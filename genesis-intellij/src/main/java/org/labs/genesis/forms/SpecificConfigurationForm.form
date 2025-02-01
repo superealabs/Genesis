@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.labs.genesis.forms.SpecificConfigurationForm">
+  <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="14" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="30" left="30" bottom="30" right="30"/>
+    <constraints>
+      <xy x="20" y="20" width="786" height="679"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="6b091" class="javax.swing.JLabel" binding="projectPortLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="6394f"/>
+          <text value="Project port:"/>
+        </properties>
+      </component>
+      <component id="6394f" class="javax.swing.JTextField" binding="projectPortField">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="8080"/>
+        </properties>
+      </component>
+      <component id="9e86" class="javax.swing.JLabel" binding="projectDescriptionLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="76874"/>
+          <text value="Project description:"/>
+        </properties>
+      </component>
+      <component id="76874" class="javax.swing.JTextField" binding="projectDescriptionField">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="Project Description"/>
+        </properties>
+      </component>
+      <component id="a65ab" class="javax.swing.JLabel" binding="loggingLevelLabel">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="79" height="35"/>
+          </grid>
+        </constraints>
+        <properties>
+          <labelFor value=""/>
+          <text value="Logging level:"/>
+        </properties>
+      </component>
+      <component id="3e2eb" class="javax.swing.JComboBox" binding="loggingLevelOptions">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="d5d29" class="javax.swing.JLabel" binding="hibernateDDLAutoLabel">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Hibernate DDL Auto:"/>
+        </properties>
+      </component>
+      <component id="5629e" class="javax.swing.JComboBox" binding="ddlAutoOptions">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="df33a" class="javax.swing.JCheckBox" binding="useAnEurekaServerCheckBox" default-binding="true">
+        <constraints>
+          <grid row="11" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <selected value="true"/>
+          <text value="Use an Eureka Server"/>
+        </properties>
+      </component>
+      <component id="6a50b" class="javax.swing.JLabel" binding="routeConfigurationLabel">
+        <constraints>
+          <grid row="5" column="0" row-span="2" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Route configuration:"/>
+        </properties>
+      </component>
+      <vspacer id="446a8">
+        <constraints>
+          <grid row="13" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <component id="a98e1" class="javax.swing.JLabel" binding="eurekaServerHostLabel">
+        <constraints>
+          <grid row="12" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Eureka Server URL:"/>
+        </properties>
+      </component>
+      <component id="f887c" class="javax.swing.JTextField" binding="eurekaServerHostField">
+        <constraints>
+          <grid row="12" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="http://localhost:8761/eureka"/>
+        </properties>
+      </component>
+      <component id="6cc82" class="javax.swing.JLabel" binding="defaultUsernameLabel">
+        <constraints>
+          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="ed4a3"/>
+          <text value="Username"/>
+        </properties>
+      </component>
+      <component id="ed4a3" class="javax.swing.JTextField" binding="usernameField">
+        <constraints>
+          <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="fd3ae" class="javax.swing.JLabel" binding="passwordLabel">
+        <constraints>
+          <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="a7deb"/>
+          <text value="Password"/>
+        </properties>
+      </component>
+      <component id="a7deb" class="javax.swing.JPasswordField" binding="passwordField">
+        <constraints>
+          <grid row="8" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <vspacer id="970da">
+        <constraints>
+          <grid row="10" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <vspacer id="d050c">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="2" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+            <minimum-size width="30" height="30"/>
+            <preferred-size width="30" height="30"/>
+            <maximum-size width="30" height="30"/>
+          </grid>
+        </constraints>
+      </vspacer>
+      <component id="7024a" class="javax.swing.JLabel" binding="roleLabel">
+        <constraints>
+          <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Role"/>
+        </properties>
+      </component>
+      <component id="5b394" class="javax.swing.JTextField" binding="roleField">
+        <constraints>
+          <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <scrollpane id="43ae3" binding="scrollPaneRouteTable">
+        <constraints>
+          <grid row="5" column="1" row-span="2" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="-1" height="150"/>
+          </grid>
+        </constraints>
+        <properties>
+          <foreground color="-16777216"/>
+        </properties>
+        <border type="etched">
+          <font name="JetBrains Mono" size="12" style="1"/>
+          <title-color color="-16777216"/>
+          <color color="-14079968"/>
+        </border>
+        <children>
+          <component id="e5596" class="javax.swing.JTable" binding="routeConfigurationOption">
+            <constraints/>
+            <properties>
+              <alignmentX value="1.0"/>
+              <alignmentY value="1.0"/>
+              <autoCreateColumnsFromModel value="true"/>
+              <cellSelectionEnabled value="false"/>
+              <dropMode value="INSERT"/>
+              <editingColumn value="30"/>
+              <editingRow value="30"/>
+              <fillsViewportHeight value="false"/>
+              <foreground color="-16777216"/>
+              <gridColor color="-4802117"/>
+              <inheritsPopupMenu value="false"/>
+              <intercellSpacing width="1" height="2"/>
+              <minimumSize width="30" height="30"/>
+              <name value=""/>
+              <preferredScrollableViewportSize width="-1" height="60"/>
+              <preferredSize width="-1" height="150"/>
+              <rowHeight value="25"/>
+              <rowMargin value="2"/>
+              <selectionBackground color="-1312001"/>
+              <selectionForeground color="-16777216"/>
+              <showVerticalLines value="true"/>
+              <surrendersFocusOnKeystroke value="true"/>
+            </properties>
+          </component>
+        </children>
+      </scrollpane>
+      <component id="26f6a" class="javax.swing.JButton" binding="removeRouteButton">
+        <constraints>
+          <grid row="6" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="50" height="-1"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="Remove Route"/>
+        </properties>
+      </component>
+      <component id="f0c60" class="javax.swing.JButton" binding="addRouteButton">
+        <constraints>
+          <grid row="5" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="50" height="-1"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="&amp;Add Route"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

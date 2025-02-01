@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.labs.genesis.forms.InitializationForm">
+  <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="10" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="30" left="30" bottom="30" right="30"/>
+    <constraints>
+      <xy x="25" y="59" width="545" height="465"/>
+    </constraints>
+    <properties/>
+    <border type="empty">
+      <size top="10" left="0" bottom="0" right="0"/>
+    </border>
+    <children>
+      <component id="a9735" class="javax.swing.JTextField" binding="projectNameField">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="250" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="5e050" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="locationField">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="350" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="dd72" class="javax.swing.JComboBox" binding="languageOptions">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="34"/>
+          </grid>
+        </constraints>
+        <properties>
+          <model/>
+        </properties>
+      </component>
+      <component id="44c4f" class="javax.swing.JComboBox" binding="languageVersionOptions">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="a38a1" class="javax.swing.JComboBox" binding="coreFrameworkOptions">
+        <constraints>
+          <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="34"/>
+          </grid>
+        </constraints>
+        <properties>
+          <model/>
+        </properties>
+      </component>
+      <component id="f18e7" class="javax.swing.JLabel" binding="nameLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="68" height="15"/>
+          </grid>
+        </constraints>
+        <properties>
+          <labelFor value="a9735"/>
+          <text value="&amp;Name:"/>
+        </properties>
+      </component>
+      <component id="4dd9c" class="javax.swing.JLabel" binding="locationLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="68" height="15"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="Location:"/>
+        </properties>
+      </component>
+      <component id="9a1d0" class="javax.swing.JLabel" binding="languageLabel">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="68" height="15"/>
+          </grid>
+        </constraints>
+        <properties>
+          <labelFor value="dd72"/>
+          <text value="Language:"/>
+        </properties>
+      </component>
+      <component id="52dc6" class="javax.swing.JLabel" binding="languageVersionLabel">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="68" height="15"/>
+          </grid>
+        </constraints>
+        <properties>
+          <labelFor value="44c4f"/>
+          <text value="Language version:"/>
+        </properties>
+      </component>
+      <vspacer id="619de">
+        <constraints>
+          <grid row="9" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+            <preferred-size width="196" height="14"/>
+          </grid>
+        </constraints>
+      </vspacer>
+      <component id="e89c0" class="javax.swing.JLabel" binding="projectType">
+        <constraints>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Project type:"/>
+        </properties>
+      </component>
+      <component id="cb063" class="javax.swing.JLabel" binding="buildToolLabel">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="68" height="15"/>
+          </grid>
+        </constraints>
+        <properties>
+          <labelFor value="a1d59"/>
+          <text value="Build tool:"/>
+        </properties>
+      </component>
+      <component id="a1d59" class="javax.swing.JComboBox" binding="buildToolOptions">
+        <constraints>
+          <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="cc9ad" class="javax.swing.JLabel" binding="frameworkLabel">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="68" height="15"/>
+          </grid>
+        </constraints>
+        <properties>
+          <labelFor value="a38a1"/>
+          <text value="Framework:"/>
+        </properties>
+      </component>
+      <component id="46f38" class="javax.swing.JLabel" binding="frameworkVersionLabel">
+        <constraints>
+          <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Framework version:"/>
+        </properties>
+      </component>
+      <component id="b6bdb" class="javax.swing.JComboBox" binding="frameworkOptions">
+        <constraints>
+          <grid row="6" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="250" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="12726" class="javax.swing.JComboBox" binding="frameworkVersionOptions">
+        <constraints>
+          <grid row="8" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="100" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="cf12a" class="javax.swing.JLabel" binding="groupIdLabel">
+        <constraints>
+          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="5307c"/>
+          <text value="Group id:"/>
+        </properties>
+      </component>
+      <component id="e7068" class="javax.swing.JTextField" binding="groupIdField">
+        <constraints>
+          <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="250" height="34"/>
+          </grid>
+        </constraints>
+        <properties>
+          <toolTipText value=""/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

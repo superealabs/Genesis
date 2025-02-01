@@ -1,0 +1,582 @@
+- id: 1
+  name: "Maven"
+  coreFrameworks:
+    - "Spring Boot"
+  projectFilesEdits:
+    - fileType: "Xml"
+      fileName: "pom"
+      extension: "xml"
+      content: |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+            <parent>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-parent</artifactId>
+                <version>${frameworkVersion}</version>
+                <relativePath/>
+            </parent>
+            <groupId>${groupLink}</groupId>
+            <artifactId>${projectName}</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <name>${projectName}</name>
+            <description>${projectDescription}</description>
+            <url/>
+            <licenses>
+                <license/>
+            </licenses>
+            <developers>
+                <developer/>
+            </developers>
+            <scm>
+                <connection/>
+                <developerConnection/>
+                <tag/>
+                <url/>
+            </scm>
+            <properties>
+                <java.version>${languageVersion}</java.version>
+                {{#if useCloud}}<spring-cloud.version>2023.0.3</spring-cloud.version>{{/if}}
+            </properties>
+            <dependencies>
+                {{#each dependencies}}
+                <dependency>
+                    <groupId>${this.groupId}</groupId>
+                    <artifactId>${this.artifactId}</artifactId>
+                    <version>${this.version}</version>
+                    <scope>${this.scope}</scope>
+                </dependency>{{#if !@last}}{{newline}}        {{/if}}
+                {{/each}}
+                {{#if useDB}}<dependency>
+                    <groupId>${DBgroupId}</groupId>
+                    <artifactId>${DBartifactId}</artifactId>
+                    <version>${DBversion}</version>
+                </dependency>
+        {{else}}{{removeLine}}
+        {{removeLine}}
+        {{removeLine}}
+        {{removeLine}}
+        {{removeLine}}{{/if}}
+                {{#if useEurekaServer}}<dependency>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-actuator</artifactId>
+                </dependency>{{/if}}
+            </dependencies>
+        {{#if useCloud}}
+            <dependencyManagement>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.springframework.cloud</groupId>
+                        <artifactId>spring-cloud-dependencies</artifactId>
+                        <version>$[spring-cloud.version]</version>
+                        <type>pom</type>
+                        <scope>import</scope>
+                    </dependency>
+                </dependencies>
+            </dependencyManagement>{{/if}}        
+        
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </project>
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+  projectFiles:
+    - fileType: "Script"
+      fileName: "mvnw"
+      sourcePath: "data_genesis/maven/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
+    - fileType: "ScriptWin"
+      fileName: "mvnw.cmd"
+      sourcePath: "data_genesis/maven/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+  projectFolders:
+    - folderType: "MavenFolder"
+      folderName: ".mvn"
+      sourcePath: "data_genesis/maven/.mvn"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
+- id: 2
+  name: "MSBuild for .NET "
+  coreFrameworks:
+    - ".NET"
+  projectFilesEdits:
+    - fileType: "ProgramFile"
+      fileName: "Program"
+      extension: "cs"
+      content: |
+        {{#if useEurekaServer}}
+        using Steeltoe.Management.Endpoint.Info;
+        using System.Net;
+        using System.Net.NetworkInformation;
+        using System.Net.Sockets;
+        using Steeltoe.Discovery.Client;
+        using Steeltoe.Management.Endpoint.Health;
+        using Steeltoe.Management.Endpoint;{{/if}}
+        using Microsoft.OpenApi.Models;
+        using Microsoft.EntityFrameworkCore;
+        using ${majStart(projectName)}.Data;
+        using ${majStart(projectName)}.Repositories.Implementation;
+        using ${majStart(projectName)}.Repositories.Interface;
+        using ${majStart(projectName)}.Services.Implementation;
+        using ${majStart(projectName)}.Services.Interface;
+
+        var builder = WebApplication.CreateBuilder(args);
+        
+        var pathBase = builder.Configuration.GetValue<string>("PathBase");
+        
+        builder.Services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "${projectName}",               
+                Version = "v1",                       
+                Description = "${projectDescription}"
+            });
+            if (!string.IsNullOrEmpty(pathBase))
+            {
+              c.AddServer(new OpenApiServer { Url = pathBase });
+            }
+        });
+        
+        {{#if useEurekaServer}}
+        // Add Steeltoe Actuators for application monitoring and diagnostics
+        builder.Services.AddAllActuators(builder.Configuration);
+        builder.Services.AddHealthActuator();
+        builder.Services.AddInfoActuator();
+        
+        // Retrieve the local IP address dynamically
+        string localIpAddress = NetworkInterface
+              .GetAllNetworkInterfaces()
+              .SelectMany(nic => nic.GetIPProperties().UnicastAddresses)
+              .Where(addr => addr.Address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(addr.Address))
+              .Select(addr => addr.Address.ToString())
+              .FirstOrDefault() ?? "127.0.0.1";
+        
+        // Configure Kestrel to listen on both the machine's IP address and localhost
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.Listen(IPAddress.Parse(localIpAddress), ${projectPort});
+            options.Listen(IPAddress.Loopback, ${projectPort});
+        });
+        
+        // Set the IP address in configuration for Eureka registration
+        builder.Configuration["eureka:instance:ipAddress"] = localIpAddress;
+        
+        // Add Eureka Discovery Client for service registration with Eureka server
+        builder.Services.AddDiscoveryClient(builder.Configuration);{{/if}}
+        
+        // Add services to the container.
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        builder.Services.AddDbContext<WebApiNetContext>(options =>
+            options.Use${daoName}(connectionString${addOptions}));
+        
+        // Adding repositories ...
+        {{#each entities}}
+        builder.Services.AddScoped<I${this}Repository, ${this}Repository>();
+        {{/each}}
+        // Adding services ...
+        {{#each entities}}
+        builder.Services.AddScoped<I${this}Service, ${this}Service>();
+        {{/each}}
+        // Adding controllers ...
+        builder.Services.AddControllers();
+
+        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+
+        var app = builder.Build();
+        
+        if (!string.IsNullOrEmpty(pathBase))
+        {
+            app.UsePathBase(pathBase);
+        }
+        
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+
+        app.UseHttpsRedirection();
+        {{#if useEurekaServer}}
+        // Map all actuators and controllers directly
+        app.MapAllActuators(_ => { });{{/if}}
+        app.MapControllers();
+        
+        app.UseAuthorization();
+        app.Run();
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+
+    - fileType: "HttpFile"
+      fileName: "${majStart(projectName)}"
+      extension: "http"
+      content: |
+        @TestDbCRUD_HostAddress = http://localhost:${projectPort}
+
+        {{#each entities}}
+        GET {{TestDbCRUD_HostAddress}}/${this}s
+        Accept: application/json
+        
+        ###{{#if !@last}}{{newline}}{{/if}}{{/each}}
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+
+    - fileType: "AppSettings"
+      fileName: "appsettings"
+      extension: "json"
+      content: |
+        {
+          "Logging": {
+            "LogLevel": {
+              "Default": "${loggingLevel}",
+              "Microsoft.AspNetCore": "${loggingLevel}"
+            }
+          },
+          "AllowedHosts": "*"{{#if useDB}},
+          "ConnectionStrings": {
+            "DefaultConnection": "${connectionString}"
+          }{{/if}},
+          "PathBase": "/${toKebabCase(projectName)}"{{#if useEurekaServer}},
+          "spring": {
+            "application": {
+              "name": "${projectName}"
+            }
+          },
+          "eureka": {
+            "client": {
+              "serviceUrl": "${eurekaServerURL}",
+              "shouldFetchRegistry": "false",
+              "shouldRegisterWithEureka": true,
+              "validateCertificates": false
+            },
+            "instance": {
+              "appName": "${projectName}",
+              "port": "${projectPort}",
+              "hostname": "$[HOSTNAME]",
+              "preferIpAddress": true
+            },
+            "Management": {
+              "Endpoints": {
+                "Actuator": {
+                  "Exposure": {
+                    "Include": [
+                      "health",
+                      "info",
+                      "*"
+                    ]
+                  }
+                },
+                "Health": {
+                  "ShowDetails": "Always"
+                },
+                "Info": {
+                  "Application": {
+                    "name": "${projectName}",
+                    "description": "${projectDescription}",
+                    "version": "0.0.1-SNAPSHOT"
+                  }
+                }
+              }
+            }
+          }{{/if}}
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+
+    - fileType: "ProjectFile"
+      fileName: "${majStart(projectName)}"
+      extension: "csproj"
+      content: |
+        <Project Sdk="Microsoft.NET.Sdk.Web">
+            <PropertyGroup>
+                <TargetFramework>net${frameworkVersion}</TargetFramework>
+                <Nullable>enable</Nullable>
+                <ImplicitUsings>enable</ImplicitUsings>
+                <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+                <RootNamespace>${projectName}</RootNamespace>
+                <Description>${projectDescription}</Description>
+            </PropertyGroup>
+        
+            <ItemGroup>
+                {{#if useDB}}<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="${frameworkVersion}.0">
+                    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+                    <PrivateAssets>all</PrivateAssets>
+                </PackageReference>
+                <PackageReference Include="${DBartifactId}" Version="${frameworkVersion}.0"/>{{/if}}
+                <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0"/>
+                {{#if useEurekaServer}}<PackageReference Include="Steeltoe.Discovery.Eureka" Version="3.2.0"/>
+                <PackageReference Include="Steeltoe.Management.Endpoint.Info" Version="1.1.0" />
+                <PackageReference Include="Steeltoe.Management.Endpoint.Health" Version="1.1.0" />
+                <PackageReference Include="Steeltoe.Management.EndpointCore" Version="3.2.0" />
+                <PackageReference Include="Steeltoe.Management.TracingCore" Version="3.2.0" />{{/if}}
+            </ItemGroup>
+        </Project>
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+
+    - fileType: "SolutionFile"
+      fileName: "${majStart(projectName)}"
+      extension: "sln"
+      content: |
+        Microsoft Visual Studio Solution File, Format Version 12.00
+        
+        Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "${majStart(projectName)}", "${majStart(projectName)}\${majStart(projectName)}.csproj", "{B06BF436-528B-4DF7-9F86-6F86B6A77E84}"
+        EndProject
+        Global
+            GlobalSection(SolutionConfigurationPlatforms) = preSolution
+                Debug|Any CPU = Debug|Any CPU
+                Release|Any CPU = Release|Any CPU
+            EndGlobalSection
+            GlobalSection(ProjectConfigurationPlatforms) = postSolution
+                {B06BF436-528B-4DF7-9F86-6F86B6A77E84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+                {B06BF436-528B-4DF7-9F86-6F86B6A77E84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+                {B06BF436-528B-4DF7-9F86-6F86B6A77E84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+                {B06BF436-528B-4DF7-9F86-6F86B6A77E84}.Release|Any CPU.Build.0 = Release|Any CPU
+            EndGlobalSection
+        EndGlobal
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
+    - fileType: "LaunchSettingsFile"
+      fileName: "launchSettings"
+      extension: "json"
+      content: |
+        {
+          "$schema": "http://json.schemastore.org/launchsettings.json",
+          "iisSettings": {
+            "windowsAuthentication": false,
+            "anonymousAuthentication": true,
+            "iisExpress": {
+              "applicationUrl": "http://localhost:53034/${toKebabCase(projectName)}",
+              "sslPort": 44349
+            }
+          },
+          "profiles": {
+            "http": {
+              "commandName": "Project",
+              "dotnetRunMessages": true,
+              "launchBrowser": true,
+              "launchUrl": "swagger",
+              "applicationUrl": "http://localhost:${projectPort}/${toKebabCase(projectName)}",
+              "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+              }
+            },
+            "https": {
+              "commandName": "Project",
+              "dotnetRunMessages": true,
+              "launchBrowser": true,
+              "launchUrl": "swagger",
+              "applicationUrl": "https://localhost:7273/${toKebabCase(projectName)};http://localhost:${projectPort}",
+              "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+              }
+            },
+            "IIS Express": {
+              "commandName": "IISExpress",
+              "launchBrowser": true,
+              "launchUrl": "swagger",
+              "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+              }
+            }{{#if useEurekaServer}},
+            "${projectName}": {
+              "commandName": "Project",
+              "launchBrowser": true,
+              "launchUrl": "swagger",
+              "applicationUrl": "http://localhost:${projectPort}/${toKebabCase(projectName)}",
+              "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+              }
+            }
+            {{/if}}
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Properties/"
+
+    - fileType: "DbContextFile"
+      fileName: "${majStart(projectName)}Context"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Data;
+        
+        using Microsoft.EntityFrameworkCore;
+        using Models;
+        
+        public class ${majStart(projectName)}Context : DbContext
+        {
+            public ${majStart(projectName)}Context(DbContextOptions<${majStart(projectName)}Context> options) : base(options)
+            {
+            }
+            {{#each entities}}
+            public DbSet<${this}> ${this}s { get; set; }
+            {{/each}}
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Data/"
+
+
+    - fileType: "Generic  file"
+      fileName: "IRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Generic;
+        
+        using System.Linq.Expressions;
+
+        public interface IRepository<T, in TKey> where T : class
+        {
+            Task<IEnumerable<T>> GetAllWithIncludes(params Expression<Func<T, object?>>[]? includeProperties);
+            Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
+            Task AddAsync(T entity);
+            Task UpdateAsync(T entity);
+            Task DeleteAsync(TKey id);
+            Task<bool> ExistsAsync(TKey id);
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Generic/"
+
+    - fileType: "Implementation file"
+      fileName: "Repository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Generic;
+        
+        using System.ComponentModel.DataAnnotations;
+        using System.Linq.Expressions;
+        using Microsoft.EntityFrameworkCore;
+        using Data;
+
+        public class Repository<T, TKey>: IRepository<T, TKey>, IDisposable, IAsyncDisposable where T : class
+        {
+        
+            private readonly DbSet<T> _dbSet;
+            private readonly ${majStart(projectName)}Context _context;
+        
+            public Repository(${majStart(projectName)}Context context)
+            {
+                _context = context;
+                _dbSet = context.Set<T>();
+            }
+
+            public async ValueTask DisposeAsync()
+            {
+                await _context.DisposeAsync();
+            }
+
+            public void Dispose()
+            {
+                _context.Dispose();
+            }
+
+            public async Task<IEnumerable<T>> GetAllWithIncludes(params Expression<Func<T, object?>>[]? includeProperties)
+            {
+                var query = GetQuery(_dbSet, includeProperties);
+                query = query.OrderBy(e => EF.Property<object>(e, GetKeyPropertyName()));
+                return await query.ToListAsync();
+            }     
+
+            public async Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties)
+            {
+                var keyPropertyName = GetKeyPropertyName();
+                var query = GetQuery(_dbSet, includeProperties);
+                return await query.FirstOrDefaultAsync(e => EF.Property<TKey>(e, keyPropertyName)!.Equals(id));
+            }
+
+            public async Task AddAsync(T entity)
+            {
+                await _dbSet.AddAsync(entity);
+                await _context.SaveChangesAsync();
+            }
+
+            public async Task UpdateAsync(T entity)
+            {
+                _context.Entry(entity).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+            }
+
+            public async Task DeleteAsync(TKey id)
+            {
+                var entity = await GetByIdAsync(id);
+                if (entity == null) 
+                    throw new KeyNotFoundException($"Entity with ID {id} not found.");
+                _dbSet.Remove(entity);
+                await _context.SaveChangesAsync();
+            }
+
+            public async Task<bool> ExistsAsync(TKey id)
+            {
+                if (EqualityComparer<TKey>.Default.Equals(id, default)) return false;
+        
+                var keyPropertyName = GetKeyPropertyName();
+        
+                if (string.IsNullOrEmpty(keyPropertyName))
+                throw new InvalidOperationException($"No key property found for type {typeof(T).Name}");
+        
+                return await _dbSet.AnyAsync(e =>
+                    EF.Property<TKey>(e, keyPropertyName) != null &&
+                    EF.Property<TKey>(e, keyPropertyName)!.Equals(id));
+            }
+
+            private IQueryable<T> GetQuery(IQueryable<T> query, params Expression<Func<T, object?>>[]? includeProperties)
+            {
+                if (includeProperties != null)
+                    foreach (var includeProperty in includeProperties)
+                        query = query.Include(includeProperty);
+        
+                return query;
+            }
+
+            private string GetKeyPropertyName()
+            {
+                var keyProperty = typeof(T).GetProperties()
+                    .FirstOrDefault(prop => Attribute.IsDefined(prop, typeof(KeyAttribute)));
+        
+                if (keyProperty == null)
+                    throw new InvalidOperationException($"No key property found for type {typeof(T).Name}");
+        
+                return keyProperty.Name;
+            }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Generic/"
+
+
+    - fileType: "Generic file"
+      fileName: "IService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Generic;
+        
+        using System.Linq.Expressions;
+        
+        public interface IService<T, in TKey> where T : class
+        {
+            Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object?>>[]? includeProperties);
+            Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
+            Task AddAsync(T entity);
+            Task UpdateAsync(T entity);
+            Task DeleteAsync(TKey id);
+            Task<bool> ExistsAsync(TKey id);
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Generic/"
+
+  projectFiles:
+    - fileType: "appSettingsDeveloppement"
+      fileName: "appsettings.Development.json"
+      sourcePath: "data_genesis/csharp/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+
+  projectFolders: [ ]

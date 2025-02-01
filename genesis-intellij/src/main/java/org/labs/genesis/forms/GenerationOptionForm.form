@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.labs.genesis.forms.GenerationOptionForm">
+  <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="30" left="30" bottom="30" right="30"/>
+    <constraints>
+      <xy x="6" y="3" width="552" height="343"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="a03df" class="javax.swing.JLabel" binding="tableAvailableLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Tables available:"/>
+        </properties>
+      </component>
+      <vspacer id="8cc6b">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="6" hsize-policy="5" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <component id="ed5ab" class="javax.swing.JLabel" binding="componentsLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Components:"/>
+          <verticalAlignment value="0"/>
+        </properties>
+      </component>
+      <component id="aac42" class="com.intellij.ui.components.labels.LinkLabel" binding="refreshLinkLabel">
+        <constraints>
+          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Refresh"/>
+        </properties>
+      </component>
+      <component id="dc40f" class="com.intellij.ui.components.JBList" binding="componentChoice">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="2" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <model>
+            <item value="Model"/>
+            <item value="DAO"/>
+            <item value="Service"/>
+            <item value="Controller"/>
+          </model>
+          <selectionMode value="2"/>
+        </properties>
+      </component>
+      <component id="78525" class="com.intellij.ui.components.JBList" binding="tableNamesList">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="2" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <model>
+            <item value="No tables available for selection"/>
+          </model>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

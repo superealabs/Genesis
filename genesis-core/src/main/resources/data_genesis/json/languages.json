@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "Java",
+    "extension": "java",
+    "configurations": [
+      {
+        "name": "Language version",
+        "variableName": "languageVersion",
+        "options": [
+          "17",
+          "21",
+          "23"
+        ],
+        "defaultOption": "21"
+      }
+    ],
+    "syntax": {
+      "classKeyword": "public class",
+      "namespace": "package",
+      "namespaceStart": "",
+      "namespaceEnd": "{{removeLine}}",
+      "bracketStart": "{",
+      "bracketEnd": "}"
+    },
+    "types": {
+      "int": "Integer",
+      "long": "Long",
+      "double": "Double",
+      "string": "String",
+      "date": "java.time.LocalDate",
+      "timestamp": "java.time.LocalDateTime",
+      "time": "java.time.LocalTime",
+      "boolean": "Boolean"
+    }
+  },
+  {
+    "id": 2,
+    "name": "C#",
+    "extension": "cs",
+    "configurations": [],
+    "syntax": {
+      "classKeyword": "public class",
+      "namespace": "namespace",
+      "namespaceStart": ";",
+      "namespaceEnd": "{{removeLine}}",
+      "bracketStart": "\n{",
+      "bracketEnd": "}"
+    },
+    "types": {
+      "int": "int",
+      "long": "long",
+      "double": "double",
+      "string": "string",
+      "date": "DateOnly",
+      "timestamp": "DateTime",
+      "time": "TimeSpan",
+
+      "boolean": "Boolean"
+    }
+  }
+]

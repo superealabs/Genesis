@@ -1,0 +1,205 @@
+[
+  {
+    "id": 1,
+    "name": "MySQL",
+    "dependencies": {
+      "1": {
+        "groupId": "com.mysql",
+        "artifactId": "mysql-connector-j",
+        "version": "9.0.0"
+      },
+      "2": {
+        "groupId": "",
+        "artifactId": "Pomelo.EntityFrameworkCore.MySql"
+      }
+    },
+    "driverType": "",
+    "sid": "",
+    "connectionString": {
+      "1": "jdbc:mysql://${host}:${port}/${database}",
+      "2": "Server=${host};Port=${port};Database=${database};User Id=${username};Password=${password};"
+    },
+    "daoName": {
+      "2": "MySql"
+    },
+    "addOptions": {
+      "2": ", ServerVersion.AutoDetect(connectionString)"
+    },
+    "driver": "com.mysql.cj.jdbc.Driver",
+    "port": "3306",
+    "types": {
+      "INT": "int",
+      "SMALLINT": "int",
+      "BIGINT": "long",
+      "FLOAT": "float",
+      "DOUBLE": "double",
+      "VARCHAR": "string",
+      "DATE": "date",
+      "DATETIME": "timestamp",
+      "TIME": "time"
+    },
+    "excludeSchemas": [
+      "information_schema",
+      "mysql",
+      "performance_schema",
+      "sys"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "PostgreSQL",
+    "dependencies": {
+      "1": {
+        "groupId": "org.postgresql",
+        "artifactId": "postgresql",
+        "version": "42.7.3"
+      },
+      "2": {
+        "groupId": "",
+        "artifactId": "Npgsql.EntityFrameworkCore.PostgreSQL"
+      }
+    },
+    "driverType": "",
+    "sid": "",
+    "connectionString": {
+      "1": "jdbc:postgresql://${host}:${port}/${database}",
+      "2": "Host=${host};Port=${port};Database=${database};Username=${username};Password=${password};"
+    },
+    "daoName": {
+      "2": "Npgsql"
+    },
+    "addOptions": {
+      "2": ""
+    },
+    "driver": "org.postgresql.Driver",
+    "port": "5432",
+    "types": {
+      "int2": "int",
+      "smallint": "int",
+      "integer": "int",
+      "int": "int",
+      "int4": "int",
+      "int8": "long",
+      "bigint": "long",
+      "serial": "long",
+      "bigserial": "long",
+      "character varying": "string",
+      "text": "string",
+      "varchar": "string",
+      "real": "double",
+      "double": "double",
+      "float4": "double",
+      "float8": "double",
+      "double precision": "double",
+      "decimal": "double",
+      "numeric": "double",
+      "date": "date",
+      "timestamp without time zone": "timestamp",
+      "timestamp": "timestamp",
+      "bool": "boolean",
+      "time": "time",
+      "tsrange": "string"
+    },
+    "excludeSchemas": [
+      "information_schema",
+      "pg_catalog",
+      "pg_toast",
+      "pg_temp"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "SQL Server",
+    "dependencies": {
+      "1": {
+        "groupId": "com.microsoft.sqlserver",
+        "artifactId": "mssql-jdbc",
+        "version": "12.8.1.jre11"
+      },
+      "2": {
+        "groupId": "",
+        "artifactId": "Microsoft.EntityFrameworkCore.SqlServer"
+      }
+    },
+    "driverType": "",
+    "sid": "",
+    "connectionString": {
+      "1": "jdbc:sqlserver://${host}:${port};databaseName=${database}",
+      "2": "Server=${host};Database=${database};User Id=${username};Password=${password};"
+    },
+    "daoName": {
+      "2": "SqlServer"
+    },
+    "addOptions": {
+      "2": ""
+    },
+    "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+    "port": "1433",
+    "types": {
+      "int": "int",
+      "int identity": "int",
+      "bigint": "long",
+      "smallint": "int",
+      "float": "float",
+      "double": "double",
+      "decimal": "double",
+      "nvarchar": "string",
+      "date": "date",
+      "time": "time",
+      "datetime": "datetime"
+    },
+    "excludeSchemas": [
+      "sys",
+      "information_schema"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Oracle",
+    "dependencies": {
+      "1": {
+        "groupId": "com.oracle.database.jdbc",
+        "artifactId": "ojdbc8",
+        "version": "23.5.0.24.07"
+      },
+      "2": {
+        "groupId": "",
+        "artifactId": "Oracle.EntityFrameworkCore"
+      }
+    },
+    "driverType": "thin",
+    "sid": "ORCLCDB",
+    "connectionString": {
+      "1": "jdbc:oracle:${driverType}:@//${host}:${port}/${sid}",
+      "2": "User Id=${username};Password=${password};Data Source=${host}:${port}/${database}"
+    },
+    "daoName": {
+      "2": "Oracle"
+    },
+    "addOptions": {
+      "2": ""
+    },
+    "driver": "oracle.jdbc.driver.OracleDriver",
+    "port": "1521",
+    "types": {
+      "NUMBER": "int",
+      "VARCHAR2": "string",
+      "DATE": "date",
+      "TIMESTAMP": "timestamp",
+      "TIME": "time",
+      "BLOB": "bytea",
+      "CLOB": "text",
+      "NCLOB": "text"
+    },
+    "excludeSchemas": [
+      "SYS",
+      "SYSTEM",
+      "OUTLN",
+      "DBSNMP",
+      "SYSMAN",
+      "APEX_040000",
+      "XDB",
+      "ORDDATA"
+    ]
+  }
+]

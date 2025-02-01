@@ -1,0 +1,15 @@
+###
+
+POST https://api.groq.com/openai/v1/chat/completions
+Authorization: Bearer <YOUR_GROQ_TOKEN_HERE>
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Explain me what a LLM is and why they're important"
+    }
+  ],
+  "model": "llama3-8b-8192"
+}

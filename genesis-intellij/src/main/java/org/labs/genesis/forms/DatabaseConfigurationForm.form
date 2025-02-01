@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.labs.genesis.forms.DatabaseConfigurationForm">
+  <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="15" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="30" left="30" bottom="30" right="30"/>
+    <constraints>
+      <xy x="20" y="20" width="647" height="606"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="c650a" class="javax.swing.JLabel" binding="dmsLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="523b7"/>
+          <text value="DMS:"/>
+        </properties>
+      </component>
+      <component id="523b7" class="javax.swing.JComboBox" binding="dmsOptions">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="6dd67" class="javax.swing.JLabel" binding="databaseLabel">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="377f4"/>
+          <text value="Database:"/>
+        </properties>
+      </component>
+      <component id="377f4" class="javax.swing.JTextField" binding="databaseField">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="32e33" class="javax.swing.JLabel" binding="usernameLabel">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="d0554"/>
+          <text value="Username:"/>
+        </properties>
+      </component>
+      <component id="f60ac" class="javax.swing.JLabel" binding="hostLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="e36e9"/>
+          <text value="Host:"/>
+        </properties>
+      </component>
+      <component id="e36e9" class="javax.swing.JTextField" binding="hostField">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="d0554" class="javax.swing.JTextField" binding="usernameField">
+        <constraints>
+          <grid row="4" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="7d9f1" class="javax.swing.JTextField" binding="portField">
+        <constraints>
+          <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <minimum-size width="100" height="-1"/>
+            <preferred-size width="100" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="7cc8a" class="javax.swing.JLabel" binding="passwordLabel">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="2a541"/>
+          <text value="Password:"/>
+        </properties>
+      </component>
+      <component id="2a541" class="javax.swing.JPasswordField" binding="passwordField">
+        <constraints>
+          <grid row="5" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="200" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="9bf95" class="javax.swing.JToolBar$Separator">
+        <constraints>
+          <grid row="7" column="0" row-span="1" col-span="5" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="6d27c" class="javax.swing.JLabel" binding="portLabel">
+        <constraints>
+          <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelFor value="7d9f1"/>
+          <text value="Port:"/>
+        </properties>
+      </component>
+      <component id="7769b" class="javax.swing.JLabel" binding="schemaLabel">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Schema:"/>
+        </properties>
+      </component>
+      <component id="7f340" class="javax.swing.JTextField" binding="schemaField">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="50" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="8bbad" class="javax.swing.JCheckBox" binding="trustCertificateCheckBox" default-binding="true">
+        <constraints>
+          <grid row="10" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Trust certificate"/>
+        </properties>
+      </component>
+      <component id="b6141" class="javax.swing.JLabel" binding="driverNameLabel">
+        <constraints>
+          <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Driver type:"/>
+        </properties>
+      </component>
+      <component id="fdccd" class="javax.swing.JTextField" binding="driverNameField">
+        <constraints>
+          <grid row="8" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="5369b" class="javax.swing.JCheckBox" binding="useSSLCheckBox" default-binding="true">
+        <constraints>
+          <grid row="11" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Use SSL "/>
+        </properties>
+      </component>
+      <component id="39552" class="javax.swing.JCheckBox" binding="allowKeyRetrievalCheckBox" default-binding="true">
+        <constraints>
+          <grid row="12" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Allow key retrieval"/>
+        </properties>
+      </component>
+      <component id="8f385" class="javax.swing.JLabel" binding="URLLabel">
+        <constraints>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="URL"/>
+        </properties>
+      </component>
+      <component id="aade7" class="javax.swing.JTextField" binding="URLField">
+        <constraints>
+          <grid row="6" column="1" row-span="1" col-span="4" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="ee855" class="javax.swing.JLabel" binding="sidLabel">
+        <constraints>
+          <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="SID"/>
+        </properties>
+      </component>
+      <component id="f4643" class="javax.swing.JTextField" binding="sidField">
+        <constraints>
+          <grid row="9" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <vspacer id="e266e">
+        <constraints>
+          <grid row="14" column="1" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+      <component id="eb2f8" class="com.intellij.ui.components.labels.LinkLabel" binding="testConnectionButton">
+        <constraints>
+          <grid row="13" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Test connection"/>
+        </properties>
+      </component>
+      <component id="d47d5" class="javax.swing.JLabel" binding="connectionStatusLabel">
+        <constraints>
+          <grid row="13" column="2" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Connection Status"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

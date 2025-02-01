@@ -1,0 +1,1000 @@
+- id: 1
+  languageId: 1
+  coreFramework: "Spring Boot"
+  name: "Spring Boot - WEB API REST"
+  template: "Template"
+  useDB: true
+  withGroupId: true
+  useCloud: false
+  useEurekaServer: false
+  isGateway: false
+  additionalFiles:
+    - fileType: "MainFile"
+      fileName: "${majStart(projectName)}Application"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+
+        import io.swagger.v3.oas.models.OpenAPI;
+        import io.swagger.v3.oas.models.info.Info; 
+        import org.springframework.context.annotation.Bean;
+        import org.springframework.boot.SpringApplication;
+        import org.springframework.boot.autoconfigure.SpringBootApplication;
+        {{#if useEurekaServer}}import org.springframework.cloud.client.discovery.EnableDiscoveryClient;{{/if}}
+
+        {{#if useEurekaServer}}@EnableDiscoveryClient{{/if}}
+        @SpringBootApplication
+        public class ${majStart(projectName)}Application {
+            public static void main(String[] args) {
+                SpringApplication.run(${majStart(projectName)}Application.class, args);
+            }
+        
+            @Bean
+            public OpenAPI customOpenAPI() {
+                return new OpenAPI()
+                            .info(new Info().title("${projectName}")
+                            .description("${projectDescription}")
+                            .version("0.0.1-SNAPSHOT"));
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}"
+
+    - fileType: "TestFile"
+      fileName: "${majStart(projectName)}ApplicationTests"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+
+        import org.junit.jupiter.api.Test;
+        import org.springframework.boot.test.context.SpringBootTest;
+
+        @SpringBootTest
+        class ${majStart(projectName)}ApplicationTests {
+
+        {{tab}}@Test
+        {{tab}}void contextLoads() {
+        {{tab}}}
+
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}/"
+
+    - fileType: "ApplicationYml"
+      fileName: "application"
+      extension: "yml"
+      content: |
+        spring:
+          application:
+            name: ${toKebabCase(projectName)}
+        {{#if useDB}}
+          datasource:
+            url: ${connectionString}
+            username: ${databaseUsername}
+            password: ${databasePassword}
+          jpa:
+            hibernate:
+              ddl-auto: ${hibernateDdlAuto}
+            properties:
+              hibernate.format_sql: true
+        {{/if}}
+        
+        server:
+          port: ${projectPort}
+          servlet:
+            context-path: /${toKebabCase(projectName)}
+        
+        # Logs Configuration
+        logging:
+          level:
+            root: ${loggingLevel}
+            {{#if useDB}}org.hibernate.SQL: ${loggingLevel}{{/if}}
+        
+        {{#if useEurekaServer}}
+        eureka:
+          client:
+            service-url:
+              defaultZone: ${eurekaServerURL}
+          instance:
+            prefer-ip-address: true
+            ip-address: $[spring.cloud.client.ip-address]
+        management:
+          endpoints:
+            web:
+              exposure:
+                include: health,info
+          endpoint:
+            health:
+              show-details: always
+            info:
+              enabled: true
+          info:
+            env:
+              enabled: true
+            java:
+              enabled: true
+            build:
+              enabled: true
+        info:
+          app:
+            name: $[spring.application.name]
+            description: "${projectDescription}"
+            version: "0.0.1-SNAPSHOT"
+            technical:
+              spring-boot:
+                version: "${frameworkVersion}"
+              server:
+                port: $[server.port]
+              database:
+                url: $[spring.datasource.url]
+                type: "${databaseType}"
+        {{/if}}
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
+
+  configurations:
+    - name: "Logging Level"
+      variableName: "loggingLevel"
+      options:
+        - "TRACE"
+        - "DEBUG"
+        - "INFO"
+        - "WARN"
+        - "ERROR"
+        - "FATAL"
+        - "OFF"
+      defaultOption: "INFO"
+    - name: "Framework Version"
+      variableName: "frameworkVersion"
+      options:
+        - "3.3.6"
+        - "3.2.12"
+      defaultOption: "3.3.6"
+    - name: "Hibernate Ddl Auto"
+      variableName: "hibernateDdlAuto"
+      options:
+        - "create"
+        - "create-drop"
+        - "none"
+        - "update"
+      defaultOption: "none"
+
+  eurekaClientConfigurations:
+    - name: "Eureka Server URL"
+      variableName: "eurekaServerURL"
+      options:
+        - "http://localhost:8761/eureka/"
+      defaultOption: "http://localhost:8761/eureka/"
+
+
+  dependencies:
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-data-jpa"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-web"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-test"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springdoc"
+      artifactId: "springdoc-openapi-starter-webmvc-ui"
+      version: "2.6.0"
+      scope: "{{removeLine}}"
+
+  model:
+    toGenerate: true
+    modelImports: |
+      import jakarta.persistence.*;
+    modelExtends: ""
+    modelAnnotations: |
+      @Entity
+      @Table(name="${tableName}")
+    modelFieldContent: |
+      {{tab}}{{#each fields}}
+      {{tab}}{{#if this.isPrimaryKey}}
+      {{tab}}@Id
+      {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
+      {{tab}}@Column(name="${this.columnName}"){{elseIf this.isForeignKey}}
+      {{tab}}@ManyToOne
+      {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
+      {{tab}}@Column(name="${this.columnName}"){{/if}}
+      {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
+      {{tab}}{{/each}}
+    modelGetterSetter: |
+      {{tab}}{{#each fields}}
+      {{tab}}{{#if this.withGetters}}
+      {{tab}}public ${this.type} get${majStart(this.name)}() {
+      {{tab}}   return ${this.name};
+      {{tab}}}{{/if}}
+      {{#if this.withSetters}}
+      {{tab}}public void set${majStart(this.name)}(${this.type} ${this.name}) {
+      {{tab}}   this.${this.name} = ${this.name};
+      {{tab}}}{{#if !@last}}
+      {{tab}}{{/if}}
+      {{tab}}{{/if}}{{/each}}
+    modelConstructors: "{{removeLine}}"
+    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
+    modelPackage: "${groupLink}.${lowerCase(projectName)}.models;"
+  modelDao:
+    toGenerate: true
+    modelDaoImports: |
+      import org.springframework.data.jpa.repository.JpaRepository;
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+
+    modelDaoAnnotations: "{{newline}}"
+    modelDaoClassKeyword: "public interface"
+    modelDaoExtends: "extends JpaRepository<${majStart(className)}, ${pkColumnType}>"
+    modelDaoName: "${majStart(className)}Repository"
+    modelDaoFieldContent: "{{removeLine}}"
+    modelDaoMethodContent: "{{removeLine}}"
+    modelDaoConstructors: "{{removeLine}}"
+    modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
+    modelDaoPackage: "${groupLink}.${lowerCase(projectName)}.repositories;"
+    modelDaoAdditionalFiles: [ ]
+  service:
+    toGenerate: true
+    serviceImports: |
+      import org.springframework.data.domain.Sort;
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+      import org.springframework.stereotype.Service;
+      import ${groupLink}.${lowerCase(projectName)}.repositories.${majStart(className)}Repository;
+      import org.springframework.beans.factory.annotation.Autowired;
+      import java.util.List;
+      import java.util.Optional;
+
+    serviceAnnotations: |
+      @Service
+    serviceClassKeyword: "public class"
+    serviceExtends: ""
+    serviceName: "${majStart(className)}Service"
+    serviceFieldContent: |
+      {{tab}}private final ${majStart(className)}Repository ${minStart(className)}Repository;
+    serviceConstructors: |
+      {{tab}}@Autowired
+      {{tab}}public ${majStart(className)}Service(${majStart(className)}Repository ${minStart(className)}Repository) {
+      {{tab}}   this.${minStart(className)}Repository = ${minStart(className)}Repository;
+      {{tab}}}
+    serviceMethodContent: |
+      {{tab}}public List<${majStart(className)}> getAll${majStart(className)}() {
+      {{tab}}   return ${minStart(className)}Repository.findAll(Sort.by(Sort.Direction.ASC, "${pkColumn}"));
+      {{tab}}}
+      
+      {{tab}}public ${majStart(className)} get${majStart(className)}ById(${pkColumnType} ${pkColumn}) {
+      {{tab}}   Optional<${majStart(className)}> ${minStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
+      {{tab}}   if (${minStart(className)}.isPresent()) {
+      {{tab}}     return ${minStart(className)}.get();
+      {{tab}}   } else {
+      {{tab}}     throw new RuntimeException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
+      {{tab}}   }
+      {{tab}}}
+      
+      {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
+      {{tab}}   return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}}
+
+      {{tab}}public ${majStart(className)} update${majStart(className)}(${pkColumnType} ${pkColumn}, ${majStart(className)} ${minStart(className)}) {
+      {{tab}}   Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
+      {{tab}}		if (existing${majStart(className)}.isPresent()) {
+      {{tab}}		    ${minStart(className)}.set${majStart(pkColumn)}(${pkColumn});
+      {{tab}}           return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}       } else {
+      {{tab}}         throw new RuntimeException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
+      {{tab}}       }
+      {{tab}}}
+      
+      {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
+      {{tab}}   ${minStart(className)}Repository.deleteById(${pkColumn});
+      {{tab}}}
+    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
+    servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
+    serviceAdditionalFiles: [ ]
+  controller:
+    toGenerate: true
+    controllerImports: |
+      import org.springframework.http.HttpStatus;
+      import org.springframework.http.ResponseEntity;
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+      import org.springframework.web.bind.annotation.*;
+      import ${groupLink}.${lowerCase(projectName)}.services.${majStart(className)}Service;
+      import java.util.List;
+    controllerAnnotations: |
+      @RestController
+      @RequestMapping("/${lowerCase(classNameLink)}")
+    controllerExtends: ""
+    controllerName: "${majStart(className)}Controller"
+    controllerFieldContent: |
+      {{tab}}private final ${majStart(className)}Service ${lowerCase(className)}Service;
+    controllerConstructors: |
+      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${lowerCase(className)}Service) {
+      {{tab}}   this.${lowerCase(className)}Service = ${lowerCase(className)}Service;
+      {{tab}}}
+    controllerMethodContent: |
+      {{tab}}@GetMapping
+      {{tab}}public ResponseEntity<List<${majStart(className)}>> getAll${majStart(classNameLink)}() {
+      {{tab}}   List<${majStart(className)}> ${lowerCase(classNameLink)} = ${lowerCase(className)}Service.getAll${majStart(className)}();
+      {{tab}}   return ${lowerCase(classNameLink)}.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(${lowerCase(classNameLink)});
+      {{tab}}}
+      
+      {{tab}}@GetMapping("/{${pkColumn}}")
+      {{tab}}public ResponseEntity<${majStart(className)}> get${majStart(className)}ById(@PathVariable ${pkColumnType} ${pkColumn}) {
+      {{tab}}   ${majStart(className)} ${lowerCase(className)} = ${lowerCase(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{tab}}   return ResponseEntity.ok(${lowerCase(className)});
+      {{tab}}}
+      
+      {{tab}}@PostMapping
+      {{tab}}public ResponseEntity<${majStart(className)}> create${majStart(className)}(@RequestBody ${majStart(className)} ${lowerCase(className)}) {
+      {{tab}}   ${majStart(className)} new${majStart(className)} = ${lowerCase(className)}Service.create${majStart(className)}(${lowerCase(className)});
+      {{tab}}   return ResponseEntity.status(HttpStatus.CREATED).body(new${majStart(className)});
+      {{tab}}}
+      
+      {{tab}}@PutMapping("/{${pkColumn}}")
+      {{tab}}public ResponseEntity<${majStart(className)}> update${majStart(className)}(@PathVariable ${pkColumnType} ${pkColumn}, @RequestBody ${majStart(className)} ${lowerCase(className)}) {
+      {{tab}}   ${majStart(className)} update${majStart(className)} = ${lowerCase(className)}Service.update${majStart(className)}(${pkColumn}, ${lowerCase(className)});
+      {{tab}}   return ResponseEntity.ok(update${majStart(className)});
+      {{tab}}}
+      
+      {{tab}}@DeleteMapping("/{${pkColumn}}")
+      {{tab}}public ResponseEntity<Void> delete${majStart(className)}ById(@PathVariable ${pkColumnType} ${pkColumn}) {
+      {{tab}}   ${lowerCase(className)}Service.delete${majStart(className)}(${pkColumn});
+      {{tab}}   return ResponseEntity.noContent().build();
+      {{tab}}}
+      
+      {{tab}}@ExceptionHandler(RuntimeException.class)
+      {{tab}}public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
+      {{tab}}	return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+      {{tab}}}
+    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
+    controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
+    controllerAdditionalFiles:
+      - fileType: "WebConfig"
+        fileName: "WebConfig"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.config;
+          
+          import org.springframework.context.annotation.Configuration;
+          import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+          import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+          import org.springframework.web.servlet.config.annotation.CorsRegistry;
+          
+          
+          @Configuration
+          public class WebConfig implements WebMvcConfigurer {
+          {{tab}}@Override
+          {{tab}}public void addCorsMappings(CorsRegistry registry) {
+          {{tab}}    registry.addMapping("/**")
+          {{tab}}        .allowedOriginPatterns("*")
+          {{tab}}        .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+          {{tab}}        .allowedHeaders("*")
+          {{tab}}        .allowCredentials(true)
+          {{tab}}        .maxAge(3600);
+          {{tab}}}
+          
+          {{tab}}@Override
+          {{tab}}public void addViewControllers(ViewControllerRegistry registry) {
+          {{tab}}    registry.addRedirectViewController("/", "/swagger-ui/index.html");
+          {{tab}}}
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+
+- id: 2
+  languageId: 2
+  coreFramework: ".NET"
+  name: "ASP.NET Core - WEB API REST"
+  template: "Template"
+  useDB: true
+  withGroupId: false
+  useCloud: false
+  useEurekaServer: false
+  isGateway: false
+  additionalFiles: [ ]
+  configurations:
+    - name: "Logging Level"
+      variableName: "loggingLevel"
+      options:
+        - "Trace"
+        - "Debug"
+        - "Information"
+        - "Warning"
+        - "Error"
+        - "Critical"
+        - "None"
+      defaultOption: "Information"
+    - name: "Framework Version"
+      variableName: "frameworkVersion"
+      options:
+        - "8.0"
+        - "7.0"
+        - "6.0"
+      defaultOption: "8.0"
+
+  eurekaClientConfigurations:
+    - name: "Eureka Server URL"
+      variableName: "eurekaServerURL"
+      options:
+        - "http://localhost:8761/eureka/"
+      defaultOption: "http://localhost:8761/eureka/"
+
+
+  dependencies: [ ]
+
+  model:
+    toGenerate: true
+    modelImports: |
+      using System.ComponentModel.DataAnnotations;
+      using System.ComponentModel.DataAnnotations.Schema;
+    modelExtends: ""
+    modelAnnotations: |
+      [Table("${tableName}")]
+    modelFieldContent: |
+      {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+      {{tab}}[Key]
+      {{tab}}[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{elseIf this.isForeignKey}}
+      {{tab}}
+      {{tab}}[ForeignKey("${this.type}")]
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}public ${this.columnType} ${majStart(this.columnNameField)} { get; set; }
+      {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
+      {{tab}}{{else}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
+      {{tab}}{{/each}}
+    modelGetterSetter: "{{removeLine}}"
+    modelConstructors: "{{removeLine}}"
+    modelSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/"
+    modelPackage: "${majStart(projectName)}.Models"
+  modelDao:
+    toGenerate: true
+    modelDaoImports: |
+      using Models;
+      using Generic;
+
+    modelDaoAnnotations: ""
+    modelDaoClassKeyword: "public interface"
+    modelDaoExtends: ": IRepository<${majStart(className)}, ${pkColumnType}>"
+    modelDaoName: "I${majStart(className)}Repository"
+    modelDaoFieldContent: "{{removeLine}}"
+    modelDaoMethodContent: "{{removeLine}}"
+    modelDaoConstructors: "{{removeLine}}"
+    modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Interface/"
+    modelDaoPackage: "${majStart(projectName)}.Repositories.Interface"
+    modelDaoAdditionalFiles:
+      - fileType: "Repository inherited from Repository"
+        fileName: "${majStart(className)}Repository"
+        extension: "cs"
+        content: |
+          using ${majStart(projectName)}.Data;
+          using ${majStart(projectName)}.Models;
+          using ${majStart(projectName)}.Repositories.Generic;
+          using ${majStart(projectName)}.Repositories.Interface;
+          
+          namespace ${majStart(projectName)}.Repositories.Implementation;
+          
+          public class ${majStart(className)}Repository : Repository<${majStart(className)}, ${pkColumnType}>, I${majStart(className)}Repository
+          {
+          {{tab}}public ${majStart(className)}Repository(${majStart(projectName)}Context context) : base(context)
+          {{tab}}{
+          {{tab}}}
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Implementation/"
+
+  service:
+    toGenerate: true
+    serviceImports: |
+      using Models;
+      using Generic;
+
+    serviceAnnotations: ""
+    serviceClassKeyword: "public interface"
+    serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}>"
+    serviceName: "I${majStart(className)}Service"
+    serviceFieldContent: "{{removeLine}}"
+    serviceMethodContent: "{{removeLine}}"
+    serviceConstructors: "{{removeLine}}"
+    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
+    servicePackage: "${majStart(projectName)}.Services.Interface"
+    serviceAdditionalFiles:
+      - fileType: "Service inherited from Service"
+        fileName: "${majStart(className)}Service"
+        extension: "cs"
+        content: |
+          using System.Linq.Expressions;
+          using ${majStart(projectName)}.Models;
+          using ${majStart(projectName)}.Repositories.Interface;
+          using ${majStart(projectName)}.Services.Interface;
+          
+          namespace ${majStart(projectName)}.Services.Implementation;
+          
+          public class ${majStart(className)}Service : I${majStart(className)}Service
+          {
+          {{tab}}private readonly I${majStart(className)}Repository _repository;
+          
+          {{tab}}public ${majStart(className)}Service(I${majStart(className)}Repository repository)
+          {{tab}}{
+          {{tab}}{{tab}}_repository = repository;
+          {{tab}}}
+          
+          {{tab}}public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(
+          {{tab}}params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
+          {{tab}}{
+          {{tab}}{{tab}}return await _repository.GetAllWithIncludes(includeProperties);
+          {{tab}}}
+          
+          {{tab}}public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id,
+          {{tab}}params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
+          {{tab}}{
+          {{tab}}{{tab}}return await _repository.GetByIdAsync(id, includeProperties);
+          {{tab}}}
+          
+          {{tab}}public async Task AddAsync(${majStart(className)} ${minStart(className)})
+          {{tab}}{
+          {{tab}}{{tab}}await _repository.AddAsync(${minStart(className)});
+          {{tab}}}
+          
+          {{tab}}public async Task UpdateAsync(${majStart(className)} ${minStart(className)})
+          {{tab}}{
+          {{tab}}{{tab}}await _repository.UpdateAsync(${minStart(className)});
+          {{tab}}}
+          
+          {{tab}}public async Task DeleteAsync(${pkColumnType} id)
+          {{tab}}{
+          {{tab}}{{tab}}await _repository.DeleteAsync(id);
+          {{tab}}}
+          
+          {{tab}}public async Task<bool> ExistsAsync(${pkColumnType} id)
+          {{tab}}{
+          {{tab}}{{tab}}return await _repository.ExistsAsync(id);
+          {{tab}}}
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation/"
+
+  controller:
+    toGenerate: true
+    controllerImports: |
+      using Microsoft.AspNetCore.Mvc;
+      using Models;
+      using Services.Interface;
+
+    controllerAnnotations: |
+      [ApiController]
+      [Route("${minStart(className)}s")]
+    controllerExtends: " : ControllerBase"
+    controllerName: "${majStart(className)}Controller"
+    controllerFieldContent: |
+      {{tab}}private readonly I${majStart(className)}Service _service;
+    controllerConstructors: |
+      {{tab}}public ${majStart(className)}Controller(I${majStart(className)}Service service)
+      {{tab}}{
+      {{tab}}{{tab}}_service = service;
+      {{tab}}}
+    controllerMethodContent: |
+      {{tab}}[HttpGet]
+      {{tab}}public async Task<ActionResult<IEnumerable<${majStart(className)}>>> Get${majStart(className)}s()
+      {{tab}}{
+      {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync({{#each fieldsFK}}e => e.${majStart(this.name)}{{#if !@last}}, {{/if}}{{/each}});
+      {{tab}}{{tab}}return ${minStart(className)}s.Any() ? Ok(${minStart(className)}s) : NoContent();
+      {{tab}}}
+      
+      {{tab}}[HttpGet("{id}")]
+      {{tab}}public async Task<ActionResult<${majStart(className)}>> Get${majStart(className)}(${pkColumnType} id)
+      {{tab}}{
+      {{tab}}{{tab}}var ${minStart(className)} = await _service.GetByIdAsync(id{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
+      {{tab}}{{tab}}return ${minStart(className)} == null ? NotFound() : Ok(${minStart(className)});
+      {{tab}}}
+      
+      {{tab}}[HttpPost]
+      {{tab}}public async Task<ActionResult<${majStart(className)}>> Post(${majStart(className)} ${minStart(className)})
+      {{tab}}{
+      {{tab}}{{tab}}await _service.AddAsync(${minStart(className)});
+      {{tab}}{{tab}}return CreatedAtAction(nameof(Get${majStart(className)}), new { id = ${minStart(className)}.${majStart(pkColumn)} }, ${minStart(className)});
+      {{tab}}}
+      
+      {{tab}}[HttpPut("{id}")]
+      {{tab}}public async Task<ActionResult<${majStart(className)}>> Put${majStart(className)}(${pkColumnType} id, ${majStart(className)} ${minStart(className)})
+      {{tab}}{
+      {{tab}}{{tab}}if (id != ${minStart(className)}.${majStart(pkColumn)})
+      {{tab}}{{tab}}{{tab}}return BadRequest();
+      
+      {{tab}}{{tab}}var exists = await _service.ExistsAsync(id);
+      {{tab}}{{tab}}if (!exists) return NotFound();
+      
+      {{tab}}{{tab}}await _service.UpdateAsync(${minStart(className)});
+      {{tab}}{{tab}}return NoContent();
+      {{tab}}}
+      
+      {{tab}}[HttpDelete("{id}")]
+      {{tab}}public async Task<ActionResult> Delete${majStart(className)}(${pkColumnType} id)
+      {{tab}}{
+      
+      {{tab}}{{tab}}var exists = await _service.ExistsAsync(id);
+      {{tab}}{{tab}}if (!exists) return NotFound();
+      
+      {{tab}}{{tab}}await _service.DeleteAsync(id);
+      {{tab}}{{tab}}return NoContent();
+      {{tab}}}
+
+    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
+    controllerPackage: "${majStart(projectName)}.Controllers"
+    controllerAdditionalFiles: [ ]
+
+
+- id: 3
+  languageId: 1
+  coreFramework: "Spring Boot"
+  name: "Spring Boot - Eureka Server"
+  template: "Template"
+  useDB: false
+  useCloud: true
+  useEurekaServer: false
+  isGateway: false
+  withGroupId: true
+  additionalFiles:
+    - fileType: "MainFile"
+      fileName: "${majStart(projectName)}Application"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+
+        import org.springframework.boot.SpringApplication;
+        import org.springframework.boot.autoconfigure.SpringBootApplication;
+        import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+        @EnableEurekaServer
+        @SpringBootApplication
+        public class ${majStart(projectName)}Application {
+        {{tab}}public static void main(String[] args) {
+        {{tab}}{{tab}}SpringApplication.run(${majStart(projectName)}Application.class, args);
+        {{tab}}}
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}"
+
+    - fileType: "TestFile"
+      fileName: "${majStart(projectName)}ApplicationTests"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+
+        import org.junit.jupiter.api.Test;
+        import org.springframework.boot.test.context.SpringBootTest;
+
+        @SpringBootTest
+        class ${majStart(projectName)}ApplicationTests {
+
+        {{tab}}@Test
+        {{tab}}void contextLoads() {
+        {{tab}}}
+
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}/"
+
+    - fileType: "ApplicationYml"
+      fileName: "application"
+      extension: "yml"
+      content: |
+        spring:
+          application:
+            name: ${toKebabCase(projectName)}
+        
+        eureka:
+          client:
+            register-with-eureka: ${useEurekaServer}
+            fetch-registry: ${useEurekaServer}
+        {{#if useEurekaServer}}
+            service-url:
+              defaultZone: ${eurekaServerURL}
+        
+          instance:
+              prefer-ip-address: true
+              ip-address: $[spring.cloud.client.ip-address]
+        
+        management:
+          endpoints:
+            web:
+              exposure:
+                include: health,info
+          endpoint:
+            health:
+              show-details: always
+            info:
+              enabled: true
+          info:
+            env:
+              enabled: true
+            java:
+              enabled: true
+            build:
+              enabled: true
+        info:
+          app:
+            name: $[spring.application.name]
+            description: "${projectDescription}"
+            version: "0.0.1-SNAPSHOT"
+            technical:
+              spring-boot:
+                version: "${frameworkVersion}"
+              server:
+                port: $[server.port]
+        {{/if}}
+        server:
+          port: ${projectPort}
+        
+        logging:
+          level:
+            eureka: ${loggingLevel}
+            root: ${loggingLevel}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
+
+  configurations:
+    - name: "Logging Level"
+      variableName: "loggingLevel"
+      options:
+        - "TRACE"
+        - "DEBUG"
+        - "INFO"
+        - "WARN"
+        - "ERROR"
+        - "FATAL"
+        - "OFF"
+      defaultOption: "INFO"
+    - name: "Framework Version"
+      variableName: "frameworkVersion"
+      options:
+        - "3.3.6"
+        - "3.2.12"
+      defaultOption: "3.3.6"
+
+  eurekaClientConfigurations:
+    - name: "Eureka Server URL"
+      variableName: "eurekaServerURL"
+      options:
+        - "http://localhost:8761/eureka/"
+      defaultOption: "http://localhost:8761/eureka/"
+
+
+  dependencies:
+    - groupId: "org.springframework.cloud"
+      artifactId: "spring-cloud-starter-netflix-eureka-server"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-test"
+      version: "{{removeLine}}"
+      scope: "test"
+
+- id: 4
+  languageId: 1
+  coreFramework: "Spring Boot"
+  name: "Spring Boot - API Gateway"
+  template: "Template"
+  useDB: false
+  useCloud: true
+  useEurekaServer: false
+  isGateway: true
+  withGroupId: true
+  additionalFiles:
+    - fileType: "MainFile"
+      fileName: "${majStart(projectName)}Application"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+        
+        import org.springframework.boot.SpringApplication;
+        import org.springframework.boot.autoconfigure.SpringBootApplication;
+        {{#if useEurekaServer}}import org.springframework.cloud.client.discovery.EnableDiscoveryClient;{{/if}}
+
+        {{#if useEurekaServer}}@EnableDiscoveryClient{{/if}}
+        @SpringBootApplication
+        public class ${majStart(projectName)}Application {
+            public static void main(String[] args) {
+        		SpringApplication.run(${majStart(projectName)}Application.class, args);
+        	}
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}"
+
+    - fileType: "TestFile"
+      fileName: "${majStart(projectName)}ApplicationTests"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+
+        import org.junit.jupiter.api.Test;
+        import org.springframework.boot.test.context.SpringBootTest;
+
+        @SpringBootTest
+        class ${majStart(projectName)}ApplicationTests {
+
+        {{tab}}@Test
+        {{tab}}void contextLoads() {
+        {{tab}}}
+
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}/"
+
+    - fileType: "SecurityConfig"
+      fileName: "SecurityConfig"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config;
+        
+        import org.springframework.beans.factory.annotation.Value;
+        import org.springframework.context.annotation.Bean;
+        import org.springframework.context.annotation.Configuration;
+        import org.springframework.security.config.Customizer;
+        import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+        import org.springframework.security.config.web.server.ServerHttpSecurity;
+        import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
+        import org.springframework.security.core.userdetails.User;
+        import org.springframework.security.core.userdetails.UserDetails;
+        import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+        import org.springframework.security.crypto.password.PasswordEncoder;
+        import org.springframework.security.web.server.SecurityWebFilterChain;
+        
+        @Configuration
+        @EnableWebFluxSecurity
+        public class SecurityConfig {
+            @Value("$[security.user.username:admin]")
+            private String username;
+        
+            @Value("$[security.user.password:admin]")
+            private String password;
+        
+            @Value("$[security.user.role:USER]")
+            private String role;
+        
+            @Bean
+            public MapReactiveUserDetailsService userDetailsService() {
+                UserDetails user = User.builder()
+                    .username(username)
+                    .password(passwordEncoder().encode(password))
+                    .roles(role)
+                    .build();
+        
+                return new MapReactiveUserDetailsService(user);
+            }
+        
+            @Bean
+            public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+            }
+        
+            @Bean
+            public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
+                http.authorizeExchange(exchanges -> exchanges
+                    .anyExchange().authenticated()
+                ).httpBasic(Customizer.withDefaults());
+        
+              return http.build();
+            }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+
+    - fileType: "ApplicationYml"
+      fileName: "application"
+      extension: "yml"
+      content: |
+        server:
+          port: ${projectPort}
+        
+        security:
+          user:
+            username: ${username}
+            password: ${password}
+            role: ${toUpperCase(role)}
+        
+        spring:
+          main:
+            web-application-type: reactive
+          application:
+            name: ${toKebabCase(projectName)}
+        
+          cloud:
+            gateway:
+              routes:
+              {{#each routes}}
+              - id: ${this.id}
+                uri: ${this.uri}
+                predicates:
+                  - Path=${this.path}
+                  - Method=${this.method}
+        
+              {{/each}}{{#if useEurekaServer}}
+        eureka:
+          client:
+            service-url:
+              defaultZone: ${eurekaServerURL}
+          instance:
+            prefer-ip-address: true
+            ip-address: $[spring.cloud.client.ip-address]
+        
+        management:
+          endpoints:
+            web:
+              exposure:
+                include: health,info
+          endpoint:
+            health:
+              show-details: always
+            info:
+              enabled: true
+          info:
+            env:
+              enabled: true
+            java:
+              enabled: true
+            build:
+              enabled: true
+        info:
+          app:
+            name: $[spring.application.name]
+            description: "${projectDescription}"
+            version: "0.0.1-SNAPSHOT"
+            technical:
+              spring-boot:
+                version: "${frameworkVersion}"
+              server:
+                port: $[server.port]
+        {{/if}}
+        logging:
+          level:
+            root: ${loggingLevel}
+            org.springframework.cloud.gateway: ${loggingLevel}
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
+
+  configurations:
+    - name: "Logging Level"
+      variableName: "loggingLevel"
+      options:
+        - "TRACE"
+        - "DEBUG"
+        - "INFO"
+        - "WARN"
+        - "ERROR"
+        - "FATAL"
+        - "OFF"
+      defaultOption: "INFO"
+    - name: "Framework Version"
+      variableName: "frameworkVersion"
+      options:
+        - "3.3.6"
+        - "3.2.12"
+      defaultOption: "3.3.6"
+
+  eurekaClientConfigurations:
+    - name: "Eureka Server URL"
+      variableName: "eurekaServerURL"
+      options:
+        - "http://localhost:8761/eureka/"
+      defaultOption: "http://localhost:8761/eureka/"
+
+
+  dependencies:
+    - groupId: "org.springframework.cloud"
+      artifactId: "spring-cloud-starter-gateway"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-test"
+      version: "{{removeLine}}"
+      scope: "test"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-webflux"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "io.projectreactor"
+      artifactId: "reactor-test"
+      version: "{{removeLine}}"
+      scope: "test"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-security"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
