@@ -1,12 +1,12 @@
 package org.labs.genesis.config;
 
+import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.config.langage.Project;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
-import lombok.Getter;
 
 import java.sql.Connection;
 import java.util.List;

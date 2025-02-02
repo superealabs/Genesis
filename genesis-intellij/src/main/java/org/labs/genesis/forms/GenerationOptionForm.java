@@ -3,9 +3,9 @@ package org.labs.genesis.forms;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.labels.LinkLabel;
-import org.labs.genesis.connexion.Database;
-import org.labs.handler.ProjectGenerationContext;
 import lombok.Getter;
+import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.connexion.Database;
 
 import javax.swing.*;
 import java.sql.Connection;
@@ -13,6 +13,7 @@ import java.util.List;
 
 @Getter
 public class GenerationOptionForm {
+    public static String SELECT_ALL = "* (select all)";
     private final ProjectGenerationContext projectGenerationContext;
     private JPanel mainPanel;
     private JBList<String> tableNamesList;
@@ -20,7 +21,6 @@ public class GenerationOptionForm {
     private LinkLabel<String> refreshLinkLabel;
     private JBList<String> componentChoice;
     private JLabel componentsLabel;
-    public static String SELECT_ALL = "* (select all)";
 
     public GenerationOptionForm(ProjectGenerationContext projectGenerationContext) {
         this.projectGenerationContext = projectGenerationContext;

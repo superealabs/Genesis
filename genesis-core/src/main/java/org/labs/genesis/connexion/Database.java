@@ -1,10 +1,10 @@
 package org.labs.genesis.connexion;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.model.TableMetadata;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.sql.*;
 import java.util.ArrayList;

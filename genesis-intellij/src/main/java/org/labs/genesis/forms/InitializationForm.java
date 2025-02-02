@@ -3,12 +3,12 @@ package org.labs.genesis.forms;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import lombok.Getter;
 import org.labs.genesis.config.langage.ConfigurationMetadata;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.config.langage.Project;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
-import lombok.Getter;
 
 import javax.swing.*;
 import java.util.List;
@@ -150,12 +150,11 @@ public class InitializationForm {
             frameworkOptions.setSelectedIndex(0);
             Framework selectedFramework = (Framework) frameworkOptions.getSelectedItem();
             assert selectedFramework != null;
-            if (selectedFramework.getWithGroupId() !=null && selectedFramework.getWithGroupId()) {
+            if (selectedFramework.getWithGroupId() != null && selectedFramework.getWithGroupId()) {
                 groupIdLabel.setEnabled(true);
                 groupIdField.setEnabled(true);
                 groupIdField.setText("org.example");
-            }
-            else {
+            } else {
                 groupIdLabel.setEnabled(false);
                 groupIdField.setEnabled(false);
                 groupIdField.setText("");

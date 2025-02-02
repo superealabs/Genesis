@@ -3,11 +3,11 @@ package org.labs.genesis.forms;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkLabel;
+import lombok.Getter;
+import lombok.Setter;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
-import lombok.Getter;
-import lombok.Setter;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

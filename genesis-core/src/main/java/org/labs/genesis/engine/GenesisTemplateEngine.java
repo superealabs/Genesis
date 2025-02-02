@@ -46,6 +46,34 @@ public class GenesisTemplateEngine {
 
     private final Map<String, String> commentMap = new HashMap<>();
 
+    @SuppressWarnings("unchecked")
+    private static @NotNull Map<String, Object> getLoopMap(Map<String, Object> variables, List<?> loopList, int i) {
+        Object item = loopList.get(i);
+        Map<String, Object> loopVariables = new HashMap<>(variables);
+
+        if (item instanceof Map) {
+            Map<String, Object> itemMap = (Map<String, Object>) item;
+
+            for (Map.Entry<String, Object> entry : itemMap.entrySet()) {
+                Object value = entry.getValue();
+
+                if (value instanceof List) {
+                    // Support imbriqué
+                    loopVariables.put(entry.getKey(), value);
+                } else {
+                    loopVariables.put(LOOP_ITEM + "." + entry.getKey(), value);
+                }
+            }
+        } else {
+            loopVariables.put(LOOP_ITEM, item);
+        }
+
+        loopVariables.put(LOOP_INDEX, i);
+        loopVariables.put(IS_LOOP_FIRST_INDEX, (i == 0));
+        loopVariables.put(IS_LOOP_LAST_INDEX, (i == loopList.size() - 1));
+        return loopVariables;
+    }
+
     public String simpleRender(String template, Map<String, Object> variables) {
         if (template == null || template.isEmpty()) {
             throw new IllegalArgumentException("The template must not be empty.");
@@ -90,7 +118,6 @@ public class GenesisTemplateEngine {
         return result.toString();
     }
 
-
     private String evaluatePlaceholderSimple(String placeholder, Map<String, Object> variables) {
         int funcStart = placeholder.indexOf(FUNCTION_OPEN_PARENTHESIS);
         int funcEnd = placeholder.indexOf(FUNCTION_CLOSED_PARENTHESIS);
@@ -113,7 +140,6 @@ public class GenesisTemplateEngine {
             return valueObj != null ? valueObj.toString() : VARIABLE_PLACEHOLDER_PREFIX + placeholder + VARIABLE_PLACEHOLDER_SUFFIX;
         }
     }
-
 
     public String render(String template, Map<String, Object> variables) throws Exception {
         if (template == null || template.isEmpty()) {
@@ -252,37 +278,6 @@ public class GenesisTemplateEngine {
 
         template.insert(start, loopResult);
     }
-
-
-
-    @SuppressWarnings("unchecked")
-    private static @NotNull Map<String, Object> getLoopMap(Map<String, Object> variables, List<?> loopList, int i) {
-        Object item = loopList.get(i);
-        Map<String, Object> loopVariables = new HashMap<>(variables);
-
-        if (item instanceof Map) {
-            Map<String, Object> itemMap = (Map<String, Object>) item;
-
-            for (Map.Entry<String, Object> entry : itemMap.entrySet()) {
-                Object value = entry.getValue();
-
-                if (value instanceof List) {
-                    // Support imbriqué
-                    loopVariables.put(entry.getKey(), value);
-                } else {
-                    loopVariables.put(LOOP_ITEM + "." + entry.getKey(), value);
-                }
-            }
-        } else {
-            loopVariables.put(LOOP_ITEM, item);
-        }
-
-        loopVariables.put(LOOP_INDEX, i);
-        loopVariables.put(IS_LOOP_FIRST_INDEX, (i == 0));
-        loopVariables.put(IS_LOOP_LAST_INDEX, (i == loopList.size() - 1));
-        return loopVariables;
-    }
-
 
     private void evaluateConditionals(StringBuilder template, Map<String, Object> variables) throws Exception {
         int start;

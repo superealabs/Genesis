@@ -12,6 +12,17 @@ import java.util.List;
 import java.util.Map;
 
 public class GenesisCoreTest {
+    private static Map<String, Object> createRoute(String id, String uri, String path, String method) {
+        Map<String, Object> route = new HashMap<>();
+        route.put("id", id);
+        route.put("uri", uri);
+
+        route.put("path", path);
+        route.put("method", method);
+
+        return route;
+    }
+
     @Test
     void generateProjectSpring() {
         var credentials = new Credentials()
@@ -91,7 +102,6 @@ public class GenesisCoreTest {
         }
     }
 
-
     @Test
     void generateProjectNET() {
         var credentials = new Credentials()
@@ -158,7 +168,6 @@ public class GenesisCoreTest {
             throw new RuntimeException(e);
         }
     }
-
 
     @Test
     void generateProjectSpringEurekaServer() {
@@ -281,16 +290,5 @@ public class GenesisCoreTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private static Map<String, Object> createRoute(String id, String uri, String path, String method) {
-        Map<String, Object> route = new HashMap<>();
-        route.put("id", id);
-        route.put("uri", uri);
-
-        route.put("path", path);
-        route.put("method", method);
-
-        return route;
     }
 }

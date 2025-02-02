@@ -1,5 +1,6 @@
 ### Custom ###
 *.http
+genesis-core/src/main/resources/genesis-core.properties
 
 ### Gradle ###
 .gradle

@@ -1,3 +1,5 @@
+val projectVersion = rootProject.version
+
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.9.24"
     id("org.jetbrains.intellij") version "1.17.3"
@@ -27,5 +29,13 @@ tasks {
 
     publishPlugin {
         token.set(System.getenv("PUBLISH_TOKEN"))
+    }
+
+    buildPlugin {
+        archiveFileName.set("genesis-intellij-${projectVersion}.zip")
+    }
+
+    buildSearchableOptions {
+        enabled = false
     }
 }

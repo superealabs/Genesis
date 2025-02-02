@@ -1,19 +1,19 @@
 package org.labs.genesis.connexion.model;
 
-import org.labs.genesis.config.langage.Language;
-import org.labs.genesis.connexion.Credentials;
-import org.labs.genesis.connexion.Database;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.connexion.Credentials;
+import org.labs.genesis.connexion.Database;
 import org.labs.utils.FileUtils;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.labs.utils.FileUtils.*;
 import java.util.stream.Stream;
+
+import static org.labs.utils.FileUtils.toCamelCase;
 
 @Setter
 @Getter

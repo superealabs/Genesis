@@ -4,27 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.gson.GsonBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.adapter.DatabaseDeserializer;
-import org.jetbrains.annotations.NotNull;
-import org.labs.utils.LocalDateTimeTypeAdapter;
-import org.labs.utils.LocalDateTypeAdapter;
-import org.labs.utils.LocalTimeTypeAdapter;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystem;
 import java.nio.file.*;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.Scanner;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
 public class FileUtils {
@@ -221,20 +212,22 @@ public class FileUtils {
     }
 
     private static void copyDirectoryFromJar(Path sourceJarPath, Path destinationPath) throws IOException {
-        Files.walk(sourceJarPath)
-                .forEach(path -> {
-                    Path resolvedDestPath = destinationPath.resolve(sourceJarPath.relativize(path).toString());
-                    try {
-                        if (Files.isDirectory(path)) {
-                            Files.createDirectories(resolvedDestPath);
-                        } else {
-                            Files.copy(path, resolvedDestPath, StandardCopyOption.REPLACE_EXISTING);
-                        }
-                    } catch (IOException e) {
-                        throw new UncheckedIOException("Error copying file from JAR: " + path, e);
+        try (Stream<Path> paths = Files.walk(sourceJarPath)) { // Utilisation du try-with-resources
+            paths.forEach(path -> {
+                Path resolvedDestPath = destinationPath.resolve(sourceJarPath.relativize(path).toString());
+                try {
+                    if (Files.isDirectory(path)) {
+                        Files.createDirectories(resolvedDestPath);
+                    } else {
+                        Files.copy(path, resolvedDestPath, StandardCopyOption.REPLACE_EXISTING);
                     }
-                });
+                } catch (IOException e) {
+                    throw new UncheckedIOException("Error copying file from JAR: " + path, e);
+                }
+            });
+        }
     }
+
 
 
     private static @NotNull URI getResourceUri(String sourceDir) throws IOException {
@@ -281,7 +274,6 @@ public class FileUtils {
             });
         }
     }
-
 
 
     public static void createDirectory(String filePath) {
@@ -338,13 +330,6 @@ public class FileUtils {
         return objectMapper.readValue(inputStream, clazz);
     }
 
-
-    public static String toJson(Object source) {
-        GsonBuilder builder = (new GsonBuilder()).registerTypeAdapter(LocalDate.class, new LocalDateTypeAdapter());
-        builder.registerTypeAdapter(LocalTime.class, new LocalTimeTypeAdapter());
-        builder.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter());
-        return builder.create().toJson(source);
-    }
 
     public static String majStart(String input) {
         if (input == null || input.isEmpty()) {

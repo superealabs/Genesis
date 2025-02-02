@@ -2,19 +2,19 @@ package org.labs.genesis.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.config.langage.Project;
-import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.forms.InitializationForm;
 
 import javax.swing.*;
 import java.util.Map;
 
 public class InitializationWizardStep extends ModuleWizardStep {
+    public final SpecificConfigurationWizardStep specificConfigurationWizardStep;
     private final InitializationForm newProjectPanel;
     private final ProjectGenerationContext projectGenerationContext;
-    public final SpecificConfigurationWizardStep specificConfigurationWizardStep;
 
     public InitializationWizardStep(ProjectGenerationContext projectGenerationContext, SpecificConfigurationWizardStep specificConfigurationWizardStep) {
         newProjectPanel = new InitializationForm();

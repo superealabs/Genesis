@@ -1,12 +1,12 @@
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.24" apply false
+    id("com.gradleup.shadow") version "8.3.5" apply false
 }
 
 group = "org.labs"
-version = "1.0-SNAPSHOT"
+version = "0.0.1-SNAPSHOT"
 
-// Remplacer la déclaration val versions par :
 extra["versions"] = mapOf(
     "junit" to "5.10.3",
     "lombok" to "1.18.36",

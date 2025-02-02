@@ -26,6 +26,11 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         specificConfigurationForm.initializeForm();
     }
 
+    public static boolean frameworkHasConfiguration(Framework framework, String variableName) {
+        return framework != null && framework.getConfigurations().stream()
+                .anyMatch(config -> variableName.equals(config.getVariableName()));
+    }
+
     @Override
     public JComponent getComponent() {
         return specificConfigurationForm.getMainPanel();
@@ -194,11 +199,6 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             e.printStackTrace();
             throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
         }
-    }
-
-    public static boolean frameworkHasConfiguration(Framework framework, String variableName) {
-        return framework != null && framework.getConfigurations().stream()
-                .anyMatch(config -> variableName.equals(config.getVariableName()));
     }
 
     public void onFrameworkSelected(Framework framework) {

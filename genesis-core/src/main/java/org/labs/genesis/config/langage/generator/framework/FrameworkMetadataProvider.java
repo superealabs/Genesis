@@ -1,5 +1,6 @@
 package org.labs.genesis.config.langage.generator.framework;
 
+import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
@@ -7,7 +8,6 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
-import org.jetbrains.annotations.NotNull;
 import org.labs.utils.FileUtils;
 
 import java.util.ArrayList;

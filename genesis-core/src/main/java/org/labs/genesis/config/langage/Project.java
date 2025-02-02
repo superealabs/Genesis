@@ -20,6 +20,7 @@ public class Project {
     public String toString() {
         return this.name;
     }
+
     @Getter
     @Setter
     @ToString

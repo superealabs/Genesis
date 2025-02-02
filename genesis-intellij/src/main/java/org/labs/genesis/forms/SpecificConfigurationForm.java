@@ -2,8 +2,8 @@ package org.labs.genesis.forms;
 
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.JBColor;
-import org.labs.genesis.config.langage.Framework;
 import lombok.Getter;
+import org.labs.genesis.config.langage.Framework;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
