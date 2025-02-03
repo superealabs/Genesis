@@ -58,7 +58,7 @@ Genesis prend en charge les bases de données suivantes :
 ## Prérequis Système
 
 - **Java 21**
-- **Gradle 8.10**
+- **Gradle 8.11**
 - **IntelliJ IDEA 2024.3** (requis pour le plugin)
     - Ultimate Edition de préférence, mais compatible avec Community Edition
 
