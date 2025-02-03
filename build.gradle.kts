@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.labs"
-version = "0.0.1-SNAPSHOT"
+version = "0.0.1"
 
 extra["versions"] = mapOf(
     "junit" to "5.10.3",
