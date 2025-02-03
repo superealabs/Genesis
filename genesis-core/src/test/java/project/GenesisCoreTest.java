@@ -6,10 +6,14 @@ import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Credentials;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GenesisCoreTest {
     private static Map<String, Object> createRoute(String id, String uri, String path, String method) {
@@ -25,16 +29,7 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectSpring() {
-        var credentials = new Credentials()
-                .setHost("localhost")
-                .setPort("5432")
-                .setSchemaName("public")
-                .setDatabaseName("mon_refuge_test")
-                .setUser("nomena")
-                .setPwd("root")
-                .setTrustCertificate(true)
-                .setUseSSL(true)
-                .setAllowPublicKeyRetrieval(true);
+        var credentials = new Credentials().setHost("localhost").setPort("5432").setSchemaName("public").setDatabaseName("test_desc_db").setUser("nomena").setPwd("root").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true);
 
         try {
 
@@ -48,15 +43,15 @@ public class GenesisCoreTest {
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var project = ProjectGenerator.projects.get(projectId);
 
-            String projectName = "MonRefuge";
+            String projectName = "TestProject";
             String groupLink = "org.labs";
             String projectPort = "8000";
             String logLevel = "INFO";
             String hibernateDdlAuto = "none";
-            String projectDescription = "Mon Refuge - Backend";
+            String projectDescription = "test";
             String frameworkVersion = "3.3.6";
             String languageVersion = "21";
-            String destinationFolder = "generated/spring";
+            String destinationFolder = "../generated/spring";
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
 
@@ -97,6 +92,10 @@ public class GenesisCoreTest {
 
             projectGenerator.generateProject(context);
 
+            // Assertion pour vérifier si le dossier existe
+            Path path = Path.of(destinationFolder);
+            assertTrue(Files.exists(path) && Files.isDirectory(path), "Le dossier de destination n'existe pas.");
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -104,13 +103,7 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectNET() {
-        var credentials = new Credentials()
-                .setHost("localhost")
-                .setPort("5432")
-                .setSchemaName("public")
-                .setDatabaseName("test_db")
-                .setUser("nomena")
-                .setPwd("root");
+        var credentials = new Credentials().setHost("localhost").setPort("5432").setSchemaName("public").setDatabaseName("test_db").setUser("nomena").setPwd("root");
 
         try {
             int databaseId = Constantes.PostgreSQL_ID;
@@ -130,7 +123,7 @@ public class GenesisCoreTest {
             String projectDescription = "An ASP.NET BEGIN Project";
             String frameworkVersion = "8.0";
             String languageVersion = "";
-            String destinationFolder = "generated/dotnet";
+            String destinationFolder = "../generated/dotnet";
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
 
@@ -164,6 +157,10 @@ public class GenesisCoreTest {
 
             projectGenerator.generateProject(context);
 
+            // Assertion pour vérifier si le dossier existe
+            Path path = Path.of(destinationFolder);
+            assertTrue(Files.exists(path) && Files.isDirectory(path), "Le dossier de destination n'existe pas.");
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -189,7 +186,7 @@ public class GenesisCoreTest {
             String frameworkVersion = "3.3.5";
             String languageVersion = "17";
 
-            String destinationFolder = "generated/discovery";
+            String destinationFolder = "../generated/discovery";
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
 
@@ -213,6 +210,10 @@ public class GenesisCoreTest {
             context.setFrameworkConfiguration(frameworkConfiguration);
 
             projectGenerator.generateProject(context);
+
+            // Assertion pour vérifier si le dossier existe
+            Path path = Path.of(destinationFolder);
+            assertTrue(Files.exists(path) && Files.isDirectory(path), "Le dossier de destination n'existe pas.");
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -239,7 +240,7 @@ public class GenesisCoreTest {
             String frameworkVersion = "3.3.5";
             String languageVersion = "17";
 
-            String destinationFolder = "generated/gateway";
+            String destinationFolder = "../generated/gateway";
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
 
@@ -286,6 +287,10 @@ public class GenesisCoreTest {
             context.setFrameworkConfiguration(frameworkConfiguration);
 
             projectGenerator.generateProject(context);
+
+            // Assertion pour vérifier si le dossier existe
+            Path path = Path.of(destinationFolder);
+            assertTrue(Files.exists(path) && Files.isDirectory(path), "Le dossier de destination n'existe pas.");
 
         } catch (Exception e) {
             throw new RuntimeException(e);

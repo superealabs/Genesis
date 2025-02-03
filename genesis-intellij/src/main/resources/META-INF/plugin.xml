@@ -8,7 +8,7 @@
     <name>Genesis</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor email="vahatra.nomena@yahoo.com">GENESIS</vendor>
+    <vendor email="vahatra.nomena@yahoo.com">Genesis</vendor>
 
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
@@ -25,7 +25,7 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <moduleBuilder builderClass="org.labs.genesis.module.GenesisModuleBuilder"
-                       id="GENESIS_API_MODULE_TYPE"
+                       id="GENESIS_MODULE_TYPE"
                        order="first"/>
     </extensions>
 

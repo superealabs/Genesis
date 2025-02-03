@@ -18,7 +18,7 @@ import javax.swing.*;
 import static org.labs.genesis.module.GenesisModuleBuilder.projectGenerationContext;
 
 final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
-    private static final String ID = "GENESIS_API_MODULE_TYPE";
+    private static final String ID = "GENESIS_MODULE_TYPE";
 
     GenesisModuleType() {
         super(ID);
@@ -53,13 +53,13 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
     @NotNull
     @Override
     public String getName() {
-        return "GENESIS-API";
+        return "Genesis";
     }
 
     @NotNull
     @Override
     public String getDescription() {
-        return "Let's build microservices.";
+        return "Genesis : A Database-First code generator for Java Spring Boot and .NET for JetBrains IDEs";
     }
 
     @Override

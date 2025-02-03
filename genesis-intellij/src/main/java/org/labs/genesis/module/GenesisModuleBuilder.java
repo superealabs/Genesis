@@ -46,7 +46,7 @@ public class GenesisModuleBuilder extends ModuleBuilder {
     @NotNull
     @Override
     public String getName() {
-        return "GENESIS-API";
+        return "Genesis";
     }
 
     @NotNull
