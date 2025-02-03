@@ -35,6 +35,8 @@ subprojects {
         compileOnly("org.projectlombok:lombok:${versions["lombok"]}")
         annotationProcessor("org.projectlombok:lombok:${versions["lombok"]}")
 
+        implementation("org.jetbrains:annotations:24.0.1")
+
         // Testing
         testImplementation(platform("org.junit:junit-bom:${versions["junit"]}"))
         testImplementation("org.junit.jupiter:junit-jupiter")
