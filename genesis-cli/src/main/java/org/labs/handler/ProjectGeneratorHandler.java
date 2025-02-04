@@ -37,7 +37,7 @@ public class ProjectGeneratorHandler {
         projectGenerator = new ProjectGenerator();
     }
 
-    public void generateProject() {
+    public void generateProject() throws Exception {
         System.out.println("\n** Welcome to the GENESIS-CLI ** \n\n Let's get started 🚀\n");
 
         try (Scanner scanner = new Scanner(System.in)) {
@@ -65,7 +65,7 @@ public class ProjectGeneratorHandler {
 
         } catch (Exception e) {
             System.err.println("\nAn error occurred during project generation: \n" + e.getMessage());
-            e.printStackTrace();
+            throw e;
         }
     }
 
