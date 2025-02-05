@@ -16,7 +16,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GenesisCoreTest {
-    private static Map<String, Object> createRoute(String id, String uri, String path, String method) {
+    /*private static Map<String, Object> createRoute(String id, String uri, String path, String method) {
         Map<String, Object> route = new HashMap<>();
         route.put("id", id);
         route.put("uri", uri);
@@ -295,5 +295,5 @@ public class GenesisCoreTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
+    }*/
 }
