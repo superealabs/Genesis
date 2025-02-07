@@ -16,7 +16,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GenesisCoreTest {
-    /*private static Map<String, Object> createRoute(String id, String uri, String path, String method) {
+    private static Map<String, Object> createRoute(String id, String uri, String path, String method) {
         Map<String, Object> route = new HashMap<>();
         route.put("id", id);
         route.put("uri", uri);
@@ -29,7 +29,7 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectSpring() {
-        var credentials = new Credentials().setHost("localhost").setPort("5432").setSchemaName("public").setDatabaseName("test_desc_db").setUser("nomena").setPwd("root").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true);
+        var credentials = new Credentials().setHost("localhost").setPort("5432").setSchemaName("public").setDatabaseName("genesis").setUser("mendrika").setPwd("azerty").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true);
 
         try {
 
@@ -43,7 +43,7 @@ public class GenesisCoreTest {
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var project = ProjectGenerator.projects.get(projectId);
 
-            String projectName = "TestProject";
+            String projectName = "Popol";
             String groupLink = "org.labs";
             String projectPort = "8000";
             String logLevel = "INFO";
@@ -101,7 +101,7 @@ public class GenesisCoreTest {
         }
     }
 
-    @Test
+    /*@Test
     void generateProjectNET() {
         var credentials = new Credentials().setHost("localhost").setPort("5432").setSchemaName("public").setDatabaseName("test_db").setUser("nomena").setPwd("root");
 
