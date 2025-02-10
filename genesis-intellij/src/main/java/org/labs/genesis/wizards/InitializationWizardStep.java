@@ -17,30 +17,20 @@ public class InitializationWizardStep extends ModuleWizardStep {
     private final InitializationForm newProjectPanel;
     private final ProjectGenerationContext projectGenerationContext;
     // added as attributes to avoid repetition
-    private final String projectName;
-    private final String groupId;
-    private final String location;
-    private final Language language;
-    private final String languageVersion;
-    private final String frameworkVersion;
-    private final Framework framework;
-    private final Project buildTool;
-    private final Framework projectType;
+    private String projectName;
+    private String groupId;
+    private String location;
+    private Language language;
+    private String languageVersion;
+    private String frameworkVersion;
+    private Framework framework;
+    private Project buildTool;
+    private Framework projectType;
 
     public InitializationWizardStep(ProjectGenerationContext projectGenerationContext, SpecificConfigurationWizardStep specificConfigurationWizardStep) {
         newProjectPanel = new InitializationForm();
         this.projectGenerationContext = projectGenerationContext;
         this.specificConfigurationWizardStep = specificConfigurationWizardStep;
-        // initialization of the added attributes
-        this.projectName = newProjectPanel.getProjectNameField().getText().trim();
-        this.groupId = newProjectPanel.getGroupIdField().getText().trim();
-        this.location = newProjectPanel.getLocationField().getText().trim();
-        this.language = (Language) newProjectPanel.getLanguageOptions().getSelectedItem();
-        this.languageVersion = (String) newProjectPanel.getLanguageVersionOptions().getSelectedItem();
-        this.frameworkVersion = (String) newProjectPanel.getFrameworkVersionOptions().getSelectedItem();
-        this.framework = (Framework) newProjectPanel.getFrameworkOptions().getSelectedItem();
-        this.buildTool = (Project) newProjectPanel.getBuildToolOptions().getSelectedItem();
-        this.projectType = (Framework) newProjectPanel.getFrameworkOptions().getSelectedItem();
     }
 
     @Override
@@ -48,8 +38,29 @@ public class InitializationWizardStep extends ModuleWizardStep {
         return newProjectPanel.getMainPanel();
     }
 
+    private void initializeAttributes(String projectName, String groupId, String location, Language language, String languageVersion, String frameworkVersion, Framework framework, Project buildTool){
+        this.projectName = projectName;
+        this.groupId = groupId;
+        this.location = location;
+        this.language = language;
+        this.languageVersion = languageVersion;
+        this.frameworkVersion = frameworkVersion;
+        this.framework = framework;
+        this.buildTool = buildTool;
+    }
+
     @Override
     public void updateDataModel() {
+        initializeAttributes(
+                newProjectPanel.getProjectNameField().getText().trim(),
+                newProjectPanel.getGroupIdField().getText().trim(),
+                newProjectPanel.getLocationField().getText().trim(),
+                (Language) newProjectPanel.getLanguageOptions().getSelectedItem(),
+                (String) newProjectPanel.getLanguageVersionOptions().getSelectedItem(),
+                (String) newProjectPanel.getFrameworkVersionOptions().getSelectedItem(),
+                (Framework) newProjectPanel.getFrameworkOptions().getSelectedItem(),
+                (Project) newProjectPanel.getBuildToolOptions().getSelectedItem()
+        );
         assert languageVersion != null;
         assert frameworkVersion != null;
         Map<String, Object> languageConfiguration = Map.of(
@@ -71,6 +82,17 @@ public class InitializationWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean validate() throws ConfigurationException {
+        initializeAttributes(
+                newProjectPanel.getProjectNameField().getText().trim(),
+                newProjectPanel.getGroupIdField().getText().trim(),
+                newProjectPanel.getLocationField().getText().trim(),
+                (Language) newProjectPanel.getLanguageOptions().getSelectedItem(),
+                (String) newProjectPanel.getLanguageVersionOptions().getSelectedItem(),
+                (String) newProjectPanel.getFrameworkVersionOptions().getSelectedItem(),
+                (Framework) newProjectPanel.getFrameworkOptions().getSelectedItem(),
+                (Project) newProjectPanel.getBuildToolOptions().getSelectedItem()
+        );
+        this.projectType = (Framework) newProjectPanel.getFrameworkOptions().getSelectedItem();
         // declared the validation steps as a map to avoid hardcoded if's
         HashMap<Boolean, ConfigurationException> validationMap=new HashMap<>(){{
             put(projectName.isEmpty(), new ConfigurationException("The project name cannot be empty."));
