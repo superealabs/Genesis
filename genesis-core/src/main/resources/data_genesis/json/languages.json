@@ -64,16 +64,7 @@
       "date": "DateOnly",
       "timestamp": "DateTime",
       "time": "TimeSpan",
-      "boolean": "Boolean",
-
-      "json" : "string",
-      "interval": "TimeSpan",
-      "uuid" : "string",
-      "integer[]" : "int[]",
-      "text[]" : "string[]",
-      "bytea" : "byte[]",
-      "inet" : "System.Net.IPAddress",
-      "xml" : "string"
+      "boolean": "Boolean"
     }
   }
 ]
