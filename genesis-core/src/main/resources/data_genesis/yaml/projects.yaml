@@ -118,12 +118,12 @@
       content: |
         {{#if useEurekaServer}}
         using Steeltoe.Management.Endpoint.Info;
-        using System.Net;
-        using System.Net.NetworkInformation;
-        using System.Net.Sockets;
         using Steeltoe.Discovery.Client;
         using Steeltoe.Management.Endpoint.Health;
-        using Steeltoe.Management.Endpoint;{{/if}}
+        using Steeltoe.Management.Endpoint;
+        using System.Net.NetworkInformation;
+        using System.Net.Sockets;{{/if}}
+        using System.Net;
         using Microsoft.OpenApi.Models;
         using Microsoft.EntityFrameworkCore;
         using ${majStart(projectName)}.Data;
@@ -150,6 +150,14 @@
             }
         });
         
+        // Configure Kestrel to listen on both the machine's IP address and localhost
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            {{#if useEurekaServer}}
+            options.Listen(IPAddress.Parse(localIpAddress), ${projectPort});{{/if}}
+            options.Listen(IPAddress.Loopback, ${projectPort});
+        });
+        
         {{#if useEurekaServer}}
         // Add Steeltoe Actuators for application monitoring and diagnostics
         builder.Services.AddAllActuators(builder.Configuration);
@@ -164,13 +172,6 @@
               .Select(addr => addr.Address.ToString())
               .FirstOrDefault() ?? "127.0.0.1";
         
-        // Configure Kestrel to listen on both the machine's IP address and localhost
-        builder.WebHost.ConfigureKestrel(options =>
-        {
-            options.Listen(IPAddress.Parse(localIpAddress), ${projectPort});
-            options.Listen(IPAddress.Loopback, ${projectPort});
-        });
-        
         // Set the IP address in configuration for Eureka registration
         builder.Configuration["eureka:instance:ipAddress"] = localIpAddress;
         
@@ -179,7 +180,7 @@
         
         // Add services to the container.
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-        builder.Services.AddDbContext<WebApiNetContext>(options =>
+        builder.Services.AddDbContext<${majStart(projectName)}Context>(options =>
             options.Use${daoName}(connectionString${addOptions}));
         
         // Adding repositories ...
