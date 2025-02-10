@@ -7,19 +7,28 @@ public class SqlServerExtractor extends ExtractorSignature {
     @Override
     public DatabaseFields extractArgs(String jdbcUrl) {
         DatabaseFields fields = new DatabaseFields();
-        Pattern pattern = Pattern.compile("jdbc:sqlserver://([^:]+):([^;]+);databaseName=([^;]+);(.*)");
+        Pattern pattern = Pattern.compile("jdbc:sqlserver://([^:]+):([^;]+);(.*)");
         Matcher matcher = pattern.matcher(jdbcUrl);
         if (matcher.find()) {
             fields.setHost(matcher.group(1));
             fields.setPort(matcher.group(2));
-            fields.setDatabaseName(matcher.group(3));
             fields.setDriverType("sqlserver");
-            String params = matcher.group(4);
-            fields.setUser(extractParameter(params, "user"));
-            fields.setPassword(extractParameter(params, "password"));
+            String params = matcher.group(3);
+            fields.setDatabaseName(this.extractParameter(params, "databaseName"));
+            fields.setUser(this.extractParameter(params, "user"));
+            fields.setPassword(this.extractParameter(params, "password"));
 //            fields.setEncrypt(extractBooleanParameter(params, "encrypt"));
 //            fields.setTrustServerCertificate(extractBooleanParameter(params, "trustServerCertificate"));
         }
         return fields;
+    }
+    @Override
+    public String extractParameter(String params, String key) {
+        Pattern pattern = Pattern.compile(key + "=([^;]+)");
+        Matcher matcher = pattern.matcher(params);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return "";
     }
 }

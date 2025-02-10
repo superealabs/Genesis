@@ -13,4 +13,17 @@ public class DatabaseFields {
     String driverType;
     String user;
     String password;
+
+    @Override
+    public String toString() {
+        return "DatabaseFields{" +
+                "host='" + host + '\'' +
+                ", port='" + port + '\'' +
+                ", databaseName='" + databaseName + '\'' +
+                ", sid='" + sid + '\'' +
+                ", driverType='" + driverType + '\'' +
+                ", user='" + user + '\'' +
+                ", password='" + password + '\'' +
+                '}';
+    }
 }

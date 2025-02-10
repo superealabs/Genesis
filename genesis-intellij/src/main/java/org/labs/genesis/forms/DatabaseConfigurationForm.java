@@ -231,6 +231,7 @@ public class DatabaseConfigurationForm {
             if (jdbcUrl.startsWith("jdbc:sqlserver:")){ extractorSignature = new SqlServerExtractor(); }
             databaseFields = extractorSignature.extractArgs(jdbcUrl);
             SwingUtilities.invokeLater(() -> {
+                System.out.println(databaseFields);
                 isUpdating = true;
                 hostField.setText(databaseFields.getHost());
                 portField.setText(databaseFields.getPort());
@@ -239,13 +240,13 @@ public class DatabaseConfigurationForm {
                 usernameField.setText(databaseFields.getUser());
                 passwordField.setText(databaseFields.getPassword());
 
-                if (databaseFields.getDriverType().equalsIgnoreCase("oracle")) {
-                    sidField.setText(databaseFields.getDatabaseName());
-                    driverNameField.setEnabled(true);
-                } else {
-                    sidField.setText("");
-                    driverNameField.setEnabled(false);
-                }
+//                if (databaseFields.getDriverType().equalsIgnoreCase("oracle")) {
+//                    sidField.setText(databaseFields.getDatabaseName());
+//                    driverNameField.setEnabled(true);
+//                } else {
+//                    sidField.setText("");
+//                    driverNameField.setEnabled(false);
+//                }
                 isUpdating = false;
             });
 
