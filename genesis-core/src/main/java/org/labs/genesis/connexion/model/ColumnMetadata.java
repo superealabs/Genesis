@@ -13,4 +13,5 @@ public class ColumnMetadata {
     private String referencedTable;
     private String columnType;
     private String referencedColumn;
+    private String referencedColumnType;
 }

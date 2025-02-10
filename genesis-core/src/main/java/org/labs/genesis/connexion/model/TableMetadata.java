@@ -49,7 +49,7 @@ public class TableMetadata {
 
             List<ColumnMetadata> listeCols = fetchColumns(metaData, tableName, language, database);
             fetchPrimaryKeys(metaData, tableName, listeCols);
-            fetchForeignKeys(metaData, tableName, listeCols);
+            fetchForeignKeys(metaData, tableName, language, listeCols);
 
             setClassName(
                     Stream.of(tableName)
@@ -143,18 +143,19 @@ public class TableMetadata {
         }
     }
 
-    private void fetchForeignKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> listeCols) throws SQLException {
+    private void fetchForeignKeys(DatabaseMetaData metaData, String tableName, Language language, List<ColumnMetadata> listeCols) throws SQLException {
         try (ResultSet foreignKeys = metaData.getImportedKeys(null, database.getCredentials().getSchemaName(), tableName)) {
 
             while (foreignKeys.next()) {
                 String fkColumnName = foreignKeys.getString("FKCOLUMN_NAME");
                 String pkTableName = foreignKeys.getString("PKTABLE_NAME");
-                //String pkColumnName = foreignKeys.getString("PKCOLUMN_NAME");
+                String pkColumnName = foreignKeys.getString("PKCOLUMN_NAME");
                 for (ColumnMetadata field : listeCols) {
                     if (field.getReferencedColumn().equalsIgnoreCase(fkColumnName)) {
                         field.setForeign(true);
 
                         field.setReferencedColumn(field.getReferencedColumn());
+                        field.setReferencedColumnType(field.getReferencedColumnType());
                         field.setColumnType(toCamelCase(field.getType()));
                         field.setName(
                                 field.getName()
@@ -162,6 +163,15 @@ public class TableMetadata {
                                         .transform(name -> name + FileUtils.majStart(FileUtils.toCamelCase(pkTableName.toLowerCase())))
                         );
                         field.setReferencedTable(pkTableName.transform(FileUtils::toCamelCase));
+
+                        // Récupérer le type de la colonne référencée
+                        try (ResultSet pkColumn = metaData.getColumns(null, database.getCredentials().getSchemaName(), pkTableName, pkColumnName)) {
+                            if (pkColumn.next()) {
+                                String pkColumnType = pkColumn.getString("TYPE_NAME");
+                                field.setReferencedColumnType(language.getTypes().get(database.getTypes().get(pkColumnType)));
+                            }
+                        }
+
                         field.setType(pkTableName
                                 .transform(FileUtils::toCamelCase)
                                 .transform(FileUtils::removeLastS)
