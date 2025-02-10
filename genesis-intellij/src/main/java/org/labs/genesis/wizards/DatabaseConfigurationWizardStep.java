@@ -34,6 +34,7 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
 
         if (selectedDatabase != null) {
             try {
+
                 // Update context and attempt connection
                 updateContextAndEstablishConnection(selectedDatabase);
 

@@ -64,6 +64,14 @@ public class GenerationOptionForm {
         allTableNames.addFirst(SELECT_ALL); // Ajouter l'option pour tout sélectionner
         return allTableNames;
     }
+    private void connectionIsValid(Connection connection) throws Exception {
+
+        if (!connection.isValid(2)) {
+            throw new IllegalStateException("Database connection is not valid.");
+        } else {
+            System.out.println("Connection to the database is established."+connection.getMetaData().getURL());
+        }
+    }
 
 }
 

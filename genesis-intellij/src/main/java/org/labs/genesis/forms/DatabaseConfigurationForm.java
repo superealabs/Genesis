@@ -8,11 +8,14 @@ import lombok.Setter;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.wizards.fieldHandler.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.event.ActionListener;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.labs.genesis.Utils.formatErrorMessage;
 import static org.labs.genesis.Utils.formatErrorMessageHtml;
@@ -46,6 +49,7 @@ public class DatabaseConfigurationForm {
 
     private LinkLabel<String> testConnectionButton;
     private JLabel connectionStatusLabel;
+    private boolean isUpdating = false;
 
     @Setter
     private boolean connectionSuccessful = false;
@@ -54,6 +58,7 @@ public class DatabaseConfigurationForm {
         populateDmsOptions();
         initializeDefaultValues();
         addListeners();
+//        addUrlFieldListener();
 
         if (dmsOptions.getItemCount() > 0) {
             dmsOptions.setSelectedIndex(0);
@@ -166,17 +171,23 @@ public class DatabaseConfigurationForm {
         DocumentListener updateUrlDocumentListener = new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                updateJdbcUrl((Database) dmsOptions.getSelectedItem());
+                if (!isUpdating) {
+                    updateJdbcUrl((Database) dmsOptions.getSelectedItem());
+                }
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                updateJdbcUrl((Database) dmsOptions.getSelectedItem());
+                if (!isUpdating) {
+                    updateJdbcUrl((Database) dmsOptions.getSelectedItem());
+                }
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                updateJdbcUrl((Database) dmsOptions.getSelectedItem());
+                if (!isUpdating) {
+                    updateJdbcUrl((Database) dmsOptions.getSelectedItem());
+                }
             }
         };
 
@@ -188,7 +199,60 @@ public class DatabaseConfigurationForm {
         schemaField.getDocument().addDocumentListener(updateUrlDocumentListener);
         sidField.getDocument().addDocumentListener(updateUrlDocumentListener);
         driverNameField.getDocument().addDocumentListener(updateUrlDocumentListener);
+        passwordField.getDocument().addDocumentListener(updateUrlDocumentListener);
+
+        addUrlFieldListener();
     }
+
+    private void addUrlFieldListener() {
+        URLField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateFieldsFromUrl(URLField.getText().trim());
+            }
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateFieldsFromUrl(URLField.getText().trim());
+            }
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateFieldsFromUrl(URLField.getText().trim());
+            }
+        });
+    }
+
+    private void updateFieldsFromUrl(String jdbcUrl) {
+        if (jdbcUrl != null && !jdbcUrl.isEmpty()) {
+            ExtractorSignature extractorSignature = null;
+            DatabaseFields databaseFields;
+            if (jdbcUrl.startsWith("jdbc:oracle:")){ extractorSignature = new OracleExtractor();}
+            if (jdbcUrl.startsWith("jdbc:postgresql:")){ extractorSignature = new PotgresExtractor();}
+            if (jdbcUrl.startsWith("jdbc:mysql:")){ extractorSignature = new MySqlExtractor(); }
+            if (jdbcUrl.startsWith("jdbc:sqlserver:")){ extractorSignature = new SqlServerExtractor(); }
+            databaseFields = extractorSignature.extractArgs(jdbcUrl);
+            SwingUtilities.invokeLater(() -> {
+                isUpdating = true;
+                hostField.setText(databaseFields.getHost());
+                portField.setText(databaseFields.getPort());
+                databaseField.setText(databaseFields.getDatabaseName());
+                driverNameField.setText(databaseFields.getDriverType());
+                usernameField.setText(databaseFields.getUser());
+                passwordField.setText(databaseFields.getPassword());
+
+                if (databaseFields.getDriverType().equalsIgnoreCase("oracle")) {
+                    sidField.setText(databaseFields.getDatabaseName());
+                    driverNameField.setEnabled(true);
+                } else {
+                    sidField.setText("");
+                    driverNameField.setEnabled(false);
+                }
+                isUpdating = false;
+            });
+
+        }
+    }
+
+
 
 
     private void updateFieldsForDatabase(Database database) {
@@ -215,7 +279,7 @@ public class DatabaseConfigurationForm {
 
     private void updateJdbcUrl(Database database) {
         if (database == null) return;
-
+        isUpdating = true;
         // Build Credentials based on user input
         Credentials credentials = new Credentials(
                 databaseField.getText().trim(),          // databaseName
@@ -237,7 +301,10 @@ public class DatabaseConfigurationForm {
         String jdbcUrl = database.getJdbcUrl(credentials);
 
         // Update the URL field
-        URLField.setText(jdbcUrl);
+        SwingUtilities.invokeLater(() -> {
+            URLField.setText(jdbcUrl);
+            isUpdating = false;
+        });
     }
 
 }

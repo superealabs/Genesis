@@ -84,8 +84,9 @@ public abstract class Database {
                 String tableName = tables.getString("TABLE_NAME");
                 tableNames.add(tableName);
             }
+        }catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
-
         return tableNames;
     }
 
