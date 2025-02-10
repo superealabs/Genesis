@@ -180,7 +180,7 @@
         
         // Add services to the container.
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-        builder.Services.AddDbContext<WebApiNetContext>(options =>
+        builder.Services.AddDbContext<${majStart(projectName)}Context>(options =>
             options.Use${daoName}(connectionString${addOptions}));
         
         // Adding repositories ...
