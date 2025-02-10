@@ -150,12 +150,12 @@
             }
         });
         
-        {{#if useEurekaServer}}
         // Add Steeltoe Actuators for application monitoring and diagnostics
         builder.Services.AddAllActuators(builder.Configuration);
         builder.Services.AddHealthActuator();
         builder.Services.AddInfoActuator();
         
+        {{#if useEurekaServer}}
         // Retrieve the local IP address dynamically
         string localIpAddress = NetworkInterface
               .GetAllNetworkInterfaces()
@@ -179,7 +179,7 @@
         
         // Add services to the container.
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-        builder.Services.AddDbContext<WebApiNetContext>(options =>
+        builder.Services.AddDbContext<${majStart(projectName)}Context>(options =>
             options.Use${daoName}(connectionString${addOptions}));
         
         // Adding repositories ...
@@ -319,11 +319,11 @@
                 </PackageReference>
                 <PackageReference Include="${DBartifactId}" Version="${frameworkVersion}.0"/>{{/if}}
                 <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0"/>
-                {{#if useEurekaServer}}<PackageReference Include="Steeltoe.Discovery.Eureka" Version="3.2.0"/>
+                {{#if useEurekaServer}}<PackageReference Include="Steeltoe.Discovery.Eureka" Version="3.2.0"/>{{/if}}
                 <PackageReference Include="Steeltoe.Management.Endpoint.Info" Version="1.1.0" />
                 <PackageReference Include="Steeltoe.Management.Endpoint.Health" Version="1.1.0" />
                 <PackageReference Include="Steeltoe.Management.EndpointCore" Version="3.2.0" />
-                <PackageReference Include="Steeltoe.Management.TracingCore" Version="3.2.0" />{{/if}}
+                <PackageReference Include="Steeltoe.Management.TracingCore" Version="3.2.0" />
             </ItemGroup>
         </Project>
 
