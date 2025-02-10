@@ -102,7 +102,10 @@ public class InitializationWizardStep extends ModuleWizardStep {
         }
 
         // Check that a language version is selected
-        if (languageVersion == null || languageVersion.equals("Not applicable")) {
+//        if (languageVersion == null || languageVersion.equals("Not applicable")) {
+//            throw new ConfigurationException("Please select a language version.");
+//        }
+        if (languageVersion == null) {
             throw new ConfigurationException("Please select a language version.");
         }
 
