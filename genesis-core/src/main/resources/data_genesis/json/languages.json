@@ -31,7 +31,16 @@
       "date": "java.time.LocalDate",
       "timestamp": "java.time.LocalDateTime",
       "time": "java.time.LocalTime",
-      "boolean": "Boolean"
+      "boolean": "Boolean",
+
+      "json" : "String",
+      "interval": "java.time.Duration",
+      "uuid" : "String",
+      "integer[]" : "Integer[]",
+      "text[]" : "String[]",
+      "bytea" : "byte[]",
+      "inet" : "java.net.InetAddress",
+      "xml" : "String"
     }
   },
   {
@@ -55,7 +64,16 @@
       "date": "DateOnly",
       "timestamp": "DateTime",
       "time": "TimeSpan",
-      "boolean": "Boolean"
+      "boolean": "Boolean",
+
+      "json" : "string",
+      "interval": "TimeSpan",
+      "uuid" : "string",
+      "integer[]" : "int[]",
+      "text[]" : "string[]",
+      "bytea" : "byte[]",
+      "inet" : "System.Net.IPAddress",
+      "xml" : "string"
     }
   }
 ]
