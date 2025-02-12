@@ -11,6 +11,9 @@ import org.labs.genesis.forms.DatabaseConfigurationForm;
 
 import javax.swing.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.labs.genesis.Utils.formatErrorMessageHtml;
 
 public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
@@ -32,33 +35,34 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
         // Retrieve the selected database
         Database selectedDatabase = (Database) databaseConfigurationForm.getDmsOptions().getSelectedItem();
 
-        if (selectedDatabase != null) {
-            try {
+        if(selectedDatabase==null){
+            return;
+        }
+        try {
+            // Update context and attempt connection
+            updateContextAndEstablishConnection(selectedDatabase);
 
-                // Update context and attempt connection
-                updateContextAndEstablishConnection(selectedDatabase);
+            // Update the UI with success feedback
+            databaseConfigurationForm.getConnectionStatusLabel().setText("<html>Connection successful!</html>");
+            databaseConfigurationForm.getConnectionStatusLabel().setForeground(JBColor.GREEN);
+            databaseConfigurationForm.setConnectionSuccessful(true);
 
-                // Update the UI with success feedback
-                databaseConfigurationForm.getConnectionStatusLabel().setText("<html>Connection successful!</html>");
-                databaseConfigurationForm.getConnectionStatusLabel().setForeground(JBColor.GREEN);
-                databaseConfigurationForm.setConnectionSuccessful(true);
+        } catch (Exception e) {
+            // Update the UI with error feedback
+            String formattedMessageHtml = formatErrorMessageHtml(e.getMessage());
+            databaseConfigurationForm.getConnectionStatusLabel().setText("<html>Connection failed:<br>" + formattedMessageHtml + "</html>");
+            databaseConfigurationForm.getConnectionStatusLabel().setForeground(JBColor.RED);
+            databaseConfigurationForm.setConnectionSuccessful(false);
 
-            } catch (Exception e) {
-                // Update the UI with error feedback
-                String formattedMessageHtml = formatErrorMessageHtml(e.getMessage());
-                databaseConfigurationForm.getConnectionStatusLabel().setText("<html>Connection failed:<br>" + formattedMessageHtml + "</html>");
-                databaseConfigurationForm.getConnectionStatusLabel().setForeground(JBColor.RED);
-                databaseConfigurationForm.setConnectionSuccessful(false);
+            Messages.showErrorDialog(
+                    databaseConfigurationForm.getMainPanel(),
+                    "Connection failed: " + e.getMessage(),
+                    "Error"
+            );
 
-                Messages.showErrorDialog(
-                        databaseConfigurationForm.getMainPanel(),
-                        "Connection failed: " + e.getMessage(),
-                        "Error"
-                );
+            System.err.println("Connection failed: " + e.getMessage());
+            e.printStackTrace();
 
-                System.err.println("Connection failed: " + e.getMessage());
-                e.printStackTrace();
-            }
         }
     }
 
@@ -112,17 +116,16 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
         String databaseName = databaseConfigurationForm.getDatabaseField().getText().trim();
         String username = databaseConfigurationForm.getUsernameField().getText().trim();
 
-        if (host.isEmpty()) {
-            throw new ConfigurationException("Host field cannot be empty.");
-        }
-        if (portStr.isEmpty()) {
-            throw new ConfigurationException("Port field cannot be empty.");
-        }
-        if (databaseName.isEmpty()) {
-            throw new ConfigurationException("Database name cannot be empty.");
-        }
-        if (username.isEmpty()) {
-            throw new ConfigurationException("Username field cannot be empty.");
+        HashMap<String, String> options = new HashMap<>(){{
+            put(host, "Host field cannot be empty.");
+            put(portStr, "Port field cannot be empty.");
+            put(databaseName, "Database name cannot be empty.");
+            put(username, "Username cannot be empty");
+        }};
+        for(Map.Entry<String, String> e:options.entrySet()){
+            if(e.getKey().isEmpty()){
+                throw new ConfigurationException(e.getValue());
+            }
         }
     }
 
@@ -141,17 +144,17 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
 
     private void validateDatabaseSpecificFields() throws ConfigurationException {
         Database selectedDatabase = (Database) databaseConfigurationForm.getDmsOptions().getSelectedItem();
+        if(selectedDatabase==null||!"Oracle".equals(selectedDatabase.getName())){
+            return;
+        }
+        String sid = databaseConfigurationForm.getSidField().getText().trim();
+        String driverType = databaseConfigurationForm.getDriverNameField().getText().trim();
 
-        if (selectedDatabase != null && "Oracle".equalsIgnoreCase(selectedDatabase.getName())) {
-            String sid = databaseConfigurationForm.getSidField().getText().trim();
-            String driverType = databaseConfigurationForm.getDriverNameField().getText().trim();
-
-            if (sid.isEmpty()) {
-                throw new ConfigurationException("SID field cannot be empty for Oracle databases.");
-            }
-            if (driverType.isEmpty()) {
-                throw new ConfigurationException("Driver Type field cannot be empty for Oracle databases.");
-            }
+        if (sid.isEmpty()) {
+            throw new ConfigurationException("SID field cannot be empty for Oracle databases.");
+        }
+        if (driverType.isEmpty()) {
+            throw new ConfigurationException("Driver Type field cannot be empty for Oracle databases.");
         }
     }
 
