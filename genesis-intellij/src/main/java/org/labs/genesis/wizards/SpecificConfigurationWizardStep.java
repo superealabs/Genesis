@@ -157,7 +157,7 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             put(username, "Username for API Gateway cannot be empty.");
             put(password, "Password for API Gateway cannot be empty.");
             put(role, "Role for API Gateway cannot be empty.");
-        }}
+        }};
         for(Map.Entry<String, String> e:gatewayMap.entrySet()){
             if(e.getKey().isEmpty()){
                 throw new ConfigurationException(e.getValue());
