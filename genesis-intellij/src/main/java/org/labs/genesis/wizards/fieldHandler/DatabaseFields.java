@@ -10,9 +10,10 @@ public class DatabaseFields {
     String port;
     String databaseName;
     String sid;
-    String driverType;
+    String driverName;
     String user;
     String password;
+    String driverType;
 
     @Override
     public String toString() {
@@ -21,7 +22,7 @@ public class DatabaseFields {
                 ", port='" + port + '\'' +
                 ", databaseName='" + databaseName + '\'' +
                 ", sid='" + sid + '\'' +
-                ", driverType='" + driverType + '\'' +
+                ", driverType='" + driverName + '\'' +
                 ", user='" + user + '\'' +
                 ", password='" + password + '\'' +
                 '}';

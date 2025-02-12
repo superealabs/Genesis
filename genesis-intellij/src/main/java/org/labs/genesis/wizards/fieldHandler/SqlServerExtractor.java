@@ -12,6 +12,7 @@ public class SqlServerExtractor extends ExtractorSignature {
         if (matcher.find()) {
             fields.setHost(matcher.group(1));
             fields.setPort(matcher.group(2));
+            fields.setDriverName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
             fields.setDriverType("sqlserver");
             String params = matcher.group(3);
             fields.setDatabaseName(this.extractParameter(params, "databaseName"));

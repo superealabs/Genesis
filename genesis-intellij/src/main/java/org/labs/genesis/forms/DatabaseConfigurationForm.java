@@ -14,8 +14,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.event.ActionListener;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.labs.genesis.Utils.formatErrorMessage;
 import static org.labs.genesis.Utils.formatErrorMessageHtml;
@@ -46,6 +44,9 @@ public class DatabaseConfigurationForm {
     private JTextField URLField;
     private JTextField sidField;
     private JLabel sidLabel;
+
+    private JLabel driverTypeLabel;
+    private JTextField driverTypeField;
 
     private LinkLabel<String> testConnectionButton;
     private JLabel connectionStatusLabel;
@@ -167,6 +168,7 @@ public class DatabaseConfigurationForm {
         useSSLCheckBox.addActionListener(updateUrlActionListener);
         allowKeyRetrievalCheckBox.addActionListener(updateUrlActionListener);
 
+
         // DocumentListener for text fields affecting the JDBC URL
         DocumentListener updateUrlDocumentListener = new DocumentListener() {
             @Override
@@ -235,10 +237,12 @@ public class DatabaseConfigurationForm {
                 isUpdating = true;
                 hostField.setText(databaseFields.getHost());
                 portField.setText(databaseFields.getPort());
-                databaseField.setText(databaseFields.getDatabaseName());
-                driverNameField.setText(databaseFields.getDriverType());
-                usernameField.setText(databaseFields.getUser());
-                passwordField.setText(databaseFields.getPassword());
+                if (!jdbcUrl.startsWith("jdbc:oracle:")) databaseField.setText(databaseFields.getDatabaseName());
+                driverNameField.setText(databaseFields.getDriverName());
+                driverTypeField.setText(databaseFields.getDriverType());
+                if (!jdbcUrl.startsWith("jdbc:oracle:")) usernameField.setText(databaseFields.getUser());
+                if (!jdbcUrl.startsWith("jdbc:oracle:")) passwordField.setText(databaseFields.getPassword());
+                sidField.setText(databaseFields.getSid());
 
 //                if (databaseFields.getDriverType().equalsIgnoreCase("oracle")) {
 //                    sidField.setText(databaseFields.getDatabaseName());
@@ -260,6 +264,7 @@ public class DatabaseConfigurationForm {
         trustCertificateCheckBox.setEnabled(false);
         useSSLCheckBox.setEnabled(false);
         allowKeyRetrievalCheckBox.setEnabled(false);
+        driverTypeField.setEnabled(false);
 
         // Adjust visible fields based on the selected database
         boolean isOracle = "Oracle".equalsIgnoreCase(database.getName());

@@ -13,6 +13,7 @@ public class PotgresExtractor extends ExtractorSignature {
             fields.setHost(matcher.group(1));
             fields.setPort(matcher.group(2));
             fields.setDatabaseName(matcher.group(3));
+            fields.setDriverName("org.postgresql.Driver");
             fields.setDriverType("postgresql");
             String params = matcher.group(4);
             fields.setUser(extractParameter(params, "user"));

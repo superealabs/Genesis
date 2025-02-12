@@ -13,6 +13,7 @@ public class MySqlExtractor extends ExtractorSignature {
             fields.setHost(matcher.group(1));
             fields.setPort(matcher.group(2));
             fields.setDatabaseName(matcher.group(3));
+            fields.setDriverName("com.mysql.cj.jdbc.Driver");
             fields.setDriverType("mysql");
             String params = matcher.group(4);
             fields.setUser(extractParameter(params, "user"));
