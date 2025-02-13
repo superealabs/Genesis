@@ -3,6 +3,7 @@ package org.labs.genesis.connexion.model;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -18,6 +19,7 @@ import static org.labs.utils.FileUtils.toCamelCase;
 @Setter
 @Getter
 @NoArgsConstructor
+@ToString
 public class TableMetadata {
     private Database database;
     private String tableName;
