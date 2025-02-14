@@ -154,6 +154,7 @@
       "smallint": "int",
       "float": "float",
       "double": "double",
+      "varchar": "string",
       "decimal": "double",
       "nvarchar": "string",
       "date": "date",

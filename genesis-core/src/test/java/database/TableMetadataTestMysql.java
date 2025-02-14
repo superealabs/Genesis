@@ -9,17 +9,17 @@ import org.labs.genesis.connexion.model.TableMetadata;
 import java.sql.Connection;
 import java.util.Arrays;
 
-public class TableMetadataTest {
+public class TableMetadataTestMysql {
 
     Credentials credentials;
 
-    public TableMetadataTest() {
+    public TableMetadataTestMysql() {
         this.credentials = new Credentials()
                 .setHost("localhost")
                 .setPort("3306")
-                .setDatabaseName("test_db")
+                .setDatabaseName("biblio")
                 .setUser("root")
-                .setPwd("Nomena321@");
+                .setPwd("");
     }
 
 
@@ -39,5 +39,20 @@ public class TableMetadataTest {
         }
     }
 
+    @Test
+    void listViewMetadata() {
+        int databaseId = Constantes.MySQL_ID;
+        int languageId = Constantes.Java_ID;
+
+        var database = ProjectGenerator.databases.get(databaseId);
+        var language = ProjectGenerator.languages.get(languageId);
+
+        try (Connection connection = database.getConnection(credentials)) {
+            TableMetadata[] entities = database.getViews(connection, credentials, language).toArray(new TableMetadata[0]);
+            System.out.println("\n\nEntities : \n"+Arrays.toString(entities)+"\n\n");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }

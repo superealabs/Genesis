@@ -75,7 +75,11 @@ public class TableMetadata {
         return database.getAllTableNames(connection);
     }
 
-    public List<TableMetadata> initializeTables(List<String> tableNames, Connection connex, Credentials credentials, Database database, Language language) throws SQLException, ClassNotFoundException {
+    public List<String> getAllViewNames(Database database, Connection connection) throws SQLException {
+        return database.getAllViewNames(connection);
+    }
+
+    public List<TableMetadata> initializeTableType(List<String> tableTypeNames, Connection connex, Credentials credentials, Database database, Language language, boolean isView) throws SQLException, ClassNotFoundException {
         List<TableMetadata> tableMetadataList = new ArrayList<>();
         boolean opened = false;
         Connection connect = connex;
@@ -86,13 +90,17 @@ public class TableMetadata {
         }
 
         try {
-            if (tableNames == null || tableNames.isEmpty()) {
-                tableNames = getAllTableNames(database, connect);
+            if (tableTypeNames == null || tableTypeNames.isEmpty()) {
+                if (isView) {
+                    tableTypeNames = getAllViewNames(database, connect);
+                } else {
+                    tableTypeNames = getAllTableNames(database, connect);
+                }
             }
 
-            for (String tableName : tableNames) {
+            for (String tableTypeName : tableTypeNames) {
                 TableMetadata tableMetadata = new TableMetadata();
-                tableMetadata.setTableName(tableName);
+                tableMetadata.setTableName(tableTypeName);
                 tableMetadata.initialize(connect, credentials, database, language);
                 tableMetadataList.add(tableMetadata);
             }
@@ -103,6 +111,16 @@ public class TableMetadata {
         }
 
         return tableMetadataList;
+    }
+
+
+
+    public List<TableMetadata> initializeTables(List<String> tableNames, Connection connex, Credentials credentials, Database database, Language language) throws SQLException, ClassNotFoundException {
+       return initializeTableType(tableNames, connex, credentials, database, language, false);
+    }
+
+    public List<TableMetadata> initializeViews(List<String> viewNames, Connection connex, Credentials credentials, Database database, Language language) throws SQLException, ClassNotFoundException {
+      return initializeTableType(viewNames, connex, credentials, database, language, true);
     }
 
 
