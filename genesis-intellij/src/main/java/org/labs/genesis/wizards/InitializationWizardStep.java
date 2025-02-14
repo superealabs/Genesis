@@ -38,7 +38,7 @@ public class InitializationWizardStep extends ModuleWizardStep {
         return newProjectPanel.getMainPanel();
     }
 
-    private void initializeAttributes(String projectName, String groupId, String location, Language language, String languageVersion, String frameworkVersion, Framework framework, Project buildTool){
+    private void initializeAttributes(String projectName, String groupId, String location, Language language, String languageVersion, String frameworkVersion, Framework framework, Project buildTool) {
         this.projectName = projectName;
         this.groupId = groupId;
         this.location = location;
@@ -94,7 +94,7 @@ public class InitializationWizardStep extends ModuleWizardStep {
         );
         this.projectType = (Framework) newProjectPanel.getFrameworkOptions().getSelectedItem();
         // declared the validation steps as a map to avoid hardcoded if's
-        HashMap<Boolean, ConfigurationException> validationMap=new HashMap<>(){{
+        HashMap<Boolean, ConfigurationException> validationMap = new HashMap<>() {{
             put(projectName.isEmpty(), new ConfigurationException("The project name cannot be empty."));
 //                put(groupId.isEmpty() && projectType.getWithGroupId(), new ConfigurationException("The group id cannot be empty."));
             put(!projectName.matches("^[a-zA-Z0-9_]+$"), new ConfigurationException("""
@@ -109,8 +109,8 @@ public class InitializationWizardStep extends ModuleWizardStep {
             put(projectType == null, new ConfigurationException("Please select a project type."));
             put(buildTool == null, new ConfigurationException("Please select a build tool."));
         }};
-        for(Map.Entry<Boolean, ConfigurationException> e:validationMap.entrySet()){
-            if(e.getKey()){
+        for (Map.Entry<Boolean, ConfigurationException> e : validationMap.entrySet()) {
+            if (e.getKey()) {
                 throw e.getValue();
             }
         }

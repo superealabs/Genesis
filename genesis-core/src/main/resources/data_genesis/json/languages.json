@@ -32,15 +32,14 @@
       "timestamp": "java.time.LocalDateTime",
       "time": "java.time.LocalTime",
       "boolean": "Boolean",
-
-      "json" : "String",
-      "interval": "java.time.Duration",
-      "uuid" : "String",
-      "integer[]" : "Integer[]",
-      "text[]" : "String[]",
-      "bytea" : "byte[]",
-      "inet" : "java.net.InetAddress",
-      "xml" : "String"
+      "json": "String",
+      "interval": "String",
+      "uuid": "String",
+      "integer[]": "String",
+      "text[]": "String",
+      "bytea": "byte[]",
+      "inet": "java.net.InetAddress",
+      "xml": "String"
     }
   },
   {
@@ -65,15 +64,14 @@
       "timestamp": "DateTime",
       "time": "TimeSpan",
       "boolean": "Boolean",
-
-      "json" : "string",
+      "json": "string",
       "interval": "TimeSpan",
-      "uuid" : "string",
-      "integer[]" : "int[]",
-      "text[]" : "string[]",
-      "bytea" : "byte[]",
-      "inet" : "System.Net.IPAddress",
-      "xml" : "string"
+      "uuid": "string",
+      "integer[]": "int[]",
+      "text[]": "string[]",
+      "bytea": "byte[]",
+      "inet": "System.Net.IPAddress",
+      "xml": "string"
     }
   }
 ]
