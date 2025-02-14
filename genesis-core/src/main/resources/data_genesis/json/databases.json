@@ -99,18 +99,17 @@
       "bool": "boolean",
       "time": "time",
       "tsrange": "string",
-
       "json": "json",
       "jsonb": "json",
-      "interval" : "interval",
-      "uuid" : "uuid",
-      "_int4" : "integer[]",
-      "_text" : "text[]",
-      "bytea" : "bytea",
-      "inet" : "inet",
-      "cidr" : "inet",
-      "macaddr" : "string",
-      "xml" : "string"
+      "interval": "interval",
+      "uuid": "uuid",
+      "_int4": "integer[]",
+      "_text": "text[]",
+      "bytea": "bytea",
+      "inet": "inet",
+      "cidr": "inet",
+      "macaddr": "string",
+      "xml": "string"
     },
     "excludeSchemas": [
       "information_schema",

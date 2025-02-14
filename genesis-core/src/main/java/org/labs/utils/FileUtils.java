@@ -229,7 +229,6 @@ public class FileUtils {
     }
 
 
-
     private static @NotNull URI getResourceUri(String sourceDir) throws IOException {
         // Obtenir le class loader actuel
         ClassLoader classLoader = FileUtils.class.getClassLoader();
