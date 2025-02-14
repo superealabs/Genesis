@@ -34,6 +34,7 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
     public void updateDataModel() {
         // Retrieve the selected database
         Database selectedDatabase = (Database) databaseConfigurationForm.getDmsOptions().getSelectedItem();
+
         if(selectedDatabase==null){
             return;
         }
@@ -61,6 +62,7 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
 
             System.err.println("Connection failed: " + e.getMessage());
             e.printStackTrace();
+
         }
     }
 
