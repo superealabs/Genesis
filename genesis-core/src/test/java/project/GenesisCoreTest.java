@@ -29,11 +29,11 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectSpring() {
-        var credentials = new Credentials().setHost("localhost").setPort("5432").setSchemaName("public").setDatabaseName("genesis").setUser("mendrika").setPwd("azerty").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true);
+        var credentials = new Credentials().setHost("localhost").setPort("3306").setSchemaName("public").setDatabaseName("genesis").setUser("mendrika").setPwd("azerty").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true);
 
         try {
 
-            int databaseId = Constantes.PostgreSQL_ID;
+            int databaseId = Constantes.MySQL_ID;
             int languageId = Constantes.Java_ID;
             int frameworkId = Constantes.Spring_REST_API_ID;
             int projectId = Constantes.Maven_ID;

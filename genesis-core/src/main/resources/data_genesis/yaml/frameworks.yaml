@@ -71,6 +71,7 @@
             username: ${databaseUsername}
             password: ${databasePassword}
           jpa:
+            database-platform : org.hibernate.dialect.${databaseType}${databaseVersion}Dialect
             hibernate:
               ddl-auto: ${hibernateDdlAuto}
             properties:

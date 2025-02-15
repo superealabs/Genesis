@@ -36,7 +36,29 @@
       "VARCHAR": "string",
       "DATE": "date",
       "DATETIME": "timestamp",
-      "TIME": "time"
+      "TIME": "time",
+
+      "TINYINT" : "tinyint",
+      "MEDIUMINT" : "int",
+      "INTEGER": "int",
+      "DECIMAL": "double",
+      "BIT": "byte[]",
+      "CHAR": "char",
+      "TEXT": "string",
+      "TINYTEXT": "string",
+      "MEDIUMTEXT": "string",
+      "LONGTEXT": "string",
+      "ENUM": "string",
+      "SET": "list[string]",
+      "TIMESTAMP": "timestamp",
+      "YEAR" : "int",
+      "BLOB" :	"byte[]",
+      "TINYBLOB" :	"byte[]",
+      "MEDIUMBLOB": 	"byte[]",
+      "LONGBLOB" :	"byte[]",
+      "VARBINARY":	"byte[]",
+      "BINARY" :	"byte[]"
+
     },
     "excludeSchemas": [
       "information_schema",
