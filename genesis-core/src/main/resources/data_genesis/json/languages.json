@@ -78,6 +78,7 @@
       "integer[]" : "int[]",
       "text[]" : "string[]",
       "bytea" : "byte[]",
+      "byte[]" : "byte[]",
       "inet" : "System.Net.IPAddress",
       "xml" : "string"
     }

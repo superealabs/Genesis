@@ -239,11 +239,9 @@
       "NVARCHAR2": "string",
       "TIMESTAMP WITH TIME ZONE": "timestamp",
       "TIMESTAMP WITH LOCAL TIME ZONE": "timestamp",
-
       "RAW": "byte[]",
       "LONG RAW": "byte[]",
       "BFILE": "byte[]",
-
       "XMLTYPE": "string",
       "ROWID": "string",
       "UROWID": "string"
