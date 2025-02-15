@@ -217,13 +217,36 @@
     "port": "1521",
     "types": {
       "NUMBER": "int",
+      "NUMBER(*,*)": "double",
       "VARCHAR2": "string",
       "DATE": "date",
+      "TIMESTAMP(*)": "timestamp",
       "TIMESTAMP": "timestamp",
       "TIME": "time",
       "BLOB": "bytea",
-      "CLOB": "text",
-      "NCLOB": "text"
+      "CLOB": "string",
+      "NCLOB": "string",
+      "BINARY_FLOAT": "double",
+      "BINARY_DOUBLE": "double",
+      "FLOAT": "double",
+      "INTEGER": "int",
+      "DECIMAL": "double",
+      "SMALLINT": "int",
+      "TINYINT": "int",
+      "BIGINT": "long",
+      "CHAR": "string",
+      "NCHAR": "string",
+      "NVARCHAR2": "string",
+      "TIMESTAMP WITH TIME ZONE": "timestamp",
+      "TIMESTAMP WITH LOCAL TIME ZONE": "timestamp",
+
+      "RAW": "byte[]",
+      "LONG RAW": "byte[]",
+      "BFILE": "byte[]",
+
+      "XMLTYPE": "string",
+      "ROWID": "string",
+      "UROWID": "string"
     },
     "excludeSchemas": [
       "SYS",
