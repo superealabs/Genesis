@@ -166,6 +166,11 @@
 
 
   dependencies:
+    - groupId: "org.projectlombok"
+      artifactId: "lombok"
+      version: "1.18.36"
+      scope: "provided"
+
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-data-jpa"
       version: "{{removeLine}}"
@@ -243,27 +248,28 @@
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
       import org.springframework.stereotype.Service;
       import ${groupLink}.${lowerCase(projectName)}.repositories.${majStart(className)}Repository;
-      import org.springframework.beans.factory.annotation.Autowired;
       import java.util.List;
       import java.util.Optional;
+      import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
 
     serviceAnnotations: |
       @Service
     serviceClassKeyword: "public class"
-    serviceExtends: ""
-    serviceName: "${majStart(className)}Service"
+    serviceExtends: "implements ${majStart(className)}Service"
+    serviceName: "Default${majStart(className)}Service"
     serviceFieldContent: |
       {{tab}}private final ${majStart(className)}Repository ${minStart(className)}Repository;
     serviceConstructors: |
-      {{tab}}@Autowired
-      {{tab}}public ${majStart(className)}Service(${majStart(className)}Repository ${minStart(className)}Repository) {
+      {{tab}}public Default${majStart(className)}Service(${majStart(className)}Repository ${minStart(className)}Repository) {
       {{tab}}   this.${minStart(className)}Repository = ${minStart(className)}Repository;
       {{tab}}}
     serviceMethodContent: |
+      {{tab}}@Override
       {{tab}}public List<${majStart(className)}> getAll${majStart(className)}() {
       {{tab}}   return ${minStart(className)}Repository.findAll(Sort.by(Sort.Direction.ASC, "${pkColumn}"));
       {{tab}}}
       
+      {{tab}}@Override
       {{tab}}public ${majStart(className)} get${majStart(className)}ById(${pkColumnType} ${pkColumn}) {
       {{tab}}   Optional<${majStart(className)}> ${minStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
       {{tab}}   if (${minStart(className)}.isPresent()) {
@@ -273,10 +279,12 @@
       {{tab}}   }
       {{tab}}}
       
+      {{tab}}@Override
       {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
       {{tab}}   return ${minStart(className)}Repository.save(${minStart(className)});
       {{tab}}}
 
+      {{tab}}@Override
       {{tab}}public ${majStart(className)} update${majStart(className)}(${pkColumnType} ${pkColumn}, ${majStart(className)} ${minStart(className)}) {
       {{tab}}   Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
       {{tab}}		if (existing${majStart(className)}.isPresent()) {
@@ -287,24 +295,59 @@
       {{tab}}       }
       {{tab}}}
       
+      {{tab}}@Override
       {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
       {{tab}}   ${minStart(className)}Repository.deleteById(${pkColumn});
       {{tab}}}
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
     servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
-    serviceAdditionalFiles: [ ]
+    serviceAdditionalFiles:
+      - fileType: "Interface service"
+        fileName: "${majStart(className)}Service"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.services.interfaces;
+          
+          import ${groupLink}.${lowerCase(projectName)}.models.${className};
+          import java.util.List;
+          
+          public interface ${majStart(className)}Service {
+              List<${className}> getAll${className}();
+          
+              ${className} get${className}ById(${pkColumnType} ${pkColumn});
+          
+              ${className} create${className}(${className} ${minStart(className)});
+          
+              ${className} update${className}(${pkColumnType} ${pkColumn}, ${className} ${minStart(className)});
+          
+              void delete${className}(${pkColumnType} ${pkColumn});
+          }
+
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services/interfaces"
+
   controller:
     toGenerate: true
     controllerImports: |
+      import io.swagger.v3.oas.annotations.Operation;
+      import io.swagger.v3.oas.annotations.Parameter;
+      import io.swagger.v3.oas.annotations.media.Content;
+      import io.swagger.v3.oas.annotations.media.Schema;
+      import io.swagger.v3.oas.annotations.responses.ApiResponse;
+      import io.swagger.v3.oas.annotations.responses.ApiResponses;
+      import io.swagger.v3.oas.annotations.tags.Tag;
       import org.springframework.http.HttpStatus;
       import org.springframework.http.ResponseEntity;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
       import org.springframework.web.bind.annotation.*;
-      import ${groupLink}.${lowerCase(projectName)}.services.${majStart(className)}Service;
+      import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
+      import ${groupLink}.${lowerCase(projectName)}.config.RestResponse;
+
       import java.util.List;
+
     controllerAnnotations: |
       @RestController
       @RequestMapping("/${lowerCase(classNameLink)}")
+      @Tag(name = "${formatReadable(className)}", description = "${formatReadable(className)} Management APIs")
     controllerExtends: ""
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
@@ -314,43 +357,181 @@
       {{tab}}   this.${lowerCase(className)}Service = ${lowerCase(className)}Service;
       {{tab}}}
     controllerMethodContent: |
+      {{tab}}@Operation(
+      {{tab}}    summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}    description = "Get a list of all ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "200",
+      {{tab}}        description = "Successfully retrieved the list of ${formatReadableLowerCase(className)}",
+      {{tab}}        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "204",
+      {{tab}}        description = "No ${formatReadableLowerCase(className)} found"
+      {{tab}}    )
+      {{tab}}})
       {{tab}}@GetMapping
-      {{tab}}public ResponseEntity<List<${majStart(className)}>> getAll${majStart(classNameLink)}() {
-      {{tab}}   List<${majStart(className)}> ${lowerCase(classNameLink)} = ${lowerCase(className)}Service.getAll${majStart(className)}();
-      {{tab}}   return ${lowerCase(classNameLink)}.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(${lowerCase(classNameLink)});
+      {{tab}}public ResponseEntity<RestResponse<List<${majStart(className)}>>> getAll${majStart(classNameLink)}() {
+      {{tab}}    List<${majStart(className)}> ${lowerCase(classNameLink)} = ${lowerCase(className)}Service.getAll${majStart(className)}();
+      {{tab}}    if (${lowerCase(classNameLink)}.isEmpty()) {
+      {{tab}}        return ResponseEntity.noContent().build();
+      {{tab}}    }
+      {{tab}}    RestResponse<List<${majStart(className)}>> response = RestResponse.buildSuccessResponse(HttpStatus.OK,
+      {{tab}}            "${formatReadableLowerCase(className)} retrieved successfully", ${lowerCase(classNameLink)});
+      {{tab}}    return ResponseEntity.ok(response);
       {{tab}}}
       
+      {{tab}}@Operation(
+      {{tab}}    summary = "Get ${formatReadableLowerCase(className)} by ID",
+      {{tab}}    description = "Retrieve a specific ${formatReadableLowerCase(className)} item by its ID"
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "200",
+      {{tab}}        description = "Successfully retrieved the ${formatReadableLowerCase(className)}",
+      {{tab}}        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "404",
+      {{tab}}        description = "${formatReadable(className)} not found with the provided ID"
+      {{tab}}    )
+      {{tab}}})
       {{tab}}@GetMapping("/{${pkColumn}}")
-      {{tab}}public ResponseEntity<${majStart(className)}> get${majStart(className)}ById(@PathVariable ${pkColumnType} ${pkColumn}) {
-      {{tab}}   ${majStart(className)} ${lowerCase(className)} = ${lowerCase(className)}Service.get${majStart(className)}ById(${pkColumn});
-      {{tab}}   return ResponseEntity.ok(${lowerCase(className)});
+      {{tab}}public ResponseEntity<RestResponse<${majStart(className)}>> get${majStart(className)}ById(
+      {{tab}}    @Parameter(description = "ID of the ${formatReadableLowerCase(className)} to retrieve", required = true)
+      {{tab}}    @PathVariable ${pkColumnType} ${pkColumn}
+      {{tab}}) {
+      {{tab}}    ${majStart(className)} ${lowerCase(className)} = ${lowerCase(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{tab}}    RestResponse<${majStart(className)}> response = RestResponse.buildSuccessResponse(HttpStatus.OK,
+      {{tab}}            "${formatReadableLowerCase(className)} retrieved successfully", ${lowerCase(className)});
+      {{tab}}    return ResponseEntity.ok(response);
       {{tab}}}
       
+      {{tab}}@Operation(
+      {{tab}}    summary = "Create new ${formatReadableLowerCase(className)}",
+      {{tab}}    description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "201",
+      {{tab}}        description = "${formatReadable(className)} created successfully",
+      {{tab}}        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "400",
+      {{tab}}        description = "Invalid ${formatReadableLowerCase(className)} supplied"
+      {{tab}}    )
+      {{tab}}})
       {{tab}}@PostMapping
-      {{tab}}public ResponseEntity<${majStart(className)}> create${majStart(className)}(@RequestBody ${majStart(className)} ${lowerCase(className)}) {
-      {{tab}}   ${majStart(className)} new${majStart(className)} = ${lowerCase(className)}Service.create${majStart(className)}(${lowerCase(className)});
-      {{tab}}   return ResponseEntity.status(HttpStatus.CREATED).body(new${majStart(className)});
+      {{tab}}public ResponseEntity<RestResponse<${majStart(className)}>> create${majStart(className)}(
+      {{tab}}    @Parameter(description = "${formatReadable(className)} object to be created", required = true)
+      {{tab}}    @RequestBody ${majStart(className)} ${lowerCase(className)}
+      {{tab}}) {
+      {{tab}}    ${majStart(className)} new${majStart(className)} = ${lowerCase(className)}Service.create${majStart(className)}(${lowerCase(className)});
+      {{tab}}    RestResponse<${majStart(className)}> response = RestResponse.buildSuccessResponse(HttpStatus.CREATED,
+      {{tab}}            "${formatReadableLowerCase(className)} created successfully", new${majStart(className)});
+      {{tab}}    return ResponseEntity.status(HttpStatus.CREATED).body(response);
       {{tab}}}
       
+      {{tab}}@Operation(
+      {{tab}}    summary = "Update existing ${formatReadableLowerCase(className)}",
+      {{tab}}    description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "200",
+      {{tab}}        description = "${formatReadable(className)} updated successfully",
+      {{tab}}        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "404",
+      {{tab}}        description = "${formatReadable(className)} not found with the provided ID"
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "400",
+      {{tab}}        description = "Invalid ${formatReadableLowerCase(className)} supplied"
+      {{tab}}    )
+      {{tab}}})
       {{tab}}@PutMapping("/{${pkColumn}}")
-      {{tab}}public ResponseEntity<${majStart(className)}> update${majStart(className)}(@PathVariable ${pkColumnType} ${pkColumn}, @RequestBody ${majStart(className)} ${lowerCase(className)}) {
-      {{tab}}   ${majStart(className)} update${majStart(className)} = ${lowerCase(className)}Service.update${majStart(className)}(${pkColumn}, ${lowerCase(className)});
-      {{tab}}   return ResponseEntity.ok(update${majStart(className)});
+      {{tab}}public ResponseEntity<RestResponse<${majStart(className)}>> update${majStart(className)}(
+      {{tab}}    @Parameter(description = "ID of the ${formatReadableLowerCase(className)} to update", required = true)
+      {{tab}}    @PathVariable ${pkColumnType} ${pkColumn},
+      {{tab}}    @Parameter(description = "Updated ${formatReadableLowerCase(className)} object", required = true)
+      {{tab}}    @RequestBody ${majStart(className)} ${lowerCase(className)}
+      {{tab}}) {
+      {{tab}}    ${majStart(className)} update${majStart(className)} = ${lowerCase(className)}Service.update${majStart(className)}(${pkColumn}, ${lowerCase(className)});
+      {{tab}}    RestResponse<${majStart(className)}> response = RestResponse.buildSuccessResponse(HttpStatus.OK,
+      {{tab}}            "${formatReadableLowerCase(className)} updated successfully", update${majStart(className)});
+      {{tab}}    return ResponseEntity.ok(response);
       {{tab}}}
       
+      {{tab}}@Operation(
+      {{tab}}    summary = "Delete ${formatReadableLowerCase(className)}",
+      {{tab}}    description = "Delete a ${formatReadableLowerCase(className)} item by its ID"
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "204",
+      {{tab}}        description = "${formatReadable(className)} deleted successfully"
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "404",
+      {{tab}}        description = "${formatReadable(className)} not found with the provided ID"
+      {{tab}}    )
+      {{tab}}})
       {{tab}}@DeleteMapping("/{${pkColumn}}")
-      {{tab}}public ResponseEntity<Void> delete${majStart(className)}ById(@PathVariable ${pkColumnType} ${pkColumn}) {
-      {{tab}}   ${lowerCase(className)}Service.delete${majStart(className)}(${pkColumn});
-      {{tab}}   return ResponseEntity.noContent().build();
+      {{tab}}public ResponseEntity<RestResponse<Void>> delete${majStart(className)}ById(
+      {{tab}}    @Parameter(description = "ID of the ${formatReadableLowerCase(className)} to delete", required = true)
+      {{tab}}    @PathVariable ${pkColumnType} ${pkColumn}
+      {{tab}}) {
+      {{tab}}    ${lowerCase(className)}Service.delete${majStart(className)}(${pkColumn});
+      {{tab}}    RestResponse<Void> response = RestResponse.buildSuccessResponse(HttpStatus.NO_CONTENT,
+      {{tab}}            "${formatReadableLowerCase(className)} deleted successfully", null);
+      {{tab}}    return ResponseEntity.ok(response);
       {{tab}}}
-      
-      {{tab}}@ExceptionHandler(RuntimeException.class)
-      {{tab}}public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
-      {{tab}}	return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-      {{tab}}}
+
+
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
     controllerAdditionalFiles:
+      - fileType: "RestResponse"
+        fileName: "RestResponse"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.config;
+          
+          import java.time.Instant;
+          import org.springframework.http.HttpStatus;
+          import lombok.Getter;
+          import lombok.Setter;
+          
+          @Getter
+          @Setter
+          public class RestResponse<T> {
+              private int status;
+              private String message;
+              private int returnCode;
+              private T data;
+              private Instant timestamp;
+          
+              private RestResponse(int status, String message, T data) {
+                  this.status = status;
+                  this.message = message;
+                  this.data = data;
+                  this.timestamp = Instant.now();
+              }
+          
+              public static <T> RestResponse<T> buildSuccessResponse(HttpStatus status, String message, T data) {
+                  return new RestResponse<>(status.value(), message, data);
+              }
+          
+              public static <T> RestResponse<T> buildErrorResponse(HttpStatus status, String message, T data) {
+                  return new RestResponse<>(status.value(), message, data);
+              }
+            }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
       - fileType: "WebConfig"
         fileName: "WebConfig"
         extension: "java"
@@ -392,7 +573,283 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
-  additionalFiles: [ ]
+  additionalFiles:
+    - fileType: "ProgramFile"
+      fileName: "Program"
+      extension: "cs"
+      content: |
+        {{#if useEurekaServer}}
+        using Steeltoe.Management.Endpoint.Info;
+        using Steeltoe.Discovery.Client;
+        using Steeltoe.Management.Endpoint.Health;
+        using Steeltoe.Management.Endpoint;
+        using System.Net.NetworkInformation;
+        using System.Net.Sockets;{{/if}}
+        using System.Net;
+        using Microsoft.OpenApi.Models;
+        using Microsoft.EntityFrameworkCore;
+        using ${majStart(projectName)}.Data;
+        using ${majStart(projectName)}.Repositories.Implementation;
+        using ${majStart(projectName)}.Repositories.Interface;
+        using ${majStart(projectName)}.Services.Implementation;
+        using ${majStart(projectName)}.Services.Interface;
+        
+        var builder = WebApplication.CreateBuilder(args);
+        
+        var pathBase = builder.Configuration.GetValue<string>("PathBase");
+        
+        builder.Services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "${projectName}",               
+                Version = "v1",                       
+                Description = "${projectDescription}"
+            });
+            if (!string.IsNullOrEmpty(pathBase))
+            {
+              c.AddServer(new OpenApiServer { Url = pathBase });
+            }
+        });
+        
+        // Configure Kestrel to listen on both the machine's IP address and localhost
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            {{#if useEurekaServer}}
+            options.Listen(IPAddress.Parse(localIpAddress), ${projectPort});{{/if}}
+            options.Listen(IPAddress.Loopback, ${projectPort});
+        });
+        {{#if useEurekaServer}}
+        
+        // Add Steeltoe Actuators for application monitoring and diagnostics
+        builder.Services.AddAllActuators(builder.Configuration);
+        builder.Services.AddHealthActuator();
+        builder.Services.AddInfoActuator();
+        
+        {{#if useEurekaServer}}
+        // Retrieve the local IP address dynamically
+        string localIpAddress = NetworkInterface
+              .GetAllNetworkInterfaces()
+              .SelectMany(nic => nic.GetIPProperties().UnicastAddresses)
+              .Where(addr => addr.Address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(addr.Address))
+              .Select(addr => addr.Address.ToString())
+              .FirstOrDefault() ?? "127.0.0.1";
+        
+        // Set the IP address in configuration for Eureka registration
+        builder.Configuration["eureka:instance:ipAddress"] = localIpAddress;
+        
+        // Add Eureka Discovery Client for service registration with Eureka server
+        builder.Services.AddDiscoveryClient(builder.Configuration);{{/if}}
+        
+        // Add services to the container.
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        builder.Services.AddDbContext<${majStart(projectName)}Context>(options =>
+            options.Use${daoName}(connectionString${addOptions}));
+        
+        // Adding repositories ...
+        {{#each entities}}
+        builder.Services.AddScoped<I${this}Repository, ${this}Repository>();
+        {{/each}}
+        // Adding services ...
+        {{#each entities}}
+        builder.Services.AddScoped<I${this}Service, ${this}Service>();
+        {{/each}}
+        // Adding controllers ...
+        builder.Services.AddControllers();
+        
+        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+        
+        var app = builder.Build();
+        
+        if (!string.IsNullOrEmpty(pathBase))
+        {
+            app.UsePathBase(pathBase);
+        }
+        
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+        
+        app.UseHttpsRedirection();
+        {{#if useEurekaServer}}
+        // Map all actuators and controllers directly
+        app.MapAllActuators(_ => { });{{/if}}
+        app.MapControllers();
+        
+        app.UseAuthorization();
+        app.Run();
+      
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+
+    - fileType: "DbContextFile"
+      fileName: "${majStart(projectName)}Context"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Data;
+        
+        using Microsoft.EntityFrameworkCore;
+        using Models;
+        
+        public class ${majStart(projectName)}Context : DbContext
+        {
+            {{#each entities}}
+            public DbSet<${this}> ${this}s { get; set; }
+            {{/each}}
+            public ${majStart(projectName)}Context(DbContextOptions<${majStart(projectName)}Context> options) : base(options)
+            {
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Data/"
+
+    - fileType: "Generic  file"
+      fileName: "IRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Generic;
+        
+        using System.Linq.Expressions;
+        
+        public interface IRepository<T, in TKey> where T : class
+        {
+            Task<IEnumerable<T>> GetAllWithIncludes(params Expression<Func<T, object?>>[]? includeProperties);
+            Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
+            Task AddAsync(T entity);
+            Task UpdateAsync(T entity);
+            Task DeleteAsync(TKey id);
+            Task<bool> ExistsAsync(TKey id);
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Generic/"
+
+    - fileType: "Generic Repository file"
+      fileName: "Repository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Generic;
+        
+        using System.ComponentModel.DataAnnotations;
+        using System.Linq.Expressions;
+        using Microsoft.EntityFrameworkCore;
+        using Data;
+        
+        public class Repository<T, TKey>: IRepository<T, TKey>, IDisposable, IAsyncDisposable where T : class
+        {
+        
+            private readonly DbSet<T> _dbSet;
+            private readonly ${majStart(projectName)}Context _context;
+        
+            public Repository(${majStart(projectName)}Context context)
+            {
+                _context = context;
+                _dbSet = context.Set<T>();
+            }
+        
+            public async ValueTask DisposeAsync()
+            {
+                await _context.DisposeAsync();
+            }
+        
+            public void Dispose()
+            {
+                _context.Dispose();
+            }
+        
+            public async Task<IEnumerable<T>> GetAllWithIncludes(params Expression<Func<T, object?>>[]? includeProperties)
+            {
+                var query = GetQuery(_dbSet, includeProperties);
+                query = query.OrderBy(e => EF.Property<object>(e, GetKeyPropertyName()));
+                return await query.ToListAsync();
+            }     
+        
+            public async Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties)
+            {
+                var keyPropertyName = GetKeyPropertyName();
+                var query = GetQuery(_dbSet, includeProperties);
+                return await query.FirstOrDefaultAsync(e => EF.Property<TKey>(e, keyPropertyName)!.Equals(id));
+            }
+        
+            public async Task AddAsync(T entity)
+            {
+                await _dbSet.AddAsync(entity);
+                await _context.SaveChangesAsync();
+            }
+        
+            public async Task UpdateAsync(T entity)
+            {
+                _context.Entry(entity).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+            }
+        
+            public async Task DeleteAsync(TKey id)
+            {
+                var entity = await GetByIdAsync(id);
+                if (entity == null) 
+                    throw new KeyNotFoundException($"Entity with ID {id} not found.");
+                _dbSet.Remove(entity);
+                await _context.SaveChangesAsync();
+            }
+        
+            public async Task<bool> ExistsAsync(TKey id)
+            {
+                if (EqualityComparer<TKey>.Default.Equals(id, default)) return false;
+        
+                var keyPropertyName = GetKeyPropertyName();
+        
+                if (string.IsNullOrEmpty(keyPropertyName))
+                throw new InvalidOperationException($"No key property found for type {typeof(T).Name}");
+        
+                return await _dbSet.AnyAsync(e =>
+                    EF.Property<TKey>(e, keyPropertyName) != null &&
+                    EF.Property<TKey>(e, keyPropertyName)!.Equals(id));
+            }
+        
+            private IQueryable<T> GetQuery(IQueryable<T> query, params Expression<Func<T, object?>>[]? includeProperties)
+            {
+                if (includeProperties != null)
+                    foreach (var includeProperty in includeProperties)
+                        query = query.Include(includeProperty);
+        
+                return query;
+            }
+        
+            private string GetKeyPropertyName()
+            {
+                var keyProperty = typeof(T).GetProperties()
+                    .FirstOrDefault(prop => Attribute.IsDefined(prop, typeof(KeyAttribute)));
+        
+                if (keyProperty == null)
+                    throw new InvalidOperationException($"No key property found for type {typeof(T).Name}");
+        
+                return keyProperty.Name;
+            }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Generic/"
+
+    - fileType: "Generic file"
+      fileName: "IService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Generic;
+        
+        using System.Linq.Expressions;
+        
+        public interface IService<T, in TKey> where T : class
+        {
+            Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object?>>[]? includeProperties);
+            Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
+            Task AddAsync(T entity);
+            Task UpdateAsync(T entity);
+            Task DeleteAsync(TKey id);
+            Task<bool> ExistsAsync(TKey id);
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Generic/"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
@@ -419,7 +876,6 @@
       options:
         - "http://localhost:8761/eureka/"
       defaultOption: "http://localhost:8761/eureka/"
-
 
   dependencies: [ ]
 
@@ -466,7 +922,7 @@
     modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Interface/"
     modelDaoPackage: "${majStart(projectName)}.Repositories.Interface"
     modelDaoAdditionalFiles:
-      - fileType: "Repository inherited from Repository"
+      - fileType: "Repository inherited from Generic Repository"
         fileName: "${majStart(className)}Repository"
         extension: "cs"
         content: |
@@ -477,11 +933,10 @@
           
           namespace ${majStart(projectName)}.Repositories.Implementation;
           
-          public class ${majStart(className)}Repository : Repository<${majStart(className)}, ${pkColumnType}>, I${majStart(className)}Repository
-          {
-          {{tab}}public ${majStart(className)}Repository(${majStart(projectName)}Context context) : base(context)
-          {{tab}}{
-          {{tab}}}
+          public class ${majStart(className)}Repository : Repository<${majStart(className)}, ${pkColumnType}>, I${majStart(className)}Repository          {
+              public ${majStart(className)}Repository(${majStart(projectName)}Context context) : base(context)
+              {
+              }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Implementation/"
 
@@ -501,57 +956,56 @@
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
     servicePackage: "${majStart(projectName)}.Services.Interface"
     serviceAdditionalFiles:
-      - fileType: "Service inherited from Service"
+      - fileType: "Service inherited from Service Interface"
         fileName: "${majStart(className)}Service"
         extension: "cs"
         content: |
           using System.Linq.Expressions;
           using ${majStart(projectName)}.Models;
           using ${majStart(projectName)}.Repositories.Interface;
+          using ${majStart(projectName)}.Repositories.Implementation;
           using ${majStart(projectName)}.Services.Interface;
           
           namespace ${majStart(projectName)}.Services.Implementation;
           
           public class ${majStart(className)}Service : I${majStart(className)}Service
           {
-          {{tab}}private readonly I${majStart(className)}Repository _repository;
+              private readonly I${majStart(className)}Repository _repository;
           
-          {{tab}}public ${majStart(className)}Service(I${majStart(className)}Repository repository)
-          {{tab}}{
-          {{tab}}{{tab}}_repository = repository;
-          {{tab}}}
+              public ${majStart(className)}Service(I${majStart(className)}Repository repository)
+              {
+                  _repository = repository;
+              }
           
-          {{tab}}public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(
-          {{tab}}params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
-          {{tab}}{
-          {{tab}}{{tab}}return await _repository.GetAllWithIncludes(includeProperties);
-          {{tab}}}
+              public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
+              {
+                  return await _repository.GetAllWithIncludes(includeProperties);
+              }
           
-          {{tab}}public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id,
-          {{tab}}params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
-          {{tab}}{
-          {{tab}}{{tab}}return await _repository.GetByIdAsync(id, includeProperties);
-          {{tab}}}
+              public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
+              {
+                  return await _repository.GetByIdAsync(id, includeProperties);
+              }
           
-          {{tab}}public async Task AddAsync(${majStart(className)} ${minStart(className)})
-          {{tab}}{
-          {{tab}}{{tab}}await _repository.AddAsync(${minStart(className)});
-          {{tab}}}
+              public async Task AddAsync(${majStart(className)} ${minStart(className)})
+              {
+                  await _repository.AddAsync(${minStart(className)});
+              }
           
-          {{tab}}public async Task UpdateAsync(${majStart(className)} ${minStart(className)})
-          {{tab}}{
-          {{tab}}{{tab}}await _repository.UpdateAsync(${minStart(className)});
-          {{tab}}}
+              public async Task UpdateAsync(${majStart(className)} ${minStart(className)})
+              {
+                  await _repository.UpdateAsync(${minStart(className)});
+              }
           
-          {{tab}}public async Task DeleteAsync(${pkColumnType} id)
-          {{tab}}{
-          {{tab}}{{tab}}await _repository.DeleteAsync(id);
-          {{tab}}}
+              public async Task DeleteAsync(${pkColumnType} id)
+              {
+                  await _repository.DeleteAsync(id);
+              }
           
-          {{tab}}public async Task<bool> ExistsAsync(${pkColumnType} id)
-          {{tab}}{
-          {{tab}}{{tab}}return await _repository.ExistsAsync(id);
-          {{tab}}}
+              public async Task<bool> ExistsAsync(${pkColumnType} id)
+              {
+                  return await _repository.ExistsAsync(id);
+              }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation/"
 
@@ -560,6 +1014,7 @@
     controllerImports: |
       using Microsoft.AspNetCore.Mvc;
       using Models;
+      using Services;
       using Services.Interface;
 
     controllerAnnotations: |
@@ -641,11 +1096,11 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)};
-
+        
         import org.springframework.boot.SpringApplication;
         import org.springframework.boot.autoconfigure.SpringBootApplication;
         import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
-
+        
         @EnableEurekaServer
         @SpringBootApplication
         public class ${majStart(projectName)}Application {
@@ -660,17 +1115,17 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)};
-
+        
         import org.junit.jupiter.api.Test;
         import org.springframework.boot.test.context.SpringBootTest;
-
+        
         @SpringBootTest
         class ${majStart(projectName)}ApplicationTests {
-
+        
         {{tab}}@Test
         {{tab}}void contextLoads() {
         {{tab}}}
-
+        
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}/"
 
@@ -788,13 +1243,13 @@
         import org.springframework.boot.SpringApplication;
         import org.springframework.boot.autoconfigure.SpringBootApplication;
         {{#if useEurekaServer}}import org.springframework.cloud.client.discovery.EnableDiscoveryClient;{{/if}}
-
+        
         {{#if useEurekaServer}}@EnableDiscoveryClient{{/if}}
         @SpringBootApplication
         public class ${majStart(projectName)}Application {
             public static void main(String[] args) {
-        		SpringApplication.run(${majStart(projectName)}Application.class, args);
-        	}
+              SpringApplication.run(${majStart(projectName)}Application.class, args);
+          }
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}"
@@ -804,17 +1259,16 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)};
-
+        
         import org.junit.jupiter.api.Test;
         import org.springframework.boot.test.context.SpringBootTest;
-
+        
         @SpringBootTest
         class ${majStart(projectName)}ApplicationTests {
-
-        {{tab}}@Test
-        {{tab}}void contextLoads() {
-        {{tab}}}
-
+        
+            @Test
+            void contextLoads() {
+            }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}/"
 
