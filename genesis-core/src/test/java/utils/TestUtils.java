@@ -10,7 +10,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class UtilsTest {
+public class TestUtils {
 
     // Méthode utilitaire pour créer une route
     public static Map<String, Object> createRoute(String id, String uri, String path, String method) {
@@ -58,6 +58,9 @@ public class UtilsTest {
 
         framework.setUseCloud(useCloud);
         framework.setUseEurekaServer(useEureka);
+
+        config.put("useCloud", framework.getUseCloud());
+        config.put("useEureka", framework.getUseEurekaServer());
 
         return config;
     }

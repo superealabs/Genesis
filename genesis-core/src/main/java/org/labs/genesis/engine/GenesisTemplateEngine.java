@@ -1,7 +1,7 @@
 package org.labs.genesis.engine;
 
 import org.jetbrains.annotations.NotNull;
-import org.labs.utils.FileUtils;
+import org.labs.utils.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,10 +38,12 @@ public class GenesisTemplateEngine {
     static {
         FUNCTIONS_MAP.put("upperCase", str -> str == null ? "" : str.toUpperCase());
         FUNCTIONS_MAP.put("lowerCase", str -> str == null ? "" : str.toLowerCase());
-        FUNCTIONS_MAP.put("majStart", FileUtils::majStart);
-        FUNCTIONS_MAP.put("minStart", FileUtils::minStart);
-        FUNCTIONS_MAP.put("toCamelCase", FileUtils::toCamelCase);
-        FUNCTIONS_MAP.put("toKebabCase", FileUtils::toKebabCase);
+        FUNCTIONS_MAP.put("majStart", StringUtils::majStart);
+        FUNCTIONS_MAP.put("minStart", StringUtils::minStart);
+        FUNCTIONS_MAP.put("toCamelCase", StringUtils::toCamelCase);
+        FUNCTIONS_MAP.put("toKebabCase", StringUtils::toKebabCase);
+        FUNCTIONS_MAP.put("formatReadable", StringUtils::formatReadable);
+        FUNCTIONS_MAP.put("formatReadableLowerCase", StringUtils::formatReadableLowerCase);
     }
 
     private final Map<String, String> commentMap = new HashMap<>();
