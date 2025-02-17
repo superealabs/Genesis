@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static utils.UtilsTest.*;
+import static utils.TestUtils.*;
 
 public class GenesisCoreTest {
     private ProjectGenerator projectGenerator;
@@ -50,7 +50,7 @@ public class GenesisCoreTest {
 
             // Création du contexte de base
             ProjectGenerationContext context = createBaseContext(
-                    "TestWebApiFeat",
+                    "TestWebApi",
                     "org.labs",
                     "8000",
                     "../generated/spring",
@@ -86,7 +86,7 @@ public class GenesisCoreTest {
 
             // Génération du projet
             projectGenerator.generateProject(context);
-            assertFolderCreated("../generated/spring");
+            assertFolderCreated("../generated/spring/");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -96,7 +96,7 @@ public class GenesisCoreTest {
     void generateProjectNET() {
         try {
             // Configuration initiale
-            var credentials = createDatabaseCredentials("test_db");
+            var credentials = createDatabaseCredentials("genesis");
 
             // Récupération des composants du projet
             var database = ProjectGenerator.databases.get(Constantes.PostgreSQL_ID);
@@ -106,7 +106,7 @@ public class GenesisCoreTest {
 
             // Création du contexte de base
             ProjectGenerationContext context = createBaseContext(
-                    "TestNet",
+                    "WebApiTestNet",
                     "",
                     "8080",
                     "../generated/dotnet",
@@ -120,7 +120,7 @@ public class GenesisCoreTest {
                     "8.0",
                     "8080",
                     true,
-                    true
+                    false
             );
 
             // Configuration du framework et du langage

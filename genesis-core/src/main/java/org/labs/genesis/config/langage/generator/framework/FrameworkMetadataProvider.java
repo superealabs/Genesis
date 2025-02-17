@@ -9,6 +9,7 @@ import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
+import org.labs.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -232,7 +233,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnType", field.getColumnType());
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("referencedColumnType", field.getReferencedColumnType());
-        fieldMap.put("columnNameField", FileUtils.toCamelCase(field.getReferencedColumn()));
+        fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
 
         return fieldMap;
     }

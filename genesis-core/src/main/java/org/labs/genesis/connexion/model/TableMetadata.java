@@ -6,14 +6,15 @@ import lombok.Setter;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
-import org.labs.utils.FileUtils;
+import org.labs.utils.StringUtils;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.labs.utils.FileUtils.toCamelCase;
+import static org.labs.utils.StringUtils.toCamelCase;
+
 
 @Setter
 @Getter
@@ -54,9 +55,9 @@ public class TableMetadata {
             setClassName(
                     Stream.of(tableName)
                             .map(String::toLowerCase)
-                            .map(FileUtils::toCamelCase)
-                            .map(FileUtils::majStart)
-                            .map(FileUtils::removeLastS)
+                            .map(StringUtils::toCamelCase)
+                            .map(StringUtils::majStart)
+                            .map(StringUtils::removeLastS)
                             .findFirst()
                             .orElse("")
             );
@@ -159,12 +160,11 @@ public class TableMetadata {
                         field.setColumnType(toCamelCase(field.getType()));
                         field.setName(
                                 field.getName()
-                                        .transform(FileUtils::toCamelCase)
-                                        .transform(name -> name + FileUtils.majStart(FileUtils.toCamelCase(pkTableName.toLowerCase())))
-                        );
-                        field.setReferencedTable(pkTableName.transform(FileUtils::toCamelCase));
+                                        .transform(StringUtils::toCamelCase)
+                                        .transform(name -> name +(StringUtils.majStart(StringUtils.toCamelCase(pkTableName.toLowerCase())))
+                        ));
+                        field.setReferencedTable(pkTableName.transform(StringUtils::toCamelCase));
 
-                        // Récupérer le type de la colonne référencée
                         try (ResultSet pkColumn = metaData.getColumns(null, database.getCredentials().getSchemaName(), pkTableName, pkColumnName)) {
                             if (pkColumn.next()) {
                                 String pkColumnType = pkColumn.getString("TYPE_NAME");
@@ -173,73 +173,14 @@ public class TableMetadata {
                         }
 
                         field.setType(pkTableName
-                                .transform(FileUtils::toCamelCase)
-                                .transform(FileUtils::removeLastS)
-                                .transform(FileUtils::majStart)
+                                .transform(StringUtils::toCamelCase)
+                                .transform(StringUtils::removeLastS)
+                                .transform(StringUtils::majStart)
                         );
 
                     }
                 }
             }
-        }
-    }
-
-    private void printColumnsInfo(DatabaseMetaData metaData, String tableName) throws SQLException {
-        ResultSet columns = metaData.getColumns(null, database.getCredentials().getSchemaName(), tableName, null);
-        System.out.println("columns:");
-
-        while (columns.next()) {
-            String columnName = columns.getString("COLUMN_NAME");
-            int columnType = columns.getInt("DATA_TYPE");
-            String columnTypeName = columns.getString("TYPE_NAME");
-            int columnSize = columns.getInt("COLUMN_SIZE");
-            boolean nullable = columns.getBoolean("NULLABLE");
-
-            String dataTypeName = JDBCType.valueOf(columnType).getName();
-            System.out.println("\t" + columnName + " (" + dataTypeName + "), Size: " + columnSize + ", Nullable: " + nullable + "Columname type: " + columnTypeName);
-        }
-    }
-
-    private void printPrimaryKeys(DatabaseMetaData metaData, String tableName) throws SQLException {
-        ResultSet primaryKeys = metaData.getPrimaryKeys(null, database.getCredentials().getSchemaName(), tableName);
-        System.out.println("Primary Keys:");
-        while (primaryKeys.next()) {
-            String pkColumnName = primaryKeys.getString("COLUMN_NAME");
-            System.out.println("\t" + pkColumnName);
-        }
-    }
-
-    private void printForeignKeys(DatabaseMetaData metaData, String tableName) throws SQLException {
-        ResultSet foreignKeys = metaData.getImportedKeys(null, database.getCredentials().getSchemaName(), tableName);
-        System.out.println("Foreign Keys:");
-        while (foreignKeys.next()) {
-            String fkColumnName = foreignKeys.getString("FKCOLUMN_NAME");
-            String fkName = foreignKeys.getString("FK_NAME");
-            String pkTableName = foreignKeys.getString("PKTABLE_NAME");
-            String pkColumnName = foreignKeys.getString("PKCOLUMN_NAME");
-            System.out.println("\t" + fkColumnName + " -> " + pkTableName + "." + pkColumnName + " (" + fkName + ")");
-        }
-    }
-
-    public void getMetaData(Credentials credentials, Database database) {
-        try (Connection connection = database.getConnection(credentials)) {
-            DatabaseMetaData metaData = connection.getMetaData();
-
-            ResultSet tables = metaData.getTables(null, database.getCredentials().getSchemaName(), "%", new String[]{"TABLE"});
-
-            while (tables.next()) {
-                String tableName = tables.getString("TABLE_NAME");
-                System.out.println("Table Name: " + tableName);
-
-                printColumnsInfo(metaData, tableName);
-                printPrimaryKeys(metaData, tableName);
-                printForeignKeys(metaData, tableName);
-
-                System.out.println();
-            }
-
-        } catch (SQLException | ClassNotFoundException e) {
-            throw new RuntimeException("Error while accessing database metadata: ", e);
         }
     }
 
