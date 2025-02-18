@@ -224,8 +224,8 @@ public class FrameworkMetadataProvider {
     public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field) {
         Map<String, Object> fieldMap = new HashMap<>();
 
-        fieldMap.put("withGetters", true);
-        fieldMap.put("withSetters", true);
+        fieldMap.put("withGetters", false);
+        fieldMap.put("withSetters", false);
         fieldMap.put("type", field.getType());
         fieldMap.put("name", field.getName());
         fieldMap.put("isPrimaryKey", field.isPrimary());

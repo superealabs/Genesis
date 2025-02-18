@@ -20,10 +20,6 @@ public class APIGenerator implements GenesisGenerator {
         this.engine = engine;
     }
 
-    public APIGenerator() {
-        this.engine = new GenesisTemplateEngine();
-    }
-
 
     private String loadTemplate(Framework framework) throws IOException {
         return FileUtils.getFileContent(Constantes.DATA_PATH + "/" + framework.getTemplate() + "." + Constantes.MODEL_TEMPLATE_EXT);

@@ -50,7 +50,7 @@ public class GenesisCoreTest {
 
             // Création du contexte de base
             ProjectGenerationContext context = createBaseContext(
-                    "TestWebApi",
+                    "TestWebApiRe",
                     "org.labs",
                     "8000",
                     "../generated/spring",
@@ -96,7 +96,7 @@ public class GenesisCoreTest {
     void generateProjectNET() {
         try {
             // Configuration initiale
-            var credentials = createDatabaseCredentials("genesis");
+            var credentials = createDatabaseCredentials("test_db");
 
             // Récupération des composants du projet
             var database = ProjectGenerator.databases.get(Constantes.PostgreSQL_ID);

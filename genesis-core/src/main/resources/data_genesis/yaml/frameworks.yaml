@@ -58,6 +58,150 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}/"
 
+
+    - fileType: "RestResponse"
+      fileName: "RestResponse"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.dto;
+
+        import java.time.Instant;
+        import org.springframework.http.HttpStatus;
+        import lombok.Getter;
+        import lombok.Setter;
+
+        @Getter
+        @Setter
+        public class RestResponse<T> {
+            private int status;
+            private String message;
+            private int returnCode;
+            private T data;
+            private Instant timestamp;
+
+            private RestResponse(int status, String message, int returnCode, T data) {
+                this.status = status;
+                this.message = message;
+                this.returnCode = returnCode;
+                this.data = data;
+                this.timestamp = Instant.now();
+            }
+
+            public static <T> RestResponse<T> buildSuccessResponse(HttpStatus status, String message, T data) {
+                int OK = 1;
+                return new RestResponse<>(status.value(), message, OK, data);
+            }
+
+            public static <T> RestResponse<T> buildErrorResponse(HttpStatus status, String message, T data) {
+                int KO = 0;
+                return new RestResponse<>(status.value(), message, KO, data);
+            }
+          }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/dto"
+    - fileType: "WebConfig"
+      fileName: "WebConfig"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config;
+
+        import org.springframework.context.annotation.Configuration;
+        import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+        import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+        import org.springframework.web.servlet.config.annotation.CorsRegistry;
+
+        @Configuration
+        public class WebConfig implements WebMvcConfigurer {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                    .allowedOriginPatterns("*")
+                    .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                    .allowedHeaders("*")
+                    .allowCredentials(true)
+                    .maxAge(3600);
+            }
+            @Override
+            public void addViewControllers(ViewControllerRegistry registry) {
+                registry.addRedirectViewController("/", "/swagger-ui/index.html");
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+
+    - fileType: "Exception"
+      fileName: "ResourceNotFoundException"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.exception;
+
+        public class ResourceNotFoundException extends RuntimeException {
+            public ResourceNotFoundException(String message) {
+                super(message);
+            }
+            
+            public ResourceNotFoundException(String message, Throwable cause) {
+                super(message, cause);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/exception"
+
+    - fileType: "Exception"
+      fileName: "InternalServerErrorException"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.exception;
+
+        public class InternalServerErrorException extends RuntimeException {
+            public InternalServerErrorException(String message) {
+                super(message);
+            }
+            
+            public InternalServerErrorException(String message, Throwable cause) {
+                super(message, cause);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/exception"
+
+    - fileType: "Exception Handler"
+      fileName: "GlobalExceptionHandler"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.exception.handler;
+        
+        import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+        import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
+        import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
+        import org.springframework.http.HttpStatus;
+        import org.springframework.http.ResponseEntity;
+        import org.springframework.web.bind.annotation.ExceptionHandler;
+        import org.springframework.web.bind.annotation.RestControllerAdvice;
+        
+        @RestControllerAdvice
+        public class GlobalExceptionHandler {
+            
+            @ExceptionHandler(ResourceNotFoundException.class)
+            public ResponseEntity<RestResponse<Void>> handleEntityNotFoundException(ResourceNotFoundException ex) {
+                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+            
+            @ExceptionHandler(InternalServerErrorException.class)
+            public ResponseEntity<RestResponse<Void>> handleInternalServerErrorException(InternalServerErrorException ex) {
+                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), null);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+            
+            @ExceptionHandler(Exception.class)
+            public ResponseEntity<RestResponse<Void>> handleGenericException(Exception ex) {
+                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", null);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+        
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/exception/handler"
+
+
     - fileType: "ApplicationYml"
       fileName: "application"
       extension: "yml"
@@ -164,7 +308,6 @@
         - "http://localhost:8761/eureka/"
       defaultOption: "http://localhost:8761/eureka/"
 
-
   dependencies:
     - groupId: "org.projectlombok"
       artifactId: "lombok"
@@ -195,8 +338,12 @@
     toGenerate: true
     modelImports: |
       import jakarta.persistence.*;
+      import lombok.Getter;
+      import lombok.Setter;
     modelExtends: ""
     modelAnnotations: |
+      @Setter
+      @Getter
       @Entity
       @Table(name="${tableName}")
     modelFieldContent: |
@@ -210,18 +357,7 @@
       {{tab}}@Column(name="${this.columnName}"){{/if}}
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
-    modelGetterSetter: |
-      {{tab}}{{#each fields}}
-      {{tab}}{{#if this.withGetters}}
-      {{tab}}public ${this.type} get${majStart(this.name)}() {
-      {{tab}}   return ${this.name};
-      {{tab}}}{{/if}}
-      {{#if this.withSetters}}
-      {{tab}}public void set${majStart(this.name)}(${this.type} ${this.name}) {
-      {{tab}}   this.${this.name} = ${this.name};
-      {{tab}}}{{#if !@last}}
-      {{tab}}{{/if}}
-      {{tab}}{{/if}}{{/each}}
+    modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
     modelPackage: "${groupLink}.${lowerCase(projectName)}.models;"
@@ -231,7 +367,7 @@
       import org.springframework.data.jpa.repository.JpaRepository;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
 
-    modelDaoAnnotations: "{{newline}}"
+    modelDaoAnnotations: ""
     modelDaoClassKeyword: "public interface"
     modelDaoExtends: "extends JpaRepository<${majStart(className)}, ${pkColumnType}>"
     modelDaoName: "${majStart(className)}Repository"
@@ -251,6 +387,8 @@
       import java.util.List;
       import java.util.Optional;
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
+      import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
+      import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
 
     serviceAnnotations: |
       @Service
@@ -266,39 +404,56 @@
     serviceMethodContent: |
       {{tab}}@Override
       {{tab}}public List<${majStart(className)}> getAll${majStart(className)}() {
-      {{tab}}   return ${minStart(className)}Repository.findAll(Sort.by(Sort.Direction.ASC, "${pkColumn}"));
+      {{tab}}    try {
+      {{tab}}        return ${minStart(className)}Repository.findAll(Sort.by(Sort.Direction.ASC, "${pkColumn}"));
+      {{tab}}    } catch (Exception ex) {
+      {{tab}}        throw new InternalServerErrorException("Error while retrieving ${formatReadableLowerCase(className)}", ex);
+      {{tab}}    }
       {{tab}}}
       
       {{tab}}@Override
       {{tab}}public ${majStart(className)} get${majStart(className)}ById(${pkColumnType} ${pkColumn}) {
-      {{tab}}   Optional<${majStart(className)}> ${minStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
-      {{tab}}   if (${minStart(className)}.isPresent()) {
-      {{tab}}     return ${minStart(className)}.get();
-      {{tab}}   } else {
-      {{tab}}     throw new RuntimeException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
-      {{tab}}   }
+      {{tab}}    Optional<${majStart(className)}> ${minStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
+      {{tab}}    if (${minStart(className)}.isPresent()) {
+      {{tab}}        return ${minStart(className)}.get();
+      {{tab}}    } else {
+      {{tab}}        throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
+      {{tab}}    }
       {{tab}}}
       
       {{tab}}@Override
       {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
-      {{tab}}   return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}    try {
+      {{tab}}        return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}    } catch (Exception ex) {
+      {{tab}}        throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
+      {{tab}}    }
       {{tab}}}
-
+      
       {{tab}}@Override
       {{tab}}public ${majStart(className)} update${majStart(className)}(${pkColumnType} ${pkColumn}, ${majStart(className)} ${minStart(className)}) {
-      {{tab}}   Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
-      {{tab}}		if (existing${majStart(className)}.isPresent()) {
-      {{tab}}		    ${minStart(className)}.set${majStart(pkColumn)}(${pkColumn});
-      {{tab}}           return ${minStart(className)}Repository.save(${minStart(className)});
-      {{tab}}       } else {
-      {{tab}}         throw new RuntimeException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
-      {{tab}}       }
+      {{tab}}    Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
+      {{tab}}    if (existing${majStart(className)}.isPresent()) {
+      {{tab}}        ${minStart(className)}.set${majStart(pkColumn)}(${pkColumn});
+      {{tab}}        try {
+      {{tab}}            return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}        } catch (Exception ex) {
+      {{tab}}            throw new InternalServerErrorException("Error while updating ${formatReadableLowerCase(className)}", ex);
+      {{tab}}        }
+      {{tab}}    } else {
+      {{tab}}        throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
+      {{tab}}    }
       {{tab}}}
       
       {{tab}}@Override
       {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
-      {{tab}}   ${minStart(className)}Repository.deleteById(${pkColumn});
+      {{tab}}    try {
+      {{tab}}        ${minStart(className)}Repository.deleteById(${pkColumn});
+      {{tab}}    } catch (Exception ex) {
+      {{tab}}        throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
+      {{tab}}    }
       {{tab}}}
+
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
     servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
     serviceAdditionalFiles:
@@ -340,7 +495,7 @@
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
       import org.springframework.web.bind.annotation.*;
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
-      import ${groupLink}.${lowerCase(projectName)}.config.RestResponse;
+      import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
 
       import java.util.List;
 
@@ -495,73 +650,7 @@
 
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
-    controllerAdditionalFiles:
-      - fileType: "RestResponse"
-        fileName: "RestResponse"
-        extension: "java"
-        content: |
-          package ${groupLink}.${lowerCase(projectName)}.config;
-          
-          import java.time.Instant;
-          import org.springframework.http.HttpStatus;
-          import lombok.Getter;
-          import lombok.Setter;
-          
-          @Getter
-          @Setter
-          public class RestResponse<T> {
-              private int status;
-              private String message;
-              private int returnCode;
-              private T data;
-              private Instant timestamp;
-          
-              private RestResponse(int status, String message, T data) {
-                  this.status = status;
-                  this.message = message;
-                  this.data = data;
-                  this.timestamp = Instant.now();
-              }
-          
-              public static <T> RestResponse<T> buildSuccessResponse(HttpStatus status, String message, T data) {
-                  return new RestResponse<>(status.value(), message, data);
-              }
-          
-              public static <T> RestResponse<T> buildErrorResponse(HttpStatus status, String message, T data) {
-                  return new RestResponse<>(status.value(), message, data);
-              }
-            }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
-      - fileType: "WebConfig"
-        fileName: "WebConfig"
-        extension: "java"
-        content: |
-          package ${groupLink}.${lowerCase(projectName)}.config;
-          
-          import org.springframework.context.annotation.Configuration;
-          import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
-          import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-          import org.springframework.web.servlet.config.annotation.CorsRegistry;
-          
-          
-          @Configuration
-          public class WebConfig implements WebMvcConfigurer {
-          {{tab}}@Override
-          {{tab}}public void addCorsMappings(CorsRegistry registry) {
-          {{tab}}    registry.addMapping("/**")
-          {{tab}}        .allowedOriginPatterns("*")
-          {{tab}}        .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-          {{tab}}        .allowedHeaders("*")
-          {{tab}}        .allowCredentials(true)
-          {{tab}}        .maxAge(3600);
-          {{tab}}}
-          
-          {{tab}}@Override
-          {{tab}}public void addViewControllers(ViewControllerRegistry registry) {
-          {{tab}}    registry.addRedirectViewController("/", "/swagger-ui/index.html");
-          {{tab}}}
-          }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+    controllerAdditionalFiles: []
 
 - id: 2
   languageId: 2
