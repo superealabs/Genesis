@@ -96,7 +96,7 @@
                 int KO = 0;
                 return new RestResponse<>(status.value(), message, KO, data);
             }
-          }
+        }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/dto"
     - fileType: "WebConfig"
@@ -127,6 +127,62 @@
             }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+
+    - fileType: "WebUtils"
+      fileName: "WebUtils"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.utils;
+
+        import org.springframework.data.domain.Sort;
+        import java.util.Arrays;
+        import java.util.List;
+        import java.util.stream.Collectors;
+        
+        public class WebUtils {
+            public static final String ASC = "asc";
+            public static final String DESC = "desc";
+            public static final String SORT_CRITERIA_DELIMITER = ";";
+            public static final String SORT_PARTS_DELIMITER = ",";
+            
+            public static Sort createSortObject(String sortParam) {
+                try {
+                    String[] sortCriteria = sortParam.split(SORT_CRITERIA_DELIMITER);
+                    
+                    List<Sort.Order> orders = Arrays.stream(sortCriteria)
+                            .map(criteria -> {
+                                String[] parts = criteria.split(SORT_PARTS_DELIMITER);
+                                if (parts.length != 2) {
+                                    throw new IllegalArgumentException(
+                                        "Each sort criteria must have exactly 2 parts: property and direction"
+                                    );
+                                }
+            
+                                String property = parts[0].trim();
+                                String direction = parts[1].trim().toLowerCase();
+                                
+                                if (!direction.equals(ASC) && !direction.equals(DESC)) {
+                                    throw new IllegalArgumentException(
+                                        "Sort direction must be either '"+ASC+"' or '"+DESC+"'"
+                                    );
+                                }
+                            
+                                return new Sort.Order(
+                                          Sort.Direction.fromString(direction),
+                                          property
+                                );
+                            })
+                            .collect(Collectors.toList());
+            
+                    return Sort.by(orders);
+        
+                } catch (Exception e) {
+                    throw new IllegalArgumentException(e.getMessage());
+                }
+            }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
 
     - fileType: "Exception"
       fileName: "ResourceNotFoundException"
@@ -168,6 +224,7 @@
       content: |
         package ${groupLink}.${lowerCase(projectName)}.exception.handler;
         
+        import lombok.extern.slf4j.Slf4j;
         import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
         import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
         import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
@@ -176,24 +233,35 @@
         import org.springframework.web.bind.annotation.ExceptionHandler;
         import org.springframework.web.bind.annotation.RestControllerAdvice;
         
+        @Slf4j
         @RestControllerAdvice
         public class GlobalExceptionHandler {
             
             @ExceptionHandler(ResourceNotFoundException.class)
             public ResponseEntity<RestResponse<Void>> handleEntityNotFoundException(ResourceNotFoundException ex) {
                 RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
+                log.info("Resource not found : {}", ex.getMessage(), ex);        
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
             
             @ExceptionHandler(InternalServerErrorException.class)
             public ResponseEntity<RestResponse<Void>> handleInternalServerErrorException(InternalServerErrorException ex) {
                 RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), null);
+                log.error("An internal error occurred : {}", ex.getMessage(), ex);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+        
+            @ExceptionHandler(IllegalArgumentException.class)
+            public ResponseEntity<RestResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
+                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
+                log.error("Illegal argument provided : {}", ex.getMessage(), ex);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
             
             @ExceptionHandler(Exception.class)
             public ResponseEntity<RestResponse<Void>> handleGenericException(Exception ex) {
                 RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", null);
+                log.error("An unexpected error occurred : {}", ex.getMessage(), ex);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
         
@@ -380,11 +448,11 @@
   service:
     toGenerate: true
     serviceImports: |
-      import org.springframework.data.domain.Sort;
+      import org.springframework.data.domain.Page;
+      import org.springframework.data.domain.Pageable;      
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
       import org.springframework.stereotype.Service;
       import ${groupLink}.${lowerCase(projectName)}.repositories.${majStart(className)}Repository;
-      import java.util.List;
       import java.util.Optional;
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
@@ -403,9 +471,9 @@
       {{tab}}}
     serviceMethodContent: |
       {{tab}}@Override
-      {{tab}}public List<${majStart(className)}> getAll${majStart(className)}() {
+      {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable) {
       {{tab}}    try {
-      {{tab}}        return ${minStart(className)}Repository.findAll(Sort.by(Sort.Direction.ASC, "${pkColumn}"));
+      {{tab}}        return ${minStart(className)}Repository.findAll(pageable);
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while retrieving ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
@@ -464,10 +532,11 @@
           package ${groupLink}.${lowerCase(projectName)}.services.interfaces;
           
           import ${groupLink}.${lowerCase(projectName)}.models.${className};
-          import java.util.List;
+          import org.springframework.data.domain.Page;
+          import org.springframework.data.domain.Pageable;    
           
           public interface ${majStart(className)}Service {
-              List<${className}> getAll${className}();
+              Page<${className}> getAll${className}(Pageable pageable);
           
               ${className} get${className}ById(${pkColumnType} ${pkColumn});
           
@@ -495,9 +564,12 @@
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
       import org.springframework.web.bind.annotation.*;
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
+      import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
+      import org.springframework.data.domain.Page;
+      import org.springframework.data.domain.PageRequest;
+      import org.springframework.data.domain.Pageable;
+      import org.springframework.data.domain.Sort;
       import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
-
-      import java.util.List;
 
     controllerAnnotations: |
       @RestController
@@ -514,12 +586,12 @@
     controllerMethodContent: |
       {{tab}}@Operation(
       {{tab}}    summary = "Retrieve all ${formatReadableLowerCase(className)}",
-      {{tab}}    description = "Get a list of all ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
+      {{tab}}    description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
       {{tab}})
       {{tab}}@ApiResponses({
       {{tab}}    @ApiResponse(
       {{tab}}        responseCode = "200",
-      {{tab}}        description = "Successfully retrieved the list of ${formatReadableLowerCase(className)}",
+      {{tab}}        description = "Successfully retrieved the paginated list of ${formatReadableLowerCase(className)}",
       {{tab}}        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
       {{tab}}    ),
       {{tab}}    @ApiResponse(
@@ -528,16 +600,39 @@
       {{tab}}    )
       {{tab}}})
       {{tab}}@GetMapping
-      {{tab}}public ResponseEntity<RestResponse<List<${majStart(className)}>>> getAll${majStart(classNameLink)}() {
-      {{tab}}    List<${majStart(className)}> ${lowerCase(classNameLink)} = ${lowerCase(className)}Service.getAll${majStart(className)}();
-      {{tab}}    if (${lowerCase(classNameLink)}.isEmpty()) {
-      {{tab}}        return ResponseEntity.noContent().build();
-      {{tab}}    }
-      {{tab}}    RestResponse<List<${majStart(className)}>> response = RestResponse.buildSuccessResponse(HttpStatus.OK,
-      {{tab}}            "${formatReadableLowerCase(className)} retrieved successfully", ${lowerCase(classNameLink)});
-      {{tab}}    return ResponseEntity.ok(response);
+      {{tab}}public ResponseEntity<RestResponse<Page<${majStart(className)}>>> getAll${majStart(classNameLink)}(
+      {{tab}}    @Parameter(description = "Page number (0-indexed)", example = "0")
+      {{tab}}    @RequestParam(defaultValue = "0") int page,
+      {{tab}}
+      {{tab}}    @Parameter(description = "Size of the page", example = "10")
+      {{tab}}    @RequestParam(defaultValue = "10") int size,
+      {{tab}}
+      {{tab}}    @Parameter(
+      {{tab}}        description = "Sorting criteria in the format: property,(asc|desc). "
+      {{tab}}                + "Multiple sort criteria can be passed using semicolon separator. "
+      {{tab}}                + "Example: id,asc;name,desc",
+      {{tab}}        example = "id,asc"
+      {{tab}}    )
+      {{tab}}    @RequestParam(defaultValue = "id,asc") String sortParam) {
+      {{tab}}
+      {{tab}}    Sort sortObj = WebUtils.createSortObject(sortParam);
+      {{tab}}    Pageable pageable = PageRequest.of(page, size, sortObj);
+      {{tab}}    Page<${majStart(className)}> ${lowerCase(classNameLink)} = ${lowerCase(className)}Service.getAll${majStart(className)}(pageable);
+      {{tab}}
+      {{tab}}    String message = ${lowerCase(classNameLink)}.hasContent()
+      {{tab}}            ? "${formatReadableLowerCase(className)} retrieved successfully"
+      {{tab}}            : "No ${formatReadableLowerCase(className)} found";
+      {{tab}}    HttpStatus statusCode = ${lowerCase(classNameLink)}.hasContent()
+      {{tab}}            ? HttpStatus.OK
+      {{tab}}            : HttpStatus.NO_CONTENT;
+      {{tab}}
+      {{tab}}    RestResponse<Page<${majStart(className)}>> response = RestResponse.buildSuccessResponse(
+      {{tab}}            statusCode,
+      {{tab}}            message,
+      {{tab}}            ${lowerCase(classNameLink)}
+      {{tab}}    );
+      {{tab}}    return ResponseEntity.status(statusCode).body(response);
       {{tab}}}
-      
       {{tab}}@Operation(
       {{tab}}    summary = "Get ${formatReadableLowerCase(className)} by ID",
       {{tab}}    description = "Retrieve a specific ${formatReadableLowerCase(className)} item by its ID"
@@ -646,7 +741,6 @@
       {{tab}}            "${formatReadableLowerCase(className)} deleted successfully", null);
       {{tab}}    return ResponseEntity.ok(response);
       {{tab}}}
-
 
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
@@ -1167,7 +1261,6 @@
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"
     controllerAdditionalFiles: [ ]
-
 
 - id: 3
   languageId: 1
