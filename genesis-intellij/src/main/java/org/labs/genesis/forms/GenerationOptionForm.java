@@ -13,6 +13,8 @@ import org.labs.genesis.services.tablename.TableNamePaginatorStrategy;
 import org.labs.genesis.services.tablename.TableNameStrategyImpl;
 
 import javax.swing.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.List;
 
 @Getter
@@ -50,7 +52,26 @@ public class GenerationOptionForm {
 
     private void setupListeners() {
         assert refreshLinkLabel != null;
+
         refreshLinkLabel.setListener((LinkLabel<String> source, String data) -> populateTableNames(), null);
+
+        refreshLinkLabel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                handleLinkLabelShown();
+            }
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+                handleLinkLabelShown();
+            }
+        });
+    }
+
+    private void handleLinkLabelShown() {
+        populateTableNames();
+        refreshLinkLabel.setFocusable(true);
+        refreshLinkLabel.setToolTipText("Click to refresh table names");
     }
 
     public void populateTableNames() {
