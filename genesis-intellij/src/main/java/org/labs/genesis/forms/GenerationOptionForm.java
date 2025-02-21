@@ -73,5 +73,26 @@ public class GenerationOptionForm {
             );
         }
     }
+    public List<String> getAllTableNames() throws Exception {
+        Database database = projectGenerationContext.getDatabase();
+        Connection connection = projectGenerationContext.getConnection();
+
+        if (database == null || connection == null) {
+            throw new IllegalStateException("Database or connection is not defined.");
+        }
+
+        // Récupérer les noms de tables et ajouter l'option spéciale
+        List<String> allTableNames = database.getAllTableNames(connection);
+        allTableNames.addFirst(SELECT_ALL); // Ajouter l'option pour tout sélectionner
+        return allTableNames;
+    }
+    private void connectionIsValid(Connection connection) throws Exception {
+
+        if (!connection.isValid(2)) {
+            throw new IllegalStateException("Database connection is not valid.");
+        } else {
+            System.out.println("Connection to the database is established."+connection.getMetaData().getURL());
+        }
+    }
 }
 

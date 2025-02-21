@@ -40,7 +40,13 @@
       "text[]" : "String[]",
       "bytea" : "byte[]",
       "inet" : "java.net.InetAddress",
-      "xml" : "String"
+      "xml" : "String",
+
+      "tinyint" : "short",
+      "byte[]" : "byte[]",
+      "list[string]" : "java.util.List<String>",
+      "float" : "Float",
+      "char" : "char"
     }
   },
   {
@@ -64,7 +70,17 @@
       "date": "DateOnly",
       "timestamp": "DateTime",
       "time": "TimeSpan",
-      "boolean": "Boolean"
+      "boolean": "Boolean",
+
+      "json" : "string",
+      "interval": "TimeSpan",
+      "uuid" : "string",
+      "integer[]" : "int[]",
+      "text[]" : "string[]",
+      "bytea" : "byte[]",
+      "byte[]" : "byte[]",
+      "inet" : "System.Net.IPAddress",
+      "xml" : "string"
     }
   }
 ]
