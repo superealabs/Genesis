@@ -261,16 +261,23 @@ public class DatabaseConfigurationForm {
 
 
     private void updateFieldsForDatabase(Database database) {
-        trustCertificateCheckBox.setEnabled(false);
-        useSSLCheckBox.setEnabled(false);
-        allowKeyRetrievalCheckBox.setEnabled(false);
-        driverTypeField.setEnabled(false);
+        boolean isMysql = "Mysql".equalsIgnoreCase(database.getName());
+        if (!isMysql) {
+            trustCertificateCheckBox.setEnabled(false);
+            useSSLCheckBox.setEnabled(false);
+            allowKeyRetrievalCheckBox.setEnabled(false);
+        } else {
+            trustCertificateCheckBox.setEnabled(true);
+            useSSLCheckBox.setEnabled(true);
+            allowKeyRetrievalCheckBox.setEnabled(true);
+        }
 
         // Adjust visible fields based on the selected database
         boolean isOracle = "Oracle".equalsIgnoreCase(database.getName());
 
         driverNameField.setEnabled(isOracle);
         sidField.setEnabled(isOracle);
+        databaseField.setEnabled(!isOracle);
 
         // Specific default values
         portField.setText(database.getPort());

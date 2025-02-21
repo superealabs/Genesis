@@ -63,6 +63,11 @@ public abstract class Database {
         return tableMetadata.initializeTables(null, connection, credentials, this, language);
     }
 
+    public List<TableMetadata> getViews(Connection connection, Credentials credentials, Language language) throws SQLException, ClassNotFoundException {
+        TableMetadata tableMetadata = new TableMetadata();
+        return tableMetadata.initializeViews(null, connection, credentials, this, language);
+    }
+
     public List<TableMetadata> getEntitiesByNames(List<String> entityNames, Connection connection, Credentials credentials, Language language) throws SQLException, ClassNotFoundException {
         if (entityNames.isEmpty())
             return getEntities(connection, credentials, language);
@@ -75,11 +80,11 @@ public abstract class Database {
     }
 
 
-    public List<String> getAllTableNames(Connection connection) throws SQLException {
+    public List<String> getAllTableTypeNames(Connection connection, String tableType) throws SQLException {
         List<String> tableNames = new ArrayList<>();
         DatabaseMetaData metaData = connection.getMetaData();
 
-        try (ResultSet tables = metaData.getTables(null, credentials.getSchemaName(), "%", new String[]{"TABLE"})) {
+        try (ResultSet tables = metaData.getTables(null, credentials.getSchemaName(), "%", new String[]{tableType})) {
             while (tables.next()) {
                 String tableName = tables.getString("TABLE_NAME");
                 tableNames.add(tableName);
@@ -89,6 +94,19 @@ public abstract class Database {
         }
         return tableNames;
     }
+
+    public List<String> getAllTableNames(Connection connection) throws SQLException {
+        return getAllTableTypeNames(connection, "TABLE");
+    }
+
+    public List<String> getAllViewNames(Connection connection) throws SQLException {
+        return getAllTableTypeNames(connection, "VIEW");
+    }
+
+
+
+
+
 
 
     public Map<String, Object> getDatabaseMetadataHashMap(Credentials credentials) {

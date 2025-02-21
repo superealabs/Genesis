@@ -3,10 +3,7 @@ package org.labs.genesis.connexion.providers;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,12 +25,14 @@ public class MySQLDatabase extends Database {
                 credentials.isAllowPublicKeyRetrieval());
     }
 
+
+
     @Override
     public List<String> getAllTableNames(Connection connection) throws SQLException {
         List<String> tableNames = new ArrayList<>();
 
         try (Statement statement = connection.createStatement();
-             ResultSet tables = statement.executeQuery("SHOW TABLES")) {
+             ResultSet tables = statement.executeQuery("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")) {
             while (tables.next()) {
                 String tableName = tables.getString(1);
                 tableNames.add(tableName);
@@ -42,6 +41,23 @@ public class MySQLDatabase extends Database {
 
         return tableNames;
     }
+
+    @Override
+    public List<String> getAllViewNames(Connection connection) throws SQLException {
+        List<String> viewNames = new ArrayList<>();
+        DatabaseMetaData metaData = connection.getMetaData();
+
+        try (Statement statement = connection.createStatement();
+             ResultSet views = statement.executeQuery("SHOW FULL TABLES WHERE Table_type = 'VIEW'")) {
+            while (views.next()) {
+                String viewName = views.getString(1);
+                viewNames.add(viewName);
+            }
+        }
+
+        return viewNames;
+    }
+
 
 
 }

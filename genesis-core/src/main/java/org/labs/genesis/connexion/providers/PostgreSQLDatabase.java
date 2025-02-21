@@ -40,6 +40,21 @@ public class PostgreSQLDatabase extends Database {
         return tableNames;
     }
 
+    @Override
+    public List<String> getAllViewNames(Connection connection) throws SQLException {
+        List<String> tableNames = new ArrayList<>();
+        DatabaseMetaData metaData = connection.getMetaData();
+
+        try (ResultSet tables = metaData.getTables(null, null, "%", new String[]{"VIEW"})) {
+            while (tables.next()) {
+                String tableName = tables.getString("TABLE_NAME");
+                tableNames.add(tableName);
+            }
+        }
+
+        return tableNames;
+    }
+
 
 }
 
