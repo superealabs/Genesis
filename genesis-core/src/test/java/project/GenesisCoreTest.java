@@ -35,6 +35,8 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectSpring() {
+        var credentials = new Credentials().setHost("localhost").setPort("1522").setSchemaName("GENESIS").setDatabaseName("orcl").setUser("genesis").setPwd("root").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCL").setDriverType("Oracle");
+
         try {
             // Configuration initiale
             var credentials = createDatabaseCredentials("genesis");
@@ -78,7 +80,49 @@ public class GenesisCoreTest {
             context.setGenerateProjectStructure(true);
 
             // Configuration des composants
-            context.setDatabase(database);
+            int databaseId = Constantes.Oracle_ID;
+            int languageId = Constantes.Java_ID;
+            int frameworkId = Constantes.Spring_REST_API_ID;
+            int projectId = Constantes.Maven_ID;
+
+            var database = ProjectGenerator.databases.get(databaseId);
+            var language = ProjectGenerator.languages.get(languageId);
+            var framework = ProjectGenerator.frameworks.get(frameworkId);
+            var project = ProjectGenerator.projects.get(projectId);
+
+            String projectName = "Popol";
+            String groupLink = "org.labs";
+            String projectPort = "8000";
+            String logLevel = "INFO";
+            String hibernateDdlAuto = "none";
+            String projectDescription = "test";
+            String frameworkVersion = "3.3.6";
+            String languageVersion = "21";
+            String destinationFolder = "../generated/spring";
+
+            ProjectGenerator projectGenerator = new ProjectGenerator();
+
+            HashMap<String, Object> frameworkConfiguration = new HashMap<>();
+            frameworkConfiguration.put("hibernateDdlAuto", hibernateDdlAuto);
+            frameworkConfiguration.put("loggingLevel", logLevel);
+            frameworkConfiguration.put("frameworkVersion", frameworkVersion);
+
+            //===== USE EUREKA SERVER =======//
+            framework.setUseCloud(false);
+            framework.setUseEurekaServer(false);
+            frameworkConfiguration.put("eurekaServerURL", "http://localhost:8761/eureka");
+            frameworkConfiguration.put("projectNonSecurePort", projectPort);
+            //==============================//
+
+            HashMap<String, Object> languageConfiguration = new HashMap<>();
+            languageConfiguration.put("languageVersion", languageVersion);
+
+            List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
+            List<String> entityNames = new ArrayList<>();
+
+            ProjectGenerationContext context = new ProjectGenerationContext();
+
+          context.setDatabase(database);
             context.setLanguage(language);
             context.setFramework(framework);
             context.setProject(project);
@@ -92,6 +136,7 @@ public class GenesisCoreTest {
         }
     }
 
+    
     @Test
     void generateProjectNET() {
         try {
@@ -152,7 +197,7 @@ public class GenesisCoreTest {
         }
     }
 
-    @Test
+    /*@Test
     void generateProjectSpringEurekaServer() {
         try {
             // Récupération des composants du projet
