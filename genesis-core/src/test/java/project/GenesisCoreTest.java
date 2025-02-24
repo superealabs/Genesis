@@ -96,7 +96,7 @@ public class GenesisCoreTest {
     void generateProjectNET() {
         try {
             // Configuration initiale
-            var credentials = createDatabaseCredentials("test_db");
+            var credentials = createDatabaseCredentials("scenema");
             credentials.setPort("3306")
                     .setUser("root")
                     .setPwd("Nomena321@")
@@ -105,14 +105,14 @@ public class GenesisCoreTest {
                     .setAllowPublicKeyRetrieval(true);
 
             // Récupération des composants du projet
-            var database = ProjectGenerator.databases.get(Constantes.PostgreSQL_ID);
+            var database = ProjectGenerator.databases.get(Constantes.MySQL_ID);
             var language = ProjectGenerator.languages.get(Constantes.CSharp_ID);
             var framework = ProjectGenerator.frameworks.get(Constantes.NET_ID);
             var project = ProjectGenerator.projects.get(Constantes.ASP_ID);
 
             // Création du contexte de base
             ProjectGenerationContext context = createBaseContext(
-                    "WebApiTestNet",
+                    "WebApiScenema",
                     "",
                     "8080",
                     "../generated/dotnet",
