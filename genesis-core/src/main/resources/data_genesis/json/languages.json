@@ -71,8 +71,7 @@
       "timestamp": "DateTime",
       "time": "TimeSpan",
       "boolean": "Boolean",
-
-      "json" : "string",
+      "json": "string",
       "interval": "TimeSpan",
       "uuid" : "string",
       "integer[]" : "int[]",

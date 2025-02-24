@@ -9,6 +9,7 @@ import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
+import org.labs.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -223,8 +224,8 @@ public class FrameworkMetadataProvider {
     public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field) {
         Map<String, Object> fieldMap = new HashMap<>();
 
-        fieldMap.put("withGetters", true);
-        fieldMap.put("withSetters", true);
+        fieldMap.put("withGetters", false);
+        fieldMap.put("withSetters", false);
         fieldMap.put("type", field.getType());
         fieldMap.put("name", field.getName());
         fieldMap.put("isPrimaryKey", field.isPrimary());
@@ -232,13 +233,13 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnType", field.getColumnType());
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("referencedColumnType", field.getReferencedColumnType());
-        fieldMap.put("columnNameField", FileUtils.toCamelCase(field.getReferencedColumn()));
+        fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
 
         return fieldMap;
     }
 
     public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName) throws Exception {
-        String packageDefault;
+        String packageDefault = "";
         packageDefault = framework.getModelDao().getModelDaoSavePath();
 
         Database database = tableMetadata.getFirst().getDatabase();

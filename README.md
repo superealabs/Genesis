@@ -9,8 +9,8 @@ Genesis simplifie le démarrage de vos projets en réduisant le boilerplate code
 applications prêtes à l'emploi – que ce soit des microservices, des applications MVC ou des front-end JS – grâce à une
 approche Database First et son moteur de template intégré flexible.
 
-
 ## Technologies Supportées
+
 Genesis permet de générer des projets utilisant diverses technologies selon les types de combinaisons :
 
 ### Types de Projets Générés
@@ -25,21 +25,20 @@ Genesis permet de générer des projets utilisant diverses technologies selon le
 
 5. **Web API Spring Boot + Web API .NET + Eureka Server + API Gateway**
 
-
 #### Technologies Transversales
 
 * Pour les projets basés sur Spring (Types 1, 3, 5) :
-  * Java (17-23), Spring Boot (3.3.6, 3.2.12), Spring Web, Spring Actuator, Spring Test, Spring Data JPA, Maven (3.9.9), Swagger (springdoc OpenAPI Starter)
+    * Java (17-23), Spring Boot (3.3.6, 3.2.12), Spring Web, Spring Actuator, Spring Test, Spring Data JPA, Maven (
+      3.9.9), Swagger (springdoc OpenAPI Starter)
 
 * Pour les projets basés sur .NET (Types 2, 4) :
-  * C# (8.0-9.0), Entity Framework Core, ASP.NET Core, Swashbuckle
+    * C# (8.0-9.0), Entity Framework Core, ASP.NET Core, Swashbuckle
 
 * Commun aux projets avec API Gateway (Types 3, 4, 5) :
-  * Spring Cloud (2023) Gateway Reactive Server, Spring Security
+    * Spring Cloud (2023) Gateway Reactive Server, Spring Security
 
 * Spécifique au Type 5 :
-  * Spring Cloud Netflix Eureka Server & Client, Steeltoe
-
+    * Spring Cloud Netflix Eureka Server & Client, Steeltoe
 
 ### Bases de Données Supportées
 
@@ -52,8 +51,6 @@ Genesis prend en charge les bases de données suivantes :
 3. **Oracle** : version 19c
 
 4. **MySQL** : version 8.4.2
-
-
 
 ## Prérequis Système
 
@@ -93,13 +90,14 @@ Le projet Genesis est un projet **multi-module**, avec les modules suivants :
 
 1. **Cloner, construire et lancer**
     - Clonez ce dépôt.
-    - Exécutez `gradle genesis-cli:run` pour démarrer l'application.
+    - Exécutez : 
+      - `gradle genesis-cli:run` pour démarrer l'application.
 
 2. **Build et exécuter le JAR**
-    - Build le fichier JAR avec `gradle genesis-cli:build`.
+    - Build le fichier JAR avec `gradle genesis-cli:shadowJar`.
     - Exécutez-le avec la commande suivante :
        ```bash
-       java -jar genesis-cli-0.0.1.jar
+       java -jar genesis-cli/build/libs/genesis-cli-x.x.x.jar
        ```
 
 3. **Télécharger et exécuter le JAR**
@@ -107,7 +105,7 @@ Le projet Genesis est un projet **multi-module**, avec les modules suivants :
     - Téléchargez la dernière version du fichier .jar.
     - Exécutez-le avec la commande suivante :
        ```bash
-       java -jar chemin/vers/genesis-cli-0.0.1.jar
+       java -jar genesis-cli-x.x.x.jar
         ```
 
 ### Utilisation du Plugin IntelliJ
@@ -120,7 +118,7 @@ Le plugin IntelliJ permet d'utiliser Genesis directement dans l'IDE.
 
 2. **Installation via le .zip : genesis-intellij.zip**
     - Construisez le projet via `gradle genesis-intellij:buildPlugin` pour générer le fichier
-      `genesis-intellij/build/distributions/genesis-intellij.zip`.
+      `genesis-intellij/build/distributions/genesis-intellij-x.x.x.zip`.
     - Chargez ce fichier depuis une autre instance d'IntelliJ IDEA.
 
 3. **Installation depuis JetBrains Marketplace**
