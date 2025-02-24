@@ -97,6 +97,12 @@ public class GenesisCoreTest {
         try {
             // Configuration initiale
             var credentials = createDatabaseCredentials("test_db");
+            credentials.setPort("3306")
+                    .setUser("root")
+                    .setPwd("Nomena321@")
+                    .setTrustCertificate(true)
+                    .setUseSSL(true)
+                    .setAllowPublicKeyRetrieval(true);
 
             // Récupération des composants du projet
             var database = ProjectGenerator.databases.get(Constantes.PostgreSQL_ID);

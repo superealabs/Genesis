@@ -136,9 +136,10 @@ public class ProjectGenerator {
                 context.getFrameworkConfiguration()
         );
 
-        if (context.getFramework().getUseDB())
-            projectFilesEditsHashMap.putAll(getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName()));
-
+        if (context.getFramework().getUseDB()) {
+            var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
+            projectFilesEditsHashMap.putAll(mapDaoGlobal);
+        }
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);
