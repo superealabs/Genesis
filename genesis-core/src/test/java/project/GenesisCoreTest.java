@@ -29,7 +29,7 @@ public class GenesisCoreTest {
                 .setPort("5432")
                 .setSchemaName("public")
                 .setDatabaseName(databaseName)
-                .setUser("nomena")
+                .setUser("postgres")
                 .setPwd("root");
     }
 
@@ -37,7 +37,7 @@ public class GenesisCoreTest {
     void generateProjectSpring() {
         try {
             // Configuration initiale
-            var credentials = createDatabaseCredentials("genesis");
+            var credentials = createDatabaseCredentials("mydbgenesis");
 /*          credentials.setTrustCertificate(true)
                     .setUseSSL(true)
                     .setAllowPublicKeyRetrieval(true);
@@ -50,9 +50,9 @@ public class GenesisCoreTest {
 
             // Création du contexte de base
             ProjectGenerationContext context = createBaseContext(
-                    "TestWebApiRe",
+                    "RechercheSpringDef",
                     "org.labs",
-                    "8000",
+                    "8080",
                     "../generated/spring",
                     "test web api"
             );
@@ -66,11 +66,11 @@ public class GenesisCoreTest {
                     false,
                     false
             );
-            frameworkConfig.put("hibernateDdlAuto", "none");
+            frameworkConfig.put("hibernateDdlAuto", "update");
 
             // Configuration du framework et du langage
             context.setFrameworkConfiguration(frameworkConfig);
-            context.setLanguageConfiguration(createLanguageConfig("21"));
+            context.setLanguageConfiguration(createLanguageConfig("17"));
 
             // Configuration des options de génération
             context.setGenerationOptions(List.of("Model", "DAO", "Service", "Controller"));
