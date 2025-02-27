@@ -1,12 +1,13 @@
 package org.labs.genesis.engine;
 
-import org.jetbrains.annotations.NotNull;
 import org.labs.utils.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 public class GenesisTemplateEngine {
 
@@ -32,6 +33,15 @@ public class GenesisTemplateEngine {
     private static final String FUNCTION_CLOSED_PARENTHESIS = ")";
     private static final String START_COMMENTARY_TAG = "<#";
     private static final String END_COMMENTARY_TAG = "/#>";
+    // Liste des opérateurs de comparaison supportés, du plus long au plus court
+    // Définir ces opérateurs comme des constantes de classe
+    private static final String GREATER_EQUAL_OPERATOR = ">=";
+    private static final String LESS_EQUAL_OPERATOR = "<=";
+    private static final String NOT_EQUAL_OPERATOR = "!=";
+    private static final String EQUAL_OPERATOR = "=";
+    private static final String GREATER_OPERATOR = ">";
+    private static final String LESS_OPERATOR = "<";
+
 
     private static final Map<String, Function<String, String>> FUNCTIONS_MAP = new HashMap<>();
 
@@ -47,34 +57,6 @@ public class GenesisTemplateEngine {
     }
 
     private final Map<String, String> commentMap = new HashMap<>();
-
-    @SuppressWarnings("unchecked")
-    private static @NotNull Map<String, Object> getLoopMap(Map<String, Object> variables, List<?> loopList, int i) {
-        Object item = loopList.get(i);
-        Map<String, Object> loopVariables = new HashMap<>(variables);
-
-        if (item instanceof Map) {
-            Map<String, Object> itemMap = (Map<String, Object>) item;
-
-            for (Map.Entry<String, Object> entry : itemMap.entrySet()) {
-                Object value = entry.getValue();
-
-                if (value instanceof List) {
-                    // Support imbriqué
-                    loopVariables.put(entry.getKey(), value);
-                } else {
-                    loopVariables.put(LOOP_ITEM + "." + entry.getKey(), value);
-                }
-            }
-        } else {
-            loopVariables.put(LOOP_ITEM, item);
-        }
-
-        loopVariables.put(LOOP_INDEX, i);
-        loopVariables.put(IS_LOOP_FIRST_INDEX, (i == 0));
-        loopVariables.put(IS_LOOP_LAST_INDEX, (i == loopList.size() - 1));
-        return loopVariables;
-    }
 
     public String simpleRender(String template, Map<String, Object> variables) {
         if (template == null || template.isEmpty()) {
@@ -466,29 +448,249 @@ public class GenesisTemplateEngine {
     }
 
 
+    /**
+     * Évalue une condition simple qui peut inclure des comparaisons.
+     */
     private boolean evaluateSimpleCondition(String condition, Map<String, Object> variables) throws Exception {
+        condition = condition.trim();
 
-        if ("true".equalsIgnoreCase(condition)) {
+        // Cas des valeurs booléennes littérales
+        final String TRUE_VALUE = "true";
+        final String FALSE_VALUE = "false";
+        if (TRUE_VALUE.equalsIgnoreCase(condition)) {
             return true;
         }
-        if ("false".equalsIgnoreCase(condition)) {
+        if (FALSE_VALUE.equalsIgnoreCase(condition)) {
             return false;
         }
 
-        if ("@last".equals(condition)) {
-            Object lastFlag = variables.get("@last");
-            if (lastFlag instanceof Boolean) {
-                return (Boolean) lastFlag;
-            } else {
-                throw new Exception("Variable '@last' is not a boolean.");
-            }
+        // Cas spécial pour la variable spéciale du dernier élément d'une boucle
+        if (IS_LOOP_LAST_INDEX.equals(condition)) {
+            return evaluateLoopFlagValue(variables);
+        }
+
+        // Recherche d'opérateurs de comparaison
+        String operator = findComparisonOperator(condition);
+
+        if (operator != null) {
+            // Si un opérateur est trouvé, évaluer la comparaison
+            return evaluateComparison(condition, operator, variables);
         } else {
+            // Comportement d'origine pour les conditions sans opérateurs
             Object conditionValue = variables.get(condition);
             if (conditionValue == null) {
                 return false;
             }
             return conditionValue instanceof Boolean && (Boolean) conditionValue;
         }
+    }
+
+    /**
+     * Évalue une valeur de drapeau de boucle (comme @last ou @first).
+     */
+    private boolean evaluateLoopFlagValue(Map<String, Object> variables) throws Exception {
+        Object flagValue = variables.get(GenesisTemplateEngine.IS_LOOP_LAST_INDEX);
+        if (flagValue instanceof Boolean) {
+            return (Boolean) flagValue;
+        } else {
+            throw new Exception("Variable '" + GenesisTemplateEngine.IS_LOOP_LAST_INDEX + "' is not a boolean.");
+        }
+    }
+
+    /**
+     * Trouve le premier opérateur de comparaison dans la condition.
+     * Retourne l'opérateur trouvé ou null si aucun opérateur n'est présent.
+     */
+    private String findComparisonOperator(String condition) {
+
+        String[] operators = {
+                GREATER_EQUAL_OPERATOR,
+                LESS_EQUAL_OPERATOR,
+                NOT_EQUAL_OPERATOR,
+                EQUAL_OPERATOR,
+                GREATER_OPERATOR,
+                LESS_OPERATOR
+        };
+
+        for (String op : operators) {
+            if (condition.contains(op)) {
+                return op;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Évalue une comparaison avec un opérateur donné.
+     */
+    private boolean evaluateComparison(String condition, String operator, Map<String, Object> variables) throws Exception {
+        String[] parts = condition.split(Pattern.quote(operator), 2);
+        if (parts.length != 2) {
+            throw new Exception("Invalid comparison condition: " + condition);
+        }
+
+        String leftPart = parts[0].trim();
+        String rightPart = parts[1].trim();
+
+        // Extraire les valeurs des deux côtés
+        Object leftValue = extractValue(leftPart, variables);
+        Object rightValue = extractValue(rightPart, variables);
+
+        // Appliquer l'opérateur de comparaison
+        return compareValues(leftValue, rightValue, operator);
+    }
+
+    /**
+     * Extrait la valeur d'une expression qui peut être une variable ou une valeur littérale.
+     */
+    private Object extractValue(String expression, Map<String, Object> variables) {
+        var variable = variables.get(expression);
+
+        // Vérifier si c'est une référence à une variable
+        if (variable != null) {
+            return variable;
+        }
+
+        // Essayer de convertir en nombre si possible
+        return convertToNumericIfPossible(expression);
+    }
+
+    /**
+     * Vérifie si l'expression est une variable délimitée par les préfixes et suffixes donnés.
+     */
+    private boolean isVariable(String expression, String prefix, String suffix) {
+        return expression.startsWith(prefix) && expression.endsWith(suffix);
+    }
+
+    /**
+     * Extrait le nom de la variable à partir de l'expression complète.
+     */
+    private String extractVariableName(String expression, String prefix, String suffix) {
+        return expression.substring(
+                prefix.length(),
+                expression.length() - suffix.length()
+        ).trim();
+    }
+
+    /**
+     * Tente de convertir une chaîne en valeur numérique.
+     */
+    private Object convertToNumericIfPossible(String expression) {
+        try {
+            // Tenter la conversion en entier
+            return Integer.parseInt(expression);
+        } catch (NumberFormatException e1) {
+            try {
+                // Tenter la conversion en nombre décimal
+                return Double.parseDouble(expression);
+            } catch (NumberFormatException e2) {
+                // Si ce n'est pas un nombre, retourner la chaîne comme valeur littérale
+                return expression;
+            }
+        }
+    }
+
+    /**
+     * Compare deux valeurs avec l'opérateur donné.
+     */
+    @SuppressWarnings("unchecked")
+    private boolean compareValues(Object left, Object right, String operator) throws Exception {
+        // Gestion des valeurs null
+        if (left == null || right == null) {
+            if (operator.equals(EQUAL_OPERATOR)) {
+                return left == right; // Tous deux null
+            } else if (operator.equals(NOT_EQUAL_OPERATOR)) {
+                return left != right; // L'un est null, l'autre non
+            } else {
+                // Pour les autres opérateurs, on ne peut pas comparer avec null
+                return false;
+            }
+        }
+
+        // Si les types sont différents mais numériques, convertir en Double pour la comparaison
+        if ((left instanceof Number) && (right instanceof Number)) {
+            double leftDouble = ((Number) left).doubleValue();
+            double rightDouble = ((Number) right).doubleValue();
+
+            return performNumericComparison(leftDouble, rightDouble, operator
+            );
+        }
+
+        // Si les types sont différents et non numériques, convertir en String
+        if (left.getClass() != right.getClass()) {
+            return performStringComparison(left.toString(), right.toString(), operator
+            );
+        }
+
+        // Si les objets sont Comparable et du même type
+        if (left instanceof Comparable) {
+            return performComparableComparison((Comparable<Object>) left, right, operator
+            );
+        }
+
+        // Pour les autres types, la seule comparaison possible est l'égalité
+        if (operator.equals(EQUAL_OPERATOR)) {
+            return Objects.equals(left, right);
+        } else if (operator.equals(NOT_EQUAL_OPERATOR)) {
+            return !Objects.equals(left, right);
+        } else {
+            throw new Exception("Cannot compare objects of type " + left.getClass().getName() +
+                    " with operator " + operator);
+        }
+    }
+
+    /**
+     * Effectue une comparaison numérique.
+     */
+    private boolean performNumericComparison(double left, double right, String operator) {
+        return switch (operator) {
+            case GenesisTemplateEngine.EQUAL_OPERATOR -> left == right;
+            case GenesisTemplateEngine.NOT_EQUAL_OPERATOR -> left != right;
+            case GenesisTemplateEngine.GREATER_OPERATOR -> left > right;
+            case GenesisTemplateEngine.LESS_OPERATOR -> left < right;
+            case GenesisTemplateEngine.GREATER_EQUAL_OPERATOR -> left >= right;
+            case GenesisTemplateEngine.LESS_EQUAL_OPERATOR -> left <= right;
+            default -> false;
+        };
+    }
+
+    /**
+     * Effectue une comparaison de chaînes.
+     */
+    private boolean performStringComparison(String left, String right, String operator) throws Exception {
+        return switch (operator) {
+            case GenesisTemplateEngine.EQUAL_OPERATOR -> left.equals(right);
+            case GenesisTemplateEngine.NOT_EQUAL_OPERATOR -> !left.equals(right);
+            case GenesisTemplateEngine.GREATER_OPERATOR -> left.compareTo(right) > 0;
+            case GenesisTemplateEngine.LESS_OPERATOR -> left.compareTo(right) < 0;
+            case GenesisTemplateEngine.GREATER_EQUAL_OPERATOR -> left.compareTo(right) >= 0;
+            case GenesisTemplateEngine.LESS_EQUAL_OPERATOR -> left.compareTo(right) <= 0;
+            default -> throw new Exception("Unsupported operator: " + operator);
+        };
+    }
+
+    /**
+     * Effectue une comparaison avec des objets implémentant Comparable.
+     */
+    @SuppressWarnings("unchecked")
+    private <T> boolean performComparableComparison(Comparable<T> left, Object right, String operator) throws Exception {
+        int comparisonResult;
+        try {
+            comparisonResult = left.compareTo((T) right);
+        } catch (ClassCastException e) {
+            throw new Exception("Cannot compare objects of different types with operator " + operator);
+        }
+
+        return switch (operator) {
+            case GenesisTemplateEngine.EQUAL_OPERATOR -> comparisonResult == 0;
+            case GenesisTemplateEngine.NOT_EQUAL_OPERATOR -> comparisonResult != 0;
+            case GenesisTemplateEngine.GREATER_OPERATOR -> comparisonResult > 0;
+            case GenesisTemplateEngine.LESS_OPERATOR -> comparisonResult < 0;
+            case GenesisTemplateEngine.GREATER_EQUAL_OPERATOR -> comparisonResult >= 0;
+            case GenesisTemplateEngine.LESS_EQUAL_OPERATOR -> comparisonResult <= 0;
+            default -> throw new Exception("Unsupported operator: " + operator);
+        };
     }
 
     private void processSpecialTags(StringBuilder template) {
