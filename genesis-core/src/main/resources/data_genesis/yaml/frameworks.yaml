@@ -430,15 +430,45 @@
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
     modelPackage: "${groupLink}.${lowerCase(projectName)}.models;"
+    modelAdditionalFiles:
+      - fileType: "Specification File"
+        fileName: "${majStart(className)}Specification"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.specification;
+
+          import ${groupLink}.${lowerCase(projectName)}.models.${className};
+          import org.springframework.data.jpa.domain.Specification;
+          import jakarta.persistence.criteria.Predicate;
+
+          import java.util.ArrayList;
+          import java.util.List;
+
+          public class ${className}Specification {
+
+              public static Specification<${className}> filter(${className} object) {
+                  return (root, query, criteriaBuilder) -> {
+                      List<Predicate> predicates = new ArrayList<>();
+                      {{#each fields}}
+                      if(object.get${majStart(this.name)}()!=null){
+                          predicates.add(criteriaBuilder.equal(root.get("${this.name}"), object.get${majStart(this.name)}()));
+                      }
+                      {{/each}}
+                      return criteriaBuilder.and(predicates.toArray(new Predicate[predicates.size()]));
+                  };
+              }
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/specification"
   modelDao:
     toGenerate: true
     modelDaoImports: |
       import org.springframework.data.jpa.repository.JpaRepository;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+      import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
     modelDaoAnnotations: ""
     modelDaoClassKeyword: "public interface"
-    modelDaoExtends: "extends JpaRepository<${majStart(className)}, ${pkColumnType}>"
+    modelDaoExtends: "extends JpaRepository<${majStart(className)}, ${pkColumnType}>, JpaSpecificationExecutor<${majStart(className)}>"
     modelDaoName: "${majStart(className)}Repository"
     modelDaoFieldContent: "{{removeLine}}"
     modelDaoMethodContent: "{{removeLine}}"
@@ -446,16 +476,20 @@
     modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
     modelDaoPackage: "${groupLink}.${lowerCase(projectName)}.repositories;"
     modelDaoAdditionalFiles: [ ]
+
+
   service:
     toGenerate: true
     serviceImports: |
       import org.springframework.data.domain.Page;
       import org.springframework.data.domain.Pageable;      
+      import org.springframework.data.jpa.domain.Specification;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
       import org.springframework.stereotype.Service;
       import ${groupLink}.${lowerCase(projectName)}.repositories.${majStart(className)}Repository;
       import java.util.Optional;
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
+      import ${groupLink}.${lowerCase(projectName)}.specification.${majStart(className)}Specification;
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
       import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
 
@@ -475,6 +509,16 @@
       {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.findAll(pageable);
+      {{tab}}    } catch (Exception ex) {
+      {{tab}}        throw new InternalServerErrorException("Error while retrieving ${formatReadableLowerCase(className)}", ex);
+      {{tab}}    }
+      {{tab}}}
+      
+      {{tab}}@Override
+      {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable, ${majStart(className)} object) {
+      {{tab}}    try {
+      {{tab}}        Specification<${majStart(className)}> spec=${majStart(className)}Specification.filter(object);
+      {{tab}}        return ${minStart(className)}Repository.findAll(spec, pageable);
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while retrieving ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
@@ -538,6 +582,8 @@
           
           public interface ${majStart(className)}Service {
               Page<${className}> getAll${className}(Pageable pageable);
+          
+              Page<${className}> getAll${className}(Pageable pageable, ${majStart(className)} object);
           
               ${className} get${className}ById(${pkColumnType} ${pkColumn});
           
@@ -619,6 +665,56 @@
       {{tab}}    Sort sortObj = WebUtils.createSortObject(sortParam);
       {{tab}}    Pageable pageable = PageRequest.of(page, size, sortObj);
       {{tab}}    Page<${majStart(className)}> ${lowerCase(classNameLink)} = ${lowerCase(className)}Service.getAll${majStart(className)}(pageable);
+      {{tab}}
+      {{tab}}    String message = ${lowerCase(classNameLink)}.hasContent()
+      {{tab}}            ? "${formatReadableLowerCase(className)} retrieved successfully"
+      {{tab}}            : "No ${formatReadableLowerCase(className)} found";
+      {{tab}}    HttpStatus statusCode = ${lowerCase(classNameLink)}.hasContent()
+      {{tab}}            ? HttpStatus.OK
+      {{tab}}            : HttpStatus.NO_CONTENT;
+      {{tab}}
+      {{tab}}    RestResponse<Page<${majStart(className)}>> response = RestResponse.buildSuccessResponse(
+      {{tab}}            statusCode,
+      {{tab}}            message,
+      {{tab}}            ${lowerCase(classNameLink)}
+      {{tab}}    );
+      {{tab}}    return ResponseEntity.status(statusCode).body(response);
+      {{tab}}}
+      {{tab}}@Operation(
+      {{tab}}    summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}    description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "200",
+      {{tab}}        description = "Successfully retrieved the paginated list of ${formatReadableLowerCase(className)}",
+      {{tab}}        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "204",
+      {{tab}}        description = "No ${formatReadableLowerCase(className)} found"
+      {{tab}}    )
+      {{tab}}})
+      {{tab}}@PostMapping("/search")
+      {{tab}}public ResponseEntity<RestResponse<Page<${majStart(className)}>>> getAll${majStart(classNameLink)}(
+      {{tab}}    @Parameter(description = "Page number (0-indexed)", example = "0")
+      {{tab}}    @RequestParam(defaultValue = "0") int page,
+      {{tab}}
+      {{tab}}    @Parameter(description = "Size of the page", example = "10")
+      {{tab}}    @RequestParam(defaultValue = "10") int size,
+      {{tab}}
+      {{tab}}    @Parameter(
+      {{tab}}        description = "Sorting criteria in the format: property,(asc|desc). "
+      {{tab}}                + "Multiple sort criteria can be passed using semicolon separator. "
+      {{tab}}                + "Example: id,asc;name,desc",
+      {{tab}}        example = "id,asc"
+      {{tab}}    )
+      {{tab}}    @RequestParam(defaultValue = "id,asc") String sortParam,
+      {{tab}}    @RequestBody ${majStart(className)} object) {
+      {{tab}}
+      {{tab}}    Sort sortObj = WebUtils.createSortObject(sortParam);
+      {{tab}}    Pageable pageable = PageRequest.of(page, size, sortObj);
+      {{tab}}    Page<${majStart(className)}> ${lowerCase(classNameLink)} = ${lowerCase(className)}Service.getAll${majStart(className)}(pageable, object);
       {{tab}}
       {{tab}}    String message = ${lowerCase(classNameLink)}.hasContent()
       {{tab}}            ? "${formatReadableLowerCase(className)} retrieved successfully"
