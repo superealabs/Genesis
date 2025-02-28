@@ -63,6 +63,8 @@ public class APIGenerator implements GenesisGenerator {
         result = engine.render(result, metadataFinally);
         FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
 
+        ProjectGenerator.renderFilesEdits(framework.getModel().getModelAdditionalFiles(), metadataFinally);
+
         return result;
     }
 
