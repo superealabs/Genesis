@@ -1175,7 +1175,7 @@
       {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{elseIf this.isForeignKey}}
       {{tab}}
       {{tab}}[Column("${this.columnName}")]
-      {{tab}}public ${this.referencedColumnType} ${majStart(this.columnNameField)} { get; set; }
+      {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
       {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
       {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
       {{tab}}{{else}}

@@ -74,7 +74,13 @@ public class FrameworkMetadataProvider {
         metadata.put("package", framework.getModelDao().getModelDaoPackage());
         metadata.put("imports", framework.getModelDao().getModelDaoImports());
         metadata.put("extends", framework.getModelDao().getModelDaoExtends());
-        metadata.put("pkColumnType", tableMetadata.getPrimaryColumn().getType());
+
+        if (tableMetadata.getPrimaryColumn() != null) {
+            metadata.put("pkColumnType", tableMetadata.getPrimaryColumn().getType());
+        } else {
+            metadata.put("pkColumnType", "");
+        }
+
         metadata.put("fields", framework.getModelDao().getModelDaoFieldContent());
         metadata.put("methods", framework.getModelDao().getModelDaoMethodContent());
         metadata.put("constructors", framework.getModelDao().getModelDaoConstructors());
@@ -83,11 +89,18 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
+
     public static HashMap<String, Object> getPrimaryServiceHashMap(Framework framework, TableMetadata tableMetadata) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         metadata.put("className", tableMetadata.getClassName());
-        metadata.put("pkColumn", tableMetadata.getPrimaryColumn().getName());
+
+        if (tableMetadata.getPrimaryColumn() != null) {
+            metadata.put("pkColumn", tableMetadata.getPrimaryColumn().getName());
+        } else {
+            metadata.put("pkColumn", "");
+        }
+
         metadata.put("entityName", framework.getService().getServiceName());
         metadata.put("package", framework.getService().getServicePackage());
         metadata.put("imports", framework.getService().getServiceImports());
@@ -99,6 +112,7 @@ public class FrameworkMetadataProvider {
 
         return metadata;
     }
+
 
     public static HashMap<String, Object> getPrimaryControllerHashMap(Framework framework, TableMetadata tableMetadata) {
         HashMap<String, Object> metadata = new HashMap<>();
@@ -182,13 +196,21 @@ public class FrameworkMetadataProvider {
         metadata.put("projectName", projectName);
         metadata.put("groupLink", groupLink);
         metadata.put("groupLinkPath", groupLink.replace(".", "/"));
-        metadata.put("pkColumn", tableMetadata.getPrimaryColumn().getName());
-        metadata.put("pkColumnType", tableMetadata.getPrimaryColumn().getType());
+
+        if (tableMetadata.getPrimaryColumn() != null) {
+            metadata.put("pkColumn", tableMetadata.getPrimaryColumn().getName());
+            metadata.put("pkColumnType", tableMetadata.getPrimaryColumn().getType());
+        } else {
+            metadata.put("pkColumn", "");
+            metadata.put("pkColumnType", "");
+        }
+
         metadata.put("tableName", tableMetadata.getTableName());
         metadata.put("className", tableMetadata.getClassName());
         metadata.put("entityName", tableMetadata.getClassName());
         metadata.put("classNameLink", tableMetadata.getClassName() + "s");
     }
+
 
     private static List<Map<String, Object>> getFieldsList(TableMetadata tableMetadata) {
         List<Map<String, Object>> fields = new ArrayList<>();

@@ -45,8 +45,7 @@
       "tinyint" : "short",
       "byte[]" : "byte[]",
       "list[string]" : "java.util.List<String>",
-      "float" : "Float",
-      "char" : "char"
+      "float" : "Float"
     }
   },
   {
@@ -73,13 +72,14 @@
       "boolean": "Boolean",
       "json": "string",
       "interval": "TimeSpan",
-      "uuid" : "string",
+      "uuid" : "Guid",
       "integer[]" : "int[]",
       "text[]" : "string[]",
       "bytea" : "byte[]",
       "byte[]" : "byte[]",
       "inet" : "System.Net.IPAddress",
-      "xml" : "string"
+      "xml" : "string",
+      "float" : "float"
     }
   }
 ]

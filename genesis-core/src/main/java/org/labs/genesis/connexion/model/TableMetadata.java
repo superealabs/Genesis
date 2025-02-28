@@ -40,7 +40,6 @@ public class TableMetadata {
             connect = database.getConnection(credentials);
             opened = true;
         }
-
         try {
             DatabaseMetaData metaData = connect.getMetaData();
 
@@ -51,7 +50,6 @@ public class TableMetadata {
             database.setDriverVersion(driverVersion);
 
             setDatabase(database);
-
             String tableName = getTableName();
 
             List<ColumnMetadata> listeCols = fetchColumns(metaData, tableName, language, database);
@@ -131,7 +129,6 @@ public class TableMetadata {
 
     private List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language, Database database) throws SQLException {
         List<ColumnMetadata> listeCols = new ArrayList<>();
-        database.getDriverType().equals("Oracle");
         try (ResultSet columns = metaData.getColumns(null, database.getCredentials().getSchemaName(), tableName, null)) {
             while (columns.next()) {
                 ColumnMetadata column = new ColumnMetadata();
@@ -141,12 +138,10 @@ public class TableMetadata {
                 column.setName(toCamelCase(columnName.toLowerCase()));
                 column.setReferencedColumn(columnName);
 
-//                if (language.getTypes().get(database.getTypes().get(columnType)) == null)
                 if (language.getTypes().get(getDatabaseType(database,columns)) == null)
                     throw new RuntimeException("Database type not supported yet : " + columnType);
                 else
                     column.setType(language.getTypes().get(getDatabaseType(database,columns)));
-//                    column.setType(language.getTypes().get(database.getTypes().get(columnType)));
 
                 column.setColumnType(columnType);
                 listeCols.add(column);
