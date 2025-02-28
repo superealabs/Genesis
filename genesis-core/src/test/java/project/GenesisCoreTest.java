@@ -103,7 +103,16 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectNET() {
-        var credentials = new Credentials().setHost("localhost").setPort("3306").setSchemaName("GENESIS").setDatabaseName("genesis").setUser("root").setPwd("root").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true);
+        var credentials = new Credentials()
+                .setHost("localhost")
+                .setPort("3306")
+                .setSchemaName("default")
+                .setDatabaseName("genesis")
+                .setUser("root")
+                .setPwd("Nomena321@")
+                .setTrustCertificate(true)
+                .setUseSSL(true)
+                .setAllowPublicKeyRetrieval(true);
 
         try {
             int databaseId = Constantes.MySQL_ID;
@@ -115,8 +124,9 @@ public class GenesisCoreTest {
             var language = ProjectGenerator.languages.get(languageId);
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var project = ProjectGenerator.projects.get(projectId);
+
             List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
-            String projectName = "WebApiNet";
+            String projectName = "WebApiTestNet";
             String groupLink = "";
             String projectPort = "8080";
             String logLevel = "Information";
@@ -132,8 +142,8 @@ public class GenesisCoreTest {
             frameworkConfiguration.put("frameworkVersion", frameworkVersion);
 
             //===== USE EUREKA SERVER =======//
-            framework.setUseCloud(true);
-            framework.setUseEurekaServer(true);
+            framework.setUseCloud(false);
+            framework.setUseEurekaServer(false);
             frameworkConfiguration.put("eurekaServerURL", "http://localhost:8761/eureka");
             frameworkConfiguration.put("projectNonSecurePort", projectPort);
             //==============================//
@@ -156,6 +166,8 @@ public class GenesisCoreTest {
             context.setFrameworkConfiguration(frameworkConfiguration);
             context.setEntityNames(entityNames);
             context.setGenerationOptions(generationOptions);
+            context.setGenerateProjectStructure(true);
+
             projectGenerator.generateProject(context);
 
 
@@ -168,7 +180,7 @@ public class GenesisCoreTest {
         }
     }
 
-    /*@Test
+    @Test
     void generateProjectSpringEurekaServer() {
         try {
 
@@ -297,5 +309,5 @@ public class GenesisCoreTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }*/
+    }
 }

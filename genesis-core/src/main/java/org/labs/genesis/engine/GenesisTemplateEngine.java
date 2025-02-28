@@ -430,15 +430,12 @@ public class GenesisTemplateEngine {
     }
 
     private boolean evaluateCondition(String condition, Map<String, Object> variables) throws Exception {
-
         condition = condition.trim();
-
 
         if (condition.startsWith("!")) {
             String innerCondition = condition.substring(1).trim();
             return !evaluateCondition(innerCondition, variables);
         }
-
 
         return evaluateCompositeCondition(condition, variables);
     }
