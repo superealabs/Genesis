@@ -239,7 +239,7 @@ public class FrameworkMetadataProvider {
     }
 
     public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName) throws Exception {
-        String packageDefault;
+        String packageDefault = "";
         packageDefault = framework.getModelDao().getModelDaoSavePath();
 
         Database database = tableMetadata.getFirst().getDatabase();

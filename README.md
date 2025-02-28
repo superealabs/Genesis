@@ -68,7 +68,7 @@ Le projet est structuré en plusieurs modules. Voici les étapes pour cloner et 
 
 1. Clonez ce dépôt :
    ```bash
-   git clone https://github.com/yourusername/genesis-project.git
+   git clone https://github.com/superealabs/Genesis.git
    ```
 2. Ouvrez le projet dans IntelliJ IDEA.
 3. Pour synchroniser les dépendances, exécutez la commande suivante :
@@ -90,11 +90,16 @@ Le projet Genesis est un projet **multi-module**, avec les modules suivants :
 
 1. **Cloner, construire et lancer**
     - Clonez ce dépôt.
-    - Exécutez : 
-      - `gradle genesis-cli:run` pour démarrer l'application.
+    - Pour démarrer l'application, exécutez :
+        ```bash
+        gradle genesis-cli:run
+        ```
 
 2. **Build et exécuter le JAR**
-    - Build le fichier JAR avec `gradle genesis-cli:shadowJar`.
+    - Build le fichier JAR avec : 
+      ```bash
+      gradle genesis-cli:shadowJar
+      ```
     - Exécutez-le avec la commande suivante :
        ```bash
        java -jar genesis-cli/build/libs/genesis-cli-x.x.x.jar
@@ -114,12 +119,17 @@ Le plugin IntelliJ permet d'utiliser Genesis directement dans l'IDE.
 
 1. **Développement en live**
     - Clonez le dépôt.
-    - Exécutez `gradle genesis-intellij:runIde` pour lancer une instance d'IntelliJ IDEA avec le plugin en mode live.
+    - Pour lancer une instance d'IntelliJ IDEA avec le plugin en mode live, exécutez : 
+        ``` bash
+        gradle genesis-intellij:runIde` 
+        ```
 
 2. **Installation via le .zip : genesis-intellij.zip**
-    - Construisez le projet via `gradle genesis-intellij:buildPlugin` pour générer le fichier
-      `genesis-intellij/build/distributions/genesis-intellij-x.x.x.zip`.
-    - Chargez ce fichier depuis une autre instance d'IntelliJ IDEA.
+- Pour générer le fichier `genesis-intellij/build/distributions/genesis-intellij-x.x.x.zip`, construisez le projet via :
+    ``` bash
+    gradle genesis-intellij:buildPlugin 
+    ````
+  - Chargez ce fichier depuis une autre instance d'IntelliJ IDEA.
 
 3. **Installation depuis JetBrains Marketplace**
     - Rendez-vous sur la JetBrains Marketplace ou ouvrez la section Plugins depuis IntelliJ IDEA (Ultimate ou Community

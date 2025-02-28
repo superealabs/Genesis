@@ -32,14 +32,21 @@
       "timestamp": "java.time.LocalDateTime",
       "time": "java.time.LocalTime",
       "boolean": "Boolean",
-      "json": "String",
-      "interval": "String",
-      "uuid": "String",
-      "integer[]": "String",
-      "text[]": "String",
-      "bytea": "byte[]",
-      "inet": "java.net.InetAddress",
-      "xml": "String"
+
+      "json" : "String",
+      "interval": "java.time.Duration",
+      "uuid" : "String",
+      "integer[]" : "Integer[]",
+      "text[]" : "String[]",
+      "bytea" : "byte[]",
+      "inet" : "java.net.InetAddress",
+      "xml" : "String",
+
+      "tinyint" : "short",
+      "byte[]" : "byte[]",
+      "list[string]" : "java.util.List<String>",
+      "float" : "Float",
+      "char" : "char"
     }
   },
   {
@@ -66,12 +73,13 @@
       "boolean": "Boolean",
       "json": "string",
       "interval": "TimeSpan",
-      "uuid": "string",
-      "integer[]": "int[]",
-      "text[]": "string[]",
-      "bytea": "byte[]",
-      "inet": "System.Net.IPAddress",
-      "xml": "string"
+      "uuid" : "string",
+      "integer[]" : "int[]",
+      "text[]" : "string[]",
+      "bytea" : "byte[]",
+      "byte[]" : "byte[]",
+      "inet" : "System.Net.IPAddress",
+      "xml" : "string"
     }
   }
 ]
