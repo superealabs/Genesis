@@ -1186,6 +1186,7 @@
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/"
     modelPackage: "${majStart(projectName)}.Models"
+    modelAdditionalFiles: [ ]
   modelDao:
     toGenerate: true
     modelDaoImports: |
