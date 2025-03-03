@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class GenesisTemplateEngineTest {
@@ -134,4 +136,60 @@ public class GenesisTemplateEngineTest {
                 """;
         assertEquals("A is greater than B\n", engine.render(elseIfTemplate, variables));
     }
+
+    @Test
+    void testNestedLoop() throws Exception {
+        // Création de la map de variables
+        var variables = new HashMap<String, Object>();
+
+        // Création de la liste des catégories (chaque catégorie est une map avec un nom et une liste de produits)
+        List<Map<String, Object>> categories = new ArrayList<>();
+
+        // Catégorie 1 : Fruits
+        Map<String, Object> category1 = new HashMap<>();
+        category1.put("name", "Fruits");
+        category1.put("products", List.of("Pomme", "Banane", "Cerise"));
+        categories.add(category1);
+
+        // Catégorie 2 : Légumes
+        Map<String, Object> category2 = new HashMap<>();
+        category2.put("name", "Légumes");
+        category2.put("products", List.of("Carotte", "Pommes de terre", "Brocoli"));
+        categories.add(category2);
+
+        // Ajout de la liste des catégories dans les variables
+        variables.put("categories", categories);
+
+        // Template avec boucle each imbriquée :
+        var template = """
+            Liste des catégories :
+            {{#each categories}}
+              Catégorie : ${this.name}
+              Produits :
+              {{#each this.products}}
+                - ${this}
+              {{/each}}
+            {{/each}}
+            """;
+
+        var result = engine.render(template, variables);
+
+        System.out.println(result);
+
+        /*
+        Expected output :
+        Liste des catégories :
+          Catégorie : Fruits
+          Produits :
+            - Pomme
+            - Banane
+            - Cerise
+          Catégorie : Légumes
+          Produits :
+            - Carotte
+            - Pommes de terre
+            - Brocoli
+         */
+    }
+
 }
