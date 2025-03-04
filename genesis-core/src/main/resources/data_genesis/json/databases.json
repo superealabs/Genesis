@@ -52,6 +52,7 @@
       "TIME": "time",
       "BIT": "boolean",
       "CHAR": "string",
+      "UUID": "uuid",
       "TINYTEXT": "string",
       "LONGTEXT": "string",
       "ENUM": "string",

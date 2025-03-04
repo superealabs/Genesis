@@ -17,9 +17,10 @@ public class TableMetadataTestPostgres {
         this.credentials = new Credentials()
                 .setHost("localhost")
                 .setPort("5432")
-                .setDatabaseName("biblio")
+                .setSchemaName("public")
+                .setDatabaseName("postgres")
                 .setUser("postgres")
-                .setPwd("postgres");
+                .setPwd("root");
     }
 
 

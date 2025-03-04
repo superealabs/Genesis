@@ -1297,6 +1297,7 @@
       using Models;
       using Services;
       using Services.Interface;
+      using Swashbuckle.AspNetCore.Annotations;
 
     controllerAnnotations: |
       [ApiController]
@@ -1312,6 +1313,8 @@
       {{tab}}}
     controllerMethodContent: |
       {{tab}}[HttpGet]
+      {{tab}}[SwaggerResponse(200, "Successfully retrieved the list of ${majStart(className)}", typeof(IEnumerable<${majStart(className)}>))]
+      {{tab}}[SwaggerResponse(204, "No content available")]
       {{tab}}public async Task<ActionResult<IEnumerable<${majStart(className)}>>> Get${majStart(className)}s()
       {{tab}}{
       {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync({{#each fieldsFK}}e => e.${majStart(this.name)}{{#if !@last}}, {{/if}}{{/each}});
@@ -1319,6 +1322,8 @@
       {{tab}}}
       
       {{tab}}[HttpGet("{id}")]
+      {{tab}}[SwaggerResponse(200, "Successfully retrieved the ${majStart(className)}", typeof(${majStart(className)}))]
+      {{tab}}[SwaggerResponse(404, "The ${majStart(className)} was not found")]
       {{tab}}public async Task<ActionResult<${majStart(className)}>> Get${majStart(className)}(${pkColumnType} id)
       {{tab}}{
       {{tab}}{{tab}}var ${minStart(className)} = await _service.GetByIdAsync(id{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
@@ -1326,6 +1331,8 @@
       {{tab}}}
       
       {{tab}}[HttpPost]
+      {{tab}}[SwaggerResponse(201, "Successfully created the ${majStart(className)}", typeof(${majStart(className)}))]
+      {{tab}}[SwaggerResponse(400, "Bad request - Invalid input data")]
       {{tab}}public async Task<ActionResult<${majStart(className)}>> Post(${majStart(className)} ${minStart(className)})
       {{tab}}{
       {{tab}}{{tab}}await _service.AddAsync(${minStart(className)});
@@ -1333,6 +1340,10 @@
       {{tab}}}
       
       {{tab}}[HttpPut("{id}")]
+      {{tab}}[SwaggerResponse(200, "Successfully updated the ${majStart(className)}", typeof(${majStart(className)}))]
+      {{tab}}[SwaggerResponse(400, "Bad request - ID mismatch")]
+      {{tab}}[SwaggerResponse(404, "The ${majStart(className)} was not found")]
+      {{tab}}[SwaggerResponse(204, "No content after update")]
       {{tab}}public async Task<ActionResult<${majStart(className)}>> Put${majStart(className)}(${pkColumnType} id, ${majStart(className)} ${minStart(className)})
       {{tab}}{
       {{tab}}{{tab}}if (id != ${minStart(className)}.${majStart(pkColumn)})
@@ -1346,6 +1357,8 @@
       {{tab}}}
       
       {{tab}}[HttpDelete("{id}")]
+      {{tab}}[SwaggerResponse(204, "Successfully deleted the ${majStart(className)}")]
+      {{tab}}[SwaggerResponse(404, "The ${majStart(className)} was not found")]
       {{tab}}public async Task<ActionResult> Delete${majStart(className)}(${pkColumnType} id)
       {{tab}}{
       
