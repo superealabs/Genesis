@@ -6,8 +6,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
-import org.labs.genesis.listener.NextButtonListener;
-import org.labs.genesis.listener.PreviousButtonListener;
+import org.labs.genesis.listener.MoreButtonListener;
 import org.labs.genesis.services.TableNameStrategy;
 import org.labs.genesis.services.tablename.TableNamePaginatorStrategy;
 import org.labs.genesis.services.tablename.TableNameStrategyImpl;
@@ -28,27 +27,25 @@ public class GenerationOptionForm {
     private JBList<String> componentChoice;
     private JLabel componentsLabel;
     private JButton nextButton;
-    private JButton previousButton;
-    private TableNameStrategy tableNameStrategy;
     @Setter
     private List<String> allTablesNames = null;
+
     @Setter
     private int paginationIndex = 0;
+    private int paginationSize = 1;
 
+    private TableNameStrategy tableNameStrategy;
     public GenerationOptionForm(ProjectGenerationContext projectGenerationContext) {
         this.projectGenerationContext = projectGenerationContext;
         setupListeners();
-        setupNextListener();
-        setupPreviousListener();
+        setupMoreListener();
+
     }
 
-    private void setupNextListener() {
-        nextButton.addMouseListener(new NextButtonListener(this));
+    private void setupMoreListener() {
+        nextButton.addMouseListener(new MoreButtonListener(this));
     }
 
-    private void setupPreviousListener() {
-        nextButton.addMouseListener(new PreviousButtonListener(this));
-    }
 
     private void setupListeners() {
         assert refreshLinkLabel != null;
@@ -74,12 +71,12 @@ public class GenerationOptionForm {
         refreshLinkLabel.setToolTipText("Click to refresh table names");
     }
 
-    public void populateTableNames() {
+    private void populateTableNames() {
         try {
-            //this.tableNameStrategy = new TableNamePaginatorStrategy(projectGenerationContext, SELECT_ALL, this);
-            this.tableNameStrategy = new TableNameStrategyImpl(projectGenerationContext, SELECT_ALL);
-            List<String> allTableNames = tableNameStrategy.getTableNames();
-            tableNamesList.setListData(allTableNames.toArray(new String[0]));
+            this.tableNameStrategy =  new TableNamePaginatorStrategy(this.projectGenerationContext, SELECT_ALL, this);
+            List<String> list = tableNameStrategy.getTableNames();
+            this.allTablesNames.addAll(list);
+            tableNamesList.setListData(this.allTablesNames.toArray(new String[0]));
         } catch (IllegalStateException e) {
             Messages.showErrorDialog(
                     mainPanel,
@@ -93,6 +90,10 @@ public class GenerationOptionForm {
                     "Error"
             );
         }
+    }
+
+    public void incrementTableNameList(){
+        this.populateTableNames();
     }
 }
 
