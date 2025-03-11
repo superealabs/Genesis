@@ -15,11 +15,11 @@ public class TableMetadataTestOracle {
     public TableMetadataTestOracle() {
         this.credentials = new Credentials()
                 .setHost("localhost")
-                .setPort("1521")
-                .setUser("biblio")
-                .setSchemaName("BIBLIO")
-                .setPwd("biblio")
-                .setSID("SYSTEM");
+                .setPort("1522")
+                .setUser("genesis")
+                .setSchemaName("GENESIS")
+                .setPwd("root")
+                .setSID("orcl");
     }
 
     @Test

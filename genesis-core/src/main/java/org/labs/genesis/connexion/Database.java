@@ -129,4 +129,25 @@ public abstract class Database {
     public String toString() {
         return name;
     }
+
+
+    public List<String> getPaginatedTableNames(Connection connection,int index, int size) throws SQLException {
+        List<String> tableNames = new ArrayList<>();
+        DatabaseMetaData metaData = connection.getMetaData();
+
+        int tempIndex = 0;
+        try (ResultSet tables = metaData.getTables(null, credentials.getSchemaName(), "%", new String[]{"TABLE"})) {
+            while (tables.next() && size > tableNames.size()) {
+                if (tempIndex < (index*size)) {
+                    tempIndex++;
+                    continue;
+                }
+                String tableName = tables.getString("TABLE_NAME");
+                tableNames.add(tableName);
+                tempIndex++;
+            }
+        }
+
+        return tableNames;
+    }
 }

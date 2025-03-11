@@ -209,6 +209,7 @@
                 </PackageReference>
                 <PackageReference Include="${DBartifactId}" Version="${frameworkVersion}.0"/>{{/if}}
                 <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0"/>
+                <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.9.0"/>
                 {{#if useEurekaServer}}<PackageReference Include="Steeltoe.Discovery.Eureka" Version="3.2.0"/>{{/if}}
                 <PackageReference Include="Steeltoe.Management.Endpoint.Info" Version="1.1.0" />
                 <PackageReference Include="Steeltoe.Management.Endpoint.Health" Version="1.1.0" />

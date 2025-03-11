@@ -17,9 +17,9 @@ public class TableMetadataTestMysql {
         this.credentials = new Credentials()
                 .setHost("localhost")
                 .setPort("3306")
-                .setDatabaseName("scenema")
+                .setDatabaseName("genesis")
                 .setUser("root")
-                .setPwd("Nomena321@")
+                .setPwd("root")
                 .setTrustCertificate(true)
                 .setUseSSL(true)
                 .setAllowPublicKeyRetrieval(true);

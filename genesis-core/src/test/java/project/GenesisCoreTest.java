@@ -109,7 +109,7 @@ public class GenesisCoreTest {
                 .setSchemaName("default")
                 .setDatabaseName("genesis")
                 .setUser("root")
-                .setPwd("Nomena321@")
+                .setPwd("root")
                 .setTrustCertificate(true)
                 .setUseSSL(true)
                 .setAllowPublicKeyRetrieval(true);

@@ -1046,6 +1046,7 @@
         
         builder.Services.AddSwaggerGen(c =>
         {
+            c.EnableAnnotations();
             c.SwaggerDoc("v1", new OpenApiInfo
             {
                 Title = "${projectName}",               
@@ -1352,6 +1353,7 @@
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/"
     modelPackage: "${majStart(projectName)}.Models"
+    modelAdditionalFiles: [ ]
   modelDao:
     toGenerate: true
     modelDaoImports: |
@@ -1462,10 +1464,15 @@
       using Models;
       using Services;
       using Services.Interface;
+      using Swashbuckle.AspNetCore.Annotations;
 
     controllerAnnotations: |
       [ApiController]
       [Route("${minStart(className)}s")]
+      [Produces("application/json")]
+      [Consumes("application/json")]
+      [ApiExplorerSettings(GroupName = "${majStart(className)}")]
+      [SwaggerTag("${majStart(className)} Management APIs")]
     controllerExtends: " : ControllerBase"
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
@@ -1477,6 +1484,13 @@
       {{tab}}}
     controllerMethodContent: |
       {{tab}}[HttpGet]
+      {{tab}}[SwaggerOperation(
+      {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
+      {{tab}})]
+      {{tab}}[SwaggerResponse(200, "Successfully retrieved the paginated list of ${formatReadableLowerCase(className)}",
+      {{tab}}{{tab}}typeof(IEnumerable<${majStart(className)}>))]
+      {{tab}}[SwaggerResponse(204, "No ${formatReadableLowerCase(className)} found")]
       {{tab}}public async Task<ActionResult<IEnumerable<${majStart(className)}>>> Get${majStart(className)}s()
       {{tab}}{
       {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync({{#each fieldsFK}}e => e.${majStart(this.name)}{{#if !@last}}, {{/if}}{{/each}});
@@ -1484,21 +1498,40 @@
       {{tab}}}
       
       {{tab}}[HttpGet("{id}")]
-      {{tab}}public async Task<ActionResult<${majStart(className)}>> Get${majStart(className)}(${pkColumnType} id)
+      {{tab}}[SwaggerOperation(
+      {{tab}}{{tab}}Summary = "Get ${formatReadableLowerCase(className)} by ID",
+      {{tab}}{{tab}}Description = "Retrieve a specific ${formatReadableLowerCase(className)} item by its ID"
+      {{tab}})]
+      {{tab}}[SwaggerResponse(200, "Successfully retrieved the ${formatReadableLowerCase(className)}", typeof(${majStart(className)}))]
+      {{tab}}[SwaggerResponse(404, "${majStart(className)} not found with the provided ID")]
+      {{tab}}public async Task<ActionResult<${majStart(className)}>> Get${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to retrieve", Required = true)] ${pkColumnType} id)
       {{tab}}{
       {{tab}}{{tab}}var ${minStart(className)} = await _service.GetByIdAsync(id{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
       {{tab}}{{tab}}return ${minStart(className)} == null ? NotFound() : Ok(${minStart(className)});
       {{tab}}}
       
       {{tab}}[HttpPost]
-      {{tab}}public async Task<ActionResult<${majStart(className)}>> Post(${majStart(className)} ${minStart(className)})
+      {{tab}}[SwaggerOperation(
+      {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
+      {{tab}}{{tab}}Description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
+      {{tab}})]
+      {{tab}}[SwaggerResponse(201, "${majStart(className)} created successfully", typeof(${majStart(className)}))]
+      {{tab}}[SwaggerResponse(400, "Invalid ${formatReadableLowerCase(className)} supplied")]
+      {{tab}}public async Task<ActionResult<${majStart(className)}>> Post([SwaggerParameter(Description = "${formatReadable(className)} object to be created", Required = true)] ${majStart(className)} ${minStart(className)})
       {{tab}}{
       {{tab}}{{tab}}await _service.AddAsync(${minStart(className)});
       {{tab}}{{tab}}return CreatedAtAction(nameof(Get${majStart(className)}), new { id = ${minStart(className)}.${majStart(pkColumn)} }, ${minStart(className)});
       {{tab}}}
       
       {{tab}}[HttpPut("{id}")]
-      {{tab}}public async Task<ActionResult<${majStart(className)}>> Put${majStart(className)}(${pkColumnType} id, ${majStart(className)} ${minStart(className)})
+      {{tab}}[SwaggerOperation(
+      {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)}",
+      {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
+      {{tab}})]
+      {{tab}}[SwaggerResponse(200, "${majStart(className)} updated successfully", typeof(${majStart(className)}))]
+      {{tab}}[SwaggerResponse(400, "Invalid ${formatReadableLowerCase(className)} supplied")]
+      {{tab}}[SwaggerResponse(404, "${majStart(className)} not found with the provided ID")]
+      {{tab}}public async Task<ActionResult<${majStart(className)}>> Put${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to update", Required = true)] ${pkColumnType} id, [SwaggerParameter(Description = "Updated ${formatReadable(className)} object", Required = true)] ${majStart(className)} ${minStart(className)})
       {{tab}}{
       {{tab}}{{tab}}if (id != ${minStart(className)}.${majStart(pkColumn)})
       {{tab}}{{tab}}{{tab}}return BadRequest();
@@ -1511,7 +1544,13 @@
       {{tab}}}
       
       {{tab}}[HttpDelete("{id}")]
-      {{tab}}public async Task<ActionResult> Delete${majStart(className)}(${pkColumnType} id)
+      {{tab}}[SwaggerOperation(
+      {{tab}}{{tab}}Summary = "Delete ${formatReadableLowerCase(className)}",
+      {{tab}}{{tab}}Description = "Delete a ${formatReadableLowerCase(className)} item by its ID"
+      {{tab}})]
+      {{tab}}[SwaggerResponse(204, "${majStart(className)} deleted successfully")]
+      {{tab}}[SwaggerResponse(404, "${majStart(className)} not found with the provided ID")]
+      {{tab}}public async Task<ActionResult> Delete${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to delete", Required = true)] ${pkColumnType} id)
       {{tab}}{
       
       {{tab}}{{tab}}var exists = await _service.ExistsAsync(id);
