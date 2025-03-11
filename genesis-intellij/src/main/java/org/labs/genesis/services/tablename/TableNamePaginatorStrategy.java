@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TableNamePaginatorStrategy extends TableNameStrategy {
-    private final int NB_TABLE = 2;
+    private final int NB_TABLE = 10;
     private final GenerationOptionForm generationOptionForm;
 
     public TableNamePaginatorStrategy(ProjectGenerationContext projectGenerationContext, String selectAll, GenerationOptionForm generationOptionForm) {
