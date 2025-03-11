@@ -15,7 +15,9 @@ public class Language {
     private List<ConfigurationMetadata> configurations;
     private Map<String, String> syntax;
     private Map<String, String> types;
-
+    private Map<String, List<String>> attributeTypeAnnotations;
+    private Map<String, String> mockData;
+    private Map<String, String> criteriaBuildSnippet;
     @Override
     public String toString() {
         return this.name;

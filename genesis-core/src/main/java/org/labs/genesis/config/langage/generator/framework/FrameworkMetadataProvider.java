@@ -191,6 +191,17 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
+    public static HashMap<String, Object> getHashMapIntermediaire(Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink) {
+        HashMap<String, Object> metadata = new HashMap<>();
+
+        addGeneralMetadata(metadata, tableMetadata, destinationFolder, projectName, groupLink);
+        metadata.put("fields", getFieldsList(tableMetadata, language));
+        metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
+        metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
+
+        return metadata;
+    }
+
     private static void addGeneralMetadata(HashMap<String, Object> metadata, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink) {
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName", projectName);
@@ -243,6 +254,37 @@ public class FrameworkMetadataProvider {
         return fieldsFK;
     }
 
+    private static List<Map<String, Object>> getFieldsList(TableMetadata tableMetadata, Language language) {
+        List<Map<String, Object>> fields = new ArrayList<>();
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            Map<String, Object> fieldMap = getFieldHashMap(field, language);
+            fields.add(fieldMap);
+        }
+        return fields;
+    }
+
+    private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata, Language language) {
+        List<Map<String, Object>> fieldsPK = new ArrayList<>();
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            if (!field.isPrimary()) {
+                Map<String, Object> fieldMap = getFieldHashMap(field, language);
+                fieldsPK.add(fieldMap);
+            }
+        }
+        return fieldsPK;
+    }
+
+    private static List<Map<String, Object>> getFieldsFKList(TableMetadata tableMetadata, Language language) {
+        List<Map<String, Object>> fieldsFK = new ArrayList<>();
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            if (field.isForeign()) {
+                Map<String, Object> fieldMap = getFieldHashMap(field, language);
+                fieldsFK.add(fieldMap);
+            }
+        }
+        return fieldsFK;
+    }
+
     public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field) {
         Map<String, Object> fieldMap = new HashMap<>();
 
@@ -256,6 +298,26 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("referencedColumnType", field.getReferencedColumnType());
         fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
+
+        return fieldMap;
+    }
+
+    public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field, Language language) {
+        Map<String, Object> fieldMap = new HashMap<>();
+
+        fieldMap.put("withGetters", false);
+        fieldMap.put("withSetters", false);
+        fieldMap.put("type", field.getType());
+        fieldMap.put("name", field.getName());
+        fieldMap.put("isPrimaryKey", field.isPrimary());
+        fieldMap.put("isForeignKey", field.isForeign());
+        fieldMap.put("columnType", field.getColumnType());
+        fieldMap.put("columnName", field.getReferencedColumn());
+        fieldMap.put("referencedColumnType", field.getReferencedColumnType());
+        fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
+        fieldMap.put("attributeTypeAnnotations", language.getAttributeTypeAnnotations().get(field.getType()));
+        fieldMap.put("mockdata", language.getMockData().get(field.getColumnType()));
+        fieldMap.put("criteriaBuildSnippet", language.getCriteriaBuildSnippet().get(field.getColumnType()));
 
         return fieldMap;
     }

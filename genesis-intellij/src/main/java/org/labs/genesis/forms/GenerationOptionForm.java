@@ -6,6 +6,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.connexion.Database;
 import org.labs.genesis.listener.NextButtonListener;
 import org.labs.genesis.listener.PreviousButtonListener;
 import org.labs.genesis.services.TableNameStrategy;
@@ -13,6 +14,7 @@ import org.labs.genesis.services.tablename.TableNamePaginatorStrategy;
 import org.labs.genesis.services.tablename.TableNameStrategyImpl;
 
 import javax.swing.*;
+import java.sql.Connection;
 import java.util.List;
 
 @Getter

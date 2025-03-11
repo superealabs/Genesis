@@ -183,6 +183,37 @@
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
+    - fileType: "Timestamp Range Converter"
+      fileName: "TSRangeConverter"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.utils;
+  
+        import java.time.LocalDateTime;
+        
+        import jakarta.persistence.AttributeConverter;
+        import jakarta.persistence.Converter;
+        
+        @Converter
+        public class TSRangeConverter implements AttributeConverter<LocalDateTime[], String>{
+          @Override
+          public String convertToDatabaseColumn(LocalDateTime[] attribute) {
+            String range="[\"%s\",\"%s\"]";
+            return String.format(range, attribute[0].toString().replace("T", " "), attribute[1].toString().replace("T", " "));
+          }
+          
+          @Override
+          public LocalDateTime[] convertToEntityAttribute(String dbData) {
+            String[] range=dbData.substring(1, dbData.length()-1).split(",");
+            LocalDateTime[] ranges={
+              LocalDateTime.parse(range[0].replace(" ", "T").substring(1, range[0].length()-1)),
+              LocalDateTime.parse(range[1].replace(" ", "T").substring(1, range[1].length()-1))
+            };
+            return ranges;
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
+
 
     - fileType: "Exception"
       fileName: "ResourceNotFoundException"
@@ -283,7 +314,7 @@
             username: ${databaseUsername}
             password: ${databasePassword}
           jpa:
-            database-platform : org.hibernate.dialect.${databaseType}${databaseVersion}Dialect
+            database-platform : org.hibernate.dialect.${databaseType}Dialect
             hibernate:
               ddl-auto: ${hibernateDdlAuto}
             properties:
@@ -403,6 +434,11 @@
       version: "2.6.0"
       scope: "{{removeLine}}"
 
+    - groupId: "io.hypersistence"
+      artifactId: "hypersistence-utils-hibernate-63"
+      version: "3.9.2"
+      scope: "{{removeLine}}"
+
   model:
     toGenerate: true
     modelImports: |
@@ -424,6 +460,9 @@
       {{tab}}@ManyToOne
       {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
       {{tab}}@Column(name="${this.columnName}"){{/if}}
+      {{tab}}{{#each this.attributeTypeAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
@@ -451,7 +490,11 @@
                       List<Predicate> predicates = new ArrayList<>();
                       {{#each fields}}
                       if(object.get${majStart(this.name)}()!=null){
-                          predicates.add(criteriaBuilder.equal(root.get("${this.name}"), object.get${majStart(this.name)}()));
+                          predicates.add(
+                              criteriaBuilder.equal(
+                                  ${this.criteriaBuildSnippet}
+                              )
+                          );
                       }
                       {{/each}}
                       return criteriaBuilder.and(predicates.toArray(new Predicate[predicates.size()]));
@@ -459,6 +502,129 @@
               }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/specification"
+      - fileType: "Unit Test File"
+        fileName: "${majStart(className)}ApplicationTests"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)};
+  
+          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+          
+          import java.nio.charset.StandardCharsets;
+          import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+          import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
+          import org.junit.jupiter.api.AfterEach;
+          import org.junit.jupiter.api.BeforeEach;
+          import org.junit.jupiter.api.Tag;
+          import org.junit.jupiter.api.Test;
+          import org.junit.jupiter.api.TestInfo;
+          import org.junit.jupiter.api.TestInstance;
+          import org.junit.jupiter.api.TestInstance.Lifecycle;
+          import org.springframework.beans.factory.annotation.Autowired;
+          import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+          import org.springframework.boot.test.context.SpringBootTest;
+          import org.springframework.http.MediaType;
+          import org.springframework.mock.web.MockHttpServletResponse;
+          import org.springframework.test.web.servlet.MockMvc;
+          
+          import com.fasterxml.jackson.databind.ObjectMapper;
+          import com.fasterxml.jackson.databind.ObjectWriter;
+          import com.fasterxml.jackson.databind.SerializationFeature;
+          
+          @SpringBootTest
+          @AutoConfigureMockMvc
+          @TestInstance(Lifecycle.PER_CLASS)
+          class ${majStart(className)}ApplicationTests {
+          
+            private MockMvc mockMvc;
+            private ${majStart(className)}Service service;
+            private ${majStart(className)} mockData=new ${majStart(className)}();
+            
+            @Autowired
+            public ${majStart(className)}ApplicationTests(MockMvc mockMvc, ${majStart(className)}Service service){
+              this.mockMvc=mockMvc;
+              this.service=service;
+              {{#each fields}}
+              {{#if this.isPrimaryKey}}{{removeLine}}
+              {{elseIf this.isForeignKey}}{{removeLine}}
+              {{else}}mockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
+              {{/each}}
+            }
+              
+            private final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(),
+            MediaType.APPLICATION_JSON.getSubtype(),
+            StandardCharsets.UTF_8);
+            
+            @BeforeEach
+            void seedingTheDatabase(){
+              service.create${majStart(className)}(mockData);
+            }
+            @AfterEach
+            void removingMockdatas(TestInfo testInfo){
+              if(testInfo.getTags().contains("skipAfter")){
+                return;
+              }
+              service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
+            }
+              
+            @Test
+            void testSearch${majStart(className)}() throws Exception{
+              ObjectMapper mapper=new ObjectMapper();
+              mapper.findAndRegisterModules();
+              mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
+              ObjectWriter writer=mapper.writer().withDefaultPrettyPrinter();
+              String requestJson=writer.writeValueAsString(mockData);
+              MockHttpServletResponse resp=mockMvc.perform(post("/${lowerCase(classNameLink)}/search").contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
+              System.out.println(resp.getContentAsString());
+            }
+              
+            @Test
+            void testGetAll${majStart(className)}() throws Exception{
+              MockHttpServletResponse resp=mockMvc.perform(get("/${lowerCase(classNameLink)}")).andReturn().getResponse();
+              System.out.println(resp.getContentAsString());
+            }
+              
+            @Test
+            void testCreate${majStart(className)}() throws Exception{
+              ${majStart(className)} otherMockData=new ${majStart(className)}();
+              {{#each fields}}
+              {{#if this.isPrimaryKey}}{{removeLine}}
+              {{elseIf this.isForeignKey}}{{removeLine}}
+              {{else}}otherMockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
+              {{/each}}
+              service.create${majStart(className)}(otherMockData);
+              MockHttpServletResponse resp=mockMvc.perform(get("/${lowerCase(classNameLink)}")).andReturn().getResponse();
+              System.out.println(resp.getContentAsString());
+              service.delete${majStart(className)}(otherMockData.get${majStart(pkColumn)}());
+            }
+              
+            @Test
+            void testModify${majStart(className)}() throws Exception{
+              ObjectMapper mapper=new ObjectMapper();
+              mapper.findAndRegisterModules();
+              mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
+              ObjectWriter writer=mapper.writer().withDefaultPrettyPrinter();
+              String requestJson=writer.writeValueAsString(mockData);
+              String requestUrl="/${lowerCase(classNameLink)}/%s";
+              requestUrl=String.format(requestUrl, mockData.getId());
+              MockHttpServletResponse resp=mockMvc.perform(put(requestUrl).contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
+              System.out.println(resp.getContentAsString());
+            }
+              
+            @Test
+            @Tag("skipAfter")
+            void testDelete${majStart(className)}() throws Exception{
+              String requestUrl="/${lowerCase(classNameLink)}/%s";
+              requestUrl=String.format(requestUrl, mockData.get${majStart(pkColumn)}());
+              MockHttpServletResponse resp=mockMvc.perform(delete(requestUrl).contentType(APPLICATION_JSON_UTF8)).andReturn().getResponse();
+              System.out.println(resp.getContentAsString());
+            }
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
+
   modelDao:
     toGenerate: true
     modelDaoImports: |
