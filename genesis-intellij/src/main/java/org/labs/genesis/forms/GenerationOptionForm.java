@@ -8,10 +8,8 @@ import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.listener.MoreButtonListener;
 import org.labs.genesis.connexion.Database;
-import org.labs.genesis.listener.NextButtonListener;
-import org.labs.genesis.listener.PreviousButtonListener;
 import org.labs.genesis.services.TableNameStrategy;
-import org.labs.genesis.services.tablename.TableNameStrategyImpl;
+import org.labs.genesis.services.tablename.TableNamePaginatorStrategy;
 
 import javax.swing.*;
 import java.awt.event.ComponentAdapter;
