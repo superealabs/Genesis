@@ -26,7 +26,6 @@ public class MySQLDatabase extends Database {
     }
 
 
-
     @Override
     public List<String> getAllTableNames(Connection connection) throws SQLException {
         List<String> tableNames = new ArrayList<>();
@@ -57,7 +56,6 @@ public class MySQLDatabase extends Database {
 
         return viewNames;
     }
-
 
 
 }

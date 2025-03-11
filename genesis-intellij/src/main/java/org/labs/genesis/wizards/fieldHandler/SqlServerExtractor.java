@@ -23,6 +23,7 @@ public class SqlServerExtractor extends ExtractorSignature {
         }
         return fields;
     }
+
     @Override
     public String extractParameter(String params, String key) {
         Pattern pattern = Pattern.compile(key + "=([^;]+)");

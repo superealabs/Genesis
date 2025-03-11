@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 
 public abstract class ExtractorSignature {
     public abstract DatabaseFields extractArgs(String jdbcUrl);
+
     public String extractParameter(String params, String key) {
         Pattern pattern = Pattern.compile(key + "=([^&]+)");
         Matcher matcher = pattern.matcher(params);

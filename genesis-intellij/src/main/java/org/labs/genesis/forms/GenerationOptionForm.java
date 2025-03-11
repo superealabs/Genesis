@@ -7,15 +7,11 @@ import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.connexion.Database;
-import org.labs.genesis.listener.NextButtonListener;
-import org.labs.genesis.listener.PreviousButtonListener;
 import org.labs.genesis.listener.MoreButtonListener;
-import org.labs.genesis.connexion.Database;
 import org.labs.genesis.services.TableNameStrategy;
 import org.labs.genesis.services.tablename.TableNamePaginatorStrategy;
 
 import javax.swing.*;
-
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.sql.Connection;
@@ -40,6 +36,7 @@ public class GenerationOptionForm {
     private int paginationSize = 1;
 
     private TableNameStrategy tableNameStrategy;
+
     public GenerationOptionForm(ProjectGenerationContext projectGenerationContext) {
         this.projectGenerationContext = projectGenerationContext;
         setupListeners();
@@ -78,7 +75,7 @@ public class GenerationOptionForm {
 
     private void populateTableNames() {
         try {
-            this.tableNameStrategy =  new TableNamePaginatorStrategy(this.projectGenerationContext, SELECT_ALL, this);
+            this.tableNameStrategy = new TableNamePaginatorStrategy(this.projectGenerationContext, SELECT_ALL, this);
             List<String> list = tableNameStrategy.getTableNames();
             this.allTablesNames.addAll(list);
             tableNamesList.setListData(this.allTablesNames.toArray(new String[0]));
@@ -96,7 +93,7 @@ public class GenerationOptionForm {
             );
         }
     }
-  
+
     public List<String> getAllTableNames() throws Exception {
         Database database = projectGenerationContext.getDatabase();
         Connection connection = projectGenerationContext.getConnection();
@@ -110,17 +107,17 @@ public class GenerationOptionForm {
         allTableNames.addFirst(SELECT_ALL); // Ajouter l'option pour tout sélectionner
         return allTableNames;
     }
-  
+
     private void connectionIsValid(Connection connection) throws Exception {
 
         if (!connection.isValid(2)) {
             throw new IllegalStateException("Database connection is not valid.");
         } else {
-            System.out.println("Connection to the database is established."+connection.getMetaData().getURL());
+            System.out.println("Connection to the database is established." + connection.getMetaData().getURL());
         }
     }
 
-    public void incrementTableNameList(){
+    public void incrementTableNameList() {
         this.populateTableNames();
     }
 }

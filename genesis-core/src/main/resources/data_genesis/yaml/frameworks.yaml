@@ -144,11 +144,11 @@
             public static final String DESC = "desc";
             public static final String SORT_CRITERIA_DELIMITER = ";";
             public static final String SORT_PARTS_DELIMITER = ",";
-            
+        
             public static Sort createSortObject(String sortParam) {
                 try {
                     String[] sortCriteria = sortParam.split(SORT_CRITERIA_DELIMITER);
-                    
+        
                     List<Sort.Order> orders = Arrays.stream(sortCriteria)
                             .map(criteria -> {
                                 String[] parts = criteria.split(SORT_PARTS_DELIMITER);
@@ -157,23 +157,23 @@
                                         "Each sort criteria must have exactly 2 parts: property and direction"
                                     );
                                 }
-            
+        
                                 String property = parts[0].trim();
                                 String direction = parts[1].trim().toLowerCase();
-                                
+        
                                 if (!direction.equals(ASC) && !direction.equals(DESC)) {
                                     throw new IllegalArgumentException(
                                         "Sort direction must be either '"+ASC+"' or '"+DESC+"'"
                                     );
                                 }
-                            
+        
                                 return new Sort.Order(
                                           Sort.Direction.fromString(direction),
                                           property
                                 );
                             })
                             .collect(Collectors.toList());
-            
+        
                     return Sort.by(orders);
         
                 } catch (Exception e) {
@@ -188,7 +188,7 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.utils;
-  
+        
         import java.time.LocalDateTime;
         
         import jakarta.persistence.AttributeConverter;
@@ -201,7 +201,7 @@
             String range="[\"%s\",\"%s\"]";
             return String.format(range, attribute[0].toString().replace("T", " "), attribute[1].toString().replace("T", " "));
           }
-          
+        
           @Override
           public LocalDateTime[] convertToEntityAttribute(String dbData) {
             String[] range=dbData.substring(1, dbData.length()-1).split(",");
@@ -225,7 +225,7 @@
             public ResourceNotFoundException(String message) {
                 super(message);
             }
-            
+        
             public ResourceNotFoundException(String message, Throwable cause) {
                 super(message, cause);
             }
@@ -242,7 +242,7 @@
             public InternalServerErrorException(String message) {
                 super(message);
             }
-            
+        
             public InternalServerErrorException(String message, Throwable cause) {
                 super(message, cause);
             }
@@ -267,14 +267,14 @@
         @Slf4j
         @RestControllerAdvice
         public class GlobalExceptionHandler {
-            
+        
             @ExceptionHandler(ResourceNotFoundException.class)
             public ResponseEntity<RestResponse<Void>> handleEntityNotFoundException(ResourceNotFoundException ex) {
                 RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
                 log.info("Resource not found : {}", ex.getMessage(), ex);        
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
-            
+        
             @ExceptionHandler(InternalServerErrorException.class)
             public ResponseEntity<RestResponse<Void>> handleInternalServerErrorException(InternalServerErrorException ex) {
                 RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), null);
@@ -288,7 +288,7 @@
                 log.error("Illegal argument provided : {}", ex.getMessage(), ex);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
-            
+        
             @ExceptionHandler(Exception.class)
             public ResponseEntity<RestResponse<Void>> handleGenericException(Exception ex) {
                 RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", null);
@@ -507,7 +507,7 @@
         extension: "java"
         content: |
           package ${groupLink}.${lowerCase(projectName)};
-  
+          
           import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
           import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
           import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -542,7 +542,7 @@
             private MockMvc mockMvc;
             private ${majStart(className)}Service service;
             private ${majStart(className)} mockData=new ${majStart(className)}();
-            
+          
             @Autowired
             public ${majStart(className)}ApplicationTests(MockMvc mockMvc, ${majStart(className)}Service service){
               this.mockMvc=mockMvc;
@@ -553,11 +553,11 @@
               {{else}}mockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
               {{/each}}
             }
-              
+          
             private final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(),
             MediaType.APPLICATION_JSON.getSubtype(),
             StandardCharsets.UTF_8);
-            
+          
             @BeforeEach
             void seedingTheDatabase(){
               service.create${majStart(className)}(mockData);
@@ -569,7 +569,7 @@
               }
               service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
             }
-              
+          
             @Test
             void testSearch${majStart(className)}() throws Exception{
               ObjectMapper mapper=new ObjectMapper();
@@ -580,13 +580,13 @@
               MockHttpServletResponse resp=mockMvc.perform(post("/${lowerCase(classNameLink)}/search").contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
               System.out.println(resp.getContentAsString());
             }
-              
+          
             @Test
             void testGetAll${majStart(className)}() throws Exception{
               MockHttpServletResponse resp=mockMvc.perform(get("/${lowerCase(classNameLink)}")).andReturn().getResponse();
               System.out.println(resp.getContentAsString());
             }
-              
+          
             @Test
             void testCreate${majStart(className)}() throws Exception{
               ${majStart(className)} otherMockData=new ${majStart(className)}();
@@ -600,7 +600,7 @@
               System.out.println(resp.getContentAsString());
               service.delete${majStart(className)}(otherMockData.get${majStart(pkColumn)}());
             }
-              
+          
             @Test
             void testModify${majStart(className)}() throws Exception{
               ObjectMapper mapper=new ObjectMapper();
@@ -613,7 +613,7 @@
               MockHttpServletResponse resp=mockMvc.perform(put(requestUrl).contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
               System.out.println(resp.getContentAsString());
             }
-              
+          
             @Test
             @Tag("skipAfter")
             void testDelete${majStart(className)}() throws Exception{
@@ -1007,7 +1007,7 @@
 
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
-    controllerAdditionalFiles: []
+    controllerAdditionalFiles: [ ]
 
 - id: 2
   languageId: 2

@@ -89,7 +89,7 @@ public abstract class Database {
                 String tableName = tables.getString("TABLE_NAME");
                 tableNames.add(tableName);
             }
-        }catch (SQLException e) {
+        } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
         return tableNames;
@@ -102,11 +102,6 @@ public abstract class Database {
     public List<String> getAllViewNames(Connection connection) throws SQLException {
         return getAllTableTypeNames(connection, "VIEW");
     }
-
-
-
-
-
 
 
     public Map<String, Object> getDatabaseMetadataHashMap(Credentials credentials) {
@@ -131,14 +126,14 @@ public abstract class Database {
     }
 
 
-    public List<String> getPaginatedTableNames(Connection connection,int index, int size) throws SQLException {
+    public List<String> getPaginatedTableNames(Connection connection, int index, int size) throws SQLException {
         List<String> tableNames = new ArrayList<>();
         DatabaseMetaData metaData = connection.getMetaData();
 
         int tempIndex = 0;
         try (ResultSet tables = metaData.getTables(null, credentials.getSchemaName(), "%", new String[]{"TABLE"})) {
             while (tables.next() && size > tableNames.size()) {
-                if (tempIndex < (index*size)) {
+                if (tempIndex < (index * size)) {
                     tempIndex++;
                     continue;
                 }

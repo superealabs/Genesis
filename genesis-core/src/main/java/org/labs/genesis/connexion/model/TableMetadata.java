@@ -13,9 +13,6 @@ import org.labs.utils.StringUtils;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.labs.utils.StringUtils.toCamelCase;
@@ -117,13 +114,12 @@ public class TableMetadata {
     }
 
 
-
     public List<TableMetadata> initializeTables(List<String> tableNames, Connection connex, Credentials credentials, Database database, Language language) throws SQLException, ClassNotFoundException {
-       return initializeTableType(tableNames, connex, credentials, database, language, false);
+        return initializeTableType(tableNames, connex, credentials, database, language, false);
     }
 
     public List<TableMetadata> initializeViews(List<String> viewNames, Connection connex, Credentials credentials, Database database, Language language) throws SQLException, ClassNotFoundException {
-      return initializeTableType(viewNames, connex, credentials, database, language, true);
+        return initializeTableType(viewNames, connex, credentials, database, language, true);
     }
 
 
@@ -138,27 +134,27 @@ public class TableMetadata {
                 column.setName(toCamelCase(columnName.toLowerCase()));
                 column.setReferencedColumn(columnName);
 
-                if (language.getTypes().get(getDatabaseType(database,columns)) == null)
+                if (language.getTypes().get(getDatabaseType(database, columns)) == null)
                     throw new RuntimeException("Database type not supported yet : " + columnType);
                 else
-                    column.setType(language.getTypes().get(getDatabaseType(database,columns)));
+                    column.setType(language.getTypes().get(getDatabaseType(database, columns)));
 
                 column.setColumnType(columnType);
                 listeCols.add(column);
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return listeCols;
     }
-    
+
     private String getDatabaseType(Database database, ResultSet columns) throws Exception {
         String columnType = columns.getString("TYPE_NAME");
 
         if (columns.getInt("DATA_TYPE") == Types.NUMERIC && database.getId() == Constantes.Oracle_ID) {
-            if (columns.getInt("DECIMAL_DIGITS") > 0){
-                columnType = getBeforeBracketsSimple(columnType)+"(*,*)";
-            }else {
+            if (columns.getInt("DECIMAL_DIGITS") > 0) {
+                columnType = getBeforeBracketsSimple(columnType) + "(*,*)";
+            } else {
                 columnType = getBeforeBracketsSimple(columnType);
             }
         }
@@ -209,8 +205,8 @@ public class TableMetadata {
                         field.setName(
                                 field.getName()
                                         .transform(StringUtils::toCamelCase)
-                                        .transform(name -> name +(StringUtils.majStart(StringUtils.toCamelCase(pkTableName.toLowerCase())))
-                        ));
+                                        .transform(name -> name + (StringUtils.majStart(StringUtils.toCamelCase(pkTableName.toLowerCase())))
+                                        ));
                         field.setReferencedTable(pkTableName.transform(StringUtils::toCamelCase));
 
                         try (ResultSet pkColumn = metaData.getColumns(null, database.getCredentials().getSchemaName(), pkTableName, pkColumnName)) {

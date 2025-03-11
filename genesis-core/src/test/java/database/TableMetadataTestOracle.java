@@ -10,7 +10,7 @@ import java.sql.Connection;
 import java.util.Arrays;
 
 public class TableMetadataTestOracle {
-        Credentials credentials;
+    Credentials credentials;
 
     public TableMetadataTestOracle() {
         this.credentials = new Credentials()
@@ -32,7 +32,7 @@ public class TableMetadataTestOracle {
 
         try (Connection connection = database.getConnection(credentials)) {
             TableMetadata[] entities = database.getEntities(connection, credentials, language).toArray(new TableMetadata[0]);
-            System.out.println("\n\nEntities : \n"+ Arrays.toString(entities)+"\n\n");
+            System.out.println("\n\nEntities : \n" + Arrays.toString(entities) + "\n\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -48,7 +48,7 @@ public class TableMetadataTestOracle {
 
         try (Connection connection = database.getConnection(credentials)) {
             TableMetadata[] entities = database.getViews(connection, credentials, language).toArray(new TableMetadata[0]);
-            System.out.println("\n\nEntities : \n"+Arrays.toString(entities)+"\n\n");
+            System.out.println("\n\nEntities : \n" + Arrays.toString(entities) + "\n\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

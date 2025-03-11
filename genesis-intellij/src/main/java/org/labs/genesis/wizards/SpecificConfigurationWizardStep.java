@@ -123,7 +123,7 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
     }
 
     private void validateLoggingLevel(Framework framework) throws ConfigurationException {
-        if(!frameworkHasConfiguration(framework, "logginglevel")){
+        if (!frameworkHasConfiguration(framework, "logginglevel")) {
             return;
         }
         String loggingLevel = Objects.toString(specificConfigurationForm.getLoggingLevelOptions().getSelectedItem(), "").trim();
@@ -153,13 +153,13 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         String username = specificConfigurationForm.getUsernameField().getText().trim();
         String password = new String(specificConfigurationForm.getPasswordField().getPassword()).trim();
         String role = specificConfigurationForm.getRoleField().getText().trim();
-        HashMap<String, String> gatewayMap=new HashMap<>(){{
+        HashMap<String, String> gatewayMap = new HashMap<>() {{
             put(username, "Username for API Gateway cannot be empty.");
             put(password, "Password for API Gateway cannot be empty.");
             put(role, "Role for API Gateway cannot be empty.");
         }};
-        for(Map.Entry<String, String> e:gatewayMap.entrySet()){
-            if(e.getKey().isEmpty()){
+        for (Map.Entry<String, String> e : gatewayMap.entrySet()) {
+            if (e.getKey().isEmpty()) {
                 throw new ConfigurationException(e.getValue());
             }
         }
@@ -167,7 +167,7 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
     private void validateRouteTable() throws ConfigurationException {
         List<Map<String, String>> routes = specificConfigurationForm.getRouteConfigurationData();
-        HashMap<String, String> routeOptionsMap=new HashMap<>();
+        HashMap<String, String> routeOptionsMap = new HashMap<>();
         String routeId = "";
         String uri = "";
         String path = "";
@@ -183,8 +183,8 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             routeOptionsMap.put(path, "Path in row " + (i + 1) + " cannot be empty.");
             routeOptionsMap.put(method, "Method in row " + (i + 1) + " cannot be empty.");
 
-            for(Map.Entry<String, String> e:routeOptionsMap.entrySet()){
-                if(e.getKey()==null || e.getKey().trim().isEmpty()){
+            for (Map.Entry<String, String> e : routeOptionsMap.entrySet()) {
+                if (e.getKey() == null || e.getKey().trim().isEmpty()) {
                     throw new ConfigurationException(e.getValue());
                 }
             }

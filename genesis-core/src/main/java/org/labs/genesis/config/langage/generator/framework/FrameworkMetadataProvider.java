@@ -8,7 +8,6 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
-import org.labs.utils.FileUtils;
 import org.labs.utils.StringUtils;
 
 import java.util.ArrayList;

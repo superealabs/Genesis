@@ -212,10 +212,12 @@ public class DatabaseConfigurationForm {
             public void insertUpdate(DocumentEvent e) {
                 updateFieldsFromUrl(URLField.getText().trim());
             }
+
             @Override
             public void removeUpdate(DocumentEvent e) {
                 updateFieldsFromUrl(URLField.getText().trim());
             }
+
             @Override
             public void changedUpdate(DocumentEvent e) {
                 updateFieldsFromUrl(URLField.getText().trim());
@@ -227,10 +229,18 @@ public class DatabaseConfigurationForm {
         if (jdbcUrl != null && !jdbcUrl.isEmpty()) {
             ExtractorSignature extractorSignature = null;
             DatabaseFields databaseFields;
-            if (jdbcUrl.startsWith("jdbc:oracle:")){ extractorSignature = new OracleExtractor();}
-            if (jdbcUrl.startsWith("jdbc:postgresql:")){ extractorSignature = new PotgresExtractor();}
-            if (jdbcUrl.startsWith("jdbc:mysql:")){ extractorSignature = new MySqlExtractor(); }
-            if (jdbcUrl.startsWith("jdbc:sqlserver:")){ extractorSignature = new SqlServerExtractor(); }
+            if (jdbcUrl.startsWith("jdbc:oracle:")) {
+                extractorSignature = new OracleExtractor();
+            }
+            if (jdbcUrl.startsWith("jdbc:postgresql:")) {
+                extractorSignature = new PotgresExtractor();
+            }
+            if (jdbcUrl.startsWith("jdbc:mysql:")) {
+                extractorSignature = new MySqlExtractor();
+            }
+            if (jdbcUrl.startsWith("jdbc:sqlserver:")) {
+                extractorSignature = new SqlServerExtractor();
+            }
             databaseFields = extractorSignature.extractArgs(jdbcUrl);
             SwingUtilities.invokeLater(() -> {
                 System.out.println(databaseFields);
@@ -256,8 +266,6 @@ public class DatabaseConfigurationForm {
 
         }
     }
-
-
 
 
     private void updateFieldsForDatabase(Database database) {

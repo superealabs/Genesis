@@ -1,8 +1,8 @@
 package org.labs.genesis.services.tablename;
 
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.forms.GenerationOptionForm;
 import org.labs.genesis.services.TableNameStrategy;
-import org.labs.genesis.config.ProjectGenerationContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +10,7 @@ import java.util.List;
 public class TableNamePaginatorStrategy extends TableNameStrategy {
     private final int NB_TABLE = 2;
     private final GenerationOptionForm generationOptionForm;
+
     public TableNamePaginatorStrategy(ProjectGenerationContext projectGenerationContext, String selectAll, GenerationOptionForm generationOptionForm) {
         super(projectGenerationContext, selectAll);
         this.generationOptionForm = generationOptionForm;
@@ -23,7 +24,7 @@ public class TableNamePaginatorStrategy extends TableNameStrategy {
     @Override
     public List<String> getTableNames() throws Exception {
         this.checkIsNotNull();
-        List<String> allTableNames = this.getDatabase().getPaginatedTableNames(this.getConnection(),this.generationOptionForm.getPaginationIndex(),this.NB_TABLE);
+        List<String> allTableNames = this.getDatabase().getPaginatedTableNames(this.getConnection(), this.generationOptionForm.getPaginationIndex(), this.NB_TABLE);
         if (this.generationOptionForm.getAllTablesNames().isEmpty()) {
             allTableNames.addFirst(this.getSelectAll()); // Ajouter l'option pour tout sélectionner "Message"
         }

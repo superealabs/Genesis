@@ -10,7 +10,6 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.forms.DatabaseConfigurationForm;
 
 import javax.swing.*;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,7 +34,7 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
         // Retrieve the selected database
         Database selectedDatabase = (Database) databaseConfigurationForm.getDmsOptions().getSelectedItem();
 
-        if(selectedDatabase==null){
+        if (selectedDatabase == null) {
             return;
         }
         try {
@@ -116,14 +115,14 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
         String databaseName = databaseConfigurationForm.getDatabaseField().getText().trim();
         String username = databaseConfigurationForm.getUsernameField().getText().trim();
 
-        HashMap<String, String> options = new HashMap<>(){{
+        HashMap<String, String> options = new HashMap<>() {{
             put(host, "Host field cannot be empty.");
             put(portStr, "Port field cannot be empty.");
             put(databaseName, "Database name cannot be empty.");
             put(username, "Username cannot be empty");
         }};
-        for(Map.Entry<String, String> e:options.entrySet()){
-            if(e.getKey().isEmpty()){
+        for (Map.Entry<String, String> e : options.entrySet()) {
+            if (e.getKey().isEmpty()) {
                 throw new ConfigurationException(e.getValue());
             }
         }
@@ -144,7 +143,7 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
 
     private void validateDatabaseSpecificFields() throws ConfigurationException {
         Database selectedDatabase = (Database) databaseConfigurationForm.getDmsOptions().getSelectedItem();
-        if(selectedDatabase==null||!"Oracle".equals(selectedDatabase.getName())){
+        if (selectedDatabase == null || !"Oracle".equals(selectedDatabase.getName())) {
             return;
         }
         String sid = databaseConfigurationForm.getSidField().getText().trim();

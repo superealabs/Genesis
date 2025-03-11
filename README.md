@@ -96,7 +96,7 @@ Le projet Genesis est un projet **multi-module**, avec les modules suivants :
         ```
 
 2. **Build et exécuter le JAR**
-    - Build le fichier JAR avec : 
+    - Build le fichier JAR avec :
       ```bash
       gradle genesis-cli:shadowJar
       ```
@@ -119,17 +119,18 @@ Le plugin IntelliJ permet d'utiliser Genesis directement dans l'IDE.
 
 1. **Développement en live**
     - Clonez le dépôt.
-    - Pour lancer une instance d'IntelliJ IDEA avec le plugin en mode live, exécutez : 
+    - Pour lancer une instance d'IntelliJ IDEA avec le plugin en mode live, exécutez :
         ``` bash
         gradle genesis-intellij:runIde` 
         ```
 
 2. **Installation via le .zip : genesis-intellij.zip**
+
 - Pour générer le fichier `genesis-intellij/build/distributions/genesis-intellij-x.x.x.zip`, construisez le projet via :
     ``` bash
     gradle genesis-intellij:buildPlugin 
     ````
-  - Chargez ce fichier depuis une autre instance d'IntelliJ IDEA.
+    - Chargez ce fichier depuis une autre instance d'IntelliJ IDEA.
 
 3. **Installation depuis JetBrains Marketplace**
     - Rendez-vous sur la JetBrains Marketplace ou ouvrez la section Plugins depuis IntelliJ IDEA (Ultimate ou Community

@@ -36,7 +36,7 @@ public class TableMetadataTestMysql {
 
         try (Connection connection = database.getConnection(credentials)) {
             TableMetadata[] entities = database.getEntities(connection, credentials, language).toArray(new TableMetadata[0]);
-            System.out.println("\n\nEntities : \n"+Arrays.toString(entities)+"\n\n");
+            System.out.println("\n\nEntities : \n" + Arrays.toString(entities) + "\n\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -52,7 +52,7 @@ public class TableMetadataTestMysql {
 
         try (Connection connection = database.getConnection(credentials)) {
             TableMetadata[] entities = database.getViews(connection, credentials, language).toArray(new TableMetadata[0]);
-            System.out.println("\n\nEntities : \n"+Arrays.toString(entities)+"\n\n");
+            System.out.println("\n\nEntities : \n" + Arrays.toString(entities) + "\n\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

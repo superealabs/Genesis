@@ -33,20 +33,18 @@
       "timestamp[]": "java.time.LocalDateTime[]",
       "time": "java.time.LocalTime",
       "boolean": "Boolean",
-
-      "json" : "String",
+      "json": "String",
       "interval": "java.time.Duration",
-      "uuid" : "String",
-      "integer[]" : "Integer[]",
-      "text[]" : "String[]",
-      "bytea" : "byte[]",
-      "inet" : "java.net.InetAddress",
-      "xml" : "String",
-
-      "tinyint" : "short",
-      "byte[]" : "byte[]",
-      "list[string]" : "java.util.List<String>",
-      "float" : "Float"
+      "uuid": "String",
+      "integer[]": "Integer[]",
+      "text[]": "String[]",
+      "bytea": "byte[]",
+      "inet": "java.net.InetAddress",
+      "xml": "String",
+      "tinyint": "short",
+      "byte[]": "byte[]",
+      "list[string]": "java.util.List<String>",
+      "float": "Float"
     },
     "attributeTypeAnnotations": {
       "Integer": [],
@@ -55,7 +53,7 @@
       "String": [
         "@org.hibernate.annotations.ColumnTransformer(read = \"CAST(${this.columnName} as varchar)\", write = \"CAST(? as ${this.columnType})\")"
       ],
-      "java.time.LocalDate":[],
+      "java.time.LocalDate": [],
       "java.time.LocalDateTime[]": [
         "@Convert(converter=${groupLink}.${lowerCase(projectName)}.utils.TSRangeConverter.class)",
         "@org.hibernate.annotations.ColumnTransformer(read = \"CAST(${this.columnName} as varchar)\", write=\"CAST(? as tsrange)\")"
@@ -70,7 +68,7 @@
       "byte[]": [],
       "java.net.InetAddress": [],
       "short": [],
-      "java.util.List<String>":[],
+      "java.util.List<String>": [],
       "Float": []
     },
     "mockData": {
@@ -79,8 +77,8 @@
       "json": "\"{}\"",
       "uuid": "java.util.UUID.randomUUID().toString()",
       "xml": "\"<mock>mock</mock>\"",
-      "date":"java.time.LocalDate.now()",
-      "timestamp":"java.time.LocalDateTime.now()",
+      "date": "java.time.LocalDate.now()",
+      "timestamp": "java.time.LocalDateTime.now()",
       "time": "java.time.LocalTime.now()",
       "interval": "java.time.Duration.ofSeconds(0)",
       "bytea": "new byte[]{1}",
@@ -117,8 +115,8 @@
       "json": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "uuid": "criteriaBuilder.function(\"${this.columnType}\", String.class, root.get(\"${this.name}\")),\n\t\t\t\t\t\tcriteriaBuilder.function(\"${this.columnType}\", String.class, criteriaBuilder.literal(object.get${majStart(this.name)}()))",
       "xml": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
-      "date":"root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
-      "timestamp":"root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "date": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "timestamp": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "time": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "interval": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "bytea": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
@@ -174,14 +172,14 @@
       "boolean": "Boolean",
       "json": "string",
       "interval": "TimeSpan",
-      "uuid" : "Guid",
-      "integer[]" : "int[]",
-      "text[]" : "string[]",
-      "bytea" : "byte[]",
-      "byte[]" : "byte[]",
-      "inet" : "System.Net.IPAddress",
-      "xml" : "string",
-      "float" : "float"
+      "uuid": "Guid",
+      "integer[]": "int[]",
+      "text[]": "string[]",
+      "bytea": "byte[]",
+      "byte[]": "byte[]",
+      "inet": "System.Net.IPAddress",
+      "xml": "string",
+      "float": "float"
     },
     "attributeTypeAnnotations": {},
     "mockData": {},

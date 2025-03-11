@@ -1,13 +1,6 @@
 package database;
 
-import org.junit.jupiter.api.Test;
-import org.labs.genesis.config.Constantes;
-import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Credentials;
-import org.labs.genesis.connexion.model.TableMetadata;
-
-import java.sql.Connection;
-import java.util.Arrays;
 
 public class TableMetadataTestSQLServer {
 

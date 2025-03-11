@@ -3,7 +3,7 @@ package org.labs.genesis.wizards.fieldHandler;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class OracleExtractor extends ExtractorSignature{
+public class OracleExtractor extends ExtractorSignature {
     @Override
     public DatabaseFields extractArgs(String jdbcUrl) {
         DatabaseFields fields = new DatabaseFields();

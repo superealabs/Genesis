@@ -3,12 +3,13 @@ package engine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.labs.genesis.engine.GenesisTemplateEngine;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class GenesisTemplateEngineTest {
     private GenesisTemplateEngine engine;
@@ -162,15 +163,15 @@ public class GenesisTemplateEngineTest {
 
         // Template avec boucle each imbriquée :
         var template = """
-            Liste des catégories :
-            {{#each categories}}
-              Catégorie : ${this.name}
-              Produits :
-              {{#each this.products}}
-                - ${this}
-              {{/each}}
-            {{/each}}
-            """;
+                Liste des catégories :
+                {{#each categories}}
+                  Catégorie : ${this.name}
+                  Produits :
+                  {{#each this.products}}
+                    - ${this}
+                  {{/each}}
+                {{/each}}
+                """;
 
         var result = engine.render(template, variables);
 
