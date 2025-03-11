@@ -116,7 +116,6 @@ public class APIGenerator implements GenesisGenerator {
         if (!generateComponentOnly) {
             ProjectGenerator.renderFilesEdits(framework.getModelDao().getModelDaoAdditionalFiles(), metadataFinally);
         }
-
         return result;
     }
 
@@ -128,7 +127,6 @@ public class APIGenerator implements GenesisGenerator {
                     "' (provided ID: " + language.getId() + ") is not compatible with the framework '" +
                     framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
         }
-
         // Chargement du template
         String templateContent = loadTemplate(framework);
 
@@ -179,6 +177,7 @@ public class APIGenerator implements GenesisGenerator {
                     "' (provided ID: " + language.getId() + ") is not compatible with the framework '" +
                     framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
         }
+
 
         // Chargement du template
         String templateContent = loadTemplate(framework);
