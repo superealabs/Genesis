@@ -141,6 +141,7 @@ public class GenesisTemplateEngine {
         evaluateLoops(result, variables);
         evaluateConditionals(result, variables);
         replaceVariables(result, variables);
+        replaceVariables(result, variables);
         processSpecialTags(result);
 
         restoreComments(result);

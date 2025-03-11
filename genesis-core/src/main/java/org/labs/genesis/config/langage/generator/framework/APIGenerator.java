@@ -42,7 +42,7 @@ public class APIGenerator implements GenesisGenerator {
         String result = engine.simpleRender(templateContent, metadataPrimary);
 
         // Rendu final
-        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, groupLink);
+        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(language, tableMetadata, destinationFolder, projectName, groupLink);
 
         // Ajustement du chemin de sauvegarde en fonction de generateComponentOnly
         String fileSavePath;
