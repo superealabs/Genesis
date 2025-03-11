@@ -7,13 +7,16 @@ import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.listener.MoreButtonListener;
+import org.labs.genesis.connexion.Database;
+import org.labs.genesis.listener.NextButtonListener;
+import org.labs.genesis.listener.PreviousButtonListener;
 import org.labs.genesis.services.TableNameStrategy;
-import org.labs.genesis.services.tablename.TableNamePaginatorStrategy;
 import org.labs.genesis.services.tablename.TableNameStrategyImpl;
 
 import javax.swing.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.sql.Connection;
 import java.util.List;
 
 @Getter
@@ -89,6 +92,29 @@ public class GenerationOptionForm {
                     "Failed to retrieve table names: " + e.getMessage(),
                     "Error"
             );
+        }
+    }
+  
+    public List<String> getAllTableNames() throws Exception {
+        Database database = projectGenerationContext.getDatabase();
+        Connection connection = projectGenerationContext.getConnection();
+
+        if (database == null || connection == null) {
+            throw new IllegalStateException("Database or connection is not defined.");
+        }
+
+        // Récupérer les noms de tables et ajouter l'option spéciale
+        List<String> allTableNames = database.getAllTableNames(connection);
+        allTableNames.addFirst(SELECT_ALL); // Ajouter l'option pour tout sélectionner
+        return allTableNames;
+    }
+  
+    private void connectionIsValid(Connection connection) throws Exception {
+
+        if (!connection.isValid(2)) {
+            throw new IllegalStateException("Database connection is not valid.");
+        } else {
+            System.out.println("Connection to the database is established."+connection.getMetaData().getURL());
         }
     }
 

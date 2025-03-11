@@ -123,20 +123,22 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
     }
 
     private void validateLoggingLevel(Framework framework) throws ConfigurationException {
-        if (frameworkHasConfiguration(framework, "loggingLevel")) {
-            String loggingLevel = Objects.toString(specificConfigurationForm.getLoggingLevelOptions().getSelectedItem(), "").trim();
-            if (loggingLevel.isEmpty()) {
-                throw new ConfigurationException("Logging Level cannot be empty.");
-            }
+        if(!frameworkHasConfiguration(framework, "logginglevel")){
+            return;
+        }
+        String loggingLevel = Objects.toString(specificConfigurationForm.getLoggingLevelOptions().getSelectedItem(), "").trim();
+        if (loggingLevel.isEmpty()) {
+            throw new ConfigurationException("Logging Level cannot be empty.");
         }
     }
 
     private void validateHibernateDdlAuto(Framework framework) throws ConfigurationException {
-        if (frameworkHasConfiguration(framework, "hibernateDdlAuto")) {
-            String hibernateDdlAuto = Objects.toString(specificConfigurationForm.getDdlAutoOptions().getSelectedItem(), "").trim();
-            if (hibernateDdlAuto.isEmpty()) {
-                throw new ConfigurationException("Hibernate DDL Auto cannot be empty.");
-            }
+        if (!frameworkHasConfiguration(framework, "hibernateDdlAuto")) {
+            return;
+        }
+        String hibernateDdlAuto = Objects.toString(specificConfigurationForm.getDdlAutoOptions().getSelectedItem(), "").trim();
+        if (hibernateDdlAuto.isEmpty()) {
+            throw new ConfigurationException("Hibernate DDL Auto cannot be empty.");
         }
     }
 
@@ -149,46 +151,44 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
     private void validateGatewayAuthentication() throws ConfigurationException {
         String username = specificConfigurationForm.getUsernameField().getText().trim();
-        if (username.isEmpty()) {
-            throw new ConfigurationException("Username for API Gateway cannot be empty.");
-        }
-
         String password = new String(specificConfigurationForm.getPasswordField().getPassword()).trim();
-        if (password.isEmpty()) {
-            throw new ConfigurationException("Password for API Gateway cannot be empty.");
-        }
-
         String role = specificConfigurationForm.getRoleField().getText().trim();
-        if (role.isEmpty()) {
-            throw new ConfigurationException("Role for API Gateway cannot be empty.");
+        HashMap<String, String> gatewayMap=new HashMap<>(){{
+            put(username, "Username for API Gateway cannot be empty.");
+            put(password, "Password for API Gateway cannot be empty.");
+            put(role, "Role for API Gateway cannot be empty.");
+        }};
+        for(Map.Entry<String, String> e:gatewayMap.entrySet()){
+            if(e.getKey().isEmpty()){
+                throw new ConfigurationException(e.getValue());
+            }
         }
     }
 
     private void validateRouteTable() throws ConfigurationException {
         List<Map<String, String>> routes = specificConfigurationForm.getRouteConfigurationData();
-
+        HashMap<String, String> routeOptionsMap=new HashMap<>();
+        String routeId = "";
+        String uri = "";
+        String path = "";
+        String method = "";
         for (int i = 0; i < routes.size(); i++) {
-            Map<String, String> route = routes.get(i);
+            routeId = routes.get(i).get("id");
+            uri = routes.get(i).get("uri");
+            path = routes.get(i).get("path");
+            method = routes.get(i).get("method");
 
-            String routeId = route.get("id");
-            if (routeId == null || routeId.trim().isEmpty()) {
-                throw new ConfigurationException("Route ID in row " + (i + 1) + " cannot be empty.");
-            }
+            routeOptionsMap.put(routeId, "Route ID in row " + (i + 1) + " cannot be empty.");
+            routeOptionsMap.put(uri, "URI in row " + (i + 1) + " cannot be empty.");
+            routeOptionsMap.put(path, "Path in row " + (i + 1) + " cannot be empty.");
+            routeOptionsMap.put(method, "Method in row " + (i + 1) + " cannot be empty.");
 
-            String uri = route.get("uri");
-            if (uri == null || uri.trim().isEmpty()) {
-                throw new ConfigurationException("URI in row " + (i + 1) + " cannot be empty.");
+            for(Map.Entry<String, String> e:routeOptionsMap.entrySet()){
+                if(e.getKey()==null || e.getKey().trim().isEmpty()){
+                    throw new ConfigurationException(e.getValue());
+                }
             }
-
-            String path = route.get("path");
-            if (path == null || path.trim().isEmpty()) {
-                throw new ConfigurationException("Path in row " + (i + 1) + " cannot be empty.");
-            }
-
-            String method = route.get("method");
-            if (method == null || method.trim().isEmpty()) {
-                throw new ConfigurationException("Method in row " + (i + 1) + " cannot be empty.");
-            }
+            routeOptionsMap.clear();
         }
     }
 

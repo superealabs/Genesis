@@ -57,6 +57,7 @@ public class Framework {
         private String modelSavePath;
         private String modelForeignContextAttribute;
         private String modelPackage;
+        private List<FilesEdit> modelAdditionalFiles;
     }
 
     @Getter
