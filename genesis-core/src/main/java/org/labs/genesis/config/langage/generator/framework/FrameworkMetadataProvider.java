@@ -24,13 +24,13 @@ public class FrameworkMetadataProvider {
 
         return new HashMap<>(
                 Map.of("host", credentials.getHost(),
-                        "port", database.getPort(),
+                        "port", credentials.getPort(),
                         "database", credentials.getDatabaseName(),
                         "schema", credentials.getSchemaName(),
                         "useSSL", credentials.isUseSSL(),
                         "username", credentials.getUser(),
                         "password", credentials.getPwd(),
-                        "driverType", database.getDriverType(),
+                        "driverType", credentials.getDriverType(),
                         "sid", database.getSid()
                 )
         );
