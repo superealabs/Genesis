@@ -6,6 +6,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.listener.MoreButtonListener;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.listener.NextButtonListener;
 import org.labs.genesis.listener.PreviousButtonListener;
@@ -13,6 +14,8 @@ import org.labs.genesis.services.TableNameStrategy;
 import org.labs.genesis.services.tablename.TableNameStrategyImpl;
 
 import javax.swing.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.sql.Connection;
 import java.util.List;
 
@@ -27,39 +30,56 @@ public class GenerationOptionForm {
     private JBList<String> componentChoice;
     private JLabel componentsLabel;
     private JButton nextButton;
-    private JButton previousButton;
-    private TableNameStrategy tableNameStrategy;
     @Setter
     private List<String> allTablesNames = null;
+
     @Setter
     private int paginationIndex = 0;
+    private int paginationSize = 1;
 
+    private TableNameStrategy tableNameStrategy;
     public GenerationOptionForm(ProjectGenerationContext projectGenerationContext) {
         this.projectGenerationContext = projectGenerationContext;
         setupListeners();
-        setupNextListener();
-        setupPreviousListener();
+        setupMoreListener();
+
     }
 
-    private void setupNextListener() {
-        nextButton.addMouseListener(new NextButtonListener(this));
+    private void setupMoreListener() {
+        nextButton.addMouseListener(new MoreButtonListener(this));
     }
 
-    private void setupPreviousListener() {
-        nextButton.addMouseListener(new PreviousButtonListener(this));
-    }
 
     private void setupListeners() {
         assert refreshLinkLabel != null;
+
         refreshLinkLabel.setListener((LinkLabel<String> source, String data) -> populateTableNames(), null);
+
+        refreshLinkLabel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                handleLinkLabelShown();
+            }
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+                handleLinkLabelShown();
+            }
+        });
     }
 
-    public void populateTableNames() {
+    private void handleLinkLabelShown() {
+        populateTableNames();
+        refreshLinkLabel.setFocusable(true);
+        refreshLinkLabel.setToolTipText("Click to refresh table names");
+    }
+
+    private void populateTableNames() {
         try {
-            //this.tableNameStrategy = new TableNamePaginatorStrategy(projectGenerationContext, SELECT_ALL, this);
-            this.tableNameStrategy = new TableNameStrategyImpl(projectGenerationContext, SELECT_ALL);
-            List<String> allTableNames = tableNameStrategy.getTableNames();
-            tableNamesList.setListData(allTableNames.toArray(new String[0]));
+            this.tableNameStrategy =  new TableNamePaginatorStrategy(this.projectGenerationContext, SELECT_ALL, this);
+            List<String> list = tableNameStrategy.getTableNames();
+            this.allTablesNames.addAll(list);
+            tableNamesList.setListData(this.allTablesNames.toArray(new String[0]));
         } catch (IllegalStateException e) {
             Messages.showErrorDialog(
                     mainPanel,
@@ -74,6 +94,7 @@ public class GenerationOptionForm {
             );
         }
     }
+  
     public List<String> getAllTableNames() throws Exception {
         Database database = projectGenerationContext.getDatabase();
         Connection connection = projectGenerationContext.getConnection();
@@ -87,6 +108,7 @@ public class GenerationOptionForm {
         allTableNames.addFirst(SELECT_ALL); // Ajouter l'option pour tout sélectionner
         return allTableNames;
     }
+  
     private void connectionIsValid(Connection connection) throws Exception {
 
         if (!connection.isValid(2)) {
@@ -94,6 +116,10 @@ public class GenerationOptionForm {
         } else {
             System.out.println("Connection to the database is established."+connection.getMetaData().getURL());
         }
+    }
+
+    public void incrementTableNameList(){
+        this.populateTableNames();
     }
 }
 

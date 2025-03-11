@@ -5,21 +5,22 @@ import org.labs.genesis.forms.GenerationOptionForm;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class PreviousButtonListener extends MouseAdapter {
+public class MoreButtonListener extends MouseAdapter {
     private final GenerationOptionForm generationOptionForm;
 
-    public PreviousButtonListener(GenerationOptionForm generationOptionForm) {
+    public MoreButtonListener(GenerationOptionForm generationOptionForm) {
         this.generationOptionForm = generationOptionForm;
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        int index = generationOptionForm.getPaginationIndex();
-        if (index == 0) {
+        /*int index = generationOptionForm.getPaginationIndex();
+        if (index == generationOptionForm.getAllTablesNames().size()) {
             return;
         }
-        index--;
+        index++;
         generationOptionForm.setPaginationIndex(index);
-        generationOptionForm.populateTableNames();
+        generationOptionForm.populateTableNames();*/
+        this.generationOptionForm.incrementTableNameList();
     }
 }
