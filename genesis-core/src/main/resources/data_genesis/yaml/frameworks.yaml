@@ -109,7 +109,9 @@
         import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
         import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
         import org.springframework.web.servlet.config.annotation.CorsRegistry;
+        import org.springframework.data.web.config.EnableSpringDataWebSupport;
 
+        @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
         @Configuration
         public class WebConfig implements WebMvcConfigurer {
             @Override
@@ -1131,7 +1133,6 @@
         app.UseAuthorization();
         app.Run();
       
-
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
 
     - fileType: "DbContextFile"
