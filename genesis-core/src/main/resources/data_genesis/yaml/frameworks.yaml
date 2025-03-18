@@ -1164,7 +1164,7 @@
         
         public interface IRepository<T, in TKey> where T : class
         {
-            Task<IEnumerable<T>> GetAllWithIncludes(params Expression<Func<T, object?>>[]? includeProperties);
+            Task<IEnumerable<T>> GetAllWithIncludes(int page, int pageSize, params Expression<Func<T, object?>>[]? includeProperties);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -1206,10 +1206,11 @@
                 _context.Dispose();
             }
         
-            public async Task<IEnumerable<T>> GetAllWithIncludes(params Expression<Func<T, object?>>[]? includeProperties)
+            public async Task<IEnumerable<T>> GetAllWithIncludes(int page, int pageSize, params Expression<Func<T, object?>>[]? includeProperties)
             {
                 var query = GetQuery(_dbSet, includeProperties);
                 query = query.OrderBy(e => EF.Property<object>(e, GetKeyPropertyName()));
+                query = query.Skip(page * pageSize).Take(pageSize);
                 return await query.ToListAsync();
             }     
         
@@ -1288,7 +1289,7 @@
         
         public interface IService<T, in TKey> where T : class
         {
-            Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object?>>[]? includeProperties);
+            Task<IEnumerable<T>> GetAllAsync(int page, int pageSize, params Expression<Func<T, object?>>[]? includeProperties);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -1425,9 +1426,9 @@
                   _repository = repository;
               }
           
-              public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
+              public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(int page, int pageSize, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
-                  return await _repository.GetAllWithIncludes(includeProperties);
+                  return await _repository.GetAllWithIncludes(page, pageSize, includeProperties);
               }
           
               public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
@@ -1471,7 +1472,7 @@
       [Route("${minStart(className)}s")]
       [Produces("application/json")]
       [Consumes("application/json")]
-      [ApiExplorerSettings(GroupName = "${majStart(className)}")]
+      [ApiExplorerSettings(GroupName = "v1")]
       [SwaggerTag("${majStart(className)} Management APIs")]
     controllerExtends: " : ControllerBase"
     controllerName: "${majStart(className)}Controller"
@@ -1491,9 +1492,12 @@
       {{tab}}[SwaggerResponse(200, "Successfully retrieved the paginated list of ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}typeof(IEnumerable<${majStart(className)}>))]
       {{tab}}[SwaggerResponse(204, "No ${formatReadableLowerCase(className)} found")]
-      {{tab}}public async Task<ActionResult<IEnumerable<${majStart(className)}>>> Get${majStart(className)}s()
+      {{tab}}public async Task<ActionResult<IEnumerable<${majStart(className)}>>> Get${majStart(className)}s(
+      {{tab}} [FromQuery, SwaggerParameter("Page number (0-indexed)", Required = false)] int page = 0,
+      {{tab}} [FromQuery, SwaggerParameter("Size of the page", Required = false)] int pageSize = 10
+      {{tab}})
       {{tab}}{
-      {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync({{#each fieldsFK}}e => e.${majStart(this.name)}{{#if !@last}}, {{/if}}{{/each}});
+      {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync(page, pageSize {{#each fieldsFK}}, e => e.${majStart(this.name)}{{#if !@last}}, {{/if}}{{/each}}   );
       {{tab}}{{tab}}return ${minStart(className)}s.Any() ? Ok(${minStart(className)}s) : NoContent();
       {{tab}}}
       
