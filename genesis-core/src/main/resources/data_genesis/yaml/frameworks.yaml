@@ -1593,7 +1593,7 @@
       {{tab}}   [FromQuery, SwaggerParameter("Sort order", Required = false)] string? sortOrder = null
       {{tab}})
       {{tab}}{
-      {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync(page, pageSize, sortOrder{{#each fieldsFK}}, e => e.${majStart(this.name)}{{#if !@last}}, {{/if}}{{/each}});
+      {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync(page, pageSize, sortOrder{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}});
       {{tab}}{{tab}}return ${minStart(className)}s.Any() ? Ok(${minStart(className)}s) : NoContent();
       {{tab}}}
       
