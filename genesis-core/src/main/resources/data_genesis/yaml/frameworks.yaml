@@ -1155,6 +1155,98 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Data/"
 
+    - fileType: "WebUtils"
+      fileName: "WebUtils"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+          
+        using System;
+        using System.Linq;
+        using System.Reflection;
+        using System.Linq.Expressions;
+        
+        public class WebUtils
+        {
+            public static readonly string _asc = "asc";
+            public static readonly string _desc = "desc";
+            public static readonly string _sortCriteriaDelimiter = ";";
+            public static readonly string _sortParsDelimiter = ",";
+          
+            public static IEnumerable<(string PropertyName, bool Ascending)> ParseSortingString(string input)
+            {
+                return input
+                .Split(_sortCriteriaDelimiter, StringSplitOptions.RemoveEmptyEntries)
+                .Select(part =>
+                {
+                  var elements = part.Split(_sortParsDelimiter, StringSplitOptions.TrimEntries);
+                    if (elements.Length != 2)
+                      throw new ArgumentException("Each sort criteria must have exactly 2 parts: property and direction");
+          
+                    string propertyName = elements[0];
+                    bool ascending = true;
+                    if(elements[1].Equals(_asc, StringComparison.OrdinalIgnoreCase)) 
+                    {
+                        ascending = true;
+                    }
+                    else if(elements[1].Equals(_desc, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ascending = false;
+                    }
+                    else
+                    {
+                      throw new ArgumentException($"Sort direction must be either '{_asc}' or '{_desc}'");
+                    }
+          
+                    return (propertyName, ascending);
+                });
+            }
+            
+            public static IQueryable<T> ApplySort<T>(IQueryable<T> query, 
+                  IEnumerable<(string PropertyName, bool Ascending)> sortCriteria)
+            {
+              var result = query;
+              bool isFirst = true;
+              
+              foreach (var (propertyName, ascending) in sortCriteria)
+                {
+                  var propertyInfo = typeof(T).GetProperty(propertyName,
+                  BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                  
+                  if (propertyInfo == null)
+                    throw new ArgumentException($"Property {propertyName} not found for type {typeof(T).FullName}");
+                  
+                  var parameter = Expression.Parameter(typeof(T));
+                  
+                  var property = Expression.Property(parameter, propertyInfo);
+                  
+                  var lambda = Expression.Lambda(property, parameter);
+                  
+                  string methodName;
+                  if (isFirst)
+                  {
+                      methodName = ascending ? "OrderBy" : "OrderByDescending";
+                                                               isFirst = false;
+                  }
+                  else
+                  {
+                      methodName = ascending ? "ThenBy" : "ThenByDescending";
+                  }
+                  
+                  var methodInfo = typeof(Queryable).GetMethods()
+                      .Where(m => m.Name == methodName && m.IsGenericMethodDefinition)
+                      .Single(m => m.GetParameters().Length == 2);
+                  
+                  var genericMethod = methodInfo.MakeGenericMethod(typeof(T), propertyInfo.PropertyType);
+                  
+                  result = (IQueryable<T>)genericMethod.Invoke(null, new object[] { result, lambda });
+                }
+              
+                return result;
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
     - fileType: "Generic  file"
       fileName: "IRepository"
       extension: "cs"
@@ -1165,7 +1257,7 @@
         
         public interface IRepository<T, in TKey> where T : class
         {
-            Task<IEnumerable<T>> GetAllWithIncludes(params Expression<Func<T, object?>>[]? includeProperties);
+            Task<IEnumerable<T>> GetAllWithIncludes(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -1184,6 +1276,7 @@
         using System.Linq.Expressions;
         using Microsoft.EntityFrameworkCore;
         using Data;
+        using Utils;
         
         public class Repository<T, TKey>: IRepository<T, TKey>, IDisposable, IAsyncDisposable where T : class
         {
@@ -1207,10 +1300,13 @@
                 _context.Dispose();
             }
         
-            public async Task<IEnumerable<T>> GetAllWithIncludes(params Expression<Func<T, object?>>[]? includeProperties)
+            public async Task<IEnumerable<T>> GetAllWithIncludes(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties)
             {
                 var query = GetQuery(_dbSet, includeProperties);
-                query = query.OrderBy(e => EF.Property<object>(e, GetKeyPropertyName()));
+                string sortOrder = sorting ?? $"{GetKeyPropertyName()},asc";
+                query = WebUtils.ApplySort(query, WebUtils.ParseSortingString(sortOrder));
+                // query = query.OrderBy(e => EF.Property<object>(e, GetKeyPropertyName()));
+                query = query.Skip(page * pageSize).Take(pageSize);
                 return await query.ToListAsync();
             }     
         
@@ -1289,7 +1385,7 @@
         
         public interface IService<T, in TKey> where T : class
         {
-            Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object?>>[]? includeProperties);
+            Task<IEnumerable<T>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -1426,9 +1522,9 @@
                   _repository = repository;
               }
           
-              public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
+              public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
-                  return await _repository.GetAllWithIncludes(includeProperties);
+                  return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
               }
           
               public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
@@ -1472,7 +1568,7 @@
       [Route("${minStart(className)}s")]
       [Produces("application/json")]
       [Consumes("application/json")]
-      [ApiExplorerSettings(GroupName = "${majStart(className)}")]
+      [ApiExplorerSettings(GroupName = "v1")]
       [SwaggerTag("${majStart(className)} Management APIs")]
     controllerExtends: " : ControllerBase"
     controllerName: "${majStart(className)}Controller"
@@ -1492,9 +1588,13 @@
       {{tab}}[SwaggerResponse(200, "Successfully retrieved the paginated list of ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}typeof(IEnumerable<${majStart(className)}>))]
       {{tab}}[SwaggerResponse(204, "No ${formatReadableLowerCase(className)} found")]
-      {{tab}}public async Task<ActionResult<IEnumerable<${majStart(className)}>>> Get${majStart(className)}s()
+      {{tab}}public async Task<ActionResult<IEnumerable<${majStart(className)}>>> Get${majStart(className)}s(
+      {{tab}}   [FromQuery, SwaggerParameter("Page number (0-indexed)", Required = false)] int page = 0,
+      {{tab}}   [FromQuery, SwaggerParameter("Size of the page", Required = false)] int pageSize = 10,
+      {{tab}}   [FromQuery, SwaggerParameter("Sort order", Required = false)] string? sortOrder = null
+      {{tab}})
       {{tab}}{
-      {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync({{#each fieldsFK}}e => e.${majStart(this.name)}{{#if !@last}}, {{/if}}{{/each}});
+      {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync(page, pageSize, sortOrder{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}});
       {{tab}}{{tab}}return ${minStart(className)}s.Any() ? Ok(${minStart(className)}s) : NoContent();
       {{tab}}}
       

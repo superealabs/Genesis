@@ -105,17 +105,17 @@ public class GenesisCoreTest {
     void generateProjectNET() {
         var credentials = new Credentials()
                 .setHost("localhost")
-                .setPort("3306")
-                .setSchemaName("default")
-                .setDatabaseName("genesis")
-                .setUser("root")
-                .setPwd("root")
+                .setPort("5432")
+                .setSchemaName("public")
+                .setDatabaseName("test_keywords")
+                .setUser("postgres")
+                .setPwd("olafienby7")
                 .setTrustCertificate(true)
                 .setUseSSL(true)
                 .setAllowPublicKeyRetrieval(true);
 
         try {
-            int databaseId = Constantes.MySQL_ID;
+            int databaseId = Constantes.PostgreSQL_ID;
             int languageId = Constantes.CSharp_ID;
             int frameworkId = Constantes.NET_ID;
             int projectId = Constantes.ASP_ID;
@@ -126,7 +126,7 @@ public class GenesisCoreTest {
             var project = ProjectGenerator.projects.get(projectId);
 
             List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
-            String projectName = "WebApiTestNet";
+            String projectName = "kw";
             String groupLink = "";
             String projectPort = "8080";
             String logLevel = "Information";
