@@ -1271,6 +1271,7 @@
     modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
     modelDaoExtension: "java"
     modelDaoPackage: "#{groupLink}.#{lowerCase(projectName)}.repositories;"
+    modelDaoAdditionalFiles: [ ]
 
   service:
     toGenerate: true

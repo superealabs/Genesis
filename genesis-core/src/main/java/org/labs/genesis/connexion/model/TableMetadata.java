@@ -129,7 +129,8 @@ public class TableMetadata {
 
     private List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language, Database database) throws SQLException {
         List<ColumnMetadata> listeCols = new ArrayList<>();
-        try (ResultSet columns = metaData.getColumns(null, database.getCredentials().getSchemaName(), tableName, null)) {
+//        try (ResultSet columns = metaData.getColumns(null, database.getCredentials().getSchemaName(), tableName, null)) {
+        try (ResultSet columns = metaData.getColumns(null, null, tableName, null)) {
             while (columns.next()) {
                 ColumnMetadata column = new ColumnMetadata();
                 String columnName = columns.getString("COLUMN_NAME");
@@ -177,7 +178,8 @@ public class TableMetadata {
     }
 
     private void fetchPrimaryKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> columns) throws SQLException {
-        try (ResultSet primaryKeys = metaData.getPrimaryKeys(null, database.getCredentials().getSchemaName(), tableName)) {
+//        try (ResultSet primaryKeys = metaData.getPrimaryKeys(null, database.getCredentials().getSchemaName(), tableName)) {
+        try (ResultSet primaryKeys = metaData.getPrimaryKeys(null, null, tableName)) {
             while (primaryKeys.next()) {
                 String pkColumnName = primaryKeys.getString("COLUMN_NAME");
 
@@ -193,7 +195,8 @@ public class TableMetadata {
     }
 
     private void fetchForeignKeys(DatabaseMetaData metaData, String tableName, Language language, List<ColumnMetadata> listeCols) throws SQLException {
-        try (ResultSet foreignKeys = metaData.getImportedKeys(null, database.getCredentials().getSchemaName(), tableName)) {
+//        try (ResultSet foreignKeys = metaData.getImportedKeys(null, database.getCredentials().getSchemaName(), tableName)) {
+        try (ResultSet foreignKeys = metaData.getImportedKeys(null, null, tableName)) {
 
             while (foreignKeys.next()) {
                 String fkColumnName = foreignKeys.getString("FKCOLUMN_NAME");
