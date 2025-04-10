@@ -3,6 +3,7 @@ package org.labs.genesis.connexion;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.FrameworkConfiguration;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.model.TableMetadata;
 
@@ -30,7 +31,7 @@ public abstract class Database {
     private List<String> excludeSchemas;
     private Credentials credentials;
     private Map<String, Object> databaseMetadata;
-    private Map<String, Framework.Dependency> dependencies;
+    private Map<String, FrameworkConfiguration.Dependency> dependencies;
 
     public Connection getConnection(Credentials credentials) throws ClassNotFoundException, SQLException {
         setCredentials(credentials);

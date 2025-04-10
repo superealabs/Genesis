@@ -2,6 +2,7 @@ package org.labs.genesis.config.langage.generator.project;
 
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.FrameworkConfiguration;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -45,7 +46,7 @@ public class ProjectMetadataProvider {
         return configFile;
     }
 
-    static HashMap<String, Object> getDependencyFileHashMap(String projectDescription, Database database, Language language, Framework framework, Map<String, Object> langageConfiguration, Map<String, Object> frameworkConfiguration) {
+    static HashMap<String, Object> getDependencyFileHashMap(String projectDescription, Database database, Language language, Framework framework, Map<String, Object> langageConfiguration, Map<String, Object> frameworkConfiguration, FrameworkConfiguration configuration) {
         HashMap<String, Object> dependencyFileMap = new HashMap<>();
         dependencyFileMap.putAll(langageConfiguration);
         dependencyFileMap.putAll(frameworkConfiguration);
@@ -53,13 +54,13 @@ public class ProjectMetadataProvider {
         dependencyFileMap.put("useCloud", framework.getUseCloud());
         dependencyFileMap.put("useEurekaServer", framework.getUseEurekaServer());
 
-        List<HashMap<String, String>> dependencies = getDependenciesHashMaps(framework);
+        List<HashMap<String, String>> dependencies = getDependenciesHashMaps(configuration);
         dependencyFileMap.put("dependencies", dependencies);
 
         if (database != null && framework.getUseDB()) {
             dependencyFileMap.put("useDB", true);
 
-            Framework.Dependency databaseDependency = database.getDependencies().get(String.valueOf(language.getId()));
+            FrameworkConfiguration.Dependency databaseDependency = database.getDependencies().get(String.valueOf(language.getId()));
 
             dependencyFileMap.put("DBgroupId", databaseDependency.getGroupId());
             dependencyFileMap.put("DBartifactId", databaseDependency.getArtifactId());
@@ -75,11 +76,11 @@ public class ProjectMetadataProvider {
         return dependencyFileMap;
     }
 
-    private static @NotNull List<HashMap<String, String>> getDependenciesHashMaps(Framework framework) {
+    private static @NotNull List<HashMap<String, String>> getDependenciesHashMaps(FrameworkConfiguration framework) {
         List<HashMap<String, String>> dependencies = new ArrayList<>();
-        List<Framework.Dependency> dependenciesList = framework.getDependencies();
+        List<FrameworkConfiguration.Dependency> dependenciesList = framework.getDependencies();
 
-        for (Framework.Dependency dependency : dependenciesList) {
+        for (FrameworkConfiguration.Dependency dependency : dependenciesList) {
             HashMap<String, String> dependencyMap = new HashMap<>();
             dependencyMap.put("groupId", dependency.getGroupId());
             dependencyMap.put("artifactId", dependency.getArtifactId());
@@ -91,11 +92,11 @@ public class ProjectMetadataProvider {
         return dependencies;
     }
 
-    static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName, String groupLink, String projectPort, Database database, Credentials credentials, @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
+    static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName, String groupLink, String projectPort, Database database, Credentials credentials, @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration, Framework framework, Map<String, Object> frameworkOptions, FrameworkConfiguration frameworkConfiguration) throws Exception {
         HashMap<String, Object> combinedMap = new HashMap<>();
 
         combinedMap.putAll(getConfigFileHashMap(projectPort, database, credentials, language, framework, frameworkOptions));
-        combinedMap.putAll(getDependencyFileHashMap(projectDescription, database, language, framework, langageConfiguration, frameworkOptions));
+        combinedMap.putAll(getDependencyFileHashMap(projectDescription, database, language, framework, langageConfiguration, frameworkOptions, frameworkConfiguration));
         combinedMap.putAll(getInitialHashMap(destinationFolder, projectName, groupLink));
 
         return combinedMap;

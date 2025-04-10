@@ -11,22 +11,28 @@ import java.util.regex.Pattern;
 
 public class GenesisTemplateEngine {
 
+
     private static final String LOOP_START = "{{#each ";
     private static final String LOOP_INDEX = "@index";
     private static final String IS_LOOP_FIRST_INDEX = "@first";
     private static final String IS_LOOP_LAST_INDEX = "@last";
     private static final String LOOP_ITEM = "this";
     private static final String LOOP_END = "{{/each}}";
+
     private static final String IF_START = "{{#if ";
     private static final String ELSE_IF_TOKEN = "{{elseIf ";
     private static final String ELSE_TOKEN = "{{else}}";
     private static final String IF_END = "{{/if}}";
+
     private static final String VARIABLE_PLACEHOLDER_PREFIX = "${";
     private static final String VARIABLE_PLACEHOLDER_SUFFIX = "}";
     private static final String VARIABLE_PLACEHOLDER_PREFIX_ALT = "$[";
     private static final String VARIABLE_PLACEHOLDER_SUFFIX_ALT = "]";
+
     private static final String NEWLINE_TAG = "{{newline}}";
+
     private static final String TAB_TAG = "{{tab}}";
+    private static final String START_TAB_TAG = "{{tab"; 
     private static final String REMOVE_LINE_TAG = "{{removeLine}}";
     private static final String BLOCK_END = "}}";
     private static final String FUNCTION_OPEN_PARENTHESIS = "(";
@@ -605,7 +611,7 @@ public class GenesisTemplateEngine {
             }
         }
 
-        // Si les types sont différents mais numériques, convertir en Double pour la comparaison
+        // Si les types sont différents, mais numériques, convertir en Double pour la comparaison
         if ((left instanceof Number) && (right instanceof Number)) {
             double leftDouble = ((Number) left).doubleValue();
             double rightDouble = ((Number) right).doubleValue();
@@ -620,7 +626,7 @@ public class GenesisTemplateEngine {
             );
         }
 
-        // Si les objets sont Comparable et du même type
+        // Si les objets sont comparables et du même type
         if (left instanceof Comparable) {
             return performComparableComparison((Comparable<Object>) left, right, operator
             );
@@ -693,6 +699,32 @@ public class GenesisTemplateEngine {
     private void processSpecialTags(StringBuilder template) {
         replaceAllOccurrences(template, NEWLINE_TAG, "\n");
         replaceAllOccurrences(template, TAB_TAG, "\t");
+
+        int tabTagIndex;
+        while ((tabTagIndex = template.indexOf(START_TAB_TAG)) != -1) {
+            int start = tabTagIndex + START_TAB_TAG.length();
+            int end = template.indexOf(BLOCK_END, start);
+
+            if (end != -1) {
+                String tabCountString = template.substring(start, end).trim();
+
+                try {
+                    // Convertir la valeur en entier
+                    int tabCount = Integer.parseInt(tabCountString);
+
+                    // Générer les tabulations
+                    String tabs = "\t".repeat(Math.max(0, tabCount));
+
+                    // Remplacer le tag entier par les tabulations générées
+                    template.replace(tabTagIndex, end + BLOCK_END.length(), tabs);
+                } catch (NumberFormatException e) {
+                    // Si la conversion échoue, ignorer et supprimer le tag
+                    template.replace(tabTagIndex, end + BLOCK_END.length(), "");
+                }
+            } else {
+                break; // Tag mal formé, sortir de la boucle
+            }
+        }
 
         // Supprimer les lignes contenant le tag {{removeLine}}
         int start;

@@ -1,30 +1,27 @@
 package org.labs.genesis.config.langage.generator.project;
 
+import org.labs.utils.FileUtils;
+import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.Constantes;
+import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.Credentials;
+import org.labs.genesis.engine.GenesisTemplateEngine;
+import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.config.ProjectGenerationContext;
-import org.labs.genesis.config.langage.FilesEdit;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.Language;
-import org.labs.genesis.config.langage.Project;
 import org.labs.genesis.config.langage.generator.framework.APIGenerator;
 import org.labs.genesis.config.langage.generator.framework.GenesisGenerator;
-import org.labs.genesis.connexion.Credentials;
-import org.labs.genesis.connexion.Database;
-import org.labs.genesis.connexion.model.TableMetadata;
-import org.labs.genesis.engine.GenesisTemplateEngine;
-import org.labs.utils.FileUtils;
 
-import java.io.IOException;
-import java.sql.Connection;
+import java.util.Map;
+import java.util.List;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.sql.Connection;
 import java.util.stream.Collectors;
 
 import static org.labs.genesis.config.ProjectGenerationContext.*;
-import static org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider.getHashMapDaoGlobal;
 import static org.labs.genesis.config.langage.generator.project.ProjectMetadataProvider.getInitialHashMap;
+import static org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider.getHashMapDaoGlobal;
 import static org.labs.genesis.config.langage.generator.project.ProjectMetadataProvider.getProjectFilesEditsHashMap;
 
 public class ProjectGenerator {
@@ -50,16 +47,51 @@ public class ProjectGenerator {
 
             frameworks = Arrays.stream(FileUtils.fromYaml(Framework[].class, Constantes.FRAMEWORK_YAML))
                     .collect(Collectors.toMap(Framework::getId, framework -> framework));
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    public static Map<Integer, ProjectConfiguration> getProjectsConfiguration(Project project) {
+        Map<Integer, ProjectConfiguration> projectConfigurations = new HashMap<>();
+        String fileName = project.getFilename();
+        String sourceFile = Constantes.PROJECT_CONFIGURATION_YAML + fileName + "." +Constantes.YAML_EXT;
+
+        try {
+             projectConfigurations = Arrays.stream(FileUtils.fromYaml(ProjectConfiguration[].class, sourceFile))
+                    .collect(Collectors.toMap(ProjectConfiguration::getId, projectConfiguration -> projectConfiguration));
+
+            System.out.println(projectConfigurations);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return projectConfigurations;
+    }
+
+    public static Map<Integer, FrameworkConfiguration> getFrameworkConfiguration(Framework framework) {
+        Map<Integer, FrameworkConfiguration> frameworkConfigurationMap = new HashMap<>();
+        String fileName = framework.getFileName();
+        String sourceFile = Constantes.FRAMEWORKS_CONFIGURATION_YAML + fileName + "." +Constantes.YAML_EXT;
+
+        try {
+             frameworkConfigurationMap = Arrays.stream(FileUtils.fromYaml(FrameworkConfiguration[].class, sourceFile))
+                    .collect(Collectors.toMap(FrameworkConfiguration::getId, frameworkConfiguration -> frameworkConfiguration));
+
+            System.out.println(frameworkConfigurationMap);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return frameworkConfigurationMap;
+    }
+
     public ProjectGenerator() {
     }
 
-    public static void renderAndCopyFiles(List<Project.ProjectFiles> projectFiles, HashMap<String, Object> initializeHashMap) throws IOException {
-        for (Project.ProjectFiles projectFile : projectFiles) {
+    public static void renderAndCopyFiles(List<ProjectConfiguration.ProjectFiles> projectFiles, HashMap<String, Object> initializeHashMap) throws IOException {
+        for (ProjectConfiguration.ProjectFiles projectFile : projectFiles) {
             String sourceFilePath = projectFile.getSourcePath() + projectFile.getFileName();
             String destinationFilePathSimple = projectFile.getDestinationPath() + projectFile.getFileName();
             String destinationFilePath = engine.simpleRender(destinationFilePathSimple, initializeHashMap);
@@ -72,8 +104,8 @@ public class ProjectGenerator {
         }
     }
 
-    public static void renderAndCopyFolders(List<Project.ProjectFolders> projectFolders, HashMap<String, Object> initializeHashMap) throws IOException {
-        for (Project.ProjectFolders projectFolder : projectFolders) {
+    public static void renderAndCopyFolders(List<ProjectConfiguration.ProjectFolders> projectFolders, HashMap<String, Object> initializeHashMap) throws IOException {
+        for (ProjectConfiguration.ProjectFolders projectFolder : projectFolders) {
             String sourceFolderPath = projectFolder.getSourcePath();
             String destinationFolderPath = engine.simpleRender(projectFolder.getDestinationPath() + projectFolder.getFolderName(), initializeHashMap);
 
@@ -133,17 +165,19 @@ public class ProjectGenerator {
                 context.getProjectDescription(),
                 context.getLanguageConfiguration(),
                 context.getFramework(),
-                context.getFrameworkConfiguration()
+                context.getFrameworkConfiguration(),
+                context.getFrameworktypeConfiguration()
         );
 
         if (context.getFramework().getUseDB()) {
-            var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
+            var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName(), context.getFrameworktypeConfiguration());
             projectFilesEditsHashMap.putAll(mapDaoGlobal);
         }
-        renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
-        renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
-        renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);
-        renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
+        getProjectsConfiguration(context.getProject());
+        renderAndCopyFiles(context.getProjectConfiguration().getProjectFiles(), initializeHashMap);
+        renderAndCopyFolders(context.getProjectConfiguration().getProjectFolders(), initializeHashMap);
+        renderFilesEdits(context.getProjectConfiguration().getProjectFilesEdits(), projectFilesEditsHashMap);
+        renderFilesEdits(context.getFrameworktypeConfiguration().getAdditionalFiles(), projectFilesEditsHashMap);
     }
 
     public void generateBackendComponents(ProjectGenerationContext context,
@@ -158,30 +192,32 @@ public class ProjectGenerator {
         // S'assurer que le répertoire de destination existe
         FileUtils.createDirectory(renderedDestinationFolder);
 
-        List<String> generationOptions = context.getGenerationOptions();
-        Framework framework = context.getFramework();
         Language language = context.getLanguage();
-        String projectName = context.getProjectName();
         String groupLink = context.getGroupLink();
+        Framework framework = context.getFramework();
+        String projectName = context.getProjectName();
+        getProjectsConfiguration(context.getProject());
+        List<String> generationOptions = context.getGenerationOptions();
+        FrameworkConfiguration frameworkConfiguration = context.getFrameworktypeConfiguration();
 
-        if (generationOptions.contains(COMPONENT_MODEL) && framework.getModel().getToGenerate()) {
+        if (generationOptions.contains(COMPONENT_MODEL) && frameworkConfiguration.getModel().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_MODEL + " component...");
-            genesisGenerator.generateModel(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateModel(framework, frameworkConfiguration, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
-        if (generationOptions.contains(COMPONENT_DAO) && framework.getModelDao().getToGenerate()) {
+        if (generationOptions.contains(COMPONENT_DAO) && frameworkConfiguration.getModelDao().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_DAO + " component..." + tableMetadata.getClassName());
-            genesisGenerator.generateDao(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateDao(framework, frameworkConfiguration, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
-        if (generationOptions.contains(COMPONENT_SERVICE) && framework.getService().getToGenerate()) {
+        if (generationOptions.contains(COMPONENT_SERVICE) && frameworkConfiguration.getService().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_SERVICE + " component...");
-            genesisGenerator.generateService(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateService(framework, frameworkConfiguration, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
-        if (generationOptions.contains(COMPONENT_CONTROLLER) && framework.getController().getToGenerate()) {
+        if (generationOptions.contains(COMPONENT_CONTROLLER) && frameworkConfiguration.getController().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_CONTROLLER + " component...");
-            genesisGenerator.generateController(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateController(framework, frameworkConfiguration, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         System.out.println("Backend component generation completed for project: " + projectName);
@@ -207,7 +243,7 @@ public class ProjectGenerator {
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
                 List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language);
-                GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
+                 GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
 
                 for (TableMetadata tableMetadata : entities) {
                     generateBackendComponents(

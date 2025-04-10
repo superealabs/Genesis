@@ -1,0 +1,1441 @@
+- id: 1
+  coreFramework: "Spring Boot"
+  name: "Spring Boot - WEB API REST"
+  additionalFiles:
+    - fileType: "MainFile"
+      fileName: "${majStart(projectName)}Application"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+
+        import io.swagger.v3.oas.models.OpenAPI;
+        import io.swagger.v3.oas.models.info.Info; 
+        import org.springframework.context.annotation.Bean;
+        import org.springframework.boot.SpringApplication;
+        import org.springframework.boot.autoconfigure.SpringBootApplication;
+        {{#if useEurekaServer}}import org.springframework.cloud.client.discovery.EnableDiscoveryClient;{{/if}}
+
+        {{#if useEurekaServer}}@EnableDiscoveryClient{{/if}}
+        @SpringBootApplication
+        public class ${majStart(projectName)}Application {
+            public static void main(String[] args) {
+                SpringApplication.run(${majStart(projectName)}Application.class, args);
+            }
+        
+            @Bean
+            public OpenAPI customOpenAPI() {
+                return new OpenAPI()
+                            .info(new Info().title("${projectName}")
+                            .description("${projectDescription}")
+                            .version("0.0.1-SNAPSHOT"));
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}"
+
+    - fileType: "TestFile"
+      fileName: "${majStart(projectName)}ApplicationTests"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+
+        import org.junit.jupiter.api.Test;
+        import org.springframework.boot.test.context.SpringBootTest;
+
+        @SpringBootTest
+        class ${majStart(projectName)}ApplicationTests {
+
+        {{tab}}@Test
+        {{tab}}void contextLoads() {
+        {{tab}}}
+
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}/"
+
+
+    - fileType: "RestResponse"
+      fileName: "RestResponse"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.dto;
+
+        import java.time.Instant;
+        import org.springframework.http.HttpStatus;
+        import lombok.Getter;
+        import lombok.Setter;
+
+        @Getter
+        @Setter
+        public class RestResponse<T> {
+            private int status;
+            private String message;
+            private int returnCode;
+            private T data;
+            private Instant timestamp;
+
+            private RestResponse(int status, String message, int returnCode, T data) {
+                this.status = status;
+                this.message = message;
+                this.returnCode = returnCode;
+                this.data = data;
+                this.timestamp = Instant.now();
+            }
+
+            public static <T> RestResponse<T> buildSuccessResponse(HttpStatus status, String message, T data) {
+                int OK = 1;
+                return new RestResponse<>(status.value(), message, OK, data);
+            }
+
+            public static <T> RestResponse<T> buildErrorResponse(HttpStatus status, String message, T data) {
+                int KO = 0;
+                return new RestResponse<>(status.value(), message, KO, data);
+            }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/dto"
+    - fileType: "WebConfig"
+      fileName: "WebConfig"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config;
+
+        import org.springframework.context.annotation.Configuration;
+        import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+        import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+        import org.springframework.web.servlet.config.annotation.CorsRegistry;
+
+        @Configuration
+        public class WebConfig implements WebMvcConfigurer {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                    .allowedOriginPatterns("*")
+                    .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                    .allowedHeaders("*")
+                    .allowCredentials(true)
+                    .maxAge(3600);
+            }
+            @Override
+            public void addViewControllers(ViewControllerRegistry registry) {
+                registry.addRedirectViewController("/", "/swagger-ui/index.html");
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+
+    - fileType: "WebUtils"
+      fileName: "WebUtils"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.utils;
+
+        import org.springframework.data.domain.Sort;
+        import java.util.Arrays;
+        import java.util.List;
+        import java.util.stream.Collectors;
+        
+        public class WebUtils {
+            public static final String ASC = "asc";
+            public static final String DESC = "desc";
+            public static final String SORT_CRITERIA_DELIMITER = ";";
+            public static final String SORT_PARTS_DELIMITER = ",";
+        
+            public static Sort createSortObject(String sortParam) {
+                try {
+                    String[] sortCriteria = sortParam.split(SORT_CRITERIA_DELIMITER);
+        
+                    List<Sort.Order> orders = Arrays.stream(sortCriteria)
+                            .map(criteria -> {
+                                String[] parts = criteria.split(SORT_PARTS_DELIMITER);
+                                if (parts.length != 2) {
+                                    throw new IllegalArgumentException(
+                                        "Each sort criteria must have exactly 2 parts: property and direction"
+                                    );
+                                }
+        
+                                String property = parts[0].trim();
+                                String direction = parts[1].trim().toLowerCase();
+        
+                                if (!direction.equals(ASC) && !direction.equals(DESC)) {
+                                    throw new IllegalArgumentException(
+                                        "Sort direction must be either '"+ASC+"' or '"+DESC+"'"
+                                    );
+                                }
+        
+                                return new Sort.Order(
+                                          Sort.Direction.fromString(direction),
+                                          property
+                                );
+                            })
+                            .collect(Collectors.toList());
+        
+                    return Sort.by(orders);
+        
+                } catch (Exception e) {
+                    throw new IllegalArgumentException(e.getMessage());
+                }
+            }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
+
+    - fileType: "Exception"
+      fileName: "ResourceNotFoundException"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.exception;
+
+        public class ResourceNotFoundException extends RuntimeException {
+            public ResourceNotFoundException(String message) {
+                super(message);
+            }
+        
+            public ResourceNotFoundException(String message, Throwable cause) {
+                super(message, cause);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/exception"
+
+    - fileType: "Exception"
+      fileName: "InternalServerErrorException"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.exception;
+
+        public class InternalServerErrorException extends RuntimeException {
+            public InternalServerErrorException(String message) {
+                super(message);
+            }
+        
+            public InternalServerErrorException(String message, Throwable cause) {
+                super(message, cause);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/exception"
+
+    - fileType: "Exception Handler"
+      fileName: "GlobalExceptionHandler"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.exception.handler;
+        
+        import lombok.extern.slf4j.Slf4j;
+        import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+        import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
+        import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
+        import org.springframework.http.HttpStatus;
+        import org.springframework.http.ResponseEntity;
+        import org.springframework.web.bind.annotation.ExceptionHandler;
+        import org.springframework.web.bind.annotation.RestControllerAdvice;
+        
+        @Slf4j
+        @RestControllerAdvice
+        public class GlobalExceptionHandler {
+        
+            @ExceptionHandler(ResourceNotFoundException.class)
+            public ResponseEntity<RestResponse<Void>> handleEntityNotFoundException(ResourceNotFoundException ex) {
+                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
+                log.info("Resource not found : {}", ex.getMessage(), ex);        
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+        
+            @ExceptionHandler(InternalServerErrorException.class)
+            public ResponseEntity<RestResponse<Void>> handleInternalServerErrorException(InternalServerErrorException ex) {
+                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), null);
+                log.error("An internal error occurred : {}", ex.getMessage(), ex);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+        
+            @ExceptionHandler(IllegalArgumentException.class)
+            public ResponseEntity<RestResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
+                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
+                log.error("Illegal argument provided : {}", ex.getMessage(), ex);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+        
+            @ExceptionHandler(Exception.class)
+            public ResponseEntity<RestResponse<Void>> handleGenericException(Exception ex) {
+                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", null);
+                log.error("An unexpected error occurred : {}", ex.getMessage(), ex);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+        
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/exception/handler"
+
+
+    - fileType: "ApplicationYml"
+      fileName: "application"
+      extension: "yml"
+      content: |
+        spring:
+          application:
+            name: ${toKebabCase(projectName)}
+        {{#if useDB}}
+          datasource:
+            url: ${connectionString}
+            username: ${databaseUsername}
+            password: ${databasePassword}
+          jpa:
+            database-platform : org.hibernate.dialect.${databaseType}Dialect
+            hibernate:
+              ddl-auto: ${hibernateDdlAuto}
+            properties:
+              hibernate.format_sql: true
+        {{/if}}
+        
+        server:
+          port: ${projectPort}
+          servlet:
+            context-path: /${toKebabCase(projectName)}
+        
+        # Logs Configuration
+        logging:
+          level:
+            root: ${loggingLevel}
+            {{#if useDB}}org.hibernate.SQL: ${loggingLevel}{{/if}}
+        
+        {{#if useEurekaServer}}
+        eureka:
+          client:
+            service-url:
+              defaultZone: ${eurekaServerURL}
+          instance:
+            prefer-ip-address: true
+            ip-address: $[spring.cloud.client.ip-address]
+        management:
+          endpoints:
+            web:
+              exposure:
+                include: health,info
+          endpoint:
+            health:
+              show-details: always
+            info:
+              enabled: true
+          info:
+            env:
+              enabled: true
+            java:
+              enabled: true
+            build:
+              enabled: true
+        info:
+          app:
+            name: $[spring.application.name]
+            description: "${projectDescription}"
+            version: "0.0.1-SNAPSHOT"
+            technical:
+              spring-boot:
+                version: "${frameworkVersion}"
+              server:
+                port: $[server.port]
+              database:
+                url: $[spring.datasource.url]
+                type: "${databaseType}"
+        {{/if}}
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
+
+  configurations:
+    - name: "Logging Level"
+      variableName: "loggingLevel"
+      options:
+        - "TRACE"
+        - "DEBUG"
+        - "INFO"
+        - "WARN"
+        - "ERROR"
+        - "FATAL"
+        - "OFF"
+      defaultOption: "INFO"
+    - name: "Framework Version"
+      variableName: "frameworkVersion"
+      options:
+        - "3.3.6"
+        - "3.2.12"
+      defaultOption: "3.3.6"
+    - name: "Hibernate Ddl Auto"
+      variableName: "hibernateDdlAuto"
+      options:
+        - "create"
+        - "create-drop"
+        - "none"
+        - "update"
+      defaultOption: "none"
+
+  eurekaClientConfigurations:
+    - name: "Eureka Server URL"
+      variableName: "eurekaServerURL"
+      options:
+        - "http://localhost:8761/eureka/"
+      defaultOption: "http://localhost:8761/eureka/"
+
+  dependencies:
+    - groupId: "org.projectlombok"
+      artifactId: "lombok"
+      version: "1.18.36"
+      scope: "provided"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-data-jpa"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-web"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-test"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springdoc"
+      artifactId: "springdoc-openapi-starter-webmvc-ui"
+      version: "2.6.0"
+      scope: "{{removeLine}}"
+
+  model:
+    toGenerate: true
+    modelImports: |
+      import jakarta.persistence.*;
+      import lombok.Getter;
+      import lombok.Setter;
+    modelExtends: ""
+    modelAnnotations: |
+      @Setter
+      @Getter
+      @Entity
+      @Table(name="${tableName}")
+    modelFieldContent: |
+      {{tab}}{{#each fields}}
+      {{tab}}{{#if this.isPrimaryKey}}
+      {{tab}}@Id
+      {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
+      {{tab}}@Column(name="${this.columnName}"){{elseIf this.isForeignKey}}
+      {{tab}}@ManyToOne
+      {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
+      {{tab}}@Column(name="${this.columnName}"){{/if}}
+      {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
+      {{tab}}{{/each}}
+    modelGetterSetter: "{{removeLine}}"
+    modelConstructors: "{{removeLine}}"
+    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
+    modelForeignContextAttribute: ""
+    modelPackage: "${groupLink}.${lowerCase(projectName)}.models;"
+    modelExtension: "java"
+    modelAdditionalFiles:
+      - fileType: "Specification File"
+        fileName: "${majStart(className)}Specification"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.specification;
+
+          import ${groupLink}.${lowerCase(projectName)}.models.${className};
+          import org.springframework.data.jpa.domain.Specification;
+          import jakarta.persistence.criteria.Predicate;
+
+          import java.util.ArrayList;
+          import java.util.List;
+
+          public class ${className}Specification {
+
+              public static Specification<${className}> filter(${className} object) {
+                  return (root, query, criteriaBuilder) -> {
+                      List<Predicate> predicates = new ArrayList<>();
+                      {{#each fields}}
+                      if(object.get${majStart(this.name)}()!=null){
+                          predicates.add(criteriaBuilder.equal(root.get("${this.name}"), object.get${majStart(this.name)}()));
+                      }
+                      {{/each}}
+                      return criteriaBuilder.and(predicates.toArray(new Predicate[predicates.size()]));
+                  };
+              }
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/specification"
+  modelDao:
+    toGenerate: true
+    modelDaoImports: |
+      import org.springframework.data.jpa.repository.JpaRepository;
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+      import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+    modelDaoAnnotations: ""
+    modelDaoClassKeyword: "public interface"
+    modelDaoExtends: "extends JpaRepository<${majStart(className)}, ${pkColumnType}>, JpaSpecificationExecutor<${majStart(className)}>"
+    modelDaoName: "${majStart(className)}Repository"
+    modelDaoFieldContent: "{{removeLine}}"
+    modelDaoMethodContent: "{{removeLine}}"
+    modelDaoConstructors: "{{removeLine}}"
+    modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
+    modelDaoExtension: "java"
+    modelDaoPackage: "${groupLink}.${lowerCase(projectName)}.repositories;"
+    modelDaoAdditionalFiles: [ ]
+
+
+  service:
+    toGenerate: true
+    serviceImports: |
+      import org.springframework.data.domain.Page;
+      import org.springframework.data.domain.Pageable;      
+      import org.springframework.data.jpa.domain.Specification;
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+      import org.springframework.stereotype.Service;
+      import ${groupLink}.${lowerCase(projectName)}.repositories.${majStart(className)}Repository;
+      import java.util.Optional;
+      import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
+      import ${groupLink}.${lowerCase(projectName)}.specification.${majStart(className)}Specification;
+      import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
+      import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
+
+    serviceAnnotations: |
+      @Service
+    serviceClassKeyword: "public class"
+    serviceExtends: "implements ${majStart(className)}Service"
+    serviceName: "Default${majStart(className)}Service"
+    serviceFieldContent: |
+      {{tab}}private final ${majStart(className)}Repository ${minStart(className)}Repository;
+    serviceConstructors: |
+      {{tab}}public Default${majStart(className)}Service(${majStart(className)}Repository ${minStart(className)}Repository) {
+      {{tab}}   this.${minStart(className)}Repository = ${minStart(className)}Repository;
+      {{tab}}}
+    serviceMethodContent: |
+      {{tab}}@Override
+      {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable) {
+      {{tab}}    try {
+      {{tab}}        return ${minStart(className)}Repository.findAll(pageable);
+      {{tab}}    } catch (Exception ex) {
+      {{tab}}        throw new InternalServerErrorException("Error while retrieving ${formatReadableLowerCase(className)}", ex);
+      {{tab}}    }
+      {{tab}}}
+      
+      {{tab}}@Override
+      {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable, ${majStart(className)} object) {
+      {{tab}}    try {
+      {{tab}}        Specification<${majStart(className)}> spec=${majStart(className)}Specification.filter(object);
+      {{tab}}        return ${minStart(className)}Repository.findAll(spec, pageable);
+      {{tab}}    } catch (Exception ex) {
+      {{tab}}        throw new InternalServerErrorException("Error while retrieving ${formatReadableLowerCase(className)}", ex);
+      {{tab}}    }
+      {{tab}}}
+      
+      {{tab}}@Override
+      {{tab}}public ${majStart(className)} get${majStart(className)}ById(${pkColumnType} ${pkColumn}) {
+      {{tab}}    Optional<${majStart(className)}> ${minStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
+      {{tab}}    if (${minStart(className)}.isPresent()) {
+      {{tab}}        return ${minStart(className)}.get();
+      {{tab}}    } else {
+      {{tab}}        throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
+      {{tab}}    }
+      {{tab}}}
+      
+      {{tab}}@Override
+      {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
+      {{tab}}    try {
+      {{tab}}        return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}    } catch (Exception ex) {
+      {{tab}}        throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
+      {{tab}}    }
+      {{tab}}}
+      
+      {{tab}}@Override
+      {{tab}}public ${majStart(className)} update${majStart(className)}(${pkColumnType} ${pkColumn}, ${majStart(className)} ${minStart(className)}) {
+      {{tab}}    Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
+      {{tab}}    if (existing${majStart(className)}.isPresent()) {
+      {{tab}}        ${minStart(className)}.set${majStart(pkColumn)}(${pkColumn});
+      {{tab}}        try {
+      {{tab}}            return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}        } catch (Exception ex) {
+      {{tab}}            throw new InternalServerErrorException("Error while updating ${formatReadableLowerCase(className)}", ex);
+      {{tab}}        }
+      {{tab}}    } else {
+      {{tab}}        throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
+      {{tab}}    }
+      {{tab}}}
+      
+      {{tab}}@Override
+      {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
+      {{tab}}    try {
+      {{tab}}        ${minStart(className)}Repository.deleteById(${pkColumn});
+      {{tab}}    } catch (Exception ex) {
+      {{tab}}        throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
+      {{tab}}    }
+      {{tab}}}
+
+    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
+    servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
+    serviceExtension: "java"
+    serviceAdditionalFiles:
+      - fileType: "Interface service"
+        fileName: "${majStart(className)}Service"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.services.interfaces;
+          
+          import ${groupLink}.${lowerCase(projectName)}.models.${className};
+          import org.springframework.data.domain.Page;
+          import org.springframework.data.domain.Pageable;    
+          
+          public interface ${majStart(className)}Service {
+              Page<${className}> getAll${className}(Pageable pageable);
+          
+              Page<${className}> getAll${className}(Pageable pageable, ${majStart(className)} object);
+          
+              ${className} get${className}ById(${pkColumnType} ${pkColumn});
+          
+              ${className} create${className}(${className} ${minStart(className)});
+          
+              ${className} update${className}(${pkColumnType} ${pkColumn}, ${className} ${minStart(className)});
+          
+              void delete${className}(${pkColumnType} ${pkColumn});
+          }
+
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services/interfaces"
+
+  controller:
+    toGenerate: true
+    controllerImports: |
+      import io.swagger.v3.oas.annotations.Operation;
+      import io.swagger.v3.oas.annotations.Parameter;
+      import io.swagger.v3.oas.annotations.media.Content;
+      import io.swagger.v3.oas.annotations.media.Schema;
+      import io.swagger.v3.oas.annotations.responses.ApiResponse;
+      import io.swagger.v3.oas.annotations.responses.ApiResponses;
+      import io.swagger.v3.oas.annotations.tags.Tag;
+      import org.springframework.http.HttpStatus;
+      import org.springframework.http.ResponseEntity;
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+      import org.springframework.web.bind.annotation.*;
+      import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
+      import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
+      import org.springframework.data.domain.Page;
+      import org.springframework.data.domain.PageRequest;
+      import org.springframework.data.domain.Pageable;
+      import org.springframework.data.domain.Sort;
+      import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+
+    controllerAnnotations: |
+      @RestController
+      @RequestMapping("/${lowerCase(classNameLink)}")
+      @Tag(name = "${formatReadable(className)}", description = "${formatReadable(className)} Management APIs")
+    controllerExtends: ""
+    controllerName: "${majStart(className)}Controller"
+    controllerFieldContent: |
+      {{tab}}private final ${majStart(className)}Service ${lowerCase(className)}Service;
+    controllerConstructors: |
+      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${lowerCase(className)}Service) {
+      {{tab}}   this.${lowerCase(className)}Service = ${lowerCase(className)}Service;
+      {{tab}}}
+    controllerMethodContent: |
+      {{tab}}@Operation(
+      {{tab}}    summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}    description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "200",
+      {{tab}}        description = "Successfully retrieved the paginated list of ${formatReadableLowerCase(className)}",
+      {{tab}}        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "204",
+      {{tab}}        description = "No ${formatReadableLowerCase(className)} found"
+      {{tab}}    )
+      {{tab}}})
+      {{tab}}@GetMapping
+      {{tab}}public ResponseEntity<RestResponse<Page<${majStart(className)}>>> getAll${majStart(classNameLink)}(
+      {{tab}}    @Parameter(description = "Page number (0-indexed)", example = "0")
+      {{tab}}    @RequestParam(defaultValue = "0") int page,
+      {{tab}}
+      {{tab}}    @Parameter(description = "Size of the page", example = "10")
+      {{tab}}    @RequestParam(defaultValue = "10") int size,
+      {{tab}}
+      {{tab}}    @Parameter(
+      {{tab}}        description = "Sorting criteria in the format: property,(asc|desc). "
+      {{tab}}                + "Multiple sort criteria can be passed using semicolon separator. "
+      {{tab}}                + "Example: id,asc;name,desc",
+      {{tab}}        example = "id,asc"
+      {{tab}}    )
+      {{tab}}    @RequestParam(defaultValue = "id,asc") String sortParam) {
+      {{tab}}
+      {{tab}}    Sort sortObj = WebUtils.createSortObject(sortParam);
+      {{tab}}    Pageable pageable = PageRequest.of(page, size, sortObj);
+      {{tab}}    Page<${majStart(className)}> ${lowerCase(classNameLink)} = ${lowerCase(className)}Service.getAll${majStart(className)}(pageable);
+      {{tab}}
+      {{tab}}    String message = ${lowerCase(classNameLink)}.hasContent()
+      {{tab}}            ? "${formatReadableLowerCase(className)} retrieved successfully"
+      {{tab}}            : "No ${formatReadableLowerCase(className)} found";
+      {{tab}}    HttpStatus statusCode = ${lowerCase(classNameLink)}.hasContent()
+      {{tab}}            ? HttpStatus.OK
+      {{tab}}            : HttpStatus.NO_CONTENT;
+      {{tab}}
+      {{tab}}    RestResponse<Page<${majStart(className)}>> response = RestResponse.buildSuccessResponse(
+      {{tab}}            statusCode,
+      {{tab}}            message,
+      {{tab}}            ${lowerCase(classNameLink)}
+      {{tab}}    );
+      {{tab}}    return ResponseEntity.status(statusCode).body(response);
+      {{tab}}}
+      {{tab}}@Operation(
+      {{tab}}    summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}    description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "200",
+      {{tab}}        description = "Successfully retrieved the paginated list of ${formatReadableLowerCase(className)}",
+      {{tab}}        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "204",
+      {{tab}}        description = "No ${formatReadableLowerCase(className)} found"
+      {{tab}}    )
+      {{tab}}})
+      {{tab}}@PostMapping("/search")
+      {{tab}}public ResponseEntity<RestResponse<Page<${majStart(className)}>>> getAll${majStart(classNameLink)}(
+      {{tab}}    @Parameter(description = "Page number (0-indexed)", example = "0")
+      {{tab}}    @RequestParam(defaultValue = "0") int page,
+      {{tab}}
+      {{tab}}    @Parameter(description = "Size of the page", example = "10")
+      {{tab}}    @RequestParam(defaultValue = "10") int size,
+      {{tab}}
+      {{tab}}    @Parameter(
+      {{tab}}        description = "Sorting criteria in the format: property,(asc|desc). "
+      {{tab}}                + "Multiple sort criteria can be passed using semicolon separator. "
+      {{tab}}                + "Example: id,asc;name,desc",
+      {{tab}}        example = "id,asc"
+      {{tab}}    )
+      {{tab}}    @RequestParam(defaultValue = "id,asc") String sortParam,
+      {{tab}}    @RequestBody ${majStart(className)} object) {
+      {{tab}}
+      {{tab}}    Sort sortObj = WebUtils.createSortObject(sortParam);
+      {{tab}}    Pageable pageable = PageRequest.of(page, size, sortObj);
+      {{tab}}    Page<${majStart(className)}> ${lowerCase(classNameLink)} = ${lowerCase(className)}Service.getAll${majStart(className)}(pageable, object);
+      {{tab}}
+      {{tab}}    String message = ${lowerCase(classNameLink)}.hasContent()
+      {{tab}}            ? "${formatReadableLowerCase(className)} retrieved successfully"
+      {{tab}}            : "No ${formatReadableLowerCase(className)} found";
+      {{tab}}    HttpStatus statusCode = ${lowerCase(classNameLink)}.hasContent()
+      {{tab}}            ? HttpStatus.OK
+      {{tab}}            : HttpStatus.NO_CONTENT;
+      {{tab}}
+      {{tab}}    RestResponse<Page<${majStart(className)}>> response = RestResponse.buildSuccessResponse(
+      {{tab}}            statusCode,
+      {{tab}}            message,
+      {{tab}}            ${lowerCase(classNameLink)}
+      {{tab}}    );
+      {{tab}}    return ResponseEntity.status(statusCode).body(response);
+      {{tab}}}
+      {{tab}}@Operation(
+      {{tab}}    summary = "Get ${formatReadableLowerCase(className)} by ID",
+      {{tab}}    description = "Retrieve a specific ${formatReadableLowerCase(className)} item by its ID"
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "200",
+      {{tab}}        description = "Successfully retrieved the ${formatReadableLowerCase(className)}",
+      {{tab}}        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "404",
+      {{tab}}        description = "${formatReadable(className)} not found with the provided ID"
+      {{tab}}    )
+      {{tab}}})
+      {{tab}}@GetMapping("/{${pkColumn}}")
+      {{tab}}public ResponseEntity<RestResponse<${majStart(className)}>> get${majStart(className)}ById(
+      {{tab}}    @Parameter(description = "ID of the ${formatReadableLowerCase(className)} to retrieve", required = true)
+      {{tab}}    @PathVariable ${pkColumnType} ${pkColumn}
+      {{tab}}) {
+      {{tab}}    ${majStart(className)} ${lowerCase(className)} = ${lowerCase(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{tab}}    RestResponse<${majStart(className)}> response = RestResponse.buildSuccessResponse(HttpStatus.OK,
+      {{tab}}            "${formatReadableLowerCase(className)} retrieved successfully", ${lowerCase(className)});
+      {{tab}}    return ResponseEntity.ok(response);
+      {{tab}}}
+      
+      {{tab}}@Operation(
+      {{tab}}    summary = "Create new ${formatReadableLowerCase(className)}",
+      {{tab}}    description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "201",
+      {{tab}}        description = "${formatReadable(className)} created successfully",
+      {{tab}}        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "400",
+      {{tab}}        description = "Invalid ${formatReadableLowerCase(className)} supplied"
+      {{tab}}    )
+      {{tab}}})
+      {{tab}}@PostMapping
+      {{tab}}public ResponseEntity<RestResponse<${majStart(className)}>> create${majStart(className)}(
+      {{tab}}    @Parameter(description = "${formatReadable(className)} object to be created", required = true)
+      {{tab}}    @RequestBody ${majStart(className)} ${lowerCase(className)}
+      {{tab}}) {
+      {{tab}}    ${majStart(className)} new${majStart(className)} = ${lowerCase(className)}Service.create${majStart(className)}(${lowerCase(className)});
+      {{tab}}    RestResponse<${majStart(className)}> response = RestResponse.buildSuccessResponse(HttpStatus.CREATED,
+      {{tab}}            "${formatReadableLowerCase(className)} created successfully", new${majStart(className)});
+      {{tab}}    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+      {{tab}}}
+      
+      {{tab}}@Operation(
+      {{tab}}    summary = "Update existing ${formatReadableLowerCase(className)}",
+      {{tab}}    description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "200",
+      {{tab}}        description = "${formatReadable(className)} updated successfully",
+      {{tab}}        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "404",
+      {{tab}}        description = "${formatReadable(className)} not found with the provided ID"
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "400",
+      {{tab}}        description = "Invalid ${formatReadableLowerCase(className)} supplied"
+      {{tab}}    )
+      {{tab}}})
+      {{tab}}@PutMapping("/{${pkColumn}}")
+      {{tab}}public ResponseEntity<RestResponse<${majStart(className)}>> update${majStart(className)}(
+      {{tab}}    @Parameter(description = "ID of the ${formatReadableLowerCase(className)} to update", required = true)
+      {{tab}}    @PathVariable ${pkColumnType} ${pkColumn},
+      {{tab}}    @Parameter(description = "Updated ${formatReadableLowerCase(className)} object", required = true)
+      {{tab}}    @RequestBody ${majStart(className)} ${lowerCase(className)}
+      {{tab}}) {
+      {{tab}}    ${majStart(className)} update${majStart(className)} = ${lowerCase(className)}Service.update${majStart(className)}(${pkColumn}, ${lowerCase(className)});
+      {{tab}}    RestResponse<${majStart(className)}> response = RestResponse.buildSuccessResponse(HttpStatus.OK,
+      {{tab}}            "${formatReadableLowerCase(className)} updated successfully", update${majStart(className)});
+      {{tab}}    return ResponseEntity.ok(response);
+      {{tab}}}
+      
+      {{tab}}@Operation(
+      {{tab}}    summary = "Delete ${formatReadableLowerCase(className)}",
+      {{tab}}    description = "Delete a ${formatReadableLowerCase(className)} item by its ID"
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "204",
+      {{tab}}        description = "${formatReadable(className)} deleted successfully"
+      {{tab}}    ),
+      {{tab}}    @ApiResponse(
+      {{tab}}        responseCode = "404",
+      {{tab}}        description = "${formatReadable(className)} not found with the provided ID"
+      {{tab}}    )
+      {{tab}}})
+      {{tab}}@DeleteMapping("/{${pkColumn}}")
+      {{tab}}public ResponseEntity<RestResponse<Void>> delete${majStart(className)}ById(
+      {{tab}}    @Parameter(description = "ID of the ${formatReadableLowerCase(className)} to delete", required = true)
+      {{tab}}    @PathVariable ${pkColumnType} ${pkColumn}
+      {{tab}}) {
+      {{tab}}    ${lowerCase(className)}Service.delete${majStart(className)}(${pkColumn});
+      {{tab}}    RestResponse<Void> response = RestResponse.buildSuccessResponse(HttpStatus.NO_CONTENT,
+      {{tab}}            "${formatReadableLowerCase(className)} deleted successfully", null);
+      {{tab}}    return ResponseEntity.ok(response);
+      {{tab}}}
+
+    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
+    controllerExtension: "java"
+    controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
+    controllerAdditionalFiles: []
+
+- id: 2
+  coreFramework: "Spring Boot"
+  name: "Spring Boot - Eureka Server"
+  additionalFiles:
+    - fileType: "MainFile"
+      fileName: "${majStart(projectName)}Application"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+        
+        import org.springframework.boot.SpringApplication;
+        import org.springframework.boot.autoconfigure.SpringBootApplication;
+        import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+        
+        @EnableEurekaServer
+        @SpringBootApplication
+        public class ${majStart(projectName)}Application {
+        {{tab}}public static void main(String[] args) {
+        {{tab}}{{tab}}SpringApplication.run(${majStart(projectName)}Application.class, args);
+        {{tab}}}
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}"
+
+    - fileType: "TestFile"
+      fileName: "${majStart(projectName)}ApplicationTests"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+        
+        import org.junit.jupiter.api.Test;
+        import org.springframework.boot.test.context.SpringBootTest;
+        
+        @SpringBootTest
+        class ${majStart(projectName)}ApplicationTests {
+        
+        {{tab}}@Test
+        {{tab}}void contextLoads() {
+        {{tab}}}
+        
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}/"
+
+    - fileType: "ApplicationYml"
+      fileName: "application"
+      extension: "yml"
+      content: |
+        spring:
+          application:
+            name: ${toKebabCase(projectName)}
+        
+        eureka:
+          client:
+            register-with-eureka: ${useEurekaServer}
+            fetch-registry: ${useEurekaServer}
+        {{#if useEurekaServer}}
+            service-url:
+              defaultZone: ${eurekaServerURL}
+        
+          instance:
+              prefer-ip-address: true
+              ip-address: $[spring.cloud.client.ip-address]
+        
+        management:
+          endpoints:
+            web:
+              exposure:
+                include: health,info
+          endpoint:
+            health:
+              show-details: always
+            info:
+              enabled: true
+          info:
+            env:
+              enabled: true
+            java:
+              enabled: true
+            build:
+              enabled: true
+        info:
+          app:
+            name: $[spring.application.name]
+            description: "${projectDescription}"
+            version: "0.0.1-SNAPSHOT"
+            technical:
+              spring-boot:
+                version: "${frameworkVersion}"
+              server:
+                port: $[server.port]
+        {{/if}}
+        server:
+          port: ${projectPort}
+        
+        logging:
+          level:
+            eureka: ${loggingLevel}
+            root: ${loggingLevel}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
+
+  configurations:
+    - name: "Logging Level"
+      variableName: "loggingLevel"
+      options:
+        - "TRACE"
+        - "DEBUG"
+        - "INFO"
+        - "WARN"
+        - "ERROR"
+        - "FATAL"
+        - "OFF"
+      defaultOption: "INFO"
+    - name: "Framework Version"
+      variableName: "frameworkVersion"
+      options:
+        - "3.3.6"
+        - "3.2.12"
+      defaultOption: "3.3.6"
+
+  eurekaClientConfigurations:
+    - name: "Eureka Server URL"
+      variableName: "eurekaServerURL"
+      options:
+        - "http://localhost:8761/eureka/"
+      defaultOption: "http://localhost:8761/eureka/"
+
+
+  dependencies:
+    - groupId: "org.springframework.cloud"
+      artifactId: "spring-cloud-starter-netflix-eureka-server"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-test"
+      version: "{{removeLine}}"
+      scope: "test"
+
+- id: 3
+  coreFramework: "Spring Boot"
+  name: "Spring Boot - API Gateway"
+  additionalFiles:
+    - fileType: "MainFile"
+      fileName: "${majStart(projectName)}Application"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+        
+        import org.springframework.boot.SpringApplication;
+        import org.springframework.boot.autoconfigure.SpringBootApplication;
+        {{#if useEurekaServer}}import org.springframework.cloud.client.discovery.EnableDiscoveryClient;{{/if}}
+        
+        {{#if useEurekaServer}}@EnableDiscoveryClient{{/if}}
+        @SpringBootApplication
+        public class ${majStart(projectName)}Application {
+            public static void main(String[] args) {
+              SpringApplication.run(${majStart(projectName)}Application.class, args);
+          }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}"
+
+    - fileType: "TestFile"
+      fileName: "${majStart(projectName)}ApplicationTests"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+        
+        import org.junit.jupiter.api.Test;
+        import org.springframework.boot.test.context.SpringBootTest;
+        
+        @SpringBootTest
+        class ${majStart(projectName)}ApplicationTests {
+        
+            @Test
+            void contextLoads() {
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}/"
+
+    - fileType: "SecurityConfig"
+      fileName: "SecurityConfig"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config;
+        
+        import org.springframework.beans.factory.annotation.Value;
+        import org.springframework.context.annotation.Bean;
+        import org.springframework.context.annotation.Configuration;
+        import org.springframework.security.config.Customizer;
+        import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+        import org.springframework.security.config.web.server.ServerHttpSecurity;
+        import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
+        import org.springframework.security.core.userdetails.User;
+        import org.springframework.security.core.userdetails.UserDetails;
+        import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+        import org.springframework.security.crypto.password.PasswordEncoder;
+        import org.springframework.security.web.server.SecurityWebFilterChain;
+        
+        @Configuration
+        @EnableWebFluxSecurity
+        public class SecurityConfig {
+            @Value("$[security.user.username:admin]")
+            private String username;
+        
+            @Value("$[security.user.password:admin]")
+            private String password;
+        
+            @Value("$[security.user.role:USER]")
+            private String role;
+        
+            @Bean
+            public MapReactiveUserDetailsService userDetailsService() {
+                UserDetails user = User.builder()
+                    .username(username)
+                    .password(passwordEncoder().encode(password))
+                    .roles(role)
+                    .build();
+        
+                return new MapReactiveUserDetailsService(user);
+            }
+        
+            @Bean
+            public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+            }
+        
+            @Bean
+            public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
+                http.authorizeExchange(exchanges -> exchanges
+                    .anyExchange().authenticated()
+                ).httpBasic(Customizer.withDefaults());
+        
+              return http.build();
+            }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+
+    - fileType: "ApplicationYml"
+      fileName: "application"
+      extension: "yml"
+      content: |
+        server:
+          port: ${projectPort}
+        
+        security:
+          user:
+            username: ${username}
+            password: ${password}
+            role: ${toUpperCase(role)}
+        
+        spring:
+          main:
+            web-application-type: reactive
+          application:
+            name: ${toKebabCase(projectName)}
+        
+          cloud:
+            gateway:
+              routes:
+              {{#each routes}}
+              - id: ${this.id}
+                uri: ${this.uri}
+                predicates:
+                  - Path=${this.path}
+                  - Method=${this.method}
+        
+              {{/each}}{{#if useEurekaServer}}
+        eureka:
+          client:
+            service-url:
+              defaultZone: ${eurekaServerURL}
+          instance:
+            prefer-ip-address: true
+            ip-address: $[spring.cloud.client.ip-address]
+        
+        management:
+          endpoints:
+            web:
+              exposure:
+                include: health,info
+          endpoint:
+            health:
+              show-details: always
+            info:
+              enabled: true
+          info:
+            env:
+              enabled: true
+            java:
+              enabled: true
+            build:
+              enabled: true
+        info:
+          app:
+            name: $[spring.application.name]
+            description: "${projectDescription}"
+            version: "0.0.1-SNAPSHOT"
+            technical:
+              spring-boot:
+                version: "${frameworkVersion}"
+              server:
+                port: $[server.port]
+        {{/if}}
+        logging:
+          level:
+            root: ${loggingLevel}
+            org.springframework.cloud.gateway: ${loggingLevel}
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
+
+  configurations:
+    - name: "Logging Level"
+      variableName: "loggingLevel"
+      options:
+        - "TRACE"
+        - "DEBUG"
+        - "INFO"
+        - "WARN"
+        - "ERROR"
+        - "FATAL"
+        - "OFF"
+      defaultOption: "INFO"
+    - name: "Framework Version"
+      variableName: "frameworkVersion"
+      options:
+        - "3.3.6"
+        - "3.2.12"
+      defaultOption: "3.3.6"
+
+  eurekaClientConfigurations:
+    - name: "Eureka Server URL"
+      variableName: "eurekaServerURL"
+      options:
+        - "http://localhost:8761/eureka/"
+      defaultOption: "http://localhost:8761/eureka/"
+
+
+  dependencies:
+    - groupId: "org.springframework.cloud"
+      artifactId: "spring-cloud-starter-gateway"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-test"
+      version: "{{removeLine}}"
+      scope: "test"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-webflux"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "io.projectreactor"
+      artifactId: "reactor-test"
+      version: "{{removeLine}}"
+      scope: "test"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-security"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+- id: 4
+  coreFramework: "Spring Boot"
+  name: "Spring Boot - MVC"
+  additionalFiles: [ ]
+  model:
+    toGenerate: true
+    modelImports: |
+      import jakarta.persistence.*;
+    modelExtends: ""
+    modelAnnotations: |
+      @Entity
+      @Table(name="#{tableName}")
+    modelFieldContent: |
+      {{tab}}{{#each fields}} 
+      {{tab}}{{#if this.isPrimaryKey}}
+      {{tab}}@Id
+      {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
+      {{tab}}@Column(name="#{this.columnName}"){{elseIf this.isForeignKey}}
+      {{tab}}@ManyToOne
+      {{tab}}@JoinColumn(name="#{this.columnName}"){{else}}
+      {{tab}}@Column(name="#{this.columnName}"){{/if}}
+      {{tab}}private #{this.type} #{this.name};{{#if !@last}}{{newline}}{{/if}}
+      {{tab}}{{/each}}
+    modelGetterSetter: |
+      {{tab}}{{#each fields}}
+      {{tab}}{{#if this.withGetters}}
+      {{tab}}public #{this.type} get#{majStart(this.name)}() {
+      {{tab}}    return #{this.name};
+      {{tab}}}{{/if}}
+      {{#if this.withSetters}}
+      {{tab}}public void set#{majStart(this.name)}(#{this.type} #{this.name}) {
+      {{tab}}    this.#{this.name} = #{this.name};
+      {{tab}}}{{#if !@last}}
+      {{tab}}{{/if}}
+      {{tab}}{{/if}}{{/each}}
+    modelConstructors: |
+      {{tab}}public #{majStart(className)}() {
+      {{tab}}}
+      
+      {{tab}}public #{majStart(className)}({{#each fieldsPK}}#{this.type} #{this.name}{{#if !@last}}, {{/if}}{{/each}}) {
+      {{tab}}    {{#each fieldsPK}}
+      {{tab}}    this.#{this.name} = #{this.name};{{#if !@last}}
+      {{tab}}    {{/if}}{{/each}}
+      {{tab}}}
+      
+      {{tab}}public #{majStart(className)}({{#each fields}}#{this.type} #{this.name}{{#if !@last}}, {{/if}}{{/each}}) {
+      {{tab}}    {{#each fields}}
+      {{tab}}    this.#{this.name} = #{this.name};{{#if !@last}}
+      {{tab}}    {{/if}}{{/each}}
+      {{tab}}}
+    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
+    modelForeignContextAttribute: ""
+    modelExtension: "java"
+    modelPackage: "#{groupLink}.#{lowerCase(projectName)}.models;"
+    modelAdditionalFiles: [ ]
+
+  modelDao:
+    toGenerate: true
+    modelDaoImports: |
+      import org.springframework.data.jpa.repository.JpaRepository;
+      import #{groupLink}.#{lowerCase(projectName)}.models.#{majStart(className)};
+    modelDaoAnnotations: "{{newline}}"
+    modelDaoClassKeyword: "public interface"
+    modelDaoExtends: "extends JpaRepository<#{majStart(className)}, #{pkColumnType}>"
+    modelDaoName: "#{majStart(className)}Repository"
+    modelDaoFieldContent: "{{removeLine}}"
+    modelDaoMethodContent: "{{removeLine}}"
+    modelDaoConstructors: "{{removeLine}}"
+    modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
+    modelDaoExtension: "java"
+    modelDaoPackage: "#{groupLink}.#{lowerCase(projectName)}.repositories;"
+
+  service:
+    toGenerate: true
+    serviceImports: |
+      import #{groupLink}.#{lowerCase(projectName)}.models.#{majStart(className)};
+      import org.springframework.stereotype.Service;
+      import #{groupLink}.#{lowerCase(projectName)}.repositories.#{majStart(className)}Repository;
+      import org.springframework.beans.factory.annotation.Autowired;
+      import java.util.List;
+      import java.util.Optional;
+
+    serviceClassKeyword: "public class"
+    serviceAnnotations: |
+      @Service
+    serviceExtends: ""
+    serviceName: "#{majStart(className)}Service"
+    serviceFieldContent: |
+      {{tab}}private final #{majStart(className)}Repository #{minStart(className)}Repository;
+    serviceConstructors: |
+      {{tab}}@Autowired
+      {{tab}}public #{majStart(className)}Service(#{majStart(className)}Repository #{minStart(className)}Repository) {
+      {{tab}}    this.#{lowerCase(className)}Repository = #{minStart(className)}Repository;
+      {{tab}}}
+    serviceMethodContent: |
+      {{tab}}public List<#{majStart(className)}> getAll#{majStart(className)}() {
+      {{tab}}    return #{minStart(className)}Repository.findAll();
+      {{tab}}}  
+      
+      {{tab}}public #{majStart(className)} get#{majStart(className)}ById(#{pkColumnType} id) {
+      {{tab}}    Optional<#{majStart(className)}> #{minStart(className)} = #{minStart(className)}Repository.findById(id);
+      {{tab}}    if (#{minStart(className)}.isPresent()) {
+      {{tab}}       return #{minStart(className)}.get();
+      {{tab}}    } else {
+      {{tab}}       throw new RuntimeException("#{majStart(className)} not found with id " + id);
+      {{tab}}    }
+      {{tab}}}
+      
+      {{tab}}public #{majStart(className)} create#{majStart(className)}(#{majStart(className)} #{minStart(className)}) {
+      {{tab}}    return #{minStart(className)}Repository.save(#{minStart(className)});
+      {{tab}}}
+      
+      {{tab}}public #{majStart(className)} update#{majStart(className)}(#{pkColumnType} id, #{majStart(className)} #{lowerCase(className)}) {
+      {{tab}}    Optional<#{majStart(className)}> existing#{majStart(className)} = #{lowerCase(className)}Repository.findById(id);
+      {{tab}}       if (existing#{majStart(className)}.isPresent()) {
+      {{tab}}	       #{lowerCase(className)}.set#{majStart(className)}id(id);
+      {{tab}}             return #{lowerCase(className)}Repository.save(#{lowerCase(className)});
+      {{tab}}       } else {
+      {{tab}}          throw new RuntimeException("#{majStart(className)} not found with id " + id);
+      {{tab}}       }
+      {{tab}}}
+      
+      {{tab}}public void delete#{majStart(className)}(#{pkColumnType} id) {
+      {{tab}}    #{lowerCase(className)}Repository.deleteById(id);
+      {{tab}}}
+    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
+    serviceExtension: "java"
+    servicePackage: "#{groupLink}.#{lowerCase(projectName)}.services;"
+    serviceAdditionalFiles: [ ]
+
+  controller:
+    toGenerate: true
+    controllerImports: |
+      import org.springframework.ui.Model;
+      import #{groupLink}.#{lowerCase(projectName)}.models.*;
+      import #{groupLink}.#{lowerCase(projectName)}.services.*;
+      import org.springframework.stereotype.Controller;
+      import org.springframework.web.bind.annotation.*;
+      
+      import java.util.List;
+      import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+    controllerAnnotations: |
+      @Controller
+      @RequestMapping("/#{lowerCase(classNameLink)}")
+    controllerExtends: ""
+    controllerName: "#{majStart(className)}Controller"
+    controllerFieldContent: |
+      {{tab}}private final #{majStart(className)}Service #{lowerCase(className)}Service;
+      {{tab}}{{#each fields}} 
+      {{tab}}{{#if this.isForeignKey}}
+      {{tab}}private final #{majStart(this.name)}Service #{lowerCase(this.name)}Service;
+      {{tab}}{{/if}}{{/each}}
+    controllerConstructors: |
+      {{tab}}public #{majStart(className)}Controller({{#each fields}}{{#if this.isForeignKey}} #{majStart(this.name)}Service #{lowerCase(this.name)}Service,{{/if}}{{/each}} #{majStart(className)}Service #{lowerCase(className)}Service) {
+      {{tab}}    this.#{lowerCase(className)}Service = #{lowerCase(className)}Service;
+      {{tab}}    {{#each fields}} 
+      {{tab}}    {{#if this.isForeignKey}}
+      {{tab}}    this.#{lowerCase(this.name)}Service = #{lowerCase(this.name)}Service;
+      {{tab}}    {{/if}}{{/each}}
+      {{tab}}}
+    controllerMethodContent: |
+      {{tab}}@GetMapping
+      {{tab}}public String getAll#{majStart(classNameLink)}(Model model) {
+      {{tab}}    List<#{majStart(className)}> #{lowerCase(classNameLink)} = #{lowerCase(className)}Service.getAll#{majStart(className)}();
+      {{tab}}    {{#each fields}} 
+      {{tab}}    {{#if this.isForeignKey}}
+      {{tab}}    List<#{majStart(this.name)}> #{lowerCase(this.name)}s = #{lowerCase(this.name)}Service.getAll#{majStart(this.name)}();
+      {{tab}}    {{/if}}{{/each}}
+      {{tab}}    model.addAttribute("#{lowerCase(classNameLink)}", #{lowerCase(classNameLink)});
+      {{tab}}    {{#each fields}} 
+      {{tab}}    {{#if this.isForeignKey}}
+      {{tab}}    model.addAttribute("#{this.name}s", #{this.name}s);
+      {{tab}}    {{/if}}{{/each}}
+      {{tab}}    return "#{lowerCase(classNameLink)}/list-#{lowerCase(className)}";
+      {{tab}}}
+      
+      {{tab}}@GetMapping("/create-#{lowerCase(className)}")
+      {{tab}}public String return#{majStart(classNameLink)}(Model model) {
+      {{tab}}    {{#each fields}} 
+      {{tab}}    {{#if this.isForeignKey}}
+      {{tab}}    List<#{majStart(this.name)}> #{lowerCase(this.name)}s = #{lowerCase(this.name)}Service.getAll#{majStart(this.name)}();
+      {{tab}}    {{/if}}{{/each}}
+      {{tab}}    {{#each fields}} 
+      {{tab}}    {{#if this.isForeignKey}}
+      {{tab}}    model.addAttribute("#{this.name}s", #{this.name}s);
+      {{tab}}    {{/if}}{{/each}}
+      {{tab}}    return "#{lowerCase(classNameLink)}/create-#{lowerCase(className)}";
+      {{tab}}}
+      
+      {{tab}}@PostMapping
+      {{tab}}public String create#{majStart(className)}(@ModelAttribute #{majStart(className)} #{lowerCase(className)}, RedirectAttributes redirectAttributes, Model model) {
+      {{tab}}    try {
+      {{tab 2}}    #{majStart(className)} new#{majStart(className)} = #{lowerCase(className)}Service.create#{majStart(className)}(#{lowerCase(className)});
+      {{tab 2}}    model.addAttribute("new#{majStart(className)}", new#{majStart(className)});
+      
+      {{tab 2}}    redirectAttributes.addFlashAttribute("success", "#{lowerCase(className)} successfully completed");
+      {{tab}}    } catch (Exception e) {
+      {{tab 2}}    redirectAttributes.addFlashAttribute(
+      {{tab 2}}     "error",
+      {{tab 2}}     "An error has occurred during the creation of #{lowerCase(className)}");
+      {{tab}}    }
+      
+      {{tab}}    return "redirect:/#{lowerCase(classNameLink)}";
+      {{tab}}}
+      
+      {{tab}}@PostMapping("/{id}")
+      {{tab}}public String update#{majStart(className)}(@PathVariable #{pkColumnType} id, @ModelAttribute #{majStart(className)} #{lowerCase(className)}, RedirectAttributes redirectAttributes, Model model) {
+      {{tab}}    try {
+      {{tab 2}}    #{majStart(className)} update#{majStart(className)} = #{lowerCase(className)}Service.update#{majStart(className)}(id, #{lowerCase(className)});
+      {{tab 2}}    model.addAttribute("update#{majStart(className)}", update#{majStart(className)});
+      
+      {{tab 2}}    redirectAttributes.addFlashAttribute("success", "#{lowerCase(className)} modify with success");
+      {{tab}}    } catch (Exception e) {
+      {{tab 2}}    redirectAttributes.addFlashAttribute(
+      {{tab 2}}     "error",
+      {{tab 2}}     "An error has occurred during the update of #{lowerCase(className)}");
+      {{tab}}    }
+      
+      {{tab}}    return "redirect:/#{lowerCase(classNameLink)}";
+      {{tab}}}
+      
+      {{tab}}@PostMapping("/{id}/delete")
+      {{tab}}public String delete#{majStart(className)}ById(@PathVariable #{pkColumnType} id, RedirectAttributes redirectAttributes, Model model) {
+      {{tab}}    try {
+      {{tab 2}}     #{lowerCase(className)}Service.delete#{majStart(className)}(id);
+      
+      {{tab 2}}    redirectAttributes.addFlashAttribute("success", "#{lowerCase(className)} has been deleted ");
+      {{tab}}    } catch (Exception e) {
+      {{tab 2}}    redirectAttributes.addFlashAttribute(
+      {{tab 2}}     "error",
+      {{tab 2}}     "An error has occurred during the delete of #{lowerCase(className)}");
+      {{tab}}    }
+      
+      {{tab}}    return "redirect:/#{lowerCase(classNameLink)}";
+      {{tab}}}
+    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
+    controllerExtension: "java"
+    controllerPackage: "#{groupLink}.#{lowerCase(projectName)}.controllers;"
+    controllerAdditionalFiles: [ ]

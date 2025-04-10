@@ -29,19 +29,23 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectSpring() {
-        var credentials = new Credentials().setHost("localhost").setPort("1522").setSchemaName("GENESIS").setDatabaseName("orcl").setUser("genesis").setPwd("root").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCL").setDriverType("Oracle");
+        var credentials = new Credentials().setHost("localhost").setPort("5432").setDatabaseName("btp_eval_db").setSchemaName("btp_eval_db").setUser("postgres").setPwd("nikami").setTrustCertificate(true).setUseSSL(true);
 
         try {
 
-            int databaseId = Constantes.Oracle_ID;
+            int databaseId = Constantes.PostgreSQL_ID;
             int languageId = Constantes.Java_ID;
-            int frameworkId = Constantes.Spring_REST_API_ID;
+            int frameworkId = Constantes.MVC_Framework_ID;
             int projectId = Constantes.Maven_ID;
+            int projectConfigurationId = Constantes.MVC_ID;
+            int frameworkConfigurationId = Constantes.MVC_Framework;
 
             var database = ProjectGenerator.databases.get(databaseId);
             var language = ProjectGenerator.languages.get(languageId);
             var framework = ProjectGenerator.frameworks.get(frameworkId);
+            var frameworkConfiguration = ProjectGenerator.getFrameworkConfiguration(framework).get(frameworkConfigurationId);
             var project = ProjectGenerator.projects.get(projectId);
+            var projectConfiguration = ProjectGenerator.getProjectsConfiguration(project).get(projectConfigurationId);
 
             String projectName = "Popol";
             String groupLink = "org.labs";
@@ -55,16 +59,16 @@ public class GenesisCoreTest {
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
 
-            HashMap<String, Object> frameworkConfiguration = new HashMap<>();
-            frameworkConfiguration.put("hibernateDdlAuto", hibernateDdlAuto);
-            frameworkConfiguration.put("loggingLevel", logLevel);
-            frameworkConfiguration.put("frameworkVersion", frameworkVersion);
+            HashMap<String, Object> frameworkconfiguration = new HashMap<>();
+            frameworkconfiguration.put("hibernateDdlAuto", hibernateDdlAuto);
+            frameworkconfiguration.put("loggingLevel", logLevel);
+            frameworkconfiguration.put("frameworkVersion", frameworkVersion);
 
             //===== USE EUREKA SERVER =======//
             framework.setUseCloud(false);
             framework.setUseEurekaServer(false);
-            frameworkConfiguration.put("eurekaServerURL", "http://localhost:8761/eureka");
-            frameworkConfiguration.put("projectNonSecurePort", projectPort);
+            frameworkconfiguration.put("eurekaServerURL", "http://localhost:8761/eureka");
+            frameworkconfiguration.put("projectNonSecurePort", projectPort);
             //==============================//
 
             HashMap<String, Object> languageConfiguration = new HashMap<>();
@@ -84,8 +88,10 @@ public class GenesisCoreTest {
             context.setGroupLink(groupLink);
             context.setProjectPort(projectPort);
             context.setProjectDescription(projectDescription);
+            context.setProjectConfiguration(projectConfiguration);
             context.setLanguageConfiguration(languageConfiguration);
-            context.setFrameworkConfiguration(frameworkConfiguration);
+            context.setFrameworkConfiguration(frameworkconfiguration);
+            context.setFrameworksTypeConfiguration(frameworkConfiguration);
             context.setEntityNames(entityNames);
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
@@ -185,7 +191,7 @@ public class GenesisCoreTest {
         try {
 
             int languageId = Constantes.Java_ID;
-            int frameworkId = Constantes.Spring_Eureka_Server_ID;
+            int frameworkId = Constantes.Eureka_Server_ID;
             int projectId = Constantes.Maven_ID;
 
             var language = ProjectGenerator.languages.get(languageId);
@@ -239,7 +245,7 @@ public class GenesisCoreTest {
         try {
 
             int languageId = Constantes.Java_ID;
-            int frameworkId = Constantes.Spring_Api_Gateway_ID;
+            int frameworkId = Constantes.Api_Gateway_ID;
             int projectId = Constantes.Maven_ID;
 
             var language = ProjectGenerator.languages.get(languageId);

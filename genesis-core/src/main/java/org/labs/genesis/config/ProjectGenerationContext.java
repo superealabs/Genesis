@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.config.langage.Project;
+import org.labs.genesis.config.langage.ProjectConfiguration;
+import org.labs.genesis.config.langage.FrameworkConfiguration;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 
@@ -21,22 +23,24 @@ public class ProjectGenerationContext {
     public static final String COMPONENT_SERVICE = "Service";
     public static final String COMPONENT_CONTROLLER = "Controller";
 
+    private Project project;
+    private String groupLink;
     private Database database;
     private Language language;
-    private Framework framework;
-    private Project project;
-    private Credentials credentials;
-    private String destinationFolder;
     private String projectName;
-    private String groupLink;
     private String projectPort;
-    private String projectDescription;
-    private Map<String, Object> languageConfiguration;
-    private Map<String, Object> frameworkConfiguration;
-    private List<String> entityNames;
+    private Framework framework;
     private Connection connection;
+    private Credentials credentials;
+    private List<String> entityNames;
+    private String destinationFolder;
+    private String projectDescription;
     private List<String> generationOptions;
     private boolean generateProjectStructure = true;
+    private ProjectConfiguration projectConfiguration;
+    private Map<String, Object> languageConfiguration;
+    private Map<String, Object> frameworkConfiguration;
+    private FrameworkConfiguration frameworktypeConfiguration;
 
     public ProjectGenerationContext setDatabase(Database database) {
         this.database = database;
@@ -55,6 +59,16 @@ public class ProjectGenerationContext {
 
     public ProjectGenerationContext setProject(Project project) {
         this.project = project;
+        return this;
+    }
+
+    public ProjectGenerationContext setProjectConfiguration(ProjectConfiguration projectConfiguration) {
+        this.projectConfiguration = projectConfiguration;
+        return this;
+    }
+
+    public ProjectGenerationContext setFrameworksTypeConfiguration(FrameworkConfiguration frameworkConfiguration) {
+        this.frameworktypeConfiguration = frameworkConfiguration;
         return this;
     }
 

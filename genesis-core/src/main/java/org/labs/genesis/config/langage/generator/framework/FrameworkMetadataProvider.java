@@ -2,6 +2,7 @@ package org.labs.genesis.config.langage.generator.framework;
 
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.FrameworkConfiguration;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -49,7 +50,7 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
-    public static HashMap<String, Object> getPrimaryModelHashMap(Framework framework, Language language, TableMetadata tableMetadata) {
+    public static HashMap<String, Object> getPrimaryModelHashMap(FrameworkConfiguration framework, Language language, TableMetadata tableMetadata) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         metadata.put("className", tableMetadata.getClassName());
@@ -66,7 +67,7 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
-    public static HashMap<String, Object> getPrimaryModelDaoHashMap(Framework framework, TableMetadata tableMetadata) {
+    public static HashMap<String, Object> getPrimaryModelDaoHashMap(FrameworkConfiguration framework, TableMetadata tableMetadata) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         metadata.put("className", tableMetadata.getClassName());
@@ -90,7 +91,7 @@ public class FrameworkMetadataProvider {
     }
 
 
-    public static HashMap<String, Object> getPrimaryServiceHashMap(Framework framework, TableMetadata tableMetadata) {
+    public static HashMap<String, Object> getPrimaryServiceHashMap(FrameworkConfiguration framework, TableMetadata tableMetadata) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         metadata.put("className", tableMetadata.getClassName());
@@ -114,7 +115,7 @@ public class FrameworkMetadataProvider {
     }
 
 
-    public static HashMap<String, Object> getPrimaryControllerHashMap(Framework framework, TableMetadata tableMetadata) {
+    public static HashMap<String, Object> getPrimaryControllerHashMap(FrameworkConfiguration framework, TableMetadata tableMetadata) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         metadata.put("className", tableMetadata.getClassName());
@@ -130,7 +131,7 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
-    public static HashMap<String, Object> getModelHashMap(Framework framework, Language language, TableMetadata tableMetadata) {
+    public static HashMap<String, Object> getModelHashMap(FrameworkConfiguration framework, Language language, TableMetadata tableMetadata) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         HashMap<String, Object> primaryModelMetadata = getPrimaryModelHashMap(framework, language, tableMetadata);
@@ -142,7 +143,7 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
-    public static HashMap<String, Object> getModelDaoHashMap(Framework framework, Language language, TableMetadata tableMetadata) {
+    public static HashMap<String, Object> getModelDaoHashMap(FrameworkConfiguration framework, Language language, TableMetadata tableMetadata) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         HashMap<String, Object> primaryModelDaoMetadata = getPrimaryModelDaoHashMap(framework, tableMetadata);
@@ -155,7 +156,7 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
-    public static HashMap<String, Object> getServiceHashMap(Framework framework, Language language, TableMetadata tableMetadata) {
+    public static HashMap<String, Object> getServiceHashMap(FrameworkConfiguration framework, Language language, TableMetadata tableMetadata) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         HashMap<String, Object> primaryServiceMetadata = getPrimaryServiceHashMap(framework, tableMetadata);
@@ -168,7 +169,7 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
-    public static HashMap<String, Object> getControllerHashMap(Framework framework, Language language, TableMetadata tableMetadata) {
+    public static HashMap<String, Object> getControllerHashMap(FrameworkConfiguration framework, Language language, TableMetadata tableMetadata) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         HashMap<String, Object> primaryControllerMetadata = getPrimaryControllerHashMap(framework, tableMetadata);
@@ -260,9 +261,10 @@ public class FrameworkMetadataProvider {
         return fieldMap;
     }
 
-    public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName) throws Exception {
+    public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName, FrameworkConfiguration frameworkConfiguration) throws Exception {
         String packageDefault = "";
-        packageDefault = framework.getModelDao().getModelDaoSavePath();
+        packageDefault = frameworkConfiguration
+                .getModelDao().getModelDaoSavePath();
 
         Database database = tableMetadata.getFirst().getDatabase();
         String connectionString = database.getConnectionString().get(framework.getLanguageId());
