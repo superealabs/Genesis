@@ -33,19 +33,27 @@ public class GenesisCoreTest {
 
         try {
 
+            int uiElementId = Constantes.THYMELEAF_ID;
             int databaseId = Constantes.PostgreSQL_ID;
             int languageId = Constantes.Java_ID;
             int frameworkId = Constantes.MVC_Framework_ID;
             int projectId = Constantes.Maven_ID;
             int projectConfigurationId = Constantes.MVC_ID;
+            int uiViewsConfigurationId = Constantes.THYMELEAF_ID;
             int frameworkConfigurationId = Constantes.MVC_Framework;
 
             var database = ProjectGenerator.databases.get(databaseId);
             var language = ProjectGenerator.languages.get(languageId);
+
+            var uielements = ProjectGenerator.uiviews.get(uiElementId);
+            var uiViewsConfiguration = ProjectGenerator.getUIViewsConfiguration(uielements).get(uiViewsConfigurationId);
+
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var frameworkConfiguration = ProjectGenerator.getFrameworkConfiguration(framework).get(frameworkConfigurationId);
+
             var project = ProjectGenerator.projects.get(projectId);
             var projectConfiguration = ProjectGenerator.getProjectsConfiguration(project).get(projectConfigurationId);
+
 
             String projectName = "Popol";
             String groupLink = "org.labs";
@@ -74,7 +82,7 @@ public class GenesisCoreTest {
             HashMap<String, Object> languageConfiguration = new HashMap<>();
             languageConfiguration.put("languageVersion", languageVersion);
 
-            List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
+            List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller", "Views");
             List<String> entityNames = new ArrayList<>();
 
             ProjectGenerationContext context = new ProjectGenerationContext();
@@ -95,6 +103,8 @@ public class GenesisCoreTest {
             context.setEntityNames(entityNames);
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
+            context.setUIViews(uielements);
+            context.setUiViewsConfiguration(uiViewsConfiguration);
 
             projectGenerator.generateProject(context);
 

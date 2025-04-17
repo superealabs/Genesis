@@ -840,6 +840,17 @@
     controllerExtension: "java"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
     controllerAdditionalFiles: []
+  view:
+    toGenerate: false
+    viewExtension: ""
+    viewSavePath: ""
+    listViewName: ""
+    createViewName: ""
+  customChanges: [ ]
+  navbarLinks:
+    path: ""
+    link: ""
+
 
 - id: 2
   coreFramework: "Spring Boot"
@@ -1204,6 +1215,54 @@
   coreFramework: "Spring Boot"
   name: "Spring Boot - MVC"
   additionalFiles: [ ]
+  configurations:
+    - name: "Logging Level"
+      variableName: "loggingLevel"
+      options:
+        - "TRACE"
+        - "DEBUG"
+        - "INFO"
+        - "WARN"
+        - "ERROR"
+        - "FATAL"
+        - "OFF"
+      defaultOption: "INFO"
+    - name: "Framework Version"
+      variableName: "frameworkVersion"
+      options:
+        - "3.3.6"
+        - "3.2.12"
+      defaultOption: "3.3.6"
+    - name: "Hibernate Ddl Auto"
+      variableName: "hibernateDdlAuto"
+      options:
+        - "create"
+        - "create-drop"
+        - "none"
+        - "update"
+      defaultOption: "none"
+
+  dependencies:
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-data-jpa"
+      version: "{{removeLine}}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-web"
+      version: "{{removeLine}}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-thymeleaf"
+      version: "{{removeLine}}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-test"
+      version: "{{removeLine}}"
+    - groupId: "org.thymeleaf.extras"
+      artifactId: "thymeleaf-extras-java8time"
+      version: "3.0.1.RELEASE"
+    - groupId: "nz.net.ultraq.thymeleaf"
+      artifactId: "thymeleaf-layout-dialect"
+      version: "3.3.0"
+  eurekaClientConfigurations: [ ]
+
   model:
     toGenerate: true
     modelImports: |
@@ -1440,3 +1499,13 @@
     controllerExtension: "java"
     controllerPackage: "#{groupLink}.#{lowerCase(projectName)}.controllers;"
     controllerAdditionalFiles: [ ]
+  view:
+    toGenerate: true
+    viewExtension: "html"
+    viewSavePath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/#{lowerCase(classNameLink)}"
+    listViewName: "list-#{lowerCase(className)}"
+    createViewName: "create-#{lowerCase(className)}"
+  customChanges: [ ]
+  navbarLinks:
+      path: "${destinationFolder}/[projectNameMaj]/src/main/resources/templates/layout/layout.html"
+      link: "<a href=\"/tocrud[classNameMin].do\" class=\"nav-item nav-link\"><i class=\"fa fa-tachometer-alt me-2\"></i>[classNameformattedMaj]</a>"

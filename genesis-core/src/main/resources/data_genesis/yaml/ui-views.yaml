@@ -1,0 +1,7 @@
+- id: 1
+  langageId: 1
+  name: "Thymeleaf template"
+  fileName: "thymeleaf"
+  template: "Layout"
+  listTemplate: "ListView"
+  createTemplate: "CreateView"

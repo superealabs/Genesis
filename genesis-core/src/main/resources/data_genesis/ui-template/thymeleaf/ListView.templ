@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.w3.org/1999/xhtml" layout:decorate="~{layout/main_layout}" lang="fr">
+
+<div layout:fragment="content" class="row">
+
+    <!-- Page header -->
+    <div class="row align-items-center justify-content-between">
+        <div class="col-6 text-start">
+            <h2 class="fw-bold py-3 mb-3"><span class="text-muted fw-light">List of #{lowerCase(className)}</span></h2>
+        </div>
+        <div class="col-6 text-end">
+            <a class="btn btn-primary mb-3" $[createLink]>Create</a>
+        </div>
+    </div>
+
+    <div $[alertSuccess] class="alert alert-success alert-dismissible" role="alert" $[textSuccess]>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div $[alertFailed] class="alert alert-danger alert-dismissible" role="alert" $[textFailed]>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- TABLE ALSO AT THE TOP OF THE PAGE -->
+    <div class="col-lg-12 col-md-7 order-0">
+        <div class="card shadow border-0">
+            <div class="card-body">
+                <div class="table-responsive text-nowrap">
+                    <table class="table">
+                        <thead class="thead-light">
+                        <tr>
+                            {{#each fields}}
+                            <th>#{this.name}</th>
+                            {{/each}}{{removeLine}}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr $[dataLoop]>
+                            {{#each fields}}
+                            <td class="text-truncate align-middle mt-3" {{#if this.isForeignKey}} $[dataForeignValues] {{else}} $[dataValues] {{/if}}> $[dataKeys] </td>
+                            {{#if @last}}
+                            <td class="align-middle">
+                                <div class="row">
+                                    <div class="col-lg-3 col-md-2 order-0">
+                                        <div class="mt-0">
+                                            <!-- Button trigger modal -->
+                                            <button
+                                                    type="button"
+                                                    class="btn btn-info"
+                                                    data-bs-toggle="modal"
+                                                    $[dataModificationButton]
+                                            >
+                                                <i class="bx bx-wallet"></i> Update
+                                            </button>
+
+                                            <!-- Modal -->
+                                            <div class="modal fade" $[dataModificationId]
+                                                 tabindex="-1"
+                                                 aria-hidden="true">
+                                                <div class="modal-dialog modal-dialog-centered modal-lg"
+                                                     role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h3 class="modal-title" $[dataModificationTitleModal]>
+                                                                Modify this element</h3>
+                                                            <button
+                                                                    type="button"
+                                                                    class="btn-close"
+                                                                    data-bs-dismiss="modal"
+                                                                    aria-label="close"
+                                                            ></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <!-- Select entity modification form -->
+                                                            <form $[formUpdateLink] method="post">
+                                                            <div class="row">
+                                                                <div class="log-lg-3 col-md-6 order-0">
+                                                                    {{#each inputContents}}
+                                                                        #{this}
+                                                                    {{/each}}{{removeLine}}
+                                                                    {{removeLine}}
+                                                                </div>
+                                                            </div>
+                                                            <button type="submit" class="btn btn-primary">Confirm
+                                                            </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="row">
+                                    <div class="col-lg-3 col-md-2 order-0">
+                                        <div class="mt-0">
+                                           <!-- Button trigger modal -->
+                                           <button
+                                                   type="button"
+                                                   class="btn btn-danger"
+                                                   data-bs-toggle="modal"
+                                                   $[dataCancelButton]
+                                           >
+                                               <i class="bx bx-trash"></i> Delete
+                                           </button>
+
+                                           <!-- Modal -->
+                                           <div class="modal fade" $[dataCancelId]
+                                                tabindex="-1"
+                                                aria-hidden="true">
+                                               <div class="modal-dialog modal-dialog-centered modal-lg"
+                                                    role="document">
+                                                   <div class="modal-content">
+                                                       <div class="modal-header">
+                                                           <h3 class="modal-title" $[dataCancelTitleModal]>
+                                                               Cancellation</h3>
+                                                           <button
+                                                                   type="button"
+                                                                   class="btn-close"
+                                                                   data-bs-dismiss="modal"
+                                                                   aria-label="close"
+                                                           ></button>
+                                                       </div>
+                                                       <div class="modal-body">
+                                                           <!-- Select entity modification form -->
+                                                           <form $[formDeleteLink] method="post">
+                                                           <div class="row">
+                                                               <div class="log-lg-3 col-md-6 order-0">
+                                                                    <p>Do you want to undo the changes made to this element?</p>
+                                                               </div>
+                                                           </div>
+                                                           <button type="submit" class="btn btn-danger">Delete
+                                                           </button>
+                                                           </form>
+                                                       </div>
+                                                   </div>
+                                               </div>
+                                           </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            {{/if}}{{removeLine}}
+                            {{/each}}{{removeLine}}
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</html>

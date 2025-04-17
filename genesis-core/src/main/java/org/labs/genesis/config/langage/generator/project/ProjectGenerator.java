@@ -1,5 +1,6 @@
 package org.labs.genesis.config.langage.generator.project;
 
+import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.utils.FileUtils;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.Constantes;
@@ -30,6 +31,7 @@ public class ProjectGenerator {
     public static final Map<Integer, Database> databases;
     public static final Map<Integer, Language> languages;
     public static final Map<Integer, Framework> frameworks;
+    public static final Map<Integer, UIViews> uiviews;
     public static final GenesisTemplateEngine engine;
 
     static {
@@ -47,6 +49,9 @@ public class ProjectGenerator {
 
             frameworks = Arrays.stream(FileUtils.fromYaml(Framework[].class, Constantes.FRAMEWORK_YAML))
                     .collect(Collectors.toMap(Framework::getId, framework -> framework));
+
+            uiviews = Arrays.stream(FileUtils.fromYaml(UIViews[].class, Constantes.UIVIEWS_YAML))
+                    .collect(Collectors.toMap(UIViews::getId, uiview -> uiview));
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -85,6 +90,23 @@ public class ProjectGenerator {
             throw new RuntimeException(e);
         }
         return frameworkConfigurationMap;
+    }
+
+    public static Map<Integer, UIViewsConfiguration> getUIViewsConfiguration(UIViews uiViews) {
+        Map<Integer, UIViewsConfiguration> uiViewsConfigurationMap = new HashMap<>();
+        String fileName = uiViews.getFileName();
+        String sourceFile = Constantes.UIVIEWS_CONFIGURATION_YAML + fileName + "." +Constantes.YAML_EXT;
+
+        try {
+            uiViewsConfigurationMap = Arrays.stream(FileUtils.fromYaml(UIViewsConfiguration[].class, sourceFile))
+                    .collect(Collectors.toMap(UIViewsConfiguration::getId, UIViewsConfiguration -> UIViewsConfiguration));
+
+            System.out.println(uiViewsConfigurationMap);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return uiViewsConfigurationMap;
     }
 
     public ProjectGenerator() {
@@ -174,13 +196,18 @@ public class ProjectGenerator {
             projectFilesEditsHashMap.putAll(mapDaoGlobal);
         }
         getProjectsConfiguration(context.getProject());
-        renderAndCopyFiles(context.getProjectConfiguration().getProjectFiles(), initializeHashMap);
+
         renderAndCopyFolders(context.getProjectConfiguration().getProjectFolders(), initializeHashMap);
+
+        renderAndCopyFiles(context.getProjectConfiguration().getProjectFiles(), initializeHashMap);
+
         renderFilesEdits(context.getProjectConfiguration().getProjectFilesEdits(), projectFilesEditsHashMap);
+
         renderFilesEdits(context.getFrameworktypeConfiguration().getAdditionalFiles(), projectFilesEditsHashMap);
+
     }
 
-    public void generateBackendComponents(ProjectGenerationContext context,
+    public void generateComponents(ProjectGenerationContext context,
                                           GenesisGenerator genesisGenerator,
                                           TableMetadata tableMetadata,
                                           boolean generateComponentOnly) throws Exception {
@@ -192,13 +219,17 @@ public class ProjectGenerator {
         // S'assurer que le répertoire de destination existe
         FileUtils.createDirectory(renderedDestinationFolder);
 
+        UIViews uiViews = context.getUiViews();
         Language language = context.getLanguage();
         String groupLink = context.getGroupLink();
         Framework framework = context.getFramework();
         String projectName = context.getProjectName();
         getProjectsConfiguration(context.getProject());
         List<String> generationOptions = context.getGenerationOptions();
+        UIViewsConfiguration uiViewsConfiguration = context.getUiViewsConfiguration();
         FrameworkConfiguration frameworkConfiguration = context.getFrameworktypeConfiguration();
+
+        ColumnMetadata[] columnMetadatas = tableMetadata.getColumns();
 
         if (generationOptions.contains(COMPONENT_MODEL) && frameworkConfiguration.getModel().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_MODEL + " component...");
@@ -220,6 +251,13 @@ public class ProjectGenerator {
             genesisGenerator.generateController(framework, frameworkConfiguration, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
+        for (ColumnMetadata columnMetadata : columnMetadatas) {
+            if (generationOptions.contains(COMPONENT_VIEWS) && frameworkConfiguration.getView().getToGenerate()) {
+                System.out.println("Generating " + COMPONENT_VIEWS + " component...");
+                genesisGenerator.generateView(columnMetadatas, columnMetadata, framework, frameworkConfiguration, language, uiViews, uiViewsConfiguration, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            }
+        }
+
         System.out.println("Backend component generation completed for project: " + projectName);
     }
 
@@ -234,27 +272,33 @@ public class ProjectGenerator {
     }
 
     private void generateFullProject(ProjectGenerationContext context) throws Exception {
+        UIViews uiViews = context.getUiViews();
         Database database = context.getDatabase();
-        Framework framework = context.getFramework();
-        Credentials credentials = context.getCredentials();
-        Connection connection = context.getConnection();
         Language language = context.getLanguage();
+        Framework framework = context.getFramework();
+        Connection connection = context.getConnection();
+        Credentials credentials = context.getCredentials();
+        UIViewsConfiguration uiViewsConfiguration = context.getUiViewsConfiguration();
+        GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
 
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
                 List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language);
-                 GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
+                TableMetadata[] array = entities.toArray(new TableMetadata[entities.size()]);
+
+                generateProjectFiles(context, entities);
 
                 for (TableMetadata tableMetadata : entities) {
-                    generateBackendComponents(
+                    generateComponents(
                             context,
                             genesisGenerator,
                             tableMetadata,
                             false
                     );
-                }
 
-                generateProjectFiles(context, entities);
+                    genesisGenerator.generateViewMainLayout(framework, language, uiViews, uiViewsConfiguration, array, tableMetadata, context.getDestinationFolder(), context.getProjectName(), context.getGroupLink());
+
+                }
 
             } catch (Exception e) {
                 throw new RuntimeException("\nError in generateFullProject : \n" + e);
@@ -265,24 +309,30 @@ public class ProjectGenerator {
     }
 
     private void generateComponentsOnly(ProjectGenerationContext context) {
+        UIViews uiViews = context.getUiViews();
         Database database = context.getDatabase();
-        Framework framework = context.getFramework();
-        Credentials credentials = context.getCredentials();
-        Connection connection = context.getConnection();
         Language language = context.getLanguage();
+        Framework framework = context.getFramework();
+        Connection connection = context.getConnection();
+        Credentials credentials = context.getCredentials();
+        UIViewsConfiguration uiViewsConfiguration = context.getUiViewsConfiguration();
+        FrameworkConfiguration frameworkConfiguration = context.getFrameworktypeConfiguration();
 
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
                 List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language);
                 GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
+                TableMetadata[] array = entities.toArray(new TableMetadata[entities.size()]);
 
                 for (TableMetadata tableMetadata : entities) {
-                    generateBackendComponents(
+                    generateComponents(
                             context,
                             genesisGenerator,
                             tableMetadata,
                             true
                     );
+
+                    genesisGenerator.generateViewMainLayout(framework, language, uiViews, uiViewsConfiguration, array, tableMetadata, context.getDestinationFolder(), context.getProjectName(), context.getGroupLink());
                 }
             } catch (Exception e) {
                 throw new RuntimeException("\nError in generateComponentsOnly : \n" + e);

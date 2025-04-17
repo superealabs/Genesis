@@ -14,13 +14,18 @@ public class FrameworkConfiguration {
     private String coreFramework;
 
 
+    private NavbarLink navbarLinks;
+    private List<Dependency> dependencies;
     private List<FilesEdit> additionalFiles;
     private List<ConfigurationMetadata> configurations;
     private List<ConfigurationMetadata> eurekaClientConfigurations;
-    private List<Dependency> dependencies;
+
+    private List<CustomChanges> customChanges;
+
+    private View view;
     private Model model;
-    private ModelDao modelDao;
     private Service service;
+    private ModelDao modelDao;
     private Controller controller;
 
     @Override
@@ -110,5 +115,33 @@ public class FrameworkConfiguration {
         private String controllerExtension;
         private String controllerPackage;
         private List<FilesEdit> controllerAdditionalFiles;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class View {
+        private Boolean toGenerate;
+        private String viewSavePath;
+        private String listViewName;
+        private String viewExtension;
+        private String createViewName;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class CustomChanges {
+        private String path;
+        private String changes;
+        private boolean withEndComma;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class NavbarLink {
+        private String path;
+        private String link;
     }
 }

@@ -2,13 +2,10 @@ package org.labs.genesis.config;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.Language;
-import org.labs.genesis.config.langage.Project;
-import org.labs.genesis.config.langage.ProjectConfiguration;
-import org.labs.genesis.config.langage.FrameworkConfiguration;
+import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 
 import java.sql.Connection;
 import java.util.List;
@@ -22,8 +19,10 @@ public class ProjectGenerationContext {
     public static final String COMPONENT_DAO = "DAO";
     public static final String COMPONENT_SERVICE = "Service";
     public static final String COMPONENT_CONTROLLER = "Controller";
+    public static final String COMPONENT_VIEWS = "Views";
 
     private Project project;
+    private UIViews uiViews;
     private String groupLink;
     private Database database;
     private Language language;
@@ -39,6 +38,7 @@ public class ProjectGenerationContext {
     private boolean generateProjectStructure = true;
     private ProjectConfiguration projectConfiguration;
     private Map<String, Object> languageConfiguration;
+    private UIViewsConfiguration uiViewsConfiguration;
     private Map<String, Object> frameworkConfiguration;
     private FrameworkConfiguration frameworktypeConfiguration;
 
@@ -62,6 +62,11 @@ public class ProjectGenerationContext {
         return this;
     }
 
+    public ProjectGenerationContext setUIViews(UIViews uiViews) {
+        this.uiViews = uiViews;
+        return this;
+    }
+
     public ProjectGenerationContext setProjectConfiguration(ProjectConfiguration projectConfiguration) {
         this.projectConfiguration = projectConfiguration;
         return this;
@@ -69,6 +74,11 @@ public class ProjectGenerationContext {
 
     public ProjectGenerationContext setFrameworksTypeConfiguration(FrameworkConfiguration frameworkConfiguration) {
         this.frameworktypeConfiguration = frameworkConfiguration;
+        return this;
+    }
+
+    public ProjectGenerationContext setUIViewsTypeConfiguration(UIViewsConfiguration uiViewsConfiguration) {
+        this.uiViewsConfiguration = uiViewsConfiguration;
         return this;
     }
 

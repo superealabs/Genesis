@@ -4,9 +4,13 @@ public class Constantes {
     public static final String DATABASE_JSON = "data_genesis/json/databases.json";
     public static final String LANGUAGE_JSON = "data_genesis/json/languages.json";
     public static final String FRAMEWORK_YAML = "data_genesis/yaml/frameworks.yaml";
+    public static final String UIVIEWS_YAML = "data_genesis/yaml/ui-views.yaml";
     public static final String PROJECT_YAML = "data_genesis/yaml/projects.yaml";
+
     public static final String DATA_PATH = "data_genesis";
+    public static final String LAYOUT_DATA_PATH = "data_genesis/ui-template";
     public static final String MODEL_TEMPLATE_EXT = "genesis";
+    public static final String VIEWS_TEMPLATE_EXT = "templ";
 
     //EXTENSION FICHIERS DE CONFIGURATION
     public static final String YAML_EXT = "yaml";
@@ -16,6 +20,9 @@ public class Constantes {
 
     //FRAMEWORKS CONFIGURATIONS
     public static final String FRAMEWORKS_CONFIGURATION_YAML = "data_genesis/yaml/frameworksfiles/";
+
+    //UI-VIEWS CONFIGURATIONS
+    public static final String UIVIEWS_CONFIGURATION_YAML = "data_genesis/yaml/ui-viewsfiles/";
 
     // DATABASES
     public static final int MySQL_ID = 1;
@@ -51,5 +58,7 @@ public class Constantes {
     public static final int API_ID = 1;
     public static final int MVC_ID = 2;
 
-
+    // UI-VIEWS TYPE
+    public static final String THYMELEAF_UI_ELEMENTS = "thymeleaf" ;
+    public static final int THYMELEAF_ID = 1;
 }

@@ -1,16 +1,15 @@
 package org.labs.genesis.config.langage.generator.framework;
 
 import org.jetbrains.annotations.NotNull;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.FrameworkConfiguration;
-import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
-import org.labs.utils.FileUtils;
 import org.labs.utils.StringUtils;
+
+import org.labs.genesis.config.langage.generator.project.ProjectMetadataProvider;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +34,16 @@ public class FrameworkMetadataProvider {
                         "sid", database.getSid()
                 )
         );
+    }
+
+    public static List<String> getClassNameHashMap(TableMetadata[] tableMetadata) {
+        List<String> fields = new ArrayList<>();
+
+        for (TableMetadata tableMetadatum : tableMetadata) {
+            fields.add(tableMetadatum.getClassName());
+        }
+
+        return fields;
     }
 
     public static HashMap<String, Object> getRelatedLanguageMetadata(Language language) {
@@ -181,6 +190,158 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
+    public static HashMap<String, Object> getSelectHashMap(ColumnMetadata[] columnMetadonnee, ColumnMetadata columnMetadata) {
+        HashMap<String, Object> metadata = new HashMap<>();
+        ColumnMetadata data = getColumnAfterPK(columnMetadonnee);
+
+        metadata.put("foreignPrimaryName", data.getName());
+        metadata.put("fieldName", columnMetadata.getName());
+        metadata.put("foreignName", columnMetadata.getReferencedColumn());
+
+        return metadata;
+    }
+
+    public static List<String> getCreateInputsList(ColumnMetadata[] columnMetadatas, ColumnMetadata metaDonnee, TableMetadata tableMetadata, UIViewsConfiguration uiViewsConfiguration) throws Exception {
+        List<String> inputContents = new ArrayList<>();
+        String select = uiViewsConfiguration.getInsert().getSelect();
+        ColumnMetadata[] columns = tableMetadata.getColumns();
+        Map<String, Object> creates = uiViewsConfiguration.getInsert().getInput();
+        HashMap<String, Object> datas = getSelectHashMap(columnMetadatas, metaDonnee);
+        HashMap<String, Object> selectHashMap = ProjectMetadataProvider.getSelectHashMap(uiViewsConfiguration);
+
+        for (ColumnMetadata columnMetadatum : columns) {
+            if (!columnMetadatum.isPrimary()) {
+                if (columnMetadatum.getReferencedTable() == null) {
+                    String updatesInput = engine.render(creates.get(columnMetadatum.getPrimaryType()).toString(), Map.of("fieldName", columnMetadatum.getName()));
+                    inputContents.add(updatesInput);
+                } else {
+                    String foreignUpdateInput = engine.simpleRenderAlt(select, selectHashMap);
+                    foreignUpdateInput = engine.render(foreignUpdateInput,datas);
+                    inputContents.add(foreignUpdateInput);
+                }
+            }
+        }
+
+        return inputContents;
+    }
+
+    public static List<String> getUpdateInputsList(ColumnMetadata[] columnMetadatas, ColumnMetadata metaDonnee, TableMetadata tableMetadata,UIViewsConfiguration editor) throws Exception {
+        List<String> inputContents = new ArrayList<>();
+        String select = editor.getUpdate().getSelect();
+        ColumnMetadata[] columns = tableMetadata.getColumns();
+        Map<String, Object> updates = editor.getUpdate().getInput();
+        HashMap<String, Object> datas = getSelectHashMap(columnMetadatas, metaDonnee);
+        HashMap<String, Object> selectHashMap = ProjectMetadataProvider.getSelectHashMap(editor);
+
+        for (ColumnMetadata columnMetadatum : columns) {
+            if (!columnMetadatum.isPrimary()) {
+                if (columnMetadatum.getReferencedTable() == null) {
+                    try {
+                        String updatesInput = engine.render(updates.get(columnMetadatum.getPrimaryType()).toString(), Map.of("fieldName", columnMetadatum.getName()));
+                        inputContents.add(updatesInput);
+
+                    } catch (Exception e) {
+                        System.out.println(columnMetadatum);
+                    }
+                } else {
+                    String foreignUpdateInput = engine.simpleRenderAlt(select, selectHashMap);
+                    foreignUpdateInput = engine.render(foreignUpdateInput,datas);
+                    inputContents.add(foreignUpdateInput);
+                }
+            }
+        }
+
+        return inputContents;
+    }
+
+    public static HashMap<String, Object> getViewMainLayoutHashMap(TableMetadata[] tableMetadatas, TableMetadata tableMetadata, Language language, UIViewsConfiguration configuration) throws Exception {
+        HashMap<String, Object> metadata = new HashMap<>();
+
+        HashMap<String, Object> primaryViewMetadata = getDisplayHashMap(configuration);
+        List<String> classNames = getClassNameHashMap(tableMetadatas);
+        HashMap<String, Object> languageMetadata = getRelatedLanguageMetadata(language);
+
+        metadata.putAll(primaryViewMetadata);
+        metadata.putAll(languageMetadata);
+        metadata.put("fields", classNames);
+
+        metadata.put("className", tableMetadata.getClassName());
+        return metadata;
+    }
+
+    public static HashMap<String, Object> getDisplayHashMap(UIViewsConfiguration editor) {
+        HashMap<String, Object> metadata = new HashMap<>();
+
+        /*-- Header --*/
+        metadata.put("iconsLink", editor.getLayout().getHeader().getIconsLink());
+        metadata.put("coresLink", editor.getLayout().getHeader().getCoresLink());
+        metadata.put("themeLink", editor.getLayout().getHeader().getThemeLink());
+        metadata.put("assetsLink", editor.getLayout().getHeader().getAssetsLink());
+        metadata.put("vendorsLink", editor.getLayout().getHeader().getVendorsLink());
+        metadata.put("helpersLink", editor.getLayout().getHeader().getHelpersLink());
+        metadata.put("viewAttribute", editor.getLayout().getHeader().getViewAttribute());
+
+        /*-- Content --*/
+        metadata.put("callMenu", editor.getLayout().getContent().getCallMenu());
+        metadata.put("callContent", editor.getLayout().getContent().getCallContent());
+
+        /*-- Footer --*/
+        metadata.put("coresFooterLink", editor.getLayout().getFooter().getCoresFooterLink());
+        metadata.put("mainsFooterLink", editor.getLayout().getFooter().getMainsFooterLink());
+        metadata.put("pagesFooterLink", editor.getLayout().getFooter().getPagesFooterLink());
+        metadata.put("vendorsFooterLink", editor.getLayout().getFooter().getVendorsFooterLink());
+
+        return metadata;
+    }
+
+    public static HashMap<String, Object> getListViewHashMap(UIViewsConfiguration editor, TableMetadata tableMetadata, String destinationFolder,  String projectName, String groupLink) throws Exception {
+        HashMap<String, Object> metadata = new HashMap<>();
+
+        String createLink = engine.render(editor.getLayout().getMenu().getCreateLink(), getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, groupLink));
+
+        metadata.put("createLink", createLink);
+        metadata.put("textFailed", editor.getLayout().getContent().getTextFailed());
+        metadata.put("alertFailed", editor.getLayout().getContent().getAlertFailed());
+        metadata.put("textSuccess", editor.getLayout().getContent().getTextSuccess());
+        metadata.put("alertSuccess", editor.getLayout().getContent().getAlertSuccess());
+
+        return metadata;
+    }
+
+
+    public static HashMap<String, Object> getAllCreateViewHashMap(ColumnMetadata[] columnMetadatas, ColumnMetadata metaDonnee, FrameworkConfiguration framework, UIViewsConfiguration uiViewsConfiguration, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink) throws Exception {
+        HashMap<String, Object> metadata = new HashMap<>();
+
+        HashMap<String, Object> fieldsCreateMap = getPrimaryModelDaoHashMap(framework, tableMetadata);
+        List<String> createInput = getCreateInputsList(columnMetadatas, metaDonnee, tableMetadata, uiViewsConfiguration);
+        HashMap<String, Object> languageMetadata = getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, groupLink);
+        HashMap<String, Object> primaryListViewHashMap = getListViewHashMap(uiViewsConfiguration, tableMetadata, destinationFolder, projectName, groupLink);
+
+        metadata.putAll(fieldsCreateMap);
+        metadata.putAll(languageMetadata);
+        metadata.putAll(primaryListViewHashMap);
+        metadata.put("inputContents", createInput);
+
+
+        return metadata;
+    }
+
+    public static HashMap<String, Object> getAllListViewHashMap(ColumnMetadata[] columnMetadatas, ColumnMetadata metaDonnee, FrameworkConfiguration frameworkConfiguration, UIViewsConfiguration uiViewsConfiguration, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink) throws Exception {
+        HashMap<String, Object> metadata = new HashMap<>();
+
+        HashMap<String, Object> fieldsUpdateMap = getPrimaryModelDaoHashMap(frameworkConfiguration, tableMetadata);
+        List<String> updatesInput = getUpdateInputsList(columnMetadatas, metaDonnee, tableMetadata, uiViewsConfiguration);
+        HashMap<String, Object> languageMetadata = getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, groupLink);
+        HashMap<String, Object> primaryListViewHashMap = getListViewHashMap(uiViewsConfiguration, tableMetadata, destinationFolder, projectName, groupLink);
+
+        metadata.putAll(fieldsUpdateMap);
+        metadata.putAll(languageMetadata);
+        metadata.putAll(primaryListViewHashMap);
+        metadata.put("inputContents", updatesInput);
+
+        return metadata;
+    }
+
     public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
 
@@ -285,6 +446,24 @@ public class FrameworkMetadataProvider {
         }
 
         metadata.put("entities", fields);
+
+        return metadata;
+    }
+
+    public static ColumnMetadata getColumnAfterPK(ColumnMetadata[] columnMetadata) {
+        ColumnMetadata metadata = new ColumnMetadata();
+        boolean nextColumnIsMetadata = false;
+
+        for (ColumnMetadata column : columnMetadata) {
+            if (nextColumnIsMetadata) {
+                metadata = column;
+                break;
+            }
+
+            if (column.isPrimary()) {
+                nextColumnIsMetadata = true;
+            }
+        }
 
         return metadata;
     }

@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkConfiguration;
 import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.langage.UIViewsConfiguration;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.engine.GenesisTemplateEngine;
@@ -100,5 +101,53 @@ public class ProjectMetadataProvider {
         combinedMap.putAll(getInitialHashMap(destinationFolder, projectName, groupLink));
 
         return combinedMap;
+    }
+
+    // PARTIE FRONT-END GENESIS-MVC
+
+    public static HashMap<String, Object> getAltCreateViewHashMap(UIViewsConfiguration editor) {
+        HashMap<String, Object> altMap = new HashMap<>();
+
+        altMap.put("formCreateLink", editor.getLayout().getTableLoop().getFormCreateLink());
+
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getSelectHashMap(UIViewsConfiguration uiViewsConfiguration) {
+        HashMap<String, Object> altMap = new HashMap<>();
+
+        altMap.put("dataTextOption", uiViewsConfiguration.getLayout().getTableLoop().getDataTextOption());
+        altMap.put("dataSelectLoop", uiViewsConfiguration.getLayout().getTableLoop().getDataSelectLoop());
+        altMap.put("dataValueOption", uiViewsConfiguration.getLayout().getTableLoop().getDataValueOption());
+
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltListViewHashMap(UIViewsConfiguration editor) {
+        HashMap<String, Object> altMap = new HashMap<>();
+
+        altMap.put("listLink", editor.getLayout().getMenu().getListLink());
+        altMap.put("createLink", editor.getLayout().getMenu().getCreateLink());
+        altMap.put("dataLoop", editor.getLayout().getTableLoop().getDataLoop());
+        altMap.put("dataKeys", editor.getLayout().getTableLoop().getDataKeys());
+        altMap.put("dataValues", editor.getLayout().getTableLoop().getDataValues());
+        altMap.put("dataForeignValues", editor.getLayout().getTableLoop().getDataForeignValues());
+
+        altMap.put("dataCancelId", editor.getLayout().getTableLoop().getDataCancelId());
+        altMap.put("dataModificationId", editor.getLayout().getTableLoop().getDataModificationId());
+
+        altMap.put("dataCancelButton", editor.getLayout().getTableLoop().getDataCancelButton());
+        altMap.put("dataModificationButton", editor.getLayout().getTableLoop().getDataModificationButton());
+
+        altMap.put("dataCancelTitleModal", editor.getLayout().getTableLoop().getDataCancelTitleModal());
+        altMap.put("dataModificationTitleModal", editor.getLayout().getTableLoop().getDataModificationTitleModal());
+
+        altMap.put("dataEditEventButton", editor.getLayout().getTableLoop().getDataEditEventButton());
+        altMap.put("dataDeleteEventButton", editor.getLayout().getTableLoop().getDataDeleteEventButton());
+
+        altMap.put("formUpdateLink", editor.getLayout().getTableLoop().getFormUpdateLink());
+        altMap.put("formDeleteLink", editor.getLayout().getTableLoop().getFormDeleteLink());
+
+        return altMap;
     }
 }

@@ -122,37 +122,37 @@
       sourcePath: "data_genesis/maven/MVC/src/main/resources"
       destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/"
 
-#    - folderType: "staticAssetsFolder"
-#      folderName: "assets"
-#      sourcePath: "data_genesis/layout/assets"
-#      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/static/"
-#
-#    - folderType: "compiledAssetsFolder"
-#      folderName: "compiled"
-#      sourcePath: "data_genesis/layout/compiled"
-#      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/static/"
-#
-#    - folderType: "errorTemplateFolder"
-#      folderName: "error"
-#      sourcePath: "data_genesis/layout/error"
-#      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/"
-#
-#    - folderType: "layoutTemplateFolder"
-#      folderName: "layout"
-#      sourcePath: "data_genesis/layout/layout"
-#      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/"
-#
-#    - folderType: "templsTemplateFolder"
-#      folderName: "templs"
-#      sourcePath: "data_genesis/layout/templs"
-#      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/"
-#
-#    ##need to change the location to be able to create maven projects but not with thymeleaf
-#    ##but for now we're putting it
-#    - folderType: "thymeleafConfig"
-#      folderName: "config"
-#      sourcePath: "data_genesis/layout/config"
-#      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/java/#{groupLink}/#{lowerCase(projectName)}/"
+    - folderType: "staticAssetsFolder"
+      folderName: "assets"
+      sourcePath: "data_genesis/ui-template/thymeleaf/assets"
+      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/static/"
+
+    - folderType: "compiledAssetsFolder"
+      folderName: "compiled"
+      sourcePath: "data_genesis/ui-template/thymeleaf/compiled"
+      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/static/"
+
+    - folderType: "errorTemplateFolder"
+      folderName: "error"
+      sourcePath: "data_genesis/ui-template/thymeleaf/error"
+      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/"
+
+    - folderType: "layoutTemplateFolder"
+      folderName: "layout"
+      sourcePath: "data_genesis/ui-template/thymeleaf/layout"
+      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/"
+
+    - folderType: "templsTemplateFolder"
+      folderName: "templs"
+      sourcePath: "data_genesis/ui-template/thymeleaf/templs"
+      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/"
+
+    ##need to change the location to be able to create maven projects but not with thymeleaf
+    ##but for now we're putting it
+    - folderType: "thymeleafConfig"
+      folderName: "config"
+      sourcePath: "data_genesis/ui-template/thymeleaf/config"
+      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/java/#{groupLink}/#{lowerCase(projectName)}/"
   projectFilesEdits:
     - fileType: "MainFile"
       fileName: "#{majStart(projectName)}Application"
@@ -408,7 +408,7 @@
       sourcePath: "data_genesis/maven/MVC/"
       destinationPath: "${destinationFolder}/#{majStart(projectName)}/"
 
-#    - fileType: "Index"
-#      fileName: "index.html"
-#      sourcePath: "data_genesis/layout/"
-#      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/"
+    - fileType: "Index"
+      fileName: "index.html"
+      sourcePath: "data_genesis/ui-template/thymeleaf/"
+      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/"

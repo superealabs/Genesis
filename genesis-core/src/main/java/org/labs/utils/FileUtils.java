@@ -258,5 +258,12 @@ public class FileUtils {
         return objectMapper.readValue(inputStream, clazz);
     }
 
+    public static void overwriteFileContentByName(String filePath, String fileContent, String content) throws IOException {
+        File file = new File(filePath, fileContent);
 
+        try (FileWriter writer = new FileWriter(file, false)) {
+            writer.write(content);
+        }
+
+    }
 }

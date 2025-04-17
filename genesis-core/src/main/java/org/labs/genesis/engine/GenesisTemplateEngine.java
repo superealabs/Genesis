@@ -25,18 +25,21 @@ public class GenesisTemplateEngine {
     private static final String IF_END = "{{/if}}";
 
     private static final String VARIABLE_PLACEHOLDER_PREFIX = "${";
+
     private static final String VARIABLE_PLACEHOLDER_SUFFIX = "}";
     private static final String VARIABLE_PLACEHOLDER_PREFIX_ALT = "$[";
     private static final String VARIABLE_PLACEHOLDER_SUFFIX_ALT = "]";
 
     private static final String NEWLINE_TAG = "{{newline}}";
 
-    private static final String TAB_TAG = "{{tab}}";
-    private static final String START_TAB_TAG = "{{tab"; 
-    private static final String REMOVE_LINE_TAG = "{{removeLine}}";
     private static final String BLOCK_END = "}}";
+    private static final String TAB_TAG = "{{tab}}";
+    private static final String START_TAB_TAG = "{{tab";
+
     private static final String FUNCTION_OPEN_PARENTHESIS = "(";
     private static final String FUNCTION_CLOSED_PARENTHESIS = ")";
+    private static final String REMOVE_LINE_TAG = "{{removeLine}}";
+
     private static final String START_COMMENTARY_TAG = "<#";
     private static final String END_COMMENTARY_TAG = "/#>";
     // Liste des opérateurs de comparaison supportés, du plus long au plus court
@@ -169,6 +172,11 @@ public class GenesisTemplateEngine {
             template.replace(startIndex, endIndex, marker);
             startIndex += marker.length();
         }
+    }
+
+    public void dropCommentary(StringBuilder template) {
+        replaceAllOccurrences(template, START_COMMENTARY_TAG, "");
+        replaceAllOccurrences(template, END_COMMENTARY_TAG, "");
     }
 
     private void restoreComments(StringBuilder template) {

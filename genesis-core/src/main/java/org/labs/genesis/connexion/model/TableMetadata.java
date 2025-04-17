@@ -145,6 +145,7 @@ public class TableMetadata {
                     column.setType(language.getTypes().get(getDatabaseType(database,columns)));
 
                 column.setColumnType(columnType);
+                column.setPrimaryType(database.getTypes().get(columnType));
                 listeCols.add(column);
             }
         }catch (Exception e) {

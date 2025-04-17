@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr" layout:decorate="~{layout/error_layout}" xmlns:layout="http://www.w3.org/1999/xhtml">
+<body>
+<!-- BODY -->
+<div layout:fragment="content">
+    <div class="error-page container">
+        <div class="col-md-8 col-12 offset-md-2">
+            <div class="text-center">
+                <img alt="Not Found" class="img-error"
+                     src="../../../static/assets/compiled/svg/error-404.svg"
+                     th:src="@{/assets/compiled/svg/error-404.svg}">
+                <h1 class="error-title">NOT FOUND</h1>
+                <p class='fs-5 text-gray-600'>Ressource absente</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- -->
+</div>
+</body>
+</html>

@@ -1,0 +1,226 @@
+- id: 1
+  langageId: 1
+  name: "Thymeleaf"
+  template: "Layout"
+  listTemplate: "ListView"
+  createTemplate: "CreateView"
+  layout:
+    name: "main_layout.html"
+    destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/layout/"
+    header:
+      assetsLink: |
+        data-assets-path="../assets/"
+              th:href="@{/assets/}"
+      viewAttribute: |
+        xmlns:th="http://www.thymeleaf.org"
+              xmlns:layout="http://www.w3.org/1999/xhtml"
+      iconsLink: |
+        <link rel="stylesheet" href="/assets/vendor/fonts/boxicons.css"
+              th:href="@{/assets/vendor/fonts/boxicons.css}"/>
+      coresLink: |
+        <link rel="stylesheet" href="/assets/vendor/css/core.css"
+              th:href="@{/assets/vendor/css/core.css}" class="template-customizer-core-css"/>
+            <link rel="stylesheet" href="/assets/vendor/css/theme-default.css"
+              th:href="@{/assets/vendor/css/theme-default.css}" class="template-customizer-theme-css"/>
+            <link rel="stylesheet" href="/assets/css/demo.css"
+              th:href="@{/assets/css/demo.css}"/>
+      vendorsLink: |
+        <link rel="stylesheet" href="/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css"
+              th:href="@{/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css}"/>
+        
+            <link rel="stylesheet" href="/assets/vendor/libs/apex-charts/apex-charts.css"
+              th:href="@{/assets/vendor/libs/apex-charts/apex-charts.css}"/>
+      helpersLink: |
+        <script src="/assets/vendor/js/helpers.js"
+              th:src="@{/assets/vendor/js/helpers.js}"></script>
+        
+            <!--! Template customizer & Theme config files MUST be included after core stylesheets and helpers.js in the <head> section -->
+            <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
+            <script src="/assets/js/config.js"
+              th:src="@{/assets/js/config.js}"></script>
+      themeLink: |
+        <script src="../../static/assets/static/js/initTheme.js" th:src="@{/assets/static/js/initTheme.js}"></script>
+    menu:
+      aside: |
+        th:fragment="layout-menu"
+      logo: |
+        th:src="@{/assets/img/favicon/logo-projet-universel.jpg}"
+      listLink: "th:href=\"@{/#{lowerCase(this)}s}\""
+      createLink: "th:href=\"@{/#{lowerCase(classNameLink)}/create-#{lowerCase(className)}}\""
+    content:
+      alertSuccess: "th:if=\"${success}\""
+      textSuccess: "th:text=\"${success}\""
+      alertFailed: "th:if=\"${error}\""
+      textFailed: "th:text=\"${error}\""
+      callMenu: |
+        <!-- MENU -->
+        {{tab}}{{tab}}    <div th:replace="~{templs/menu :: layout-menu}"></div>
+        {{tab}}    <!-- -->
+      callContent: |
+        <!-- CONTENT -->
+        {{tab}}{{tab}}<div class="container-xxl flex-grow-1 container-p-y">
+        {{tab}}{{tab}}{{tab}}<section class="section">
+        {{tab}}{{tab}}{{tab}}    <div layout:fragment="content">
+        {{tab}}{{tab}}{{tab}}    </div>
+        {{tab}}{{tab}}{{tab}}</section>
+        {{tab}}{{tab}}</div>
+        <!-- End Content -->
+    footer:
+      coresFooterLink: |
+        <script src="/assets/vendor/libs/jquery/jquery.js"
+          th:src="@{/assets/vendor/libs/jquery/jquery.js}"></script>
+        <script src="/assets/vendor/libs/popper/popper.js"
+          th:src="@{/assets/vendor/libs/popper/popper.js}"></script>
+        <script src="/assets/vendor/js/bootstrap.js"
+          th:src="@{/assets/vendor/js/bootstrap.js}"></script>
+        <script src="/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"
+          th:src="@{/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js}"></script>
+
+        <script src="/assets/vendor/js/menu.js"
+          th:src="@{/assets/vendor/js/menu.js}"></script>
+      vendorsFooterLink: |
+        <script src="/assets/vendor/libs/apex-charts/apexcharts.js"
+          th:src="@{/assets/vendor/libs/apex-charts/apexcharts.js}"></script>
+      mainsFooterLink: |
+        <script src="/assets/js/main.js"
+          th:src="@{/assets/js/main.js}"></script>
+      pagesFooterLink: |
+        <script src="/assets/js/dashboards-analytics.js"
+          th:src="@{/assets/js/dashboards-analytics.js}"></script>
+    tableLoop:
+      dataKeys: ""
+      dataValues: "th:text=\"${ #{lowerCase(className)}.#{this.name} }\""
+      dataLoop: "th:each=\"#{lowerCase(className)} : ${ #{lowerCase(classNameLink)} }\""
+      dataForeignValues: "th:text=\"${ #{lowerCase(className)}.#{this.columnTable}.#{this.columnName} }\""
+      #
+      dataValueOption: "th:value=\"${#{lowerCase(fieldName)}.#{foreignName}}\""
+      dataTextOption: "th:text=\"${#{lowerCase(fieldName)}.#{foreignPrimaryName}}\""
+      dataSelectLoop: "th:each=\"#{lowerCase(fieldName)}:${#{lowerCase(fieldName)}s}\""
+      #
+      dataCancelId: "th:id=\"'cancelModalCenter_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
+      dataModificationId: "th:id=\"'updateModalCenter_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
+      #
+      dataCancelTitleModal: "th:id=\"'cancelModalCenterTitle_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
+      dataModificationTitleModal: "th:id=\"'updateModalCenterTitle_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
+      #
+      dataCancelButton: "th:attr=\"data-bs-target='#cancelModalCenter_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
+      dataModificationButton: "th:attr=\"data-bs-target='#updateModalCenter_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
+      #
+      dataEditEventButton: "th:id=\"'editEvent_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
+      dataDeleteEventButton: "th:id=\"'deleteEvent_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
+      #
+      formCreateLink: "th:action=\"@{/#{lowerCase(classNameLink)}}\""
+      formUpdateLink: "th:action=\"@{/#{lowerCase(classNameLink)}/{id} (id=${#{lowerCase(className)}.#{pkColumnName}})}\""
+      formDeleteLink: "th:action=\"@{/#{lowerCase(classNameLink)}/{id}/delete (id=${#{lowerCase(className)}.#{pkColumnName}})}\""
+  insert:
+    input:
+      date: |
+        <div class="mb-3">
+          <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+          <input type="date" class="form-control" id="#{lowerCase(fieldName)}input"
+            aria-describedby="#{lowerCase(fieldName)}help" name="#{lowerCase(fieldName)}">
+        </div>
+      double: |
+        <div class="mb-3">
+          <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+          <input type="number" step="0.001" class="form-control" id="#{lowerCase(fieldName)}input"
+            aria-describedby="#{lowerCase(fieldName)}help" name="#{lowerCase(fieldName)}">
+        </div>
+      int: |
+        <div class="mb-3">
+            <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+            <input type="number" step="1.0" class="form-control" id="#{lowerCase(fieldName)}input"
+              aria-describedby="#{lowerCase(fieldName)}help" name="#{lowerCase(fieldName)}">
+        </div>
+      long: |
+        <div class="mb-3">
+            <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+            <input type="number" step="1.0" class="form-control" id="#{lowerCase(fieldName)}input"
+              aria-describedby="#{lowerCase(fieldName)}help" name="#{lowerCase(fieldName)}">
+        </div>
+      string: |
+        <div class="mb-3">
+            <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+            <input type="text" class="form-control" id="#{lowerCase(fieldName)}input"
+              aria-describedby="#{lowerCase(fieldName)}help" name="#{lowerCase(fieldName)}">
+        </div>
+      timestamp: |
+        <div class="mb-3">
+          <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+            <input type="datetime-local" class="form-control" id="#{lowerCase(fieldName)}input"
+              aria-describedby="#{lowerCase(fieldName)}help" name="#{lowerCase(fieldName)}">
+        </div>
+      boolean: |
+        <div class="mb-3 form-check">
+          <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+          <input type="checkbox" class="form-check-input" id="#{lowerCase(fieldName)}input" 
+            name="#{lowerCase(fieldName)}">
+          <label class="form-check-label" for="#{lowerCase(fieldName)}input">#{majStart(fieldName)}</label>
+        </div>
+    select: |
+      <div class="mb-3">
+        <label for="#{lowerCase(fieldName)}Select" class="form-label">#{majStart(foreignPrimaryName)}</label>
+        <select class="form-select" id="#{lowerCase(fieldName)}Select" name="#{lowerCase(fieldName)}">
+          <option $[dataSelectLoop] $[dataValueOption] $[dataTextOption]></option>
+        </select>
+        <div id="#{lowerCase(fieldName)}help" class="form-text">Select an option.</div>
+      </div>
+  update:
+    input:
+      date: |
+        <div class="mb-3">
+          {{tab 17}}<label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+          {{tab 17}}<input type="date" class="form-control" id="#{lowerCase(fieldName)}input"
+          {{tab 17}}  name="#{lowerCase(fieldName)}"
+          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 16}}</div>
+      double: |
+        <div class="mb-3">
+          {{tab 17}}<label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+          {{tab 17}}<input type="number" step="0.001" class="form-control" id="#{lowerCase(fieldName)}input"
+          {{tab 17}}  name="#{lowerCase(fieldName)}"
+          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 16}}</div>
+      int: |
+        <div class="mb-3">
+          {{tab 17}}<label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+          {{tab 17}}<input type="number" step="1.0" class="form-control" id="#{lowerCase(fieldName)}input"
+          {{tab 17}}  name="#{lowerCase(fieldName)}"
+          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 16}}</div>
+      long: |
+        <div class="mb-3">
+          {{tab 17}}<label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+          {{tab 17}}<input type="number" step="1.0" class="form-control" id="#{lowerCase(fieldName)}input"
+          {{tab 17}}  name="#{lowerCase(fieldName)}"
+          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 16}}</div>
+      string: |
+        <div class="mb-3">
+          {{tab 17}}<label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+          {{tab 17}}<input type="text" class="form-control" id="#{lowerCase(fieldName)}input"
+          {{tab 17}}  name="#{lowerCase(fieldName)}"
+          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 16}}</div>
+      timestamp: |
+        <div class="mb-3">
+          {{tab 17}}<label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
+          {{tab 17}}<input type="datetime-local" class="form-control" id="#{lowerCase(fieldName)}input"
+          {{tab 17}}  name="#{lowerCase(fieldName)}"
+          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 16}}</div>
+      boolean: |
+        <div class="mb-3 form-check">
+          {{tab 17}}<input type="checkbox" class="form-check-input" id="#{lowerCase(fieldName)}input"
+          {{tab 17}}  name="#{lowerCase(fieldName)}"
+          {{tab 17}}  th:checked="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 17}}<label class="form-check-label" for="#{lowerCase(fieldName)}input">#{majStart(fieldName)}</label>
+        {{tab 16}}</div>
+    select: |
+      <div class="mb-3">
+        {{tab 17}}<label for="#{lowerCase(fieldName)}Select" class="form-label">#{majStart(fieldName)}</label>
+        {{tab 17}}<select class="form-select" id="#{lowerCase(fieldName)}Select" name="#{lowerCase(fieldName)}">
+        {{tab 17}}  <option $[dataSelectLoop] $[dataValueOption] $[dataTextOption]></option>
+        {{tab 17}}</select>
+        {{tab 17}}<div id="#{lowerCase(fieldName)}help" class="form-text">Select an option.</div>
+        {{tab 17}}</div>
