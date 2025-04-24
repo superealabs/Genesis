@@ -770,7 +770,7 @@ public class ProjectGeneratorHandler {
     private int getProjectId(Scanner scanner, String baseframework) {
         Map<Integer, Project> projects = ProjectGenerator.projects;
         Map<Integer, String> languageNames = projects.entrySet().stream()
-                .filter(entry -> entry.getValue().getCoreFrameworks().contains(baseframework))
+                //.filter(entry -> entry.getValue().getCoreFrameworks().contains(baseframework))
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> entry.getValue().getName()
@@ -811,11 +811,13 @@ public class ProjectGeneratorHandler {
     }
 
     private HashMap<String, Object> configureFramework(Scanner scanner, Framework framework) {
-        return configureOptions(scanner, framework.getConfigurations());
+        //return configureOptions(scanner, framework.getConfigurations());
+        return null;
     }
 
     private HashMap<String, Object> configureFrameworkWithEureka(Scanner scanner, Framework framework) {
-        HashMap<String, Object> config = configureOptions(scanner, framework.getEurekaClientConfigurations());
+        //HashMap<String, Object> config = configureOptions(scanner, framework.getEurekaClientConfigurations());
+        HashMap<String, Object> config = new HashMap<>();
         framework.setUseCloud(true);
         framework.setUseEurekaServer(true);
         return config;

@@ -59,7 +59,7 @@ public class ProjectGenerator {
     }
 
     public static Map<Integer, ProjectConfiguration> getProjectsConfiguration(Project project) {
-        Map<Integer, ProjectConfiguration> projectConfigurations = new HashMap<>();
+        Map<Integer, ProjectConfiguration> projectConfigurations;
         String fileName = project.getFilename();
         String sourceFile = Constantes.PROJECT_CONFIGURATION_YAML + fileName + "." +Constantes.YAML_EXT;
 

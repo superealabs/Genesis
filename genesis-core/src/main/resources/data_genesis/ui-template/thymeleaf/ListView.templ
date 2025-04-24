@@ -6,7 +6,7 @@
     <!-- Page header -->
     <div class="row align-items-center justify-content-between">
         <div class="col-6 text-start">
-            <h2 class="fw-bold py-3 mb-3"><span class="text-muted fw-light">List of #{lowerCase(className)}</span></h2>
+            <h2 class="fw-bold py-3 mb-3"><span class="text-muted fw-light">List of ${lowerCase(className)}</span></h2>
         </div>
         <div class="col-6 text-end">
             <a class="btn btn-primary mb-3" $[createLink]>Create</a>
@@ -29,7 +29,7 @@
                         <thead class="thead-light">
                         <tr>
                             {{#each fields}}
-                            <th>#{this.name}</th>
+                            <th>${this.name}</th>
                             {{/each}}{{removeLine}}
                         </tr>
                         </thead>
@@ -75,7 +75,7 @@
                                                             <div class="row">
                                                                 <div class="log-lg-3 col-md-6 order-0">
                                                                     {{#each inputContents}}
-                                                                        #{this}
+                                                                        ${this}
                                                                     {{/each}}{{removeLine}}
                                                                     {{removeLine}}
                                                                 </div>

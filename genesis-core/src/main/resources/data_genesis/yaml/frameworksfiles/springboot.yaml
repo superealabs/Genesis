@@ -51,7 +51,6 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}/"
 
-
     - fileType: "RestResponse"
       fileName: "RestResponse"
       extension: "java"
@@ -473,7 +472,6 @@
     modelDaoPackage: "${groupLink}.${lowerCase(projectName)}.repositories;"
     modelDaoAdditionalFiles: [ ]
 
-
   service:
     toGenerate: true
     serviceImports: |
@@ -850,7 +848,6 @@
   navbarLinks:
     path: ""
     link: ""
-
 
 - id: 2
   coreFramework: "Spring Boot"
@@ -1243,21 +1240,31 @@
       defaultOption: "none"
 
   dependencies:
+    - groupId: "org.projectlombok"
+      artifactId: "lombok"
+      version: "1.18.36"
+      scope: "provided"
+
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-data-jpa"
       version: "{{removeLine}}"
+
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-web"
       version: "{{removeLine}}"
+
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-thymeleaf"
       version: "{{removeLine}}"
+
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-test"
       version: "{{removeLine}}"
+
     - groupId: "org.thymeleaf.extras"
       artifactId: "thymeleaf-extras-java8time"
       version: "3.0.1.RELEASE"
+
     - groupId: "nz.net.ultraq.thymeleaf"
       artifactId: "thymeleaf-layout-dialect"
       version: "3.3.0"
@@ -1267,77 +1274,56 @@
     toGenerate: true
     modelImports: |
       import jakarta.persistence.*;
+      import lombok.Getter;
+      import lombok.Setter;
     modelExtends: ""
     modelAnnotations: |
+      @Setter
+      @Getter
       @Entity
-      @Table(name="#{tableName}")
+      @Table(name="${tableName}")
     modelFieldContent: |
       {{tab}}{{#each fields}} 
       {{tab}}{{#if this.isPrimaryKey}}
       {{tab}}@Id
       {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
-      {{tab}}@Column(name="#{this.columnName}"){{elseIf this.isForeignKey}}
+      {{tab}}@Column(name="${this.columnName}"){{elseIf this.isForeignKey}}
       {{tab}}@ManyToOne
-      {{tab}}@JoinColumn(name="#{this.columnName}"){{else}}
-      {{tab}}@Column(name="#{this.columnName}"){{/if}}
-      {{tab}}private #{this.type} #{this.name};{{#if !@last}}{{newline}}{{/if}}
+      {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
+      {{tab}}@Column(name="${this.columnName}"){{/if}}
+      {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
-    modelGetterSetter: |
-      {{tab}}{{#each fields}}
-      {{tab}}{{#if this.withGetters}}
-      {{tab}}public #{this.type} get#{majStart(this.name)}() {
-      {{tab}}    return #{this.name};
-      {{tab}}}{{/if}}
-      {{#if this.withSetters}}
-      {{tab}}public void set#{majStart(this.name)}(#{this.type} #{this.name}) {
-      {{tab}}    this.#{this.name} = #{this.name};
-      {{tab}}}{{#if !@last}}
-      {{tab}}{{/if}}
-      {{tab}}{{/if}}{{/each}}
-    modelConstructors: |
-      {{tab}}public #{majStart(className)}() {
-      {{tab}}}
-      
-      {{tab}}public #{majStart(className)}({{#each fieldsPK}}#{this.type} #{this.name}{{#if !@last}}, {{/if}}{{/each}}) {
-      {{tab}}    {{#each fieldsPK}}
-      {{tab}}    this.#{this.name} = #{this.name};{{#if !@last}}
-      {{tab}}    {{/if}}{{/each}}
-      {{tab}}}
-      
-      {{tab}}public #{majStart(className)}({{#each fields}}#{this.type} #{this.name}{{#if !@last}}, {{/if}}{{/each}}) {
-      {{tab}}    {{#each fields}}
-      {{tab}}    this.#{this.name} = #{this.name};{{#if !@last}}
-      {{tab}}    {{/if}}{{/each}}
-      {{tab}}}
+    modelGetterSetter: "{{removeLine}}"
+    modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
     modelForeignContextAttribute: ""
     modelExtension: "java"
-    modelPackage: "#{groupLink}.#{lowerCase(projectName)}.models;"
+    modelPackage: "${groupLink}.${lowerCase(projectName)}.models;"
     modelAdditionalFiles: [ ]
 
   modelDao:
     toGenerate: true
     modelDaoImports: |
       import org.springframework.data.jpa.repository.JpaRepository;
-      import #{groupLink}.#{lowerCase(projectName)}.models.#{majStart(className)};
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
     modelDaoAnnotations: "{{newline}}"
     modelDaoClassKeyword: "public interface"
-    modelDaoExtends: "extends JpaRepository<#{majStart(className)}, #{pkColumnType}>"
-    modelDaoName: "#{majStart(className)}Repository"
+    modelDaoExtends: "extends JpaRepository<${majStart(className)}, ${pkColumnType}>"
+    modelDaoName: "${majStart(className)}Repository"
     modelDaoFieldContent: "{{removeLine}}"
     modelDaoMethodContent: "{{removeLine}}"
     modelDaoConstructors: "{{removeLine}}"
     modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
     modelDaoExtension: "java"
-    modelDaoPackage: "#{groupLink}.#{lowerCase(projectName)}.repositories;"
+    modelDaoPackage: "${groupLink}.${lowerCase(projectName)}.repositories;"
     modelDaoAdditionalFiles: [ ]
 
   service:
     toGenerate: true
     serviceImports: |
-      import #{groupLink}.#{lowerCase(projectName)}.models.#{majStart(className)};
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
       import org.springframework.stereotype.Service;
-      import #{groupLink}.#{lowerCase(projectName)}.repositories.#{majStart(className)}Repository;
+      import ${groupLink}.${lowerCase(projectName)}.repositories.${majStart(className)}Repository;
       import org.springframework.beans.factory.annotation.Autowired;
       import java.util.List;
       import java.util.Optional;
@@ -1346,56 +1332,56 @@
     serviceAnnotations: |
       @Service
     serviceExtends: ""
-    serviceName: "#{majStart(className)}Service"
+    serviceName: "${majStart(className)}Service"
     serviceFieldContent: |
-      {{tab}}private final #{majStart(className)}Repository #{minStart(className)}Repository;
+      {{tab}}private final ${majStart(className)}Repository ${minStart(className)}Repository;
     serviceConstructors: |
       {{tab}}@Autowired
-      {{tab}}public #{majStart(className)}Service(#{majStart(className)}Repository #{minStart(className)}Repository) {
-      {{tab}}    this.#{lowerCase(className)}Repository = #{minStart(className)}Repository;
+      {{tab}}public ${majStart(className)}Service(${majStart(className)}Repository ${minStart(className)}Repository) {
+      {{tab}}    this.${minStart(className)}Repository = ${minStart(className)}Repository;
       {{tab}}}
     serviceMethodContent: |
-      {{tab}}public List<#{majStart(className)}> getAll#{majStart(className)}() {
-      {{tab}}    return #{minStart(className)}Repository.findAll();
+      {{tab}}public List<${majStart(className)}> getAll${majStart(className)}() {
+      {{tab}}    return ${minStart(className)}Repository.findAll();
       {{tab}}}  
       
-      {{tab}}public #{majStart(className)} get#{majStart(className)}ById(#{pkColumnType} id) {
-      {{tab}}    Optional<#{majStart(className)}> #{minStart(className)} = #{minStart(className)}Repository.findById(id);
-      {{tab}}    if (#{minStart(className)}.isPresent()) {
-      {{tab}}       return #{minStart(className)}.get();
+      {{tab}}public ${majStart(className)} get${majStart(className)}ById(${pkColumnType} ${pkColumn}) {
+      {{tab}}    Optional<${majStart(className)}> ${minStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
+      {{tab}}    if (${minStart(className)}.isPresent()) {
+      {{tab}}       return ${minStart(className)}.get();
       {{tab}}    } else {
-      {{tab}}       throw new RuntimeException("#{majStart(className)} not found with id " + id);
+      {{tab}}       throw new RuntimeException("${majStart(className)} not found with ${pkColumn} " + ${pkColumn});
       {{tab}}    }
       {{tab}}}
       
-      {{tab}}public #{majStart(className)} create#{majStart(className)}(#{majStart(className)} #{minStart(className)}) {
-      {{tab}}    return #{minStart(className)}Repository.save(#{minStart(className)});
+      {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
+      {{tab}}    return ${minStart(className)}Repository.save(${minStart(className)});
       {{tab}}}
       
-      {{tab}}public #{majStart(className)} update#{majStart(className)}(#{pkColumnType} id, #{majStart(className)} #{lowerCase(className)}) {
-      {{tab}}    Optional<#{majStart(className)}> existing#{majStart(className)} = #{lowerCase(className)}Repository.findById(id);
-      {{tab}}       if (existing#{majStart(className)}.isPresent()) {
-      {{tab}}	       #{lowerCase(className)}.set#{majStart(className)}id(id);
-      {{tab}}             return #{lowerCase(className)}Repository.save(#{lowerCase(className)});
+      {{tab}}public ${majStart(className)} update${majStart(className)}(${pkColumnType} ${pkColumn}, ${majStart(className)} ${lowerCase(className)}) {
+      {{tab}}    Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(id);
+      {{tab}}       if (existing${majStart(className)}.isPresent()) {
+      {{tab}}	       ${lowerCase(className)}.set${majStart(pkColumn)}(${pkColumn});
+      {{tab}}             return ${minStart(className)}Repository.save(${lowerCase(className)});
       {{tab}}       } else {
-      {{tab}}          throw new RuntimeException("#{majStart(className)} not found with id " + id);
+      {{tab}}          throw new RuntimeException("${majStart(className)} not found with ${pkColumn} " + ${pkColumn});
       {{tab}}       }
       {{tab}}}
       
-      {{tab}}public void delete#{majStart(className)}(#{pkColumnType} id) {
-      {{tab}}    #{lowerCase(className)}Repository.deleteById(id);
+      {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
+      {{tab}}    ${minStart(className)}Repository.deleteById(${pkColumn});
       {{tab}}}
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
     serviceExtension: "java"
-    servicePackage: "#{groupLink}.#{lowerCase(projectName)}.services;"
+    servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
     serviceAdditionalFiles: [ ]
 
   controller:
     toGenerate: true
     controllerImports: |
       import org.springframework.ui.Model;
-      import #{groupLink}.#{lowerCase(projectName)}.models.*;
-      import #{groupLink}.#{lowerCase(projectName)}.services.*;
+      import ${groupLink}.${lowerCase(projectName)}.models.*;
+      import ${groupLink}.${lowerCase(projectName)}.services.*;
       import org.springframework.stereotype.Controller;
       import org.springframework.web.bind.annotation.*;
       
@@ -1403,108 +1389,108 @@
       import org.springframework.web.servlet.mvc.support.RedirectAttributes;
     controllerAnnotations: |
       @Controller
-      @RequestMapping("/#{lowerCase(classNameLink)}")
+      @RequestMapping("/${lowerCase(classNameLink)}")
     controllerExtends: ""
-    controllerName: "#{majStart(className)}Controller"
+    controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
-      {{tab}}private final #{majStart(className)}Service #{lowerCase(className)}Service;
+      {{tab}}private final ${majStart(className)}Service ${lowerCase(className)}Service;
       {{tab}}{{#each fields}} 
       {{tab}}{{#if this.isForeignKey}}
-      {{tab}}private final #{majStart(this.name)}Service #{lowerCase(this.name)}Service;
+      {{tab}}private final ${majStart(this.type)}Service ${lowerCase(this.type)}Service;
       {{tab}}{{/if}}{{/each}}
     controllerConstructors: |
-      {{tab}}public #{majStart(className)}Controller({{#each fields}}{{#if this.isForeignKey}} #{majStart(this.name)}Service #{lowerCase(this.name)}Service,{{/if}}{{/each}} #{majStart(className)}Service #{lowerCase(className)}Service) {
-      {{tab}}    this.#{lowerCase(className)}Service = #{lowerCase(className)}Service;
+      {{tab}}public ${majStart(className)}Controller({{#each fields}}{{#if this.isForeignKey}} ${majStart(this.type)}Service ${lowerCase(this.type)}Service,{{/if}}{{/each}} ${majStart(className)}Service ${lowerCase(className)}Service) {
+      {{tab}}    this.${lowerCase(className)}Service = ${lowerCase(className)}Service;
       {{tab}}    {{#each fields}} 
       {{tab}}    {{#if this.isForeignKey}}
-      {{tab}}    this.#{lowerCase(this.name)}Service = #{lowerCase(this.name)}Service;
+      {{tab}}    this.${lowerCase(this.type)}Service = ${lowerCase(this.type)}Service;
       {{tab}}    {{/if}}{{/each}}
       {{tab}}}
     controllerMethodContent: |
       {{tab}}@GetMapping
-      {{tab}}public String getAll#{majStart(classNameLink)}(Model model) {
-      {{tab}}    List<#{majStart(className)}> #{lowerCase(classNameLink)} = #{lowerCase(className)}Service.getAll#{majStart(className)}();
+      {{tab}}public String getAll${majStart(classNameLink)}(Model model) {
+      {{tab}}    List<${majStart(className)}> ${lowerCase(classNameLink)} = ${lowerCase(className)}Service.getAll${majStart(className)}();
       {{tab}}    {{#each fields}} 
       {{tab}}    {{#if this.isForeignKey}}
-      {{tab}}    List<#{majStart(this.name)}> #{lowerCase(this.name)}s = #{lowerCase(this.name)}Service.getAll#{majStart(this.name)}();
+      {{tab}}    List<${majStart(this.type)}> ${this.name}s = ${lowerCase(this.type)}Service.getAll${majStart(this.type)}();
       {{tab}}    {{/if}}{{/each}}
-      {{tab}}    model.addAttribute("#{lowerCase(classNameLink)}", #{lowerCase(classNameLink)});
+      {{tab}}    model.addAttribute("${lowerCase(classNameLink)}", ${lowerCase(classNameLink)});
       {{tab}}    {{#each fields}} 
       {{tab}}    {{#if this.isForeignKey}}
-      {{tab}}    model.addAttribute("#{this.name}s", #{this.name}s);
+      {{tab}}    model.addAttribute("${this.name}s", ${this.name}s);
       {{tab}}    {{/if}}{{/each}}
-      {{tab}}    return "#{lowerCase(classNameLink)}/list-#{lowerCase(className)}";
+      {{tab}}    return "${lowerCase(classNameLink)}/list-${lowerCase(className)}";
       {{tab}}}
       
-      {{tab}}@GetMapping("/create-#{lowerCase(className)}")
-      {{tab}}public String return#{majStart(classNameLink)}(Model model) {
+      {{tab}}@GetMapping("/create-${lowerCase(className)}")
+      {{tab}}public String return${majStart(classNameLink)}(Model model) {
       {{tab}}    {{#each fields}} 
       {{tab}}    {{#if this.isForeignKey}}
-      {{tab}}    List<#{majStart(this.name)}> #{lowerCase(this.name)}s = #{lowerCase(this.name)}Service.getAll#{majStart(this.name)}();
+      {{tab}}    List<${majStart(this.type)}> ${this.name}s = ${lowerCase(this.type)}Service.getAll${majStart(this.type)}();
       {{tab}}    {{/if}}{{/each}}
       {{tab}}    {{#each fields}} 
       {{tab}}    {{#if this.isForeignKey}}
-      {{tab}}    model.addAttribute("#{this.name}s", #{this.name}s);
+      {{tab}}    model.addAttribute("${this.name}s", ${this.name}s);
       {{tab}}    {{/if}}{{/each}}
-      {{tab}}    return "#{lowerCase(classNameLink)}/create-#{lowerCase(className)}";
+      {{tab}}    return "${lowerCase(classNameLink)}/create-${lowerCase(className)}";
       {{tab}}}
       
       {{tab}}@PostMapping
-      {{tab}}public String create#{majStart(className)}(@ModelAttribute #{majStart(className)} #{lowerCase(className)}, RedirectAttributes redirectAttributes, Model model) {
+      {{tab}}public String create${majStart(className)}(@ModelAttribute ${majStart(className)} ${lowerCase(className)}, RedirectAttributes redirectAttributes, Model model) {
       {{tab}}    try {
-      {{tab 2}}    #{majStart(className)} new#{majStart(className)} = #{lowerCase(className)}Service.create#{majStart(className)}(#{lowerCase(className)});
-      {{tab 2}}    model.addAttribute("new#{majStart(className)}", new#{majStart(className)});
+      {{tab 2}}    ${majStart(className)} new${majStart(className)} = ${lowerCase(className)}Service.create${majStart(className)}(${lowerCase(className)});
+      {{tab 2}}    model.addAttribute("new${majStart(className)}", new${majStart(className)});
       
-      {{tab 2}}    redirectAttributes.addFlashAttribute("success", "#{lowerCase(className)} successfully completed");
+      {{tab 2}}    redirectAttributes.addFlashAttribute("success", "${lowerCase(className)} successfully completed");
       {{tab}}    } catch (Exception e) {
       {{tab 2}}    redirectAttributes.addFlashAttribute(
       {{tab 2}}     "error",
-      {{tab 2}}     "An error has occurred during the creation of #{lowerCase(className)}");
+      {{tab 2}}     "An error has occurred during the creation of ${lowerCase(className)}");
       {{tab}}    }
       
-      {{tab}}    return "redirect:/#{lowerCase(classNameLink)}";
+      {{tab}}    return "redirect:/${lowerCase(classNameLink)}";
       {{tab}}}
       
       {{tab}}@PostMapping("/{id}")
-      {{tab}}public String update#{majStart(className)}(@PathVariable #{pkColumnType} id, @ModelAttribute #{majStart(className)} #{lowerCase(className)}, RedirectAttributes redirectAttributes, Model model) {
+      {{tab}}public String update${majStart(className)}(@PathVariable ${pkColumnType} id, @ModelAttribute ${majStart(className)} ${lowerCase(className)}, RedirectAttributes redirectAttributes, Model model) {
       {{tab}}    try {
-      {{tab 2}}    #{majStart(className)} update#{majStart(className)} = #{lowerCase(className)}Service.update#{majStart(className)}(id, #{lowerCase(className)});
-      {{tab 2}}    model.addAttribute("update#{majStart(className)}", update#{majStart(className)});
+      {{tab 2}}    ${majStart(className)} update${majStart(className)} = ${lowerCase(className)}Service.update${majStart(className)}(id, ${lowerCase(className)});
+      {{tab 2}}    model.addAttribute("update${majStart(className)}", update${majStart(className)});
       
-      {{tab 2}}    redirectAttributes.addFlashAttribute("success", "#{lowerCase(className)} modify with success");
+      {{tab 2}}    redirectAttributes.addFlashAttribute("success", "${lowerCase(className)} modify with success");
       {{tab}}    } catch (Exception e) {
       {{tab 2}}    redirectAttributes.addFlashAttribute(
       {{tab 2}}     "error",
-      {{tab 2}}     "An error has occurred during the update of #{lowerCase(className)}");
+      {{tab 2}}     "An error has occurred during the update of ${lowerCase(className)}");
       {{tab}}    }
       
-      {{tab}}    return "redirect:/#{lowerCase(classNameLink)}";
+      {{tab}}    return "redirect:/${lowerCase(classNameLink)}";
       {{tab}}}
       
       {{tab}}@PostMapping("/{id}/delete")
-      {{tab}}public String delete#{majStart(className)}ById(@PathVariable #{pkColumnType} id, RedirectAttributes redirectAttributes, Model model) {
+      {{tab}}public String delete${majStart(className)}ById(@PathVariable ${pkColumnType} id, RedirectAttributes redirectAttributes, Model model) {
       {{tab}}    try {
-      {{tab 2}}     #{lowerCase(className)}Service.delete#{majStart(className)}(id);
+      {{tab 2}}     ${lowerCase(className)}Service.delete${majStart(className)}(id);
       
-      {{tab 2}}    redirectAttributes.addFlashAttribute("success", "#{lowerCase(className)} has been deleted ");
+      {{tab 2}}    redirectAttributes.addFlashAttribute("success", "${lowerCase(className)} has been deleted ");
       {{tab}}    } catch (Exception e) {
       {{tab 2}}    redirectAttributes.addFlashAttribute(
       {{tab 2}}     "error",
-      {{tab 2}}     "An error has occurred during the delete of #{lowerCase(className)}");
+      {{tab 2}}     "An error has occurred during the delete of ${lowerCase(className)}");
       {{tab}}    }
       
-      {{tab}}    return "redirect:/#{lowerCase(classNameLink)}";
+      {{tab}}    return "redirect:/${lowerCase(classNameLink)}";
       {{tab}}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerExtension: "java"
-    controllerPackage: "#{groupLink}.#{lowerCase(projectName)}.controllers;"
+    controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
     controllerAdditionalFiles: [ ]
   view:
     toGenerate: true
     viewExtension: "html"
-    viewSavePath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/#{lowerCase(classNameLink)}"
-    listViewName: "list-#{lowerCase(className)}"
-    createViewName: "create-#{lowerCase(className)}"
+    viewSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/${lowerCase(classNameLink)}"
+    listViewName: "list-${lowerCase(className)}"
+    createViewName: "create-${lowerCase(className)}"
   customChanges: [ ]
   navbarLinks:
       path: "${destinationFolder}/[projectNameMaj]/src/main/resources/templates/layout/layout.html"

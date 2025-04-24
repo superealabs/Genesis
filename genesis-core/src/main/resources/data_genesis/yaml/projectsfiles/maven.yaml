@@ -115,105 +115,109 @@
     - folderType: "MavenFolder"
       folderName: ".mvn"
       sourcePath: "data_genesis/maven/MVC/.mvn"
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
 
     - folderType: "resourceFolder"
       folderName: "resources"
       sourcePath: "data_genesis/maven/MVC/src/main/resources"
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/"
 
     - folderType: "staticAssetsFolder"
       folderName: "assets"
       sourcePath: "data_genesis/ui-template/thymeleaf/assets"
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/static/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/"
 
     - folderType: "compiledAssetsFolder"
       folderName: "compiled"
       sourcePath: "data_genesis/ui-template/thymeleaf/compiled"
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/static/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/"
 
     - folderType: "errorTemplateFolder"
       folderName: "error"
       sourcePath: "data_genesis/ui-template/thymeleaf/error"
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/"
 
     - folderType: "layoutTemplateFolder"
       folderName: "layout"
       sourcePath: "data_genesis/ui-template/thymeleaf/layout"
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/"
 
     - folderType: "templsTemplateFolder"
       folderName: "templs"
       sourcePath: "data_genesis/ui-template/thymeleaf/templs"
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/"
 
     ##need to change the location to be able to create maven projects but not with thymeleaf
     ##but for now we're putting it
     - folderType: "thymeleafConfig"
       folderName: "config"
       sourcePath: "data_genesis/ui-template/thymeleaf/config"
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/java/#{groupLink}/#{lowerCase(projectName)}/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLink}/${lowerCase(projectName)}/"
   projectFilesEdits:
     - fileType: "MainFile"
-      fileName: "#{majStart(projectName)}Application"
+      fileName: "${majStart(projectName)}Application"
       extension: "java"
       content: |
-        package #{groupLink}.#{lowerCase(projectName)};
+        package ${groupLink}.${lowerCase(projectName)};
 
         import org.springframework.boot.SpringApplication;
         import org.springframework.boot.autoconfigure.SpringBootApplication;
 
         @SpringBootApplication
-        public class #{majStart(projectName)}Application {
+        public class ${majStart(projectName)}Application {
         {{tab}}public static void main(String[] args) {
-        {{tab}}    SpringApplication.run(#{majStart(projectName)}Application.class, args);
+        {{tab}}    SpringApplication.run(${majStart(projectName)}Application.class, args);
         {{tab}}}
         }
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/java/#{groupLink}/#{lowerCase(projectName)}"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLink}/${lowerCase(projectName)}"
 
     - fileType: "TestFile"
-      fileName: "#{majStart(projectName)}ApplicationTests"
+      fileName: "${majStart(projectName)}ApplicationTests"
       extension: "java"
       content: |
-        package #{groupLink}.#{lowerCase(projectName)};
+        package ${groupLink}.${lowerCase(projectName)};
 
         import org.junit.jupiter.api.Test;
         import org.springframework.boot.test.context.SpringBootTest;
 
         @SpringBootTest
-        class #{majStart(projectName)}ApplicationTests {
+        class ${majStart(projectName)}ApplicationTests {
 
         {{tab}}@Test
         {{tab}}void contextLoads() {
         {{tab}}}
 
         }
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/test/java/#{groupLink}/#{lowerCase(projectName)}/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLink}/${lowerCase(projectName)}/"
 
-    - fileType: "ApplicationProperties"
+    - fileType: "ApplicationYml"
       fileName: "application"
-      extension: "properties"
+      extension: "yml"
       content: |
-        spring.application.name=#{lowerCase(projectName)}
-
-        server.port=#{projectPort}
-
-        # Configuration logs
-        logging.level.root=#{logLevel}
         {{#if useDB}}
-        logging.level.org.hibernate.SQL=#{logLevel}
-
-        # Configuration datasource
-        spring.datasource.url=#{databaseUrl}
-        spring.datasource.username=#{databaseUsername}
-        spring.datasource.password=#{databasePassword}
-
-        # Configuration Hibernate
-        spring.jpa.hibernate.ddl-auto=#{hibernateDdlAuto}
-        spring.jpa.properties.hibernate.format_sql=true
+        spring:
+          datasource:
+            url: ${connectionString}
+            username: ${databaseUsername}
+            password: ${databasePassword}
+          jpa:
+            database-platform : org.hibernate.dialect.${databaseType}Dialect
+            hibernate:
+              ddl-auto: ${hibernateDdlAuto}
+            properties:
+              hibernate.format_sql: true
         {{/if}}
+        
+        server:
+          port: ${projectPort}
+          
+        # Logs Configuration
+        logging:
+          level:
+            root: ${loggingLevel}
+            {{#if useDB}}org.hibernate.SQL: ${loggingLevel}{{/if}}
 
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
 
     - fileType: "Xml"
       fileName: "pom"
@@ -226,14 +230,14 @@
         {{tab}}<parent>
         {{tab}}    <groupId>org.springframework.boot</groupId>
         {{tab}}    <artifactId>spring-boot-starter-parent</artifactId>
-        {{tab}}    <version>#{frameworkVersion}</version>
+        {{tab}}    <version>${frameworkVersion}</version>
         {{tab}}    <relativePath/>
         {{tab}}</parent>
-        {{tab}}<groupId>#{groupLink}</groupId>
-        {{tab}}<artifactId>#{projectName}</artifactId>
+        {{tab}}<groupId>${groupLink}</groupId>
+        {{tab}}<artifactId>${projectName}</artifactId>
         {{tab}}<version>0.0.1-SNAPSHOT</version>
-        {{tab}}<name>#{projectName}</name>
-        {{tab}}<description>#{projectDescription}</description>
+        {{tab}}<name>${projectName}</name>
+        {{tab}}<description>${projectDescription}</description>
         {{tab}}<url/>
         {{tab}}<licenses>
         {{tab}}    <license/>
@@ -248,38 +252,38 @@
         {{tab}}    <url/>
         {{tab}}</scm>
         {{tab}}<properties>
-        {{tab}}    <java.version>#{languageVersion}</java.version>
+        {{tab}}    <java.version>${languageVersion}</java.version>
         {{tab}}</properties>
         {{tab}}<dependencies>
         {{tab}}    {{#each dependencies}}
         {{tab}}    <dependency>
-        {{tab 2}}    <groupId>#{this.groupId}</groupId>
-        {{tab 2}}    <artifactId>#{this.artifactId}</artifactId>
-        {{tab 2}}    <version>#{this.version}</version>
+        {{tab 2}}    <groupId>${this.groupId}</groupId>
+        {{tab 2}}    <artifactId>${this.artifactId}</artifactId>
+        {{tab 2}}    <version>${this.version}</version>
         {{tab}}    </dependency>{{#if !@last}}{{newline}}{{tab}}{{tab}}{{/if}}{{/each}}
         {{tab}}    {{#if useDB}}<dependency>
-        {{tab 2}}    <groupId>#{DBgroupId}</groupId>
-        {{tab 2}}    <artifactId>#{DBartifactId}</artifactId>
-        {{tab 2}}    <version>#{DBversion}</version>
+        {{tab 2}}    <groupId>${DBgroupId}</groupId>
+        {{tab 2}}    <artifactId>${DBartifactId}</artifactId>
+        {{tab 2}}    <version>${DBversion}</version>
         {{tab}}    </dependency>{{/if}}
         {{tab}}</dependencies>
         </project>
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
 
     - fileType: "menuHtml"
       fileName: "menu"
       extension: "html"
       content: |
         <!-- Menu -->
-        <aside #{aside} id="layout-menu" 
+        <aside ${aside} id="layout-menu" 
         {{tab}}class="layout-menu menu-vertical menu bg-menu-theme">
         {{tab}}<div class="app-brand demo">
         {{tab}}    <a href="/" class="app-brand-link">
         {{tab 2}}    <span class="app-brand-logo demo">
-        {{tab 3}}    <img #{logo} 
+        {{tab 3}}    <img ${logo} 
         {{tab 4}}    alt="Logo" style="width: 45px; height: auto;">
         {{tab 2}}    </span>
-        {{tab 2}}    <span class="app-brand-text menu-text fw-bolder ms-2">#{majStart(projectName)} </span>
+        {{tab 2}}    <span class="app-brand-text menu-text fw-bolder ms-2">${majStart(projectName)} </span>
         {{tab}}    </a>
 
         {{tab}}    <a href="javascript:void(0);"
@@ -307,7 +311,7 @@
         {{tab 3}}    {{#each fields}}
         {{tab 5}}    <li class="menu-item">
         {{tab 5}}    <a $[listLink] class="menu-link">
-        {{tab 6}}    <div data-i18n="list-#{minStart(this)}">List #{lowerCase(this)}</div>
+        {{tab 6}}    <div data-i18n="list-${minStart(this)}">List ${lowerCase(this)}</div>
         {{tab 5}}    </a>
         {{tab 4}}    </li>
         {{tab 3}}    {{/each}}
@@ -327,35 +331,29 @@
         {{tab}}</div> -->
 
         </aside>
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/templs/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/templs/"
     - fileType: "HomeController"
       fileName: "HomeController"
       extension: "java"
       content: |
-        package #{groupLink}.#{lowerCase(projectName)}.controllers;
+        package ${groupLink}.${lowerCase(projectName)}.controllers;
 
         import org.springframework.stereotype.Controller;
         import org.springframework.web.bind.annotation.GetMapping;
-        import org.springframework.beans.factory.annotation.Autowired;
 
         @Controller
         public class HomeController {
-
-        {{tab}}@Autowired
-        {{tab}}public HomeController() {
-        {{tab}}}
-
         {{tab}}@GetMapping
         {{tab}}public String index() {
         {{tab 2}}return "/index";
         {{tab}}}
         }
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/java/#{groupLink}/#{lowerCase(projectName)}/controllers/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLink}/${lowerCase(projectName)}/controllers/"
     - fileType: "layoutConfig"
       fileName: "ThymeleafConfig"
       extension: "java"
       content: |
-        package #{groupLink}.#{lowerCase(projectName)}.config;
+        package ${groupLink}.${lowerCase(projectName)}.config;
 
         import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
         import org.springframework.context.annotation.Bean;
@@ -390,25 +388,25 @@
         {{tab}}    return templateResolver;
         {{tab}}}
         }
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/java/#{groupLink}/#{lowerCase(projectName)}/config/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLink}/${lowerCase(projectName)}/config/"
   projectFiles:
 
     - fileType: "Helper"
       fileName: "HELP.md"
       sourcePath: "data_genesis/maven/MVC/"
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
 
     - fileType: "Script"
       fileName: "mvnw"
       sourcePath: "data_genesis/maven/MVC/"
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
 
     - fileType: "ScriptWin"
       fileName: "mvnw.cmd"
       sourcePath: "data_genesis/maven/MVC/"
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
 
     - fileType: "Index"
       fileName: "index.html"
       sourcePath: "data_genesis/ui-template/thymeleaf/"
-      destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/"

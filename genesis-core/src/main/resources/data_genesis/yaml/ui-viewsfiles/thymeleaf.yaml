@@ -6,7 +6,7 @@
   createTemplate: "CreateView"
   layout:
     name: "main_layout.html"
-    destinationPath: "${destinationFolder}/#{majStart(projectName)}/src/main/resources/templates/layout/"
+    destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/layout/"
     header:
       assetsLink: |
         data-assets-path="../assets/"
@@ -45,8 +45,8 @@
         th:fragment="layout-menu"
       logo: |
         th:src="@{/assets/img/favicon/logo-projet-universel.jpg}"
-      listLink: "th:href=\"@{/#{lowerCase(this)}s}\""
-      createLink: "th:href=\"@{/#{lowerCase(classNameLink)}/create-#{lowerCase(className)}}\""
+      listLink: "th:href=\"@{/${lowerCase(this)}s}\""
+      createLink: "th:href=\"@{/${lowerCase(classNameLink)}/create-${lowerCase(className)}}\""
     content:
       alertSuccess: "th:if=\"${success}\""
       textSuccess: "th:text=\"${success}\""
@@ -87,140 +87,141 @@
       pagesFooterLink: |
         <script src="/assets/js/dashboards-analytics.js"
           th:src="@{/assets/js/dashboards-analytics.js}"></script>
+    # TODO : APPLY THE SPECIAL TAG #{ ... } HERE
     tableLoop:
       dataKeys: ""
-      dataValues: "th:text=\"${ #{lowerCase(className)}.#{this.name} }\""
-      dataLoop: "th:each=\"#{lowerCase(className)} : ${ #{lowerCase(classNameLink)} }\""
-      dataForeignValues: "th:text=\"${ #{lowerCase(className)}.#{this.columnTable}.#{this.columnName} }\""
+      dataValues: "th:text=\"${ ${lowerCase(className)}.${this.name} }\""
+      dataLoop: "th:each=\"${lowerCase(className)} : ${ ${lowerCase(classNameLink)} }\""
+      dataForeignValues: "th:text=\"${ ${lowerCase(className)}.${this.columnTable}.${this.columnName} }\""
       #
-      dataValueOption: "th:value=\"${#{lowerCase(fieldName)}.#{foreignName}}\""
-      dataTextOption: "th:text=\"${#{lowerCase(fieldName)}.#{foreignPrimaryName}}\""
-      dataSelectLoop: "th:each=\"#{lowerCase(fieldName)}:${#{lowerCase(fieldName)}s}\""
+      dataValueOption: "th:value=\"${${lowerCase(fieldName)}.${foreignName}}\""
+      dataTextOption: "th:text=\"${${lowerCase(fieldName)}.${foreignPrimaryName}}\""
+      dataSelectLoop: "th:each=\"${lowerCase(fieldName)}:${${lowerCase(fieldName)}s}\""
       #
-      dataCancelId: "th:id=\"'cancelModalCenter_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
-      dataModificationId: "th:id=\"'updateModalCenter_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
+      dataCancelId: "th:id=\"'cancelModalCenter_' + ${ ${lowerCase(className)}.${pkColumnName} }\""
+      dataModificationId: "th:id=\"'updateModalCenter_' + ${ ${lowerCase(className)}.${pkColumnName} }\""
       #
-      dataCancelTitleModal: "th:id=\"'cancelModalCenterTitle_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
-      dataModificationTitleModal: "th:id=\"'updateModalCenterTitle_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
+      dataCancelTitleModal: "th:id=\"'cancelModalCenterTitle_' + ${ ${lowerCase(className)}.${pkColumnName} }\""
+      dataModificationTitleModal: "th:id=\"'updateModalCenterTitle_' + ${ ${lowerCase(className)}.${pkColumnName} }\""
       #
-      dataCancelButton: "th:attr=\"data-bs-target='#cancelModalCenter_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
-      dataModificationButton: "th:attr=\"data-bs-target='#updateModalCenter_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
+      dataCancelButton: "th:attr=\"data-bs-target='#cancelModalCenter_' + ${ ${lowerCase(className)}.${pkColumnName} }\""
+      dataModificationButton: "th:attr=\"data-bs-target='#updateModalCenter_' + ${ ${lowerCase(className)}.${pkColumnName} }\""
       #
-      dataEditEventButton: "th:id=\"'editEvent_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
-      dataDeleteEventButton: "th:id=\"'deleteEvent_' + ${ #{lowerCase(className)}.#{pkColumnName} }\""
+      dataEditEventButton: "th:id=\"'editEvent_' + ${ ${lowerCase(className)}.${pkColumnName} }\""
+      dataDeleteEventButton: "th:id=\"'deleteEvent_' + ${ ${lowerCase(className)}.${pkColumnName} }\""
       #
-      formCreateLink: "th:action=\"@{/#{lowerCase(classNameLink)}}\""
-      formUpdateLink: "th:action=\"@{/#{lowerCase(classNameLink)}/{id} (id=${#{lowerCase(className)}.#{pkColumnName}})}\""
-      formDeleteLink: "th:action=\"@{/#{lowerCase(classNameLink)}/{id}/delete (id=${#{lowerCase(className)}.#{pkColumnName}})}\""
+      formCreateLink: "th:action=\"@{/${lowerCase(classNameLink)}}\""
+      formUpdateLink: "th:action=\"@{/${lowerCase(classNameLink)}/{id} (id=${${lowerCase(className)}.${pkColumnName}})}\""
+      formDeleteLink: "th:action=\"@{/${lowerCase(classNameLink)}/{id}/delete (id=${${lowerCase(className)}.${pkColumnName}})}\""
   insert:
     input:
       date: |
         <div class="mb-3">
-          <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-          <input type="date" class="form-control" id="#{lowerCase(fieldName)}input"
-            aria-describedby="#{lowerCase(fieldName)}help" name="#{lowerCase(fieldName)}">
+          <label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+          <input type="date" class="form-control" id="${lowerCase(fieldName)}input"
+            aria-describedby="${lowerCase(fieldName)}help" name="${lowerCase(fieldName)}">
         </div>
       double: |
         <div class="mb-3">
-          <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-          <input type="number" step="0.001" class="form-control" id="#{lowerCase(fieldName)}input"
-            aria-describedby="#{lowerCase(fieldName)}help" name="#{lowerCase(fieldName)}">
+          <label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+          <input type="number" step="0.001" class="form-control" id="${lowerCase(fieldName)}input"
+            aria-describedby="${lowerCase(fieldName)}help" name="${lowerCase(fieldName)}">
         </div>
       int: |
         <div class="mb-3">
-            <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-            <input type="number" step="1.0" class="form-control" id="#{lowerCase(fieldName)}input"
-              aria-describedby="#{lowerCase(fieldName)}help" name="#{lowerCase(fieldName)}">
+            <label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+            <input type="number" step="1.0" class="form-control" id="${lowerCase(fieldName)}input"
+              aria-describedby="${lowerCase(fieldName)}help" name="${lowerCase(fieldName)}">
         </div>
       long: |
         <div class="mb-3">
-            <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-            <input type="number" step="1.0" class="form-control" id="#{lowerCase(fieldName)}input"
-              aria-describedby="#{lowerCase(fieldName)}help" name="#{lowerCase(fieldName)}">
+            <label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+            <input type="number" step="1.0" class="form-control" id="${lowerCase(fieldName)}input"
+              aria-describedby="${lowerCase(fieldName)}help" name="${lowerCase(fieldName)}">
         </div>
       string: |
         <div class="mb-3">
-            <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-            <input type="text" class="form-control" id="#{lowerCase(fieldName)}input"
-              aria-describedby="#{lowerCase(fieldName)}help" name="#{lowerCase(fieldName)}">
+            <label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+            <input type="text" class="form-control" id="${lowerCase(fieldName)}input"
+              aria-describedby="${lowerCase(fieldName)}help" name="${lowerCase(fieldName)}">
         </div>
       timestamp: |
         <div class="mb-3">
-          <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-            <input type="datetime-local" class="form-control" id="#{lowerCase(fieldName)}input"
-              aria-describedby="#{lowerCase(fieldName)}help" name="#{lowerCase(fieldName)}">
+          <label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+            <input type="datetime-local" class="form-control" id="${lowerCase(fieldName)}input"
+              aria-describedby="${lowerCase(fieldName)}help" name="${lowerCase(fieldName)}">
         </div>
       boolean: |
         <div class="mb-3 form-check">
-          <label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-          <input type="checkbox" class="form-check-input" id="#{lowerCase(fieldName)}input" 
-            name="#{lowerCase(fieldName)}">
-          <label class="form-check-label" for="#{lowerCase(fieldName)}input">#{majStart(fieldName)}</label>
+          <label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+          <input type="checkbox" class="form-check-input" id="${lowerCase(fieldName)}input" 
+            name="${lowerCase(fieldName)}">
+          <label class="form-check-label" for="${lowerCase(fieldName)}input">${majStart(fieldName)}</label>
         </div>
     select: |
       <div class="mb-3">
-        <label for="#{lowerCase(fieldName)}Select" class="form-label">#{majStart(foreignPrimaryName)}</label>
-        <select class="form-select" id="#{lowerCase(fieldName)}Select" name="#{lowerCase(fieldName)}">
+        <label for="${lowerCase(fieldName)}Select" class="form-label">${majStart(foreignPrimaryName)}</label>
+        <select class="form-select" id="${lowerCase(fieldName)}Select" name="${lowerCase(fieldName)}">
           <option $[dataSelectLoop] $[dataValueOption] $[dataTextOption]></option>
         </select>
-        <div id="#{lowerCase(fieldName)}help" class="form-text">Select an option.</div>
+        <div id="${lowerCase(fieldName)}help" class="form-text">Select an option.</div>
       </div>
   update:
     input:
       date: |
         <div class="mb-3">
-          {{tab 17}}<label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-          {{tab 17}}<input type="date" class="form-control" id="#{lowerCase(fieldName)}input"
-          {{tab 17}}  name="#{lowerCase(fieldName)}"
-          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 17}}<label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+          {{tab 17}}<input type="date" class="form-control" id="${lowerCase(fieldName)}input"
+          {{tab 17}}  name="${lowerCase(fieldName)}"
+          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get${majStart(fieldName)}() }">
           {{tab 16}}</div>
       double: |
         <div class="mb-3">
-          {{tab 17}}<label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-          {{tab 17}}<input type="number" step="0.001" class="form-control" id="#{lowerCase(fieldName)}input"
-          {{tab 17}}  name="#{lowerCase(fieldName)}"
-          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 17}}<label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+          {{tab 17}}<input type="number" step="0.001" class="form-control" id="${lowerCase(fieldName)}input"
+          {{tab 17}}  name="${lowerCase(fieldName)}"
+          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get${majStart(fieldName)}() }">
           {{tab 16}}</div>
       int: |
         <div class="mb-3">
-          {{tab 17}}<label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-          {{tab 17}}<input type="number" step="1.0" class="form-control" id="#{lowerCase(fieldName)}input"
-          {{tab 17}}  name="#{lowerCase(fieldName)}"
-          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 17}}<label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+          {{tab 17}}<input type="number" step="1.0" class="form-control" id="${lowerCase(fieldName)}input"
+          {{tab 17}}  name="${lowerCase(fieldName)}"
+          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get${majStart(fieldName)}() }">
           {{tab 16}}</div>
       long: |
         <div class="mb-3">
-          {{tab 17}}<label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-          {{tab 17}}<input type="number" step="1.0" class="form-control" id="#{lowerCase(fieldName)}input"
-          {{tab 17}}  name="#{lowerCase(fieldName)}"
-          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 17}}<label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+          {{tab 17}}<input type="number" step="1.0" class="form-control" id="${lowerCase(fieldName)}input"
+          {{tab 17}}  name="${lowerCase(fieldName)}"
+          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get${majStart(fieldName)}() }">
           {{tab 16}}</div>
       string: |
         <div class="mb-3">
-          {{tab 17}}<label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-          {{tab 17}}<input type="text" class="form-control" id="#{lowerCase(fieldName)}input"
-          {{tab 17}}  name="#{lowerCase(fieldName)}"
-          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 17}}<label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+          {{tab 17}}<input type="text" class="form-control" id="${lowerCase(fieldName)}input"
+          {{tab 17}}  name="${lowerCase(fieldName)}"
+          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get${majStart(fieldName)}() }">
           {{tab 16}}</div>
       timestamp: |
         <div class="mb-3">
-          {{tab 17}}<label for="#{lowerCase(fieldName)}input" class="form-label">#{majStart(fieldName)}</label>
-          {{tab 17}}<input type="datetime-local" class="form-control" id="#{lowerCase(fieldName)}input"
-          {{tab 17}}  name="#{lowerCase(fieldName)}"
-          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
+          {{tab 17}}<label for="${lowerCase(fieldName)}input" class="form-label">${majStart(fieldName)}</label>
+          {{tab 17}}<input type="datetime-local" class="form-control" id="${lowerCase(fieldName)}input"
+          {{tab 17}}  name="${lowerCase(fieldName)}"
+          {{tab 17}}  th:value="${ <##{lowerCase(className)}/#>.get${majStart(fieldName)}() }">
           {{tab 16}}</div>
       boolean: |
         <div class="mb-3 form-check">
-          {{tab 17}}<input type="checkbox" class="form-check-input" id="#{lowerCase(fieldName)}input"
-          {{tab 17}}  name="#{lowerCase(fieldName)}"
-          {{tab 17}}  th:checked="${ <##{lowerCase(className)}/#>.get#{majStart(fieldName)}() }">
-          {{tab 17}}<label class="form-check-label" for="#{lowerCase(fieldName)}input">#{majStart(fieldName)}</label>
+          {{tab 17}}<input type="checkbox" class="form-check-input" id="${lowerCase(fieldName)}input"
+          {{tab 17}}  name="${lowerCase(fieldName)}"
+          {{tab 17}}  th:checked="${ <##{lowerCase(className)}/#>.get${majStart(fieldName)}() }">
+          {{tab 17}}<label class="form-check-label" for="${lowerCase(fieldName)}input">${majStart(fieldName)}</label>
         {{tab 16}}</div>
     select: |
       <div class="mb-3">
-        {{tab 17}}<label for="#{lowerCase(fieldName)}Select" class="form-label">#{majStart(fieldName)}</label>
-        {{tab 17}}<select class="form-select" id="#{lowerCase(fieldName)}Select" name="#{lowerCase(fieldName)}">
+        {{tab 17}}<label for="${lowerCase(fieldName)}Select" class="form-label">${majStart(fieldName)}</label>
+        {{tab 17}}<select class="form-select" id="${lowerCase(fieldName)}Select" name="${lowerCase(fieldName)}">
         {{tab 17}}  <option $[dataSelectLoop] $[dataValueOption] $[dataTextOption]></option>
         {{tab 17}}</select>
-        {{tab 17}}<div id="#{lowerCase(fieldName)}help" class="form-text">Select an option.</div>
+        {{tab 17}}<div id="${lowerCase(fieldName)}help" class="form-text">Select an option.</div>
         {{tab 17}}</div>

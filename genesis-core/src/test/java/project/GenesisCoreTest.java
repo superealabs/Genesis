@@ -29,7 +29,15 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectSpring() {
-        var credentials = new Credentials().setHost("localhost").setPort("5432").setDatabaseName("btp_eval_db").setSchemaName("btp_eval_db").setUser("postgres").setPwd("nikami").setTrustCertificate(true).setUseSSL(true);
+        var credentials = new Credentials()
+                .setHost("localhost")
+                .setPort("5432")
+                .setDatabaseName("test_desc_db")
+                .setSchemaName("test_desc_db")
+                .setUser("nomena")
+                .setPwd("root")
+                .setTrustCertificate(true)
+                .setUseSSL(true);
 
         try {
 
@@ -54,8 +62,7 @@ public class GenesisCoreTest {
             var project = ProjectGenerator.projects.get(projectId);
             var projectConfiguration = ProjectGenerator.getProjectsConfiguration(project).get(projectConfigurationId);
 
-
-            String projectName = "Popol";
+            String projectName = "WebMVC";
             String groupLink = "org.labs";
             String projectPort = "8000";
             String logLevel = "INFO";
@@ -63,7 +70,7 @@ public class GenesisCoreTest {
             String projectDescription = "test";
             String frameworkVersion = "3.3.6";
             String languageVersion = "21";
-            String destinationFolder = "../generated/spring";
+            String destinationFolder = "../generated/spring_mvc";
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
 
