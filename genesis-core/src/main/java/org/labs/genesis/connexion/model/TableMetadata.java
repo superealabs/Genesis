@@ -28,6 +28,7 @@ public class TableMetadata {
     private ColumnMetadata[] columns;
     private ColumnMetadata primaryColumn;
     private String className;
+    private Boolean isView;
 
     public void initialize(Connection connex, Credentials credentials, Database database, Language language) throws SQLException, ClassNotFoundException {
         boolean opened = false;
@@ -48,6 +49,8 @@ public class TableMetadata {
 
             setDatabase(database);
             String tableName = getTableName();
+            //Initialise l'entité en le considérant comme table
+            setIsView(false);
 
             List<ColumnMetadata> listeCols = fetchColumns(metaData, tableName, language, database);
             fetchPrimaryKeys(metaData, tableName, listeCols);
@@ -102,6 +105,8 @@ public class TableMetadata {
                 TableMetadata tableMetadata = new TableMetadata();
                 tableMetadata.setTableName(tableTypeName);
                 tableMetadata.initialize(connect, credentials, database, language);
+                tableMetadata.setIsView(isView);
+                tableMetadata.setPKForView();
                 tableMetadataList.add(tableMetadata);
             }
         } finally {
@@ -185,6 +190,22 @@ public class TableMetadata {
                     }
                 }
             }
+        }
+    }
+
+    public void setPKForView()  {
+        if(!isView) return;
+
+        for (ColumnMetadata column : columns) {
+            if (column.getReferencedColumn().equalsIgnoreCase("id")) {
+                column.setPrimary(true);
+                setPrimaryColumn(column);
+                return;
+            }
+        }
+        if(columns.length>0){
+            columns[0].setPrimary(true);
+            setPrimaryColumn(columns[0]);
         }
     }
 
