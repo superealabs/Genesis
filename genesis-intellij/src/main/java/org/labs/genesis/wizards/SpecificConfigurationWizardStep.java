@@ -8,10 +8,12 @@ import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.forms.SpecificConfigurationForm;
 
 import javax.swing.*;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.sql.Connection;
 
 public class SpecificConfigurationWizardStep extends ModuleWizardStep {
     private final SpecificConfigurationForm specificConfigurationForm;
@@ -73,7 +75,11 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         projectGenerationContext.setFrameworkConfiguration(frameworkConfiguration);
 
         // Génération du projet
-        generateProject();
+        try {
+            generateProject();
+        } catch (Exception e) {
+            throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -192,12 +198,15 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         }
     }
 
-    private void generateProject() {
+    private void generateProject() throws Exception {
         try {
             projectGenerator.generateProject(projectGenerationContext);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
+        } finally {
+            Connection con = projectGenerationContext.getConnection();
+            if(con!=null) con.close();
         }
     }
 
