@@ -1037,6 +1037,7 @@
         using Microsoft.OpenApi.Models;
         using Microsoft.EntityFrameworkCore;
         using ${majStart(projectName)}.Data;
+        using ${majStart(projectName)}.Filters;
         using ${majStart(projectName)}.Repositories.Implementation;
         using ${majStart(projectName)}.Repositories.Interface;
         using ${majStart(projectName)}.Services.Implementation;
@@ -1104,7 +1105,11 @@
         builder.Services.AddScoped<I${this}Service, ${this}Service>();
         {{/each}}
         // Adding controllers ...
-        builder.Services.AddControllers();
+        builder.Services.AddControllers(options =>
+        {
+          // Adding the global exception filter to all controllers
+          options.Filters.Add<GlobalExceptionFilter>();
+        });
         
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
@@ -1154,6 +1159,109 @@
             }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Data/"
+
+    - fileType: "Exception"
+      fileName: "ResourceNotFoundException"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Exceptions;
+        
+        using System;
+        
+        public class ResourceNotFoundException : Exception 
+        {
+          public ResourceNotFoundException(string message) : base(message) {}
+          public ResourceNotFoundException(string message, Exception cause) : base(message, cause) {}
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Exceptions/"
+
+    -   fileType: "Exception"
+        fileName: "InternalServerErrorException"
+        extension: "cs"
+        content: |
+          namespace ${majStart(projectName)}.Exceptions;
+          
+          using System;
+          
+          public class InternalServerErrorException : Exception 
+          {
+            public InternalServerErrorException(string message) : base(message) {}
+            public InternalServerErrorException(string message, Exception cause) : base(message, cause) {}
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Exceptions/"
+
+    - fileType: "ExceptionFilter"
+      fileName: "GlobalExceptionFilter"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Filters;
+
+        using Microsoft.AspNetCore.Mvc;
+        using Microsoft.AspNetCore.Mvc.Filters;
+        using ${majStart(projectName)}.Exceptions;
+
+        public class GlobalExceptionFilter: IExceptionFilter
+        {
+            private readonly ILogger<GlobalExceptionFilter> _logger;
+
+            public GlobalExceptionFilter(ILogger<GlobalExceptionFilter> logger)
+            {
+              _logger = logger;
+            }
+        
+            public void OnException(ExceptionContext context)
+            {
+                ObjectResult result;
+          
+                switch (context.Exception)
+                {
+                    case InternalServerErrorException internalServEx:
+                      _logger.LogError(internalServEx, "An internal error occured: {Message}", internalServEx.Message);
+                      result = new ObjectResult(new { Message = internalServEx.Message })
+                      {
+                          StatusCode = StatusCodes.Status500InternalServerError
+                      };
+                      break;
+                    
+                    case ResourceNotFoundException notFoundEx:
+                      _logger.LogInformation(notFoundEx, "Resource not found: {Message}", notFoundEx.Message);
+                      result = new ObjectResult(new { Message = notFoundEx.Message })
+                      {
+                          StatusCode = StatusCodes.Status404NotFound
+                      };
+                      break;
+                    
+                    case ArgumentException argEx:
+                      _logger.LogError(argEx, "Illegal argument provided: {Message}", argEx.Message);
+                      result = new ObjectResult(new { Message = argEx.Message })
+                      {
+                          StatusCode = StatusCodes.Status400BadRequest
+                      };
+                      break;
+        
+                    case Exception ex:
+                      _logger.LogError(ex, "An unexpected error occured: {Message}", ex.Message);
+                      result = new ObjectResult(new { Message = "An unexpected error occurred." })
+                      {
+                          StatusCode = StatusCodes.Status500InternalServerError
+                      };
+                      break;
+                    
+                    default:
+                      _logger.LogError("An unexpected error occured.");
+                      result = new ObjectResult(new { Message = "An unexpected error occurred." })
+                      {
+                          StatusCode = StatusCodes.Status500InternalServerError
+                      };
+                      break;
+                }
+          
+                context.Result = result;
+                context.ExceptionHandled = true;
+            }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Filters/"
 
     - fileType: "WebUtils"
       fileName: "WebUtils"
@@ -1506,6 +1614,7 @@
         extension: "cs"
         content: |
           using System.Linq.Expressions;
+          using ${majStart(projectName)}.Exceptions;
           using ${majStart(projectName)}.Models;
           using ${majStart(projectName)}.Repositories.Interface;
           using ${majStart(projectName)}.Repositories.Implementation;
@@ -1524,32 +1633,74 @@
           
               public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
-                  return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                  try
+                  {
+                    return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                  }
+                  catch (Exception ex)
+                  {
+                    throw new InternalServerErrorException("Error while retrieving all ${formatReadableLowerCase(className)}", ex);
+                  }
               }
           
               public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
-                  return await _repository.GetByIdAsync(id, includeProperties);
+                  try
+                  {
+                    return await _repository.GetByIdAsync(id, includeProperties);
+                  }
+                  catch (Exception ex)
+                  {
+                    throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
+                  }
               }
           
               public async Task AddAsync(${majStart(className)} ${minStart(className)})
               {
-                  await _repository.AddAsync(${minStart(className)});
+                  try
+                  {
+                    await _repository.AddAsync(${minStart(className)});
+                  }
+                  catch (Exception ex)
+                  {
+                    throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
+                  }
               }
           
               public async Task UpdateAsync(${majStart(className)} ${minStart(className)})
               {
-                  await _repository.UpdateAsync(${minStart(className)});
+                  try
+                  {
+                    await _repository.UpdateAsync(${minStart(className)});
+                  }
+                  catch (Exception ex)
+                  {
+                    throw new InternalServerErrorException("Error while updating ${formatReadableLowerCase(className)}", ex);
+                  }
               }
           
               public async Task DeleteAsync(${pkColumnType} id)
               {
+                try 
+                {
                   await _repository.DeleteAsync(id);
+                }
+                catch (Exception ex)
+                {
+                  throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
+                }
               }
           
               public async Task<bool> ExistsAsync(${pkColumnType} id)
               {
+                try 
+                {
                   return await _repository.ExistsAsync(id);
+                }
+                catch (Exception ex)
+                {
+                  throw new InternalServerErrorException("Error while checking the existence of ${formatReadableLowerCase(className)}", ex);
+                }
               }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation/"
