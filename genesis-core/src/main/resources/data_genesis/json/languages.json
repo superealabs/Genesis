@@ -107,7 +107,11 @@
       "_int4": "new Integer[]{0}",
       "_text": "new String[]{\"mock\"}",
       "cidr": "\"192.0.2.0/24\"",
-      "macaddr": "\"00-B0-D0-63-C2-26\""
+      "macaddr": "\"00-B0-D0-63-C2-26\"",
+      "INT": "0",
+      "VARCHAR": "\"mock\"",
+      "DATE": "java.time.LocalDate.now()",
+      "BIGINT": "0L"
     },
     "criteriaBuildSnippet": {
       "int": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
@@ -145,7 +149,11 @@
       "_int4": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "_text": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "cidr": "criteriaBuilder.function(\"${this.columnType}\", String.class, root.get(\"${this.name}\")),\n\t\t\t\t\t\tcriteriaBuilder.function(\"${this.columnType}\", String.class, criteriaBuilder.literal(object.get${majStart(this.name)}()))",
-      "macaddr": "criteriaBuilder.function(\"${this.columnType}\", String.class, root.get(\"${this.name}\")),\n\t\t\t\t\t\tcriteriaBuilder.function(\"${this.columnType}\", String.class, criteriaBuilder.literal(object.get${majStart(this.name)}()))"
+      "macaddr": "criteriaBuilder.function(\"${this.columnType}\", String.class, root.get(\"${this.name}\")),\n\t\t\t\t\t\tcriteriaBuilder.function(\"${this.columnType}\", String.class, criteriaBuilder.literal(object.get${majStart(this.name)}()))",
+      "INT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "VARCHAR": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "DATE": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "BIGINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
     }
   },
   {

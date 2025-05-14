@@ -207,6 +207,7 @@ public class ProjectGenerator {
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
                 List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language);
+                List<TableMetadata> views = database.getViewsByNames(context.getViewNames(), connex, credentials, language);
                 GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
 
                 for (TableMetadata tableMetadata : entities) {
@@ -218,7 +219,17 @@ public class ProjectGenerator {
                     );
                 }
 
+                for (TableMetadata tableMetadata : views) {
+                    generateBackendComponents(
+                            context,
+                            genesisGenerator,
+                            tableMetadata,
+                            false
+                    );
+                }
+
                 generateProjectFiles(context, entities);
+                generateProjectFiles(context, views);
 
             } catch (Exception e) {
                 throw new RuntimeException("\nError in generateFullProject : \n" + e);
@@ -238,9 +249,19 @@ public class ProjectGenerator {
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
                 List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language);
+                List<TableMetadata> views = database.getViewsByNames(context.getViewNames(), connex, credentials, language);
                 GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
 
                 for (TableMetadata tableMetadata : entities) {
+                    generateBackendComponents(
+                            context,
+                            genesisGenerator,
+                            tableMetadata,
+                            true
+                    );
+                }
+
+                for (TableMetadata tableMetadata : views) {
                     generateBackendComponents(
                             context,
                             genesisGenerator,

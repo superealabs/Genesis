@@ -34,6 +34,7 @@ public class ProjectGenerationContext {
     private Map<String, Object> languageConfiguration;
     private Map<String, Object> frameworkConfiguration;
     private List<String> entityNames;
+    private List<String> viewNames;
     private Connection connection;
     private List<String> generationOptions;
     private boolean generateProjectStructure = true;

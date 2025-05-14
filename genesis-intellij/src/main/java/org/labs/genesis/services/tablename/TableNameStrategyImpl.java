@@ -20,4 +20,13 @@ public class TableNameStrategyImpl extends TableNameStrategy {
         allTableNames.addFirst(this.getSelectAll()); // Ajouter l'option pour tout sélectionner
         return allTableNames;
     }
+
+    @Override
+    public List<String> getViewNames() throws Exception {
+        this.checkIsNotNull();
+        // Récupérer les noms de vues et ajouter l'option spéciale
+        List<String> allViewNames = this.getDatabase().getAllViewNames(this.getConnection());
+        allViewNames.addFirst(this.getSelectAll()); // Ajouter l'option pour tout sélectionner
+        return allViewNames;
+    }
 }

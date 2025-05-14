@@ -79,6 +79,19 @@ public abstract class Database {
         return tableMetadataList;
     }
 
+    public List<TableMetadata> getViewsByNames(List<String> viewNames, Connection connection, Credentials credentials, Language language) throws SQLException, ClassNotFoundException {
+        if (viewNames.isEmpty())
+            return getViews(connection, credentials, language);
+
+        List<TableMetadata> tableMetadataList = new ArrayList<>();
+        for (String viewName : viewNames) {
+            TableMetadata viewEntity = getEntity(connection, credentials, viewName, language);
+            viewEntity.setIsView(true);
+            viewEntity.setPKForView();
+            tableMetadataList.add(viewEntity);
+        }
+        return tableMetadataList;
+    }
 
     public List<String> getAllTableTypeNames(Connection connection, String tableType) throws SQLException {
         List<String> tableNames = new ArrayList<>();
@@ -144,5 +157,25 @@ public abstract class Database {
         }
 
         return tableNames;
+    }
+
+    public List<String> getPaginatedViewNames(Connection connection, int index, int size) throws SQLException {
+        List<String> viewNames = new ArrayList<>();
+        DatabaseMetaData metaData = connection.getMetaData();
+
+        int tempIndex = 0;
+        try (ResultSet views = metaData.getTables(null, credentials.getSchemaName(), "%", new String[]{"VIEW"})) {
+            while (views.next() && size > viewNames.size()) {
+//                if (tempIndex < (index * size)) {
+//                    tempIndex++;
+//                    continue;
+//                }
+                String viewName = views.getString("TABLE_NAME");
+                viewNames.add(viewName);
+                tempIndex++;
+            }
+        }
+
+        return viewNames;
     }
 }

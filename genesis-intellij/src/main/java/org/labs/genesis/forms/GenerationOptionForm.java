@@ -23,13 +23,18 @@ public class GenerationOptionForm {
     private final ProjectGenerationContext projectGenerationContext;
     private JPanel mainPanel;
     private JBList<String> tableNamesList;
+    private JBList<String> viewNamesList;
     private JLabel tableAvailableLabel;
     private LinkLabel<String> refreshLinkLabel;
     private JBList<String> componentChoice;
     private JLabel componentsLabel;
     private JButton nextButton;
+    private JLabel viewAvailableLabel;
+    private JButton nextViewButton;
     @Setter
     private List<String> allTablesNames = null;
+    @Setter
+    private List<String> allViewsNames = null;
 
     @Setter
     private int paginationIndex = 0;
@@ -46,6 +51,7 @@ public class GenerationOptionForm {
 
     private void setupMoreListener() {
         nextButton.addMouseListener(new MoreButtonListener(this));
+        nextViewButton.addMouseListener(new MoreButtonListener(this));
     }
 
 
@@ -53,6 +59,8 @@ public class GenerationOptionForm {
         assert refreshLinkLabel != null;
 
         refreshLinkLabel.setListener((LinkLabel<String> source, String data) -> populateTableNames(), null);
+
+        refreshLinkLabel.setListener((LinkLabel<String> source, String data) -> populateViewNames(), null);
 
         refreshLinkLabel.addComponentListener(new ComponentAdapter() {
             @Override
@@ -69,6 +77,7 @@ public class GenerationOptionForm {
 
     private void handleLinkLabelShown() {
         populateTableNames();
+        populateViewNames();
         refreshLinkLabel.setFocusable(true);
         refreshLinkLabel.setToolTipText("Click to refresh table names");
     }
@@ -89,6 +98,27 @@ public class GenerationOptionForm {
             Messages.showErrorDialog(
                     mainPanel,
                     "Failed to retrieve table names: " + e.getMessage(),
+                    "Error"
+            );
+        }
+    }
+
+    private void populateViewNames() {
+        try {
+            this.tableNameStrategy = new TableNamePaginatorStrategy(this.projectGenerationContext, SELECT_ALL, this);
+            List<String> list = tableNameStrategy.getViewNames();
+            this.allViewsNames.addAll(list);
+            viewNamesList.setListData(this.allViewsNames.toArray(new String[0]));
+        } catch (IllegalStateException e) {
+            Messages.showErrorDialog(
+                    mainPanel,
+                    e.getMessage(),
+                    "Error"
+            );
+        } catch (Exception e) {
+            Messages.showErrorDialog(
+                    mainPanel,
+                    "Failed to retrieve view names: " + e.getMessage(),
                     "Error"
             );
         }

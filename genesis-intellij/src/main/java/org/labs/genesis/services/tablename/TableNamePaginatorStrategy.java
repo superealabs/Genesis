@@ -19,6 +19,10 @@ public class TableNamePaginatorStrategy extends TableNameStrategy {
             this.generationOptionForm.setAllTablesNames(new ArrayList<>());
         }
 
+        if (this.generationOptionForm.getAllViewsNames() == null || this.generationOptionForm.getAllViewsNames().isEmpty()) {
+            this.generationOptionForm.setAllViewsNames(new ArrayList<>());
+        }
+
     }
 
     @Override
@@ -34,5 +38,16 @@ public class TableNamePaginatorStrategy extends TableNameStrategy {
         int lastIndex = Math.min(firstIndex + this.NB_TABLE, this.generationOptionForm.getAllTablesNames().size());
         return this.generationOptionForm.getAllTablesNames().subList(firstIndex, lastIndex);*/
         return allTableNames;
+    }
+
+    @Override
+    public List<String> getViewNames() throws Exception {
+        this.checkIsNotNull();
+        List<String> allViewNames = this.getDatabase().getPaginatedViewNames(this.getConnection(), this.generationOptionForm.getPaginationIndex(), this.NB_TABLE);
+        if (this.generationOptionForm.getAllViewsNames().isEmpty()) {
+            allViewNames.addFirst(this.getSelectAll()); // Ajouter l'option pour tout sélectionner "Message"
+        }
+        this.generationOptionForm.setPaginationIndex(this.generationOptionForm.getPaginationIndex() + 1);
+        return allViewNames;
     }
 }

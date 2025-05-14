@@ -32,12 +32,22 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
             // Obtenir toutes les tables disponibles
             List<String> allTableNames = generationOptionForm.getTableNameStrategy().getTableNames();
 
+            // Obtenir toutes les vues disponibles
+            List<String> allViewNames = generationOptionForm.getTableNameStrategy().getViewNames();
+
             // Obtenir les valeurs sélectionnées depuis l'interface utilisateur
             List<String> selectedValues = generationOptionForm.getTableNamesList().getSelectedValuesList();
+
+            // Obtenir les vues sélectionnées depuis l'interface utilisateur
+            List<String> selectedViewValues = generationOptionForm.getViewNamesList().getSelectedValuesList();
 
             // Gérer la sélection des entités
             List<String> selectedEntities = handleEntitySelection(allTableNames, selectedValues);
             projectGenerationContext.setEntityNames(selectedEntities);
+
+            // Gérer la sélection des vues
+            List<String> selectedViews = handleEntitySelection(allViewNames, selectedViewValues);
+            projectGenerationContext.setViewNames(selectedViews);
 
             // Gérer la sélection des composants
             List<String> selectedComponent = generationOptionForm.getComponentChoice().getSelectedValuesList();

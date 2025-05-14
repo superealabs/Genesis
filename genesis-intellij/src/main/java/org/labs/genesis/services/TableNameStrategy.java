@@ -27,4 +27,6 @@ public abstract class TableNameStrategy {
     }
 
     abstract public List<String> getTableNames() throws Exception;
+
+    abstract public List<String> getViewNames() throws Exception;
 }

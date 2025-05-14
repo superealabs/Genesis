@@ -219,6 +219,8 @@ public class FrameworkMetadataProvider {
         metadata.put("className", tableMetadata.getClassName());
         metadata.put("entityName", tableMetadata.getClassName());
         metadata.put("classNameLink", tableMetadata.getClassName() + "s");
+
+        metadata.put("isView", tableMetadata.getIsView());
     }
 
 

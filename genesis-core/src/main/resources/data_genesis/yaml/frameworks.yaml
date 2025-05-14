@@ -447,11 +447,13 @@
       import jakarta.persistence.*;
       import lombok.Getter;
       import lombok.Setter;
+      {{#if isView}}import org.hibernate.annotations.Immutable;{{else}}{{removeLine}}{{/if}}
     modelExtends: ""
     modelAnnotations: |
       @Setter
       @Getter
       @Entity
+      {{#if isView}}@Immutable{{else}}{{removeLine}}{{/if}}
       @Table(name="${tableName}")
     modelFieldContent: |
       {{tab}}{{#each fields}}
@@ -560,6 +562,7 @@
             MediaType.APPLICATION_JSON.getSubtype(),
             StandardCharsets.UTF_8);
           
+            {{#if !isView}} 
             @BeforeEach
             void seedingTheDatabase(){
               service.create${majStart(className)}(mockData);
@@ -571,6 +574,7 @@
               }
               service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
             }
+            {{else}}{{removeLine}}{{/if}}
           
             @Test
             void testSearch${majStart(className)}() throws Exception{
@@ -589,6 +593,7 @@
               System.out.println(resp.getContentAsString());
             }
           
+            {{#if !isView}} 
             @Test
             void testCreate${majStart(className)}() throws Exception{
               ${majStart(className)} otherMockData=new ${majStart(className)}();
@@ -602,6 +607,7 @@
               System.out.println(resp.getContentAsString());
               service.delete${majStart(className)}(otherMockData.get${majStart(pkColumn)}());
             }
+            {{else}}{{removeLine}}{{/if}}
           
             @Test
             void testModify${majStart(className)}() throws Exception{
@@ -611,7 +617,7 @@
               ObjectWriter writer=mapper.writer().withDefaultPrettyPrinter();
               String requestJson=writer.writeValueAsString(mockData);
               String requestUrl="/${lowerCase(classNameLink)}/%s";
-              requestUrl=String.format(requestUrl, mockData.getId());
+              requestUrl=String.format(requestUrl, mockData.get${majStart(pkColumn)}());
               MockHttpServletResponse resp=mockMvc.perform(put(requestUrl).contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
               System.out.println(resp.getContentAsString());
             }
@@ -702,6 +708,8 @@
       {{tab}}    }
       {{tab}}}
       
+      {{#if !isView}} 
+      
       {{tab}}@Override
       {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
       {{tab}}    try {
@@ -734,6 +742,7 @@
       {{tab}}        throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
       {{tab}}}
+      {{else}}{{removeLine}}{{/if}}
 
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
     servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
@@ -755,11 +764,14 @@
           
               ${className} get${className}ById(${pkColumnType} ${pkColumn});
           
+              {{#if !isView}} 
+          
               ${className} create${className}(${className} ${minStart(className)});
           
               ${className} update${className}(${pkColumnType} ${pkColumn}, ${className} ${minStart(className)});
           
               void delete${className}(${pkColumnType} ${pkColumn});
+              {{else}}{{removeLine}}{{/if}}
           }
 
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services/interfaces"
@@ -924,6 +936,8 @@
       {{tab}}    return ResponseEntity.ok(response);
       {{tab}}}
       
+      {{#if !isView}} 
+      
       {{tab}}@Operation(
       {{tab}}    summary = "Create new ${formatReadableLowerCase(className)}",
       {{tab}}    description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
@@ -1006,6 +1020,7 @@
       {{tab}}            "${formatReadableLowerCase(className)} deleted successfully", null);
       {{tab}}    return ResponseEntity.ok(response);
       {{tab}}}
+      {else}}{{removeLine}}{{/if}}
 
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
