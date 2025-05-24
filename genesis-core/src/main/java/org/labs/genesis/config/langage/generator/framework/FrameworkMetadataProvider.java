@@ -446,6 +446,7 @@ public class FrameworkMetadataProvider {
         }
 
         metadata.put("entities", fields);
+        metadata.put("fields", fields);
 
         return metadata;
     }
