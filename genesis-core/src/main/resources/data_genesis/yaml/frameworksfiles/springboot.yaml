@@ -1359,7 +1359,7 @@
       {{tab}}}
       
       {{tab}}public ${majStart(className)} update${majStart(className)}(${pkColumnType} ${pkColumn}, ${majStart(className)} ${lowerCase(className)}) {
-      {{tab}}    Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(id);
+      {{tab}}    Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
       {{tab}}       if (existing${majStart(className)}.isPresent()) {
       {{tab}}	       ${lowerCase(className)}.set${majStart(pkColumn)}(${pkColumn});
       {{tab}}             return ${minStart(className)}Repository.save(${lowerCase(className)});
