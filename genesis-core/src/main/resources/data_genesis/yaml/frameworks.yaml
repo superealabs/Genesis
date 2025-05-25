@@ -764,7 +764,7 @@
           
               ${className} get${className}ById(${pkColumnType} ${pkColumn});
           
-              {{#if !isView}} 
+              {{#if !isView}}
           
               ${className} create${className}(${className} ${minStart(className)});
           
@@ -838,9 +838,9 @@
       {{tab}}        description = "Sorting criteria in the format: property,(asc|desc). "
       {{tab}}                + "Multiple sort criteria can be passed using semicolon separator. "
       {{tab}}                + "Example: id,asc;name,desc",
-      {{tab}}        example = "id,asc"
+      {{tab}}        example = "${pkColumn},asc"
       {{tab}}    )
-      {{tab}}    @RequestParam(defaultValue = "id,asc") String sortParam) {
+      {{tab}}    @RequestParam(defaultValue = "${pkColumn},asc") String sortParam) {
       {{tab}}
       {{tab}}    Sort sortObj = WebUtils.createSortObject(sortParam);
       {{tab}}    Pageable pageable = PageRequest.of(page, size, sortObj);
