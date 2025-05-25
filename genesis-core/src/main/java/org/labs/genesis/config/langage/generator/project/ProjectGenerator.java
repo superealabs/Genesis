@@ -16,10 +16,7 @@ import org.labs.utils.FileUtils;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.labs.genesis.config.ProjectGenerationContext.*;
@@ -228,8 +225,11 @@ public class ProjectGenerator {
                     );
                 }
 
-                generateProjectFiles(context, entities);
-                generateProjectFiles(context, views);
+                List<TableMetadata> allEntities = new ArrayList<>();
+                allEntities.addAll(entities);
+                allEntities.addAll(views);
+
+                generateProjectFiles(context, allEntities);
 
             } catch (Exception e) {
                 throw new RuntimeException("\nError in generateFullProject : \n" + e);

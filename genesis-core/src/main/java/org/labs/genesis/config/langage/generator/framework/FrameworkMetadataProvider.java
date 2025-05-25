@@ -346,7 +346,37 @@ public class FrameworkMetadataProvider {
         }
 
         metadata.put("entities", fields);
-
+        metadata.put("allEntities", getTableMetadataList(tableMetadata));
         return metadata;
+    }
+
+    private static List<Map<String, Object>> getTableMetadataList(List<TableMetadata> tableMetadata) {
+        List<Map<String, Object>> tms = new ArrayList<>();
+        for (TableMetadata field : tableMetadata) {
+            Map<String, Object> tmMap = getTableMetadataHashMap(field);
+            tms.add(tmMap);
+        }
+        return tms;
+    }
+
+    public static @NotNull Map<String, Object> getTableMetadataHashMap(TableMetadata tm) {
+        Map<String, Object> tmMap = new HashMap<>();
+
+        if (tm.getPrimaryColumn() != null) {
+            tmMap.put("pkColumn", tm.getPrimaryColumn().getName());
+            tmMap.put("pkColumnType", tm.getPrimaryColumn().getType());
+        } else {
+            tmMap.put("pkColumn", "");
+            tmMap.put("pkColumnType", "");
+        }
+
+        tmMap.put("tableName", tm.getTableName());
+        tmMap.put("className", tm.getClassName());
+        tmMap.put("entityName", tm.getClassName());
+        tmMap.put("classNameLink", tm.getClassName() + "s");
+
+        tmMap.put("isView", tm.getIsView());
+
+        return tmMap;
     }
 }

@@ -1172,6 +1172,18 @@
             public ${majStart(projectName)}Context(DbContextOptions<${majStart(projectName)}Context> options) : base(options)
             {
             }
+            
+            protected override void OnModelCreating(ModelBuilder modelBuilder)
+            {
+                base.OnModelCreating(modelBuilder);
+                {{#each allEntities}}{{#if this.isView}}
+                modelBuilder.Entity<${this.className}>(entity =>
+                {
+                  entity.HasNoKey();
+                  entity.ToView("${this.tableName}"); 
+                });
+                {{/if}}{{/each}}
+            }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Data/"
 
@@ -1666,10 +1678,10 @@
                   }
                   catch (Exception ex)
                   {
-                    throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
+                    throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + id);
                   }
               }
-          
+              {{#if !isView}}  
               public async Task AddAsync(${majStart(className)} ${minStart(className)})
               {
                   try
@@ -1680,8 +1692,14 @@
                   {
                     throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
                   }
+              }{{else}}
+              public async Task AddAsync(${majStart(className)} ${minStart(className)})
+              {
+                  throw new NotSupportedException("Operation not supported for view-based entity.");
               }
+              {{/if}}
           
+              {{#if !isView}} 
               public async Task UpdateAsync(${majStart(className)} ${minStart(className)})
               {
                   try
@@ -1692,8 +1710,14 @@
                   {
                     throw new InternalServerErrorException("Error while updating ${formatReadableLowerCase(className)}", ex);
                   }
+              }{{else}}
+              public async Task UpdateAsync(${majStart(className)} ${minStart(className)})
+              {
+                  throw new NotSupportedException("Operation not supported for view-based entity.");
               }
+              {{/if}}
           
+              {{#if !isView}} 
               public async Task DeleteAsync(${pkColumnType} id)
               {
                 try 
@@ -1704,7 +1728,12 @@
                 {
                   throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
                 }
+              }{{else}}
+              public async Task DeleteAsync(${pkColumnType} id)
+              {
+                  throw new NotSupportedException("Operation not supported for view-based entity.");
               }
+              {{/if}}
           
               public async Task<bool> ExistsAsync(${pkColumnType} id)
               {
@@ -1777,6 +1806,7 @@
       {{tab}}{{tab}}return ${minStart(className)} == null ? NotFound() : Ok(${minStart(className)});
       {{tab}}}
       
+      {{#if !isView}} 
       {{tab}}[HttpPost]
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
@@ -1826,6 +1856,7 @@
       {{tab}}{{tab}}await _service.DeleteAsync(id);
       {{tab}}{{tab}}return NoContent();
       {{tab}}}
+      {{else}}{{removeLine}}{{/if}}
 
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"
