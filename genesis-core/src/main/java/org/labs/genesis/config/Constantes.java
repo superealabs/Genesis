@@ -3,6 +3,7 @@ package org.labs.genesis.config;
 public class Constantes {
     public static final String DATABASE_JSON = "data_genesis/json/databases.json";
     public static final String LANGUAGE_JSON = "data_genesis/json/languages.json";
+    public static final String LLM_API_CONFIG_JSON = "data_genesis/json/llm-api-config.json";
     public static final String FRAMEWORK_YAML = "data_genesis/yaml/frameworks.yaml";
     public static final String PROJECT_YAML = "data_genesis/yaml/projects.yaml";
     public static final String DATA_PATH = "data_genesis";
