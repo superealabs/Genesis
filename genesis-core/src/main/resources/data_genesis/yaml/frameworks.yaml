@@ -1771,6 +1771,18 @@
                   }
               }
           
+              public async Task<IEnumerable<${majStart(className)}>> SearchAsync(${majStart(className)} search, int page, int pageSize, string? sorting)
+              {
+                try
+                {
+                  return await _repository.SearchAsync(search, page, pageSize, sorting);
+                }
+                catch (Exception ex)
+                {
+                  throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
+                }
+              }
+          
               public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
                   try
