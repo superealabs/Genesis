@@ -886,10 +886,10 @@
       {{tab}}    @Parameter(
       {{tab}}        description = "Sorting criteria in the format: property,(asc|desc). "
       {{tab}}                + "Multiple sort criteria can be passed using semicolon separator. "
-      {{tab}}                + "Example: id,asc;name,desc",
-      {{tab}}        example = "id,asc"
+      {{tab}}                + "Example: ${pkColumn},asc;name,desc",
+      {{tab}}        example = "${pkColumn},asc"
       {{tab}}    )
-      {{tab}}    @RequestParam(defaultValue = "id,asc") String sortParam,
+      {{tab}}    @RequestParam(defaultValue = "${pkColumn},asc") String sortParam,
       {{tab}}    @RequestBody ${majStart(className)} object) {
       {{tab}}
       {{tab}}    Sort sortObj = WebUtils.createSortObject(sortParam);
