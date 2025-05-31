@@ -1507,6 +1507,52 @@
         
                 return keyProperty.Name;
             }
+        
+            public async Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting)
+            {
+              IQueryable<T> query = _dbSet;
+              
+              // Récupère la propriété marquée [Key]
+              var keyProperty = typeof(T).GetProperties()
+              .FirstOrDefault(p => Attribute.IsDefined(p, typeof(KeyAttribute)));
+              
+              // Crée un filtre dynamique basé sur les propriétés non nulles (en ignorant la clé si elle vaut 0)
+              var properties = typeof(T).GetProperties()
+              .Where(p =>
+              {
+                if (!p.CanRead || !p.CanWrite)
+                return false;
+                
+                var value = p.GetValue(example);
+                
+                // Ignore les propriétés nulles
+                if (value == null)
+                return false;
+                
+                // Ignore la clé si elle vaut 0
+                if (p == keyProperty && value.Equals(Activator.CreateInstance(p.PropertyType)))
+                return false;
+                
+                return true;
+              });
+              
+              foreach (var prop in properties)
+              {
+                var value = prop.GetValue(example);
+                var parameter = Expression.Parameter(typeof(T), "x");
+                var propertyAccess = Expression.Property(parameter, prop);
+                var constant = Expression.Constant(value);
+                var equal = Expression.Equal(propertyAccess, constant);
+                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
+                query = query.Where(lambda);
+              }
+              
+              string sortOrder = sorting ?? $"{GetKeyPropertyName()},asc";
+              query = WebUtils.ApplySort(query, WebUtils.ParseSortingString(sortOrder));
+              query = query.Skip(page * pageSize).Take(pageSize);
+              
+              return await query.ToListAsync();
+            }
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Generic/"
