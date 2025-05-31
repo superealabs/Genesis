@@ -1628,6 +1628,12 @@
       {{tab}}[Column("${this.columnName}")]
       {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
+      }
+      public class ${majStart(className)}SearchModel
+      {
+      {{tab}}{{#each fields}}
+      {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+      {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/"
