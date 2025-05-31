@@ -1568,6 +1568,7 @@
         public interface IService<T, in TKey> where T : class
         {
             Task<IEnumerable<T>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
+            Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
