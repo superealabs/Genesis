@@ -1870,6 +1870,7 @@
       using Services;
       using Services.Interface;
       using Swashbuckle.AspNetCore.Annotations;
+      using ${majStart(projectName)}.Utils;
 
     controllerAnnotations: |
       [ApiController]
@@ -1917,6 +1918,25 @@
       {{tab}}{
       {{tab}}{{tab}}var ${minStart(className)} = await _service.GetByIdAsync(id{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
       {{tab}}{{tab}}return ${minStart(className)} == null ? NotFound() : Ok(${minStart(className)});
+      {{tab}}}
+      
+      {{tab}}[HttpPost("search")]
+      {{tab}}[SwaggerOperation(
+      {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
+      {{tab}})]
+      {{tab}}[SwaggerResponse(200, "Successfully retrieved the paginated list of ${formatReadableLowerCase(className)}", typeof(IEnumerable<${majStart(className)}>))]
+      {{tab}}[SwaggerResponse(204, "No ${formatReadableLowerCase(className)} found")]
+      {{tab}}public async Task<ActionResult<IEnumerable<${majStart(className)}>>> Search${majStart(className)}s(
+      {{tab}}   [FromBody] ${majStart(className)}SearchModel search,
+      {{tab}}   [FromQuery] int page = 0,
+      {{tab}}   [FromQuery] int pageSize = 10,
+      {{tab}}   [FromQuery] string? sortOrder = null
+      {{tab}})
+      {{tab}}{
+      {{tab}}{{tab}}var filter = new GenericMapper().Map<${majStart(className)}SearchModel, ${majStart(className)}>(search);
+      {{tab}}{{tab}}var results = await _service.SearchAsync(filter, page, pageSize, sortOrder);
+      {{tab}}{{tab}}return results.Any() ? Ok(results) : NoContent();
       {{tab}}}
       
       {{#if !isView}} 
