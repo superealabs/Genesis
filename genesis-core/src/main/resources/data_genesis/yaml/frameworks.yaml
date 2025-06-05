@@ -1612,9 +1612,10 @@
                     var convertedValue = Convert.ChangeType(value, Nullable.GetUnderlyingType(tProp.PropertyType) ?? tProp.PropertyType);
                     tProp.SetValue(target, convertedValue);
                   }
-                  catch
+                  catch (Exception ex)
                   {
-                    // Ignorer les conversions échouées
+                      // Afficher ou logguer l'erreur
+                      Console.WriteLine(ex.ToString());
                   }
                 }
               }
