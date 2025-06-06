@@ -1152,6 +1152,7 @@
         
         app.UseAuthorization();
         app.Run();
+        public partial class Program {}
       
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
 
@@ -1585,7 +1586,199 @@
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/"
     modelPackage: "${majStart(projectName)}.Models"
-    modelAdditionalFiles: [ ]
+    modelAdditionalFiles:
+      - fileType: "Unit Test File"
+        fileName: "${majStart(className)}ApplicationTests"
+        extension: "cs"
+        content: |
+          namespace ${majStart(projectName)}.Tests;
+  
+          using System.Net.Http;
+          using System.Linq.Expressions;
+          using Microsoft.AspNetCore.Mvc.Testing;
+          using Xunit;
+          using Microsoft.Extensions.DependencyInjection;
+          using ${majStart(projectName)}.Models;
+          using ${majStart(projectName)}.Services.Implementation;
+          using ${majStart(projectName)}.Repositories.Implementation;
+          using ${majStart(projectName)}.Data;
+          using ${majStart(projectName)}.Utils;
+
+          public class ${majStart(className)}ApplicationTests : IClassFixture<WebApplicationFactory<Program>>, IAsyncLifetime
+          {
+            private readonly WebApplicationFactory<Program> _factory;
+            private ${majStart(className)} mockData;
+            protected string CurrentTestName;
+            
+            public ${majStart(className)}ApplicationTests(WebApplicationFactory<Program> factory)
+            {
+              _factory = factory.WithWebHostBuilder(builder =>{});
+              
+              mockData = new ${majStart(className)}
+              {
+                {{#each fields}}
+                {{#if this.isPrimaryKey}}{{removeLine}}
+                {{elseIf this.isForeignKey}}{{removeLine}}
+                {{else}}${majStart(this.name)}= ${this.mockdata},{{/if}}
+                {{/each}}
+              };
+            }
+    
+            public async Task InitializeAsync()
+            {
+              CurrentTestName = "";
+              {{#if !isView}} 
+              using (var scope = _factory.Services.CreateScope())
+              {
+                // Résoudre le DbContext et les autres services dans ce scope
+                var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
+                var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
+                
+                // Act
+                await service.AddAsync(mockData);
+              }
+              {{else}}{{removeLine}}{{/if}}
+            }
+    
+            public async Task DisposeAsync()
+            {
+              {{#if !isView}} 
+              if (CurrentTestName == nameof(${majStart(className)}ApplicationTests.TestDelete))
+              return;
+              
+              using (var scope = _factory.Services.CreateScope())
+              {
+                var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
+                var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
+                await service.DeleteAsync(mockData.${majStart(pkColumn)});
+              }
+              {{else}}{{removeLine}}{{/if}}
+            }
+    
+            {{#if !isView}} 
+            [Fact]
+            public async Task TestCreate()
+            {
+              using (var scope = _factory.Services.CreateScope())
+              {
+                // Résoudre le DbContext et les autres services dans ce scope
+                var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
+                var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
+                
+                var otherMockData = new ${majStart(className)}
+                {
+                  {{#each fields}}
+                  {{#if this.isPrimaryKey}}{{removeLine}}
+                  {{elseIf this.isForeignKey}}{{removeLine}}
+                  {{else}}${majStart(this.name)} = ${this.mockdata},{{/if}}
+                  {{/each}}
+                };
+                await service.AddAsync(otherMockData);
+                await service.DeleteAsync(otherMockData.${majStart(pkColumn)});
+              }
+            }
+    
+            [Fact]
+            public async Task TestDelete()
+            {
+              CurrentTestName = nameof(TestDelete);
+              using (var scope = _factory.Services.CreateScope())
+              {
+                // Résoudre le DbContext et les autres services dans ce scope
+                var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
+                var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
+                await service.DeleteAsync(mockData.${majStart(pkColumn)});
+              }
+            }
+    
+            [Fact]
+            public async Task TestModify()
+            {
+              using (var scope = _factory.Services.CreateScope())
+              {
+                // Résoudre le DbContext et les autres services dans ce scope
+                var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
+                var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
+                
+                {{#each fields}}
+                {{#if this.isPrimaryKey}}{{removeLine}}
+                {{elseIf this.isForeignKey}}{{removeLine}}
+                {{else}}mockData.${majStart(this.name)} = ${this.mockdata};{{/if}}
+                {{/each}}
+                await service.UpdateAsync(mockData);
+              }
+            }
+            {{else}}{{removeLine}}{{/if}}
+    
+            [Fact]
+            public async Task TestGetAll()
+            {
+              using (var scope = _factory.Services.CreateScope())
+              {
+                var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
+                var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
+                
+                var result = await service.GetAllAsync(page: 0, pageSize: 10, sorting: null);
+                
+                Assert.NotNull(result);
+                {{#if !isView}}
+                Assert.True(result.Any(), "Aucun enregistrement trouvé dans GetAllAsync. Vérifiez si la base contient des données.");
+                {{else}}{{removeLine}}{{/if}}
+              }
+            }
+    
+            [Fact]
+            public async Task TestSearch()
+            {
+              using (var scope = _factory.Services.CreateScope())
+              {
+                var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
+                var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
+                
+                var search = new ${majStart(className)}SearchModel
+                {
+                  {{#each fields}}
+                  {{#if this.isPrimaryKey}}{{removeLine}}
+                  {{elseIf this.isForeignKey}}{{removeLine}}
+                  {{else}}${majStart(this.name)} = ${this.mockdata},
+                  {{/if}} 
+                  {{/each}}
+                };
+                var objectSearch = new GenericMapper().Map<${majStart(className)}SearchModel, ${majStart(className)}>(search);
+                
+                // Act
+                var result = await service.SearchAsync(objectSearch, page: 0, pageSize: 10, sorting: null);
+                
+                // Assert
+                Assert.NotNull(result);
+                {{#if !isView}} 
+                Assert.True(result.Any(), "Aucun ${className} trouvé avec le critère de recherche.");
+                {{else}}{{removeLine}}{{/if}}
+              }
+            }
+    
+            [Fact]
+            public async Task TestGetById()
+            {
+              using (var scope = _factory.Services.CreateScope())
+              {
+                var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
+                var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
+                
+                var result = await service.GetByIdAsync(mockData.${majStart(pkColumn)}, Array.Empty<Expression<Func<${majStart(className)}, object>>>());
+                
+                {{#if !isView}} 
+                // Assert
+                Assert.NotNull(result);
+                {{#each fields}}
+                {{#if this.isForeignKey}}{{removeLine}}
+                {{else}}Assert.Equal(mockData.${majStart(this.name)}, result?.${majStart(this.name)});{{/if}}
+                {{/each}}
+                {{else}}{{removeLine}}{{/if}}
+              }
+            }
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
   modelDao:
     toGenerate: true
     modelDaoImports: |
