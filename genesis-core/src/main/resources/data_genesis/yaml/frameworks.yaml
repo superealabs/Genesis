@@ -886,10 +886,10 @@
       {{tab}}    @Parameter(
       {{tab}}        description = "Sorting criteria in the format: property,(asc|desc). "
       {{tab}}                + "Multiple sort criteria can be passed using semicolon separator. "
-      {{tab}}                + "Example: id,asc;name,desc",
-      {{tab}}        example = "id,asc"
+      {{tab}}                + "Example: ${pkColumn},asc;name,desc",
+      {{tab}}        example = "${pkColumn},asc"
       {{tab}}    )
-      {{tab}}    @RequestParam(defaultValue = "id,asc") String sortParam,
+      {{tab}}    @RequestParam(defaultValue = "${pkColumn},asc") String sortParam,
       {{tab}}    @RequestBody ${majStart(className)} object) {
       {{tab}}
       {{tab}}    Sort sortObj = WebUtils.createSortObject(sortParam);
@@ -1394,6 +1394,7 @@
         public interface IRepository<T, in TKey> where T : class
         {
             Task<IEnumerable<T>> GetAllWithIncludes(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
+            Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -1507,6 +1508,52 @@
         
                 return keyProperty.Name;
             }
+        
+            public async Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting)
+            {
+              IQueryable<T> query = _dbSet;
+              
+              // Récupère la propriété marquée [Key]
+              var keyProperty = typeof(T).GetProperties()
+              .FirstOrDefault(p => Attribute.IsDefined(p, typeof(KeyAttribute)));
+              
+              // Crée un filtre dynamique basé sur les propriétés non nulles (en ignorant la clé si elle vaut 0)
+              var properties = typeof(T).GetProperties()
+              .Where(p =>
+              {
+                if (!p.CanRead || !p.CanWrite)
+                return false;
+                
+                var value = p.GetValue(example);
+                
+                // Ignore les propriétés nulles
+                if (value == null)
+                return false;
+                
+                // Ignore la clé si elle vaut 0
+                if (p == keyProperty && value.Equals(Activator.CreateInstance(p.PropertyType)))
+                return false;
+                
+                return true;
+              });
+              
+              foreach (var prop in properties)
+              {
+                var value = prop.GetValue(example);
+                var parameter = Expression.Parameter(typeof(T), "x");
+                var propertyAccess = Expression.Property(parameter, prop);
+                var constant = Expression.Constant(value);
+                var equal = Expression.Equal(propertyAccess, constant);
+                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
+                query = query.Where(lambda);
+              }
+              
+              string sortOrder = sorting ?? $"{GetKeyPropertyName()},asc";
+              query = WebUtils.ApplySort(query, WebUtils.ParseSortingString(sortOrder));
+              query = query.Skip(page * pageSize).Take(pageSize);
+              
+              return await query.ToListAsync();
+            }
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Generic/"
@@ -1522,6 +1569,7 @@
         public interface IService<T, in TKey> where T : class
         {
             Task<IEnumerable<T>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
+            Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -1529,6 +1577,54 @@
             Task<bool> ExistsAsync(TKey id);
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Generic/"
+
+    - fileType: "GenericMapper"
+      fileName: "GenericMapper"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+
+        public class GenericMapper
+        {
+          public TModel Map<TSource, TModel>(TSource source) where TModel : new()
+          {
+            if (source == null)
+            throw new ArgumentNullException(nameof(source));
+        
+            var sourceProps = typeof(TSource).GetProperties();
+            var targetProps = typeof(TModel).GetProperties();
+        
+            var target = new TModel();
+        
+            foreach (var sProp in sourceProps)
+            {
+              var tProp = targetProps.FirstOrDefault(p =>
+              p.Name.Equals(sProp.Name, StringComparison.OrdinalIgnoreCase) &&
+              p.CanWrite && p.CanRead);
+              
+              if (tProp != null)
+              {
+                var value = sProp.GetValue(source);
+                if (value != null)
+                {
+                  try
+                  {
+                    // Tentative de conversion
+                    var convertedValue = Convert.ChangeType(value, Nullable.GetUnderlyingType(tProp.PropertyType) ?? tProp.PropertyType);
+                    tProp.SetValue(target, convertedValue);
+                  }
+                  catch (Exception ex)
+                  {
+                      // Afficher ou logguer l'erreur
+                      Console.WriteLine(ex.ToString());
+                  }
+                }
+              }
+            }
+            return target;
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
   configurations:
     - name: "Logging Level"
@@ -1581,6 +1677,12 @@
       {{tab}}{{else}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
+      {{tab}}{{/each}}
+      }
+      public class ${majStart(className)}SearchModel
+      {
+      {{tab}}{{#each fields}}
+      {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
@@ -1863,6 +1965,18 @@
                   }
               }
           
+              public async Task<IEnumerable<${majStart(className)}>> SearchAsync(${majStart(className)} search, int page, int pageSize, string? sorting)
+              {
+                try
+                {
+                  return await _repository.SearchAsync(search, page, pageSize, sorting);
+                }
+                catch (Exception ex)
+                {
+                  throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
+                }
+              }
+          
               public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
                   try
@@ -1950,6 +2064,7 @@
       using Services;
       using Services.Interface;
       using Swashbuckle.AspNetCore.Annotations;
+      using ${majStart(projectName)}.Utils;
 
     controllerAnnotations: |
       [ApiController]
@@ -1997,6 +2112,25 @@
       {{tab}}{
       {{tab}}{{tab}}var ${minStart(className)} = await _service.GetByIdAsync(id{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
       {{tab}}{{tab}}return ${minStart(className)} == null ? NotFound() : Ok(${minStart(className)});
+      {{tab}}}
+      
+      {{tab}}[HttpPost("search")]
+      {{tab}}[SwaggerOperation(
+      {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
+      {{tab}})]
+      {{tab}}[SwaggerResponse(200, "Successfully retrieved the paginated list of ${formatReadableLowerCase(className)}", typeof(IEnumerable<${majStart(className)}>))]
+      {{tab}}[SwaggerResponse(204, "No ${formatReadableLowerCase(className)} found")]
+      {{tab}}public async Task<ActionResult<IEnumerable<${majStart(className)}>>> Search${majStart(className)}s(
+      {{tab}}   [FromBody] ${majStart(className)}SearchModel search,
+      {{tab}}   [FromQuery] int page = 0,
+      {{tab}}   [FromQuery] int pageSize = 10,
+      {{tab}}   [FromQuery] string? sortOrder = null
+      {{tab}})
+      {{tab}}{
+      {{tab}}{{tab}}var filter = new GenericMapper().Map<${majStart(className)}SearchModel, ${majStart(className)}>(search);
+      {{tab}}{{tab}}var results = await _service.SearchAsync(filter, page, pageSize, sortOrder);
+      {{tab}}{{tab}}return results.Any() ? Ok(results) : NoContent();
       {{tab}}}
       
       {{#if !isView}} 
