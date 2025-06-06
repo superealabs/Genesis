@@ -299,6 +299,41 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Properties/"
 
+    - fileType: "TestProjectFile"
+      fileName: "${majStart(projectName)}.Tests"
+      extension: "csproj"
+      content: |
+        <Project Sdk="Microsoft.NET.Sdk">
+
+          <PropertyGroup>
+            <TargetFramework>net${frameworkVersion}.0</TargetFramework>
+            <ImplicitUsings>enable</ImplicitUsings>
+            <Nullable>enable</Nullable>
+
+            <IsPackable>false</IsPackable>
+            <IsTestProject>true</IsTestProject>
+          </PropertyGroup>
+
+          <ItemGroup>
+            <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="${frameworkVersion}.1" />
+            <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
+            <PackageReference Include="xunit" Version="2.9.3" />
+            <PackageReference Include="xunit.runner.visualstudio" Version="3.1.0">
+              <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+              <PrivateAssets>all</PrivateAssets>
+            </PackageReference>
+          </ItemGroup>
+
+          <ItemGroup>
+            <Using Include="Xunit" />
+          </ItemGroup>
+
+          <ItemGroup>
+            <ProjectReference Include="..\${majStart(projectName)}\${majStart(projectName)}.csproj" />
+          </ItemGroup>
+
+        </Project>
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
 
   projectFiles:
     - fileType: "appSettingsDeveloppement"
