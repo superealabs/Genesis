@@ -1152,6 +1152,7 @@
         
         app.UseAuthorization();
         app.Run();
+        public partial class Program {}
       
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
 
