@@ -2,6 +2,7 @@ package org.labs.genesis.connexion.providers;
 
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -57,5 +58,259 @@ public class MySQLDatabase extends Database {
         return viewNames;
     }
 
+    private static final String STRICT_NUMERIC_CONSTRAINT_QUERY =
+            """
+                WITH parsed_constraints AS ( 
+                    SELECT
+                    CONSTRAINT_SCHEMA AS database_name,
+                    TABLE_NAME,
+                    CONSTRAINT_NAME,
+                    CHECK_CLAUSE,
+                    REPLACE(REPLACE(CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
+                    FROM information_schema.CHECK_CONSTRAINTS
+                    WHERE
+                    (%s)
+                ),\s
+                matches AS (\s
+                    SELECT
+                    database_name,
+                    TABLE_NAME,
+                    CONSTRAINT_NAME,
+                    CHECK_CLAUSE,
+                    cleaned_clause,
+                    REGEXP_SUBSTR(cleaned_clause, %s) AS match_direct,
+                    REGEXP_SUBSTR(cleaned_clause, '`(\\\\w+)`') AS col_direct,
+                    REGEXP_SUBSTR(cleaned_clause, '([0-9]+(?:\\\\.[0-9]+)?)') AS val_direct,
+                    REGEXP_SUBSTR(cleaned_clause, '`(\\\\w+)`$') AS col_inverse,
+                    REGEXP_SUBSTR(cleaned_clause, '^([0-9]+(?:\\\\.[0-9]+)?)') AS val_inverse\s
+                FROM parsed_constraints)
+                SELECT
+                    database_name,
+                    TABLE_NAME,
+                    COALESCE(TRIM(BOTH '`' FROM col_direct), TRIM(BOTH '`' FROM col_inverse)) AS column_name,
+                    COALESCE(val_direct, val_inverse) + 0 AS %s\s
+                FROM matches
+                WHERE table_name = ? and database_name = ?\s
+                    and (match_direct IS NOT NULL)
+            """;
 
+    @Override
+    protected void checkStrictMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        String sql = String.format(
+                STRICT_NUMERIC_CONSTRAINT_QUERY,
+                // WHERE
+                " (CHECK_CLAUSE LIKE '%>%' AND CHECK_CLAUSE NOT LIKE '%>=%')  ",
+                // match_direct
+                "'`(\\\\w+)`\\\\s*>\\\\s*([0-9]+(?:\\\\.[0-9]+)?)'",
+                // alias final
+                "min_value"
+        );
+
+        try (PreparedStatement stmt = connex.prepareStatement(sql)) {
+            stmt.setString(1, tableName);
+            stmt.setString(2, this.getCredentials().getDatabaseName());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String columnName = rs.getString("column_name");
+                    String value = rs.getString("min_value");
+
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
+                            col.setHasStrictMinimumConstraint(true);
+                            col.setStrictMinimumConstraint(value);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void checkStrictMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        String sql = String.format(
+                STRICT_NUMERIC_CONSTRAINT_QUERY,
+                // WHERE
+                " CHECK_CLAUSE REGEXP '`\\\\w+`\\\\s*<\\\\s*[0-9]+(?:\\\\.[0-9]+)?' OR CHECK_CLAUSE REGEXP '[0-9]+(?:\\\\.[0-9]+)?\\\\s*>\\\\s*`\\\\w+`' ",
+                // match_direct
+                "'`(\\\\w+)`\\\\s*<\\\\s*([0-9]+(?:\\\\.[0-9]+)?)'",
+                // alias final
+                "max_value"
+        );
+
+        try (PreparedStatement stmt = connex.prepareStatement(sql)) {
+            stmt.setString(1, tableName);
+            stmt.setString(2, this.getCredentials().getDatabaseName());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String columnName = rs.getString("column_name");
+                    String value = rs.getString("max_value");
+
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
+                            col.setHasStrictMaximumConstraint(true);
+                            col.setStrictMaximumConstraint(value);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static final String MINIMUM_NUMERIC_CONSTRAINT_QUERY = """
+                WITH parsed_constraints AS (
+                    SELECT
+                        CONSTRAINT_SCHEMA AS database_name,
+                        TABLE_NAME,
+                        CONSTRAINT_NAME,
+                        CHECK_CLAUSE,
+                        REPLACE(REPLACE(CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
+                    FROM information_schema.CHECK_CONSTRAINTS
+                    WHERE
+                        -- Inclure seulement celles avec >=, <= ou between
+                        (CHECK_CLAUSE LIKE '%>=%' OR CHECK_CLAUSE LIKE '%between%')
+                        -- MAIS exclure les contraintes qui contiennent AUSSI une borne basse strictement >
+                        AND CHECK_CLAUSE NOT REGEXP '^\\\\s*[0-9]+\\\\s*>='
+                ),
+                matches AS (
+                    SELECT
+                        database_name,
+                        TABLE_NAME,
+                        CONSTRAINT_NAME,
+                        CHECK_CLAUSE,
+                        cleaned_clause,
+                
+                        -- >=
+                        REGEXP_SUBSTR(cleaned_clause, '`(\\\\w+)`\\\\s*>=\\\\s*([0-9]+(?:\\\\.[0-9]+)?)') AS match_gte,
+                        -- BETWEEN
+                        REGEXP_SUBSTR(cleaned_clause, '`(\\\\w+)`\\\\s+between\\\\s+[0-9]+(?:\\\\.[0-9]+)?\\\\s+and\\\\s+[0-9]+(?:\\\\.[0-9]+)?') AS match_between,
+                
+                        -- colonnes et valeurs
+                        REGEXP_SUBSTR(cleaned_clause, '`(\\\\w+)`') AS col_gte,
+                        REGEXP_SUBSTR(cleaned_clause, '([0-9]+(?:\\\\.[0-9]+)?)') AS val_gte,
+                
+                        -- BETWEEN
+                        CASE\s
+                            WHEN cleaned_clause REGEXP '`(\\\\w+)`\\\\s+between\\\\s+([0-9.]+)\\\\s+and\\\\s+([0-9.]+)' THEN
+                                TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`(\\\\w+)`'))
+                        END AS col_between,
+                        CASE\s
+                            WHEN cleaned_clause REGEXP 'between\\\\s+([0-9.]+)\\\\s+and' THEN
+                                REGEXP_SUBSTR(cleaned_clause, '(?<=between\\\\s)[0-9]+(?:\\\\.[0-9]+)?')
+                        END AS val_between_min
+                from parsed_constraints
+                )
+                SELECT
+                    database_name,
+                    TABLE_NAME,
+                    COALESCE(col_between, TRIM(BOTH '`' FROM col_gte)) AS column_name,
+                    COALESCE(val_between_min, val_gte) + 0 AS min_value
+                FROM matches
+                WHERE table_name = ? and database_name = ? 
+                and (match_gte IS NOT NULL OR match_between IS NOT NULL);
+    """;
+
+    @Override
+    protected void checkMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        String sql = MINIMUM_NUMERIC_CONSTRAINT_QUERY;
+
+        try (PreparedStatement stmt = connex.prepareStatement(sql)) {
+            stmt.setString(1, tableName);
+            stmt.setString(2, this.getCredentials().getDatabaseName());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String columnName = rs.getString("column_name");
+                    String value = rs.getString("min_value");
+
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
+                            col.setHasMinimumConstraint(true);
+                            col.setMinimumConstraint(value);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static final String MAXIMUM_NUMERIC_CONSTRAINT_QUERY =
+            """
+                    WITH parsed_constraints AS (
+                        SELECT
+                            CONSTRAINT_SCHEMA AS database_name,
+                            TABLE_NAME,
+                            CONSTRAINT_NAME,
+                            CHECK_CLAUSE,
+                            REPLACE(REPLACE(CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
+                        FROM information_schema.CHECK_CONSTRAINTS
+                        WHERE
+                            -- Inclure seulement celles avec <= ou between
+                            (CHECK_CLAUSE LIKE '%<=%' OR CHECK_CLAUSE LIKE '%between%')
+                            -- MAIS exclure les contraintes qui contiennent AUSSI une borne haute stricte <
+                            AND CHECK_CLAUSE NOT REGEXP '`\\\\w+`\\\\s*<\\\\s*[0-9]'
+                    ),
+                    matches AS (
+                        SELECT
+                            database_name,
+                            TABLE_NAME,
+                            CONSTRAINT_NAME,
+                            CHECK_CLAUSE,
+                            cleaned_clause,
+                    
+                            -- <= (forme directe)
+                            REGEXP_SUBSTR(cleaned_clause, '`(\\\\w+)`\\\\s*<=\\\\s*([0-9]+(?:\\\\.[0-9]+)?)') AS match_lte,
+                    
+                            -- BETWEEN
+                            REGEXP_SUBSTR(cleaned_clause, '`(\\\\w+)`\\\\s+between\\\\s+[0-9]+(?:\\\\.[0-9]+)?\\\\s+and\\\\s+[0-9]+(?:\\\\.[0-9]+)?') AS match_between,
+                    
+                            -- colonnes et valeurs
+                            REGEXP_SUBSTR(cleaned_clause, '`(\\\\w+)`') AS col_lte,
+                            REGEXP_REPLACE(cleaned_clause, '.*`\\\\w+`\\\\s*<=\\\\s*([0-9]+(?:\\\\.[0-9]+)?).*', '\\\\1') AS val_lte,
+                    
+                            -- BETWEEN
+                            CASE\s
+                                WHEN cleaned_clause REGEXP '`(\\\\w+)`\\\\s+between\\\\s+([0-9.]+)\\\\s+and\\\\s+([0-9.]+)' THEN
+                                    TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`(\\\\w+)`'))
+                            END AS col_between,
+                            CASE\s
+                                WHEN cleaned_clause REGEXP 'between\\\\s+[0-9.]+\\\\s+and\\\\s+([0-9.]+)' THEN
+                                    REGEXP_SUBSTR(cleaned_clause, '(?<=and\\\\s)[0-9]+(?:\\\\.[0-9]+)?')
+                            END AS val_between_max
+                        FROM parsed_constraints
+                    )
+                    SELECT
+                        database_name,
+                        TABLE_NAME,
+                        COALESCE(col_between, TRIM(BOTH '`' FROM col_lte)) AS column_name,
+                        COALESCE(val_between_max, val_lte) + 0 AS max_value
+                    FROM matches
+                    WHERE table_name = ? and database_name = ? 
+                    and (match_lte IS NOT NULL OR match_between IS NOT NULL);
+            """;
+
+    @Override
+    protected void checkMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        String sql = MAXIMUM_NUMERIC_CONSTRAINT_QUERY;
+
+        try (PreparedStatement stmt = connex.prepareStatement(sql)) {
+            stmt.setString(1, tableName);
+            stmt.setString(2, this.getCredentials().getDatabaseName());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String columnName = rs.getString("column_name");
+                    String value = rs.getString("max_value");
+
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
+                            col.setHasMaximumConstraint(true);
+                            col.setMaximumConstraint(value);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
