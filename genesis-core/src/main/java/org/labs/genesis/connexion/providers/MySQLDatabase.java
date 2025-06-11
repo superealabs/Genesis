@@ -374,4 +374,37 @@ public class MySQLDatabase extends Database {
             }
         }
     }
+
+    private static final String MIN_LENGTH_SQL = """
+        SELECT
+            table_name
+            constraint_name,
+            check_clause,
+            REPLACE(REGEXP_SUBSTR(check_clause, '`(\\\\w+)`'), '`', '') AS column_name,
+            REGEXP_SUBSTR(check_clause, '(>=|>)') AS operator,
+            CAST(REGEXP_SUBSTR(check_clause, '\\\\d+$') AS UNSIGNED) AS min_length
+        FROM information_schema.check_constraints
+        WHERE table_name = ? and CONSTRAINT_SCHEMA = ?
+        and check_clause REGEXP 'char_length\\\\s*\\\\(.*\\\\)\\\\s*(>=|>)\\\\s*\\\\d+';
+    """;
+
+    protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        try (PreparedStatement stmt = connex.prepareStatement(MIN_LENGTH_SQL)) {
+            stmt.setString(1, tableName);
+            stmt.setString(2, this.getCredentials().getDatabaseName());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String colName = rs.getString("column_name");
+                    String minLength = rs.getString("min_length");
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
+                            col.setHasMinimumLengthConstraint(true);
+                            col.setMinimumLengthConstraint(minLength);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
