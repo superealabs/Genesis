@@ -238,4 +238,31 @@ public abstract class Database {
         return columnType.trim();
     }
 
+
+    protected boolean isColumnNumeric(ResultSet column) throws Exception {
+        int dataType = column.getInt("DATA_TYPE");
+
+        return dataType == Types.INTEGER ||
+                dataType == Types.SMALLINT ||
+                dataType == Types.TINYINT ||
+                dataType == Types.BIGINT ||
+                dataType == Types.FLOAT ||
+                dataType == Types.REAL ||
+                dataType == Types.DOUBLE ||
+                dataType == Types.NUMERIC ||
+                dataType == Types.DECIMAL;
+    }
+
+    protected boolean isColumnNumericWithPrecision(ResultSet column) throws Exception {
+        int dataType = column.getInt("DATA_TYPE");
+        int columnSize = column.getInt("COLUMN_SIZE");
+        int decimalDigits = column.getInt("DECIMAL_DIGITS");
+
+        if ((dataType == Types.NUMERIC || dataType == Types.DECIMAL)
+                && columnSize > 0
+                && decimalDigits > 0) {
+            return true;
+        }
+        return false;
+    }
 }
