@@ -323,4 +323,9 @@ public abstract class Database {
     protected void checkPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
     protected void checkStrictFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
     protected void checkFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
+
+    protected void checkNotBlankConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
+    protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
+    protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
+
 }
