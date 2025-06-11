@@ -296,4 +296,21 @@ public abstract class Database {
                 dataType == Types.TIME_WITH_TIMEZONE ||
                 dataType == Types.TIMESTAMP_WITH_TIMEZONE;
     }
+
+    protected void checkUnique(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> listeCols) throws SQLException {
+        try (ResultSet indexes = metaData.getIndexInfo(null, this.getCredentials().getSchemaName(), tableName, false, true)) {
+            while (indexes.next()) {
+                String columnNameInIndex = indexes.getString("COLUMN_NAME");
+                boolean isUnique = !indexes.getBoolean("NON_UNIQUE");
+
+                for(ColumnMetadata col : listeCols){
+                    if (col.getName().equals(columnNameInIndex)) {
+                        col.setUnique(isUnique);
+                        break;
+                    }
+                }
+
+            }
+        }
+    }
 }
