@@ -182,9 +182,9 @@ public abstract class Database {
         return viewNames;
     }
 
-    private List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language, Database database) throws SQLException {
+    public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language,Connection connex) throws SQLException {
         List<ColumnMetadata> listeCols = new ArrayList<>();
-        try (ResultSet columns = metaData.getColumns(null, database.getCredentials().getSchemaName(), tableName, null)) {
+        try (ResultSet columns = metaData.getColumns(null, this.getCredentials().getSchemaName(), tableName, null)) {
             while (columns.next()) {
                 ColumnMetadata column = new ColumnMetadata();
                 String columnName = columns.getString("COLUMN_NAME");

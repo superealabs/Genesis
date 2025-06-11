@@ -52,7 +52,7 @@ public class TableMetadata {
             //Initialise l'entité en le considérant comme table
             setIsView(false);
 
-            List<ColumnMetadata> listeCols = database.fetchColumns(metaData, tableName, language);
+            List<ColumnMetadata> listeCols = database.fetchColumns(metaData, tableName, language,connect);
             fetchPrimaryKeys(metaData, tableName, listeCols);
             fetchForeignKeys(metaData, tableName, language, listeCols);
 
