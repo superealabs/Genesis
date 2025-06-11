@@ -2,8 +2,10 @@ package org.labs.genesis.connexion;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 
 import java.sql.*;
@@ -12,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.labs.utils.StringUtils.toCamelCase;
 @Setter
 @Getter
 public abstract class Database {
@@ -178,4 +181,54 @@ public abstract class Database {
 
         return viewNames;
     }
+
+    private List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language, Database database) throws SQLException {
+        List<ColumnMetadata> listeCols = new ArrayList<>();
+        try (ResultSet columns = metaData.getColumns(null, database.getCredentials().getSchemaName(), tableName, null)) {
+            while (columns.next()) {
+                ColumnMetadata column = new ColumnMetadata();
+                String columnName = columns.getString("COLUMN_NAME");
+                String columnType = columns.getString("TYPE_NAME");
+
+                column.setName(toCamelCase(columnName.toLowerCase()));
+                column.setReferencedColumn(columnName);
+
+                if (language.getTypes().get(getDatabaseType(database, columns)) == null)
+                    throw new RuntimeException("Database type not supported yet : " + columnType);
+                else
+                    column.setType(language.getTypes().get(getDatabaseType(database, columns)));
+
+                column.setColumnType(columnType);
+                listeCols.add(column);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return listeCols;
+    }
+
+    private String getDatabaseType(Database database, ResultSet columns) throws Exception {
+        String columnType = columns.getString("TYPE_NAME");
+
+        if (columns.getInt("DATA_TYPE") == Types.NUMERIC && database.getId() == Constantes.Oracle_ID) {
+            if (columns.getInt("DECIMAL_DIGITS") > 0) {
+                columnType = getBeforeBracketsSimple(columnType) + "(*,*)";
+            } else {
+                columnType = getBeforeBracketsSimple(columnType);
+            }
+        }
+        if (columns.getInt("DATA_TYPE") == Types.TIMESTAMP && database.getId() == Constantes.Oracle_ID) {
+            columnType = getBeforeBracketsSimple(columnType);
+        }
+        return database.getTypes().get(columnType);
+    }
+
+    private String getBeforeBracketsSimple(String columnType) {
+        int index = columnType.indexOf('(');
+        if (index != -1) {
+            return columnType.substring(0, index).trim();
+        }
+        return columnType.trim();
+    }
+
 }

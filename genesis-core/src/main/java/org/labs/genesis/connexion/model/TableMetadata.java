@@ -52,7 +52,7 @@ public class TableMetadata {
             //Initialise l'entité en le considérant comme table
             setIsView(false);
 
-            List<ColumnMetadata> listeCols = fetchColumns(metaData, tableName, language, database);
+            List<ColumnMetadata> listeCols = database.fetchColumns(metaData, tableName, language);
             fetchPrimaryKeys(metaData, tableName, listeCols);
             fetchForeignKeys(metaData, tableName, language, listeCols);
 
@@ -125,56 +125,6 @@ public class TableMetadata {
 
     public List<TableMetadata> initializeViews(List<String> viewNames, Connection connex, Credentials credentials, Database database, Language language) throws SQLException, ClassNotFoundException {
         return initializeTableType(viewNames, connex, credentials, database, language, true);
-    }
-
-
-    private List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language, Database database) throws SQLException {
-        List<ColumnMetadata> listeCols = new ArrayList<>();
-        try (ResultSet columns = metaData.getColumns(null, database.getCredentials().getSchemaName(), tableName, null)) {
-            while (columns.next()) {
-                ColumnMetadata column = new ColumnMetadata();
-                String columnName = columns.getString("COLUMN_NAME");
-                String columnType = columns.getString("TYPE_NAME");
-
-                column.setName(toCamelCase(columnName.toLowerCase()));
-                column.setReferencedColumn(columnName);
-
-                if (language.getTypes().get(getDatabaseType(database, columns)) == null)
-                    throw new RuntimeException("Database type not supported yet : " + columnType);
-                else
-                    column.setType(language.getTypes().get(getDatabaseType(database, columns)));
-
-                column.setColumnType(columnType);
-                listeCols.add(column);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return listeCols;
-    }
-
-    private String getDatabaseType(Database database, ResultSet columns) throws Exception {
-        String columnType = columns.getString("TYPE_NAME");
-
-        if (columns.getInt("DATA_TYPE") == Types.NUMERIC && database.getId() == Constantes.Oracle_ID) {
-            if (columns.getInt("DECIMAL_DIGITS") > 0) {
-                columnType = getBeforeBracketsSimple(columnType) + "(*,*)";
-            } else {
-                columnType = getBeforeBracketsSimple(columnType);
-            }
-        }
-        if (columns.getInt("DATA_TYPE") == Types.TIMESTAMP && database.getId() == Constantes.Oracle_ID) {
-            columnType = getBeforeBracketsSimple(columnType);
-        }
-        return database.getTypes().get(columnType);
-    }
-
-    private String getBeforeBracketsSimple(String columnType) {
-        int index = columnType.indexOf('(');
-        if (index != -1) {
-            return columnType.substring(0, index).trim();
-        }
-        return columnType.trim();
     }
 
     private void fetchPrimaryKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> columns) throws SQLException {
