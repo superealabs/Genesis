@@ -192,11 +192,10 @@ public abstract class Database {
 
                 column.setName(toCamelCase(columnName.toLowerCase()));
                 column.setReferencedColumn(columnName);
-
-                if (language.getTypes().get(getDatabaseType(database, columns)) == null)
+                if (language.getTypes().get(getDatabaseType(columns)) == null)
                     throw new RuntimeException("Database type not supported yet : " + columnType);
                 else
-                    column.setType(language.getTypes().get(getDatabaseType(database, columns)));
+                    column.setType(language.getTypes().get(getDatabaseType(columns)));
 
                 column.setColumnType(columnType);
                 listeCols.add(column);
@@ -207,20 +206,20 @@ public abstract class Database {
         return listeCols;
     }
 
-    private String getDatabaseType(Database database, ResultSet columns) throws Exception {
+    private String getDatabaseType(ResultSet columns) throws Exception {
         String columnType = columns.getString("TYPE_NAME");
 
-        if (columns.getInt("DATA_TYPE") == Types.NUMERIC && database.getId() == Constantes.Oracle_ID) {
+        if (columns.getInt("DATA_TYPE") == Types.NUMERIC && this.getId() == Constantes.Oracle_ID) {
             if (columns.getInt("DECIMAL_DIGITS") > 0) {
                 columnType = getBeforeBracketsSimple(columnType) + "(*,*)";
             } else {
                 columnType = getBeforeBracketsSimple(columnType);
             }
         }
-        if (columns.getInt("DATA_TYPE") == Types.TIMESTAMP && database.getId() == Constantes.Oracle_ID) {
+        if (columns.getInt("DATA_TYPE") == Types.TIMESTAMP && this.getId() == Constantes.Oracle_ID) {
             columnType = getBeforeBracketsSimple(columnType);
         }
-        return database.getTypes().get(columnType);
+        return this.getTypes().get(columnType);
     }
 
     private String getBeforeBracketsSimple(String columnType) {
