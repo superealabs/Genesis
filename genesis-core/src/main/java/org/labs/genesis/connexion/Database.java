@@ -190,8 +190,16 @@ public abstract class Database {
                 String columnName = columns.getString("COLUMN_NAME");
                 String columnType = columns.getString("TYPE_NAME");
 
+                String isNullable = columns.getString("IS_NULLABLE");
+                String defaultValue = columns.getString("COLUMN_DEF");
+                int decimalDigits = columns.getInt("DECIMAL_DIGITS");
+                int columnSize = columns.getInt("COLUMN_SIZE");
                 column.setName(toCamelCase(columnName.toLowerCase()));
                 column.setReferencedColumn(columnName);
+                column.setNullable(isNullable);
+                column.setDefaultValue(defaultValue);
+                column.setDecimalDigits(decimalDigits);
+                column.setColumnSize(columnSize);
                 if (language.getTypes().get(getDatabaseType(columns)) == null)
                     throw new RuntimeException("Database type not supported yet : " + columnType);
                 else
