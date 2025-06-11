@@ -314,6 +314,7 @@ public class PostgreSQLDatabase extends Database {
             }
         }
     }
+
     private static final String TRIM_NOT_BLANK_SQL = """
         WITH check_constraints AS (
             SELECT
@@ -340,5 +341,22 @@ public class PostgreSQLDatabase extends Database {
         WHERE cc.table_name = ?
         ORDER BY cc.table_name, column_name;
     """;
+
+    protected void checkNotBlankConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        try (PreparedStatement stmt = connex.prepareStatement(TRIM_NOT_BLANK_SQL)) {
+            stmt.setString(1, tableName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String colName = rs.getString("column_name");
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
+                            col.setHasNotBlankConstraint(true);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
