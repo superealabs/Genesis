@@ -269,4 +269,15 @@ public abstract class Database {
         }
         return false;
     }
+
+    protected boolean isColumnText(ResultSet column) throws SQLException {
+        int dataType = column.getInt("DATA_TYPE");
+
+        return dataType == Types.CHAR ||
+                dataType == Types.VARCHAR ||
+                dataType == Types.LONGVARCHAR ||
+                dataType == Types.NCHAR ||
+                dataType == Types.NVARCHAR ||
+                dataType == Types.LONGNVARCHAR;
+    }
 }
