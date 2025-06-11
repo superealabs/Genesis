@@ -406,5 +406,67 @@ public class PostgreSQLDatabase extends Database {
             }
         }
     }
+
+    private static final String REGEX_CONSTRAINT_SQL = """
+        WITH check_constraints AS (
+            SELECT
+                c.conname AS constraint_name,
+                t.relname AS table_name,
+                pg_get_constraintdef(c.oid) AS constraint_definition
+            FROM pg_constraint c
+            JOIN pg_class t ON c.conrelid = t.oid
+            WHERE c.contype = 'c'
+                AND t.relkind = 'r'
+                AND pg_get_constraintdef(c.oid) ~ '(::text)?\\s*~\\*?\\s*'''
+        ),
+        regex_matches AS (
+            SELECT
+                constraint_name,
+                table_name,
+                constraint_definition,
+                regexp_replace(constraint_definition, E'[()]', '', 'g') AS cleaned_def
+            FROM check_constraints
+        ),
+        parsed AS (
+            SELECT
+                constraint_name,
+                table_name,
+                constraint_definition,
+                regexp_matches(
+                    cleaned_def,
+                    E'(\\\\w+)(::text)?\\\\s*(~\\\\*?)\\\\s*''([^'']+)''(::text)?',
+                    'i'
+                ) AS match
+            FROM regex_matches
+        )
+        SELECT
+            constraint_name,
+            table_name,
+            match[1] AS column_name,
+            match[3] AS operator,
+            match[4] AS regex_pattern,
+            constraint_definition
+        FROM parsed
+        WHERE table_name = ?;
+    """;
+
+    protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        try (PreparedStatement stmt = connex.prepareStatement(REGEX_CONSTRAINT_SQL)) {
+            stmt.setString(1, tableName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String colName = rs.getString("column_name");
+                    String pattern = rs.getString("regex_pattern");
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
+                            col.setHasRegexConstraint(true);
+                            col.setRegexConstraint(pattern);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
