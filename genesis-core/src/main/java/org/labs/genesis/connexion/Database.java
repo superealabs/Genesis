@@ -313,4 +313,9 @@ public abstract class Database {
             }
         }
     }
+
+    protected void checkStrictMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
+    protected void checkMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
+    protected void checkStrictMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
+    protected void checkMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
 }
