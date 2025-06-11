@@ -282,4 +282,14 @@ public abstract class Database {
                 dataType == Types.NVARCHAR ||
                 dataType == Types.LONGNVARCHAR;
     }
+
+    private boolean isColumnDate(ResultSet column) throws SQLException {
+        int dataType = column.getInt("DATA_TYPE");
+
+        return dataType == Types.DATE ||
+                dataType == Types.TIME ||
+                dataType == Types.TIMESTAMP ||
+                dataType == Types.TIME_WITH_TIMEZONE ||
+                dataType == Types.TIMESTAMP_WITH_TIMEZONE;
+    }
 }
