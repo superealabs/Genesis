@@ -221,6 +221,23 @@ public abstract class Database {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        try {
+            checkUnique(metaData, tableName, listeCols);
+            checkStrictMinConstraint(connex, tableName, listeCols);
+            checkMinConstraint(connex, tableName, listeCols);
+            checkStrictMaxConstraint(connex, tableName, listeCols);
+            checkMaxConstraint(connex, tableName, listeCols);
+            checkStrictPastDateConstraint(connex, tableName, listeCols);
+            checkPastDateConstraint(connex, tableName, listeCols);
+            checkStrictFutureDateConstraint(connex, tableName, listeCols);
+            checkFutureDateConstraint(connex, tableName, listeCols);
+            checkNotBlankConstraint(connex, tableName, listeCols);
+            checkMinLengthConstraint(connex, tableName, listeCols);
+            checkRegexConstraint(connex, tableName, listeCols);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return listeCols;
     }
 
