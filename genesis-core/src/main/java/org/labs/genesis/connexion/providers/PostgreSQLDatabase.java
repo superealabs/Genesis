@@ -180,5 +180,139 @@ public class PostgreSQLDatabase extends Database {
             }
         }
     }
+
+    private static final String GENERIC_DATE_CHECK_SQL = """
+        WITH check_constraints AS (
+            SELECT
+                c.conname AS constraint_name,
+                t.relname AS table_name,
+                pg_get_constraintdef(c.oid) AS constraint_definition
+            FROM
+                pg_constraint c
+            JOIN
+                pg_class t ON c.conrelid = t.oid
+            WHERE
+                c.contype = 'c'  -- CHECK
+                AND t.relkind = 'r'  -- tables
+                AND (
+                    pg_get_constraintdef(c.oid) ~* '%s'
+                    OR pg_get_constraintdef(c.oid) ~* '%s'
+                )
+        ),
+        parsed AS (
+            SELECT
+                constraint_name,
+                table_name,
+                constraint_definition,
+                regexp_matches(constraint_definition, '%s', 'i') AS m1,
+                regexp_matches(constraint_definition, '%s', 'i') AS m2
+            FROM
+                check_constraints
+        )
+        SELECT
+            constraint_name,
+            table_name,
+            COALESCE(m1[1], m2[3]) AS column_name,
+            COALESCE(m1[2], m2[2]) AS operator,
+            COALESCE(m1[3], m2[1]) AS date_function
+        FROM
+            parsed
+        WHERE
+            table_name = ?
+            AND (m1 IS NOT NULL OR m2 IS NOT NULL)
+        ORDER BY
+            table_name,
+            column_name;
+    """;
+
+    protected void checkStrictPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        // Strict past: col > CURRENT_DATE ou CURRENT_DATE < col
+        String pattern1 = "(\\w+)\\s*(>)\\s*(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\\(\\))";
+        String pattern2 = "(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\\(\\))\\s*(<)\\s*(\\w+)";
+        String sql = String.format(GENERIC_DATE_CHECK_SQL, pattern1, pattern2, pattern1, pattern2);
+
+        try (PreparedStatement stmt = connex.prepareStatement(sql)) {
+            stmt.setString(1, tableName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String colName = rs.getString("column_name");
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
+                            col.setHasStrictPastDateConstraint(true);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    protected void checkPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        // Past with inclusion: col >= CURRENT_DATE ou CURRENT_DATE <= col
+        String pattern1 = "(\\w+)\\s*(>=)\\s*(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\\(\\))";
+        String pattern2 = "(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\\(\\))\\s*(<=)\\s*(\\w+)";
+        String sql = String.format(GENERIC_DATE_CHECK_SQL, pattern1, pattern2, pattern1, pattern2);
+
+        try (PreparedStatement stmt = connex.prepareStatement(sql)) {
+            stmt.setString(1, tableName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String colName = rs.getString("column_name");
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
+                            col.setHasPastDateConstraint(true);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    protected void checkStrictFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        // Strict future: col < CURRENT_DATE ou CURRENT_DATE > col
+        String pattern1 = "(\\w+)\\s*(<)\\s*(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\\(\\))";
+        String pattern2 = "(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\\(\\))\\s*(>)\\s*(\\w+)";
+        String sql = String.format(GENERIC_DATE_CHECK_SQL, pattern1, pattern2, pattern1, pattern2);
+
+        try (PreparedStatement stmt = connex.prepareStatement(sql)) {
+            stmt.setString(1, tableName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String colName = rs.getString("column_name");
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
+                            col.setHasStrictFutureDateConstraint(true);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    protected void checkFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        // Future with inclusion: col <= CURRENT_DATE ou CURRENT_DATE >= col
+        String pattern1 = "(\\w+)\\s*(<=)\\s*(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\\(\\))";
+        String pattern2 = "(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\\(\\))\\s*(>=)\\s*(\\w+)";
+        String sql = String.format(GENERIC_DATE_CHECK_SQL, pattern1, pattern2, pattern1, pattern2);
+
+        try (PreparedStatement stmt = connex.prepareStatement(sql)) {
+            stmt.setString(1, tableName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String colName = rs.getString("column_name");
+                    String operator = rs.getString("operator");
+                    String dateFunc = rs.getString("date_function");
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
+                            col.setHasFutureDateConstraint(true);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
