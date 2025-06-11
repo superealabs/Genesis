@@ -314,5 +314,31 @@ public class PostgreSQLDatabase extends Database {
             }
         }
     }
+    private static final String TRIM_NOT_BLANK_SQL = """
+        WITH check_constraints AS (
+            SELECT
+                c.conname AS constraint_name,
+                t.relname AS table_name,
+                pg_get_constraintdef(c.oid) AS constraint_definition
+            FROM pg_constraint c
+            JOIN pg_class t ON c.conrelid = t.oid
+            WHERE c.contype = 'c'
+              AND t.relkind = 'r'
+              AND pg_get_constraintdef(c.oid) ~* '(<>\s*''|::text\s*<>\s*''::text)'
+        )
+        SELECT
+            cc.constraint_name,
+            cc.table_name,
+            cc.constraint_definition,
+            matches[1] AS column_name
+        FROM check_constraints cc
+        CROSS JOIN LATERAL regexp_matches(
+            cc.constraint_definition,
+            '(?:trim\\s*\\(\\s*(?:both\\s+from\\s+)?(\\w+)\\s*\\)|(\\w+)|\\(?(\\w+)\\)?::text)\\s*<>\\s*''(?:::text)?',
+            'i'
+        ) AS matches
+        WHERE cc.table_name = ?
+        ORDER BY cc.table_name, column_name;
+    """;
 }
 
