@@ -196,6 +196,7 @@ public abstract class Database {
                 int columnSize = columns.getInt("COLUMN_SIZE");
                 boolean isColumnNumeric = isColumnNumeric(columns);
                 boolean isColumnNumericWithPrecision = isColumnNumericWithPrecision(columns);
+                boolean isColumnText = isColumnText(columns);
                 column.setName(toCamelCase(columnName.toLowerCase()));
                 column.setReferencedColumn(columnName);
                 column.setNullable(isNullable);
@@ -204,6 +205,7 @@ public abstract class Database {
                 column.setColumnSize(columnSize);
                 column.setNumeric(isColumnNumeric);
                 column.setNumericWithPrecision(isColumnNumericWithPrecision);
+                column.setText(isColumnText);
                 if (language.getTypes().get(getDatabaseType(columns)) == null)
                     throw new RuntimeException("Database type not supported yet : " + columnType);
                 else
