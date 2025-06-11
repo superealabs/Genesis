@@ -313,4 +313,65 @@ public class MySQLDatabase extends Database {
             }
         }
     }
+
+    private static final String TRIM_NOT_BLANK_SQL = """
+        with cc1 as (SELECT
+            cc.CONSTRAINT_NAME,
+            cc.CONSTRAINT_SCHEMA,
+            cc.TABLE_NAME,
+            cc.CHECK_CLAUSE,
+            CASE
+                -- cas : trim(colonne) <> ''
+                WHEN cc.CHECK_CLAUSE REGEXP 'trim\\\\(\\\\s*`?([a-zA-Z0-9_]+)`?\\\\s*\\\\)\\\\s*<>\\\\s*''''|''''\\\\s*<>\\\\s*trim\\\\(\\\\s*`?([a-zA-Z0-9_]+)`?\\\\s*\\\\)'
+                    THEN
+                        CASE
+                            WHEN cc.CHECK_CLAUSE LIKE 'trim(%' THEN
+                                TRIM(BOTH '`' FROM SUBSTRING_INDEX(SUBSTRING_INDEX(cc.CHECK_CLAUSE, 'trim(', -1), ')', 1))
+                            ELSE
+                                TRIM(BOTH '`' FROM SUBSTRING_INDEX(SUBSTRING_INDEX(cc.CHECK_CLAUSE, '<>', -1), ')', 1))
+                        END
+                -- cas : colonne <> ''
+                WHEN cc.CHECK_CLAUSE REGEXP '`?([a-zA-Z0-9_]+)`?\\\\s*<>\\\\s*''''|''''\\\\s*<>\\\\s*`?([a-zA-Z0-9_]+)`?'
+                    THEN
+                        CASE
+                            WHEN cc.CHECK_CLAUSE LIKE "'' <>%" THEN
+                                TRIM(BOTH ' `' FROM SUBSTRING_INDEX(cc.CHECK_CLAUSE, '>', -1))
+                            ELSE
+                                TRIM(BOTH ' `' FROM SUBSTRING_INDEX(cc.CHECK_CLAUSE, '<>', 1))
+                        END
+                ELSE NULL
+            END AS column_name
+        FROM information_schema.check_constraints cc
+        WHERE cc.CHECK_CLAUSE REGEXP '(trim\\\\(\\\\s*`?[a-zA-Z0-9_]+`?\\\\s*\\\\)\\\\s*<>\\\\s*''''|''''\\\\s*<>\\\\s*trim\\\\(\\\\s*`?[a-zA-Z0-9_]+`?\\\\)|`?[a-zA-Z0-9_]+`?\\\\s*<>\\\\s*''''|''''\\\\s*<>\\\\s*`?[a-zA-Z0-9_]+`?)'),
+        cc as (
+        SELECT
+            cc.CONSTRAINT_NAME,
+            cc.CONSTRAINT_SCHEMA,
+            cc.TABLE_NAME,
+            cc.CHECK_CLAUSE,
+            trim(REPLACE(REPLACE(cc.column_name, '`', ''), '`', ''))AS column_name
+            from cc1 cc)
+            select * from cc
+        WHERE table_name = ? and CONSTRAINT_SCHEMA = ? 
+        and cc.CHECK_CLAUSE REGEXP '(trim\\\\(\\\\s*`?[a-zA-Z0-9_]+`?\\\\s*\\\\)\\\\s*<>\\\\s*''''|''''\\\\s*<>\\\\s*trim\\\\(\\\\s*`?[a-zA-Z0-9_]+`?\\\\)|`?[a-zA-Z0-9_]+`?\\\\s*<>\\\\s*''''|''''\\\\s*<>\\\\s*`?[a-zA-Z0-9_]+`?)'
+        ORDER BY cc.TABLE_NAME, column_name;
+    """;
+
+    protected void checkNotBlankConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        try (PreparedStatement stmt = connex.prepareStatement(TRIM_NOT_BLANK_SQL)) {
+            stmt.setString(1, tableName);
+            stmt.setString(2, this.getCredentials().getDatabaseName());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String colName = rs.getString("column_name");
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
+                            col.setHasNotBlankConstraint(true);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
