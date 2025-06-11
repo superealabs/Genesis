@@ -407,4 +407,59 @@ public class MySQLDatabase extends Database {
             }
         }
     }
+
+    private static final String REGEX_CONSTRAINT_SQL = """
+        
+        WITH check_constraints AS (
+            SELECT
+                table_name,
+                constraint_name,
+                check_clause,
+                CONSTRAINT_SCHEMA
+            FROM information_schema.check_constraints
+            WHERE check_clause LIKE '%REGEXP%'
+        ),
+        regex_matches AS (
+            SELECT
+                table_name,
+                constraint_name,
+                check_clause,
+                CONSTRAINT_SCHEMA,
+                -- Nouvelle regex pour extraire le nom de colonne même s'il est entre backticks
+                TRIM(BOTH '`' FROM REGEXP_SUBSTR(check_clause, '^`?\\\\w+`?')) AS column_name,
+                UPPER(REGEXP_SUBSTR(check_clause, '\\\\s(REGEXP)\\\\s')) AS operator,
+                TRIM(BOTH '\\'' FROM REGEXP_SUBSTR(check_clause, "'[^']+'")) AS regex_pattern
+            FROM check_constraints
+        )
+        SELECT
+            table_name,
+            constraint_name,
+            column_name,
+            operator,
+            regex_pattern,
+            check_clause
+        FROM regex_matches
+        WHERE table_name = ? and CONSTRAINT_SCHEMA = ?
+        ORDER BY table_name, column_name;
+    """;
+
+    protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        try (PreparedStatement stmt = connex.prepareStatement(REGEX_CONSTRAINT_SQL)) {
+            stmt.setString(1, tableName);
+            stmt.setString(2, this.getCredentials().getDatabaseName());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String colName = rs.getString("column_name");
+                    String pattern = rs.getString("regex_pattern");
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
+                            col.setHasRegexConstraint(true);
+                            col.setRegexConstraint(pattern);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
