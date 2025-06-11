@@ -358,5 +358,53 @@ public class PostgreSQLDatabase extends Database {
             }
         }
     }
+
+    private static final String MIN_LENGTH_SQL = """
+        WITH check_constraints AS (
+            SELECT
+                c.conname AS constraint_name,
+                t.relname AS table_name,
+                pg_get_constraintdef(c.oid) AS constraint_definition
+            FROM pg_constraint c
+            JOIN pg_class t ON c.conrelid = t.oid
+            WHERE c.contype = 'c'
+              AND t.relkind = 'r'
+              AND pg_get_constraintdef(c.oid) ~* 'length\\s*\\('
+        )
+        SELECT
+            cc.constraint_name,
+            cc.table_name,
+            cc.constraint_definition,
+            matches[1] AS column_name,
+            matches[3] AS operator,
+            matches[4]::int AS min_length
+        FROM check_constraints cc
+        CROSS JOIN LATERAL regexp_matches(
+            cc.constraint_definition,
+            'length\\s*\\(\\s*\\(*\\s*(\\w+)\\s*\\)*\\s*(::text)?\\s*\\)\\s*(>=|>)\\s*(\\d+)',
+            'i'
+        ) AS matches
+        WHERE cc.table_name = ?
+        ORDER BY cc.table_name, column_name;
+    """;
+
+    protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        try (PreparedStatement stmt = connex.prepareStatement(MIN_LENGTH_SQL)) {
+            stmt.setString(1, tableName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String colName = rs.getString("column_name");
+                    String minLength = rs.getString("min_length");
+                    for (ColumnMetadata col : columns) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
+                            col.setHasMinimumLengthConstraint(true);
+                            col.setMinimumLengthConstraint(minLength);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
