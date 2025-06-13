@@ -1,0 +1,55 @@
+- databaseId: 1
+  databaseName: "MySQL"
+  checkMinimumConstraintQuery: |
+  checkMaximumConstraintQuery: |
+  checkStrictMinimumConstraintQuery: |
+  checkStrictMaximumConstraintQuery: |
+  checkPastDateConstraintQuery: |
+  checkFutureDateConstraintQuery: |
+  checkStrictPastDateConstraintQuery: |
+  checkStrictFutureDateConstraintQuery: |
+  checkNotBlankConstraintQuery: |
+  checkMinimumLengthConstraintQuery: |
+  checkRegexConstraintQuery: |
+
+- databaseId: 2
+  databaseName: "PostgreSQL"
+  checkMinimumConstraintQuery: |
+  checkMaximumConstraintQuery: |
+  checkStrictMinimumConstraintQuery: |
+  checkStrictMaximumConstraintQuery: |
+  checkPastDateConstraintQuery: |
+  checkFutureDateConstraintQuery: |
+  checkStrictPastDateConstraintQuery: |
+  checkStrictFutureDateConstraintQuery: |
+  checkNotBlankConstraintQuery: |
+  checkMinimumLengthConstraintQuery: |
+  checkRegexConstraintQuery: |    
+
+- databaseId: 3
+  databaseName: "SQL Server"
+  checkMinimumConstraintQuery: |
+  checkMaximumConstraintQuery: |
+  checkStrictMinimumConstraintQuery: |
+  checkStrictMaximumConstraintQuery: |
+  checkPastDateConstraintQuery: |
+  checkFutureDateConstraintQuery: |
+  checkStrictPastDateConstraintQuery: |
+  checkStrictFutureDateConstraintQuery: |
+  checkNotBlankConstraintQuery: |
+  checkMinimumLengthConstraintQuery: |
+  checkRegexConstraintQuery: |
+
+- databaseId: 4
+  databaseName: "Oracle"
+  checkMinimumConstraintQuery: |
+  checkMaximumConstraintQuery: |
+  checkStrictMinimumConstraintQuery: |
+  checkStrictMaximumConstraintQuery: |
+  checkPastDateConstraintQuery: |
+  checkFutureDateConstraintQuery: |
+  checkStrictPastDateConstraintQuery: |
+  checkStrictFutureDateConstraintQuery: |
+  checkNotBlankConstraintQuery: |
+  checkMinimumLengthConstraintQuery: |
+  checkRegexConstraintQuery: |    
