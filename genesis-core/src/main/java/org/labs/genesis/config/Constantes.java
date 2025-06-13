@@ -5,6 +5,7 @@ public class Constantes {
     public static final String LANGUAGE_JSON = "data_genesis/json/languages.json";
     public static final String FRAMEWORK_YAML = "data_genesis/yaml/frameworks.yaml";
     public static final String PROJECT_YAML = "data_genesis/yaml/projects.yaml";
+    public static final String CONSTRAINT_QUERIES_YAML = "data_genesis/yaml/constraint-queries.yaml";
     public static final String DATA_PATH = "data_genesis";
     public static final String MODEL_TEMPLATE_EXT = "genesis";
 
