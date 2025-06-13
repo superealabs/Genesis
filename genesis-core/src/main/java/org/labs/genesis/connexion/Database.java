@@ -7,14 +7,14 @@ import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
+import org.labs.utils.FileUtils;
 
+import java.io.IOException;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.labs.utils.StringUtils.toCamelCase;
+
 @Setter
 @Getter
 public abstract class Database {
@@ -34,6 +34,7 @@ public abstract class Database {
     private Credentials credentials;
     private Map<String, Object> databaseMetadata;
     private Map<String, Framework.Dependency> dependencies;
+    private ConstraintQueries constraintQueries;
 
     public Connection getConnection(Credentials credentials) throws ClassNotFoundException, SQLException {
         setCredentials(credentials);
@@ -180,6 +181,13 @@ public abstract class Database {
         }
 
         return viewNames;
+    }
+
+    public void setConstraintQueries() throws IOException {
+        this.constraintQueries = Arrays.stream(FileUtils.fromYaml(ConstraintQueries[].class, Constantes.CONSTRAINT_QUERIES_YAML))
+                .filter(q -> q.getDatabaseId() == this.id)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No ConstraintQueries found for id : " + this.id));
     }
 
     public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language,Connection connex) throws SQLException {
