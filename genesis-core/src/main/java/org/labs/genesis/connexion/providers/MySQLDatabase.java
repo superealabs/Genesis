@@ -2,6 +2,7 @@ package org.labs.genesis.connexion.providers;
 
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -151,6 +152,7 @@ public class MySQLDatabase extends Database {
         }
     }
 
+    @Override
     protected void checkNotBlankConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
         String sql = this.getConstraintQueries().getCheckNotBlankConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
@@ -170,6 +172,7 @@ public class MySQLDatabase extends Database {
         }
     }
 
+    @Override
     protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
         String sql = this.getConstraintQueries().getCheckMinimumLengthConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
@@ -191,6 +194,7 @@ public class MySQLDatabase extends Database {
         }
     }
 
+    @Override
     protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
         String sql = this.getConstraintQueries().getCheckRegexConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
