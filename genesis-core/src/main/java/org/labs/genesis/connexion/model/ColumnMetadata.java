@@ -3,6 +3,11 @@ package org.labs.genesis.connexion.model;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
+import org.labs.genesis.engine.GenesisTemplateEngine;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Setter
 @Getter
@@ -16,40 +21,22 @@ public class ColumnMetadata {
     private String columnType;
     private String referencedColumn;
     private String referencedColumnType;
-    private boolean nullable;
-    private String defaultValue;
-    private int decimalDigits;
-    private int columnSize;
     private boolean unique;
+    private boolean nullable;
     private boolean isNumeric;
     private boolean isNumericWithPrecision;
     private boolean isText;
     private boolean isDate;
-
-    private boolean hasStrictMinimumConstraint;
-    private String strictMinimumConstraint;
-
-    private boolean hasMinimumConstraint;
-    private String minimumConstraint;
-
-    private boolean hasStrictMaximumConstraint;
-    private String strictMaximumConstraint;
-
-    private boolean hasMaximumConstraint;
-    private String maximumConstraint;
+    private String defaultValue;
+    private int decimalDigits;
+    private int columnSize;
+    private Map<String, Object> validationAnnotations=new HashMap<>();
 
     private boolean hasStrictPastDateConstraint;
     private boolean hasPastDateConstraint;
 
     private boolean hasStrictFutureDateConstraint;
     private boolean hasFutureDateConstraint;
-    private boolean hasNotBlankConstraint;
-
-    private boolean hasMinimumLengthConstraint;
-    private String minimumLengthConstraint;
-
-    private boolean hasRegexConstraint;
-    private String regexConstraint;
 
     public void setNullable(String nullable) {
         if(nullable.equalsIgnoreCase("YES")){
