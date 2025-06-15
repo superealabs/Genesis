@@ -32,12 +32,6 @@ public class ColumnMetadata {
     private int columnSize;
     private Map<String, Object> validationAnnotations=new HashMap<>();
 
-    private boolean hasStrictPastDateConstraint;
-    private boolean hasPastDateConstraint;
-
-    private boolean hasStrictFutureDateConstraint;
-    private boolean hasFutureDateConstraint;
-
     public void setNullable(String nullable, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
         if(nullable.equalsIgnoreCase("YES")){
             this.nullable = true;
