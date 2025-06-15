@@ -5,8 +5,10 @@ import lombok.Setter;
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
+import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
 
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.sql.*;
 import java.util.*;
 
 import static org.labs.utils.StringUtils.toCamelCase;
+import java.util.*;
 
 @Setter
 @Getter
@@ -35,6 +38,7 @@ public abstract class Database {
     private Map<String, Object> databaseMetadata;
     private Map<String, Framework.Dependency> dependencies;
     private ConstraintQueries constraintQueries;
+    protected static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
 
     public Connection getConnection(Credentials credentials) throws ClassNotFoundException, SQLException {
         setCredentials(credentials);
@@ -193,6 +197,7 @@ public abstract class Database {
     public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language,Connection connex,Framework framework) throws SQLException {
         List<ColumnMetadata> listeCols = new ArrayList<>();
         try (ResultSet columns = metaData.getColumns(null, this.getCredentials().getSchemaName(), tableName, null)) {
+            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
             while (columns.next()) {
                 ColumnMetadata column = new ColumnMetadata();
                 String columnName = columns.getString("COLUMN_NAME");
