@@ -55,41 +55,41 @@ public abstract class Database {
 
     public abstract String getJdbcUrl(Credentials credentials);
 
-    public TableMetadata getEntity(Connection connection, Credentials credentials, String entityName, Language language) throws SQLException, ClassNotFoundException {
+    public TableMetadata getEntity(Connection connection, Credentials credentials, String entityName, Language language, Framework framework) throws SQLException, ClassNotFoundException {
         TableMetadata tableMetadata = new TableMetadata();
         tableMetadata.setTableName(entityName);
-        tableMetadata.initialize(connection, credentials, this, language);
+        tableMetadata.initialize(connection, credentials, this, language,framework);
         return tableMetadata;
     }
 
-    public List<TableMetadata> getEntities(Connection connection, Credentials credentials, Language language) throws SQLException, ClassNotFoundException {
+    public List<TableMetadata> getEntities(Connection connection, Credentials credentials, Language language,Framework framework) throws SQLException, ClassNotFoundException {
         TableMetadata tableMetadata = new TableMetadata();
-        return tableMetadata.initializeTables(null, connection, credentials, this, language);
+        return tableMetadata.initializeTables(null, connection, credentials, this, language,framework);
     }
 
-    public List<TableMetadata> getViews(Connection connection, Credentials credentials, Language language) throws SQLException, ClassNotFoundException {
+    public List<TableMetadata> getViews(Connection connection, Credentials credentials, Language language,Framework framework) throws SQLException, ClassNotFoundException {
         TableMetadata tableMetadata = new TableMetadata();
-        return tableMetadata.initializeViews(null, connection, credentials, this, language);
+        return tableMetadata.initializeViews(null, connection, credentials, this, language,framework);
     }
 
-    public List<TableMetadata> getEntitiesByNames(List<String> entityNames, Connection connection, Credentials credentials, Language language) throws SQLException, ClassNotFoundException {
+    public List<TableMetadata> getEntitiesByNames(List<String> entityNames, Connection connection, Credentials credentials, Language language, Framework framework) throws SQLException, ClassNotFoundException {
         if (entityNames.isEmpty())
-            return getEntities(connection, credentials, language);
+            return getEntities(connection, credentials, language, framework);
 
         List<TableMetadata> tableMetadataList = new ArrayList<>();
         for (String entityName : entityNames) {
-            tableMetadataList.add(getEntity(connection, credentials, entityName, language));
+            tableMetadataList.add(getEntity(connection, credentials, entityName, language, framework));
         }
         return tableMetadataList;
     }
 
-    public List<TableMetadata> getViewsByNames(List<String> viewNames, Connection connection, Credentials credentials, Language language) throws SQLException, ClassNotFoundException {
+    public List<TableMetadata> getViewsByNames(List<String> viewNames, Connection connection, Credentials credentials, Language language, Framework framework) throws SQLException, ClassNotFoundException {
         if (viewNames.isEmpty())
-            return getViews(connection, credentials, language);
+            return getViews(connection, credentials, language, framework);
 
         List<TableMetadata> tableMetadataList = new ArrayList<>();
         for (String viewName : viewNames) {
-            TableMetadata viewEntity = getEntity(connection, credentials, viewName, language);
+            TableMetadata viewEntity = getEntity(connection, credentials, viewName, language, framework);
             viewEntity.setIsView(true);
             viewEntity.setPKForView();
             tableMetadataList.add(viewEntity);
@@ -190,7 +190,7 @@ public abstract class Database {
                 .orElseThrow(() -> new IllegalStateException("No ConstraintQueries found for id : " + this.id));
     }
 
-    public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language,Connection connex) throws SQLException {
+    public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language,Connection connex,Framework framework) throws SQLException {
         List<ColumnMetadata> listeCols = new ArrayList<>();
         try (ResultSet columns = metaData.getColumns(null, this.getCredentials().getSchemaName(), tableName, null)) {
             while (columns.next()) {
@@ -231,18 +231,18 @@ public abstract class Database {
         }
 
         try {
-            checkUnique(metaData, tableName, listeCols);
-            checkStrictMinConstraint(connex, tableName, listeCols);
-            checkMinConstraint(connex, tableName, listeCols);
-            checkStrictMaxConstraint(connex, tableName, listeCols);
-            checkMaxConstraint(connex, tableName, listeCols);
-            checkStrictPastDateConstraint(connex, tableName, listeCols);
-            checkPastDateConstraint(connex, tableName, listeCols);
-            checkStrictFutureDateConstraint(connex, tableName, listeCols);
-            checkFutureDateConstraint(connex, tableName, listeCols);
-            checkNotBlankConstraint(connex, tableName, listeCols);
-            checkMinLengthConstraint(connex, tableName, listeCols);
-            checkRegexConstraint(connex, tableName, listeCols);
+            checkUnique(metaData, tableName, listeCols,framework);
+            checkStrictMinConstraint(connex, tableName, listeCols,framework);
+            checkMinConstraint(connex, tableName, listeCols,framework);
+            checkStrictMaxConstraint(connex, tableName, listeCols,framework);
+            checkMaxConstraint(connex, tableName, listeCols,framework);
+            checkStrictPastDateConstraint(connex, tableName, listeCols,framework);
+            checkPastDateConstraint(connex, tableName, listeCols,framework);
+            checkStrictFutureDateConstraint(connex, tableName, listeCols,framework);
+            checkFutureDateConstraint(connex, tableName, listeCols,framework);
+            checkNotBlankConstraint(connex, tableName, listeCols,framework);
+            checkMinLengthConstraint(connex, tableName, listeCols,framework);
+            checkRegexConstraint(connex, tableName, listeCols,framework);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -322,7 +322,7 @@ public abstract class Database {
                 dataType == Types.TIMESTAMP_WITH_TIMEZONE;
     }
 
-    protected void checkUnique(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> listeCols) throws SQLException {
+    protected void checkUnique(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> listeCols, Framework framework) throws SQLException {
         try (ResultSet indexes = metaData.getIndexInfo(null, this.getCredentials().getSchemaName(), tableName, false, true)) {
             while (indexes.next()) {
                 String columnNameInIndex = indexes.getString("COLUMN_NAME");
@@ -339,18 +339,18 @@ public abstract class Database {
         }
     }
 
-    protected void checkStrictMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
-    protected void checkMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
-    protected void checkStrictMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
-    protected void checkMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
+    protected void checkStrictMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
+    protected void checkMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
+    protected void checkStrictMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
+    protected void checkMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
 
-    protected void checkStrictPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
-    protected void checkPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
-    protected void checkStrictFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
-    protected void checkFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
+    protected void checkStrictPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
+    protected void checkPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
+    protected void checkStrictFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
+    protected void checkFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
 
-    protected void checkNotBlankConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
-    protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
-    protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws Exception {}
+    protected void checkNotBlankConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
+    protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
+    protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
 
 }
