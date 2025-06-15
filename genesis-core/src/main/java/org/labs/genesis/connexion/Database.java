@@ -214,14 +214,15 @@ public abstract class Database {
 
                 column.setName(toCamelCase(columnName.toLowerCase()));
                 column.setReferencedColumn(columnName);
-                column.setNullable(isNullable);
-                column.setDefaultValue(defaultValue);
-                column.setDecimalDigits(decimalDigits);
-                column.setColumnSize(columnSize);
                 column.setNumeric(isColumnNumeric);
                 column.setNumericWithPrecision(isColumnNumericWithPrecision);
                 column.setText(isColumnText);
                 column.setDate(isColumnDate);
+
+                column.setNullable(isNullable,frameworkValidationAnnotations,engine);
+                column.setDefaultValue(defaultValue,frameworkValidationAnnotations,engine);
+                column.setColumnSize(columnSize,frameworkValidationAnnotations,engine);
+                column.setDecimalDigits(decimalDigits,frameworkValidationAnnotations,engine);
 
                 if (language.getTypes().get(getDatabaseType(columns)) == null)
                     throw new RuntimeException("Database type not supported yet : " + columnType);

@@ -38,11 +38,45 @@ public class ColumnMetadata {
     private boolean hasStrictFutureDateConstraint;
     private boolean hasFutureDateConstraint;
 
-    public void setNullable(String nullable) {
+    public void setNullable(String nullable, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
         if(nullable.equalsIgnoreCase("YES")){
             this.nullable = true;
             return;
         }
         this.nullable = false;
+        Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(this);
+        String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("notNull","{{removeLine}}");
+        String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+        this.validationAnnotations.put("notNull",annotationResult);
+    }
+
+    public void setDefaultValue(String defaultValue, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
+        this.defaultValue = defaultValue;
+        if (defaultValue!=null && !this.isDate){
+            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(this);
+            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("defaultValue","{{removeLine}}");
+            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+            this.validationAnnotations.put("defaultValue",annotationResult);
+        }
+    }
+
+    public void setColumnSize(int columnSize, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
+        this.columnSize = columnSize;
+        if (this.isText) {
+            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(this);
+            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("maxSize","{{removeLine}}");
+            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+            this.validationAnnotations.put("maxSize",annotationResult);
+        }
+    }
+
+    public void setDecimalDigits(int decimalDigits, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
+        this.decimalDigits = decimalDigits;
+        if(this.isNumericWithPrecision){
+            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(this);
+            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("digits","{{removeLine}}");
+            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+            this.validationAnnotations.put("digits",annotationResult);
+        }
     }
 }
