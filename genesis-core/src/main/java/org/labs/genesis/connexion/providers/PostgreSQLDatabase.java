@@ -1,14 +1,15 @@
 package org.labs.genesis.connexion.providers;
 
+import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class PostgreSQLDatabase extends Database {
     @Override
@@ -56,7 +57,7 @@ public class PostgreSQLDatabase extends Database {
     }
 
     @Override
-    protected void checkStrictMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkStrictMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckStrictMinimumConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -67,8 +68,12 @@ public class PostgreSQLDatabase extends Database {
 
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
-                            col.setHasStrictMinimumConstraint(true);
-                            col.setStrictMinimumConstraint(value);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            fieldHashMap.put("value",value);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMinimumValue","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("numericMinimumValue",annotationResult);
                             break;
                         }
                     }
@@ -78,7 +83,7 @@ public class PostgreSQLDatabase extends Database {
     }
 
     @Override
-    protected void checkMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckMinimumConstraintQuery();
 
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
@@ -90,8 +95,12 @@ public class PostgreSQLDatabase extends Database {
 
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
-                            col.setHasMinimumConstraint(true);
-                            col.setMinimumConstraint(value);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            fieldHashMap.put("value",value);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMinimumInclusiveValue","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("numericMinimumInclusiveValue",annotationResult);
                             break;
                         }
                     }
@@ -101,7 +110,7 @@ public class PostgreSQLDatabase extends Database {
     }
 
     @Override
-    protected void checkStrictMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkStrictMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckStrictMaximumConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -112,8 +121,13 @@ public class PostgreSQLDatabase extends Database {
 
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
-                            col.setHasStrictMaximumConstraint(true);
-                            col.setStrictMaximumConstraint(value);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            fieldHashMap.put("value",value);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMaximumValue","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("numericMaximumValue",annotationResult);
+
                             break;
                         }
                     }
@@ -123,7 +137,7 @@ public class PostgreSQLDatabase extends Database {
     }
 
     @Override
-    protected void checkMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckMaximumConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -134,8 +148,12 @@ public class PostgreSQLDatabase extends Database {
 
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
-                            col.setHasMaximumConstraint(true);
-                            col.setMaximumConstraint(value);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            fieldHashMap.put("value",value);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMaximumInclusiveValue","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("numericMaximumInclusiveValue",annotationResult);
                             break;
                         }
                     }
@@ -145,7 +163,7 @@ public class PostgreSQLDatabase extends Database {
     }
 
     @Override
-    protected void checkStrictPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkStrictPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         // Strict past: col > CURRENT_DATE ou CURRENT_DATE < col
         String sql = this.getConstraintQueries().getCheckStrictPastDateConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
@@ -155,7 +173,11 @@ public class PostgreSQLDatabase extends Database {
                     String colName = rs.getString("column_name");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
-                            col.setHasStrictPastDateConstraint(true);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("past","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("past",annotationResult);
                             break;
                         }
                     }
@@ -165,7 +187,7 @@ public class PostgreSQLDatabase extends Database {
     }
 
     @Override
-    protected void checkPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         // Past with inclusion: col >= CURRENT_DATE ou CURRENT_DATE <= col
         String sql = this.getConstraintQueries().getCheckPastDateConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
@@ -175,7 +197,11 @@ public class PostgreSQLDatabase extends Database {
                     String colName = rs.getString("column_name");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
-                            col.setHasPastDateConstraint(true);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("pastOrPresent","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("pastOrPresent",annotationResult);
                             break;
                         }
                     }
@@ -185,7 +211,7 @@ public class PostgreSQLDatabase extends Database {
     }
 
     @Override
-    protected void checkStrictFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkStrictFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         // Strict future: col < CURRENT_DATE ou CURRENT_DATE > col
         String sql = this.getConstraintQueries().getCheckStrictFutureDateConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
@@ -195,7 +221,11 @@ public class PostgreSQLDatabase extends Database {
                     String colName = rs.getString("column_name");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
-                            col.setHasStrictFutureDateConstraint(true);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("future","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("future",annotationResult);
                             break;
                         }
                     }
@@ -205,7 +235,7 @@ public class PostgreSQLDatabase extends Database {
     }
 
     @Override
-    protected void checkFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         // Future with inclusion: col <= CURRENT_DATE ou CURRENT_DATE >= col
         String sql = this.getConstraintQueries().getCheckFutureDateConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
@@ -217,7 +247,11 @@ public class PostgreSQLDatabase extends Database {
                     String dateFunc = rs.getString("date_function");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
-                            col.setHasFutureDateConstraint(true);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("futureOrPresent","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("futureOrPresent",annotationResult);
                             break;
                         }
                     }
@@ -227,7 +261,7 @@ public class PostgreSQLDatabase extends Database {
     }
 
     @Override
-    protected void checkNotBlankConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkNotBlankConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckNotBlankConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -236,7 +270,11 @@ public class PostgreSQLDatabase extends Database {
                     String colName = rs.getString("column_name");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
-                            col.setHasNotBlankConstraint(true);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("notBlank","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("notBlank",annotationResult);
                             break;
                         }
                     }
@@ -246,7 +284,7 @@ public class PostgreSQLDatabase extends Database {
     }
 
     @Override
-    protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckMinimumLengthConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -256,8 +294,13 @@ public class PostgreSQLDatabase extends Database {
                     String minLength = rs.getString("min_length");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
-                            col.setHasMinimumLengthConstraint(true);
-                            col.setMinimumLengthConstraint(minLength);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            fieldHashMap.put("minLength",minLength);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("minAndMaxSize","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().remove("maxSize");
+                            col.getValidationAnnotations().put("minAndMaxSize",annotationResult);
                             break;
                         }
                     }
@@ -267,7 +310,7 @@ public class PostgreSQLDatabase extends Database {
     }
 
     @Override
-    protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckRegexConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -277,8 +320,12 @@ public class PostgreSQLDatabase extends Database {
                     String pattern = rs.getString("regex_pattern");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
-                            col.setHasRegexConstraint(true);
-                            col.setRegexConstraint(pattern);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            fieldHashMap.put("value",pattern);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("regexPattern","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("regexPattern",annotationResult);
                             break;
                         }
                     }
