@@ -299,6 +299,10 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("referencedColumnType", field.getReferencedColumnType());
         fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
+        fieldMap.put("defaultValue", field.getDefaultValue());
+        fieldMap.put("columnSize", field.getColumnSize());
+        fieldMap.put("decimalDigits", field.getDecimalDigits());
+        fieldMap.put("isUnique", field.isUnique());
 
         return fieldMap;
     }
@@ -319,6 +323,10 @@ public class FrameworkMetadataProvider {
         fieldMap.put("attributeTypeAnnotations", language.getAttributeTypeAnnotations().get(field.getType()));
         fieldMap.put("mockdata", language.getMockData().get(field.getColumnType()));
         fieldMap.put("criteriaBuildSnippet", language.getCriteriaBuildSnippet().get(field.getColumnType()));
+        fieldMap.put("defaultValue", field.getDefaultValue());
+        fieldMap.put("columnSize", field.getColumnSize());
+        fieldMap.put("decimalDigits", field.getDecimalDigits());
+        fieldMap.put("isUnique", field.isUnique());
 
         return fieldMap;
     }
