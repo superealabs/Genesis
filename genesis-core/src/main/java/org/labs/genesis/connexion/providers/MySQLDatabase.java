@@ -1,12 +1,16 @@
 package org.labs.genesis.connexion.providers;
 
+import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
+import org.labs.genesis.engine.GenesisTemplateEngine;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class MySQLDatabase extends Database {
 
@@ -59,7 +63,7 @@ public class MySQLDatabase extends Database {
     }
 
     @Override
-    protected void checkStrictMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkStrictMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckStrictMinimumConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -71,8 +75,12 @@ public class MySQLDatabase extends Database {
 
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
-                            col.setHasStrictMinimumConstraint(true);
-                            col.setStrictMinimumConstraint(value);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            fieldHashMap.put("value",value);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMinimumValue","{{removeLine}}");
+                            String annotationResult = this.engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("numericMinimumValue",annotationResult);
                             break;
                         }
                     }
@@ -82,7 +90,7 @@ public class MySQLDatabase extends Database {
     }
 
     @Override
-    protected void checkStrictMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkStrictMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckStrictMaximumConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -94,8 +102,13 @@ public class MySQLDatabase extends Database {
 
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
-                            col.setHasStrictMaximumConstraint(true);
-                            col.setStrictMaximumConstraint(value);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            fieldHashMap.put("value",value);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMaximumValue","{{removeLine}}");
+                            String annotationResult = this.engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("numericMaximumValue",annotationResult);
+
                             break;
                         }
                     }
@@ -105,7 +118,7 @@ public class MySQLDatabase extends Database {
     }
 
     @Override
-    protected void checkMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckMinimumConstraintQuery();
 
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
@@ -118,8 +131,13 @@ public class MySQLDatabase extends Database {
 
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
-                            col.setHasMinimumConstraint(true);
-                            col.setMinimumConstraint(value);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            fieldHashMap.put("value",value);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMinimumInclusiveValue","{{removeLine}}");
+                            String annotationResult = this.engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("numericMinimumInclusiveValue",annotationResult);
+
                             break;
                         }
                     }
@@ -129,7 +147,7 @@ public class MySQLDatabase extends Database {
     }
 
     @Override
-    protected void checkMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckMaximumConstraintQuery();
 
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
@@ -142,8 +160,12 @@ public class MySQLDatabase extends Database {
 
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
-                            col.setHasMaximumConstraint(true);
-                            col.setMaximumConstraint(value);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            fieldHashMap.put("value",value);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMaximumInclusiveValue","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("numericMaximumInclusiveValue",annotationResult);
                             break;
                         }
                     }
@@ -153,7 +175,7 @@ public class MySQLDatabase extends Database {
     }
 
     @Override
-    protected void checkNotBlankConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkNotBlankConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckNotBlankConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -163,7 +185,11 @@ public class MySQLDatabase extends Database {
                     String colName = rs.getString("column_name");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
-                            col.setHasNotBlankConstraint(true);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("notBlank","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("notBlank",annotationResult);
                             break;
                         }
                     }
@@ -173,7 +199,7 @@ public class MySQLDatabase extends Database {
     }
 
     @Override
-    protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckMinimumLengthConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -184,8 +210,13 @@ public class MySQLDatabase extends Database {
                     String minLength = rs.getString("min_length");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
-                            col.setHasMinimumLengthConstraint(true);
-                            col.setMinimumLengthConstraint(minLength);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            fieldHashMap.put("minLength",minLength);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("minAndMaxSize","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().remove("maxSize");
+                            col.getValidationAnnotations().put("minAndMaxSize",annotationResult);
                             break;
                         }
                     }
@@ -195,7 +226,7 @@ public class MySQLDatabase extends Database {
     }
 
     @Override
-    protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns) throws SQLException {
+    protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckRegexConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -206,8 +237,13 @@ public class MySQLDatabase extends Database {
                     String pattern = rs.getString("regex_pattern");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
-                            col.setHasRegexConstraint(true);
-                            col.setRegexConstraint(pattern);
+                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
+                            fieldHashMap.put("value",pattern);
+                            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("regexPattern","{{removeLine}}");
+                            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                            col.getValidationAnnotations().put("regexPattern",annotationResult);
+
                             break;
                         }
                     }
