@@ -138,41 +138,41 @@
                             and (match_direct IS NOT NULL)
   checkStrictMaximumConstraintQuery: |
     WITH parsed_constraints AS ( 
-                        SELECT
-                        CONSTRAINT_SCHEMA AS database_name,
-                        TABLE_NAME,
-                        CONSTRAINT_NAME,
-                        CHECK_CLAUSE,
-                        REPLACE(REPLACE(CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
-                        FROM information_schema.CHECK_CONSTRAINTS
-                        WHERE
-                        (CHECK_CLAUSE REGEXP '`\\w+`\\s*<\\s*[0-9]+(?:\\.[0-9]+)?' OR CHECK_CLAUSE REGEXP '[0-9]+(?:\\.[0-9]+)?\\s*>\\s*`\\w+`')
-                    ),
-                    matches AS (
-                        SELECT
-                        database_name,
-                        TABLE_NAME,
-                        CONSTRAINT_NAME,
-                        CHECK_CLAUSE,
-                        cleaned_clause,
-                        REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`\\s*<\\s*([0-9]+(?:\\.[0-9]+)?)') AS match_direct,
-                        REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`') AS col_direct,
-                        REGEXP_SUBSTR(cleaned_clause, '([0-9]+(?:\\.[0-9]+)?)') AS val_direct,
-                        REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`$') AS col_inverse,
-                        REGEXP_SUBSTR(cleaned_clause, '^([0-9]+(?:\\.[0-9]+)?)') AS val_inverse
-                    FROM parsed_constraints)
-                    SELECT
-                        database_name,
-                        TABLE_NAME,
-                        COALESCE(TRIM(BOTH '`' FROM col_direct), TRIM(BOTH '`' FROM col_inverse)) AS column_name,
-                        COALESCE(val_direct, val_inverse) + 0 AS max_value
-                    FROM matches
-                    WHERE table_name = ? and database_name = ?
-                        and (match_direct IS NOT NULL)
-  checkPastDateConstraintQuery: ""
-  checkFutureDateConstraintQuery: ""
-  checkStrictPastDateConstraintQuery: ""
-  checkStrictFutureDateConstraintQuery: ""
+                           SELECT
+                           CONSTRAINT_SCHEMA AS database_name,
+                           TABLE_NAME,
+                           CONSTRAINT_NAME,
+                           CHECK_CLAUSE,
+                           REPLACE(REPLACE(CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
+                           FROM information_schema.CHECK_CONSTRAINTS
+                           WHERE
+                           (CHECK_CLAUSE REGEXP '`\\w+`\\s*<\\s*[0-9]+(?:\\.[0-9]+)?' OR CHECK_CLAUSE REGEXP '[0-9]+(?:\\.[0-9]+)?\\s*>\\s*`\\w+`')
+                       ),
+                       matches AS (
+                           SELECT
+                           database_name,
+                           TABLE_NAME,
+                           CONSTRAINT_NAME,
+                           CHECK_CLAUSE,
+                           cleaned_clause,
+                           REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`\\s*<\\s*([0-9]+(?:\\.[0-9]+)?)') AS match_direct,
+                           REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`') AS col_direct,
+                           REGEXP_SUBSTR(cleaned_clause, '([0-9]+(?:\\.[0-9]+)?)') AS val_direct,
+                           REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`$') AS col_inverse,
+                           REGEXP_SUBSTR(cleaned_clause, '^([0-9]+(?:\\.[0-9]+)?)') AS val_inverse
+                       FROM parsed_constraints)
+                       SELECT
+                           database_name,
+                           TABLE_NAME,
+                           COALESCE(TRIM(BOTH '`' FROM col_direct), TRIM(BOTH '`' FROM col_inverse)) AS column_name,
+                           COALESCE(val_direct, val_inverse) + 0 AS max_value
+                       FROM matches
+                       WHERE table_name = ? and database_name = ?
+                           and (match_direct IS NOT NULL)
+  checkPastDateConstraintQuery: |
+  checkFutureDateConstraintQuery: |
+  checkStrictPastDateConstraintQuery: |
+  checkStrictFutureDateConstraintQuery: |
   checkNotBlankConstraintQuery: |
     with cc1 as (SELECT
                 cc.CONSTRAINT_NAME,
@@ -271,7 +271,7 @@
   checkNotBlankConstraintQuery: |
   checkMinimumLengthConstraintQuery: |
   checkRegexConstraintQuery: |
-    
+
 - databaseId: 3
   databaseName: "SQL Server"
   checkMinimumConstraintQuery: |
