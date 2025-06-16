@@ -303,6 +303,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnSize", field.getColumnSize());
         fieldMap.put("decimalDigits", field.getDecimalDigits());
         fieldMap.put("isUnique", field.isUnique());
+        fieldMap.put("validationAnnotations", field.getValidationAnnotations());
 
         return fieldMap;
     }
@@ -327,6 +328,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnSize", field.getColumnSize());
         fieldMap.put("decimalDigits", field.getDecimalDigits());
         fieldMap.put("isUnique", field.isUnique());
+        fieldMap.put("validationAnnotations", field.getValidationAnnotations());
 
         return fieldMap;
     }
