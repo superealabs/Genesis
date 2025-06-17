@@ -381,8 +381,6 @@
         WHERE table_name = ?;
   
 
-
-
 - databaseId: 3
   databaseName: "SQL Server"
   checkMinimumConstraintQuery: |
