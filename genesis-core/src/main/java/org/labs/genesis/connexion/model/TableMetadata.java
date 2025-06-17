@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.labs.genesis.config.Constantes;
+import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -30,7 +31,7 @@ public class TableMetadata {
     private String className;
     private Boolean isView;
 
-    public void initialize(Connection connex, Credentials credentials, Database database, Language language) throws SQLException, ClassNotFoundException {
+    public void initialize(Connection connex, Credentials credentials, Database database, Language language, Framework framework) throws SQLException, ClassNotFoundException {
         boolean opened = false;
         Connection connect = connex;
 
@@ -52,7 +53,7 @@ public class TableMetadata {
             //Initialise l'entité en le considérant comme table
             setIsView(false);
 
-            List<ColumnMetadata> listeCols = fetchColumns(metaData, tableName, language, database);
+            List<ColumnMetadata> listeCols = database.fetchColumns(metaData, tableName, language,connect,framework);
             fetchPrimaryKeys(metaData, tableName, listeCols);
             fetchForeignKeys(metaData, tableName, language, listeCols);
 
@@ -82,7 +83,7 @@ public class TableMetadata {
         return database.getAllViewNames(connection);
     }
 
-    public List<TableMetadata> initializeTableType(List<String> tableTypeNames, Connection connex, Credentials credentials, Database database, Language language, boolean isView) throws SQLException, ClassNotFoundException {
+    public List<TableMetadata> initializeTableType(List<String> tableTypeNames, Connection connex, Credentials credentials, Database database, Language language, boolean isView,Framework framework) throws SQLException, ClassNotFoundException {
         List<TableMetadata> tableMetadataList = new ArrayList<>();
         boolean opened = false;
         Connection connect = connex;
@@ -104,7 +105,7 @@ public class TableMetadata {
             for (String tableTypeName : tableTypeNames) {
                 TableMetadata tableMetadata = new TableMetadata();
                 tableMetadata.setTableName(tableTypeName);
-                tableMetadata.initialize(connect, credentials, database, language);
+                tableMetadata.initialize(connect, credentials, database, language, framework);
                 tableMetadata.setIsView(isView);
                 tableMetadata.setPKForView();
                 tableMetadataList.add(tableMetadata);
@@ -119,62 +120,12 @@ public class TableMetadata {
     }
 
 
-    public List<TableMetadata> initializeTables(List<String> tableNames, Connection connex, Credentials credentials, Database database, Language language) throws SQLException, ClassNotFoundException {
-        return initializeTableType(tableNames, connex, credentials, database, language, false);
+    public List<TableMetadata> initializeTables(List<String> tableNames, Connection connex, Credentials credentials, Database database, Language language,Framework framework) throws SQLException, ClassNotFoundException {
+        return initializeTableType(tableNames, connex, credentials, database, language, false,framework);
     }
 
-    public List<TableMetadata> initializeViews(List<String> viewNames, Connection connex, Credentials credentials, Database database, Language language) throws SQLException, ClassNotFoundException {
-        return initializeTableType(viewNames, connex, credentials, database, language, true);
-    }
-
-
-    private List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language, Database database) throws SQLException {
-        List<ColumnMetadata> listeCols = new ArrayList<>();
-        try (ResultSet columns = metaData.getColumns(null, database.getCredentials().getSchemaName(), tableName, null)) {
-            while (columns.next()) {
-                ColumnMetadata column = new ColumnMetadata();
-                String columnName = columns.getString("COLUMN_NAME");
-                String columnType = columns.getString("TYPE_NAME");
-
-                column.setName(toCamelCase(columnName.toLowerCase()));
-                column.setReferencedColumn(columnName);
-
-                if (language.getTypes().get(getDatabaseType(database, columns)) == null)
-                    throw new RuntimeException("Database type not supported yet : " + columnType);
-                else
-                    column.setType(language.getTypes().get(getDatabaseType(database, columns)));
-
-                column.setColumnType(columnType);
-                listeCols.add(column);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return listeCols;
-    }
-
-    private String getDatabaseType(Database database, ResultSet columns) throws Exception {
-        String columnType = columns.getString("TYPE_NAME");
-
-        if (columns.getInt("DATA_TYPE") == Types.NUMERIC && database.getId() == Constantes.Oracle_ID) {
-            if (columns.getInt("DECIMAL_DIGITS") > 0) {
-                columnType = getBeforeBracketsSimple(columnType) + "(*,*)";
-            } else {
-                columnType = getBeforeBracketsSimple(columnType);
-            }
-        }
-        if (columns.getInt("DATA_TYPE") == Types.TIMESTAMP && database.getId() == Constantes.Oracle_ID) {
-            columnType = getBeforeBracketsSimple(columnType);
-        }
-        return database.getTypes().get(columnType);
-    }
-
-    private String getBeforeBracketsSimple(String columnType) {
-        int index = columnType.indexOf('(');
-        if (index != -1) {
-            return columnType.substring(0, index).trim();
-        }
-        return columnType.trim();
+    public List<TableMetadata> initializeViews(List<String> viewNames, Connection connex, Credentials credentials, Database database, Language language,Framework framework) throws SQLException, ClassNotFoundException {
+        return initializeTableType(viewNames, connex, credentials, database, language, true,framework);
     }
 
     private void fetchPrimaryKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> columns) throws SQLException {

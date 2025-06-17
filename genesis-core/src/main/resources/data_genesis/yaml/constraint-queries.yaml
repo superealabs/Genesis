@@ -257,20 +257,374 @@
         FROM regex_matches
         WHERE table_name = ? and CONSTRAINT_SCHEMA = ?
         ORDER BY table_name, column_name;
-
+    
 - databaseId: 2
   databaseName: "PostgreSQL"
   checkMinimumConstraintQuery: |
+    WITH check_constraints AS (
+                SELECT c.conname AS constraint_name,
+                       t.relname AS table_name,
+                       pg_get_constraintdef(c.oid) AS constraint_definition
+                FROM pg_constraint c
+                JOIN pg_class t ON c.conrelid = t.oid
+                WHERE c.contype = 'c' AND t.relkind = 'r'
+            ),
+            cleaned AS (
+                SELECT constraint_name, table_name, constraint_definition,
+                       regexp_replace(constraint_definition, '[\(\)]', '', 'g') AS cleaned_def
+                FROM check_constraints
+            ),
+            matches AS (
+                SELECT constraint_name, table_name, constraint_definition, cleaned_def,
+                       regexp_matches(cleaned_def, '(\w+)\s*(>=)\s*([0-9]+(?:\.[0-9]+)?)', 'g') AS match,
+                       regexp_matches(cleaned_def, '([0-9]+(?:\.[0-9]+)?)\s*(<=)\s*(\w+)', 'g') AS inverse_match
+                FROM cleaned       
+            )
+            SELECT table_name,
+                   COALESCE(match[1], inverse_match[3]) AS column_name,
+                   COALESCE(match[3], inverse_match[1])::numeric AS value
+            FROM matches
+            WHERE table_name = ?
+              AND (match IS NOT NULL OR inverse_match IS NOT NULL);
   checkMaximumConstraintQuery: |
+    WITH check_constraints AS (
+                SELECT c.conname AS constraint_name,
+                       t.relname AS table_name,
+                       pg_get_constraintdef(c.oid) AS constraint_definition
+                FROM pg_constraint c
+                JOIN pg_class t ON c.conrelid = t.oid
+                WHERE c.contype = 'c' AND t.relkind = 'r'
+            ),
+            cleaned AS (
+                SELECT constraint_name, table_name, constraint_definition,
+                       regexp_replace(constraint_definition, '[\(\)]', '', 'g') AS cleaned_def
+                FROM check_constraints
+            ),
+            matches AS (
+                SELECT constraint_name, table_name, constraint_definition, cleaned_def,
+                       regexp_matches(cleaned_def, '(\w+)\s*(<=)\s*([0-9]+(?:\.[0-9]+)?)', 'g') AS match,
+                       regexp_matches(cleaned_def, '([0-9]+(?:\.[0-9]+)?)\s*(>=)\s*(\w+)', 'g') AS inverse_match
+                FROM cleaned       
+            )
+            SELECT table_name,
+                   COALESCE(match[1], inverse_match[3]) AS column_name,
+                   COALESCE(match[3], inverse_match[1])::numeric AS value
+            FROM matches
+            WHERE table_name = ?
+              AND (match IS NOT NULL OR inverse_match IS NOT NULL);
   checkStrictMinimumConstraintQuery: |
+    WITH check_constraints AS (
+                SELECT c.conname AS constraint_name,
+                       t.relname AS table_name,
+                       pg_get_constraintdef(c.oid) AS constraint_definition
+                FROM pg_constraint c
+                JOIN pg_class t ON c.conrelid = t.oid
+                WHERE c.contype = 'c' AND t.relkind = 'r'
+            ),
+            cleaned AS (
+                SELECT constraint_name, table_name, constraint_definition,
+                       regexp_replace(constraint_definition, '[\(\)]', '', 'g') AS cleaned_def
+                FROM check_constraints
+            ),
+            matches AS (
+                SELECT constraint_name, table_name, constraint_definition, cleaned_def,
+                       regexp_matches(cleaned_def, '(\w+)\s*(>)\s*([0-9]+(?:\.[0-9]+)?)', 'g') AS match,
+                       regexp_matches(cleaned_def, '([0-9]+(?:\.[0-9]+)?)\s*(<)\s*(\w+)', 'g') AS inverse_match
+                FROM cleaned       
+            )
+            SELECT table_name,
+                   COALESCE(match[1], inverse_match[3]) AS column_name,
+                   COALESCE(match[3], inverse_match[1])::numeric AS value
+            FROM matches
+            WHERE table_name = ?
+              AND (match IS NOT NULL OR inverse_match IS NOT NULL);
   checkStrictMaximumConstraintQuery: |
+    WITH check_constraints AS (
+                SELECT c.conname AS constraint_name,
+                       t.relname AS table_name,
+                       pg_get_constraintdef(c.oid) AS constraint_definition
+                FROM pg_constraint c
+                JOIN pg_class t ON c.conrelid = t.oid
+                WHERE c.contype = 'c' AND t.relkind = 'r'
+            ),
+            cleaned AS (
+                SELECT constraint_name, table_name, constraint_definition,
+                       regexp_replace(constraint_definition, '[\(\)]', '', 'g') AS cleaned_def
+                FROM check_constraints
+            ),
+            matches AS (
+                SELECT constraint_name, table_name, constraint_definition, cleaned_def,
+                       regexp_matches(cleaned_def, '(\w+)\s*(<)\s*([0-9]+(?:\.[0-9]+)?)', 'g') AS match,
+                       regexp_matches(cleaned_def, '([0-9]+(?:\.[0-9]+)?)\s*(>)\s*(\w+)', 'g') AS inverse_match
+                FROM cleaned       
+            )
+            SELECT table_name,
+                   COALESCE(match[1], inverse_match[3]) AS column_name,
+                   COALESCE(match[3], inverse_match[1])::numeric AS value
+            FROM matches
+            WHERE table_name = ?
+              AND (match IS NOT NULL OR inverse_match IS NOT NULL);
   checkPastDateConstraintQuery: |
+    WITH check_constraints AS (
+                SELECT
+                    c.conname AS constraint_name,
+                    t.relname AS table_name,
+                    pg_get_constraintdef(c.oid) AS constraint_definition
+                FROM
+                    pg_constraint c
+                JOIN
+                    pg_class t ON c.conrelid = t.oid
+                WHERE
+                    c.contype = 'c'  -- CHECK
+                    AND t.relkind = 'r'  -- tables
+                    AND (
+                        pg_get_constraintdef(c.oid) ~* '(\w+)\s*(>=)\s*(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))'
+                        OR pg_get_constraintdef(c.oid) ~* '(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))\s*(<=)\s*(\w+)'
+                    )
+            ),
+            parsed AS (
+                SELECT
+                    constraint_name,
+                    table_name,
+                    constraint_definition,
+                    regexp_matches(constraint_definition, '(\w+)\s*(>=)\s*(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))', 'i') AS m1,
+                    regexp_matches(constraint_definition, '(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))\s*(<=)\s*(\w+)', 'i') AS m2
+                FROM
+                    check_constraints
+            )
+            SELECT
+                constraint_name,
+                table_name,
+                COALESCE(m1[1], m2[3]) AS column_name,
+                COALESCE(m1[2], m2[2]) AS operator,
+                COALESCE(m1[3], m2[1]) AS date_function
+            FROM
+                parsed
+            WHERE
+                table_name = ?
+                AND (m1 IS NOT NULL OR m2 IS NOT NULL)
+            ORDER BY
+                table_name,
+                column_name;
   checkFutureDateConstraintQuery: |
+    WITH check_constraints AS (
+                SELECT
+                    c.conname AS constraint_name,
+                    t.relname AS table_name,
+                    pg_get_constraintdef(c.oid) AS constraint_definition
+                FROM
+                    pg_constraint c
+                JOIN
+                    pg_class t ON c.conrelid = t.oid
+                WHERE
+                    c.contype = 'c'  -- CHECK
+                    AND t.relkind = 'r'  -- tables
+                    AND (
+                        pg_get_constraintdef(c.oid) ~* '(\w+)\s*(<=)\s*(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))'
+                        OR pg_get_constraintdef(c.oid) ~* '(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))\s*(>=)\s*(\w+)'
+                    )
+            ),
+            parsed AS (
+                SELECT
+                    constraint_name,
+                    table_name,
+                    constraint_definition,
+                    regexp_matches(constraint_definition, '(\w+)\s*(<=)\s*(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))', 'i') AS m1,
+                    regexp_matches(constraint_definition, '(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))\s*(>=)\s*(\w+)', 'i') AS m2
+                FROM
+                    check_constraints
+            )
+            SELECT
+                constraint_name,
+                table_name,
+                COALESCE(m1[1], m2[3]) AS column_name,
+                COALESCE(m1[2], m2[2]) AS operator,
+                COALESCE(m1[3], m2[1]) AS date_function
+            FROM
+                parsed
+            WHERE
+                table_name = ?
+                AND (m1 IS NOT NULL OR m2 IS NOT NULL)
+            ORDER BY
+                table_name,
+                column_name;
   checkStrictPastDateConstraintQuery: |
+    WITH check_constraints AS (
+                SELECT
+                    c.conname AS constraint_name,
+                    t.relname AS table_name,
+                    pg_get_constraintdef(c.oid) AS constraint_definition
+                FROM
+                    pg_constraint c
+                JOIN
+                    pg_class t ON c.conrelid = t.oid
+                WHERE
+                    c.contype = 'c'  -- CHECK
+                    AND t.relkind = 'r'  -- tables
+                    AND (
+                        pg_get_constraintdef(c.oid) ~* '(\w+)\s*(>)\s*(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))'
+                        OR pg_get_constraintdef(c.oid) ~* '(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))\s*(<)\s*(\w+)'
+                    )
+            ),
+            parsed AS (
+                SELECT
+                    constraint_name,
+                    table_name,
+                    constraint_definition,
+                    regexp_matches(constraint_definition, '(\w+)\s*(>)\s*(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))', 'i') AS m1,
+                    regexp_matches(constraint_definition, '(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))\s*(<)\s*(\w+)', 'i') AS m2
+                FROM
+                    check_constraints
+            )
+            SELECT
+                constraint_name,
+                table_name,
+                COALESCE(m1[1], m2[3]) AS column_name,
+                COALESCE(m1[2], m2[2]) AS operator,
+                COALESCE(m1[3], m2[1]) AS date_function
+            FROM
+                parsed
+            WHERE
+                table_name = ?
+                AND (m1 IS NOT NULL OR m2 IS NOT NULL)
+            ORDER BY
+                table_name,
+                column_name;
   checkStrictFutureDateConstraintQuery: |
+    WITH check_constraints AS (
+                SELECT
+                    c.conname AS constraint_name,
+                    t.relname AS table_name,
+                    pg_get_constraintdef(c.oid) AS constraint_definition
+                FROM
+                    pg_constraint c
+                JOIN
+                    pg_class t ON c.conrelid = t.oid
+                WHERE
+                    c.contype = 'c'  -- CHECK
+                    AND t.relkind = 'r'  -- tables
+                    AND (
+                        pg_get_constraintdef(c.oid) ~* '(\w+)\s*(<)\s*(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))'
+                        OR pg_get_constraintdef(c.oid) ~* '(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))\s*(>)\s*(\w+)'
+                    )
+            ),
+            parsed AS (
+                SELECT
+                    constraint_name,
+                    table_name,
+                    constraint_definition,
+                    regexp_matches(constraint_definition, '(\w+)\s*(<)\s*(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))', 'i') AS m1,
+                    regexp_matches(constraint_definition, '(CURRENT_DATE|CURRENT_TIMESTAMP|NOW\(\))\s*(>)\s*(\w+)', 'i') AS m2
+                FROM
+                    check_constraints
+            )
+            SELECT
+                constraint_name,
+                table_name,
+                COALESCE(m1[1], m2[3]) AS column_name,
+                COALESCE(m1[2], m2[2]) AS operator,
+                COALESCE(m1[3], m2[1]) AS date_function
+            FROM
+                parsed
+            WHERE
+                table_name = ?
+                AND (m1 IS NOT NULL OR m2 IS NOT NULL)
+            ORDER BY
+                table_name,
+                column_name;
   checkNotBlankConstraintQuery: |
+    WITH check_constraints AS (
+                SELECT
+                    c.conname AS constraint_name,
+                    t.relname AS table_name,
+                    pg_get_constraintdef(c.oid) AS constraint_definition
+                FROM pg_constraint c
+                JOIN pg_class t ON c.conrelid = t.oid
+                WHERE c.contype = 'c'
+                  AND t.relkind = 'r'
+                  AND pg_get_constraintdef(c.oid) ~* '(<>s*''|::texts*<>s*''::text)'
+            )
+            SELECT
+                cc.constraint_name,
+                cc.table_name,
+                cc.constraint_definition,
+                matches[1] AS column_name
+            FROM check_constraints cc
+            CROSS JOIN LATERAL regexp_matches(
+                cc.constraint_definition,
+                '(?:trim\s*\(\s*(?:both\s+from\s+)?(\w+)\s*\)|(\w+)|\(?(\w+)\)?::text)\s*<>\s*''(?:::text)?',
+                'i'
+            ) AS matches
+            WHERE cc.table_name = ?
+            ORDER BY cc.table_name, column_name;
   checkMinimumLengthConstraintQuery: |
+    WITH check_constraints AS (
+                SELECT
+                    c.conname AS constraint_name,
+                    t.relname AS table_name,
+                    pg_get_constraintdef(c.oid) AS constraint_definition
+                FROM pg_constraint c
+                JOIN pg_class t ON c.conrelid = t.oid
+                WHERE c.contype = 'c'
+                  AND t.relkind = 'r'
+                  AND pg_get_constraintdef(c.oid) ~* 'length\s*\('
+            )
+            SELECT
+                cc.constraint_name,
+                cc.table_name,
+                cc.constraint_definition,
+                matches[1] AS column_name,
+                matches[3] AS operator,
+                matches[4]::int AS min_length
+            FROM check_constraints cc
+            CROSS JOIN LATERAL regexp_matches(
+                cc.constraint_definition,
+                'length\s*\(\s*\(*\s*(\w+)\s*\)*\s*(::text)?\s*\)\s*(>=|>)\s*(\d+)',
+                'i'
+            ) AS matches
+            WHERE cc.table_name = ?
+            ORDER BY cc.table_name, column_name;
   checkRegexConstraintQuery: |
+    WITH check_constraints AS (
+            SELECT
+                c.conname AS constraint_name,
+                t.relname AS table_name,
+                pg_get_constraintdef(c.oid) AS constraint_definition
+            FROM pg_constraint c
+            JOIN pg_class t ON c.conrelid = t.oid
+            WHERE c.contype = 'c'
+                AND t.relkind = 'r'
+                AND pg_get_constraintdef(c.oid) ~ '(::text)?\s*~\*?\s*'''
+        ),
+        regex_matches AS (
+            SELECT
+                constraint_name,
+                table_name,
+                constraint_definition,
+                regexp_replace(constraint_definition, E'[()]', '', 'g') AS cleaned_def
+            FROM check_constraints
+        ),
+        parsed AS (
+            SELECT
+                constraint_name,
+                table_name,
+                constraint_definition,
+                regexp_matches(
+                    cleaned_def,
+                    E'(\\w+)(::text)?\\s*(~\\*?)\\s*''([^'']+)''(::text)?',
+                    'i'
+                ) AS match
+            FROM regex_matches
+        )
+        SELECT
+            constraint_name,
+            table_name,
+            match[1] AS column_name,
+            match[3] AS operator,
+            match[4] AS regex_pattern,
+            constraint_definition
+        FROM parsed
+        WHERE table_name = ?;
 
 - databaseId: 3
   databaseName: "SQL Server"
