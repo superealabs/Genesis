@@ -632,6 +632,22 @@
             }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
+    validationAnnotations:
+      notNull: '@NotNull(message = "${majStart(name)} cannot be null")'
+      maxSize: "@Size(max = ${columnSize})"
+      defaultValue: '@DefaultValue("${defaultValue}")'
+      digits: '@Digits(integer = ${columnSize}, fraction = ${decimalDigits})'
+      numericMinimumValue : '@DecimalMin(value = "${value}")'
+      numericMinimumInclusiveValue : '@DecimalMin(value = "${value}", inclusive = true)'
+      numericMaximumValue: '@DecimalMax(value = "${value}")'
+      numericMaximumInclusiveValue: '@DecimalMax(value = "${value}", inclusive = true)'
+      past: "@Past"
+      pastOrPresent: "@PastOrPresent"
+      future: "@Future"
+      futureOrPresent: "@FutureOrPresent"
+      notBlank: "@NotBlank"
+      minAndMaxSize: '@Size(min = ${minLength}, max = ${columnSize})'
+      regexPattern: '@Pattern(regexp = "${value}")'
 
   modelDao:
     toGenerate: true
@@ -1881,6 +1897,7 @@
             }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
+    validationAnnotations: {}
   modelDao:
     toGenerate: true
     modelDaoImports: |
