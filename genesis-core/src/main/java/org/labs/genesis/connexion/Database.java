@@ -249,6 +249,7 @@ public abstract class Database {
             checkNotBlankConstraint(connex, tableName, listeCols,framework);
             checkMinLengthConstraint(connex, tableName, listeCols,framework);
             checkRegexConstraint(connex, tableName, listeCols,framework);
+            removeUnusedData(listeCols);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -359,4 +360,17 @@ public abstract class Database {
     protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
     protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
 
+    protected void removeUnusedData(List<ColumnMetadata> listeCols){
+        for(ColumnMetadata col : listeCols){
+            Map<String, Object> map = col.getValidationAnnotations(); // ton map initial
+
+            Iterator<String> it = map.keySet().iterator();
+            while (it.hasNext()) {
+                String key = it.next();
+                if (key.toLowerCase().contains("data")) {
+                    it.remove();
+                }
+            }
+        }
+    }
 }
