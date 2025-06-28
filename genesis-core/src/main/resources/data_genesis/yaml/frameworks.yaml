@@ -2107,6 +2107,790 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
+    - fileType: "ConstraintDisabler"
+      fileName: "ConstraintDisabler"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+  
+        using System;
+        using System.Collections.Generic;
+        using System.Data;
+        using System.Data.Common;
+        using System.Linq;
+        {{#if databaseType = SQL Server}}
+        using Microsoft.Data.SqlClient;
+        {{else}}{{removeLine}}{{/if}}
+        {{#if databaseType = MySQL}}
+        using MySqlConnector;
+        {{else}}{{removeLine}}{{/if}}
+        {{#if databaseType = PostgreSQL}}
+        using Npgsql;
+        {{else}}{{removeLine}}{{/if}}
+        {{#if databaseType = Oracle}}
+        using Oracle.ManagedDataAccess.Client;
+        {{else}}{{removeLine}}{{/if}}
+        
+        public class ConstraintDisabler
+        {
+          public enum DbType { PostgreSQL, MySQL, SQLServer, Oracle }
+      
+          private readonly DbConnection _connection;
+          private readonly DbType _dbType;
+          private readonly Stack<string> _restoreDdls = new Stack<string>();
+          private readonly HashSet<string> _processedTables = new HashSet<string>();
+
+          public ConstraintDisabler(DbConnection connection)
+          {
+            _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+            _dbType = DetectDatabaseType();
+          }
+
+          private DbType DetectDatabaseType()
+          {
+            switch (_connection)
+            {
+              {{#if databaseType = PostgreSQL}}
+              case NpgsqlConnection:
+                return DbType.PostgreSQL;
+              {{else}}{{removeLine}}{{/if}}
+              {{#if databaseType = MySQL}}
+              case MySqlConnection:
+                  return DbType.MySQL;
+              {{else}}{{removeLine}}{{/if}}
+              {{#if databaseType = SQL Server}}
+              case SqlConnection:
+                  return DbType.SQLServer;
+              {{else}}{{removeLine}}{{/if}}
+              {{#if databaseType = Oracle}}
+              case OracleConnection:
+                  return DbType.Oracle;
+              {{else}}{{removeLine}}{{/if}}
+                default:
+                  throw new NotSupportedException($"SGBD non pris en charge: {_connection.GetType().Name}");
+            }
+          }
+
+          public void StartTransaction()
+          {
+              if (_dbType == DbType.PostgreSQL)
+              {
+                  using var cmd = _connection.CreateCommand();
+                  cmd.CommandText = "SET CONSTRAINTS ALL DEFERRED";
+                  cmd.ExecuteNonQuery();
+            }
+          }
+
+          public void DisableConstraintsForTable(string tableName)
+          {
+            if (_processedTables.Contains(tableName)) return;
+            _processedTables.Add(tableName);
+            
+            switch (_dbType)
+            {
+              {{#if databaseType = PostgreSQL}}
+              case DbType.PostgreSQL:
+                DisablePostgres(tableName);
+                break;
+              {{else}}{{removeLine}}{{/if}}
+              {{#if databaseType = MySQL}}
+              case DbType.MySQL:
+                DisableMySql(tableName);
+                break;
+              {{else}}{{removeLine}}{{/if}}
+              {{#if databaseType = SQL Server}}
+              case DbType.SQLServer:
+                DisableSqlServer(tableName);
+                break;
+              {{else}}{{removeLine}}{{/if}}
+              {{#if databaseType = Oracle}}
+              case DbType.Oracle:
+                DisableOracle(tableName);
+                break;
+              {{else}}{{removeLine}}{{/if}}
+            }
+          }
+
+          public void RestoreConstraints()
+          {
+            Console.WriteLine($"Restoring {_restoreDdls.Count} constraints");
+            
+            while (_restoreDdls.Count > 0)
+            {
+              string ddl = _restoreDdls.Pop();
+              Console.WriteLine($"Restoring: {ddl}");
+      
+                  try
+                  {
+                      // Créer la commande spécifique au SGBD
+                      using (var cmd = CreateDbCommand(ddl))
+                      {
+                          cmd.ExecuteNonQuery();
+                          Console.WriteLine($"Successfully restored: {ddl}");
+                      }
+                  }
+                  catch (DbException ex)
+                  {
+                      Console.Error.WriteLine($"Error restoring constraint: {ddl}");
+                      Console.Error.WriteLine($"Reason: {ex.Message}");
+                  }
+                  catch (InvalidOperationException ex)
+                  {
+                      Console.Error.WriteLine($"Connection issue: {ex.Message}");
+                  }
+              }
+              _processedTables.Clear();
+          }
+
+          private DbCommand CreateDbCommand(string commandText)
+          {
+              switch (_dbType)
+              {
+                  {{#if databaseType = PostgreSQL}}
+                  case DbType.PostgreSQL:
+                      return new NpgsqlCommand(commandText, (NpgsqlConnection)_connection);
+                  {{else}}{{removeLine}}{{/if}}
+                  {{#if databaseType = MySQL}}
+                  case DbType.MySQL:
+                      return new MySqlCommand(commandText, (MySqlConnection)_connection);
+                  {{else}}{{removeLine}}{{/if}}
+                  {{#if databaseType = SQL Server}}
+                  case DbType.SQLServer:
+                      return new SqlCommand(commandText, (SqlConnection)_connection);
+                  {{else}}{{removeLine}}{{/if}}
+                  {{#if databaseType = Oracle}}
+                  case DbType.Oracle:
+                      return new OracleCommand(commandText, (OracleConnection)_connection);
+                  {{else}}{{removeLine}}{{/if}}
+                  default:
+                      throw new NotSupportedException($"Unsupported database type: {_dbType}");
+              }
+          }
+          {{#if databaseType = PostgreSQL}}
+          private void DisablePostgres(string tableName)
+          {
+              // 1. Désactiver les contraintes référencées
+              var foreignConstraints = new List<(string Name, string SourceTable, string Definition)>();
+      
+              using (var cmd = new NpgsqlCommand(
+                  "SELECT conname, conrelid::regclass::text AS source_table, " +
+                  "pg_get_constraintdef(oid) AS definition " +
+              "FROM pg_constraint " +
+              "WHERE confrelid = @tableName::regclass",
+              (NpgsqlConnection)_connection))
+              {
+                cmd.Parameters.AddWithValue("tableName", tableName);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                  foreignConstraints.Add((
+                  reader.GetString(0),
+                  reader.GetString(1),
+                  reader.GetString(2)
+                  ));
+                }
+              }
+      
+              foreach (var (name, sourceTable, definition) in foreignConstraints)
+              {
+                _restoreDdls.Push($"ALTER TABLE {sourceTable} ADD CONSTRAINT {name} {definition}");
+      
+                  using var dropCmd = new NpgsqlCommand(
+                      $"ALTER TABLE {sourceTable} DROP CONSTRAINT {name} CASCADE",
+                (NpgsqlConnection)_connection);
+                dropCmd.ExecuteNonQuery();
+              }
+      
+              // 2. Désactiver les contraintes locales
+              var localConstraints = new List<(string Name, string Definition)>();
+      
+              using (var cmd = new NpgsqlCommand(
+              "SELECT conname, pg_get_constraintdef(oid) AS def " +
+              "FROM pg_constraint " +
+              "WHERE conrelid = @tableName::regclass",
+              (NpgsqlConnection)_connection))
+              {
+                cmd.Parameters.AddWithValue("tableName", tableName);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                  localConstraints.Add((
+                  reader.GetString(0),
+                  reader.GetString(1)
+                  ));
+                }
+              }
+      
+              foreach (var (name, def) in localConstraints)
+              {
+                _restoreDdls.Push($"ALTER TABLE {tableName} ADD CONSTRAINT {name} {def}");
+      
+                  using var dropCmd = new NpgsqlCommand(
+                      $"ALTER TABLE {tableName} DROP CONSTRAINT {name} CASCADE",
+                (NpgsqlConnection)_connection);
+                dropCmd.ExecuteNonQuery();
+              }
+      
+              // 3. Gérer les contraintes NOT NULL
+              var notNullColumns = new List<string>();
+      
+              using (var cmd = new NpgsqlCommand(
+              "SELECT a.attname AS column_name " +
+              "FROM pg_attribute a " +
+              "JOIN pg_class c ON c.oid = a.attrelid " +
+              "WHERE c.relname = @tableName " +
+              "  AND a.attnotnull " +
+              "  AND a.attidentity = '' " +
+              "  AND a.attnum > 0 " +
+              "  AND NOT a.attisdropped",
+              (NpgsqlConnection)_connection))
+              {
+                cmd.Parameters.AddWithValue("tableName", tableName);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                  notNullColumns.Add(reader.GetString(0));
+                }
+              }
+      
+              foreach (var colName in notNullColumns)
+              {
+                _restoreDdls.Push($"ALTER TABLE {tableName} ALTER COLUMN {colName} SET NOT NULL");
+                
+                using var alterCmd = new NpgsqlCommand(
+                $"ALTER TABLE {tableName} ALTER COLUMN {colName} DROP NOT NULL",
+                (NpgsqlConnection)_connection);
+                alterCmd.ExecuteNonQuery();
+              }
+          }
+          {{else}}{{removeLine}}{{/if}}
+          {{#if databaseType = MySQL}}
+          private void DisableMySql(string tableName)
+          {
+            var schema = _connection.Database;
+            Console.WriteLine($"[MySQL] Starting constraint disable for table: {tableName}");
+      
+              try
+              {
+                  // 1. Collecter toutes les informations d'abord
+                  var foreignKeys = new List<Tuple<string, string, string, string>>();
+                  var uniqueConstraints = new List<Tuple<string, List<string>>>();
+                  var tableChecks = new List<Tuple<string, string>>();
+                  var columnChecks = new List<Tuple<string, string, string>>();
+                  var notNullColumns = new List<Tuple<string, string, string>>();
+      
+                  // FOREIGN KEYS
+                  // FOREIGN KEYS
+                  Console.WriteLine("[MySQL] Collecting FOREIGN KEYS...");
+                     using (var cmd = new MySqlCommand(
+                     "SELECT constraint_name, column_name, referenced_table_name, referenced_column_name " +
+                     "FROM information_schema.key_column_usage " +
+                     "WHERE table_schema = @schema AND table_name = @table " +
+                     "AND referenced_table_name IS NOT NULL",
+                  (MySqlConnection)_connection))
+                  {
+                    cmd.Parameters.AddWithValue("@schema", schema);
+                    cmd.Parameters.AddWithValue("@table", tableName);
+                    
+                    using var reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                      foreignKeys.Add(Tuple.Create(
+                      reader.GetString(0),
+                      reader.GetString(1),
+                      reader.GetString(2),
+                      reader.GetString(3)
+                      ));
+                    }
+                  }
+      
+                  // UNIQUE Constraints
+                  Console.WriteLine("[MySQL] Collecting UNIQUE constraints...");
+                  var uniqueConstraintNames = new List<string>();
+                  using (var cmd = new MySqlCommand(
+                  "SELECT DISTINCT constraint_name " +
+                  "FROM information_schema.table_constraints " +
+                  "WHERE table_schema = @schema " +
+                  "AND table_name = @table " +
+                  "AND constraint_type = 'UNIQUE' " +
+                  "AND constraint_name != 'PRIMARY'",
+                  (MySqlConnection)_connection))
+                  {
+                    cmd.Parameters.AddWithValue("@schema", schema);
+                    cmd.Parameters.AddWithValue("@table", tableName);
+                    
+                    using var reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                      uniqueConstraintNames.Add(reader.GetString(0));
+                    }
+                  }
+      
+                  foreach (var name in uniqueConstraintNames)
+                  {
+                    var columns = new List<string>();
+                    Console.WriteLine($"[MySQL] Collecting columns for UNIQUE: {name}");
+            
+                    using (var colCmd = new MySqlCommand(
+                        "SELECT column_name " +
+                         "FROM information_schema.key_column_usage " +
+                         "WHERE constraint_schema = @schema " +
+                         "AND table_name = @table " +
+                         "AND constraint_name = @name " +
+                         "ORDER BY ordinal_position",
+                    (MySqlConnection)_connection))
+                    {
+                      colCmd.Parameters.AddWithValue("@schema", schema);
+                      colCmd.Parameters.AddWithValue("@table", tableName);
+                      colCmd.Parameters.AddWithValue("@name", name);
+                      
+                      using var colReader = colCmd.ExecuteReader();
+                      while (colReader.Read())
+                      {
+                        columns.Add(colReader.GetString(0));
+                      }
+                    }
+        
+                    uniqueConstraints.Add(Tuple.Create(name, columns));
+                  }
+
+                  // CHECK Constraints - Table Level
+                  using (var cmd = new MySqlCommand(
+                  "SELECT tc.constraint_name, cc.check_clause " +
+                  "FROM information_schema.table_constraints tc " +
+                  "JOIN information_schema.check_constraints cc " +
+                  "  ON tc.constraint_schema = cc.constraint_schema " +
+                  " AND tc.constraint_name = cc.constraint_name " +
+                  "WHERE tc.table_schema = @schema " +
+                  "  AND tc.table_name = @table " +
+                  "  AND tc.constraint_type = 'CHECK' " +
+                  "  AND cc.level = 'Table'",
+                  (MySqlConnection)_connection))
+                  {
+                    cmd.Parameters.AddWithValue("@schema", schema);
+                    cmd.Parameters.AddWithValue("@table", tableName);
+                    
+                    using var reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                      tableChecks.Add(Tuple.Create(
+                      reader.GetString(0),
+                      reader.GetString(1)
+                      ));
+                    }
+                  }
+
+                  // CHECK Constraints - Column Level
+                  using (var cmd = new MySqlCommand(
+                  "SELECT cc.constraint_name, cc.check_clause, kcu.column_name " +
+                  "FROM information_schema.check_constraints cc " +
+                  "JOIN information_schema.key_column_usage kcu " +
+                  "  ON cc.constraint_name = kcu.constraint_name " +
+                  " AND cc.constraint_schema = kcu.constraint_schema " +
+                  "JOIN information_schema.table_constraints tc " +
+                  "  ON cc.constraint_name = tc.constraint_name " +
+                  " AND cc.constraint_schema = tc.constraint_schema " +
+                  "WHERE tc.table_schema = @schema " +
+                  "  AND tc.table_name = @table " +
+                  "  AND tc.constraint_type = 'CHECK' " +
+                  "  AND cc.level = 'Column'",
+                  (MySqlConnection)_connection))
+                  {
+                    cmd.Parameters.AddWithValue("@schema", schema);
+                    cmd.Parameters.AddWithValue("@table", tableName);
+                    
+                    using var reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                      columnChecks.Add(Tuple.Create(
+                      reader.GetString(0),
+                      reader.GetString(1),
+                      reader.GetString(2)
+                      ));
+                    }
+                  }
+      
+                  // NOT NULL Constraints
+                  using (var cmd = new MySqlCommand(
+                  "SELECT column_name, column_type, extra " +
+                  "FROM information_schema.columns " +
+                  "WHERE table_schema = @schema " +
+                  "AND table_name = @table " +
+                  "AND is_nullable = 'NO'",
+                  (MySqlConnection)_connection))
+                  {
+                    cmd.Parameters.AddWithValue("@schema", schema);
+                    cmd.Parameters.AddWithValue("@table", tableName);
+                    
+                    using var reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                      notNullColumns.Add(Tuple.Create(
+                      reader.GetString(0),
+                      reader.GetString(1),
+                      reader.IsDBNull(2) ? "" : reader.GetString(2)
+                        ));
+                    }
+                  }
+
+                  // 2. Désactiver les contraintes après avoir tout collecté
+                  Console.WriteLine($"[MySQL] Found: {foreignKeys.Count} FKs, {uniqueConstraints.Count} UNIQUES, " +
+                                          $"{tableChecks.Count} TABLE-CHECKS, {columnChecks.Count} COLUMN-CHECKS, " +
+                                          $"{notNullColumns.Count} NOT NULLS");
+
+                  // FOREIGN KEYS
+                  Console.WriteLine("[MySQL] Disabling FOREIGN KEYS...");
+                  foreach (var fk in foreignKeys)
+                  {
+                    var (name, col, refTable, refCol) = fk;
+                    Console.WriteLine($"[MySQL] Disabling FK: {name}");
+
+                    var restoreSQL = $"ALTER TABLE {tableName} " +
+                               $"ADD CONSTRAINT `{name}` FOREIGN KEY(`{col}`) " +
+                                $"REFERENCES `{refTable}`(`{refCol}`)";
+                                                    
+                    _restoreDdls.Push(restoreSQL);
+                    
+                    using var dropCmd = new MySqlCommand(
+                      $"ALTER TABLE {tableName} DROP FOREIGN KEY `{name}`",
+                      (MySqlConnection)_connection);
+                    dropCmd.ExecuteNonQuery();
+
+                    Console.WriteLine($"[MySQL] Disabled FK: {name}");
+                  }
+
+                  // UNIQUE Constraints
+                  Console.WriteLine("[MySQL] Disabling UNIQUE constraints...");
+                  foreach (var uc in uniqueConstraints)
+                  {
+                    var (name, columns) = uc;
+                    Console.WriteLine($"[MySQL] Disabling UNIQUE: {name}");
+          
+                          var columnsStr = string.Join(",", columns.Select(c => $"`{c}`"));
+                          var restoreSQL = $"ALTER TABLE {tableName} " +
+                                         $"ADD CONSTRAINT `{name}` UNIQUE ({columnsStr})";
+          
+                    _restoreDdls.Push(restoreSQL);
+          
+                    using var dropCmd = new MySqlCommand(
+                    $"ALTER TABLE {tableName} DROP INDEX `{name}`",
+                              (MySqlConnection)_connection);
+                          dropCmd.ExecuteNonQuery();
+          
+                          Console.WriteLine($"[MySQL] Disabled UNIQUE: {name}");
+                      }
+
+                    // CHECK Constraints - Table Level
+                    Console.WriteLine("[MySQL] Disabling TABLE-level CHECK constraints...");
+                                                                                                                      foreach (var check in tableChecks)
+                    {
+                      var (name, clause) = check;
+                      Console.WriteLine($"[MySQL] Disabling TABLE-CHECK: {name}");
+
+                      using var dropCmd = new MySqlCommand(
+                          $"ALTER TABLE {tableName} DROP CONSTRAINT `{name}`",
+                          (MySqlConnection)_connection);
+                      dropCmd.ExecuteNonQuery();
+
+                      _restoreDdls.Push($"ALTER TABLE {tableName} ADD CONSTRAINT `{name}` CHECK ({clause})");
+                     Console.WriteLine($"[MySQL] Disabled TABLE-CHECK: {name}");
+                    }
+        
+                    // CHECK Constraints - Column Level
+                    Console.WriteLine("[MySQL] Disabling COLUMN-level CHECK constraints...");
+                   foreach (var check in columnChecks)
+                  {
+                    var (constraintName, clause, columnName) = check;
+                    Console.WriteLine($"[MySQL] Disabling COLUMN-CHECK: {constraintName} on {columnName}");
+
+                    // Get column definition
+                    string columnType = null;
+                    string nullable = "YES";
+                    using (var colCmd = new MySqlCommand(
+                    "SELECT column_type, is_nullable " +
+                    "FROM information_schema.columns " +
+                    "WHERE table_schema = @schema " +
+                    "  AND table_name = @table " +
+                    "  AND column_name = @column",
+                    (MySqlConnection)_connection))
+                    {
+                      colCmd.Parameters.AddWithValue("@schema", schema);
+                      colCmd.Parameters.AddWithValue("@table", tableName);
+                      colCmd.Parameters.AddWithValue("@column", columnName);
+                      
+                      using var colReader = colCmd.ExecuteReader();
+                      if (colReader.Read())
+                      {
+                        columnType = colReader.GetString(0);
+                        nullable = colReader.GetString(1);
+                      }
+                      else
+                      {
+                        Console.WriteLine($"[WARNING] Column {columnName} not found, skipping");
+                        continue;
+                      }
+                    }
+              
+                    // Remove check constraint
+                    var modifySQL = $"ALTER TABLE {tableName} MODIFY `{columnName}` {columnType}";
+                    if (nullable == "NO") modifySQL += " NOT NULL";
+              
+                    using var alterCmd = new MySqlCommand(modifySQL, (MySqlConnection)_connection);
+                    alterCmd.ExecuteNonQuery();
+                    
+                    // Store for restoration
+                    var restoreSQL = $"ALTER TABLE {tableName} MODIFY `{columnName}` {columnType}";
+                      if (nullable == "NO") restoreSQL += " NOT NULL";
+                    restoreSQL += $" CHECK ({clause})";
+                    
+                    _restoreDdls.Push(restoreSQL);
+                    Console.WriteLine($"[MySQL] Disabled COLUMN-CHECK: {constraintName}");
+                  }
+      
+                  // NOT NULL Constraints
+                  Console.WriteLine("[MySQL] Disabling NOT NULL constraints...");
+                 foreach (var col in notNullColumns)
+                {
+                  var (colName, typeDef, extra) = col;
+  
+                  if (extra.Contains("auto_increment"))
+                  {
+                    Console.WriteLine($"[MySQL] Skipping AUTO_INCREMENT column: {colName}");
+                      continue;
+                  }
+  
+                  Console.WriteLine($"[MySQL] Disabling NOT NULL: {colName}");
+  
+                  var modifySQL = $"ALTER TABLE {tableName} MODIFY `{colName}` {typeDef}";
+                  using var alterCmd = new MySqlCommand(modifySQL, (MySqlConnection)_connection);
+                  alterCmd.ExecuteNonQuery();
+  
+                  _restoreDdls.Push($"{modifySQL} NOT NULL");
+                                                                                                                                                           Console.WriteLine($"[MySQL] Disabled NOT NULL: {colName}");
+              }
+
+              Console.WriteLine($"[MySQL] Finished constraint disable for table: {tableName}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[FATAL ERROR] Failed to disable constraints for {tableName}: {ex.Message}");
+                throw;
+            }
+          }
+          {{else}}{{removeLine}}{{/if}}
+          {{#if databaseType = SQL Server}}
+          private void DisableSqlServer(string tableName)
+          {
+            // CHECK Constraints
+            using (var cmd = new SqlCommand(
+              "SELECT cc.name AS name, cc.definition AS def " +
+              "FROM sys.check_constraints cc " +
+              "JOIN sys.objects t ON cc.parent_object_id = t.object_id " +
+              "WHERE t.name = @table",
+              (SqlConnection)_connection))
+            {
+              cmd.Parameters.AddWithValue("@table", tableName);
+              using var reader = cmd.ExecuteReader();
+              while (reader.Read())
+              {
+                var name = reader.GetString(0);
+                var def = reader.GetString(1);
+                        
+                _restoreDdls.Push($"ALTER TABLE {tableName} ADD CONSTRAINT {name} CHECK ({def})");
+                        
+                using var dropCmd = new SqlCommand(
+                  $"ALTER TABLE {tableName} DROP CONSTRAINT {name}",
+                  (SqlConnection)_connection);
+                dropCmd.ExecuteNonQuery();
+              }
+            }
+
+            // FOREIGN KEYS
+            using (var cmd = new SqlCommand(
+                "SELECT fk.name AS name, COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS col, " +
+                "OBJECT_NAME(fk.referenced_object_id) AS refTable, " +
+                "COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id) AS refCol " +
+                            "FROM sys.foreign_keys fk " +
+                            "JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id " +
+                            "WHERE OBJECT_NAME(fk.parent_object_id) = @table",
+                            (SqlConnection)_connection))
+            {
+              cmd.Parameters.AddWithValue("@table", tableName);
+              using var reader = cmd.ExecuteReader();
+              while (reader.Read())
+              {
+                var name = reader.GetString(0);
+                var col = reader.GetString(1);
+                var refTable = reader.GetString(2);
+                var refCol = reader.GetString(3);
+                
+                var restoreSQL = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
+                   $"FOREIGN KEY({col}) REFERENCES {refTable}({refCol})";
+                
+                _restoreDdls.Push(restoreSQL);
+                            
+                using var dropCmd = new SqlCommand(
+                  $"ALTER TABLE {tableName} DROP CONSTRAINT {name}",
+                  (SqlConnection)_connection);
+                dropCmd.ExecuteNonQuery();
+              }
+            }
+
+            // NOT NULL Constraints
+            using (var cmd = new SqlCommand(
+                "SELECT name, system_type_name AS def " +
+                            "FROM sys.columns " +
+                            "WHERE object_id = OBJECT_ID(@table) " +
+                            "AND is_nullable = 0 AND is_identity = 0",
+                            (SqlConnection)_connection))
+            {
+              cmd.Parameters.AddWithValue("@table", tableName);
+              using var reader = cmd.ExecuteReader();
+              while (reader.Read())
+              {
+                var colName = reader.GetString(0);
+                var def = reader.GetString(1);
+                
+                _restoreDdls.Push($"ALTER TABLE {tableName} ALTER COLUMN {colName} {def} NOT NULL");
+                
+                using var alterCmd = new SqlCommand(
+                $"ALTER TABLE {tableName} ALTER COLUMN {colName} {def} NULL",
+                (SqlConnection)_connection);
+                alterCmd.ExecuteNonQuery();
+              }
+            }
+          }
+          {{else}}{{removeLine}}{{/if}}
+          {{#if databaseType = Oracle}}
+          private void DisableOracle(string tableName)
+          {
+            var schema = _connection is OracleConnection oracleConn
+            ? oracleConn.UserID?.ToUpper()
+              : "CURRENT_USER";
+                  
+                  // Contraintes R, C, U, P
+            using (var cmd = new OracleCommand(
+            "SELECT constraint_name, constraint_type, " +
+            "search_condition, r_constraint_name " +
+            "FROM all_constraints " +
+            "WHERE owner = :owner AND table_name = :table " +
+            "AND constraint_type IN ('R','C','U','P')",
+            (OracleConnection)_connection))
+            {
+              cmd.Parameters.Add(new OracleParameter("owner", schema));
+              cmd.Parameters.Add(new OracleParameter("table", tableName.ToUpper()));
+              using var reader = cmd.ExecuteReader();
+              while (reader.Read())
+              {
+                var name = reader.GetString(0);
+                var type = reader.GetString(1);
+                string ddl;
+                                
+                switch (type)
+                {
+                  case "C": // CHECK
+                    var cond = reader.IsDBNull(2) ? "" : reader.GetString(2);
+                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} CHECK ({cond})";
+                    break;
+
+                  case "R": // FOREIGN KEY
+                    var pk = reader.GetString(3);
+                    var fkCols = GetConstraintColumns(schema, name);
+                    var pkCols = GetConstraintColumns(schema, pk);
+                    var refTable = GetTableNameForConstraint(schema, pk);
+                                  
+                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
+                         $"FOREIGN KEY ({string.Join(",", fkCols)}) " +
+                          $"REFERENCES {refTable}({string.Join(",", pkCols)})";
+                    break;
+
+                  case "U": // UNIQUE
+                    var uniqueCols = GetConstraintColumns(schema, name);
+                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
+                         $"UNIQUE ({string.Join(",", uniqueCols)})";
+                    break;
+
+                  default: // PRIMARY KEY
+                    var pkCols2 = GetConstraintColumns(schema, name);
+                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
+                         $"PRIMARY KEY ({string.Join(",", pkCols2)})";
+                    break;
+                }
+            
+                _restoreDdls.Push(ddl);
+                
+                using var disableCmd = new OracleCommand(
+                $"ALTER TABLE {tableName} DISABLE CONSTRAINT {name}",
+                    (OracleConnection)_connection);
+                disableCmd.ExecuteNonQuery();
+              }
+            }
+
+            // NOT NULL Constraints
+            using (var cmd = new OracleCommand(
+                "SELECT column_name, data_type, data_length " +
+                "FROM all_tab_columns " +
+                "WHERE owner = :owner " +
+                "AND table_name = :table " +
+                "AND nullable = 'N'",
+                (OracleConnection)_connection))
+            {
+              cmd.Parameters.Add(new OracleParameter("owner", schema));
+              cmd.Parameters.Add(new OracleParameter("table", tableName.ToUpper()));
+              using var reader = cmd.ExecuteReader();
+              while (reader.Read())
+              {
+                var colName = reader.GetString(0);
+                var dt = reader.GetString(1);
+                var len = reader.IsDBNull(2) ? 0 : reader.GetDecimal(2);
+                var def = len > 0 ? $"{dt}({len})" : dt;
+
+                _restoreDdls.Push($"ALTER TABLE {tableName} MODIFY ({colName} {def} NOT NULL)");
+                 
+                using var alterCmd = new OracleCommand(
+                  $"ALTER TABLE {tableName} MODIFY ({colName} NULL)",
+                  (OracleConnection)_connection);
+                alterCmd.ExecuteNonQuery();
+              }
+            }
+          }
+                                  
+          private List<string> GetConstraintColumns(string schema, string constraintName)
+          {
+            var columns = new List<string>();
+            using var cmd = new OracleCommand(
+            "SELECT column_name FROM all_cons_columns " +
+            "WHERE owner = :owner AND constraint_name = :constraint",
+            (OracleConnection)_connection);
+            
+            cmd.Parameters.Add(new OracleParameter("owner", schema));
+            cmd.Parameters.Add(new OracleParameter("constraint", constraintName));
+            
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+              columns.Add(reader.GetString(0));
+            }
+            return columns;
+          }
+                                  
+          private string GetTableNameForConstraint(string schema, string constraintName)
+          {
+            using var cmd = new OracleCommand(
+            "SELECT table_name FROM all_constraints " +
+            "WHERE owner = :owner AND constraint_name = :constraint",
+            (OracleConnection)_connection);
+            
+            cmd.Parameters.Add(new OracleParameter("owner", schema));
+            cmd.Parameters.Add(new OracleParameter("constraint", constraintName));
+            
+            return cmd.ExecuteScalar()?.ToString() ?? string.Empty;
+          }
+          {{else}}{{removeLine}}{{/if}}
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
