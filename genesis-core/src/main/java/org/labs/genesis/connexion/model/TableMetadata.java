@@ -136,6 +136,7 @@ public class TableMetadata {
                 for (ColumnMetadata column : columns) {
                     if (column.getReferencedColumn().equalsIgnoreCase(pkColumnName)) {
                         column.setPrimary(true);
+                        column.getValidationAnnotations().remove("notNull");
                         setPrimaryColumn(column);
                         break;
                     }
