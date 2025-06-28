@@ -216,6 +216,445 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
 
+    - fileType: "Database constraints disabler"
+      fileName: "ConstraintDisabler"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.utils;
+
+        {{#if databaseType = PostgreSQL}}
+        import org.postgresql.util.PGobject;
+        {{else}}{{removeLine}}{{/if}}
+        import org.springframework.dao.DataAccessException;
+        import org.springframework.jdbc.core.JdbcTemplate;
+        import org.springframework.jdbc.datasource.DataSourceUtils;
+        import javax.sql.DataSource;
+        import java.sql.Connection;
+        import java.sql.SQLException;
+        import java.util.*;
+        import java.util.stream.Collectors;
+
+        public class ConstraintDisabler {
+        
+          public enum DbType { POSTGRESQL, MYSQL, SQLSERVER, ORACLE }
+          
+          private final JdbcTemplate jdbc;
+          private final DbType dbType;
+          private final Deque<String> restoreDdls = new LinkedList<>();
+          private final Set<String> processedTables = new HashSet<>();
+        
+          public ConstraintDisabler(JdbcTemplate jdbc) throws SQLException {
+            this.jdbc = jdbc;
+            this.dbType = detectDatabaseType();
+          }
+        
+          private DbType detectDatabaseType() throws SQLException {
+            DataSource dataSource = jdbc.getDataSource();
+            Connection conn = DataSourceUtils.getConnection(dataSource);
+            try {
+              String product = conn.getMetaData().getDatabaseProductName();
+              if (product.contains("PostgreSQL")) return DbType.POSTGRESQL;
+              else if (product.contains("MySQL")) return DbType.MYSQL;
+              else if (product.contains("Microsoft SQL Server")) return DbType.SQLSERVER;
+              else if (product.contains("Oracle")) return DbType.ORACLE;
+              else throw new UnsupportedOperationException("SGBD non pris en charge: " + product);
+            } finally {
+              DataSourceUtils.releaseConnection(conn, dataSource);
+            }
+          }
+
+          public void startTransaction() {
+            jdbc.execute("SET CONSTRAINTS ALL DEFERRED");
+          }
+
+          public void disableConstraintsForTable(String tableName) {
+            if (processedTables.contains(tableName)) return;
+            processedTables.add(tableName);
+            
+            switch (dbType) {
+              case POSTGRESQL -> disablePostgres(tableName);
+              case MYSQL -> disableMySql(tableName);
+              case SQLSERVER -> disableSqlServer(tableName);
+              case ORACLE -> disableOracle(tableName);
+            }
+          }
+
+          public void restoreConstraints() {
+            System.out.println("Restoring " + restoreDdls.size() + " constraints");
+            
+            while (!restoreDdls.isEmpty()) {
+              String ddl = restoreDdls.pop();
+              try {
+                System.out.println("Executing: " + ddl);
+                jdbc.execute(ddl);
+              } catch (DataAccessException e) {
+                System.err.println("Error restoring constraint: " + ddl);
+                System.err.println("Reason: " + e.getCause().getMessage());
+              }
+            }
+            processedTables.clear();
+          }
+
+          private String safeGetString(Map<String, Object> row, String key) {
+              Object value = row.get(key);
+              {{#if databaseType = PostgreSQL}}
+              if (value instanceof PGobject) {
+                  return ((PGobject) value).getValue();
+              }
+              {{else}}{{removeLine}}{{/if}}
+              return value != null ? value.toString() : null;
+          }
+
+          private void disablePostgres(String tableName) {
+              // 1. Désactiver les contraintes référencées (FK pointant vers cette table)
+              jdbc.queryForList(
+                "SELECT conname, conrelid::regclass AS source_table, " +
+                        "pg_get_constraintdef(oid) AS definition " +
+                        "FROM pg_constraint " +
+                        "WHERE confrelid = ?::regclass",
+                tableName
+              ).forEach(con -> {
+                String constraintName = safeGetString(con, "conname");
+                String sourceTable = safeGetString(con, "source_table");
+                String definition = safeGetString(con, "definition");
+                String restoreSQL = String.format(
+                  "ALTER TABLE %s ADD CONSTRAINT %s %s",
+                  sourceTable, constraintName, definition
+                );
+      
+                restoreDdls.push(restoreSQL);
+                jdbc.execute(String.format(
+                "ALTER TABLE %s DROP CONSTRAINT %s CASCADE",
+                sourceTable, constraintName
+                ));
+              });
+      
+              // 2. Désactiver les contraintes locales
+              jdbc.queryForList(
+              "SELECT conname, pg_get_constraintdef(oid) AS def " +
+              "FROM pg_constraint " +
+              "WHERE conrelid = ?::regclass",
+              tableName
+              ).forEach(row -> {
+                String name = safeGetString(row, "conname");
+                String def = safeGetString(row, "def");
+                
+                restoreDdls.push("ALTER TABLE " + tableName + " ADD CONSTRAINT " + name + " " + def);
+                jdbc.execute("ALTER TABLE " + tableName + " DROP CONSTRAINT " + name + " CASCADE");
+              });
+      
+              // 3. Gérer les contraintes NOT NULL (sauf colonnes d'identité)
+              jdbc.queryForList(
+              "SELECT a.attname AS column_name " +
+              "FROM pg_attribute a " +
+              "JOIN pg_class c ON c.oid = a.attrelid " +
+              "WHERE c.relname = ? " +
+              "  AND a.attnotnull " +
+              "  AND a.attidentity = '' " +  // Exclure les colonnes d'identité
+              "  AND a.attnum > 0 " +
+              "  AND NOT a.attisdropped",
+              tableName
+              ).forEach(col -> {
+                String colName = safeGetString(col, "column_name");
+                restoreDdls.push("ALTER TABLE " + tableName + " ALTER COLUMN " + colName + " SET NOT NULL");
+                jdbc.execute("ALTER TABLE " + tableName + " ALTER COLUMN " + colName + " DROP NOT NULL");
+              });
+          }
+
+          private void disableMySql(String tableName) {
+            String schema = jdbc.queryForObject("SELECT DATABASE()", String.class);
+        
+            // FOREIGN KEYS
+            jdbc.queryForList(
+              "SELECT constraint_name, column_name, referenced_table_name, referenced_column_name " +
+              "FROM information_schema.key_column_usage " +
+              "WHERE table_schema = ? AND table_name = ? AND referenced_table_name IS NOT NULL",
+              schema, tableName
+            ).forEach(fk -> {
+              String name = safeGetString(fk, "constraint_name");
+              String col = safeGetString(fk, "column_name");
+              String refTable = safeGetString(fk, "referenced_table_name");
+              String refCol = safeGetString(fk, "referenced_column_name");
+      
+              String restoreSQL = "ALTER TABLE " + tableName +
+              " ADD CONSTRAINT `" + name + "`" +
+              " FOREIGN KEY(`" + col + "`) REFERENCES `" +
+              refTable + "`(`" + refCol + "`)";
+      
+              restoreDdls.push(restoreSQL);
+              jdbc.execute("ALTER TABLE " + tableName + " DROP FOREIGN KEY `" + name + "`");
+            });
+
+            // Contraintes UNIQUE - Version corrigée
+            jdbc.queryForList(
+              "SELECT DISTINCT tc.constraint_name " +
+              "FROM information_schema.table_constraints tc " +
+              "WHERE tc.table_schema = ? " +
+              "  AND tc.table_name = ? " +
+              "  AND tc.constraint_type = 'UNIQUE' " +
+              "  AND tc.constraint_name != 'PRIMARY'",
+              schema, tableName
+            ).forEach(unique -> {
+              Map<String, Object> row = (Map<String, Object>) unique;
+              String name = safeGetString(row, "constraint_name");
+    
+              try {
+                // Récupérer toutes les colonnes de la contrainte UNIQUE
+                  List<String> columns = jdbc.queryForList(
+                  "SELECT column_name " +
+                  "FROM information_schema.key_column_usage " +
+                  "WHERE constraint_schema = ? " +
+                  "  AND table_name = ? " +
+                  "  AND constraint_name = ? " +
+                  "ORDER BY ordinal_position",
+                  String.class, schema, tableName, name
+                  );
+      
+                  String columnsStr = columns.stream()
+                  .map(col -> "`" + col + "`")
+                  .collect(Collectors.joining(","));
+      
+                  // Créer la commande de restauration
+                  String restoreSQL = "ALTER TABLE " + tableName +
+                  " ADD CONSTRAINT `" + name + "`" +
+                  " UNIQUE (" + columnsStr + ")";
+                  
+                  restoreDdls.push(restoreSQL);
+                  
+                  // Supprimer la contrainte UNIQUE
+                  jdbc.execute("ALTER TABLE " + tableName + " DROP INDEX `" + name + "`");
+                  System.out.println("Dropped UNIQUE constraint: " + name);
+  
+                } catch (DataAccessException e) {
+                  System.err.println("Failed to drop UNIQUE constraint: " + name);
+                  System.err.println("Reason: " + e.getCause().getMessage());
+                }
+              });
+
+              // Contraintes CHECK
+              disableMySqlCheckConstraints(tableName, schema);
+
+              // NOT NULL (sauf colonnes AUTO_INCREMENT)
+              jdbc.queryForList(
+                "SELECT column_name, column_type, extra " +
+                "FROM information_schema.columns " +
+                "WHERE table_schema = ? AND table_name = ? AND is_nullable = 'NO'",
+                schema, tableName                                                                                                                                            
+              ).forEach(col -> {
+                String colName = safeGetString(col, "column_name");
+                String typeDef = safeGetString(col, "column_type");
+                String extra = safeGetString(col, "extra");
+    
+                if (extra == null || !extra.contains("auto_increment")) {
+                  String modifySQL = "ALTER TABLE " + tableName + " MODIFY `" + colName + "` " + typeDef;
+                  jdbc.execute(modifySQL);
+                  restoreDdls.push(modifySQL + " NOT NULL");
+                }
+            });
+          }
+
+          private void disableMySqlCheckConstraints(String tableName, String schema) {
+            // 1. Contraintes CHECK au niveau TABLE
+            jdbc.queryForList(
+              "SELECT cc.constraint_name, cc.check_clause " +
+              "FROM information_schema.table_constraints tc " +
+              "JOIN information_schema.check_constraints cc " +
+              "  ON tc.constraint_schema = cc.constraint_schema " +
+              " AND tc.constraint_name = cc.constraint_name " +
+              "WHERE tc.table_schema = ? " +
+              "  AND tc.table_name = ? " +
+              "  AND tc.constraint_type = 'CHECK' " +
+              "  AND cc.level = 'Table'",
+              schema, tableName
+            ).forEach(ch -> {
+              String name = safeGetString(ch, "constraint_name");
+              String clause = safeGetString(ch, "check_clause");
+    
+              try {
+                jdbc.execute("ALTER TABLE " + tableName + " DROP CONSTRAINT `" + name + "`");
+                restoreDdls.push("ALTER TABLE " + tableName + " ADD CONSTRAINT `" + name + "` CHECK (" + clause + ")");
+              } catch (DataAccessException e) {
+                System.err.println("Failed to drop table-level CHECK constraint: " + name);
+              }
+            });
+
+            // 2. Contraintes CHECK au niveau COLONNE
+            jdbc.queryForList(
+              """
+                  SELECT cc.constraint_name, cc.check_clause
+                  FROM information_schema.check_constraints cc
+                  JOIN information_schema.table_constraints tc
+                  ON tc.constraint_schema = cc.constraint_schema
+                  AND tc.constraint_name = cc.constraint_name
+                  WHERE tc.table_schema = ?
+                  AND tc.table_name = ?
+                  AND tc.constraint_type = 'CHECK'
+                  AND cc.level = 'Column'
+              """,
+              schema, tableName
+            ).forEach(ch -> {
+              String colName = safeGetString(ch, "constraint_name");
+              String clause = safeGetString(ch, "check_clause");
+  
+              try {
+                // Désactiver via modification de colonne
+                String columnType = jdbc.queryForObject(
+                "SELECT column_type FROM information_schema.columns " +
+                "WHERE table_schema = ? AND table_name = ? AND column_name = ?",
+                String.class, schema, tableName, colName
+                );
+      
+                // Supprimer la contrainte CHECK
+                String modifySQL = "ALTER TABLE " + tableName + " MODIFY `" + colName + "` " + columnType;
+                jdbc.execute(modifySQL);
+      
+                // Stocker pour restauration
+                restoreDdls.push("ALTER TABLE " + tableName + " MODIFY `" + colName + "` " + columnType + " CHECK (" + clause + ")");
+              } catch (DataAccessException e) {
+                System.err.println("Failed to drop column-level CHECK constraint: " + colName);
+              }
+            });
+          }
+
+          private void disableSqlServer(String tableName) {
+            // CHECK
+            jdbc.queryForList(
+            "SELECT cc.name AS name, cc.definition AS def " +
+            "FROM sys.check_constraints cc " +
+            "JOIN sys.objects t ON cc.parent_object_id = t.object_id " +
+            "WHERE t.name = ?",
+            tableName
+            ).forEach(ch -> {
+              String name = safeGetString(ch, "name");
+              String def = safeGetString(ch, "def");
+              
+              restoreDdls.push("ALTER TABLE " + tableName + " ADD CONSTRAINT " + name + " CHECK (" + def + ")");
+              jdbc.execute("ALTER TABLE " + tableName + " DROP CONSTRAINT " + name);
+            });
+          
+            // FOREIGN KEY
+            jdbc.queryForList(
+            "SELECT fk.name AS name, COL_NAME(fkc.parent_object_id,fkc.parent_column_id) AS col, " +
+            "OBJECT_NAME(fk.referenced_object_id) AS refTable, " +
+            "COL_NAME(fkc.referenced_object_id,fkc.referenced_column_id) AS refCol " +
+            "FROM sys.foreign_keys fk " +
+            "JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id " +
+            "WHERE OBJECT_NAME(fk.parent_object_id)=?",
+            tableName
+            ).forEach(fk -> {
+              String name = safeGetString(fk, "name");
+              String col = safeGetString(fk, "col");
+              String refTable = safeGetString(fk, "refTable");
+              String refCol = safeGetString(fk, "refCol");
+              
+              String restoreSQL = "ALTER TABLE " + tableName +
+              " ADD CONSTRAINT " + name +
+              " FOREIGN KEY(" + col + ") REFERENCES " +
+              refTable + "(" + refCol + ")";
+              
+              restoreDdls.push(restoreSQL);
+              jdbc.execute("ALTER TABLE " + tableName + " DROP CONSTRAINT " + name);
+            });
+          
+            // NOT NULL (sauf colonnes IDENTITY)
+            jdbc.queryForList(
+            "SELECT name, system_type_name AS def " +
+            "FROM sys.columns " +
+            "WHERE object_id = OBJECT_ID(?) AND is_nullable = 0 AND is_identity = 0",
+            tableName
+            ).forEach(col -> {
+              String colName = safeGetString(col, "name");
+              String def = safeGetString(col, "def");
+              
+              restoreDdls.push("ALTER TABLE " + tableName + " ALTER COLUMN " + colName + " " + def + " NOT NULL");
+              jdbc.execute("ALTER TABLE " + tableName + " ALTER COLUMN " + colName + " " + def + " NULL");
+            });
+          }
+
+          private void disableOracle(String tableName) {
+            String schema = jdbc.queryForObject("SELECT USER FROM DUAL", String.class).toUpperCase();
+            String tableUpper = tableName.toUpperCase();
+          
+            // Contraintes R, C, U, P
+            jdbc.queryForList(
+            "SELECT constraint_name, constraint_type, search_condition, r_constraint_name " +
+            "FROM all_constraints " +
+            "WHERE owner = ? AND table_name = ? AND constraint_type IN ('R','C','U','P')",
+            schema, tableUpper
+            ).forEach(row -> {
+              String name = safeGetString(row, "CONSTRAINT_NAME");
+              String type = safeGetString(row, "CONSTRAINT_TYPE");
+              String ddl;
+              
+              switch (type) {
+              case "C": // CHECK
+                String cond = safeGetString(row, "SEARCH_CONDITION");
+                ddl = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name + " CHECK (" + cond + ")";
+                break;
+              case "R": // FK
+                String pk = safeGetString(row, "R_CONSTRAINT_NAME");
+                List<String> fkCols = jdbc.queryForList(
+                "SELECT column_name FROM all_cons_columns " +
+                "WHERE owner = ? AND constraint_name = ?",
+                String.class, schema, name
+                );
+                List<String> pkCols = jdbc.queryForList(
+                "SELECT column_name FROM all_cons_columns " +
+                "WHERE owner = ? AND constraint_name = ?",
+                String.class, schema, pk
+                );
+                String refTable = jdbc.queryForObject(
+                "SELECT table_name FROM all_constraints " +
+                "WHERE owner = ? AND constraint_name = ?",
+                String.class, schema, pk
+                );
+                
+                ddl = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name +
+                " FOREIGN KEY (" + String.join(",", fkCols) + ") REFERENCES " +
+                refTable + "(" + String.join(",", pkCols) + ")";
+                break;
+              case "U": // UNIQUE
+                List<String> uniqueCols = jdbc.queryForList(
+                "SELECT column_name FROM all_cons_columns " +
+                "WHERE owner = ? AND constraint_name = ?",
+                String.class, schema, name
+                );
+                ddl = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name +
+                " UNIQUE (" + String.join(",", uniqueCols) + ")";
+                break;
+              default: // P = PRIMARY KEY
+                List<String> pkCols2 = jdbc.queryForList(
+                "SELECT column_name FROM all_cons_columns " +
+                "WHERE owner = ? AND constraint_name = ?",
+                String.class, schema, name
+                );
+                ddl = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name +
+                " PRIMARY KEY (" + String.join(",", pkCols2) + ")";
+            }
+        
+              restoreDdls.push(ddl);
+              jdbc.execute("ALTER TABLE " + tableName + " DISABLE CONSTRAINT " + name);
+            });
+          
+            // NOT NULL
+            jdbc.queryForList(
+            "SELECT column_name, data_type, data_length " +
+            "FROM all_tab_columns " +
+            "WHERE owner = ? AND table_name = ? AND nullable = 'N'",
+            schema, tableUpper
+            ).forEach(col -> {
+              String colName = safeGetString(col, "COLUMN_NAME");
+              String dt = safeGetString(col, "DATA_TYPE");
+              Object lenObj = col.get("DATA_LENGTH");
+              int len = lenObj instanceof Number ? ((Number) lenObj).intValue(): 0;
+              String def = (len > 0) ? dt + "(" + len + ")": dt;
+        
+              restoreDdls.push("ALTER TABLE " + tableName + " MODIFY (" + colName + " " + def + " NOT NULL)");
+              jdbc.execute("ALTER TABLE " + tableName + " MODIFY (" + colName + " NULL)");
+            });
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
 
     - fileType: "Exception"
       fileName: "ResourceNotFoundException"
