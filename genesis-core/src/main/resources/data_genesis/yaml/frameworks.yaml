@@ -991,6 +991,9 @@
           import org.springframework.http.MediaType;
           import org.springframework.mock.web.MockHttpServletResponse;
           import org.springframework.test.web.servlet.MockMvc;
+          import org.springframework.test.context.ActiveProfiles;
+          import org.springframework.jdbc.core.JdbcTemplate;
+          import ${groupLink}.${lowerCase(projectName)}.utils.ConstraintDisabler;
           
           import com.fasterxml.jackson.databind.ObjectMapper;
           import com.fasterxml.jackson.databind.ObjectWriter;
@@ -999,21 +1002,21 @@
           @SpringBootTest
           @AutoConfigureMockMvc
           @TestInstance(Lifecycle.PER_CLASS)
+          @ActiveProfiles("test")
           class ${majStart(className)}ApplicationTests {
           
             private MockMvc mockMvc;
             private ${majStart(className)}Service service;
             private ${majStart(className)} mockData=new ${majStart(className)}();
+            private final JdbcTemplate jdbcTemplate;
+            private ConstraintDisabler constraintDisabler;
           
             @Autowired
-            public ${majStart(className)}ApplicationTests(MockMvc mockMvc, ${majStart(className)}Service service){
+            public ${majStart(className)}ApplicationTests(MockMvc mockMvc, ${majStart(className)}Service service, JdbcTemplate jdbcTemplate) throws Exception {
               this.mockMvc=mockMvc;
               this.service=service;
-              {{#each fields}}
-              {{#if this.isPrimaryKey}}{{removeLine}}
-              {{elseIf this.isForeignKey}}{{removeLine}}
-              {{else}}mockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
-              {{/each}}
+              this.jdbcTemplate = jdbcTemplate;
+              constraintDisabler = new ConstraintDisabler(jdbcTemplate);
             }
           
             private final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(),
@@ -1023,6 +1026,13 @@
             {{#if !isView}} 
             @BeforeEach
             void seedingTheDatabase(){
+              constraintDisabler.disableConstraintsForTable("${lowerCase(classNameLink)}");
+              mockData = new ${majStart(className)}();
+              {{#each fields}}
+              {{#if this.isPrimaryKey}}{{removeLine}}
+              {{elseIf this.isForeignKey}}{{removeLine}}
+              {{else}}mockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
+              {{/each}}
               service.create${majStart(className)}(mockData);
             }
             @AfterEach
@@ -1031,6 +1041,7 @@
                 return;
               }
               service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
+              constraintDisabler.restoreConstraints();
             }
             {{else}}{{removeLine}}{{/if}}
           
@@ -1083,10 +1094,8 @@
             @Test
             @Tag("skipAfter")
             void testDelete${majStart(className)}() throws Exception{
-              String requestUrl="/${lowerCase(classNameLink)}/%s";
-              requestUrl=String.format(requestUrl, mockData.get${majStart(pkColumn)}());
-              MockHttpServletResponse resp=mockMvc.perform(delete(requestUrl).contentType(APPLICATION_JSON_UTF8)).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
+              service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
+              constraintDisabler.restoreConstraints();
             }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
