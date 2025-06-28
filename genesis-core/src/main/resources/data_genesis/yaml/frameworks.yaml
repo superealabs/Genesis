@@ -2891,6 +2891,15 @@
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
+    - fileType: "XunitConfig"
+      fileName: "XunitConfig"
+      extension: "cs"
+      content: |
+        using Xunit;
+  
+        [assembly: CollectionBehavior(DisableTestParallelization = true)]
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
