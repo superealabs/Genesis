@@ -306,6 +306,11 @@ public class PostgreSQLDatabase extends Database {
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("notBlank","{{removeLine}}");
                             String annotationResult = engine.render(annotationTemplate, fieldHashMap);
                             col.getValidationAnnotations().put("notBlank",annotationResult);
+                            col.checkAndCreateNotNullNotBlankCombinedAnnotation(
+                                    frameworkValidationAnnotations,
+                                    fieldHashMap,
+                                    engine
+                            );
                             break;
                         }
                     }

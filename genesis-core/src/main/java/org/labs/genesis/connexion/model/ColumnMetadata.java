@@ -125,4 +125,22 @@ public class ColumnMetadata {
         return validationAnnotations.containsKey("numericMaximumInclusiveValue")
                 || validationAnnotations.containsKey("numericMaximumValue");
     }
+
+    public void checkAndCreateNotNullNotBlankCombinedAnnotation(
+            Map<String, Object> frameworkValidationAnnotations,
+            Map<String, Object> fieldHashMap,
+            GenesisTemplateEngine engine) throws Exception {
+
+        if (validationAnnotations.containsKey("notNull")
+                && frameworkValidationAnnotations.containsKey("notNullAndNotBlank")) {
+
+            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault(
+                    "notNullAndNotBlank", "{{removeLine}}"
+            );
+            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+            validationAnnotations.put("notNullAndNotBlank", annotationResult);
+            validationAnnotations.remove("notNull");
+            validationAnnotations.remove("notBlank");
+        }
+    }
 }
