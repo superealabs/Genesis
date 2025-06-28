@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class FrameworkMetadataProvider {
     private static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
@@ -303,7 +304,8 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnSize", field.getColumnSize());
         fieldMap.put("decimalDigits", field.getDecimalDigits());
         fieldMap.put("isUnique", field.isUnique());
-        fieldMap.put("validationAnnotations", field.getValidationAnnotations());
+        fieldMap.put("isNullable", field.isNullable());
+        fieldMap.put("validationAnnotations", getFieldValidationAnnotations(field));
 
         return fieldMap;
     }
@@ -328,7 +330,8 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnSize", field.getColumnSize());
         fieldMap.put("decimalDigits", field.getDecimalDigits());
         fieldMap.put("isUnique", field.isUnique());
-        fieldMap.put("validationAnnotations", field.getValidationAnnotations());
+        fieldMap.put("isNullable", field.isNullable());
+        fieldMap.put("validationAnnotations", getFieldValidationAnnotations(field));
 
         return fieldMap;
     }
@@ -388,5 +391,11 @@ public class FrameworkMetadataProvider {
         tmMap.put("isView", tm.getIsView());
 
         return tmMap;
+    }
+
+    private static List<String> getFieldValidationAnnotations(ColumnMetadata field){
+        return field.getValidationAnnotations().values().stream()
+                .map(Object::toString)
+                .collect(Collectors.toList());
     }
 }
