@@ -2975,9 +2975,13 @@
   
           using System.Net.Http;
           using System.Linq.Expressions;
+          using System.Data.Common;
+          using System.Data;
+          using System.Data.SqlClient;
           using Microsoft.AspNetCore.Mvc.Testing;
           using Xunit;
           using Microsoft.Extensions.DependencyInjection;
+          using Microsoft.EntityFrameworkCore;
           using ${majStart(projectName)}.Models;
           using ${majStart(projectName)}.Services.Implementation;
           using ${majStart(projectName)}.Repositories.Implementation;
@@ -2989,6 +2993,9 @@
             private readonly WebApplicationFactory<Program> _factory;
             private ${majStart(className)} mockData;
             protected string CurrentTestName;
+            private IServiceScope _scope;
+            private DbConnection _dbConnection;
+            private ConstraintDisabler _constraintDisabler;
             
             public ${majStart(className)}ApplicationTests(WebApplicationFactory<Program> factory)
             {
@@ -3007,30 +3014,58 @@
             public async Task InitializeAsync()
             {
               CurrentTestName = "";
-              {{#if !isView}} 
-              using (var scope = _factory.Services.CreateScope())
+              {{#if !isView}}
+              // Créer un scope qui durera toute la vie du test
+              _scope = _factory.Services.CreateScope();
+              var context = _scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
+              
+              _dbConnection = context.Database.GetDbConnection();
+            
+              // Ouvrir la connexion si nécessaire
+              if (_dbConnection.State != ConnectionState.Open)
               {
-                // Résoudre le DbContext et les autres services dans ce scope
-                var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
-                var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
-                
-                // Act
-                await service.AddAsync(mockData);
+                await _dbConnection.OpenAsync();
               }
+            
+              // Initialiser le désactivateur de contraintes
+              _constraintDisabler = new ConstraintDisabler(_dbConnection);
+              
+              // Démarrer la transaction et désactiver les contraintes
+              _constraintDisabler.StartTransaction();
+              _constraintDisabler.DisableConstraintsForTable("${tableName}");
+              
+              // Insérer les données de test
+              var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
+              await service.AddAsync(mockData);
               {{else}}{{removeLine}}{{/if}}
             }
     
             public async Task DisposeAsync()
             {
               {{#if !isView}} 
-              if (CurrentTestName == nameof(${majStart(className)}ApplicationTests.TestDelete))
-              return;
-              
-              using (var scope = _factory.Services.CreateScope())
+              try
               {
-                var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
+                if (CurrentTestName == nameof(TestDelete))
+                return;
+                
+                var context = _scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
                 var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
-                await service.DeleteAsync(mockData.${majStart(pkColumn)});
+                
+                // Supprimer les données de test
+                await service.DeleteAsync(mockData.Id);
+                
+                // Restaurer les contraintes
+                _constraintDisabler.RestoreConstraints();
+              }
+              finally
+              {
+                // Fermer la connexion et libérer les ressources
+                if (_dbConnection?.State == ConnectionState.Open)
+                {
+                  await _dbConnection.CloseAsync();
+                }
+                
+                _scope?.Dispose();
               }
               {{else}}{{removeLine}}{{/if}}
             }
@@ -3068,6 +3103,8 @@
                 var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
                 var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
                 await service.DeleteAsync(mockData.${majStart(pkColumn)});
+                _constraintDisabler.RestoreConstraints();
+                await _dbConnection.CloseAsync();
               }
             }
     
