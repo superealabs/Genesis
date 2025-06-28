@@ -815,6 +815,16 @@
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
 
+    - fileType: "Configuration file for test classes"
+      fileName: "application-test"
+      extension: "properties"
+      content: |   
+        spring.jpa.properties.jakarta.persistence.validation.mode=none
+        spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration
+        spring.jpa.properties.hibernate.validator.apply_to_ddl=false
+        spring.jpa.properties.hibernate.validator.autoregister_listeners=false
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/resources/"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
