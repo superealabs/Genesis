@@ -223,8 +223,8 @@
       "float4": "0.0f",
       "float8": "0.0d",
       "double precision": "0.0d",
-      "decimal": "0.0m",
-      "numeric": "0.0m",
+      "decimal": "0.0",
+      "numeric": "0.0",
       "timestamp without time zone": "DateOnly.FromDateTime(DateTime.Now)",
       "bool": "true",
       "tsrange": "new[] { DateTime.Now, DateTime.Now.AddHours(1) }",
@@ -236,7 +236,10 @@
       "INT": "0",
       "VARCHAR": "\"mock\"",
       "DATE": "DateOnly.FromDateTime(DateTime.Today)",
-      "BIGINT": "0L"
+      "BIGINT": "0L",
+      "TEXT": "\"mock\"",
+      "SMALLINT": "0",
+      "DECIMAL": "0.0"
     },
     "criteriaBuildSnippet": {}
   }
