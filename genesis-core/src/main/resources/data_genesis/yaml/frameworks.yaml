@@ -1102,8 +1102,6 @@
     validationAnnotations:
       notNull: '@NotNull(message = "${majStart(name)} cannot be null")'
       maxSize: "@Size(max = ${columnSize})"
-      defaultValue: '@DefaultValue("${defaultValue}")'
-      digits: '@Digits(integer = ${columnSize}, fraction = ${decimalDigits})'
       numericMinimumValue : '@DecimalMin(value = "${value}")'
       numericMinimumInclusiveValue : '@DecimalMin(value = "${value}", inclusive = true)'
       numericMaximumValue: '@DecimalMax(value = "${value}")'
