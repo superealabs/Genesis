@@ -3196,7 +3196,19 @@
             }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
-    validationAnnotations: {}
+    validationAnnotations:
+      notNull: '[Required(ErrorMessage = "${majStart(name)} cannot be null")]'
+      maxSize: "[StringLength(${columnSize})]"
+      numericMinimumValue: '[Range(${value}, double.MaxValue)]'
+      numericMinimumInclusiveValue: '[Range(${value}, double.MaxValue)]'
+      numericMaximumValue: '[Range(double.MinValue, ${value})]'
+      numericMaximumInclusiveValue: '[Range(double.MinValue, ${value})]'
+      numericMinimumAndMaximumValue: '[Range(${minValue}, ${maxValue})]'
+      notBlank: '[Required(AllowEmptyStrings = false)]'
+      minAndMaxSize: '[StringLength(${columnSize}, MinimumLength = ${minLength})]'
+      regexPattern: '[RegularExpression("${value}")]'
+      defaultValue: '[DefaultValue("${defaultValue}")]'
+      notNullAndNotBlank: '[Required(AllowEmptyStrings = false, ErrorMessage = "${majStart(name)} cannot be null")]'
   modelDao:
     toGenerate: true
     modelDaoImports: |
