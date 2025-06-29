@@ -78,9 +78,17 @@ public class MySQLDatabase extends Database {
                             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             fieldHashMap.put("value",value);
+                            col.getValidationAnnotations().put("numericMinimumValueData",value);
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMinimumValue","{{removeLine}}");
                             String annotationResult = this.engine.render(annotationTemplate, fieldHashMap);
-                            col.getValidationAnnotations().put("numericMinimumValue",annotationResult);
+                            col.getValidationAnnotations().put("numericMinimumValue", annotationResult);
+                            col.checkAndCreateRangeAnnotation(
+                                    frameworkValidationAnnotations,
+                                    fieldHashMap,
+                                    engine,
+                                    value,
+                                    true
+                            );
                             break;
                         }
                     }
@@ -105,10 +113,17 @@ public class MySQLDatabase extends Database {
                             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             fieldHashMap.put("value",value);
+                            col.getValidationAnnotations().put("numericMaximumValueData",value);
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMaximumValue","{{removeLine}}");
                             String annotationResult = this.engine.render(annotationTemplate, fieldHashMap);
-                            col.getValidationAnnotations().put("numericMaximumValue",annotationResult);
-
+                            col.getValidationAnnotations().put("numericMaximumValue", annotationResult);
+                            col.checkAndCreateRangeAnnotation(
+                                    frameworkValidationAnnotations,
+                                    fieldHashMap,
+                                    engine,
+                                    value,
+                                    false
+                            );
                             break;
                         }
                     }
@@ -134,10 +149,17 @@ public class MySQLDatabase extends Database {
                             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             fieldHashMap.put("value",value);
+                            col.getValidationAnnotations().put("numericMinimumInclusiveValueData",value);
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMinimumInclusiveValue","{{removeLine}}");
                             String annotationResult = this.engine.render(annotationTemplate, fieldHashMap);
-                            col.getValidationAnnotations().put("numericMinimumInclusiveValue",annotationResult);
-
+                            col.getValidationAnnotations().put("numericMinimumInclusiveValue", annotationResult);
+                            col.checkAndCreateRangeAnnotation(
+                                    frameworkValidationAnnotations,
+                                    fieldHashMap,
+                                    engine,
+                                    value,
+                                    true
+                            );
                             break;
                         }
                     }
@@ -163,9 +185,17 @@ public class MySQLDatabase extends Database {
                             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             fieldHashMap.put("value",value);
+                            col.getValidationAnnotations().put("numericMaximumInclusiveValueData",value);
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMaximumInclusiveValue","{{removeLine}}");
                             String annotationResult = engine.render(annotationTemplate, fieldHashMap);
-                            col.getValidationAnnotations().put("numericMaximumInclusiveValue",annotationResult);
+                            col.getValidationAnnotations().put("numericMaximumInclusiveValue", annotationResult);
+                            col.checkAndCreateRangeAnnotation(
+                                    frameworkValidationAnnotations,
+                                    fieldHashMap,
+                                    engine,
+                                    value,
+                                    false
+                            );
                             break;
                         }
                     }
@@ -190,6 +220,11 @@ public class MySQLDatabase extends Database {
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("notBlank","{{removeLine}}");
                             String annotationResult = engine.render(annotationTemplate, fieldHashMap);
                             col.getValidationAnnotations().put("notBlank",annotationResult);
+                            col.checkAndCreateNotNullNotBlankCombinedAnnotation(
+                                    frameworkValidationAnnotations,
+                                    fieldHashMap,
+                                    engine
+                            );
                             break;
                         }
                     }

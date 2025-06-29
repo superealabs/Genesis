@@ -111,7 +111,10 @@
       "INT": "0",
       "VARCHAR": "\"mock\"",
       "DATE": "java.time.LocalDate.now()",
-      "BIGINT": "0L"
+      "BIGINT": "0L",
+      "SMALLINT": "0",
+      "TEXT": "\"mock\"",
+      "DECIMAL": "0."
     },
     "criteriaBuildSnippet": {
       "int": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
@@ -153,7 +156,10 @@
       "INT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "VARCHAR": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "DATE": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
-      "BIGINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
+      "BIGINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "DECIMAL": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "TEXT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "SMALLINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
     }
   },
   {
@@ -217,8 +223,8 @@
       "float4": "0.0f",
       "float8": "0.0d",
       "double precision": "0.0d",
-      "decimal": "0.0m",
-      "numeric": "0.0m",
+      "decimal": "0.0",
+      "numeric": "0.0",
       "timestamp without time zone": "DateOnly.FromDateTime(DateTime.Now)",
       "bool": "true",
       "tsrange": "new[] { DateTime.Now, DateTime.Now.AddHours(1) }",
@@ -230,7 +236,10 @@
       "INT": "0",
       "VARCHAR": "\"mock\"",
       "DATE": "DateOnly.FromDateTime(DateTime.Today)",
-      "BIGINT": "0L"
+      "BIGINT": "0L",
+      "TEXT": "\"mock\"",
+      "SMALLINT": "0",
+      "DECIMAL": "0.0"
     },
     "criteriaBuildSnippet": {}
   }

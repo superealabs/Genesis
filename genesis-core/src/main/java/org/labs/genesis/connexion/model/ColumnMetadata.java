@@ -6,7 +6,9 @@ import lombok.ToString;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Setter
@@ -30,7 +32,7 @@ public class ColumnMetadata {
     private String defaultValue;
     private int decimalDigits;
     private int columnSize;
-    private Map<String, Object> validationAnnotations=new HashMap<>();
+    private Map<String, Object> validationAnnotations = new HashMap<>();
 
     public void setNullable(String nullable, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
         if(nullable.equalsIgnoreCase("YES")){
@@ -71,6 +73,74 @@ public class ColumnMetadata {
             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("digits","{{removeLine}}");
             String annotationResult = engine.render(annotationTemplate, fieldHashMap);
             this.validationAnnotations.put("digits",annotationResult);
+        }
+    }
+
+    public void removeSeparateMinMaxAnnotations(){
+        this.validationAnnotations.remove("numericMaximumInclusiveValue");
+        this.validationAnnotations.remove("numericMinimumInclusiveValue");
+        this.validationAnnotations.remove("numericMaximumValue");
+        this.validationAnnotations.remove("numericMinimumValue");
+    }
+
+    public void checkAndCreateRangeAnnotation(Map<String, Object> frameworkValidationAnnotations,
+                                              Map<String, Object> fieldHashMap,
+                                              GenesisTemplateEngine engine,
+                                              String currentValue,
+                                              boolean isMin) throws Exception {
+
+        if ((isMin && hasMaxConstraint()) || (!isMin && hasMinConstraint())) {
+            if (frameworkValidationAnnotations.containsKey("numericMinimumAndMaximumValue")) {
+                Object otherValue = getOppositeBoundValue(isMin);
+                if (otherValue != null) {
+                    String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMinimumAndMaximumValue", "{{removeLine}}");
+                    fieldHashMap.put("minValue", isMin ? currentValue : otherValue);
+                    fieldHashMap.put("maxValue", isMin ? otherValue : currentValue);
+                    String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+                    validationAnnotations.put("numericMinimumAndMaximumValue", annotationResult);
+                    removeSeparateMinMaxAnnotations();
+                }
+            }
+        }
+    }
+
+    private Object getOppositeBoundValue(boolean isMin) {
+        if (isMin) {
+            return validationAnnotations.containsKey("numericMaximumInclusiveValue")
+                    ? validationAnnotations.get("numericMaximumInclusiveValueData")
+                    : validationAnnotations.get("numericMaximumValueData");
+        } else {
+            return validationAnnotations.containsKey("numericMinimumInclusiveValue")
+                    ? validationAnnotations.get("numericMinimumInclusiveValueData")
+                    : validationAnnotations.get("numericMinimumValueData");
+        }
+    }
+
+    private boolean hasMinConstraint() {
+        return validationAnnotations.containsKey("numericMinimumInclusiveValue")
+                || validationAnnotations.containsKey("numericMinimumValue");
+    }
+
+    private boolean hasMaxConstraint() {
+        return validationAnnotations.containsKey("numericMaximumInclusiveValue")
+                || validationAnnotations.containsKey("numericMaximumValue");
+    }
+
+    public void checkAndCreateNotNullNotBlankCombinedAnnotation(
+            Map<String, Object> frameworkValidationAnnotations,
+            Map<String, Object> fieldHashMap,
+            GenesisTemplateEngine engine) throws Exception {
+
+        if (validationAnnotations.containsKey("notNull")
+                && frameworkValidationAnnotations.containsKey("notNullAndNotBlank")) {
+
+            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault(
+                    "notNullAndNotBlank", "{{removeLine}}"
+            );
+            String annotationResult = engine.render(annotationTemplate, fieldHashMap);
+            validationAnnotations.put("notNullAndNotBlank", annotationResult);
+            validationAnnotations.remove("notNull");
+            validationAnnotations.remove("notBlank");
         }
     }
 }
