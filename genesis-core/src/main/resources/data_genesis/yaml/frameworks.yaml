@@ -1078,6 +1078,7 @@
             }
             {{else}}{{removeLine}}{{/if}}
           
+            {{#if !isView}} 
             @Test
             void testModify${majStart(className)}() throws Exception{
               ObjectMapper mapper=new ObjectMapper();
@@ -1097,6 +1098,7 @@
               service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
               constraintDisabler.restoreConstraints();
             }
+            {{else}}{{removeLine}}{{/if}}
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
     validationAnnotations:
