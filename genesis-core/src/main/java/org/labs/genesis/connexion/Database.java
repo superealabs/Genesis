@@ -166,10 +166,10 @@ public abstract class Database {
         int tempIndex = 0;
         try (ResultSet views = metaData.getTables(null, credentials.getSchemaName(), "%", new String[]{"VIEW"})) {
             while (views.next() && size > viewNames.size()) {
-//                if (tempIndex < (index * size)) {
-//                    tempIndex++;
-//                    continue;
-//                }
+                if (tempIndex < (index * size)) {
+                    tempIndex++;
+                    continue;
+                }
                 String viewName = views.getString("TABLE_NAME");
                 viewNames.add(viewName);
                 tempIndex++;
