@@ -39,6 +39,7 @@ public class SQLRunnerForm {
     private LinkLabel<String> generateScriptLinkLabel;
     private RTextScrollPane rTextScrollPane;
     private RSyntaxTextArea sqlTextArea;
+    private JCheckBox addDBSchemaCheckBox;
     private final LlmApiClient llmApiClient;
     
     public SQLRunnerForm(ProjectGenerationContext projectGenerationContext) {
@@ -51,8 +52,10 @@ public class SQLRunnerForm {
         setupListeners();
         useLLMCheckBox.setSelected(false);
         usePersonalAccessTokenCheckBox.setSelected(false);
+        addDBSchemaCheckBox.setSelected(false);
         llmModelComboBox.setEnabled(false);
         usePersonalAccessTokenCheckBox.setEnabled(false);
+        addDBSchemaCheckBox.setEnabled(false);
         tokenApiField.setEnabled(false);
         promptTextArea.setEnabled(false);
         generateScriptLinkLabel.setEnabled(false);
@@ -157,6 +160,8 @@ public class SQLRunnerForm {
             llmModelComboBox.setEnabled(selected);
             usePersonalAccessTokenCheckBox.setEnabled(selected);
             usePersonalAccessTokenCheckBox.setSelected(false);
+            addDBSchemaCheckBox.setEnabled(selected);
+            addDBSchemaCheckBox.setSelected(false);
             tokenApiField.setEnabled(false);
             promptTextArea.setEnabled(selected);
             generateScriptLinkLabel.setEnabled(selected);
@@ -203,7 +208,9 @@ public class SQLRunnerForm {
                 this.llmApiClient.setApiKeyFromFile();
             }
             if (!validateIaPrompt()) return;
-            String scriptGenerated = this.llmApiClient.generateSQL(this.projectGenerationContext.getDatabase(),this.promptTextArea.getText());
+            String scriptGenerated = this.llmApiClient.generateSQL(this.projectGenerationContext,
+                    this.promptTextArea.getText(),
+                    addDBSchemaCheckBox.isSelected());
             this.sqlTextArea.setText(scriptGenerated);
             Messages.showInfoMessage(
                     mainPanel,
