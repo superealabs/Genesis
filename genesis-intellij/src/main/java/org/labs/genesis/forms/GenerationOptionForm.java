@@ -40,6 +40,9 @@ public class GenerationOptionForm {
     private int paginationIndex = 0;
     private int paginationSize = 1;
 
+    @Setter
+    private int paginationListViewIndex = 0;
+
     private TableNameStrategy tableNameStrategy;
 
     public GenerationOptionForm(ProjectGenerationContext projectGenerationContext) {

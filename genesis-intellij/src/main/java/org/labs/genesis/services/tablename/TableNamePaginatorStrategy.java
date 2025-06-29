@@ -43,11 +43,11 @@ public class TableNamePaginatorStrategy extends TableNameStrategy {
     @Override
     public List<String> getViewNames() throws Exception {
         this.checkIsNotNull();
-        List<String> allViewNames = this.getDatabase().getPaginatedViewNames(this.getConnection(), this.generationOptionForm.getPaginationIndex(), this.NB_TABLE);
+        List<String> allViewNames = this.getDatabase().getPaginatedViewNames(this.getConnection(), this.generationOptionForm.getPaginationListViewIndex(), this.NB_TABLE);
         if (this.generationOptionForm.getAllViewsNames().isEmpty()) {
             allViewNames.addFirst(this.getSelectAll()); // Ajouter l'option pour tout sélectionner "Message"
         }
-        this.generationOptionForm.setPaginationIndex(this.generationOptionForm.getPaginationIndex() + 1);
+        this.generationOptionForm.setPaginationListViewIndex(this.generationOptionForm.getPaginationListViewIndex() + 1);
         return allViewNames;
     }
 }

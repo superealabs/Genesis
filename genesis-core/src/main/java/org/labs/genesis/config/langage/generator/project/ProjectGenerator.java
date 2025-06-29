@@ -30,6 +30,7 @@ public class ProjectGenerator {
     public static final Map<Integer, Database> databases;
     public static final Map<Integer, Language> languages;
     public static final Map<Integer, Framework> frameworks;
+    public static final Map<Integer, LlmApiConfig> llmApiConfigs;
     public static final GenesisTemplateEngine engine;
 
     static {
@@ -47,6 +48,9 @@ public class ProjectGenerator {
 
             frameworks = Arrays.stream(FileUtils.fromYaml(Framework[].class, Constantes.FRAMEWORK_YAML))
                     .collect(Collectors.toMap(Framework::getId, framework -> framework));
+
+            llmApiConfigs = Arrays.stream(FileUtils.fromJson(LlmApiConfig[].class, Constantes.LLM_API_CONFIG_JSON))
+                    .collect(Collectors.toMap(LlmApiConfig::getId, llmApiConfig -> llmApiConfig));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
