@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -167,8 +168,9 @@ public class LlmApiClient {
         Credentials credentials = projectGenerationContext.getCredentials();
         Connection connex = projectGenerationContext.getConnection();
         Language language = projectGenerationContext.getLanguage();
-        List<TableMetadata> entities = database.getEntitiesByNames(new ArrayList<>(), connex, credentials, language);
-        List<TableMetadata> views = database.getViewsByNames(new ArrayList<>(), connex, credentials, language);
+        Framework framework = projectGenerationContext.getFramework();
+        List<TableMetadata> entities = database.getEntitiesByNames(new ArrayList<>(), connex, credentials, language, framework);
+        List<TableMetadata> views = database.getViewsByNames(new ArrayList<>(), connex, credentials, language, framework);
 
         List<TableMetadata> allEntities = new ArrayList<>();
         allEntities.addAll(entities);
