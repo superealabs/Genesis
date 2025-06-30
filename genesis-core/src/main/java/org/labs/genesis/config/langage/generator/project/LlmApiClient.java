@@ -185,7 +185,7 @@ public class LlmApiClient {
 
             for (ColumnMetadata column : table.getColumns()) {
                 schemaBuilder.append(String.format("\n    ├─ %s: %s%s%s",
-                        column.getName(),
+                        column.getReferencedColumn(),
                         column.getColumnType(),
                         column.isPrimary() ? " (PK)" : "",
                         column.isForeign() ? String.format(" → %s(%s)",
