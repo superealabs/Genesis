@@ -308,10 +308,10 @@
           private void disablePostgres(String tableName) {
               // 1. Désactiver les contraintes référencées (FK pointant vers cette table)
               jdbc.queryForList(
-                "SELECT conname, conrelid::regclass AS source_table, " +
+                "SELECT conname, conrelid::regclass::text AS source_table, " +
                         "pg_get_constraintdef(oid) AS definition " +
                         "FROM pg_constraint " +
-                        "WHERE confrelid = ?::regclass",
+                        "WHERE confrelid = to_regclass(?)",
                 tableName
               ).forEach(con -> {
                 String constraintName = safeGetString(con, "conname");
@@ -333,7 +333,7 @@
               jdbc.queryForList(
               "SELECT conname, pg_get_constraintdef(oid) AS def " +
               "FROM pg_constraint " +
-              "WHERE conrelid = ?::regclass",
+              "WHERE conrelid = to_regclass(?)",
               tableName
               ).forEach(row -> {
                 String name = safeGetString(row, "conname");
@@ -1026,7 +1026,7 @@
             {{#if !isView}} 
             @BeforeEach
             void seedingTheDatabase(){
-              constraintDisabler.disableConstraintsForTable("${lowerCase(classNameLink)}");
+              constraintDisabler.disableConstraintsForTable("${tableName}");
               mockData = new ${majStart(className)}();
               {{#each fields}}
               {{#if this.isPrimaryKey}}{{removeLine}}
