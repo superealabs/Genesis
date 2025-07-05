@@ -2968,6 +2968,19 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
+    - fileType: "Response Helper"
+      fileName: "PagedResponse"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+
+        public class PagedResponse<T>
+        {
+          public List<T> Content { get; set; }
+          public PageInfo Page { get; set; }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
