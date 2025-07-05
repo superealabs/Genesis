@@ -2044,6 +2044,11 @@
               
               return await query.ToListAsync();
             }
+        
+            public async Task<long> GetTotalCountAsync()
+            {
+              return await _context.Set<T>().CountAsync();
+            }
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Generic/"
