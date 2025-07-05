@@ -2908,6 +2908,22 @@
         [assembly: CollectionBehavior(DisableTestParallelization = true)]
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
 
+    - fileType: "Response Helper"
+      fileName: "ApiResponse"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+
+        public class ApiResponse<T>
+        {
+          public int Status { get; set; }
+          public string Message { get; set; }
+          public int ReturnCode { get; set; }
+          public T? Data { get; set; }
+          public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
