@@ -3139,7 +3139,7 @@
                 var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
                 
                 // Supprimer les données de test
-                await service.DeleteAsync(mockData.Id);
+                await service.DeleteAsync(mockData.${majStart(pkColumn)});
                 
                 // Restaurer les contraintes
                 _constraintDisabler.RestoreConstraints();
