@@ -203,7 +203,7 @@
       "uuid": "Guid.NewGuid().ToString()",
       "xml": "\"<mock>mock</mock>\"",
       "date": "DateOnly.FromDateTime(DateTime.Today)",
-      "timestamp": "DateOnly.FromDateTime(DateTime.Now)",
+      "timestamp": "DateTime.Now",
       "time": "DateTime.Now.TimeOfDay",
       "interval": "TimeSpan.Zero",
       "bytea": "new byte[] { 1 }",
