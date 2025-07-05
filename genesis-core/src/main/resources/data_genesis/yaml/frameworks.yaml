@@ -1280,6 +1280,7 @@
       import org.springframework.data.domain.Pageable;
       import org.springframework.data.domain.Sort;
       import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+      import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
 
     controllerAnnotations: |
       @RestController
@@ -1332,16 +1333,13 @@
       {{tab}}    String message = ${lowerCase(classNameLink)}.hasContent()
       {{tab}}            ? "${formatReadableLowerCase(className)} retrieved successfully"
       {{tab}}            : "No ${formatReadableLowerCase(className)} found";
-      {{tab}}    HttpStatus statusCode = ${lowerCase(classNameLink)}.hasContent()
-      {{tab}}            ? HttpStatus.OK
-      {{tab}}            : HttpStatus.NO_CONTENT;
       {{tab}}
       {{tab}}    RestResponse<Page<${majStart(className)}>> response = RestResponse.buildSuccessResponse(
-      {{tab}}            statusCode,
+      {{tab}}            HttpStatus.OK,
       {{tab}}            message,
       {{tab}}            ${lowerCase(classNameLink)}
       {{tab}}    );
-      {{tab}}    return ResponseEntity.status(statusCode).body(response);
+      {{tab}}    return ResponseEntity.status(HttpStatus.OK).body(response);
       {{tab}}}
       {{tab}}@Operation(
       {{tab}}    summary = "Retrieve all ${formatReadableLowerCase(className)}",
@@ -1382,16 +1380,13 @@
       {{tab}}    String message = ${lowerCase(classNameLink)}.hasContent()
       {{tab}}            ? "${formatReadableLowerCase(className)} retrieved successfully"
       {{tab}}            : "No ${formatReadableLowerCase(className)} found";
-      {{tab}}    HttpStatus statusCode = ${lowerCase(classNameLink)}.hasContent()
-      {{tab}}            ? HttpStatus.OK
-      {{tab}}            : HttpStatus.NO_CONTENT;
       {{tab}}
       {{tab}}    RestResponse<Page<${majStart(className)}>> response = RestResponse.buildSuccessResponse(
-      {{tab}}            statusCode,
+      {{tab}}            HttpStatus.OK,
       {{tab}}            message,
       {{tab}}            ${lowerCase(classNameLink)}
       {{tab}}    );
-      {{tab}}    return ResponseEntity.status(statusCode).body(response);
+      {{tab}}    return ResponseEntity.status(HttpStatus.OK).body(response);
       {{tab}}}
       {{tab}}@Operation(
       {{tab}}    summary = "Get ${formatReadableLowerCase(className)} by ID",
@@ -1481,16 +1476,12 @@
       
       {{tab}}@Operation(
       {{tab}}    summary = "Delete ${formatReadableLowerCase(className)}",
-      {{tab}}    description = "Delete a ${formatReadableLowerCase(className)} item by its ID"
+      {{tab}}    description = "Delete a ${formatReadableLowerCase(className)} item by its ID. Returns success even if ${formatReadableLowerCase(className)} was already deleted."
       {{tab}})
       {{tab}}@ApiResponses({
       {{tab}}    @ApiResponse(
-      {{tab}}        responseCode = "204",
-      {{tab}}        description = "${formatReadable(className)} deleted successfully"
-      {{tab}}    ),
-      {{tab}}    @ApiResponse(
-      {{tab}}        responseCode = "404",
-      {{tab}}        description = "${formatReadable(className)} not found with the provided ID"
+      {{tab}}        responseCode = "200",
+      {{tab}}        description = "${formatReadable(className)} deleted successfully or already deleted"
       {{tab}}    )
       {{tab}}})
       {{tab}}@DeleteMapping("/{${pkColumn}}")
@@ -1498,10 +1489,25 @@
       {{tab}}    @Parameter(description = "ID of the ${formatReadableLowerCase(className)} to delete", required = true)
       {{tab}}    @PathVariable ${pkColumnType} ${pkColumn}
       {{tab}}) {
-      {{tab}}    ${lowerCase(className)}Service.delete${majStart(className)}(${pkColumn});
-      {{tab}}    RestResponse<Void> response = RestResponse.buildSuccessResponse(HttpStatus.NO_CONTENT,
-      {{tab}}            "${formatReadableLowerCase(className)} deleted successfully", null);
-      {{tab}}    return ResponseEntity.ok(response);
+      {{tab}}{{tab}}try {
+      {{tab}}{{tab}}{{tab}}${lowerCase(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{tab}}{{tab}}{{tab}}${lowerCase(className)}Service.delete${majStart(className)}(${pkColumn});
+      {{tab}}{{tab}}{{tab}}return ResponseEntity.ok(
+      {{tab}}{{tab}}{{tab}}{{tab}}RestResponse.buildSuccessResponse(
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}HttpStatus.OK,
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}"${formatReadableLowerCase(className)} deleted successfully",
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}null
+      {{tab}}{{tab}}{{tab}}{{tab}})
+      {{tab}}{{tab}}{{tab}});
+      {{tab}}{{tab}}}catch (ResourceNotFoundException ex) {
+      {{tab}}{{tab}}{{tab}}return ResponseEntity.ok(
+      {{tab}}{{tab}}{{tab}}{{tab}}RestResponse.buildSuccessResponse(
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}HttpStatus.OK,
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}"${formatReadableLowerCase(className)} already deleted or does not exist",
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}null
+      {{tab}}{{tab}}{{tab}}{{tab}})
+      {{tab}}{{tab}}{{tab}});
+      {{tab}}{{tab}}}
       {{tab}}}
       {else}}{{removeLine}}{{/if}}
 
