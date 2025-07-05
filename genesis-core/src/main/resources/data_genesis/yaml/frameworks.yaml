@@ -2924,6 +2924,21 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
+    - fileType: "Response Helper"
+      fileName: "PageInfo"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+
+        public class PageInfo
+        {
+            public int Size { get; set; }
+            public int Number { get; set; }
+            public long TotalElements { get; set; }
+            public int TotalPages { get; set; }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
