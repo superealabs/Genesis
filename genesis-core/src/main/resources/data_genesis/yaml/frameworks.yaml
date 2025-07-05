@@ -1889,6 +1889,7 @@
             Task UpdateAsync(T entity);
             Task DeleteAsync(TKey id);
             Task<bool> ExistsAsync(TKey id);
+            Task<long> GetTotalCountAsync();
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Generic/"
 
