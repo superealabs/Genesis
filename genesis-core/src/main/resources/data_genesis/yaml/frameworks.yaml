@@ -1330,9 +1330,12 @@
       {{tab}}    Pageable pageable = PageRequest.of(page, size, sortObj);
       {{tab}}    Page<${majStart(className)}> ${lowerCase(classNameLink)} = ${lowerCase(className)}Service.getAll${majStart(className)}(pageable);
       {{tab}}
-      {{tab}}    String message = ${lowerCase(classNameLink)}.hasContent()
-      {{tab}}            ? "${formatReadableLowerCase(className)} retrieved successfully"
-      {{tab}}            : "No ${formatReadableLowerCase(className)} found";
+      {{tab}}    String message = "${formatReadableLowerCase(className)} retrieved successfully";
+      {{tab}}
+      {{tab}}    if(!${formatReadableLowerCase(className)}.hasContent()) {
+      {{tab}}            message = "No ${formatReadableLowerCase(className)} found";
+      {{tab}}            throw new ResourceNotFoundException(message);
+      {{tab}}    }
       {{tab}}
       {{tab}}    RestResponse<Page<${majStart(className)}>> response = RestResponse.buildSuccessResponse(
       {{tab}}            HttpStatus.OK,
@@ -1377,9 +1380,12 @@
       {{tab}}    Pageable pageable = PageRequest.of(page, size, sortObj);
       {{tab}}    Page<${majStart(className)}> ${lowerCase(classNameLink)} = ${lowerCase(className)}Service.getAll${majStart(className)}(pageable, object);
       {{tab}}
-      {{tab}}    String message = ${lowerCase(classNameLink)}.hasContent()
-      {{tab}}            ? "${formatReadableLowerCase(className)} retrieved successfully"
-      {{tab}}            : "No ${formatReadableLowerCase(className)} found";
+      {{tab}}    String message = "${formatReadableLowerCase(className)} retrieved successfully";
+      {{tab}}
+      {{tab}}    if(!${formatReadableLowerCase(className)}.hasContent()) {
+      {{tab}}            message = "No ${formatReadableLowerCase(className)} found";
+      {{tab}}            throw new ResourceNotFoundException(message);
+      {{tab}}    }
       {{tab}}
       {{tab}}    RestResponse<Page<${majStart(className)}>> response = RestResponse.buildSuccessResponse(
       {{tab}}            HttpStatus.OK,
