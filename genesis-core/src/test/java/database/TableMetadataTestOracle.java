@@ -1,3 +1,4 @@
+
 package database;
 
 import org.junit.jupiter.api.Test;
@@ -15,23 +16,24 @@ public class TableMetadataTestOracle {
     public TableMetadataTestOracle() {
         this.credentials = new Credentials()
                 .setHost("localhost")
-                .setPort("1522")
-                .setUser("genesis")
-                .setSchemaName("GENESIS")
-                .setPwd("root")
-                .setSID("orcl");
+                .setPort("1521")
+                .setUser("C##TAHIANA")
+                .setPwd("tahiana")
+                .setSID("orclbdd");
     }
 
     @Test
     void listTableMetadata() {
         int databaseId = Constantes.Oracle_ID;
         int languageId = Constantes.Java_ID;
+        int frameworkId=Constantes.Spring_REST_API_ID;
 
         var database = ProjectGenerator.databases.get(databaseId);
         var language = ProjectGenerator.languages.get(languageId);
+        var  framework= ProjectGenerator.frameworks.get(frameworkId);
 
         try (Connection connection = database.getConnection(credentials)) {
-            TableMetadata[] entities = database.getEntities(connection, credentials, language).toArray(new TableMetadata[0]);
+            TableMetadata[] entities = database.getEntities(connection, credentials, language,framework).toArray(new TableMetadata[0]);
             System.out.println("\n\nEntities : \n" + Arrays.toString(entities) + "\n\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -42,12 +44,15 @@ public class TableMetadataTestOracle {
     void listViewMetadata() {
         int databaseId = Constantes.Oracle_ID;
         int languageId = Constantes.Java_ID;
+        int frameworkId=Constantes.Spring_REST_API_ID;
+
 
         var database = ProjectGenerator.databases.get(databaseId);
         var language = ProjectGenerator.languages.get(languageId);
+        var  framework= ProjectGenerator.frameworks.get(frameworkId);
 
         try (Connection connection = database.getConnection(credentials)) {
-            TableMetadata[] entities = database.getViews(connection, credentials, language).toArray(new TableMetadata[0]);
+            TableMetadata[] entities = database.getViews(connection, credentials, language,framework).toArray(new TableMetadata[0]);
             System.out.println("\n\nEntities : \n" + Arrays.toString(entities) + "\n\n");
         } catch (Exception e) {
             throw new RuntimeException(e);
