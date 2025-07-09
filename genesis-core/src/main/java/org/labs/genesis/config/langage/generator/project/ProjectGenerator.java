@@ -47,6 +47,13 @@ public class ProjectGenerator {
                     .collect(Collectors.toMap(Project::getId, project -> project));
 
             frameworks = Arrays.stream(FileUtils.fromYaml(Framework[].class, Constantes.FRAMEWORK_YAML))
+                    .peek(framework -> {
+                        try {
+                            framework.setFrameworkSecurities();
+                        } catch (IOException e) {
+                            throw new RuntimeException("Error while initializing frameworkSecurities for Framework ID: " + framework.getId(), e);
+                        }
+                    })
                     .collect(Collectors.toMap(Framework::getId, framework -> framework));
 
             llmApiConfigs = Arrays.stream(FileUtils.fromJson(LlmApiConfig[].class, Constantes.LLM_API_CONFIG_JSON))
