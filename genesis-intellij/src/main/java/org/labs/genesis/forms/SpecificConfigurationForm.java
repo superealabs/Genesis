@@ -40,6 +40,8 @@ public class SpecificConfigurationForm {
     private JPasswordField passwordField;
     private JLabel roleLabel;
     private JTextField roleField;
+    private JLabel securityTypeLabel;
+    private JComboBox<String> securityTypeOptions;
 
     public void initializeForm() {
         // Masquer tous les composants dépendants au début
@@ -55,6 +57,8 @@ public class SpecificConfigurationForm {
         // Afficher les composants toujours visibles
         loggingLevelLabel.setVisible(true);
         loggingLevelOptions.setVisible(true);
+        securityTypeLabel.setVisible(true);
+        securityTypeOptions.setVisible(true);
         useAnEurekaServerCheckBox.setVisible(true);
     }
 
@@ -64,6 +68,8 @@ public class SpecificConfigurationForm {
         if (framework != null) {
             // Configurer loggingLevel
             configureLoggingLevel(framework);
+            // Configurer type de sécurité
+            configureSecurityType(framework);
 
             if (framework.getIsGateway()) {
                 configureGatewayComponents();
@@ -113,6 +119,17 @@ public class SpecificConfigurationForm {
                 .filter(config -> "loggingLevel".equals(config.getVariableName()))
                 .flatMap(config -> config.getOptions().stream())
                 .forEach(option -> loggingLevelOptions.addItem(option));
+    }
+
+    private void configureSecurityType(Framework framework) {
+        securityTypeLabel.setVisible(true);
+        securityTypeOptions.setVisible(true);
+
+        securityTypeOptions.removeAllItems();
+        framework.getConfigurations().stream()
+                .filter(config -> "securityType".equals(config.getVariableName()))
+                .flatMap(config -> config.getOptions().stream())
+                .forEach(option -> securityTypeOptions.addItem(option));
     }
 
     private void configureGatewayComponents() {
