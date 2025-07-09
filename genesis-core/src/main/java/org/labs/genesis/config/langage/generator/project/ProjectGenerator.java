@@ -152,6 +152,24 @@ public class ProjectGenerator {
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
+
+        String securityType = (String) context.getFrameworkConfiguration().get("securityType");
+
+        if (securityType != null && !securityType.isBlank()) {
+            Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework()
+                    .getFrameworkSecurities()
+                    .stream()
+                    .filter(fs -> fs.getName().equalsIgnoreCase(securityType))
+                    .findFirst();
+
+            selectedSecurityOption.ifPresent(security -> {
+                try {
+                    renderFilesEdits(security.getSecurityFiles(), projectFilesEditsHashMap);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
     }
 
     public void generateBackendComponents(ProjectGenerationContext context,
