@@ -3,10 +3,15 @@ package org.labs.genesis.config.langage;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.labs.genesis.config.Constantes;
+import org.labs.utils.FileUtils;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -29,6 +34,13 @@ public class Framework {
     private ModelDao modelDao;
     private Service service;
     private Controller controller;
+    private List<FrameworkSecurity> frameworkSecurities;
+
+    public void setFrameworkSecurities() throws IOException {
+        this.frameworkSecurities = Arrays.stream(FileUtils.fromYaml(FrameworkSecurity[].class, Constantes.FRAMEWORK_SECURITY_YAML))
+                .filter(fs -> fs.getFrameworkId() == this.id)
+                .collect(Collectors.toList());
+    }
 
     @Override
     public String toString() {

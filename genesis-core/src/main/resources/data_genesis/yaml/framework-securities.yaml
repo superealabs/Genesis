@@ -1,0 +1,12 @@
+- id: 1
+  frameworkId: 1
+  name: "JWT"
+  securityFiles:
+    - fileType: "Example security class"
+      fileName: "ExampleClass"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+
+        To implement
+      destinationPath: "path/to/Define"

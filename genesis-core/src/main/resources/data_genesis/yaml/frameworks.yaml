@@ -851,6 +851,11 @@
         - "none"
         - "update"
       defaultOption: "none"
+    - name: "Security Type"
+      variableName: "securityType"
+      options:
+        - "NONE"
+      defaultOption: "NONE"
 
   eurekaClientConfigurations:
     - name: "Eureka Server URL"
@@ -3012,6 +3017,11 @@
         - "7.0"
         - "6.0"
       defaultOption: "8.0"
+    - name: "Security Type"
+      variableName: "securityType"
+      options:
+        - "NONE"
+      defaultOption: "NONE"
 
   eurekaClientConfigurations:
     - name: "Eureka Server URL"

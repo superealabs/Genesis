@@ -55,6 +55,11 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
                 specificConfigurationForm.getLoggingLevelOptions().getSelectedItem(), () -> "").toString()
         );
 
+        // Gestion du type de sécurisation
+        frameworkConfiguration.put("securityType", Objects.requireNonNullElseGet(
+                specificConfigurationForm.getSecurityTypeOptions().getSelectedItem(), () -> "").toString()
+        );
+
         // Gestion de hibernate ddl option
         frameworkConfiguration.put("hibernateDdlAuto", Objects.requireNonNullElseGet(
                 specificConfigurationForm.getDdlAutoOptions().getSelectedItem(), () -> "").toString()
