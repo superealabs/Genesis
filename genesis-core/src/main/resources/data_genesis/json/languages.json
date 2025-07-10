@@ -114,6 +114,14 @@
       "BIGINT": "0L",
       "SMALLINT": "0",
       "TEXT": "\"mock\"",
+      "NUMBER": "0.",
+      "FLOAT": "0.",
+      "BINARY_FLOAT": "0.",
+      "BINARY_DOUBLE": "0.",
+      "CHAR": "\"mock\"",
+      "NCHAR": "\"mock\"",
+      "VARCHAR2": "\"mock\"",
+      "NVARCHAR2": "\"mock\"",
       "DECIMAL": "0."
     },
     "criteriaBuildSnippet": {
@@ -159,6 +167,14 @@
       "BIGINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "DECIMAL": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TEXT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "NUMBER": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "FLOAT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "BINARY_FLOAT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "BINARY_DOUBLE": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "CHAR": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "NCHAR": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "VARCHAR2": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "NVARCHAR2": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "SMALLINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
     }
   },

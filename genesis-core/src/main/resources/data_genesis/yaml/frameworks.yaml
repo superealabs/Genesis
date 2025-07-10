@@ -1332,7 +1332,7 @@
       {{tab}}
       {{tab}}    String message = "${formatReadableLowerCase(className)} retrieved successfully";
       {{tab}}
-      {{tab}}    if(!${formatReadableLowerCase(className)}.hasContent()) {
+      {{tab}}    if(!${lowerCase(classNameLink)}.hasContent()) {
       {{tab}}            message = "No ${formatReadableLowerCase(className)} found";
       {{tab}}            throw new ResourceNotFoundException(message);
       {{tab}}    }
@@ -1382,7 +1382,7 @@
       {{tab}}
       {{tab}}    String message = "${formatReadableLowerCase(className)} retrieved successfully";
       {{tab}}
-      {{tab}}    if(!${formatReadableLowerCase(className)}.hasContent()) {
+      {{tab}}    if(!${lowerCase(classNameLink)}.hasContent()) {
       {{tab}}            message = "No ${formatReadableLowerCase(className)} found";
       {{tab}}            throw new ResourceNotFoundException(message);
       {{tab}}    }

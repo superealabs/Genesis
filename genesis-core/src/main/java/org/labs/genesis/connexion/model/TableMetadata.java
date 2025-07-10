@@ -129,7 +129,7 @@ public class TableMetadata {
     }
 
     private void fetchPrimaryKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> columns) throws SQLException {
-        try (ResultSet primaryKeys = metaData.getPrimaryKeys(null, database.getCredentials().getSchemaName(), tableName)) {
+        try (ResultSet primaryKeys = metaData.getPrimaryKeys(null, database.getCredentials().getSchemaNameSecond(), tableName)) {
             while (primaryKeys.next()) {
                 String pkColumnName = primaryKeys.getString("COLUMN_NAME");
 
@@ -162,7 +162,7 @@ public class TableMetadata {
     }
 
     private void fetchForeignKeys(DatabaseMetaData metaData, String tableName, Language language, List<ColumnMetadata> listeCols) throws SQLException {
-        try (ResultSet foreignKeys = metaData.getImportedKeys(null, database.getCredentials().getSchemaName(), tableName)) {
+        try (ResultSet foreignKeys = metaData.getImportedKeys(null, database.getCredentials().getSchemaNameSecond(), tableName)) {
 
             while (foreignKeys.next()) {
                 String fkColumnName = foreignKeys.getString("FKCOLUMN_NAME");

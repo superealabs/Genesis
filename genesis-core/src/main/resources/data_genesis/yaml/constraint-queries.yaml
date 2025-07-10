@@ -643,13 +643,101 @@
 - databaseId: 4
   databaseName: "Oracle"
   checkMinimumConstraintQuery: |
+    SELECT acc.table_name,
+           acc.column_name,
+           ac.search_condition
+    FROM all_constraints ac
+    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+    WHERE ac.constraint_type = 'C'
+      AND acc.table_name = UPPER(?)
+
   checkMaximumConstraintQuery: |
+    SELECT acc.table_name,
+           acc.column_name,
+           ac.search_condition
+    FROM all_constraints ac
+    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+    WHERE ac.constraint_type = 'C'
+      AND acc.table_name = UPPER(?)
+
   checkStrictMinimumConstraintQuery: |
+    SELECT acc.table_name,
+           acc.column_name,
+           ac.search_condition
+    FROM all_constraints ac
+    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+    WHERE ac.constraint_type = 'C'
+      AND acc.table_name = UPPER(?)
+
   checkStrictMaximumConstraintQuery: |
+    SELECT acc.table_name,
+           acc.column_name,
+           ac.search_condition
+    FROM all_constraints ac
+    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+    WHERE ac.constraint_type = 'C'
+      AND acc.table_name = UPPER(?)
+
   checkPastDateConstraintQuery: |
+    SELECT acc.table_name,
+           acc.column_name,
+           ac.search_condition
+    FROM all_constraints ac
+    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+    WHERE ac.constraint_type = 'C'
+      AND acc.table_name = UPPER(?)
+
   checkFutureDateConstraintQuery: |
+    SELECT acc.table_name,
+           acc.column_name,
+           ac.search_condition
+    FROM all_constraints ac
+    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+    WHERE ac.constraint_type = 'C'
+      AND acc.table_name = UPPER(?)
+
   checkStrictPastDateConstraintQuery: |
+    SELECT acc.table_name,
+           acc.column_name,
+           ac.search_condition
+    FROM all_constraints ac
+    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+    WHERE ac.constraint_type = 'C'
+      AND acc.table_name = UPPER(?)
+
   checkStrictFutureDateConstraintQuery: |
+    SELECT acc.table_name,
+           acc.column_name,
+           ac.search_condition
+    FROM all_constraints ac
+    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+    WHERE ac.constraint_type = 'C'
+      AND acc.table_name = UPPER(?)
+
   checkNotBlankConstraintQuery: |
+    SELECT acc.table_name,
+           acc.column_name,
+           ac.search_condition
+    FROM all_constraints ac
+    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+    WHERE ac.constraint_type = 'C'
+      AND acc.table_name = UPPER(?)
+
   checkMinimumLengthConstraintQuery: |
-  checkRegexConstraintQuery: |    
+    SELECT acc.table_name,
+           acc.column_name,
+           ac.search_condition
+    FROM all_constraints ac
+    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+    WHERE ac.constraint_type = 'C'
+      AND acc.table_name = UPPER(?)
+
+  checkRegexConstraintQuery: |
+    SELECT acc.table_name,
+           acc.column_name,
+           ac.search_condition
+    FROM all_constraints ac
+    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
+    WHERE ac.constraint_type = 'C'
+      AND acc.table_name = UPPER(?)
+

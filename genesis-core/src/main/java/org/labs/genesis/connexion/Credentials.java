@@ -13,6 +13,14 @@ public class Credentials {
     private String databaseName, schemaName, user, pwd, host, port, driverType, SID;
     private boolean useSSL, allowPublicKeyRetrieval, trustCertificate;
 
+    public String getSchemaNameSecond()
+    {
+        if(schemaName.trim().isEmpty())
+        {
+            return null;
+        }
+        return schemaName;
+    }
     public Credentials setDatabaseName(String databaseName) {
         this.databaseName = databaseName;
         return this;
