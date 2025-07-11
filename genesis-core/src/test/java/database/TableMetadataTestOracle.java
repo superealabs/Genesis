@@ -19,7 +19,8 @@ public class TableMetadataTestOracle {
                 .setPort("1521")
                 .setUser("C##TAHIANA")
                 .setPwd("tahiana")
-                .setSID("orclbdd");
+                .setSID("orclbdd")
+                .setSchemaName("");
     }
 
 

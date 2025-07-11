@@ -174,7 +174,7 @@ public class OracleDatabase extends Database {
                                 String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("past", "{{removeLine}}");
                                 String annotationResult = engine.render(annotationTemplate, fieldHashMap);
                                 col.getValidationAnnotations().put("past", annotationResult);
-                                break;  // on traite une fois par colonne
+                                break;
                             }
                         }
                     }
@@ -320,8 +320,6 @@ public class OracleDatabase extends Database {
                 while (rs.next()) {
                     String columnName = rs.getString("column_name");
                     String searchCondition = rs.getString("search_condition");
-
-                    // Ce pattern détecte : LENGTH(TRIM(NOM)) >= 3 ou LENGTH(NOM) >= 3
                     Pattern pattern = Pattern.compile(
                             "LENGTH\\s*\\(\\s*(?:TRIM\\s*\\(\\s*)?(\\w+)(?:\\s*\\))?\\s*\\)\\s*>=\\s*(\\d+)",
                             Pattern.CASE_INSENSITIVE

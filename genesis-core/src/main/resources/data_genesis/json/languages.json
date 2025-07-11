@@ -51,7 +51,6 @@
       "Long": [],
       "Double": [],
       "String": [
-        "@org.hibernate.annotations.ColumnTransformer(read = \"CAST(${this.columnName} as varchar)\", write = \"CAST(? as ${this.columnType})\")"
       ],
       "java.time.LocalDate": [],
       "java.time.LocalDateTime[]": [
@@ -255,6 +254,14 @@
       "BIGINT": "0L",
       "TEXT": "\"mock\"",
       "SMALLINT": "0",
+      "NUMBER": "0.0",
+      "FLOAT": "0.0",
+      "BINARY_FLOAT": "0.0",
+      "BINARY_DOUBLE": "0.0",
+      "CHAR": "\"mock\"",
+      "NCHAR": "\"mock\"",
+      "VARCHAR2": "\"mock\"",
+      "NVARCHAR2": "\"mock\"",
       "DECIMAL": "0.0"
     },
     "criteriaBuildSnippet": {}
