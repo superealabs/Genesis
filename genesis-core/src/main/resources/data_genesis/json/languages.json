@@ -50,8 +50,7 @@
       "Integer": [],
       "Long": [],
       "Double": [],
-      "String": [
-      ],
+      "String": [],
       "java.time.LocalDate": [],
       "java.time.LocalDateTime[]": [
         "@Convert(converter=${groupLink}.${lowerCase(projectName)}.utils.TSRangeConverter.class)",
@@ -114,6 +113,7 @@
       "SMALLINT": "0",
       "TEXT": "\"mock\"",
       "NUMBER": "0.",
+      "NUMBER(*,*)": "0.",
       "FLOAT": "0.",
       "BINARY_FLOAT": "0.",
       "BINARY_DOUBLE": "0.",
@@ -254,7 +254,8 @@
       "BIGINT": "0L",
       "TEXT": "\"mock\"",
       "SMALLINT": "0",
-      "NUMBER": "0.0",
+      "NUMBER": "0",
+      "NUMBER(*,*)": "0.0",
       "FLOAT": "0.0",
       "BINARY_FLOAT": "0.0",
       "BINARY_DOUBLE": "0.0",
