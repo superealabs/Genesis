@@ -761,6 +761,13 @@
             properties:
               hibernate.format_sql: true
         {{/if}}
+        {{#if useSpringSecurityJWT}}
+          sql:
+            init:
+              mode: always
+              schema-locations: classpath:sql-init/users.sql 
+              encoding: UTF-8
+        {{/if}}
         
         server:
           port: ${projectPort}
@@ -811,6 +818,12 @@
               database:
                 url: $[spring.datasource.url]
                 type: "${databaseType}"
+        {{/if}}
+        
+        {{#if useSpringSecurityJWT}}
+        jwt:
+          secret: $[JWT_SECRET:Bel0Y8TSTrZyicQgAJdcabCbaMQo3s3BkBmP925Wb3g=]
+          expiration: 36000
         {{/if}}
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
