@@ -2,15 +2,13 @@ package org.labs.genesis.config.langage.generator.project;
 
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.FrameworkSecurity;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ProjectMetadataProvider {
     private static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
@@ -54,7 +52,11 @@ public class ProjectMetadataProvider {
         dependencyFileMap.put("useEurekaServer", framework.getUseEurekaServer());
 
         List<HashMap<String, String>> dependencies = getDependenciesHashMaps(framework);
-        dependencyFileMap.put("dependencies", dependencies);
+        List<HashMap<String, String>> additionalSecurityDependencies = getFrameworkSecurityDependenciesHashMaps(framework, frameworkConfiguration);
+        List<HashMap<String, String>> allDependencies = new ArrayList<>();
+        allDependencies.addAll(dependencies);
+        allDependencies.addAll(additionalSecurityDependencies);
+        dependencyFileMap.put("dependencies", allDependencies);
 
         if (database != null && framework.getUseDB()) {
             dependencyFileMap.put("useDB", true);
@@ -91,6 +93,30 @@ public class ProjectMetadataProvider {
         return dependencies;
     }
 
+    private static List<HashMap<String, String>> getFrameworkSecurityDependenciesHashMaps(Framework framework, Map<String, Object> frameworkConfiguration) {
+        List<HashMap<String, String>> dependencies = new ArrayList<>();
+        String securityType = (String) frameworkConfiguration.get("securityType");
+        Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
+
+        selectedSecurityOption.ifPresent(security -> {
+            try {
+                List<Framework.Dependency> dependenciesList = security.getAdditionalDependencies();
+
+                for (Framework.Dependency dependency : dependenciesList) {
+                    HashMap<String, String> dependencyMap = new HashMap<>();
+                    dependencyMap.put("groupId", dependency.getGroupId());
+                    dependencyMap.put("artifactId", dependency.getArtifactId());
+                    dependencyMap.put("version", dependency.getVersion());
+                    dependencyMap.put("scope", dependency.getScope());
+                    dependencies.add(dependencyMap);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        return dependencies;
+    }
     static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName, String groupLink, String projectPort, Database database, Credentials credentials, @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
         HashMap<String, Object> combinedMap = new HashMap<>();
 
