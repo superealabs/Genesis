@@ -532,6 +532,117 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/services/"
 
+    - fileType: "UserInfoService"
+      fileName: "UserInfoService"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.services;
+  
+        import ${groupLink}.${lowerCase(projectName)}.config.security.models.AuthRequest;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.models.UserInfoDetails;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.models.UserUpdateRequest;
+        import ${groupLink}.${lowerCase(projectName)}.models.User;
+        import ${groupLink}.${lowerCase(projectName)}.repositories.UserRepository;
+        import org.springframework.beans.factory.annotation.Autowired;
+        import org.springframework.context.annotation.Lazy;
+        import org.springframework.security.authentication.AuthenticationManager;
+        import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+        import org.springframework.security.core.Authentication;
+        import org.springframework.security.core.userdetails.UserDetails;
+        import org.springframework.security.core.userdetails.UserDetailsService;
+        import org.springframework.security.core.userdetails.UsernameNotFoundException;
+        import org.springframework.stereotype.Service;
+        
+        import java.util.Optional;
+        
+        import static ${groupLink}.${lowerCase(projectName)}.config.security.filters.SecurityConfig.passwordEncoder;
+        
+        @Service
+        public class UserInfoService implements UserDetailsService {
+          private final UserRepository repository;
+          private final JwtService jwtService;
+          private final AuthenticationManager authenticationManager;
+          
+          @Autowired
+          public UserInfoService(UserRepository repository, JwtService jwtService, @Lazy AuthenticationManager authenticationManager) {
+            this.repository = repository;
+            this.jwtService = jwtService;
+            this.authenticationManager = authenticationManager;
+          }
+          
+          @Override
+          public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            Optional<User> userDetail = repository.findAllByName(username); // Assuming 'email' is used as username
+          
+            // Converting UserInfo to UserDetails
+            return userDetail.map(UserInfoDetails::new)
+              .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+          }
+        
+          public String addUser(User user) {
+              // Encode password before saving the user
+              user.setPassword(passwordEncoder.encode(user.getPassword()));
+              repository.save(user);
+              return "User Added Successfully";
+          }
+          
+          public String authenticateAndGetToken(AuthRequest authRequest) {
+            System.out.println("Received username: " + authRequest.username());
+            System.out.println("Received password: " + authRequest.password());
+    
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(authRequest.username(), authRequest.password())
+            );
+            if (authentication.isAuthenticated()) {
+                return jwtService.generateToken(authRequest.username());
+            } else {
+                throw new UsernameNotFoundException("Invalid user request!");
+            }
+          }
+          
+          // Ajoutez ces méthodes dans UserInfoService
+          public void updateUser(String username, UserUpdateRequest updateRequest) {
+            User user = repository.findUserByName(username);
+            if (user == null) {
+              throw new UsernameNotFoundException("User not found: " + username);
+            }
+            
+            if (updateRequest.getName() != null) {
+                user.setName(updateRequest.getName());
+            }
+            if (updateRequest.getEmail() != null) {
+                user.setEmail(updateRequest.getEmail());
+            }
+                
+            repository.save(user);
+          }
+        
+          public void changeUserPassword(
+                  String username, 
+                  String oldPassword, 
+                  String newPassword, 
+                  String confirmPassword) {
+            
+            if (!newPassword.equals(confirmPassword)) {
+                throw new IllegalArgumentException("New password and confirmation do not match");
+            }
+          
+            User user = repository.findUserByName(username);
+            if (user == null) {
+              throw new UsernameNotFoundException("User not found: " + username);
+            }
+                
+            // Vérifier l'ancien mot de passe
+            if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+              throw new IllegalArgumentException("Old password is incorrect");
+            }
+          
+            user.setPassword(passwordEncoder.encode(newPassword));
+            repository.save(user);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/services/"
+
   additionalDependencies:
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-security"
