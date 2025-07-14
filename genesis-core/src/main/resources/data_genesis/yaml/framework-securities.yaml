@@ -1,6 +1,6 @@
 - id: 1
   frameworkId: 1
-  name: "JWT"
+  name: "Spring Security - JWT"
   securityFiles:
     - fileType: "Example security class"
       fileName: "ExampleClass"
@@ -10,3 +10,21 @@
 
         To implement
       destinationPath: "path/to/Define"
+
+  additionalDependencies:
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-security"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "io.jsonwebtoken"
+      artifactId: "jjwt-api"
+      version: "0.11.5"
+      scope: "{{removeLine}}"
+    - groupId: "io.jsonwebtoken"
+      artifactId: "jjwt-impl"
+      version: "0.11.5"
+      scope: "{{removeLine}}"
+    - groupId: "io.jsonwebtoken"
+      artifactId: "jjwt-jackson"
+      version: "0.11.5"
+      scope: "{{removeLine}}"

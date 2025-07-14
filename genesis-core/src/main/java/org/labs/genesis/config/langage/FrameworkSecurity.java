@@ -12,4 +12,5 @@ public class FrameworkSecurity {
     private String name;
     private int frameworkId;
     private List<FilesEdit> securityFiles;
+    private List<Framework.Dependency> additionalDependencies;
 }
