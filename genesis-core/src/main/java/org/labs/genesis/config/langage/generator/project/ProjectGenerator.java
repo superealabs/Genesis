@@ -152,21 +152,15 @@ public class ProjectGenerator {
 
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
 
-        if (securityType != null && !securityType.isBlank()) {
-            Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework()
-                    .getFrameworkSecurities()
-                    .stream()
-                    .filter(fs -> fs.getName().equalsIgnoreCase(securityType))
-                    .findFirst();
+        Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
 
-            selectedSecurityOption.ifPresent(security -> {
-                try {
-                    renderFilesEdits(security.getSecurityFiles(), projectFilesEditsHashMap);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        }
+        selectedSecurityOption.ifPresent(security -> {
+            try {
+                renderFilesEdits(security.getSecurityFiles(), projectFilesEditsHashMap);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public void generateBackendComponents(ProjectGenerationContext context,
