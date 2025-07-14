@@ -549,3 +549,6 @@
       artifactId: "jjwt-jackson"
       version: "0.11.5"
       scope: "{{removeLine}}"
+  metadataBooleanTrueKeys:
+    - "useBearerToken"
+    - "useSpringSecurityJWT"
