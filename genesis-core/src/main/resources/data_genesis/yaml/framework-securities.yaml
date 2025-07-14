@@ -2,14 +2,31 @@
   frameworkId: 1
   name: "Spring Security - JWT"
   securityFiles:
-    - fileType: "Example security class"
-      fileName: "ExampleClass"
+    - fileType: "Type User Entity"
+      fileName: "TypeUser"
       extension: "java"
       content: |
-        package ${groupLink}.${lowerCase(projectName)};
+        package ${groupLink}.${lowerCase(projectName)}.models;
 
-        To implement
-      destinationPath: "path/to/Define"
+        import jakarta.persistence.*;
+        import lombok.Getter;
+        import lombok.Setter;
+
+        @Getter
+        @Setter
+        @Entity
+        @Table(name = "type_user")
+        public class TypeUser {
+            @Id
+            @GeneratedValue(strategy = GenerationType.IDENTITY)
+            @Column(name = "id")
+            private Long id;
+
+            @Column(name = "name")
+            private String name;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
+
 
   additionalDependencies:
     - groupId: "org.springframework.boot"
