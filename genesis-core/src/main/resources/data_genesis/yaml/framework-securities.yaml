@@ -93,6 +93,134 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
 
+    - fileType: "User table and data init script"
+      fileName: "users"
+      extension: "sql"
+      content: |
+        --Default login
+        --Username: admin
+        --Password: admin
+        {{#if databaseType = PostgreSQL}}
+        CREATE TABLE IF NOT EXISTS type_user
+        (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE
+        );
+        
+        CREATE TABLE IF NOT EXISTS "user"
+        (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) UNIQUE NOT NULL,
+          email VARCHAR(100) UNIQUE NOT NULL CHECK (email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+          password VARCHAR(100) NOT NULL,
+          type_user_id INTEGER NOT NULL REFERENCES type_user(id)
+        );
+        
+        INSERT INTO type_user (name) VALUES ('ROLE_ADMIN')
+        ON CONFLICT (name) DO NOTHING;
+        
+        INSERT INTO "user" (name, email, password, type_user_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1)
+        ON CONFLICT (email) DO NOTHING;
+        {{else}}{{removeLine}}{{/if}}
+        
+        {{#if databaseType = MySQL}}
+        CREATE TABLE IF NOT EXISTS type_user (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE
+        );
+        
+        CREATE TABLE IF NOT EXISTS `user` (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE,
+          email VARCHAR(100) NOT NULL UNIQUE,
+          password VARCHAR(100) NOT NULL,
+          type_user_id INT NOT NULL,
+          CONSTRAINT fk_type_user FOREIGN KEY (type_user_id) REFERENCES type_user(id),
+          CONSTRAINT chk_email CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
+        );
+        
+        INSERT INTO type_user (name) VALUES ('ROLE_ADMIN')
+        ON DUPLICATE KEY UPDATE id=id;
+        
+        INSERT INTO `user` (name, email, password, type_user_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1)
+        ON DUPLICATE KEY UPDATE id=id;
+        {{else}}{{removeLine}}{{/if}}
+        
+        {{#if databaseType = SQL Server}}
+        CREATE TABLE IF NOT EXISTS type_user (
+          id INT IDENTITY(1,1) PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE
+        );
+        
+        CREATE TABLE IF NOT EXISTS [user] (
+          id INT IDENTITY(1,1) PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE,
+          email VARCHAR(100) NOT NULL UNIQUE,
+          password VARCHAR(100) NOT NULL,
+          type_user_id INT NOT NULL,
+          CONSTRAINT FK_user_type_user FOREIGN KEY (type_user_id) REFERENCES type_user(id),
+          CONSTRAINT CHK_email CHECK (email LIKE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}')
+        );
+        
+        IF NOT EXISTS (SELECT 1 FROM type_user WHERE name = 'ROLE_ADMIN')
+        INSERT INTO type_user (name) VALUES ('ROLE_ADMIN');
+        
+        IF NOT EXISTS (SELECT 1 FROM [user] WHERE name = 'admin' OR email = 'admin@user.com')
+        INSERT INTO [user] (name, email, password, type_user_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1);
+        {{else}}{{removeLine}}{{/if}}
+        
+        {{#if databaseType = Oracle}}
+        CREATE TABLE type_user (
+          id NUMBER PRIMARY KEY,
+          name VARCHAR2(100) NOT NULL UNIQUE
+        ) TABLESPACE users;
+        
+        CREATE SEQUENCE type_user_seq START WITH 1 INCREMENT BY 1;
+        
+        CREATE OR REPLACE TRIGGER type_user_trigger
+        BEFORE INSERT ON type_user
+        FOR EACH ROW
+        BEGIN
+        SELECT type_user_seq.NEXTVAL INTO :new.id FROM dual;
+        END;
+        
+        CREATE TABLE "user" (
+          id NUMBER PRIMARY KEY,
+          name VARCHAR2(100) NOT NULL UNIQUE,
+          email VARCHAR2(100) NOT NULL UNIQUE,
+          password VARCHAR2(100) NOT NULL,
+          type_user_id NUMBER NOT NULL,
+          CONSTRAINT fk_user_type_user FOREIGN KEY (type_user_id) REFERENCES type_user(id),
+          CONSTRAINT chk_email CHECK (REGEXP_LIKE(email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'))
+        ) TABLESPACE users;
+        
+        CREATE SEQUENCE user_seq START WITH 1 INCREMENT BY 1;
+        
+        CREATE OR REPLACE TRIGGER user_trigger
+        BEFORE INSERT ON "user"
+        FOR EACH ROW
+        BEGIN
+        SELECT user_seq.NEXTVAL INTO :new.id FROM dual;
+        END;
+        
+        MERGE INTO type_user tu
+        USING (SELECT 1 FROM dual) d
+        ON (tu.name = 'ROLE_ADMIN')
+        WHEN NOT MATCHED THEN
+        INSERT (name) VALUES ('ROLE_ADMIN');
+        
+        MERGE INTO "user" u
+        USING (SELECT 1 FROM dual) d
+        ON (u.name = 'admin' OR u.email = 'admin@user.com')
+        WHEN NOT MATCHED THEN
+        INSERT (name, email, password, type_user_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1);
+        {{else}}{{removeLine}}{{/if}}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/sql-init/"
+
   additionalDependencies:
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-security"
