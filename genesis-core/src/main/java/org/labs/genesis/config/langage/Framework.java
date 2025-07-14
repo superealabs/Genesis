@@ -7,10 +7,7 @@ import org.labs.genesis.config.Constantes;
 import org.labs.utils.FileUtils;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
@@ -40,6 +37,14 @@ public class Framework {
         this.frameworkSecurities = Arrays.stream(FileUtils.fromYaml(FrameworkSecurity[].class, Constantes.FRAMEWORK_SECURITY_YAML))
                 .filter(fs -> fs.getFrameworkId() == this.id)
                 .collect(Collectors.toList());
+    }
+
+    public Optional<FrameworkSecurity> getSelectedSecurityByName(String securityType){
+        return this
+                .getFrameworkSecurities()
+                .stream()
+                .filter(fs -> fs.getName().equalsIgnoreCase(securityType))
+                .findFirst();
     }
 
     @Override
