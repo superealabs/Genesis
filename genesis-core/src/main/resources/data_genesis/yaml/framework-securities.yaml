@@ -375,6 +375,23 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/models/"
 
+    - fileType: "UserUpdateRequest DTO"
+      fileName: "UserUpdateRequest"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.models;
+
+        import lombok.Getter;
+        import lombok.Setter;
+
+        @Getter
+        @Setter
+        public class UserUpdateRequest {
+            private String name;
+            private String email;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/models/"
+
   additionalDependencies:
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-security"
