@@ -855,6 +855,7 @@
       variableName: "securityType"
       options:
         - "NONE"
+        - "Spring Security - JWT"
       defaultOption: "NONE"
 
   eurekaClientConfigurations:
