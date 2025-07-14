@@ -77,6 +77,21 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
 
+    - fileType: "User Repository"
+      fileName: "UserRepository"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.repositories;
+
+        import ${groupLink}.${lowerCase(projectName)}.models.User;
+        import org.springframework.data.jpa.repository.JpaRepository;
+        import java.util.Optional;
+
+        public interface UserRepository extends JpaRepository<User, Long> {
+            Optional<User> findAllByName(String name);
+            User findUserByName(String name);
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
 
   additionalDependencies:
     - groupId: "org.springframework.boot"
