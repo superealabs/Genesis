@@ -117,12 +117,26 @@ public class ProjectMetadataProvider {
 
         return dependencies;
     }
+
+    private static HashMap<String, Object> getFrameworkSecurityTrueBooleansHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
+        HashMap<String, Object> frameworkSecurityBooleanMetadata = new HashMap<>();
+        String securityType = (String) frameworkConfiguration.get("securityType");
+        Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
+        selectedSecurityOption.ifPresent(security -> {
+            for(String key : security.getMetadataBooleanTrueKeys()){
+                frameworkSecurityBooleanMetadata.put(key, true);
+            }
+        });
+        return frameworkSecurityBooleanMetadata;
+    }
+
     static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName, String groupLink, String projectPort, Database database, Credentials credentials, @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
         HashMap<String, Object> combinedMap = new HashMap<>();
 
         combinedMap.putAll(getConfigFileHashMap(projectPort, database, credentials, language, framework, frameworkOptions));
         combinedMap.putAll(getDependencyFileHashMap(projectDescription, database, language, framework, langageConfiguration, frameworkOptions));
         combinedMap.putAll(getInitialHashMap(destinationFolder, projectName, groupLink));
+        combinedMap.putAll(getFrameworkSecurityTrueBooleansHashMap(framework,frameworkOptions));
 
         return combinedMap;
     }

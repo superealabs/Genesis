@@ -13,4 +13,5 @@ public class FrameworkSecurity {
     private int frameworkId;
     private List<FilesEdit> securityFiles;
     private List<Framework.Dependency> additionalDependencies;
+    private List<String> metadataBooleanTrueKeys;
 }
