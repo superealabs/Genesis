@@ -798,11 +798,12 @@
       table_name,
       constraint_name,
       definition,
-      SUBSTRING(definition, 1, CHARINDEX('>=', definition) - 2) AS column_name,
+      SUBSTRING(definition, CHARINDEX('[', definition) + 1, CHARINDEX(']', definition) - CHARINDEX('[', definition) - 1) AS column_name,
       '>=' AS operator,
       'GETDATE()' AS reference
     FROM constraints
     WHERE definition LIKE '%>= GETDATE()%';
+
 
   checkStrictPastDateConstraintQuery: |
     WITH constraints AS (
@@ -840,16 +841,17 @@
       JOIN sys.schemas s ON t.schema_id = s.schema_id
       WHERE t.name = ? AND s.name = ?
     )
-    SELECT 
+    SELECT
       table_name,
       constraint_name,
       definition,
-      SUBSTRING(definition, 1, CHARINDEX('>', definition) - 2) AS column_name,
+      SUBSTRING(definition, CHARINDEX('[', definition) + 1, CHARINDEX(']', definition) - CHARINDEX('[', definition) - 1) AS column_name,
       '>' AS operator,
       'GETDATE()' AS reference
-    FROM constraints
-    WHERE definition LIKE '%> GETDATE()%'
+      FROM constraints
+      WHERE definition LIKE '%> GETDATE()%'
       AND definition NOT LIKE '%>= GETDATE()%';
+
   checkNotBlankConstraintQuery: |
     WITH constraints AS (
       SELECT 
@@ -882,22 +884,22 @@
       JOIN sys.schemas s ON t.schema_id = s.schema_id
       WHERE t.name = ? AND s.name = ?
     )
-    SELECT 
+    SELECT
       table_name,
       constraint_name,
       definition,
-      
-      LTRIM(RTRIM(
-        SUBSTRING(
-          definition,
-          CHARINDEX('LEN([', definition) + 5,
-          CHARINDEX(']', definition) - CHARINDEX('LEN([', definition) - 4
-          )
-      )) AS column_name,
+      SUBSTRING(
+        definition,
+        CHARINDEX('LEN([', definition) + 5,
+        CHARINDEX(']', definition) - CHARINDEX('LEN([', definition) - 5
+      ) AS column_name,
       TRY_CAST(
-        SUBSTRING(definition, CHARINDEX('>=', definition) + 2,
-        PATINDEX('%[^0-9]%', SUBSTRING(definition, CHARINDEX('>=', definition) + 2, 20) + 'X') - 1
-      ) AS INT) AS min_length
+          SUBSTRING(
+          definition,
+          CHARINDEX('>', definition) + 2,
+          PATINDEX('%[^0-9]%', SUBSTRING(definition, CHARINDEX('>', definition) + 2, 20) + 'X') - 1
+        ) AS INT
+      ) AS min_length
     FROM constraints
     WHERE UPPER(definition) LIKE '%LEN(%' AND definition LIKE '%>%';
 
