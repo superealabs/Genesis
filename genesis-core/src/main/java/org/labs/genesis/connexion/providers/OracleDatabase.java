@@ -18,6 +18,49 @@ import static org.labs.utils.StringUtils.toCamelCase;
 
 public class OracleDatabase extends Database {
 
+
+
+
+    public List<String> getPaginatedTableNames(Connection connection, int index, int size) throws SQLException {
+        List<String> tableNames = new ArrayList<>();
+        DatabaseMetaData metaData = connection.getMetaData();
+
+        int tempIndex = 0;
+        try (ResultSet tables = metaData.getTables(null, credentials.getUser(), "%", new String[]{"TABLE"})) {
+            while (tables.next() && size > tableNames.size()) {
+                if (tempIndex < (index * size)) {
+                    tempIndex++;
+                    continue;
+                }
+                String tableName = tables.getString("TABLE_NAME");
+                tableNames.add(tableName);
+                tempIndex++;
+            }
+        }
+
+        return tableNames;
+    }
+
+    public List<String> getPaginatedViewNames(Connection connection, int index, int size) throws SQLException {
+        List<String> viewNames = new ArrayList<>();
+        DatabaseMetaData metaData = connection.getMetaData();
+
+        int tempIndex = 0;
+        try (ResultSet views = metaData.getTables(null, credentials.getUser(), "%", new String[]{"VIEW"})) {
+            while (views.next() && size > viewNames.size()) {
+                if (tempIndex < (index * size)) {
+                    tempIndex++;
+                    continue;
+                }
+                String viewName = views.getString("TABLE_NAME");
+                viewNames.add(viewName);
+                tempIndex++;
+            }
+        }
+
+        return viewNames;
+    }
+
     @Override
     protected void checkStrictMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         String sql = this.getConstraintQueries().getCheckStrictMinimumConstraintQuery();
@@ -403,10 +446,8 @@ public class OracleDatabase extends Database {
     public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language,Connection connex,Framework framework) throws SQLException {
         List<ColumnMetadata> listeCols = new ArrayList<>();
 
-        String schema = this.getCredentials().getSchemaName();
-        schema = (schema != null && schema.trim().isEmpty()) ? null : schema;
 
-        try (ResultSet columns = metaData.getColumns(null, schema, tableName, null)) {
+        try (ResultSet columns = metaData.getColumns(null, this.credentials.getUser(), tableName, null)) {
             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
             while (columns.next()) {
                 ColumnMetadata column = new ColumnMetadata();

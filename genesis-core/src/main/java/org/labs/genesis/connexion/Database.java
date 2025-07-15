@@ -34,7 +34,7 @@ public abstract class Database {
     private String port;
     private Map<String, String> types;
     private List<String> excludeSchemas;
-    private Credentials credentials;
+    protected Credentials credentials;
     private Map<String, Object> databaseMetadata;
     private Map<String, Framework.Dependency> dependencies;
     private ConstraintQueries constraintQueries;
