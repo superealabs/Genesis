@@ -775,11 +775,12 @@
       table_name,
       constraint_name,
       definition,
-      SUBSTRING(definition, 1, CHARINDEX('<=', definition) - 2) AS column_name,
+      SUBSTRING(definition, CHARINDEX('[', definition) + 1, CHARINDEX(']', definition) - CHARINDEX('[', definition) - 1) AS column_name,
       '<=' AS operator,
       'GETDATE()' AS reference
     FROM constraints
     WHERE definition LIKE '%<= GETDATE()%';
+
 
   checkFutureDateConstraintQuery: |
     WITH constraints AS (
