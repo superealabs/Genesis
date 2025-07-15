@@ -625,20 +625,309 @@
             constraint_definition
         FROM parsed
         WHERE table_name = ?;
-
 - databaseId: 3
   databaseName: "SQL Server"
   checkMinimumConstraintQuery: |
+    WITH constraints AS (
+      SELECT 
+        cc.name AS constraint_name,
+        t.name AS table_name,
+        s.name AS schema_name,
+        cc.definition
+      FROM sys.check_constraints cc
+      JOIN sys.tables t ON cc.parent_object_id = t.object_id
+      JOIN sys.schemas s ON t.schema_id = s.schema_id
+      WHERE t.name = ? AND s.name = ?
+    )
+    SELECT 
+      table_name,
+      constraint_name,
+      definition,
+            LTRIM(RTRIM(
+        SUBSTRING(definition, CHARINDEX('[', definition) + 1,
+        CHARINDEX(']', definition) - CHARINDEX('[', definition) - 1
+        )
+      )) AS column_name,
+      TRY_CAST(
+        LTRIM(RTRIM(
+          SUBSTRING(
+            definition,
+            CHARINDEX('>=', definition) + 2,
+            PATINDEX('%[^0-9.]%', SUBSTRING(definition, CHARINDEX('>=', definition) + 2, 100) + 'X') - 1
+          )
+        )) AS FLOAT
+      ) AS min_value
+    FROM constraints
+    WHERE definition LIKE '%>=%';
+
   checkMaximumConstraintQuery: |
+    WITH constraints AS (
+      SELECT 
+        cc.name AS constraint_name,
+        t.name AS table_name,
+        s.name AS schema_name,
+        cc.definition
+      FROM sys.check_constraints cc
+      JOIN sys.tables t ON cc.parent_object_id = t.object_id
+      JOIN sys.schemas s ON t.schema_id = s.schema_id
+      WHERE t.name = ? AND s.name = ?
+    )
+    SELECT 
+      table_name,
+      constraint_name,
+      definition,
+      LTRIM(RTRIM(
+        SUBSTRING(definition, CHARINDEX('[', definition) + 1,
+        CHARINDEX(']', definition) - CHARINDEX('[', definition) - 1
+        )
+      )) AS column_name,
+      TRY_CAST(
+        LTRIM(RTRIM(
+          SUBSTRING(
+            definition,
+            CHARINDEX('<=', definition) + 2,
+            PATINDEX('%[^0-9.]%', SUBSTRING(definition, CHARINDEX('<=', definition) + 2, 100) + 'X') - 1
+          )
+        )) AS FLOAT
+      ) AS max_value
+    FROM constraints
+    WHERE definition LIKE '%<=%';
+
   checkStrictMinimumConstraintQuery: |
+    WITH constraints AS (
+      SELECT 
+        cc.name AS constraint_name,
+        t.name AS table_name,
+        s.name AS schema_name,
+        cc.definition
+      FROM sys.check_constraints cc
+      JOIN sys.tables t ON cc.parent_object_id = t.object_id
+      JOIN sys.schemas s ON t.schema_id = s.schema_id
+      WHERE t.name = ? AND s.name = ?
+    )
+    SELECT 
+      table_name,
+      constraint_name,
+      definition,
+            LTRIM(RTRIM(
+        SUBSTRING(definition, CHARINDEX('[', definition) + 1,
+        CHARINDEX(']', definition) - CHARINDEX('[', definition) - 1
+        )
+      )) AS column_name,
+      TRY_CAST(
+        LTRIM(RTRIM(
+          SUBSTRING(
+            definition,
+            CHARINDEX('>', definition) + 1,
+            PATINDEX('%[^0-9.]%', SUBSTRING(definition, CHARINDEX('>', definition) + 1, 100) + 'X') - 1
+          )
+        )) AS FLOAT
+      ) AS min_value
+    FROM constraints
+    WHERE definition LIKE '%>%' AND definition NOT LIKE '%>=%';
+
   checkStrictMaximumConstraintQuery: |
+    WITH constraints AS (
+      SELECT 
+        cc.name AS constraint_name,
+        t.name AS table_name,
+        s.name AS schema_name,
+        cc.definition
+      FROM sys.check_constraints cc
+      JOIN sys.tables t ON cc.parent_object_id = t.object_id
+      JOIN sys.schemas s ON t.schema_id = s.schema_id
+      WHERE t.name = ? AND s.name = ?
+    )
+    SELECT 
+      table_name,
+      constraint_name,
+      definition,
+            LTRIM(RTRIM(
+        SUBSTRING(definition, CHARINDEX('[', definition) + 1,
+        CHARINDEX(']', definition) - CHARINDEX('[', definition) - 1
+        )
+      )) AS column_name,
+      TRY_CAST(
+      LTRIM(RTRIM(
+      SUBSTRING(
+      definition,
+      CHARINDEX('<', definition) + 1,
+      PATINDEX('%[^0-9.]%', SUBSTRING(definition, CHARINDEX('<', definition) + 1, 100) + 'X') - 1
+      )
+      )) AS FLOAT
+      ) AS max_value
+    FROM constraints
+    WHERE definition LIKE '%<%' AND definition NOT LIKE '%<=%';
+
   checkPastDateConstraintQuery: |
+    WITH constraints AS (
+      SELECT 
+        cc.name AS constraint_name,
+        t.name AS table_name,
+        s.name AS schema_name,
+        cc.definition
+      FROM sys.check_constraints cc
+      JOIN sys.tables t ON cc.parent_object_id = t.object_id
+      JOIN sys.schemas s ON t.schema_id = s.schema_id
+      WHERE t.name = ? AND s.name = ?
+    )
+    SELECT 
+      table_name,
+      constraint_name,
+      definition,
+      SUBSTRING(definition, 1, CHARINDEX('<=', definition) - 2) AS column_name,
+      '<=' AS operator,
+      'GETDATE()' AS reference
+    FROM constraints
+    WHERE definition LIKE '%<= GETDATE()%';
+
   checkFutureDateConstraintQuery: |
+    WITH constraints AS (
+      SELECT 
+        cc.name AS constraint_name,
+        t.name AS table_name,
+        s.name AS schema_name,
+        cc.definition
+      FROM sys.check_constraints cc
+      JOIN sys.tables t ON cc.parent_object_id = t.object_id
+      JOIN sys.schemas s ON t.schema_id = s.schema_id
+      WHERE t.name = ? AND s.name = ?
+    )
+    SELECT 
+      table_name,
+      constraint_name,
+      definition,
+      SUBSTRING(definition, 1, CHARINDEX('>=', definition) - 2) AS column_name,
+      '>=' AS operator,
+      'GETDATE()' AS reference
+    FROM constraints
+    WHERE definition LIKE '%>= GETDATE()%';
+
   checkStrictPastDateConstraintQuery: |
+    WITH constraints AS (
+      SELECT 
+        cc.name AS constraint_name,
+        t.name AS table_name,
+        s.name AS schema_name,
+        cc.definition
+      FROM sys.check_constraints cc
+      JOIN sys.tables t ON cc.parent_object_id = t.object_id
+      JOIN sys.schemas s ON t.schema_id = s.schema_id
+      WHERE t.name = ? AND s.name = ?
+    )
+    SELECT 
+      table_name,
+      constraint_name,
+      definition,
+      SUBSTRING(definition, 1, CHARINDEX('<', definition) - 2) AS column_name,
+      '<' AS operator,
+      'GETDATE()' AS reference
+    FROM constraints
+    WHERE definition LIKE '%< GETDATE()%'
+      AND definition NOT LIKE '%<= GETDATE()%';
+
   checkStrictFutureDateConstraintQuery: |
+    WITH constraints AS (
+      SELECT 
+        cc.name AS constraint_name,
+        t.name AS table_name,
+        s.name AS schema_name,
+        cc.definition
+      FROM sys.check_constraints cc
+      JOIN sys.tables t ON cc.parent_object_id = t.object_id
+      JOIN sys.schemas s ON t.schema_id = s.schema_id
+      WHERE t.name = ? AND s.name = ?
+    )
+    SELECT 
+      table_name,
+      constraint_name,
+      definition,
+      SUBSTRING(definition, 1, CHARINDEX('>', definition) - 2) AS column_name,
+      '>' AS operator,
+      'GETDATE()' AS reference
+    FROM constraints
+    WHERE definition LIKE '%> GETDATE()%'
+      AND definition NOT LIKE '%>= GETDATE()%';
   checkNotBlankConstraintQuery: |
+    WITH constraints AS (
+      SELECT 
+        cc.name AS constraint_name,
+        t.name AS table_name,
+        s.name AS schema_name,
+        cc.definition
+      FROM sys.check_constraints cc
+      JOIN sys.tables t ON cc.parent_object_id = t.object_id
+      JOIN sys.schemas s ON t.schema_id = s.schema_id
+      WHERE t.name = ? AND s.name = ?
+    )
+    SELECT 
+      table_name,
+      constraint_name,
+      definition,
+      SUBSTRING(definition, 1, CHARINDEX('<>', definition) - 2) AS column_name
+    FROM constraints
+    WHERE definition LIKE '%<> ''''%';
+
   checkMinimumLengthConstraintQuery: |
+    WITH constraints AS (
+      SELECT 
+        cc.name AS constraint_name,
+        t.name AS table_name,
+        s.name AS schema_name,
+        cc.definition
+      FROM sys.check_constraints cc
+      JOIN sys.tables t ON cc.parent_object_id = t.object_id
+      JOIN sys.schemas s ON t.schema_id = s.schema_id
+      WHERE t.name = ? AND s.name = ?
+    )
+    SELECT 
+      table_name,
+      constraint_name,
+      definition,
+      
+      LTRIM(RTRIM(
+        SUBSTRING(
+          definition,
+          CHARINDEX('LEN([', definition) + 5,
+          CHARINDEX(']', definition) - CHARINDEX('LEN([', definition) - 4
+          )
+      )) AS column_name,
+      TRY_CAST(
+        SUBSTRING(definition, CHARINDEX('>=', definition) + 2,
+        PATINDEX('%[^0-9]%', SUBSTRING(definition, CHARINDEX('>=', definition) + 2, 20) + 'X') - 1
+      ) AS INT) AS min_length
+    FROM constraints
+    WHERE UPPER(definition) LIKE '%LEN(%' AND definition LIKE '%>%';
+
   checkRegexConstraintQuery: |
+    WITH constraints AS (
+      SELECT 
+        cc.name AS constraint_name,
+        t.name AS table_name,
+        s.name AS schema_name,
+        cc.definition
+      FROM sys.check_constraints cc
+      JOIN sys.tables t ON cc.parent_object_id = t.object_id
+      JOIN sys.schemas s ON t.schema_id = s.schema_id
+      WHERE t.name = ? AND s.name = ?
+    )
+    SELECT 
+      table_name,
+      constraint_name,
+      definition,
+    
+      LTRIM(RTRIM(
+        SUBSTRING(definition, 
+          CHARINDEX('[', definition) + 1,
+          CHARINDEX(']', definition) - CHARINDEX('[', definition) - 1
+        )
+      )) AS column_name,
+    
+    LTRIM(RTRIM(
+      SUBSTRING(definition, CHARINDEX('like', definition) + 5, LEN(definition))
+    )) AS regex_pattern
+    WHERE UPPER(definition) LIKE '%LIKE%' AND definition LIKE '%[%]%';
+
 
 - databaseId: 4
   databaseName: "Oracle"
