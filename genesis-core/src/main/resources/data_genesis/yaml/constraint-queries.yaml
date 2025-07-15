@@ -649,14 +649,14 @@
         )
       )) AS column_name,
       TRY_CAST(
-        LTRIM(RTRIM(
-          SUBSTRING(
-            definition,
-            CHARINDEX('>=', definition) + 2,
-            PATINDEX('%[^0-9.]%', SUBSTRING(definition, CHARINDEX('>=', definition) + 2, 100) + 'X') - 1
-          )
-        )) AS FLOAT
-      ) AS min_value
+      LTRIM(RTRIM(
+        SUBSTRING(
+          definition,
+          CHARINDEX('>=', definition) + 3,
+          CHARINDEX(')', definition + ' ', CHARINDEX('>=', definition)) - CHARINDEX('>=', definition) - 3
+        )
+      ) )AS FLOAT
+    ) AS min_value
     FROM constraints
     WHERE definition LIKE '%>=%';
 
@@ -927,6 +927,7 @@
       SUBSTRING(definition, CHARINDEX('like', definition) + 5, LEN(definition))
     )) AS regex_pattern
     WHERE UPPER(definition) LIKE '%LIKE%' AND definition LIKE '%[%]%';
+
 
 
 - databaseId: 4
