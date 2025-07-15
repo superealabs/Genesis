@@ -257,7 +257,7 @@
         FROM regex_matches
         WHERE table_name = ? and CONSTRAINT_SCHEMA = ?
         ORDER BY table_name, column_name;
-    
+
 - databaseId: 2
   databaseName: "PostgreSQL"
   checkMinimumConstraintQuery: |
@@ -749,13 +749,13 @@
       )) AS column_name,
       TRY_CAST(
       LTRIM(RTRIM(
-      SUBSTRING(
-      definition,
-      CHARINDEX('<', definition) + 1,
-      PATINDEX('%[^0-9.]%', SUBSTRING(definition, CHARINDEX('<', definition) + 1, 100) + 'X') - 1
-      )
-      )) AS FLOAT
-      ) AS max_value
+        SUBSTRING(
+          definition,
+          CHARINDEX('<', definition) + 3,
+          CHARINDEX(')', definition + ' ', CHARINDEX('<', definition)) - CHARINDEX('<', definition) - 3
+        )
+      ) )AS FLOAT
+    ) AS max_value
     FROM constraints
     WHERE definition LIKE '%<%' AND definition NOT LIKE '%<=%';
 
@@ -911,21 +911,26 @@
       JOIN sys.schemas s ON t.schema_id = s.schema_id
       WHERE t.name = ? AND s.name = ?
     )
-    SELECT 
+    SELECT
       table_name,
       constraint_name,
       definition,
-    
+      -- Nom de colonne
       LTRIM(RTRIM(
-        SUBSTRING(definition, 
+        SUBSTRING(
+          definition,
           CHARINDEX('[', definition) + 1,
           CHARINDEX(']', definition) - CHARINDEX('[', definition) - 1
+      ))) AS column_name,
+      -- Pattern LIKE (regex)
+      LTRIM(RTRIM(
+        SUBSTRING(
+          definition,
+          CHARINDEX('LIKE', definition) + 6,
+          LEN(definition)
         )
-      )) AS column_name,
-    
-    LTRIM(RTRIM(
-      SUBSTRING(definition, CHARINDEX('like', definition) + 5, LEN(definition))
-    )) AS regex_pattern
+      )) AS regex_pattern
+    FROM constraints
     WHERE UPPER(definition) LIKE '%LIKE%' AND definition LIKE '%[%]%';
 
 

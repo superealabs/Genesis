@@ -185,6 +185,8 @@ public class SQLServerDatabase extends Database {
                 while (rs.next()) {
                     String colName = rs.getString("column_name");
                     String pattern = rs.getString("regex_pattern");
+                    int pattern_limiter_index = pattern.indexOf("\'");
+                    pattern = pattern.substring(0, pattern_limiter_index);
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
                             Map<String, Object> annotations = framework.getModel().getValidationAnnotations();
