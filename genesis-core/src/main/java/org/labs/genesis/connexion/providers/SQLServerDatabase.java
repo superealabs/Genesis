@@ -149,6 +149,7 @@ public class SQLServerDatabase extends Database {
     }
 
 
+
     @Override
     protected void checkMinLengthConstraint(Connection conn, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         try (PreparedStatement stmt = conn.prepareStatement(this.getConstraintQueries().getCheckMinimumLengthConstraintQuery())) {
@@ -167,14 +168,12 @@ public class SQLServerDatabase extends Database {
                             String result = engine.render(template, fieldMap);
                             col.getValidationAnnotations().remove("maxSize");
                             col.getValidationAnnotations().put("minAndMaxSize", result);
-                            break;
                         }
                     }
                 }
             }
         }
     }
-
 
     @Override
     protected void checkRegexConstraint(Connection conn, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
