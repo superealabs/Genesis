@@ -2770,98 +2770,104 @@
           }
           {{else}}{{removeLine}}{{/if}}
           {{#if databaseType = Oracle}}
-          private void DisableOracle(string tableName)
+          public void DisableOracle(string tableName)
           {
-            var schema = _connection is OracleConnection oracleConn
-            ? oracleConn.UserID?.ToUpper()
-              : "CURRENT_USER";
-                  
-                  // Contraintes R, C, U, P
-            using (var cmd = new OracleCommand(
-            "SELECT constraint_name, constraint_type, " +
-            "search_condition, r_constraint_name " +
-            "FROM all_constraints " +
-            "WHERE owner = :owner AND table_name = :table " +
-            "AND constraint_type IN ('R','C','U','P')",
-            (OracleConnection)_connection))
-            {
-              cmd.Parameters.Add(new OracleParameter("owner", schema));
-              cmd.Parameters.Add(new OracleParameter("table", tableName.ToUpper()));
-              using var reader = cmd.ExecuteReader();
-              while (reader.Read())
-              {
-                var name = reader.GetString(0);
-                var type = reader.GetString(1);
-                string ddl;
-                                
-                switch (type)
-                {
-                  case "C": // CHECK
-                    var cond = reader.IsDBNull(2) ? "" : reader.GetString(2);
-                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} CHECK ({cond})";
-                    break;
-
-                  case "R": // FOREIGN KEY
-                    var pk = reader.GetString(3);
-                    var fkCols = GetConstraintColumns(schema, name);
-                    var pkCols = GetConstraintColumns(schema, pk);
-                    var refTable = GetTableNameForConstraint(schema, pk);
-                                  
-                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
-                         $"FOREIGN KEY ({string.Join(",", fkCols)}) " +
-                          $"REFERENCES {refTable}({string.Join(",", pkCols)})";
-                    break;
-
-                  case "U": // UNIQUE
-                    var uniqueCols = GetConstraintColumns(schema, name);
-                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
-                         $"UNIQUE ({string.Join(",", uniqueCols)})";
-                    break;
-
-                  default: // PRIMARY KEY
-                    var pkCols2 = GetConstraintColumns(schema, name);
-                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
-                         $"PRIMARY KEY ({string.Join(",", pkCols2)})";
-                    break;
-                }
+            using var getSchemaCmd = _connection.CreateCommand();
+            getSchemaCmd.CommandText = "SELECT USER FROM DUAL";
+            var schema = getSchemaCmd.ExecuteScalar()?.ToString()?.ToUpper();
+            if (string.IsNullOrEmpty(schema)) throw new Exception("Schema not found.");
+        
+            var tableUpper = tableName.ToUpper();
+        
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = @"
+            SELECT constraint_name, constraint_type, search_condition, r_constraint_name
+            FROM all_constraints ac
+            WHERE owner = :schema
+            AND table_name = :t_table_name
+            AND constraint_type IN ('R', 'C', 'U', 'P')
+            AND (
+            constraint_name NOT LIKE 'SYS_%'
+            OR (
+            constraint_name LIKE 'SYS_%'
+            AND EXISTS (
+            SELECT 1 FROM all_cons_columns acc
+            WHERE acc.owner = ac.owner
+            AND acc.constraint_name = ac.constraint_name
+            )
+            )
+            )
+            ORDER BY constraint_name";
             
-                _restoreDdls.Push(ddl);
-                
-                using var disableCmd = new OracleCommand(
-                $"ALTER TABLE {tableName} DISABLE CONSTRAINT {name}",
-                    (OracleConnection)_connection);
-                disableCmd.ExecuteNonQuery();
-              }
-            }
-
-            // NOT NULL Constraints
-            using (var cmd = new OracleCommand(
-                "SELECT column_name, data_type, data_length " +
-                "FROM all_tab_columns " +
-                "WHERE owner = :owner " +
-                "AND table_name = :table " +
-                "AND nullable = 'N'",
-                (OracleConnection)_connection))
+            var param1 = cmd.CreateParameter();
+            param1.ParameterName = "schema";
+            param1.Value = schema;
+            cmd.Parameters.Add(param1);
+        
+            var param2 = cmd.CreateParameter();
+            param2.ParameterName = "t_table_name";
+            param2.Value = tableUpper;
+            cmd.Parameters.Add(param2);
+        
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
             {
-              cmd.Parameters.Add(new OracleParameter("owner", schema));
-              cmd.Parameters.Add(new OracleParameter("table", tableName.ToUpper()));
-              using var reader = cmd.ExecuteReader();
-              while (reader.Read())
+              var name = reader["CONSTRAINT_NAME"].ToString();
+              var type = reader["CONSTRAINT_TYPE"].ToString();
+              var searchCond = reader["SEARCH_CONDITION"]?.ToString();
+              
+              if (type == "P")
               {
-                var colName = reader.GetString(0);
-                var dt = reader.GetString(1);
-                var len = reader.IsDBNull(2) ? 0 : reader.GetDecimal(2);
-                var def = len > 0 ? $"{dt}({len})" : dt;
-
-                _restoreDdls.Push($"ALTER TABLE {tableName} MODIFY ({colName} {def} NOT NULL)");
-                 
-                using var alterCmd = new OracleCommand(
-                  $"ALTER TABLE {tableName} MODIFY ({colName} NULL)",
-                  (OracleConnection)_connection);
-                alterCmd.ExecuteNonQuery();
+                Console.WriteLine($"Constraint {name} ignored (PRIMARY KEY)");
+                continue;
               }
+              
+              if (type == "C" && searchCond != null && searchCond.ToUpper().Contains("IS NOT NULL"))
+              {
+                Console.WriteLine($"Constraint {name} ignored (NOT NULL implicit)");
+                continue;
+              }
+              
+              _restoreDdls.Push($"ALTER TABLE {tableUpper} ENABLE CONSTRAINT {name}");
+        
+                if (type == "R")
+              {
+                var fkCols = GetConstraintColumns(schema, name);
+                
+                foreach (var col in fkCols)
+                {
+                  try
+                  {
+                    using var alterCmd = _connection.CreateCommand();
+                    alterCmd.CommandText = $"ALTER TABLE {tableUpper} MODIFY ({col} NULL)";
+                    alterCmd.ExecuteNonQuery();
+                    Console.WriteLine($"Column {tableUpper}.{col} made nullable");
+                    
+                    _restoreDdls.Push($"ALTER TABLE {tableUpper} MODIFY ({col} NOT NULL)");
+                  }
+                  catch (Exception ex)
+                  {
+                    Console.Error.WriteLine($"Error making column {col} nullable: {ex.Message}");
+                        }
+                    }
+                }
+        
+                try
+                {
+                    using var disableCmd = _connection.CreateCommand();
+                    disableCmd.CommandText = $"ALTER TABLE {tableUpper} DISABLE CONSTRAINT {name}";
+                    disableCmd.ExecuteNonQuery();
+                    Console.WriteLine($"Constraint {name} disabled");
+                  }
+                  catch (Exception ex)
+                  {
+                    Console.Error.WriteLine($"Error disabling constraint {name}: {ex.Message}");
+                }
             }
+        
+            Console.WriteLine($"Processing finished for table {tableUpper}");
           }
+
                                   
           private List<string> GetConstraintColumns(string schema, string constraintName)
           {

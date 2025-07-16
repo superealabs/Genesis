@@ -17,8 +17,8 @@ public class TableMetadataTestOracle {
         this.credentials = new Credentials()
                 .setHost("localhost")
                 .setPort("1521")
-                .setUser("C##TAHIANA")
-                .setPwd("tahiana")
+                .setUser("C##SUPER")
+                .setPwd("super")
                 .setSID("orclbdd")
                 .setSchemaName("");
     }

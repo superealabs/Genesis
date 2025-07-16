@@ -412,7 +412,8 @@ public class OracleDatabase extends Database {
                     Matcher matcher = regexpLikePattern.matcher(searchCondition);
                     if (matcher.find()) {
                         String extractedPattern = matcher.group(1);
-                        String processedPattern = extractedPattern;
+                        String processedPattern = extractedPattern.replace("\\", "\\\\");
+
                         if (processedPattern.startsWith("^")) {
                             processedPattern = processedPattern.substring(1);
                         }
@@ -457,6 +458,10 @@ public class OracleDatabase extends Database {
                 String isNullable = columns.getString("IS_NULLABLE");
 
                 int decimalDigits = columns.getInt("DECIMAL_DIGITS");
+                if(decimalDigits>0)
+                {
+                    columnType = columns.getString("TYPE_NAME")+"(*,*)";
+                }
                 int columnSize = columns.getInt("COLUMN_SIZE");
                 String defaultValue = columns.getString("COLUMN_DEF");
                 boolean isColumnNumeric = isColumnNumeric(columns);
