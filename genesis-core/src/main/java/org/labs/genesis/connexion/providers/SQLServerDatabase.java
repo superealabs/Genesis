@@ -25,9 +25,6 @@ public class SQLServerDatabase extends Database {
                 credentials.isTrustCertificate());
     }
 
-    // The rest of the methods for checkMinConstraint, checkStrictMinConstraint, etc.
-    // follow the same pattern as PostgreSQLDatabase class, using SQLServer-specific queries
-
     @Override
     protected void checkStrictMinConstraint(Connection conn, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         checkNumericConstraint(conn, tableName, columns, framework, "numericMinimumValue", "numericMinimumValueData", this.getConstraintQueries().getCheckStrictMinimumConstraintQuery(), true);
@@ -123,7 +120,6 @@ public class SQLServerDatabase extends Database {
         }
     }
 
-
     @Override
     protected void checkNotBlankConstraint(Connection conn, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         try (PreparedStatement stmt = conn.prepareStatement(this.getConstraintQueries().getCheckNotBlankConstraintQuery())) {
@@ -147,8 +143,6 @@ public class SQLServerDatabase extends Database {
             }
         }
     }
-
-
 
     @Override
     protected void checkMinLengthConstraint(Connection conn, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
