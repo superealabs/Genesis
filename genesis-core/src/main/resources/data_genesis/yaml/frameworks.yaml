@@ -2324,33 +2324,67 @@
           public void RestoreConstraints()
           {
             Console.WriteLine($"Restoring {_restoreDdls.Count} constraints");
-            
-            while (_restoreDdls.Count > 0)
+        
+            // Separate NOT NULL and other constraints to restore NOT NULL first
+            var notNullDdls = new List<string>();
+            var otherDdls = new List<string>();
+            foreach (var ddl in _restoreDdls)
             {
-              string ddl = _restoreDdls.Pop();
-              Console.WriteLine($"Restoring: {ddl}");
-      
-                  try
-                  {
-                      // Créer la commande spécifique au SGBD
-                      using (var cmd = CreateDbCommand(ddl))
-                      {
-                          cmd.ExecuteNonQuery();
-                          Console.WriteLine($"Successfully restored: {ddl}");
-                      }
-                  }
-                  catch (DbException ex)
-                  {
-                      Console.Error.WriteLine($"Error restoring constraint: {ddl}");
-                      Console.Error.WriteLine($"Reason: {ex.Message}");
-                  }
-                  catch (InvalidOperationException ex)
-                  {
-                      Console.Error.WriteLine($"Connection issue: {ex.Message}");
-                  }
-              }
-              _processedTables.Clear();
-          }
+              if (ddl.Contains("NOT NULL"))
+              notNullDdls.Add(ddl);
+              else
+              otherDdls.Add(ddl);
+            }
+        
+            // Restore NOT NULL constraints first
+            foreach (var ddl in notNullDdls)
+            {
+              try
+              {
+                Console.WriteLine($"Restoring: {ddl}");
+                    using (var cmd = CreateDbCommand(ddl))
+                    {
+                        cmd.ExecuteNonQuery();
+                        Console.WriteLine($"Successfully restored: {ddl}");
+                    }
+                }
+                catch (DbException ex)
+                {
+                    Console.Error.WriteLine($"Error restoring constraint: {ddl}");
+                    Console.Error.WriteLine($"Reason: {ex.Message}");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Console.Error.WriteLine($"Connection issue: {ex.Message}");
+                }
+            }
+        
+            // Restore other constraints (CHECK, FOREIGN KEY, UNIQUE)
+            foreach (var ddl in otherDdls)
+            {
+                try
+                {
+                    Console.WriteLine($"Restoring: {ddl}");
+                    using (var cmd = CreateDbCommand(ddl))
+                    {
+                        cmd.ExecuteNonQuery();
+                        Console.WriteLine($"Successfully restored: {ddl}");
+                    }
+                }
+                catch (DbException ex)
+                {
+                    Console.Error.WriteLine($"Error restoring constraint: {ddl}");
+                    Console.Error.WriteLine($"Reason: {ex.Message}");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Console.Error.WriteLine($"Connection issue: {ex.Message}");
+                }
+            }
+        
+            _restoreDdls.Clear();
+            _processedTables.Clear();
+        }
 
           private DbCommand CreateDbCommand(string commandText)
           {
@@ -2805,24 +2839,20 @@
             }
         
             // Get schema (default to dbo)
-            string schema;
-            using (var cmd = CreateDbCommand("SELECT SCHEMA_NAME()"))
-            {
-              schema = cmd.ExecuteScalar()?.ToString() ?? "dbo";
-            }
+            string schema = "dbo";
         
             string qualifiedTableName = $"[{schema}].[{tableName}]";
         
             try
             {
               // Begin transaction
-              using (var cmd = CreateDbCommand("BEGIN TRANSACTION"))
+              using (var cmd = new SqlCommand("BEGIN TRANSACTION"))
               {
                 cmd.ExecuteNonQuery();
               }
             
               // 1. UNIQUE Constraints
-              using (var cmd = CreateDbCommand(
+              using (var cmd = new SqlCommand(
                 "SELECT i.name AS constraint_name, " +
                 "STRING_AGG(COL_NAME(ic.object_id, ic.column_id), ',') AS columns " +
                 "FROM sys.indexes i " +
@@ -2859,7 +2889,7 @@
               }
           
               // 2. CHECK Constraints
-              using (var cmd = CreateDbCommand(
+              using (var cmd = new SqlCommand(
                 "SELECT cc.name AS name, cc.definition AS def " +
                 "FROM sys.check_constraints cc " +
                 "JOIN sys.objects t ON cc.parent_object_id = t.object_id " +
@@ -2892,7 +2922,7 @@
               }
           
               // 3. FOREIGN KEY Constraints
-              using (var cmd = CreateDbCommand(
+              using (var cmd = new SqlCommand(
                 "SELECT fk.name AS name, " +
                 "COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS col, " +
                 "OBJECT_NAME(fk.referenced_object_id) AS refTable, " +
@@ -2931,7 +2961,7 @@
               }
           
               // 4. NOT NULL Constraints (excluding IDENTITY columns)
-              using (var cmd = CreateDbCommand(
+              using (var cmd = new SqlCommand(
                 "SELECT c.name, t.name AS type_name, " +
                 "CASE " +
                 "  WHEN t.name IN ('decimal', 'numeric') THEN t.name + '(' + CAST(c.precision AS VARCHAR) + ',' + CAST(c.scale AS VARCHAR) + ')' " +
@@ -2967,7 +2997,7 @@
               }
         
               // Commit transaction
-              using (var cmd = CreateDbCommand("COMMIT TRANSACTION"))
+              using (var cmd = new SqlCommand("COMMIT TRANSACTION"))
               {
                 cmd.ExecuteNonQuery();
               }
@@ -2977,7 +3007,7 @@
               // Rollback transaction on error
               try
               {
-                using (var cmd = CreateDbCommand("ROLLBACK TRANSACTION"))
+                using (var cmd = new SqlCommand("ROLLBACK TRANSACTION"))
                 {
                   cmd.ExecuteNonQuery();
                 }
