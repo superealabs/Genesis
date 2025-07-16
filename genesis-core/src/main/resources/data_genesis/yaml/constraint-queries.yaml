@@ -874,7 +874,7 @@
 
   checkMinimumLengthConstraintQuery: |
     WITH constraints AS (
-      SELECT 
+      SELECT
         cc.name AS constraint_name,
         t.name AS table_name,
         s.name AS schema_name,
@@ -882,27 +882,37 @@
       FROM sys.check_constraints cc
       JOIN sys.tables t ON cc.parent_object_id = t.object_id
       JOIN sys.schemas s ON t.schema_id = s.schema_id
-      WHERE t.name = ? AND s.name = ?
+      WHERE 
+        t.name = ? AND s.name = ?
+        AND cc.definition LIKE '%LEN(%)[>]%([0-9])%'
+        AND CHARINDEX('LEN([', cc.definition) > 0
+        AND CHARINDEX('])', cc.definition) > CHARINDEX('LEN([', cc.definition)
+        AND CHARINDEX('>', cc.definition) > CHARINDEX('])', cc.definition)
     )
     SELECT
       table_name,
       constraint_name,
       definition,
-      SUBSTRING(
-        definition,
-        CHARINDEX('LEN([', definition) + 5,
-        CHARINDEX(']', definition) - CHARINDEX('LEN([', definition) - 5
-      ) AS column_name,
-      TRY_CAST(
+      LTRIM(
+        RTRIM(
           SUBSTRING(
+            definition,
+            CHARINDEX('LEN([', definition) + 5,
+            CHARINDEX('])', definition) - CHARINDEX('LEN([', definition) - 5
+      ))) AS column_name
+      ,
+    TRY_CAST(
+      LTRIM(RTRIM(
+        SUBSTRING(
           definition,
-          CHARINDEX('>', definition) + 2,
-          PATINDEX('%[^0-9]%', SUBSTRING(definition, CHARINDEX('>', definition) + 2, 20) + 'X') - 1
-        ) AS INT
-      ) AS min_length
+          CHARINDEX('>', definition) + (CASE WHEN CHARINDEX('>=', definition) > 0 THEN 3 ELSE 2 END),
+          CASE
+            WHEN PATINDEX('%[^0-9]%', SUBSTRING(definition, CHARINDEX('>', definition) + (CASE WHEN CHARINDEX('>=', definition) > 0 THEN 3 ELSE 2 END), 20) + 'X') > 0
+            THEN PATINDEX('%[^0-9]%', SUBSTRING(definition, CHARINDEX('>', definition) + (CASE WHEN CHARINDEX('>=', definition) > 0 THEN 3 ELSE 2 END), 20) + 'X') - 1
+            ELSE 0
+          END
+      ))) AS INT ) AS min_length
     FROM constraints
-    WHERE UPPER(definition) LIKE '%LEN(%' AND definition LIKE '%>%';
-
   checkRegexConstraintQuery: |
     WITH constraints AS (
       SELECT 
