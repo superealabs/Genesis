@@ -2,8 +2,8 @@
   frameworkId: 1
   name: "Spring Security - JWT"
   securityFiles:
-    - fileType: "Type User Entity"
-      fileName: "TypeUser"
+    - fileType: "Roles Entity"
+      fileName: "RoleEntity"
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.models;
@@ -15,8 +15,8 @@
         @Getter
         @Setter
         @Entity
-        @Table(name = "type_user")
-        public class TypeUser {
+        @Table(name = "roles")
+        public class RoleEntity {
             @Id
             @GeneratedValue(strategy = GenerationType.IDENTITY)
             @Column(name = "id")
@@ -27,23 +27,23 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
 
-    - fileType: "Type User Repository"
-      fileName: "TypeUserRepository"
+    - fileType: "Role User Repository"
+      fileName: "RoleEntityRepository"
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.repositories;
   
-        import ${groupLink}.${lowerCase(projectName)}.models.TypeUser;
+        import ${groupLink}.${lowerCase(projectName)}.models.RoleEntity;
         import org.springframework.data.jpa.repository.JpaRepository;
         import java.util.Optional;
         
-        public interface TypeUserRepository extends JpaRepository<TypeUser, Long> {
-          Optional<TypeUser> findAllByName(String username);
+        public interface RoleEntityRepository extends JpaRepository<RoleEntity, Long> {
+          Optional<RoleEntity> findAllByName(String username);
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
 
     - fileType: "User Entity"
-      fileName: "User"
+      fileName: "UserEntity"
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.models;
@@ -55,8 +55,8 @@
         @Getter
         @Setter
         @Entity
-        @Table(name = "\"user\"")
-        public class User {
+        @Table(name = "users")
+        public class UserEntity {
             @Id
             @GeneratedValue(strategy = GenerationType.IDENTITY)
             @Column(name = "id")
@@ -72,24 +72,24 @@
             private String password;
 
             @ManyToOne
-            @JoinColumn(name = "type_user_id")
-            private TypeUser typeuseridTypeUser;
+            @JoinColumn(name = "role_id")
+            private RoleEntity roleidRoleEntity;
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
 
     - fileType: "User Repository"
-      fileName: "UserRepository"
+      fileName: "UserEntityRepository"
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.repositories;
 
-        import ${groupLink}.${lowerCase(projectName)}.models.User;
+        import ${groupLink}.${lowerCase(projectName)}.models.UserEntity;
         import org.springframework.data.jpa.repository.JpaRepository;
         import java.util.Optional;
 
-        public interface UserRepository extends JpaRepository<User, Long> {
-            Optional<User> findAllByName(String name);
-            User findUserByName(String name);
+        public interface UserEntityRepository extends JpaRepository<UserEntity, Long> {
+            Optional<UserEntity> findAllByName(String name);
+            UserEntity findUserByName(String name);
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
 
@@ -101,79 +101,79 @@
         --Username: admin
         --Password: admin
         {{#if databaseType = PostgreSQL}}
-        CREATE TABLE IF NOT EXISTS type_user
+        CREATE TABLE IF NOT EXISTS roles
         (
           id SERIAL PRIMARY KEY,
           name VARCHAR(100) NOT NULL UNIQUE
         );
         
-        CREATE TABLE IF NOT EXISTS "user"
+        CREATE TABLE IF NOT EXISTS users
         (
           id SERIAL PRIMARY KEY,
           name VARCHAR(100) UNIQUE NOT NULL,
           email VARCHAR(100) UNIQUE NOT NULL CHECK (email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
           password VARCHAR(100) NOT NULL,
-          type_user_id INTEGER NOT NULL REFERENCES type_user(id)
+          role_id INTEGER NOT NULL REFERENCES roles(id)
         );
         
-        INSERT INTO type_user (name) VALUES ('ROLE_ADMIN')
+        INSERT INTO roles (name) VALUES ('ROLE_ADMIN')
         ON CONFLICT (name) DO NOTHING;
         
-        INSERT INTO "user" (name, email, password, type_user_id)
+        INSERT INTO users (name, email, password, role_id)
         VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1)
         ON CONFLICT (email) DO NOTHING;
         {{else}}{{removeLine}}{{/if}}
         
         {{#if databaseType = MySQL}}
-        CREATE TABLE IF NOT EXISTS type_user (
+        CREATE TABLE IF NOT EXISTS roles (
           id INT AUTO_INCREMENT PRIMARY KEY,
           name VARCHAR(100) NOT NULL UNIQUE
         );
         
-        CREATE TABLE IF NOT EXISTS `user` (
+        CREATE TABLE IF NOT EXISTS users (
           id INT AUTO_INCREMENT PRIMARY KEY,
           name VARCHAR(100) NOT NULL UNIQUE,
           email VARCHAR(100) NOT NULL UNIQUE,
           password VARCHAR(100) NOT NULL,
-          type_user_id INT NOT NULL,
-          CONSTRAINT fk_type_user FOREIGN KEY (type_user_id) REFERENCES type_user(id),
+          role_id INT NOT NULL,
+          CONSTRAINT fk_type_user FOREIGN KEY (role_id) REFERENCES roles(id),
           CONSTRAINT chk_email CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
         );
         
-        INSERT INTO type_user (name) VALUES ('ROLE_ADMIN')
+        INSERT INTO roles (name) VALUES ('ROLE_ADMIN')
         ON DUPLICATE KEY UPDATE id=id;
         
-        INSERT INTO `user` (name, email, password, type_user_id)
+        INSERT INTO users (name, email, password, role_id)
         VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1)
         ON DUPLICATE KEY UPDATE id=id;
         {{else}}{{removeLine}}{{/if}}
         
         {{#if databaseType = SQL Server}}
-        CREATE TABLE IF NOT EXISTS type_user (
+        CREATE TABLE IF NOT EXISTS roles (
           id INT IDENTITY(1,1) PRIMARY KEY,
           name VARCHAR(100) NOT NULL UNIQUE
         );
         
-        CREATE TABLE IF NOT EXISTS [user] (
+        CREATE TABLE IF NOT EXISTS [users] (
           id INT IDENTITY(1,1) PRIMARY KEY,
           name VARCHAR(100) NOT NULL UNIQUE,
           email VARCHAR(100) NOT NULL UNIQUE,
           password VARCHAR(100) NOT NULL,
-          type_user_id INT NOT NULL,
-          CONSTRAINT FK_user_type_user FOREIGN KEY (type_user_id) REFERENCES type_user(id),
+          role_id INT NOT NULL,
+          CONSTRAINT FK_user_type_user FOREIGN KEY (role_id) REFERENCES roles(id),
           CONSTRAINT CHK_email CHECK (email LIKE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}')
         );
         
-        IF NOT EXISTS (SELECT 1 FROM type_user WHERE name = 'ROLE_ADMIN')
-        INSERT INTO type_user (name) VALUES ('ROLE_ADMIN');
+        IF NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_ADMIN')
+        INSERT INTO roles (name) VALUES ('ROLE_ADMIN');
         
-        IF NOT EXISTS (SELECT 1 FROM [user] WHERE name = 'admin' OR email = 'admin@user.com')
-        INSERT INTO [user] (name, email, password, type_user_id)
+        IF NOT EXISTS (SELECT 1 FROM [users] WHERE name = 'admin' OR email = 'admin@user.com')
+        INSERT INTO [users] (name, email, password, role_id)
         VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1);
         {{else}}{{removeLine}}{{/if}}
         
         {{#if databaseType = Oracle}}
-        CREATE TABLE type_user (
+        CREATE TABLE roles (
           id NUMBER PRIMARY KEY,
           name VARCHAR2(100) NOT NULL UNIQUE
         ) TABLESPACE users;
@@ -181,42 +181,42 @@
         CREATE SEQUENCE type_user_seq START WITH 1 INCREMENT BY 1;
         
         CREATE OR REPLACE TRIGGER type_user_trigger
-        BEFORE INSERT ON type_user
+        BEFORE INSERT ON roles
         FOR EACH ROW
         BEGIN
         SELECT type_user_seq.NEXTVAL INTO :new.id FROM dual;
         END;
         
-        CREATE TABLE "user" (
+        CREATE TABLE users (
           id NUMBER PRIMARY KEY,
           name VARCHAR2(100) NOT NULL UNIQUE,
           email VARCHAR2(100) NOT NULL UNIQUE,
           password VARCHAR2(100) NOT NULL,
-          type_user_id NUMBER NOT NULL,
-          CONSTRAINT fk_user_type_user FOREIGN KEY (type_user_id) REFERENCES type_user(id),
+          role_id NUMBER NOT NULL,
+          CONSTRAINT fk_user_type_user FOREIGN KEY (role_id) REFERENCES roles(id),
           CONSTRAINT chk_email CHECK (REGEXP_LIKE(email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'))
         ) TABLESPACE users;
         
         CREATE SEQUENCE user_seq START WITH 1 INCREMENT BY 1;
         
         CREATE OR REPLACE TRIGGER user_trigger
-        BEFORE INSERT ON "user"
+        BEFORE INSERT ON users
         FOR EACH ROW
         BEGIN
         SELECT user_seq.NEXTVAL INTO :new.id FROM dual;
         END;
         
-        MERGE INTO type_user tu
+        MERGE INTO roles tu
         USING (SELECT 1 FROM dual) d
         ON (tu.name = 'ROLE_ADMIN')
         WHEN NOT MATCHED THEN
         INSERT (name) VALUES ('ROLE_ADMIN');
         
-        MERGE INTO "user" u
+        MERGE INTO users u
         USING (SELECT 1 FROM dual) d
         ON (u.name = 'admin' OR u.email = 'admin@user.com')
         WHEN NOT MATCHED THEN
-        INSERT (name, email, password, type_user_id)
+        INSERT (name, email, password, role_id)
         VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1);
         {{else}}{{removeLine}}{{/if}}
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/sql-init/"
@@ -268,7 +268,7 @@
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config.security.models;
   
-        import ${groupLink}.${lowerCase(projectName)}.models.User;
+        import ${groupLink}.${lowerCase(projectName)}.models.UserEntity;
         import org.springframework.security.core.GrantedAuthority;
         import org.springframework.security.core.authority.SimpleGrantedAuthority;
         import org.springframework.security.core.userdetails.UserDetails;
@@ -285,11 +285,11 @@
           private final String email;
           private final List<GrantedAuthority> authorities;
           
-          public UserInfoDetails(User user) {
+          public UserInfoDetails(UserEntity user) {
             this.username = user.getName(); // Assuming 'name' is used as 'username'
             this.password = user.getPassword();
             this.email = user.getEmail();
-            this.authorities = Stream.of(user.getTypeuseridTypeUser().getName().split(","))
+            this.authorities = Stream.of(user.getRoleidRoleEntity().getName().split(","))
             .map(SimpleGrantedAuthority::new)
             .collect(Collectors.toList());
           }
@@ -541,8 +541,8 @@
         import ${groupLink}.${lowerCase(projectName)}.config.security.models.AuthRequest;
         import ${groupLink}.${lowerCase(projectName)}.config.security.models.UserInfoDetails;
         import ${groupLink}.${lowerCase(projectName)}.config.security.models.UserUpdateRequest;
-        import ${groupLink}.${lowerCase(projectName)}.models.User;
-        import ${groupLink}.${lowerCase(projectName)}.repositories.UserRepository;
+        import ${groupLink}.${lowerCase(projectName)}.models.UserEntity;
+        import ${groupLink}.${lowerCase(projectName)}.repositories.UserEntityRepository;
         import org.springframework.beans.factory.annotation.Autowired;
         import org.springframework.context.annotation.Lazy;
         import org.springframework.security.authentication.AuthenticationManager;
@@ -559,12 +559,12 @@
         
         @Service
         public class UserInfoService implements UserDetailsService {
-          private final UserRepository repository;
+          private final UserEntityRepository repository;
           private final JwtService jwtService;
           private final AuthenticationManager authenticationManager;
           
           @Autowired
-          public UserInfoService(UserRepository repository, JwtService jwtService, @Lazy AuthenticationManager authenticationManager) {
+          public UserInfoService(UserEntityRepository repository, JwtService jwtService, @Lazy AuthenticationManager authenticationManager) {
             this.repository = repository;
             this.jwtService = jwtService;
             this.authenticationManager = authenticationManager;
@@ -572,14 +572,14 @@
           
           @Override
           public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-            Optional<User> userDetail = repository.findAllByName(username); // Assuming 'email' is used as username
+            Optional<UserEntity> userDetail = repository.findAllByName(username); // Assuming 'email' is used as username
           
             // Converting UserInfo to UserDetails
             return userDetail.map(UserInfoDetails::new)
               .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
           }
         
-          public String addUser(User user) {
+          public String addUser(UserEntity user) {
               // Encode password before saving the user
               user.setPassword(passwordEncoder.encode(user.getPassword()));
               repository.save(user);
@@ -602,7 +602,7 @@
           
           // Ajoutez ces méthodes dans UserInfoService
           public void updateUser(String username, UserUpdateRequest updateRequest) {
-            User user = repository.findUserByName(username);
+            UserEntity user = repository.findUserByName(username);
             if (user == null) {
               throw new UsernameNotFoundException("User not found: " + username);
             }
@@ -627,7 +627,7 @@
                 throw new IllegalArgumentException("New password and confirmation do not match");
             }
           
-            User user = repository.findUserByName(username);
+            UserEntity user = repository.findUserByName(username);
             if (user == null) {
               throw new UsernameNotFoundException("User not found: " + username);
             }
@@ -991,7 +991,7 @@
         import ${groupLink}.${lowerCase(projectName)}.config.security.services.TokenBlacklistService;
         import ${groupLink}.${lowerCase(projectName)}.config.security.services.UserInfoService;
         import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
-        import ${groupLink}.${lowerCase(projectName)}.models.User;
+        import ${groupLink}.${lowerCase(projectName)}.models.UserEntity;
         import org.springframework.beans.factory.annotation.Autowired;
         import org.springframework.http.HttpStatus;
         import org.springframework.http.ResponseEntity;
@@ -1127,7 +1127,7 @@
            )
           })
           @PostMapping("/register")
-          public ResponseEntity<RestResponse<String>> addNewUser(@RequestBody User user) {
+          public ResponseEntity<RestResponse<String>> addNewUser(@RequestBody UserEntity user) {
             try {
               String result = userInfoService.addUser(user);
               return ResponseEntity.ok(
