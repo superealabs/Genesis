@@ -863,7 +863,7 @@
             username: ${databaseUsername}
             password: ${databasePassword}
           jpa:
-            database-platform : org.hibernate.dialect.${databaseType}Dialect
+            database-platform : org.hibernate.dialect.${skipEscape(databaseType)}Dialect
             hibernate:
               ddl-auto: ${hibernateDdlAuto}
             properties:
@@ -2791,83 +2791,202 @@
           {{#if databaseType = SQL Server}}
           private void DisableSqlServer(string tableName)
           {
-            // CHECK Constraints
-            using (var cmd = new SqlCommand(
-              "SELECT cc.name AS name, cc.definition AS def " +
-              "FROM sys.check_constraints cc " +
-              "JOIN sys.objects t ON cc.parent_object_id = t.object_id " +
-              "WHERE t.name = @table",
-              (SqlConnection)_connection))
+            if (string.IsNullOrWhiteSpace(tableName))
             {
-              cmd.Parameters.AddWithValue("@table", tableName);
-              using var reader = cmd.ExecuteReader();
-              while (reader.Read())
-              {
-                var name = reader.GetString(0);
-                var def = reader.GetString(1);
-                        
-                _restoreDdls.Push($"ALTER TABLE {tableName} ADD CONSTRAINT {name} CHECK ({def})");
-                        
-                using var dropCmd = new SqlCommand(
-                  $"ALTER TABLE {tableName} DROP CONSTRAINT {name}",
-                  (SqlConnection)_connection);
-                dropCmd.ExecuteNonQuery();
-              }
+              Console.Error.WriteLine("Table name cannot be null or empty");
+              throw new ArgumentException("Table name cannot be null or empty");
             }
-
-            // FOREIGN KEYS
-            using (var cmd = new SqlCommand(
-                "SELECT fk.name AS name, COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS col, " +
+        
+            // Sanitize table name
+            if (!tableName.All(c => char.IsLetterOrDigit(c) || c == '_'))
+            {
+              Console.Error.WriteLine($"Invalid table name: {tableName}");
+              throw new ArgumentException("Invalid table name");
+            }
+        
+            // Get schema (default to dbo)
+            string schema;
+            using (var cmd = CreateDbCommand("SELECT SCHEMA_NAME()"))
+            {
+              schema = cmd.ExecuteScalar()?.ToString() ?? "dbo";
+            }
+        
+            string qualifiedTableName = $"[{schema}].[{tableName}]";
+        
+            try
+            {
+              // Begin transaction
+              using (var cmd = CreateDbCommand("BEGIN TRANSACTION"))
+              {
+                cmd.ExecuteNonQuery();
+              }
+            
+              // 1. UNIQUE Constraints
+              using (var cmd = CreateDbCommand(
+                "SELECT i.name AS constraint_name, " +
+                "STRING_AGG(COL_NAME(ic.object_id, ic.column_id), ',') AS columns " +
+                "FROM sys.indexes i " +
+                "JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id " +
+                "JOIN sys.tables t ON i.object_id = t.object_id " +
+                "JOIN sys.schemas s ON t.schema_id = s.schema_id " +
+                "WHERE i.is_unique = 1 AND i.is_primary_key = 0 " +
+                "AND t.name = @tableName AND s.name = @schema " +
+                "GROUP BY i.name"))
+              {
+                cmd.Parameters.AddWithValue("@tableName", tableName);
+                cmd.Parameters.AddWithValue("@schema", schema);
+                using (var reader = cmd.ExecuteReader())
+                {
+                  while (reader.Read())
+                  {
+                    string name = reader["constraint_name"]?.ToString();
+                    string columns = reader["columns"]?.ToString();
+                    if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(columns))
+                    {
+                      Console.WriteLine($"Skipping invalid UNIQUE constraint for table {schema}.{tableName}: name={name}, columns={columns}");
+                      continue;
+                    }
+          
+                    string restoreSQL = $"ALTER TABLE {qualifiedTableName} ADD CONSTRAINT [{name}] UNIQUE ([{columns.Replace(",", "],[")}])";
+                    _restoreDdls.Push(restoreSQL);
+                    using (var dropCmd = CreateDbCommand($"ALTER TABLE {qualifiedTableName} DROP CONSTRAINT [{name}]"))
+                    {
+                      dropCmd.ExecuteNonQuery();
+                      Console.WriteLine($"Dropped UNIQUE constraint [{name}] on table {schema}.{tableName}");
+                    }
+                  }
+                }
+              }
+          
+              // 2. CHECK Constraints
+              using (var cmd = CreateDbCommand(
+                "SELECT cc.name AS name, cc.definition AS def " +
+                "FROM sys.check_constraints cc " +
+                "JOIN sys.objects t ON cc.parent_object_id = t.object_id " +
+                "JOIN sys.schemas s ON t.schema_id = s.schema_id " +
+                "WHERE t.name = @tableName AND s.name = @schema"))
+              {
+                cmd.Parameters.AddWithValue("@tableName", tableName);
+                cmd.Parameters.AddWithValue("@schema", schema);
+                using (var reader = cmd.ExecuteReader())
+                {
+                  while (reader.Read())
+                  {
+                    string name = reader["name"]?.ToString();
+                    string def = reader["def"]?.ToString();
+                    if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(def))
+                    {
+                      Console.WriteLine($"Skipping invalid CHECK constraint for table {schema}.{tableName}: name={name}, def={def}");
+                          continue;
+                      }
+  
+                      string restoreSQL = $"ALTER TABLE {qualifiedTableName} ADD CONSTRAINT [{name}] CHECK ({def})";
+                      _restoreDdls.Push(restoreSQL);
+                      using (var dropCmd = CreateDbCommand($"ALTER TABLE {qualifiedTableName} DROP CONSTRAINT [{name}]"))
+                      {
+                          dropCmd.ExecuteNonQuery();
+                          Console.WriteLine($"Dropped CHECK constraint [{name}] on table {schema}.{tableName}");
+                      }
+                  }
+                }
+              }
+          
+              // 3. FOREIGN KEY Constraints
+              using (var cmd = CreateDbCommand(
+                "SELECT fk.name AS name, " +
+                "COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS col, " +
                 "OBJECT_NAME(fk.referenced_object_id) AS refTable, " +
                 "COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id) AS refCol " +
-                            "FROM sys.foreign_keys fk " +
-                            "JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id " +
-                            "WHERE OBJECT_NAME(fk.parent_object_id) = @table",
-                            (SqlConnection)_connection))
-            {
-              cmd.Parameters.AddWithValue("@table", tableName);
-              using var reader = cmd.ExecuteReader();
-              while (reader.Read())
+                "FROM sys.foreign_keys fk " +
+                "JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id " +
+                "JOIN sys.tables t ON fk.parent_object_id = t.object_id " +
+                "JOIN sys.schemas s ON t.schema_id = s.schema_id " +
+                "WHERE t.name = @tableName AND s.name = @schema"))
               {
-                var name = reader.GetString(0);
-                var col = reader.GetString(1);
-                var refTable = reader.GetString(2);
-                var refCol = reader.GetString(3);
-                
-                var restoreSQL = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
-                   $"FOREIGN KEY({col}) REFERENCES {refTable}({refCol})";
-                
-                _restoreDdls.Push(restoreSQL);
-                            
-                using var dropCmd = new SqlCommand(
-                  $"ALTER TABLE {tableName} DROP CONSTRAINT {name}",
-                  (SqlConnection)_connection);
-                dropCmd.ExecuteNonQuery();
+                cmd.Parameters.AddWithValue("@tableName", tableName);
+                cmd.Parameters.AddWithValue("@schema", schema);
+                using (var reader = cmd.ExecuteReader())
+                {
+                  while (reader.Read())
+                  {
+                    string name = reader["name"]?.ToString();
+                    string col = reader["col"]?.ToString();
+                    string refTable = reader["refTable"]?.ToString();
+                    string refCol = reader["refCol"]?.ToString();
+                    if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(col) || string.IsNullOrEmpty(refTable) || string.IsNullOrEmpty(refCol))
+                    {
+                      Console.WriteLine($"Skipping invalid FOREIGN KEY constraint for table {schema}.{tableName}: name={name}, col={col}, refTable={refTable}, refCol={refCol}");
+                      continue;
+                    }
+      
+                    string restoreSQL = $"ALTER TABLE {qualifiedTableName} ADD CONSTRAINT [{name}] FOREIGN KEY ([{col}]) REFERENCES [{refTable}]([{refCol}])";
+                    _restoreDdls.Push(restoreSQL);
+                    using (var dropCmd = CreateDbCommand($"ALTER TABLE {qualifiedTableName} DROP CONSTRAINT [{name}]"))
+                    {
+                        dropCmd.ExecuteNonQuery();
+                        Console.WriteLine($"Dropped FOREIGN KEY constraint [{name}] on table {schema}.{tableName}");
+                    }
+                  }
+                }
+              }
+          
+              // 4. NOT NULL Constraints (excluding IDENTITY columns)
+              using (var cmd = CreateDbCommand(
+                "SELECT c.name, t.name AS type_name, " +
+                "CASE " +
+                "  WHEN t.name IN ('decimal', 'numeric') THEN t.name + '(' + CAST(c.precision AS VARCHAR) + ',' + CAST(c.scale AS VARCHAR) + ')' " +
+                "  WHEN t.name IN ('varchar', 'nvarchar', 'char', 'nchar') THEN t.name + '(' + CASE WHEN c.max_length = -1 THEN 'MAX' ELSE CAST(c.max_length AS VARCHAR) END + ')' " +
+                "  ELSE t.name " +
+                "END AS def " +
+                "FROM sys.columns c " +
+                "JOIN sys.types t ON c.system_type_id = t.system_type_id " +
+                "WHERE c.object_id = OBJECT_ID(@qualifiedTableName) AND c.is_nullable = 0 AND c.is_identity = 0"))
+              {
+                cmd.Parameters.AddWithValue("@qualifiedTableName", $"{schema}.{tableName}");
+                using (var reader = cmd.ExecuteReader())
+                {
+                  while (reader.Read())
+                  {
+                    string colName = reader["name"]?.ToString();
+                    string def = reader["def"]?.ToString();
+                    if (string.IsNullOrEmpty(colName) || string.IsNullOrEmpty(def))
+                    {
+                      Console.WriteLine($"Skipping invalid NOT NULL column for table {schema}.{tableName}: name={colName}, def={def}");
+                    continue;
+                    }
+  
+                    string restoreSQL = $"ALTER TABLE {qualifiedTableName} ALTER COLUMN [{colName}] {def} NOT NULL";
+                    _restoreDdls.Push(restoreSQL);
+                    using (var dropCmd = CreateDbCommand($"ALTER TABLE {qualifiedTableName} ALTER COLUMN [{colName}] {def} NULL"))
+                    {
+                      dropCmd.ExecuteNonQuery();
+                      Console.WriteLine($"Dropped NOT NULL constraint on column [{colName}] in table {schema}.{tableName}");
+                    }
+                  }
+                }
+              }
+        
+              // Commit transaction
+              using (var cmd = CreateDbCommand("COMMIT TRANSACTION"))
+              {
+                cmd.ExecuteNonQuery();
               }
             }
-
-            // NOT NULL Constraints
-            using (var cmd = new SqlCommand(
-                "SELECT name, system_type_name AS def " +
-                            "FROM sys.columns " +
-                            "WHERE object_id = OBJECT_ID(@table) " +
-                            "AND is_nullable = 0 AND is_identity = 0",
-                            (SqlConnection)_connection))
+            catch (DbException ex)
             {
-              cmd.Parameters.AddWithValue("@table", tableName);
-              using var reader = cmd.ExecuteReader();
-              while (reader.Read())
+              // Rollback transaction on error
+              try
               {
-                var colName = reader.GetString(0);
-                var def = reader.GetString(1);
-                
-                _restoreDdls.Push($"ALTER TABLE {tableName} ALTER COLUMN {colName} {def} NOT NULL");
-                
-                using var alterCmd = new SqlCommand(
-                $"ALTER TABLE {tableName} ALTER COLUMN {colName} {def} NULL",
-                (SqlConnection)_connection);
-                alterCmd.ExecuteNonQuery();
+                using (var cmd = CreateDbCommand("ROLLBACK TRANSACTION"))
+                {
+                  cmd.ExecuteNonQuery();
+                }
               }
+              catch (DbException rollbackEx)
+              {
+                Console.Error.WriteLine($"Failed to rollback transaction for table {schema}.{tableName}: {rollbackEx.Message}");
+              }
+              throw;
             }
           }
           {{else}}{{removeLine}}{{/if}}
