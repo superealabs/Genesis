@@ -2,7 +2,9 @@ package org.labs.genesis.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.forms.SQLRunnerForm;
+import org.labs.genesis.wizards.conditionals.InitConditionalWizardStep;
 
 import javax.swing.*;
 
@@ -26,4 +28,11 @@ public class SQLRunnerWizardStep extends ModuleWizardStep {
 
     //@Override
     //public boolean validate() throws ConfigurationException {}
+
+    @Override
+    public boolean isStepVisible() {
+        Framework framework = projectGenerationContext.getFramework();
+        return framework != null
+                && framework.getUseDB();
+    }
 }
