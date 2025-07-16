@@ -182,7 +182,7 @@ public class TableMetadata {
                                         ));
                         field.setReferencedTable(pkTableName.transform(StringUtils::toCamelCase));
 
-                        try (ResultSet pkColumn = metaData.getColumns(null, database.getCredentials().getSchemaName(), pkTableName, pkColumnName)) {
+                        try (ResultSet pkColumn = metaData.getColumns(null, (database.getName().equals("Oracle")) ?database.getCredentials().getUser():database.getCredentials().getSchemaName(), pkTableName, pkColumnName)) {
                             if (pkColumn.next()) {
                                 String pkColumnType = pkColumn.getString("TYPE_NAME");
                                 field.setReferencedColumnType(language.getTypes().get(database.getTypes().get(pkColumnType)));
