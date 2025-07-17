@@ -7,6 +7,7 @@
   withGroupId: true
   useCloud: false
   useEurekaServer: false
+  useCache: false
   isGateway: false
   additionalFiles:
     - fileType: "MainFile"
@@ -21,8 +22,10 @@
         import org.springframework.boot.SpringApplication;
         import org.springframework.boot.autoconfigure.SpringBootApplication;
         {{#if useEurekaServer}}import org.springframework.cloud.client.discovery.EnableDiscoveryClient;{{/if}}
+        {{#if useCache}}import org.springframework.cache.annotation.EnableCaching;{{/if}}
 
         {{#if useEurekaServer}}@EnableDiscoveryClient{{/if}}
+        {{#if useCache}}@EnableCaching{{/if}}
         @SpringBootApplication
         public class ${majStart(projectName)}Application {
             public static void main(String[] args) {
@@ -761,6 +764,11 @@
             properties:
               hibernate.format_sql: true
         {{/if}}
+        {{#if useCache}
+          cache:
+            jcache:
+              config: classpath:ehcache.xml
+        {{/if}}
         
         server:
           port: ${projectPort}
@@ -898,6 +906,26 @@
     - groupId: "io.hypersistence"
       artifactId: "hypersistence-utils-hibernate-63"
       version: "3.9.2"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-cache"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.ehcache"
+      artifactId: "ehcache"
+      version: "3.10.0"
+      scope: "{{removeLine}}"
+
+    - groupId: "javax.xml.bind"
+      artifactId: "jaxb-api"
+      version: "2.3.1"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.glassfish.jaxb"
+      artifactId: "jaxb-runtime"
+      version: "2.3.1"
       scope: "{{removeLine}}"
 
   model:
@@ -1535,6 +1563,7 @@
   withGroupId: false
   useCloud: false
   useEurekaServer: false
+  useCache: false
   isGateway: false
   additionalFiles:
     - fileType: "ProgramFile"
@@ -3811,6 +3840,7 @@
   useDB: false
   useCloud: true
   useEurekaServer: false
+  useCache: false
   isGateway: false
   withGroupId: true
   additionalFiles:
@@ -3954,6 +3984,7 @@
   useDB: false
   useCloud: true
   useEurekaServer: false
+  useCache: false
   isGateway: true
   withGroupId: true
   additionalFiles:
