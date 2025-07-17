@@ -31,3 +31,20 @@
         </config>
 
   destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
+  additionalDependencies:
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-cache"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "org.ehcache"
+      artifactId: "ehcache"
+      version: "3.10.0"
+      scope: "{{removeLine}}"
+    - groupId: "javax.xml.bind"
+      artifactId: "jaxb-api"
+      version: "2.3.1"
+      scope: "{{removeLine}}"
+    - groupId: "org.glassfish.jaxb"
+      artifactId: "jaxb-runtime"
+      version: "2.3.1"
+      scope: "{{removeLine}}"
