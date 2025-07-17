@@ -1,0 +1,33 @@
+- id: 1
+  frameworkId: 1
+  name: "EhCache"
+  configFiles:
+    - fileType: "ConfigFile"
+      fileName: "ehcache"
+      extension: "xml"
+      content: |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <config xmlns='http://www.ehcache.org/v3'
+            xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+            xmlns:jsr107='http://www.ehcache.org/v3/jsr107'
+            xsi:schemaLocation="http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core.xsd">
+        
+          <service>
+            <jsr107:defaults />
+          </service>
+        
+          {{#each entitiesCacheable}}
+          <cache alias="${this}sCache">
+            <key-type>java.lang.String</key-type>
+            <value-type>java.io.Serializable</value-type>
+            <expiry>
+              <ttl unit="minutes">5</ttl>
+            </expiry>
+            <resources>
+              <heap unit="entries">100</heap>
+            </resources>
+          </cache>
+          {{/each}}
+        </config>
+
+  destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
