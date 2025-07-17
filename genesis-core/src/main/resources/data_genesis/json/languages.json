@@ -165,6 +165,8 @@
       "DATE": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "DECIMAL": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TEXT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "TIMESTAMP": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "TIMESTAMP(*)": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "NUMBER": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "NUMBER(*,*)": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "FLOAT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",

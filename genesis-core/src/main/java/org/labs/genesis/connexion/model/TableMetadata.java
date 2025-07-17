@@ -174,7 +174,6 @@ public class TableMetadata {
 
                         field.setReferencedColumn(field.getReferencedColumn());
                         field.setReferencedColumnType(field.getReferencedColumnType());
-                        field.setColumnType(toCamelCase(field.getType()));
                         field.setName(
                                 field.getName()
                                         .transform(StringUtils::toCamelCase)
@@ -189,10 +188,13 @@ public class TableMetadata {
                             }
                         }
 
-                        field.setType(pkTableName
-                                .transform(StringUtils::toCamelCase)
-                                .transform(StringUtils::removeLastS)
-                                .transform(StringUtils::majStart)
+                        field.setType(Stream.of(pkTableName)
+                                .map(String::toLowerCase)
+                                .map(StringUtils::toCamelCase)
+                                .map(StringUtils::majStart)
+                                .map(StringUtils::removeLastS)
+                                .findFirst()
+                                .orElse("")
                         );
 
                     }

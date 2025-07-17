@@ -442,6 +442,17 @@ public class OracleDatabase extends Database {
 
 
 
+    public String handleType(ResultSet columns)throws Exception{
+        String columnType=columns.getString("TYPE_NAME");
+        int decimalDigits = columns.getInt("DECIMAL_DIGITS");
+        if(decimalDigits>0 && columnType.contains("NUMBER"))
+        {
+            columnType = columns.getString("TYPE_NAME")+"(*,*)";
+        } else if (columnType.contains("TIMESTAMP")) {
+            columnType="TIMESTAMP";
+        }
+        return columnType;
+    }
 
     @Override
     public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language,Connection connex,Framework framework) throws SQLException {
@@ -454,14 +465,9 @@ public class OracleDatabase extends Database {
                 ColumnMetadata column = new ColumnMetadata();
                 String columnName = columns.getString("COLUMN_NAME");
                 String columnType = columns.getString("TYPE_NAME");
-
                 String isNullable = columns.getString("IS_NULLABLE");
-
                 int decimalDigits = columns.getInt("DECIMAL_DIGITS");
-                if(decimalDigits>0)
-                {
-                    columnType = columns.getString("TYPE_NAME")+"(*,*)";
-                }
+                columnType=handleType(columns);
                 int columnSize = columns.getInt("COLUMN_SIZE");
                 String defaultValue = columns.getString("COLUMN_DEF");
                 boolean isColumnNumeric = isColumnNumeric(columns);
@@ -512,6 +518,8 @@ public class OracleDatabase extends Database {
         }
         return listeCols;
     }
+
+
 
     @Override
     public List<String> getAllTableTypeNames(Connection connection, String tableType) throws SQLException {
