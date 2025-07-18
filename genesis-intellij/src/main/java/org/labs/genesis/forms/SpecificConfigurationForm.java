@@ -42,6 +42,8 @@ public class SpecificConfigurationForm {
     private JTextField roleField;
     private JLabel securityTypeLabel;
     private JComboBox<String> securityTypeOptions;
+    private JLabel cacheProviderLabel;
+    private JComboBox<String> cacheProviderOptions;
 
     public void initializeForm() {
         // Masquer tous les composants dépendants au début
@@ -59,6 +61,8 @@ public class SpecificConfigurationForm {
         loggingLevelOptions.setVisible(true);
         securityTypeLabel.setVisible(true);
         securityTypeOptions.setVisible(true);
+        cacheProviderLabel.setVisible(true);
+        cacheProviderOptions.setVisible(true);
         useAnEurekaServerCheckBox.setVisible(true);
     }
 
@@ -70,6 +74,8 @@ public class SpecificConfigurationForm {
             configureLoggingLevel(framework);
             // Configurer type de sécurité
             configureSecurityType(framework);
+            // Configure cache provider
+            configureCacheProvider(framework);
 
             if (framework.getIsGateway()) {
                 configureGatewayComponents();
@@ -130,6 +136,17 @@ public class SpecificConfigurationForm {
                 .filter(config -> "securityType".equals(config.getVariableName()))
                 .flatMap(config -> config.getOptions().stream())
                 .forEach(option -> securityTypeOptions.addItem(option));
+    }
+
+    private void configureCacheProvider(Framework framework) {
+        cacheProviderLabel.setVisible(true);
+        cacheProviderOptions.setVisible(true);
+
+        cacheProviderOptions.removeAllItems();
+        framework.getConfigurations().stream()
+                .filter(config -> "cacheProvider".equals(config.getVariableName()))
+                .flatMap(config -> config.getOptions().stream())
+                .forEach(option -> cacheProviderOptions.addItem(option));
     }
 
     private void configureGatewayComponents() {

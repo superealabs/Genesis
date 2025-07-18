@@ -60,6 +60,11 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
                 specificConfigurationForm.getSecurityTypeOptions().getSelectedItem(), () -> "").toString()
         );
 
+        // Gestion du cache provider
+        frameworkConfiguration.put("cacheProvider", Objects.requireNonNullElseGet(
+                specificConfigurationForm.getCacheProviderOptions().getSelectedItem(), () -> "").toString()
+        );
+
         // Gestion de hibernate ddl option
         frameworkConfiguration.put("hibernateDdlAuto", Objects.requireNonNullElseGet(
                 specificConfigurationForm.getDdlAutoOptions().getSelectedItem(), () -> "").toString()
