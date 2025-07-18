@@ -1569,6 +1569,8 @@
         using Steeltoe.Management.Endpoint;
         using System.Net.NetworkInformation;
         using System.Net.Sockets;{{/if}}
+        {{#if useJWT}}
+        using Microsoft.AspNetCore.Identity;{{/if}}
         using System.Net;
         using Microsoft.OpenApi.Models;
         using Microsoft.EntityFrameworkCore;
@@ -1596,6 +1598,32 @@
             {
               c.AddServer(new OpenApiServer { Url = pathBase });
             }
+            {{#if useJWT}}
+            c.AddSecurityDefinition("Bearer" , new OpenApiSecurityScheme
+            {
+                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                Description = "Please enter a token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "bearer"
+            });
+            
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    []
+                }
+            });
+            {{/if}}
         });
         
         // Configure Kestrel to listen on both the machine's IP address and localhost
@@ -1651,7 +1679,17 @@
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         
+        {{#if useJWT}}
+        // Add Authorization
+        builder.Services.AddAuthorization();
+        builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<SqlcshContext>();
+        {{/if}}
+        
         var app = builder.Build();
+        
+        {{#if useJWT}}
+        app.MapIdentityApi<IdentityUser>();
+        {{/if}}
         
         if (!string.IsNullOrEmpty(pathBase))
         {
@@ -1682,11 +1720,16 @@
       extension: "cs"
       content: |
         namespace ${majStart(projectName)}.Data;
-        
+        {{#if useJWT}}
+        using Microsoft.AspNetCore.Identity;
+        using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+        {{/if}}
         using Microsoft.EntityFrameworkCore;
         using Models;
-        
-        public class ${majStart(projectName)}Context : DbContext
+        {{#if useJWT}}
+        public class ${majStart(projectName)}Context : IdentityDbContext<IdentityUser>
+        {{else}}
+        public class ${majStart(projectName)}Context : DbContext{{/if}}
         {
             {{#each entities}}
             public DbSet<${this}> ${this}s { get; set; }
