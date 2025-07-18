@@ -7,7 +7,6 @@
   withGroupId: true
   useCloud: false
   useEurekaServer: false
-  useCache: false
   isGateway: false
   additionalFiles:
     - fileType: "MainFile"
@@ -864,6 +863,12 @@
       options:
         - "NONE"
       defaultOption: "NONE"
+    - name: "Cache Provider"
+      variableName: "cacheProvider"
+      options:
+        - "NONE"
+        - "EhCache"
+      defaultOption: "NONE"
 
   eurekaClientConfigurations:
     - name: "Eureka Server URL"
@@ -1543,7 +1548,6 @@
   withGroupId: false
   useCloud: false
   useEurekaServer: false
-  useCache: false
   isGateway: false
   additionalFiles:
     - fileType: "ProgramFile"
@@ -3820,7 +3824,6 @@
   useDB: false
   useCloud: true
   useEurekaServer: false
-  useCache: false
   isGateway: false
   withGroupId: true
   additionalFiles:
@@ -3964,7 +3967,6 @@
   useDB: false
   useCloud: true
   useEurekaServer: false
-  useCache: false
   isGateway: true
   withGroupId: true
   additionalFiles:
