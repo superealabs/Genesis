@@ -47,6 +47,7 @@ public class ProjectGenerator {
                     .peek(framework -> {
                         try {
                             framework.setFrameworkSecurities();
+                            framework.setFrameworkCaching();
                         } catch (IOException e) {
                             throw new RuntimeException("Error while initializing frameworkSecurities for Framework ID: " + framework.getId(), e);
                         }
