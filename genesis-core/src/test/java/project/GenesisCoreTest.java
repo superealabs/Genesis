@@ -30,10 +30,10 @@ public class GenesisCoreTest {
     @Test
     void generateProjectSpring() {
         var credentials = new Credentials().setHost("localhost").setPort("1522").setSchemaName("GENESIS").setDatabaseName("orcl").setUser("genesis").setPwd("root").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCL").setDriverType("Oracle");
-
+//
         try {
 
-            int databaseId = Constantes.Oracle_ID;
+            int databaseId = Constantes.Oracle_ID;//
             int languageId = Constantes.Java_ID;
             int frameworkId = Constantes.Spring_REST_API_ID;
             int projectId = Constantes.Maven_ID;
@@ -69,6 +69,7 @@ public class GenesisCoreTest {
 
             HashMap<String, Object> languageConfiguration = new HashMap<>();
             languageConfiguration.put("languageVersion", languageVersion);
+            languageConfiguration.put("frameworkCaching", "nom");
 
             List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
             List<String> entityNames = new ArrayList<>();
