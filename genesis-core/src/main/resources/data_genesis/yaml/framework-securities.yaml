@@ -1321,3 +1321,10 @@
   metadataBooleanTrueKeys:
     - "useBearerToken"
     - "useSpringSecurityJWT"
+- id: 2
+  frameworkId: 2
+  name: ""
+  securityFiles:
+  additionalDependencies: [ ]
+  metadataBooleanTrueKeys:
+    - "useJWT"
