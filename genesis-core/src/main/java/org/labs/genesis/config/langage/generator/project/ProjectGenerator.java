@@ -187,25 +187,26 @@ public class ProjectGenerator {
         Language language = context.getLanguage();
         String projectName = context.getProjectName();
         String groupLink = context.getGroupLink();
+        Map<String, Object> frameworkOptions = context.getFrameworkConfiguration();
 
         if (generationOptions.contains(COMPONENT_MODEL) && framework.getModel().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_MODEL + " component...");
-            genesisGenerator.generateModel(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateModel(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         if (generationOptions.contains(COMPONENT_DAO) && framework.getModelDao().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_DAO + " component..." + tableMetadata.getClassName());
-            genesisGenerator.generateDao(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateDao(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         if (generationOptions.contains(COMPONENT_SERVICE) && framework.getService().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_SERVICE + " component...");
-            genesisGenerator.generateService(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateService(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         if (generationOptions.contains(COMPONENT_CONTROLLER) && framework.getController().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_CONTROLLER + " component...");
-            genesisGenerator.generateController(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateController(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         System.out.println("Backend component generation completed for project: " + projectName);
