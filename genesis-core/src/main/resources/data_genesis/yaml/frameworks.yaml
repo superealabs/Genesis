@@ -3085,6 +3085,7 @@
       variableName: "securityType"
       options:
         - "NONE"
+        - "ASP NET Core Security"
       defaultOption: "NONE"
 
   eurekaClientConfigurations:
