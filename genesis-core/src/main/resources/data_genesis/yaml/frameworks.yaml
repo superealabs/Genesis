@@ -21,10 +21,10 @@
         import org.springframework.boot.SpringApplication;
         import org.springframework.boot.autoconfigure.SpringBootApplication;
         {{#if useEurekaServer}}import org.springframework.cloud.client.discovery.EnableDiscoveryClient;{{/if}}
-        {{#if useCache}}import org.springframework.cache.annotation.EnableCaching;{{/if}}
+        {{#if useEhcache}}import org.springframework.cache.annotation.EnableCaching;{{/if}}
 
         {{#if useEurekaServer}}@EnableDiscoveryClient{{/if}}
-        {{#if useCache}}@EnableCaching{{/if}}
+        {{#if useEhcache}}@EnableCaching{{/if}}
         @SpringBootApplication
         public class ${majStart(projectName)}Application {
             public static void main(String[] args) {
@@ -763,7 +763,7 @@
             properties:
               hibernate.format_sql: true
         {{/if}}
-        {{#if useCache}
+        {{#if useEhcache}
           cache:
             jcache:
               config: classpath:ehcache.xml
