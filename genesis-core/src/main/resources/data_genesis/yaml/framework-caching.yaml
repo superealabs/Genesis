@@ -29,8 +29,7 @@
           </cache>
           {{/each}}
         </config>
-
-  destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
   additionalDependencies:
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-cache"
