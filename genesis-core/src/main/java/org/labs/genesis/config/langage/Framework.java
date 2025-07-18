@@ -7,10 +7,7 @@ import org.labs.genesis.config.Constantes;
 import org.labs.utils.FileUtils;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
@@ -35,11 +32,26 @@ public class Framework {
     private Service service;
     private Controller controller;
     private List<FrameworkSecurity> frameworkSecurities;
+    private List<FrameworkCaching> frameworkCaching;
 
     public void setFrameworkSecurities() throws IOException {
         this.frameworkSecurities = Arrays.stream(FileUtils.fromYaml(FrameworkSecurity[].class, Constantes.FRAMEWORK_SECURITY_YAML))
                 .filter(fs -> fs.getFrameworkId() == this.id)
                 .collect(Collectors.toList());
+    }
+
+    public void setFrameworkCaching() throws IOException {
+        this.frameworkCaching = Arrays.stream(FileUtils.fromYaml(FrameworkCaching[].class, Constantes.FRAMEWORK_CACHING_YAML))
+                .filter(fs -> fs.getFrameworkId() == this.id)
+                .collect(Collectors.toList());
+    }
+
+    public Optional<FrameworkCaching> getSelectedCacheProviderByName(String cacheProvider){
+        return this
+                .getFrameworkCaching()
+                .stream()
+                .filter(fs -> fs.getName().equalsIgnoreCase(cacheProvider))
+                .findFirst();
     }
 
     @Override
