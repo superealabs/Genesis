@@ -48,3 +48,5 @@
       artifactId: "jaxb-runtime"
       version: "2.3.1"
       scope: "{{removeLine}}"
+  metadataBooleanTrueKeys:
+    - "useEhcache"
