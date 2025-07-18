@@ -12,4 +12,6 @@ public class FrameworkCaching {
     private String name;
     private int frameworkId;
     private List<FilesEdit> configFiles;
+    private List<Framework.Dependency> additionalDependencies;
+    private List<String> metadataBooleanTrueKeys;
 }
