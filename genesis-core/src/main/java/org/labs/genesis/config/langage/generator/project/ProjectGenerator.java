@@ -168,6 +168,18 @@ public class ProjectGenerator {
                 }
             });
         }
+
+        String cacheProvider = (String) context.getFrameworkConfiguration().get("cacheProvider");
+
+        Optional<FrameworkCaching> selectedCacheProviderOption = context.getFramework().getSelectedCacheProviderByName(cacheProvider);
+
+        selectedCacheProviderOption.ifPresent(frameworkCaching -> {
+            try {
+                renderFilesEdits(frameworkCaching.getConfigFiles(), projectFilesEditsHashMap);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public void generateBackendComponents(ProjectGenerationContext context,
