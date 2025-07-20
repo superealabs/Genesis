@@ -146,6 +146,14 @@ public class ProjectGenerator {
             var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
             projectFilesEditsHashMap.putAll(mapDaoGlobal);
         }
+
+        // Retrieve the "entitiesCacheable" configuration value once
+        Object entitiesCacheableConfig = context.getFrameworkConfiguration().get("entitiesCacheable");
+        // Check if the value is not "NONE" (case-insensitive) and is not null
+        if (entitiesCacheableConfig != null && !entitiesCacheableConfig.toString().equalsIgnoreCase("NONE")) {
+            projectFilesEditsHashMap.put("entitiesCacheable", entitiesCacheableConfig);
+        }
+
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);

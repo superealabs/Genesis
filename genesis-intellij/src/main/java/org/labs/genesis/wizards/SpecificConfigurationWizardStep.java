@@ -60,10 +60,13 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
                 specificConfigurationForm.getSecurityTypeOptions().getSelectedItem(), () -> "").toString()
         );
 
-        // Gestion du cache provider
-        frameworkConfiguration.put("cacheProvider", Objects.requireNonNullElseGet(
-                specificConfigurationForm.getCacheProviderOptions().getSelectedItem(), () -> "").toString()
-        );
+        // Gestion du cache
+        if (!specificConfigurationForm.getCacheProviderOptions().getSelectedItem().equals("NONE")) {
+            frameworkConfiguration.put("cacheProvider", Objects.requireNonNullElseGet(
+                    specificConfigurationForm.getCacheProviderOptions().getSelectedItem(), () -> "").toString()
+            );
+            frameworkConfiguration.put("entitiesCacheable", specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList());
+        }
 
         // Gestion de hibernate ddl option
         frameworkConfiguration.put("hibernateDdlAuto", Objects.requireNonNullElseGet(
@@ -106,6 +109,9 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         // Valider les champs spécifiques au projet
         validateProjectPort();
         validateProjectDescription();
+
+        // Valider la configuration du cache
+        validateCache();
 
         // Valider les champs pour les API Gateway
         if (framework != null && framework.getIsGateway()) {
@@ -162,6 +168,13 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         if (specificConfigurationForm.getUseAnEurekaServerCheckBox().isSelected() &&
                 specificConfigurationForm.getEurekaServerHostField().getText().trim().isEmpty()) {
             throw new ConfigurationException("Eureka Server Host cannot be empty if Eureka is enabled.");
+        }
+    }
+
+    private void validateCache() throws ConfigurationException {
+        if (!specificConfigurationForm.getCacheProviderOptions().getSelectedItem().equals("NONE") &&
+                specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList().isEmpty()) {
+            throw new ConfigurationException("Please select at least one table or view to cache.");
         }
     }
 
