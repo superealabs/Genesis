@@ -226,4 +226,11 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         }
         specificConfigurationForm.updateFormWithFramework(framework);
     }
+
+    public void onTablesAndViewsSelected(List<String> selectedValues, List<String> selectedViewValues) {
+        if (selectedValues.isEmpty() && selectedViewValues.isEmpty()) {
+            throw new IllegalArgumentException("At least one table or view must be selected");
+        }
+        specificConfigurationForm.updateFormWithTablesAndViews(selectedValues, selectedViewValues);
+    }
 }
