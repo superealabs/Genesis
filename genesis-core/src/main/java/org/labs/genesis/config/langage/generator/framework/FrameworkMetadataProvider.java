@@ -220,6 +220,7 @@ public class FrameworkMetadataProvider {
         metadata.put("classNameLink", tableMetadata.getClassName() + "s");
 
         metadata.put("isView", tableMetadata.getIsView());
+        metadata.put("cacheableWith"+frameworkOptions.get("cacheProvider"), (Boolean) frameworkOptions.get("cacheableWith"+frameworkOptions.get("cacheProvider")));
 
         metadata.putAll(getFrameworkCachingTrueBooleanHashMap(framework,frameworkOptions));
     }
