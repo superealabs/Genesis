@@ -227,7 +227,7 @@
       "NUMBER(*,*)": "double",
       "VARCHAR2": "string",
       "DATE": "date",
-      "TIMESTAMP(*)": "timestamp",
+      "TIMESTAMP(6)": "timestamp",
       "TIMESTAMP": "timestamp",
       "TIME": "time",
       "BLOB": "bytea",
