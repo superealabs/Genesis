@@ -5,7 +5,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import lombok.Getter;
 import lombok.Setter;
-import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 
 import javax.swing.*;
