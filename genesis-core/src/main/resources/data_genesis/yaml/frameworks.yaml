@@ -905,7 +905,7 @@
       {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isPrimaryKey}}
       {{tab}}@Id
-      {{tab}}@org.hibernate.annotations.Generated(GenerationTime.INSERT)
+      {{tab}}@org.hibernate.annotations.Generated(org.hibernate.annotations.GenerationTime.INSERT)
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
       {{tab}}@ManyToOne
       {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
