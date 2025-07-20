@@ -1167,6 +1167,8 @@
       import ${groupLink}.${lowerCase(projectName)}.specification.${majStart(className)}Specification;
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
       import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
+      {{#if cacheableWithEhCache}}import org.springframework.cache.annotation.CacheEvict;{{else}}{{removeLine}}{{/if}}
+      {{#if cacheableWithEhCache}}import org.springframework.cache.annotation.Cacheable;{{else}}{{removeLine}}{{/if}}
 
     serviceAnnotations: |
       @Service
@@ -1181,6 +1183,9 @@
       {{tab}}}
     serviceMethodContent: |
       {{tab}}@Override
+      {{#if cacheableWithEhCache}}
+      {{tab}}@Cacheable(value = "${minStart(className)}Cache", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
+      {{/if}}
       {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.findAll(pageable);
@@ -1190,6 +1195,9 @@
       {{tab}}}
       
       {{tab}}@Override
+      {{#if cacheableWithEhCache}}
+      {{tab}}@Cacheable(value = "${minStart(className)}Cache", key = "'filtered-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort + '-' + #object.hashCode()")
+      {{/if}}
       {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable, ${majStart(className)} object) {
       {{tab}}    try {
       {{tab}}        Specification<${majStart(className)}> spec=${majStart(className)}Specification.filter(object);
@@ -1212,6 +1220,9 @@
       {{#if !isView}} 
       
       {{tab}}@Override
+      {{#if cacheableWithEhCache}}
+      {{tab}}@CacheEvict(value = "${minStart(className)}Cache", allEntries = true)
+      {{/if}}
       {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.save(${minStart(className)});
@@ -1221,6 +1232,9 @@
       {{tab}}}
       
       {{tab}}@Override
+      {{#if cacheableWithEhCache}}
+      {{tab}}@CacheEvict(value = "${minStart(className)}Cache", allEntries = true)
+      {{/if}}
       {{tab}}public ${majStart(className)} update${majStart(className)}(${pkColumnType} ${pkColumn}, ${majStart(className)} ${minStart(className)}) {
       {{tab}}    Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
       {{tab}}    if (existing${majStart(className)}.isPresent()) {
@@ -1236,6 +1250,9 @@
       {{tab}}}
       
       {{tab}}@Override
+      {{#if cacheableWithEhCache}}
+      {{tab}}@CacheEvict(value = "${minStart(className)}Cache", allEntries = true)
+      {{/if}}
       {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
       {{tab}}    try {
       {{tab}}        ${minStart(className)}Repository.deleteById(${pkColumn});
