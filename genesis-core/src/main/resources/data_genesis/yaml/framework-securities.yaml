@@ -1300,7 +1300,16 @@
           }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/controllers/"
+    - fileType: "README file"
+      fileName: "SpringSecurityJWTReadME"
+      extension: "md"
+      content: |
+        ## Authentication Details
 
+        Default Admin Credentials:
+          Username : admin
+          Password : admin
+  destinationPath: "${destinationFolder}/${majStart(projectName)}/"
   additionalDependencies:
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-security"
