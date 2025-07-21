@@ -1309,7 +1309,7 @@
         Default Admin Credentials:
           Username : admin
           Password : admin
-  destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
   additionalDependencies:
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-security"
