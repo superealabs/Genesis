@@ -1689,5 +1689,26 @@
             }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/filters/"
+
+    - fileType: "README file"
+      fileName: "OAuth2GoogleReadME"
+      extension: "md"
+      content: |
+        # Google OAuth2 Configuration
+
+        To use Google OAuth2 authentication in your project, you need to configure the authorized redirect URI in the Google Cloud Console.
+
+        ## Step-by-Step Configuration
+
+        1. Go to the Google Cloud Console and select your project
+        2. Navigate to **APIs & Services** > **OAuth 2.0 clients**
+        3. Find your OAuth 2.0 client ID
+        4. Click on **Authorized Redirect URIs**
+        5. Add the following URL:
+           ```
+           http://localhost:${projectPort}/${toKebabCase(projectName)}/login/oauth2/code/google
+           ```
+        6. Click **Save**
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
   additionalDependencies:
   metadataBooleanTrueKeys:
