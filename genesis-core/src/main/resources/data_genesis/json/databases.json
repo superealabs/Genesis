@@ -86,6 +86,11 @@
       "2": {
         "groupId": "",
         "artifactId": "Npgsql.EntityFrameworkCore.PostgreSQL"
+      },
+      "3": {
+        "groupId": "io.hypersistence",
+        "artifactId": "hypersistence-utils-hibernate-63",
+        "version": "3.8.4"
       }
     },
     "driverType": "",
@@ -124,6 +129,7 @@
       "numeric": "double",
       "date": "date",
       "timestamp without time zone": "timestamp",
+      "timestamp with time zone": "timestampz",
       "timestamp": "timestamp",
       "bool": "boolean",
       "time": "time",
@@ -183,8 +189,8 @@
       "float": "float",
       "double": "double",
       "varchar": "string",
-      "decimal": "double",
       "nvarchar": "string",
+      "decimal": "double",
       "date": "date",
       "time": "time",
       "datetime": "datetime"
