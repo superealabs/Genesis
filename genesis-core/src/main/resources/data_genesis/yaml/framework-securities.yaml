@@ -1322,7 +1322,7 @@
     - "useSpringSecurityJWT"
 - id: 2
   frameworkId: 2
-  name: "ASP.NET Core Security"
+  name: ".NET Security - JWT"
   securityFiles:
   additionalDependencies: [ ]
   metadataBooleanTrueKeys:

@@ -1569,8 +1569,7 @@
         using Steeltoe.Management.Endpoint;
         using System.Net.NetworkInformation;
         using System.Net.Sockets;{{/if}}
-        {{#if useJWT}}
-        using Microsoft.AspNetCore.Identity;{{/if}}
+        {{#if useJWT}}using Microsoft.AspNetCore.Identity;{{/if}}
         using System.Net;
         using Microsoft.OpenApi.Models;
         using Microsoft.EntityFrameworkCore;
@@ -1622,8 +1621,7 @@
                     },
                     []
                 }
-            });
-            {{/if}}
+            });{{/if}}
         });
         
         // Configure Kestrel to listen on both the machine's IP address and localhost
@@ -1682,14 +1680,12 @@
         {{#if useJWT}}
         // Add Authorization
         builder.Services.AddAuthorization();
-        builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<SqlcshContext>();
-        {{/if}}
+        builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<SqlcshContext>();{{/if}}
         
         var app = builder.Build();
         
         {{#if useJWT}}
-        app.MapIdentityApi<IdentityUser>();
-        {{/if}}
+        app.MapIdentityApi<IdentityUser>();{{/if}}
         
         if (!string.IsNullOrEmpty(pathBase))
         {
@@ -3085,7 +3081,7 @@
       variableName: "securityType"
       options:
         - "NONE"
-        - "ASP NET Core Security"
+        - ".NET Security - JWT"
       defaultOption: "NONE"
 
   eurekaClientConfigurations:
