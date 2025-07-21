@@ -1569,5 +1569,65 @@
           }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/handlers/"
+
+    - fileType: "JwtAuthenticationFilter"
+      fileName: "JwtAuthenticationFilter"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.filters;
+  
+        import java.io.IOException;
+        import java.util.Collections;
+        
+        import ${groupLink}.${lowerCase(projectName)}.config.security.services.JwtService;
+        import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+        import org.springframework.security.core.context.SecurityContextHolder;
+        import org.springframework.web.filter.OncePerRequestFilter;
+        import io.jsonwebtoken.Claims;
+        import io.jsonwebtoken.Jws;
+        import jakarta.servlet.FilterChain;
+        import jakarta.servlet.ServletException;
+        import jakarta.servlet.http.HttpServletRequest;
+        import jakarta.servlet.http.HttpServletResponse;
+        import org.springframework.stereotype.Component;
+  
+        @Component
+        public class JwtAuthenticationFilter extends OncePerRequestFilter {
+          
+          private final JwtService jwtTokenUtil;
+          
+          public JwtAuthenticationFilter(JwtService jwtTokenUtil) {
+            this.jwtTokenUtil = jwtTokenUtil;
+          }
+          
+          @Override
+          protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain chain
+          ) throws ServletException, IOException {
+            
+            String header = request.getHeader("Authorization");
+            
+            if (header != null && header.startsWith("Bearer ")) {
+              String token = header.substring(7);
+              try {
+                Jws<Claims> claims = jwtTokenUtil.validateToken(token);
+                UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(
+                  claims.getBody().getSubject(),
+                  null,
+                  Collections.emptyList()
+                );
+                SecurityContextHolder.getContext().setAuthentication(auth);
+              } catch (Exception e) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+              }
+            }
+            chain.doFilter(request, response);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/filters/"
   additionalDependencies:
   metadataBooleanTrueKeys:
