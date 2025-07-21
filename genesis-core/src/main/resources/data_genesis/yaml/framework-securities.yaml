@@ -1355,5 +1355,52 @@
         public class SwaggerConfig {
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+
+    - fileType: "JwtService"
+      fileName: "JwtService"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.services;
+  
+        import io.jsonwebtoken.Jwts;
+        import io.jsonwebtoken.security.Keys;
+        import java.util.Date;
+        import io.jsonwebtoken.Claims;
+        import io.jsonwebtoken.Jws;
+        import org.springframework.beans.factory.annotation.Value;
+        import org.springframework.stereotype.Component;
+        import javax.crypto.SecretKey;
+  
+        @Component
+        public class JwtService {
+  
+          private final SecretKey secretKey;
+          private final long expirationTime;
+          
+          public JwtService(
+            @Value("$[jwt.secret]") String secret,
+            @Value("$[jwt.expiration]") long expirationTime
+          ) {
+            this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+            this.expirationTime = expirationTime;
+          }
+  
+          public String generateToken(String email) {
+            return Jwts.builder()
+            .setSubject(email)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + 1000 * expirationTime))
+            .signWith(secretKey)
+            .compact();
+          }
+  
+          public Jws<Claims> validateToken(String token) {
+            return Jwts.parserBuilder()
+            .setSigningKey(secretKey)
+            .build()
+            .parseClaimsJws(token);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/services/"
   additionalDependencies:
   metadataBooleanTrueKeys:
