@@ -1507,5 +1507,67 @@
             }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/handlers/"
+
+    - fileType: "OAuth2SuccessHandler"
+      fileName: "OAuth2SuccessHandler"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.handlers;
+  
+        import ${groupLink}.${lowerCase(projectName)}.config.security.services.JwtService;
+        import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+        import org.springframework.http.HttpStatus;
+        import org.springframework.http.MediaType;
+        import org.springframework.security.core.Authentication;
+        import org.springframework.security.oauth2.core.user.OAuth2User;
+        import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+              
+        import jakarta.servlet.http.HttpServletRequest;
+        import jakarta.servlet.http.HttpServletResponse;
+        import java.io.IOException;
+        import org.springframework.stereotype.Component;
+  
+        import com.fasterxml.jackson.databind.ObjectMapper;
+  
+        @Component
+        public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
+        
+          private final JwtService jwtTokenUtil;
+          private final ObjectMapper objectMapper;
+  
+          public OAuth2SuccessHandler(JwtService jwtTokenUtil, ObjectMapper objectMapper) {
+            this.jwtTokenUtil = jwtTokenUtil;
+            this.objectMapper = objectMapper;
+          }
+  
+          @Override
+          public void onAuthenticationSuccess(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Authentication authentication
+          ) throws IOException {
+            
+            OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
+            String email = oauthUser.getAttribute("email");
+            
+            String jwt = jwtTokenUtil.generateToken(email);
+  
+            // Construire la réponse standardisée
+              RestResponse<String> restResponse = RestResponse.buildSuccessResponse(
+              HttpStatus.OK,
+              "Authentication successful",
+              jwt
+            );
+  
+            // Convertir en JSON
+            String jsonResponse = objectMapper.writeValueAsString(restResponse);
+            
+            // Configurer la réponse HTTP
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(jsonResponse);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/handlers/"
   additionalDependencies:
   metadataBooleanTrueKeys:
