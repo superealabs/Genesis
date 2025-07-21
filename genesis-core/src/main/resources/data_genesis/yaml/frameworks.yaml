@@ -977,6 +977,7 @@
       options:
         - "NONE"
         - "Spring Security - JWT"
+        - "Spring Security - OAuth 2.0 (Google)"
       defaultOption: "NONE"
 
   eurekaClientConfigurations:
