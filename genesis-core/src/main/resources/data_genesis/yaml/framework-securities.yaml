@@ -1335,5 +1335,25 @@
   frameworkId: 1
   name: "Spring Security - OAuth 2.0 (Google)"
   securityFiles:
+    - fileType: "Swagger Config"
+      fileName: "SwaggerConfig"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config;
+
+        import org.springframework.context.annotation.Configuration;
+        import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+        import io.swagger.v3.oas.annotations.security.SecurityScheme;
+
+        @Configuration
+        @SecurityScheme(
+            name = "bearerAuth",
+            type = SecuritySchemeType.HTTP,
+            scheme = "bearer",
+            bearerFormat = "JWT"
+        )
+        public class SwaggerConfig {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
   additionalDependencies:
   metadataBooleanTrueKeys:
