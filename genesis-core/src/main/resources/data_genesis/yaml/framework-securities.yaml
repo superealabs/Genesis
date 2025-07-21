@@ -1629,5 +1629,65 @@
           }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/filters/"
+
+    - fileType: "SecurityConfig"
+      fileName: "SecurityConfig"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.filters;
+
+        import org.springframework.context.annotation.Configuration;
+        import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+        import org.springframework.security.config.http.SessionCreationPolicy;
+        import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.handlers.JwtAccessDeniedHandler;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.handlers.JwtAuthEntryPoint;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.handlers.OAuth2SuccessHandler;
+        import org.springframework.context.annotation.Bean;
+        import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+        import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+        import org.springframework.security.web.SecurityFilterChain;
+
+        @Configuration
+        @EnableWebSecurity
+        @EnableMethodSecurity
+        public class SecurityConfig {
+
+            private final JwtAuthenticationFilter jwtFilter;
+            private final OAuth2SuccessHandler oAuth2SuccessHandler;
+            private final JwtAuthEntryPoint authenticationEntryPoint;
+            private final JwtAccessDeniedHandler accessDeniedHandler;
+
+            public SecurityConfig(JwtAuthenticationFilter jwtFilter, OAuth2SuccessHandler oAuth2SuccessHandler, JwtAccessDeniedHandler accessDeniedHandler, JwtAuthEntryPoint authenticationEntryPoint) {
+                this.jwtFilter = jwtFilter;
+                this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+                this.authenticationEntryPoint = authenticationEntryPoint;
+                this.accessDeniedHandler = accessDeniedHandler;
+            }
+
+            @Bean
+            public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http
+                    .csrf(csrf -> csrf.disable())
+                    .authorizeHttpRequests(authz -> authz
+                        //.requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers( "/welcome/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .anyRequest().authenticated()
+                    )
+                    .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2SuccessHandler)
+                    )
+                    .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    )
+                    .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                    .exceptionHandling()
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler);
+
+                return http.build();
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/filters/"
   additionalDependencies:
   metadataBooleanTrueKeys:
