@@ -1680,7 +1680,7 @@
         {{#if useJWT}}
         // Add Authorization
         builder.Services.AddAuthorization();
-        builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<SqlcshContext>();{{/if}}
+        builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<${majStart(projectName)}Context>();{{/if}}
         
         var app = builder.Build();
         
