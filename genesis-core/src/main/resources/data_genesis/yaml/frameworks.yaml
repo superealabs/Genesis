@@ -876,6 +876,16 @@
               schema-locations: classpath:sql-init/users.sql 
               encoding: UTF-8
         {{/if}}
+        {{#if useOAuthGoogle}}
+          security:  
+            oauth2:
+              client:
+                registration:
+                  google:
+                    client-id: #todefine
+                    client-secret: #todefine
+                    scope: #todefine
+        {{/if}}
         
         server:
           port: ${projectPort}
@@ -887,6 +897,8 @@
           level:
             root: ${loggingLevel}
             {{#if useDB}}org.hibernate.SQL: ${loggingLevel}{{/if}}
+            {{#if useSpringSecurity}}org.springframework.security: ${loggingLevel}{{/if}}
+            {{#if useSpringSecurityOAuth2}}org.springframework.security.oauth2: ${loggingLevel}{{/if}}
         
         {{#if useEurekaServer}}
         eureka:
@@ -928,7 +940,7 @@
                 type: "${databaseType}"
         {{/if}}
         
-        {{#if useSpringSecurityJWT}}
+        {{#if useJavaJwtLibrary}}
         jwt:
           secret: $[JWT_SECRET:Bel0Y8TSTrZyicQgAJdcabCbaMQo3s3BkBmP925Wb3g=]
           expiration: 36000
