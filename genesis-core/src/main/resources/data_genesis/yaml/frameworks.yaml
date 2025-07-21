@@ -761,6 +761,13 @@
             properties:
               hibernate.format_sql: true
         {{/if}}
+        {{#if useSpringSecurityJWT}}
+          sql:
+            init:
+              mode: always
+              schema-locations: classpath:sql-init/users.sql 
+              encoding: UTF-8
+        {{/if}}
         
         server:
           port: ${projectPort}
@@ -812,6 +819,12 @@
                 url: $[spring.datasource.url]
                 type: "${databaseType}"
         {{/if}}
+        
+        {{#if useSpringSecurityJWT}}
+        jwt:
+          secret: $[JWT_SECRET:Bel0Y8TSTrZyicQgAJdcabCbaMQo3s3BkBmP925Wb3g=]
+          expiration: 36000
+        {{/if}}
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
 
@@ -855,6 +868,7 @@
       variableName: "securityType"
       options:
         - "NONE"
+        - "Spring Security - JWT"
       defaultOption: "NONE"
 
   eurekaClientConfigurations:
@@ -1273,6 +1287,7 @@
       import io.swagger.v3.oas.annotations.media.Schema;
       import io.swagger.v3.oas.annotations.responses.ApiResponse;
       import io.swagger.v3.oas.annotations.responses.ApiResponses;
+      import io.swagger.v3.oas.annotations.security.SecurityRequirement;
       import io.swagger.v3.oas.annotations.tags.Tag;
       import org.springframework.http.HttpStatus;
       import org.springframework.http.ResponseEntity;
@@ -1302,6 +1317,7 @@
     controllerMethodContent: |
       {{tab}}@Operation(
       {{tab}}    summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
       {{tab}}    description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1351,6 +1367,7 @@
       {{tab}}}
       {{tab}}@Operation(
       {{tab}}    summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
       {{tab}}    description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1401,6 +1418,7 @@
       {{tab}}}
       {{tab}}@Operation(
       {{tab}}    summary = "Get ${formatReadableLowerCase(className)} by ID",
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}      
       {{tab}}    description = "Retrieve a specific ${formatReadableLowerCase(className)} item by its ID"
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1429,6 +1447,7 @@
       
       {{tab}}@Operation(
       {{tab}}    summary = "Create new ${formatReadableLowerCase(className)}",
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
       {{tab}}    description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1455,6 +1474,7 @@
       
       {{tab}}@Operation(
       {{tab}}    summary = "Update existing ${formatReadableLowerCase(className)}",
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}      
       {{tab}}    description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1487,6 +1507,7 @@
       
       {{tab}}@Operation(
       {{tab}}    summary = "Delete ${formatReadableLowerCase(className)}",
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}      
       {{tab}}    description = "Delete a ${formatReadableLowerCase(className)} item by its ID. Returns success even if ${formatReadableLowerCase(className)} was already deleted."
       {{tab}})
       {{tab}}@ApiResponses({

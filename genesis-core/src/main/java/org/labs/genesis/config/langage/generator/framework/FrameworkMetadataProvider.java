@@ -2,6 +2,7 @@ package org.labs.genesis.config.langage.generator.framework;
 
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.FrameworkSecurity;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -10,10 +11,7 @@ import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FrameworkMetadataProvider {
@@ -180,10 +178,10 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
-    public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink) {
+    public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
 
-        addGeneralMetadata(metadata, tableMetadata, destinationFolder, projectName, groupLink);
+        addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
         metadata.put("fields", getFieldsList(tableMetadata));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
@@ -191,10 +189,10 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
-    public static HashMap<String, Object> getHashMapIntermediaire(Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink) {
+    public static HashMap<String, Object> getHashMapIntermediaire(Language language, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
 
-        addGeneralMetadata(metadata, tableMetadata, destinationFolder, projectName, groupLink);
+        addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
         metadata.put("fields", getFieldsList(tableMetadata, language));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
@@ -202,7 +200,7 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
-    private static void addGeneralMetadata(HashMap<String, Object> metadata, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink) {
+    private static void addGeneralMetadata(HashMap<String, Object> metadata, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkOptions, String destinationFolder, String projectName, String groupLink) {
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName", projectName);
         metadata.put("groupLink", groupLink);
@@ -222,6 +220,8 @@ public class FrameworkMetadataProvider {
         metadata.put("classNameLink", tableMetadata.getClassName() + "s");
 
         metadata.put("isView", tableMetadata.getIsView());
+
+        metadata.putAll(getFrameworkSecurityTrueBooleanHashMap(framework,frameworkOptions));
     }
 
 
@@ -397,5 +397,17 @@ public class FrameworkMetadataProvider {
         return field.getValidationAnnotations().values().stream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
+    }
+
+    private static HashMap<String, Object> getFrameworkSecurityTrueBooleanHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
+        HashMap<String, Object> frameworkSecurityBooleanMetadata = new HashMap<>();
+        String securityType = (String) frameworkConfiguration.get("securityType");
+        Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
+        selectedSecurityOption.ifPresent(security -> {
+            for(String key : security.getMetadataBooleanTrueKeys()){
+                frameworkSecurityBooleanMetadata.put(key, true);
+            }
+        });
+        return frameworkSecurityBooleanMetadata;
     }
 }

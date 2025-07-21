@@ -1,12 +1,1323 @@
 - id: 1
   frameworkId: 1
-  name: "JWT"
+  name: "Spring Security - JWT"
   securityFiles:
-    - fileType: "Example security class"
-      fileName: "ExampleClass"
+    - fileType: "Roles Entity"
+      fileName: "RoleEntity"
       extension: "java"
       content: |
-        package ${groupLink}.${lowerCase(projectName)};
+        package ${groupLink}.${lowerCase(projectName)}.models;
 
-        To implement
-      destinationPath: "path/to/Define"
+        import jakarta.persistence.*;
+        import lombok.Getter;
+        import lombok.Setter;
+
+        @Getter
+        @Setter
+        @Entity
+        @Table(name = "roles")
+        public class RoleEntity {
+            @Id
+            @GeneratedValue(strategy = GenerationType.IDENTITY)
+            @Column(name = "id")
+            private Long id;
+
+            @Column(name = "name")
+            private String name;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
+
+    - fileType: "Role User Repository"
+      fileName: "RoleEntityRepository"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.repositories;
+  
+        import ${groupLink}.${lowerCase(projectName)}.models.RoleEntity;
+        import org.springframework.data.jpa.repository.JpaRepository;
+        import java.util.Optional;
+        
+        public interface RoleEntityRepository extends JpaRepository<RoleEntity, Long> {
+          Optional<RoleEntity> findAllByName(String username);
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
+
+    - fileType: "User Entity"
+      fileName: "UserEntity"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.models;
+
+        import jakarta.persistence.*;
+        import lombok.Getter;
+        import lombok.Setter;
+
+        @Getter
+        @Setter
+        @Entity
+        @Table(name = "users")
+        public class UserEntity {
+            @Id
+            @GeneratedValue(strategy = GenerationType.IDENTITY)
+            @Column(name = "id")
+            private Long id;
+
+            @Column(name = "name")
+            private String name;
+
+            @Column(name = "email")
+            private String email;
+
+            @Column(name = "password")
+            private String password;
+
+            @ManyToOne
+            @JoinColumn(name = "role_id")
+            private RoleEntity roleidRoleEntity;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
+
+    - fileType: "User Repository"
+      fileName: "UserEntityRepository"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.repositories;
+
+        import ${groupLink}.${lowerCase(projectName)}.models.UserEntity;
+        import org.springframework.data.jpa.repository.JpaRepository;
+        import java.util.Optional;
+
+        public interface UserEntityRepository extends JpaRepository<UserEntity, Long> {
+            Optional<UserEntity> findAllByName(String name);
+            UserEntity findUserByName(String name);
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
+
+    - fileType: "User table and data init script"
+      fileName: "users"
+      extension: "sql"
+      content: |
+        --Default login
+        --Username: admin
+        --Password: admin
+        {{#if databaseType = PostgreSQL}}
+        CREATE TABLE IF NOT EXISTS roles
+        (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE
+        );
+        
+        CREATE TABLE IF NOT EXISTS users
+        (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) UNIQUE NOT NULL,
+          email VARCHAR(100) UNIQUE NOT NULL CHECK (email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+          password VARCHAR(100) NOT NULL,
+          role_id INTEGER NOT NULL REFERENCES roles(id)
+        );
+        
+        INSERT INTO roles (name) VALUES ('ROLE_ADMIN')
+        ON CONFLICT (name) DO NOTHING;
+        
+        INSERT INTO users (name, email, password, role_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1)
+        ON CONFLICT (email) DO NOTHING;
+        {{else}}{{removeLine}}{{/if}}
+        
+        {{#if databaseType = MySQL}}
+        CREATE TABLE IF NOT EXISTS roles (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE
+        );
+        
+        CREATE TABLE IF NOT EXISTS users (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE,
+          email VARCHAR(100) NOT NULL UNIQUE,
+          password VARCHAR(100) NOT NULL,
+          role_id INT NOT NULL,
+          CONSTRAINT fk_type_user FOREIGN KEY (role_id) REFERENCES roles(id),
+          CONSTRAINT chk_email CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
+        );
+        
+        INSERT INTO roles (name) VALUES ('ROLE_ADMIN')
+        ON DUPLICATE KEY UPDATE id=id;
+        
+        INSERT INTO users (name, email, password, role_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1)
+        ON DUPLICATE KEY UPDATE id=id;
+        {{else}}{{removeLine}}{{/if}}
+        
+        {{#if databaseType = SQL Server}}
+        CREATE TABLE IF NOT EXISTS roles (
+          id INT IDENTITY(1,1) PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE
+        );
+        
+        CREATE TABLE IF NOT EXISTS [users] (
+          id INT IDENTITY(1,1) PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE,
+          email VARCHAR(100) NOT NULL UNIQUE,
+          password VARCHAR(100) NOT NULL,
+          role_id INT NOT NULL,
+          CONSTRAINT FK_user_type_user FOREIGN KEY (role_id) REFERENCES roles(id),
+          CONSTRAINT CHK_email CHECK (email LIKE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}')
+        );
+        
+        IF NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_ADMIN')
+        INSERT INTO roles (name) VALUES ('ROLE_ADMIN');
+        
+        IF NOT EXISTS (SELECT 1 FROM [users] WHERE name = 'admin' OR email = 'admin@user.com')
+        INSERT INTO [users] (name, email, password, role_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1);
+        {{else}}{{removeLine}}{{/if}}
+        
+        {{#if databaseType = Oracle}}
+        CREATE TABLE roles (
+          id NUMBER PRIMARY KEY,
+          name VARCHAR2(100) NOT NULL UNIQUE
+        ) TABLESPACE users;
+        
+        CREATE SEQUENCE type_user_seq START WITH 1 INCREMENT BY 1;
+        
+        CREATE OR REPLACE TRIGGER type_user_trigger
+        BEFORE INSERT ON roles
+        FOR EACH ROW
+        BEGIN
+        SELECT type_user_seq.NEXTVAL INTO :new.id FROM dual;
+        END;
+        
+        CREATE TABLE users (
+          id NUMBER PRIMARY KEY,
+          name VARCHAR2(100) NOT NULL UNIQUE,
+          email VARCHAR2(100) NOT NULL UNIQUE,
+          password VARCHAR2(100) NOT NULL,
+          role_id NUMBER NOT NULL,
+          CONSTRAINT fk_user_type_user FOREIGN KEY (role_id) REFERENCES roles(id),
+          CONSTRAINT chk_email CHECK (REGEXP_LIKE(email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'))
+        ) TABLESPACE users;
+        
+        CREATE SEQUENCE user_seq START WITH 1 INCREMENT BY 1;
+        
+        CREATE OR REPLACE TRIGGER user_trigger
+        BEFORE INSERT ON users
+        FOR EACH ROW
+        BEGIN
+        SELECT user_seq.NEXTVAL INTO :new.id FROM dual;
+        END;
+        
+        MERGE INTO roles tu
+        USING (SELECT 1 FROM dual) d
+        ON (tu.name = 'ROLE_ADMIN')
+        WHEN NOT MATCHED THEN
+        INSERT (name) VALUES ('ROLE_ADMIN');
+        
+        MERGE INTO users u
+        USING (SELECT 1 FROM dual) d
+        ON (u.name = 'admin' OR u.email = 'admin@user.com')
+        WHEN NOT MATCHED THEN
+        INSERT (name, email, password, role_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1);
+        {{else}}{{removeLine}}{{/if}}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/sql-init/"
+
+    - fileType: "Swagger Config"
+      fileName: "SwaggerConfig"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config;
+
+        import org.springframework.context.annotation.Configuration;
+        import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+        import io.swagger.v3.oas.annotations.security.SecurityScheme;
+
+        @Configuration
+        @SecurityScheme(
+            name = "bearerAuth",
+            type = SecuritySchemeType.HTTP,
+            scheme = "bearer",
+            bearerFormat = "JWT"
+        )
+        public class SwaggerConfig {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+
+    - fileType: "User role enumeration class"
+      fileName: "UserRole"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.enums;
+  
+        import lombok.Getter;
+        
+        @Getter
+        public enum UserRole {
+          ADMIN("ROLE_ADMIN");
+          
+          private final String authority;
+          
+          UserRole(String authority) {
+            this.authority = authority;
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/enums/"
+
+    - fileType: "Custom implementation of the UserDetails(Spring security class)"
+      fileName: "UserInfoDetails"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.models;
+  
+        import ${groupLink}.${lowerCase(projectName)}.models.UserEntity;
+        import org.springframework.security.core.GrantedAuthority;
+        import org.springframework.security.core.authority.SimpleGrantedAuthority;
+        import org.springframework.security.core.userdetails.UserDetails;
+        
+        import java.util.Collection;
+        import java.util.List;
+        import java.util.stream.Collectors;
+        import java.util.stream.Stream;
+        
+        public class UserInfoDetails implements UserDetails {
+        
+          private final String username; // Changed from 'name' to 'username' for clarity
+          private final String password;
+          private final String email;
+          private final List<GrantedAuthority> authorities;
+          
+          public UserInfoDetails(UserEntity user) {
+            this.username = user.getName(); // Assuming 'name' is used as 'username'
+            this.password = user.getPassword();
+            this.email = user.getEmail();
+            this.authorities = Stream.of(user.getRoleidRoleEntity().getName().split(","))
+            .map(SimpleGrantedAuthority::new)
+            .collect(Collectors.toList());
+          }
+          
+          @Override
+          public Collection<? extends GrantedAuthority> getAuthorities() {
+            return authorities;
+          }
+          
+          @Override
+          public String getPassword() {
+            return password;
+          }
+          
+          @Override
+          public String getUsername() {
+            return username;
+          }
+          
+          @Override
+          public boolean isAccountNonExpired() {
+            return true; // Implement your logic if you need this
+          }
+          
+          @Override
+          public boolean isAccountNonLocked() {
+            return true; // Implement your logic if you need this
+          }
+          
+          @Override
+          public boolean isCredentialsNonExpired() {
+            return true; // Implement your logic if you need this
+          }
+          
+          @Override
+          public boolean isEnabled() {
+            return true; // Implement your logic if you need this
+          }
+          
+          public String getEmail() {
+            return email;
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/models/"
+
+    - fileType: "AuthRequest DTO"
+      fileName: "AuthRequest"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.models;
+
+        import jakarta.validation.constraints.NotBlank;
+
+        public record AuthRequest(
+                @NotBlank(message = "Username is required") String username,
+                @NotBlank(message = "Password is required") String password
+        ) {
+            public String username() {
+                return username;
+            }
+
+            public String password() {
+                return password;
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/models/"
+
+    - fileType: "PasswordChangeRequest DTO"
+      fileName: "PasswordChangeRequest"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.models;
+
+        import lombok.Getter;
+        import lombok.Setter;
+
+        @Getter
+        @Setter
+        public class PasswordChangeRequest {
+            private String oldPassword;
+            private String newPassword;
+            private String confirmPassword;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/models/"
+
+    - fileType: "UserUpdateRequest DTO"
+      fileName: "UserUpdateRequest"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.models;
+
+        import lombok.Getter;
+        import lombok.Setter;
+
+        @Getter
+        @Setter
+        public class UserUpdateRequest {
+            private String name;
+            private String email;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/models/"
+
+    - fileType: "JwtService"
+      fileName: "JwtService"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.services;
+  
+        import io.jsonwebtoken.Claims;
+        import io.jsonwebtoken.Jwts;
+        import io.jsonwebtoken.SignatureAlgorithm;
+        import io.jsonwebtoken.io.Decoders;
+        import io.jsonwebtoken.security.Keys;
+        import jakarta.annotation.PostConstruct;
+        import org.springframework.beans.factory.annotation.Value;
+        import org.springframework.security.core.userdetails.UserDetails;
+        import org.springframework.stereotype.Component;
+        
+        import java.security.Key;
+        import java.util.Date;
+        import java.util.HashMap;
+        import java.util.Map;
+        import java.util.function.Function;
+        
+        @Component
+        public class JwtService {
+          public static String SECRET;
+          public static long EXPIRATION_TIME;
+          @Value("$[jwt.secret]")
+          private String secret;
+          @Value("$[jwt.expiration]")
+          private long expirationTime;
+          
+          // Get the signing key for JWT token
+          private static Key getSignKey() {
+            byte[] keyBytes = Decoders.BASE64.decode(SECRET);
+            return Keys.hmacShaKeyFor(keyBytes);
+          }
+        
+          // Extract the expiration date from the token
+          public static Date extractExpiration(String token) {
+            return extractClaim(token, Claims::getExpiration);
+          }
+        
+          // Extract a claim from the token
+          public static <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+            final Claims claims = extractAllClaims(token);
+            return claimsResolver.apply(claims);
+          }
+        
+          // Extract all claims from the token
+          private static Claims extractAllClaims(String token) {
+            return Jwts.parserBuilder()
+            .setSigningKey(getSignKey())
+            .build()
+            .parseClaimsJws(token)
+            .getBody();
+          }
+        
+          @PostConstruct
+          public void init() {
+            SECRET = secret;
+            EXPIRATION_TIME = expirationTime;
+          }
+        
+          // Generate token with given user name
+          public String generateToken(String userName) {
+            Map<String, Object> claims = new HashMap<>();
+            return createToken(claims, userName);
+          }
+        
+          // Create a JWT token with specified claims and subject (user name)
+          private String createToken(Map<String, Object> claims, String userName) {
+            return Jwts.builder()
+            .setClaims(claims)
+            .setSubject(userName)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + 1000 * EXPIRATION_TIME)) // Token valid for 30 minutes
+            .signWith(getSignKey(), SignatureAlgorithm.HS256)
+            .compact();
+          }
+        
+          // Extract the username from the token
+          public String extractUsername(String token) {
+            return extractClaim(token, Claims::getSubject);
+          }
+        
+          // Check if the token is expired
+          public Boolean isTokenExpired(String token) {
+            return extractExpiration(token).before(new Date());
+          }
+        
+          // Validate the token against user details and expiration
+          public Boolean validateToken(String token, UserDetails userDetails) {
+            final String username = extractUsername(token);
+            return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+          }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/services/"
+
+    - fileType: "TokenBlacklistService"
+      fileName: "TokenBlacklistService"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.services;
+  
+        import org.springframework.scheduling.annotation.Scheduled;
+        import org.springframework.stereotype.Service;
+        
+        import java.util.concurrent.ConcurrentHashMap;
+        
+        @Service
+        public class TokenBlacklistService {
+          private final ConcurrentHashMap<String, Long> invalidatedTokens = new ConcurrentHashMap<>();
+          
+          public void invalidateToken(String token) {
+            // Ajoute le token dans la blacklist avec une durée d'expiration correspondant à sa validité
+            long expirationTime = extractExpiration(token);
+            invalidatedTokens.put(token, expirationTime);
+          }
+          
+          public boolean isTokenInvalidated(String token) {
+            // Vérifie si le token est dans la blacklist
+            Long expirationTime = invalidatedTokens.get(token);
+            return expirationTime != null && expirationTime > System.currentTimeMillis();
+          }
+          
+          private long extractExpiration(String token) {
+            // Méthode pour extraire la date d'expiration du JWT (à implémenter avec JwtService)
+            return JwtService.extractExpiration(token).getTime();
+          }
+          
+          // Pour nettoyage automatique (facultatif)
+          @Scheduled(fixedRate = 60000) // Chaque minute
+          public void cleanExpiredTokens() {
+            long now = System.currentTimeMillis();
+            invalidatedTokens.entrySet().removeIf(entry -> entry.getValue() < now);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/services/"
+
+    - fileType: "UserInfoService"
+      fileName: "UserInfoService"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.services;
+  
+        import ${groupLink}.${lowerCase(projectName)}.config.security.models.AuthRequest;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.models.UserInfoDetails;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.models.UserUpdateRequest;
+        import ${groupLink}.${lowerCase(projectName)}.models.UserEntity;
+        import ${groupLink}.${lowerCase(projectName)}.repositories.UserEntityRepository;
+        import org.springframework.beans.factory.annotation.Autowired;
+        import org.springframework.context.annotation.Lazy;
+        import org.springframework.security.authentication.AuthenticationManager;
+        import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+        import org.springframework.security.core.Authentication;
+        import org.springframework.security.core.userdetails.UserDetails;
+        import org.springframework.security.core.userdetails.UserDetailsService;
+        import org.springframework.security.core.userdetails.UsernameNotFoundException;
+        import org.springframework.stereotype.Service;
+        
+        import java.util.Optional;
+        
+        import static ${groupLink}.${lowerCase(projectName)}.config.security.filters.SecurityConfig.passwordEncoder;
+        
+        @Service
+        public class UserInfoService implements UserDetailsService {
+          private final UserEntityRepository repository;
+          private final JwtService jwtService;
+          private final AuthenticationManager authenticationManager;
+          
+          @Autowired
+          public UserInfoService(UserEntityRepository repository, JwtService jwtService, @Lazy AuthenticationManager authenticationManager) {
+            this.repository = repository;
+            this.jwtService = jwtService;
+            this.authenticationManager = authenticationManager;
+          }
+          
+          @Override
+          public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            Optional<UserEntity> userDetail = repository.findAllByName(username); // Assuming 'email' is used as username
+          
+            // Converting UserInfo to UserDetails
+            return userDetail.map(UserInfoDetails::new)
+              .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+          }
+        
+          public String addUser(UserEntity user) {
+              // Encode password before saving the user
+              user.setPassword(passwordEncoder.encode(user.getPassword()));
+              repository.save(user);
+              return "User Added Successfully";
+          }
+          
+          public String authenticateAndGetToken(AuthRequest authRequest) {
+            System.out.println("Received username: " + authRequest.username());
+            System.out.println("Received password: " + authRequest.password());
+    
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(authRequest.username(), authRequest.password())
+            );
+            if (authentication.isAuthenticated()) {
+                return jwtService.generateToken(authRequest.username());
+            } else {
+                throw new UsernameNotFoundException("Invalid user request!");
+            }
+          }
+          
+          // Ajoutez ces méthodes dans UserInfoService
+          public void updateUser(String username, UserUpdateRequest updateRequest) {
+            UserEntity user = repository.findUserByName(username);
+            if (user == null) {
+              throw new UsernameNotFoundException("User not found: " + username);
+            }
+            
+            if (updateRequest.getName() != null) {
+                user.setName(updateRequest.getName());
+            }
+            if (updateRequest.getEmail() != null) {
+                user.setEmail(updateRequest.getEmail());
+            }
+                
+            repository.save(user);
+          }
+        
+          public void changeUserPassword(
+                  String username, 
+                  String oldPassword, 
+                  String newPassword, 
+                  String confirmPassword) {
+            
+            if (!newPassword.equals(confirmPassword)) {
+                throw new IllegalArgumentException("New password and confirmation do not match");
+            }
+          
+            UserEntity user = repository.findUserByName(username);
+            if (user == null) {
+              throw new UsernameNotFoundException("User not found: " + username);
+            }
+                
+            // Vérifier l'ancien mot de passe
+            if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+              throw new IllegalArgumentException("Old password is incorrect");
+            }
+          
+            user.setPassword(passwordEncoder.encode(newPassword));
+            repository.save(user);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/services/"
+
+    - fileType: "JwtAccessDeniedHandler"
+      fileName: "JwtAccessDeniedHandler"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.handlers;
+
+        import java.io.IOException;
+
+        import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+        import org.springframework.http.HttpStatus;
+        import org.springframework.http.MediaType;
+        import org.springframework.security.access.AccessDeniedException;
+        import org.springframework.security.web.access.AccessDeniedHandler;
+        import org.springframework.stereotype.Component;
+
+        import com.fasterxml.jackson.databind.ObjectMapper;
+
+        import jakarta.servlet.http.HttpServletRequest;
+        import jakarta.servlet.http.HttpServletResponse;
+        
+        @Component
+        public class JwtAccessDeniedHandler implements AccessDeniedHandler {
+
+            private final ObjectMapper objectMapper;
+
+            // Injection de l'ObjectMapper via le constructeur
+            public JwtAccessDeniedHandler(ObjectMapper objectMapper) {
+                this.objectMapper = objectMapper;
+            }
+
+            @Override
+            public void handle(HttpServletRequest request,
+                               HttpServletResponse response,
+                               AccessDeniedException ex) throws IOException {
+
+                // Création de la réponse standardisée
+                RestResponse<Void> restResponse = RestResponse.buildErrorResponse(
+                    HttpStatus.FORBIDDEN,
+                    ex.getMessage(),
+                    null
+                );
+
+                // Conversion en JSON
+                String jsonResponse = objectMapper.writeValueAsString(restResponse);
+
+                // Configuration de la réponse HTTP
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.getWriter().write(jsonResponse);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/handlers/"
+
+    - fileType: "JwtAuthEntryPoint"
+      fileName: "JwtAuthEntryPoint"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.handlers;
+
+        import java.io.IOException;
+
+        import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+        import org.springframework.http.HttpStatus;
+        import org.springframework.http.MediaType;
+        import org.springframework.security.core.AuthenticationException;
+        import org.springframework.security.web.AuthenticationEntryPoint;
+        import org.springframework.stereotype.Component;
+
+        import com.fasterxml.jackson.databind.ObjectMapper;
+
+        import jakarta.servlet.http.HttpServletRequest;
+        import jakarta.servlet.http.HttpServletResponse;
+        
+        @Component
+        public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
+
+            private final ObjectMapper objectMapper;
+
+            public JwtAuthEntryPoint(ObjectMapper objectMapper) {
+                this.objectMapper = objectMapper;
+            }
+
+            @Override
+            public void commence(HttpServletRequest request, 
+                                 HttpServletResponse response,
+                                 AuthenticationException ex) throws IOException {
+
+                // Construire la réponse standardisée
+                RestResponse<Void> restResponse = RestResponse.buildErrorResponse(
+                    HttpStatus.UNAUTHORIZED,
+                    ex.getMessage(),
+                    null  // Aucune donnée supplémentaire
+                );
+
+                // Convertir en JSON
+                String jsonResponse = objectMapper.writeValueAsString(restResponse);
+
+                // Configurer la réponse HTTP
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write(jsonResponse);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/handlers/"
+
+    - fileType: "JwtAuthenticationFilter"
+      fileName: "JwtAuthenticationFilter"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.filters;
+  
+        import jakarta.servlet.FilterChain;
+        import jakarta.servlet.ServletException;
+        import jakarta.servlet.http.HttpServletRequest;
+        import jakarta.servlet.http.HttpServletResponse;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.services.JwtService;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.services.TokenBlacklistService;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.services.UserInfoService;
+        import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+        import org.springframework.beans.factory.annotation.Autowired;
+        import org.springframework.context.annotation.Lazy;
+        import org.springframework.http.HttpStatus;
+        import org.springframework.http.MediaType;
+        import org.springframework.lang.NonNull;
+        import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+        import org.springframework.security.core.context.SecurityContextHolder;
+        import org.springframework.security.core.userdetails.UserDetails;
+        import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+        import org.springframework.stereotype.Component;
+        import org.springframework.web.filter.OncePerRequestFilter;
+        
+        import com.fasterxml.jackson.databind.ObjectMapper;
+        
+        import java.io.IOException;
+        
+        @Component
+        public class JwtAuthenticationFilter extends OncePerRequestFilter {
+          private final JwtService jwtService;
+          private final TokenBlacklistService tokenBlacklistService;
+          private final UserInfoService userInfoService;
+          
+          private final ObjectMapper objectMapper;
+          
+          @Autowired
+          public JwtAuthenticationFilter(JwtService jwtService, TokenBlacklistService tokenBlacklistService, @Lazy UserInfoService userInfoService,
+          ObjectMapper objectMapper) {
+            this.jwtService = jwtService;
+            this.tokenBlacklistService = tokenBlacklistService;
+            this.userInfoService = userInfoService;
+            this.objectMapper = objectMapper;
+          }
+        
+          @Override
+          protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
+          throws ServletException, IOException {
+    
+            String authHeader = request.getHeader("Authorization");
+            String username = null;
+            String jwt = null;
+    
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+              jwt = authHeader.substring(7);
+    
+              // Vérification blacklist
+              if (tokenBlacklistService.isTokenInvalidated(jwt)) {
+                sendErrorResponse(response,
+                HttpStatus.UNAUTHORIZED,
+                "Token has been invalidated");
+                return;
+              }
+    
+              try {
+                username = jwtService.extractUsername(jwt);
+              } catch (Exception e) {
+                sendErrorResponse(response,
+                  HttpStatus.UNAUTHORIZED,
+                  "Invalid token: " + e.getMessage());
+                return;
+              }
+            }
+
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userInfoService.loadUserByUsername(username);
+                
+                try {
+                    if (jwtService.validateToken(jwt, userDetails)) {
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
+                } catch (Exception e) {
+                    sendErrorResponse(response, 
+                                     HttpStatus.UNAUTHORIZED, 
+                                     "Token validation failed: " + e.getMessage());
+                    return;
+                }
+            }
+            filterChain.doFilter(request, response);
+          }
+
+          private void sendErrorResponse(HttpServletResponse response, 
+                                        HttpStatus status, 
+                                        String message) throws IOException {
+              RestResponse<String> errorResponse = RestResponse.buildErrorResponse(
+                  status,
+                  message,
+                  null
+              );
+              
+              response.setStatus(status.value());
+              response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+              response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/filters/"
+
+    - fileType: "SecurityConfig"
+      fileName: "SecurityConfig"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.filters;
+  
+        import ${groupLink}.${lowerCase(projectName)}.config.security.handlers.JwtAccessDeniedHandler;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.handlers.JwtAuthEntryPoint;
+        import org.springframework.beans.factory.annotation.Autowired;
+        import org.springframework.context.annotation.Bean;
+        import org.springframework.context.annotation.Configuration;
+        import org.springframework.security.authentication.AuthenticationManager;
+        import org.springframework.security.authentication.AuthenticationProvider;
+        import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+        import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+        import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+        import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+        import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+        import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+        import org.springframework.security.config.http.SessionCreationPolicy;
+        import org.springframework.security.core.userdetails.UserDetailsService;
+        import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+        import org.springframework.security.crypto.password.PasswordEncoder;
+        import org.springframework.security.web.SecurityFilterChain;
+        import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
+        import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+        import org.springframework.web.cors.CorsConfiguration;
+        import org.springframework.web.cors.CorsConfigurationSource;
+        import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+        
+        import java.util.Arrays;
+        import java.util.List;
+  
+        @Configuration
+        @EnableWebSecurity
+        @EnableMethodSecurity
+        public class SecurityConfig {
+          public static final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(); // Password encoding
+          public final UserDetailsService userDetailsService;
+          private final JwtAuthenticationFilter authFilter;
+          
+          //NEW
+          private final JwtAuthEntryPoint authenticationEntryPoint;
+          private final JwtAccessDeniedHandler accessDeniedHandler;
+          
+          @Autowired
+          public SecurityConfig(JwtAuthenticationFilter authFilter, UserDetailsService userDetailsService,
+            JwtAuthEntryPoint authenticationEntryPoint,
+            JwtAccessDeniedHandler accessDeniedHandler) {
+            this.authFilter = authFilter;
+            this.userDetailsService = userDetailsService;
+            
+            this.authenticationEntryPoint = authenticationEntryPoint;
+            this.accessDeniedHandler = accessDeniedHandler;
+          }
+        
+          static CorsConfigurationSource getCorsConfigurationSource(CorsConfiguration configuration) {
+                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+                configuration.setAllowedHeaders(List.of("*"));
+                configuration.setAllowCredentials(false);
+                configuration.setMaxAge(3600L);
+        
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
+                return source;
+          }
+        
+          @Bean
+          public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+            http
+              .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+              .csrf(AbstractHttpConfigurer::disable)
+              .authorizeHttpRequests(auth -> auth
+                  .requestMatchers("/auth/**", "/welcome/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                  // Autoriser ADMIN sur TOUTES les routes via une expression SpEL
+                  .anyRequest().access(new WebExpressionAuthorizationManager(
+                      "hasAuthority('ROLE_ADMIN')" 
+                  ))
+              )
+              .sessionManagement(sess -> sess
+                      .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // No sessions
+              )
+              .authenticationProvider(authenticationProvider()) // Custom authentication provider
+              .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class) // Add JWT filter
+              .exceptionHandling()
+                    .authenticationEntryPoint(authenticationEntryPoint)
+                    .accessDeniedHandler(accessDeniedHandler);
+            return http.build();
+          }
+      
+          @Bean
+          public CorsConfigurationSource corsConfigurationSource() {
+            CorsConfiguration configuration = new CorsConfiguration();
+            configuration.setAllowedOrigins(List.of("*")); // Spécifiez explicitement l'origine
+            return getCorsConfigurationSource(configuration);
+          }
+    
+          @Bean
+            public PasswordEncoder passwordEncoder() {
+            return passwordEncoder; // Password encoding
+          }
+    
+          @Bean
+          public AuthenticationProvider authenticationProvider() {
+            DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+            authenticationProvider.setUserDetailsService(userDetailsService);
+            authenticationProvider.setPasswordEncoder(passwordEncoder);
+            return authenticationProvider;
+          }
+    
+          @Bean
+          public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+            return config.getAuthenticationManager();
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/filters/"
+
+    - fileType: "UserAuthController"
+      fileName: "UserAuthController"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.controllers;
+  
+        import jakarta.validation.Valid;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.models.AuthRequest;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.models.PasswordChangeRequest;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.models.UserUpdateRequest;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.services.JwtService;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.services.TokenBlacklistService;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.services.UserInfoService;
+        import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+        import ${groupLink}.${lowerCase(projectName)}.models.UserEntity;
+        import org.springframework.beans.factory.annotation.Autowired;
+        import org.springframework.http.HttpStatus;
+        import org.springframework.http.ResponseEntity;
+        import org.springframework.security.core.userdetails.UserDetails;
+        import org.springframework.web.bind.annotation.*;
+        
+        import io.swagger.v3.oas.annotations.Operation;
+        import io.swagger.v3.oas.annotations.media.Content;
+        import io.swagger.v3.oas.annotations.media.Schema;
+        import io.swagger.v3.oas.annotations.responses.ApiResponse;
+        import io.swagger.v3.oas.annotations.responses.ApiResponses;
+        import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+        import io.swagger.v3.oas.annotations.tags.Tag;
+        
+        @RestController
+        @RequestMapping("/auth")
+        @Tag(name = "Authentication", description = "Endpoints for user authentication and management")
+        public class UserAuthController {
+          private final JwtService jwtService;
+          private final UserInfoService userInfoService;
+          private final TokenBlacklistService tokenBlacklistService;
+          
+          @Autowired
+          public UserAuthController(JwtService jwtService, UserInfoService userInfoService, TokenBlacklistService tokenBlacklistService) {
+            this.jwtService = jwtService;
+            this.userInfoService = userInfoService;
+            this.tokenBlacklistService = tokenBlacklistService;
+          }
+          
+           @Operation(
+            security = { @SecurityRequirement(name = "bearerAuth") },
+            summary = "Logout user",
+            description = "Invalidate the user's JWT token"
+          )
+          @ApiResponses({
+            @ApiResponse(
+              responseCode = "200",
+              description = "Successfully logged out",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+            ),
+            @ApiResponse(
+              responseCode = "400",
+              description = "Invalid Authorization header",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+           )
+          })
+          @PostMapping("/logout")
+          public ResponseEntity<RestResponse<String>> logout(@RequestHeader("Authorization") String authHeader) {
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+              String token = authHeader.substring(7);
+              tokenBlacklistService.invalidateToken(token);
+              return ResponseEntity.ok(
+                RestResponse.buildSuccessResponse(
+                  HttpStatus.OK,
+                  "Logged out successfully",
+                  null
+                )
+              );
+            }
+            return ResponseEntity.badRequest().body(
+              RestResponse.buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Invalid Authorization Header",
+                null
+              )
+            );
+          }
+        
+          @Operation(
+            security = { @SecurityRequirement(name = "bearerAuth") },
+            summary = "Get current user",
+            description = "Retrieve details of the currently authenticated user"
+          )
+          @ApiResponses({
+            @ApiResponse(
+              responseCode = "200",
+              description = "Successfully retrieved user details",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+            ),
+            @ApiResponse(
+              responseCode = "400",
+              description = "No valid user session",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+           )
+          })
+          @GetMapping("/current")
+          public ResponseEntity<RestResponse<UserDetails>> currentUser(@RequestHeader("Authorization") String authHeader) {
+            try {
+              if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                String username = jwtService.extractUsername(token);
+                UserDetails userConnected = userInfoService.loadUserByUsername(username);
+                return ResponseEntity.ok(
+                  RestResponse.buildSuccessResponse(
+                    HttpStatus.OK,
+                    "User details retrieved",
+                    userConnected
+                  )
+                );
+              }
+            } catch (Exception e) {
+              return ResponseEntity.badRequest().body(
+                RestResponse.buildErrorResponse(
+                  HttpStatus.BAD_REQUEST,
+                  "Error retrieving user: " + e.getMessage(),
+                  null
+                )
+              );
+            }
+            return ResponseEntity.badRequest().body(
+                RestResponse.buildErrorResponse(
+                    HttpStatus.BAD_REQUEST,
+                    "No user connected",
+                    null
+                )
+            );
+          }
+        
+          @Operation(
+              summary = "Register new user",
+              description = "Create a new user account"
+          )
+          @ApiResponses({
+            @ApiResponse(
+              responseCode = "200",
+              description = "User created successfully",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+            ),
+            @ApiResponse(
+              responseCode = "400",
+              description = "Invalid user data",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+           )
+          })
+          @PostMapping("/register")
+          public ResponseEntity<RestResponse<String>> addNewUser(@RequestBody UserEntity user) {
+            try {
+              String result = userInfoService.addUser(user);
+              return ResponseEntity.ok(
+                RestResponse.buildSuccessResponse(
+                  HttpStatus.OK,
+                  "User registered successfully",
+                  result
+                )
+              );
+            } catch (Exception e) {
+              return ResponseEntity.badRequest().body(
+                RestResponse.buildErrorResponse(
+                  HttpStatus.BAD_REQUEST,
+                  "Registration failed: " + e.getMessage(),
+                  null
+                )
+              );
+            }
+          }
+
+          @Operation(
+              summary = "User login",
+              description = "Authenticate user and generate JWT token"
+          )
+          @ApiResponses({
+              @ApiResponse(
+                  responseCode = "200",
+                  description = "Authentication successful",
+                  content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+              ),
+              @ApiResponse(
+                  responseCode = "401",
+                  description = "Invalid credentials",
+                  content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+              )
+          })
+          @PostMapping("/login")
+          public ResponseEntity<RestResponse<String>> authenticateAndGetToken(@Valid @RequestBody AuthRequest authRequest) {
+              try {
+                  String token = userInfoService.authenticateAndGetToken(authRequest);
+                  return ResponseEntity.ok(
+                      RestResponse.buildSuccessResponse(
+                          HttpStatus.OK,
+                          "Authentication successful",
+                          token
+                      )
+                  );
+              } catch (Exception e) {
+                  return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                      RestResponse.buildErrorResponse(
+                          HttpStatus.UNAUTHORIZED,
+                          "Authentication failed: " + e.getMessage(),
+                          null
+                      )
+                  );
+              }
+          }
+        
+          @Operation(
+            security = { @SecurityRequirement(name = "bearerAuth") },
+            summary = "Update user information",
+            description = "Update the current user's name and email"
+          )
+          @ApiResponses({
+            @ApiResponse(
+              responseCode = "200",
+              description = "User updated successfully",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+            ),
+            @ApiResponse(
+              responseCode = "400",
+              description = "Invalid data or update failed",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+           )
+          })
+          @PatchMapping("/update")
+          public ResponseEntity<RestResponse<String>> updateUser(
+          @RequestHeader("Authorization") String authHeader,
+          @Valid @RequestBody UserUpdateRequest updateRequest) {
+          
+            try {
+              if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                String username = jwtService.extractUsername(token);
+                userInfoService.updateUser(username, updateRequest);
+          
+                return ResponseEntity.ok(
+                  RestResponse.buildSuccessResponse(
+                    HttpStatus.OK,
+                    "User updated successfully",
+                    null
+                  )
+                );
+              }
+              return ResponseEntity.badRequest().body(
+                RestResponse.buildErrorResponse(
+                  HttpStatus.BAD_REQUEST,
+                  "Invalid Authorization Header",
+                  null
+                )
+              );
+          } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+            RestResponse.buildErrorResponse(
+            HttpStatus.BAD_REQUEST,
+            "Update failed: " + e.getMessage(),
+                          null
+                      )
+                  );
+              }
+          }
+        
+          @Operation(
+            security = { @SecurityRequirement(name = "bearerAuth") },
+            summary = "Change user password",
+            description = "Change the current user's password. Requires old password, new password and confirmation."
+          )
+          @ApiResponses({
+            @ApiResponse(
+              responseCode = "200",
+              description = "Password changed successfully",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+            ),
+            @ApiResponse(
+              responseCode = "400",
+              description = "Invalid data or password change failed",
+              content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+           )
+          })
+          @PostMapping("/change-password")
+          public ResponseEntity<RestResponse<String>> changePassword(
+          @RequestHeader("Authorization") String authHeader,
+          @Valid @RequestBody PasswordChangeRequest passwordChangeRequest) {
+          
+            try {
+              if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7); 
+                String username = jwtService.extractUsername(token);
+                userInfoService.changeUserPassword(
+                  username,
+                  passwordChangeRequest.getOldPassword(),
+                  passwordChangeRequest.getNewPassword(),
+                  passwordChangeRequest.getConfirmPassword()
+                );
+            
+                return ResponseEntity.ok(
+                  RestResponse.buildSuccessResponse(
+                    HttpStatus.OK,
+                    "Password changed successfully",
+                    null
+                  )
+                );
+              }
+              return ResponseEntity.badRequest().body(
+                RestResponse.buildErrorResponse(
+                  HttpStatus.BAD_REQUEST,
+                  "Invalid Authorization Header",
+                  null
+                )
+              );
+            } catch (Exception e) {
+              return ResponseEntity.badRequest().body(
+                RestResponse.buildErrorResponse(
+                  HttpStatus.BAD_REQUEST,
+                  "Password change failed: " + e.getMessage(),
+                  null
+                )
+              );
+            }
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/controllers/"
+
+  additionalDependencies:
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-security"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "io.jsonwebtoken"
+      artifactId: "jjwt-api"
+      version: "0.11.5"
+      scope: "{{removeLine}}"
+    - groupId: "io.jsonwebtoken"
+      artifactId: "jjwt-impl"
+      version: "0.11.5"
+      scope: "{{removeLine}}"
+    - groupId: "io.jsonwebtoken"
+      artifactId: "jjwt-jackson"
+      version: "0.11.5"
+      scope: "{{removeLine}}"
+  metadataBooleanTrueKeys:
+    - "useBearerToken"
+    - "useSpringSecurityJWT"
