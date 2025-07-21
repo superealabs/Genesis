@@ -1329,7 +1329,9 @@
       scope: "{{removeLine}}"
   metadataBooleanTrueKeys:
     - "useBearerToken"
+    - "useSpringSecurity"
     - "useSpringSecurityJWT"
+    - "useJavaJwtLibrary"
 
 - id: 2
   frameworkId: 1
@@ -1732,3 +1734,8 @@
       version: "0.11.5"
       scope: "{{removeLine}}"
   metadataBooleanTrueKeys:
+    - "useBearerToken"
+    - "useSpringSecurity"
+    - "useJavaJwtLibrary"
+    - "useOAuthGoogle"
+    - "useSpringSecurityOAuth2"
