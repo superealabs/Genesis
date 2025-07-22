@@ -2063,7 +2063,7 @@
       fileName: "Aspnetuserclaim"
       extension: "cs"
       content: |
-        namespace Netnet.Models;
+        namespace ${majStart(projectName)}.Models;
 
         using System.ComponentModel.DataAnnotations;
         using System.ComponentModel.DataAnnotations.Schema;
