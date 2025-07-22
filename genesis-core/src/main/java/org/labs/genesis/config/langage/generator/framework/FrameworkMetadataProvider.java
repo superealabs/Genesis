@@ -225,7 +225,7 @@ public class FrameworkMetadataProvider {
         Optional<FrameworkCaching> selectedCacheProviderOption = framework.getSelectedCacheProviderByName(cacheProvider);
 
         if (selectedCacheProviderOption.isPresent() && !frameworkOptions.get("entitiesCacheable").toString().isBlank()) {
-            metadata.put("cacheableWith"+cacheProvider, frameworkOptions.get("entitiesCacheable").toString().contains(tableMetadata.getTableName()));
+            metadata.put(StringUtils.toCamelCase("cacheableWith"+(cacheProvider)), frameworkOptions.get("entitiesCacheable").toString().contains(tableMetadata.getTableName()));
         }
 
         metadata.putAll(getFrameworkCachingTrueBooleanHashMap(framework,frameworkOptions));
