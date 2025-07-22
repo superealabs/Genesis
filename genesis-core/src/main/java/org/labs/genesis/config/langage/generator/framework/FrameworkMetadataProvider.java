@@ -220,7 +220,13 @@ public class FrameworkMetadataProvider {
         metadata.put("classNameLink", tableMetadata.getClassName() + "s");
 
         metadata.put("isView", tableMetadata.getIsView());
-        metadata.put("cacheableWith"+frameworkOptions.get("cacheProvider"), (Boolean) frameworkOptions.get("cacheableWith"+frameworkOptions.get("cacheProvider")));
+
+        String cacheProvider = (String) frameworkOptions.get("cacheProvider");
+        Optional<FrameworkCaching> selectedCacheProviderOption = framework.getSelectedCacheProviderByName(cacheProvider);
+
+        if (selectedCacheProviderOption.isPresent() && !frameworkOptions.get("entitiesCacheable").toString().isBlank()) {
+            metadata.put("cacheableWith"+cacheProvider, frameworkOptions.get("entitiesCacheable").toString().contains(tableMetadata.getTableName()));
+        }
 
         metadata.putAll(getFrameworkCachingTrueBooleanHashMap(framework,frameworkOptions));
     }

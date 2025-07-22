@@ -1242,7 +1242,7 @@
       {{tab}}}
       
       {{tab}}@Override
-      {{#if cacheableWithEhCache}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{removeLine}}{{/if}}
+      {{#if cacheableWithEhCache}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
       {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
       {{tab}}    try {
       {{tab}}        ${minStart(className)}Repository.deleteById(${pkColumn});

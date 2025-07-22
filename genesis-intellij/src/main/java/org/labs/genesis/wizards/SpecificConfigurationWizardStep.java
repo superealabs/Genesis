@@ -61,10 +61,10 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         );
 
         // Gestion du cache
-        if (!specificConfigurationForm.getCacheProviderOptions().getSelectedItem().equals("NONE")) {
-            frameworkConfiguration.put("cacheProvider", Objects.requireNonNullElseGet(
-                    specificConfigurationForm.getCacheProviderOptions().getSelectedItem(), () -> "").toString()
-            );
+        frameworkConfiguration.put("cacheProvider", Objects.requireNonNullElseGet(
+                specificConfigurationForm.getCacheProviderOptions().getSelectedItem(), () -> "").toString()
+        );
+        if (!specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList().isEmpty()) {
             frameworkConfiguration.put("entitiesCacheable", specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList());
         }
 

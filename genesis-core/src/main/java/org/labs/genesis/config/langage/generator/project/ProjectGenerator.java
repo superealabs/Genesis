@@ -147,12 +147,6 @@ public class ProjectGenerator {
             projectFilesEditsHashMap.putAll(mapDaoGlobal);
         }
 
-        List<String> entitiesCacheableConfig = (List<String>) context.getFrameworkConfiguration().get("entitiesCacheable");
-        String cacheProvider = (String) context.getFrameworkConfiguration().get("cacheProvider");
-        if (!entitiesCacheableConfig.isEmpty() && !cacheProvider.equals("NONE")) {
-            projectFilesEditsHashMap.put("entitiesCacheable", entitiesCacheableConfig);
-        }
-
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);
@@ -176,6 +170,7 @@ public class ProjectGenerator {
             });
         }
 
+        String cacheProvider = (String) context.getFrameworkConfiguration().get("cacheProvider");
         Optional<FrameworkCaching> selectedCacheProviderOption = context.getFramework().getSelectedCacheProviderByName(cacheProvider);
 
         selectedCacheProviderOption.ifPresent(frameworkCaching -> {
@@ -205,12 +200,6 @@ public class ProjectGenerator {
         String projectName = context.getProjectName();
         String groupLink = context.getGroupLink();
         Map<String, Object> frameworkOptions = context.getFrameworkConfiguration();
-
-        if (frameworkOptions.get("entitiesCacheable").toString().contains(tableMetadata.getTableName())) {
-            frameworkOptions.put("cacheableWith"+frameworkOptions.get("cacheProvider"), true);
-        } else {
-            frameworkOptions.put("cacheableWith"+frameworkOptions.get("cacheProvider"), false);
-        }
 
         if (generationOptions.contains(COMPONENT_MODEL) && framework.getModel().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_MODEL + " component...");
