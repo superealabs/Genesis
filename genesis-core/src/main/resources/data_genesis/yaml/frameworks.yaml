@@ -1214,19 +1214,21 @@
       {{tab}}}
       
       {{#if !isView}} 
-      
-      {{tab}}@Override
+      {{tab}}@Override{{else}}{{removeLine}}{{/if}}
       {{#if cacheableWithEhcache}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
+      {{#if !isView}} {{removeLine}}
       {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.save(${minStart(className)});
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
-      {{tab}}}
+      {{tab}}}{{else}}{{removeLine}}{{/if}}
       
-      {{tab}}@Override
+      {{#if !isView}} 
+      {{tab}}@Override{{else}}{{removeLine}}{{/if}}
       {{#if cacheableWithEhcache}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
+      {{#if !isView}} {{removeLine}}
       {{tab}}public ${majStart(className)} update${majStart(className)}(${pkColumnType} ${pkColumn}, ${majStart(className)} ${minStart(className)}) {
       {{tab}}    Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
       {{tab}}    if (existing${majStart(className)}.isPresent()) {
@@ -1239,10 +1241,12 @@
       {{tab}}    } else {
       {{tab}}        throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
       {{tab}}    }
-      {{tab}}}
+      {{tab}}}{{else}}{{removeLine}}{{/if}}
       
-      {{tab}}@Override
+      {{#if !isView}} 
+      {{tab}}@Override{{else}}{{removeLine}}{{/if}}
       {{#if cacheableWithEhcache}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
+      {{#if !isView}} {{removeLine}}
       {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
       {{tab}}    try {
       {{tab}}        ${minStart(className)}Repository.deleteById(${pkColumn});
