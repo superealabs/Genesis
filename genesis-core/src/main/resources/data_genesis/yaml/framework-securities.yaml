@@ -2441,6 +2441,7 @@
         using Exceptions;
         using Models;
         using Repositories.Interface;
+        using Services.Interface;
 
         public class AspnetroleclaimService : IAspnetroleclaimService
         {
@@ -2547,6 +2548,7 @@
         using Exceptions;
         using Models;
         using Repositories.Interface;
+        using Services.Interface;
 
         public class AspnetroleService : IAspnetroleService
         {
@@ -2642,6 +2644,7 @@
             }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+
     - fileType: "User-Claim Service Implementation"
       fileName: "AspnetuserclaimService"
       extension: "cs"
@@ -2652,6 +2655,7 @@
         using Exceptions;
         using Models;
         using Repositories.Interface;
+        using Services.Interface;
 
         public class AspnetuserclaimService : IAspnetuserclaimService
         {
@@ -2758,6 +2762,7 @@
         using Exceptions;
         using Models;
         using Repositories.Interface;
+        using Services.Interface;
 
         public class AspnetuserloginService : IAspnetuserloginService
         {
@@ -2863,6 +2868,7 @@
         using Exceptions;
         using Models;
         using Repositories.Interface;
+        using Services.Interface;
 
         public class AspnetuserService : IAspnetuserService
         {
@@ -2969,6 +2975,7 @@
         using Exceptions;
         using Models;
         using Repositories.Interface;
+        using Services.Interface;
 
         public class AspnetuserroleService : IAspnetuserroleService
         {
@@ -3075,6 +3082,7 @@
         using Exceptions;
         using Models;
         using Repositories.Interface;
+        using Services.Interface;
 
         public class AspnetusertokenService : IAspnetusertokenService
         {
