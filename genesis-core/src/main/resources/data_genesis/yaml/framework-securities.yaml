@@ -2213,7 +2213,7 @@
 
         public class AspnetroleclaimRepository : Repository<Aspnetroleclaim, long>, IAspnetroleclaimRepository
         {
-            public AspnetroleclaimRepository(NetnetContext context) : base(context)
+            public AspnetroleclaimRepository(${majStart(projectName)}Context context) : base(context)
             {
             }
         }
@@ -2232,7 +2232,7 @@
 
         public class AspnetroleRepository : Repository<Aspnetrole, string>, IAspnetroleRepository
         {
-            public AspnetroleRepository(NetnetContext context) : base(context)
+            public AspnetroleRepository(${majStart(projectName)}Context context) : base(context)
             {
             }
         }
@@ -2251,7 +2251,7 @@
 
         public class AspnetuserclaimRepository : Repository<Aspnetuserclaim, long>, IAspnetuserclaimRepository
         {
-            public AspnetuserclaimRepository(NetnetContext context) : base(context)
+            public AspnetuserclaimRepository(${majStart(projectName)}Context context) : base(context)
             {
             }
         }
@@ -2270,7 +2270,7 @@
 
         public class AspnetuserloginRepository : Repository<Aspnetuserlogin, string>, IAspnetuserloginRepository
         {
-            public AspnetuserloginRepository(NetnetContext context) : base(context)
+            public AspnetuserloginRepository(${majStart(projectName)}Context context) : base(context)
             {
             }
         }
@@ -2289,7 +2289,7 @@
 
         public class AspnetuserRepository : Repository<Aspnetuser, string>, IAspnetuserRepository
         {
-            public AspnetuserRepository(NetnetContext context) : base(context)
+            public AspnetuserRepository(${majStart(projectName)}Context context) : base(context)
             {
             }
         }
@@ -2308,7 +2308,7 @@
 
         public class AspnetuserroleRepository : Repository<Aspnetuserrole, Aspnetrole>, IAspnetuserroleRepository
         {
-            public AspnetuserroleRepository(NetnetContext context) : base(context)
+            public AspnetuserroleRepository(${majStart(projectName)}Context context) : base(context)
             {
             }
         }
@@ -2327,7 +2327,7 @@
 
         public class AspnetusertokenRepository : Repository<Aspnetusertoken, string>, IAspnetusertokenRepository
         {
-            public AspnetusertokenRepository(NetnetContext context) : base(context)
+            public AspnetusertokenRepository(${majStart(projectName)}Context context) : base(context)
             {
             }
         }
