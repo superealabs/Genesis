@@ -1760,6 +1760,1417 @@
           {{else}}{{removeLine}}{{/if}}
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/data"
 
+    - fileType: "Roles Entity"
+      fileName: "Aspnetrole"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Models;
+        using System.ComponentModel.DataAnnotations;
+        using System.ComponentModel.DataAnnotations.Schema;
+        using System.ComponentModel;
+        
+        [Table("AspNetRoles")]
+        public class Aspnetrole
+        {
+          [Key]
+          [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+          [Column("Id")]
+          public string Id { get; set; }
+          
+          [Column("Name")]
+          [StringLength(256)]
+          public string Name { get; set; }
+          
+          [Column("NormalizedName")]
+          [StringLength(256)]
+          public string Normalizedname { get; set; }
+          
+          [Column("ConcurrencyStamp")]
+          [StringLength(2147483647)]
+          public string Concurrencystamp { get; set; }
+        
+        }
+        public class AspnetroleSearchModel
+        {
+          public string? Id { get; set; }
+          public string? Name { get; set; }
+          public string? Normalizedname { get; set; }
+          public string? Concurrencystamp { get; set; }
+        
+        
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
+    
+    - fileType: "Users Entity"
+      fileName: "Aspnetuser"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Models;
+        
+        using System.ComponentModel.DataAnnotations;
+        using System.ComponentModel.DataAnnotations.Schema;
+        using System.ComponentModel;
+        
+        [Table("AspNetUsers")]
+        public class Aspnetuser
+        {
+          [Key]
+          [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+          [Column("Id")]
+          public string Id { get; set; }
+          
+          [Column("UserName")]
+          [StringLength(256)]
+          public string Username { get; set; }
+          
+          [Column("NormalizedUserName")]
+          [StringLength(256)]
+          public string Normalizedusername { get; set; }
+          
+          [Column("Email")]
+          [StringLength(256)]
+          public string Email { get; set; }
+          
+          [Column("NormalizedEmail")]
+          [StringLength(256)]
+          public string Normalizedemail { get; set; }
+          
+          [Column("EmailConfirmed")]
+          [Required(ErrorMessage = "Emailconfirmed cannot be null")]
+          [DefaultValue("false")]
+          public Boolean Emailconfirmed { get; set; }
+          
+          [Column("PasswordHash")]
+          [StringLength(2147483647)]
+          public string Passwordhash { get; set; }
+          
+          [Column("SecurityStamp")]
+          [StringLength(2147483647)]
+          public string Securitystamp { get; set; }
+          
+          [Column("ConcurrencyStamp")]
+          [StringLength(2147483647)]
+          public string Concurrencystamp { get; set; }
+          
+          [Column("PhoneNumber")]
+          [StringLength(2147483647)]
+          public string Phonenumber { get; set; }
+          
+          [Column("PhoneNumberConfirmed")]
+          [Required(ErrorMessage = "Phonenumberconfirmed cannot be null")]
+          [DefaultValue("false")]
+          public Boolean Phonenumberconfirmed { get; set; }
+          
+          [Column("TwoFactorEnabled")]
+          [Required(ErrorMessage = "Twofactorenabled cannot be null")]
+          [DefaultValue("false")]
+          public Boolean Twofactorenabled { get; set; }
+          
+          [Column("LockoutEnd")]
+          public DateTimeOffset Lockoutend { get; set; }
+          
+          [Column("LockoutEnabled")]
+          [Required(ErrorMessage = "Lockoutenabled cannot be null")]
+          [DefaultValue("false")]
+          public Boolean Lockoutenabled { get; set; }
+          
+          [Column("AccessFailedCount")]
+          [Required(ErrorMessage = "Accessfailedcount cannot be null")]
+          [DefaultValue("0")]
+          public int Accessfailedcount { get; set; }
+        
+        }
+        public class AspnetuserSearchModel
+        {
+          public string? Id { get; set; }
+          public string? Username { get; set; }
+          public string? Normalizedusername { get; set; }
+          public string? Email { get; set; }
+          public string? Normalizedemail { get; set; }
+          public Boolean? Emailconfirmed { get; set; }
+          public string? Passwordhash { get; set; }
+          public string? Securitystamp { get; set; }
+          public string? Concurrencystamp { get; set; }
+          public string? Phonenumber { get; set; }
+          public Boolean? Phonenumberconfirmed { get; set; }
+          public Boolean? Twofactorenabled { get; set; }
+          public DateTimeOffset? Lockoutend { get; set; }
+          public Boolean? Lockoutenabled { get; set; }
+          public int? Accessfailedcount { get; set; }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
+    
+    - fileType: "User-Role Entity"
+      fileName: "Aspnetuserrole"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Models;
+
+        using System.ComponentModel.DataAnnotations;
+        using System.ComponentModel.DataAnnotations.Schema;
+        using System.ComponentModel;
+
+        [Table("AspNetUserRoles")]
+        public class Aspnetuserrole  
+        {
+        	[Key]
+        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        	[Column("UserId")]
+        	public Aspnetuser UseridAspnetusers { get; set; }
+
+        	[Key]
+        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        	[Column("RoleId")]
+        	public Aspnetrole RoleidAspnetroles { get; set; }
+        }
+        public class AspnetuserroleSearchModel
+        {
+        	public Aspnetuser? UseridAspnetusers { get; set; }
+        	public Aspnetrole? RoleidAspnetroles { get; set; }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
+
+    - fileType: "User-Login Entity"
+      fileName: "Aspnetuserlogin"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Models;
+        using System.ComponentModel.DataAnnotations;
+        using System.ComponentModel.DataAnnotations.Schema;
+        using System.ComponentModel;
+
+        [Table("AspNetUserLogins")]
+        public class Aspnetuserlogin  
+        {
+        	[Key]
+        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        	[Column("LoginProvider")]
+        	public string Loginprovider { get; set; }
+
+        	[Key]
+        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        	[Column("ProviderKey")]
+        	public string Providerkey { get; set; }
+
+        	[Column("ProviderDisplayName")]
+        	[StringLength(2147483647)]
+        	public string Providerdisplayname { get; set; }
+
+        	[Column("UserId")]
+        	public string? Userid { get; set; }
+        	[ForeignKey(nameof(Userid))]
+        	public virtual Aspnetuser? UseridAspnetusers { get; set; }
+        }
+        public class AspnetuserloginSearchModel
+        {
+        	public string? Loginprovider { get; set; }
+        	public string? Providerkey { get; set; }
+        	public string? Providerdisplayname { get; set; }
+        	public Aspnetuser? UseridAspnetusers { get; set; }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
+      
+      
+    - fileType: "User-Token Entity"
+      fileName: "Aspnetusertoken"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Models;
+
+        using System.ComponentModel.DataAnnotations;
+        using System.ComponentModel.DataAnnotations.Schema;
+        using System.ComponentModel;
+
+        [Table("AspNetUserTokens")]
+        public class Aspnetusertoken  
+        {
+        	[Key]
+        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        	[Column("UserId")]
+        	public Aspnetuser UseridAspnetusers { get; set; }
+
+        	[Key]
+        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        	[Column("LoginProvider")]
+        	public string Loginprovider { get; set; }
+
+        	[Key]
+        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        	[Column("Name")] 
+        	public string Name { get; set; }
+
+        	[Column("Value")]
+        	[StringLength(2147483647)]
+        	public string Value { get; set; }
+
+        }
+        public class AspnetusertokenSearchModel
+        {
+        	public Aspnetuser? UseridAspnetusers { get; set; }
+        	public string? Loginprovider { get; set; }
+        	public string? Name { get; set; }
+        	public string? Value { get; set; }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
+
+    - fileType: "Role-Clain Entity"
+      fileName: "Aspnetroleclaim"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Models;
+
+        using System.ComponentModel.DataAnnotations;
+        using System.ComponentModel.DataAnnotations.Schema;
+        using System.ComponentModel;
+
+        [Table("AspNetRoleClaims")]
+        public class Aspnetroleclaim  
+        {
+        	[Key]
+        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        	[Column("Id")]
+        	public long Id { get; set; }
+
+        	[Column("RoleId")]
+        	public string? Roleid { get; set; }
+        	[ForeignKey(nameof(Roleid))]
+        	public virtual Aspnetrole? RoleidAspnetroles { get; set; }
+
+
+        	[Column("ClaimType")]
+        	[StringLength(2147483647)]
+        	public string Claimtype { get; set; }
+
+        	[Column("ClaimValue")]
+        	[StringLength(2147483647)]
+        	public string Claimvalue { get; set; }
+
+        }
+        public class AspnetroleclaimSearchModel
+        {
+        	public long? Id { get; set; }
+        	public Aspnetrole? RoleidAspnetroles { get; set; }
+        	public string? Claimtype { get; set; }
+        	public string? Claimvalue { get; set; }
+
+
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
+
+    - fileType: "User-Claim Entity"
+      fileName: "Aspnetuserclaim"
+      extension: "cs"
+      content: |
+        namespace Netnet.Models;
+
+        using System.ComponentModel.DataAnnotations;
+        using System.ComponentModel.DataAnnotations.Schema;
+        using System.ComponentModel;
+
+        [Table("AspNetUserClaims")]
+        public class Aspnetuserclaim  
+        {
+        	[Key]
+        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        	[Column("Id")]
+        	public long Id { get; set; }
+
+        	[Column("UserId")]
+        	public string? Userid { get; set; }
+        	[ForeignKey(nameof(Userid))]
+        	public virtual Aspnetuser? UseridAspnetusers { get; set; }
+
+
+        	[Column("ClaimType")]
+        	[StringLength(2147483647)]
+        	public string Claimtype { get; set; }
+
+        	[Column("ClaimValue")]
+        	[StringLength(2147483647)]
+        	public string Claimvalue { get; set; }
+
+        }
+        public class AspnetuserclaimSearchModel
+        {
+        	public long? Id { get; set; }
+        	public Aspnetuser? UseridAspnetusers { get; set; }
+        	public string? Claimtype { get; set; }
+        	public string? Claimvalue { get; set; }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
+
+    - fileType: "Role-Claim Repository Interface"
+      fileName: "IAspnetroleclaimRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetroleclaimRepository : IRepository<Aspnetroleclaim, long> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Interface"
+
+    - fileType: "Role Repository Interface"
+      fileName: "IAspnetroleRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetroleRepository : IRepository<Aspnetrole, string> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Interface"
+
+    - fileType: "User-Claim Repository Interface"
+      fileName: "IAspnetuserclaimRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetuserclaimRepository : IRepository<Aspnetuserclaim, long> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Interface"
+
+    - fileType: "User-Login Repository Interface"
+      fileName: "IAspnetuserloginRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetuserloginRepository : IRepository<Aspnetuserlogin, string> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Interface"
+
+    - fileType: "User Repository Interface"
+      fileName: "IAspnetuserRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetuserRepository : IRepository<Aspnetuser, string> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Interface"
+
+    - fileType: "User-Role Repository Interface"
+      fileName: "IAspnetuserroleRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetuserroleRepository : IRepository<Aspnetuserrole, Aspnetrole> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Interface"
+
+    - fileType: "User-Token Repository Interface"
+      fileName: "IAspnetusertokenRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetusertokenRepository : IRepository<Aspnetusertoken, string> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Interface"
+
+    - fileType: "Role-Claim Repository Implementation"
+      fileName: "AspnetroleclaimRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Implementation;
+
+        using Data;
+        using Models;
+        using Generic;
+        using Interface;
+
+        public class AspnetroleclaimRepository : Repository<Aspnetroleclaim, long>, IAspnetroleclaimRepository
+        {
+            public AspnetroleclaimRepository(NetnetContext context) : base(context)
+            {
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Implementation"
+
+    - fileType: "Role Repository Implementation"
+      fileName: "AspnetroleRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Implementation;
+
+        using Data;
+        using Models;
+        using Generic;
+        using Interface;
+
+        public class AspnetroleRepository : Repository<Aspnetrole, string>, IAspnetroleRepository
+        {
+            public AspnetroleRepository(NetnetContext context) : base(context)
+            {
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Implementation"
+
+    - fileType: "User-Claim Repository Implementation"
+      fileName: "AspnetuserclaimRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Implementation;
+
+        using Data;
+        using Models;
+        using Generic;
+        using Interface;
+
+        public class AspnetuserclaimRepository : Repository<Aspnetuserclaim, long>, IAspnetuserclaimRepository
+        {
+            public AspnetuserclaimRepository(NetnetContext context) : base(context)
+            {
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Implementation"
+
+    - fileType: "User-Login Repository Implementation"
+      fileName: "AspnetuserloginRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Implementation;
+
+        using Data;
+        using Models;
+        using Generic;
+        using Interface;
+
+        public class AspnetuserloginRepository : Repository<Aspnetuserlogin, string>, IAspnetuserloginRepository
+        {
+            public AspnetuserloginRepository(NetnetContext context) : base(context)
+            {
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Implementation"
+
+    - fileType: "User Repository Implementation"
+      fileName: "AspnetuserRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Implementation;
+
+        using Data;
+        using Models;
+        using Generic;
+        using Interface;
+
+        public class AspnetuserRepository : Repository<Aspnetuser, string>, IAspnetuserRepository
+        {
+            public AspnetuserRepository(NetnetContext context) : base(context)
+            {
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Implementation"
+
+    - fileType: "User-Role Repository Implementation"
+      fileName: "AspnetuserroleRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Implementation;
+
+        using Data;
+        using Models;
+        using Generic;
+        using Interface;
+
+        public class AspnetuserroleRepository : Repository<Aspnetuserrole, Aspnetrole>, IAspnetuserroleRepository
+        {
+            public AspnetuserroleRepository(NetnetContext context) : base(context)
+            {
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Implementation"
+
+    - fileType: "User-Token Repository Implementation"
+      fileName: "AspnetusertokenRepository"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Repositories.Implementation;
+
+        using Data;
+        using Models;
+        using Generic;
+        using Interface;
+
+        public class AspnetusertokenRepository : Repository<Aspnetusertoken, string>, IAspnetusertokenRepository
+        {
+            public AspnetusertokenRepository(NetnetContext context) : base(context)
+            {
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Implementation" 
+
+    - fileType: "Role-Claim Service Interface"
+      fileName: "IAspnetroleclaimService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetroleclaimService : IService<Aspnetroleclaim, long> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
+
+    - fileType: "Role Service Interface"
+      fileName: "IAspnetroleService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetroleService : IService<Aspnetrole, string> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
+
+    - fileType: "User-Claim Service Interface"
+      fileName: "IAspnetuserclaimService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetuserclaimService : IService<Aspnetuserclaim, long> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
+
+    - fileType: "User-Login Service Interface"
+      fileName: "IAspnetuserloginService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetuserloginService : IService<Aspnetuserlogin, string> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
+
+    - fileType: "User-Role Service Interface"
+      fileName: "IAspnetuserroleService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetuserroleService : IService<Aspnetuserrole, Aspnetrole> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
+
+    - fileType: "User Service Interface"
+      fileName: "IAspnetuserService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetuserService : IService<Aspnetuser, string> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
+
+    - fileType: "User-Token Service Interface"
+      fileName: "IAspnetusertokenService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Interface;
+
+        using Models;
+        using Generic;
+
+        public interface IAspnetusertokenService : IService<Aspnetusertoken, string> 
+        {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
+    
+    - fileType: "Role-Claim Service Implementation"
+      fileName: "AspnetroleclaimService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Implementation;
+
+        using System.Linq.Expressions;
+        using Exceptions;
+        using Models;
+        using Repositories.Interface;
+
+        public class AspnetroleclaimService : IAspnetroleclaimService
+        {
+            private readonly IAspnetroleclaimRepository _repository;
+
+            public AspnetroleclaimService(IAspnetroleclaimRepository repository)
+            {
+                _repository = repository;
+            }
+
+            public async Task<IEnumerable<Aspnetroleclaim>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<Aspnetroleclaim, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while retrieving all aspnetroleclaim", ex);
+                }
+            }
+
+            public async Task<IEnumerable<Aspnetroleclaim>> SearchAsync(Aspnetroleclaim search, int page, int pageSize, string? sorting)
+            {
+                try
+                {
+                    return await _repository.SearchAsync(search, page, pageSize, sorting);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while searching aspnetroleclaim", ex);
+                }
+            }
+
+            public async Task<Aspnetroleclaim?> GetByIdAsync(long id, params Expression<Func<Aspnetroleclaim, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetByIdAsync(id, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new ResourceNotFoundException("Aspnetroleclaim not found with id : " + id);
+                }
+            }
+
+            public async Task AddAsync(Aspnetroleclaim aspnetroleclaim)
+            {
+                try
+                {
+                    await _repository.AddAsync(aspnetroleclaim);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while creating aspnetroleclaim", ex);
+                }
+            }
+
+            public async Task UpdateAsync(Aspnetroleclaim aspnetroleclaim)
+            {
+                try
+                {
+                    await _repository.UpdateAsync(aspnetroleclaim);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while updating aspnetroleclaim", ex);
+                }
+            }
+
+            public async Task DeleteAsync(long id)
+            {
+                try
+                {
+                    await _repository.DeleteAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while deleting aspnetroleclaim", ex);
+                }
+            }
+
+            public async Task<bool> ExistsAsync(long id)
+            {
+                try
+                {
+                    return await _repository.ExistsAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while checking existence of aspnetroleclaim", ex);
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+
+    - fileType: "Role Service Implementation"
+      fileName: "AspnetroleService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Implementation;
+
+        using System.Linq.Expressions;
+        using Exceptions;
+        using Models;
+        using Repositories.Interface;
+
+        public class AspnetroleService : IAspnetroleService
+        {
+            private readonly IAspnetroleRepository _repository;
+
+            public AspnetroleService(IAspnetroleRepository repository)
+            {
+                _repository = repository;
+            }
+
+            public async Task<IEnumerable<Aspnetrole>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<Aspnetrole, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while retrieving all aspnetrole", ex);
+                }
+            }
+
+            public async Task<IEnumerable<Aspnetrole>> SearchAsync(Aspnetrole search, int page, int pageSize, string? sorting)
+            {
+                try
+                {
+                    return await _repository.SearchAsync(search, page, pageSize, sorting);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while searching aspnetrole", ex);
+                }
+            }
+
+            public async Task<Aspnetrole?> GetByIdAsync(string id, params Expression<Func<Aspnetrole, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetByIdAsync(id, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new ResourceNotFoundException("Aspnetrole not found with id : " + id);
+                }
+            }
+
+            public async Task AddAsync(Aspnetrole aspnetrole)
+            {
+                try
+                {
+                    await _repository.AddAsync(aspnetrole);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while creating aspnetrole", ex);
+                }
+            }
+
+            public async Task UpdateAsync(Aspnetrole aspnetrole)
+            {
+                try
+                {
+                    await _repository.UpdateAsync(aspnetrole);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while updating aspnetrole", ex);
+                }
+            }
+
+            public async Task DeleteAsync(string id)
+            {
+                try
+                {
+                    await _repository.DeleteAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while deleting aspnetrole", ex);
+                }
+            }
+
+            public async Task<bool> ExistsAsync(string id)
+            {
+                try
+                {
+                    return await _repository.ExistsAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while checking existence of aspnetrole", ex);
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+    - fileType: "User-Claim Service Implementation"
+      fileName: "AspnetuserclaimService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Implementation;
+
+        using System.Linq.Expressions;
+        using Exceptions;
+        using Models;
+        using Repositories.Interface;
+
+        public class AspnetuserclaimService : IAspnetuserclaimService
+        {
+            private readonly IAspnetuserclaimRepository _repository;
+
+            public AspnetuserclaimService(IAspnetuserclaimRepository repository)
+            {
+                _repository = repository;
+            }
+
+            public async Task<IEnumerable<Aspnetuserclaim>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<Aspnetuserclaim, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while retrieving all aspnetuserclaim", ex);
+                }
+            }
+
+            public async Task<IEnumerable<Aspnetuserclaim>> SearchAsync(Aspnetuserclaim search, int page, int pageSize, string? sorting)
+            {
+                try
+                {
+                    return await _repository.SearchAsync(search, page, pageSize, sorting);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while searching aspnetuserclaim", ex);
+                }
+            }
+
+            public async Task<Aspnetuserclaim?> GetByIdAsync(long id, params Expression<Func<Aspnetuserclaim, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetByIdAsync(id, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new ResourceNotFoundException("Aspnetuserclaim not found with id : " + id);
+                }
+            }
+
+            public async Task AddAsync(Aspnetuserclaim aspnetuserclaim)
+            {
+                try
+                {
+                    await _repository.AddAsync(aspnetuserclaim);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while creating aspnetuserclaim", ex);
+                }
+            }
+
+            public async Task UpdateAsync(Aspnetuserclaim aspnetuserclaim)
+            {
+                try
+                {
+                    await _repository.UpdateAsync(aspnetuserclaim);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while updating aspnetuserclaim", ex);
+                }
+            }
+
+            public async Task DeleteAsync(long id)
+            {
+                try
+                {
+                    await _repository.DeleteAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while deleting aspnetuserclaim", ex);
+                }
+            }
+
+            public async Task<bool> ExistsAsync(long id)
+            {
+                try
+                {
+                    return await _repository.ExistsAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while checking existence of aspnetuserclaim", ex);
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+
+    - fileType: "User-Login Service Implementation"
+      fileName: "AspnetuserloginService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Implementation;
+
+        using System.Linq.Expressions;
+        using Exceptions;
+        using Models;
+        using Repositories.Interface;
+
+        public class AspnetuserloginService : IAspnetuserloginService
+        {
+            private readonly IAspnetuserloginRepository _repository;
+
+            public AspnetuserloginService(IAspnetuserloginRepository repository)
+            {
+                _repository = repository;
+            }
+
+            public async Task<IEnumerable<Aspnetuserlogin>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<Aspnetuserlogin, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while retrieving all aspnetuserlogin", ex);
+                }
+            }
+
+            public async Task<IEnumerable<Aspnetuserlogin>> SearchAsync(Aspnetuserlogin search, int page, int pageSize, string? sorting)
+            {
+                try
+                {
+                    return await _repository.SearchAsync(search, page, pageSize, sorting);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while searching aspnetuserlogin", ex);
+                }
+            }
+
+            public async Task<Aspnetuserlogin?> GetByIdAsync(string id, params Expression<Func<Aspnetuserlogin, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetByIdAsync(id, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new ResourceNotFoundException("Aspnetuserlogin not found with id : " + id);
+                }
+            }
+
+            public async Task AddAsync(Aspnetuserlogin aspnetuserlogin)
+            {
+                try
+                {
+                    await _repository.AddAsync(aspnetuserlogin);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while creating aspnetuserlogin", ex);
+                }
+            }
+
+            public async Task UpdateAsync(Aspnetuserlogin aspnetuserlogin)
+            {
+                try
+                {
+                    await _repository.UpdateAsync(aspnetuserlogin);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while updating aspnetuserlogin", ex);
+                }
+            }
+
+            public async Task DeleteAsync(string id)
+            {
+                try
+                {
+                    await _repository.DeleteAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while deleting aspnetuserlogin", ex);
+                }
+            }
+
+            public async Task<bool> ExistsAsync(string id)
+            {
+                try
+                {
+                    return await _repository.ExistsAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while checking existence of aspnetuserlogin", ex);
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+    - fileType: "User Service Implementation"
+      fileName: "AspnetuserService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Implementation;
+
+        using System.Linq.Expressions;
+        using Exceptions;
+        using Models;
+        using Repositories.Interface;
+
+        public class AspnetuserService : IAspnetuserService
+        {
+            private readonly IAspnetuserRepository _repository;
+
+            public AspnetuserService(IAspnetuserRepository repository)
+            {
+                _repository = repository;
+            }
+
+            public async Task<IEnumerable<Aspnetuser>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<Aspnetuser, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while retrieving all aspnetuser", ex);
+                }
+            }
+
+            public async Task<IEnumerable<Aspnetuser>> SearchAsync(Aspnetuser search, int page, int pageSize, string? sorting)
+            {
+                try
+                {
+                    return await _repository.SearchAsync(search, page, pageSize, sorting);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while searching aspnetuser", ex);
+                }
+            }
+
+            public async Task<Aspnetuser?> GetByIdAsync(string id, params Expression<Func<Aspnetuser, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetByIdAsync(id, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new ResourceNotFoundException("Aspnetuser not found with id : " + id);
+                }
+            }
+
+            public async Task AddAsync(Aspnetuser aspnetuser)
+            {
+                try
+                {
+                    await _repository.AddAsync(aspnetuser);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while creating aspnetuser", ex);
+                }
+            }
+
+            public async Task UpdateAsync(Aspnetuser aspnetuser)
+            {
+                try
+                {
+                    await _repository.UpdateAsync(aspnetuser);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while updating aspnetuser", ex);
+                }
+            }
+
+            public async Task DeleteAsync(string id)
+            {
+                try
+                {
+                    await _repository.DeleteAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while deleting aspnetuser", ex);
+                }
+            }
+
+            public async Task<bool> ExistsAsync(string id)
+            {
+                try
+                {
+                    return await _repository.ExistsAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while checking existence of aspnetuser", ex);
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+    
+    - fileType: "User-Role Service Implementation"
+      fileName: "AspnetuserroleService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Implementation;
+
+        using System.Linq.Expressions;
+        using Exceptions;
+        using Models;
+        using Repositories.Interface;
+
+        public class AspnetuserroleService : IAspnetuserroleService
+        {
+            private readonly IAspnetuserroleRepository _repository;
+
+            public AspnetuserroleService(IAspnetuserroleRepository repository)
+            {
+                _repository = repository;
+            }
+
+            public async Task<IEnumerable<Aspnetuserrole>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<Aspnetuserrole, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while retrieving all aspnetuserrole", ex);
+                }
+            }
+
+            public async Task<IEnumerable<Aspnetuserrole>> SearchAsync(Aspnetuserrole search, int page, int pageSize, string? sorting)
+            {
+                try
+                {
+                    return await _repository.SearchAsync(search, page, pageSize, sorting);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while searching aspnetuserrole", ex);
+                }
+            }
+
+            public async Task<Aspnetuserrole?> GetByIdAsync(Aspnetrole id, params Expression<Func<Aspnetuserrole, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetByIdAsync(id, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new ResourceNotFoundException("Aspnetuserrole not found with role id : " + id);
+                }
+            }
+
+            public async Task AddAsync(Aspnetuserrole aspnetuserrole)
+            {
+                try
+                {
+                    await _repository.AddAsync(aspnetuserrole);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while creating aspnetuserrole", ex);
+                }
+            }
+
+            public async Task UpdateAsync(Aspnetuserrole aspnetuserrole)
+            {
+                try
+                {
+                    await _repository.UpdateAsync(aspnetuserrole);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while updating aspnetuserrole", ex);
+                }
+            }
+
+            public async Task DeleteAsync(Aspnetrole id)
+            {
+                try
+                {
+                    await _repository.DeleteAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while deleting aspnetuserrole", ex);
+                }
+            }
+
+            public async Task<bool> ExistsAsync(Aspnetrole id)
+            {
+                try
+                {
+                    return await _repository.ExistsAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while checking existence of aspnetuserrole", ex);
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+
+    - fileType: "User-Token Service Implementation"
+      fileName: "AspnetusertokenService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Implementation;
+
+        using System.Linq.Expressions;
+        using Exceptions;
+        using Models;
+        using Repositories.Interface;
+
+        public class AspnetusertokenService : IAspnetusertokenService
+        {
+            private readonly IAspnetusertokenRepository _repository;
+
+            public AspnetusertokenService(IAspnetusertokenRepository repository)
+            {
+                _repository = repository;
+            }
+
+            public async Task<IEnumerable<Aspnetusertoken>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<Aspnetusertoken, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while retrieving all aspnetusertoken", ex);
+                }
+            }
+
+            public async Task<IEnumerable<Aspnetusertoken>> SearchAsync(Aspnetusertoken search, int page, int pageSize, string? sorting)
+            {
+                try
+                {
+                    return await _repository.SearchAsync(search, page, pageSize, sorting);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while searching aspnetusertoken", ex);
+                }
+            }
+
+            public async Task<Aspnetusertoken?> GetByIdAsync(string id, params Expression<Func<Aspnetusertoken, object?>>[]? includeProperties)
+            {
+                try
+                {
+                    return await _repository.GetByIdAsync(id, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                    throw new ResourceNotFoundException("Aspnetusertoken not found with id : " + id);
+                }
+            }
+
+            public async Task AddAsync(Aspnetusertoken aspnetusertoken)
+            {
+                try
+                {
+                    await _repository.AddAsync(aspnetusertoken);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while creating aspnetusertoken", ex);
+                }
+            }
+
+            public async Task UpdateAsync(Aspnetusertoken aspnetusertoken)
+            {
+                try
+                {
+                    await _repository.UpdateAsync(aspnetusertoken);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while updating aspnetusertoken", ex);
+                }
+            }
+
+            public async Task DeleteAsync(string id)
+            {
+                try
+                {
+                    await _repository.DeleteAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while deleting aspnetusertoken", ex);
+                }
+            }
+
+            public async Task<bool> ExistsAsync(string id)
+            {
+                try
+                {
+                    return await _repository.ExistsAsync(id);
+                }
+                catch (Exception ex)
+                {
+                    throw new InternalServerErrorException("Error while checking existence of aspnetusertoken", ex);
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+  
   additionalDependencies: [ ]
   metadataBooleanTrueKeys:
     - "useJWT"
