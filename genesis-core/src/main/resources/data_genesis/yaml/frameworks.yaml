@@ -947,7 +947,7 @@
       {{tab}}{{/each}}
       {{tab}}{{#if cacheableWithEhcache}}@Override
       {{tab}}public String toString() {
-      {{tab}}StringBuilder filterCriteria = new StringBuilder("${majStart(className)}{");
+      {{tab}}StringBuilder filterCriteria = new StringBuilder("${majStart(className)}SearchCriteria{");
       {{tab}}{{#each fields}}
       {{tab}}if (${this.name} != null) filterCriteria.append("${this.name}=").append(${this.name}).append(", ");
       {{tab}}{{/each}}{{removeLine}}
@@ -1217,7 +1217,7 @@
       {{tab}}}
       
       {{tab}}@Override
-      {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "#id"){{else}}{{removeLine}}{{/if}}
+      {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "#${pkColumn}"){{else}}{{removeLine}}{{/if}}
       {{tab}}public ${majStart(className)} get${majStart(className)}ById(${pkColumnType} ${pkColumn}) {
       {{tab}}    Optional<${majStart(className)}> ${minStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
       {{tab}}    if (${minStart(className)}.isPresent()) {

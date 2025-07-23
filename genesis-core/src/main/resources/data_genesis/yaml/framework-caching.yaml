@@ -17,7 +17,7 @@
           </service>
         
           {{#each entitiesCacheable}}
-          <cache alias="${this}sCache">
+          <cache alias="${removeLastS(this)}sCache">
             <key-type>java.lang.String</key-type>
             <value-type>java.io.Serializable</value-type>
             <expiry>
