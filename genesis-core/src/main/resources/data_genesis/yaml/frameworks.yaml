@@ -945,6 +945,19 @@
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
+      {{tab}}{{#if cacheableWithEhcache}}@Override
+      {{tab}}public String toString() {
+      {{tab}}StringBuilder filterCriteria = new StringBuilder("${majStart(className)}{");
+      {{tab}}{{#each fields}}
+      {{tab}}if (${this.name} != null) filterCriteria.append("${this.name}=").append(${this.name}).append(", ");
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}if (filterCriteria.lastIndexOf(", ") == filterCriteria.length() - 2) {
+      {{tab}}{{tab}}filterCriteria.delete(filterCriteria.length() - 2, filterCriteria.length());
+      {{tab}}}
+      {{tab}}filterCriteria.append("}");
+      {{tab}}return filterCriteria.toString();
+      {{tab}}}
+      {{tab}}{{else}}{{removeLine}}{{/if}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
@@ -1183,7 +1196,7 @@
       {{tab}}}
     serviceMethodContent: |
       {{tab}}@Override
-      {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort"){{else}}{{removeLine}}{{/if}}
+      {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort", unless = "#result.isEmpty()"){{else}}{{removeLine}}{{/if}}
       {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.findAll(pageable);
@@ -1193,7 +1206,7 @@
       {{tab}}}
       
       {{tab}}@Override
-      {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "'filtered-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort + '-' + #object.hashCode()"){{else}}{{removeLine}}{{/if}}
+      {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "'filtered-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort + '-' + #object.toString()", unless = "#result.isEmpty()"){{else}}{{removeLine}}{{/if}}
       {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable, ${majStart(className)} object) {
       {{tab}}    try {
       {{tab}}        Specification<${majStart(className)}> spec=${majStart(className)}Specification.filter(object);
@@ -1204,6 +1217,7 @@
       {{tab}}}
       
       {{tab}}@Override
+      {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "#id"){{else}}{{removeLine}}{{/if}}
       {{tab}}public ${majStart(className)} get${majStart(className)}ById(${pkColumnType} ${pkColumn}) {
       {{tab}}    Optional<${majStart(className)}> ${minStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
       {{tab}}    if (${minStart(className)}.isPresent()) {
