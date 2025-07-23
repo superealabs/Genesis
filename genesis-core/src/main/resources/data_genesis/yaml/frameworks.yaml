@@ -1217,7 +1217,7 @@
       {{tab}}}
       
       {{tab}}@Override
-      {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "#${pkColumn}"){{else}}{{removeLine}}{{/if}}
+      {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "'${pkColumn}-' + #${pkColumn}"){{else}}{{removeLine}}{{/if}}
       {{tab}}public ${majStart(className)} get${majStart(className)}ById(${pkColumnType} ${pkColumn}) {
       {{tab}}    Optional<${majStart(className)}> ${minStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
       {{tab}}    if (${minStart(className)}.isPresent()) {
