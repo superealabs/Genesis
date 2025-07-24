@@ -57,7 +57,7 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
                 projectGenerationContext.setGenerationOptions(selectedComponent);
             }
 
-            specificConfigurationWizardStep.onTablesAndViewsSelected(handleSelectAll(selectedValues, allTableNames), handleSelectAll(selectedViewValues, allViewNames));
+            specificConfigurationWizardStep.onTablesAndViewsSelected(handleSelectAll(selectedValues, generationOptionForm.getAllTableNames()), handleSelectAll(selectedViewValues, generationOptionForm.getAllViewsNames()));
         } catch (Exception e) {
             Messages.showErrorDialog(
                     generationOptionForm.getMainPanel(),
@@ -70,7 +70,9 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
 
     private List<String> handleSelectAll(List<String> selectedValues, List<String> allValues) {
         if (selectedValues.contains(SELECT_ALL)) {
-            return allValues;
+            List<String> result = new ArrayList<>(allValues);
+            result.remove(SELECT_ALL);
+            return result;
         }
         return selectedValues;
     }
