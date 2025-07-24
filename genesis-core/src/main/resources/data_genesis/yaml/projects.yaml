@@ -208,6 +208,7 @@
                     <PrivateAssets>all</PrivateAssets>
                 </PackageReference>
                 <PackageReference Include="${DBartifactId}" Version="${frameworkVersion}.0"/>{{/if}}
+                {{#if useMicrosoftExtensionsCachingMemory}}<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.7" />{{else}}{{removeLine}}{{/if}}
                 <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0"/>
                 <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.9.0"/>
                 {{#if useEurekaServer}}<PackageReference Include="Steeltoe.Discovery.Eureka" Version="3.2.0"/>{{/if}}

@@ -49,3 +49,101 @@
       scope: "{{removeLine}}"
   metadataBooleanTrueKeys:
     - "useEhcache"
+- id: 2
+  frameworkId: 2
+  name: "MicrosoftExtensionsCachingMemory"
+  configFiles:
+    - fileType: "ICacheService"
+      fileName: "ICacheService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Interface;
+
+        public interface ICacheService
+        {
+            T? Get<T>(string key);
+            void Set<T>(string key, T value, TimeSpan expiration);
+            void Remove(string key);
+
+            void RemoveByKey(string key);
+            void RemoveByKeyPrefix(string prefix);
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
+    - fileType: "MemoryCacheService"
+      fileName: "MemoryCacheService"
+      extension: "cs"
+      content: |
+        using Microsoft.Extensions.Caching.Memory;
+        using System.Collections.Concurrent;
+        using ${majStart(projectName)}.Services.Interface;
+
+        namespace ${majStart(projectName)}.Services.Implementation;
+
+        public class MemoryCacheService : ICacheService
+        {
+            private readonly IMemoryCache _memoryCache;
+            private static readonly ConcurrentDictionary<string, byte> _keys = new();
+
+            public MemoryCacheService(IMemoryCache memoryCache)
+            {
+                _memoryCache = memoryCache;
+            }
+
+            public T? Get<T>(string key)
+            {
+                if (_memoryCache.TryGetValue(key, out T value))
+                {
+                    Console.WriteLine($"Cache hit for key: {key}");
+                    return value;
+                }
+                else
+                {
+                    Console.WriteLine($"Cache miss for key: {key}");
+                    return default;
+                }
+            }
+
+            public void Set<T>(string key, T value, TimeSpan expiration)
+            {
+                Console.WriteLine($"Setting cache for key: {key} (expires in {expiration.TotalMinutes} min)");
+                _memoryCache.Set(key, value, new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = expiration,
+                    PostEvictionCallbacks =
+                    {
+                        new PostEvictionCallbackRegistration
+                        {
+                            EvictionCallback = (k, _, _, _) => _keys.TryRemove(k.ToString(), out _)
+                        }
+                    }
+                });
+
+                _keys.TryAdd(key, 0);
+            }
+
+            public void Remove(string key)
+            {
+                Console.WriteLine($"Cache remove for key: {key}");
+                _memoryCache.Remove(key);
+            }
+
+            public void RemoveByKey(string key)
+            {
+                Remove(key);
+                _keys.TryRemove(key, out _);
+            }
+
+            public void RemoveByKeyPrefix(string prefix)
+            {
+                var keysToRemove = _keys.Keys.Where(k => k.StartsWith(prefix)).ToList();
+                foreach (var key in keysToRemove)
+                {
+                    Remove(key);
+                    _keys.TryRemove(key, out _);
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+  additionalDependencies: [ ]
+  metadataBooleanTrueKeys:
+    - "useMicrosoftExtensionsCachingMemory"
