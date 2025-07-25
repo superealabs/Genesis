@@ -1760,6 +1760,7 @@
       fileName: "UserRoles"
       extension: "cs"
       content: |
+        namespace ${majStart(projectName)}.Models;
         public static class UserRoles
         {
             public const string Admin = "Admin";
@@ -1772,6 +1773,7 @@
       fileName: "ApplicationUser"
       extension: "cs"
       content: |
+        namespace ${majStart(projectName)}.Models;
         using Microsoft.AspNetCore.Identity;
 
         public class ApplicationUser : IdentityUser
@@ -1783,53 +1785,57 @@
       fileName: "AuthRequest"
       extension: "cs"
       content: |
+        namespace ${majStart(projectName)}.DTOs;
         public class AuthRequest
         {
             public string Username { get; set; }
             public string Password { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Dto"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
 
     - fileType: "Register Request DTO"
       fileName: "RegisterRequest"
       extension: "cs"
       content: |
+        namespace ${majStart(projectName)}.DTOs;
         public class RegisterRequest
         {
             public string Username { get; set; }
             public string Email { get; set; }
             public string Password { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Dto"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
 
     - fileType: "Password Change Request DTO"
       fileName: "PasswordChangeRequest"
       extension: "cs"
       content: |
+        namespace ${majStart(projectName)}.DTOs;
         public class PasswordChangeRequest
         {
             public string OldPassword { get; set; }
             public string NewPassword { get; set; }
             public string ConfirmPassword { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Dto"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
 
     - fileType: "User Update Request DTO"
       fileName: "UserUpdateRequest"
       extension: "cs"
       content: |
+        namespace ${majStart(projectName)}.DTOs;
         public class UserUpdateRequest
         {
             public string Name { get; set; }
             public string Email { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Dto"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
 
     - fileType: "JWT Service"
       fileName: "JwtService"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}Services.Implementation;
+        namespace ${majStart(projectName)}.Services.Implementation;
         using System.IdentityModel.Tokens.Jwt;
         using System.Security.Claims;
         using System.Text;
@@ -1881,6 +1887,7 @@
       fileName: "TokenBlacklistService"
       extension: "cs"
       content: |
+        namespace ${majStart(projectName)}.Services.Implementation;
         public class TokenBlacklistService
         {
             private readonly Dictionary<string, DateTime> _invalidatedTokens = new();
@@ -1910,10 +1917,11 @@
       fileName: "UserService"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}Services.Implementation;
+        namespace ${majStart(projectName)}.Services.Implementation;
 
-        using ${majStart(projectName)}Dto;
-        using Microsoft.AspNetCore.Identity;
+        using ${majStart(projectName)}.DTOs;
+        using Microsoft.AspNetCore.Identity;      
+        using ${majStart(projectName)}.Models;
 
         public class UserService
         {
@@ -1978,15 +1986,14 @@
       fileName: "AuthController"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}Controllers;
+        namespace ${majStart(projectName)}.Controllers;
 
         using Microsoft.AspNetCore.Authorization;
         using Microsoft.AspNetCore.Mvc;
         using Microsoft.AspNetCore.Http;
-        using ${majStart(projectName)}Dto;
-        using ${majStart(projectName)}Utils;
-        using ${majStart(projectName)}Services.Implementation;
-
+        using ${majStart(projectName)}.DTOs;
+        using ${majStart(projectName)}.Utils;
+        using ${majStart(projectName)}.Services.Implementation;
 
         [ApiController]
         [Route("auth")]
@@ -2102,79 +2109,78 @@
       fileName: "SqlSchemaBootstrapper"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}Services.Startup
+        namespace ${majStart(projectName)}.Services.Startup;
 
         using Microsoft.Extensions.Hosting;
         using Microsoft.Extensions.DependencyInjection;
         using Microsoft.EntityFrameworkCore;
         using System.Data.Common;
-        using ${majStart(projectName)}Data;
-
+        using ${majStart(projectName)}.Data;
+    
+        public class SqlSchemaBootstrapper : IHostedService
         {
-            public class SqlSchemaBootstrapper : IHostedService
+            private readonly IServiceProvider _provider;
+            private const string SchemaFilePath = "Data/identity_schema.sql"; // chemin du script SQL
+
+            public SqlSchemaBootstrapper(IServiceProvider provider)
             {
-                private readonly IServiceProvider _provider;
-                private const string SchemaFilePath = "Data/identity_schema.sql"; // chemin du script SQL
+                _provider = provider;
+            }
 
-                public SqlSchemaBootstrapper(IServiceProvider provider)
+            public async Task StartAsync(CancellationToken cancellationToken)
+            {
+                using var scope = _provider.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
+                var db = context.Database;
+                var conn = db.GetDbConnection();
+
+                try
                 {
-                    _provider = provider;
-                }
+                    await conn.OpenAsync(cancellationToken);
 
-                public async Task StartAsync(CancellationToken cancellationToken)
-                {
-                    using var scope = _provider.CreateScope();
-                    var context = scope.ServiceProvider.GetRequiredService<NiniContext>();
-                    var db = context.Database;
-                    var conn = db.GetDbConnection();
-
-                    try
+                    if (!await TableExistsAsync(conn, "AspNetUsers"))
                     {
-                        await conn.OpenAsync(cancellationToken);
+                        var sql = await File.ReadAllTextAsync(SchemaFilePath, cancellationToken);
+                        using var command = conn.CreateCommand();
+                        command.CommandText = sql;
+                        await command.ExecuteNonQueryAsync(cancellationToken);
 
-                        if (!await TableExistsAsync(conn, "AspNetUsers"))
-                        {
-                            var sql = await File.ReadAllTextAsync(SchemaFilePath, cancellationToken);
-                            using var command = conn.CreateCommand();
-                            command.CommandText = sql;
-                            await command.ExecuteNonQueryAsync(cancellationToken);
-
-                            Console.WriteLine("[Identity Schema] Tables créées automatiquement.");
-                        }
-                        else
-                        {
-                            Console.WriteLine("[Identity Schema] Tables déjà existantes.");
-                        }
+                        Console.WriteLine("[Identity Schema] Tables créées automatiquement.");
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        Console.WriteLine($"[Identity Schema] ERREUR : {ex.Message}");
-                    }
-                    finally
-                    {
-                        await conn.CloseAsync();
+                        Console.WriteLine("[Identity Schema] Tables déjà existantes.");
                     }
                 }
-
-                public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-
-                private async Task<bool> TableExistsAsync(DbConnection connection, string tableName)
+                catch (Exception ex)
                 {
-                    string query = connection.GetType().Name switch
-                    {
-                        var n when n.Contains("Npgsql") => $"SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '{tableName.ToLower()}');",
-                        var n when n.Contains("MySql") => $"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{tableName}';",
-                        var n when n.Contains("SqlConnection") => $"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{tableName}';",
-                        var n when n.Contains("Oracle") => $"SELECT COUNT(*) FROM user_tables WHERE table_name = UPPER('{tableName}');",
-                        _ => throw new NotSupportedException($"Type de connexion non reconnu : {connection.GetType().Name}")
-                    };
-
-                    using var cmd = connection.CreateCommand();
-                    cmd.CommandText = query;
-                    var result = await cmd.ExecuteScalarAsync();
-                    return Convert.ToInt32(result) > 0;
+                    Console.WriteLine($"[Identity Schema] ERREUR : {ex.Message}");
+                }
+                finally
+                {
+                    await conn.CloseAsync();
                 }
             }
+
+            public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+            private async Task<bool> TableExistsAsync(DbConnection connection, string tableName)
+            {
+                string query = connection.GetType().Name switch
+                {
+                    var n when n.Contains("Npgsql") => $"SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '{tableName.ToLower()}');",
+                    var n when n.Contains("MySql") => $"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{tableName}';",
+                    var n when n.Contains("SqlConnection") => $"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{tableName}';",
+                    var n when n.Contains("Oracle") => $"SELECT COUNT(*) FROM user_tables WHERE table_name = UPPER('{tableName}');",
+                    _ => throw new NotSupportedException($"Type de connexion non reconnu : {connection.GetType().Name}")
+                };
+
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = query;
+                var result = await cmd.ExecuteScalarAsync();
+                return Convert.ToInt32(result) > 0;
+            }
+        
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Startup"
 

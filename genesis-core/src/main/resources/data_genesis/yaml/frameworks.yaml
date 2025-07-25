@@ -1571,12 +1571,17 @@
         using System.Net.Sockets;{{/if}}
         {{#if useJWT}}
         using Microsoft.AspNetCore.Identity;
-        using ${majStart(projectName)}.Services.Startup;{{/if}}
+        using Microsoft.AspNetCore.Authentication;
+        using ${majStart(projectName)}.Services.Startup;
+        using Microsoft.IdentityModel.Tokens;
+        using System.Text;
+        {{/if}}
         using System.Net;
         using Microsoft.OpenApi.Models;
         using Microsoft.EntityFrameworkCore;
         using ${majStart(projectName)}.Data;
         using ${majStart(projectName)}.Filters;
+        using ${majStart(projectName)}.Models;
         using ${majStart(projectName)}.Repositories.Implementation;
         using ${majStart(projectName)}.Repositories.Interface;
         using ${majStart(projectName)}.Services.Implementation;
@@ -1659,7 +1664,16 @@
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         builder.Services.AddDbContext<${majStart(projectName)}Context>(options =>
             options.Use${daoName}(connectionString${addOptions}));
+        {{#if useJWT}}
         builder.Services.AddHostedService<SqlSchemaBootstrapper>();
+        builder.Services
+          .AddIdentity<ApplicationUser, IdentityRole>()
+          .AddEntityFrameworkStores<${majStart(projectName)}Context>()
+          .AddDefaultTokenProviders();
+        
+        builder.Services.AddScoped<UserService>();
+        builder.Services.AddScoped<JwtService>();
+        {{/if}}
         // Adding repositories ...
         {{#each entities}}
         builder.Services.AddScoped<I${this}Repository, ${this}Repository>();
@@ -1683,11 +1697,6 @@
         // Add Authorization
         builder.Services.AddAuthorization();        
         
-        builder.Services
-          .AddIdentity<IdentityUser, IdentityRole>()
-          .AddEntityFrameworkStores<${majStart(projectName)}Context>()
-          .AddDefaultTokenProviders();
-        
         builder.Services.AddAuthentication("Bearer")
         .AddJwtBearer("Bearer", options =>
         {
@@ -1700,7 +1709,7 @@
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT key missing")))
           };
         });
-        {{/if}
+        {{/if}}
 
         var app = builder.Build();
         
@@ -1721,7 +1730,7 @@
         // Map all actuators and controllers directly
         app.MapAllActuators(_ => { });{{/if}}
         app.MapControllers();
-        {{#if useJWT}
+        {{#if useJWT}}
         app.UseAuthorization();
         app.UseAuthentication();{{/if}}
         app.Run();
