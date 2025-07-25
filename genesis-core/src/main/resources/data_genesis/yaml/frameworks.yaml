@@ -1571,6 +1571,7 @@
         using System.Net.Sockets;{{/if}}
         {{#if useJWT}}
         using Microsoft.AspNetCore.Identity;
+        using System.Security.Claims;
         using Microsoft.AspNetCore.Authorization;
         using ${majStart(projectName)}.Services.Startup;
         using Microsoft.IdentityModel.Tokens;
@@ -1694,7 +1695,11 @@
         builder.Services.AddSwaggerGen();
         
         {{#if useJWT}}    
-        builder.Services.AddAuthentication("Bearer")
+        builder.Services.AddAuthentication(options =>
+        {
+          options.DefaultAuthenticateScheme = "Bearer";
+          options.DefaultChallengeScheme = "Bearer";
+        })
         .AddJwtBearer("Bearer", options =>
         {
           options.TokenValidationParameters = new TokenValidationParameters
@@ -1704,7 +1709,9 @@
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(
-              builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT key missing")))
+              builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT key missing"))
+            ),
+            NameClaimType = ClaimTypes.NameIdentifier
           };
         });
         {{/if}}

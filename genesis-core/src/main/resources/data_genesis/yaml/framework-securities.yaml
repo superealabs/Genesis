@@ -1859,12 +1859,11 @@
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             
             var token = new JwtSecurityToken(
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(30),
-            signingCredentials: creds
-              );
-      
-              return new JwtSecurityTokenHandler().WriteToken(token);
+              claims: claims,
+              expires: DateTime.UtcNow.AddMinutes(30),
+              signingCredentials: creds
+            );
+            return new JwtSecurityTokenHandler().WriteToken(token);
           }
       
           public string ExtractUsername(string token)
@@ -1873,7 +1872,7 @@
             .ValidateToken(token, new TokenValidationParameters
             {
               ValidateIssuerSigningKey = true,
-              IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
+              IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(_config["Jwt:SecretKey"])),
               ValidateIssuer = false,
               ValidateAudience = false,
               ClockSkew = TimeSpan.Zero
