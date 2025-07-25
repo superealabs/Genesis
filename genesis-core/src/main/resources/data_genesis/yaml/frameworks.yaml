@@ -1700,6 +1700,7 @@
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT key missing")))
           };
         });
+        {{/if}
 
         var app = builder.Build();
         
@@ -1720,9 +1721,9 @@
         // Map all actuators and controllers directly
         app.MapAllActuators(_ => { });{{/if}}
         app.MapControllers();
-        
+        {{#if useJWT}
         app.UseAuthorization();
-        app.UseAuthentication();
+        app.UseAuthentication();{{/if}}
         app.Run();
         public partial class Program {}
       
