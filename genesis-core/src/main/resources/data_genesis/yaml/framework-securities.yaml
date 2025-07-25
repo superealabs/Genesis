@@ -1993,9 +1993,14 @@
         using ${majStart(projectName)}.DTOs;
         using ${majStart(projectName)}.Utils;
         using ${majStart(projectName)}.Services.Implementation;
+        using Swashbuckle.AspNetCore.Annotations;
 
         [ApiController]
         [Route("auth")]
+        [Produces("application/json")]
+        [Consumes("application/json")]
+        [ApiExplorerSettings(GroupName = "v1")]
+        [SwaggerTag("Authentication APIs")]
         public class AuthController : ControllerBase
         {
             private readonly UserService _userService;
@@ -2006,6 +2011,10 @@
             }
 
             [HttpPost("login")]
+            [AllowAnonymous]
+            [SwaggerOperation(Summary = "Login", Description = "Authenticate user and return a JWT token")]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
             public async Task<IActionResult> Login([FromBody] AuthRequest request)
             {
                 try
@@ -2015,6 +2024,7 @@
                     {
                         Status = StatusCodes.Status200OK,
                         Message = "You are logged in",
+                        ReturnCode = 1,
                         Data = token
                     });
                 }
@@ -2024,21 +2034,27 @@
                     {
                         Status = StatusCodes.Status500InternalServerError,
                         Message = e.Message,
+                        ReturnCode = 0,
                         Data = null
                     });
                 }
             }
 
             [HttpPost("register")]
+            [AllowAnonymous]
+            [SwaggerOperation(Summary = "Register", Description = "Register a new user")]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status201Created)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
             public async Task<IActionResult> Register([FromBody] RegisterRequest request)
             {
                 try
                 {
                     var id = await _userService.Register(request);
-                    return Ok(new ApiResponse<string>
+                    return StatusCode(StatusCodes.Status201Created, new ApiResponse<string>
                     {
                         Status = StatusCodes.Status201Created,
                         Message = "User created successfully",
+                        ReturnCode = 1,
                         Data = id
                     });
                 }
@@ -2048,13 +2064,17 @@
                     {
                         Status = StatusCodes.Status500InternalServerError,
                         Message = e.Message,
+                        ReturnCode = 0,
                         Data = null
                     });
                 }
             }
 
-            [Authorize]
             [HttpPost("change-password")]
+            [Authorize]
+            [SwaggerOperation(Summary = "Change Password", Description = "Change the password of the logged-in user")]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
             public async Task<IActionResult> ChangePassword([FromBody] PasswordChangeRequest model)
             {
                 try
@@ -2064,7 +2084,8 @@
                     return Ok(new ApiResponse<string>
                     {
                         Status = StatusCodes.Status200OK,
-                        Message = "Password changed successfully"
+                        Message = "Password changed successfully",
+                        ReturnCode = 1
                     });
                 }
                 catch (Exception e)
@@ -2072,13 +2093,17 @@
                     return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
                     {
                         Status = StatusCodes.Status500InternalServerError,
-                        Message = e.Message
+                        Message = e.Message,
+                        ReturnCode = 0
                     });
                 }
             }
 
-            [Authorize]
             [HttpPatch("update")]
+            [Authorize]
+            [SwaggerOperation(Summary = "Update User", Description = "Update user information of the logged-in user")]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
             public async Task<IActionResult> Update([FromBody] UserUpdateRequest model)
             {
                 try
@@ -2088,7 +2113,8 @@
                     return Ok(new ApiResponse<string>
                     {
                         Status = StatusCodes.Status200OK,
-                        Message = "User updated successfully"
+                        Message = "User updated successfully",
+                        ReturnCode = 1
                     });
                 }
                 catch (Exception e)
@@ -2096,7 +2122,8 @@
                     return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
                     {
                         Status = StatusCodes.Status500InternalServerError,
-                        Message = e.Message
+                        Message = e.Message,
+                        ReturnCode = 0
                     });
                 }
             }
