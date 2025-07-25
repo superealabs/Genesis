@@ -2030,7 +2030,7 @@
                 public async Task StartAsync(CancellationToken cancellationToken)
                 {
                     using var scope = _provider.CreateScope();
-                    var context = scope.ServiceProvider.GetRequiredService<NetContext>();
+                    var context = scope.ServiceProvider.GetRequiredService<majStart(projectName)}Context>();
                     var db = context.Database;
                     var conn = db.GetDbConnection();
 
