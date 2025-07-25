@@ -137,6 +137,11 @@
               "Microsoft.AspNetCore": "${loggingLevel}"
             }
           },
+          {{#if useJWT}}
+          "Jwt": {
+            "SecretKey": "Bel0Y8TSTrZyicQgAJdcabCbaMQo3s3BkBmP925Wb3g=",
+            "ExpirationMinutes": 30
+          },{{/if}}
           "AllowedHosts": "*"{{#if useDB}},
           "ConnectionStrings": {
             "DefaultConnection": "${connectionString}"
@@ -184,6 +189,7 @@
               }
             }
           }{{/if}}
+        
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
