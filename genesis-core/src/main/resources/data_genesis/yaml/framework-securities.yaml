@@ -1776,8 +1776,6 @@
 
         public class ApplicationUser : IdentityUser
         {
-            public string FullName { get; set; }
-            public string Role { get; set; } // Stocker le rôle principal en clair (optionnel)
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
 
@@ -1790,7 +1788,19 @@
             public string Username { get; set; }
             public string Password { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Dto"
+
+    - fileType: "Register Request DTO"
+      fileName: "RegisterRequest"
+      extension: "cs"
+      content: |
+        public class RegisterRequest
+        {
+            public string Username { get; set; }
+            public string Email { get; set; }
+            public string Password { get; set; }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Dto"
 
     - fileType: "Password Change Request DTO"
       fileName: "PasswordChangeRequest"
@@ -1802,7 +1812,7 @@
             public string NewPassword { get; set; }
             public string ConfirmPassword { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Dto"
 
     - fileType: "User Update Request DTO"
       fileName: "UserUpdateRequest"
@@ -1813,56 +1823,57 @@
             public string Name { get; set; }
             public string Email { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Dto"
 
     - fileType: "JWT Service"
       fileName: "JwtService"
       extension: "cs"
       content: |
+        namespace ${majStart(projectName)}Services.Implementation;
         using System.IdentityModel.Tokens.Jwt;
         using System.Security.Claims;
         using System.Text;
         using Microsoft.Extensions.Configuration;
         using Microsoft.IdentityModel.Tokens;
-
+        
         public class JwtService
         {
-            private readonly IConfiguration _config;
-            public JwtService(IConfiguration config) => _config = config;
-
-            public string GenerateToken(string username)
+          private readonly IConfiguration _config;
+          public JwtService(IConfiguration config) => _config = config;
+      
+          public string GenerateToken(string username)
+          {
+            var claims = new[]
             {
-                var claims = new[]
-                {
-                    new Claim(JwtRegisteredClaimNames.Sub, username),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-                };
-
-                var key = new SymmetricSecurityKey(Convert.FromBase64String(_config["Jwt:SecretKey"]));
-                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-                var token = new JwtSecurityToken(
-                    claims: claims,
-                    expires: DateTime.UtcNow.AddMinutes(30),
-                    signingCredentials: creds
-                );
-
-                return new JwtSecurityTokenHandler().WriteToken(token);
-            }
-
-            public string ExtractUsername(string token)
+              new Claim(JwtRegisteredClaimNames.Sub, username),
+              new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+            
+            var key = new SymmetricSecurityKey(Convert.FromBase64String(_config["Jwt:SecretKey"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            
+            var token = new JwtSecurityToken(
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(30),
+            signingCredentials: creds
+              );
+      
+              return new JwtSecurityTokenHandler().WriteToken(token);
+          }
+      
+          public string ExtractUsername(string token)
+          {
+            var principal = new JwtSecurityTokenHandler()
+            .ValidateToken(token, new TokenValidationParameters
             {
-                var principal = new JwtSecurityTokenHandler()
-                    .ValidateToken(token, new TokenValidationParameters
-                    {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-                        ClockSkew = TimeSpan.Zero
-                    }, out _);
-                return principal.Identity.Name;
-            }
+              ValidateIssuerSigningKey = true,
+              IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
+              ValidateIssuer = false,
+              ValidateAudience = false,
+              ClockSkew = TimeSpan.Zero
+            }, out _);
+            return principal.Identity.Name;
+          }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
 
@@ -1899,6 +1910,11 @@
       fileName: "UserService"
       extension: "cs"
       content: |
+        namespace ${majStart(projectName)}Services.Implementation;
+
+        using ${majStart(projectName)}Dto;
+        using Microsoft.AspNetCore.Identity;
+
         public class UserService
         {
             private readonly UserManager<ApplicationUser> _userManager;
@@ -1920,12 +1936,20 @@
                 throw new UnauthorizedAccessException("Invalid credentials");
             }
 
-            public async Task<string> Register(ApplicationUser user, string password)
+            public async Task<string> Register(RegisterRequest request)
             {
-                var result = await _userManager.CreateAsync(user, password);
-                if (!result.Succeeded) throw new Exception("Registration failed");
+                var user = new ApplicationUser
+                {
+                    UserName = request.Username,
+                    Email = request.Email
+                };
+
+                var result = await _userManager.CreateAsync(user, request.Password);
+                if (!result.Succeeded)
+                    throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
                 return user.Id;
             }
+
 
             public async Task ChangePassword(string username, PasswordChangeRequest model)
             {
@@ -1954,8 +1978,18 @@
       fileName: "AuthController"
       extension: "cs"
       content: |
+        namespace ${majStart(projectName)}Controllers;
+
+        using Microsoft.AspNetCore.Authorization;
+        using Microsoft.AspNetCore.Mvc;
+        using Microsoft.AspNetCore.Http;
+        using ${majStart(projectName)}Dto;
+        using ${majStart(projectName)}Utils;
+        using ${majStart(projectName)}Services.Implementation;
+
+
         [ApiController]
-        [Route("api/auth")]
+        [Route("auth")]
         public class AuthController : ControllerBase
         {
             private readonly UserService _userService;
@@ -1968,47 +2002,114 @@
             [HttpPost("login")]
             public async Task<IActionResult> Login([FromBody] AuthRequest request)
             {
-                var token = await _userService.Authenticate(request);
-                return Ok(new ApiResponse<string> { Status = 200, Message = "OK", Data = token });
+                try
+                {
+                    var token = await _userService.Authenticate(request);
+                    return Ok(new ApiResponse<string>
+                    {
+                        Status = StatusCodes.Status200OK,
+                        Message = "You are logged in",
+                        Data = token
+                    });
+                }
+                catch (Exception e)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
+                    {
+                        Status = StatusCodes.Status500InternalServerError,
+                        Message = e.Message,
+                        Data = null
+                    });
+                }
             }
 
             [HttpPost("register")]
-            public async Task<IActionResult> Register([FromBody] ApplicationUser user)
+            public async Task<IActionResult> Register([FromBody] RegisterRequest request)
             {
-                var id = await _userService.Register(user, user.PasswordHash);
-                return Ok(new ApiResponse<string> { Status = 200, Message = "User created", Data = id });
+                try
+                {
+                    var id = await _userService.Register(request);
+                    return Ok(new ApiResponse<string>
+                    {
+                        Status = StatusCodes.Status201Created,
+                        Message = "User created successfully",
+                        Data = id
+                    });
+                }
+                catch (Exception e)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
+                    {
+                        Status = StatusCodes.Status500InternalServerError,
+                        Message = e.Message,
+                        Data = null
+                    });
+                }
             }
 
             [Authorize]
             [HttpPost("change-password")]
             public async Task<IActionResult> ChangePassword([FromBody] PasswordChangeRequest model)
             {
-                var username = User.Identity.Name;
-                await _userService.ChangePassword(username, model);
-                return Ok(new ApiResponse<string> { Status = 200, Message = "Password changed" });
+                try
+                {
+                    var username = User.Identity?.Name;
+                    await _userService.ChangePassword(username, model);
+                    return Ok(new ApiResponse<string>
+                    {
+                        Status = StatusCodes.Status200OK,
+                        Message = "Password changed successfully"
+                    });
+                }
+                catch (Exception e)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
+                    {
+                        Status = StatusCodes.Status500InternalServerError,
+                        Message = e.Message
+                    });
+                }
             }
 
             [Authorize]
             [HttpPatch("update")]
             public async Task<IActionResult> Update([FromBody] UserUpdateRequest model)
             {
-                var username = User.Identity.Name;
-                await _userService.UpdateUser(username, model);
-                return Ok(new ApiResponse<string> { Status = 200, Message = "User updated" });
+                try
+                {
+                    var username = User.Identity?.Name;
+                    await _userService.UpdateUser(username, model);
+                    return Ok(new ApiResponse<string>
+                    {
+                        Status = StatusCodes.Status200OK,
+                        Message = "User updated successfully"
+                    });
+                }
+                catch (Exception e)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
+                    {
+                        Status = StatusCodes.Status500InternalServerError,
+                        Message = e.Message
+                    });
+                }
             }
         }
+
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers/Implementation"
 
     - fileType: "SQL Schema Bootstrapper Service"
       fileName: "SqlSchemaBootstrapper"
       extension: "cs"
       content: |
+        namespace ${majStart(projectName)}Services.Startup
+
         using Microsoft.Extensions.Hosting;
         using Microsoft.Extensions.DependencyInjection;
         using Microsoft.EntityFrameworkCore;
         using System.Data.Common;
+        using ${majStart(projectName)}Data;
 
-        namespace Net.Services.Startup
         {
             public class SqlSchemaBootstrapper : IHostedService
             {
@@ -2023,7 +2124,7 @@
                 public async Task StartAsync(CancellationToken cancellationToken)
                 {
                     using var scope = _provider.CreateScope();
-                    var context = scope.ServiceProvider.GetRequiredService<majStart(projectName)}Context>();
+                    var context = scope.ServiceProvider.GetRequiredService<NiniContext>();
                     var db = context.Database;
                     var conn = db.GetDbConnection();
 
