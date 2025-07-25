@@ -126,6 +126,7 @@
     },
     "criteriaBuildSnippet": {
       "int": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "int identity": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "double": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "json": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "uuid": "criteriaBuilder.function(\"${this.columnType}\", String.class, root.get(\"${this.name}\")),\n\t\t\t\t\t\tcriteriaBuilder.function(\"${this.columnType}\", String.class, criteriaBuilder.literal(object.get${majStart(this.name)}()))",
@@ -164,6 +165,7 @@
       "cidr": "criteriaBuilder.function(\"${this.columnType}\", String.class, root.get(\"${this.name}\")),\n\t\t\t\t\t\tcriteriaBuilder.function(\"${this.columnType}\", String.class, criteriaBuilder.literal(object.get${majStart(this.name)}()))",
       "macaddr": "criteriaBuilder.function(\"${this.columnType}\", String.class, root.get(\"${this.name}\")),\n\t\t\t\t\t\tcriteriaBuilder.function(\"${this.columnType}\", String.class, criteriaBuilder.literal(object.get${majStart(this.name)}()))",
       "INT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "IDENTITY": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "VARCHAR": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "DATE": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "BIGINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
