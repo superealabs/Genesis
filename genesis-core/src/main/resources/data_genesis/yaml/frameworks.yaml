@@ -1571,7 +1571,7 @@
         using System.Net.Sockets;{{/if}}
         {{#if useJWT}}
         using Microsoft.AspNetCore.Identity;
-        using Microsoft.AspNetCore.Authentication;
+        using Microsoft.AspNetCore.Authorization;
         using ${majStart(projectName)}.Services.Startup;
         using Microsoft.IdentityModel.Tokens;
         using System.Text;
