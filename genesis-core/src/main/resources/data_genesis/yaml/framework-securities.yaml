@@ -1326,12 +1326,12 @@
   name: ".NET Security - JWT"
   securityFiles:
     - fileType: "Init Script"
-      fileName: "sql-init"
+      fileName: "identity_schema"
       extension: "sql"
       content: |
         --Default login
         --Username: admin
-        --Password: admin
+        --Password: Pwd@123
         {{#if databaseType = PostgreSQL}}
           CREATE TABLE IF NOT EXISTS "AspNetRoles" (
             "Id" TEXT NOT NULL,
@@ -1359,8 +1359,7 @@
             "LockoutEnabled" BOOLEAN NOT NULL DEFAULT FALSE,
             "AccessFailedCount" INTEGER NOT NULL DEFAULT 0,
             CONSTRAINT "PK_AspNetUsers" PRIMARY KEY ("Id"),
-            CONSTRAINT "UserNameIndex" UNIQUE ("NormalizedUserName"),
-            INDEX "EmailIndex" ("NormalizedEmail")
+            CONSTRAINT "UserNameIndex" UNIQUE ("NormalizedUserName")
           );
           
           CREATE TABLE IF NOT EXISTS "AspNetRoleClaims" (
@@ -1369,8 +1368,7 @@
             "ClaimType" TEXT,
             "ClaimValue" TEXT,
             CONSTRAINT "PK_AspNetRoleClaims" PRIMARY KEY ("Id"),
-            CONSTRAINT "FK_AspNetRoleClaims_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles"("Id") ON DELETE CASCADE,
-            INDEX "IX_AspNetRoleClaims_RoleId" ("RoleId")
+            CONSTRAINT "FK_AspNetRoleClaims_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles"("Id") ON DELETE CASCADE
           );
           
           CREATE TABLE IF NOT EXISTS "AspNetUserClaims" (
@@ -1379,8 +1377,7 @@
             "ClaimType" TEXT,
             "ClaimValue" TEXT,
             CONSTRAINT "PK_AspNetUserClaims" PRIMARY KEY ("Id"),
-            CONSTRAINT "FK_AspNetUserClaims_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE,
-            INDEX "IX_AspNetUserClaims_UserId" ("UserId")
+            CONSTRAINT "FK_AspNetUserClaims_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
           );
           
           CREATE TABLE IF NOT EXISTS "AspNetUserLogins" (
@@ -1389,8 +1386,7 @@
             "ProviderDisplayName" TEXT,
             "UserId" TEXT NOT NULL,
             CONSTRAINT "PK_AspNetUserLogins" PRIMARY KEY ("LoginProvider", "ProviderKey"),
-            CONSTRAINT "FK_AspNetUserLogins_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE,
-            INDEX "IX_AspNetUserLogins_UserId" ("UserId")
+            CONSTRAINT "FK_AspNetUserLogins_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
           );
           
           CREATE TABLE IF NOT EXISTS "AspNetUserRoles" (
@@ -1398,8 +1394,7 @@
             "RoleId" TEXT NOT NULL,
             CONSTRAINT "PK_AspNetUserRoles" PRIMARY KEY ("UserId", "RoleId"),
             CONSTRAINT "FK_AspNetUserRoles_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE,
-            CONSTRAINT "FK_AspNetUserRoles_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles"("Id") ON DELETE CASCADE,
-            INDEX "IX_AspNetUserRoles_RoleId" ("RoleId")
+            CONSTRAINT "FK_AspNetUserRoles_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles"("Id") ON DELETE CASCADE
           );
           
           CREATE TABLE IF NOT EXISTS "AspNetUserTokens" (
@@ -1417,7 +1412,7 @@
           ON CONFLICT ("Id") DO NOTHING;
           
           INSERT INTO "AspNetUsers" ("Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail", "EmailConfirmed", "PasswordHash", "SecurityStamp", "ConcurrencyStamp", "LockoutEnabled", "AccessFailedCount")
-          VALUES ('1', 'admin', 'ADMIN', 'admin@user.com', 'ADMIN@USER.COM', TRUE, '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', gen_random_uuid(), gen_random_uuid(), FALSE, 0)
+          VALUES ('1', 'admin', 'ADMIN', 'admin@user.com', 'ADMIN@USER.COM', TRUE, 'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==', gen_random_uuid(), gen_random_uuid(), FALSE, 0)
           ON CONFLICT ("Id") DO NOTHING;
           
           INSERT INTO "AspNetUserRoles" ("UserId", "RoleId")
@@ -1510,7 +1505,7 @@
           ON DUPLICATE KEY UPDATE Id = Id;
           
           INSERT INTO AspNetUsers (Id, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp, LockoutEnabled, AccessFailedCount)
-          VALUES ('1', 'admin', 'ADMIN', 'admin@user.com', 'ADMIN@USER.COM', TRUE, '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', UUID(), UUID(), FALSE, 0)
+          VALUES ('1', 'admin', 'ADMIN', 'admin@user.com', 'ADMIN@USER.COM', TRUE, 'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==', UUID(), UUID(), FALSE, 0)
           ON DUPLICATE KEY UPDATE Id = Id;
           
           INSERT INTO AspNetUserRoles (UserId, RoleId)
@@ -1604,7 +1599,7 @@
           
           IF NOT EXISTS (SELECT 1 FROM [dbo].[AspNetUsers] WHERE [Id] = '1')
           INSERT INTO [dbo].[AspNetUsers] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [LockoutEnabled], [AccessFailedCount])
-          VALUES ('1', 'admin', 'ADMIN', 'admin@user.com', 'ADMIN@USER.COM', 1, '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', NEWID(), NEWID(), 0, 0);
+          VALUES ('1', 'admin', 'ADMIN', 'admin@user.com', 'ADMIN@USER.COM', 1, 'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==', NEWID(), NEWID(), 0, 0);
           
           IF NOT EXISTS (SELECT 1 FROM [dbo].[AspNetUserRoles] WHERE [UserId] = '1' AND [RoleId] = '1')
           INSERT INTO [dbo].[AspNetUserRoles] ([UserId], [RoleId])
@@ -1742,7 +1737,7 @@
             EXECUTE IMMEDIATE '
             MERGE INTO AspNetUsers u
             USING (SELECT ''1'' AS Id, ''admin'' AS UserName, ''ADMIN'' AS NormalizedUserName, ''admin@user.com'' AS Email, ''ADMIN@USER.COM'' AS NormalizedEmail,
-            1 AS EmailConfirmed, ''$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS'' AS PasswordHash,
+            1 AS EmailConfirmed, 'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==' AS PasswordHash,
             SYS_GUID() AS SecurityStamp, SYS_GUID() AS ConcurrencyStamp, 0 AS LockoutEnabled, 0 AS AccessFailedCount FROM dual) s
             ON (u.Id = s.Id)
             WHEN NOT MATCHED THEN
@@ -2018,7 +2013,7 @@
             public class SqlSchemaBootstrapper : IHostedService
             {
                 private readonly IServiceProvider _provider;
-                private const string SchemaFilePath = "Scripts/identity_schema.sql"; // chemin du script SQL
+                private const string SchemaFilePath = "Data/identity_schema.sql"; // chemin du script SQL
 
                 public SqlSchemaBootstrapper(IServiceProvider provider)
                 {
