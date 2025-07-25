@@ -1569,7 +1569,9 @@
         using Steeltoe.Management.Endpoint;
         using System.Net.NetworkInformation;
         using System.Net.Sockets;{{/if}}
-        {{#if useJWT}}using Microsoft.AspNetCore.Identity;{{/if}}
+        {{#if useJWT}}
+        using Microsoft.AspNetCore.Identity;
+        using ${majStart(projectName)}.Services.Startup;{{/if}}
         using System.Net;
         using Microsoft.OpenApi.Models;
         using Microsoft.EntityFrameworkCore;
@@ -1657,7 +1659,7 @@
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         builder.Services.AddDbContext<${majStart(projectName)}Context>(options =>
             options.Use${daoName}(connectionString${addOptions}));
-        
+        builder.Services.AddHostedService<SqlSchemaBootstrapper>();
         // Adding repositories ...
         {{#each entities}}
         builder.Services.AddScoped<I${this}Repository, ${this}Repository>();
@@ -1679,13 +1681,29 @@
         
         {{#if useJWT}}
         // Add Authorization
-        builder.Services.AddAuthorization();
-        builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<${majStart(projectName)}Context>();{{/if}}
+        builder.Services.AddAuthorization();        
         
+        builder.Services
+          .AddIdentity<IdentityUser, IdentityRole>()
+          .AddEntityFrameworkStores<${majStart(projectName)}Context>()
+          .AddDefaultTokenProviders();
+        
+        builder.Services.AddAuthentication("Bearer")
+        .AddJwtBearer("Bearer", options =>
+        {
+          options.TokenValidationParameters = new TokenValidationParameters
+          {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT key missing")))
+          };
+        });
+
         var app = builder.Build();
-        
-        {{#if useJWT}}
-        app.MapIdentityApi<IdentityUser>();{{/if}}
         
         if (!string.IsNullOrEmpty(pathBase))
         {
@@ -1706,6 +1724,7 @@
         app.MapControllers();
         
         app.UseAuthorization();
+        app.UseAuthentication();
         app.Run();
         public partial class Program {}
       
@@ -1723,7 +1742,7 @@
         using Microsoft.EntityFrameworkCore;
         using Models;
         {{#if useJWT}}
-        public class ${majStart(projectName)}Context : IdentityDbContext<IdentityUser>
+        public class ${majStart(projectName)}Context : IdentityDbContext<ApplicationUser>
         {{else}}
         public class ${majStart(projectName)}Context : DbContext{{/if}}
         {
