@@ -2103,7 +2103,7 @@
             }
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers/Implementation"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
 
     - fileType: "SQL Schema Bootstrapper Service"
       fileName: "SqlSchemaBootstrapper"
