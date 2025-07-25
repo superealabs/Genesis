@@ -1300,6 +1300,7 @@
           }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/controllers/"
+
   additionalDependencies:
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-security"
@@ -1758,8 +1759,333 @@
           END;
           /
           {{else}}{{removeLine}}{{/if}}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/data"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Data"
 
+
+    - fileType: "User Roles Static Class"
+      fileName: "UserRoles"
+      extension: "cs"
+      content: |
+        public static class UserRoles
+        {
+            public const string Admin = "Admin";
+            public const string User = "User";
+            // Ajouter d'autres rôles si nécessaire
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
+
+    - fileType: "Application User Entity"
+      fileName: "ApplicationUser"
+      extension: "cs"
+      content: |
+        using Microsoft.AspNetCore.Identity;
+
+        public class ApplicationUser : IdentityUser
+        {
+            public string FullName { get; set; }
+            public string Role { get; set; } // Stocker le rôle principal en clair (optionnel)
+            // Ajouter d'autres propriétés spécifiques si besoin
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
+
+    - fileType: "Auth Request DTO"
+      fileName: "AuthRequest"
+      extension: "cs"
+      content: |
+        public class AuthRequest
+        {
+            public string Username { get; set; }
+            public string Password { get; set; }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+
+    - fileType: "Password Change Request DTO"
+      fileName: "PasswordChangeRequest"
+      extension: "cs"
+      content: |
+        public class PasswordChangeRequest
+        {
+            public string OldPassword { get; set; }
+            public string NewPassword { get; set; }
+            public string ConfirmPassword { get; set; }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+
+    - fileType: "User Update Request DTO"
+      fileName: "UserUpdateRequest"
+      extension: "cs"
+      content: |
+        public class UserUpdateRequest
+        {
+            public string Name { get; set; }
+            public string Email { get; set; }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+
+    - fileType: "JWT Service"
+      fileName: "JwtService"
+      extension: "cs"
+      content: |
+        using System.IdentityModel.Tokens.Jwt;
+        using System.Security.Claims;
+        using System.Text;
+        using Microsoft.Extensions.Configuration;
+        using Microsoft.IdentityModel.Tokens;
+
+        public class JwtService
+        {
+            private readonly IConfiguration _config;
+            public JwtService(IConfiguration config) => _config = config;
+
+            public string GenerateToken(string username)
+            {
+                var claims = new[]
+                {
+                    new Claim(JwtRegisteredClaimNames.Sub, username),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                };
+
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+                var token = new JwtSecurityToken(
+                    issuer: _config["Jwt:Issuer"],
+                    audience: _config["Jwt:Audience"],
+                    claims: claims,
+                    expires: DateTime.UtcNow.AddMinutes(30),
+                    signingCredentials: creds
+                );
+
+                return new JwtSecurityTokenHandler().WriteToken(token);
+            }
+
+            public string ExtractUsername(string token)
+            {
+                var principal = new JwtSecurityTokenHandler()
+                    .ValidateToken(token, new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"])),
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ClockSkew = TimeSpan.Zero
+                    }, out _);
+                return principal.Identity.Name;
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+
+    - fileType: "Token Blacklist Service"
+      fileName: "TokenBlacklistService"
+      extension: "cs"
+      content: |
+        public class TokenBlacklistService
+        {
+            private readonly Dictionary<string, DateTime> _invalidatedTokens = new();
+
+            public void InvalidateToken(string token, DateTime expiration)
+            {
+                _invalidatedTokens[token] = expiration;
+            }
+
+            public bool IsTokenInvalidated(string token)
+            {
+                return _invalidatedTokens.TryGetValue(token, out var exp) && exp > DateTime.UtcNow;
+            }
+
+            public void CleanExpiredTokens()
+            {
+                var now = DateTime.UtcNow;
+                foreach (var key in _invalidatedTokens.Where(x => x.Value < now).Select(x => x.Key).ToList())
+                {
+                    _invalidatedTokens.Remove(key);
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+
+    - fileType: "User Service"
+      fileName: "UserService"
+      extension: "cs"
+      content: |
+        public class UserService
+        {
+            private readonly UserManager<ApplicationUser> _userManager;
+            private readonly JwtService _jwtService;
+
+            public UserService(UserManager<ApplicationUser> userManager, JwtService jwtService)
+            {
+                _userManager = userManager;
+                _jwtService = jwtService;
+            }
+
+            public async Task<string> Authenticate(AuthRequest request)
+            {
+                var user = await _userManager.FindByNameAsync(request.Username);
+                if (user != null && await _userManager.CheckPasswordAsync(user, request.Password))
+                {
+                    return _jwtService.GenerateToken(user.UserName);
+                }
+                throw new UnauthorizedAccessException("Invalid credentials");
+            }
+
+            public async Task<string> Register(ApplicationUser user, string password)
+            {
+                var result = await _userManager.CreateAsync(user, password);
+                if (!result.Succeeded) throw new Exception("Registration failed");
+                return user.Id;
+            }
+
+            public async Task ChangePassword(string username, PasswordChangeRequest model)
+            {
+                var user = await _userManager.FindByNameAsync(username);
+                if (user == null || !await _userManager.CheckPasswordAsync(user, model.OldPassword))
+                    throw new Exception("Invalid current password");
+
+                if (model.NewPassword != model.ConfirmPassword)
+                    throw new Exception("Passwords do not match");
+
+                await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
+            }
+
+            public async Task UpdateUser(string username, UserUpdateRequest update)
+            {
+                var user = await _userManager.FindByNameAsync(username);
+                if (user == null) throw new Exception("User not found");
+                user.Email = update.Email;
+                user.UserName = update.Name;
+                await _userManager.UpdateAsync(user);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+
+    - fileType: "Authentication Controller"
+      fileName: "AuthController"
+      extension: "cs"
+      content: |
+        [ApiController]
+        [Route("api/auth")]
+        public class AuthController : ControllerBase
+        {
+            private readonly UserService _userService;
+
+            public AuthController(UserService userService)
+            {
+                _userService = userService;
+            }
+
+            [HttpPost("login")]
+            public async Task<IActionResult> Login([FromBody] AuthRequest request)
+            {
+                var token = await _userService.Authenticate(request);
+                return Ok(new ApiResponse<string> { Status = 200, Message = "OK", Data = token });
+            }
+
+            [HttpPost("register")]
+            public async Task<IActionResult> Register([FromBody] ApplicationUser user)
+            {
+                var id = await _userService.Register(user, user.PasswordHash);
+                return Ok(new ApiResponse<string> { Status = 200, Message = "User created", Data = id });
+            }
+
+            [Authorize]
+            [HttpPost("change-password")]
+            public async Task<IActionResult> ChangePassword([FromBody] PasswordChangeRequest model)
+            {
+                var username = User.Identity.Name;
+                await _userService.ChangePassword(username, model);
+                return Ok(new ApiResponse<string> { Status = 200, Message = "Password changed" });
+            }
+
+            [Authorize]
+            [HttpPatch("update")]
+            public async Task<IActionResult> Update([FromBody] UserUpdateRequest model)
+            {
+                var username = User.Identity.Name;
+                await _userService.UpdateUser(username, model);
+                return Ok(new ApiResponse<string> { Status = 200, Message = "User updated" });
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers/Implementation"
+
+    - fileType: "SQL Schema Bootstrapper Service"
+      fileName: "SqlSchemaBootstrapper"
+      extension: "cs"
+      content: |
+        using Microsoft.Extensions.Hosting;
+        using Microsoft.Extensions.DependencyInjection;
+        using Microsoft.EntityFrameworkCore;
+        using System.Data.Common;
+
+        namespace Net.Services.Startup
+        {
+            public class SqlSchemaBootstrapper : IHostedService
+            {
+                private readonly IServiceProvider _provider;
+                private const string SchemaFilePath = "Scripts/identity_schema.sql"; // chemin du script SQL
+
+                public SqlSchemaBootstrapper(IServiceProvider provider)
+                {
+                    _provider = provider;
+                }
+
+                public async Task StartAsync(CancellationToken cancellationToken)
+                {
+                    using var scope = _provider.CreateScope();
+                    var context = scope.ServiceProvider.GetRequiredService<NetContext>();
+                    var db = context.Database;
+                    var conn = db.GetDbConnection();
+
+                    try
+                    {
+                        await conn.OpenAsync(cancellationToken);
+
+                        if (!await TableExistsAsync(conn, "AspNetUsers"))
+                        {
+                            var sql = await File.ReadAllTextAsync(SchemaFilePath, cancellationToken);
+                            using var command = conn.CreateCommand();
+                            command.CommandText = sql;
+                            await command.ExecuteNonQueryAsync(cancellationToken);
+
+                            Console.WriteLine("[Identity Schema] Tables créées automatiquement.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("[Identity Schema] Tables déjà existantes.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[Identity Schema] ERREUR : {ex.Message}");
+                    }
+                    finally
+                    {
+                        await conn.CloseAsync();
+                    }
+                }
+
+                public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+                private async Task<bool> TableExistsAsync(DbConnection connection, string tableName)
+                {
+                    string query = connection.GetType().Name switch
+                    {
+                        var n when n.Contains("Npgsql") => $"SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '{tableName.ToLower()}');",
+                        var n when n.Contains("MySql") => $"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{tableName}';",
+                        var n when n.Contains("SqlConnection") => $"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{tableName}';",
+                        var n when n.Contains("Oracle") => $"SELECT COUNT(*) FROM user_tables WHERE table_name = UPPER('{tableName}');",
+                        _ => throw new NotSupportedException($"Type de connexion non reconnu : {connection.GetType().Name}")
+                    };
+
+                    using var cmd = connection.CreateCommand();
+                    cmd.CommandText = query;
+                    var result = await cmd.ExecuteScalarAsync();
+                    return Convert.ToInt32(result) > 0;
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Startup"
+# Entites
     - fileType: "Roles Entity"
       fileName: "Aspnetrole"
       extension: "cs"
@@ -1913,20 +2239,20 @@
         [Table("AspNetUserRoles")]
         public class Aspnetuserrole  
         {
-        	[Key]
-        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        	[Column("UserId")]
-        	public Aspnetuser UseridAspnetusers { get; set; }
+          [Key]
+          [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+          [Column("UserId")]
+          public Aspnetuser UseridAspnetusers { get; set; }
 
-        	[Key]
-        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        	[Column("RoleId")]
-        	public Aspnetrole RoleidAspnetroles { get; set; }
+          [Key]
+          [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+          [Column("RoleId")]
+          public Aspnetrole RoleidAspnetroles { get; set; }
         }
         public class AspnetuserroleSearchModel
         {
-        	public Aspnetuser? UseridAspnetusers { get; set; }
-        	public Aspnetrole? RoleidAspnetroles { get; set; }
+          public Aspnetuser? UseridAspnetusers { get; set; }
+          public Aspnetrole? RoleidAspnetroles { get; set; }
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
@@ -1943,34 +2269,33 @@
         [Table("AspNetUserLogins")]
         public class Aspnetuserlogin  
         {
-        	[Key]
-        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        	[Column("LoginProvider")]
-        	public string Loginprovider { get; set; }
+          [Key]
+          [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+          [Column("LoginProvider")]
+          public string Loginprovider { get; set; }
 
-        	[Key]
-        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        	[Column("ProviderKey")]
-        	public string Providerkey { get; set; }
+          [Key]
+          [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+          [Column("ProviderKey")]
+          public string Providerkey { get; set; }
 
-        	[Column("ProviderDisplayName")]
-        	[StringLength(2147483647)]
-        	public string Providerdisplayname { get; set; }
+          [Column("ProviderDisplayName")]
+          [StringLength(2147483647)]
+          public string Providerdisplayname { get; set; }
 
-        	[Column("UserId")]
-        	public string? Userid { get; set; }
-        	[ForeignKey(nameof(Userid))]
-        	public virtual Aspnetuser? UseridAspnetusers { get; set; }
+          [Column("UserId")]
+          public string? Userid { get; set; }
+          [ForeignKey(nameof(Userid))]
+          public virtual Aspnetuser? UseridAspnetusers { get; set; }
         }
         public class AspnetuserloginSearchModel
         {
-        	public string? Loginprovider { get; set; }
-        	public string? Providerkey { get; set; }
-        	public string? Providerdisplayname { get; set; }
-        	public Aspnetuser? UseridAspnetusers { get; set; }
+          public string? Loginprovider { get; set; }
+          public string? Providerkey { get; set; }
+          public string? Providerdisplayname { get; set; }
+          public Aspnetuser? UseridAspnetusers { get; set; }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
-      
       
     - fileType: "User-Token Entity"
       fileName: "Aspnetusertoken"
@@ -1985,32 +2310,32 @@
         [Table("AspNetUserTokens")]
         public class Aspnetusertoken  
         {
-        	[Key]
-        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        	[Column("UserId")]
-        	public Aspnetuser UseridAspnetusers { get; set; }
+          [Key]
+          [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+          [Column("UserId")]
+          public Aspnetuser UseridAspnetusers { get; set; }
 
-        	[Key]
-        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        	[Column("LoginProvider")]
-        	public string Loginprovider { get; set; }
+          [Key]
+          [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+          [Column("LoginProvider")]
+          public string Loginprovider { get; set; }
 
-        	[Key]
-        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        	[Column("Name")] 
-        	public string Name { get; set; }
+          [Key]
+          [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+          [Column("Name")] 
+          public string Name { get; set; }
 
-        	[Column("Value")]
-        	[StringLength(2147483647)]
-        	public string Value { get; set; }
+          [Column("Value")]
+          [StringLength(2147483647)]
+          public string Value { get; set; }
 
         }
         public class AspnetusertokenSearchModel
         {
-        	public Aspnetuser? UseridAspnetusers { get; set; }
-        	public string? Loginprovider { get; set; }
-        	public string? Name { get; set; }
-        	public string? Value { get; set; }
+          public Aspnetuser? UseridAspnetusers { get; set; }
+          public string? Loginprovider { get; set; }
+          public string? Name { get; set; }
+          public string? Value { get; set; }
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
@@ -2028,32 +2353,32 @@
         [Table("AspNetRoleClaims")]
         public class Aspnetroleclaim  
         {
-        	[Key]
-        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        	[Column("Id")]
-        	public long Id { get; set; }
+          [Key]
+          [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+          [Column("Id")]
+          public long Id { get; set; }
 
-        	[Column("RoleId")]
-        	public string? Roleid { get; set; }
-        	[ForeignKey(nameof(Roleid))]
-        	public virtual Aspnetrole? RoleidAspnetroles { get; set; }
+          [Column("RoleId")]
+          public string? Roleid { get; set; }
+          [ForeignKey(nameof(Roleid))]
+          public virtual Aspnetrole? RoleidAspnetroles { get; set; }
 
 
-        	[Column("ClaimType")]
-        	[StringLength(2147483647)]
-        	public string Claimtype { get; set; }
+          [Column("ClaimType")]
+          [StringLength(2147483647)]
+          public string Claimtype { get; set; }
 
-        	[Column("ClaimValue")]
-        	[StringLength(2147483647)]
-        	public string Claimvalue { get; set; }
+          [Column("ClaimValue")]
+          [StringLength(2147483647)]
+          public string Claimvalue { get; set; }
 
         }
         public class AspnetroleclaimSearchModel
         {
-        	public long? Id { get; set; }
-        	public Aspnetrole? RoleidAspnetroles { get; set; }
-        	public string? Claimtype { get; set; }
-        	public string? Claimvalue { get; set; }
+          public long? Id { get; set; }
+          public Aspnetrole? RoleidAspnetroles { get; set; }
+          public string? Claimtype { get; set; }
+          public string? Claimvalue { get; set; }
 
 
         }
@@ -2072,32 +2397,32 @@
         [Table("AspNetUserClaims")]
         public class Aspnetuserclaim  
         {
-        	[Key]
-        	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        	[Column("Id")]
-        	public long Id { get; set; }
+          [Key]
+          [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+          [Column("Id")]
+          public long Id { get; set; }
 
-        	[Column("UserId")]
-        	public string? Userid { get; set; }
-        	[ForeignKey(nameof(Userid))]
-        	public virtual Aspnetuser? UseridAspnetusers { get; set; }
+          [Column("UserId")]
+          public string? Userid { get; set; }
+          [ForeignKey(nameof(Userid))]
+          public virtual Aspnetuser? UseridAspnetusers { get; set; }
 
 
-        	[Column("ClaimType")]
-        	[StringLength(2147483647)]
-        	public string Claimtype { get; set; }
+          [Column("ClaimType")]
+          [StringLength(2147483647)]
+          public string Claimtype { get; set; }
 
-        	[Column("ClaimValue")]
-        	[StringLength(2147483647)]
-        	public string Claimvalue { get; set; }
+          [Column("ClaimValue")]
+          [StringLength(2147483647)]
+          public string Claimvalue { get; set; }
 
         }
         public class AspnetuserclaimSearchModel
         {
-        	public long? Id { get; set; }
-        	public Aspnetuser? UseridAspnetusers { get; set; }
-        	public string? Claimtype { get; set; }
-        	public string? Claimvalue { get; set; }
+          public long? Id { get; set; }
+          public Aspnetuser? UseridAspnetusers { get; set; }
+          public string? Claimtype { get; set; }
+          public string? Claimvalue { get; set; }
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models"
