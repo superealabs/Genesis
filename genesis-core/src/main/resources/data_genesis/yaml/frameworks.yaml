@@ -1693,10 +1693,7 @@
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         
-        {{#if useJWT}}
-        // Add Authorization
-        builder.Services.AddAuthorization();        
-        
+        {{#if useJWT}}    
         builder.Services.AddAuthentication("Bearer")
         .AddJwtBearer("Bearer", options =>
         {
@@ -1706,10 +1703,18 @@
             ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT key missing")))
+            IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(
+              builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT key missing")))
           };
         });
         {{/if}}
+        
+        builder.Services.AddAuthorization(options =>
+        {
+          options.DefaultPolicy = new AuthorizationPolicyBuilder("Bearer")
+          .RequireAuthenticatedUser()
+          .Build();
+        });
 
         var app = builder.Build();
         
@@ -1729,10 +1734,13 @@
         {{#if useEurekaServer}}
         // Map all actuators and controllers directly
         app.MapAllActuators(_ => { });{{/if}}
-        app.MapControllers();
+        
         {{#if useJWT}}
-        app.UseAuthorization();
-        app.UseAuthentication();{{/if}}
+        app.UseAuthentication();
+        app.UseAuthorization();{{/if}}
+        
+        app.MapControllers();
+        
         app.Run();
         public partial class Program {}
       
