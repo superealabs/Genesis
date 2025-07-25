@@ -3586,6 +3586,7 @@
       using ${majStart(projectName)}.Utils;
       using ${majStart(projectName)}.Exceptions;
       using ${majStart(projectName)}.Repositories.Interface;
+      {{#if useJWT}}using Microsoft.AspNetCore.Authorization;{{/if}}
 
     controllerAnnotations: |
       [ApiController]
@@ -3607,6 +3608,7 @@
       {{tab}}}
     controllerMethodContent: |
       {{tab}}[HttpGet]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. "
@@ -3651,6 +3653,7 @@
       {{tab}}}
       
       {{tab}}[HttpGet("{id}")]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Get ${formatReadableLowerCase(className)} by ID",
       {{tab}}{{tab}}Description = "Retrieve a specific ${formatReadableLowerCase(className)} item by its ID"
@@ -3702,6 +3705,7 @@
       {{tab}}}
       
       {{tab}}[HttpPost("search")]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items."
@@ -3753,6 +3757,7 @@
       
       {{#if !isView}} 
       {{tab}}[HttpPost]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
@@ -3785,6 +3790,7 @@
       {{tab}}}
       
       {{tab}}[HttpPut("{id}")]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
@@ -3844,6 +3850,7 @@
       {{tab}}}
       
       {{tab}}[HttpDelete("{id}")]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Delete ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Delete a ${formatReadableLowerCase(className)} item by its ID"
