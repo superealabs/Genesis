@@ -1,56 +1,54 @@
 - databaseId: 1
   databaseName: "MySQL"
   checkMinimumConstraintQuery: |
-    WITH parsed_constraints AS (
-                        SELECT
-                            CONSTRAINT_SCHEMA AS database_name,
-                            TABLE_NAME,
-                            CONSTRAINT_NAME,
-                            CHECK_CLAUSE,
-                            REPLACE(REPLACE(CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
-                        FROM information_schema.CHECK_CONSTRAINTS
-                        WHERE
-                            -- Inclure seulement celles avec >=, <= ou between
-                            (CHECK_CLAUSE LIKE '%>=%' OR CHECK_CLAUSE LIKE '%between%')
-                            -- MAIS exclure les contraintes qui contiennent AUSSI une borne basse strictement >
-                            AND CHECK_CLAUSE NOT REGEXP '^\\s*[0-9]+\\s*>='
-                    ),
-                    matches AS (
-                        SELECT
-                            database_name,
-                            TABLE_NAME,
-                            CONSTRAINT_NAME,
-                            CHECK_CLAUSE,
-                            cleaned_clause,
-
-                            -- >=
-                            REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`\\s*>=\\s*([0-9]+(?:\\.[0-9]+)?)') AS match_gte,
-                            -- BETWEEN
-                            REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`\\s+between\\s+[0-9]+(?:\\.[0-9]+)?\\s+and\\s+[0-9]+(?:\\.[0-9]+)?') AS match_between,
-
-                            -- colonnes et valeurs
-                            REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`') AS col_gte,
-                            REGEXP_SUBSTR(cleaned_clause, '([0-9]+(?:\\.[0-9]+)?)') AS val_gte,
-
-                            -- BETWEEN
-                            CASE
-                                WHEN cleaned_clause REGEXP '`(\\w+)`\\s+between\\s+([0-9.]+)\\s+and\\s+([0-9.]+)' THEN
-                                    TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`'))
-                            END AS col_between,
-                            CASE
-                                WHEN cleaned_clause REGEXP 'between\\s+([0-9.]+)\\s+and' THEN
-                                    REGEXP_SUBSTR(cleaned_clause, '(?<=between\\s)[0-9]+(?:\\.[0-9]+)?')
-                            END AS val_between_min
-                    from parsed_constraints
-                    )
-                    SELECT
-                        database_name,
-                        TABLE_NAME,
-                        COALESCE(col_between, TRIM(BOTH '`' FROM col_gte)) AS column_name,
-                        COALESCE(val_between_min, val_gte) + 0 AS min_value
-                    FROM matches
-                    WHERE table_name = ? and database_name = ? 
-                    and (match_gte IS NOT NULL OR match_between IS NOT NULL);
+      WITH parsed_constraints AS (
+      SELECT
+          c.CONSTRAINT_SCHEMA AS database_name,
+          c.TABLE_NAME,
+          c.CONSTRAINT_NAME,
+          ch.CHECK_CLAUSE,
+          REGEXP_REPLACE(ch.CHECK_CLAUSE, '[()]', '') AS cleaned_clause
+      FROM information_schema.TABLE_CONSTRAINTS c
+      JOIN information_schema.CHECK_CONSTRAINTS ch 
+          ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
+          AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
+      WHERE
+          c.CONSTRAINT_TYPE = 'CHECK'
+          AND (ch.CHECK_CLAUSE LIKE '%>=%' OR ch.CHECK_CLAUSE LIKE '%between%')
+          AND ch.CHECK_CLAUSE NOT REGEXP '^[[:space:]]*[0-9]+[[:space:]]*>='
+      ),
+      matches AS (
+        SELECT
+          database_name,
+          TABLE_NAME,
+          CONSTRAINT_NAME,
+          CHECK_CLAUSE,
+          cleaned_clause,
+          -- Extraction pour >=
+          REGEXP_SUBSTR(cleaned_clause, '`([[:alnum:]_]+)`[[:space:]]*>=[[:space:]]*([0-9]+(\\.[0-9]+)?)') AS match_gte,
+          -- Extraction pour BETWEEN
+          REGEXP_SUBSTR(cleaned_clause, '`([[:alnum:]_]+)`[[:space:]]+BETWEEN[[:space:]]+[0-9]+(\\.[0-9]+)?[[:space:]]+AND[[:space:]]+[0-9]+(\\.[0-9]+)?') AS match_between,
+          -- Colonne pour >= (sans les backticks)
+          TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`')) AS col_gte,
+          -- Valeur pour >=
+          REGEXP_SUBSTR(cleaned_clause, '[0-9]+(\\.[0-9]+)?') AS val_gte,
+          -- Colonne pour BETWEEN (sans les backticks)
+          TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`')) AS col_between,
+          -- Valeur min pour BETWEEN
+          REGEXP_SUBSTR(REGEXP_SUBSTR(cleaned_clause, 'BETWEEN[[:space:]]+[0-9.]+'), '[0-9.]+') AS val_between_min
+        FROM parsed_constraints
+      )
+      SELECT
+        database_name,
+        TABLE_NAME,
+        COALESCE(NULLIF(col_between, ''), NULLIF(col_gte, '')) AS column_name,
+        COALESCE(
+          NULLIF(val_between_min, ''),
+          NULLIF(val_gte, '')
+        ) + 0 AS min_value
+      FROM matches
+          WHERE table_name = ? and database_name = ? 
+          and (match_gte IS NOT NULL OR match_between IS NOT NULL);
   checkMaximumConstraintQuery: |
     WITH parsed_constraints AS (
                             SELECT
