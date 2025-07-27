@@ -296,37 +296,44 @@
         AND (ch.CHECK_CLAUSE LIKE '%char_length(%>=%' 
              OR ch.CHECK_CLAUSE LIKE '%char_length(%>%');
   checkRegexConstraintQuery: |
-    WITH check_constraints AS (
+          WITH regex_constraints AS (
             SELECT
-                table_name,
-                constraint_name,
-                check_clause,
-                CONSTRAINT_SCHEMA
-            FROM information_schema.check_constraints
-            WHERE check_clause LIKE '%REGEXP%'
-        ),
-        regex_matches AS (
-            SELECT
-                table_name,
-                constraint_name,
-                check_clause,
-                CONSTRAINT_SCHEMA,
-                -- Nouvelle regex pour extraire le nom de colonne même s'il est entre backticks
-                TRIM(BOTH '`' FROM REGEXP_SUBSTR(check_clause, '^`?\\w+`?')) AS column_name,
-                UPPER(REGEXP_SUBSTR(check_clause, '\\s(REGEXP)\\s')) AS operator,
-                TRIM(BOTH '\'' FROM REGEXP_SUBSTR(check_clause, "'[^']+'")) AS regex_pattern
-            FROM check_constraints
-        )
-        SELECT
-            table_name,
-            constraint_name,
-            column_name,
-            operator,
-            regex_pattern,
-            check_clause
-        FROM regex_matches
-        WHERE table_name = ? and CONSTRAINT_SCHEMA = ?
-        ORDER BY table_name, column_name;
+            c.TABLE_NAME,
+            c.CONSTRAINT_NAME,
+            ch.CHECK_CLAUSE,
+            c.CONSTRAINT_SCHEMA,
+            TRIM(BOTH '`' FROM 
+                SUBSTRING_INDEX(
+                    SUBSTRING_INDEX(
+                        SUBSTRING_INDEX(ch.CHECK_CLAUSE, '(', -1),
+                        ',', 1
+                    ),
+                    ')', 1
+                )
+            ) AS column_name,
+            'REGEXP' AS operator,
+            -- Modification ici : Ajout du REGEXP_REPLACE pour supprimer le \ final
+            REGEXP_REPLACE(
+                TRIM(BOTH '\'' FROM 
+                    SUBSTRING_INDEX(
+                        SUBSTRING_INDEX(ch.CHECK_CLAUSE, '\'', -2),
+                        '\'', 1
+                    )
+                ), 
+                '\\\\$', 
+                ''
+            ) AS regex_pattern
+            FROM information_schema.TABLE_CONSTRAINTS c
+            JOIN information_schema.CHECK_CONSTRAINTS ch 
+            ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
+            AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
+            WHERE c.CONSTRAINT_TYPE = 'CHECK'
+            AND (ch.CHECK_CLAUSE LIKE '%regexp%' OR ch.CHECK_CLAUSE LIKE '%REGEXP%')
+          )
+          SELECT * FROM regex_constraints
+          WHERE 
+              TABLE_NAME = ? 
+              AND CONSTRAINT_SCHEMA = ?;
 
 - databaseId: 2
   databaseName: "PostgreSQL"
