@@ -2294,6 +2294,7 @@
         using System.Data;
         using System.Data.Common;
         using System.Linq;
+        using System.Text.RegularExpressions;
         {{#if databaseType = SQL Server}}
         using Microsoft.Data.SqlClient;
         {{else}}{{removeLine}}{{/if}}
@@ -2585,8 +2586,7 @@
                   // 1. Collecter toutes les informations d'abord
                   var foreignKeys = new List<Tuple<string, string, string, string>>();
                   var uniqueConstraints = new List<Tuple<string, List<string>>>();
-                  var tableChecks = new List<Tuple<string, string>>();
-                  var columnChecks = new List<Tuple<string, string, string>>();
+                  var allChecks = new List<Tuple<string, string>>(); // constraint_name, check_clause
                   var notNullColumns = new List<Tuple<string, string, string>>();
       
                   // FOREIGN KEYS
@@ -2664,33 +2664,30 @@
                     uniqueConstraints.Add(Tuple.Create(name, columns));
                   }
 
-                  // CHECK Constraints - Table Level
+                  Console.WriteLine("[MySQL] Collecting all CHECK constraints...");
                   using (var cmd = new MySqlCommand(
-                  "SELECT tc.constraint_name, cc.check_clause " +
-                  "FROM information_schema.table_constraints tc " +
-                  "JOIN information_schema.check_constraints cc " +
-                  "  ON tc.constraint_schema = cc.constraint_schema " +
-                  " AND tc.constraint_name = cc.constraint_name " +
-                  "WHERE tc.table_schema = @schema " +
-                  "  AND tc.table_name = @table " +
-                  "  AND tc.constraint_type = 'CHECK' " +
-                  "  AND cc.level = 'Table'",
-                  (MySqlConnection)_connection))
+                      "SELECT cc.constraint_name, cc.check_clause " +
+                      "FROM information_schema.table_constraints tc " +
+                      "JOIN information_schema.check_constraints cc " +
+                      "  ON tc.constraint_schema = cc.constraint_schema " +
+                      " AND tc.constraint_name = cc.constraint_name " +
+                      "WHERE tc.table_schema = @schema " +
+                      "  AND tc.table_name = @table " +
+                      "  AND tc.constraint_type = 'CHECK'",
+                      (MySqlConnection)_connection))
                   {
-                    cmd.Parameters.AddWithValue("@schema", schema);
-                    cmd.Parameters.AddWithValue("@table", tableName);
-                    
-                    using var reader = cmd.ExecuteReader();
-                    while (reader.Read())
-                    {
-                      tableChecks.Add(Tuple.Create(
-                      reader.GetString(0),
-                      reader.GetString(1)
-                      ));
-                    }
+                      cmd.Parameters.AddWithValue("@schema", schema);
+                      cmd.Parameters.AddWithValue("@table", tableName);
+                  
+                      using var reader = cmd.ExecuteReader();
+                      while (reader.Read())
+                      {
+                          string constraintName = reader.GetString(0);
+                          string clause = reader.GetString(1);
+                  
+                          allChecks.Add(Tuple.Create(constraintName, clause));
+                      }
                   }
-
-                  // CHECK Constraints - Column Level
                   using (var cmd = new MySqlCommand(
                   "SELECT cc.constraint_name, cc.check_clause, kcu.column_name " +
                   "FROM information_schema.check_constraints cc " +
@@ -2745,8 +2742,7 @@
 
                   // 2. Désactiver les contraintes après avoir tout collecté
                   Console.WriteLine($"[MySQL] Found: {foreignKeys.Count} FKs, {uniqueConstraints.Count} UNIQUES, " +
-                                          $"{tableChecks.Count} TABLE-CHECKS, {columnChecks.Count} COLUMN-CHECKS, " +
-                                          $"{notNullColumns.Count} NOT NULLS");
+                                          $"{notNullColumns.Count} NOT NULLS, {defaultConstraints.Count} DEFAULTS");
 
                   // FOREIGN KEYS
                   Console.WriteLine("[MySQL] Disabling FOREIGN KEYS...");
@@ -2785,7 +2781,7 @@
                     using var dropCmd = new MySqlCommand(
                     $"ALTER TABLE {tableName} DROP INDEX `{name}`",
                               (MySqlConnection)_connection);
-                          dropCmd.ExecuteNonQuery();
+                    dropCmd.ExecuteNonQuery();
           
                           Console.WriteLine($"[MySQL] Disabled UNIQUE: {name}");
                       }
@@ -2806,9 +2802,6 @@
                      Console.WriteLine($"[MySQL] Disabled TABLE-CHECK: {name}");
                     }
         
-                    // CHECK Constraints - Column Level
-                    Console.WriteLine("[MySQL] Disabling COLUMN-level CHECK constraints...");
-                   foreach (var check in columnChecks)
                   {
                     var (constraintName, clause, columnName) = check;
                     Console.WriteLine($"[MySQL] Disabling COLUMN-CHECK: {constraintName} on {columnName}");
