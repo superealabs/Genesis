@@ -204,46 +204,62 @@
   checkStrictPastDateConstraintQuery: |
   checkStrictFutureDateConstraintQuery: |
   checkNotBlankConstraintQuery: |
-    with cc1 as (SELECT
-                cc.CONSTRAINT_NAME,
-                cc.CONSTRAINT_SCHEMA,
-                cc.TABLE_NAME,
-                cc.CHECK_CLAUSE,
-                CASE
-                    -- cas : trim(colonne) <> ''
-                    WHEN cc.CHECK_CLAUSE REGEXP 'trim\\(\\s*`?([a-zA-Z0-9_]+)`?\\s*\\)\\s*<>\\s*''''|''''\\s*<>\\s*trim\\(\\s*`?([a-zA-Z0-9_]+)`?\\s*\\)'
-                        THEN
-                            CASE
-                                WHEN cc.CHECK_CLAUSE LIKE 'trim(%' THEN
-                                    TRIM(BOTH '`' FROM SUBSTRING_INDEX(SUBSTRING_INDEX(cc.CHECK_CLAUSE, 'trim(', -1), ')', 1))
-                                ELSE
-                                    TRIM(BOTH '`' FROM SUBSTRING_INDEX(SUBSTRING_INDEX(cc.CHECK_CLAUSE, '<>', -1), ')', 1))
-                            END
-                    -- cas : colonne <> ''
-                    WHEN cc.CHECK_CLAUSE REGEXP '`?([a-zA-Z0-9_]+)`?\\s*<>\\s*''''|''''\\s*<>\\s*`?([a-zA-Z0-9_]+)`?'
-                        THEN
-                            CASE
-                                WHEN cc.CHECK_CLAUSE LIKE "'' <>%" THEN
-                                    TRIM(BOTH ' `' FROM SUBSTRING_INDEX(cc.CHECK_CLAUSE, '>', -1))
-                                ELSE
-                                    TRIM(BOTH ' `' FROM SUBSTRING_INDEX(cc.CHECK_CLAUSE, '<>', 1))
-                            END
-                    ELSE NULL
-                END AS column_name
-            FROM information_schema.check_constraints cc
-            WHERE cc.CHECK_CLAUSE REGEXP '(trim\\(\\s*`?[a-zA-Z0-9_]+`?\\s*\\)\\s*<>\\s*''''|''''\\s*<>\\s*trim\\(\\s*`?[a-zA-Z0-9_]+`?\\)|`?[a-zA-Z0-9_]+`?\\s*<>\\s*''''|''''\\s*<>\\s*`?[a-zA-Z0-9_]+`?)'),
-            cc as (
-            SELECT
-                cc.CONSTRAINT_NAME,
-                cc.CONSTRAINT_SCHEMA,
-                cc.TABLE_NAME,
-                cc.CHECK_CLAUSE,
-                trim(REPLACE(REPLACE(cc.column_name, '`', ''), '`', ''))AS column_name
-                from cc1 cc)
-                select * from cc
-            WHERE table_name = ? and CONSTRAINT_SCHEMA = ? 
-            and cc.CHECK_CLAUSE REGEXP '(trim\\(\\s*`?[a-zA-Z0-9_]+`?\\s*\\)\\s*<>\\s*''''|''''\\s*<>\\s*trim\\(\\s*`?[a-zA-Z0-9_]+`?\\)|`?[a-zA-Z0-9_]+`?\\s*<>\\s*''''|''''\\s*<>\\s*`?[a-zA-Z0-9_]+`?)'
-            ORDER BY cc.TABLE_NAME, column_name;
+      WITH not_empty_constraints AS (
+      SELECT
+          c.CONSTRAINT_NAME,
+          c.CONSTRAINT_SCHEMA,
+          c.TABLE_NAME,
+          ch.CHECK_CLAUSE,
+          CASE
+              -- Cas 1: trim(colonne) <> ''
+              WHEN ch.CHECK_CLAUSE LIKE '%trim(%' THEN
+                  TRIM(BOTH '`' FROM 
+                      SUBSTRING_INDEX(
+                          SUBSTRING_INDEX(
+                              SUBSTRING_INDEX(ch.CHECK_CLAUSE, 'trim(', -1),
+                              ')', 1
+                          ),
+                          ',', 1
+                      )
+                  )
+              -- Cas 2: '' <> colonne (ou équivalent)
+              WHEN ch.CHECK_CLAUSE LIKE '%''% <> %' OR ch.CHECK_CLAUSE LIKE '%_utf8mb4\\\\''% <> %' THEN
+                  TRIM(BOTH '`' FROM 
+                      SUBSTRING_INDEX(
+                          TRIM(SUBSTRING_INDEX(ch.CHECK_CLAUSE, '<>', -1)),
+                          ' ', 1
+                      )
+                  )
+              
+              -- Cas 3: colonne <> '' (ou équivalent)
+              ELSE
+                  TRIM(BOTH '`' FROM 
+                      SUBSTRING_INDEX(
+                          TRIM(SUBSTRING_INDEX(ch.CHECK_CLAUSE, '<>', 1)),
+                          ' ', -1
+                      )
+                  )
+              END AS column_name
+          FROM information_schema.TABLE_CONSTRAINTS c
+          JOIN information_schema.CHECK_CONSTRAINTS ch 
+              ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
+              AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
+          WHERE c.CONSTRAINT_TYPE = 'CHECK'
+              AND (
+                  ch.CHECK_CLAUSE LIKE '%<> _utf8mb4\\\\''%' 
+                  OR ch.CHECK_CLAUSE LIKE '%<> \\\\''%'
+                  OR ch.CHECK_CLAUSE LIKE '%<> ''''%'
+                  OR ch.CHECK_CLAUSE LIKE '%_utf8mb4\\\\'' <>%'
+                  OR ch.CHECK_CLAUSE LIKE '%\\\\'' <>%'
+                  OR ch.CHECK_CLAUSE LIKE '%'''' <>%'
+                  OR ch.CHECK_CLAUSE LIKE '% <> _utf8mb4\\\\''%'
+                  OR ch.CHECK_CLAUSE LIKE '% <> \\\\''%'
+                  OR ch.CHECK_CLAUSE LIKE '% <> ''''%'
+              )
+      )
+      SELECT * FROM not_empty_constraints
+      WHERE
+        table_name = ? and CONSTRAINT_SCHEMA = ? ;
   checkMinimumLengthConstraintQuery: |
     SELECT
                 table_name
