@@ -1041,8 +1041,8 @@
       scope: "{{removeLine}}"
 
     - groupId: "org.apache.commons"
-      artifactId: "commons-lang3"
-      version: "{{removeLine}}"
+      artifactId: "commons-text"
+      version: "1.11.0"
       scope: "{{removeLine}}"
   model:
     toGenerate: true
