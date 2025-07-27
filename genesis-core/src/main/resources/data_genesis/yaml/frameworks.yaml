@@ -457,7 +457,7 @@
           }
 
           private void disableMySqlCheckConstraints(String tableName, String schema) {
-            // 1. Contraintes CHECK au niveau TABLE
+            // 1. Contraintes CHECK au niveau TABLE et niveau COLONNE
             jdbc.queryForList(
               "SELECT cc.constraint_name, cc.check_clause " +
               "FROM information_schema.table_constraints tc " +
@@ -466,55 +466,23 @@
               " AND tc.constraint_name = cc.constraint_name " +
               "WHERE tc.table_schema = ? " +
               "  AND tc.table_name = ? " +
-              "  AND tc.constraint_type = 'CHECK' " +
-              "  AND cc.level = 'Table'",
+              "  AND tc.constraint_type = 'CHECK' ",
               schema, tableName
             ).forEach(ch -> {
               String name = safeGetString(ch, "constraint_name");
               String clause = safeGetString(ch, "check_clause");
+              clause = StringEscapeUtils.unescapeJava(clause);
+              clause = clause.replaceAll("_utf8mb4'", "'"); // remplace \' par '
+        
+              if (clause.toLowerCase().contains("regexp_like")) {
+                  clause = "(" + clause + ")";
+              }
     
               try {
                 jdbc.execute("ALTER TABLE " + tableName + " DROP CONSTRAINT `" + name + "`");
-                restoreDdls.push("ALTER TABLE " + tableName + " ADD CONSTRAINT `" + name + "` CHECK (" + clause + ")");
+                restoreDdls.push("ALTER TABLE " + tableName + " ADD CONSTRAINT `" + name + "` CHECK " + clause);
               } catch (DataAccessException e) {
                 System.err.println("Failed to drop table-level CHECK constraint: " + name);
-              }
-            });
-
-            // 2. Contraintes CHECK au niveau COLONNE
-            jdbc.queryForList(
-              """
-                  SELECT cc.constraint_name, cc.check_clause
-                  FROM information_schema.check_constraints cc
-                  JOIN information_schema.table_constraints tc
-                  ON tc.constraint_schema = cc.constraint_schema
-                  AND tc.constraint_name = cc.constraint_name
-                  WHERE tc.table_schema = ?
-                  AND tc.table_name = ?
-                  AND tc.constraint_type = 'CHECK'
-                  AND cc.level = 'Column'
-              """,
-              schema, tableName
-            ).forEach(ch -> {
-              String colName = safeGetString(ch, "constraint_name");
-              String clause = safeGetString(ch, "check_clause");
-  
-              try {
-                // Désactiver via modification de colonne
-                String columnType = jdbc.queryForObject(
-                "SELECT column_type FROM information_schema.columns " +
-                "WHERE table_schema = ? AND table_name = ? AND column_name = ?",
-                String.class, schema, tableName, colName
-                );
-      
-                // Supprimer la contrainte CHECK
-                String modifySQL = "ALTER TABLE " + tableName + " MODIFY `" + colName + "` " + columnType;
-                jdbc.execute(modifySQL);
-      
-                // Stocker pour restauration
-                restoreDdls.push("ALTER TABLE " + tableName + " MODIFY `" + colName + "` " + columnType + " CHECK (" + clause + ")");
-              } catch (DataAccessException e) {
-                System.err.println("Failed to drop column-level CHECK constraint: " + colName);
               }
             });
           }
