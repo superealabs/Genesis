@@ -235,6 +235,7 @@
         import java.sql.SQLException;
         import java.util.*;
         import java.util.stream.Collectors;
+        import org.apache.commons.text.StringEscapeUtils;
 
         public class ConstraintDisabler {
         
@@ -1022,6 +1023,10 @@
       version: "3.9.2"
       scope: "{{removeLine}}"
 
+    - groupId: "org.apache.commons"
+      artifactId: "commons-lang3"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
   model:
     toGenerate: true
     modelImports: |
