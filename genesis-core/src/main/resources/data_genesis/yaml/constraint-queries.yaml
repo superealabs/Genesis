@@ -262,15 +262,39 @@
         table_name = ? and CONSTRAINT_SCHEMA = ? ;
   checkMinimumLengthConstraintQuery: |
     SELECT
-                table_name
-                constraint_name,
-                check_clause,
-                REPLACE(REGEXP_SUBSTR(check_clause, '`(\\w+)`'), '`', '') AS column_name,
-                REGEXP_SUBSTR(check_clause, '(>=|>)') AS operator,
-                CAST(REGEXP_SUBSTR(check_clause, '\\d+$') AS UNSIGNED) AS min_length
-            FROM information_schema.check_constraints
-            WHERE table_name = ? and CONSTRAINT_SCHEMA = ?
-            and check_clause REGEXP 'char_length\\s*\\(.*\\)\\s*(>=|>)\\s*\\d+';
+        c.TABLE_NAME,
+        c.CONSTRAINT_NAME,
+        ch.CHECK_CLAUSE,
+        TRIM(BOTH '`' FROM 
+            SUBSTRING_INDEX(
+                SUBSTRING_INDEX(
+                    SUBSTRING_INDEX(ch.CHECK_CLAUSE, 'char_length(', -1),
+                    ')', 1
+                ),
+                ',', 1
+            )
+        ) AS column_name,
+        IF(ch.CHECK_CLAUSE LIKE '%>=%', '>=', '>') AS operator,
+        CAST(
+            SUBSTRING_INDEX(
+                SUBSTRING_INDEX(
+                    SUBSTRING_INDEX(ch.CHECK_CLAUSE, IF(ch.CHECK_CLAUSE LIKE '%>=%', '>=', '>'), -1),
+                    ')', 1
+                ),
+                ' ',
+                -1
+            ) AS UNSIGNED
+        ) AS min_length
+    FROM information_schema.TABLE_CONSTRAINTS c
+    JOIN information_schema.CHECK_CONSTRAINTS ch 
+        ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
+        AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
+    WHERE 
+        c.TABLE_NAME = ?
+        AND c.CONSTRAINT_SCHEMA = ?
+        AND c.CONSTRAINT_TYPE = 'CHECK'
+        AND (ch.CHECK_CLAUSE LIKE '%char_length(%>=%' 
+             OR ch.CHECK_CLAUSE LIKE '%char_length(%>%');
   checkRegexConstraintQuery: |
     WITH check_constraints AS (
             SELECT
