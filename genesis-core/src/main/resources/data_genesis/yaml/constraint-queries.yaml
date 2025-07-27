@@ -99,38 +99,54 @@
       WHERE table_name = ? and database_name = ? 
       and (match_lte IS NOT NULL OR match_between IS NOT NULL);
   checkStrictMinimumConstraintQuery: |
-        WITH parsed_constraints AS ( 
-                            SELECT
-                            CONSTRAINT_SCHEMA AS database_name,
-                            TABLE_NAME,
-                            CONSTRAINT_NAME,
-                            CHECK_CLAUSE,
-                            REPLACE(REPLACE(CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
-                            FROM information_schema.CHECK_CONSTRAINTS
-                            WHERE
-                            ((CHECK_CLAUSE LIKE '%>%' AND CHECK_CLAUSE NOT LIKE '%>=%'))
-                        ),
-                        matches AS (
-                            SELECT
-                            database_name,
-                            TABLE_NAME,
-                            CONSTRAINT_NAME,
-                            CHECK_CLAUSE,
-                            cleaned_clause,
-                            REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`\\s*>\\s*([0-9]+(?:\\.[0-9]+)?)') AS match_direct,
-                            REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`') AS col_direct,
-                            REGEXP_SUBSTR(cleaned_clause, '([0-9]+(?:\\.[0-9]+)?)') AS val_direct,
-                            REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`$') AS col_inverse,
-                            REGEXP_SUBSTR(cleaned_clause, '^([0-9]+(?:\\.[0-9]+)?)') AS val_inverse
-                        FROM parsed_constraints)
-                        SELECT
-                            database_name,
-                            TABLE_NAME,
-                            COALESCE(TRIM(BOTH '`' FROM col_direct), TRIM(BOTH '`' FROM col_inverse)) AS column_name,
-                            COALESCE(val_direct, val_inverse) + 0 AS min_value
-                        FROM matches
-                        WHERE table_name = ? and database_name = ?
-                            and (match_direct IS NOT NULL)
+      WITH parsed_constraints AS (
+          SELECT
+          c.CONSTRAINT_SCHEMA AS database_name,
+          c.TABLE_NAME,
+          c.CONSTRAINT_NAME,
+          ch.CHECK_CLAUSE,
+          REGEXP_REPLACE(ch.CHECK_CLAUSE, '[()]', '') AS cleaned_clause
+          FROM information_schema.TABLE_CONSTRAINTS c
+          JOIN information_schema.CHECK_CONSTRAINTS ch 
+          ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
+          AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
+          WHERE
+          c.CONSTRAINT_TYPE = 'CHECK'
+          AND (ch.CHECK_CLAUSE LIKE '%>%' AND ch.CHECK_CLAUSE NOT LIKE '%>=%')
+      ),
+      matches AS (
+          SELECT
+            database_name,
+            TABLE_NAME,
+            CONSTRAINT_NAME,
+            CHECK_CLAUSE,
+            cleaned_clause,
+            -- Extraction directe: colonne > valeur
+            REGEXP_SUBSTR(cleaned_clause, '`([[:alnum:]_]+)`[[:space:]]*>[[:space:]]*([0-9]+(\\.[0-9]+)?)') AS match_direct,
+            -- Colonne dans le cas direct
+            TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`')) AS col_direct,
+            -- Valeur dans le cas direct
+            REGEXP_SUBSTR(cleaned_clause, '[0-9]+(\\.[0-9]+)?') AS val_direct,
+            -- Colonne dans le cas inverse (valeur > colonne)
+            TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`$')) AS col_inverse,
+            -- Valeur dans le cas inverse (valeur > colonne)
+            REGEXP_SUBSTR(cleaned_clause, '^[[:space:]]*([0-9]+(\\.[0-9]+)?)') AS val_inverse
+          FROM parsed_constraints
+      )
+      SELECT
+          database_name,
+          TABLE_NAME,
+          COALESCE(
+            NULLIF(col_direct, ''),
+            NULLIF(col_inverse, '')
+          ) AS column_name,
+          COALESCE(
+            NULLIF(val_direct, ''),
+            NULLIF(val_inverse, '')
+          ) + 0 AS min_value
+      FROM matches
+        WHERE table_name = ? and database_name = ?
+        and (match_direct IS NOT NULL)
   checkStrictMaximumConstraintQuery: |
     WITH parsed_constraints AS ( 
                            SELECT
