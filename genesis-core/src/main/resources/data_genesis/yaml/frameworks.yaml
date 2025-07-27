@@ -2690,18 +2690,6 @@
                   }
                   using (var cmd = new MySqlCommand(
                   {
-                    cmd.Parameters.AddWithValue("@schema", schema);
-                    cmd.Parameters.AddWithValue("@table", tableName);
-                    
-                    using var reader = cmd.ExecuteReader();
-                    while (reader.Read())
-                    {
-                      columnChecks.Add(Tuple.Create(
-                      reader.GetString(0),
-                      reader.GetString(1),
-                      reader.GetString(2)
-                      ));
-                    }
                   }
       
                   // NOT NULL Constraints
