@@ -2783,24 +2783,45 @@
                               (MySqlConnection)_connection);
                     dropCmd.ExecuteNonQuery();
           
-                          Console.WriteLine($"[MySQL] Disabled UNIQUE: {name}");
-                      }
+                    Console.WriteLine($"[MySQL] Disabled UNIQUE: {name}");
+                  }
+                  // Traitement unifié des contraintes CHECK
+                  Console.WriteLine("[MySQL] Disabling all CHECK constraints...");
+                  foreach (var check in allChecks)
+                  {
+                    var (constraintName, clause) = check;
+                    Console.WriteLine($"[ MySQL ] Processing CHECK: { constraintName }");
+              
+                    clause = Regex.Unescape(clause);
 
-                    // CHECK Constraints - Table Level
-                    Console.WriteLine("[MySQL] Disabling TABLE-level CHECK constraints...");
-                                                                                                                      foreach (var check in tableChecks)
+                    // Nettoyage de la clause (identique au code Java)
+                    clause = clause
+                      .Replace("_utf8mb4'", "'");            // remplace \' par '
+
+                    // Ajout de parenthèses pour regexp_like
+                    if (clause.Contains("regexp_like", StringComparison.OrdinalIgnoreCase))
                     {
-                      var (name, clause) = check;
-                      Console.WriteLine($"[MySQL] Disabling TABLE-CHECK: {name}");
-
-                      using var dropCmd = new MySqlCommand(
-                          $"ALTER TABLE {tableName} DROP CONSTRAINT `{name}`",
-                          (MySqlConnection)_connection);
-                      dropCmd.ExecuteNonQuery();
-
-                      _restoreDdls.Push($"ALTER TABLE {tableName} ADD CONSTRAINT `{name}` CHECK ({clause})");
-                     Console.WriteLine($"[MySQL] Disabled TABLE-CHECK: {name}");
+                      clause = $"({ clause })";
                     }
+    
+                    try
+                    {
+                      // DROP CONSTRAINT
+                      using var dropCmd = new MySqlCommand(
+                          $"ALTER TABLE { tableName } DROP CONSTRAINT `{ constraintName }`",
+                      (MySqlConnection)_connection);
+                      dropCmd.ExecuteNonQuery();
+                  
+                      // Commande de restauration
+                      _restoreDdls.Push($"ALTER TABLE { tableName } ADD CONSTRAINT `{ constraintName }` CHECK { clause }");
+
+                      Console.WriteLine($"[ MySQL ] Disabled CHECK: { constraintName }");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[ WARNING ] Failed to disable CHECK constraint { constraintName }: { ex.Message }");
+                    }
+                  }
         
                   {
                     var (constraintName, clause, columnName) = check;
