@@ -2689,19 +2689,6 @@
                       }
                   }
                   using (var cmd = new MySqlCommand(
-                  "SELECT cc.constraint_name, cc.check_clause, kcu.column_name " +
-                  "FROM information_schema.check_constraints cc " +
-                  "JOIN information_schema.key_column_usage kcu " +
-                  "  ON cc.constraint_name = kcu.constraint_name " +
-                  " AND cc.constraint_schema = kcu.constraint_schema " +
-                  "JOIN information_schema.table_constraints tc " +
-                  "  ON cc.constraint_name = tc.constraint_name " +
-                  " AND cc.constraint_schema = tc.constraint_schema " +
-                  "WHERE tc.table_schema = @schema " +
-                  "  AND tc.table_name = @table " +
-                  "  AND tc.constraint_type = 'CHECK' " +
-                  "  AND cc.level = 'Column'",
-                  (MySqlConnection)_connection))
                   {
                     cmd.Parameters.AddWithValue("@schema", schema);
                     cmd.Parameters.AddWithValue("@table", tableName);
@@ -2824,8 +2811,6 @@
                   }
         
                   {
-                    var (constraintName, clause, columnName) = check;
-                    Console.WriteLine($"[MySQL] Disabling COLUMN-CHECK: {constraintName} on {columnName}");
 
                     // Get column definition
                     string columnType = null;
@@ -2868,7 +2853,6 @@
                     restoreSQL += $" CHECK ({clause})";
                     
                     _restoreDdls.Push(restoreSQL);
-                    Console.WriteLine($"[MySQL] Disabled COLUMN-CHECK: {constraintName}");
                   }
       
                   // NOT NULL Constraints
