@@ -1699,11 +1699,20 @@
         using Steeltoe.Management.Endpoint;
         using System.Net.NetworkInformation;
         using System.Net.Sockets;{{/if}}
+        {{#if useJWT}}
+        using Microsoft.AspNetCore.Identity;
+        using System.Security.Claims;
+        using Microsoft.AspNetCore.Authorization;
+        using ${majStart(projectName)}.Services.Startup;
+        using Microsoft.IdentityModel.Tokens;
+        using System.Text;
+        {{/if}}
         using System.Net;
         using Microsoft.OpenApi.Models;
         using Microsoft.EntityFrameworkCore;
         using ${majStart(projectName)}.Data;
         using ${majStart(projectName)}.Filters;
+        using ${majStart(projectName)}.Models;
         using ${majStart(projectName)}.Repositories.Implementation;
         using ${majStart(projectName)}.Repositories.Interface;
         using ${majStart(projectName)}.Services.Implementation;
@@ -1726,6 +1735,31 @@
             {
               c.AddServer(new OpenApiServer { Url = pathBase });
             }
+            {{#if useJWT}}
+            c.AddSecurityDefinition("Bearer" , new OpenApiSecurityScheme
+            {
+                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                Description = "Please enter a token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "bearer"
+            });
+            
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    []
+                }
+            });{{/if}}
         });
         
         // Configure Kestrel to listen on both the machine's IP address and localhost
@@ -1761,7 +1795,16 @@
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         builder.Services.AddDbContext<${majStart(projectName)}Context>(options =>
             options.Use${daoName}(connectionString${addOptions}));
+        {{#if useJWT}}
+        builder.Services.AddHostedService<SqlSchemaBootstrapper>();
+        builder.Services
+          .AddIdentity<ApplicationUser, IdentityRole>()
+          .AddEntityFrameworkStores<${majStart(projectName)}Context>()
+          .AddDefaultTokenProviders();
         
+        builder.Services.AddScoped<UserService>();
+        builder.Services.AddScoped<JwtService>();
+        {{/if}}
         // Adding repositories ...
         {{#each entities}}
         builder.Services.AddScoped<I${this}Repository, ${this}Repository>();
@@ -1781,6 +1824,35 @@
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         
+        {{#if useJWT}}    
+        builder.Services.AddAuthentication(options =>
+        {
+          options.DefaultAuthenticateScheme = "Bearer";
+          options.DefaultChallengeScheme = "Bearer";
+        })
+        .AddJwtBearer("Bearer", options =>
+        {
+          options.TokenValidationParameters = new TokenValidationParameters
+          {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(
+              builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT key missing"))
+            ),
+            NameClaimType = ClaimTypes.NameIdentifier
+          };
+        });
+        {{/if}}
+        
+        builder.Services.AddAuthorization(options =>
+        {
+          options.DefaultPolicy = new AuthorizationPolicyBuilder("Bearer")
+          .RequireAuthenticatedUser()
+          .Build();
+        });
+
         var app = builder.Build();
         
         if (!string.IsNullOrEmpty(pathBase))
@@ -1799,9 +1871,13 @@
         {{#if useEurekaServer}}
         // Map all actuators and controllers directly
         app.MapAllActuators(_ => { });{{/if}}
+        
+        {{#if useJWT}}
+        app.UseAuthentication();
+        app.UseAuthorization();{{/if}}
+        
         app.MapControllers();
         
-        app.UseAuthorization();
         app.Run();
         public partial class Program {}
       
@@ -1812,11 +1888,16 @@
       extension: "cs"
       content: |
         namespace ${majStart(projectName)}.Data;
-        
+        {{#if useJWT}}
+        using Microsoft.AspNetCore.Identity;
+        using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+        {{/if}}
         using Microsoft.EntityFrameworkCore;
         using Models;
-        
-        public class ${majStart(projectName)}Context : DbContext
+        {{#if useJWT}}
+        public class ${majStart(projectName)}Context : IdentityDbContext<ApplicationUser>
+        {{else}}
+        public class ${majStart(projectName)}Context : DbContext{{/if}}
         {
             {{#each entities}}
             public DbSet<${this}> ${this}s { get; set; }
@@ -3336,6 +3417,7 @@
       variableName: "securityType"
       options:
         - "NONE"
+        - ".NET Security - JWT"
       defaultOption: "NONE"
 
   eurekaClientConfigurations:
@@ -3813,6 +3895,7 @@
       using ${majStart(projectName)}.Utils;
       using ${majStart(projectName)}.Exceptions;
       using ${majStart(projectName)}.Repositories.Interface;
+      {{#if useJWT}}using Microsoft.AspNetCore.Authorization;{{/if}}
 
     controllerAnnotations: |
       [ApiController]
@@ -3834,6 +3917,7 @@
       {{tab}}}
     controllerMethodContent: |
       {{tab}}[HttpGet]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. "
@@ -3878,6 +3962,7 @@
       {{tab}}}
       
       {{tab}}[HttpGet("{id}")]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Get ${formatReadableLowerCase(className)} by ID",
       {{tab}}{{tab}}Description = "Retrieve a specific ${formatReadableLowerCase(className)} item by its ID"
@@ -3929,6 +4014,7 @@
       {{tab}}}
       
       {{tab}}[HttpPost("search")]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items."
@@ -3980,6 +4066,7 @@
       
       {{#if !isView}} 
       {{tab}}[HttpPost]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
@@ -4012,6 +4099,7 @@
       {{tab}}}
       
       {{tab}}[HttpPut("{id}")]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
@@ -4071,6 +4159,7 @@
       {{tab}}}
       
       {{tab}}[HttpDelete("{id}")]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Delete ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Delete a ${formatReadableLowerCase(className)} item by its ID"
