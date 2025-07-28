@@ -697,87 +697,74 @@
               }
           }
 
-          private void disableOracle(String tableName) {
-            String schema = jdbc.queryForObject("SELECT USER FROM DUAL", String.class).toUpperCase();
-            String tableUpper = tableName.toUpperCase();
+                private void disableOracle(String tableName) {
+                String schema = jdbc.queryForObject("SELECT USER FROM DUAL", String.class).toUpperCase();
+                String tableUpper = tableName.toUpperCase();
           
-            // Contraintes R, C, U, P
-            jdbc.queryForList(
-            "SELECT constraint_name, constraint_type, search_condition, r_constraint_name " +
-            "FROM all_constraints " +
-            "WHERE owner = ? AND table_name = ? AND constraint_type IN ('R','C','U','P')",
-            schema, tableUpper
-            ).forEach(row -> {
-              String name = safeGetString(row, "CONSTRAINT_NAME");
-              String type = safeGetString(row, "CONSTRAINT_TYPE");
-              String ddl;
-              
-              switch (type) {
-              case "C": // CHECK
-                String cond = safeGetString(row, "SEARCH_CONDITION");
-                ddl = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name + " CHECK (" + cond + ")";
-                break;
-              case "R": // FK
-                String pk = safeGetString(row, "R_CONSTRAINT_NAME");
-                List<String> fkCols = jdbc.queryForList(
-                "SELECT column_name FROM all_cons_columns " +
-                "WHERE owner = ? AND constraint_name = ?",
-                String.class, schema, name
+                List<Map<String, Object>> constraints = jdbc.queryForList(
+                "SELECT constraint_name, constraint_type, search_condition, r_constraint_name " +
+                "FROM all_constraints ac " +
+                "WHERE owner = ? " +
+                "  AND table_name = ? " +
+                "  AND constraint_type IN ('R', 'C', 'U', 'P') " +
+                "  AND ( " +
+                "       constraint_name NOT LIKE 'SYS_%' " +
+                "       OR ( " +
+                "          constraint_name LIKE 'SYS_%' " +
+                "          AND EXISTS ( " +
+                "              SELECT 1 FROM all_cons_columns acc " +
+                "              WHERE acc.owner = ac.owner " +
+                "                AND acc.constraint_name = ac.constraint_name " +
+                "          ) " +
+                "       ) " +
+                "  ) " +
+                "ORDER BY constraint_name",
+                schema, tableUpper
                 );
-                List<String> pkCols = jdbc.queryForList(
-                "SELECT column_name FROM all_cons_columns " +
-                "WHERE owner = ? AND constraint_name = ?",
-                String.class, schema, pk
-                );
-                String refTable = jdbc.queryForObject(
-                "SELECT table_name FROM all_constraints " +
-                "WHERE owner = ? AND constraint_name = ?",
-                String.class, schema, pk
-                );
-                
-                ddl = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name +
-                " FOREIGN KEY (" + String.join(",", fkCols) + ") REFERENCES " +
-                refTable + "(" + String.join(",", pkCols) + ")";
-                break;
-              case "U": // UNIQUE
-                List<String> uniqueCols = jdbc.queryForList(
-                "SELECT column_name FROM all_cons_columns " +
-                "WHERE owner = ? AND constraint_name = ?",
-                String.class, schema, name
-                );
-                ddl = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name +
-                " UNIQUE (" + String.join(",", uniqueCols) + ")";
-                break;
-              default: // P = PRIMARY KEY
-                List<String> pkCols2 = jdbc.queryForList(
-                "SELECT column_name FROM all_cons_columns " +
-                "WHERE owner = ? AND constraint_name = ?",
-                String.class, schema, name
-                );
-                ddl = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name +
-                " PRIMARY KEY (" + String.join(",", pkCols2) + ")";
-            }
-        
-              restoreDdls.push(ddl);
-              jdbc.execute("ALTER TABLE " + tableName + " DISABLE CONSTRAINT " + name);
-            });
           
-            // NOT NULL
-            jdbc.queryForList(
-            "SELECT column_name, data_type, data_length " +
-            "FROM all_tab_columns " +
-            "WHERE owner = ? AND table_name = ? AND nullable = 'N'",
-            schema, tableUpper
-            ).forEach(col -> {
-              String colName = safeGetString(col, "COLUMN_NAME");
-              String dt = safeGetString(col, "DATA_TYPE");
-              Object lenObj = col.get("DATA_LENGTH");
-              int len = lenObj instanceof Number ? ((Number) lenObj).intValue(): 0;
-              String def = (len > 0) ? dt + "(" + len + ")": dt;
-        
-              restoreDdls.push("ALTER TABLE " + tableName + " MODIFY (" + colName + " " + def + " NOT NULL)");
-              jdbc.execute("ALTER TABLE " + tableName + " MODIFY (" + colName + " NULL)");
-            });
+                for (Map<String, Object> row : constraints) {
+                  String name = safeGetString(row, "CONSTRAINT_NAME");
+                  String type = safeGetString(row, "CONSTRAINT_TYPE");
+                  String searchCond = safeGetString(row, "SEARCH_CONDITION");
+                  
+                  if ("P".equals(type)) {
+                  System.out.println("Constraint " + name + " ignored (PRIMARY KEY)");
+                  continue;
+                  }
+                  if ("C".equals(type) && searchCond != null && searchCond.toUpperCase().contains("IS NOT NULL")) {
+                  System.out.println("Constraint " + name + " ignored (NOT NULL implicit)");
+                  continue;
+                  }
+                  
+                  restoreDdls.push("ALTER TABLE " + tableUpper + " ENABLE CONSTRAINT " + name);
+                  
+                  if ("R".equals(type)) {
+                  List<String> fkCols = jdbc.queryForList(
+                  "SELECT column_name FROM all_cons_columns WHERE owner = ? AND constraint_name = ? ORDER BY position",
+                  String.class, schema, name
+                  );
+                  
+                  for (String col : fkCols) {
+                    String alterToNull = "ALTER TABLE " + tableUpper + " MODIFY (" + col + " NULL)";
+                    try {
+                    jdbc.execute(alterToNull);
+                    System.out.println("Column " + tableUpper + "." + col + " made nullable");
+                    restoreDdls.push("ALTER TABLE " + tableUpper + " MODIFY (" + col + " NOT NULL)");
+                    } catch (DataAccessException e) {
+                    System.err.println("Error modifying NULL for column " + col + ": " + e.getMessage());
+                            }
+                        }
+                    }
+          
+                    try {
+                        jdbc.execute("ALTER TABLE " + tableUpper + " DISABLE CONSTRAINT " + name);
+                  System.out.println("Constraint " + name + " disabled");
+                } catch (DataAccessException e) {
+                  System.err.println("Error disabling constraint " + name + ": " + e.getMessage());
+                    }
+                }
+          
+                System.out.println("Processing finished for table " + tableUpper);
           }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
@@ -957,7 +944,8 @@
     - fileType: "Configuration file for test classes"
       fileName: "application-test"
       extension: "properties"
-      content: |   
+      content: |
+        spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.${databaseType}Dialect
         spring.jpa.properties.jakarta.persistence.validation.mode=none
         spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration
         spring.jpa.properties.hibernate.validator.apply_to_ddl=false
@@ -1061,17 +1049,23 @@
       @Table(name="${tableName}")
     modelFieldContent: |
       {{tab}}{{#each fields}}
-      {{tab}}{{#if this.isPrimaryKey}}
+      {{tab}}{{#if this.isIntAndPrimaryKey}}
       {{tab}}@Id
       {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
-      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
+      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable})
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}{{elseIf this.isPrimaryKey}}
+      {{tab}}@Id
+      {{tab}}@org.hibernate.annotations.Generated(org.hibernate.annotations.GenerationTime.INSERT)
+      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable})
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}{{elseIf this.isForeignKey}}
       {{tab}}@ManyToOne
       {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{/if}}
       {{tab}}{{#each this.attributeTypeAnnotations}}
-      {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}
-      {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
@@ -3183,98 +3177,104 @@
           }
           {{else}}{{removeLine}}{{/if}}
           {{#if databaseType = Oracle}}
-          private void DisableOracle(string tableName)
+          public void DisableOracle(string tableName)
           {
-            var schema = _connection is OracleConnection oracleConn
-            ? oracleConn.UserID?.ToUpper()
-              : "CURRENT_USER";
-                  
-                  // Contraintes R, C, U, P
-            using (var cmd = new OracleCommand(
-            "SELECT constraint_name, constraint_type, " +
-            "search_condition, r_constraint_name " +
-            "FROM all_constraints " +
-            "WHERE owner = :owner AND table_name = :table " +
-            "AND constraint_type IN ('R','C','U','P')",
-            (OracleConnection)_connection))
-            {
-              cmd.Parameters.Add(new OracleParameter("owner", schema));
-              cmd.Parameters.Add(new OracleParameter("table", tableName.ToUpper()));
-              using var reader = cmd.ExecuteReader();
-              while (reader.Read())
-              {
-                var name = reader.GetString(0);
-                var type = reader.GetString(1);
-                string ddl;
-                                
-                switch (type)
-                {
-                  case "C": // CHECK
-                    var cond = reader.IsDBNull(2) ? "" : reader.GetString(2);
-                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} CHECK ({cond})";
-                    break;
-
-                  case "R": // FOREIGN KEY
-                    var pk = reader.GetString(3);
-                    var fkCols = GetConstraintColumns(schema, name);
-                    var pkCols = GetConstraintColumns(schema, pk);
-                    var refTable = GetTableNameForConstraint(schema, pk);
-                                  
-                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
-                         $"FOREIGN KEY ({string.Join(",", fkCols)}) " +
-                          $"REFERENCES {refTable}({string.Join(",", pkCols)})";
-                    break;
-
-                  case "U": // UNIQUE
-                    var uniqueCols = GetConstraintColumns(schema, name);
-                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
-                         $"UNIQUE ({string.Join(",", uniqueCols)})";
-                    break;
-
-                  default: // PRIMARY KEY
-                    var pkCols2 = GetConstraintColumns(schema, name);
-                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
-                         $"PRIMARY KEY ({string.Join(",", pkCols2)})";
-                    break;
-                }
+            using var getSchemaCmd = _connection.CreateCommand();
+            getSchemaCmd.CommandText = "SELECT USER FROM DUAL";
+            var schema = getSchemaCmd.ExecuteScalar()?.ToString()?.ToUpper();
+            if (string.IsNullOrEmpty(schema)) throw new Exception("Schema not found.");
+        
+            var tableUpper = tableName.ToUpper();
+        
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = @"
+            SELECT constraint_name, constraint_type, search_condition, r_constraint_name
+            FROM all_constraints ac
+            WHERE owner = :schema
+            AND table_name = :t_table_name
+            AND constraint_type IN ('R', 'C', 'U', 'P')
+            AND (
+            constraint_name NOT LIKE 'SYS_%'
+            OR (
+            constraint_name LIKE 'SYS_%'
+            AND EXISTS (
+            SELECT 1 FROM all_cons_columns acc
+            WHERE acc.owner = ac.owner
+            AND acc.constraint_name = ac.constraint_name
+            )
+            )
+            )
+            ORDER BY constraint_name";
             
-                _restoreDdls.Push(ddl);
-                
-                using var disableCmd = new OracleCommand(
-                $"ALTER TABLE {tableName} DISABLE CONSTRAINT {name}",
-                    (OracleConnection)_connection);
-                disableCmd.ExecuteNonQuery();
-              }
-            }
-
-            // NOT NULL Constraints
-            using (var cmd = new OracleCommand(
-                "SELECT column_name, data_type, data_length " +
-                "FROM all_tab_columns " +
-                "WHERE owner = :owner " +
-                "AND table_name = :table " +
-                "AND nullable = 'N'",
-                (OracleConnection)_connection))
+            var param1 = cmd.CreateParameter();
+            param1.ParameterName = "schema";
+            param1.Value = schema;
+            cmd.Parameters.Add(param1);
+        
+            var param2 = cmd.CreateParameter();
+            param2.ParameterName = "t_table_name";
+            param2.Value = tableUpper;
+            cmd.Parameters.Add(param2);
+        
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
             {
-              cmd.Parameters.Add(new OracleParameter("owner", schema));
-              cmd.Parameters.Add(new OracleParameter("table", tableName.ToUpper()));
-              using var reader = cmd.ExecuteReader();
-              while (reader.Read())
+              var name = reader["CONSTRAINT_NAME"].ToString();
+              var type = reader["CONSTRAINT_TYPE"].ToString();
+              var searchCond = reader["SEARCH_CONDITION"]?.ToString();
+              
+              if (type == "P")
               {
-                var colName = reader.GetString(0);
-                var dt = reader.GetString(1);
-                var len = reader.IsDBNull(2) ? 0 : reader.GetDecimal(2);
-                var def = len > 0 ? $"{dt}({len})" : dt;
-
-                _restoreDdls.Push($"ALTER TABLE {tableName} MODIFY ({colName} {def} NOT NULL)");
-                 
-                using var alterCmd = new OracleCommand(
-                  $"ALTER TABLE {tableName} MODIFY ({colName} NULL)",
-                  (OracleConnection)_connection);
-                alterCmd.ExecuteNonQuery();
+                Console.WriteLine($"Constraint {name} ignored (PRIMARY KEY)");
+                continue;
               }
+              
+              if (type == "C" && searchCond != null && searchCond.ToUpper().Contains("IS NOT NULL"))
+              {
+                Console.WriteLine($"Constraint {name} ignored (NOT NULL implicit)");
+                continue;
+              }
+              
+              _restoreDdls.Push($"ALTER TABLE {tableUpper} ENABLE CONSTRAINT {name}");
+        
+                if (type == "R")
+              {
+                var fkCols = GetConstraintColumns(schema, name);
+                
+                foreach (var col in fkCols)
+                {
+                  try
+                  {
+                    using var alterCmd = _connection.CreateCommand();
+                    alterCmd.CommandText = $"ALTER TABLE {tableUpper} MODIFY ({col} NULL)";
+                    alterCmd.ExecuteNonQuery();
+                    Console.WriteLine($"Column {tableUpper}.{col} made nullable");
+                    
+                    _restoreDdls.Push($"ALTER TABLE {tableUpper} MODIFY ({col} NOT NULL)");
+                  }
+                  catch (Exception ex)
+                  {
+                    Console.Error.WriteLine($"Error making column {col} nullable: {ex.Message}");
+                        }
+                    }
+                }
+        
+                try
+                {
+                    using var disableCmd = _connection.CreateCommand();
+                    disableCmd.CommandText = $"ALTER TABLE {tableUpper} DISABLE CONSTRAINT {name}";
+                    disableCmd.ExecuteNonQuery();
+                    Console.WriteLine($"Constraint {name} disabled");
+                  }
+                  catch (Exception ex)
+                  {
+                    Console.Error.WriteLine($"Error disabling constraint {name}: {ex.Message}");
+                }
             }
+        
+            Console.WriteLine($"Processing finished for table {tableUpper}");
           }
+
                                   
           private List<string> GetConstraintColumns(string schema, string constraintName)
           {

@@ -245,7 +245,7 @@
       "1": {
         "groupId": "com.oracle.database.jdbc",
         "artifactId": "ojdbc8",
-        "version": "23.5.0.24.07"
+        "version": "19.8.0.0"
       },
       "2": {
         "groupId": "",
@@ -271,7 +271,7 @@
       "NUMBER(*,*)": "double",
       "VARCHAR2": "string",
       "DATE": "date",
-      "TIMESTAMP(*)": "timestamp",
+      "TIMESTAMP(6)": "timestamp",
       "TIMESTAMP": "timestamp",
       "TIME": "time",
       "BLOB": "bytea",
