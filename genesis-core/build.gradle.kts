@@ -17,6 +17,7 @@ dependencies {
     implementation("org.postgresql:postgresql:42.7.3")
     implementation("com.microsoft.sqlserver:mssql-jdbc:12.8.1.jre11")
     implementation("com.oracle.database.jdbc:ojdbc8:19.8.0.0")
+    implementation("org.apache.commons:commons-text:1.11.0")
 
     // Logging
     testImplementation("org.slf4j:slf4j-simple:2.0.12")

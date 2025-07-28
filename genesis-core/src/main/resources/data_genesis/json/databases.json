@@ -86,6 +86,11 @@
       "2": {
         "groupId": "",
         "artifactId": "Npgsql.EntityFrameworkCore.PostgreSQL"
+      },
+      "3": {
+        "groupId": "io.hypersistence",
+        "artifactId": "hypersistence-utils-hibernate-63",
+        "version": "3.8.4"
       }
     },
     "driverType": "",
@@ -124,7 +129,9 @@
       "numeric": "double",
       "date": "date",
       "timestamp without time zone": "timestamp",
+      "timestamp with time zone": "timestamptz",
       "timestamp": "timestamp",
+      "timestamptz": "timestamptz",
       "bool": "boolean",
       "time": "time",
       "tsrange": "timestamp[]",
@@ -164,8 +171,8 @@
     "driverType": "",
     "sid": "",
     "connectionString": {
-      "1": "jdbc:sqlserver://${host}:${port};databaseName=${database}",
-      "2": "Server=${host};Database=${database};User Id=${username};Password=${password};"
+      "1": "jdbc:sqlserver://${host}:${port};databaseName=${database};encrypt=false;trustServerCertificate=true",
+      "2": "Server=${host};Database=${database};User Id=${username};Password=${password};Encrypt=false;TrustServerCertificate=true"
     },
     "daoName": {
       "2": "SqlServer"
@@ -180,18 +187,55 @@
       "int identity": "int",
       "bigint": "long",
       "smallint": "int",
+      "tinyint": "int",
+      "bit": "boolean",
       "float": "float",
+      "real": "float",
       "double": "double",
-      "varchar": "string",
       "decimal": "double",
+      "numeric": "double",
+      "money": "double",
+      "smallmoney": "double",
+      "varchar": "string",
       "nvarchar": "string",
+      "char": "string",
+      "nchar": "string",
+      "text": "string",
+      "ntext": "string",
+      "xml": "string",
       "date": "date",
       "time": "time",
-      "datetime": "datetime"
+      "datetime": "datetime",
+      "datetime2": "timestamp",
+      "smalldatetime": "datetime",
+      "datetimeoffset": "timestamp",
+      "timestamp": "bytea",
+      "binary": "bytea",
+      "varbinary": "bytea",
+      "image": "bytea",
+      "uniqueidentifier": "uuid",
+      "sql_variant": "string",
+      "cursor": "string",
+      "table": "string",
+      "hierarchyid": "string",
+      "geometry": "string",
+      "geography": "string"
     },
     "excludeSchemas": [
       "sys",
-      "information_schema"
+      "information_schema",
+      "INFORMATION_SCHEMA",
+      "SYS",
+      "db_owner",
+      "db_accessadmin",
+      "db_securityadmin",
+      "db_ddladmin",
+      "db_backupoperator",
+      "db_datareader",
+      "db_datawriter",
+      "db_denydatareader",
+      "db_denydatawriter",
+      "guest"
     ]
   },
   {

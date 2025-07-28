@@ -2,10 +2,7 @@ package org.labs.genesis.config.langage.generator.project;
 
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
-import org.labs.genesis.config.langage.FilesEdit;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.Language;
-import org.labs.genesis.config.langage.Project;
+import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.framework.APIGenerator;
 import org.labs.genesis.config.langage.generator.framework.GenesisGenerator;
 import org.labs.genesis.connexion.Credentials;
@@ -47,6 +44,13 @@ public class ProjectGenerator {
                     .collect(Collectors.toMap(Project::getId, project -> project));
 
             frameworks = Arrays.stream(FileUtils.fromYaml(Framework[].class, Constantes.FRAMEWORK_YAML))
+                    .peek(framework -> {
+                        try {
+                            framework.setFrameworkSecurities();
+                        } catch (IOException e) {
+                            throw new RuntimeException("Error while initializing frameworkSecurities for Framework ID: " + framework.getId(), e);
+                        }
+                    })
                     .collect(Collectors.toMap(Framework::getId, framework -> framework));
 
             llmApiConfigs = Arrays.stream(FileUtils.fromJson(LlmApiConfig[].class, Constantes.LLM_API_CONFIG_JSON))
@@ -145,6 +149,18 @@ public class ProjectGenerator {
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
+
+        String securityType = (String) context.getFrameworkConfiguration().get("securityType");
+
+        Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
+
+        selectedSecurityOption.ifPresent(security -> {
+            try {
+                renderFilesEdits(security.getSecurityFiles(), projectFilesEditsHashMap);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public void generateBackendComponents(ProjectGenerationContext context,
@@ -164,25 +180,26 @@ public class ProjectGenerator {
         Language language = context.getLanguage();
         String projectName = context.getProjectName();
         String groupLink = context.getGroupLink();
+        Map<String, Object> frameworkOptions = context.getFrameworkConfiguration();
 
         if (generationOptions.contains(COMPONENT_MODEL) && framework.getModel().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_MODEL + " component...");
-            genesisGenerator.generateModel(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateModel(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         if (generationOptions.contains(COMPONENT_DAO) && framework.getModelDao().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_DAO + " component..." + tableMetadata.getClassName());
-            genesisGenerator.generateDao(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateDao(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         if (generationOptions.contains(COMPONENT_SERVICE) && framework.getService().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_SERVICE + " component...");
-            genesisGenerator.generateService(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateService(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         if (generationOptions.contains(COMPONENT_CONTROLLER) && framework.getController().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_CONTROLLER + " component...");
-            genesisGenerator.generateController(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateController(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         System.out.println("Backend component generation completed for project: " + projectName);
