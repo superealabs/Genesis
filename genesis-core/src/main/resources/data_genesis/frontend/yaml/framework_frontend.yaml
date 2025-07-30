@@ -1,9 +1,8 @@
 - id: 1
   languageId: 1
   coreFramework: "Angular"
-  initPath: ""
   name: "Angular App"
-  template: "Template"
+  template: "Angular-template"
   initPath: "angular/angular-skeletoon"
   componentExtension: ""
   additionalFiles:
