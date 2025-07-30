@@ -1,0 +1,60 @@
+- id: 1
+  languageId: 1
+  coreFramework: "Angular"
+  name: "Angular App"
+  template: "Template"
+  additionalFiles:
+    - fileType: "App-files"
+      fileName: "app.component"
+      extension: "ts"
+      content: | 
+      destinationPath: ""
+    - fileType: "App-files"
+      fileName: "app.component"
+      extension: "html"
+      content: |
+      destinationPath: ""
+
+    - fileType: "App-files"
+      fileName: "app.component"
+      extension: "css"
+      content: |
+      destinationPath: ""
+  component:
+    importFile: |
+    selector: ""
+    standalone: ""
+    importComponent: |
+    template: |
+    style: |
+    export: |
+    componentAdditionalFiles:
+      - fileType: "html template"
+        fileName: "$.component"
+        extension: "html"
+        content: |
+        destinationPath: ""
+      - fileType: "css template"
+        fileName: "$.component"
+        extension: "css"
+        content: |
+        destinationPath: ""
+  serviceComponent:
+    import: |
+    methods: |
+  modelComponent:
+    exports: |
+  
+
+
+
+
+      
+      
+      
+
+
+
+
+  
+  
