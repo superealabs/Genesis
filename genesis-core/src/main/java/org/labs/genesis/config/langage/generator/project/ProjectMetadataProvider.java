@@ -20,7 +20,7 @@ public class ProjectMetadataProvider {
         metadata.put("projectName", projectName);
         metadata.put("groupLink", groupLink);
         metadata.put("groupLinkPath", groupLink.replace(".", "/"));
-        metadata.put("webapp", destinationFolder+"/"+ StringUtils.majStart(projectName) +"/"+webappFolder);
+        metadata.put("webapp", destinationFolder+"/"+ StringUtils.majStart(projectName) +"_"+webappFolder);
         return metadata;
     }
 
