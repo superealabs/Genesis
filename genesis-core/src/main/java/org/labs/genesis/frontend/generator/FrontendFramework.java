@@ -23,4 +23,5 @@ public class FrontendFramework
     private List<Component> components;
     private ServiceComponent serviceComponent;
     private ModelComponent modelComponent;
+    private String initPath;
 }

@@ -1,8 +1,10 @@
 - id: 1
   languageId: 1
   coreFramework: "Angular"
+  initPath: ""
   name: "Angular App"
   template: "Template"
+  initPath: "angular/angular-skeletoon"
   componentExtension: ""
   additionalFiles:
     - fileType: "App-files"
@@ -14,23 +16,27 @@
       fileName: "app.component"
       extension: "html"
       content: |
+        c zihcbz
       destinationPath: ""
     - fileType: "App-files"
       fileName: "app.component"
       extension: "css"
       content: |
+        fbezkicbi
       destinationPath: ""
   components:
     - componentType : "list"
-      importFile: |
-      selector: ""
+      importFile: | 
+        vnoznzoznozudzieho
+      selector: "mama"
       standalone: ""
       importComponent: |
       template: |
+        io fa mandeha
       style: |
       export: |
       destinationPath: ""
-      componentName : ""
+      componentName : " "
       componentAdditionalFiles:
         - fileType: "html template"
           fileName: "$.component"
@@ -42,7 +48,6 @@
           extension: "css"
           content: |
           destinationPath: ""
-          componentName: ""
     - componentType: "form"
       importFile: |
       selector: ""
@@ -52,12 +57,13 @@
       style: |
       export: |
       destinationPath: ""
+      componentName: ""
       componentAdditionalFiles:
         - fileType: "html template"
           fileName: "$.component"
           extension: "html"
           content: |
-          destinationPath: ""
+          destinationPath: "${webapp}"
         - fileType: "css template"
           fileName: "$.component"
           extension: "css"
@@ -65,121 +71,15 @@
           destinationPath: ""
   serviceComponent:
     imports: |
+       zeicnezo
     methods: |
-    destinationPath: ""
-    name: ""
+      cezbciz
+    destinationPath: "cicb"
+    name: "czebciz"
   modelComponent:
     exports : |
     destinationPath: ""
     name: ""
-- id: 2
-  languageId: 1
-  coreFramework: "Vue"
-  name: "Vue App"
-  template: "VueJs"
-  additionalFiles:
-    - fileType: "App-files"
-      fileName: "App"
-      extension: "vue"
-      content: |
-        <template>
-          <div id="app">
-            <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
-          </div>
-        </template>
-
-        <script lang="ts" setup>
-          import HelloWorld from './components/HelloWorld.vue';
-        </script>
-
-        <style>
-          #app {
-            font-family: Avenir, Helvetica, Arial, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            text-align: center;
-            color: #2c3e50;
-            margin-top: 60px;
-          }
-        </style>
-      destinationPath: "src/"
-    - fileType: "Main-files"
-      fileName: "main"
-      extension: "ts"
-      content: |
-        import { createApp } from 'vue';
-        import App from './App.vue';
-      
-        createApp(App).mount('#app');
-      destinationPath: "src/"
-
-  components:
-    - componentType : "list"
-      importFile: |
-        import { defineComponent } from 'vue';
-      selector: "HelloWorld"
-      standalone: true
-      importComponent: |
-        import HelloWorld from './components/HelloWorld.vue';
-      template: |
-        <div>
-          <h1>{{ msg }}</h1>
-        </div>
-      style: |
-        <style>
-          h1 {
-            color: #42b983;
-          }
-        </style>
-      export: |
-        export default defineComponent({
-          name: 'HelloWorld',
-          props: {
-            msg: String
-          }
-        });
-      componentAdditionalFiles: [ ]
-
-    - componentType: "form"
-      importFile: |
-        import { defineComponent } from 'vue';
-      selector: "HelloWorld"
-      standalone: true
-      importComponent: |
-        import HelloWorld from './components/HelloWorld.vue';
-      template: |
-        <div>
-          <h1>{{ msg }}</h1>
-        </div>
-      style: |
-        <style>
-          h1 {
-            color: #42b983;
-          }
-        </style>
-      export: |
-        export default defineComponent({
-          name: 'HelloWorld',
-          props: {
-            msg: String
-          }
-        });
-      componentAdditionalFiles: [ ]
-
-  serviceComponent:
-    import: |
-      import axios from 'axios';
-    methods: |
-      export async function fetchData() {
-        return await axios.get('/api/data');
-      }
-  modelComponent:
-    exports: |
-      export interface User {
-        id: number;
-        name: string;
-        email: string;
-      }
 
   
   
