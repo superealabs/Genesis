@@ -1,0 +1,64 @@
+.sidebar {
+  width: 220px;
+  margin-top: 2rem; /* marge en haut ajoutée */
+  padding: 0 1rem 1rem 1rem;
+  font-family: sans-serif;
+  background-color: #fbfcfd; /* gris très très clair */
+  height: 100vh;
+  border-right: 1px solid #e7eaf0; /* gris clair plus doux */
+}
+
+.app-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 2.4rem;
+}
+
+.app-title .blue {
+  color: #2263cb; /* bleu vif, inchangé */
+}
+
+.section-label {
+  font-size: 0.7rem;
+  color: #a1a9b8; /* gris clair doux */
+  text-transform: uppercase;
+  margin-top: 1.2rem;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+a {
+  display: block;
+  padding: calc(0.35rem * 1.15) calc(0.5rem * 1.15);
+  margin-top: 0;
+  margin-bottom: calc(0.18rem * 1.15);
+  border-radius: calc(0.5rem * 1.15);
+  text-decoration: none;
+  color: #5a5f6d; /* gris moyen clair */
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+a.entities,
+a.views {
+  font-size: 1rem;
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: calc(0.5rem * 1.15);
+  padding-bottom: calc(0.5rem * 1.15);
+  margin-bottom: calc(0.27rem * 1.15);
+  border-radius: calc(0.5rem * 1.15);
+}
+
+a:hover {
+  background-color: #e6f0ff; /* bleu très clair */
+  color: #2263cb; /* bleu vif, inchangé */
+}
+
+a.active {
+  background-color: #dbe6ff; /* bleu pastel clair un peu plus foncé */
+  color: #2263cb; /* bleu vif, inchangé */
+}
