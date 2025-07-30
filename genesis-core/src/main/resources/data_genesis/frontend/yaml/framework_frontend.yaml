@@ -3,6 +3,7 @@
   coreFramework: "Angular"
   name: "Angular App"
   template: "Template"
+  initPath: "angular/angular-skeletoon"
   componentExtension: ""
   additionalFiles:
     - fileType: "App-files"
@@ -77,6 +78,7 @@
   coreFramework: "Vue"
   name: "Vue App"
   template: "VueJs"
+  initPath: "vue/vue-skeletoon"
   additionalFiles:
     - fileType: "App-files"
       fileName: "App"
