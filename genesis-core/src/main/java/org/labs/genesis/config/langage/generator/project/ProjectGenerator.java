@@ -14,6 +14,7 @@ import org.labs.genesis.frontend.generator.FontendGenerator;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.genesis.frontend.generator.IFrontendGenerator;
 import org.labs.utils.FileUtils;
+import org.labs.utils.StringUtils;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -197,7 +198,20 @@ public class ProjectGenerator {
     public void generateFrontendComponents(ProjectGenerationContext context,
                                            IFrontendGenerator frontendGenerator,
                                            TableMetadata tableMetadata) throws Exception {
-        return;
+        // Create missing Webapp folder
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("destinationFolder", context.getDestinationFolder());
+        metadata.put("projectName", context.getProjectName());
+        metadata.put("webappFolder", context.getWebappFolder());
+        String webappFolder = engine.simpleRender(Constantes.WEBAPP_DIR_TEMPLATE, metadata);
+        FileUtils.createDirectory(webappFolder);
+
+        FrontendFramework frontendFramework = context.getFrontendFramework();
+        FrontendLanguage frontendLanguage = context.getFrontendLanguage();
+
+        frontendGenerator.generateComponent(frontendLanguage, frontendFramework, tableMetadata);
+        frontendGenerator.generateService(frontendLanguage, frontendFramework, tableMetadata);
+        frontendGenerator.generateService(frontendLanguage, frontendFramework, tableMetadata);
     }
 
     public void generateBackendComponents(ProjectGenerationContext context,
