@@ -13,8 +13,8 @@ import java.util.HashMap;
 public class FontendGenerator implements IFrontendGenerator{
     private final GenesisTemplateEngine engine;
 
-    FontendGenerator(GenesisTemplateEngine engine) {
-        this.engine=engine;
+    public FontendGenerator(GenesisTemplateEngine engine) {
+        this.engine = engine;
     }
 
     @Override
