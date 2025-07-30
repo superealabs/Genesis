@@ -10,7 +10,9 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.FrontendLanguage;
+import org.labs.genesis.frontend.generator.FontendGenerator;
 import org.labs.genesis.frontend.generator.FrontendFramework;
+import org.labs.genesis.frontend.generator.IFrontendGenerator;
 import org.labs.utils.FileUtils;
 
 import java.io.IOException;
@@ -88,6 +90,20 @@ public class ProjectGenerator {
         }
     }
 
+    public static void initFrontendProjectFiles(ProjectGenerationContext context, HashMap<String, Object> initializeHashMap){
+        FrontendFramework frontendFramework = context.getFrontendFramework();
+        String frontendDestination = "${destinationFolder}/${majStart(projectName)}/" + context.getFrontendProjectName();
+        String destinationFilePath = engine.simpleRender(frontendDestination, initializeHashMap);
+
+        String sourcePath = "data_genesis/frontend/initProjects" + frontendFramework.getInitPath();
+        try {
+            FileUtils.copyDirectory(sourcePath,destinationFilePath);
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Error while initializing frontend project files: " + frontendDestination, e);
+        }
+    }
+
     public static void renderAndCopyFolders(List<Project.ProjectFolders> projectFolders, HashMap<String, Object> initializeHashMap) throws IOException {
         for (Project.ProjectFolders projectFolder : projectFolders) {
             String sourceFolderPath = projectFolder.getSourcePath();
@@ -156,6 +172,11 @@ public class ProjectGenerator {
             var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
             projectFilesEditsHashMap.putAll(mapDaoGlobal);
         }
+
+        if (context.isGenerateFrontendApp()){
+            initFrontendProjectFiles(context,initializeHashMap);
+        }
+
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);
@@ -172,6 +193,12 @@ public class ProjectGenerator {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    public void generateFrontendComponents(ProjectGenerationContext context,
+                                           IFrontendGenerator frontendGenerator,
+                                           TableMetadata tableMetadata) throws Exception {
+        return;
     }
 
     public void generateBackendComponents(ProjectGenerationContext context,
@@ -225,7 +252,44 @@ public class ProjectGenerator {
             generateComponentsOnly(context);
         }
     }
+    private  void generateFullBackendProject(ProjectGenerationContext context, List<TableMetadata> entities, List<TableMetadata> views) throws Exception {
+        GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
+        for (TableMetadata tableMetadata : entities) {
+            generateBackendComponents(
+                    context,
+                    genesisGenerator,
+                    tableMetadata,
+                    false
+            );
+        }
 
+        for (TableMetadata tableMetadata : views) {
+            generateBackendComponents(
+                    context,
+                    genesisGenerator,
+                    tableMetadata,
+                    false
+            );
+        }
+    }
+    private  void generateFullFrontendProject(ProjectGenerationContext context, List<TableMetadata> entities, List<TableMetadata> views) throws Exception {
+        if (!context.isGenerateFrontendApp()) { return; }
+        IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
+        for (TableMetadata tableMetadata : entities) {
+            generateFrontendComponents(
+                    context,
+                    frontendGenerator,
+                    tableMetadata
+            );
+        }
+        for (TableMetadata tableMetadata : views) {
+            generateFrontendComponents(
+                    context,
+                    frontendGenerator,
+                    tableMetadata
+            );
+        }
+    }
     private void generateFullProject(ProjectGenerationContext context) throws Exception {
         Database database = context.getDatabase();
         Framework framework = context.getFramework();
@@ -238,25 +302,9 @@ public class ProjectGenerator {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
                 List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language, framework);
                 List<TableMetadata> views = database.getViewsByNames(context.getViewNames(), connex, credentials, language, framework);
-                GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
 
-                for (TableMetadata tableMetadata : entities) {
-                    generateBackendComponents(
-                            context,
-                            genesisGenerator,
-                            tableMetadata,
-                            false
-                    );
-                }
-
-                for (TableMetadata tableMetadata : views) {
-                    generateBackendComponents(
-                            context,
-                            genesisGenerator,
-                            tableMetadata,
-                            false
-                    );
-                }
+                generateFullBackendProject(context, entities, views);
+                generateFullFrontendProject(context, entities, views);
 
                 List<TableMetadata> allEntities = new ArrayList<>();
                 allEntities.addAll(entities);
