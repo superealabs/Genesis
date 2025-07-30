@@ -1,22 +1,67 @@
 package org.labs.genesis.frontend.generator.frameworkFrontend;
 
+import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
+import org.labs.genesis.frontend.generator.model.Component;
+import org.labs.utils.StringUtils;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class FrameworkFrontendMetadataProvider {
     private static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
 
+    public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field) {
+        Map<String, Object> fieldMap = new HashMap<>();
 
-    public static HashMap<String,Object> getComponentHashMap(FrontendFramework frontendFramework, FrontendLanguage frontendLanguage, TableMetadata tableMetadata)
+        fieldMap.put("type", field.getType());
+        fieldMap.put("name", field.getName());
+        fieldMap.put("isPrimaryKey", field.isPrimary());
+        fieldMap.put("isForeignKey", field.isForeign());
+        fieldMap.put("columnType", field.getColumnType());
+        fieldMap.put("columnName", field.getReferencedColumn());
+        fieldMap.put("referencedColumnType", field.getReferencedColumnType());
+        fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
+        fieldMap.put("defaultValue", field.getDefaultValue());
+        fieldMap.put("columnSize", field.getColumnSize());
+        fieldMap.put("decimalDigits", field.getDecimalDigits());
+        fieldMap.put("isUnique", field.isUnique());
+        fieldMap.put("isNullable", field.isNullable());
+        fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
+
+        return fieldMap;
+    }
+
+
+    public  static HashMap<String,Object> getComponentHashMapList(FrontendFramework frontendFramework, FrontendLanguage frontendLanguage, TableMetadata tableMetadata)
     {
-        HashMap<String, Object> metadata = new HashMap<>();
+        return getComponentHashMap(frontendFramework.getComponents().get(0),frontendLanguage,tableMetadata);
+    }
 
-        return metadata;
+    public  static HashMap<String,Object> getComponentHashMapForm(FrontendFramework frontendFramework, FrontendLanguage frontendLanguage, TableMetadata tableMetadata)
+    {
+        return getComponentHashMap(frontendFramework.getComponents().get(1),frontendLanguage,tableMetadata);
+    }
+
+
+    public static HashMap<String,Object> getComponentHashMap(Component component, FrontendLanguage frontendLanguage, TableMetadata tableMetadata)
+    {
+        HashMap<String, Object> data = new HashMap<>();
+
+        data.put("importFile",component.getImportFile());
+        data.put("selector",component.getSelector());
+        data.put("standalone",component.getStandalone());
+        data.put("importComponent",component.getImportComponent());
+        data.put("template",component.getTemplate());
+        data.put("style",component.getStyle());
+        data.put("export",component.getExport());
+
+        return data;
     }
 }

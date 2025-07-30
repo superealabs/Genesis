@@ -18,16 +18,19 @@ public class FontendGenerator implements IFrontendGenerator{
     }
 
     @Override
-    public String generateComponent(FrontendLanguage language, FrontendFramework frontendFramework,TableMetadata tableMetadata)throws Exception
-    {
+    public String generateComponent(FrontendLanguage language, FrontendFramework frontendFramework,TableMetadata tableMetadata)throws Exception {
         if(language.getId()!=frontendFramework.getLanguageId()){
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the frontend framework '" +
                     frontendFramework.getName() + "' (required language ID: '" + frontendFramework.getLanguageId() + "').");
         }
-
         String templateArchitecture=loadTemplate(frontendFramework);
-        HashMap<String,Object> metadataPrimary= FrameworkFrontendMetadataProvider.getComponentHashMap(frontendFramework,language,tableMetadata);
+
+        HashMap<String,Object> metadataPrimaryForList= FrameworkFrontendMetadataProvider.getComponentHashMapList(frontendFramework,language,tableMetadata);
+        String resultForListComponent=engine.simpleRender(templateArchitecture,metadataPrimaryForList);
+
+        HashMap<String,Object> metadataPrimaryForForm= FrameworkFrontendMetadataProvider.getComponentHashMapList(frontendFramework,language,tableMetadata);
+        String resultForFormComponent=engine.simpleRender(templateArchitecture,metadataPrimaryForForm);
 
         return "";
     }
