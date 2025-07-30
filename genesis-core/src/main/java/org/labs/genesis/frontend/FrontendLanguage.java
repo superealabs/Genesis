@@ -17,4 +17,13 @@ public class FrontendLanguage {
     public String toString() {
         return this.name;
     }
+
+    public static FrontendLanguage findById(FrontendLanguage[] languages, int id) {
+        for (FrontendLanguage language : languages) {
+            if (language.getId() == id) {
+                return language;
+            }
+        }
+        return null;
+    }
 }
