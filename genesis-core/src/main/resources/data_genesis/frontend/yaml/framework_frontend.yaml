@@ -3,6 +3,7 @@
   coreFramework: "Angular"
   name: "Angular App"
   template: "Template"
+  componentExtension: ""
   additionalFiles:
     - fileType: "App-files"
       fileName: "app.component"
@@ -14,36 +15,63 @@
       extension: "html"
       content: |
       destinationPath: ""
-
     - fileType: "App-files"
       fileName: "app.component"
       extension: "css"
       content: |
       destinationPath: ""
-  component:
-    importFile: |
-    selector: ""
-    standalone: ""
-    importComponent: |
-    template: |
-    style: |
-    export: |
-    componentAdditionalFiles:
-      - fileType: "html template"
-        fileName: "$.component"
-        extension: "html"
-        content: |
-        destinationPath: ""
-      - fileType: "css template"
-        fileName: "$.component"
-        extension: "css"
-        content: |
-        destinationPath: ""
+  components:
+    - componentType : "list"
+      importFile: |
+      selector: ""
+      standalone: ""
+      importComponent: |
+      template: |
+      style: |
+      export: |
+      destinationPath: ""
+      componentName : ""
+      componentAdditionalFiles:
+        - fileType: "html template"
+          fileName: "$.component"
+          extension: "html"
+          content: |
+          destinationPath: ""
+        - fileType: "css template"
+          fileName: "$.component"
+          extension: "css"
+          content: |
+          destinationPath: ""
+          componentName: ""
+    - componentType: "form"
+      importFile: |
+      selector: ""
+      standalone: ""
+      importComponent: |
+      template: |
+      style: |
+      export: |
+      destinationPath: ""
+      componentAdditionalFiles:
+        - fileType: "html template"
+          fileName: "$.component"
+          extension: "html"
+          content: |
+          destinationPath: ""
+        - fileType: "css template"
+          fileName: "$.component"
+          extension: "css"
+          content: |
+          destinationPath: ""
   serviceComponent:
-    import: |
+    imports: |
     methods: |
+    destinationPath: ""
+    name: ""
   modelComponent:
-    exports:
+    exports : |
+    destinationPath: ""
+    name: ""
 - id: 2
   languageId: 1
   coreFramework: "Vue"
