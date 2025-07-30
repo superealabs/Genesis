@@ -252,7 +252,44 @@ public class ProjectGenerator {
             generateComponentsOnly(context);
         }
     }
+    private  void generateFullBackendProject(ProjectGenerationContext context, List<TableMetadata> entities, List<TableMetadata> views) throws Exception {
+        GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
+        for (TableMetadata tableMetadata : entities) {
+            generateBackendComponents(
+                    context,
+                    genesisGenerator,
+                    tableMetadata,
+                    false
+            );
+        }
 
+        for (TableMetadata tableMetadata : views) {
+            generateBackendComponents(
+                    context,
+                    genesisGenerator,
+                    tableMetadata,
+                    false
+            );
+        }
+    }
+    private  void generateFullFrontendProject(ProjectGenerationContext context, List<TableMetadata> entities, List<TableMetadata> views) throws Exception {
+        if (!context.isGenerateFrontendApp()) { return; }
+        IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
+        for (TableMetadata tableMetadata : entities) {
+            generateFrontendComponents(
+                    context,
+                    frontendGenerator,
+                    tableMetadata
+            );
+        }
+        for (TableMetadata tableMetadata : views) {
+            generateFrontendComponents(
+                    context,
+                    frontendGenerator,
+                    tableMetadata
+            );
+        }
+    }
     private void generateFullProject(ProjectGenerationContext context) throws Exception {
         Database database = context.getDatabase();
         Framework framework = context.getFramework();
@@ -265,35 +302,13 @@ public class ProjectGenerator {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
                 List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language, framework);
                 List<TableMetadata> views = database.getViewsByNames(context.getViewNames(), connex, credentials, language, framework);
-                GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
-                IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
 
-                for (TableMetadata tableMetadata : entities) {
-                    generateBackendComponents(
-                            context,
-                            genesisGenerator,
-                            tableMetadata,
-                            false
-                    );
-                }
-
-                for (TableMetadata tableMetadata : views) {
-                    generateBackendComponents(
-                            context,
-                            genesisGenerator,
-                            tableMetadata,
-                            false
-                    );
-                }
+                generateFullBackendProject(context, entities, views);
+                generateFullFrontendProject(context, entities, views);
 
                 List<TableMetadata> allEntities = new ArrayList<>();
                 allEntities.addAll(entities);
                 allEntities.addAll(views);
-
-                // Generate Frontend if checked
-                if (context.isGenerateFrontendApp()){
-                    generateFrontendProject(context, entities, frontendGenerator);
-                }
 
                 generateProjectFiles(context, allEntities);
 
@@ -350,16 +365,6 @@ public class ProjectGenerator {
             } catch (Exception e) {
                 throw new RuntimeException("\nError in generateComponentsOnly : \n" + e);
             }
-        }
-    }
-
-    private  void generateFrontendProject(ProjectGenerationContext context, List<TableMetadata> entities, IFrontendGenerator frontendGenerator) throws  Exception{
-        for ( TableMetadata entity : entities ) {
-            generateFrontendComponents(
-                    context,
-                    frontendGenerator,
-                    entity
-            );
         }
     }
 }
