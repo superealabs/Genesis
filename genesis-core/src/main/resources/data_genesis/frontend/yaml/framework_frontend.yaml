@@ -3,7 +3,7 @@
   coreFramework: "Angular"
   initPath: ""
   name: "Angular App"
-  template: "Template"
+  template: "Angular-template"
   componentExtension: ""
   additionalFiles:
     - fileType: "App-files"
