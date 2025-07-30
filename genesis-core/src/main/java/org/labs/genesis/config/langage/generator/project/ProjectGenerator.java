@@ -10,6 +10,7 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.FrontendLanguage;
+import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.utils.FileUtils;
 
 import java.io.IOException;
@@ -31,6 +32,7 @@ public class ProjectGenerator {
     public static final Map<Integer, LlmApiConfig> llmApiConfigs;
     public static final GenesisTemplateEngine engine;
     public static final Map<Integer, FrontendLanguage> frontendLanguage;
+    public static final Map<Integer, FrontendFramework> frontendFrameworks;
 
     static {
         try {
@@ -58,8 +60,11 @@ public class ProjectGenerator {
             llmApiConfigs = Arrays.stream(FileUtils.fromJson(LlmApiConfig[].class, Constantes.LLM_API_CONFIG_JSON))
                     .collect(Collectors.toMap(LlmApiConfig::getId, llmApiConfig -> llmApiConfig));
 
-            frontendLanguage = Arrays.stream(FileUtils.fromJson(LlmApiConfig[].class, Constantes.LLM_API_CONFIG_JSON))
-                    .collect(Collectors.toMap(LlmApiConfig::getId, llmApiConfig -> llmApiConfig));
+            frontendLanguage = Arrays.stream(FileUtils.fromJson(FrontendLanguage[].class, Constantes.FRONTEND_LANGUAGE_JSON))
+                    .collect(Collectors.toMap(FrontendLanguage::getId, frontLang -> frontLang));
+
+            frontendFrameworks = Arrays.stream(FileUtils.fromYaml(FrontendFramework[].class, Constantes.FRONTEND_FRAMEWORK_YAML))
+                    .collect(Collectors.toMap(FrontendFramework::getId, frontFr -> frontFr));
 
         } catch (IOException e) {
             throw new RuntimeException(e);
