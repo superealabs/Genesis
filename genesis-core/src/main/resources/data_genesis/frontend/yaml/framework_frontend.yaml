@@ -1,6 +1,7 @@
 - id: 1
   languageId: 1
   coreFramework: "Angular"
+  initPath: ""
   name: "Angular App"
   template: "Template"
   initPath: "angular/angular-skeletoon"
@@ -15,23 +16,27 @@
       fileName: "app.component"
       extension: "html"
       content: |
+        c zihcbz
       destinationPath: ""
     - fileType: "App-files"
       fileName: "app.component"
       extension: "css"
       content: |
+        fbezkicbi
       destinationPath: ""
   components:
     - componentType : "list"
-      importFile: |
-      selector: ""
+      importFile: | 
+        vnoznzoznozudzieho
+      selector: "mama"
       standalone: ""
       importComponent: |
       template: |
+        io fa mandeha
       style: |
       export: |
       destinationPath: ""
-      componentName : ""
+      componentName : " "
       componentAdditionalFiles:
         - fileType: "html template"
           fileName: "$.component"
@@ -43,7 +48,6 @@
           extension: "css"
           content: |
           destinationPath: ""
-          componentName: ""
     - componentType: "form"
       importFile: |
       selector: ""
@@ -53,6 +57,7 @@
       style: |
       export: |
       destinationPath: ""
+      componentName: ""
       componentAdditionalFiles:
         - fileType: "html template"
           fileName: "$.component"
@@ -66,9 +71,11 @@
           destinationPath: ""
   serviceComponent:
     imports: |
+       zeicnezo
     methods: |
-    destinationPath: ""
-    name: ""
+      cezbciz
+    destinationPath: "cicb"
+    name: "czebciz"
   modelComponent:
     exports : |
     destinationPath: ""
