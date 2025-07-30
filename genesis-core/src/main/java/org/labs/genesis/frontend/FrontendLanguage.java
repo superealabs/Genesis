@@ -10,6 +10,7 @@ import java.util.Map;
 public class FrontendLanguage {
     private int id;
     private String name;
+    private String extension;
     private Map<String, String> types;
 
     @Override
