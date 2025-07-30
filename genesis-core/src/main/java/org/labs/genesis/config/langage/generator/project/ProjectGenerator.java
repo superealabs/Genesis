@@ -9,6 +9,7 @@ import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
+import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.utils.FileUtils;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ public class ProjectGenerator {
     public static final Map<Integer, Framework> frameworks;
     public static final Map<Integer, LlmApiConfig> llmApiConfigs;
     public static final GenesisTemplateEngine engine;
+    public static final Map<Integer, FrontendLanguage> frontendLanguage;
 
     static {
         try {
@@ -55,6 +57,10 @@ public class ProjectGenerator {
 
             llmApiConfigs = Arrays.stream(FileUtils.fromJson(LlmApiConfig[].class, Constantes.LLM_API_CONFIG_JSON))
                     .collect(Collectors.toMap(LlmApiConfig::getId, llmApiConfig -> llmApiConfig));
+
+            frontendLanguage = Arrays.stream(FileUtils.fromJson(LlmApiConfig[].class, Constantes.LLM_API_CONFIG_JSON))
+                    .collect(Collectors.toMap(LlmApiConfig::getId, llmApiConfig -> llmApiConfig));
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

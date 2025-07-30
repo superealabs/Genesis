@@ -7,7 +7,7 @@ import java.util.Map;
 
 @Getter
 @Setter
-public class FrontendLanguages {
+public class FrontendLanguage {
     private int id;
     private String name;
     private Map<String, String> types;
