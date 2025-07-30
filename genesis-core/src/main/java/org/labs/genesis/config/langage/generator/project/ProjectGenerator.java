@@ -90,17 +90,14 @@ public class ProjectGenerator {
         }
     }
 
-    public static void initFrontendProjectFiles(ProjectGenerationContext context, HashMap<String, Object> initializeHashMap){
-        FrontendFramework frontendFramework = context.getFrontendFramework();
-        String frontendDestination = "${destinationFolder}/${majStart(projectName)}/" + context.getFrontendProjectName();
-        String destinationFilePath = engine.simpleRender(frontendDestination, initializeHashMap);
-
-        String sourcePath = "data_genesis/frontend/initProjects" + frontendFramework.getInitPath();
+    public static void initFrontendProjectFiles(FrontendFramework frontendFramework, HashMap<String, Object> initializeHashMap){
+        String destinationFilePath = (String)initializeHashMap.get("webapp");
+        String sourcePath = Constantes.FRONTEND_SKELLETTON_DIRECTORY + frontendFramework.getInitPath();
         try {
             FileUtils.copyDirectory(sourcePath,destinationFilePath);
         }
         catch (IOException e) {
-            throw new RuntimeException("Error while initializing frontend project files: " + frontendDestination, e);
+            throw new RuntimeException("Error while initializing frontend project files: " + destinationFilePath, e);
         }
     }
 
@@ -151,12 +148,14 @@ public class ProjectGenerator {
         HashMap<String, Object> initializeHashMap = getInitialHashMap(
                 context.getDestinationFolder(),
                 context.getProjectName(),
-                context.getGroupLink()
+                context.getGroupLink(),
+                context.getWebappFolder()
         );
 
         HashMap<String, Object> projectFilesEditsHashMap = getProjectFilesEditsHashMap(
                 context.getDestinationFolder(),
                 context.getProjectName(),
+                context.getWebappFolder(),
                 context.getGroupLink(),
                 context.getProjectPort(),
                 context.getDatabase(),
@@ -174,7 +173,7 @@ public class ProjectGenerator {
         }
 
         if (context.isGenerateFrontendApp()){
-            initFrontendProjectFiles(context,initializeHashMap);
+            initFrontendProjectFiles(context.getFrontendFramework(),initializeHashMap);
         }
 
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
