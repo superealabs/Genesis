@@ -67,8 +67,8 @@ public class FontendGenerator implements IFrontendGenerator{
             if (component.getRouterLink() != null && !component.getRouterLink().isEmpty()) {
                 String componentSelector = ProjectGenerator.engine.simpleRender(component.getSelector(),metadataForFinalRender);
                 String componentRouterLink = ProjectGenerator.engine.simpleRender(component.getRouterLink(),metadataForFinalRender);
-                String componentImportPath = StringUtils.replaceUntilMarker(fileSavePath, "src/", "@");
-                componentImportPath += componentImportPath +"/"+componentSelector+"."+frontendFramework.getComponentExtension();
+                String componentImportPath = StringUtils.replaceUntilMarker(fileSavePath, "src/", "@/");
+                componentImportPath += componentImportPath +"/"+componentName+"."+frontendFramework.getComponentExtension();
                 ComponentRoute route = new ComponentRoute(
                         componentSelector,
                         componentRouterLink,

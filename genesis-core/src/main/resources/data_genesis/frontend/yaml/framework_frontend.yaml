@@ -159,95 +159,169 @@
       destinationPath: "${destinationFolder}/src/router"
 
   components:
-    - componentType : "List Component"
-      componentName : "${majStart(EntityName)}ListComponent"
-      importFile: |
-        import GenesisButton from "@/core/button/GenesisButton.vue";
-        import { ${majStart(EntityName)} } from "@/shared/models/${majStart(EntityName)}Model";
-        import { defineComponent, PropType } from "vue";
-      selector: "${majStart(EntityName)}List"
-      standalone : true
-      routerLink: ""
-      importComponent : |
-        GenesisButton,${majStart(EntityName)}{{removeLine}}
-      template : |
+#    - componentType : "List Component"
+#      componentName : "${majStart(EntityName)}ListComponent"
+#      importFile: |
+#        import GenesisButton from "@/core/button/GenesisButton.vue";
+#        import { ${majStart(EntityName)} } from "@/shared/models/${majStart(EntityName)}Model";
+#        import { defineComponent, PropType } from "vue";
+#      selector: "${majStart(EntityName)}List"
+#      standalone : true
+#      routerLink: ""
+#      importComponent : |
+#        GenesisButton,${majStart(EntityName)}{{removeLine}}
+#      template : |
+#
+#      style : |
+#
+#      export : |
+#        props: {
+#          {{tab}}${minPluralize(EntityName)}: {
+#          {{tab}} required: true,
+#          {{tab}} type: Array as PropType<${majStart(EntityName)}[]>,
+#          },
+#        },
+#        setup(props) {
+#          return {};
+#        }
+#      destinationPath : "${destinationFolder}/src/entities/${minStart(EntityName)}"
+#      componentAdditionalFiles :
+#        - fileType: "List Vue"
+#          fileName: "${majStart(EntityName)}List"
+#          extension: "vue"
+#          content: |
+#            <template>
+#              <table class="table align-middle table-rounded text-nowrap">
+#                <thead class="table-light">
+#                  <tr>
+#                    {{#each fields}}
+#                    <th >${majStart(this.columnName)}</th>{{newline}}
+#                    {{/each}}
+#                    <th class="text-end">Actions</th>
+#                  </tr>
+#                </thead>
+#                <tbody>
+#                  <tr v-for="${minStart(EntityName)} in ${minPluralize(EntityName)}" :key="product.id" class="border-bottom">
+#                    {{#each fields}}
+#                    <td>{{ ${minStart(EntityName)}.${minStart(this.columnName)} }}</td>{{newline}}
+#                    {{/each}}
+#                    <td class="text-end">
+#                      <div class="d-inline-flex gap-2">
+#                      <GenesisButton icon="fas fa-eye" class="btn-light shadow-sm" />
+#                      <GenesisButton icon="fas fa-edit" class="btn-light shadow-sm" />
+#                      <GenesisButton icon="fas fa-trash" class="btn-light shadow-sm" />
+#                      </div>
+#                    </td>
+#                  </tr>
+#                </tbody>
+#              </table>
+#            </template>
+#
+#            <script src="./${majStart(EntityName)}ListComponent.ts" lang="ts"></script>
+#
+#            <style scoped>
+#            .table thead th {
+#              background-color: #537cc226;
+#              color: #4e4e4e;
+#              font-weight: 600;
+#              vertical-align: middle;
+#              border-bottom: 2px solid #dee2e6;
+#            }
+#
+#            .table td,
+#            .table th {
+#              vertical-align: middle;
+#              padding: 0.75rem;
+#            }
+#
+#            .btn-light {
+#              border-radius: 0.5rem;
+#              transition: background 0.2s ease-in-out;
+#            }
+#
+#            .btn-light:hover {
+#              background-color: #f1f3f5;
+#            }
+#            </style>
+#          destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
 
-      style : |
+#    - componentType: "List View Component"
+#      routerLink: "/${minPluralize(EntityName)}"
+#      componentName: "${majStart(EntityName)}ListViewComponent"
+#      importFile: |
+#        import { computed, defineComponent, ref } from "vue";
+#        import { ${majStart(EntityName)} } from "@/shared/models/${majStart(EntityName)}Model";
+#        import ${majStart(EntityName)}List from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}List.vue";
+#        import GenesisSearch from "@/core/search/GenesisSearch.vue";
+#        import GenesisAddButton from "@/core/button/GenesisAddButton.vue";
+#        import PaginationLayout from "@/core/pagination/PaginationLayout.vue";
+#      selector: "${majStart(EntityName)}ListView"
+#      standalone: true
+#      importComponent: |
+#        ${majStart(EntityName)}List,
+#        GenesisSearch,
+#        GenesisAddButton,
+#        PaginationLayout,
+#      template: |
+#
+#      style: |
+#
+#      export: |
+#        setup() {
+#          const ${minPluralize(EntityName)} = ref<${majStart(EntityName)}[]>([]);
+#          const model = new ${majStart(EntityName)}();
+#          const filters = ref();
+#
+#          const filtered${majPluralize(EntityName)} = computed(() => {
+#            if (!filters.value) {
+#              console.log("Initial Values");
+#              return ${minPluralize(EntityName)}.value;
+#            }
+#            console.log("Filfil");
+#
+#            return [...${minPluralize(EntityName)}.value];
+#          });
+#
+#          const handleSearch = (filterValues: Record<string, any>) => {
+#            filters.value = filterValues;
+#          };
+#
+#          return { filtered${majPluralize(EntityName)}, handleSearch, model };
+#        },
+#      destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)/list}"
+#      componentAdditionalFiles:
+#        - fileType: "List View Vue"
+#          fileName: "${majStart(EntityName)}ListView"
+#          extension: "vue"
+#          content: |
+#            <template>
+#              <div class="">
+#                <div class="d-flex justify-content-between align-items-center">
+#                  <div>
+#                    <h3>${majStart(EntityName)} / <span class="text-muted">List</span></h3>
+#                  </div>
+#                  <div>
+#                    <GenesisAddButton>
+#                      <span>Add ${majStart(EntityName)}</span>
+#                    </GenesisAddButton>
+#                  </div>
+#                </div>
+#                <div class="mt-3">
+#                  <GenesisSearch :model="model" @search="handleSearch" />
+#                </div>
+#                <${majStart(EntityName)}List :${minPluralize(EntityName)}="filtered${majPluralize(EntityName)}" />
+#
+#                <PaginationLayout start="1" end="100" />
+#              </div>
+#            </template>
+#
+#            <script lang="ts" src="./${majStart(EntityName)}ListViewComponent.ts"></script>
+#
+#          destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)/list}"
 
-      export : |
-        props: {
-          {{tab}}${minPluralize(EntityName)}: {
-          {{tab}} required: true,
-          {{tab}} type: Array as PropType<${majStart(EntityName)}[]>,
-          },
-        },
-        setup(props) {
-          return {};
-        }
-      destinationPath : "${destinationFolder}/src/entities/${minStart(EntityName)}"
-      componentAdditionalFiles :
-        - fileType: "List Vue"
-          fileName: "${majStart(EntityName)}List"
-          extension: "vue"
-          content: |
-            <template>
-              <table class="table align-middle table-rounded text-nowrap">
-                <thead class="table-light">
-                  <tr>
-                    {{#each fields}}
-                    <th >${majStart(this.columnName)}</th>{{newline}}
-                    {{/each}}
-                    <th class="text-end">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="${minStart(EntityName)} in ${minPluralize(EntityName)}" :key="product.id" class="border-bottom">
-                    {{#each fields}}
-                    <td>{{ ${minStart(EntityName)}.${minStart(this.columnName)} }}</td>{{newline}}
-                    {{/each}}
-                    <td class="text-end">
-                      <div class="d-inline-flex gap-2">
-                      <GenesisButton icon="fas fa-eye" class="btn-light shadow-sm" />
-                      <GenesisButton icon="fas fa-edit" class="btn-light shadow-sm" />
-                      <GenesisButton icon="fas fa-trash" class="btn-light shadow-sm" />
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </template>
-            
-            <script src="./${majStart(EntityName)}ListComponent.ts" lang="ts"></script>
-            
-            <style scoped>
-            .table thead th {
-              background-color: #537cc226;
-              color: #4e4e4e;
-              font-weight: 600;
-              vertical-align: middle;
-              border-bottom: 2px solid #dee2e6;
-            }
-              
-            .table td,
-            .table th {
-              vertical-align: middle;
-              padding: 0.75rem;
-            }
-              
-            .btn-light {
-              border-radius: 0.5rem;
-              transition: background 0.2s ease-in-out;
-            }
-              
-            .btn-light:hover {
-              background-color: #f1f3f5;
-            }
-            </style>
-          destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
-
-    - componentType: "List View Component"
+    - componentType: "List View"
       routerLink: "/${minPluralize(EntityName)}"
-      componentName: "${majStart(EntityName)}ListViewComponent"
+      componentName: "${majStart(EntityName)}ListView"
       importFile: |
         import { computed, defineComponent, ref } from "vue";
         import { ${majStart(EntityName)} } from "@/shared/models/${majStart(EntityName)}Model";
@@ -258,67 +332,135 @@
       selector: "${majStart(EntityName)}ListView"
       standalone: true
       importComponent: |
-        ${majStart(EntityName)}List,
-        GenesisSearch,
-        GenesisAddButton,
-        PaginationLayout,
+        components: {
+          ${majStart(EntityName)}List,
+          GenesisSearch,
+          GenesisAddButton,
+          PaginationLayout,
+        }
       template: |
-
+        <template>
+          <div class="">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h3>${majStart(EntityName)} / <span class="text-muted">List</span></h3>
+              </div>
+              <div>
+                <GenesisAddButton>
+                  <span>Add ${majStart(EntityName)}</span>
+                </GenesisAddButton>
+              </div>
+            </div>
+            <div class="mt-3">
+              <GenesisSearch :model="model" @search="handleSearch" />
+            </div>
+            <${majStart(EntityName)}List :${minPluralize(EntityName)}="filtered${majPluralize(EntityName)}" />
+        
+            <PaginationLayout start="1" end="100" />
+          </div>
+        </template>
       style: |
-
+        <style scoped></style>
       export: |
         setup() {
           const ${minPluralize(EntityName)} = ref<${majStart(EntityName)}[]>([]);
           const model = new ${majStart(EntityName)}();
           const filters = ref();
-      
+        
           const filtered${majPluralize(EntityName)} = computed(() => {
             if (!filters.value) {
               console.log("Initial Values");
               return ${minPluralize(EntityName)}.value;
             }
             console.log("Filfil");
-            
+        
             return [...${minPluralize(EntityName)}.value];
           });
-      
+        
           const handleSearch = (filterValues: Record<string, any>) => {
             filters.value = filterValues;
           };
-      
+        
           return { filtered${majPluralize(EntityName)}, handleSearch, model };
         },
       destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)/list}"
-      componentAdditionalFiles:
-        - fileType: "List View Vue"
-          fileName: "${majStart(EntityName)}ListView"
-          extension: "vue"
-          content: |
-            <template>
-              <div class="">
-                <div class="d-flex justify-content-between align-items-center">
-                  <div>
-                    <h3>${majStart(EntityName)} / <span class="text-muted">List</span></h3>
+      componentAdditionalFiles: []
+
+    - componentType: "List Entity Component"
+      routerLink: ""
+      componentName: "${majStart(EntityName)}List"
+      importFile: |
+        import GenesisButton from "@/core/button/GenesisButton.vue";
+        import { ${majStart(EntityName)} } from "@/shared/models/${majStart(EntityName)}Model";
+        import { defineComponent, PropType } from "vue";
+      selector: "${majStart(EntityName)}List"
+      standalone: true
+      importComponent: |
+        components: { GenesisButton,${majStart(EntityName)} }
+      template: |
+        <template>
+          <table class="table align-middle table-rounded text-nowrap">
+            <thead class="table-light">
+              <tr>
+                {{#each fields}}
+                <th >${majStart(this.columnName)}</th>{{newline}}
+                {{/each}}
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="${minStart(EntityName)} in ${minPluralize(EntityName)}" :key="product.id" class="border-bottom">
+                {{#each fields}}
+                <td>{{ ${minStart(EntityName)}.${minStart(this.columnName)} }}</td>{{newline}}
+                {{/each}}
+                <td class="text-end">
+                  <div class="d-inline-flex gap-2">
+                  <GenesisButton icon="fas fa-eye" class="btn-light shadow-sm" />
+                  <GenesisButton icon="fas fa-edit" class="btn-light shadow-sm" />
+                  <GenesisButton icon="fas fa-trash" class="btn-light shadow-sm" />
                   </div>
-                  <div>
-                    <GenesisAddButton>
-                      <span>Add ${majStart(EntityName)}</span>
-                    </GenesisAddButton>
-                  </div>
-                </div>
-                <div class="mt-3">
-                  <GenesisSearch :model="model" @search="handleSearch" />
-                </div>
-                <${majStart(EntityName)}List :${minPluralize(EntityName)}="filtered${majPluralize(EntityName)}" />
-
-                <PaginationLayout start="1" end="100" />
-              </div>
-            </template>
-
-            <script lang="ts" src="./${majStart(EntityName)}ListViewComponent.ts"></script>
-
-          destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)/list}"
-
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </template>
+      style: |
+        <style scoped>
+        .table thead th {
+          background-color: #537cc226;
+          color: #4e4e4e;
+          font-weight: 600;
+          vertical-align: middle;
+          border-bottom: 2px solid #dee2e6;
+        }
+        
+        .table td,
+        .table th {
+          vertical-align: middle;
+          padding: 0.75rem;
+        }
+        
+        .btn-light {
+          border-radius: 0.5rem;
+          transition: background 0.2s ease-in-out;
+        }
+        
+        .btn-light:hover {
+          background-color: #f1f3f5;
+        }
+        </style>
+      export: |
+        props: {
+          ${minPluralize(EntityName)}: {
+          {{tab}} required: true,
+          {{tab}} type: Array as PropType<${majStart(EntityName)}[]>,
+          },
+        },
+        setup(props) {
+          return {};
+        }
+      destinationPath : "${destinationFolder}/src/entities/${minStart(EntityName)}"
+      componentAdditionalFiles: []
 
   serviceComponent:
     imports: |

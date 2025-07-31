@@ -1,7 +1,13 @@
+${template}
+
+<script lang="ts">
 ${importFile}
 
 export default defineComponent({
   name: "${selector}",
-  components: { ${importComponent} },
+  ${importComponent}},
   ${export}
 });
+</script>
+
+${style}
