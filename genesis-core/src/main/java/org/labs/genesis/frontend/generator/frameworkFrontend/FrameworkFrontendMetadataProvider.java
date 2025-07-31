@@ -42,18 +42,13 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName",projectName);
         metadata.put("EntityName",tableMetadata.getTableName());
-        metadata.put("webapp", destinationFolder+"/"+ StringUtils.majStart(projectName) +"_"+webappFolder);
-        metadata.put("webappFolder", webappFolder);
-
+        metadata.putAll(getHashMapWebapp(destinationFolder, projectName, webappFolder));
         return metadata;
     }
 
     public static HashMap<String,Object> getHashMapWebapp(String destinationFolder,String projectName, String webappFolder)
     {
         HashMap<String, Object> metadata = new HashMap<>();
-
-        metadata.put("destinationFolder", destinationFolder);
-        metadata.put("projectName",projectName);
         metadata.put("webapp", destinationFolder+"/"+ StringUtils.majStart(projectName) +"_"+webappFolder);
         metadata.put("webappFolder", webappFolder);
 
