@@ -214,6 +214,7 @@
           font-size: 14px;
         }
         </style>
+      destinationPath: "${destinationFolder}/src/core/navbar"
   components:
     - componentType: "List Entity Component"
       router :
