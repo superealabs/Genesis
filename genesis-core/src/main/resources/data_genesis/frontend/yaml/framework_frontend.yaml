@@ -11,52 +11,24 @@
       extension: "ts"
       content: | 
         content0
-      destinationPath: "${destinationFolder}"
+      destinationPath: "${destinationFolder}/src/app/"
     - fileType: "App-files"
       fileName: "app.component"
       extension: "html"
       content: |
         content1
-      destinationPath: "${destinationFolder}"
+      destinationPath: "${destinationFolder}/src/app/"
     - fileType: "App-files"
       fileName: "app.component"
       extension: "css"
       content: |
         content2
-      destinationPath: "${destinationFolder}"
+      destinationPath: "${destinationFolder}/src/app/"
   components:
-    - componentType : "list"
-      importFile: | 
-         allImport
-      selector: "test1"
-      standalone: "true"
-      importComponent: |
-        allImport
-      template: |
-        templateURL
-      style: |
-        styleURL
-      export: |
-        export
-      destinationPath: "${destinationFolder}"
-      componentName : "${EntityName}ListTest"
-      componentAdditionalFiles:
-        - fileType: "html template"
-          fileName: "${EntityName}test1.component"
-          extension: "html"
-          content: |
-            content
-          destinationPath: "${destinationFolder}"
-        - fileType: "css template"
-          fileName: "${EntityName}test2.component"
-          extension: "css"
-          content: |
-            content
-          destinationPath: "${destinationFolder}"
-    - componentType: "form"
+    - componentType: "list"
       importFile: |
         allImport
-      selector: "test2"
+      selector: "app-${toKebabCase(EntityName)}-list"
       standalone: "true"
       importComponent: |
         allImport
@@ -66,32 +38,60 @@
         styleURL
       export: |
         export
-      destinationPath: "${destinationFolder}"
-      componentName: "${EntityName}FormTest"
+      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-list"
+      componentName: "${toKebabCase(EntityName)}-list.component"
       componentAdditionalFiles:
         - fileType: "html template"
-          fileName: "${EntityName}Form.component"
+          fileName: "${toKebabCase(EntityName)}-list.component"
           extension: "html"
           content: |
             content1
-          destinationPath: "${destinationFolder}"
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-list"
         - fileType: "css template"
-          fileName: "$${EntityName}Form.component"
+          fileName: "${toKebabCase(EntityName)}-list.component"
           extension: "css"
           content: |
             content2
-          destinationPath: "${destinationFolder}"
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-list"
+    - componentType: "form"
+      importFile: |
+        allImport
+      selector: "app-${toKebabCase(EntityName)}-form"
+      standalone: "true"
+      importComponent: |
+        allImport
+      template: |
+        templateURL
+      style: |
+        styleURL
+      export: |
+        export
+      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-form"
+      componentName: "${toKebabCase(EntityName)}-form.component"
+      componentAdditionalFiles:
+        - fileType: "html template"
+          fileName: "${toKebabCase(EntityName)}-form.component"
+          extension: "html"
+          content: |
+            content1
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-form"
+        - fileType: "css template"
+          fileName: "${toKebabCase(EntityName)}-form.component"
+          extension: "css"
+          content: |
+            content2
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-form"
   serviceComponent:
     imports: |
        importService
     methods: |
       methodService
-    destinationPath: "${destinationFolder}"
-    name: "${EntityName}Service"
+    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/services"
+    name: "${toKebabCase(EntityName)}.service"
   modelComponent:
     imports: |
       importsComponents
     exports : |
       exportsComponents
-    destinationPath: "${destinationFolder}"
-    name: "${EntityName}Model"
+    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/models"
+    name: "${toKebabCase(EntityName)}.model"

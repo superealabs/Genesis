@@ -43,28 +43,29 @@ public class StringUtils {
     }
 
     public static String toKebabCase(String input) {
-        return input.transform(s -> {
-            if (s.isEmpty()) {
-                return s;
-            }
+        if (input == null || input.isEmpty()) return input;
 
-            StringBuilder result = new StringBuilder();
-            s = s.replace("_", "");
+        input = input.replace("_", "-");
 
-            for (char c : s.toCharArray()) {
-                if (Character.isUpperCase(c)) {
-                    if (!result.isEmpty()) {
-                        result.append("-");
-                    }
-                    result.append(Character.toLowerCase(c));
-                } else {
-                    result.append(c);
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+
+            if (Character.isUpperCase(c)) {
+                if (i > 0 && input.charAt(i - 1) != '-' && !Character.isUpperCase(input.charAt(i - 1))) {
+                    result.append("-");
                 }
+                result.append(Character.toLowerCase(c));
+            } else {
+                result.append(c);
             }
+        }
 
-            return result.toString();
-        });
+        return result.toString();
     }
+
+
 
 
     public static String baseFormat(String s) {
