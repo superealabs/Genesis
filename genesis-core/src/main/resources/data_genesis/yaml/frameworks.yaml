@@ -3544,7 +3544,7 @@
                 try
                 {
                   await _repository.AddAsync(${minStart(className)});{{/if}}
-                  {{#if cacheableWithMicrosoftextensionscachingmemory}}_cacheService.RemoveByKeyPrefix("${minStart(className)}s_");{{else}}{{removeLine}}{{/if}}
+                  {{#if cacheableWithMicrosoftextensionscachingmemory and isView = false}}_cacheService.RemoveByKeyPrefix("${minStart(className)}s_");{{else}}{{removeLine}}{{/if}}
                 {{#if !isView}}}
                 catch (Exception ex)
                 {
@@ -3563,7 +3563,7 @@
                 try
                 {
                   await _repository.UpdateAsync(${minStart(className)});{{/if}}
-                  {{#if cacheableWithMicrosoftextensionscachingmemory}}_cacheService.RemoveByKeyPrefix("${minStart(className)}s_");
+                  {{#if cacheableWithMicrosoftextensionscachingmemory and isView = false}}_cacheService.RemoveByKeyPrefix("${minStart(className)}s_");
                   _cacheService.RemoveByKey($"${minStart(className)}_{${minStart(className)}.${majStart(pkColumn)}}");{{else}}{{removeLine}}{{/if}}
                 {{#if !isView}}}
                 catch (Exception ex)
@@ -3583,7 +3583,7 @@
                 try 
                 {
                   await _repository.DeleteAsync(id);{{/if}}
-                  {{#if cacheableWithMicrosoftextensionscachingmemory}}_cacheService.RemoveByKeyPrefix("${minStart(className)}s_");
+                  {{#if cacheableWithMicrosoftextensionscachingmemory and isView = false}}_cacheService.RemoveByKeyPrefix("${minStart(className)}s_");
                   _cacheService.RemoveByKey($"${minStart(className)}_{id}");{{else}}{{removeLine}}{{/if}}
                 {{#if !isView}}}
                 catch (Exception ex)
