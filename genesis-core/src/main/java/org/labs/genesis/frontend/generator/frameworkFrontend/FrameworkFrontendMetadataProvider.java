@@ -21,7 +21,7 @@ public class FrameworkFrontendMetadataProvider {
     private static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
 
 
-    public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata,String destinationFolder,String projectName) {
+    public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata,String destinationFolder,String projectName, String webappFolder) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         metadata.put("fields", getFieldsList(tableMetadata));
@@ -29,19 +29,33 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
         metadata.put("EntityName",tableMetadata.getTableName());
 
-        metadata.putAll(getHashMapComponentSavePath(destinationFolder,projectName,tableMetadata));
+        metadata.putAll(getHashMapComponentSavePath(destinationFolder, projectName, tableMetadata, webappFolder));
 
         return metadata;
     }
 
 
-    public static HashMap<String,Object> getHashMapComponentSavePath(String destinationFolder,String projectName,TableMetadata tableMetadata)
+    public static HashMap<String,Object> getHashMapComponentSavePath(String destinationFolder,String projectName,TableMetadata tableMetadata, String webappFolder)
     {
         HashMap<String, Object> metadata = new HashMap<>();
 
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName",projectName);
         metadata.put("EntityName",tableMetadata.getTableName());
+        metadata.put("webapp", destinationFolder+"/"+ StringUtils.majStart(projectName) +"_"+webappFolder);
+        metadata.put("webappFolder", webappFolder);
+
+        return metadata;
+    }
+
+    public static HashMap<String,Object> getHashMapWebapp(String destinationFolder,String projectName, String webappFolder)
+    {
+        HashMap<String, Object> metadata = new HashMap<>();
+
+        metadata.put("destinationFolder", destinationFolder);
+        metadata.put("projectName",projectName);
+        metadata.put("webapp", destinationFolder+"/"+ StringUtils.majStart(projectName) +"_"+webappFolder);
+        metadata.put("webappFolder", webappFolder);
 
         return metadata;
     }

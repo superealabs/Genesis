@@ -13,8 +13,8 @@ import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FontendGenerator;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.genesis.frontend.generator.IFrontendGenerator;
+import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMetadataProvider;
 import org.labs.utils.FileUtils;
-import org.labs.utils.StringUtils;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -91,7 +91,9 @@ public class ProjectGenerator {
         }
     }
 
-    public static void initFrontendProjectFiles(FrontendFramework frontendFramework, HashMap<String, Object> initializeHashMap){
+    public static void initFrontendProjectFiles(ProjectGenerationContext context){
+        FrontendFramework frontendFramework = context.getFrontendFramework();
+        HashMap<String, Object> initializeHashMap = FrameworkFrontendMetadataProvider.getHashMapWebapp(context.getDestinationFolder(),context.getProjectName(),context.getWebappFolder());
         String destinationFilePath = (String)initializeHashMap.get("webapp");
         String sourcePath = Constantes.FRONTEND_SKELLETTON_DIRECTORY + frontendFramework.getInitPath();
         try {
@@ -149,14 +151,12 @@ public class ProjectGenerator {
         HashMap<String, Object> initializeHashMap = getInitialHashMap(
                 context.getDestinationFolder(),
                 context.getProjectName(),
-                context.getGroupLink(),
-                context.getWebappFolder()
+                context.getGroupLink()
         );
 
         HashMap<String, Object> projectFilesEditsHashMap = getProjectFilesEditsHashMap(
                 context.getDestinationFolder(),
                 context.getProjectName(),
-                context.getWebappFolder(),
                 context.getGroupLink(),
                 context.getProjectPort(),
                 context.getDatabase(),
@@ -174,7 +174,7 @@ public class ProjectGenerator {
         }
 
         if (context.isGenerateFrontendApp()){
-            initFrontendProjectFiles(context.getFrontendFramework(),initializeHashMap);
+            initFrontendProjectFiles(context);
         }
 
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
@@ -212,9 +212,9 @@ public class ProjectGenerator {
         FrontendFramework frontendFramework=context.getFrontendFramework();
         String destinationFolder=context.getDestinationFolder();
         String projectName=context.getProjectName();
-        frontendGenerator.generateComponent(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
-        frontendGenerator.generateService(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
-        frontendGenerator.generateModel(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
+        frontendGenerator.generateComponent(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, context.getWebappFolder(), false);
+        frontendGenerator.generateService(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, context.getWebappFolder(), false);
+        frontendGenerator.generateModel(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, context.getWebappFolder(),false);
         return;
     }
 
