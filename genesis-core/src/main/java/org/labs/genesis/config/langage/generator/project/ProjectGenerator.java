@@ -198,6 +198,14 @@ public class ProjectGenerator {
     public void generateFrontendComponents(ProjectGenerationContext context,
                                            IFrontendGenerator frontendGenerator,
                                            TableMetadata tableMetadata) throws Exception {
+        Database database=context.getDatabase();
+        FrontendLanguage frontendLanguage=context.getFrontendLanguage();
+        FrontendFramework frontendFramework=context.getFrontendFramework();
+        String destinationFolder=context.getDestinationFolder();
+        String projectName=context.getProjectName();
+        frontendGenerator.generateComponent(database,frontendLanguage,frontendFramework,tableMetadata,destinationFolder, projectName, false);
+        frontendGenerator.generateService(database,frontendLanguage,frontendFramework,tableMetadata,destinationFolder, projectName, false);
+        frontendGenerator.generateModel(database,frontendLanguage,frontendFramework,tableMetadata,destinationFolder, projectName, false);
         return;
     }
 
