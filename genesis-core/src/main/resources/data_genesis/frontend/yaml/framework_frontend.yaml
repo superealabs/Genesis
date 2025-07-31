@@ -129,19 +129,19 @@
       componentName : "${majStart(EntityName)}ListComponent"
       importFile: |
         import GenesisButton from "@/core/button/GenesisButton.vue";
-        import { ${EntityName} } from "@/shared/model/${EntityName}Model";
+        import { ${majStart(EntityName)} } from "@/shared/model/${majStart(EntityName)}Model";
         import { defineComponent, PropType } from "vue";
-      selector: "${EntityName}List"
+      selector: "${majStart(EntityName)}List"
       standalone : true
       importComponent : |
-        GenesisButton,${EntityName}
+        GenesisButton,${majStart(EntityName)}
       template : |
       style : |
       export : |
         props: {
-          ${minStart(EntityName)}s: {
+          ${minPluralize(EntityName)}: {
             required: true,
-            type: Array as PropType<Product[]>,
+            type: Array as PropType<${majStart(EntityName)}[]>,
           },
         },
         setup(props) {
