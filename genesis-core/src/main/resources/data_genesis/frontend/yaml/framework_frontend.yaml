@@ -102,3 +102,25 @@
   name: "Vue3 + Typescript App"
   template: "Vue3TS-Template"
   initPath: "vue/vue-3-ts-skeletoon"
+  componentExtension: "vue"
+  additionalFiles:
+    - fileType: "App-Vue"
+      fileName: "App"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="d-flex" id="app-layout">
+            <GenesisSidebar />
+            <!-- Main content -->
+            <div class="bg-light flex-grow-1 p-4">
+              <router-view />
+            </div>
+          </div>
+        </template>
+        
+        <script setup lang="ts">
+        import GenesisSidebar from "./core/navbar/GenesisSidebar.vue";
+        </script>
+        
+        <style scoped></style>
+      destinationPath: "${webapp}/src"
