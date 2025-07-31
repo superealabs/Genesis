@@ -9,7 +9,6 @@ import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProv
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
-import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.utils.FileUtils;
 
 import java.io.IOException;

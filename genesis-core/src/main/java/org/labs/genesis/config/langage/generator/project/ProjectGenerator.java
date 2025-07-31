@@ -198,7 +198,7 @@ public class ProjectGenerator {
     public void generateFrontendComponents(ProjectGenerationContext context,
                                            IFrontendGenerator frontendGenerator,
                                            TableMetadata tableMetadata) throws Exception {
-        // Create missing Webapp folder
+         // Create missing Webapp folder
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("destinationFolder", context.getDestinationFolder());
         metadata.put("projectName", context.getProjectName());
@@ -206,12 +206,16 @@ public class ProjectGenerator {
         String webappFolder = engine.simpleRender(Constantes.WEBAPP_DIR_TEMPLATE, metadata);
         FileUtils.createDirectory(webappFolder);
 
-        FrontendFramework frontendFramework = context.getFrontendFramework();
-        FrontendLanguage frontendLanguage = context.getFrontendLanguage();
 
-        frontendGenerator.generateComponent(frontendLanguage, frontendFramework, tableMetadata);
-        frontendGenerator.generateService(frontendLanguage, frontendFramework, tableMetadata);
-        frontendGenerator.generateService(frontendLanguage, frontendFramework, tableMetadata);
+        Database database=context.getDatabase();
+        FrontendLanguage frontendLanguage=context.getFrontendLanguage();
+        FrontendFramework frontendFramework=context.getFrontendFramework();
+        String destinationFolder=context.getDestinationFolder();
+        String projectName=context.getProjectName();
+        frontendGenerator.generateComponent(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
+        frontendGenerator.generateService(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
+        frontendGenerator.generateModel(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
+        return;
     }
 
     public void generateBackendComponents(ProjectGenerationContext context,

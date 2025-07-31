@@ -9,6 +9,7 @@ import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.utils.StringUtils;
 
 import java.sql.*;
@@ -30,6 +31,15 @@ public class TableMetadata {
     private ColumnMetadata primaryColumn;
     private String className;
     private Boolean isView;
+
+    public void setColumnsFrontendTypes(FrontendLanguage frontendLanguage,Database database)
+    {
+        for(ColumnMetadata column : columns)
+        {
+            column.setFrontEndType(frontendLanguage,database);
+            column.setFrontEndReferencedColumnType(frontendLanguage,database);
+        }
+    }
 
     public void initialize(Connection connex, Credentials credentials, Database database, Language language, Framework framework) throws SQLException, ClassNotFoundException {
         boolean opened = false;
@@ -184,6 +194,7 @@ public class TableMetadata {
                         try (ResultSet pkColumn = metaData.getColumns(null, (database.getName().equals("Oracle")) ?database.getCredentials().getUser():database.getCredentials().getSchemaName(), pkTableName, pkColumnName)) {
                             if (pkColumn.next()) {
                                 String pkColumnType = pkColumn.getString("TYPE_NAME");
+                                field.setDatabaseColumnType(pkColumnType);
                                 field.setReferencedColumnType(language.getTypes().get(database.getTypes().get(pkColumnType)));
                             }
                         }

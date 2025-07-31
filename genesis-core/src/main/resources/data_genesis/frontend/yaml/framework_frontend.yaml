@@ -4,94 +4,94 @@
   name: "Angular App"
   template: "Angular-template"
   initPath: "angular/angular-skeletoon"
-  componentExtension: ""
+  componentExtension: "ts"
   additionalFiles:
     - fileType: "App-files"
       fileName: "app.component"
       extension: "ts"
       content: | 
-      destinationPath: ""
+        content0
+      destinationPath: "${destinationFolder}"
     - fileType: "App-files"
       fileName: "app.component"
       extension: "html"
       content: |
-        c zihcbz
-      destinationPath: ""
+        content1
+      destinationPath: "${destinationFolder}"
     - fileType: "App-files"
       fileName: "app.component"
       extension: "css"
       content: |
-        fbezkicbi
-      destinationPath: ""
+        content2
+      destinationPath: "${destinationFolder}"
   components:
     - componentType : "list"
       importFile: | 
-        vnoznzoznozudzieho
-      selector: "mama"
-      standalone: ""
+         allImport
+      selector: "test1"
+      standalone: "true"
       importComponent: |
+        allImport
       template: |
-        io fa mandeha
+        templateURL
       style: |
+        styleURL
       export: |
-      destinationPath: ""
-      componentName : " "
+        export
+      destinationPath: "${destinationFolder}"
+      componentName : "${EntityName}ListTest"
       componentAdditionalFiles:
         - fileType: "html template"
-          fileName: "$.component"
+          fileName: "${EntityName}test1.component"
           extension: "html"
           content: |
-          destinationPath: ""
+            content
+          destinationPath: "${destinationFolder}"
         - fileType: "css template"
-          fileName: "$.component"
+          fileName: "${EntityName}test2.component"
           extension: "css"
           content: |
-          destinationPath: ""
+            content
+          destinationPath: "${destinationFolder}"
     - componentType: "form"
       importFile: |
-      selector: ""
-      standalone: ""
+        allImport
+      selector: "test2"
+      standalone: "true"
       importComponent: |
+        allImport
       template: |
+        templateURL
       style: |
+        styleURL
       export: |
-      destinationPath: ""
-      componentName: ""
+        export
+      destinationPath: "${destinationFolder}"
+      componentName: "${EntityName}FormTest"
       componentAdditionalFiles:
         - fileType: "html template"
-          fileName: "$.component"
+          fileName: "${EntityName}Form.component"
           extension: "html"
           content: |
-          destinationPath: "${webapp}"
+            content1
+          destinationPath: "${destinationFolder}"
         - fileType: "css template"
-          fileName: "$.component"
+          fileName: "$${EntityName}Form.component"
           extension: "css"
           content: |
-          destinationPath: ""
+            content2
+          destinationPath: "${destinationFolder}"
   serviceComponent:
     imports: |
-       zeicnezo
+       importService
     methods: |
-      cezbciz
-    destinationPath: "cicb"
-    name: "czebciz"
+      methodService
+    destinationPath: "${destinationFolder}"
+    name: "${EntityName}Service"
   modelComponent:
+    imports: |
+      importsComponents
     exports : |
-    destinationPath: ""
-    name: ""
-
-  
-  
-
-
-
-
-      
-      
-      
-
-
-
-
-  
-  
+      exportsComponents
+    destinationPath: "${destinationFolder}"
+    name: "${EntityName}Model"
