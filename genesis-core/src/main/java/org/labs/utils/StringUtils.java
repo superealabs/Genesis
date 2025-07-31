@@ -21,6 +21,19 @@ public class StringUtils {
     }
 
 
+    public static  String pluralize(String string) {
+        return string+"s";
+    }
+
+    public  static String majPluralize(String string) {
+        return  pluralize(majStart(string));
+    }
+
+    public  static String minPluralize(String string) {
+        return pluralize(minStart(string));
+    }
+
+
     public static String majStart(String input) {
         if (input == null || input.isEmpty()) {
             return input; // Renvoie null ou chaîne vide pour éviter NullPointerException

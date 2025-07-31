@@ -102,7 +102,7 @@
   name: "Vue3 + Typescript App"
   template: "Vue3TS-Template"
   initPath: "vue/vue-3-ts-skeletoon"
-  componentExtension: "vue"
+  componentExtension: "ts"
   additionalFiles:
     - fileType: "App-Vue"
       fileName: "App"
@@ -124,3 +124,88 @@
         
         <style scoped></style>
       destinationPath: "${webapp}/src"
+  components:
+    - componentType : "List Component"
+      componentName : "${majStart(EntityName)}ListComponent"
+      importFile: |
+        import GenesisButton from "@/core/button/GenesisButton.vue";
+        import { ${EntityName} } from "@/shared/model/${EntityName}Model";
+        import { defineComponent, PropType } from "vue";
+      selector: "${EntityName}List"
+      standalone : true
+      importComponent : |
+        GenesisButton,${EntityName}
+      template : |
+      style : |
+      export : |
+        props: {
+          ${minStart(EntityName)}s: {
+            required: true,
+            type: Array as PropType<Product[]>,
+          },
+        },
+        setup(props) {
+          return {};
+        }
+      destinationPath : "${webapp}/src/entities/${minStart(EntityName)}"
+      componentAdditionalFiles :
+        - fileType: "List Vue"
+          fileName: "${majStart(EntityName)}List"
+          extension: "vue"
+          content: |
+            <template>
+              <table class="table align-middle table-rounded text-nowrap">
+                <thead class="table-light">
+                  <tr>
+                    {{#each fields}}
+                    <th >${majStart(this.columnName)}</th>
+                    {{/each}}
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="${minStart(EntityName)} in ${minPluralize(EntityName)}" :key="product.id" class="border-bottom">
+                    {{#each fields}}
+                    <td>{{ ${minStart(EntityName)}.${minStart(this.columnName)} }}</td>
+                    {{/each}}
+                    <td class="text-end">
+                      <div class="d-inline-flex gap-2">
+                      <GenesisButton icon="fas fa-eye" class="btn-light shadow-sm" />
+                      <GenesisButton icon="fas fa-edit" class="btn-light shadow-sm" />
+                      <GenesisButton icon="fas fa-trash" class="btn-light shadow-sm" />
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </template>
+            
+            <script src="./${majStart(EntityName)}ListComponent.ts" lang="ts"></script>
+            
+            <style scoped>
+            .table thead th {
+              background-color: #537cc226;
+              color: #4e4e4e;
+              font-weight: 600;
+              vertical-align: middle;
+              border-bottom: 2px solid #dee2e6;
+            }
+              
+            .table td,
+            .table th {
+              vertical-align: middle;
+              padding: 0.75rem;
+            }
+              
+            .btn-light {
+              border-radius: 0.5rem;
+              transition: background 0.2s ease-in-out;
+            }
+              
+            .btn-light:hover {
+              background-color: #f1f3f5;
+            }
+            </style>
+          destinationPath: "${webapp}/src/entities/${minStart(EntityName)}"
+
+

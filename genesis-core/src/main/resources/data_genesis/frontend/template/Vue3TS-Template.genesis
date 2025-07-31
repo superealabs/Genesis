@@ -1,0 +1,7 @@
+${importFile}
+
+export default defineComponent({
+  name: "${selector}",
+  components: { ${importComponent} },
+  ${export}
+});
