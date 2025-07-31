@@ -192,7 +192,7 @@
           {{#each routes}}
             <li class="nav-item">
               <router-link class="nav-link text-dark" to="${this.routerLink}">
-                ${this.routerLabel)}
+                ${this.routerLabel}
               </router-link>
             </li>
           {{/each}}
@@ -228,7 +228,7 @@
       selector: "${majStart(EntityName)}List"
       standalone: true
       importComponent: |
-        components: { GenesisButton,${majStart(EntityName)} }
+        components: { GenesisButton }
       template: |
         <template>
           <table class="table align-middle table-rounded text-nowrap">
@@ -386,11 +386,11 @@
         constructor();
         constructor(
           {{#each fields}}
-            ${minStart(this.columnName)}: ${this.typeBase};{{#if !@last}},{{/if}}
+            ${minStart(this.columnName)}: ${this.typeBase}{{#if !@last}},{{/if}}
           {{/each}});
         constructor(
           {{#each fields}}
-            ${minStart(this.columnName)}?: ${this.typeBase};{{#if !@last}},{{/if}}
+            ${minStart(this.columnName)}?: ${this.typeBase}{{#if !@last}},{{/if}}
           {{/each}}
         ) {
           {{#each fields}}
