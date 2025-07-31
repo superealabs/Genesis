@@ -5,7 +5,7 @@ import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.frontend.FrontendLanguage;
 
 public interface IFrontendGenerator {
-    public  String generateComponent(Database database,FrontendLanguage language, FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, String webappFolder, boolean generateComponentOnly)throws Exception;
-    public  String generateService(Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, String webappFolder, boolean generateComponentOnly)throws Exception;
-    public  String generateModel(Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, String webappFolder, boolean generateComponentOnly)throws Exception;
+    public  String generateComponent(Database database,FrontendLanguage language, FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception;
+    public  String generateService(Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception;
+    public  String generateModel(Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception;
 }

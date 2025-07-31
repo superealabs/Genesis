@@ -93,8 +93,7 @@ public class ProjectGenerator {
 
     public static void initFrontendProjectFiles(ProjectGenerationContext context){
         FrontendFramework frontendFramework = context.getFrontendFramework();
-        HashMap<String, Object> initializeHashMap = FrameworkFrontendMetadataProvider.getHashMapWebapp(context.getDestinationFolder(),context.getProjectName(),context.getWebappFolder());
-        String destinationFilePath = (String)initializeHashMap.get("webapp");
+        String destinationFilePath = FrameworkFrontendMetadataProvider.getWebappFolder(context);
         String sourcePath = Constantes.FRONTEND_SKELLETTON_DIRECTORY + frontendFramework.getInitPath();
         try {
             FileUtils.copyDirectory(sourcePath,destinationFilePath);
@@ -212,9 +211,9 @@ public class ProjectGenerator {
         FrontendFramework frontendFramework=context.getFrontendFramework();
         String destinationFolder=context.getDestinationFolder();
         String projectName=context.getProjectName();
-        frontendGenerator.generateComponent(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, context.getWebappFolder(), false);
-        frontendGenerator.generateService(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, context.getWebappFolder(), false);
-        frontendGenerator.generateModel(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, context.getWebappFolder(),false);
+        frontendGenerator.generateComponent(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName,  false);
+        frontendGenerator.generateService(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
+        frontendGenerator.generateModel(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
         return;
     }
 

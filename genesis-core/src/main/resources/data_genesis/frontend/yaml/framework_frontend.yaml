@@ -123,7 +123,7 @@
         </script>
         
         <style scoped></style>
-      destinationPath: "${webapp}/src"
+      destinationPath: "${destinationFolder}/src"
 
     - fileType: "Router Index"
       fileName: "index"
@@ -157,7 +157,7 @@
         });
 
         export default router;
-      destinationPath: "${webapp}/src/router"
+      destinationPath: "${destinationFolder}/src/router"
 
   components:
     - componentType : "List Component"
@@ -184,7 +184,7 @@
         setup(props) {
           return {};
         }
-      destinationPath : "${webapp}/src/entities/${minStart(EntityName)}"
+      destinationPath : "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles :
         - fileType: "List Vue"
           fileName: "${majStart(EntityName)}List"
@@ -243,12 +243,12 @@
               background-color: #f1f3f5;
             }
             </style>
-          destinationPath: "${webapp}/src/entities/${minStart(EntityName)}"
+          destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
 
   serviceComponent:
     imports: |
     methods: |
-    destinationPath: "${webapp}/src/shared/services"
+    destinationPath: "${destinationFolder}/src/shared/services"
     name: "${majStart(EntityName)}Service"
   modelComponent:
     imports: |
@@ -276,6 +276,6 @@
       }
 
     exportsComponents: |
-    destinationPath: "${webapp}/src/shared/modelss"
+    destinationPath: "${destinationFolder}/src/shared/modelss"
     name: "${majStart(EntityName)}Model"
 

@@ -24,7 +24,7 @@ public class FontendGenerator implements IFrontendGenerator{
     }
 
     @Override
-    public String generateComponent(Database database, FrontendLanguage language, FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, String webappFolder, boolean generateComponentOnly)throws Exception {
+    public String generateComponent(Database database, FrontendLanguage language, FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception {
         if(language.getId()!=frontendFramework.getLanguageId()){
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the frontend framework '" +
@@ -32,7 +32,7 @@ public class FontendGenerator implements IFrontendGenerator{
         }
         tableMetadata.setColumnsFrontendTypes(language, database);
         String templateArchitecture = loadTemplate(frontendFramework);
-        HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, webappFolder);
+        HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
 
         for(Component component:frontendFramework.getComponents()) {
 
@@ -71,7 +71,7 @@ public class FontendGenerator implements IFrontendGenerator{
     }
 
     @Override
-    public String generateService(Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, String webappFolder, boolean generateComponentOnly)throws Exception {
+    public String generateService(Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception {
         tableMetadata.setColumnsFrontendTypes(language,database);
 
         if(language.getId()!=frontendFramework.getLanguageId()){
@@ -86,7 +86,7 @@ public class FontendGenerator implements IFrontendGenerator{
         HashMap<String,Object> metadataPrimary = FrameworkFrontendMetadataProvider.getServiceHashMap(serviceComponent, language, tableMetadata);
         String structure = engine.simpleRender(templateArchitecture, metadataPrimary);
 
-        HashMap<String,Object> metadataForFinalRender= FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, webappFolder);
+        HashMap<String,Object> metadataForFinalRender= FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
         String finalStringForService = engine.simpleRender(structure,metadataForFinalRender);
 
 
@@ -112,7 +112,7 @@ public class FontendGenerator implements IFrontendGenerator{
     }
 
     @Override
-    public String generateModel(Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, String webappFolder, boolean generateComponentOnly) throws Exception{
+    public String generateModel(Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly) throws Exception{
 
         if(language.getId()!=frontendFramework.getLanguageId()){
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
@@ -126,7 +126,7 @@ public class FontendGenerator implements IFrontendGenerator{
 
         String structure=modelComponent.getImports()+"\n\n"+modelComponent.getExports();
 
-        HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, webappFolder);
+        HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
         String finalStringForComponent = engine.simpleRender(structure,metadataForFinalRender );
 
         String fileSavePath;

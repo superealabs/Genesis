@@ -1,6 +1,8 @@
 package org.labs.genesis.frontend.generator.frameworkFrontend;
 
 import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.config.Constantes;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.model.ColumnMetadata;
@@ -21,7 +23,7 @@ public class FrameworkFrontendMetadataProvider {
     private static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
 
 
-    public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata,String destinationFolder,String projectName, String webappFolder) {
+    public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata,String destinationFolder,String projectName) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         metadata.put("fields", getFieldsList(tableMetadata));
@@ -29,32 +31,30 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
         metadata.put("EntityName",tableMetadata.getTableName());
 
-        metadata.putAll(getHashMapComponentSavePath(destinationFolder, projectName, tableMetadata, webappFolder));
+        metadata.putAll(getHashMapComponentSavePath(destinationFolder, projectName, tableMetadata));
 
         return metadata;
     }
 
 
-    public static HashMap<String,Object> getHashMapComponentSavePath(String destinationFolder,String projectName,TableMetadata tableMetadata, String webappFolder)
+    public static HashMap<String,Object> getHashMapComponentSavePath(String destinationFolder,String projectName,TableMetadata tableMetadata)
     {
         HashMap<String, Object> metadata = new HashMap<>();
 
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName",projectName);
         metadata.put("EntityName",tableMetadata.getTableName());
-        metadata.putAll(getHashMapWebapp(destinationFolder, projectName, webappFolder));
         return metadata;
     }
 
-    public static HashMap<String,Object> getHashMapWebapp(String destinationFolder,String projectName, String webappFolder)
-    {
-        HashMap<String, Object> metadata = new HashMap<>();
-        metadata.put("webapp", destinationFolder+"/"+ StringUtils.majStart(projectName) +"_"+webappFolder);
-        metadata.put("webappFolder", webappFolder);
-
-        return metadata;
+    public  static String  getWebappFolder(ProjectGenerationContext context){
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("destinationFolder", context.getDestinationFolder());
+        metadata.put("projectName", context.getProjectName());
+        metadata.put("webappFolder", context.getWebappFolder());
+        String webappFolder = engine.simpleRender(Constantes.WEBAPP_DIR_TEMPLATE, metadata);
+        return  webappFolder;
     }
-
 
     private static List<Map<String, Object>> getFieldsList(TableMetadata tableMetadata) {
         List<Map<String, Object>> fields = new ArrayList<>();
