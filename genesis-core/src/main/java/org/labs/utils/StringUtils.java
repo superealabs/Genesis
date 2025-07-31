@@ -113,4 +113,12 @@ public class StringUtils {
         }
         return  s.replaceAll(" ","");
     }
+
+    public static String replaceUntilMarker(String input, String marker, String replacement) {
+        int index = input.indexOf(marker);
+        if (index != -1) {
+            return replacement + input.substring(index + marker.length());
+        }
+        return input;
+    }
 }

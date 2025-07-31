@@ -7,7 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class ComponetRoute {
+public class ComponentRoute {
     private String componentName;
     private String route;
+    private String componentImport;
 }

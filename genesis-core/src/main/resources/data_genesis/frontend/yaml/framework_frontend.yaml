@@ -102,7 +102,7 @@
   name: "Vue3 + Typescript App"
   template: "Vue3TS-template"
   initPath: "vue/vue-3-ts-skeletoon"
-  componentExtension: "ts"
+  componentExtension: "vue"
   additionalFiles:
     - fileType: "App-Vue"
       fileName: "App"
@@ -131,8 +131,8 @@
       content: |
         import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
         import HomeView from "../views/HomeView.vue";
-        {{#each fields}}
-        import ${majStart(EntityName)}ListView from "@/views/${minStart(EntityName)}/list/${majStart(EntityName)}ListView.vue";{{newline}}
+        {{#each routes}}
+        import ${this.componentName} from "${this.componentImport}";
         {{/each}}
 
         const routes: Array<RouteRecordRaw> = [
@@ -141,6 +141,13 @@
             name: "home",
             component: HomeView,
           },
+          {{#each routes}}
+          {
+            path: "${this.routerLink}",
+            name: "${lowerCase(this.componentName)}",
+            component: ${this.componentName},
+          },
+          {{/each}}
         ];
 
         const router = createRouter({
@@ -243,7 +250,7 @@
       componentName: "${majStart(EntityName)}ListViewComponent"
       importFile: |
         import { computed, defineComponent, ref } from "vue";
-        import { ${majStart(EntityName)} } from "@/shared/model/ProductModel";
+        import { ${majStart(EntityName)} } from "@/shared/models/${majStart(EntityName)}Model";
         import ${majStart(EntityName)}List from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}List.vue";
         import GenesisSearch from "@/core/search/GenesisSearch.vue";
         import GenesisAddButton from "@/core/button/GenesisAddButton.vue";
@@ -251,7 +258,7 @@
       selector: "${majStart(EntityName)}ListView"
       standalone: true
       importComponent: |
-        {{newLine}}${majStart(EntityName)}List,
+        ${majStart(EntityName)}List,
         GenesisSearch,
         GenesisAddButton,
         PaginationLayout,
@@ -261,7 +268,7 @@
 
       export: |
         setup() {
-          const ${minPluralize(EntityName)}: = ref<${majStart(EntityName)}[]>([]);
+          const ${minPluralize(EntityName)} = ref<${majStart(EntityName)}[]>([]);
           const model = new ${majStart(EntityName)}();
           const filters = ref();
       
@@ -323,7 +330,7 @@
     exports: |
       export interface I${majStart(EntityName)} {
         {{#each fields}}
-        ${minStart(this.columnName)}: ${lowerCase(this.typeBase)};
+        ${minStart(this.columnName)}: ${this.typeBase};
         {{/each}}
       }
       
@@ -333,14 +340,17 @@
         {{/each}}
         
         constructor();
-        constructor({{#each fields}}${minStart(this.columnName)}: ${lowerCase(this.typeBase)}{{#if !@last}},{{/if}}{{removeLine}}{{/each}});
+        constructor(
+          {{#each fields}}
+            ${minStart(this.columnName)}: ${lowerCase(this.typeBase)}{{#if !@last}},{{/if}}
+          {{/each}});
         constructor(
           {{#each fields}}
             ${minStart(this.columnName)}?: ${lowerCase(this.typeBase)}{{#if !@last}},{{/if}}
           {{/each}}
         ) {
           {{#each fields}}
-            this.${minStart(this.columnName)} = ${minStart(this.columnName)} ?? {{#if lowerCase(this.typeBase)="number"}}0{{else}}""{{/if}};
+            this.${minStart(this.columnName)} = ${minStart(this.columnName)} ?? {{#if this.typeBase=number}}0{{else}}""{{/if}};
           {{/each}}
         }
       }
