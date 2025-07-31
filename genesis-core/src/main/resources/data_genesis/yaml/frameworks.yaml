@@ -947,15 +947,15 @@
       {{tab}}{{/each}}
       {{tab}}{{#if cacheableWithEhcache}}@Override
       {{tab}}public String toString() {
-      {{tab}}StringBuilder filterCriteria = new StringBuilder("${majStart(className)}SearchCriteria{");
-      {{tab}}{{#each fields}}
-      {{tab}}if (${this.name} != null) filterCriteria.append("${this.name}=").append(${this.name}).append(", ");
-      {{tab}}{{/each}}{{removeLine}}
-      {{tab}}if (filterCriteria.lastIndexOf(", ") == filterCriteria.length() - 2) {
-      {{tab}}{{tab}}filterCriteria.delete(filterCriteria.length() - 2, filterCriteria.length());
-      {{tab}}}
-      {{tab}}filterCriteria.append("}");
-      {{tab}}return filterCriteria.toString();
+      {{tab}}{{tab}}StringBuilder filterCriteria = new StringBuilder("${majStart(className)}SearchCriteria{");
+      {{tab}}{{tab}}{{#each fields}}
+      {{tab}}{{tab}}if (${this.name} != null) filterCriteria.append("${this.name}=").append(${this.name}).append(", ");
+      {{tab}}{{tab}}{{/each}}{{removeLine}}
+      {{tab}}{{tab}}if (filterCriteria.lastIndexOf(", ") == filterCriteria.length() - 2) {
+      {{tab}}{{tab}}{{tab}}filterCriteria.delete(filterCriteria.length() - 2, filterCriteria.length());
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}filterCriteria.append("}");
+      {{tab}}{{tab}}return filterCriteria.toString();
       {{tab}}}
       {{tab}}{{else}}{{removeLine}}{{/if}}
     modelGetterSetter: "{{removeLine}}"
@@ -1180,8 +1180,8 @@
       import ${groupLink}.${lowerCase(projectName)}.specification.${majStart(className)}Specification;
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
       import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
-      {{#if cacheableWithEhcache}}import org.springframework.cache.annotation.CacheEvict;{{else}}{{removeLine}}{{/if}}
       {{#if cacheableWithEhcache}}import org.springframework.cache.annotation.Cacheable;{{else}}{{removeLine}}{{/if}}
+      {{#if cacheableWithEhcache and isView = false}}import org.springframework.cache.annotation.CacheEvict;{{else}}{{removeLine}}{{/if}}
 
     serviceAnnotations: |
       @Service
@@ -1227,10 +1227,8 @@
       {{tab}}    }
       {{tab}}}
       
-      {{#if !isView}} 
-      {{tab}}@Override{{else}}{{removeLine}}{{/if}}
-      {{#if cacheableWithEhcache}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
-      {{#if !isView}} {{removeLine}}
+      {{#if cacheableWithEhcache and isView = false}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}{{tab}}@Override
       {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.save(${minStart(className)});
@@ -1239,10 +1237,8 @@
       {{tab}}    }
       {{tab}}}{{else}}{{removeLine}}{{/if}}
       
-      {{#if !isView}} 
-      {{tab}}@Override{{else}}{{removeLine}}{{/if}}
-      {{#if cacheableWithEhcache}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
-      {{#if !isView}} {{removeLine}}
+      {{#if cacheableWithEhcache and isView = false}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}{{tab}}@Override
       {{tab}}public ${majStart(className)} update${majStart(className)}(${pkColumnType} ${pkColumn}, ${majStart(className)} ${minStart(className)}) {
       {{tab}}    Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
       {{tab}}    if (existing${majStart(className)}.isPresent()) {
@@ -1256,19 +1252,16 @@
       {{tab}}        throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
       {{tab}}    }
       {{tab}}}{{else}}{{removeLine}}{{/if}}
-      
-      {{#if !isView}} 
-      {{tab}}@Override{{else}}{{removeLine}}{{/if}}
-      {{#if cacheableWithEhcache}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
-      {{#if !isView}} {{removeLine}}
+
+      {{#if cacheableWithEhcache and isView = false}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}{{tab}}@Override
       {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
       {{tab}}    try {
       {{tab}}        ${minStart(className)}Repository.deleteById(${pkColumn});
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
-      {{tab}}}
-      {{else}}{{removeLine}}{{/if}}
+      {{tab}}}{{else}}{{removeLine}}{{/if}}
 
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
     servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
