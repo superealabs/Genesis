@@ -11,6 +11,7 @@ import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.genesis.frontend.generator.model.Component;
+import org.labs.genesis.frontend.generator.model.ModelComponent;
 import org.labs.genesis.frontend.generator.model.ServiceComponent;
 import org.labs.utils.StringUtils;
 
@@ -109,6 +110,23 @@ public class FrameworkFrontendMetadataProvider {
         data.put("export",component.getExport());
 
         return data;
+    }
+
+    public static HashMap<String,Object> getModelHashMap(ModelComponent model, FrontendLanguage frontendLanguage, TableMetadata tableMetadata)
+    {
+        HashMap<String, Object> data = new HashMap<>();
+
+        data.put("imports",model.getImports());
+        data.put("exports",model.getExports());
+
+        return data;
+    }
+
+    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework){
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("routes", frontendFramework.getComponentRoutes());
+        data.put("components", frontendFramework.getComponents());
+        return  data;
     }
 
     private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata) {

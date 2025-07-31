@@ -174,6 +174,8 @@ public class ProjectGenerator {
 
         if (context.isGenerateFrontendApp()){
             initFrontendProjectFiles(context);
+            HashMap<String, Object> componetsData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(context.getFrontendFramework());
+            renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),componetsData);
         }
 
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
@@ -198,11 +200,7 @@ public class ProjectGenerator {
                                            IFrontendGenerator frontendGenerator,
                                            TableMetadata tableMetadata) throws Exception {
          // Create missing Webapp folder
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("destinationFolder", context.getDestinationFolder());
-        metadata.put("projectName", context.getProjectName());
-        metadata.put("webappFolder", context.getWebappFolder());
-        String webappFolder = engine.simpleRender(Constantes.WEBAPP_DIR_TEMPLATE, metadata);
+        String webappFolder = FrameworkFrontendMetadataProvider.getWebappFolder(context);
         FileUtils.createDirectory(webappFolder);
 
 

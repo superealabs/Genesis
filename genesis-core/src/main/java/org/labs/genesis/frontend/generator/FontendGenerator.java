@@ -62,10 +62,13 @@ public class FontendGenerator implements IFrontendGenerator{
 
             ProjectGenerator.renderFilesEdits(component.getComponentAdditionalFiles(), metadataForFinalRender);
 
+            // get the route for the component
+            frontendFramework.addRoute(componentName, component.getRouterLink());
+
         }
         if (!generateComponentOnly) {
-            FileUtils.copyDirectory(Constantes.FRONTEND_SKELLETTON_DIRECTORY+"/"+frontendFramework.getInitPath(),destinationFolder);
-            ProjectGenerator.renderFilesEdits(frontendFramework.getAdditionalFiles(), metadataForFinalRender);
+//            FileUtils.copyDirectory(Constantes.FRONTEND_SKELLETTON_DIRECTORY+"/"+frontendFramework.getInitPath(),destinationFolder);
+//            ProjectGenerator.renderFilesEdits(frontendFramework.getAdditionalFiles(), metadataForFinalRender);
         }
         return "";
     }
@@ -124,10 +127,11 @@ public class FontendGenerator implements IFrontendGenerator{
 
         ModelComponent modelComponent=frontendFramework.getModelComponent();
 
-        String structure=modelComponent.getImports()+"\n\n"+modelComponent.getExports();
+        String structure=loadTemplateForModel(frontendFramework);
 
+        HashMap<String, Object> metadataPrimary = FrameworkFrontendMetadataProvider.getModelHashMap(modelComponent, language, tableMetadata);
+        String finalStringForComponent = engine.simpleRender(structure,metadataPrimary);
         HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
-        String finalStringForComponent = engine.simpleRender(structure,metadataForFinalRender );
 
         String fileSavePath;
         if (generateComponentOnly) {

@@ -1,0 +1,13 @@
+package org.labs.genesis.frontend.generator.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
+public class ComponetRoute {
+    private String componentName;
+    private String route;
+}

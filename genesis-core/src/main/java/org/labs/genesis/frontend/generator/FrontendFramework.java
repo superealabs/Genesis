@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.langage.FilesEdit;
 import org.labs.genesis.frontend.generator.model.Component;
+import org.labs.genesis.frontend.generator.model.ComponetRoute;
 import org.labs.genesis.frontend.generator.model.ModelComponent;
 import org.labs.genesis.frontend.generator.model.ServiceComponent;
 
@@ -24,4 +25,15 @@ public class FrontendFramework
     private ServiceComponent serviceComponent;
     private ModelComponent modelComponent;
     private String initPath;
+    private List<ComponetRoute> componentRoutes;
+
+    public void addRoute(ComponetRoute route){
+        getComponentRoutes().add(route);
+    }
+    public  void addRoute(String componentName, String route){
+        if (componentName == null && (route == null || route.isEmpty())) {
+            return;
+        }
+        addRoute(new ComponetRoute(componentName, route));
+    }
 }

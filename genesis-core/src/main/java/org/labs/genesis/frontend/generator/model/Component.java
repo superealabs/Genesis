@@ -13,6 +13,7 @@ public class Component
     private String componentType;
     private String importFile;
     private String selector;
+    private String routerLink;
     private String standalone;
     private String importComponent;
     private String template;
