@@ -32,9 +32,12 @@ public class Constantes {
     public static final int ASP_ID = 2;
 
     // Frontend
-    public  static  final  String FRONTEND_LANGUAGE_JSON = "data_genesis/frontend/json/frontend.json";
-    public  static  final  String FRONTEND_FRAMEWORK_YAML = "data_genesis/frontend/yaml/framework_frontend.yaml";
-    public  static  final  int TYPESCRIPT_ID = 1;
-    public  static  final  int ANGULAR_ID = 1;
-    public  static  final int VUE_JS = 2;
+    public  static  final   String FRONTEND_LANGUAGE_JSON = "data_genesis/frontend/json/frontend.json";
+    public  static  final   String FRONTEND_FRAMEWORK_YAML = "data_genesis/frontend/yaml/framework_frontend.yaml";
+    public  static  final   int TYPESCRIPT_ID = 1;
+    public  static  final   int ANGULAR_ID = 1;
+    public  static  final   int VUE_JS_ID = 2;
+    public  static  final   String FRONTEND_SKELLETTON_DIRECTORY = "data_genesis/frontend/skeletoons/";
+    public  static  final   String WEBAPP_DIR_TEMPLATE = "${destinationFolder}/${majStart(projectName)}_${majStart(webappFolder)}";
+    public  static  final   String FRONTEND_TEMPLATE_DIRECTORY = DATA_PATH+"/frontend/template";
 }

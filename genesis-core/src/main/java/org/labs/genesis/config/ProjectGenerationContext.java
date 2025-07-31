@@ -44,7 +44,8 @@ public class ProjectGenerationContext {
     private  boolean generateFrontendApp = true;
     private FrontendFramework frontendFramework;
     private FrontendLanguage frontendLanguage;
-    private String frontendProjectName = "webapp";
+    private String webappFolder = "webapp";
+
     public ProjectGenerationContext setDatabase(Database database) {
         this.database = database;
         return this;
