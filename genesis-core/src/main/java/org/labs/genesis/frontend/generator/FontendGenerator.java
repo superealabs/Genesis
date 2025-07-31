@@ -64,6 +64,7 @@ public class FontendGenerator implements IFrontendGenerator{
 
         }
         if (!generateComponentOnly) {
+            FileUtils.copyDirectory(Constantes.FRONTEND_SKELLETTON_DIRECTORY+"/"+frontendFramework.getInitPath(),destinationFolder);
             ProjectGenerator.renderFilesEdits(frontendFramework.getAdditionalFiles(), metadataForFinalRender);
         }
         return "";
