@@ -95,3 +95,10 @@
       exportsComponents
     destinationPath: "${destinationFolder}"
     name: "${EntityName}Model"
+
+- id: 2
+  languageId: 1
+  coreFramework: "VueJs"
+  name: "Vue3 + Typescript App"
+  template: "Vue3TS-Template"
+  initPath: "vue/vue-3-ts-skeletoon"
