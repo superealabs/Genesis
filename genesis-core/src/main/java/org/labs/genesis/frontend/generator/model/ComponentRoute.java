@@ -15,5 +15,4 @@ public class ComponentRoute {
     private String link;
     private String componentImport;
     private String label;
-    private Component component;
 }
