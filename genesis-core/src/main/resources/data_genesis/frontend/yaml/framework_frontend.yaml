@@ -100,7 +100,7 @@
   languageId: 1
   coreFramework: "VueJs"
   name: "Vue3 + Typescript App"
-  template: "Vue3TS-Template"
+  template: "Vue3TS-template"
   initPath: "vue/vue-3-ts-skeletoon"
   componentExtension: "ts"
   additionalFiles:
@@ -132,8 +132,7 @@
         import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
         import HomeView from "../views/HomeView.vue";
         {{#each fields}}
-        <th >${majStart(this.columnName)}</th>
-        import ${minStart(EntityName)}Routes from "./${minStart(EntityName)}.router";
+        import ${majStart(EntityName)}ListView from "@/views/${minStart(EntityName)}/list/${majStart(EntityName)}ListView.vue";{{newline}}
         {{/each}}
 
         const routes: Array<RouteRecordRaw> = [
@@ -142,8 +141,13 @@
             name: "home",
             component: HomeView,
           },
-          <th >${majStart(this.columnName)}</th>
-          ...${minStart(EntityName)}Routes,
+          {{#each fields}}
+          import Routes from "./${minStart(EntityName)}.router";
+          {
+              path: "/${minPluralize(EntityName)}",
+              name: "${majStart(EntityName)}ListView",
+              component: ${majStart(EntityName)}ListView,
+          },{{newline}}
           {{/each}}
         ];
 
@@ -160,14 +164,16 @@
       componentName : "${majStart(EntityName)}ListComponent"
       importFile: |
         import GenesisButton from "@/core/button/GenesisButton.vue";
-        import { ${majStart(EntityName)} } from "@/shared/model/${majStart(EntityName)}Model";
+        import { ${majStart(EntityName)} } from "@/shared/models/${majStart(EntityName)}Model";
         import { defineComponent, PropType } from "vue";
       selector: "${majStart(EntityName)}List"
       standalone : true
       importComponent : |
         GenesisButton,${majStart(EntityName)}
       template : |
+
       style : |
+
       export : |
         props: {
           ${minPluralize(EntityName)}: {
@@ -189,7 +195,7 @@
                 <thead class="table-light">
                   <tr>
                     {{#each fields}}
-                    <th >${majStart(this.columnName)}</th>
+                    <th >${majStart(this.columnName)}</th>{{newline}}
                     {{/each}}
                     <th class="text-end">Actions</th>
                   </tr>
@@ -197,7 +203,7 @@
                 <tbody>
                   <tr v-for="${minStart(EntityName)} in ${minPluralize(EntityName)}" :key="product.id" class="border-bottom">
                     {{#each fields}}
-                    <td>{{ ${minStart(EntityName)}.${minStart(this.columnName)} }}</td>
+                    <td>{{ ${minStart(EntityName)}.${minStart(this.columnName)} }}</td>{{newline}}
                     {{/each}}
                     <td class="text-end">
                       <div class="d-inline-flex gap-2">
@@ -239,4 +245,37 @@
             </style>
           destinationPath: "${webapp}/src/entities/${minStart(EntityName)}"
 
+  serviceComponent:
+    imports: |
+    methods: |
+    destinationPath: "${webapp}/src/shared/services"
+    name: "${majStart(EntityName)}Service"
+  modelComponent:
+    imports: |
+    exports: |
+      export interface I${majStart(EntityName)} {
+        id: string;
+        name: string;
+        price: number;
+      }
+      
+      export class ${majStart(EntityName)} implements I${majStart(EntityName)} {
+        {{#each fields}}
+        ${minStart(this.columnName)}: ${lowerCase(this.typeBase)};{{newline}}
+        {{/each}}
+      
+        constructor(
+          {{#each fields}}
+            ${minStart(this.columnName)}: ${lowerCase(this.typeBase)}{{#if !@last}},{{/if}}{{newline}}
+          {{/each}}
+        ) {
+          {{#each fields}}
+            this.${minStart(this.columnName)} = ${minStart(this.columnName)};{{newline}}
+          {{/each}}
+        }
+      }
+
+    exportsComponents: |
+    destinationPath: "${webapp}/src/shared/modelss"
+    name: "${majStart(EntityName)}Model"
 

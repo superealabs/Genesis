@@ -160,4 +160,8 @@ public class FontendGenerator implements IFrontendGenerator{
     private String loadTemplateForServices(FrontendFramework frontendFramework) throws IOException {
         return FileUtils.getFileContent(Constantes.FRONTEND_TEMPLATE_DIRECTORY + "/" + frontendFramework.getTemplate() + "-service." + Constantes.MODEL_TEMPLATE_EXT);
     }
+
+    private String loadTemplateForModel(FrontendFramework frontendFramework) throws IOException {
+        return FileUtils.getFileContent(Constantes.FRONTEND_TEMPLATE_DIRECTORY + "/" + frontendFramework.getTemplate() + "-model." + Constantes.MODEL_TEMPLATE_EXT);
+    }
 }
