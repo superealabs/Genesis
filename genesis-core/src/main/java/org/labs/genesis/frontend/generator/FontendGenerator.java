@@ -66,20 +66,22 @@ public class FontendGenerator implements IFrontendGenerator{
             component.setEntityName(tableMetadata.getTableName());
             // get the route for the component
             if (component.getRouter().getLink() != null && !component.getRouter().getLink().isEmpty()) {
+                ComponentRoute router = new ComponentRoute();
+                
                 String componentSelector = ProjectGenerator.engine.simpleRender(component.getSelector(),metadataForFinalRender);
                 if ( component.getRouter().getLabel() != null && !component.getRouter().getLabel().isEmpty()) {
                     String componentRouterLable = ProjectGenerator.engine.simpleRender(component.getRouter().getLabel(), metadataForFinalRender);
-                    component.getRouter().setLabel(componentRouterLable);
+                    router.setLabel(componentRouterLable);
                 }
                 String componentRouterLink = ProjectGenerator.engine.simpleRender(component.getRouter().getLink(),metadataForFinalRender);
                 String componentImportPath = StringUtils.replaceUntilMarker(fileSavePath, "src/", "@/");
-                componentImportPath += componentImportPath +"/"+componentName+"."+frontendFramework.getComponentExtension();
+                componentImportPath += "/"+componentName+"."+frontendFramework.getComponentExtension();
 
-                component.getRouter().setLink(componentRouterLink);
-                component.getRouter().setComponentName(componentName);
-                component.getRouter().setComponentSelector(componentSelector);
-                component.getRouter().setComponentImport(componentImportPath);
-                frontendFramework.addRoute(component.getRouter());
+                router.setLink(componentRouterLink);
+                router.setComponentName(componentName);
+                router.setComponentSelector(componentSelector);
+                router.setComponentImport(componentImportPath);
+                frontendFramework.addRoute(router);
             }
 
         }

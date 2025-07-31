@@ -15,4 +15,12 @@ public class ComponentRoute {
     private String link;
     private String componentImport;
     private String label;
+
+    public ComponentRoute(ComponentRoute source){
+        this.componentName = source.getComponentName();
+        this.componentSelector = source.getComponentSelector();
+        this.link = source.getLink();
+        this.componentImport = source.getComponentImport();
+        this.label = source.getLabel();
+    }
 }
