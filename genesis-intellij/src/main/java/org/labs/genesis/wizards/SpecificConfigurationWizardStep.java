@@ -6,6 +6,7 @@ import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.forms.SpecificConfigurationForm;
+import org.labs.utils.StringUtils;
 
 import javax.swing.*;
 import java.sql.SQLException;
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.sql.Connection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SpecificConfigurationWizardStep extends ModuleWizardStep {
     private final SpecificConfigurationForm specificConfigurationForm;
@@ -65,7 +68,22 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
                 specificConfigurationForm.getCacheProviderOptions().getSelectedItem(), () -> "").toString()
         );
         if (!specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList().isEmpty()) {
-            frameworkConfiguration.put("entitiesCacheable", specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList());
+            List<String> selectedEntities = specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList();
+
+            // Formate every entity name to match with class naming convention
+            List<String> entitiesCacheable = selectedEntities.stream()
+                    .filter(tableName -> tableName != null && !tableName.isBlank())
+                    .map(tableName -> Stream.of(tableName)
+                            .map(String::toLowerCase)
+                            .map(StringUtils::toCamelCase)
+                            .map(StringUtils::majStart)
+                            .map(StringUtils::removeLastS)
+                            .findFirst()
+                            .orElse(""))
+                    .filter(formatted -> !formatted.isEmpty())
+                    .collect(Collectors.toList());
+
+            frameworkConfiguration.put("entitiesCacheable", entitiesCacheable);
         }
 
         // Gestion de hibernate ddl option
