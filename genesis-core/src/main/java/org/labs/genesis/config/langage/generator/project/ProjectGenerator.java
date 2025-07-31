@@ -205,15 +205,16 @@ public class ProjectGenerator {
         metadata.put("webappFolder", context.getWebappFolder());
         String webappFolder = engine.simpleRender(Constantes.WEBAPP_DIR_TEMPLATE, metadata);
         FileUtils.createDirectory(webappFolder);
-      
+
+
         Database database=context.getDatabase();
         FrontendLanguage frontendLanguage=context.getFrontendLanguage();
         FrontendFramework frontendFramework=context.getFrontendFramework();
         String destinationFolder=context.getDestinationFolder();
         String projectName=context.getProjectName();
-        frontendGenerator.generateComponent(database,frontendLanguage,frontendFramework,tableMetadata,destinationFolder, projectName, false);
-        frontendGenerator.generateService(database,frontendLanguage,frontendFramework,tableMetadata,destinationFolder, projectName, false);
-        frontendGenerator.generateModel(database,frontendLanguage,frontendFramework,tableMetadata,destinationFolder, projectName, false);
+        frontendGenerator.generateComponent(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
+        frontendGenerator.generateService(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
+        frontendGenerator.generateModel(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
         return;
     }
 

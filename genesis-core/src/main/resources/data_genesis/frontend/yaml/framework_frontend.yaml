@@ -11,19 +11,19 @@
       extension: "ts"
       content: | 
         content0
-      destinationPath: "D:\\tahiana\\test\\frontend"
+      destinationPath: "${destinationFolder}"
     - fileType: "App-files"
       fileName: "app.component"
       extension: "html"
       content: |
         content1
-      destinationPath: "D:\\tahiana\\test\\frontend"
+      destinationPath: "${destinationFolder}"
     - fileType: "App-files"
       fileName: "app.component"
       extension: "css"
       content: |
         content2
-      destinationPath: "D:\\tahiana\\test\\frontend"
+      destinationPath: "${destinationFolder}"
   components:
     - componentType : "list"
       importFile: | 
@@ -38,7 +38,7 @@
         styleURL
       export: |
         export
-      destinationPath: "D:\\tahiana\\test\\frontend"
+      destinationPath: "${destinationFolder}"
       componentName : "${EntityName}ListTest"
       componentAdditionalFiles:
         - fileType: "html template"
@@ -46,13 +46,13 @@
           extension: "html"
           content: |
             content
-          destinationPath: "D:\\tahiana\\test\\frontend"
+          destinationPath: "${destinationFolder}"
         - fileType: "css template"
           fileName: "${EntityName}test2.component"
           extension: "css"
           content: |
             content
-          destinationPath: "D:\\tahiana\\test\\frontend"
+          destinationPath: "${destinationFolder}"
     - componentType: "form"
       importFile: |
         allImport
@@ -66,7 +66,7 @@
         styleURL
       export: |
         export
-      destinationPath: "D:\\tahiana\\test\\frontend"
+      destinationPath: "${destinationFolder}"
       componentName: "${EntityName}FormTest"
       componentAdditionalFiles:
         - fileType: "html template"
@@ -74,24 +74,24 @@
           extension: "html"
           content: |
             content1
-          destinationPath: "D:\\tahiana\\test\\frontend"
+          destinationPath: "${destinationFolder}"
         - fileType: "css template"
           fileName: "$${EntityName}Form.component"
           extension: "css"
           content: |
             content2
-          destinationPath: "D:\\tahiana\\test\\frontend"
+          destinationPath: "${destinationFolder}"
   serviceComponent:
     imports: |
        importService
     methods: |
       methodService
-    destinationPath: "D:\\tahiana\\test\\frontend"
+    destinationPath: "${destinationFolder}"
     name: "${EntityName}Service"
   modelComponent:
     imports: |
       importsComponents
     exports : |
       exportsComponents
-    destinationPath: "D:\\tahiana\\test\\frontend"
+    destinationPath: "${destinationFolder}"
     name: "${EntityName}Model"

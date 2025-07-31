@@ -65,10 +65,10 @@ public class GenesisCoreTest {
             frameworkConfiguration.put("frameworkVersion", frameworkVersion);
 
             //===== USE EUREKA SERVER =======//
-            //framework.setUseCloud(false);
-            //framework.setUseEurekaServer(false);
-            //frameworkConfiguration.put("eurekaServerURL", "http://localhost:8761/eureka");
-            //frameworkConfiguration.put("projectNonSecurePort", projectPort);
+            framework.setUseCloud(false);
+            framework.setUseEurekaServer(false);
+            frameworkConfiguration.put("eurekaServerURL", "http://localhost:8761/eureka");
+            frameworkConfiguration.put("projectNonSecurePort", projectPort);
             //==============================//
 
             HashMap<String, Object> languageConfiguration = new HashMap<>();
