@@ -29,6 +29,9 @@ public class FrontendFramework
     private List<ComponentRoute> componentRoutes;
 
     public void addRoute(ComponentRoute route){
+        if (route.getLabel() == null || route.getLabel().isEmpty()){
+            route.setLabel( route.getComponentName());
+        }
         getComponentRoutes().add(route);
     }
 

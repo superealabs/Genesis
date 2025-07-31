@@ -118,7 +118,7 @@ public class FrameworkFrontendMetadataProvider {
         data.put("template",component.getTemplate());
         data.put("style",component.getStyle());
         data.put("export",component.getExport());
-        data.put("routerLink",component.getRouterLink());
+        data.put("router",getRouteHashMap(component.getRouter()));
 
         return data;
     }
@@ -143,8 +143,11 @@ public class FrameworkFrontendMetadataProvider {
     public  static  HashMap<String,Object> getRouteHashMap(ComponentRoute route){
         HashMap<String, Object> data = new HashMap<>();
         data.put("componentName", route.getComponentName());
-        data.put("routerLink", route.getRoute());
+        data.put("componentSelector", route.getComponentSelector());
+        data.put("routerLink", route.getLink());
         data.put("componentImport", route.getComponentImport());
+        data.put("routerLabel", route.getLabel());
+        data.put("componentEntity", route.getComponent().getEntityName());
         return  data;
     }
 

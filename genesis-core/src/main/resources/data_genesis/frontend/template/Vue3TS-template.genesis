@@ -5,7 +5,7 @@ ${importFile}
 
 export default defineComponent({
   name: "${selector}",
-  ${importComponent}},
+  ${importComponent},
   ${export}
 });
 </script>

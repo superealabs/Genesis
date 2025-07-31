@@ -13,7 +13,7 @@ public class Component
     private String componentType;
     private String importFile;
     private String selector;
-    private String routerLink;
+    private ComponentRoute router;
     private String standalone;
     private String importComponent;
     private String template;
@@ -22,5 +22,5 @@ public class Component
     private String destinationPath;
     private String componentName;
     private List<FilesEdit> componentAdditionalFiles;
-
+    private String entityName;
 }
