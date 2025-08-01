@@ -36,7 +36,10 @@ public class FontendGenerator implements IFrontendGenerator{
         HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
 
         for(Component component:frontendFramework.getComponents()) {
-
+            if(tableMetadata.getIsView() && !component.getGenerateForView())
+            {
+                continue;
+            }
             HashMap<String, Object> metadataPrimary = FrameworkFrontendMetadataProvider.getComponentHashMap(component, language, tableMetadata);
             String structure = engine.simpleRender(templateArchitecture, metadataPrimary);
 
@@ -84,10 +87,6 @@ public class FontendGenerator implements IFrontendGenerator{
                 frontendFramework.addRoute(router);
             }
 
-        }
-        if (!generateComponentOnly) {
-//            FileUtils.copyDirectory(Constantes.FRONTEND_SKELLETTON_DIRECTORY+"/"+frontendFramework.getInitPath(),destinationFolder);
-//            ProjectGenerator.renderFilesEdits(frontendFramework.getAdditionalFiles(), metadataForFinalRender);
         }
         return "";
     }

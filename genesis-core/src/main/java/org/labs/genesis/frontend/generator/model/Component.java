@@ -14,7 +14,7 @@ public class Component
     private String importFile;
     private String selector;
     private ComponentRoute router;
-    private String standalone;
+    private Boolean standalone;
     private String importComponent;
     private String template;
     private String style;
@@ -23,4 +23,5 @@ public class Component
     private String componentName;
     private List<FilesEdit> componentAdditionalFiles;
     private String entityName;
+    private Boolean generateForView;
 }

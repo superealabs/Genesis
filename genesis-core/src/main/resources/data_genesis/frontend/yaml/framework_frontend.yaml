@@ -26,10 +26,14 @@
       destinationPath: "${destinationFolder}/src/app/"
   components:
     - componentType: "list"
+      generateForView: true
+      router:
+        link: "/${minPluralize(EntityName)}"
+        label: "${majStart(EntityName)}"
       importFile: |
         allImport
       selector: "app-${toKebabCase(EntityName)}-list"
-      standalone: "true"
+      standalone: true
       importComponent: |
         allImport
       template: |
@@ -54,10 +58,14 @@
             content2
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-list"
     - componentType: "form"
+      router:
+        link: "/${minPluralize(EntityName)}"
+        label: "${majStart(EntityName)}"
       importFile: |
         allImport
       selector: "app-${toKebabCase(EntityName)}-form"
-      standalone: "true"
+      generateForView: true
+      standalone: true
       importComponent: |
         allImport
       template: |
