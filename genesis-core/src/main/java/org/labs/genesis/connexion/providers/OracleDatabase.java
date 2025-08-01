@@ -453,11 +453,9 @@ public class OracleDatabase extends Database {
         }
         return columnType;
     }
-
     @Override
     public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language,Connection connex,Framework framework) throws SQLException {
         List<ColumnMetadata> listeCols = new ArrayList<>();
-
 
         try (ResultSet columns = metaData.getColumns(null, this.credentials.getUser(), tableName, null)) {
             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();

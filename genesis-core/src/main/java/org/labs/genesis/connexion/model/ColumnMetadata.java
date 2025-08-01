@@ -4,7 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
+import org.labs.genesis.connexion.Database;
 import org.labs.genesis.engine.GenesisTemplateEngine;
+import org.labs.genesis.frontend.FrontendLanguage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +19,9 @@ import java.util.Map;
 public class ColumnMetadata {
     private String name;
     private String type;
+    private String frontEndType;
+    private String frontEndReferencedColumnType;
+    private String databaseColumnType;
     private boolean primary;
     private boolean foreign;
     private String referencedTable;
@@ -33,6 +38,16 @@ public class ColumnMetadata {
     private int decimalDigits;
     private int columnSize;
     private Map<String, Object> validationAnnotations = new HashMap<>();
+
+    public void setFrontEndType(FrontendLanguage frontendLanguage, Database database)
+    {
+        this.frontEndType = frontendLanguage.getTypes().get(database.getTypes().get(columnType));
+    }
+
+    public void setFrontEndReferencedColumnType(FrontendLanguage frontendLanguage, Database database)
+    {
+        this.frontEndReferencedColumnType = frontendLanguage.getTypes().get(database.getTypes().get(databaseColumnType));
+    }
 
     public void setNullable(String nullable, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
         if(nullable.equalsIgnoreCase("YES")){

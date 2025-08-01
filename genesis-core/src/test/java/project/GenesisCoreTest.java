@@ -37,11 +37,15 @@ public class GenesisCoreTest {
             int languageId = Constantes.Java_ID;
             int frameworkId = Constantes.Spring_REST_API_ID;
             int projectId = Constantes.Maven_ID;
+            int frontendLangageId=Constantes.TYPESCRIPT_ID;
+            int frontendFrameworkId=Constantes.ANGULAR_ID;
 
             var database = ProjectGenerator.databases.get(databaseId);
             var language = ProjectGenerator.languages.get(languageId);
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var project = ProjectGenerator.projects.get(projectId);
+            var frontendLangage=ProjectGenerator.frontendLanguage.get(frontendLangageId);
+            var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
 
             String projectName = "Popol";
             String groupLink = "org.labs";
@@ -51,7 +55,7 @@ public class GenesisCoreTest {
             String projectDescription = "test";
             String frameworkVersion = "3.3.6";
             String languageVersion = "21";
-            String destinationFolder = "../generated/spring";
+            String destinationFolder = "D:\\tahiana\\test\\";
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
 
@@ -76,6 +80,8 @@ public class GenesisCoreTest {
             ProjectGenerationContext context = new ProjectGenerationContext();
             context.setLanguage(language);
             context.setFramework(framework);
+            context.setFrontendFramework(frontendFramework);
+            context.setFrontendLanguage(frontendLangage);
             context.setProject(project);
             context.setCredentials(credentials);
             context.setDatabase(database);
@@ -87,6 +93,7 @@ public class GenesisCoreTest {
             context.setLanguageConfiguration(languageConfiguration);
             context.setFrameworkConfiguration(frameworkConfiguration);
             context.setEntityNames(entityNames);
+            context.setViewNames(new ArrayList<>());
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
 

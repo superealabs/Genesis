@@ -1,0 +1,15 @@
+<div class="sidebar">
+  <div class="app-title">
+    <span>Your</span><span class="blue">App</span>
+  </div>
+
+  <div class="section-label entities-label">ENTITIES</div>
+  <ng-container *ngFor="let entry of entities | keyvalue">
+    <a class="entities" routerLink="{{ entry.value }}" routerLinkActive="active">{{ entry.key }}</a>
+  </ng-container>
+
+  <div class="section-label views-label">VIEWS</div>
+  <ng-container *ngFor="let entry of views | keyvalue">
+    <a class="views" routerLink="{{ entry.value }}" routerLinkActive="active">{{ entry.key }}</a>
+  </ng-container>
+</div>
