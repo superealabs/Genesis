@@ -4,9 +4,11 @@ import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.langage.FilesEdit;
 import org.labs.genesis.frontend.generator.model.Component;
+import org.labs.genesis.frontend.generator.model.ComponentRoute;
 import org.labs.genesis.frontend.generator.model.ModelComponent;
 import org.labs.genesis.frontend.generator.model.ServiceComponent;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -24,4 +26,19 @@ public class FrontendFramework
     private ServiceComponent serviceComponent;
     private ModelComponent modelComponent;
     private String initPath;
+    private List<ComponentRoute> componentRoutes;
+
+    public void addRoute(ComponentRoute route){
+        if (route.getLabel() == null || route.getLabel().isEmpty()){
+            route.setLabel( route.getComponentName());
+        }
+        getComponentRoutes().add(route);
+    }
+
+    public List<ComponentRoute> getComponentRoutes(){
+        if(componentRoutes == null){
+            componentRoutes = new ArrayList<>();
+        }
+        return componentRoutes;
+    }
 }

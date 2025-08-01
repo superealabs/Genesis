@@ -14,14 +14,12 @@ import java.util.*;
 public class ProjectMetadataProvider {
     private static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
 
-    static HashMap<String, Object> getInitialHashMap(String destinationFolder, String projectName, String groupLink, String webappFolder) {
+    static HashMap<String, Object> getInitialHashMap(String destinationFolder, String projectName, String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName", projectName);
         metadata.put("groupLink", groupLink);
         metadata.put("groupLinkPath", groupLink.replace(".", "/"));
-        metadata.put("webapp", destinationFolder+"/"+ StringUtils.majStart(projectName) +"_"+webappFolder);
-        metadata.put("webappFolder", webappFolder);
         return metadata;
     }
 
@@ -133,12 +131,12 @@ public class ProjectMetadataProvider {
         return frameworkSecurityBooleanMetadata;
     }
 
-    static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName, String webappFolder, String groupLink, String projectPort, Database database, Credentials credentials, @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
+    static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName, String groupLink, String projectPort, Database database, Credentials credentials, @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
         HashMap<String, Object> combinedMap = new HashMap<>();
 
         combinedMap.putAll(getConfigFileHashMap(projectPort, database, credentials, language, framework, frameworkOptions));
         combinedMap.putAll(getDependencyFileHashMap(projectDescription, database, language, framework, langageConfiguration, frameworkOptions));
-        combinedMap.putAll(getInitialHashMap(destinationFolder, projectName, groupLink, webappFolder));
+        combinedMap.putAll(getInitialHashMap(destinationFolder, projectName, groupLink));
         combinedMap.putAll(getFrameworkSecurityTrueBooleansHashMap(framework,frameworkOptions));
 
         return combinedMap;

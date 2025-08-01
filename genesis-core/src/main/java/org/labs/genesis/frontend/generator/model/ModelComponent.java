@@ -8,6 +8,7 @@ import lombok.Setter;
 public class ModelComponent
 {
     private String exports;
+    private String exportsComponents;
     private String imports;
     private String destinationPath;
     private String name;

@@ -1,14 +1,16 @@
 package org.labs.genesis.frontend.generator.frameworkFrontend;
 
 import org.jetbrains.annotations.NotNull;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.Constantes;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.genesis.frontend.generator.model.Component;
+import org.labs.genesis.frontend.generator.model.ComponentRoute;
+import org.labs.genesis.frontend.generator.model.ModelComponent;
 import org.labs.genesis.frontend.generator.model.ServiceComponent;
 import org.labs.utils.StringUtils;
 
@@ -29,7 +31,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
         metadata.put("EntityName",tableMetadata.getTableName());
 
-        metadata.putAll(getHashMapComponentSavePath(destinationFolder,projectName,tableMetadata));
+        metadata.putAll(getHashMapComponentSavePath(destinationFolder, projectName, tableMetadata));
 
         return metadata;
     }
@@ -42,10 +44,28 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName",projectName);
         metadata.put("EntityName",tableMetadata.getTableName());
-
         return metadata;
     }
 
+    public  static String  getWebappFolder(ProjectGenerationContext context){
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("destinationFolder", context.getDestinationFolder());
+        metadata.put("projectName", context.getProjectName());
+        metadata.put("webappFolder", context.getWebappFolder());
+        String webappFolder = engine.simpleRender(Constantes.WEBAPP_DIR_TEMPLATE, metadata);
+        return  webappFolder;
+    }
+
+    public static HashMap<String, Object> getWebappHashMap(ProjectGenerationContext context){
+        HashMap<String, Object> metadata = new HashMap<>();
+        String webappFolder = getWebappFolder(context);
+        metadata.put("destinationFolder", webappFolder);
+        metadata.put("projectName", context.getProjectName());
+        metadata.put("webappFolder", context.getWebappFolder());
+        metadata.put("webapp", webappFolder);
+
+        return metadata;
+    }
 
     private static List<Map<String, Object>> getFieldsList(TableMetadata tableMetadata) {
         List<Map<String, Object>> fields = new ArrayList<>();
@@ -98,8 +118,44 @@ public class FrameworkFrontendMetadataProvider {
         data.put("template",component.getTemplate());
         data.put("style",component.getStyle());
         data.put("export",component.getExport());
+        data.put("router",getRouteHashMap(component.getRouter()));
 
         return data;
+    }
+
+    public static HashMap<String,Object> getModelHashMap(ModelComponent model, FrontendLanguage frontendLanguage, TableMetadata tableMetadata)
+    {
+        HashMap<String, Object> data = new HashMap<>();
+
+        data.put("imports",model.getImports());
+        data.put("exports",model.getExports());
+
+        return data;
+    }
+
+    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework){
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("routes",getRoutesHashMap(frontendFramework));
+//        data.put("components", frontendFramework.getComponents());
+        return  data;
+    }
+
+    public  static  HashMap<String,Object> getRouteHashMap(ComponentRoute route){
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("componentName", route.getComponentName());
+        data.put("componentSelector", route.getComponentSelector());
+        data.put("routerLink", route.getLink());
+        data.put("componentImport", route.getComponentImport());
+        data.put("routerLabel", route.getLabel());
+        return  data;
+    }
+
+    public  static  List<Map<String,Object>> getRoutesHashMap(FrontendFramework frontendFramework){
+        List<Map<String, Object>> routes = new ArrayList<>();
+        for (ComponentRoute route : frontendFramework.getComponentRoutes()) {
+            routes.add(getRouteHashMap(route));
+        }
+        return  routes;
     }
 
     private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata) {
