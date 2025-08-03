@@ -140,6 +140,7 @@
         import java.util.Arrays;
         import java.util.List;
         import java.util.stream.Collectors;
+        import jakarta.persistence.criteria.Predicate;
         
         public class WebUtils {
             public static final String ASC = "asc";
@@ -181,6 +182,29 @@
                 } catch (Exception e) {
                     throw new IllegalArgumentException(e.getMessage());
                 }
+            }
+            
+            public static void addLikeIfPresent(jakarta.persistence.criteria.CriteriaBuilder cb,
+                                         jakarta.persistence.criteria.Path<String> field,
+                                         String value,
+                                         List<Predicate> predicates) {
+                  if (value != null && !value.isBlank()) {
+                      predicates.add(cb.like(cb.lower(field), "%" + value.toLowerCase() + "%"));
+                  }
+            }
+
+            public static <T extends Comparable<? super T>> void addInterval(
+              jakarta.persistence.criteria.CriteriaBuilder cb,
+              jakarta.persistence.criteria.Path<T> field,
+              T min, T max,
+              List<Predicate> predicates) {
+              
+              if (min != null) {
+                predicates.add(cb.greaterThanOrEqualTo(field, min));
+              }
+              if (max != null) {
+                predicates.add(cb.lessThanOrEqualTo(field, max));
+              }
             }
         }
 
