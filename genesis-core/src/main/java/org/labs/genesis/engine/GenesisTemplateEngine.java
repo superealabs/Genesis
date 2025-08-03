@@ -58,6 +58,7 @@ public class GenesisTemplateEngine {
         FUNCTIONS_MAP.put("pluralize", StringUtils::pluralize);
         FUNCTIONS_MAP.put("minPluralize", StringUtils::minPluralize);
         FUNCTIONS_MAP.put("majPluralize", StringUtils::majPluralize);
+        FUNCTIONS_MAP.put("toPascalCase", StringUtils::toPascalCase);
     }
 
     private final Map<String, String> commentMap = new HashMap<>();

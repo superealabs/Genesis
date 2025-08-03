@@ -98,9 +98,11 @@
     name: "${toKebabCase(EntityName)}.service"
   modelComponent:
     imports: |
-      importsComponents
+      {{#each fieldsFK}}
+        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)/models/${toKebabCase(this.type)}.model.ts'
+      {{/each}}
     exports : |
-      exportsComponents
+
     destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/models"
     name: "${toKebabCase(EntityName)}.model"
 

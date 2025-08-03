@@ -55,6 +55,21 @@ public class StringUtils {
         });
     }
 
+    public static String toPascalCase(String string) {
+        return string.transform(s -> {
+            // Remplace tirets et underscores par un séparateur commun
+            String[] words = s.split("[-_]+");
+            StringBuilder pascalCase = new StringBuilder();
+
+            for (String word : words) {
+                pascalCase.append(majStart(word));
+            }
+
+            return pascalCase.toString();
+        });
+    }
+
+
     public static String toKebabCase(String input) {
         if (input == null || input.isEmpty()) return input;
 
