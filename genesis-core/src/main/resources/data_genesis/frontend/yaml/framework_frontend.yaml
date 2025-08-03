@@ -99,10 +99,32 @@
   modelComponent:
     imports: |
       {{#each fieldsFK}}
-        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)/models/${toKebabCase(this.type)}.model.ts'
+        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
       {{/each}}
     exports : |
-
+      export interface ${toPascalCase(EntityName)}
+      {
+      {{tab}}{{#each fields}}
+      {{tab}}{{#if this.isForeignKey}}${this.name}: ${toPascalCase(this.type)}{{else}}
+      {{tab}}${this.name}: ${this.typeBase}{{/if}}
+      {{tab}}{{/each}}{{removeLine}}
+      }
+      
+      export interface ${toPascalCase(EntityName)}DTO{
+      {{tab}}status: number;
+      {{tab}}message: string;
+      {{tab}}returnCode: number;
+      {{tab}}data: {
+      {{tab}}{{tab}}content: ${toPascalCase(EntityName)}[];
+      {{tab}}{{tab}}page: {
+      {{tab}}{{tab}}{{tab}}size: number;
+      {{tab}}{{tab}}{{tab}}number: number;
+      {{tab}}{{tab}}{{tab}}totalElements: number;
+      {{tab}}{{tab}}{{tab}}totalPages: number;
+      {{tab}}{{tab}}};
+      {{tab}}};
+      {{tab}}timestamp: string;
+      }
     destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/models"
     name: "${toKebabCase(EntityName)}.model"
 

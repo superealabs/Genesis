@@ -29,7 +29,7 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectSpring() {
-        var credentials = new Credentials().setSchemaName("").setHost("localhost").setPort("1521").setUser("C##ECOM").setPwd("ecom").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCLBDD").setDriverType("thin");
+        var credentials = new Credentials().setSchemaName("").setHost("localhost").setPort("1521").setUser("C##RH").setPwd("rh").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCLBDD").setDriverType("thin");
 
         try {
 
