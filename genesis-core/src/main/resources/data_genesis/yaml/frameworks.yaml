@@ -1349,6 +1349,7 @@
       import org.springframework.data.domain.Pageable;      
       import org.springframework.data.jpa.domain.Specification;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+      import ${groupLink}.${lowerCase(projectName)}.models.dto.${majStart(className)}Search;
       import org.springframework.stereotype.Service;
       import ${groupLink}.${lowerCase(projectName)}.repositories.${majStart(className)}Repository;
       import java.util.Optional;
@@ -1444,6 +1445,7 @@
           package ${groupLink}.${lowerCase(projectName)}.services.interfaces;
           
           import ${groupLink}.${lowerCase(projectName)}.models.${className};
+          import ${groupLink}.${lowerCase(projectName)}.models.dto.${className}Search;
           import org.springframework.data.domain.Page;
           import org.springframework.data.domain.Pageable;    
           
