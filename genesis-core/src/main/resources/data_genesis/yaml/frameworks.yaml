@@ -1639,6 +1639,8 @@
       {{tab}}@Operation(
       {{tab}}    summary = "Create new ${formatReadableLowerCase(className)}",
       {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}
       {{tab}}    description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1662,10 +1664,13 @@
       {{tab}}            "${formatReadableLowerCase(className)} created successfully", new${majStart(className)});
       {{tab}}    return ResponseEntity.status(HttpStatus.CREATED).body(response);
       {{tab}}}
-      
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}} 
       {{tab}}@Operation(
       {{tab}}    summary = "Update existing ${formatReadableLowerCase(className)}",
-      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}      
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}
       {{tab}}    description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1683,6 +1688,8 @@
       {{tab}}        description = "Invalid ${formatReadableLowerCase(className)} supplied"
       {{tab}}    )
       {{tab}}})
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}} 
       {{tab}}@PutMapping("/{${pkColumn}}")
       {{tab}}public ResponseEntity<RestResponse<${majStart(className)}>> update${majStart(className)}(
       {{tab}}    @Parameter(description = "ID of the ${formatReadableLowerCase(className)} to update", required = true)
@@ -1695,10 +1702,13 @@
       {{tab}}            "${formatReadableLowerCase(className)} updated successfully", update${majStart(className)});
       {{tab}}    return ResponseEntity.ok(response);
       {{tab}}}
-      
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}
       {{tab}}@Operation(
       {{tab}}    summary = "Delete ${formatReadableLowerCase(className)}",
-      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}      
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}    
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}
       {{tab}}    description = "Delete a ${formatReadableLowerCase(className)} item by its ID. Returns success even if ${formatReadableLowerCase(className)} was already deleted."
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1732,7 +1742,7 @@
       {{tab}}{{tab}}{{tab}});
       {{tab}}{{tab}}}
       {{tab}}}
-      {else}}{{removeLine}}{{/if}}
+      {{else}}{{removeLine}}{{/if}}
 
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
