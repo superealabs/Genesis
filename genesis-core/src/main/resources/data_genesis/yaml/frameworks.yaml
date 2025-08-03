@@ -1268,6 +1268,30 @@
             {{else}}{{removeLine}}{{/if}}
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
+      - fileType: "DTO Search Model class"
+        fileName: "${className}Search"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.models.dto;
+
+          import lombok.Getter;
+          import lombok.Setter;
+
+          @Getter @Setter
+          public class ${className}Search {
+
+          {{tab}}{{#each fields}}
+          {{#if this.isPrimaryKey}}
+          {{tab}}private ${this.type} ${this.name};
+          {{tab}}{{elseIf this.isNumeric or this.isDate }}
+          {{tab}}private ${this.type} ${this.name};
+          {{tab}}private ${this.type} ${this.name}Min;
+          {{tab}}private ${this.type} ${this.name}Max;
+          {{else}}
+          {{tab}}private ${this.type} ${this.name};{{/if}}
+          {{tab}}{{/each}}
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models/dto"
     validationAnnotations:
       notNull: '@NotNull(message = "${majStart(name)} cannot be null")'
       maxSize: "@Size(max = ${columnSize})"
