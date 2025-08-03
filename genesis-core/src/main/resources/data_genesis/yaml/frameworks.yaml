@@ -1106,6 +1106,8 @@
           package ${groupLink}.${lowerCase(projectName)}.specification;
 
           import ${groupLink}.${lowerCase(projectName)}.models.${className};
+          import ${groupLink}.${lowerCase(projectName)}.models.dto.${className}Search;
+          import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
           import org.springframework.data.jpa.domain.Specification;
           import jakarta.persistence.criteria.Predicate;
 
@@ -1114,10 +1116,11 @@
 
           public class ${className}Specification {
 
-              public static Specification<${className}> filter(${className} object) {
+              public static Specification<${className}> filter(${className}Search object) {
                   return (root, query, criteriaBuilder) -> {
                       List<Predicate> predicates = new ArrayList<>();
                       {{#each fields}}
+                      {{#if this.isPrimaryKey}}
                       if(object.get${majStart(this.name)}()!=null){
                           predicates.add(
                               criteriaBuilder.equal(
@@ -1125,6 +1128,19 @@
                               )
                           );
                       }
+                      {{elseIf this.isText}}
+                      WebUtils.addLikeIfPresent(criteriaBuilder, ${this.criteriaBuildSnippet}, predicates);
+                      {{elseIf this.isNumeric or this.isDate}}
+                      WebUtils.addInterval(criteriaBuilder, root.get("${this.name}"), object.get${majStart(this.name)}Min(), object.get${majStart(this.name)}Max(), predicates);
+                      {{else}}
+                      if(object.get${majStart(this.name)}()!=null){
+                          predicates.add(
+                              criteriaBuilder.equal(
+                                  ${this.criteriaBuildSnippet}
+                              )
+                          );
+                      }
+                      {{/if}}
                       {{/each}}
                       return criteriaBuilder.and(predicates.toArray(new Predicate[predicates.size()]));
                   };
@@ -1363,7 +1379,7 @@
       {{tab}}}
       
       {{tab}}@Override
-      {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable, ${majStart(className)} object) {
+      {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable, ${majStart(className)}Search object) {
       {{tab}}    try {
       {{tab}}        Specification<${majStart(className)}> spec=${majStart(className)}Specification.filter(object);
       {{tab}}        return ${minStart(className)}Repository.findAll(spec, pageable);
@@ -1434,7 +1450,7 @@
           public interface ${majStart(className)}Service {
               Page<${className}> getAll${className}(Pageable pageable);
           
-              Page<${className}> getAll${className}(Pageable pageable, ${majStart(className)} object);
+              Page<${className}> getAll${className}(Pageable pageable, ${majStart(className)}Search object);
           
               ${className} get${className}ById(${pkColumnType} ${pkColumn});
           
@@ -1464,6 +1480,7 @@
       import org.springframework.http.HttpStatus;
       import org.springframework.http.ResponseEntity;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+      import ${groupLink}.${lowerCase(projectName)}.models.dto.${majStart(className)}Search;
       import org.springframework.web.bind.annotation.*;
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
       import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
@@ -1568,7 +1585,7 @@
       {{tab}}        example = "${pkColumn},asc"
       {{tab}}    )
       {{tab}}    @RequestParam(defaultValue = "${pkColumn},asc") String sortParam,
-      {{tab}}    @RequestBody ${majStart(className)} object) {
+      {{tab}}    @RequestBody ${majStart(className)}Search object) {
       {{tab}}
       {{tab}}    Sort sortObj = WebUtils.createSortObject(sortParam);
       {{tab}}    Pageable pageable = PageRequest.of(page, size, sortObj);
