@@ -1128,6 +1128,7 @@
                               )
                           );
                       }
+                      {{elseIf this.isForeignKey}}{{removeLine}}
                       {{elseIf this.isText}}
                       WebUtils.addLikeIfPresent(criteriaBuilder, ${this.criteriaBuildSnippet}, predicates);
                       {{elseIf this.isNumeric or this.isDate}}
@@ -1299,6 +1300,7 @@
           {{tab}}{{#each fields}}
           {{#if this.isPrimaryKey}}
           {{tab}}private ${this.type} ${this.name};
+          {{elseIf this.isForeignKey}}{{removeLine}}
           {{tab}}{{elseIf this.isNumeric or this.isDate }}
           {{tab}}private ${this.type} ${this.name};
           {{tab}}private ${this.type} ${this.name}Min;
