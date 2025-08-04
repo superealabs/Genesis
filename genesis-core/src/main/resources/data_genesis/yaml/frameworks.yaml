@@ -140,6 +140,7 @@
         import java.util.Arrays;
         import java.util.List;
         import java.util.stream.Collectors;
+        import jakarta.persistence.criteria.Predicate;
         
         public class WebUtils {
             public static final String ASC = "asc";
@@ -181,6 +182,29 @@
                 } catch (Exception e) {
                     throw new IllegalArgumentException(e.getMessage());
                 }
+            }
+            
+            public static void addLikeIfPresent(jakarta.persistence.criteria.CriteriaBuilder cb,
+                                         jakarta.persistence.criteria.Path<String> field,
+                                         String value,
+                                         List<Predicate> predicates) {
+                  if (value != null && !value.isBlank()) {
+                      predicates.add(cb.like(cb.lower(field), "%" + value.toLowerCase() + "%"));
+                  }
+            }
+
+            public static <T extends Comparable<? super T>> void addInterval(
+              jakarta.persistence.criteria.CriteriaBuilder cb,
+              jakarta.persistence.criteria.Path<T> field,
+              T min, T max,
+              List<Predicate> predicates) {
+              
+              if (min != null) {
+                predicates.add(cb.greaterThanOrEqualTo(field, min));
+              }
+              if (max != null) {
+                predicates.add(cb.lessThanOrEqualTo(field, max));
+              }
             }
         }
 
@@ -1082,6 +1106,8 @@
           package ${groupLink}.${lowerCase(projectName)}.specification;
 
           import ${groupLink}.${lowerCase(projectName)}.models.${className};
+          import ${groupLink}.${lowerCase(projectName)}.models.dto.${className}Search;
+          import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
           import org.springframework.data.jpa.domain.Specification;
           import jakarta.persistence.criteria.Predicate;
 
@@ -1090,10 +1116,11 @@
 
           public class ${className}Specification {
 
-              public static Specification<${className}> filter(${className} object) {
+              public static Specification<${className}> filter(${className}Search object) {
                   return (root, query, criteriaBuilder) -> {
                       List<Predicate> predicates = new ArrayList<>();
                       {{#each fields}}
+                      {{#if this.isPrimaryKey}}
                       if(object.get${majStart(this.name)}()!=null){
                           predicates.add(
                               criteriaBuilder.equal(
@@ -1101,6 +1128,19 @@
                               )
                           );
                       }
+                      {{elseIf this.isText}}
+                      WebUtils.addLikeIfPresent(criteriaBuilder, ${this.criteriaBuildSnippet}, predicates);
+                      {{elseIf this.isNumeric or this.isDate}}
+                      WebUtils.addInterval(criteriaBuilder, root.get("${this.name}"), object.get${majStart(this.name)}Min(), object.get${majStart(this.name)}Max(), predicates);
+                      {{else}}
+                      if(object.get${majStart(this.name)}()!=null){
+                          predicates.add(
+                              criteriaBuilder.equal(
+                                  ${this.criteriaBuildSnippet}
+                              )
+                          );
+                      }
+                      {{/if}}
                       {{/each}}
                       return criteriaBuilder.and(predicates.toArray(new Predicate[predicates.size()]));
                   };
@@ -1244,6 +1284,30 @@
             {{else}}{{removeLine}}{{/if}}
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
+      - fileType: "DTO Search Model class"
+        fileName: "${className}Search"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.models.dto;
+
+          import lombok.Getter;
+          import lombok.Setter;
+
+          @Getter @Setter
+          public class ${className}Search {
+
+          {{tab}}{{#each fields}}
+          {{#if this.isPrimaryKey}}
+          {{tab}}private ${this.type} ${this.name};
+          {{tab}}{{elseIf this.isNumeric or this.isDate }}
+          {{tab}}private ${this.type} ${this.name};
+          {{tab}}private ${this.type} ${this.name}Min;
+          {{tab}}private ${this.type} ${this.name}Max;
+          {{else}}
+          {{tab}}private ${this.type} ${this.name};{{/if}}
+          {{tab}}{{/each}}
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models/dto"
     validationAnnotations:
       notNull: '@NotNull(message = "${majStart(name)} cannot be null")'
       maxSize: "@Size(max = ${columnSize})"
@@ -1285,6 +1349,7 @@
       import org.springframework.data.domain.Pageable;      
       import org.springframework.data.jpa.domain.Specification;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+      import ${groupLink}.${lowerCase(projectName)}.models.dto.${majStart(className)}Search;
       import org.springframework.stereotype.Service;
       import ${groupLink}.${lowerCase(projectName)}.repositories.${majStart(className)}Repository;
       import java.util.Optional;
@@ -1315,7 +1380,7 @@
       {{tab}}}
       
       {{tab}}@Override
-      {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable, ${majStart(className)} object) {
+      {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable, ${majStart(className)}Search object) {
       {{tab}}    try {
       {{tab}}        Specification<${majStart(className)}> spec=${majStart(className)}Specification.filter(object);
       {{tab}}        return ${minStart(className)}Repository.findAll(spec, pageable);
@@ -1380,13 +1445,14 @@
           package ${groupLink}.${lowerCase(projectName)}.services.interfaces;
           
           import ${groupLink}.${lowerCase(projectName)}.models.${className};
+          import ${groupLink}.${lowerCase(projectName)}.models.dto.${className}Search;
           import org.springframework.data.domain.Page;
           import org.springframework.data.domain.Pageable;    
           
           public interface ${majStart(className)}Service {
               Page<${className}> getAll${className}(Pageable pageable);
           
-              Page<${className}> getAll${className}(Pageable pageable, ${majStart(className)} object);
+              Page<${className}> getAll${className}(Pageable pageable, ${majStart(className)}Search object);
           
               ${className} get${className}ById(${pkColumnType} ${pkColumn});
           
@@ -1416,6 +1482,7 @@
       import org.springframework.http.HttpStatus;
       import org.springframework.http.ResponseEntity;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+      import ${groupLink}.${lowerCase(projectName)}.models.dto.${majStart(className)}Search;
       import org.springframework.web.bind.annotation.*;
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
       import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
@@ -1520,7 +1587,7 @@
       {{tab}}        example = "${pkColumn},asc"
       {{tab}}    )
       {{tab}}    @RequestParam(defaultValue = "${pkColumn},asc") String sortParam,
-      {{tab}}    @RequestBody ${majStart(className)} object) {
+      {{tab}}    @RequestBody ${majStart(className)}Search object) {
       {{tab}}
       {{tab}}    Sort sortObj = WebUtils.createSortObject(sortParam);
       {{tab}}    Pageable pageable = PageRequest.of(page, size, sortObj);
@@ -1572,6 +1639,8 @@
       {{tab}}@Operation(
       {{tab}}    summary = "Create new ${formatReadableLowerCase(className)}",
       {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}
       {{tab}}    description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1595,10 +1664,13 @@
       {{tab}}            "${formatReadableLowerCase(className)} created successfully", new${majStart(className)});
       {{tab}}    return ResponseEntity.status(HttpStatus.CREATED).body(response);
       {{tab}}}
-      
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}} 
       {{tab}}@Operation(
       {{tab}}    summary = "Update existing ${formatReadableLowerCase(className)}",
-      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}      
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}
       {{tab}}    description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1616,6 +1688,8 @@
       {{tab}}        description = "Invalid ${formatReadableLowerCase(className)} supplied"
       {{tab}}    )
       {{tab}}})
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}} 
       {{tab}}@PutMapping("/{${pkColumn}}")
       {{tab}}public ResponseEntity<RestResponse<${majStart(className)}>> update${majStart(className)}(
       {{tab}}    @Parameter(description = "ID of the ${formatReadableLowerCase(className)} to update", required = true)
@@ -1628,10 +1702,13 @@
       {{tab}}            "${formatReadableLowerCase(className)} updated successfully", update${majStart(className)});
       {{tab}}    return ResponseEntity.ok(response);
       {{tab}}}
-      
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}
       {{tab}}@Operation(
       {{tab}}    summary = "Delete ${formatReadableLowerCase(className)}",
-      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}      
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}    
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}
       {{tab}}    description = "Delete a ${formatReadableLowerCase(className)} item by its ID. Returns success even if ${formatReadableLowerCase(className)} was already deleted."
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1665,7 +1742,7 @@
       {{tab}}{{tab}}{{tab}});
       {{tab}}{{tab}}}
       {{tab}}}
-      {else}}{{removeLine}}{{/if}}
+      {{else}}{{removeLine}}{{/if}}
 
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
