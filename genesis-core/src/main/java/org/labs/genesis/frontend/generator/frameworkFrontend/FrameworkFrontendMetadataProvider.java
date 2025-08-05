@@ -134,10 +134,13 @@ public class FrameworkFrontendMetadataProvider {
         return data;
     }
 
-    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework){
+    public  static HashMap<String, Object> getGlobalComponentsHashMap(ProjectGenerationContext context){
+        FrontendFramework frontendFramework = context.getFrontendFramework();
         HashMap<String, Object> data = new HashMap<>();
         data.put("routes",getRoutesHashMap(frontendFramework));
 //        data.put("components", frontendFramework.getComponents());
+
+        data.putAll(getWebappHashMap(context));
         return  data;
     }
 
