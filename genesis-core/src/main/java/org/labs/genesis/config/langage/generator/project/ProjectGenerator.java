@@ -151,7 +151,6 @@ public class ProjectGenerator {
             return;
         }
         HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(context);
-
         renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
     }
 

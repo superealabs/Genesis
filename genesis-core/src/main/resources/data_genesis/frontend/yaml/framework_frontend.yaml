@@ -113,10 +113,10 @@
   componentExtension: "vue"
   additionalFiles:
     - fileType: "Env File"
-      fileName: ""
-      extension: ".env"
+      fileName: ".env"
+      extension: "example"
       content: |
-        VUE_APP_API_URL=http://localhost:8080/${lowerCase(toKebabCase(projectName))}
+        VUE_APP_API_URL=http://localhost:8080/${lowerCase(projectName)}
         VUE_APP_PORT=9000
       destinationPath: "${destinationFolder}"
 
@@ -224,7 +224,7 @@
           </nav>
         </template>
           
-        <script lang="ts" src="./GenesisSidebarComponent.ts"></script>
+        <script lang="ts"></script>
           
         <style scoped>
         .nav-group-title {
@@ -323,7 +323,7 @@
             import type { ${majStart(EntityName)} } from "../models/${majStart(EntityName)}Model";
             import * as ${minStart(EntityName)}Service from "@/services/${majStart(EntityName)}Service";
             
-            export function use${majStart(EntityName)}(autoLoad = true) {
+            export function use${majStart(EntityName)}s(autoLoad = true) {
               const ${minStart(EntityName)}s = ref<${majStart(EntityName)}[]>([]);
               const loading = ref(false);
               const error = ref<string | null>(null);
@@ -367,6 +367,7 @@
         import ${majStart(EntityName)}List from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}List.vue";
         import GenesisAddButton from "@/core/button/GenesisAddButton.vue";
         import PaginationLayout from "@/core/pagination/PaginationLayout.vue";
+        import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
         import ${majStart(EntityName)}Specification from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}Specification.vue";
       selector: "${majStart(EntityName)}ListView"
       standalone: true
@@ -374,7 +375,6 @@
         components: {
           ${majStart(EntityName)}List,
           ${majStart(EntityName)}Specification,
-          GenesisSearch,
           GenesisAddButton,
           PaginationLayout,
         }
@@ -408,22 +408,22 @@
         
           const filtered${majPluralize(EntityName)} = computed(() => {
             if (!filters.value) return ${minPluralize(EntityName)}.value;
-        
-            return  ${minPluralize(EntityName)}.value.filter((item) =>
-              Object.entries(filters.value!).every(([key, val]) =>
-                item[key as keyof ${majStart(EntityName)}]
-                  ?.toString()
-                  .toLowerCase()
-                  .includes(val.toString().toLowerCase())
-              )
-            );
+            return ${minPluralize(EntityName)}.value;        
+            //return  ${minPluralize(EntityName)}.value.filter((item) =>
+              //Object.entries(filters.value!).every(([key, val]) =>
+              //item[key as keyof ${majStart(EntityName)}]
+              //  ?.toString()
+              //  .toLowerCase()
+              //  .includes(val.toString().toLowerCase())
+              //)
+            //);
           });
         
           const handleSearch = (filterValues: Record<string, any>) => {
             filters.value = filterValues;
           };
         
-          return { filtered${majPluralize(EntityName)}, handleSearch, model };
+          return { filtered${majPluralize(EntityName)}, handleSearch};
         },
       destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)/list}"
       componentAdditionalFiles: []
@@ -431,9 +431,9 @@
     - componentType: "Entity Specification"
       generateForView: true
       router:
-        routerLink: ""
-        routerLabel: ""
-      componentName: "${majStart(EntityName)Specification}"
+        link: ""
+        label: ""
+      componentName: "${majStart(EntityName)}Specification"
       importFile: |
         import { defineComponent, ref } from "vue";
         import { useSearch } from "@/composables/useSearch";
@@ -501,8 +501,8 @@
     - componentType: "Entity Row"
       generateForView: true
       router:
-        routerLabel: ""
-        routerLink: ""
+        label: ""
+        link: ""
       importFile: |
         import GenesisButton from "@/core/button/GenesisButton.vue";
         import { defineComponent } from "vue";
@@ -510,6 +510,23 @@
       selector: "${majStart(EntityName)}Row"
       standalone: true
       importComponent: "components: { GenesisButton }"
+      template: |
+        <template>
+          <tr class="border-bottom">
+            {{#each fields}}
+            <td>{{ ${minStart(EntityName)}.${this.name} }}</td>
+            {{/each}}
+
+            <td class="text-end">
+              <div class="d-inline-flex gap-2">
+                <GenesisButton icon="fas fa-eye" class="btn-light shadow-sm" />
+                <GenesisButton icon="fas fa-edit" class="btn-light shadow-sm" />
+                <GenesisButton icon="fas fa-trash" class="btn-light shadow-sm" />
+              </div>
+            </td>
+          </tr>
+        </template>
+      style: "<style scoped></style>"
       export: |
         props: {
           ${minStart(EntityName)}: {
@@ -520,7 +537,6 @@
         setup(props) {
           return {};
         },
-      style: "<style scoped></style>"
       componentName: "${majStart(EntityName)}Row"
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
@@ -529,9 +545,9 @@
     imports: |
       import useRestApi from "@/composables/useRestApi";
       import type { IPageResponse } from "@/models/api/PageResponseModel";
-      import type { ${majStart(EntityName)} } from "@/models/majStart(EntityName)Model";
+      import type { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
     methods: |
-      const restApi = useRestApi<IPageResponse<${majStart(EntityName)}s>>();
+      const restApi = useRestApi<IPageResponse<${majStart(EntityName)}>>();
       const BASE_URL = "/${minPluralize(EntityName)}";
 
       export async function getAll() {
@@ -550,7 +566,7 @@
         };
       }
 
-      export async function create(data: ${majStart(EntityName)}s) {
+      export async function create(data: ${majStart(EntityName)}) {
         const response = await restApi.post(BASE_URL, data);
         return {
           data: response.returnCode === 1 ? response.data : null,
@@ -558,7 +574,7 @@
         };
       }
 
-      export async function update(id: string, data: ${majStart(EntityName)}s) {
+      export async function update(id: string, data: ${majStart(EntityName)}) {
         const response = await restApi.put(`${BASE_URL}/${id}`, data);
         return {
           data: response.returnCode === 1 ? response.data : null,
@@ -587,15 +603,15 @@
       
       export class ${majStart(EntityName)} implements I${majStart(EntityName)} {
         {{#each fields}}
-        ${minStart(this.this.name)}: ${this.typeBase} | undefined;
+        ${minStart(this.name)}: ${this.typeBase} | undefined;
         {{/each}}
       
-        constructor(data?: Partial<I${majStart(EntityName)>) {
+        constructor(data?: Partial<I${majStart(EntityName)}>) {
           {{#each fields}}
-            this.${minStart(this.this.name)} = data?.${minStart(this.this.name)};
+            this.${minStart(this.name)} = data?.${minStart(this.name)};
           {{/each}}
         }
       }
     exportsComponents: |
-    destinationPath: "${destinationFolder}/src/shared/models"
+    destinationPath: "${destinationFolder}/src/models"
     name: "${majStart(EntityName)}Model"

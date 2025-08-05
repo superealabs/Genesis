@@ -44,7 +44,7 @@ public class FrameworkFrontendMetadataProvider {
 
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName",projectName);
-        metadata.put("EntityName",tableMetadata.getTableName());
+        metadata.put("EntityName",tableMetadata.getClassName());
         return metadata;
     }
 
@@ -139,7 +139,6 @@ public class FrameworkFrontendMetadataProvider {
         HashMap<String, Object> data = new HashMap<>();
         data.put("routes",getRoutesHashMap(frontendFramework));
 //        data.put("components", frontendFramework.getComponents());
-
         data.putAll(getWebappHashMap(context));
         return  data;
     }
