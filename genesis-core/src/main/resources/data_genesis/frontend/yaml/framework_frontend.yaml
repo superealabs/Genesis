@@ -112,6 +112,14 @@
   initPath: "vue/vue-3-ts-skeletoon"
   componentExtension: "vue"
   additionalFiles:
+    - fileType: "Env File"
+      fileName: ""
+      extension: ".env"
+      content: |
+        VUE_APP_API_URL=http://localhost:8080/${lowerCase(toKebabCase(projectName))}
+        VUE_APP_PORT=9000
+      destinationPath: "${destinationFolder}"
+
     - fileType: "App-Vue"
       fileName: "App"
       extension: "vue"
