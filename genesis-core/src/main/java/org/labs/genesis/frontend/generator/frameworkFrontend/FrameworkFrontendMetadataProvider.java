@@ -29,7 +29,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("fields", getFieldsList(tableMetadata));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
-        metadata.put("EntityName",tableMetadata.getTableName());
+        metadata.put("EntityName",tableMetadata.getClassName());
         metadata.put("isView",tableMetadata.getIsView());
 
         metadata.putAll(getHashMapComponentSavePath(destinationFolder, projectName, tableMetadata));
