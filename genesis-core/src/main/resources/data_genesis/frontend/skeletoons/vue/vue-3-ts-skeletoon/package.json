@@ -5,10 +5,13 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "format": "prettier --write .",
+    "dev": "npm run format && npm run serve"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.0.0",
+    "axios": "^1.11.0",
     "bootstrap": "^5.3.7",
     "bootstrap-vue": "^2.23.1",
     "bootstrap-vue-3": "^0.5.1",

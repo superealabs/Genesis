@@ -1,20 +1,18 @@
-$primary: #899ED4;
+$primary: #899ed4;
 $secondary: rgba(83, 124, 194, 0.15);
 $dark: #404040;
 $muted: rgba(64, 64, 64, 0.25);
-$font-family-base: 'Segoe UI', sans-serif;
-$light: #FCFCFC;
-
+$font-family-base: "Segoe UI", sans-serif;
+$light: #fcfcfc;
 
 // Import Bootstrap
-*{
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-    font-weight: 500;
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-weight: 500;
 }
 @import "bootstrap/scss/bootstrap";
-
 
 #sidebar .nav-link.router-link-exact-active {
   background-color: $secondary;
@@ -22,11 +20,12 @@ $light: #FCFCFC;
 }
 
 .nav > .nav {
-    margin-left: 1rem;
+  margin-left: 1rem;
 }
-.page-link.active, .active > .page-link{
-  background-color: #537CC226;
+.page-link.active,
+.active > .page-link {
+  background-color: #537cc226;
 }
 .bg-secondary {
-  background-color: #537CC226;
+  background-color: #537cc226;
 }
