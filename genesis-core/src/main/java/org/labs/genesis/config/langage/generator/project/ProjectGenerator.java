@@ -150,7 +150,7 @@ public class ProjectGenerator {
         if (!context.isGenerateFrontendApp()){
             return;
         }
-        HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(context.getFrontendFramework());
+        HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(context.getFrontendFramework(),context.getProjectName(),context.getWebappFolder());
         finalRenderData.putAll(FrameworkFrontendMetadataProvider.getWebappHashMap(context));
         renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
     }
@@ -205,7 +205,6 @@ public class ProjectGenerator {
          // Create missing Webapp folder
         String webappFolder = FrameworkFrontendMetadataProvider.getWebappFolder(context);
         FileUtils.createDirectory(webappFolder);
-
 
         Database database=context.getDatabase();
         FrontendLanguage frontendLanguage=context.getFrontendLanguage();
@@ -329,8 +328,9 @@ public class ProjectGenerator {
                 allEntities.addAll(entities);
                 allEntities.addAll(views);
 
-                generateProjectFiles(context, allEntities);
                 generateFrontentProjectFiles(context, allEntities);
+                generateProjectFiles(context, allEntities);
+
 
             } catch (Exception e) {
                 throw new RuntimeException("\nError in generateFullProject : \n" + e);

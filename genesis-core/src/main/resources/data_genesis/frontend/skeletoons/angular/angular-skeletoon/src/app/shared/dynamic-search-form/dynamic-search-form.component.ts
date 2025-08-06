@@ -50,15 +50,13 @@ export interface SearchField {
         </ng-container>
       </div>
 
-      <!-- Bouton de soumission natif masqué -->
-      <button type="submit" style="display: none;"></button>
-
-      <!-- Bouton via app-link-button qui déclenche le submit -->
-      <app-link-button 
-        [links]="{ Search: '' }"
+      <!-- ✅ Submit button sans redirection -->
+      <app-link-button
+        [isButton]="true"
+        [buttonLabel]="'Rechercher'"
         type="search"
-        (click)="searchForm.valid && onSearch()">
-      </app-link-button>
+        (onClick)="searchForm.valid && onSearch()"
+      ></app-link-button>
     </form>
   `,
   styles: [`
@@ -119,7 +117,7 @@ export interface SearchField {
 })
 export class DynamicSearchFormComponent implements OnInit {
   @Input() searchFields: SearchField[] = [];
-  @Input() onSubmitFn?: (formValue: any) => void; // Fonction du parent à appeler
+  @Input() onSubmitFn?: (formValue: any) => void;
 
   searchForm!: FormGroup;
 

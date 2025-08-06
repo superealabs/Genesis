@@ -24,6 +24,35 @@
       content: |
         content2
       destinationPath: "${destinationFolder}/src/app/"
+    - fileType: "Environment-file"
+      fileName: "environment"
+      extension: "ts"
+      content: |
+          export const environment = {
+          {{tab}}production: false,
+          {{tab}}apiUrl: 'http://localhost:8070/${toKebabCase(projectName)}'
+          };
+      destinationPath: "${destinationFolder}/src/environments/"
+    - fileType: "Environment-file"
+      fileName: "environment.prod"
+      extension: "ts"
+      content: |
+        export const environment = {
+        {{tab}}production: true,
+        {{tab}}apiUrl: 'http://localhost:8070/${toKebabCase(projectName)}'
+        };
+      destinationPath: "${destinationFolder}/src/environments/"
+    - fileType: "Utilities"
+      fileName: "utilities"
+      extension: "ts"
+      content: |
+        export function cleanObject<T>(obj: Partial<T>): Partial<T> {
+          return Object.fromEntries(
+            Object.entries(obj)
+              .filter(([_, value]) => value !== '' && value !== undefined && value !== null)
+          ) as Partial<T>;
+        }
+      destinationPath: "${destinationFolder}/src/utilities/"
   components:
     - componentType: "list"
       generateForView: true
@@ -31,7 +60,11 @@
         link: "/${minPluralize(EntityName)}"
         label: "${majStart(EntityName)}"
       importFile: |
-        allImport
+        import { Component, OnInit } from '@angular/core';
+        import { CommonModule } from '@angular/common';
+        import { HttpClientModule } from '@angular/common/http';
+        import { DynamicSearchFormComponent, SearchField } from '../../shared/dynamic-search-form/dynamic-search-form.component';
+        import { PaginationComponent } from '../../shared/pagination/pagination.component';
       selector: "app-${toKebabCase(EntityName)}-list"
       standalone: true
       importComponent: |
@@ -91,9 +124,77 @@
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-form"
   serviceComponent:
     imports: |
-       importService
+      import { Injectable } from '@angular/core';
+      import { HttpClient, HttpParams  } from '@angular/common/http';
+      import { Observable, catchError, throwError, map,of } from 'rxjs';
+      import { cleanObject } from '../../../../utilities/utilities';
+      import { environment } from '../../../../environments/environment';
+      import { ${toPascalCase(EntityName)}ListDTO,${toPascalCase(EntityName)}DTO,${toPascalCase(EntityName)} } from '../models/${toKebabCase(EntityName)}.model'
     methods: |
-      methodService
+      export class ${toPascalCase(EntityName)}Service{
+      {{tab}}private readonly apiUrl = environment.apiUrl+'/${lowerCase(classNameLink)}';
+      {{tab}}constructor(private http: HttpClient) {}
+      
+        search${majStart(classNameLink)}(
+            criteria: Partial<${majStart(className)}>,
+            page: number = 0,
+            size: number = 10,
+            sortParam: string = '{{#each fieldsPK}}${this.name},asc;{{/each}}'
+          ): Observable<${majStart(className)}[]> {
+            const cleanedCriteria = cleanObject(criteria);
+            const url = this.apiUrl+'/search';
+      
+            const params = new HttpParams()
+            .set('page', page.toString())
+            .set('size', size.toString())
+            .set('sortParam', sortParam);
+      
+            return this.http.post<${majStart(className)}ListDTO>(url, cleanedCriteria, { params }).pipe(
+              map((response) => response.data?.content ?? []),
+              catchError(err => {
+                const isNotFound = err.status === 404 ;
+                if (isNotFound) {
+                  return of([]);
+                }
+                else{
+                  console.error('Error while searching ${lowerCase(classNameLink)}', err);
+                  return throwError(() => err);
+                }
+              })
+            );
+        }
+      
+      
+      {{tab}}get${toPascalCase(EntityName)}ById(id: string): Observable<${toPascalCase(EntityName)}> {
+      {{tab}}{{tab}}const url = this.apiUrl+'/'+id;
+      {{tab}}{{tab}}return this.http.get<${toPascalCase(EntityName)}DTO>(url).pipe(
+      {{tab}}{{tab}}{{tab}}map((response) => response.data ?? []),
+      {{tab}}{{tab}}{{tab}}catchError(err => {
+      {{tab}}{{tab}}{{tab}}{{tab}}console.error(`Error while collecting data of ${toPascalCase(EntityName)} with id: ${id}`, err);
+      {{tab}}{{tab}}{{tab}}{{tab}}return throwError(() => new Error('API calling error'));
+      {{tab}}{{tab}}{{tab}}})
+      {{tab}}{{tab}});
+      {{tab}}}
+      
+      {{tab}}get${toPascalCase(EntityName)}s(page: number = 0,size: number = 10,sortParam: string = '{{#each fieldsPK}}${this.name},asc;{{/each}}'): Observable<${toPascalCase(EntityName)}[]> {
+      {{tab}}{{tab}}const params = new HttpParams()
+      {{tab}}{{tab}}{{tab}}.set('page', page.toString())
+      {{tab}}{{tab}}{{tab}}.set('size', size.toString())
+      {{tab}}{{tab}}{{tab}}.set('sortParam', sortParam);
+      {{tab}}{{tab}}return this.http.get<${toPascalCase(EntityName)}ListDTO>(this.apiUrl, { params }).pipe(
+      {{tab}}{{tab}}{{tab}}map(response => response.data?.content ?? []),
+      {{tab}}{{tab}}{{tab}}catchError(err => {
+      {{tab}}{{tab}}{{tab}}{{tab}}const isNotFound = err.status === 404 ;
+      {{tab}}{{tab}}{{tab}}{{tab}}if (isNotFound) {
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}return of([]);
+      {{tab}}{{tab}}{{tab}}{{tab}}} else {
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}console.error('Error while collecting  ${lowerCase(classNameLink)}', err);
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}return throwError(() => err);
+      {{tab}}{{tab}}{{tab}}{{tab}}}
+      {{tab}}{{tab}}{{tab}}})
+      {{tab}}{{tab}});
+      {{tab}}}
+      }
     destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/services"
     name: "${toKebabCase(EntityName)}.service"
   modelComponent:
@@ -111,6 +212,14 @@
       }
       
       export interface ${toPascalCase(EntityName)}DTO{
+      {{tab}}status: number;
+      {{tab}}message: string;
+      {{tab}}returnCode: number;
+      {{tab}}data: ${toPascalCase(EntityName)};
+      {{tab}}timestamp: string;
+      }
+      
+      export interface ${toPascalCase(EntityName)}ListDTO{
       {{tab}}status: number;
       {{tab}}message: string;
       {{tab}}returnCode: number;

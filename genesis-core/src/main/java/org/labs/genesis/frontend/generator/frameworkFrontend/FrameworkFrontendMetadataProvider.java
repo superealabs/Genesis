@@ -31,6 +31,8 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
         metadata.put("EntityName",tableMetadata.getTableName());
         metadata.put("isView",tableMetadata.getIsView());
+        metadata.put("className",tableMetadata.getClassName());
+        metadata.put("classNameLink",tableMetadata.getClassName()+"s");
 
         metadata.putAll(getHashMapComponentSavePath(destinationFolder, projectName, tableMetadata));
 
@@ -134,10 +136,12 @@ public class FrameworkFrontendMetadataProvider {
         return data;
     }
 
-    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework){
+    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework,String projectName,String destinationFolder){
         HashMap<String, Object> data = new HashMap<>();
         data.put("routes",getRoutesHashMap(frontendFramework));
-//        data.put("components", frontendFramework.getComponents());
+        data.put("projectName",projectName);
+        data.put("destinationFolder",destinationFolder);
+//      data.put("components", frontendFramework.getComponents());
         return  data;
     }
 
@@ -162,7 +166,7 @@ public class FrameworkFrontendMetadataProvider {
     private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata) {
         List<Map<String, Object>> fieldsPK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
-            if (!field.isPrimary()) {
+            if (field.isPrimary()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field);
                 fieldsPK.add(fieldMap);
             }
