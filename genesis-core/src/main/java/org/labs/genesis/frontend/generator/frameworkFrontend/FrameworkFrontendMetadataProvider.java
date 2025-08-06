@@ -29,6 +29,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("fields", getFieldsList(tableMetadata));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
+        metadata.put("fieldsNotFK",getNotFkFieldsList(tableMetadata));
         metadata.put("EntityName",tableMetadata.getTableName());
         metadata.put("isView",tableMetadata.getIsView());
         metadata.put("className",tableMetadata.getClassName());
@@ -78,6 +79,16 @@ public class FrameworkFrontendMetadataProvider {
         }
         return fields;
     }
+    private static List<Map<String, Object>> getNotFkFieldsList(TableMetadata tableMetadata) {
+        List<Map<String, Object>> fields = new ArrayList<>();
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            if(!field.isForeign()) {
+                Map<String, Object> fieldMap = getFieldHashMap(field);
+                fields.add(fieldMap);
+            }
+        }
+        return fields;
+    }
     public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field) {
         Map<String, Object> fieldMap = new HashMap<>();
 
@@ -89,12 +100,17 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("columnType", field.getColumnType());
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("referencedColumnType", field.getFrontEndReferencedColumnType());
+        fieldMap.put("referencedColumn", StringUtils.minStart(StringUtils.toPascalCase(field.getReferencedColumn())));
         fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
         fieldMap.put("defaultValue", field.getDefaultValue());
         fieldMap.put("columnSize", field.getColumnSize());
         fieldMap.put("decimalDigits", field.getDecimalDigits());
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
+        fieldMap.put("isNumeric",field.isNumeric());
+        fieldMap.put("isDate",field.isDate());
+        fieldMap.put("isText", field.isText());
+        fieldMap.put("isNotForeignKey",!field.isForeign());
         fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
 
         return fieldMap;

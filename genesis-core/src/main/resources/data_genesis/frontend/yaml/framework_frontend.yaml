@@ -46,11 +46,64 @@
       fileName: "utilities"
       extension: "ts"
       content: |
-        export function cleanObject<T>(obj: Partial<T>): Partial<T> {
-          return Object.fromEntries(
-            Object.entries(obj)
-              .filter(([_, value]) => value !== '' && value !== undefined && value !== null)
-          ) as Partial<T>;
+        
+        export function recursiveObjectsTo2DArray(data: Record<string, any>[]): any[][] {
+          if (data.length === 0) return [];
+        
+          const allKeys: string[] = [];
+          for (let i = 0; i < data.length; i++) {
+            const obj = data[i];
+            for (const key in obj) {
+              if (!allKeys.includes(key)) {
+                allKeys.push(key);
+              }
+            }
+          }
+          const result: any[][] = [];
+          for (let i = 0; i < data.length; i++) {
+            const row: any[] = [];
+            const obj = data[i];
+          
+            for (let j = 0; j < allKeys.length; j++) {
+              const key = allKeys[j];
+              const value = obj[key];
+              row.push(extractSecondValueIfObject(value));
+            }
+            result.push(row);
+          }
+          return result;
+        }
+        
+        function extractSecondValueIfObject(value: any): any {
+            if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+            const values = Object.values(value);
+            return values.length >= 2 ? values[1] : values[0];
+          }
+          return value;
+        }
+
+        
+        export  function expandDotNotation(flatObj: Record<string, any>): any {
+          const result: any = {};
+
+          for (const key in flatObj) {
+            if (!flatObj.hasOwnProperty(key)) continue;
+
+            const value = flatObj[key];
+            const keys = key.split('.');
+            let current = result;
+
+            keys.forEach((part, index) => {
+              if (index === keys.length - 1) {
+                current[part] = value;
+              } else {
+                if (!current[part]) current[part] = {};
+                current = current[part];
+              }
+            });
+          }
+
+          return result;
         }
       destinationPath: "${destinationFolder}/src/utilities/"
   components:
@@ -63,18 +116,117 @@
         import { Component, OnInit } from '@angular/core';
         import { CommonModule } from '@angular/common';
         import { HttpClientModule } from '@angular/common/http';
-        import { DynamicSearchFormComponent, SearchField } from '../../shared/dynamic-search-form/dynamic-search-form.component';
-        import { PaginationComponent } from '../../shared/pagination/pagination.component';
+        import { expandDotNotation,recursiveObjectsTo2DArray } from '../../../../utilities/utilities';
+        import { DynamicSearchFormComponent, SearchField } from '../../../shared/dynamic-search-form/dynamic-search-form.component';
+        import { TableauComponent } from '../../../shared/tableau/tableau.component';
+        import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+        import { ${className} } from '../models/${toKebabCase(EntityName)}.model'
+        import { ${className}Service } from '../services/${toKebabCase(EntityName)}.service'
+        {{#each fieldsFK}}
+        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
+        import {${toPascalCase(this.type)}Service} from '../../${toKebabCase(this.type)}/services/${toKebabCase(this.type)}.service'
+        {{/each}}
       selector: "app-${toKebabCase(EntityName)}-list"
       standalone: true
-      importComponent: |
-        allImport
-      template: |
-        templateURL
-      style: |
-        styleURL
+      importComponent: "[CommonModule, HttpClientModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent]"
+      template: "./${toKebabCase(EntityName)}-list.component.html"
+      style: "./${toKebabCase(EntityName)}-list.component.css"
       export: |
-        export
+        export class ${majStart(className)}ListComponent implements OnInit {
+            
+            data:any[][]=[];
+        
+            columns =[{{#each fields}}{{#if this.isNotForeignKey}}'${formatReadable(this.name)}'{{elseIf this.isForeignKey}}'${formatReadable(this.type)}'{{/if}}{{#if !@last}},{{/if}}{{/each}}];
+        
+            ${minStart(className)}s: ${majStart(className)}[] = [];
+            
+            {{#each fieldsFK}}{{removeLine}}
+            ${minStart(this.type)}s: ${majStart(this.type)}[] = []; 
+            {{/each}}{{removeLine}}
+            
+            startPage: number = 0;
+            endPage: number = 12;
+            totalItems: number = 1000;
+            currentPage: number=1;
+        
+            formValueAttribute: Record<string, any> = {};
+        
+            searchFields: SearchField[] = [
+            {{tab}}{{tab}}{{#each fieldsFK}}
+                {
+                  key: '${this.name}.${this.referencedColumn}',
+                  label: '${this.type}',
+                  type: 'select',
+                  options: []
+                },
+            {{tab}}{{tab}}{{/each}}{{removeLine}}
+            {{tab}}{{tab}}{{#each fieldsNotFK}}
+                {{#if this.isText}}
+                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isNumeric }}
+                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'number' }{{elseIf this.isDate }}
+                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'date' }{{/if}}
+            {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
+            ];
+            
+            onPageRangeChange(pages: { pageStart: number; pageEnd: number }): void {
+                this.startPage = pages.pageStart - 1;
+                this.endPage = pages.pageEnd;
+                this.currentPage = Math.floor(this.startPage / (this.endPage - this.startPage)) + 1;
+                this.onSearch(this.formValueAttribute);
+            }
+        
+            onSearch(formValue: any): void {
+              this.formValueAttribute=formValue
+              const mappedValue = expandDotNotation(formValue);
+              this.load${majStart(className)}s(mappedValue);
+            }
+        
+             ngOnInit(): void {
+                  this.load${majStart(className)}s();
+                  {{#each fieldsFK}}{{removeLine}}
+                  this.load${majStart(this.type)}s()
+                  {{/each}}{{removeLine}}
+             } 
+             constructor(
+                {{#each fieldsFK}}{{removeLine}}
+                 private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
+                {{/each}}{{removeLine}}
+                private ${minStart(className)}Service: ${majStart(className)}Service
+             ) {}
+        
+            load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {}): void {
+                const page = Math.floor(this.startPage / (this.endPage - this.startPage));
+                const size = this.endPage - this.startPage;
+            
+                this.${minStart(className)}Service.search${majStart(className)}s(criteria, page, size).subscribe({
+                next: (${minStart(className)}s: ${majStart(className)}[]) => {
+                        this.${minStart(className)}s = ${minStart(className)}s;
+                        this.data=recursiveObjectsTo2DArray(${minStart(className)}s);  
+              },
+                error: (err) => {
+                  console.error('error while searching datas :', err);
+                  alert('error while searching datas.');
+              }
+              });
+            }
+            
+            {{#each fieldsFK}}{{removeLine}}
+            load${majStart(this.type)}s(): void {
+                this.${minStart(this.type)}Service.get${majStart(this.type)}s(0, 1000).subscribe({
+                next: (response) => {
+                  this.${minStart(this.type)}s = response;
+                  const ${minStart(this.type)}Field = this.searchFields.find(f => f.key === '${this.name}.${this.referencedColumn}');
+                  if (${minStart(this.type)}Field) {
+                  ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: d.${this.referencedColumn},label: entries[1][1]};}); 
+                }
+              },
+                error: (err) => {
+                  console.error('error while collecting datas ', err);
+              }
+              });
+            } 
+            {{/each}}{{removeLine}}
+        }
       destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-list"
       componentName: "${toKebabCase(EntityName)}-list.component"
       componentAdditionalFiles:
@@ -82,7 +234,9 @@
           fileName: "${toKebabCase(EntityName)}-list.component"
           extension: "html"
           content: |
-            content1
+            <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)"></app-dynamic-search-form>
+            <app-tableau [colonnes]="columns" [donnees]="data"></app-tableau>
+            <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="endPage - startPage" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-list"
         - fileType: "css template"
           fileName: "${toKebabCase(EntityName)}-list.component"
