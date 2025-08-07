@@ -47,7 +47,7 @@ public class GenesisCoreTest {
             var frontendLangage=ProjectGenerator.frontendLanguage.get(frontendLangageId);
             var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
 
-            String projectName = "";
+            String projectName = "oraTest";
             String groupLink = "org.labs";
             String projectPort = "8000";
             String logLevel = "INFO";

@@ -33,8 +33,8 @@
           } 
           views={
           {{tab}}{{#each entities}}{{removeLine}}
-          {{#if this.isView}}'${formatReadable(this.className)}': '/${toKebabCase(this.className)}s'{{/if}}
-          {{tab}}{{#if !@last and this.isView}},{{/if}}{{/each}}{{removeLine}}
+          {{#if this.isView}}'${formatReadable(this.className)}': '/${toKebabCase(this.className)}s',{{/if}}
+          {{tab}}{{#if @last}}'end':''{{/if}}{{/each}}{{removeLine}}
           } 
         }
       destinationPath: "${destinationFolder}/src/app/"
@@ -240,7 +240,8 @@
                 },
             {{tab}}{{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each fieldsNotFK}}
-                {{#if this.isText}}
+                {{#if this.isPrimaryKey}}
+                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isText}}
                 { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isNumeric }}
                 { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'number' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'number' }{{elseIf this.isDate }}
                 { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' }{{/if}}
