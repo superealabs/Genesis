@@ -9,20 +9,88 @@
     - fileType: "App-files"
       fileName: "app.component"
       extension: "ts"
-      content: | 
-        content0
+      content: |
+        import { Component } from '@angular/core';
+        import { RouterOutlet,RouterModule } from '@angular/router';
+        
+        import { SidebarComponent } from './shared/sidebar/sidebar.component';
+        
+        @Component({
+          selector: 'app-root',
+          standalone: true,
+          imports: [RouterOutlet,RouterModule,SidebarComponent],  
+          templateUrl: './app.component.html',
+          styleUrls: ['./app.component.css']      
+        })
+        
+        export class AppComponent {
+          title = 'first-angular-project';
+
+          entities={
+          {{tab}}{{#each entities}}{{removeLine}}
+          {{#if !this.isView}}'${formatReadable(this.className)}s': '/${toKebabCase(this.className)}s'{{/if}}
+          {{tab}}{{#if !@last  and !this.isView}},{{/if}}{{/each}}{{removeLine}}
+          } 
+          views={
+          {{tab}}{{#each entities}}{{removeLine}}
+          {{#if this.isView}}'${formatReadable(this.className)}': '/${toKebabCase(this.className)}s'{{/if}}
+          {{tab}}{{#if !@last and this.isView}},{{/if}}{{/each}}{{removeLine}}
+          } 
+        }
+      destinationPath: "${destinationFolder}/src/app/"
+    - fileType: "App-files"
+      fileName: "app.routes"
+      extension: "ts"
+      content: |
+        import { Routes } from '@angular/router';
+        
+        {{#each entities}}{{removeLine}}
+        import { ${minStart(this.className)}Routes } from './features/${toKebabCase(this.className)}/${toKebabCase(this.className)}.routes'
+        {{/each}}{{removeLine}}
+      
+        export const routes: Routes = [
+          {{#each entities}}{{removeLine}}
+          ...${minStart(this.className)}Routes
+          {{#if !@last}},{{/if}}{{/each}}{{removeLine}}
+        ];
       destinationPath: "${destinationFolder}/src/app/"
     - fileType: "App-files"
       fileName: "app.component"
       extension: "html"
       content: |
-        content1
+        <div class="app-layout">
+          <app-sidebar [entities]="entities" [views]="views"></app-sidebar>
+            <div class="main-content">
+              <router-outlet></router-outlet>
+            </div>
+        </div>
       destinationPath: "${destinationFolder}/src/app/"
     - fileType: "App-files"
       fileName: "app.component"
       extension: "css"
       content: |
-        content2
+        .app-layout {
+          display: flex;
+          height: 100vh;
+          font-family: sans-serif;
+        }
+
+        app-sidebar {
+          width: 220px;
+          flex-shrink: 0;
+          border-right: 1px solid #e5e7eb;
+          background-color: #fff;
+          height: 100vh;
+          padding: 1rem;
+        }
+
+        .main-content {
+          flex-grow: 1;
+          padding: 0.5rem 2rem 2rem 2rem;
+          background-color: #f9fafb;
+          overflow-y: auto;
+
+        }
       destinationPath: "${destinationFolder}/src/app/"
     - fileType: "Environment-file"
       fileName: "environment"
@@ -105,32 +173,43 @@
 
           return result;
         }
+        export function cleanObject<T>(obj: Partial<T>): Partial<T> {
+          return Object.fromEntries(
+            Object.entries(obj)
+              .filter(([_, value]) => value !== '' && value !== undefined && value !== null)
+          ) as Partial<T>;
+        }
       destinationPath: "${destinationFolder}/src/utilities/"
   components:
     - componentType: "list"
       generateForView: true
       router:
-        link: "/${minPluralize(EntityName)}"
-        label: "${majStart(EntityName)}"
+        link: "/${toKebabCase(className)}s"
+        label: "${formatReadable(classNameLink)}"
       importFile: |
         import { Component, OnInit } from '@angular/core';
         import { CommonModule } from '@angular/common';
         import { HttpClientModule } from '@angular/common/http';
+        
         import { expandDotNotation,recursiveObjectsTo2DArray } from '../../../../utilities/utilities';
+        
         import { DynamicSearchFormComponent, SearchField } from '../../../shared/dynamic-search-form/dynamic-search-form.component';
         import { TableauComponent } from '../../../shared/tableau/tableau.component';
         import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-        import { ${className} } from '../models/${toKebabCase(EntityName)}.model'
-        import { ${className}Service } from '../services/${toKebabCase(EntityName)}.service'
+        import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+        
+        import { ${className} } from '../models/${toKebabCase(className)}.model'
+        import { ${className}Service } from '../services/${toKebabCase(className)}.service'
+        
         {{#each fieldsFK}}
         import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
         import {${toPascalCase(this.type)}Service} from '../../${toKebabCase(this.type)}/services/${toKebabCase(this.type)}.service'
         {{/each}}
-      selector: "app-${toKebabCase(EntityName)}-list"
+      selector: "app-${toKebabCase(className)}-list"
       standalone: true
-      importComponent: "[CommonModule, HttpClientModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent]"
-      template: "./${toKebabCase(EntityName)}-list.component.html"
-      style: "./${toKebabCase(EntityName)}-list.component.css"
+      importComponent: "[CommonModule, HttpClientModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent,PageHeaderComponent]"
+      template: "./${toKebabCase(className)}-list.component.html"
+      style: "./${toKebabCase(className)}-list.component.css"
       export: |
         export class ${majStart(className)}ListComponent implements OnInit {
             
@@ -163,8 +242,8 @@
             {{tab}}{{tab}}{{#each fieldsNotFK}}
                 {{#if this.isText}}
                 { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isNumeric }}
-                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'number' }{{elseIf this.isDate }}
-                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'date' }{{/if}}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'number' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'number' }{{elseIf this.isDate }}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' }{{/if}}
             {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
             ];
             
@@ -212,7 +291,7 @@
             
             {{#each fieldsFK}}{{removeLine}}
             load${majStart(this.type)}s(): void {
-                this.${minStart(this.type)}Service.get${majStart(this.type)}s(0, 1000).subscribe({
+                this.${minStart(this.type)}Service.get${majStart(this.type)}s().subscribe({
                 next: (response) => {
                   this.${minStart(this.type)}s = response;
                   const ${minStart(this.type)}Field = this.searchFields.find(f => f.key === '${this.name}.${this.referencedColumn}');
@@ -227,55 +306,67 @@
             } 
             {{/each}}{{removeLine}}
         }
-      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-list"
-      componentName: "${toKebabCase(EntityName)}-list.component"
+      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
+      componentName: "${toKebabCase(className)}-list.component"
       componentAdditionalFiles:
         - fileType: "html template"
-          fileName: "${toKebabCase(EntityName)}-list.component"
+          fileName: "${toKebabCase(className)}-list.component"
           extension: "html"
           content: |
+            <app-page-header name="${formatReadable(classNameLink)}"></app-page-header>
             <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)"></app-dynamic-search-form>
             <app-tableau [colonnes]="columns" [donnees]="data"></app-tableau>
             <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="endPage - startPage" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-list"
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
         - fileType: "css template"
-          fileName: "${toKebabCase(EntityName)}-list.component"
+          fileName: "${toKebabCase(className)}-list.component"
           extension: "css"
           content: |
-            content2
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-list"
+            {{newline}}
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
+        - fileType: "Entity Routes"
+          fileName: "${toKebabCase(className)}.routes"
+          extension: "ts"
+          content: |
+            import { Routes } from '@angular/router';
+            import { ${majStart(className)}ListComponent } from './${toKebabCase(className)}-list/${toKebabCase(className)}-list.component';
+            {{#if !isView}}import { ${majStart(className)}FormComponent } from './${toKebabCase(className)}-form/${toKebabCase(className)}-form.component';{{/if}}
+          
+            export const ${minStart(className)}Routes: Routes = [
+              { path: '${toKebabCase(className)}s', component: ${majStart(className)}ListComponent}
+               {{#if !isView}},{ path: 'add-${toKebabCase(className)}', component: ${majStart(className)}FormComponent}{{/if}}
+            ];
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}"
     - componentType: "form"
       router:
-        link: "/${minPluralize(EntityName)}"
-        label: "${majStart(EntityName)}"
+        link: " "
+        label: " "
       importFile: |
-        allImport
-      selector: "app-${toKebabCase(EntityName)}-form"
-      generateForView: true
+        import { Component, OnInit } from '@angular/core';
+        import { HttpClientModule } from '@angular/common/http';
+      selector: "app-${toKebabCase(className)}-form"
+      generateForView: false
       standalone: true
-      importComponent: |
-        allImport
-      template: |
-        templateURL
-      style: |
-        styleURL
+      importComponent: "[HttpClientModule]"
+      template: "./${toKebabCase(className)}-form.component.html"
+      style: "./${toKebabCase(className)}-form.component.css"
       export: |
-        export
-      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-form"
-      componentName: "${toKebabCase(EntityName)}-form.component"
+        export class ${majStart(className)}FormComponent{}
+      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
+      componentName: "${toKebabCase(className)}-form.component"
       componentAdditionalFiles:
         - fileType: "html template"
-          fileName: "${toKebabCase(EntityName)}-form.component"
+          fileName: "${toKebabCase(className)}-form.component"
           extension: "html"
           content: |
-            content1
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-form"
+            {{newline}}
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
         - fileType: "css template"
-          fileName: "${toKebabCase(EntityName)}-form.component"
+          fileName: "${toKebabCase(className)}-form.component"
           extension: "css"
           content: |
-            content2
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-form"
+            {{newline}}
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
   serviceComponent:
     imports: |
       import { Injectable } from '@angular/core';
@@ -283,9 +374,9 @@
       import { Observable, catchError, throwError, map,of } from 'rxjs';
       import { cleanObject } from '../../../../utilities/utilities';
       import { environment } from '../../../../environments/environment';
-      import { ${toPascalCase(EntityName)}ListDTO,${toPascalCase(EntityName)}DTO,${toPascalCase(EntityName)} } from '../models/${toKebabCase(EntityName)}.model'
+      import { ${majStart(className)}ListDTO,${majStart(className)}DTO,${majStart(className)} } from '../models/${toKebabCase(className)}.model'
     methods: |
-      export class ${toPascalCase(EntityName)}Service{
+      export class ${majStart(className)}Service{
       {{tab}}private readonly apiUrl = environment.apiUrl+'/${lowerCase(classNameLink)}';
       {{tab}}constructor(private http: HttpClient) {}
       
@@ -319,23 +410,23 @@
         }
       
       
-      {{tab}}get${toPascalCase(EntityName)}ById(id: string): Observable<${toPascalCase(EntityName)}> {
+      {{tab}}get${majStart(className)}ById(id: string): Observable<${majStart(className)}> {
       {{tab}}{{tab}}const url = this.apiUrl+'/'+id;
-      {{tab}}{{tab}}return this.http.get<${toPascalCase(EntityName)}DTO>(url).pipe(
+      {{tab}}{{tab}}return this.http.get<${majStart(className)}DTO>(url).pipe(
       {{tab}}{{tab}}{{tab}}map((response) => response.data ?? []),
       {{tab}}{{tab}}{{tab}}catchError(err => {
-      {{tab}}{{tab}}{{tab}}{{tab}}console.error(`Error while collecting data of ${toPascalCase(EntityName)} with id: ${id}`, err);
+      {{tab}}{{tab}}{{tab}}{{tab}}console.error(`Error while collecting data of ${majStart(className)} with id: ${id}`, err);
       {{tab}}{{tab}}{{tab}}{{tab}}return throwError(() => new Error('API calling error'));
       {{tab}}{{tab}}{{tab}}})
       {{tab}}{{tab}});
       {{tab}}}
       
-      {{tab}}get${toPascalCase(EntityName)}s(page: number = 0,size: number = 10,sortParam: string = '{{#each fieldsPK}}${this.name},asc;{{/each}}'): Observable<${toPascalCase(EntityName)}[]> {
+      {{tab}}get${majStart(className)}s(page: number = 0,size: number = 1000,sortParam: string = '{{#each fieldsPK}}${this.name},asc;{{/each}}'): Observable<${majStart(className)}[]> {
       {{tab}}{{tab}}const params = new HttpParams()
       {{tab}}{{tab}}{{tab}}.set('page', page.toString())
       {{tab}}{{tab}}{{tab}}.set('size', size.toString())
       {{tab}}{{tab}}{{tab}}.set('sortParam', sortParam);
-      {{tab}}{{tab}}return this.http.get<${toPascalCase(EntityName)}ListDTO>(this.apiUrl, { params }).pipe(
+      {{tab}}{{tab}}return this.http.get<${majStart(className)}ListDTO>(this.apiUrl, { params }).pipe(
       {{tab}}{{tab}}{{tab}}map(response => response.data?.content ?? []),
       {{tab}}{{tab}}{{tab}}catchError(err => {
       {{tab}}{{tab}}{{tab}}{{tab}}const isNotFound = err.status === 404 ;
@@ -349,15 +440,15 @@
       {{tab}}{{tab}});
       {{tab}}}
       }
-    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/services"
-    name: "${toKebabCase(EntityName)}.service"
+    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/services"
+    name: "${toKebabCase(className)}.service"
   modelComponent:
     imports: |
       {{#each fieldsFK}}
         import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
       {{/each}}
     exports : |
-      export interface ${toPascalCase(EntityName)}
+      export interface ${majStart(className)}
       {
       {{tab}}{{#each fields}}
       {{tab}}{{#if this.isForeignKey}}${this.name}: ${toPascalCase(this.type)}{{else}}
@@ -365,20 +456,20 @@
       {{tab}}{{/each}}{{removeLine}}
       }
       
-      export interface ${toPascalCase(EntityName)}DTO{
+      export interface ${majStart(className)}DTO{
       {{tab}}status: number;
       {{tab}}message: string;
       {{tab}}returnCode: number;
-      {{tab}}data: ${toPascalCase(EntityName)};
+      {{tab}}data: ${majStart(className)};
       {{tab}}timestamp: string;
       }
       
-      export interface ${toPascalCase(EntityName)}ListDTO{
+      export interface ${majStart(className)}ListDTO{
       {{tab}}status: number;
       {{tab}}message: string;
       {{tab}}returnCode: number;
       {{tab}}data: {
-      {{tab}}{{tab}}content: ${toPascalCase(EntityName)}[];
+      {{tab}}{{tab}}content: ${majStart(className)}[];
       {{tab}}{{tab}}page: {
       {{tab}}{{tab}}{{tab}}size: number;
       {{tab}}{{tab}}{{tab}}number: number;
@@ -388,8 +479,8 @@
       {{tab}}};
       {{tab}}timestamp: string;
       }
-    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/models"
-    name: "${toKebabCase(EntityName)}.model"
+    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/models"
+    name: "${toKebabCase(className)}.model"
 
 - id: 2
   languageId: 1

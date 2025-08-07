@@ -29,7 +29,7 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectSpring() {
-        var credentials = new Credentials().setSchemaName("").setHost("localhost").setPort("1521").setUser("C##RH").setPwd("rh").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCLBDD").setDriverType("thin");
+        var credentials = new Credentials().setSchemaName("").setHost("localhost").setPort("1521").setUser("C##SUPER").setPwd("super").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCLBDD").setDriverType("thin");
 
         try {
 
@@ -47,7 +47,7 @@ public class GenesisCoreTest {
             var frontendLangage=ProjectGenerator.frontendLanguage.get(frontendLangageId);
             var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
 
-            String projectName = "Popol";
+            String projectName = "";
             String groupLink = "org.labs";
             String projectPort = "8000";
             String logLevel = "INFO";

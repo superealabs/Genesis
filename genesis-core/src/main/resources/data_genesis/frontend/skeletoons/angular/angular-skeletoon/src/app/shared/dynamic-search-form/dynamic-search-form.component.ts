@@ -7,7 +7,7 @@ export interface SearchField {
   key: string;
   label: string;
   type: 'text' | 'number' | 'date' | 'select';
-  options?: { value: string; label: string }[];
+  options?: { value: any; label: any }[];
 }
 
 @Component({

@@ -151,12 +151,28 @@ public class FrameworkFrontendMetadataProvider {
 
         return data;
     }
-
-    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework,String projectName,String destinationFolder){
+    public static HashMap<String,Object> getTableMetaDataHashSimple(TableMetadata tableMetadata)
+    {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("name",tableMetadata.getTableName());
+        data.put("className",tableMetadata.getClassName());
+        data.put("isView",tableMetadata.getIsView());
+        return  data;
+    }
+    private static List<Map<String, Object>> getTableMetaDataHashSimpleList(List<TableMetadata> tableMetadatas) {
+        List<Map<String, Object>> tableMetadatasAns = new ArrayList<>();
+        for (TableMetadata tableMetadata : tableMetadatas) {
+            Map<String, Object> tableMetadataMap = getTableMetaDataHashSimple(tableMetadata);
+            tableMetadatasAns.add(tableMetadataMap);
+        }
+        return tableMetadatasAns;
+    }
+    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework,String projectName,String destinationFolder,List<TableMetadata> tableMetadatas){
         HashMap<String, Object> data = new HashMap<>();
         data.put("routes",getRoutesHashMap(frontendFramework));
         data.put("projectName",projectName);
         data.put("destinationFolder",destinationFolder);
+        data.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
 //      data.put("components", frontendFramework.getComponents());
         return  data;
     }
