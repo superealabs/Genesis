@@ -5,6 +5,7 @@ import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.framework.APIGenerator;
 import org.labs.genesis.config.langage.generator.framework.GenesisGenerator;
+import org.labs.genesis.config.langage.generator.framework.MVCGenerator;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.TableMetadata;
@@ -52,6 +53,11 @@ public class ProjectGenerator {
                         }
                     })
                     .collect(Collectors.toMap(Framework::getId, framework -> framework));
+
+            // Load all MVCs
+            Map<Integer, FrameworkMVC> mvcFrameworks = Arrays.stream(FileUtils.fromYaml(FrameworkMVC[].class, Constantes.FRAMEWORK_MVC_YAML))
+                    .collect(Collectors.toMap(Framework::getId, frameworkMvc -> frameworkMvc));
+            frameworks.putAll(mvcFrameworks);
 
             llmApiConfigs = Arrays.stream(FileUtils.fromJson(LlmApiConfig[].class, Constantes.LLM_API_CONFIG_JSON))
                     .collect(Collectors.toMap(LlmApiConfig::getId, llmApiConfig -> llmApiConfig));
@@ -208,7 +214,11 @@ public class ProjectGenerator {
     public void generateProject(ProjectGenerationContext context) throws Exception {
         if (context.isGenerateProjectStructure()) {
             // Générer le projet complet
-            generateFullProject(context);
+            if (context.getFramework() instanceof FrameworkMVC) {
+                generateMvcProject(context);
+            } else {
+                generateFullProject(context);
+            }
         } else {
             // Générer uniquement les composants
             generateComponentsOnly(context);
@@ -250,6 +260,104 @@ public class ProjectGenerator {
                 List<TableMetadata> allEntities = new ArrayList<>();
                 allEntities.addAll(entities);
                 allEntities.addAll(views);
+
+                generateProjectFiles(context, allEntities);
+
+            } catch (Exception e) {
+                throw new RuntimeException("\nError in generateFullProject : \n" + e);
+            }
+        } else {
+            generateProjectFiles(context, null);
+        }
+    }
+    public static void generateViewsFiles (ProjectGenerationContext context, ViewsTemplateEngine viewsTemplateEngine) throws Exception {
+        HashMap<String, Object> initializeHashMap = getInitialHashMap(
+                context.getDestinationFolder(),
+                context.getProjectName(),
+                context.getGroupLink()
+        );
+
+        HashMap<String, Object> projectFilesEditsHashMap = getProjectFilesEditsHashMap(
+                context.getDestinationFolder(),
+                context.getProjectName(),
+                context.getGroupLink(),
+                context.getProjectPort(),
+                context.getDatabase(),
+                context.getCredentials(),
+                context.getLanguage(),
+                context.getProjectDescription(),
+                context.getLanguageConfiguration(),
+                context.getFramework(),
+                context.getFrameworkConfiguration()
+        );
+
+        renderAndCopyFolders(viewsTemplateEngine.getTemplateEngineFolders(), initializeHashMap);
+        renderFilesEdits(viewsTemplateEngine.getTemplateEngineFilesEdits(), projectFilesEditsHashMap);
+    }
+    private void generateMvcProject(ProjectGenerationContext context) throws Exception {
+        Database database = context.getDatabase();
+        FrameworkMVC framework = (FrameworkMVC) context.getFramework();
+        Credentials credentials = context.getCredentials();
+        useRealSidAndDriverType(database,credentials);
+        Connection connection = context.getConnection();
+        Language language = context.getLanguage();
+        Map<String, Object> frameworkOptions = context.getFrameworkConfiguration();
+        int templateId = (int) frameworkOptions.get("templateId");
+        int templateEngineId = (int) frameworkOptions.get("templateEngineId");
+        ViewsTemplate viewsTemplate = framework.findViewsTemplateById(templateId);
+        ViewsTemplateEngine viewsTemplateEngine = framework.findViewsTemplateEngineById(templateEngineId);
+        String groupLink = context.getGroupLink();
+
+        if (framework.getUseDB()) {
+            try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
+                List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language, framework);
+                List<TableMetadata> views = database.getViewsByNames(context.getViewNames(), connex, credentials, language, framework);
+                GenesisGenerator genesisGenerator = new MVCGenerator(ProjectGenerator.engine);
+
+                List<TableMetadata> allEntities = new ArrayList<>();
+                allEntities.addAll(entities);
+                allEntities.addAll(views);
+
+                genesisGenerator.generateViewMainLayout(framework, frameworkOptions, language, viewsTemplate, viewsTemplateEngine, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
+                generateViewsFiles(context, viewsTemplateEngine);
+
+                for (TableMetadata tableMetadata : entities) {
+                    generateBackendComponents(
+                            context,
+                            genesisGenerator,
+                            tableMetadata,
+                            false
+                    );
+                    genesisGenerator.generateViews(framework,
+                            frameworkOptions,
+                            language,
+                            viewsTemplate,
+                            viewsTemplateEngine,
+                            tableMetadata,
+                            context.getDestinationFolder(),
+                            context.getProjectName(),
+                            groupLink
+                    );
+                }
+
+                for (TableMetadata tableMetadata : views) {
+                    generateBackendComponents(
+                            context,
+                            genesisGenerator,
+                            tableMetadata,
+                            false
+                    );
+                    genesisGenerator.generateViews(framework,
+                            frameworkOptions,
+                            language,
+                            viewsTemplate,
+                            viewsTemplateEngine,
+                            tableMetadata,
+                            context.getDestinationFolder(),
+                            context.getProjectName(),
+                            groupLink
+                    );
+                }
 
                 generateProjectFiles(context, allEntities);
 
