@@ -1,10 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-interface Pages {
-  pageStart: number;
-  pageEnd: number;
-}
 
 @Component({
   selector: 'app-pagination',
@@ -12,9 +8,9 @@ interface Pages {
   imports: [CommonModule],
   template: `
     <nav *ngIf="totalPages > 1" class="pagination-container">
-      <button 
-        class="arrow" 
-        (click)="changePage(currentPage - 1)" 
+      <button
+        class="arrow"
+        (click)="changePage(currentPage - 1)"
         [disabled]="currentPage === 1"
         aria-label="Page précédente"
       >&lt;</button>
@@ -30,9 +26,9 @@ interface Pages {
 
       <button *ngIf="canShiftRight()" (click)="shiftPageWindowRight()" title="Pages suivantes">...</button>
 
-      <button 
-        class="arrow" 
-        (click)="changePage(currentPage + 1)" 
+      <button
+        class="arrow"
+        (click)="changePage(currentPage + 1)"
         [disabled]="currentPage === totalPages"
         aria-label="Page suivante"
       >&gt;</button>
@@ -106,7 +102,7 @@ export class PaginationComponent {
   @Input() totalItems: number = 0;
   @Input() itemsPerPage: number = 12;
   @Input() currentPage: number = 1;
-  @Input() onPageRangeChange!: (pages: Pages) => void;
+  @Input() onPageRangeChange!: (page:number) => void;
 
   maxVisiblePages: number = 4;
 
@@ -158,12 +154,8 @@ export class PaginationComponent {
 
     this.currentPage = page;
 
-    const pageStart = (page - 1) * this.itemsPerPage + 1;
-    let pageEnd = page * this.itemsPerPage;
-    if (pageEnd > this.totalItems) pageEnd = this.totalItems;
-
     if (this.onPageRangeChange) {
-      this.onPageRangeChange({ pageStart, pageEnd });
+      this.onPageRangeChange(page);
     }
   }
 }

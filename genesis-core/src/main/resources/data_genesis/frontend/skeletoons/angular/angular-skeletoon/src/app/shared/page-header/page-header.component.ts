@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { LinkButtonComponent } from '../link-button/link-button.component'; // adapte le chemin si besoin
+import { LinkButtonComponent } from '../link-button/link-button.component';
 import { NgIf } from '@angular/common';
+
 @Component({
   selector: 'app-page-header',
   standalone: true,
@@ -8,9 +9,15 @@ import { NgIf } from '@angular/common';
   template: `
     <div class="page-header">
       <div class="page-title">
-        <span class="light-name">{{ name }}</span> <span class="light-name"> / </span> <span class="bold-list">List</span>
+        <span class="light-name">{{ name }}</span>
+        <span class="light-name"> / </span>
+        <span class="bold-list">List</span>
       </div>
-      <app-link-button [links]="linkMap" type="add"></app-link-button>
+      <app-link-button
+        *ngIf="!isView"
+        [links]="linkMap"
+        type="add">
+      </app-link-button>
     </div>
   `,
   styles: [`
@@ -21,12 +28,8 @@ import { NgIf } from '@angular/common';
       margin: 1.5rem 0 1rem;
     }
 
-    .page-title {
-      /* plus de font-weight ici */
-    }
-
     .light-name, .bold-list {
-      font-size: 1.1rem; /* même taille pour les deux */
+      font-size: 1.1rem;
     }
 
     .light-name {
@@ -35,14 +38,15 @@ import { NgIf } from '@angular/common';
     }
 
     .bold-list {
-      font-weight: 700; /* plus bold */
-      color: #6b7280; /* couleur subtile */
+      font-weight: 700;
+      color: #6b7280;
       font-size: 1.4rem;
     }
   `]
 })
 export class PageHeaderComponent {
   @Input() name: string = '';
+  @Input() isView: boolean = false; // par défaut on affiche le bouton
 
   get singularLowercase(): string {
     return this.name.endsWith('s') ?

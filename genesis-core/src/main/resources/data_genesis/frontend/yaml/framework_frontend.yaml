@@ -174,10 +174,27 @@
           return result;
         }
         export function cleanObject<T>(obj: Partial<T>): Partial<T> {
-          return Object.fromEntries(
-            Object.entries(obj)
-              .filter(([_, value]) => value !== '' && value !== undefined && value !== null)
-          ) as Partial<T>;
+          if (typeof obj !== 'object' || obj === null) {
+            return obj;
+          }
+
+          const entries = Object.entries(obj)
+            .map(([key, value]) => {
+              if (value && typeof value === 'object' && !Array.isArray(value)) {
+                const cleanedValue = cleanObject(value);
+                if (Object.keys(cleanedValue).length === 0) {
+                  return null;
+                }
+                return [key, cleanedValue];
+              }
+              if (value !== '' && value !== undefined && value !== null) {
+                return [key, value];
+              }
+              return null;
+            })
+            .filter((entry): entry is [string, any] => entry !== null);
+
+          return Object.fromEntries(entries) as Partial<T>;
         }
       destinationPath: "${destinationFolder}/src/utilities/"
   components:
@@ -223,10 +240,9 @@
             ${minStart(this.type)}s: ${majStart(this.type)}[] = []; 
             {{/each}}{{removeLine}}
             
-            startPage: number = 0;
-            endPage: number = 12;
             totalItems: number = 1000;
             currentPage: number=1;
+            itemNumber: number=10;
         
             formValueAttribute: Record<string, any> = {};
         
@@ -248,11 +264,9 @@
             {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
             ];
             
-            onPageRangeChange(pages: { pageStart: number; pageEnd: number }): void {
-                this.startPage = pages.pageStart - 1;
-                this.endPage = pages.pageEnd;
-                this.currentPage = Math.floor(this.startPage / (this.endPage - this.startPage)) + 1;
-                this.onSearch(this.formValueAttribute);
+            onPageRangeChange(page:number): void {
+                  this.currentPage =page;
+                  this.onSearch(this.formValueAttribute);
             }
         
             onSearch(formValue: any): void {
@@ -275,10 +289,7 @@
              ) {}
         
             load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {}): void {
-                const page = Math.floor(this.startPage / (this.endPage - this.startPage));
-                const size = this.endPage - this.startPage;
-            
-                this.${minStart(className)}Service.search${majStart(className)}s(criteria, page, size).subscribe({
+                this.${minStart(className)}Service.search${majStart(className)}s(criteria, this.currentPage-1, this.itemNumber).subscribe({
                 next: (${minStart(className)}s: ${majStart(className)}[]) => {
                         this.${minStart(className)}s = ${minStart(className)}s;
                         this.data=recursiveObjectsTo2DArray(${minStart(className)}s);  
@@ -314,11 +325,11 @@
           fileName: "${toKebabCase(className)}-list.component"
           extension: "html"
           content: |
-            <app-page-header name="${formatReadable(classNameLink)}"></app-page-header>
+            <app-page-header name="${formatReadable(classNameLink)}" [isView]=${isView}></app-page-header>
             <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)"></app-dynamic-search-form>
             <br>
-            <app-tableau [colonnes]="columns" [donnees]="data"></app-tableau>
-            <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="endPage - startPage" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
+            <app-tableau [colonnes]="columns" [donnees]="data" [isView]=${isView}></app-tableau>
+            <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="itemNumber" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
         - fileType: "css template"
           fileName: "${toKebabCase(className)}-list.component"
