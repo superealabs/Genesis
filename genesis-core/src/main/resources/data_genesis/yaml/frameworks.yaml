@@ -1128,6 +1128,14 @@
                               )
                           );
                       }
+                      {{elseIf this.isForeignKey}}
+                      if(object.get${majStart(this.name)}()!=null){
+                          predicates.add(
+                              criteriaBuilder.equal(
+                                  ${this.criteriaBuildSnippet}
+                              )
+                          );
+                      }
                       {{elseIf this.isText}}
                       WebUtils.addLikeIfPresent(criteriaBuilder, ${this.criteriaBuildSnippet}, predicates);
                       {{elseIf this.isNumeric or this.isDate}}
@@ -1292,12 +1300,19 @@
 
           import lombok.Getter;
           import lombok.Setter;
+          {{#each fields}}
+          {{#if this.isForeignKey}}
+          import ${groupLink}.${lowerCase(projectName)}.models.${this.type};
+          {{else}}{{removeLine}}{{/if}}
+          {{/each}}
 
           @Getter @Setter
           public class ${className}Search {
 
           {{tab}}{{#each fields}}
           {{#if this.isPrimaryKey}}
+          {{tab}}private ${this.type} ${this.name};
+          {{elseIf this.isForeignKey}}{{removeLine}}
           {{tab}}private ${this.type} ${this.name};
           {{tab}}{{elseIf this.isNumeric or this.isDate }}
           {{tab}}private ${this.type} ${this.name};
