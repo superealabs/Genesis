@@ -1,0 +1,20 @@
+${modelType}
+<h2>List of ${className}</h2>
+<table>
+    <thead>
+        <tr>
+            {{#each fields}}
+            <th>${this.name}</th>
+            {{/each}}{{removeLine}}
+        </tr>
+    </thead>
+    <tbody>
+        ${blockLoopStatementStart}
+            <tr ${inlineLoopStatement}>
+            {{#each fields}}
+                <td>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</td>
+            {{/each}}{{removeLine}}
+            </tr>
+        ${blockLoopStatementEnd}
+    </tbody>
+</table>
