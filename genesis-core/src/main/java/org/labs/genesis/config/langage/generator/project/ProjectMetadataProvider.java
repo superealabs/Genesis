@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkSecurity;
 import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.langage.ViewsTemplateEngine;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.engine.GenesisTemplateEngine;
@@ -139,5 +140,23 @@ public class ProjectMetadataProvider {
         combinedMap.putAll(getFrameworkSecurityTrueBooleansHashMap(framework,frameworkOptions));
 
         return combinedMap;
+    }
+
+    public static HashMap<String, Object> getAltViewMainLayoutHashMap (ViewsTemplateEngine viewsTemplateEngine) {
+        HashMap<String, Object> altMap = new HashMap<>();
+        altMap.put("navLink", viewsTemplateEngine.getLayout().getNavLink());
+        altMap.put("callContent", viewsTemplateEngine.getLayout().getCallContent());
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewListHashMap (ViewsTemplateEngine viewsTemplateEngine) {
+        HashMap<String, Object> altMap = new HashMap<>();
+        altMap.put("modelType", viewsTemplateEngine.getList().getModelType());
+        altMap.put("dataValue", viewsTemplateEngine.getList().getDataValue());
+        altMap.put("dataForeignValue", viewsTemplateEngine.getList().getDataForeignValue());
+        altMap.put("blockLoopStatementStart", viewsTemplateEngine.getList().getBlockLoopStatementStart());
+        altMap.put("blockLoopStatementEnd", viewsTemplateEngine.getList().getBlockLoopStatementEnd());
+        altMap.put("inlineLoopStatement", viewsTemplateEngine.getList().getInlineLoopStatement());
+        return altMap;
     }
 }

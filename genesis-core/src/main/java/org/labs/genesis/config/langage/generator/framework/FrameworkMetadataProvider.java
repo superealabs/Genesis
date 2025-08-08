@@ -2,6 +2,7 @@ package org.labs.genesis.config.langage.generator.framework;
 
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.FrameworkMVC;
 import org.labs.genesis.config.langage.FrameworkSecurity;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
@@ -173,6 +174,16 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> languageMetadata = getRelatedLanguageMetadata(language);
 
         metadata.putAll(primaryControllerMetadata);
+        metadata.putAll(languageMetadata);
+
+        return metadata;
+    }
+
+    public static HashMap<String, Object> getViewHashMap(FrameworkMVC framework, Language language, TableMetadata tableMetadata) {
+        HashMap<String, Object> metadata = new HashMap<>();
+
+        HashMap<String, Object> languageMetadata = getRelatedLanguageMetadata(language);
+
         metadata.putAll(languageMetadata);
 
         return metadata;
@@ -362,6 +373,16 @@ public class FrameworkMetadataProvider {
 
         metadata.put("entities", fields);
         metadata.put("allEntities", getTableMetadataList(tableMetadata));
+        return metadata;
+    }
+
+    public static HashMap<String, Object>  getViewMainLayoutHashMap (List<TableMetadata> tableMetadata, String projectName, String destinationFolder) {
+        HashMap<String, Object> metadata = new HashMap<>();
+
+        metadata.put("projectName", projectName);
+        metadata.put("destinationFolder", destinationFolder);
+        metadata.put("entities", getTableMetadataList(tableMetadata));
+
         return metadata;
     }
 
