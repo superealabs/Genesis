@@ -1,0 +1,44 @@
+- id: 1
+  frameworkMvcId: 5
+  name: "Razor"
+  viewExtension: "cshtml"
+  layout:
+    name: "_Layout"
+    destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
+    navLink: "asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
+    callContent: "@RenderBody()"
+  list:
+    modelType : |
+      @model IEnumerable<${majStart(className)}>
+    dataValue: "@${lowerCase(className)}.${majStart(this.name)}"
+    dataForeignValue: "@${lowerCase(className)}.${this.columnTable}.${this.columnName}"
+    inlineLoopStatement: |
+    blockLoopStatementStart: |
+      @foreach (var ${lowerCase(className)} in Model) {
+    blockLoopStatementEnd: |
+      }
+
+  templateEngineFilesEdits:
+    - fileType : "ViewImports"
+      fileName: "_ViewImports"
+      extension: "cshtml"
+      content: |
+        @using ${majStart(projectName)}
+        @using ${majStart(projectName)}.Models
+        @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/"
+    - fileType : "ViewStart"
+      fileName: "_ViewStart"
+      extension: "cshtml"
+      content: |
+        @{
+            Layout = "_Layout";
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/"
+
+  templateEngineFiles: []
+  templateEngineFolders:
+    - folderType: "wwwroot"
+      folderName: "wwwroot"
+      sourcePath: "data_genesis/template_engine_folders/wwwroot"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
