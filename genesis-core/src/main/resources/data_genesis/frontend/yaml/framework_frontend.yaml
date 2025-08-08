@@ -316,6 +316,7 @@
           content: |
             <app-page-header name="${formatReadable(classNameLink)}"></app-page-header>
             <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)"></app-dynamic-search-form>
+            <br>
             <app-tableau [colonnes]="columns" [donnees]="data"></app-tableau>
             <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="endPage - startPage" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
@@ -330,12 +331,15 @@
           extension: "ts"
           content: |
             import { Routes } from '@angular/router';
-            import { ${majStart(className)}ListComponent } from './${toKebabCase(className)}-list/${toKebabCase(className)}-list.component';
-            {{#if !isView}}import { ${majStart(className)}FormComponent } from './${toKebabCase(className)}-form/${toKebabCase(className)}-form.component';{{/if}}
-          
             export const ${minStart(className)}Routes: Routes = [
-              { path: '${toKebabCase(className)}s', component: ${majStart(className)}ListComponent}
-               {{#if !isView}},{ path: 'add-${toKebabCase(className)}', component: ${majStart(className)}FormComponent}{{/if}}
+              {
+              path: '${toKebabCase(className)}s',
+              loadComponent: () => import('./${toKebabCase(className)}-list/${toKebabCase(className)}-list.component').then(m => m.${majStart(className)}ListComponent )
+            }{{#if !isView}},
+              {
+                path: 'add-${toKebabCase(className)}',
+                loadComponent: () => import('./${toKebabCase(className)}-form/${toKebabCase(className)}-form.component').then(m => m.${majStart(className)}FormComponent)
+              }{{/if}}
             ];
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}"
     - componentType: "form"
