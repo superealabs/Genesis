@@ -1,0 +1,12 @@
+- id: 1
+  name: "Template 1"
+  template: "Template 1"
+  preview: ""
+  layoutTemplate: "LayoutViewTemplate"
+  listTemplate: "ListViewTemplate"
+  formTemplate: "FormViewTemplate"
+  detailTemplate: "DetailViewTemplate"
+
+  templateFilesEdits: []
+  templateFiles: []
+  templateFolders: []
