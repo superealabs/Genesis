@@ -482,52 +482,65 @@
   serviceComponent:
     imports: |
       import useRestApi from "@/composables/useRestApi";
-      import type { IPageResponse } from "@/models/api/PageResponseModel";
+      import RestResponse from "@/models/api/RestResponseModel";
+      import { type IPageResponse } from "@/models/api/PageResponseModel";
+      import {
+        PaginationRequestParameter,
+        RequestModel,
+        SortFieldParameter,
+      } from "@/models/api/RequestModel";
       import type { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
     methods: |
-      const restApi = useRestApi<IPageResponse<${majStart(EntityName)}>>();
+      const restApiWithPage = useRestApi<IPageResponse<${majStart(EntityName)}>>();
       const BASE_URL = "/${minPluralize(EntityName)}";
-
-      export async function getAll() {
-        const response = await restApi.get(BASE_URL);
-        return {
-          data: response.returnCode === 1 ? response.data?.content || [] : [],
-          error: response.returnCode !== 1 ? response.message : null,
-        };
+  
+      /** GET all avec pagination */
+      export async function getAll(
+        pagination?: PaginationRequestParameter,
+        sortFields?: SortFieldParameter[]
+      ) {
+        const request = new RequestModel(BASE_URL, pagination, sortFields);
+        const response = await restApiWithPage.GET(request.buildRequestUrl());
+        return RestResponse.handleResponse<${majStart(EntityName)}[]>(response, true);
       }
-
+  
+      /** GET by ID */
       export async function getById(id: string) {
-        const response = await restApi.get(`${BASE_URL}/${id}`);
-        return {
-          data: response.returnCode === 1 ? response.data : null,
-          error: response.returnCode !== 1 ? response.message : null,
-        };
+        const response = await restApiWithPage.GET(BASE_URL+`/`+id);
+        return RestResponse.handleResponse<${majStart(EntityName)} | null>(response);
       }
-
-      export async function create(data: ${majStart(EntityName)}) {
-        const response = await restApi.post(BASE_URL, data);
-        return {
-          data: response.returnCode === 1 ? response.data : null,
-          error: response.returnCode !== 1 ? response.message : null,
-        };
+  
+      /** POST create */
+      export async function create(data: Partial<${majStart(EntityName)}>) {
+        const response = await restApiWithPage.POST(BASE_URL, data);
+        return RestResponse.handleResponse<${majStart(EntityName)} | null>(response);
       }
-
-      export async function update(id: string, data: ${majStart(EntityName)}) {
-        const response = await restApi.put(`${BASE_URL}/${id}`, data);
-        return {
-          data: response.returnCode === 1 ? response.data : null,
-          error: response.returnCode !== 1 ? response.message : null,
-        };
+  
+      /** PUT update */
+      export async function update(id: string, data: Partial<${majStart(EntityName)}>) {
+        const response = await restApiWithPage.PUT(BASE_URL+`/`+id, data);
+        return RestResponse.handleResponse<${majStart(EntityName)} | null>(response);
       }
-
+  
+      /** DELETE remove */
       export async function remove(id: string) {
-        const response = await restApi.delete(`${BASE_URL}/${id}`);
+        const response = await restApiWithPage.DELETE(BASE_URL+`/`+id);
         return {
           success: response.returnCode === 1,
           error: response.returnCode !== 1 ? response.message : null,
         };
       }
-
+  
+      /** POST search avec pagination */
+      export async function search(
+        data: Partial<${majStart(EntityName)}>,
+        pagination?: PaginationRequestParameter,
+        sortFields?: SortFieldParameter[]
+      ) {
+        const request = new RequestModel(BASE_URL+`/search`, pagination, sortFields);
+        const response = await restApiWithPage.POST(request.buildRequestUrl(), data);
+        return RestResponse.handleResponse<${majStart(EntityName)}[]>(response, true);
+      }
     destinationPath: "${destinationFolder}/src/services"
     name: "${majStart(EntityName)}Service"
   modelComponent:
