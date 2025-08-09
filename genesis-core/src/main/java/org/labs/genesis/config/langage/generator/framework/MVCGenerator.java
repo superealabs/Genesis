@@ -283,7 +283,14 @@ public class MVCGenerator implements GenesisGenerator {
     }
 
     @Override
-    public String generateViewMainLayout(FrameworkMVC framework, Map<String, Object> frameworkOptions, Language language, ViewsTemplate viewsTemplate, ViewsTemplateEngine viewsTemplateEngine, TableMetadata[] tableMetadata, String destinationFolder, String projectName, String groupLink) throws Exception {
+    public String generateViewMainLayout(FrameworkMVC framework,
+                                         Map<String, Object> frameworkOptions,
+                                         Language language,
+                                         ViewsTemplate viewsTemplate,
+                                         ViewsTemplateEngine viewsTemplateEngine,
+                                         TableMetadata[] tableMetadata, String destinationFolder,
+                                         String projectName,
+                                         String groupLink) throws Exception {
         if (language.getId() != framework.getLanguageId()) {
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() + "' (provided ID: " + language.getId() + ") is not compatible with the framework '" + framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
         }
@@ -293,7 +300,7 @@ public class MVCGenerator implements GenesisGenerator {
         HashMap<String, Object> altMap = ProjectMetadataProvider.getAltViewMainLayoutHashMap(viewsTemplateEngine);
         String firstResult = engine.simpleRender(templateContent, altMap);
 
-        HashMap<String, Object> metadataFinally = getViewMainLayoutHashMap(Arrays.stream(tableMetadata).toList(), projectName, destinationFolder);
+        HashMap<String, Object> metadataFinally = getViewMainLayoutHashMap(framework, frameworkOptions, Arrays.stream(tableMetadata).toList(), projectName, destinationFolder, groupLink);
 
         // Ajustement du chemin de sauvegarde
         String fileSavePath;
