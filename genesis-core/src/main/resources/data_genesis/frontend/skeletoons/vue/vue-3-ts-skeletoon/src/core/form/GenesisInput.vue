@@ -1,12 +1,6 @@
 <template>
   <label v-if="label" :for="inputId" class="form-label">{{ label }}</label>
-  <input
-    v-bind="$attrs"
-    :value="modelValue"
-    :id="inputId"
-    @input="onInput"
-    class="form-control form-md mb-3"
-  />
+  <input v-bind="$attrs" :value="modelValue" :id="inputId" @input="onInput" />
 </template>
 
 <script lang="ts">

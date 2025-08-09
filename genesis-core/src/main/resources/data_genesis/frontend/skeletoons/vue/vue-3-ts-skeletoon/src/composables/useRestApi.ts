@@ -26,14 +26,26 @@ export default function useRestApi<T>() {
     }
   }
 
+  const GET = (url: string, config?: AxiosRequestConfig) => {
+    return request({ ...config, method: "get", url });
+  };
+
+  const POST = (url: string, data?: any, config?: AxiosRequestConfig) => {
+    return request({ ...config, method: "post", url, data });
+  };
+
+  const PUT = (url: string, data?: any, config?: AxiosRequestConfig) => {
+    return request({ ...config, method: "put", url, data });
+  };
+
+  const DELETE = (url: string, config?: AxiosRequestConfig) => {
+    return request({ ...config, method: "delete", url });
+  };
+
   return {
-    get: (url: string, config?: AxiosRequestConfig) =>
-      request({ ...config, method: "get", url }),
-    post: (url: string, data?: any, config?: AxiosRequestConfig) =>
-      request({ ...config, method: "post", url, data }),
-    put: (url: string, data?: any, config?: AxiosRequestConfig) =>
-      request({ ...config, method: "put", url, data }),
-    delete: (url: string, config?: AxiosRequestConfig) =>
-      request({ ...config, method: "delete", url }),
+    GET,
+    POST,
+    PUT,
+    DELETE,
   };
 }

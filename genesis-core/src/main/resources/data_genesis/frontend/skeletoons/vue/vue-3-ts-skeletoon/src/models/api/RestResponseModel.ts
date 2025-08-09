@@ -1,3 +1,5 @@
+import { PaginationData } from "./PageResponseModel";
+
 export interface IRestResponse<T> {
   status: number;
   timestamp: Date;
@@ -35,5 +37,25 @@ export default class RestResponse<T> implements IRestResponse<T> {
       json.returnCode,
       json.data
     );
+  }
+
+  static handleResponse<T>(
+    response: any,
+    withPagination = false
+  ): {
+    data: T;
+    error: string | null;
+    pagination?: PaginationData;
+  } {
+    const success = response.returnCode === 1;
+    return {
+      data: response.data?.content ?? response.data ?? [],
+      error: success ? null : response.message,
+      ...(withPagination && {
+        pagination: success
+          ? response.data?.page ?? new PaginationData({ number: 0 })
+          : new PaginationData({ number: 0 }),
+      }),
+    };
   }
 }

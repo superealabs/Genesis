@@ -3,10 +3,10 @@
     <div class="row align-items-center g-2">
       <div class="col">
         <div
-          class="avatar d-flex align-items-center justify-content-center rounded-circle bg-secondary text-white fw-bold"
+          class="avatar d-flex align-items-center justify-content-center rounded-circle bg-secondary text-muted fw-bold"
           style="width: 40px; height: 40px"
         >
-          <i class="fa-regular fa-user"></i>
+          <i class="bi bi-person"></i>
         </div>
       </div>
       <div class="col-auto">
@@ -14,7 +14,11 @@
       </div>
     </div>
     <div>
-      <GenesisButton icon="fa fa-sign-out" class="btn"></GenesisButton>
+      <GenesisButton
+        icon="bi bi-box-arrow-right"
+        class=""
+        style="font-size: large"
+      ></GenesisButton>
     </div>
   </div>
 </template>
@@ -35,10 +39,10 @@ export default defineComponent({
     const initials = computed(() => {
       if (!props.name) return "";
       return props.name
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase();
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase();
     });
     return { initials };
   },

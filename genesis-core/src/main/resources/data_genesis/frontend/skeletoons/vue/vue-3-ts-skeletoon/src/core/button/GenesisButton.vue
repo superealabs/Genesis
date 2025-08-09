@@ -1,7 +1,7 @@
 <template>
   <button v-bind="$attrs" :class="btnClassNames" @click="onClick">
     <i v-if="icon" :class="icon" />
-    <span class="mx-2" v-if="label">{{ label }}</span>
+    <span v-if="label">{{ label }}</span>
     <span v-else><slot></slot></span>
   </button>
 </template>
@@ -25,7 +25,7 @@ export default defineComponent({
     };
 
     const btnClassNames = computed(() => {
-      const base = "btn d-flex align-items-center btn-md ";
+      const base = "btn d-flex align-items-center ";
       return base + (props.class ?? "btn-primary text-white");
     });
 
