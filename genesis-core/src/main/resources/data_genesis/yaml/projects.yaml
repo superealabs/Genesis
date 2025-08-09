@@ -188,6 +188,13 @@
                 }
               }
             }
+          }{{/if}}{{#if isMvcProject}},
+          "Kestrel": {
+            "Endpoints": {
+              "Http": {
+                "Url": "http://localhost:${projectPort}"
+              }
+            }
           }{{/if}}
         
         }
