@@ -113,8 +113,8 @@
   componentExtension: "vue"
   additionalFiles:
     - fileType: "Env File"
-      fileName: ".env"
-      extension: "example"
+      fileName: "{{removeLine}}"
+      extension: "env"
       content: |
         VUE_APP_API_URL=http://localhost:8080/${lowerCase(projectName)}
         VUE_APP_PORT=9000
