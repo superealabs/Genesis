@@ -221,9 +221,9 @@
         label: ""
       componentName: "${majStart(EntityName)}List"
       importFile: |
-        import { use${majStart(EntityName)}s } from "@/composables/use${majStart(EntityName)}s";
-        import { defineComponent } from "vue";
-        import ${majStart(EntityName)}Row from "./${majStart(EntityName)}Row.vue";
+        import { defineComponent, PropType } from "vue";
+        import DepartementRow from "./DepartementRow.vue";
+        import { Departement } from "@/models/DepartementModel";
       selector: "${majStart(EntityName)}List"
       standalone: true
       importComponent: |
@@ -236,7 +236,7 @@
                 {{#each fields}}
                 <th >${formatReadable(this.name)}</th>
                 {{/each}}
-                <th class="text-end">Actions</th>
+                <th scope="col" class="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -245,55 +245,41 @@
                   <span>Loading...</span>
                 </td>
               </tr>
-        
-              <tr v-else-if="error">
+            
+              <tr v-else-if="message">
                 <td colspan="10" class="text-muted text-center py-4">
-                  {{ error }}
+                  {{ message }}
                 </td>
               </tr>
-              <${majStart(EntityName)}Row
-              v-else
-              v-for="${minStart(EntityName)} in ${minStart(EntityName)}s"
-              :key="${minStart(EntityName)}.id"
-              :${minStart(EntityName)}="${minStart(EntityName)}"
+              <DepartementRow
+                v-else
+                v-for="departement in data"
+                :key="departement.id"
+                :departement="departement"
               >
-              </${majStart(EntityName)}Row>
+              </DepartementRow>
             </tbody>
           </table>
         </template>
       style: |
-        <style scoped>
-        .table thead th {
-          background-color: #537cc226;
-          color: #4e4e4e;
-          font-weight: 600;
-          vertical-align: middle;
-          border-bottom: 2px solid #dee2e6;
-        }
-
-        .table td,
-        .table th {
-          vertical-align: middle;
-          padding: 0.75rem;
-        }
-
-        .btn-light {
-          border-radius: 0.5rem;
-          transition: background 0.2s ease-in-out;
-        }
-
-        .btn-light:hover {
-          background-color: #f1f3f5;
-        }
-        </style>
       export: |
+        props: {
+          data: {
+            required: true,
+            type: Array as PropType<Departement[]>,
+          },
+          message: {
+            required: false,
+            type: String,
+          },
+          loading: {
+            type: Boolean,
+            required: false,
+            defauld: false,
+          },
+        },
         setup() {
-          const { ${minStart(EntityName)}s, error, loading } = use${majStart(EntityName)}s();
-            return {
-            ${minStart(EntityName)}s,
-            error,
-            loading,
-          };
+          return {};
         },
       componentAdditionalFiles:
         - fileType: "List Composable"
