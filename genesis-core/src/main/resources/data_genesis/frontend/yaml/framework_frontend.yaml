@@ -532,24 +532,34 @@
     name: "${majStart(EntityName)}Service"
   modelComponent:
     imports: |
+      import { EntityListField } from "./EntityModel";
     exports: |
       export interface I${majStart(EntityName)} {
         {{#each fields}}
         ${minStart(this.name)}: ${this.typeBase} | undefined;
         {{/each}}
       }
-      
+
       export class ${majStart(EntityName)} implements I${majStart(EntityName)} {
         {{#each fields}}
         ${minStart(this.name)}: ${this.typeBase} | undefined;
         {{/each}}
-      
+
         constructor(data?: Partial<I${majStart(EntityName)}>) {
           {{#each fields}}
             this.${minStart(this.name)} = data?.${minStart(this.name)};
           {{/each}}
         }
+
+        static getFieldListMetadata(): EntityListField[] {
+          return [
+            {{#each fields}}
+            { key: "${this.name}", label: "${formatReadable(this.name)}", type: "${this.uiType}", sortable: true },
+            {{/each}}
+          ];
+        }
       }
     exportsComponents: |
     destinationPath: "${destinationFolder}/src/models"
     name: "${majStart(EntityName)}Model"
+
