@@ -222,8 +222,8 @@
       componentName: "${majStart(EntityName)}List"
       importFile: |
         import { defineComponent, PropType } from "vue";
-        import DepartementRow from "./DepartementRow.vue";
-        import { Departement } from "@/models/DepartementModel";
+        import ${majStart(EntityName)}Row from "./${majStart(EntityName)}Row.vue";
+        import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
       selector: "${majStart(EntityName)}List"
       standalone: true
       importComponent: |
@@ -251,13 +251,13 @@
                   {{ message }}
                 </td>
               </tr>
-              <DepartementRow
+              <${majStart(EntityName)}Row
                 v-else
-                v-for="departement in data"
-                :key="departement.id"
-                :departement="departement"
+                v-for="${minStart(EntityName)} in data"
+                :key="${minStart(EntityName)}.id"
+                :${minStart(EntityName)}="${minStart(EntityName)}"
               >
-              </DepartementRow>
+              </${majStart(EntityName)}Row>
             </tbody>
           </table>
         </template>
@@ -267,7 +267,7 @@
         props: {
           data: {
             required: true,
-            type: Array as PropType<Departement[]>,
+            type: Array as PropType<${majStart(EntityName)}[]>,
           },
           message: {
             required: false,
@@ -283,6 +283,82 @@
           return {};
         },
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
+      componentAdditionalFiles: []
+
+    - componentType: "List View"
+      generateForView: true
+      router:
+        link: "/${minPluralize(EntityName)}"
+        label: "${majStart(EntityName)}"
+      componentName: "${majStart(EntityName)}ListView"
+      importFile: |
+        import { defineComponent, ref } from "vue";
+        import EntityTable from "@/core/table/EntityTable.vue";
+        import ${majStart(EntityName)}List from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}List.vue";
+        import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
+        import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
+        import { EntityListField } from "@/models/EntityModel";
+        import GenesisButton from "@/core/button/GenesisButton.vue";
+      selector: "${majStart(EntityName)}ListView"
+      standalone: true
+      importComponent: |
+        components: {
+          EntityTable,
+          GenesisButton,
+        }
+      template: |
+        <template>
+          <div>
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h3>${majStart(EntityName)} / <span class="text-muted">List</span></h3>
+              </div>
+              <div>
+                <GenesisButton icon="bi bi-plus me-2" title="Create new ${minStart(EntityName)}">
+                  <span>Add new ${minStart(EntityName)}</span>
+                </GenesisButton>
+              </div>
+            </div>
+            <EntityTable
+              :entity-model="new ${majStart(EntityName)}()"
+              :entity-search-fields="searchFields"
+              :searchFn="search${majPluralize(EntityName)}"
+              :getPaginationData="getPaginationData"
+              :listComponent="${majStart(EntityName)}List"
+              :entities="${minPluralize(EntityName)}"
+              :loading="loading"
+              :message="message"
+            />
+          </div>
+        </template>
+      style: |
+        <style scoped></style>
+      export: |
+        setup() {
+          const {
+            ${minPluralize(EntityName)},
+            loading,
+            search${majPluralize(EntityName)},
+            paginationData,
+            message,
+            getPaginationData,
+          } = use${majPluralize(EntityName)}();
+          const searchFields = ref<EntityListField[]>(
+            ${majStart(EntityName)}.getFieldListMetadata()
+          );
+          return {
+            ${minPluralize(EntityName)},
+            loading,
+            search${majPluralize(EntityName)},
+            paginationData,
+            ${majStart(EntityName)}List,
+            ${majStart(EntityName)},
+            searchFields,
+            getPaginationData,
+            message,
+          };
+        },
+      destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}/list"
       componentAdditionalFiles:
         - fileType: "List Composable"
           fileName: "use${majPluralize(EntityName)}"
@@ -360,124 +436,46 @@
             }
           destinationPath: "${destinationFolder}/src/composables"
 
-
-
-    - componentType: "List View"
+    - componentType: "Entity Row"
       generateForView: true
       router:
-        link: "/${minPluralize(EntityName)}"
-        label: "${majStart(EntityName)}"
-      componentName: "${majStart(EntityName)}ListView"
+        label: ""
+        link: ""
       importFile: |
-        import { defineComponent, ref } from "vue";
-        import EntityTable from "@/core/table/EntityTable.vue";
-        import ${majStart(EntityName)}List from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}List.vue";
+        import { defineComponent, PropType } from "vue";
         import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
-        import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
-        import { EntityListField } from "@/models/EntityModel";
-        import GenesisButton from "@/core/button/GenesisButton.vue";
-      selector: "${majStart(EntityName)}ListView"
+        import EntityRowActions from "@/core/table/EntityRowActions.vue";
+      selector: "${majStart(EntityName)}Row"
       standalone: true
-      importComponent: |
-        components: {
-          EntityTable,
-          GenesisButton,
-        }
+      importComponent: "components: { EntityRowActions }"
       template: |
         <template>
-          <div>
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <h3>${majStart(EntityName)} / <span class="text-muted">List</span></h3>
+          <tr class="border-bottom">
+            {{#each fields}}
+            <td>{{ ${minStart(EntityName)}.${this.name} }}</td>
+            {{/each}}
+    
+            <td class="text-end">
+              <div class="d-inline-flex rounded-3 shadow-sm overflow-hidden">
+                <EntityRowActions />
               </div>
-              <div>
-                <GenesisButton icon="bi bi-plus me-2" title="Create new ${minStart(EntityName)}">
-                  <span>Add new ${minStart(EntityName)}</span>
-                </GenesisButton>
-              </div>
-            </div>
-            <EntityTable
-              :entity-model="new ${majStart(EntityName)}()"
-              :entity-search-fields="searchFields"
-              :searchFn="search${majPluralize(EntityName)}"
-              :getPaginationData="getPaginationData"
-              :listComponent="${majStart(EntityName)}List"
-              :entities="${minPluralize(EntityName)}"
-              :loading="loading"
-              :message="message"
-            />
-          </div>
+            </td>
+          </tr>
         </template>
-      style: |
-        <style scoped></style>
+      style: "<style scoped></style>"
       export: |
-        setup() {
-          const {
-            ${minPluralize(EntityName)},
-            loading,
-            search${majPluralize(EntityName)},
-            paginationData,
-            message,
-            getPaginationData,
-          } = use${majPluralize(EntityName)}();
-          const searchFields = ref<EntityListField[]>(
-            ${majStart(EntityName)}.getFieldListMetadata()
-          );
-          return {
-            ${minPluralize(EntityName)},
-            loading,
-            search${majPluralize(EntityName)},
-            paginationData,
-            ${majStart(EntityName)}List,
-            ${majStart(EntityName)},
-            searchFields,
-            getPaginationData,
-            message,
-          };
+        props: {
+          ${minStart(EntityName)}: {
+            required: true,
+            type: Object as PropType<${majStart(EntityName)}>,
+          },
         },
-      destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}/list"
+        setup(props) {
+          return {};
+        },
+      componentName: "${majStart(EntityName)}Row"
+      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: []
-
-- componentType: "Entity Row"
-  generateForView: true
-  router:
-    label: ""
-    link: ""
-  importFile: |
-    import { defineComponent, PropType } from "vue";
-    import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
-    import EntityRowActions from "@/core/table/EntityRowActions.vue";
-  selector: "${majStart(EntityName)}Row"
-  standalone: true
-  importComponent: "components: { EntityRowActions }"
-  template: |
-    <template>
-      <tr class="border-bottom">
-        {{#each fields}}
-        <td>{{ ${minStart(EntityName)}.${this.name} }}</td>
-        {{/each}}
-
-        <td class="text-end">
-          <div class="d-inline-flex rounded-3 shadow-sm overflow-hidden">
-            <EntityRowActions />
-          </div>
-        </td>
-      </tr>
-    </template>
-  style: "<style scoped></style>"
-  export: |
-    props: {
-      ${minStart(EntityName)}: {
-        required: true,
-        type: Object as PropType<${majStart(EntityName)}>,
-      },
-    },
-    setup(props) {
-      return {};
-    },
-  componentName: "${majStart(EntityName)}Row"
-  destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
-  componentAdditionalFiles: []
 
   serviceComponent:
     imports: |
