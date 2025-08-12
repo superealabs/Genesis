@@ -13,6 +13,7 @@ public class ViewsTemplateEngine {
     private String viewExtension;
     private Layout layout;
     private List list;
+    private Detail detail;
     private java.util.List<FilesEdit> templateEngineFilesEdits;
     private java.util.List<Project.ProjectFiles> templateEngineFiles;
     private java.util.List<Project.ProjectFolders> templateEngineFolders;
@@ -44,5 +45,14 @@ public class ViewsTemplateEngine {
         private String blockLoopStatementStart;
         private String blockLoopStatementEnd;
         private String inlineLoopStatement;
+        private String detailsLink;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Detail {
+        private String modelType;
+        private String dataValue;
     }
 }

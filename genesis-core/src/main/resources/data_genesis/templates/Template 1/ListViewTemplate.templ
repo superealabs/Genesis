@@ -14,6 +14,7 @@ ${modelType}
                     {{#each fields}}
                     <th>${this.name}</th>
                     {{/each}}{{removeLine}}
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -22,6 +23,9 @@ ${modelType}
                     {{#each fields}}
                         <td>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</td>
                     {{/each}}{{removeLine}}
+                        <td>
+                            <a ${detailsLink}>Details</a>
+                        </td>
                     </tr>
                 ${blockLoopStatementEnd}
             </tbody>
