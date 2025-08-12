@@ -1,20 +1,30 @@
 ${modelType}
-<h2>List of ${className}</h2>
-<table>
-    <thead>
-        <tr>
-            {{#each fields}}
-            <th>${this.name}</th>
-            {{/each}}{{removeLine}}
-        </tr>
-    </thead>
-    <tbody>
-        ${blockLoopStatementStart}
-            <tr ${inlineLoopStatement}>
-            {{#each fields}}
-                <td>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</td>
-            {{/each}}{{removeLine}}
-            </tr>
-        ${blockLoopStatementEnd}
-    </tbody>
-</table>
+<!-- Header -->
+<header class="header">
+    <h3>${className} / <span class="page-action">List</span></h3>
+</header>
+
+<!-- Content -->
+<main class="content">
+    <!-- Table -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    {{#each fields}}
+                    <th>${this.name}</th>
+                    {{/each}}{{removeLine}}
+                </tr>
+            </thead>
+            <tbody>
+                ${blockLoopStatementStart}
+                    <tr ${inlineLoopStatement}>
+                    {{#each fields}}
+                        <td>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</td>
+                    {{/each}}{{removeLine}}
+                    </tr>
+                ${blockLoopStatementEnd}
+            </tbody>
+        </table>
+    </div>
+</main>
