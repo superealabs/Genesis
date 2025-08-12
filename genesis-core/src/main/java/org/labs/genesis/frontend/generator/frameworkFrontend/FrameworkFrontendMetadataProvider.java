@@ -26,10 +26,12 @@ public class FrameworkFrontendMetadataProvider {
     public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata,String destinationFolder,String projectName) {
         HashMap<String, Object> metadata = new HashMap<>();
 
+        List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
         metadata.put("fields", getFieldsList(tableMetadata));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
-        metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
+        metadata.put("fieldsFK", fkList);
         metadata.put("fieldsNotFK",getNotFkFieldsList(tableMetadata));
+        metadata.put("containsForeignKey",fkList.size()>0);
         metadata.put("EntityName",tableMetadata.getTableName());
         metadata.put("isView",tableMetadata.getIsView());
         metadata.put("className",tableMetadata.getClassName());

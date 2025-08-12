@@ -89,7 +89,7 @@ export interface SearchField {
     }
     .remove-icon {
       position: absolute;
-      right: 8px;
+      right: 15px;
       top: 50%;
       transform: translateY(-50%);
       cursor: pointer;

@@ -57,7 +57,7 @@ import { CommonModule } from '@angular/common';
       line-height: 1.2;
       text-align: center;
       user-select: none;
-      margin-right: 36px; /* 10% de moins que 40px */
+      margin-right: 18px; /* 10% de moins que 40px */
     }
 
     .pagination-container button:last-child {

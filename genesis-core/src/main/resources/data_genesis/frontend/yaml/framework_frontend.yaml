@@ -114,7 +114,19 @@
       fileName: "utilities"
       extension: "ts"
       content: |
-        
+        import Swal from 'sweetalert2';
+
+
+        export function warnMeUp(title:string,text:string,color:string='#ff0000',icon: 'success' | 'error' | 'warning' | 'info' | 'question' = 'error')
+          {
+            Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            confirmButtonText: 'close',
+            confirmButtonColor: color
+          });
+          }
         export function recursiveObjectsTo2DArray(data: Record<string, any>[]): any[][] {
           if (data.length === 0) return [];
         
@@ -208,14 +220,15 @@
         import { CommonModule } from '@angular/common';
         import { HttpClientModule } from '@angular/common/http';
         import { takeUntil } from 'rxjs/operators';
-        import { Subject } from 'rxjs';
+        import { Subject ,forkJoin} from 'rxjs';
         
-        import { expandDotNotation,recursiveObjectsTo2DArray } from '../../../../utilities/utilities';
+        import { expandDotNotation,recursiveObjectsTo2DArray,warnMeUp } from '../../../../utilities/utilities';
         
         import { DynamicSearchFormComponent, SearchField } from '../../../shared/dynamic-search-form/dynamic-search-form.component';
         import { TableauComponent } from '../../../shared/tableau/tableau.component';
         import { PaginationComponent } from '../../../shared/pagination/pagination.component';
         import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+        import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
         
         import { ${className} } from '../models/${toKebabCase(className)}.model'
         import { ${className}Service } from '../services/${toKebabCase(className)}.service'
@@ -226,7 +239,7 @@
         {{/each}}
       selector: "app-${toKebabCase(className)}-list"
       standalone: true
-      importComponent: "[CommonModule, HttpClientModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent,PageHeaderComponent]"
+      importComponent: "[CommonModule, HttpClientModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent,PageHeaderComponent,LoadingIconComponent]"
       template: "./${toKebabCase(className)}-list.component.html"
       style: "./${toKebabCase(className)}-list.component.css"
       export: |
@@ -249,6 +262,7 @@
             itemNumber: number=10;
         
             formValueAttribute: Record<string, any> = {};
+            isLoading: boolean = false;
         
             searchFields: SearchField[] = [
             {{tab}}{{tab}}{{#each fieldsFK}}
@@ -278,17 +292,7 @@
               const mappedValue = expandDotNotation(formValue);
               this.load${majStart(className)}s(mappedValue);
             }
-        
-             ngOnInit(): void {
-                  this.load${majStart(className)}s();
-                  {{#each fieldsFK}}{{removeLine}}
-                  this.load${majStart(this.type)}s()
-                  {{/each}}{{removeLine}}
-             }
-             ngOnDestroy() {
-                this.destroy$.next();
-                this.destroy$.complete();
-            } 
+             
              constructor(
                 {{#each fieldsFK}}{{removeLine}}
                  private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
@@ -297,14 +301,17 @@
              ) {}
         
             load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {}): void {
+                this.isLoading = true;
                 this.${minStart(className)}Service.search${majStart(className)}s(criteria, this.currentPage-1, this.itemNumber).pipe(takeUntil(this.destroy$)).subscribe({
                 next: (${minStart(className)}s: ${majStart(className)}[]) => {
                         this.${minStart(className)}s = ${minStart(className)}s;
-                        this.data=recursiveObjectsTo2DArray(${minStart(className)}s);  
+                        this.data=recursiveObjectsTo2DArray(${minStart(className)}s);
+                        this.isLoading = false;
               },
                 error: (err) => {
-                  console.error('error while searching datas :', err);
-                  alert('error while searching datas.');
+                  console.error('error while searching data :', err);
+                  warnMeUp('error','error while fetching data');
+                  this.isLoading = false;
               }
               });
             }
@@ -315,31 +322,53 @@
                   next: () => {
                       this.data = this.data.filter(d => d[0] !== id);
                       this.${minStart(className)}s = this.${minStart(className)}s.filter(c => c.{{#each fieldsPK}}${this.name}{{/each}} !== id);
+                      warnMeUp('success','line of data deleted successfully','#28a745','success')  
                   },
                     error: (err) => {
                       console.error('error while deleting data :', err);
-                      alert('error while deleting data.');
+                      warnMeUp('error','error while deleting data');
                   }
                 });
             }
             {{/if}}
             
-            {{#each fieldsFK}}{{removeLine}}
-            load${majStart(this.type)}s(): void {
-                this.${minStart(this.type)}Service.get${majStart(this.type)}s().pipe(takeUntil(this.destroy$)).subscribe({
-                next: (response) => {
-                  this.${minStart(this.type)}s = response;
-                  const ${minStart(this.type)}Field = this.searchFields.find(f => f.key === '${this.name}.${this.referencedColumn}');
-                  if (${minStart(this.type)}Field) {
-                  ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: d.${this.referencedColumn},label: entries[1][1]};}); 
-                }
-              },
-                error: (err) => {
-                  console.error('error while collecting datas ', err);
-              }
-              });
+            {{#if containsForeignKey}}
+            ngOnInit(): void {
+                  this.load${majStart(className)}s();
+                  this.isLoading = true;
+                  forkJoin([
+                      {{#each fieldsFK}}{{removeLine}}
+                      this.${minStart(this.type)}Service.get${majStart(this.type)}s(),
+                      {{/each}}{{removeLine}}
+                  ]).pipe(takeUntil(this.destroy$)).subscribe({
+                      next: ([{{#each fieldsFK}}${minStart(this.type)}s,{{/each}}]) => {
+                          {{#each fieldsFK}}
+                          this.${minStart(this.type)}s = ${minStart(this.type)}s;
+                          const ${minStart(this.type)}Field = this.searchFields.find(f => f.key === '${this.name}.${this.referencedColumn}');
+                          if (${minStart(this.type)}Field) {
+                            ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: d.${this.referencedColumn},label: entries[1][1]};}); 
+                          }
+                          {{/each}}
+                          this.isLoading = false;
+                      },
+                      error: (err) => {
+                          console.error('Error loading sales and products:', err);
+                          warnMeUp('error','error while collecting sales-items');
+                          this.isLoading = false;
+                      }
+                  });
+            }
+            {{else}}{{removeLine}}
+            ngOnInit(): void {
+                  this.load${majStart(className)}s();
+            }
+            {{/if}}{{removeLine}}
+            
+            ngOnDestroy() {
+                this.destroy$.next();
+                this.destroy$.complete();
             } 
-            {{/each}}{{removeLine}}
+        
         }
       destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
       componentName: "${toKebabCase(className)}-list.component"
@@ -352,6 +381,7 @@
             <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)"></app-dynamic-search-form>
             <br>
             <app-tableau [colonnes]="columns" [donnees]="data" {{#if !isView}}[deleteFn]="delete${majStart(className)}"{{/if}} [isView]=${isView}></app-tableau>
+            <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
             <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="itemNumber" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
         - fileType: "css template"
