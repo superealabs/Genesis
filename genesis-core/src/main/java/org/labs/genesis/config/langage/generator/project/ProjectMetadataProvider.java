@@ -160,6 +160,14 @@ public class ProjectMetadataProvider {
         altMap.put("blockLoopStatementStart", viewsTemplateEngine.getList().getBlockLoopStatementStart());
         altMap.put("blockLoopStatementEnd", viewsTemplateEngine.getList().getBlockLoopStatementEnd());
         altMap.put("inlineLoopStatement", viewsTemplateEngine.getList().getInlineLoopStatement());
+        altMap.put("detailsLink", viewsTemplateEngine.getList().getDetailsLink());
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewDetailHashMap (ViewsTemplateEngine viewsTemplateEngine) {
+        HashMap<String, Object> altMap = new HashMap<>();
+        altMap.put("modelType", viewsTemplateEngine.getDetail().getModelType());
+        altMap.put("dataValue", viewsTemplateEngine.getDetail().getDataValue());
         return altMap;
     }
 }
