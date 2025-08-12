@@ -358,7 +358,7 @@ public class GenesisCoreTest {
             String projectDescription = "An ASP.NET BEGIN Project";
             String frameworkVersion = "8.0";
             String languageVersion = "";
-            String destinationFolder = "C:/Users/Marina/Documents/stage/test";
+            String destinationFolder = "C:/Users/Marina/Documents/stage/test dotnet mvc";
 
             int viewsTemplateEngineId = Constantes.Razor_ID;
             int viewsTemplateId = Constantes.Template_1_ID;

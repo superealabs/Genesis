@@ -146,6 +146,8 @@ public class ProjectMetadataProvider {
     public static HashMap<String, Object> getAltViewMainLayoutHashMap (ViewsTemplateEngine viewsTemplateEngine) {
         HashMap<String, Object> altMap = new HashMap<>();
         altMap.put("navLink", viewsTemplateEngine.getLayout().getNavLink());
+        altMap.put("rootPath", viewsTemplateEngine.getLayout().getRootPath());
+        altMap.put("pageName", viewsTemplateEngine.getLayout().getPageName());
         altMap.put("callContent", viewsTemplateEngine.getLayout().getCallContent());
         return altMap;
     }

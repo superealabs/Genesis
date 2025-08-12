@@ -29,6 +29,8 @@ public class ViewsTemplateEngine {
         private String name;
         private String destinationPath;
         private String navLink;
+        private String rootPath;
+        private String pageName;
         private String callContent;
     }
 

@@ -6,6 +6,8 @@
     name: "_Layout"
     destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
     navLink: "asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
+    pageName: "@ViewData[\"Title\"] -"
+    rootPath: " ~/css/style.css\" asp-append-version=\"true "
     callContent: "@RenderBody()"
   list:
     modelType : |
