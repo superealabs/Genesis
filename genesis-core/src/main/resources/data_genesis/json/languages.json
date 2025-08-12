@@ -283,10 +283,10 @@
       "DECIMAL": "0.0"
     },
     "criteriaBuildSnippet": {}
-  }
-  ,{
+  },
+  {
     "id": 3,
-    "name": "Node.js",
+    "name": "Typescript",
     "extension": "ts",
     "configurations": [],
     "syntax": {

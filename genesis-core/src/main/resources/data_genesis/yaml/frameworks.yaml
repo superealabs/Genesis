@@ -1802,8 +1802,7 @@
         // Adding repositories ...
         {{#each entities}}
         builder.Services.AddScoped<I${this}Repository, ${this}Repository>();
-        {{/each}}
-        // Adding services ...
+        {{/each}}        // Adding services ...
         {{#each entities}}
         builder.Services.AddScoped<I${this}Service, ${this}Service>();
         {{/each}}
@@ -4579,3 +4578,135 @@
       artifactId: "spring-boot-starter-security"
       version: "{{removeLine}}"
       scope: "{{removeLine}}"
+
+- id: 5
+  languageId: 3
+  coreFramework: "ExpressJs"
+  name: "Express JS"
+  template: "Template"
+  useDB: true
+  withGroupId: false
+  useCloud: false
+  useEurekaServer: false
+  isGateway: false
+  additionalFiles:
+    - fileType: "Index"
+      fileName: "index"
+      extension: "ts"
+      content: |
+        import "reflect-metadata";
+        import express from "express";
+        import {AppDataSource} from "./config/dataSource";
+        import {errorHandler} from "./middlewares/error.middleware";
+        import swaggerUi from "swagger-ui-express";
+        {{#each entities}}
+        import ${this}Route from "./routes/${this}.route";
+        {{/each}}   
+        
+        const app = express();
+        app.use(express.json());
+        
+        const dotenv = require("dotenv");
+        dotenv.config();
+        
+        const port = process.env.APP_PORT || 3000;
+        
+        app.use(errorHandler);
+        
+        {{#each entities}}
+        app.use("/api", ${this}Route);
+        {{/each}}
+        
+        AppDataSource.initialize()
+        .then(()=>{
+          app.listen(port);
+        })
+        .catch((error) => console.error("Error during data source initialization", error));
+        export default app;
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src"
+    - fileType: "Data source"
+      fileName: "data-source"
+      extension: "ts"
+      content: |
+        import "reflect-metadata";
+        import {DataSource} from "typeorm";
+        import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+        
+        {{#if databaseType = PostgreSQL}}
+          export const AppDataSource =  new DataSource({
+            type: "postgres",
+            host: process.env.DB_HOST,
+            username: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_DATABASE,
+            synchronize: false,
+            logging: false,
+            namingStrategy: new SnakeNamingStrategy(),
+            entities: [
+              __dirname + "/entity/*.{ts,js}"
+            ],
+            migrations: [],
+            subscribers: [],
+          })
+        {{/if}}
+        
+        {{#if databaseType = Oracle}}
+          export const AppDataSource = new DataSource({
+            type: "oracle",
+            host: process.env.DB_HOST,
+            port: parseInt(process.env.DB_PORT ?? "1521", 10),
+            username: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            sid: process.env.DB_SID, // Oracle utilise 'sid' plutôt que 'database'
+            synchronize: false,
+            logging: false,
+            namingStrategy: new SnakeNamingStrategy(),
+            entities: [__dirname + "/entity/*.{ts,js}"],
+            migrations: [],
+            subscribers: [],
+          });
+        {{/if}}
+        {{#if databaseType = SQL Server}}
+          export const AppDataSource = new DataSource({
+            type: "mssql",
+            host: process.env.DB_HOST,
+            port: parseInt(process.env.DB_PORT ?? "1433", 10),
+            username: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_DATABASE,
+            synchronize: false,
+            logging: false,
+            namingStrategy: new SnakeNamingStrategy(),
+            entities: [__dirname + "/entity/*.{ts,js}"],
+            migrations: [],
+            subscribers: [],
+            options: {
+              encrypt: false // mettre true si Azure ou connexion sécurisée
+            }
+          });
+        {{/if}}
+        {{#if databaseType = MySQL}}
+          export const AppDataSource = new DataSource({
+            type: "mysql",
+            host: process.env.DB_HOST,
+            port: parseInt(process.env.DB_PORT ?? "3306", 10),
+            username: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_DATABASE,
+            synchronize: false,
+            logging: false,
+            namingStrategy: new SnakeNamingStrategy(),
+            entities: [__dirname + "/entity/*.{ts,js}"],
+            migrations: [],
+            subscribers: [],
+          });
+        {{/if}}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/config"  
+        
+        
+        
+
+        
+        
+
+
