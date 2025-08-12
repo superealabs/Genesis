@@ -1,0 +1,18 @@
+:root {
+  --color-primary: #4a7cb5;
+  --color-secondary: #ffffff;
+  --color-bg: #ffffff;
+  --color-text: #333;
+  --color-border: #e0e0e08c;
+  --color-active: #e6f0ff;
+
+  --spacing: 15px;
+  --radius: 10px;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('../fonts/InterTight-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}

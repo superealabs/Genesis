@@ -1,0 +1,38 @@
+/* Boutons */
+.btn-primary {
+    background: var(--color-primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+}
+.btn-secondary {
+    background: var(--color-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+}
+.btn-icon {
+    background: var(--color-secondary);
+    padding: 0.3rem;
+    border-radius: var(--radius);
+}
+
+/* Tableau */
+.table-container {
+    overflow-x: auto;
+    border-radius: var(--radius);
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+thead {
+    background: var(--color-active);
+}
+th, td {
+    padding: 0.75rem;
+}
+tr:hover {
+    background: var(--color-active);
+    opacity: 60%;
+}
+
