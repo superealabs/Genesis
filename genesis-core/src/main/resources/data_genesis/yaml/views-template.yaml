@@ -8,5 +8,29 @@
   detailTemplate: "DetailViewTemplate"
 
   templateFilesEdits: []
-  templateFiles: []
+  templateFiles:
+    - fileType: "BaseCss"
+      fileName: "base.css"
+      sourcePath: "data_genesis/templates/Template 1/assets/css/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/wwwroot/css/"
+    - fileType: "ComponentsCss"
+      fileName: "components.css"
+      sourcePath: "data_genesis/templates/Template 1/assets/css/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/wwwroot/css/"
+    - fileType: "LayoutCss"
+      fileName: "layout.css"
+      sourcePath: "data_genesis/templates/Template 1/assets/css/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/wwwroot/css/"
+    - fileType: "StyleCss"
+      fileName: "style.css"
+      sourcePath: "data_genesis/templates/Template 1/assets/css/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/wwwroot/css/"
+    - fileType: "VariablesCss"
+      fileName: "variables.css"
+      sourcePath: "data_genesis/templates/Template 1/assets/css/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/wwwroot/css/"
+    - fileType: "Font"
+      fileName: "InterTight-Regular.ttf"
+      sourcePath: "data_genesis/templates/Template 1/assets/fonts/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/wwwroot/fonts/"
   templateFolders: []

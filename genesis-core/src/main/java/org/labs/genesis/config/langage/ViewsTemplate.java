@@ -18,31 +18,11 @@ public class ViewsTemplate {
     private String formTemplate;
     private String detailTemplate;
     private List<FilesEdit> templateFilesEdits;
-    private List<TemplateFiles> templateFiles;
-    private List<TemplateFolders> templateFolders;
+    private List<Project.ProjectFiles> templateFiles;
+    private List<Project.ProjectFolders> templateFolders;
 
     @Override
     public String toString() {
         return this.name;
-    }
-
-    @Getter
-    @Setter
-    @ToString
-    public static class TemplateFiles {
-        private String fileType;
-        private String fileName;
-        private String sourcePath;
-        private String destinationPath;
-    }
-
-    @Getter
-    @Setter
-    @ToString
-    public static class TemplateFolders {
-        private String folderName;
-        private String folderType;
-        private String sourcePath;
-        private String destinationPath;
     }
 }
