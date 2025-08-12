@@ -271,7 +271,7 @@ public class ProjectGenerator {
         }
     }
 
-    public static void generateViewsTemplateEngineFiles (ProjectGenerationContext context, ViewsTemplateEngine viewsTemplateEngine) throws Exception {
+    public static void generateViewsFiles (ProjectGenerationContext context, ViewsTemplateEngine viewsTemplateEngine, ViewsTemplate viewsTemplate) throws Exception {
         HashMap<String, Object> initializeHashMap = getInitialHashMap(
                 context.getDestinationFolder(),
                 context.getProjectName(),
@@ -293,6 +293,7 @@ public class ProjectGenerator {
         );
 
         renderAndCopyFolders(viewsTemplateEngine.getTemplateEngineFolders(), initializeHashMap);
+        renderAndCopyFiles(viewsTemplate.getTemplateFiles(), initializeHashMap);
         renderFilesEdits(viewsTemplateEngine.getTemplateEngineFilesEdits(), projectFilesEditsHashMap);
     }
 
@@ -357,7 +358,7 @@ public class ProjectGenerator {
                 allEntities.addAll(views);
 
                 genesisGenerator.generateViewMainLayout(framework, frameworkOptions, language, viewsTemplate, viewsTemplateEngine, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
-                generateViewsTemplateEngineFiles(context, viewsTemplateEngine);
+                generateViewsFiles(context, viewsTemplateEngine, viewsTemplate);
 
                 for (TableMetadata tableMetadata : entities) {
                     generateBackendComponents(
