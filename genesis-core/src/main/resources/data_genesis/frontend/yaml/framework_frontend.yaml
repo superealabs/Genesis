@@ -9,100 +9,556 @@
     - fileType: "App-files"
       fileName: "app.component"
       extension: "ts"
-      content: | 
-        content0
+      content: |
+        import { Component } from '@angular/core';
+        import { RouterOutlet,RouterModule } from '@angular/router';
+        
+        import { SidebarComponent } from './shared/sidebar/sidebar.component';
+        
+        @Component({
+          selector: 'app-root',
+          standalone: true,
+          imports: [RouterOutlet,RouterModule,SidebarComponent],  
+          templateUrl: './app.component.html',
+          styleUrls: ['./app.component.css']      
+        })
+        
+        export class AppComponent {
+          title = 'first-angular-project';
+
+          entities={
+          {{tab}}{{#each entities}}{{removeLine}}
+          {{#if !this.isView}}'${formatReadable(this.className)}s': '/${toKebabCase(this.className)}s'{{/if}}
+          {{tab}}{{#if !@last  and !this.isView}},{{/if}}{{/each}}{{removeLine}}
+          } 
+          views={
+          {{tab}}{{#each entities}}{{removeLine}}
+          {{#if this.isView}}'${formatReadable(this.className)}': '/${toKebabCase(this.className)}s',{{/if}}
+          {{tab}}{{#if @last}}'end':''{{/if}}{{/each}}{{removeLine}}
+          } 
+        }
+      destinationPath: "${destinationFolder}/src/app/"
+    - fileType: "App-files"
+      fileName: "app.routes"
+      extension: "ts"
+      content: |
+        import { Routes } from '@angular/router';
+        
+        {{#each entities}}{{removeLine}}
+        import { ${minStart(this.className)}Routes } from './features/${toKebabCase(this.className)}/${toKebabCase(this.className)}.routes'
+        {{/each}}{{removeLine}}
+      
+        export const routes: Routes = [
+          {{#each entities}}{{removeLine}}
+          ...${minStart(this.className)}Routes
+          {{#if !@last}},{{/if}}{{/each}}{{removeLine}}
+        ];
       destinationPath: "${destinationFolder}/src/app/"
     - fileType: "App-files"
       fileName: "app.component"
       extension: "html"
       content: |
-        content1
+        <div class="app-layout">
+          <app-sidebar [entities]="entities" [views]="views"></app-sidebar>
+            <div class="main-content">
+              <router-outlet></router-outlet>
+            </div>
+        </div>
       destinationPath: "${destinationFolder}/src/app/"
     - fileType: "App-files"
       fileName: "app.component"
       extension: "css"
       content: |
-        content2
+        .app-layout {
+          display: flex;
+          height: 100vh;
+          font-family: sans-serif;
+        }
+
+        app-sidebar {
+          width: 220px;
+          flex-shrink: 0;
+          border-right: 1px solid #e5e7eb;
+          background-color: #fff;
+          height: 100vh;
+          padding: 1rem;
+        }
+
+        .main-content {
+          flex-grow: 1;
+          padding: 0.5rem 2rem 2rem 2rem;
+          background-color: #f9fafb;
+          overflow-y: auto;
+
+        }
       destinationPath: "${destinationFolder}/src/app/"
+    - fileType: "Environment-file"
+      fileName: "environment"
+      extension: "ts"
+      content: |
+          export const environment = {
+          {{tab}}production: false,
+          {{tab}}apiUrl: 'http://localhost:8070/${toKebabCase(projectName)}'
+          };
+      destinationPath: "${destinationFolder}/src/environments/"
+    - fileType: "Environment-file"
+      fileName: "environment.prod"
+      extension: "ts"
+      content: |
+        export const environment = {
+        {{tab}}production: true,
+        {{tab}}apiUrl: 'http://localhost:8070/${toKebabCase(projectName)}'
+        };
+      destinationPath: "${destinationFolder}/src/environments/"
+    - fileType: "Utilities"
+      fileName: "utilities"
+      extension: "ts"
+      content: |
+        import Swal from 'sweetalert2';
+
+
+        export function warnMeUp(title:string,text:string,color:string='#ff0000',icon: 'success' | 'error' | 'warning' | 'info' | 'question' = 'error')
+          {
+            Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            confirmButtonText: 'close',
+            confirmButtonColor: color
+          });
+          }
+        export function recursiveObjectsTo2DArray(data: Record<string, any>[]): any[][] {
+          if (data.length === 0) return [];
+        
+          const allKeys: string[] = [];
+          for (let i = 0; i < data.length; i++) {
+            const obj = data[i];
+            for (const key in obj) {
+              if (!allKeys.includes(key)) {
+                allKeys.push(key);
+              }
+            }
+          }
+          const result: any[][] = [];
+          for (let i = 0; i < data.length; i++) {
+            const row: any[] = [];
+            const obj = data[i];
+          
+            for (let j = 0; j < allKeys.length; j++) {
+              const key = allKeys[j];
+              const value = obj[key];
+              row.push(extractSecondValueIfObject(value));
+            }
+            result.push(row);
+          }
+          return result;
+        }
+        
+        function extractSecondValueIfObject(value: any): any {
+            if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+            const values = Object.values(value);
+            return values.length >= 2 ? values[1] : values[0];
+          }
+          return value;
+        }
+
+        
+        export  function expandDotNotation(flatObj: Record<string, any>): any {
+          const result: any = {};
+
+          for (const key in flatObj) {
+            if (!flatObj.hasOwnProperty(key)) continue;
+
+            const value = flatObj[key];
+            const keys = key.split('.');
+            let current = result;
+
+            keys.forEach((part, index) => {
+              if (index === keys.length - 1) {
+                current[part] = value;
+              } else {
+                if (!current[part]) current[part] = {};
+                current = current[part];
+              }
+            });
+          }
+
+          return result;
+        }
+        export function cleanObject<T>(obj: Partial<T>): Partial<T> {
+          if (typeof obj !== 'object' || obj === null) {
+            return obj;
+          }
+
+          const entries = Object.entries(obj)
+            .map(([key, value]) => {
+              if (value && typeof value === 'object' && !Array.isArray(value)) {
+                const cleanedValue = cleanObject(value);
+                if (Object.keys(cleanedValue).length === 0) {
+                  return null;
+                }
+                return [key, cleanedValue];
+              }
+              if (value !== '' && value !== undefined && value !== null) {
+                return [key, value];
+              }
+              return null;
+            })
+            .filter((entry): entry is [string, any] => entry !== null);
+
+          return Object.fromEntries(entries) as Partial<T>;
+        }
+      destinationPath: "${destinationFolder}/src/utilities/"
   components:
     - componentType: "list"
       generateForView: true
       router:
-        link: "/${minPluralize(EntityName)}"
-        label: "${majStart(EntityName)}"
+        link: "/${toKebabCase(className)}s"
+        label: "${formatReadable(classNameLink)}"
       importFile: |
-        allImport
-      selector: "app-${toKebabCase(EntityName)}-list"
+        import { Component, OnInit, OnDestroy } from '@angular/core';
+        import { CommonModule } from '@angular/common';
+        import { HttpClientModule } from '@angular/common/http';
+        import { takeUntil } from 'rxjs/operators';
+        import { Subject ,forkJoin} from 'rxjs';
+        
+        import { expandDotNotation,recursiveObjectsTo2DArray,warnMeUp } from '../../../../utilities/utilities';
+        
+        import { DynamicSearchFormComponent, SearchField } from '../../../shared/dynamic-search-form/dynamic-search-form.component';
+        import { TableauComponent } from '../../../shared/tableau/tableau.component';
+        import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+        import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+        import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
+        
+        import { ${className} } from '../models/${toKebabCase(className)}.model'
+        import { ${className}Service } from '../services/${toKebabCase(className)}.service'
+        
+        {{#each fieldsFK}}
+        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
+        import {${toPascalCase(this.type)}Service} from '../../${toKebabCase(this.type)}/services/${toKebabCase(this.type)}.service'
+        {{/each}}
+      selector: "app-${toKebabCase(className)}-list"
       standalone: true
-      importComponent: |
-        allImport
-      template: |
-        templateURL
-      style: |
-        styleURL
+      importComponent: "[CommonModule, HttpClientModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent,PageHeaderComponent,LoadingIconComponent]"
+      template: "./${toKebabCase(className)}-list.component.html"
+      style: "./${toKebabCase(className)}-list.component.css"
       export: |
-        export
-      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-list"
-      componentName: "${toKebabCase(EntityName)}-list.component"
+        export class ${majStart(className)}ListComponent implements OnInit, OnDestroy {
+            
+            private destroy$ = new Subject<void>();
+            
+            data:any[][]=[];
+        
+            columns =[{{#each fields}}{{#if this.isNotForeignKey}}'${formatReadable(this.name)}'{{elseIf this.isForeignKey}}'${formatReadable(this.type)}'{{/if}}{{#if !@last}},{{/if}}{{/each}}];
+        
+            ${minStart(className)}s: ${majStart(className)}[] = [];
+            
+            {{#each fieldsFK}}{{removeLine}}
+            ${minStart(this.type)}s: ${majStart(this.type)}[] = []; 
+            {{/each}}{{removeLine}}
+            
+            totalItems: number = 1000;
+            currentPage: number=1;
+            itemNumber: number=10;
+        
+            formValueAttribute: Record<string, any> = {};
+            isLoading: boolean = false;
+        
+            searchFields: SearchField[] = [
+            {{tab}}{{tab}}{{#each fieldsFK}}
+                {
+                  key: '${this.name}.${this.referencedColumn}',
+                  label: '${this.type}',
+                  type: 'select',
+                  options: []
+                },
+            {{tab}}{{tab}}{{/each}}{{removeLine}}
+            {{tab}}{{tab}}{{#each fieldsNotFK}}
+                {{#if this.isPrimaryKey}}
+                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isText}}
+                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isNumeric }}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'number' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'number' }{{elseIf this.isDate }}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' }{{/if}}
+            {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
+            ];
+            
+            onPageRangeChange(page:number): void {
+                  this.currentPage =page;
+                  this.onSearch(this.formValueAttribute);
+            }
+        
+            onSearch(formValue: any): void {
+              this.formValueAttribute=formValue
+              const mappedValue = expandDotNotation(formValue);
+              this.load${majStart(className)}s(mappedValue);
+            }
+             
+             constructor(
+                {{#each fieldsFK}}{{removeLine}}
+                 private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
+                {{/each}}{{removeLine}}
+                private ${minStart(className)}Service: ${majStart(className)}Service
+             ) {}
+        
+            load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {}): void {
+                this.isLoading = true;
+                this.${minStart(className)}Service.search${majStart(className)}s(criteria, this.currentPage-1, this.itemNumber).pipe(takeUntil(this.destroy$)).subscribe({
+                next: (${minStart(className)}s: ${majStart(className)}[]) => {
+                        this.${minStart(className)}s = ${minStart(className)}s;
+                        this.data=recursiveObjectsTo2DArray(${minStart(className)}s);
+                        this.isLoading = false;
+              },
+                error: (err) => {
+                  console.error('error while searching data :', err);
+                  warnMeUp('error','error while fetching data');
+                  this.isLoading = false;
+              }
+              });
+            }
+            {{#if !isView}}{{removeLine}}
+            delete${majStart(className)} = (line: any[]) => {
+              const id = line[0];
+              this.${minStart(className)}Service.delete${majStart(className)}ById(id.toString()).pipe(takeUntil(this.destroy$)).subscribe({
+                  next: () => {
+                      this.data = this.data.filter(d => d[0] !== id);
+                      this.${minStart(className)}s = this.${minStart(className)}s.filter(c => c.{{#each fieldsPK}}${this.name}{{/each}} !== id);
+                      warnMeUp('success','line of data deleted successfully','#28a745','success')  
+                  },
+                    error: (err) => {
+                      console.error('error while deleting data :', err);
+                      warnMeUp('error','error while deleting data');
+                  }
+                });
+            }
+            {{/if}}
+            
+            {{#if containsForeignKey}}
+            ngOnInit(): void {
+                  this.load${majStart(className)}s();
+                  this.isLoading = true;
+                  forkJoin([
+                      {{#each fieldsFK}}{{removeLine}}
+                      this.${minStart(this.type)}Service.get${majStart(this.type)}s(),
+                      {{/each}}{{removeLine}}
+                  ]).pipe(takeUntil(this.destroy$)).subscribe({
+                      next: ([{{#each fieldsFK}}${minStart(this.type)}s,{{/each}}]) => {
+                          {{#each fieldsFK}}
+                          this.${minStart(this.type)}s = ${minStart(this.type)}s;
+                          const ${minStart(this.type)}Field = this.searchFields.find(f => f.key === '${this.name}.${this.referencedColumn}');
+                          if (${minStart(this.type)}Field) {
+                            ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: d.${this.referencedColumn},label: entries[1][1]};}); 
+                          }
+                          {{/each}}
+                          this.isLoading = false;
+                      },
+                      error: (err) => {
+                          console.error('Error loading sales and products:', err);
+                          warnMeUp('error','error while collecting sales-items');
+                          this.isLoading = false;
+                      }
+                  });
+            }
+            {{else}}{{removeLine}}
+            ngOnInit(): void {
+                  this.load${majStart(className)}s();
+            }
+            {{/if}}{{removeLine}}
+            
+            ngOnDestroy() {
+                this.destroy$.next();
+                this.destroy$.complete();
+            } 
+        
+        }
+      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
+      componentName: "${toKebabCase(className)}-list.component"
       componentAdditionalFiles:
         - fileType: "html template"
-          fileName: "${toKebabCase(EntityName)}-list.component"
+          fileName: "${toKebabCase(className)}-list.component"
           extension: "html"
           content: |
-            content1
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-list"
+            <app-page-header name="${formatReadable(classNameLink)}" [isView]=${isView}></app-page-header>
+            <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)"></app-dynamic-search-form>
+            <br>
+            <app-tableau [colonnes]="columns" [donnees]="data" {{#if !isView}}[deleteFn]="delete${majStart(className)}"{{/if}} [isView]=${isView}></app-tableau>
+            <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
+            <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="itemNumber" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
         - fileType: "css template"
-          fileName: "${toKebabCase(EntityName)}-list.component"
+          fileName: "${toKebabCase(className)}-list.component"
           extension: "css"
           content: |
-            content2
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-list"
+            {{newline}}
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
+        - fileType: "Entity Routes"
+          fileName: "${toKebabCase(className)}.routes"
+          extension: "ts"
+          content: |
+            import { Routes } from '@angular/router';
+            export const ${minStart(className)}Routes: Routes = [
+              {
+              path: '${toKebabCase(className)}s',
+              loadComponent: () => import('./${toKebabCase(className)}-list/${toKebabCase(className)}-list.component').then(m => m.${majStart(className)}ListComponent )
+            }{{#if !isView}},
+              {
+                path: 'add-${toKebabCase(className)}',
+                loadComponent: () => import('./${toKebabCase(className)}-form/${toKebabCase(className)}-form.component').then(m => m.${majStart(className)}FormComponent)
+              }{{/if}}
+            ];
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}"
     - componentType: "form"
       router:
-        link: "/${minPluralize(EntityName)}"
-        label: "${majStart(EntityName)}"
+        link: " "
+        label: " "
       importFile: |
-        allImport
-      selector: "app-${toKebabCase(EntityName)}-form"
-      generateForView: true
+        import { Component, OnInit } from '@angular/core';
+        import { HttpClientModule } from '@angular/common/http';
+      selector: "app-${toKebabCase(className)}-form"
+      generateForView: false
       standalone: true
-      importComponent: |
-        allImport
-      template: |
-        templateURL
-      style: |
-        styleURL
+      importComponent: "[HttpClientModule]"
+      template: "./${toKebabCase(className)}-form.component.html"
+      style: "./${toKebabCase(className)}-form.component.css"
       export: |
-        export
-      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-form"
-      componentName: "${toKebabCase(EntityName)}-form.component"
+        export class ${majStart(className)}FormComponent{}
+      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
+      componentName: "${toKebabCase(className)}-form.component"
       componentAdditionalFiles:
         - fileType: "html template"
-          fileName: "${toKebabCase(EntityName)}-form.component"
+          fileName: "${toKebabCase(className)}-form.component"
           extension: "html"
           content: |
-            content1
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-form"
+            {{newline}}
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
         - fileType: "css template"
-          fileName: "${toKebabCase(EntityName)}-form.component"
+          fileName: "${toKebabCase(className)}-form.component"
           extension: "css"
           content: |
-            content2
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/${toKebabCase(EntityName)}-form"
+            {{newline}}
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
   serviceComponent:
     imports: |
-       importService
+      import { Injectable } from '@angular/core';
+      import { HttpClient, HttpParams  } from '@angular/common/http';
+      import { Observable, catchError, throwError, map,of } from 'rxjs';
+      import { cleanObject } from '../../../../utilities/utilities';
+      import { environment } from '../../../../environments/environment';
+      import { ${majStart(className)}ListDTO,${majStart(className)}DTO,${majStart(className)} } from '../models/${toKebabCase(className)}.model'
     methods: |
-      methodService
-    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/services"
-    name: "${toKebabCase(EntityName)}.service"
+      export class ${majStart(className)}Service{
+      {{tab}}private readonly apiUrl = environment.apiUrl+'/${lowerCase(classNameLink)}';
+      {{tab}}constructor(private http: HttpClient) {}
+      
+        search${majStart(classNameLink)}(
+            criteria: Partial<${majStart(className)}>,
+            page: number = 0,
+            size: number = 10,
+            sortParam: string = '{{#each fieldsPK}}${this.name},asc;{{/each}}'
+          ): Observable<${majStart(className)}[]> {
+            const cleanedCriteria = cleanObject(criteria);
+            const url = this.apiUrl+'/search';
+      
+            const params = new HttpParams()
+            .set('page', page.toString())
+            .set('size', size.toString())
+            .set('sortParam', sortParam);
+      
+            return this.http.post<${majStart(className)}ListDTO>(url, cleanedCriteria, { params }).pipe(
+              map((response) => response.data?.content ?? []),
+              catchError(err => {
+                const isNotFound = err.status === 404 ;
+                if (isNotFound) {
+                  return of([]);
+                }
+                else{
+                  console.error('Error while searching ${lowerCase(classNameLink)}', err);
+                  return throwError(() => err);
+                }
+              })
+            );
+        }
+      {{#if !isView}}{{removeLine}}
+        delete${majStart(className)}ById(id: string): Observable<void> {
+          const url = this.apiUrl+'/'+id;
+          return this.http.delete<void>(url).pipe(
+            catchError(err => {
+            console.error('Error while deleting ${majStart(className)} with id: '+id, err);
+                    return throwError(() => err);})
+          );
+        }
+      {{/if}}{{removeLine}}
+      
+      {{tab}}get${majStart(className)}ById(id: string): Observable<${majStart(className)}> {
+      {{tab}}{{tab}}const url = this.apiUrl+'/'+id;
+      {{tab}}{{tab}}return this.http.get<${majStart(className)}DTO>(url).pipe(
+      {{tab}}{{tab}}{{tab}}map((response) => response.data ?? []),
+      {{tab}}{{tab}}{{tab}}catchError(err => {
+      {{tab}}{{tab}}{{tab}}{{tab}}console.error(`Error while collecting data of ${majStart(className)} with id: ${id}`, err);
+      {{tab}}{{tab}}{{tab}}{{tab}}return throwError(() => new Error('API calling error'));
+      {{tab}}{{tab}}{{tab}}})
+      {{tab}}{{tab}});
+      {{tab}}}
+      
+      {{tab}}get${majStart(className)}s(page: number = 0,size: number = 1000,sortParam: string = '{{#each fieldsPK}}${this.name},asc;{{/each}}'): Observable<${majStart(className)}[]> {
+      {{tab}}{{tab}}const params = new HttpParams()
+      {{tab}}{{tab}}{{tab}}.set('page', page.toString())
+      {{tab}}{{tab}}{{tab}}.set('size', size.toString())
+      {{tab}}{{tab}}{{tab}}.set('sortParam', sortParam);
+      {{tab}}{{tab}}return this.http.get<${majStart(className)}ListDTO>(this.apiUrl, { params }).pipe(
+      {{tab}}{{tab}}{{tab}}map(response => response.data?.content ?? []),
+      {{tab}}{{tab}}{{tab}}catchError(err => {
+      {{tab}}{{tab}}{{tab}}{{tab}}const isNotFound = err.status === 404 ;
+      {{tab}}{{tab}}{{tab}}{{tab}}if (isNotFound) {
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}return of([]);
+      {{tab}}{{tab}}{{tab}}{{tab}}} else {
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}console.error('Error while collecting  ${lowerCase(classNameLink)}', err);
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}return throwError(() => err);
+      {{tab}}{{tab}}{{tab}}{{tab}}}
+      {{tab}}{{tab}}{{tab}}})
+      {{tab}}{{tab}});
+      {{tab}}}
+      }
+    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/services"
+    name: "${toKebabCase(className)}.service"
   modelComponent:
     imports: |
-      importsComponents
+      {{#each fieldsFK}}
+        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
+      {{/each}}
     exports : |
-      exportsComponents
-    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(EntityName)}/models"
-    name: "${toKebabCase(EntityName)}.model"
+      export interface ${majStart(className)}
+      {
+      {{tab}}{{#each fields}}
+      {{tab}}{{#if this.isForeignKey}}${this.name}: ${toPascalCase(this.type)}{{else}}
+      {{tab}}${this.name}: ${this.typeBase}{{/if}}
+      {{tab}}{{/each}}{{removeLine}}
+      }
+      
+      export interface ${majStart(className)}DTO{
+      {{tab}}status: number;
+      {{tab}}message: string;
+      {{tab}}returnCode: number;
+      {{tab}}data: ${majStart(className)};
+      {{tab}}timestamp: string;
+      }
+      
+      export interface ${majStart(className)}ListDTO{
+      {{tab}}status: number;
+      {{tab}}message: string;
+      {{tab}}returnCode: number;
+      {{tab}}data: {
+      {{tab}}{{tab}}content: ${majStart(className)}[];
+      {{tab}}{{tab}}page: {
+      {{tab}}{{tab}}{{tab}}size: number;
+      {{tab}}{{tab}}{{tab}}number: number;
+      {{tab}}{{tab}}{{tab}}totalElements: number;
+      {{tab}}{{tab}}{{tab}}totalPages: number;
+      {{tab}}{{tab}}};
+      {{tab}}};
+      {{tab}}timestamp: string;
+      }
+    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/models"
+    name: "${toKebabCase(className)}.model"
 
 - id: 2
   languageId: 1
