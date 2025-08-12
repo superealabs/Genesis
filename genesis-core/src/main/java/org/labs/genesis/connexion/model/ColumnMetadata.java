@@ -20,6 +20,7 @@ public class ColumnMetadata {
     private String name;
     private String type;
     private String frontEndType;
+    private String uiType;
     private String frontEndReferencedColumnType;
     private String databaseColumnType;
     private boolean primary;
@@ -42,11 +43,17 @@ public class ColumnMetadata {
     public void setFrontEndType(FrontendLanguage frontendLanguage, Database database)
     {
         this.frontEndType = frontendLanguage.getTypes().get(database.getTypes().get(columnType));
+        setUiType(frontendLanguage);
     }
 
     public void setFrontEndReferencedColumnType(FrontendLanguage frontendLanguage, Database database)
     {
         this.frontEndReferencedColumnType = frontendLanguage.getTypes().get(database.getTypes().get(databaseColumnType));
+    }
+
+    public void setUiType(FrontendLanguage frontendLanguage)
+    {
+        this.uiType = frontendLanguage.getInputTypes().get(this.getFrontEndType());
     }
 
     public void setNullable(String nullable, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {

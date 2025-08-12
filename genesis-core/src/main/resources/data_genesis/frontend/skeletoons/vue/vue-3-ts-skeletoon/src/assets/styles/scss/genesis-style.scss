@@ -1,32 +1,70 @@
-$primary: #899ED4;
+$primary: #537cc2;
 $secondary: rgba(83, 124, 194, 0.15);
 $dark: #404040;
-$muted: rgba(64, 64, 64, 0.25);
-$font-family-base: 'Segoe UI', sans-serif;
-$light: #FCFCFC;
+$light: #fcfcfc;
+$gray: rgba(64, 64, 64, 0.6);
 
-
-// Import Bootstrap
-*{
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-    font-weight: 500;
+* {
+  font-weight: 500;
 }
-@import "bootstrap/scss/bootstrap";
 
+// Surcharge personnalisée
+
+// Import Bootstrap **après** tes variables
+@import "bootstrap/scss/bootstrap";
+.text-muted {
+  color: $gray !important;
+}
+
+.bg-secondary {
+  background-color: $secondary !important;
+}
+
+.table thead th {
+  background-color: $secondary !important;
+  color: $dark !important;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+  padding: 0.75rem !important;
+}
 
 #sidebar .nav-link.router-link-exact-active {
   background-color: $secondary;
   border-radius: 0.25rem;
 }
 
-.nav > .nav {
-    margin-left: 1rem;
+.nav-link {
+  color: $dark;
 }
-.page-link.active, .active > .page-link{
-  background-color: #537CC226;
+.nav-link:hover,
+.nav-link:focus {
+  color: $primary;
 }
-.bg-secondary {
-  background-color: #537CC226;
+
+.router-link-active {
+  color: $primary;
+  position: relative;
 }
+.router-link-active::before {
+  background-color: $primary;
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: -24px;
+  height: 120%;
+  width: 20px;
+  border-radius: 20%;
+}
+
+// .nav > .nav {
+//   margin-left: 1rem;
+// }
+// .page-link.active,
+// .active > .page-link {
+//   background-color: #537cc226;
+// }

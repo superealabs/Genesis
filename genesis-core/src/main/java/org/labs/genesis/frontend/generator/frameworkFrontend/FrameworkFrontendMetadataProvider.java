@@ -29,7 +29,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("fields", getFieldsList(tableMetadata));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
-        metadata.put("EntityName",tableMetadata.getTableName());
+        metadata.put("EntityName",tableMetadata.getClassName());
         metadata.put("isView",tableMetadata.getIsView());
 
         metadata.putAll(getHashMapComponentSavePath(destinationFolder, projectName, tableMetadata));
@@ -44,7 +44,7 @@ public class FrameworkFrontendMetadataProvider {
 
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName",projectName);
-        metadata.put("EntityName",tableMetadata.getTableName());
+        metadata.put("EntityName",tableMetadata.getClassName());
         return metadata;
     }
 
@@ -80,6 +80,7 @@ public class FrameworkFrontendMetadataProvider {
         Map<String, Object> fieldMap = new HashMap<>();
 
         fieldMap.put("typeBase", field.getFrontEndType());
+        fieldMap.put("uiType", field.getUiType());
         fieldMap.put("type",field.getType());
         fieldMap.put("name", field.getName());
         fieldMap.put("isPrimaryKey", field.isPrimary());
@@ -134,10 +135,12 @@ public class FrameworkFrontendMetadataProvider {
         return data;
     }
 
-    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework){
+    public  static HashMap<String, Object> getGlobalComponentsHashMap(ProjectGenerationContext context){
+        FrontendFramework frontendFramework = context.getFrontendFramework();
         HashMap<String, Object> data = new HashMap<>();
         data.put("routes",getRoutesHashMap(frontendFramework));
 //        data.put("components", frontendFramework.getComponents());
+        data.putAll(getWebappHashMap(context));
         return  data;
     }
 

@@ -2,7 +2,7 @@
   {
     "id": 1,
     "name": "Typescript",
-    "extension":"ts",
+    "extension": "ts",
     "types": {
       "int": "number",
       "int identity": "number",
@@ -90,6 +90,17 @@
       "list[string]": "string[]",
       "integer[]": "number[]",
       "text[]": "string[]"
+    },
+    "inputTypes": {
+      "number": "number",
+      "string": "text",
+      "boolean": "checkbox",
+      "Date": "date",
+      "string[]": "text",
+      "number[]": "number",
+      "Uint8Array": "file",
+      "any": "text",
+      "Date[]": "date"
     }
   }
 ]
