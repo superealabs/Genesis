@@ -204,9 +204,11 @@
         link: "/${toKebabCase(className)}s"
         label: "${formatReadable(classNameLink)}"
       importFile: |
-        import { Component, OnInit } from '@angular/core';
+        import { Component, OnInit, OnDestroy } from '@angular/core';
         import { CommonModule } from '@angular/common';
         import { HttpClientModule } from '@angular/common/http';
+        import { takeUntil } from 'rxjs/operators';
+        import { Subject } from 'rxjs';
         
         import { expandDotNotation,recursiveObjectsTo2DArray } from '../../../../utilities/utilities';
         
@@ -228,7 +230,9 @@
       template: "./${toKebabCase(className)}-list.component.html"
       style: "./${toKebabCase(className)}-list.component.css"
       export: |
-        export class ${majStart(className)}ListComponent implements OnInit {
+        export class ${majStart(className)}ListComponent implements OnInit, OnDestroy {
+            
+            private destroy$ = new Subject<void>();
             
             data:any[][]=[];
         
@@ -280,7 +284,11 @@
                   {{#each fieldsFK}}{{removeLine}}
                   this.load${majStart(this.type)}s()
                   {{/each}}{{removeLine}}
-             } 
+             }
+             ngOnDestroy() {
+                this.destroy$.next();
+                this.destroy$.complete();
+            } 
              constructor(
                 {{#each fieldsFK}}{{removeLine}}
                  private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
@@ -289,7 +297,7 @@
              ) {}
         
             load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {}): void {
-                this.${minStart(className)}Service.search${majStart(className)}s(criteria, this.currentPage-1, this.itemNumber).subscribe({
+                this.${minStart(className)}Service.search${majStart(className)}s(criteria, this.currentPage-1, this.itemNumber).pipe(takeUntil(this.destroy$)).subscribe({
                 next: (${minStart(className)}s: ${majStart(className)}[]) => {
                         this.${minStart(className)}s = ${minStart(className)}s;
                         this.data=recursiveObjectsTo2DArray(${minStart(className)}s);  
@@ -300,10 +308,25 @@
               }
               });
             }
+            {{#if !isView}}{{removeLine}}
+            delete${majStart(className)} = (line: any[]) => {
+              const id = line[0];
+              this.${minStart(className)}Service.delete${majStart(className)}ById(id.toString()).pipe(takeUntil(this.destroy$)).subscribe({
+                  next: () => {
+                      this.data = this.data.filter(d => d[0] !== id);
+                      this.${minStart(className)}s = this.${minStart(className)}s.filter(c => c.{{#each fieldsPK}}${this.name}{{/each}} !== id);
+                  },
+                    error: (err) => {
+                      console.error('error while deleting data :', err);
+                      alert('error while deleting data.');
+                  }
+                });
+            }
+            {{/if}}
             
             {{#each fieldsFK}}{{removeLine}}
             load${majStart(this.type)}s(): void {
-                this.${minStart(this.type)}Service.get${majStart(this.type)}s().subscribe({
+                this.${minStart(this.type)}Service.get${majStart(this.type)}s().pipe(takeUntil(this.destroy$)).subscribe({
                 next: (response) => {
                   this.${minStart(this.type)}s = response;
                   const ${minStart(this.type)}Field = this.searchFields.find(f => f.key === '${this.name}.${this.referencedColumn}');
@@ -328,7 +351,7 @@
             <app-page-header name="${formatReadable(classNameLink)}" [isView]=${isView}></app-page-header>
             <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)"></app-dynamic-search-form>
             <br>
-            <app-tableau [colonnes]="columns" [donnees]="data" [isView]=${isView}></app-tableau>
+            <app-tableau [colonnes]="columns" [donnees]="data" {{#if !isView}}[deleteFn]="delete${majStart(className)}"{{/if}} [isView]=${isView}></app-tableau>
             <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="itemNumber" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
         - fileType: "css template"
@@ -424,7 +447,16 @@
               })
             );
         }
-      
+      {{#if !isView}}{{removeLine}}
+        delete${majStart(className)}ById(id: string): Observable<void> {
+          const url = this.apiUrl+'/'+id;
+          return this.http.delete<void>(url).pipe(
+            catchError(err => {
+            console.error('Error while deleting ${majStart(className)} with id: '+id, err);
+                    return throwError(() => err);})
+          );
+        }
+      {{/if}}{{removeLine}}
       
       {{tab}}get${majStart(className)}ById(id: string): Observable<${majStart(className)}> {
       {{tab}}{{tab}}const url = this.apiUrl+'/'+id;
