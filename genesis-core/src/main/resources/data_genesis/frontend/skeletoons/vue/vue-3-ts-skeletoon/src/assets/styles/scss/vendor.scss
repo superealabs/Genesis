@@ -1,9 +1,8 @@
 // 1. Import Bootstrap variables first (needed for BootstrapVue)
-@import 'bootstrap/scss/functions';
-@import 'bootstrap/scss/variables';
-@import 'bootstrap/scss/mixins';
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/mixins";
 
-@import 'bootswatch/dist/cosmo/variables';
-@import 'bootstrap/scss/bootstrap';
-@import 'bootswatch/dist/cosmo/bootswatch';
-
+@import "bootswatch/dist/cosmo/variables";
+@import "bootstrap/scss/bootstrap";
+@import "bootswatch/dist/cosmo/bootswatch";

@@ -568,6 +568,14 @@
   initPath: "vue/vue-3-ts-skeletoon"
   componentExtension: "vue"
   additionalFiles:
+    - fileType: "Env File"
+      fileName: "{{removeLine}}"
+      extension: "env"
+      content: |
+        VUE_APP_API_URL=http://localhost:8080/${lowerCase(projectName)}
+        VUE_APP_PORT=9000
+      destinationPath: "${destinationFolder}"
+
     - fileType: "App-Vue"
       fileName: "App"
       extension: "vue"
@@ -621,247 +629,404 @@
 
         export default router;
       destinationPath: "${destinationFolder}/src/router"
-    - fileType: "Genesis Sidebar"
-      fileName: "GenesisSidebar"
-      extension: "vue"
+
+    - fileType: "Navigation Store"
+      fileName: "useNavigationsStore"
+      extension: "ts"
       content: |
-        <template>
-          <!-- Sidebar -->
-          <nav
-          id="sidebar"
-          class="d-flex flex-column bg-light border-end py-4 px-2 vh-100 shadow-sm"
-          style="width: 250px; min-width: 250px"
-          >
-          <h3 class="px-3 nav-brand">
-          <span class="text-dark">Genesis</span
-          ><span class="text-primary">App</span>
-          </h3>
-          <ul class="nav flex-column flex-grow-1">
-          <li class="nav-item">
-          <span class="nav-group-title nav-link text-muted text-uppercase">
-          core
-          </span>
-          </li>
-          <ul class="nav flex-column">
-          <li class="nav-item">
-          <router-link class="nav-link text-dark" to="/">Home</router-link>
-          </li>
-          </ul>
-          <li class="nav-item">
-          <span class="nav-group-title nav-link text-muted text-uppercase">
-          entities
-          </span>
-          </li>
-          <ul class="nav flex-column">
-          {{#each routes}}
-            <li class="nav-item">
-              <router-link class="nav-link text-dark" to="${this.routerLink}">
-                ${this.routerLabel}
-              </router-link>
-            </li>
-          {{/each}}
-          </ul>
-          <li class="nav-item">
-          <span class="nav-group-title nav-link text-muted text-uppercase">
-          views
-          </span>
-          </li>
-          </ul>
-          <UserNavProfile name="John Doe" />
-          </nav>
-        </template>
-          
-        <script lang="ts" src="./GenesisSidebarComponent.ts"></script>
-          
-        <style scoped>
-        .nav-group-title {
-          font-size: 14px;
-        }
-        </style>
-      destinationPath: "${destinationFolder}/src/core/navbar"
+        import { defineStore } from "pinia";
+        
+        export const useNavigationsStore = defineStore("navigations", {
+        state: () => ({
+          navigations: [
+            // CORE NAVIGATION
+            {
+              sectionName: "Core",
+              navChilds: [
+                {
+                  navLink: "/",
+                  navTitle: "Home",
+                },
+              ],
+            },
+            // ENTITITES NAVIGATION
+            {
+              sectionName: "Entities",
+              navChilds: [
+              {{#each routes}}
+                {
+                  navTitle: "${this.routerLabel}",
+                  navLink: "${this.routerLink}",
+                },
+              {{/each}}
+              ],
+            },
+            // VIEWS NAVIGATION
+        
+              // SETTINGS NAVIGATION
+          ],
+        }),
+        actions: {},
+        });
+      destinationPath: "${destinationFolder}/src/store"
   components:
     - componentType: "List Entity Component"
+      generateForView: true
       router :
         link: ""
         label: ""
       componentName: "${majStart(EntityName)}List"
       importFile: |
-        import GenesisButton from "@/core/button/GenesisButton.vue";
-        import { ${majStart(EntityName)} } from "@/shared/models/${majStart(EntityName)}Model";
         import { defineComponent, PropType } from "vue";
+        import ${majStart(EntityName)}Row from "./${majStart(EntityName)}Row.vue";
+        import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
       selector: "${majStart(EntityName)}List"
       standalone: true
       importComponent: |
-        components: { GenesisButton }
+        components: { ${majStart(EntityName)}Row }
       template: |
         <template>
           <table class="table align-middle table-rounded text-nowrap">
             <thead class="table-light">
               <tr>
                 {{#each fields}}
-                <th >${majStart(this.columnName)}</th>
+                <th >${formatReadable(this.name)}</th>
                 {{/each}}
-                <th class="text-end">Actions</th>
+                <th scope="col" class="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="${minStart(EntityName)} in ${minPluralize(EntityName)}" :key="${minStart(EntityName)}.id" class="border-bottom">
-                {{#each fields}}
-                <td>{{ ${minStart(EntityName)}.${minStart(this.columnName)} }}</td>
-                {{/each}}
-                <td class="text-end">
-                  <div class="d-inline-flex gap-2">
-                  <GenesisButton icon="fas fa-eye" class="btn-light shadow-sm" />
-                  <GenesisButton icon="fas fa-edit" class="btn-light shadow-sm" />
-                  <GenesisButton icon="fas fa-trash" class="btn-light shadow-sm" />
-                  </div>
+              <tr v-if="loading" class="py-4 text-center">
+                <td colspan="10" class="text-muted text-center py-4">
+                  <span>Loading...</span>
                 </td>
               </tr>
+            
+              <tr v-else-if="message">
+                <td colspan="10" class="text-muted text-center py-4">
+                  {{ message }}
+                </td>
+              </tr>
+              <${majStart(EntityName)}Row
+                v-else
+                v-for="${minStart(EntityName)} in data"
+                :key="${minStart(EntityName)}.id"
+                :${minStart(EntityName)}="${minStart(EntityName)}"
+              >
+              </${majStart(EntityName)}Row>
             </tbody>
           </table>
         </template>
       style: |
-        <style scoped>
-        .table thead th {
-          background-color: #537cc226;
-          color: #4e4e4e;
-          font-weight: 600;
-          vertical-align: middle;
-          border-bottom: 2px solid #dee2e6;
-        }
-
-        .table td,
-        .table th {
-          vertical-align: middle;
-          padding: 0.75rem;
-        }
-
-        .btn-light {
-          border-radius: 0.5rem;
-          transition: background 0.2s ease-in-out;
-        }
-
-        .btn-light:hover {
-          background-color: #f1f3f5;
-        }
-        </style>
+        <style scoped></style>
       export: |
         props: {
-          ${minPluralize(EntityName)}: {
-          {{tab}} required: true,
-          {{tab}} type: Array as PropType<${majStart(EntityName)}[]>,
+          data: {
+            required: true,
+            type: Array as PropType<${majStart(EntityName)}[]>,
+          },
+          message: {
+            required: false,
+            type: String,
+          },
+          loading: {
+            type: Boolean,
+            required: false,
+            defauld: false,
           },
         },
-        setup(props) {
+        setup() {
           return {};
-        }
+        },
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
-      componentAdditionalFiles: [ ]
+      componentAdditionalFiles: []
 
     - componentType: "List View"
+      generateForView: true
       router:
         link: "/${minPluralize(EntityName)}"
         label: "${majStart(EntityName)}"
       componentName: "${majStart(EntityName)}ListView"
       importFile: |
-        import { computed, defineComponent, ref } from "vue";
-        import { ${majStart(EntityName)} } from "@/shared/models/${majStart(EntityName)}Model";
+        import { defineComponent, ref } from "vue";
+        import EntityTable from "@/core/table/EntityTable.vue";
         import ${majStart(EntityName)}List from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}List.vue";
-        import GenesisSearch from "@/core/search/GenesisSearch.vue";
-        import GenesisAddButton from "@/core/button/GenesisAddButton.vue";
-        import PaginationLayout from "@/core/pagination/PaginationLayout.vue";
+        import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
+        import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
+        import { EntityListField } from "@/models/EntityModel";
+        import GenesisButton from "@/core/button/GenesisButton.vue";
       selector: "${majStart(EntityName)}ListView"
       standalone: true
       importComponent: |
         components: {
-          ${majStart(EntityName)}List,
-          GenesisSearch,
-          GenesisAddButton,
-          PaginationLayout,
+          EntityTable,
+          GenesisButton,
         }
       template: |
         <template>
-          <div class="">
+          <div>
             <div class="d-flex justify-content-between align-items-center">
               <div>
                 <h3>${majStart(EntityName)} / <span class="text-muted">List</span></h3>
               </div>
               <div>
-                <GenesisAddButton>
-                  <span>Add ${majStart(EntityName)}</span>
-                </GenesisAddButton>
+                <GenesisButton icon="bi bi-plus me-2" title="Create new ${minStart(EntityName)}">
+                  <span>Add new ${minStart(EntityName)}</span>
+                </GenesisButton>
               </div>
             </div>
-            <div class="mt-3">
-              <GenesisSearch :model="model" @search="handleSearch" />
-            </div>
-            <${majStart(EntityName)}List :${minPluralize(EntityName)}="filtered${majPluralize(EntityName)}" />
-        
-            <PaginationLayout :start="1" :end="100" />
+            <EntityTable
+              :entity-model="new ${majStart(EntityName)}()"
+              :entity-search-fields="searchFields"
+              :searchFn="search${majPluralize(EntityName)}"
+              :getPaginationData="getPaginationData"
+              :listComponent="${majStart(EntityName)}List"
+              :entities="${minPluralize(EntityName)}"
+              :loading="loading"
+              :message="message"
+            />
           </div>
         </template>
       style: |
         <style scoped></style>
       export: |
         setup() {
-          const ${minPluralize(EntityName)} = ref<${majStart(EntityName)}[]>([]);
-          const model = new ${majStart(EntityName)}();
-          const filters = ref();
-        
-          const filtered${majPluralize(EntityName)} = computed(() => {
-            if (!filters.value) {
-              console.log("Initial Values");
-              return ${minPluralize(EntityName)}.value;
-            }
-            console.log("Filfil");
-        
-            return [...${minPluralize(EntityName)}.value];
-          });
-        
-          const handleSearch = (filterValues: Record<string, any>) => {
-            filters.value = filterValues;
+          const {
+            ${minPluralize(EntityName)},
+            loading,
+            search${majPluralize(EntityName)},
+            paginationData,
+            message,
+            getPaginationData,
+          } = use${majPluralize(EntityName)}();
+          const searchFields = ref<EntityListField[]>(
+            ${majStart(EntityName)}.getFieldListMetadata()
+          );
+          return {
+            ${minPluralize(EntityName)},
+            loading,
+            search${majPluralize(EntityName)},
+            paginationData,
+            ${majStart(EntityName)}List,
+            ${majStart(EntityName)},
+            searchFields,
+            getPaginationData,
+            message,
           };
-        
-          return { filtered${majPluralize(EntityName)}, handleSearch, model };
         },
-      destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)/list}"
-      componentAdditionalFiles: []
+      destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}/list"
+      componentAdditionalFiles:
+        - fileType: "List Composable"
+          fileName: "use${majPluralize(EntityName)}"
+          extension: "ts"
+          content: |
+            import { ref, onMounted } from "vue";
+            import type { ${majStart(EntityName)} } from "../models/${majStart(EntityName)}Model";
+            import * as ${minStart(EntityName)}Service from "@/services/${majStart(EntityName)}Service";
+            import { useLoading } from "./useLoading";
+            import {
+              PaginationRequestParameter,
+              SortFieldParameter,
+            } from "@/models/api/RequestModel";
+            import { PaginationData } from "@/models/api/PageResponseModel";
 
+            export function use${majPluralize(EntityName)}(autoLoad = true) {
+              const ${minPluralize(EntityName)} = ref<${majStart(EntityName)}[]>([]);
+              const { loading, startLoading, stopLoading } = useLoading();
+              const paginationData = ref(new PaginationData());
+              const message = ref<string | null>();
+
+              const handleResponse = async (
+                data: ${majStart(EntityName)}[],
+                err: string | null,
+                pagination?: PaginationData | undefined
+              ) => {
+                if (err) {
+                  message.value = err;
+                }
+                ${minPluralize(EntityName)}.value = data;
+                if (pagination !== undefined) {
+                  paginationData.value = pagination;
+                }
+              };
+
+              const load${majPluralize(EntityName)} = async () => {
+                message.value = null;
+                startLoading();
+                const { data, error: err } = await ${minStart(EntityName)}Service.getAll();
+                handleResponse(data, err);
+                stopLoading();
+              };
+
+              const search${majPluralize(EntityName)} = async (
+                filters: Partial<${majStart(EntityName)}>,
+                pagination: PaginationRequestParameter,
+                sortFields: SortFieldParameter[]
+              ) => {
+                message.value = null;
+                startLoading();
+                const {
+                  data,
+                  error: err,
+                  pagination: paginationresult,
+                } = await ${minStart(EntityName)}Service.search(filters, pagination, sortFields);
+                handleResponse(data, err, paginationresult);
+                stopLoading();
+              };
+
+              const getPaginationData = () => {
+                return paginationData.value;
+              };
+
+              if (autoLoad) onMounted(load${majPluralize(EntityName)});
+
+              return {
+                ${minPluralize(EntityName)},
+                loading,
+                message,
+                load${majPluralize(EntityName)},
+                search${majPluralize(EntityName)},
+                paginationData,
+                getPaginationData,
+              };
+            }
+          destinationPath: "${destinationFolder}/src/composables"
+
+    - componentType: "Entity Row"
+      generateForView: true
+      router:
+        label: ""
+        link: ""
+      importFile: |
+        import { defineComponent, PropType } from "vue";
+        import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
+        import EntityRowActions from "@/core/table/EntityRowActions.vue";
+      selector: "${majStart(EntityName)}Row"
+      standalone: true
+      importComponent: "components: { EntityRowActions }"
+      template: |
+        <template>
+          <tr class="border-bottom">
+            {{#each fields}}
+            <td>{{ ${minStart(EntityName)}.${this.name} }}</td>
+            {{/each}}
+    
+            <td class="text-end">
+              <div class="d-inline-flex rounded-3 shadow-sm overflow-hidden">
+                <EntityRowActions />
+              </div>
+            </td>
+          </tr>
+        </template>
+      style: "<style scoped></style>"
+      export: |
+        props: {
+          ${minStart(EntityName)}: {
+            required: true,
+            type: Object as PropType<${majStart(EntityName)}>,
+          },
+        },
+        setup(props) {
+          return {};
+        },
+      componentName: "${majStart(EntityName)}Row"
+      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
+      componentAdditionalFiles: []
 
   serviceComponent:
     imports: |
+      import useRestApi from "@/composables/useRestApi";
+      import RestResponse from "@/models/api/RestResponseModel";
+      import { type IPageResponse } from "@/models/api/PageResponseModel";
+      import {
+        PaginationRequestParameter,
+        RequestModel,
+        SortFieldParameter,
+      } from "@/models/api/RequestModel";
+      import type { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
     methods: |
-    destinationPath: "${destinationFolder}/src/shared/services"
+      const restApiWithPage = useRestApi<IPageResponse<${majStart(EntityName)}>>();
+      const BASE_URL = "/${minPluralize(EntityName)}";
+  
+      /** GET all avec pagination */
+      export async function getAll(
+        pagination?: PaginationRequestParameter,
+        sortFields?: SortFieldParameter[]
+      ) {
+        const request = new RequestModel(BASE_URL, pagination, sortFields);
+        const response = await restApiWithPage.GET(request.buildRequestUrl());
+        return RestResponse.handleResponse<${majStart(EntityName)}[]>(response, true);
+      }
+  
+      /** GET by ID */
+      export async function getById(id: string) {
+        const response = await restApiWithPage.GET(BASE_URL+`/`+id);
+        return RestResponse.handleResponse<${majStart(EntityName)} | null>(response);
+      }
+  
+      /** POST create */
+      export async function create(data: Partial<${majStart(EntityName)}>) {
+        const response = await restApiWithPage.POST(BASE_URL, data);
+        return RestResponse.handleResponse<${majStart(EntityName)} | null>(response);
+      }
+  
+      /** PUT update */
+      export async function update(id: string, data: Partial<${majStart(EntityName)}>) {
+        const response = await restApiWithPage.PUT(BASE_URL+`/`+id, data);
+        return RestResponse.handleResponse<${majStart(EntityName)} | null>(response);
+      }
+  
+      /** DELETE remove */
+      export async function remove(id: string) {
+        const response = await restApiWithPage.DELETE(BASE_URL+`/`+id);
+        return {
+          success: response.returnCode === 1,
+          error: response.returnCode !== 1 ? response.message : null,
+        };
+      }
+  
+      /** POST search avec pagination */
+      export async function search(
+        data: Partial<${majStart(EntityName)}>,
+        pagination?: PaginationRequestParameter,
+        sortFields?: SortFieldParameter[]
+      ) {
+        const request = new RequestModel(BASE_URL+`/search`, pagination, sortFields);
+        const response = await restApiWithPage.POST(request.buildRequestUrl(), data);
+        return RestResponse.handleResponse<${majStart(EntityName)}[]>(response, true);
+      }
+    destinationPath: "${destinationFolder}/src/services"
     name: "${majStart(EntityName)}Service"
   modelComponent:
     imports: |
+      import { EntityListField } from "./EntityModel";
     exports: |
       export interface I${majStart(EntityName)} {
         {{#each fields}}
-        ${minStart(this.columnName)}: ${this.typeBase};
+        ${minStart(this.name)}: ${this.typeBase} | undefined;
         {{/each}}
       }
-      
+
       export class ${majStart(EntityName)} implements I${majStart(EntityName)} {
         {{#each fields}}
-        ${minStart(this.columnName)}: ${this.typeBase};
+        ${minStart(this.name)}: ${this.typeBase} | undefined;
         {{/each}}
-        
-        constructor();
-        constructor(
+
+        constructor(data?: Partial<I${majStart(EntityName)}>) {
           {{#each fields}}
-            ${minStart(this.columnName)}: ${this.typeBase}{{#if !@last}},{{/if}}
-          {{/each}});
-        constructor(
-          {{#each fields}}
-            ${minStart(this.columnName)}?: ${this.typeBase}{{#if !@last}},{{/if}}
+            this.${minStart(this.name)} = data?.${minStart(this.name)};
           {{/each}}
-        ) {
-          {{#each fields}}
-            this.${minStart(this.columnName)} = ${minStart(this.columnName)} ?? {{#if this.typeBase=number}}0{{elseIf this.typeBase=Date}}new Date(){{else}}""{{/if}};
-          {{/each}}
+        }
+
+        static getFieldListMetadata(): EntityListField[] {
+          return [
+            {{#each fields}}
+            { key: "${this.name}", label: "${formatReadable(this.name)}", type: "${this.uiType}", sortable: true },
+            {{/each}}
+          ];
         }
       }
     exportsComponents: |
-    destinationPath: "${destinationFolder}/src/shared/models"
+    destinationPath: "${destinationFolder}/src/models"
     name: "${majStart(EntityName)}Model"
+

@@ -12,6 +12,7 @@ public class FrontendLanguage {
     private String name;
     private String extension;
     private Map<String, String> types;
+    private Map<String, String> inputTypes;
 
     @Override
     public String toString() {

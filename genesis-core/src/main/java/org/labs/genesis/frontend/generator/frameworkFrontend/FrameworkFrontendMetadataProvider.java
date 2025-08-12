@@ -49,7 +49,7 @@ public class FrameworkFrontendMetadataProvider {
 
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName",projectName);
-        metadata.put("EntityName",tableMetadata.getTableName());
+        metadata.put("EntityName",tableMetadata.getClassName());
         return metadata;
     }
 
@@ -95,6 +95,7 @@ public class FrameworkFrontendMetadataProvider {
         Map<String, Object> fieldMap = new HashMap<>();
 
         fieldMap.put("typeBase", field.getFrontEndType());
+        fieldMap.put("uiType", field.getUiType());
         fieldMap.put("type",field.getType());
         fieldMap.put("name", field.getName());
         fieldMap.put("isPrimaryKey", field.isPrimary());
@@ -153,6 +154,7 @@ public class FrameworkFrontendMetadataProvider {
 
         return data;
     }
+
     public static HashMap<String,Object> getTableMetaDataHashSimple(TableMetadata tableMetadata)
     {
         HashMap<String, Object> data = new HashMap<>();
