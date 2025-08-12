@@ -19,6 +19,11 @@
       @foreach (var ${lowerCase(className)} in Model) {
     blockLoopStatementEnd: |
       }
+    detailsLink: " asp-action=\"Details\" asp-route-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
+  detail:
+    modelType: |
+      @model ${majStart(className)}
+    dataValue: "@Model.${majStart(this.name)}"
 
   templateEngineFilesEdits:
     - fileType : "ViewImports"

@@ -1842,6 +1842,16 @@
       {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync(0, int.MaxValue, null);
       {{tab}}{{tab}}return View(${minStart(className)}s);
       {{tab}}}
+      {{tab}}// GET: /${majStart(className)}/Details/5
+      {{tab}}public async Task<IActionResult> Details(${pkColumnType} ${pkColumn})
+      {{tab}}{
+      {{tab}}{{tab}}var ${minStart(className)} = await _service.GetByIdAsync(${pkColumn});
+      {{tab}}{{tab}}if (${minStart(className)} == null)
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}return NotFound();
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}return View(${minStart(className)});
+      {{tab}}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"
     controllerAdditionalFiles: [ ]
@@ -1851,4 +1861,4 @@
     viewSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views"
     listViewName: "Index"
     formViewName: "form-${lowerCase(className)}"
-    detailViewName: "detail-${lowerCase(className)}"
+    detailViewName: "Details"
