@@ -12,7 +12,7 @@ ${modelType}
             <thead>
                 <tr>
                     {{#each fields}}
-                    <th>${this.name}</th>
+                    <th>{{#if this.isForeignKey}} ${this.type} {{else}} ${this.name} {{/if}}</th>
                     {{/each}}{{removeLine}}
                     <th>Actions</th>
                 </tr>

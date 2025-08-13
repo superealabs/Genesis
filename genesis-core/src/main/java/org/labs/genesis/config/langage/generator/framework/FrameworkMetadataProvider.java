@@ -458,6 +458,7 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> altMap = new HashMap<>();
         altMap.put("modelType", viewsTemplateEngine.getDetail().getModelType());
         altMap.put("dataValue", viewsTemplateEngine.getDetail().getDataValue());
+        altMap.put("dataForeignValue", viewsTemplateEngine.getDetail().getDataForeignValue());
         return altMap;
     }
 }

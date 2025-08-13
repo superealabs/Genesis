@@ -56,5 +56,6 @@ public class ViewsTemplateEngine {
     public static class Detail {
         private String modelType;
         private String dataValue;
+        private String dataForeignValue;
     }
 }

@@ -12,14 +12,15 @@ ${modelType}
             <thead>
                 <tr>
                     {{#each fields}}
-                    <th>${this.name}</th>
+                    <th>{{#if this.isForeignKey}} ${this.type} {{else}} ${this.name} {{/if}}</th>
                     {{/each}}{{removeLine}}
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                 {{#each fields}}
-                    <td>${dataValue}</td>
+                    <td>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</td>
                 {{/each}}{{removeLine}}
                 </tr>
             </tbody>

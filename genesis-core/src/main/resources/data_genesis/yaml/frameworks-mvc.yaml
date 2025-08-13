@@ -1865,6 +1865,11 @@
       {{tab}}{{tab}}return RedirectToAction(nameof(Index));
       {{tab}}}
       {{tab}}
+      {{tab}}// GET: /${majStart(className)}/Create
+      {{tab}}public IActionResult Create()
+      {{tab}}{
+      {{tab}}{{tab}}return View();
+      {{tab}}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"
     controllerAdditionalFiles: [ ]
@@ -1873,5 +1878,6 @@
     toGenerate: true
     viewSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views"
     listViewName: "Index"
+    createViewName: "Create"
     formViewName: "form-${lowerCase(className)}"
     detailViewName: "Details"

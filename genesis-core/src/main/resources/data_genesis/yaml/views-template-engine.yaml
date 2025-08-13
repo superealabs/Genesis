@@ -17,7 +17,7 @@
     modelType : |
       @model IEnumerable<${majStart(className)}>
     dataValue: "@${lowerCase(className)}.${majStart(this.name)}"
-    dataForeignValue: "@${lowerCase(className)}.${majStart(this.name)}"
+    dataForeignValue: "@${lowerCase(className)}.${majStart(this.columnNameField)}"
     inlineLoopStatement: |
     blockLoopStatementStart: |
       @foreach (var ${lowerCase(className)} in Model) {
@@ -29,6 +29,7 @@
     modelType: |
       @model ${majStart(className)}
     dataValue: "@Model.${majStart(this.name)}"
+    dataForeignValue: "@Model.${majStart(this.columnNameField)}"
 
   templateEngineFilesEdits:
     - fileType : "ViewImports"
