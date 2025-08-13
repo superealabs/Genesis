@@ -33,6 +33,7 @@ public class ViewsTemplateEngine {
         private String rootPath;
         private String pageName;
         private String callContent;
+        private String currentViewContext;
     }
 
     @Getter
@@ -46,6 +47,7 @@ public class ViewsTemplateEngine {
         private String blockLoopStatementEnd;
         private String inlineLoopStatement;
         private String detailsLink;
+        private String deleteLink;
     }
 
     @Getter
