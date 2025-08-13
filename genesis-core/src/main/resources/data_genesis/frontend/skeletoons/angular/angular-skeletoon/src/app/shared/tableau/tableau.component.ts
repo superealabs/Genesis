@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ConfirmationBoxComponent } from '../confirmation-box.component/confirmation-box.component'; // chemin à ajuster
 
 @Component({
@@ -18,7 +19,7 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
         <tr *ngFor="let ligne of donnees">
           <td *ngFor="let valeur of ligne">{{ valeur }}</td>
           <td class="actions" *ngIf="!isView">
-            <button (click)="viewFn?.(ligne)" title="View" aria-label="View">
+            <button (click)="redirect(routeToDetail, ligne[0])" title="View" aria-label="View">
               <i class="bi bi-file-text"></i>
             </button>
             <button (click)="editFn?.(ligne)" title="Edit" aria-label="Edit">
@@ -41,7 +42,6 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
     </app-confirmation-box>
   `,
   styles: [`
-    /* styles du tableau identiques à ta version */
     .styled-table {
       width: 100%;
       border-collapse: collapse;
@@ -58,7 +58,7 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
     }
     .styled-table th,
     .styled-table td {
-      padding: 0.42rem 1rem;
+      padding: 0.378rem 0.9rem; /* réduit d'environ 10% */
       text-align: left;
       border-bottom: 1px solid #e2e8f0;
     }
@@ -69,23 +69,32 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
     .styled-table tbody tr:hover {
       background-color: #f9fafb;
     }
+
+    /* Actions buttons */
     .actions {
       display: flex;
-      gap: 0.5rem;
+      gap: 0;
+      transform: scale(1); /* réduit légèrement la taille */
     }
     .actions button {
-      background-color: #f1f5f9;
-      border: none;
-      border-radius: 0.375rem;
-      padding: 0.375rem;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      color: #333;
-    }
+  background-color: #f1f5f9;
+  border: none;
+  border-radius: 0; 
+  padding: 0.25rem;       /* réduit le padding */
+  font-size: 1rem;        /* réduit la taille du texte/icône */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+}
+.actions button:first-child {
+  border-top-left-radius: 0.75rem;
+  border-bottom-left-radius: 0.75rem;
+}
+.actions button:last-child {
+  border-top-right-radius: 0.75rem;
+  border-bottom-right-radius: 0.75rem;
+}
     .actions button:hover {
       background-color: #e2e8f0;
       color: #000;
@@ -95,7 +104,7 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
 export class TableauComponent {
   @Input() colonnes: string[] = [];
   @Input() donnees: any[][] = [];
-  @Input() viewFn?: (ligne: any[]) => void;
+  @Input() routeToDetail: string = 'entity';
   @Input() editFn?: (ligne: any[]) => void;
   @Input() deleteFn?: (ligne: any[]) => void;
   @Input() isView: boolean = false;
@@ -103,6 +112,8 @@ export class TableauComponent {
   showConfirmation = false;
   selectedItem: any[] | null = null;
   selectedItemName = '';
+
+  constructor(private router: Router) {}
 
   openConfirmation(ligne: any[]) {
     this.selectedItem = ligne;
@@ -120,4 +131,8 @@ export class TableauComponent {
   cancelDelete = () => {
     this.showConfirmation = false;
   };
+
+  redirect(componentName: string, id: any) {
+    this.router.navigate([componentName, id]);
+  }
 }
