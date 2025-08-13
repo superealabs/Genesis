@@ -149,6 +149,7 @@ public class ProjectMetadataProvider {
         altMap.put("rootPath", viewsTemplateEngine.getLayout().getRootPath());
         altMap.put("pageName", viewsTemplateEngine.getLayout().getPageName());
         altMap.put("callContent", viewsTemplateEngine.getLayout().getCallContent());
+        altMap.put("currentViewContext", viewsTemplateEngine.getLayout().getCurrentViewContext());
         return altMap;
     }
 
@@ -161,6 +162,7 @@ public class ProjectMetadataProvider {
         altMap.put("blockLoopStatementEnd", viewsTemplateEngine.getList().getBlockLoopStatementEnd());
         altMap.put("inlineLoopStatement", viewsTemplateEngine.getList().getInlineLoopStatement());
         altMap.put("detailsLink", viewsTemplateEngine.getList().getDetailsLink());
+        altMap.put("deleteLink", viewsTemplateEngine.getList().getDeleteLink());
         return altMap;
     }
 
