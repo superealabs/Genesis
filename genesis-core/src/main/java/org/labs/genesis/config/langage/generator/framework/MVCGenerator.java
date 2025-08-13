@@ -3,7 +3,6 @@ package org.labs.genesis.config.langage.generator.framework;
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
-import org.labs.genesis.config.langage.generator.project.ProjectMetadataProvider;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
@@ -261,7 +260,7 @@ public class MVCGenerator implements GenesisGenerator {
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         // Rendu intermédiaire
-        HashMap<String, Object> metadataSecondary = ProjectMetadataProvider.getAltViewListHashMap(viewsTemplateEngine);
+        HashMap<String, Object> metadataSecondary = getAltViewListHashMap(viewsTemplateEngine);
         String secondaryResult = engine.simpleRender(primaryResult, metadataSecondary);
 
         // Rendu final
@@ -304,7 +303,7 @@ public class MVCGenerator implements GenesisGenerator {
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         // Rendu intermédiaire
-        HashMap<String, Object> metadataSecondary = ProjectMetadataProvider.getAltViewDetailHashMap(viewsTemplateEngine);
+        HashMap<String, Object> metadataSecondary = getAltViewDetailHashMap(viewsTemplateEngine);
         String secondaryResult = engine.simpleRender(primaryResult, metadataSecondary);
 
         // Rendu final
@@ -341,7 +340,7 @@ public class MVCGenerator implements GenesisGenerator {
 
         String templateContent = loadViewMainLayoutTemplate(viewsTemplate);
 
-        HashMap<String, Object> altMap = ProjectMetadataProvider.getAltViewMainLayoutHashMap(viewsTemplateEngine);
+        HashMap<String, Object> altMap = getAltViewMainLayoutHashMap(viewsTemplateEngine);
         String firstResult = engine.simpleRender(templateContent, altMap);
 
         HashMap<String, Object> metadataFinally = getViewMainLayoutHashMap(framework, frameworkOptions, Arrays.stream(tableMetadata).toList(), projectName, destinationFolder, groupLink);

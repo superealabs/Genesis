@@ -1,10 +1,7 @@
 package org.labs.genesis.config.langage.generator.framework;
 
 import org.jetbrains.annotations.NotNull;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.FrameworkMVC;
-import org.labs.genesis.config.langage.FrameworkSecurity;
-import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
@@ -431,5 +428,36 @@ public class FrameworkMetadataProvider {
             }
         });
         return frameworkSecurityBooleanMetadata;
+    }
+
+
+    public static HashMap<String, Object> getAltViewMainLayoutHashMap (ViewsTemplateEngine viewsTemplateEngine) {
+        HashMap<String, Object> altMap = new HashMap<>();
+        altMap.put("navLink", viewsTemplateEngine.getLayout().getNavLink());
+        altMap.put("rootPath", viewsTemplateEngine.getLayout().getRootPath());
+        altMap.put("pageName", viewsTemplateEngine.getLayout().getPageName());
+        altMap.put("callContent", viewsTemplateEngine.getLayout().getCallContent());
+        altMap.put("currentViewContext", viewsTemplateEngine.getLayout().getCurrentViewContext());
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewListHashMap (ViewsTemplateEngine viewsTemplateEngine) {
+        HashMap<String, Object> altMap = new HashMap<>();
+        altMap.put("modelType", viewsTemplateEngine.getList().getModelType());
+        altMap.put("dataValue", viewsTemplateEngine.getList().getDataValue());
+        altMap.put("dataForeignValue", viewsTemplateEngine.getList().getDataForeignValue());
+        altMap.put("blockLoopStatementStart", viewsTemplateEngine.getList().getBlockLoopStatementStart());
+        altMap.put("blockLoopStatementEnd", viewsTemplateEngine.getList().getBlockLoopStatementEnd());
+        altMap.put("inlineLoopStatement", viewsTemplateEngine.getList().getInlineLoopStatement());
+        altMap.put("detailsLink", viewsTemplateEngine.getList().getDetailsLink());
+        altMap.put("deleteLink", viewsTemplateEngine.getList().getDeleteLink());
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewDetailHashMap (ViewsTemplateEngine viewsTemplateEngine) {
+        HashMap<String, Object> altMap = new HashMap<>();
+        altMap.put("modelType", viewsTemplateEngine.getDetail().getModelType());
+        altMap.put("dataValue", viewsTemplateEngine.getDetail().getDataValue());
+        return altMap;
     }
 }
