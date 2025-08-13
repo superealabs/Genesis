@@ -5,10 +5,14 @@
   layout:
     name: "_Layout"
     destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
-    navLink: "asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
+    navLink: "class=\"@(currentController == \"${majStart(this.entityName)}\" ? \"active\" : \"\")\" asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
     pageName: "@ViewData[\"Title\"] -"
     rootPath: " ~/css/style.css\" asp-append-version=\"true "
     callContent: "@RenderBody()"
+    currentViewContext: |
+      @{
+          var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+      }
   list:
     modelType : |
       @model IEnumerable<${majStart(className)}>
@@ -19,7 +23,8 @@
       @foreach (var ${lowerCase(className)} in Model) {
     blockLoopStatementEnd: |
       }
-    detailsLink: " asp-action=\"Details\" asp-route-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
+    detailsLink: "asp-action=\"Details\" asp-route-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
+    deleteLink: "data-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
   detail:
     modelType: |
       @model ${majStart(className)}
