@@ -24,11 +24,58 @@ ${modelType}
                         <td>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</td>
                     {{/each}}{{removeLine}}
                         <td>
-                            <a ${detailsLink}>Details</a>
+                            <a ${detailsLink}>Details</a><br>
+                            <button class="btn-delete" ${deleteLink}>Delete</button>
                         </td>
                     </tr>
                 ${blockLoopStatementEnd}
             </tbody>
         </table>
+
+        <!-- Modal -->
+        <div id="customModal" class="modal-overlay">
+            <div class="modal-box">
+                <h3>Are you sure you want to delete ${className} with id "<span id="${className}IdText"></span>"?</h3>
+                <p>This cannot be undone.</p>
+                <div class="modal-actions">
+                    <button type="button" id="cancelBtn" class="btn-cancel">Cancel</button>
+
+                    <!-- Formulaire POST -->
+                    <form id="deleteForm" method="post" asp-action="Delete">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" id="${className}Id" />
+                        <button type="submit" class="btn-confirm">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('customModal');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const input${className}Id = document.getElementById('${className}Id');
+    const ${className}IdText = document.getElementById('${className}IdText');
+
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const ${className}Id = this.getAttribute('data-id');
+            ${className}IdText.textContent = ${className}Id;
+            input${className}Id.value = ${className}Id;
+            modal.style.display = 'flex';
+        });
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+});
+</script>

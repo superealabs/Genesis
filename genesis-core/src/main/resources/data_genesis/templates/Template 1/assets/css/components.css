@@ -15,6 +15,26 @@
     padding: 0.3rem;
     border-radius: var(--radius);
 }
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+.btn-cancel {
+    background: #ccc;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.btn-confirm {
+    background: #e74c3c;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+}
 
 /* Tableau */
 .table-container {
