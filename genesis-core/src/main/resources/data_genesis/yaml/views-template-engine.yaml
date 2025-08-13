@@ -17,7 +17,7 @@
     modelType : |
       @model IEnumerable<${majStart(className)}>
     dataValue: "@${lowerCase(className)}.${majStart(this.name)}"
-    dataForeignValue: "@${lowerCase(className)}.${this.columnTable}.${this.columnName}"
+    dataForeignValue: "@${lowerCase(className)}.${majStart(this.name)}"
     inlineLoopStatement: |
     blockLoopStatementStart: |
       @foreach (var ${lowerCase(className)} in Model) {

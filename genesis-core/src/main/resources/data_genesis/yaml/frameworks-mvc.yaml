@@ -1839,7 +1839,7 @@
       {{tab}}// GET: /${majStart(className)}
       {{tab}}public async Task<IActionResult> Index()
       {{tab}}{
-      {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync(0, int.MaxValue, null);
+      {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync(0, int.MaxValue, null{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
       {{tab}}{{tab}}ViewData["Title"] = "${majStart(className)}";
       {{tab}}{{tab}}return View(${minStart(className)}s);
       {{tab}}}
@@ -1847,7 +1847,7 @@
       {{tab}}// GET: /${majStart(className)}/Details/${pkColumn}
       {{tab}}public async Task<IActionResult> Details(${pkColumnType} ${pkColumn})
       {{tab}}{
-      {{tab}}{{tab}}var ${minStart(className)} = await _service.GetByIdAsync(${pkColumn});
+      {{tab}}{{tab}}var ${minStart(className)} = await _service.GetByIdAsync(${pkColumn}{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
       {{tab}}{{tab}}ViewData["Title"] = "${majStart(className)}";
       {{tab}}{{tab}}if (${minStart(className)} == null)
       {{tab}}{{tab}}{
