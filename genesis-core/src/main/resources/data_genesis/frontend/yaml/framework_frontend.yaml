@@ -1030,3 +1030,10 @@
     destinationPath: "${destinationFolder}/src/models"
     name: "${majStart(EntityName)}Model"
 
+- id: 3
+  languageId: 1
+  coreFramework: "React"
+  name: "React App"
+  template: "React-template"
+  initPath: "react/react-ts-skeletoon"
+  componentExtension: "tsx"
