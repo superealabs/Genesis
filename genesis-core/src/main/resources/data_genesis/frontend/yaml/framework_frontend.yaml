@@ -1121,3 +1121,58 @@
         </body>
         </html>
       destinationPath: "${destinationFolder}/"
+  components:
+    - componentType: "List"
+      generateForView: true
+      router:
+        link: "/${toKebabCase(className)}s"
+        label: "${formatReadable(classNameLink)}"
+      importFile: |
+        import { Edit, Delete } from '@mui/icons-material';
+        import { useNavigate } from 'react-router-dom';
+        
+        import {${majStart(className)}, ${toKebabCase(className)}Meta, ${toKebabCase(className)}Columns, ${toKebabCase(className)}Filters} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+        import { ${className}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+      importComponent: |
+        import GenericListPage from '@/components/GenericListPage/GenericListPage';
+        import ActionButtons from '@/components/ActionButtons';
+        import {useDelete} from "@/hooks/useDelete";
+      selector: "app-${toKebabCase(className)}-list"
+      export: |
+        const columns = [
+            ...${toKebabCase(className)}Columns,
+            {{#if !isView}}
+            {
+                header: 'Actions',
+                accessor: (row: ${majStart(className)}) => <RowActions row={row} />, // ✅ composant séparé
+            },
+            {{/if}}
+        ];
+
+        {{#if !isView}}
+        function RowActions({ row }: { row: ${majStart(className)} }) {
+            const navigate = useNavigate();
+            const handleDelete = useDelete(${className}Service.delete, () => window.location.reload());
+
+            return (
+                <ActionButtons
+                    actions={[
+                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/${row.{{#each fieldsPK}}${this.name}{{/each}}}/edit`) },
+                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}) },
+                    ]}
+                />
+            );
+        }
+        {{/if}}
+        export default function ${majStart(className)}List() {
+            return GenericListPage<${majStart(className)}>({
+                entityName: ${toKebabCase(className)}Meta.entityName,
+                columns,
+                availableFilters: ${toKebabCase(className)}Filters,
+                defaultSort: ${toKebabCase(className)}Meta.defaultSort,
+                searchFn: ${className}Service.search,
+                pageTitle: '${majStart(className)} List'
+            })();
+        }
+      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}/${toKebabCase(className)}-list"
+      componentName: "${majStart(className)}List"
