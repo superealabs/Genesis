@@ -1236,3 +1236,39 @@
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}/${toKebabCase(className)}-update"
       componentName: "Update${majStart(className)}"
+  serviceComponent:
+    imports: |
+      // src/models/${toKebabCase(className)}/${toKebabCase(className)}.service.ts
+      import type { ${majStart(className)} } from './${toKebabCase(className)}.model';
+      import type { FilterState } from '@/types/filter';
+      import { getById, search {{#if !isView}},create,remove, update{{/if}} } from "@/services/api";
+    methods: |
+      export const ${toKebabCase(className)}Service = {
+          search(params: {
+              page: number;
+              size: number;
+              sort: `${string},${'asc' | 'desc'}`;
+              filter: FilterState;
+          }) {
+              return search<${majStart(className)}>({
+                  endpoint: '/${toKebabCase(className)}s/search',
+                  ...params,
+              });
+          },
+
+          async getById(id: number) {
+              return getById<${majStart(className)}>('/${toKebabCase(className)}s', id);
+          },
+
+          create(${toKebabCase(className)}: Omit<${majStart(className)}, 'id'>) {
+              return create<${majStart(className)}>('/${toKebabCase(className)}s', ${toKebabCase(className)});
+          },
+
+          async update(id: number, ${toKebabCase(className)}: Partial<${majStart(className)}>) {
+              return update<${majStart(className)}>('/${toKebabCase(className)}s', id, ${toKebabCase(className)});
+          },
+
+          delete: (id: string | number) => remove('/${toKebabCase(className)}s', id),
+      };
+    destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
+    name: "${toKebabCase(className)}.service"
