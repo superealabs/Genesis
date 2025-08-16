@@ -1176,3 +1176,37 @@
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}/${toKebabCase(className)}-list"
       componentName: "${majStart(className)}List"
+    - componentType: "Add"
+      router:
+        link: "/${toKebabCase(className)}s/create"
+        label: "Create ${formatReadable(classNameLink)}"
+      importFile: |
+        import {${majStart(className)}, ${toKebabCase(className)}Meta, formFields} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+        import { ${toKebabCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+      selector: "app-${toKebabCase(className)}-form"
+      generateForView: false
+      importComponent: |
+        import GenericFormBuilder from '@/components/GenericForm/GenericFormBuilder';
+        import {ApiResponse} from "@/services/api";
+      export: |
+        export default function Create${majStart(className)}() {
+
+            const handleSubmit = async (data: any): Promise<ApiResponse<${majStart(className)}>> => {
+                return await ${toKebabCase(className)}Service.create(data);
+            };
+
+            return (
+                <GenericFormBuilder
+                    entityName={${toKebabCase(className)}Meta.entityName}
+                    fields={formFields as any}
+                    onSubmit={handleSubmit}
+                    redirectTo="/${toKebabCase(className)}s"
+                    title="Add ${toKebabCase(className)}"
+                    mode="create"
+                    idKey="{{#each fieldsPK}}${this.name}{{/each}}"
+                    detailRedirect="/${toKebabCase(className)}s/:id"
+                />
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}/${toKebabCase(className)}-create"
+      componentName: "Create${majStart(className)}"
