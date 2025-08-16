@@ -1,0 +1,324 @@
+// src/components/GenericForm/GenericFormBuilder.tsx
+import { useState, useEffect } from 'react';
+import {
+    TextField,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Select,
+    Checkbox,
+    FormControlLabel,
+    Box,
+    Paper,
+    Typography,
+    Button,
+} from '@mui/material';
+import {Add, Save} from '@mui/icons-material';
+import Breadcrumbs from '@mui/material/Breadcrumbs';
+import Link from '@mui/material/Link';
+import { Link as RouterLink } from 'react-router-dom';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs, { Dayjs } from 'dayjs';
+import { useSnackbar } from 'notistack';
+import { useNavigate } from 'react-router-dom';
+import {ApiResponse} from "@/services/api";
+import BackdropBlocker from "@/components/Backdrop/BackdropBlocker";
+import {pageContainerSx, breadcrumbSx} from "@/styles/mui-patterns";
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+
+interface FormFieldConfig {
+    label: string;
+    type: 'text' | 'number' | 'date' | 'datetime' | 'checkbox' | 'select';
+    required?: boolean;
+    readonly?: boolean;
+    options?: readonly { readonly value: string | number; readonly label: string }[];
+    foreignKey?: {
+        endpoint: string;
+        labelKey: string;
+        valueKey: string;
+    };
+    transform?: (value: any) => any;
+}
+
+interface Props<T> {
+    entityName: string;
+    fields: Record<string, FormFieldConfig>;
+    onSubmit: (data: Partial<T>) => Promise<ApiResponse<T>>;
+    redirectTo?: string;
+    title?: string;
+    cardSx?: React.ComponentProps<typeof Paper>['sx'];
+    className?: string;
+    initialData?: Partial<T>;
+    mode?: 'create' | 'update';
+    detailRedirect?: string | ((id: string | number) => string);
+    idKey?: string;
+}
+
+export default function GenericFormBuilder<T extends Record<string, any>>({
+                                                                              entityName,
+                                                                              fields,
+                                                                              onSubmit,
+                                                                              redirectTo,
+                                                                              title,
+                                                                              initialData,
+                                                                              mode,
+                                                                              detailRedirect,
+                                                                              idKey = 'id',
+                                                                          }: Props<T>) {
+    const { enqueueSnackbar } = useSnackbar();
+    const navigate = useNavigate();
+    const [formData, setFormData] = useState<Partial<T>>(initialData || {});
+    const [foreignOptions, setForeignOptions] = useState<
+        Record<string, { value: string | number; label: string }[]>
+    >({});
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const loadForeignKeys = async () => {
+            for (const [key, config] of Object.entries(fields)) {
+                if (config.foreignKey) {
+                    try {
+                        const url = `${import.meta.env.VITE_API_BASE}${config.foreignKey.endpoint}`;
+                        const response = await fetch(url);
+                        const data = await response.json();
+                        const content = data.content || data.data?.content || data;
+                        const options = Array.isArray(content)
+                            ? content.map((item: any) => ({
+                                value: item[config.foreignKey!.valueKey],
+                                label: item[config.foreignKey!.labelKey],
+                            }))
+                            : [];
+                        setForeignOptions((prev) => ({ ...prev, [key]: options }));
+                    } catch (error) {
+                        console.error(`Erreur chargement ${key}:`, error);
+                    }
+                }
+            }
+        };
+        loadForeignKeys();
+    }, [fields]);
+
+    useEffect(() => {
+        if (initialData) {
+            const preloaded: Partial<T> = {};
+            Object.entries(fields).forEach(([key, config]) => {
+                const value = initialData[key as keyof T];
+                if (config.foreignKey && value && typeof value === 'object') {
+                    preloaded[key as keyof T] = (value as any)[config.foreignKey.valueKey];
+                } else {
+                    preloaded[key as keyof T] = value;
+                }
+            });
+            setFormData(preloaded);
+        }
+    }, [initialData, fields]);
+
+    const handleChange = (key: string, value: any) => {
+        setFormData((prev) => ({ ...prev, [key]: value }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        let payload: any = { ...formData };
+        Object.entries(fields).forEach(([key, config]) => {
+            if (config.transform) {
+                payload[key] = config.transform(payload[key]);
+            }
+        });
+
+        console.log('Payload:', payload);
+
+        try {
+            const res = await onSubmit(payload);
+            enqueueSnackbar(res.message, { variant: 'success' });
+
+            if (mode === 'create') {
+                const recordId = res.data?.[idKey]; // 👈 clé dynamique
+                if (recordId != null) {
+                    const target =
+                        typeof detailRedirect === 'function'
+                            ? detailRedirect(recordId)
+                            : (detailRedirect || `/${entityName.toLowerCase()}s/:id`).replace(
+                                ':id',
+                                String(recordId)
+                            );
+                    setTimeout(() => navigate(target), 1500);
+                } else if (redirectTo) {
+                    setTimeout(() => navigate(redirectTo), 1500);
+                }
+            } else if (redirectTo) {
+                setTimeout(() => navigate(redirectTo), 1500);
+            }
+        } catch (err: any) {
+            enqueueSnackbar(err?.response?.data?.message || 'Erreur', { variant: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fieldCount = Object.keys(fields).length;
+
+    return (
+        <>
+            <BackdropBlocker open={loading} />
+            <Box sx={pageContainerSx}>
+            <Box
+                sx={{ width: 1, py: 3 }}
+            >
+                <Breadcrumbs sx={breadcrumbSx}>
+                    <Link underline="hover" color="inherit" component={RouterLink} to="/">
+                        Accueil
+                    </Link>
+                    <Link
+                        underline="hover"
+                        color="inherit"
+                        component={RouterLink}
+                        to={`/${entityName.toLowerCase()}s`}
+                    >
+                        {entityName}s
+                    </Link>
+                    <Typography color="text.primary">{title}</Typography>
+                </Breadcrumbs>
+            </Box>
+
+            <Paper
+                elevation={3}
+                sx={{
+                    maxWidth: 720,
+                    mx: 'auto', // centré
+                    p: { xs: 3, md: 5 },
+                    borderRadius: 4,
+                    bgcolor: 'background.paper',
+                }}
+            >
+                <Typography
+                    variant="h5"
+                    component="h1"
+                    sx={{ mb: 4, textAlign: 'center', fontWeight: 'bold', color: 'text' }}
+                >
+                    {title}
+                </Typography>
+
+                <form onSubmit={handleSubmit}>
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: {
+                                base: '1fr',
+                                md: fieldCount > 10 ? 'repeat(2, 1fr)' : 'minmax(480px, 1fr)', // <-- élargi
+                            },
+                            gap: 4,
+                            mb: 4,
+                        }}
+                    >
+                        {Object.entries(fields).map(([key, config]) => {
+                            const value = formData[key as keyof T] ?? '';
+                            const options = foreignOptions[key] || [...(config.options || [])];
+
+                            const isLong = ['description', 'notes', 'adresse'].includes(key);
+
+                            return (
+                                <Box key={key} sx={{ gridColumn: isLong ? '1 / -1' : undefined }}>
+                                    {config.type === 'select' || config.foreignKey ? (
+                                        <FormControl fullWidth margin="normal">
+                                            <InputLabel>{config.label}</InputLabel>
+                                            <Select
+                                                value={value}
+                                                label={config.label}
+                                                onChange={(e) => handleChange(key, e.target.value)}
+                                                disabled={config.readonly}
+                                            >
+                                                {options.map((opt) => (
+                                                    <MenuItem key={opt.value} value={opt.value}>
+                                                        {opt.label}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    ) : config.type === 'checkbox' ? (
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={Boolean(value)}
+                                                    onChange={(e) => handleChange(key, e.target.checked)}
+                                                />
+                                            }
+                                            label={config.label}
+                                        />
+                                    ) : config.type === 'datetime' ? (
+                                        <DateTimePicker
+                                            label={config.label}
+                                            value={value ? dayjs(value) : null}
+                                            onChange={(val) =>
+                                                handleChange(key, val ? val.utc().toISOString() : '')
+                                            }
+                                            slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
+                                        />
+                                    ) : config.type === 'date' ? (
+                                        <DatePicker
+                                            label={config.label}
+                                            value={value ? dayjs(value) : null}
+                                            onChange={(val: Dayjs | null) =>
+                                                handleChange(key, val ? val.format('YYYY-MM-DD') : '')
+                                            }
+                                            slotProps={{
+                                                textField: { fullWidth: true, margin: 'normal' },
+                                            }}
+                                        />
+                                    ) : (
+                                        <TextField
+                                            fullWidth
+                                            margin="normal"
+                                            label={config.label}
+                                            type={config.type}
+                                            value={value}
+                                            onChange={(e) => handleChange(key, e.target.value)}
+                                            required={config.required}
+                                            variant="outlined"
+                                            InputProps={{ readOnly: config.readonly }}
+                                            disabled={config.readonly}
+                                        />
+                                    )}
+                                </Box>
+                            );
+                        })}
+                    </Box>
+
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            gap: 3,
+                            justifyContent: 'center',
+                            mt: 4,
+                        }}
+                    >
+                        <Button
+                            variant="outlined"
+                            onClick={() => (window.location.href = redirectTo || '/')}
+                        >
+                            Annuler
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            disabled={loading}
+                            startIcon={mode === 'create' ? <Add /> : <Save />}
+                        >
+                            {loading
+                                ? mode === 'create'
+                                    ? 'Création...'
+                                    : 'Mise à jour...'
+                                : mode === 'create'
+                                    ? 'Créer'
+                                    : 'Enregistrer'}
+                        </Button>
+                    </Box>
+                </form>
+            </Paper>
+            </Box>
+        </>
+    );
+}
