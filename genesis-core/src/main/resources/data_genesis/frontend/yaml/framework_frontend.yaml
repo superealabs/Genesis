@@ -1210,3 +1210,29 @@
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}/${toKebabCase(className)}-create"
       componentName: "Create${majStart(className)}"
+    - componentType: "Update"
+      router:
+        link: "/${toKebabCase(className)}s/:id/edit"
+        label: "Update ${formatReadable(classNameLink)}"
+      importFile: |
+        import { ${majStart(className)}, ${toKebabCase(className)}Meta, updateFormFields } from '@/models/${toKebabCase(className)}Meta/${toKebabCase(className)}Meta.model';
+        import { ${toKebabCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+      selector: "app-${toKebabCase(className)}-form"
+      generateForView: false
+      importComponent: |
+        import GenericUpdateFormBuilder from '@/components/GenericForm/GenericUpdateFormBuilder';
+      export: |
+        export default function Update${majStart(className)}() {
+            return (
+                <GenericUpdateFormBuilder<${majStart(className)}>
+                    entityName={${toKebabCase(className)}Meta.entityName}
+                    fields={updateFormFields}
+                    getById={${toKebabCase(className)}Service.getById}
+                    update={${toKebabCase(className)}Service.update}
+                    title="Update ${toKebabCase(className)}"
+                    detailRedirect="/${toKebabCase(className)}s/:id"
+                />
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}/${toKebabCase(className)}-update"
+      componentName: "Update${majStart(className)}"
