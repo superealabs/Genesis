@@ -1272,3 +1272,124 @@
       };
     destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
     name: "${toKebabCase(className)}.service"
+  modelComponent:
+    imports: |
+      // src/models/commande/commande.model.ts
+      import dayjs from "dayjs";
+      import { format } from 'date-fns';
+      import 'dayjs/plugin/utc'; // Importe le plugin utc
+      import utc from 'dayjs/plugin/utc'; // Importe le plugin utc
+      dayjs.extend(utc); // Utilise le plugin utc
+    exports : |
+      export interface ${majStart(className)} {
+      {{tab}}{{#each fields}}
+      {{tab}}{{#if this.isForeignKey}}${this.name}: ${toPascalCase(this.type)}{{else}}
+      {{tab}}${this.name}: ${this.typeBase}{{/if}}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}[key: string]: unknown;
+      }
+      
+      export const ${toKebabCase(className)}Meta = {
+          entityName: '${majStart(className)}',
+          endpoint: '/${toKebabCase(className)}s/search',
+          defaultSort: '{{#each fieldsPK}}${this.name}{{/each}},asc' as const
+      };
+      
+      export const ${toKebabCase(className)}Columns = [
+          {{#each fieldsFK}}
+          {
+            header: '${this.type}',
+            accessor: (row: ${majStart(className)}) => (row.${this.name} as any)?.${this.referencedColumn} ?? '-',
+            sortKey: '${this.name}.${this.referencedColumn}',
+            link: (row: ${majStart(className)}) => `/${this.type}s/${(row.${this.name} as any)?.${this.referencedColumn}}?from=/${toKebabCase(className)}s`
+          },
+          {{/each}}
+      
+          {{#each fieldsNotFK}}
+          {{#if this.isPrimaryKey}}
+          { header: '${formatReadableLowerCase(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' ,link: (row: ${majStart(className)}) => `/${toKebabCase(className)}s/${row.${this.name}}` },
+          {{elseIf this.isDate}}
+          {
+            header: '${formatReadableLowerCase(this.name)}',
+            accessor: (row: Commande) => {
+               const date = row.${this.name};
+               if (!date) return '-';
+               const dateObject = new Date(date);
+               return isNaN(dateObject.getTime()) ? '-' : format(dateObject, "dd/MM/yyyy HH:mm:ss");
+            },
+            sortKey: '${this.name}'
+          },
+         {{else}}
+         { header: '${formatReadableLowerCase(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' }
+         {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
+      
+        export const commandeFilters = {
+            {{#each fieldsFK}}
+            ${this.name}: {
+              label: '${this.name}',
+              type: 'text' as const,
+              nestedKey: '${this.referencedColumn}' as const
+            },
+            {{/each}}
+      
+            {{#each fieldsNotFK}}
+            {{#if this.isPrimaryKey}}
+            ${this.name}: { label: '${formatReadableLowerCase(this.name)}', type: '${this.typeBase}' as const },
+            {{elseIf this.isText}}
+            ${this.name}: { label: '${formatReadableLowerCase(this.name)}', type: 'text' as const }
+            {{elseIf this.isNumeric }}
+            ${this.name}: { label: '${formatReadableLowerCase(this.name)}', type: 'number' as const },
+            ${this.name}Min: { label: '${formatReadableLowerCase(this.name)}Min', type: 'number' as const },
+            ${this.name}Max: { label: '${formatReadableLowerCase(this.name)}Max', type: 'number' as const },
+            {{elseIf this.isDate }}
+            ${this.name}: { label: '${formatReadableLowerCase(this.name)}', type: 'date' as const },
+            ${this.name}Min: { label: '${formatReadableLowerCase(this.name)}Min', type: 'date' as const },
+            ${this.name}Max: { label: '${formatReadableLowerCase(this.name)}Max', type: 'date' as const },
+            {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
+        };
+      
+        export const formFields = {
+            {{#each fieldsFK}}
+            ${this.name}: {
+              label: '${formatReadableLowerCase(this.name)}',
+              type: 'select' as const,
+              required: ${this.isNullable},
+              foreignKey: {
+                endpoint: '/${this.referencedColumnType}s?page=0&size=1000',
+                labelKey: '${this.referencedColumn}',
+                valueKey: '${this.referencedColumn}'
+              },
+              transform: (value: any) => ({ id: Number(value) }),
+            },
+            {{/each}}
+            {{#each fieldsNotFK}}
+            {{#if this.isPrimaryKey}}
+            {{removeLine}}
+            {{elseIf this.isDate }}
+            ${this.name}: {
+              label: '${formatReadableLowerCase(this.name)}',
+              type: 'datetime' as const,
+              required: ${this.isNullable},
+              transform: (value: string) =>
+                                   value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : '',
+            },
+            {{else}}
+            ${this.name}: { label: '${formatReadableLowerCase(this.name)}', type: '${this.typeBase}' as const, required: ${this.isNullable} }
+            {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
+        } as const;
+      
+        export const updateFormFields = {
+            {{#each fieldsPK}}
+            ${this.name}: {
+              label: 'ID',
+              type: '${this.typeBase}' as const,
+              required: true,
+              readonly: true, 
+            },
+            {{/each}} 
+            ...formFields, 
+        };
+      ];
+    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/models"
+    name: "${toKebabCase(className)}.model"
+
