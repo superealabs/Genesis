@@ -188,6 +188,7 @@ public class FrameworkFrontendMetadataProvider {
         data.put("componentSelector", route.getComponentSelector());
         data.put("routerLink", route.getLink());
         data.put("componentImport", route.getComponentImport());
+        data.put("componentImportWithoutExtension", route.getComponentImportWithoutExtension());
         data.put("routerLabel", route.getLabel());
         return  data;
     }
