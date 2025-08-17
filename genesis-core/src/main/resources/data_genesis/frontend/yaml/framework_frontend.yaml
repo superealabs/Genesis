@@ -1350,35 +1350,35 @@
           {{/if}}{{/each}}{{removeLine}}
       };
       
-        export const formFields = {
-            {{#each fieldsFK}}
-            ${this.name}: {
-              label: '${formatReadableLowerCase(this.name)}',
-              type: 'select' as const,
-              required: ${this.isNullable},
-              foreignKey: {
-                endpoint: '/${this.referencedColumnType}s?page=0&size=1000',
-                labelKey: '${this.referencedColumn}',
-                valueKey: '${this.referencedColumn}'
-              },
-              transform: (value: any) => ({ id: Number(value) }),
+      export const formFields = {
+          {{#each fieldsFK}}
+          ${this.name}: {
+            label: '${this.type}',
+            type: 'select' as const,
+            required: ${this.isNullable},
+            foreignKey: {
+              endpoint: '/${toKebabCase(this.type)}s?page=0&size=1000',
+              labelKey: '${this.referencedPrimaryKeyColumn}',
+              valueKey: '${this.referencedPrimaryKeyColumn}'
             },
-            {{/each}}
-            {{#each fieldsNotFK}}
-            {{#if this.isPrimaryKey}}
-            {{removeLine}}
-            {{elseIf this.isDate }}
-            ${this.name}: {
-              label: '${formatReadableLowerCase(this.name)}',
-              type: 'datetime' as const,
-              required: ${this.isNullable},
-              transform: (value: string) =>
-                                   value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : '',
-            },
-            {{else}}
-            ${this.name}: { label: '${formatReadableLowerCase(this.name)}', type: '${this.typeBase}' as const, required: ${this.isNullable} }
-            {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
-        } as const;
+            transform: (value: any) => ({ ${this.referencedPrimaryKeyColumn}: Number(value) }),
+          },
+          {{/each}}{{removeLine}}
+          {{#each fieldsNotFK}}
+          {{#if this.isPrimaryKey}}
+          {{removeLine}}
+          {{elseIf this.isDate }}
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: 'datetime' as const,
+            required: ${this.isNullable},
+            transform: (value: string) =>
+                                 value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : '',
+          },
+          {{else}}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const, required: ${this.isNullable} },
+          {{/if}}{{/each}}{{removeLine}}
+      } as const;
       
         export const updateFormFields = {
             {{#each fieldsPK}}
