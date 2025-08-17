@@ -44,6 +44,7 @@ public class FontendGenerator implements IFrontendGenerator{
             String structure = engine.simpleRender(templateArchitecture, metadataPrimary);
 
             String finalStringForComponent = engine.render(structure,metadataForFinalRender );
+            finalStringForComponent=engine.simpleRenderAlt(finalStringForComponent,metadataForFinalRender);
 
             String fileSavePath;
             if (generateComponentOnly) {
@@ -107,6 +108,7 @@ public class FontendGenerator implements IFrontendGenerator{
 
         HashMap<String,Object> metadataForFinalRender= FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
         String finalStringForService = engine.render(structure,metadataForFinalRender);
+        finalStringForService=engine.simpleRenderAlt(finalStringForService,metadataForFinalRender);
 
 
         String fileSavePath;
@@ -147,6 +149,7 @@ public class FontendGenerator implements IFrontendGenerator{
         structure = engine.simpleRender(structure,metadataPrimary);
         HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
         String finalStringForModel = engine.render(structure,metadataForFinalRender);
+        finalStringForModel=engine.simpleRenderAlt(finalStringForModel,metadataForFinalRender);
 
         String fileSavePath;
         if (generateComponentOnly) {
