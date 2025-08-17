@@ -1062,19 +1062,19 @@
                 children: [
                     {
                         label: 'List',
-                        path: '/${toKebabCase(className)}s',
+                        path: '/${toKebabCase(this.className)}s',
                         icon: <List />,
                     },
                     {{#if !this.isView}}{{removeLine}}
                     {
                         label: 'Add',
-                        path: '/${toKebabCase(className)}s/create',
+                        path: '/${toKebabCase(this.className)}s/create',
                         icon: <Add />
                     },
                     {{/if}}{{removeLine}}
                 ]
             },
-            {{/each}}
+            {{/each}}{{removeLine}}
         ];
       destinationPath: "${destinationFolder}/src/config/"
     - fileType: "Router file"
