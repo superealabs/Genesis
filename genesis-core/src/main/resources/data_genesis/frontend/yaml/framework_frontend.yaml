@@ -1326,30 +1326,29 @@
           {{/if}}{{/each}}{{removeLine}}
       ]
       
-        export const commandeFilters = {
-            {{#each fieldsFK}}
-            ${this.name}: {
-              label: '${this.name}',
-              type: 'text' as const,
-              nestedKey: '${this.referencedColumn}' as const
-            },
-            {{/each}}
-      
-            {{#each fieldsNotFK}}
-            {{#if this.isPrimaryKey}}
-            ${this.name}: { label: '${formatReadableLowerCase(this.name)}', type: '${this.typeBase}' as const },
-            {{elseIf this.isText}}
-            ${this.name}: { label: '${formatReadableLowerCase(this.name)}', type: 'text' as const }
-            {{elseIf this.isNumeric }}
-            ${this.name}: { label: '${formatReadableLowerCase(this.name)}', type: 'number' as const },
-            ${this.name}Min: { label: '${formatReadableLowerCase(this.name)}Min', type: 'number' as const },
-            ${this.name}Max: { label: '${formatReadableLowerCase(this.name)}Max', type: 'number' as const },
-            {{elseIf this.isDate }}
-            ${this.name}: { label: '${formatReadableLowerCase(this.name)}', type: 'date' as const },
-            ${this.name}Min: { label: '${formatReadableLowerCase(this.name)}Min', type: 'date' as const },
-            ${this.name}Max: { label: '${formatReadableLowerCase(this.name)}Max', type: 'date' as const },
-            {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
-        };
+      export const commandeFilters = {
+          {{#each fieldsFK}}
+          ${this.name}: {
+            label: '${formatReadable(this.type)}',
+            type: '${this.referencedColumnType}' as const,
+            nestedKey: '${this.referencedPrimaryKeyColumn}' as const
+          },
+          {{/each}}{{removeLine}}
+          {{#each fieldsNotFK}}
+          {{#if this.isPrimaryKey}}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const },
+          {{elseIf this.isText}}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'text' as const },
+          {{elseIf this.isNumeric }}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'number' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'number' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'number' as const },
+          {{elseIf this.isDate }}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'date' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'date' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'date' as const },
+          {{/if}}{{/each}}{{removeLine}}
+      };
       
         export const formFields = {
             {{#each fieldsFK}}
