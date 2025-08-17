@@ -1176,6 +1176,7 @@
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}/${toKebabCase(className)}-list"
       componentName: "${majStart(className)}List"
+      componentAdditionalFiles: []
     - componentType: "Add"
       router:
         link: "/${toKebabCase(className)}s/create"
@@ -1210,6 +1211,7 @@
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}/${toKebabCase(className)}-create"
       componentName: "Create${majStart(className)}"
+      componentAdditionalFiles: []
     - componentType: "Update"
       router:
         link: "/${toKebabCase(className)}s/:id/edit"
@@ -1236,6 +1238,7 @@
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}/${toKebabCase(className)}-update"
       componentName: "Update${majStart(className)}"
+      componentAdditionalFiles: []
   serviceComponent:
     imports: |
       // src/models/${toKebabCase(className)}/${toKebabCase(className)}.service.ts
