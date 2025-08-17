@@ -360,41 +360,105 @@
         },
       destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}/list"
       componentAdditionalFiles:
-        - fileType: "List Composable"
+        - fileType: "Entity Composable"
           fileName: "use${majPluralize(EntityName)}"
           extension: "ts"
           content: |
             import { ref, onMounted } from "vue";
-            import type { ${majStart(EntityName)} } from "../models/${majStart(EntityName)}Model";
+            import { ${majStart(EntityName)}, ${majStart(EntityName)}FormDTO } from "../models/${majStart(EntityName)}Model";
             import * as ${minStart(EntityName)}Service from "@/services/${majStart(EntityName)}Service";
+            {{#each fieldsFK}}
+            import * as ${minStart(this.type)}Service from "@/services/${majStart(this.type)}Service";
+            {{/each}}{{removeLine}}
             import { useLoading } from "./useLoading";
             import {
               PaginationRequestParameter,
               SortFieldParameter,
             } from "@/models/api/RequestModel";
             import { PaginationData } from "@/models/api/PageResponseModel";
+            import { useRouter } from "vue-router";
 
-            export function use${majPluralize(EntityName)}(autoLoad = true) {
-              const ${minPluralize(EntityName)} = ref<${majStart(EntityName)}[]>([]);
+            /**
+             * Composable to manage ${majStart(EntityName)} entities including CRUD operations,
+             * search, pagination, foreign key loading, and navigation.
+             *
+             * @param autoLoad Automatically fetch all ${minStart(EntityName)}s on mounted (default: true)
+             */
+            export function use${majStart(EntityName)}s(autoLoad = true) {
+              /** List of all ${minStart(EntityName)}s */
+              const ${minStart(EntityName)}s = ref<${majStart(EntityName)}[]>([]);
+
+              /** Loading state management */
               const { loading, startLoading, stopLoading } = useLoading();
+
+              /** Pagination information returned by API */
               const paginationData = ref(new PaginationData());
+
+              /** Message for errors or notifications */
               const message = ref<string | null>();
 
+              /** Vue router instance for navigation */
+              const router = useRouter();
+
+              /**
+               * Load foreign key data for forms (projets and employes)
+               * @returns An object containing arrays of external data
+               */
+              const loadFkMapData = async () => {
+                {{#each fieldsFK}}
+                const { data: ${minStart(this.type)}s } = await ${minStart(this.type)}Service.getAll();
+                {{/each}}
+                return {
+                {{#each fieldsFK}}
+                {{tab}}${minStart(this.type)}s,
+                {{/each}}{{removeLine}}
+                }
+              };
+
+              /**
+               * Handles API response by updating the ${minStart(EntityName)}s and pagination
+               * @param data Array of ${majStart(EntityName)} returned by the API
+               * @param err Optional error message
+               * @param pagination Optional pagination data
+               */
               const handleResponse = async (
                 data: ${majStart(EntityName)}[],
                 err: string | null,
-                pagination?: PaginationData | undefined
+                pagination?: PaginationData
               ) => {
                 if (err) {
                   message.value = err;
                 }
-                ${minPluralize(EntityName)}.value = data;
+                ${minStart(EntityName)}s.value = data;
                 if (pagination !== undefined) {
                   paginationData.value = pagination;
                 }
               };
 
-              const load${majPluralize(EntityName)} = async () => {
+              // Navigation functions
+              /** Navigate to ${minStart(EntityName)} detail view */
+              const view${majStart(EntityName)} = (${minStart(EntityName)}: Partial<${majStart(EntityName)}>) => {
+                router.push({ name: "${minStart(EntityName)}detailsview", params: { id: ${minStart(EntityName)}.id } });
+              };
+
+              /** Navigate to ${minStart(EntityName)} list view */
+              const goToListView = () => {
+                router.push({ path: "/${minStart(EntityName)}s" });
+              };
+
+              /** Navigate to ${minStart(EntityName)} create form */
+              const goToCreateFormView = () => {
+                router.push({ path: "/${minStart(EntityName)}s/create" });
+              };
+
+              /** Navigate to ${minStart(EntityName)} update form */
+              const goToUpdateFormView = (${minStart(EntityName)}: Partial<${majStart(EntityName)}>) => {
+                router.push({ name: "${minStart(EntityName)}updateview", params: { id: ${minStart(EntityName)}.id } });
+              };
+
+              // API Requests
+              /** Load all ${minStart(EntityName)}s from the API */
+              const load${majStart(EntityName)}s = async () => {
                 message.value = null;
                 startLoading();
                 const { data, error: err } = await ${minStart(EntityName)}Service.getAll();
@@ -402,7 +466,60 @@
                 stopLoading();
               };
 
-              const search${majPluralize(EntityName)} = async (
+              /**
+               * Delete a ${minStart(EntityName)} by id
+               * @param ${minStart(EntityName)} ${majStart(EntityName)} object to delete
+               */
+              const delete${majStart(EntityName)} = async (${minStart(EntityName)}: Partial<${majStart(EntityName)}>) => {
+                return await ${minStart(EntityName)}Service.remove(${minStart(EntityName)}.id);
+              };
+
+              /**
+               * Get a single ${minStart(EntityName)} by id
+               * @param id ${majStart(EntityName)} ID
+               */
+              const get${majStart(EntityName)}ById = async (id: number | string) => {
+                return ${minStart(EntityName)}Service.getById(id);
+              };
+
+              /**
+               * Create a new ${minStart(EntityName)}
+               * @param ${minStart(EntityName)}FormDTO ${majStart(EntityName)} object to create
+               */
+              const create${majStart(EntityName)} = async (${minStart(EntityName)}FormDTO: Partial<${majStart(EntityName)}FormDTO>) => {
+                const dto = new ${majStart(EntityName)}FormDTO(${minStart(EntityName)}FormDTO);
+                const ${minStart(EntityName)}: Partial<${majStart(EntityName)}> = await dto.to${majStart(EntityName)}();
+                const { data, error } = await ${minStart(EntityName)}Service.create(${minStart(EntityName)});
+                if (error) {
+                  message.value = error;
+                }
+                return data;
+              };
+
+              /**
+               * Update an existing ${minStart(EntityName)}
+               * @param ${minStart(EntityName)}FormDTO ${majStart(EntityName)} object to update
+               */
+              const update${majStart(EntityName)} = async (
+                id: number | string,
+                ${minStart(EntityName)}FormDTO: Partial<${majStart(EntityName)}FormDTO>
+              ) => {
+                const dto = new ${majStart(EntityName)}FormDTO(${minStart(EntityName)}FormDTO);
+                const ${minStart(EntityName)}: Partial<${majStart(EntityName)}> = await dto.to${majStart(EntityName)}();
+                const { data, error } = await ${minStart(EntityName)}Service.update(id, ${minStart(EntityName)});
+                if (error) {
+                  message.value = error;
+                }
+                return data;
+              };
+
+              /**
+               * Search ${minStart(EntityName)}s with filters, pagination, and sorting
+               * @param filters Partial ${majStart(EntityName)} object containing search filters
+               * @param pagination Pagination request parameters
+               * @param sortFields Array of fields to sort
+               */
+              const search${majStart(EntityName)}s = async (
                 filters: Partial<${majStart(EntityName)}>,
                 pagination: PaginationRequestParameter,
                 sortFields: SortFieldParameter[]
@@ -418,20 +535,29 @@
                 stopLoading();
               };
 
-              const getPaginationData = () => {
-                return paginationData.value;
-              };
+              /** Getter for pagination data */
+              const getPaginationData = () => paginationData.value;
 
-              if (autoLoad) onMounted(load${majPluralize(EntityName)});
+              // Automatically load ${minStart(EntityName)}s on mount if autoLoad is true
+              if (autoLoad) onMounted(load${majStart(EntityName)}s);
 
               return {
-                ${minPluralize(EntityName)},
+                ${minStart(EntityName)}s,
                 loading,
                 message,
-                load${majPluralize(EntityName)},
-                search${majPluralize(EntityName)},
+                load${majStart(EntityName)}s,
+                search${majStart(EntityName)}s,
+                get${majStart(EntityName)}ById,
+                delete${majStart(EntityName)},
+                create${majStart(EntityName)},
+                update${majStart(EntityName)},
+                loadFkMapData,
                 paginationData,
                 getPaginationData,
+                view${majStart(EntityName)},
+                goToListView,
+                goToCreateFormView,
+                goToUpdateFormView,
               };
             }
           destinationPath: "${destinationFolder}/src/composables"
