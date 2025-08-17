@@ -1062,16 +1062,16 @@
                 children: [
                     {
                         label: 'List',
-                        path: '/${this.className}s',
+                        path: '/${toKebabCase(className)}s',
                         icon: <List />,
                     },
-                    {{#if !this.isView}} 
+                    {{#if !this.isView}}{{removeLine}}
                     {
                         label: 'Add',
-                        path: '/${this.className}s/create',
+                        path: '/${toKebabCase(className)}s/create',
                         icon: <Add />
                     },
-                    {{/if}}
+                    {{/if}}{{removeLine}}
                 ]
             },
             {{/each}}
