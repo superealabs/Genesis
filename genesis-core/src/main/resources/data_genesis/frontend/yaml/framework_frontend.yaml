@@ -1147,14 +1147,14 @@
       export: |
         const columns = [
             ...${toKebabCase(className)}Columns,
-            {{#if !isView}}
+            {{#if !isView}}{{removeLine}}
             {
                 header: 'Actions',
                 accessor: (row: ${majStart(className)}) => <RowActions row={row} />, // ✅ composant séparé
             },
-            {{/if}}
+            {{/if}}{{removeLine}}
         ];
-
+        {{removeLine}}
         {{#if !isView}}
         function RowActions({ row }: { row: ${majStart(className)} }) {
             const navigate = useNavigate();
