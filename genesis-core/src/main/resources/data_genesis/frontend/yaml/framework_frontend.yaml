@@ -1223,7 +1223,7 @@
         link: "/${toKebabCase(className)}s/:id/edit"
         label: "Update ${formatReadable(classNameLink)}"
       importFile: |
-        import { ${majStart(className)}, ${toKebabCase(className)}Meta, updateFormFields } from '@/models/${toKebabCase(className)}Meta/${toKebabCase(className)}Meta.model';
+        import { ${majStart(className)}, ${toKebabCase(className)}Meta, updateFormFields } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
         import { ${toKebabCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
       selector: "Update${majStart(className)}"
       generateForView: false
