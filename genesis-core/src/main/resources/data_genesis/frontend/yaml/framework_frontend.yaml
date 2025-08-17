@@ -1283,7 +1283,7 @@
     name: "${toKebabCase(className)}.service"
   modelComponent:
     imports: |
-      // src/models/commande/commande.model.ts
+      // src/models/${toKebabCase(className)}/${toKebabCase(className)}.model.ts
       import dayjs from "dayjs";
       import { format } from 'date-fns';
       import 'dayjs/plugin/utc'; // Importe le plugin utc
@@ -1319,7 +1319,7 @@
           {{elseIf this.isDate}}
           {
             header: '${formatReadable(this.name)}',
-            accessor: (row: Commande) => {
+            accessor: (row: ${majStart(className)} ) => {
                const date = row.${this.name};
                if (!date) return '-';
                const dateObject = new Date(date);
@@ -1332,7 +1332,7 @@
           {{/if}}{{/each}}{{removeLine}}
       ]
       
-      export const commandeFilters = {
+      export const ${toKebabCase(className)}Filters = {
           {{#each fieldsFK}}
           ${this.name}: {
             label: '${formatReadable(this.type)}',
