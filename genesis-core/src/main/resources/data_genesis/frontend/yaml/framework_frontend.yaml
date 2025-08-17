@@ -1085,7 +1085,7 @@
         import RootLayout from './layouts/RootLayout';
         import { createBrowserRouter } from 'react-router-dom';
         {{#each routes}}
-        import ${this.componentName} from "${this.componentImport}";
+        import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
         {{/each}}
 
         export const router = createBrowserRouter([
@@ -1096,7 +1096,7 @@
                     {{#each routes}}
                     {
                       path: '${this.routerLink}',
-                      component: <${this.componentName} />,
+                      component: <${this.componentSelector} />,
                     },
                     {{/each}}
                 ],
