@@ -1380,18 +1380,17 @@
           {{/if}}{{/each}}{{removeLine}}
       } as const;
       
-        export const updateFormFields = {
-            {{#each fieldsPK}}
-            ${this.name}: {
-              label: 'ID',
-              type: '${this.typeBase}' as const,
-              required: true,
-              readonly: true, 
-            },
-            {{/each}} 
-            ...formFields, 
-        };
-      ];
+      export const updateFormFields = {
+          {{#each fieldsPK}}
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: '${this.typeBase}' as const,
+            required: true,
+            readonly: true, 
+          },
+          {{/each}}{{removeLine}}
+          ...formFields, 
+      };
     destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
     name: "${toKebabCase(className)}.model"
 
