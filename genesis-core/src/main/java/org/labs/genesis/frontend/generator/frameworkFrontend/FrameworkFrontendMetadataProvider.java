@@ -104,6 +104,7 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("referencedColumnType", field.getFrontEndReferencedColumnType());
         fieldMap.put("referencedColumn", StringUtils.minStart(StringUtils.toPascalCase(field.getReferencedColumn())));
+        fieldMap.put("referencedPrimaryKeyColumn", field.getReferencedPrimaryKeyColumn());
         fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
         fieldMap.put("defaultValue", field.getDefaultValue());
         fieldMap.put("columnSize", field.getColumnSize());

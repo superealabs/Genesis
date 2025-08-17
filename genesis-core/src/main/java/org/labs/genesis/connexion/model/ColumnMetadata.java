@@ -29,6 +29,7 @@ public class ColumnMetadata {
     private String columnType;
     private String referencedColumn;
     private String referencedColumnType;
+    private String referencedPrimaryKeyColumn;
     private boolean unique;
     private boolean nullable;
     private boolean isNumeric;
