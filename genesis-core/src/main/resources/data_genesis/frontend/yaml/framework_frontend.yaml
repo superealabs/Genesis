@@ -1121,6 +1121,12 @@
         </body>
         </html>
       destinationPath: "${destinationFolder}/"
+    - fileType: "Configuration file"
+      fileName: " "
+      extension: "env"
+      content: |
+        VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
+      destinationPath: "${destinationFolder}/"
   components:
     - componentType: "List"
       generateForView: true

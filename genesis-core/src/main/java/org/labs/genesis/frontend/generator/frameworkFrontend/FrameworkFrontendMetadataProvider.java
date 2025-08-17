@@ -69,6 +69,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("projectName", context.getProjectName());
         metadata.put("webappFolder", context.getWebappFolder());
         metadata.put("webapp", webappFolder);
+        metadata.put("projectPort", context.getProjectPort());
 
         return metadata;
     }
