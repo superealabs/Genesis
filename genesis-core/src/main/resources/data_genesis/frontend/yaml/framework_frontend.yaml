@@ -1163,7 +1163,7 @@
             return (
                 <ActionButtons
                     actions={[
-                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/${row.{{#each fieldsPK}}${this.name}{{/each}}}/edit`) },
+                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`) },
                         { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}) },
                     ]}
                 />
