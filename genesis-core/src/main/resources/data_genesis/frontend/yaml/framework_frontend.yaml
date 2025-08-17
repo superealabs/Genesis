@@ -1183,6 +1183,68 @@
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
       componentName: "${toKebabCase(className)}-list"
       componentAdditionalFiles: []
+    - componentType: "Detail"
+      generateForView: true
+      router:
+        link: "/${toKebabCase(className)}s/:id"
+        label: "${formatReadable(classNameLink)} Detail"
+      importFile: |
+        import { Edit, Delete } from '@mui/icons-material';
+        import { useNavigate } from 'react-router-dom';
+
+        import {${majStart(className)}, ${toKebabCase(className)}Meta, ${toKebabCase(className)}Columns } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+        import { ${className}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+      importComponent: |
+        import GenericDetailPage from '@/components/GenericDetailPage/GenericDetailPage';
+        import {useDelete} from "@/hooks/useDelete";
+        import { Typography } from '@mui/material';
+      selector: "${majStart(className)}Detail"
+      export: |
+        export default function ${majStart(className)}Detail() {
+            const navigate = useNavigate();
+            {{#if !isView}}
+            const handleDelete = useDelete(${className}Service.delete, () => {
+                  navigate('/${toKebabCase(className)}s'); 
+            });
+            {{/if}}
+        
+            return GenericDetailPage({
+                entityName: ${toKebabCase(className)}Meta.entityName,
+                service: ${className}Service,
+                columns: ${toKebabCase(className)}Columns,
+                backRoute: '/${toKebabCase(className)}s',
+                actions: [
+                    {{#if !isView}}{{removeLine}}
+                    {
+                        label: 'Edit',
+                        icon: <Edit />,
+                        variant: 'outlined',
+                        color: 'primary',
+                        onClick: (row, navigate) => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`),
+                    },
+                    {
+                        label: 'Delete',
+                        icon: <Delete />,
+                        variant: 'outlined',
+                        color: 'error',
+                        onClick: (row) => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}), 
+                    },
+                    {{/if}}{{removeLine}}
+                ],
+                tabs: [
+                    //Example use of tab
+                    //{
+                        //label: 'Tab1',
+                        //render: (row: ${majStart(className)}) => (
+                            //<Typography>Content for ${majStart(className)} ID #{row.{{#each fieldsPK}}${this.name}{{/each}} }.</Typography>
+                        //),
+                    //},
+                ],
+            })();
+        }
+      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+      componentName: "${toKebabCase(className)}-detail"
+      componentAdditionalFiles: [ ]
     - componentType: "Add"
       router:
         link: "/${toKebabCase(className)}s/create"
