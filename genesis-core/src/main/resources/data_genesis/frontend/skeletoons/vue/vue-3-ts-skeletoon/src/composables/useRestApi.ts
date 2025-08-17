@@ -10,10 +10,6 @@ export default function useRestApi<T>() {
     },
   });
 
-  // Optional: Add interceptors here
-  // instance.interceptors.request.use(...);
-  // instance.interceptors.response.use(...);
-
   async function request(config: AxiosRequestConfig): Promise<RestResponse<T>> {
     try {
       const response = await instance.request(config);

@@ -23,7 +23,6 @@ export function usePagination(defaultItemsPerPage?: number) {
     const paginationRequest = new PaginationRequestParameter();
     paginationRequest.setPage(page.value);
     paginationRequest.size = itemsPerPage.value;
-    console.log(paginationRequest);
 
     return paginationRequest;
   }

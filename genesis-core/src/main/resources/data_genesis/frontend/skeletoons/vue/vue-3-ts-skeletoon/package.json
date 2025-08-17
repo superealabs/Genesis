@@ -10,7 +10,6 @@
     "dev": "npm run format && npm run serve"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^7.0.0",
     "axios": "^1.11.0",
     "bootstrap": "^5.3.7",
     "bootstrap-icons": "^1.13.1",

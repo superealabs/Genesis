@@ -1,6 +1,18 @@
 <template>
-  <label v-if="label" :for="inputId" class="form-label">{{ label }}</label>
-  <input v-bind="$attrs" :value="modelValue" :id="inputId" @input="onInput" />
+  <label
+    v-if="label"
+    :for="inputFormId"
+    :class="{ 'form-label': !rowInput }"
+    class="text-nowrap me-1"
+    >{{ label }}</label
+  >
+  <input
+    v-bind="$attrs"
+    :value="modelValue"
+    :id="inputFormId"
+    class="form-control"
+    @input="onInput"
+  />
 </template>
 
 <script lang="ts">
@@ -14,10 +26,18 @@ export default defineComponent({
       type: [String, Number, Date] as PropType<string | number | Date>,
       required: false,
     },
+    inputId: {
+      type: String,
+      required: false,
+    },
+    rowInput: { type: Boolean, default: false },
   },
   emits: ["update:modelValue"],
   setup(props, { emit }) {
-    const inputId = computed(() => {
+    const inputFormId = computed(() => {
+      if (props.inputId) {
+        return props.inputId;
+      }
       return props.label
         ? "inpt-" + props.label.replace(/\s+/g, "-").toLowerCase()
         : "inpt-" + Math.random().toString(36).substring(2, 8);
@@ -27,7 +47,7 @@ export default defineComponent({
       emit("update:modelValue", (e.target as HTMLInputElement).value);
     };
 
-    return { inputId, onInput };
+    return { inputFormId, onInput };
   },
 });
 </script>

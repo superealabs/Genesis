@@ -41,14 +41,19 @@ $gray: rgba(64, 64, 64, 0.6);
 .nav-link {
   color: $dark;
 }
-.nav-link:hover,
-.nav-link:focus {
-  color: $primary;
-}
+// .nav-link:hover,
+// .nav-link:focus {
+//   color: $primary;
+//   background-color: $secondary;
+//   border-radius: 0.25rem;
+// }
 
 .router-link-active {
   color: $primary;
   position: relative;
+  background-color: $secondary;
+  border-radius: 0.25rem;
+  font-weight: bold;
 }
 .router-link-active::before {
   background-color: $primary;
@@ -57,7 +62,7 @@ $gray: rgba(64, 64, 64, 0.6);
   bottom: -5px;
   left: -24px;
   height: 120%;
-  width: 20px;
+  width: 5px;
   border-radius: 20%;
 }
 

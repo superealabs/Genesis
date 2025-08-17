@@ -1,7 +1,7 @@
 <template>
-  <div class="row my-3">
+  <div class="row py-2">
     <nav class="col">
-      <ul class="pagination gap-2">
+      <ul class="pagination align-items-center gap-2">
         <!-- Previous -->
         <li class="page-item me-2">
           <button
@@ -106,23 +106,39 @@ export default defineComponent({
 
     const pageNumbers = computed(() => {
       const pages: (number | string)[] = [];
-
-      const maxVisible = 5;
+      const maxVisible = 10; // show 10 pages at a time
       const totalPages = props.end;
+      const currentPage = props.page;
 
-      // Add first 5 pages
-      for (let i = props.start; i <= Math.min(maxVisible, totalPages); i++) {
+      // Figure out the current "block" of pages
+      const currentBlock = Math.floor((currentPage - 1) / maxVisible);
+      let startPage = currentBlock * maxVisible + 1;
+      let endPage = Math.min(startPage + maxVisible - 1, totalPages);
+
+      // Add first page + ellipsis if we are not in the first block
+      if (startPage > 1) {
+        pages.push(1);
+        if (startPage > 2) {
+          pages.push("...");
+        }
+      }
+
+      // Add the block of pages
+      for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
       }
 
-      // Add ellipsis if there are more pages
-      if (totalPages > maxVisible) {
-        pages.push("...");
+      // Add ellipsis + last page if not in the last block
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          pages.push("...");
+        }
         pages.push(totalPages);
       }
 
       return pages;
     });
+
     const pageSelectOptions = computed(() => {
       const totalPages = props.end;
       const options: SelectOption[] = [];

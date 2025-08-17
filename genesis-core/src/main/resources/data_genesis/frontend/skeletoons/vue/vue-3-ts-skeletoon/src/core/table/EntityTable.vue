@@ -1,11 +1,12 @@
 <template>
   <div>
-    <div class="mt-3 d-flex">
+    <!-- TOP FILTER -->
+    <div id="filter-section" class="mt-3 d-flex position-sticky top-0 bg-light">
       <GenesisSearch
         :initial-model="entityModel"
         :searchFields="entitySearchFields"
         @update:filter="updateFilters"
-        @search="doSearch"
+        @search="multiCriteriaSearch"
       />
       <div class="ms-auto d-flex align-items-center gap-2">
         <div class="row">
@@ -40,26 +41,28 @@
       :message="message"
       :data="entities"
       :loading="loading"
+      @request:refresh="doSearch"
     />
-
-    <PaginationLayout
-      :start="1"
-      :page="page"
-      :end="totalPages"
-      @update:page="changePage"
-      class="col"
-      :quickForm="true"
-    />
+    <div class="position-sticky bottom-0 bg-light">
+      <PaginationLayout
+        :start="1"
+        :page="page"
+        :end="totalPages"
+        @update:page="changePage"
+        :quickForm="true"
+      />
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import GenesisPopup from "../popup/GenesisPopup.vue";
+import { defineComponent, onMounted, PropType } from "vue";
 import GenesisSearch from "@/core/search/GenesisSearch.vue";
 import GenesisButton from "@/core/button/GenesisButton.vue";
 import PaginationLayout from "@/core/pagination/PaginationLayout.vue";
 import { useEntityTable } from "@/composables/useEntityTable";
-import { EntityListField } from "@/models/EntityModel";
+import { EntitySearchField } from "@/models/EntityModel";
 import { PaginationData } from "@/models/api/PageResponseModel";
 
 export default defineComponent({
@@ -68,6 +71,7 @@ export default defineComponent({
     GenesisSearch,
     GenesisButton,
     PaginationLayout,
+    GenesisPopup,
   },
   props: {
     entityModel: {
@@ -75,7 +79,7 @@ export default defineComponent({
       required: true,
     },
     entitySearchFields: {
-      type: Array as PropType<EntityListField[]>,
+      type: Array as PropType<EntitySearchField[]>,
       required: true,
     },
     searchFn: {
@@ -99,9 +103,23 @@ export default defineComponent({
   },
   setup(props) {
     const table = useEntityTable(props.searchFn, props.getPaginationData);
+    const multiCriteriaSearch = () => {
+      table.changePage(1);
+    };
+
+    onMounted(() => {
+      multiCriteriaSearch();
+    });
     return {
       ...table,
+      multiCriteriaSearch,
     };
   },
 });
 </script>
+
+<style scoped>
+#filter-section {
+  z-index: 999;
+}
+</style>

@@ -1,12 +1,22 @@
 <template>
-  <label v-if="label" class="text-nowrap" :for="inputId">{{ label }}</label>
+  <label
+    v-if="label"
+    class="text-nowrap me-1"
+    :class="{ 'form-label': !rowInput }"
+    :for="inputId"
+    >{{ label }}</label
+  >
   <select
     v-bind="$attrs"
     :id="inputId"
     class="form-select"
-    :value="modelValue"
+    :value="modelValue ?? ''"
+    :disabled="loading"
     @change="onChange"
   >
+    <option value="">
+      {{ placeholder ?? `-- Select an option --` }}
+    </option>
     <option v-for="option in options" :key="option.value" :value="option.value">
       {{ option.label }}
     </option>
@@ -21,14 +31,18 @@ export default defineComponent({
   name: "GenesisSelect",
   props: {
     label: { type: String, required: false },
+    placeholder: { type: String, required: false },
     modelValue: {
-      type: [String, Number] as PropType<string | number>,
+      type: [String, Number, null] as PropType<string | number | null>,
       required: false,
+      default: null,
     },
     options: {
       type: Array as PropType<SelectOption[]>,
       required: true,
     },
+    loading: { type: Boolean, default: false },
+    rowInput: { type: Boolean, default: false },
   },
   emits: ["update:modelValue"],
   setup(props, { emit }) {
@@ -39,7 +53,8 @@ export default defineComponent({
     });
 
     const onChange = (e: Event) => {
-      emit("update:modelValue", (e.target as HTMLSelectElement).value);
+      const value = (e.target as HTMLSelectElement).value;
+      emit("update:modelValue", value === "" ? null : value);
     };
 
     return { inputId, onChange };
