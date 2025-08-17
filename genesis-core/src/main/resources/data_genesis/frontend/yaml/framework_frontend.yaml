@@ -1250,7 +1250,7 @@
           search(params: {
               page: number;
               size: number;
-              sort: `${string},${'asc' | 'desc'}`;
+              sort: `$[string],$['asc' | 'desc']`;
               filter: FilterState;
           }) {
               return search<${majStart(className)}>({
@@ -1304,12 +1304,12 @@
             header: '${this.type}',
             accessor: (row: ${majStart(className)}) => (row.${this.name} as any)?.${this.referencedPrimaryKeyColumn} ?? '-',
             sortKey: '${this.name}',
-            link: (row: ${majStart(className)}) => '/${toKebabCase(this.type)}s/' + (row.${this.name} as any)?.${this.referencedPrimaryKeyColumn} + '?from=/${toKebabCase(className)}s'
+            link: (row: ${majStart(className)}) => `/${toKebabCase(this.type)}s/$[(row.${this.name} as any)?.${this.referencedPrimaryKeyColumn}]?from=/${toKebabCase(className)}s`
           },
           {{/each}}{{removeLine}}
           {{#each fieldsNotFK}}
           {{#if this.isPrimaryKey}}
-          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' ,link: (row: ${majStart(className)}) => '/${toKebabCase(className)}s/' + row.${this.name} },
+          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' ,link: (row: ${majStart(className)}) => `/${toKebabCase(className)}s/$[row.${this.name}]`},
           {{elseIf this.isDate}}
           {
             header: '${formatReadable(this.name)}',
