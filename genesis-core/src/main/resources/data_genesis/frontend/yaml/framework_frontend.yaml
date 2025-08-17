@@ -1302,18 +1302,17 @@
           {{#each fieldsFK}}
           {
             header: '${this.type}',
-            accessor: (row: ${majStart(className)}) => (row.${this.name} as any)?.${this.referencedColumn} ?? '-',
-            sortKey: '${this.name}.${this.referencedColumn}',
-            link: (row: ${majStart(className)}) => `/${this.type}s/${(row.${this.name} as any)?.${this.referencedColumn}}?from=/${toKebabCase(className)}s`
+            accessor: (row: ${majStart(className)}) => (row.${this.name} as any)?.${this.referencedPrimaryKeyColumn} ?? '-',
+            sortKey: '${this.name}',
+            link: (row: ${majStart(className)}) => '/${toKebabCase(this.type)}s/' + (row.${this.name} as any)?.${this.referencedPrimaryKeyColumn} + '?from=/${toKebabCase(className)}s'
           },
-          {{/each}}
-      
+          {{/each}}{{removeLine}}
           {{#each fieldsNotFK}}
           {{#if this.isPrimaryKey}}
-          { header: '${formatReadableLowerCase(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' ,link: (row: ${majStart(className)}) => `/${toKebabCase(className)}s/${row.${this.name}}` },
+          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' ,link: (row: ${majStart(className)}) => '/${toKebabCase(className)}s/' + row.${this.name} },
           {{elseIf this.isDate}}
           {
-            header: '${formatReadableLowerCase(this.name)}',
+            header: '${formatReadable(this.name)}',
             accessor: (row: Commande) => {
                const date = row.${this.name};
                if (!date) return '-';
@@ -1322,9 +1321,10 @@
             },
             sortKey: '${this.name}'
           },
-         {{else}}
-         { header: '${formatReadableLowerCase(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' }
-         {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
+          {{else}}
+          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' },
+          {{/if}}{{/each}}{{removeLine}}
+      ]
       
         export const commandeFilters = {
             {{#each fieldsFK}}
