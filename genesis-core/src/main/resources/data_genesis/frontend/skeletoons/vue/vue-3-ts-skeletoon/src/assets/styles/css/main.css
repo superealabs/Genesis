@@ -1,0 +1,29 @@
+:root {
+  --bs-primary: #537cc2;
+  --bs-secondary: rgba(83, 124, 194, 0.15);
+  --bs-success: #198754;
+  --bs-danger: #dc3545;
+  --bs-dark: #404040;
+  --bs-light: #fcfcfc;
+  --bs-gray: rgba(64, 64, 64, 0.6);
+}
+
+[data-theme="dark"] {
+  --bs-primary: #86a8e7;
+  --bs-secondary: rgba(134, 168, 231, 0.15);
+  --bs-success: #28a745;
+  --bs-danger: #ff6b6b;
+  --bs-dark: #f1f1f1;
+  --bs-light: #1e1e1e;
+  --bs-gray: rgba(241, 241, 241, 0.6);
+}
+
+$primary: var(--bs-primary);
+$secondary: var(--bs-secondary);
+$success: var(--bs-success);
+$danger: var(--bs-danger);
+$dark: var(--bs-dark);
+$light: var(--bs-light);
+$gray: var(--bs-gray);
+
+@import "bootstrap/scss/bootstrap";
