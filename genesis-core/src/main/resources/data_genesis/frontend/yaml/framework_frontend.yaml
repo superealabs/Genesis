@@ -1076,7 +1076,7 @@
             },
             {{/each}}
         ];
-      destinationPath: "${destinationFolder}/src/app/"
+      destinationPath: "${destinationFolder}/src/config/"
     - fileType: "Router file"
       fileName: "router"
       extension: "tsx"
@@ -1174,8 +1174,8 @@
                 pageTitle: '${majStart(className)} List'
             })();
         }
-      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}/${toKebabCase(className)}-list"
-      componentName: "${majStart(className)}List"
+      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+      componentName: "${toKebabCase(className)}-list"
       componentAdditionalFiles: []
     - componentType: "Add"
       router:
@@ -1209,8 +1209,8 @@
                 />
             );
         }
-      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}/${toKebabCase(className)}-create"
-      componentName: "Create${majStart(className)}"
+      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+      componentName: "${toKebabCase(className)}-create"
       componentAdditionalFiles: []
     - componentType: "Update"
       router:
@@ -1236,8 +1236,8 @@
                 />
             );
         }
-      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}/${toKebabCase(className)}-update"
-      componentName: "Update${majStart(className)}"
+      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+      componentName: "${toKebabCase(className)}-update"
       componentAdditionalFiles: []
   serviceComponent:
     imports: |
@@ -1393,6 +1393,6 @@
             ...formFields, 
         };
       ];
-    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/models"
+    destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
     name: "${toKebabCase(className)}.model"
 
