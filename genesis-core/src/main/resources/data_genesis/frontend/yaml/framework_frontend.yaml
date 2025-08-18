@@ -1423,7 +1423,7 @@
           ${this.name}: {
             label: '${this.type}',
             type: 'select' as const,
-            required: ${this.isNullable},
+            required: ${this.isRequired},
             foreignKey: {
               endpoint: '/${toKebabCase(this.type)}s?page=0&size=1000',
               labelKey: '${this.referencedPrimaryKeyColumn}',
@@ -1439,12 +1439,12 @@
           ${this.name}: {
             label: '${formatReadable(this.name)}',
             type: 'datetime' as const,
-            required: ${this.isNullable},
+            required: ${this.isRequired},
             transform: (value: string) =>
                                  value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : '',
           },
           {{else}}
-          ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const, required: ${this.isNullable} },
+          ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const, required: ${this.isRequired} },
           {{/if}}{{/each}}{{removeLine}}
       } as const;
       

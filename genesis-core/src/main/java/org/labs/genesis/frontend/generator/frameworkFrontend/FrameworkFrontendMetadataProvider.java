@@ -112,6 +112,7 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("decimalDigits", field.getDecimalDigits());
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
+        fieldMap.put("isRequired", !field.isNullable());
         fieldMap.put("isNumeric",field.isNumeric());
         fieldMap.put("isDate",field.isDate());
         fieldMap.put("isText", field.isText());
