@@ -1057,7 +1057,7 @@
         export const navItems: NavItem[] = [
             {{#each entities}}
             {
-                label: '${formatReadable(classNameLink)}',
+                label: '${formatReadable(this.className)}',
                 icon: <List />,
                 children: [
                     {
