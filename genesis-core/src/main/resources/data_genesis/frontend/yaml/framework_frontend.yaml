@@ -1096,7 +1096,7 @@
                     {{#each routes}}
                     {
                       path: '${this.routerLink}',
-                      component: <${this.componentSelector} />,
+                      element: <${this.componentSelector} />,
                     },
                     {{/each}}
                 ],
