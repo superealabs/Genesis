@@ -1,13 +1,18 @@
 :root {
-  --color-primary: #4a7cb5;
+  --color-primary: #5164b1;
   --color-secondary: #ffffff;
-  --color-bg: #ffffff;
+  --color-bg: #f9f9f9;
   --color-text: #333;
   --color-border: #e0e0e08c;
-  --color-active: #e6f0ff;
+  --color-active: #7e87aa40;
+  --color-hover: #7e87aa10;
+  --color-buton-hover: #7e87aa70;
+  --color-buton-clicked: #7e87aa60;
 
   --spacing: 15px;
   --radius: 10px;
+  --shadow: 0 4px 6px #09090910;
+  --shadow-soft: 0 2px 3px #09090910;
 }
 
 @font-face {

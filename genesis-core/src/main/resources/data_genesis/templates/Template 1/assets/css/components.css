@@ -1,38 +1,160 @@
 /* Boutons */
 .btn-primary {
-    background: var(--color-primary);
+    background: linear-gradient(to right, var(--color-primary), var(--color-buton-hover));
     color: white;
     padding: 0.5rem 1rem;
+    height: 35px;
+    font-size: medium;
     border-radius: var(--radius);
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
 }
+
+.btn-primary:hover {
+    background: linear-gradient(to top, var(--color-buton-hover), var(--color-primary));
+    transform: translateY(-2px) scale(1.05);
+}
+
+.btn-primary:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.btn-primary.animated {
+    background-size: 200% 200%;
+    animation: gradientShift 4s ease infinite;
+}
+
+.btn-primary svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+    stroke: currentColor;
+    color: white;
+}
+
 .btn-secondary {
     background: var(--color-secondary);
+    height: 35px;
     padding: 0.5rem 1rem;
+    font-size: medium;
     border-radius: var(--radius);
-}
-.btn-icon {
-    background: var(--color-secondary);
-    padding: 0.3rem;
-    border-radius: var(--radius);
-}
-.modal-actions {
     display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    box-shadow: var(--shadow-soft);
 }
-.btn-cancel {
-    background: #ccc;
-    padding: 8px 15px;
+
+.btn-secondary svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+    stroke: currentColor;
+    color: var(--color-text);
+}
+
+.btn-third {
+    background: var(--color-active);
+    color: var(--color-text);
+    padding: 0.5rem 1rem;
+    height: 35px;
+    font-size: medium;
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+}
+
+.btn-third:hover {
+    background: var(--color-buton-hover);
+    transform: translateY(-1px) scale(1.05);
+}
+
+.btn-third svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+    stroke: currentColor;
+    color: white;
+}
+
+.actions-group {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5px;
+}
+
+.action-button {
+    background: var(--color-active);
+    width: 32px;
+    height: 24px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
     border: none;
-    border-radius: 5px;
+    padding: 0;
     cursor: pointer;
 }
-.btn-confirm {
-    background: #e74c3c;
-    color: white;
-    padding: 8px 15px;
-    border-radius: 5px;
+
+.action-button:hover {
+    background: var(--color-buton-hover);
+}
+
+.action-button:first-child {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.action-button:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.action-button svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    color: var(--color-text);
+}
+
+.pagination button {
+    background-color: var(--color-secondary);
+    width: 32px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
     border: none;
+    padding: 0;
     cursor: pointer;
 }
 
@@ -40,19 +162,356 @@
 .table-container {
     overflow-x: auto;
     border-radius: var(--radius);
+    box-shadow: var(--shadow);
 }
+
 table {
     width: 100%;
+    background-color: var(--color-secondary);
     border-collapse: collapse;
 }
+
 thead {
     background: var(--color-active);
 }
-th, td {
+
+th,
+td {
     padding: 0.75rem;
-}
-tr:hover {
-    background: var(--color-active);
-    opacity: 60%;
+    text-align: left;
 }
 
+tr.table-content {
+    border-bottom: 1px solid var(--color-bg);
+}
+
+tr.table-content:last-child {
+    border-bottom: none;
+}
+
+tr.table-content:hover {
+    background: var(--color-hover);
+}
+
+/* Select showing content */
+.select {
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    height: 35px;
+    width: 65px;
+    background: var(--color-secondary);
+    border-radius: var(--radius);
+    border: none;
+    box-shadow: var(--shadow-soft);
+    font-size: 0.9rem;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    transition: border 0.3s ease, box-shadow 0.3s ease;
+    background-image: url("data:image/svg+xml,%3Csvg fill='%23333' height='12' viewBox='0 0 24 24' width='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 12px;
+}
+
+.select option {
+    background: #fff;
+    color: #333;
+    padding: 8px;
+}
+
+.select option:hover {
+    background: var(--color-hover);
+}
+
+/* Input filter */
+.filter-content {
+    background: var(--color-secondary);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    height: 35px;
+    width: fit-content;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    gap: 8px;
+}
+
+.filter-content input:not([type="date"]):not([type="datetime-local"]):not([type="datetime"]) {
+    border: none;
+    border-bottom: 1px solid #ccc;
+    width: 70px;
+    background: transparent;
+    outline: none;
+}
+
+.filter-content input[type="date"],
+.filter-content input[type="datetime-local"],
+.filter-content input[type="datetime"] {
+    border: none;
+    border-bottom: 1px solid #ccc;
+    width: 150px;
+    background: transparent;
+    outline: none;
+}
+
+.filter-content input[type="date"] {
+    border: none;
+    border-bottom: 1px solid #ccc;
+    width: 100px;
+    background: transparent;
+    outline: none;
+}
+
+.filter-content p {
+    opacity: 50%;
+    width: fit-content;
+}
+
+.remove-item {
+    background: transparent;
+}
+
+.remove-item svg {
+    width: 8px;
+    height: 8px;
+    fill: currentColor;
+    color: var(--color-text);
+    opacity: 50%;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    margin-top: 5px;
+    background: var(--color-secondary);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    padding: 5px 0;
+    z-index: 1000;
+    min-width: 150px;
+}
+
+.dropdown-export {
+    display: none;
+    position: absolute;
+    margin-top: 5px;
+    background: var(--color-secondary);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    padding: 5px 0;
+    z-index: 1000;
+}
+
+.dropdown-menu button,
+.dropdown-export button {
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+}
+
+.dropdown-menu button:hover,
+.dropdown-export button:hover {
+    background: var(--color-hover);
+}
+
+.pagination {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.pagination a,
+.pagination span {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.pagination a.prev,
+.pagination a.next {
+    background: var(--color-secondary);
+    box-shadow: var(--shadow-soft);
+}
+
+.pagination a.prev:hover,
+.pagination a.next:hover {
+    background: var(--color-buton-hover);
+}
+
+.prev svg,
+.next svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+    stroke: currentColor;
+    color: var(--color-text);
+}
+
+.pagination a:hover {
+    background: var(--color-hover);
+}
+
+.pagination a.active {
+    background: var(--color-active);
+    box-shadow: var(--shadow-soft);
+}
+
+.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.pagination .dots {
+    border: none;
+    background: transparent;
+    cursor: default;
+}
+
+.ongoing-page .select {
+    padding: 6px 12px;
+    text-decoration: none;
+    font-size: 14px;
+    height: 32px;
+}
+
+.ongoing-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background-color: var(--color-active);
+    box-shadow: var(--shadow-soft);
+}
+
+.ongoing-button:hover {
+    background-color: var(--color-buton-hover);
+}
+
+/* form */
+.form {
+    width: fit-content;
+    background: var(--color-secondary);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-wrap: wrap;
+    padding: 16px;
+    gap: 16px;
+}
+.form-input {
+    width: 49%;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+}
+.form-input input,
+.form-input select {
+    float: inline-start;
+    height: 30px;
+    border-radius: var(--radius);
+    height: 35px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    margin-top: 5px;
+    font-size: small;
+}
+.form-input-boolean {
+    width: 49%;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+}
+.input-boolean-options {
+    width: 49%;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    margin-top: 12px;
+}
+.input-boolean-options p {
+    margin: 0 50px 0 5px;
+}
+.form-input input[type="radio"] {
+    height: 15px;
+}
+.form .form-actions {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.reset-button {
+    background: none;
+}
+.reset-button:hover {
+    color: var(--color-buton-hover);
+}
+.reset-button:active {
+    color: var(--color-primary);
+}
+.form-actions .action-options button {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+}
+.form-actions .action-options {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+}
+.form-actions .action-options .action-save {
+    background: var(--color-primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    height: 35px;
+    font-size: medium;
+    border-radius: var(--radius);
+
+}
+.form-actions .action-options .action-cancel {
+    color: var(--color-text);
+    background: none;
+    border: 1px solid var(--color-border);
+    padding: 0.5rem 1rem;
+    height: 35px;
+    font-size: medium;
+    border-radius: var(--radius);
+
+}
+/* Modal */
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+.modal-actions .btn-cancel {
+    background: #ccc;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.modal-actions .btn-confirm {
+    background: #e74c3c;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+}
