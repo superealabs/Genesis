@@ -9,7 +9,7 @@ interface Props {
 export default function RootLayout({ layout = 'vertical' }: Props) {
     return (
         <>
-            {layout === 'vertical' ? (
+            {layout === 'horizontal' ? (
                 <>
                     <Sidebar layout="horizontal" />
                     <Outlet />
