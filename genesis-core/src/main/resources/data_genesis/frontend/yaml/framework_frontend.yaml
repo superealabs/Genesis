@@ -1122,7 +1122,7 @@
         </html>
       destinationPath: "${destinationFolder}/"
     - fileType: "Configuration file"
-      fileName: " "
+      fileName: "{{removeLine}}"
       extension: "env"
       content: |
         VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
