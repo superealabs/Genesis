@@ -231,7 +231,7 @@
         import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
         
         import { ${className} } from '../models/${toKebabCase(className)}.model'
-        import { ${className}Service } from '../services/${toKebabCase(className)}.service'
+        import { ${toKebabCase(className)}Service } from '../services/${toKebabCase(className)}.service'
         
         {{#each fieldsFK}}
         import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
@@ -1138,7 +1138,7 @@
         import { useNavigate } from 'react-router-dom';
         
         import {${majStart(className)}, ${toKebabCase(className)}Meta, ${toKebabCase(className)}Columns, ${toKebabCase(className)}Filters} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
-        import { ${className}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+        import { ${toKebabCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
       importComponent: |
         import GenericListPage from '@/components/GenericListPage/GenericListPage';
         import ActionButtons from '@/components/ActionButtons';
@@ -1158,7 +1158,7 @@
         {{#if !isView}}
         function RowActions({ row }: { row: ${majStart(className)} }) {
             const navigate = useNavigate();
-            const handleDelete = useDelete(${className}Service.delete, () => window.location.reload());
+            const handleDelete = useDelete(${toKebabCase(className)}Service.delete, () => window.location.reload());
 
             return (
                 <ActionButtons
@@ -1176,7 +1176,7 @@
                 columns,
                 availableFilters: ${toKebabCase(className)}Filters,
                 defaultSort: ${toKebabCase(className)}Meta.defaultSort,
-                searchFn: ${className}Service.search,
+                searchFn: ${toKebabCase(className)}Service.search,
                 pageTitle: '${majStart(className)} List'
             })();
         }
@@ -1193,7 +1193,7 @@
         import { useNavigate } from 'react-router-dom';
 
         import {${majStart(className)}, ${toKebabCase(className)}Meta, ${toKebabCase(className)}Columns } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
-        import { ${className}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+        import { ${toKebabCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
       importComponent: |
         import GenericDetailPage from '@/components/GenericDetailPage/GenericDetailPage';
         import {useDelete} from "@/hooks/useDelete";
@@ -1203,14 +1203,14 @@
         export default function ${majStart(className)}Detail() {
             const navigate = useNavigate();
             {{#if !isView}}
-            const handleDelete = useDelete(${className}Service.delete, () => {
+            const handleDelete = useDelete(${toKebabCase(className)}Service.delete, () => {
                   navigate('/${toKebabCase(className)}s'); 
             });
             {{/if}}
         
             return GenericDetailPage({
                 entityName: ${toKebabCase(className)}Meta.entityName,
-                service: ${className}Service,
+                service: ${toKebabCase(className)}Service,
                 columns: ${toKebabCase(className)}Columns,
                 backRoute: '/${toKebabCase(className)}s',
                 actions: [
