@@ -111,6 +111,21 @@
   template: "Vue3TS-template"
   initPath: "vue/vue-3-ts-skeletoon"
   componentExtension: "vue"
+  validationRules:
+    notNull: 'required="true"'
+    maxSize: 'maxlength="${columnSize}"'
+    numericMinimumValue: 'min="${value}"'
+    numericMinimumInclusiveValue: 'min="${value}"'
+    numericMaximumValue: 'max="${value}"'
+    numericMaximumInclusiveValue: 'max="${value}"'
+    past: 'max="${today}"'
+    pastOrPresent: 'max="${today}"'
+    future: 'min="${today}"'
+    futureOrPresent: 'min="${today}"'
+    notBlank: 'required="true"'
+    minAndMaxSize: 'minlength="${minLength}" maxlength="${columnSize}"'
+    regexPattern: 'pattern="${value}"'
+
   additionalFiles:
     - fileType: "Env File"
       fileName: "{{removeLine}}"
@@ -571,6 +586,7 @@
         import { defineComponent, PropType } from "vue";
         import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
         import EntityRowActions from "@/core/table/EntityRowActions.vue";
+        import { useObjectUtils } from "@/composables/useObjectUtils";
       selector: "${majStart(EntityName)}Row"
       standalone: true
       importComponent: "components: { EntityRowActions }"
@@ -578,17 +594,133 @@
         <template>
           <tr class="border-bottom">
             {{#each fields}}
+            {{#if this.isForeignKey}}
+            <td>{{ getSecondValue(tache.assigneaidEmployes) }}</td>
+            {{else}}
             <td>{{ ${minStart(EntityName)}.${this.name} }}</td>
+            {{/if}}{{removeLine}}</td>
             {{/each}}
     
             <td class="text-end">
               <div class="d-inline-flex rounded-3 shadow-sm overflow-hidden">
-                <EntityRowActions />
+                <EntityRowActions
+                  @delete-row="deleteRow"
+                  @view-row="viewRow"
+                  @edit-row="updateRow"
+                />
               </div>
             </td>
           </tr>
         </template>
       style: "<style scoped></style>"
+      export: |
+          props: {
+            ${minStart(EntityName)}: {
+              required: true,
+              type: Object as PropType<${majStart(EntityName)}>,
+            },
+          },
+          emits: ["request-delete", "request-view", "request-update"],
+          setup(props, { emit }) {
+            const deleteRow = () => {
+              emit("request-delete", props.tache);
+            };
+  
+            const viewRow = () => {
+              emit("request-view", props.tache);
+            };
+  
+            const updateRow = () => {
+              emit("request-update", props.tache);
+            };
+  
+            const { getSecondValue } = useObjectUtils();
+  
+            return {
+              deleteRow,
+              viewRow,
+              updateRow,
+              getSecondValue,
+            };
+          },
+      componentName: "${majStart(EntityName)}Row"
+      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
+      componentAdditionalFiles: []
+
+    - componentType: "Details Component"
+      generateForView: true
+      router:
+        link: "/${minPluralize(EntityName)}/:id"
+        label: "${majStart(EntityName)} Details"
+      componentName: "${majStart(EntityName)}Details"
+      importFile: |
+        import { defineComponent, PropType } from "vue";
+        import type { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
+        import GenesisButton from "@/core/button/GenesisButton.vue";
+        import { usePopup } from "@/composables/usePopup";
+        import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
+        import DeleteConfirmationPopup from "@/core/popup/DeleteConfirmationPopup.vue";
+      selector: "${majStart(EntityName)}Details"
+      standalone: true
+      importComponent: |
+        components: { GenesisButton, DeleteConfirmationPopup }
+      template: |
+        <template>
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              <div v-if="${minStart(EntityName)}">
+                <div class="row g-3">
+                  {{#each fields}}
+                  <div class="form-group col-md-6">
+                    <label for="${minStart(EntityName)}${majStart(this.name)}" class="form-label">
+                      ${formatReadable(this.name)}
+                    </label>
+                    <input
+                      id="${minStart(EntityName)}${majStart(this.name)}"
+                      type="text"
+                      class="form-control bg-white"
+                      readonly
+                      disabled
+                      :value="${minStart(EntityName)}.${this.name} ?? ''"
+                    />
+                  </div>
+                  {{/each}}
+                </div>
+                <!-- Action buttons -->
+                <div class="row g-3 mt-4 justify-content-end">
+                  <div class="col-auto">
+                    <GenesisButton
+                      icon="bi bi-trash me-2"
+                      @click="openDeletePopup(${minStart(EntityName)})"
+                      class="btn-outline-danger"
+                      label="Delete"
+                    />
+                  </div>
+                  <div class="col-auto">
+                    <GenesisButton
+                      icon="bi bi-pen me-2"
+                      @click="goToUpdateFormView(${minStart(EntityName)})"
+                      class="btn-outline-dark"
+                      label="Update"
+                    />
+                  </div>
+                </div>
+              </div>
+              <p v-else>Chargement...</p>
+            </div>
+          </div>
+
+          <!-- Delete confirmation popup -->
+          <DeleteConfirmationPopup
+            :visible="deletePopup"
+            :message="`Êtes-vous sûr de vouloir supprimer ${majStart(EntityName)} \${${minStart(EntityName)}.id} ?`"
+            subMessage="Cette action est irréversible."
+            @confirm="confirmDelete"
+            @cancel="closePopup"
+          />
+        </template>
+      style: |
+        <style scoped></style>
       export: |
         props: {
           ${minStart(EntityName)}: {
@@ -597,12 +729,33 @@
           },
         },
         setup(props) {
-          return {};
-        },
-      componentName: "${majStart(EntityName)}Row"
-      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
-      componentAdditionalFiles: []
+          const { closePopup, openPopup, visible: deletePopup } = usePopup(false);
+          const { delete${majStart(EntityName)}, goToListView, goToUpdateFormView } = use${majPluralize(EntityName)}();
 
+          function openDeletePopup(entity: ${majStart(EntityName)}) {
+            if (!entity) return;
+            openPopup();
+          }
+
+          async function confirmDelete() {
+            const { success, error } = await delete${majStart(EntityName)}(props.${minStart(EntityName)});
+            if (!success) {
+              console.error(error);
+            }
+            closePopup();
+            goToListView();
+          }
+
+          return {
+            deletePopup,
+            openDeletePopup,
+            confirmDelete,
+            closePopup,
+            goToUpdateFormView,
+          };
+        },
+      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
+      componentAdditionalFiles: [ ]
   serviceComponent:
     imports: |
       import useRestApi from "@/composables/useRestApi";
