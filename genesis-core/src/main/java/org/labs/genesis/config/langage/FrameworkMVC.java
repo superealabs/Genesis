@@ -49,7 +49,8 @@ public class FrameworkMVC extends Framework {
         private Boolean toGenerate;
         private String viewSavePath;
         private String listViewName;
-        private String formViewName;
+        private String createViewName;
+        private String editViewName;
         private String detailViewName;
     }
 }

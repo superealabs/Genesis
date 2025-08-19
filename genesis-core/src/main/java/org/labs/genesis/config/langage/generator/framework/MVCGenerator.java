@@ -221,6 +221,7 @@ public class MVCGenerator implements GenesisGenerator {
         return result;
     }
 
+    @Override
     public String generateViews(FrameworkMVC framework,
                                 Map<String, Object> frameworkOptions,
                                 Language language,
@@ -236,6 +237,10 @@ public class MVCGenerator implements GenesisGenerator {
 
         generateListView(framework, frameworkOptions, language, viewsTemplate, viewsTemplateEngine, tableMetadata, destinationFolder, projectName, groupLink);
         generateDetailsView(framework, frameworkOptions, language, viewsTemplate, viewsTemplateEngine, tableMetadata, destinationFolder, projectName, groupLink);
+
+        if (Boolean.FALSE.equals(tableMetadata.getIsView())) {
+            generateCreateView(framework, frameworkOptions, language, viewsTemplate, viewsTemplateEngine, tableMetadata, destinationFolder, projectName, groupLink);
+        }
 
         return "";
     }
@@ -282,7 +287,6 @@ public class MVCGenerator implements GenesisGenerator {
         FileUtils.createFile(fileSavePath, fileName, viewsTemplateEngine.getViewExtension(), result);
     }
 
-
     public void generateDetailsView(FrameworkMVC framework,
                                  Map<String, Object> frameworkOptions,
                                  Language language,
@@ -319,6 +323,48 @@ public class MVCGenerator implements GenesisGenerator {
 
         // Création du fichier
         String fileName = framework.getView().getDetailViewName();
+        fileName = engine.simpleRender(fileName, metadataFinally);
+
+        String result = engine.render(secondaryResult, metadataFinally);
+        FileUtils.createFile(fileSavePath, fileName, viewsTemplateEngine.getViewExtension(), result);
+    }
+
+    public void generateCreateView(FrameworkMVC framework,
+                                    Map<String, Object> frameworkOptions,
+                                    Language language,
+                                    ViewsTemplate viewsTemplate,
+                                    ViewsTemplateEngine viewsTemplateEngine,
+                                    TableMetadata tableMetadata,
+                                    String destinationFolder,
+                                    String projectName,
+                                    String groupLink) throws Exception {
+        if (language.getId() != framework.getLanguageId()) {
+            throw new RuntimeException("Incompatibility detected: the language '" + language.getName() + "' (provided ID: " + language.getId() + ") is not compatible with the framework '" + framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
+        }
+
+        String templateContent = loadViewCreateTemplate(viewsTemplate);
+
+        // Rendu intermédiaire
+        HashMap<String, Object> metadataPrimary = getViewHashMap(framework, language, tableMetadata);
+        String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
+
+        // Rendu intermédiaire
+        HashMap<String, Object> metadataSecondary = getAltViewCreateHashMap(viewsTemplateEngine);
+        String secondaryResult = engine.simpleRender(primaryResult, metadataSecondary);
+
+        // Rendu final
+        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
+
+        // Ajustement du chemin de sauvegarde
+        String fileSavePath;
+        fileSavePath = framework.getView().getViewSavePath() + "/" + tableMetadata.getClassName();
+        fileSavePath = engine.simpleRender(fileSavePath, metadataFinally);
+
+        // S'assurer que le répertoire existe
+        FileUtils.createDirectory(fileSavePath);
+
+        // Création du fichier
+        String fileName = framework.getView().getCreateViewName();
         fileName = engine.simpleRender(fileName, metadataFinally);
 
         String result = engine.render(secondaryResult, metadataFinally);
@@ -373,6 +419,10 @@ public class MVCGenerator implements GenesisGenerator {
 
     private String loadViewDetailsTemplate(ViewsTemplate viewsTemplate) throws IOException {
         return FileUtils.getFileContent(Constantes.TEMPLATES_PATH+ "/" + viewsTemplate.getTemplate() + "/" + viewsTemplate.getDetailTemplate() + "." + Constantes.TEMPLATE_EXT);
+    }
+
+    private String loadViewCreateTemplate(ViewsTemplate viewsTemplate) throws IOException {
+        return FileUtils.getFileContent(Constantes.TEMPLATES_PATH+ "/" + viewsTemplate.getTemplate() + "/" + viewsTemplate.getCreateTemplate() + "." + Constantes.TEMPLATE_EXT);
     }
 
 }
