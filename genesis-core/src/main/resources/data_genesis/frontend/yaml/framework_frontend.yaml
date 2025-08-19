@@ -1322,21 +1322,21 @@
               filter: FilterState;
           }) {
               return search<${majStart(className)}>({
-                  endpoint: '/${toKebabCase(className)}s/search',
+                  endpoint: '/${lowerCase(classNameLink)}/search',
                   ...params,
               });
           },
 
           async getById(id: number) {
-              return getById<${majStart(className)}>('/${toKebabCase(className)}s', id);
+              return getById<${majStart(className)}>('/${lowerCase(classNameLink)}', id);
           },
 
-              return create<${majStart(className)}>('/${toKebabCase(className)}s', ${toKebabCase(className)});
           create(${toCamelCase(className)}: Omit<${majStart(className)}, 'id'>) {
+              return create<${majStart(className)}>('/${lowerCase(classNameLink)}', ${toCamelCase(className)});
           },
 
-              return update<${majStart(className)}>('/${toKebabCase(className)}s', id, ${toKebabCase(className)});
           async update(id: number, ${toCamelCase(className)}: Partial<${majStart(className)}>) {
+              return update<${majStart(className)}>('/${lowerCase(classNameLink)}', id, ${toCamelCase(className)});
           },
 
           delete: (id: string | number) => remove('/${toKebabCase(className)}s', id),
