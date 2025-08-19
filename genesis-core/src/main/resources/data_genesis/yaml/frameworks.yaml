@@ -1141,7 +1141,7 @@
                       }
                       {{elseIf this.isText}}
                       WebUtils.addLikeIfPresent(criteriaBuilder, ${this.criteriaBuildSnippet}, predicates);
-                      {{elseIf this.isNumeric or this.isDate}}
+                      {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
                       WebUtils.addInterval(criteriaBuilder, root.get("${this.name}"), object.get${majStart(this.name)}Min(), object.get${majStart(this.name)}Max(), predicates);
                       {{else}}
                       if(object.get${majStart(this.name)}()!=null){
@@ -1317,7 +1317,7 @@
           {{tab}}private ${this.type} ${this.name};
           {{elseIf this.isForeignKey}}{{removeLine}}
           {{tab}}private ${this.type} ${this.name};
-          {{tab}}{{elseIf this.isNumeric or this.isDate }}
+          {{tab}}{{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
           {{tab}}private ${this.type} ${this.name};
           {{tab}}private ${this.type} ${this.name}Min;
           {{tab}}private ${this.type} ${this.name}Max;
