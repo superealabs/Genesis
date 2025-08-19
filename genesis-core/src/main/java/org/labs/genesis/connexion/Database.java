@@ -212,6 +212,9 @@ public abstract class Database {
                 boolean isColumnNumericWithPrecision = isColumnNumericWithPrecision(columns);
                 boolean isColumnText = isColumnText(columns);
                 boolean isColumnDate = isColumnDate(columns);
+                boolean isColumnTime = isColumnTime(columns);
+                boolean isColumnDateTime = isColumnDateTime(columns);
+                boolean isColumnInterval = isColumnInterval(columns);
 
                 column.setName(toCamelCase(columnName.toLowerCase()));
                 column.setReferencedColumn(columnName);
@@ -219,6 +222,9 @@ public abstract class Database {
                 column.setNumericWithPrecision(isColumnNumericWithPrecision);
                 column.setText(isColumnText);
                 column.setDate(isColumnDate);
+                column.setTime(isColumnTime);
+                column.setDateTime(isColumnDateTime);
+                column.setInterval(isColumnInterval);
 
                 column.setNullable(isNullable,frameworkValidationAnnotations,engine);
                 column.setDefaultValue(defaultValue,frameworkValidationAnnotations,engine);
@@ -320,14 +326,66 @@ public abstract class Database {
                 dataType == Types.LONGNVARCHAR;
     }
 
+    /* ---------- DATE pure ---------- */
     protected boolean isColumnDate(ResultSet column) throws SQLException {
-        int dataType = column.getInt("DATA_TYPE");
+        int jdbcType = column.getInt("DATA_TYPE");
+        if (jdbcType == Types.DATE) return true;
 
-        return dataType == Types.DATE ||
-                dataType == Types.TIME ||
-                dataType == Types.TIMESTAMP ||
-                dataType == Types.TIME_WITH_TIMEZONE ||
-                dataType == Types.TIMESTAMP_WITH_TIMEZONE;
+        String typeName = column.getString("TYPE_NAME");
+        if (typeName == null) return false;
+        String upper = typeName.toUpperCase(Locale.ROOT);
+
+        return "DATE".equals(upper)              // Oracle DATE
+                || "DATE32".equals(upper)            // ClickHouse
+                || "DATEV2".equals(upper);           // StarRocks
+    }
+
+    /* ---------- TIME seule ---------- */
+    protected boolean isColumnTime(ResultSet column) throws SQLException {
+        int jdbcType = column.getInt("DATA_TYPE");
+        if (jdbcType == Types.TIME || jdbcType == Types.TIME_WITH_TIMEZONE) return true;
+
+        String typeName = column.getString("TYPE_NAME");
+        if (typeName == null) return false;
+        String upper = typeName.toUpperCase(Locale.ROOT);
+
+        return upper.startsWith("TIME")          // TIME, TIME(6), TIME WITH TIME ZONE, etc.
+                || "TIMETZ".equals(upper)            // PostgreSQL alias
+                || "TIME32".equals(upper)            // ClickHouse
+                || "TIME64".equals(upper);           // ClickHouse
+    }
+
+    /* ---------- DATETIME / TIMESTAMP (date + heure) ---------- */
+    protected boolean isColumnDateTime(ResultSet column) throws SQLException {
+        int jdbcType = column.getInt("DATA_TYPE");
+        if (jdbcType == Types.TIMESTAMP || jdbcType == Types.TIMESTAMP_WITH_TIMEZONE) return true;
+
+        String typeName = column.getString("TYPE_NAME");
+        if (typeName == null) return false;
+        String upper = typeName.toUpperCase(Locale.ROOT);
+
+        return upper.startsWith("DATETIME")        // MySQL, MariaDB, SQL Server, H2
+                || upper.startsWith("SMALLDATETIME")     // SQL Server / Sybase
+                || upper.startsWith("TIMESTAMP")         // Oracle, PostgreSQL, DB2, Snowflake, Redshift, etc.
+                || "TIMESTAMPTZ".equals(upper)           // PostgreSQL short
+                || "TIMESTAMPLTZ".equals(upper)          // Oracle WITH LOCAL TIME ZONE
+                || "DATETIME2".equals(upper)             // SQL Server ≥ 2008
+                || "DATETIMEOFFSET".equals(upper)        // SQL Server WITH TZ
+                || "DATETIME64".equals(upper)            // ClickHouse
+                || "DATETIME32".equals(upper)            // ClickHouse
+                || "DATETIMEV2".equals(upper);           // StarRocks
+    }
+
+    /* ---------- INTERVAL ---------- */
+    protected boolean isColumnInterval(ResultSet column) throws SQLException {
+        String typeName = column.getString("TYPE_NAME");
+        if (typeName == null) return false;
+        String upper = typeName.toUpperCase(Locale.ROOT);
+
+        return upper.startsWith("INTERVAL")
+                || upper.equals("PG_INTERVAL")          // PostgreSQL driver internal
+                || upper.equals("INTERVALYM")           // Oracle INTERVAL YEAR TO MONTH
+                || upper.equals("INTERVALDS");          // Oracle INTERVAL DAY TO SECOND
     }
 
     protected void checkUnique(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> listeCols, Framework framework) throws SQLException {
