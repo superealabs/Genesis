@@ -244,20 +244,12 @@
                 sectionName: "Entities",
                 navChilds: [
                   {{#each routes}}
+                  {{#if this.hasLabel}}
                   {
                     navTitle: "${this.routerLabel}",
                     navLink: "${this.routerLink}",
-                    {{#if this.children}}
-                    navChilds: [
-                      {{#each this.children}}
-                      {
-                        navTitle: "${this.routerLabel}",
-                        navLink: "${this.routerLink}",
-                      },
-                      {{/each}}
-                    ],
-                    {{/if}}
                   },
+                  {{/if}}
                   {{/each}}
                 ],
               },
@@ -862,7 +854,7 @@
       generateForView: true
       router:
         link: "/${minPluralize(EntityName)}/:id"
-        label: "${majStart(EntityName)} Details"
+        label: ""
       componentName: "${majStart(EntityName)}DetailsView"
       importFile: |
         import { defineComponent, ref, onMounted } from "vue";
@@ -1036,7 +1028,7 @@
       generateForView: true
       router:
         link: "/${minPluralize(EntityName)}/update/:id"
-        label: "Update ${majStart(EntityName)}"
+        label: ""
       componentName: "${majStart(EntityName)}UpdateView"
       importFile: |
         import { defineComponent, ref, onMounted } from "vue";
