@@ -211,7 +211,10 @@ public class OracleDatabase extends Database {
                     if (matcher.find()) {
                         String matchedColName = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
                         for (ColumnMetadata col : columns) {
-                            if (col.getReferencedColumn().equalsIgnoreCase(matchedColName) && col.isDate()) {
+                            if (col.getReferencedColumn().equalsIgnoreCase(matchedColName) &&
+                                    (col.isDate() || col.isDateTime())
+                            )
+                            {
                                 Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                                 Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                                 String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("past", "{{removeLine}}");
@@ -243,7 +246,10 @@ public class OracleDatabase extends Database {
                     Matcher matcher = pattern.matcher(searchCondition);
                     if (matcher.find()) {
                         for (ColumnMetadata col : columns) {
-                            if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
+                            if (col.getReferencedColumn().equalsIgnoreCase(colName) &&
+                                        (col.isDate() || col.isDateTime())
+                            )
+                            {
                                 Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                                 Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                                 String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("pastOrPresent", "{{removeLine}}");
@@ -275,7 +281,10 @@ public class OracleDatabase extends Database {
                     Matcher matcher = pattern.matcher(searchCondition);
                     if (matcher.find()) {
                         for (ColumnMetadata col : columns) {
-                            if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
+                            if (col.getReferencedColumn().equalsIgnoreCase(colName) &&
+                                        (col.isDate() || col.isDateTime())
+                            )
+                            {
                                 Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                                 Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                                 String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("future", "{{removeLine}}");
@@ -307,7 +316,10 @@ public class OracleDatabase extends Database {
                     Matcher matcher = pattern.matcher(searchCondition);
                     if (matcher.find()) {
                         for (ColumnMetadata col : columns) {
-                            if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
+                            if (col.getReferencedColumn().equalsIgnoreCase(colName) &&
+                                        (col.isDate() || col.isDateTime())
+                            )
+                            {
                                 Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                                 Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                                 String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("futureOrPresent", "{{removeLine}}");
