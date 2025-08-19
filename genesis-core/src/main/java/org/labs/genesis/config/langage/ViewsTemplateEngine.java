@@ -13,6 +13,8 @@ public class ViewsTemplateEngine {
     private String viewExtension;
     private Layout layout;
     private List list;
+    private Create create;
+    private Edit edit;
     private Detail detail;
     private java.util.List<FilesEdit> templateEngineFilesEdits;
     private java.util.List<Project.ProjectFiles> templateEngineFiles;
@@ -48,6 +50,10 @@ public class ViewsTemplateEngine {
         private String inlineLoopStatement;
         private String detailsLink;
         private String deleteLink;
+        private String createLink;
+        private String updateLink;
+        private String backLink;
+        private String assetsImportLink;
     }
 
     @Getter
@@ -57,5 +63,26 @@ public class ViewsTemplateEngine {
         private String modelType;
         private String dataValue;
         private String dataForeignValue;
+        private String deleteLink;
+        private String updateLink;
+        private String backLink;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Create {
+        private String modelType;
+        private String backLink;
+//        private Input[] inputsList;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Edit {
+        private String modelType;
+        private String backLink;
+//        private Input[] inputsList;
     }
 }
