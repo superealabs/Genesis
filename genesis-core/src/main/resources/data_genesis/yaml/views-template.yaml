@@ -4,7 +4,8 @@
   preview: ""
   layoutTemplate: "LayoutViewTemplate"
   listTemplate: "ListViewTemplate"
-  formTemplate: "FormViewTemplate"
+  createTemplate: "CreateViewTemplate"
+  editTemplate: "EditViewTemplate"
   detailTemplate: "DetailViewTemplate"
 
   templateFilesEdits: []
@@ -33,4 +34,12 @@
       fileName: "InterTight-Regular.ttf"
       sourcePath: "data_genesis/templates/Template 1/assets/fonts/"
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/wwwroot/fonts/"
+    - fileType: "UtilsJs"
+      fileName: "utils.js"
+      sourcePath: "data_genesis/templates/Template 1/assets/js/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/wwwroot/js/"
+    - fileType: "EventsJs"
+      fileName: "events.js"
+      sourcePath: "data_genesis/templates/Template 1/assets/js/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/wwwroot/js/"
   templateFolders: []

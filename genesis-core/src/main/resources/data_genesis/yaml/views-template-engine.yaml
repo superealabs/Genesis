@@ -25,11 +25,27 @@
       }
     detailsLink: "asp-action=\"Details\" asp-route-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
     deleteLink: "data-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
+    createLink: "@Url.Action(\"Create\")"
+    updateLink: "@Url.Action(\"Update\")"
+    backLink: "@Url.Action(\"Index\")"
+    assetsImportLink: "~/"
   detail:
     modelType: |
       @model ${majStart(className)}
     dataValue: "@Model.${majStart(this.name)}"
     dataForeignValue: "@Model.${majStart(this.columnNameField)}"
+    deleteLink: "data-id=\"@Model.${majStart(pkColumn)}\""
+    updateLink: "@Url.Action(\"Update\")"
+    backLink: "@Url.Action(\"Index\")"
+
+  create:
+    modelType: |
+      @model ${majStart(className)}
+    backLink: "@Url.Action(\"Index\")"
+  edit:
+    modelType: |
+      @model ${majStart(className)}
+    backLink: "@Url.Action(\"Index\")"
 
   templateEngineFilesEdits:
     - fileType : "ViewImports"

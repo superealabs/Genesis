@@ -54,7 +54,7 @@
         
         app.UseHttpsRedirection();
         app.UseStaticFiles();
-  
+        
         app.UseRouting();
         
         app.UseAuthorization();
@@ -1826,14 +1826,17 @@
       using ${majStart(projectName)}.Models;
 
     controllerAnnotations: ""
-    controllerExtends:  " : Controller"
+    controllerExtends: " : Controller"
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
       {{tab}}private readonly I${majStart(className)}Service _service;
+      {{tab}}{{#each fieldsFK}}private readonly I${majStart(this.type)}Service _${minStart(this.type)}Service;
+      {{tab}}{{/each}}
     controllerConstructors: |
-      {{tab}}public ${majStart(className)}Controller(I${majStart(className)}Service service)
+      {{tab}}public ${majStart(className)}Controller(I${majStart(className)}Service service{{#each fieldsFK}}, I${majStart(this.type)}Service ${minStart(this.type)}Service{{/each}})
       {{tab}}{
       {{tab}}{{tab}}_service = service;
+      {{tab}}{{tab}}{{#each fieldsFK}}_${minStart(this.type)}Service = ${minStart(this.type)}Service;{{/each}}
       {{tab}}}
     controllerMethodContent: |
       {{tab}}// GET: /${majStart(className)}
@@ -1856,7 +1859,7 @@
       {{tab}}{{tab}}return View(${minStart(className)});
       {{tab}}}
       {{tab}}
-      {{tab}}// POST: /${majStart(className)}/Delete/${pkColumn}
+      {{tab}}{{#if !isView}}// POST: /${majStart(className)}/Delete/${pkColumn}
       {{tab}}[HttpPost, ActionName("Delete")]
       {{tab}}[ValidateAntiForgeryToken]
       {{tab}}public async Task<IActionResult> Delete(${pkColumnType} ${pkColumn})
@@ -1866,10 +1869,28 @@
       {{tab}}}
       {{tab}}
       {{tab}}// GET: /${majStart(className)}/Create
-      {{tab}}public IActionResult Create()
+      {{tab}}public async Task<IActionResult> Create()
       {{tab}}{
+      {{tab}}{{tab}}{{#each fieldsFK}}
+      {{tab}}{{tab}}var ${minStart(this.type)}s = await _${minStart(this.type)}Service.GetAllAsync(0, int.MaxValue, null);
+      {{tab}}{{tab}}{{/each}}
+      {{tab}}{{tab}}ViewData["Title"] = "New ${majStart(className)}";
       {{tab}}{{tab}}return View();
       {{tab}}}
+      {{tab}}
+      {{tab}}// POST: /${majStart(className)}/Create
+      {{tab}}[HttpPost]
+      {{tab}}[ValidateAntiForgeryToken]
+      {{tab}}public async Task<IActionResult> Create(${majStart(className)} ${minStart(className)})
+      {{tab}}{
+      {{tab}}{{tab}}if (ModelState.IsValid)
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}await _service.AddAsync(${minStart(className)});
+      {{tab}}{{tab}}{{tab}}return RedirectToAction(nameof(Index));
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}return View(${minStart(className)});
+      {{tab}}}  
+      {{tab}}{{else}}{{removeLine}}{{/if}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"
     controllerAdditionalFiles: [ ]
@@ -1879,5 +1900,5 @@
     viewSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views"
     listViewName: "Index"
     createViewName: "Create"
-    formViewName: "form-${lowerCase(className)}"
+    editViewName: "Edit"
     detailViewName: "Details"
