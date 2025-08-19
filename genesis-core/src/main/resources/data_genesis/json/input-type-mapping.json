@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "languageId": 2,
+    "types": {
+      "int": "number",
+      "long": "number",
+      "double": "number",
+      "float": "number",
+      "string": "text",
+      "DateTime": "datetime-local",
+      "DateTimeOffset": "datetime-local",
+      "TimeSpan": "time",
+      "Boolean": "checkbox",
+      "int[]": "multiple-int",
+      "string[]": "multiple-string",
+      "byte[]": "file",
+      "System.Net.IPAddress": "text"
+    },
+    "validations": {
+      "number": {
+        "notNull": "required",
+        "minValue": "min=\"${minValue}\"",
+        "maxValue": "max=\"${maxValue}\""
+      },
+      "text": {
+        "notNull": "required",
+        "minlength": "min=\"${minlength}\"",
+        "maxlength": "max=\"${maxlength}\""
+      },
+      "datetime-local": {
+        "notNull": "required"
+      },
+      "time": {
+        "notNull": "required"
+      },
+      "checkbox": {
+        "notNull": "required"
+      },
+      "multiple-int": {
+        "notNull": "required"
+      },
+      "multiple-string": {
+        "notNull": "required"
+      },
+      "file": {
+        "notNull": "required",
+        "accept": "accept=\"${acceptList}\""
+      }
+    }
+  }
+]
