@@ -311,6 +311,9 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isText",field.isText());
         fieldMap.put("isNumeric",field.isNumeric());
         fieldMap.put("isDate",field.isDate());
+        fieldMap.put("isTime",field.isTime());
+        fieldMap.put("isDateTime",field.isDateTime());
+        fieldMap.put("isInterval",field.isInterval());
 
         return fieldMap;
     }
@@ -341,6 +344,9 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isText",field.isText());
         fieldMap.put("isNumeric",field.isNumeric());
         fieldMap.put("isDate",field.isDate());
+        fieldMap.put("isTime",field.isTime());
+        fieldMap.put("isDateTime",field.isDateTime());
+        fieldMap.put("isInterval",field.isInterval());
 
         return fieldMap;
     }

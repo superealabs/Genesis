@@ -115,6 +115,9 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("isRequired", !field.isNullable());
         fieldMap.put("isNumeric",field.isNumeric());
         fieldMap.put("isDate",field.isDate());
+        fieldMap.put("isTime",field.isTime());
+        fieldMap.put("isDateTime",field.isDateTime());
+        fieldMap.put("isInterval",field.isInterval());
         fieldMap.put("isText", field.isText());
         fieldMap.put("isNotForeignKey",!field.isForeign());
         fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
