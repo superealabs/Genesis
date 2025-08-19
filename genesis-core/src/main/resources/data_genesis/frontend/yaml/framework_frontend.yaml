@@ -279,7 +279,7 @@
     - componentType: "Entity Row"
       generateForView: true
       router:
-        label: ""
+        label: "{{removeLine}}"
         link: ""
       importFile: |
         import { defineComponent, PropType } from "vue";
@@ -350,7 +350,7 @@
       generateForView: true
       router:
         link: ""
-        label: ""
+        label: "{{removeLine}}"
       componentName: "${majStart(EntityName)}List"
       importFile: |
         import { defineComponent, PropType, ref } from "vue";
@@ -744,7 +744,7 @@
       generateForView: true
       router:
         link: ""
-        label: ""
+        label: "{{removeLine}}"
       componentName: "${majStart(EntityName)}Details"
       importFile: |
         import { defineComponent, PropType } from "vue";
@@ -854,7 +854,7 @@
       generateForView: true
       router:
         link: "/${minPluralize(EntityName)}/:id"
-        label: ""
+        label: "{{removeLine}}"
       componentName: "${majStart(EntityName)}DetailsView"
       importFile: |
         import { defineComponent, ref, onMounted } from "vue";
@@ -913,7 +913,7 @@
       generateForView: true
       router:
         link: ""
-        label: ""
+        label: "{{removeLine}}"
       componentName: "${majStart(EntityName)}Form"
       importFile: |
         import { defineComponent, onMounted, PropType, ref } from "vue";
@@ -1028,7 +1028,7 @@
       generateForView: true
       router:
         link: "/${minPluralize(EntityName)}/update/:id"
-        label: ""
+        label: "{{removeLine}}"
       componentName: "${majStart(EntityName)}UpdateView"
       importFile: |
         import { defineComponent, ref, onMounted } from "vue";
