@@ -2,10 +2,122 @@ ${modelType}
 <!-- Header -->
 <header class="header">
     <h3>${className} / <span class="page-action">List</span></h3>
+    <button class="btn-primary" type="button" onclick="window.location.href='${createLink}'">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 59">
+            <title>Add</title>
+            <g id="Layer_2" data-name="Layer 2">
+                <g id="Layer_1-2" data-name="Layer 1">
+                    <g id="add">
+                        <path d="M56.5,32H2.5a2.5,2.5,0,0,1,0-5h54a2.5,2.5,0,0,1,0,5Z" />
+                        <path
+                            d="M29.5,59A2.5,2.5,0,0,1,27,56.5V2.5a2.5,2.5,0,0,1,5,0v54A2.5,2.5,0,0,1,29.5,59Z" />
+                    </g>
+                </g>
+            </g>
+        </svg>
+        <p>New ${className}</p>
+    </button>
 </header>
 
 <!-- Content -->
 <main class="content">
+
+    <!-- Content Header -->
+    <div class="content-header">
+        <form action="" method="post" id="inputContainer" class="filter-container">
+            <p>Filter:</p>
+
+            <!-- Dropdown Add -->
+            <div class="dropdown">
+                <button type="button" id="add-filter" class="btn-secondary"
+                    style="display:flex; align-items:center; gap:5px;">
+                    <!-- Icône Add -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 59" width="18">
+                        <title>Add</title>
+                        <path d="M56.5,32H2.5a2.5,2.5,0,0,1,0-5h54a2.5,2.5,0,0,1,0,5Z" />
+                        <path
+                            d="M29.5,59A2.5,2.5,0,0,1,27,56.5V2.5a2.5,2.5,0,0,1,5,0v54A2.5,2.5,0,0,1,29.5,59Z" />
+                    </svg>
+                </button>
+
+                <!-- Menu déroulant -->
+                <div id="dropdown-menu" class="dropdown-menu">
+                    {{#each fields}}
+                    <button type="button" data-type="${this.name}">${this.name}</button>
+                    {{/each}}{{removeLine}}
+                </div>
+            </div>
+
+            <!-- Bouton Apply -->
+            <button class="btn-third" type="submit" style="display:flex; align-items:center; gap:5px;">
+                Apply
+            </button>
+        </form>
+
+        <div class="showing-content">
+            <p>Showing: </p>
+            <select class="select" name="" id="" onchange="window.location.href='form.html'">
+                <option value="10">10</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="300">300</option>
+                <option value="500">500</option>
+                <option value="1000">1000</option>
+            </select>
+        </div>
+        <div class="dropdown">
+            <button id="export-btn" class="btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 53 59">
+                    <title>Export</title>
+                    <g id="Layer_2" data-name="Layer 2">
+                        <g id="Layer_1-2" data-name="Layer 1">
+                            <g id="export">
+                                <path
+                                    d="M42.5,59h-32A10.51,10.51,0,0,1,0,48.5v-18A10.51,10.51,0,0,1,10.5,20h6a2.5,2.5,0,0,1,0,5h-6A5.51,5.51,0,0,0,5,30.5v18A5.51,5.51,0,0,0,10.5,54h32A5.51,5.51,0,0,0,48,48.5v-18A5.51,5.51,0,0,0,42.5,25h-6a2.5,2.5,0,0,1,0-5h6A10.51,10.51,0,0,1,53,30.5v18A10.51,10.51,0,0,1,42.5,59Z" />
+                                <path
+                                    d="M26.5,45A2.5,2.5,0,0,1,24,42.5V2.5a2.5,2.5,0,0,1,5,0v40A2.5,2.5,0,0,1,26.5,45Z" />
+                                <path
+                                    d="M36.5,15a2.49,2.49,0,0,1-1.77-.73L26.5,6l-8.23,8.23a2.5,2.5,0,0,1-3.54-3.54l10-10a2.52,2.52,0,0,1,3.54,0l10,10a2.52,2.52,0,0,1,0,3.54A2.49,2.49,0,0,1,36.5,15Z" />
+                            </g>
+                        </g>
+                    </g>
+                </svg>
+                Export
+            </button>
+
+            <!-- Menu déroulant -->
+            <div id="export-options" class="dropdown-export">
+                <button type="button" data-type="pdf" class="disabled">Pdf</button>
+                <button type="button" data-type="csv" class="disabled">Csv</button>
+            </div>
+        </div>
+
+        <div id="filter-templates" style="display:none;">
+            {{#each fields}}
+            <div class="filter-content" data-type="${this.name}">
+                <p>${this.name} : </p>
+                <input class="filter-input" type="text">
+                <button type="button" class="remove-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55 55" width="14">
+                        <title>Remove</title>
+                        <g id="Layer_2" data-name="Layer 2">
+                            <g id="Layer_1-2" data-name="Layer 1">
+                                <g id="close">
+                                    <path
+                                        d="M2.5,55a2.49,2.49,0,0,1-1.77-.73,2.52,2.52,0,0,1,0-3.54l50-50a2.5,2.5,0,0,1,3.54,3.54l-50,50A2.49,2.49,0,0,1,2.5,55Z" />
+                                    <path
+                                        d="M52.5,55a2.49,2.49,0,0,1-1.77-.73l-50-50A2.5,2.5,0,0,1,4.27.73l50,50a2.52,2.52,0,0,1,0,3.54A2.49,2.49,0,0,1,52.5,55Z" />
+                                </g>
+                            </g>
+                        </g>
+                    </svg>
+                </button>
+            </div>
+            {{/each}}{{removeLine}}
+        </div>
+    </div>
+
     <!-- Table -->
     <div class="table-container">
         <table>
@@ -25,7 +137,7 @@ ${modelType}
                     {{/each}}{{removeLine}}
                         <td>
                             <a ${detailsLink}>Details</a><br>
-                            <button class="btn-delete" ${deleteLink}>Delete</button>
+                            {{#if isView}} {{else}}<button class="btn-delete" ${deleteLink}>Delete</button>{{/if}}
                         </td>
                     </tr>
                 ${blockLoopStatementEnd}
@@ -33,7 +145,10 @@ ${modelType}
         </table>
 
         <!-- Modal -->
-        <div id="customModal" class="modal-overlay">
+        <div id="customModal" class="modal-overlay"
+             data-trigger=".btn-delete"
+             data-input="${className}Id"
+             data-text="${className}IdText">
             <div class="modal-box">
                 <h3>Are you sure you want to delete ${className} with id "<span id="${className}IdText"></span>"?</h3>
                 <p>This cannot be undone.</p>
@@ -50,32 +165,60 @@ ${modelType}
             </div>
         </div>
     </div>
+
+    <!-- Content Footer -->
+    <div class="content-footer">
+        <div class="pagination">
+            <a href="#" class="prev disabled">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
+                    <title>Previous Page</title>
+                    <g id="Layer_2" data-name="Layer 2">
+                        <g id="Layer_1-2" data-name="Layer 1">
+                            <g id="arrow_back-1" data-name="arrow back-1">
+                                <path d="M56.5,26.13H2.5a2.5,2.5,0,0,1,0-5h54a2.5,2.5,0,0,1,0,5Z" />
+                                <path
+                                    d="M23.63,47.26a2.49,2.49,0,0,1-1.77-.73L.73,25.4a2.51,2.51,0,0,1,0-3.54L21.86.73A2.5,2.5,0,0,1,25.4,4.27L6,23.63,25.4,43a2.5,2.5,0,0,1-1.77,4.27Z" />
+                            </g>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+            <a href="#" class="active">1</a>
+            <a href="#">2</a>
+            <a href="#">3</a>
+            <a href="#">4</a>
+            <a href="#">5</a>
+            <span class="dots">...</span>
+            <a href="#">10</a>
+            <a href="#" class="next">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
+                    <title>Next Page</title>
+                    <g id="Layer_2" data-name="Layer 2">
+                        <g id="Layer_1-2" data-name="Layer 1">
+                            <g id="arrow_back-2" data-name="arrow back-2">
+                                <path d="M56.5,26.13H2.5a2.5,2.5,0,0,1,0-5h54a2.5,2.5,0,0,1,0,5Z" />
+                                <path
+                                    d="M35.37,47.26a2.49,2.49,0,0,1-1.77-.73,2.52,2.52,0,0,1,0-3.54L53,23.63,33.6,4.27A2.5,2.5,0,0,1,37.14.73L58.27,21.86a2.52,2.52,0,0,1,0,3.54L37.14,46.53A2.49,2.49,0,0,1,35.37,47.26Z" />
+                            </g>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+        </div>
+        <div class="ongoing-page">
+            <form action="" method="get" class="ongoing-page">
+                <p>Going to page: </p>
+                <select class="select" name="" id="">
+                    <option value="10">1</option>
+                    <option value="10">1</option>
+                    <option value="10">1</option>
+                    <option value="10">1</option>
+                    <option value="10">1</option>
+                </select>
+                <button type="submit" class="ongoing-button">Go</button>
+            </form>
+        </div>
+    </div>
 </main>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById('customModal');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const input${className}Id = document.getElementById('${className}Id');
-    const ${className}IdText = document.getElementById('${className}IdText');
-
-    document.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const ${className}Id = this.getAttribute('data-id');
-            ${className}IdText.textContent = ${className}Id;
-            input${className}Id.value = ${className}Id;
-            modal.style.display = 'flex';
-        });
-    });
-
-    cancelBtn.addEventListener('click', () => {
-        modal.style.display = 'none';
-    });
-
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.style.display = 'none';
-        }
-    });
-});
-</script>
+<script src="${assetsImportLink}js/utils.js"></script>
+<script src="${assetsImportLink}js/events.js"></script>
