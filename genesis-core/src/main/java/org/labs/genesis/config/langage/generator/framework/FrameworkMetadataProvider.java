@@ -451,6 +451,10 @@ public class FrameworkMetadataProvider {
         altMap.put("inlineLoopStatement", viewsTemplateEngine.getList().getInlineLoopStatement());
         altMap.put("detailsLink", viewsTemplateEngine.getList().getDetailsLink());
         altMap.put("deleteLink", viewsTemplateEngine.getList().getDeleteLink());
+        altMap.put("updateLink", viewsTemplateEngine.getList().getUpdateLink());
+        altMap.put("createLink", viewsTemplateEngine.getList().getCreateLink());
+        altMap.put("backLink", viewsTemplateEngine.getList().getBackLink());
+        altMap.put("assetsImportLink", viewsTemplateEngine.getList().getAssetsImportLink());
         return altMap;
     }
 
@@ -458,7 +462,17 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> altMap = new HashMap<>();
         altMap.put("modelType", viewsTemplateEngine.getDetail().getModelType());
         altMap.put("dataValue", viewsTemplateEngine.getDetail().getDataValue());
+        altMap.put("deleteLink", viewsTemplateEngine.getDetail().getDeleteLink());
+        altMap.put("updateLink", viewsTemplateEngine.getDetail().getUpdateLink());
+        altMap.put("backLink", viewsTemplateEngine.getDetail().getBackLink());
         altMap.put("dataForeignValue", viewsTemplateEngine.getDetail().getDataForeignValue());
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewCreateHashMap (ViewsTemplateEngine viewsTemplateEngine) {
+        HashMap<String, Object> altMap = new HashMap<>();
+        altMap.put("modelType", viewsTemplateEngine.getCreate().getModelType());
+        altMap.put("backLink", viewsTemplateEngine.getCreate().getBackLink());
         return altMap;
     }
 }
