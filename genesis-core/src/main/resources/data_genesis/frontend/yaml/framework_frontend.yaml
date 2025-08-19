@@ -1137,8 +1137,8 @@
         import { Edit, Delete } from '@mui/icons-material';
         import { useNavigate } from 'react-router-dom';
         
-        import {${majStart(className)}, ${toKebabCase(className)}Meta, ${toKebabCase(className)}Columns, ${toKebabCase(className)}Filters} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
-        import { ${toKebabCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+        import {${majStart(className)}, ${toCamelCase(className)}Meta, ${toCamelCase(className)}Columns, ${toCamelCase(className)}Filters} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
       importComponent: |
         import GenericListPage from '@/components/GenericListPage/GenericListPage';
         import ActionButtons from '@/components/ActionButtons';
@@ -1146,7 +1146,7 @@
       selector: "${majStart(className)}List"
       export: |
         const columns = [
-            ...${toKebabCase(className)}Columns,
+            ...${toCamelCase(className)}Columns,
             {{#if !isView}}{{removeLine}}
             {
                 header: 'Actions',
@@ -1158,7 +1158,7 @@
         {{#if !isView}}
         function RowActions({ row }: { row: ${majStart(className)} }) {
             const navigate = useNavigate();
-            const handleDelete = useDelete(${toKebabCase(className)}Service.delete, () => window.location.reload());
+            const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => window.location.reload());
 
             return (
                 <ActionButtons
@@ -1172,11 +1172,11 @@
         {{/if}}
         export default function ${majStart(className)}List() {
             return GenericListPage<${majStart(className)}>({
-                entityName: ${toKebabCase(className)}Meta.entityName,
+                entityName: ${toCamelCase(className)}Meta.entityName,
                 columns,
-                availableFilters: ${toKebabCase(className)}Filters,
-                defaultSort: ${toKebabCase(className)}Meta.defaultSort,
-                searchFn: ${toKebabCase(className)}Service.search,
+                availableFilters: ${toCamelCase(className)}Filters,
+                defaultSort: ${toCamelCase(className)}Meta.defaultSort,
+                searchFn: ${toCamelCase(className)}Service.search,
                 pageTitle: '${majStart(className)} List'
             })();
         }
@@ -1192,8 +1192,8 @@
         import { Edit, Delete } from '@mui/icons-material';
         import { useNavigate } from 'react-router-dom';
 
-        import {${majStart(className)}, ${toKebabCase(className)}Meta, ${toKebabCase(className)}Columns } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
-        import { ${toKebabCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+        import {${majStart(className)}, ${toCamelCase(className)}Meta, ${toCamelCase(className)}Columns } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
       importComponent: |
         import GenericDetailPage from '@/components/GenericDetailPage/GenericDetailPage';
         import {useDelete} from "@/hooks/useDelete";
@@ -1203,15 +1203,15 @@
         export default function ${majStart(className)}Detail() {
             const navigate = useNavigate();
             {{#if !isView}}
-            const handleDelete = useDelete(${toKebabCase(className)}Service.delete, () => {
+            const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => {
                   navigate('/${toKebabCase(className)}s'); 
             });
             {{/if}}
         
             return GenericDetailPage({
-                entityName: ${toKebabCase(className)}Meta.entityName,
-                service: ${toKebabCase(className)}Service,
-                columns: ${toKebabCase(className)}Columns,
+                entityName: ${toCamelCase(className)}Meta.entityName,
+                service: ${toCamelCase(className)}Service,
+                columns: ${toCamelCase(className)}Columns,
                 backRoute: '/${toKebabCase(className)}s',
                 actions: [
                     {{#if !isView}}{{removeLine}}
@@ -1250,8 +1250,8 @@
         link: "/${toKebabCase(className)}s/create"
         label: "Create ${formatReadable(classNameLink)}"
       importFile: |
-        import {${majStart(className)}, ${toKebabCase(className)}Meta, formFields} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
-        import { ${toKebabCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+        import {${majStart(className)}, ${toCamelCase(className)}Meta, formFields} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
       selector: "Create${majStart(className)}"
       generateForView: false
       importComponent: |
@@ -1261,12 +1261,12 @@
         export default function Create${majStart(className)}() {
 
             const handleSubmit = async (data: any): Promise<ApiResponse<${majStart(className)}>> => {
-                return await ${toKebabCase(className)}Service.create(data);
+                return await ${toCamelCase(className)}Service.create(data);
             };
 
             return (
                 <GenericFormBuilder
-                    entityName={${toKebabCase(className)}Meta.entityName}
+                    entityName={${toCamelCase(className)}Meta.entityName}
                     fields={formFields as any}
                     onSubmit={handleSubmit}
                     redirectTo="/${toKebabCase(className)}s"
@@ -1285,8 +1285,8 @@
         link: "/${toKebabCase(className)}s/:id/edit"
         label: "Update ${formatReadable(classNameLink)}"
       importFile: |
-        import { ${majStart(className)}, ${toKebabCase(className)}Meta, updateFormFields } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
-        import { ${toKebabCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+        import { ${majStart(className)}, ${toCamelCase(className)}Meta, updateFormFields } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
       selector: "Update${majStart(className)}"
       generateForView: false
       importComponent: |
@@ -1295,10 +1295,10 @@
         export default function Update${majStart(className)}() {
             return (
                 <GenericUpdateFormBuilder<${majStart(className)}>
-                    entityName={${toKebabCase(className)}Meta.entityName}
+                    entityName={${toCamelCase(className)}Meta.entityName}
                     fields={updateFormFields}
-                    getById={${toKebabCase(className)}Service.getById}
-                    update={${toKebabCase(className)}Service.update}
+                    getById={${toCamelCase(className)}Service.getById}
+                    update={${toCamelCase(className)}Service.update}
                     title="Update ${toKebabCase(className)}"
                     detailRedirect="/${toKebabCase(className)}s/:id"
                 />
@@ -1314,7 +1314,7 @@
       import type { FilterState } from '@/types/filter';
       import { getById, search {{#if !isView}},create,remove, update{{/if}} } from "@/services/api";
     methods: |
-      export const ${toKebabCase(className)}Service = {
+      export const ${toCamelCase(className)}Service = {
           search(params: {
               page: number;
               size: number;
@@ -1331,12 +1331,12 @@
               return getById<${majStart(className)}>('/${toKebabCase(className)}s', id);
           },
 
-          create(${toKebabCase(className)}: Omit<${majStart(className)}, 'id'>) {
               return create<${majStart(className)}>('/${toKebabCase(className)}s', ${toKebabCase(className)});
+          create(${toCamelCase(className)}: Omit<${majStart(className)}, 'id'>) {
           },
 
-          async update(id: number, ${toKebabCase(className)}: Partial<${majStart(className)}>) {
               return update<${majStart(className)}>('/${toKebabCase(className)}s', id, ${toKebabCase(className)});
+          async update(id: number, ${toCamelCase(className)}: Partial<${majStart(className)}>) {
           },
 
           delete: (id: string | number) => remove('/${toKebabCase(className)}s', id),
@@ -1360,13 +1360,13 @@
       {{tab}}[key: string]: unknown;
       }
       
-      export const ${toKebabCase(className)}Meta = {
+      export const ${toCamelCase(className)}Meta = {
           entityName: '${majStart(className)}',
           endpoint: '/${toKebabCase(className)}s/search',
           defaultSort: '{{#each fieldsPK}}${this.name}{{/each}},asc' as const
       };
       
-      export const ${toKebabCase(className)}Columns = [
+      export const ${toCamelCase(className)}Columns = [
           {{#each fieldsFK}}
           {
             header: '${this.type}',
@@ -1394,7 +1394,7 @@
           {{/if}}{{/each}}{{removeLine}}
       ]
       
-      export const ${toKebabCase(className)}Filters = {
+      export const ${toCamelCase(className)}Filters = {
           {{#each fieldsFK}}
           ${this.name}: {
             label: '${formatReadable(this.type)}',
