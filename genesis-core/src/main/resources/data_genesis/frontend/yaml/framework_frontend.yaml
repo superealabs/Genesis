@@ -1378,7 +1378,7 @@
           {{#each fieldsNotFK}}
           {{#if this.isPrimaryKey}}
           { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' ,link: (row: ${majStart(className)}) => `/${toKebabCase(className)}s/$[row.${this.name}]`},
-          {{elseIf this.isDate}}
+          {{elseIf this.isDate or this.isTime or this.isDateTime or this.isInterval}}
           {
             header: '${formatReadable(this.name)}',
             accessor: (row: ${majStart(className)} ) => {
@@ -1411,7 +1411,7 @@
           ${this.name}: { label: '${formatReadable(this.name)}', type: 'number' as const },
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'number' as const },
           ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'number' as const },
-          {{elseIf this.isDate }}
+          {{elseIf this.isDate or this.isTime or this.isDateTime or this.isInterval}}
           ${this.name}: { label: '${formatReadable(this.name)}', type: 'date' as const },
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'date' as const },
           ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'date' as const },
@@ -1435,7 +1435,7 @@
           {{#each fieldsNotFK}}
           {{#if this.isPrimaryKey}}
           {{removeLine}}
-          {{elseIf this.isDate }}
+          {{elseIf this.isDate or this.isTime or this.isDateTime or this.isInterval}}
           ${this.name}: {
             label: '${formatReadable(this.name)}',
             type: 'datetime' as const,
