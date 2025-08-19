@@ -39,6 +39,7 @@ public class ColumnMetadata {
     private int decimalDigits;
     private int columnSize;
     private Map<String, Object> validationAnnotations = new HashMap<>();
+    private Map<String, Object> validationRules = new HashMap<>();
 
     public void setFrontEndType(FrontendLanguage frontendLanguage, Database database)
     {

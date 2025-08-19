@@ -125,7 +125,6 @@
     notBlank: 'required="true"'
     minAndMaxSize: 'minlength="${minLength}" maxlength="${columnSize}"'
     regexPattern: 'pattern="${value}"'
-
   additionalFiles:
     - fileType: "Env File"
       fileName: "{{removeLine}}"
@@ -135,25 +134,56 @@
         VUE_APP_PORT=9000
       destinationPath: "${destinationFolder}"
 
+    - fileType: "Home View"
+      fileName: "HomeView"
+      extension: "vue"
+      content: |
+        <template>
+          <div>
+            <h1>Welcome on ${upperCase(projectName)} frontend app</h1>
+          </div>
+        </template>
+          
+        <style scoped></style>
+      destinationPath: "${destinationFolder}/src/views"
+
     - fileType: "App-Vue"
       fileName: "App"
       extension: "vue"
       content: |
         <template>
-          <div class="d-flex" id="app-layout">
-            <GenesisSidebar />
+          <div class="wrapper row">
+            <FreezeScreen></FreezeScreen>
+            <div class="p-0 col-md-auto position-relative bg-light shadow-sm">
+              <GenesisSidebar class="py-4 px-2" />
+            </div>
             <!-- Main content -->
-            <div class="bg-light flex-grow-1 p-4">
+            <div class="bg-light col-md py-4">
               <router-view />
             </div>
           </div>
         </template>
-        
-        <script setup lang="ts">
+
+        <script lang="ts">
         import GenesisSidebar from "./core/navbar/GenesisSidebar.vue";
+        import FreezeScreen from "./core/loading/FreezeScreen.vue";
+        import { defineComponent } from "vue";
+        export default defineComponent({
+          name: "App",
+          components: { FreezeScreen, GenesisSidebar },
+          setup() {
+            return {};
+          },
+        });
         </script>
-        
-        <style scoped></style>
+
+        <style scoped>
+        .wrapper.row {
+          flex-wrap: nowrap;
+          margin: 0;
+        }
+        </style>
+
       destinationPath: "${destinationFolder}/src"
 
     - fileType: "Router Index"
@@ -194,87 +224,190 @@
       extension: "ts"
       content: |
         import { defineStore } from "pinia";
-        
         export const useNavigationsStore = defineStore("navigations", {
-        state: () => ({
-          navigations: [
-            // CORE NAVIGATION
-            {
-              sectionName: "Core",
-              navChilds: [
-                {
-                  navLink: "/",
-                  navTitle: "Home",
-                },
-              ],
-            },
-            // ENTITITES NAVIGATION
-            {
-              sectionName: "Entities",
-              navChilds: [
-              {{#each routes}}
-                {
-                  navTitle: "${this.routerLabel}",
-                  navLink: "${this.routerLink}",
-                },
-              {{/each}}
-              ],
-            },
-            // VIEWS NAVIGATION
-        
+          state: () => ({
+            navigations: [
+              // CORE NAVIGATION
+              {
+                icon: "bi bi-cpu",
+                sectionName: "Core",
+                navChilds: [
+                  {
+                    navLink: "/",
+                    navTitle: "Home",
+                  },
+                ],
+              },
+              // ENTITIES NAVIGATION
+              {
+                icon: "bi bi-stack",
+                sectionName: "Entities",
+                navChilds: [
+                  {{#each routes}}
+                  {
+                    navTitle: "${this.routerLabel}",
+                    navLink: "${this.routerLink}",
+                    {{#if this.children}}
+                    navChilds: [
+                      {{#each this.children}}
+                      {
+                        navTitle: "${this.routerLabel}",
+                        navLink: "${this.routerLink}",
+                      },
+                      {{/each}}
+                    ],
+                    {{/if}}
+                  },
+                  {{/each}}
+                ],
+              },
+              // VIEWS NAVIGATION
+              {
+                icon: "bi bi-view-stacked",
+                sectionName: "Views",
+                navChilds: [],
+              },
               // SETTINGS NAVIGATION
-          ],
-        }),
-        actions: {},
+              {
+                icon: "bi bi-gear",
+                sectionName: "Settings",
+                navChilds: [
+                  {
+                    navTitle: "Customisation",
+                    navLink: "/customisation",
+                  },
+                ],
+              },
+            ],
+          }),
+          actions: {},
         });
       destinationPath: "${destinationFolder}/src/store"
   components:
+    - componentType: "Entity Row"
+      generateForView: true
+      router:
+        label: ""
+        link: ""
+      importFile: |
+        import { defineComponent, PropType } from "vue";
+        import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
+        import EntityRowActions from "@/core/table/EntityRowActions.vue";
+        import { useObjectUtils } from "@/composables/useObjectUtils";
+      selector: "${majStart(EntityName)}Row"
+      standalone: true
+      importComponent: "components: { EntityRowActions }"
+      template: |
+        <template>
+          <tr class="border-bottom">
+            {{#each fields}}
+            {{#if this.isForeignKey}}
+            <td>{{ getSecondValue(${minStart(EntityName)}.${this.name}) }}</td>
+            {{else}}
+            <td>{{ ${minStart(EntityName)}.${this.name} }}</td>
+            {{/if}}{{removeLine}}</td>
+            {{/each}}
+    
+            <td class="text-end">
+              <div class="d-inline-flex rounded-3 shadow-sm overflow-hidden">
+                <EntityRowActions
+                  @delete-row="deleteRow"
+                  @view-row="viewRow"
+                  @edit-row="updateRow"
+                />
+              </div>
+            </td>
+          </tr>
+        </template>
+      style: "<style scoped></style>"
+      export: |
+          props: {
+            ${minStart(EntityName)}: {
+              required: true,
+              type: Object as PropType<${majStart(EntityName)}>,
+            },
+          },
+          emits: ["request-delete", "request-view", "request-update"],
+          setup(props, { emit }) {
+            const deleteRow = () => {
+              emit("request-delete", props.${minStart(EntityName)});
+            };
+  
+            const viewRow = () => {
+              emit("request-view", props.${minStart(EntityName)});
+            };
+  
+            const updateRow = () => {
+              emit("request-update", props.${minStart(EntityName)});
+            };
+  
+            const { getSecondValue } = useObjectUtils();
+  
+            return {
+              deleteRow,
+              viewRow,
+              updateRow,
+              getSecondValue,
+            };
+          },
+      componentName: "${majStart(EntityName)}Row"
+      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
+      componentAdditionalFiles: []
+
     - componentType: "List Entity Component"
       generateForView: true
-      router :
+      router:
         link: ""
         label: ""
       componentName: "${majStart(EntityName)}List"
       importFile: |
-        import { defineComponent, PropType } from "vue";
+        import { defineComponent, PropType, ref } from "vue";
         import ${majStart(EntityName)}Row from "./${majStart(EntityName)}Row.vue";
         import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
+        import GenesisOverlay from "@/core/loading/GenesisOverlay.vue";
+        import DeleteConfirmationPopup from "@/core/popup/DeleteConfirmationPopup.vue";
+        import { usePopup } from "@/composables/usePopup";
+        import { use${majStart(EntityName)}s } from "@/composables/use${majStart(EntityName)}s";
       selector: "${majStart(EntityName)}List"
       standalone: true
       importComponent: |
-        components: { ${majStart(EntityName)}Row }
+        components: { ${majStart(EntityName)}Row, GenesisOverlay, DeleteConfirmationPopup }
       template: |
         <template>
-          <table class="table align-middle table-rounded text-nowrap">
-            <thead class="table-light">
-              <tr>
-                {{#each fields}}
-                <th >${formatReadable(this.name)}</th>
-                {{/each}}
-                <th scope="col" class="text-end">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="loading" class="py-4 text-center">
-                <td colspan="10" class="text-muted text-center py-4">
-                  <span>Loading...</span>
-                </td>
-              </tr>
-            
-              <tr v-else-if="message">
-                <td colspan="10" class="text-muted text-center py-4">
-                  {{ message }}
-                </td>
-              </tr>
-              <${majStart(EntityName)}Row
-                v-else
-                v-for="${minStart(EntityName)} in data"
-                :key="${minStart(EntityName)}.id"
-                :${minStart(EntityName)}="${minStart(EntityName)}"
-              >
-              </${majStart(EntityName)}Row>
-            </tbody>
-          </table>
+          <div>
+            <table class="table align-middle table-rounded text-nowrap">
+              <thead class="table-light">
+                <tr>
+                  {{#each fields}}
+                  <th scope="col">${formatReadable(this.name)}</th>
+                  {{/each}}
+                  <th scope="col" class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="position-relative">
+                <tr v-if="message && !loading">
+                  <td colspan="10" class="text-muted text-center py-4">{{ message }}</td>
+                </tr>
+                <${majStart(EntityName)}Row
+                  v-else
+                  v-for="${minStart(EntityName)} in data"
+                  :key="${minStart(EntityName)}.id"
+                  :${minStart(EntityName)}="${minStart(EntityName)}"
+                  @request-delete="openDeletePopup"
+                  @request-view="view${majStart(EntityName)}"
+                  @request-update="goToUpdateFormView"
+                />
+                <GenesisOverlay :visible="loading" />
+              </tbody>
+            </table>
+
+            <DeleteConfirmationPopup
+              :visible="deletePopup"
+              :message="`Are you sure you want to delete ${majStart(EntityName)} ${selectedEntity?.id}?`"
+              @confirm="confirmDelete"
+              @cancel="closePopup"
+            />
+          </div>
         </template>
       style: |
         <style scoped></style>
@@ -291,14 +424,46 @@
           loading: {
             type: Boolean,
             required: false,
-            defauld: false,
+            default: false,
           },
         },
-        setup() {
-          return {};
-        },
+        emits: ["request:refresh"],
+        setup(props, { emit }) {
+          const selectedEntity = ref<Partial<${majStart(EntityName)}>>({});
+          const { closePopup, visible: deletePopup } = usePopup(false);
+          const { delete${majStart(EntityName)}, view${majStart(EntityName)}, goToUpdateFormView } = use${majStart(EntityName)}s();
+
+          function openDeletePopup(entity: ${majStart(EntityName)}) {
+            if (!entity) return;
+            selectedEntity.value = entity;
+            deletePopup.value = true;
+          }
+
+          async function confirmDelete() {
+            const { success, error } = await delete${majStart(EntityName)}(selectedEntity.value);
+            deletePopup.value = false;
+            emit("request:refresh");
+          }
+
+          function jsonView(data: unknown): string {
+            if (!data) return "";
+            try { return JSON.stringify(data, null, 2); }
+            catch { return "Invalid data"; }
+          }
+
+          return {
+            deletePopup,
+            selectedEntity,
+            openDeletePopup,
+            confirmDelete,
+            closePopup,
+            jsonView,
+            view${majStart(EntityName)},
+            goToUpdateFormView,
+          };
+        }
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
-      componentAdditionalFiles: []
+      componentAdditionalFiles: [ ]
 
     - componentType: "List View"
       generateForView: true
@@ -312,7 +477,7 @@
         import ${majStart(EntityName)}List from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}List.vue";
         import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
         import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
-        import { EntityListField } from "@/models/EntityModel";
+        import { EntitySearchField } from "@/models/EntityModel";
         import GenesisButton from "@/core/button/GenesisButton.vue";
       selector: "${majStart(EntityName)}ListView"
       standalone: true
@@ -323,13 +488,17 @@
         }
       template: |
         <template>
-          <div>
+          <div class="container-fluid">
             <div class="d-flex justify-content-between align-items-center">
               <div>
                 <h3>${majStart(EntityName)} / <span class="text-muted">List</span></h3>
               </div>
               <div>
-                <GenesisButton icon="bi bi-plus me-2" title="Create new ${minStart(EntityName)}">
+                <GenesisButton
+                  icon="bi bi-plus me-2"
+                  title="Create new departement"
+                  @click="goToCreateFormView"
+                >
                   <span>Add new ${minStart(EntityName)}</span>
                 </GenesisButton>
               </div>
@@ -357,9 +526,10 @@
             paginationData,
             message,
             getPaginationData,
+            goToCreateFormView,
           } = use${majPluralize(EntityName)}();
-          const searchFields = ref<EntityListField[]>(
-            ${majStart(EntityName)}.getFieldListMetadata()
+          const searchFields = ref<EntitySearchField[]>(
+            ${majStart(EntityName)}.getSearchDaoMetadata()
           );
           return {
             ${minPluralize(EntityName)},
@@ -371,9 +541,10 @@
             searchFields,
             getPaginationData,
             message,
+            goToCreateFormView,
           };
-        },
-      destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}/list"
+        }
+      destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
       componentAdditionalFiles:
         - fileType: "Entity Composable"
           fileName: "use${majPluralize(EntityName)}"
@@ -503,7 +674,7 @@
                */
               const create${majStart(EntityName)} = async (${minStart(EntityName)}FormDTO: Partial<${majStart(EntityName)}FormDTO>) => {
                 const dto = new ${majStart(EntityName)}FormDTO(${minStart(EntityName)}FormDTO);
-                const ${minStart(EntityName)}: Partial<${majStart(EntityName)}> = await dto.to${majStart(EntityName)}();
+                const ${minStart(EntityName)}: Partial<${majStart(EntityName)}> = await dto.toEntity();
                 const { data, error } = await ${minStart(EntityName)}Service.create(${minStart(EntityName)});
                 if (error) {
                   message.value = error;
@@ -520,7 +691,7 @@
                 ${minStart(EntityName)}FormDTO: Partial<${majStart(EntityName)}FormDTO>
               ) => {
                 const dto = new ${majStart(EntityName)}FormDTO(${minStart(EntityName)}FormDTO);
-                const ${minStart(EntityName)}: Partial<${majStart(EntityName)}> = await dto.to${majStart(EntityName)}();
+                const ${minStart(EntityName)}: Partial<${majStart(EntityName)}> = await dto.toEntity();
                 const { data, error } = await ${minStart(EntityName)}Service.update(id, ${minStart(EntityName)});
                 if (error) {
                   message.value = error;
@@ -577,81 +748,11 @@
             }
           destinationPath: "${destinationFolder}/src/composables"
 
-    - componentType: "Entity Row"
-      generateForView: true
-      router:
-        label: ""
-        link: ""
-      importFile: |
-        import { defineComponent, PropType } from "vue";
-        import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
-        import EntityRowActions from "@/core/table/EntityRowActions.vue";
-        import { useObjectUtils } from "@/composables/useObjectUtils";
-      selector: "${majStart(EntityName)}Row"
-      standalone: true
-      importComponent: "components: { EntityRowActions }"
-      template: |
-        <template>
-          <tr class="border-bottom">
-            {{#each fields}}
-            {{#if this.isForeignKey}}
-            <td>{{ getSecondValue(tache.assigneaidEmployes) }}</td>
-            {{else}}
-            <td>{{ ${minStart(EntityName)}.${this.name} }}</td>
-            {{/if}}{{removeLine}}</td>
-            {{/each}}
-    
-            <td class="text-end">
-              <div class="d-inline-flex rounded-3 shadow-sm overflow-hidden">
-                <EntityRowActions
-                  @delete-row="deleteRow"
-                  @view-row="viewRow"
-                  @edit-row="updateRow"
-                />
-              </div>
-            </td>
-          </tr>
-        </template>
-      style: "<style scoped></style>"
-      export: |
-          props: {
-            ${minStart(EntityName)}: {
-              required: true,
-              type: Object as PropType<${majStart(EntityName)}>,
-            },
-          },
-          emits: ["request-delete", "request-view", "request-update"],
-          setup(props, { emit }) {
-            const deleteRow = () => {
-              emit("request-delete", props.tache);
-            };
-  
-            const viewRow = () => {
-              emit("request-view", props.tache);
-            };
-  
-            const updateRow = () => {
-              emit("request-update", props.tache);
-            };
-  
-            const { getSecondValue } = useObjectUtils();
-  
-            return {
-              deleteRow,
-              viewRow,
-              updateRow,
-              getSecondValue,
-            };
-          },
-      componentName: "${majStart(EntityName)}Row"
-      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
-      componentAdditionalFiles: []
-
     - componentType: "Details Component"
       generateForView: true
       router:
-        link: "/${minPluralize(EntityName)}/:id"
-        label: "${majStart(EntityName)} Details"
+        link: ""
+        label: ""
       componentName: "${majStart(EntityName)}Details"
       importFile: |
         import { defineComponent, PropType } from "vue";
@@ -713,7 +814,7 @@
           <!-- Delete confirmation popup -->
           <DeleteConfirmationPopup
             :visible="deletePopup"
-            :message="`Êtes-vous sûr de vouloir supprimer ${majStart(EntityName)} \${${minStart(EntityName)}.id} ?`"
+            :message="`Êtes-vous sûr de vouloir supprimer ${majStart(EntityName)} \${minStart(EntityName)}.id} ?`"
             subMessage="Cette action est irréversible."
             @confirm="confirmDelete"
             @cancel="closePopup"
@@ -756,7 +857,349 @@
         },
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
+
+    - componentType: "Details View"
+      generateForView: true
+      router:
+        link: "/${minPluralize(EntityName)}/:id"
+        label: "${majStart(EntityName)} Details"
+      componentName: "${majStart(EntityName)}DetailsView"
+      importFile: |
+        import { defineComponent, ref, onMounted } from "vue";
+        import { useRoute } from "vue-router";
+        import ${majStart(EntityName)}Details from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}Details.vue";
+        import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
+        import type { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
+        import GenesisButton from "@/core/button/GenesisButton.vue";
+      selector: "${majStart(EntityName)}DetailsView"
+      standalone: true
+      importComponent: |
+        components: {
+          ${majStart(EntityName)}Details,
+          GenesisButton,
+        }
+      template: |
+        <template>
+          <div class="container-fluid">
+            <div class="mb-4 d-flex justify-content-between align-items-center">
+              <div>
+                <h3>${majStart(EntityName)} / <span class="text-muted">Details</span></h3>
+              </div>
+              <div>
+                <GenesisButton
+                  icon="bi bi-arrow-left me-2"
+                  title="Go back to list view"
+                  @click="goToListView"
+                >
+                  <span>Back to list</span>
+                </GenesisButton>
+              </div>
+            </div>
+            <${majStart(EntityName)}Details v-if="entity" :${minStart(EntityName)}="entity" />
+            <p v-else>Chargement...</p>
+          </div>
+        </template>
+      style: |
+        <style scoped></style>
+      export: |
+        setup() {
+          const route = useRoute();
+          const { get${majStart(EntityName)}ById, goToListView } = use${majPluralize(EntityName)}();
+          const entity = ref<${majStart(EntityName)} | null>(null);
+
+          onMounted(async () => {
+            const result = await get${majStart(EntityName)}ById(Number(route.params.id));
+            entity.value = result.data || null;
+          });
+
+          return { entity, route, goToListView };
+        }
+      destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
+      componentAdditionalFiles: [ ]
+
+    - componentType: "Form Component"
+      generateForView: true
+      router:
+        link: ""
+        label: ""
+      componentName: "${majStart(EntityName)}Form"
+      importFile: |
+        import { defineComponent, onMounted, PropType, ref } from "vue";
+        import { ${majStart(EntityName)}FormDTO } from "@/models/${majStart(EntityName)}Model";
+        import GenesisButton from "@/core/button/GenesisButton.vue";
+        import GenesisInput from "@/core/form/GenesisInput.vue";
+        {{#if hasFk}}
+        import GenesisSelect from "@/core/form/GenesisSelect.vue";
+        import {
+          extractSelectOptionsFromOjectsData,
+          SelectOption,
+        } from "@/models/SelectOption";
+        import { use${majStart(EntityName)}s } from "@/composables/use${majStart(EntityName)}s";
+        {{else}}{{removeLine}}
+        {{/if}}
+      selector: "${majStart(EntityName)}Form"
+      standalone: true
+      importComponent: |
+        components: { GenesisButton, GenesisInput{{#if hasFk}} ,GenesisSelect{{/if}} }
+      template: |
+        <template>
+          <div class="card border-0 shadow-sm">
+            <div class="card-body">
+              <form @submit.prevent="handleSubmit" class="row w-50 mx-auto g-3">
+                {{#each fields}}
+                {{#if this.isPrimaryKey}}{{removeLine}}
+                {{elseIf this.isForeignKey}}
+                <div class="col-md-12">
+                  <GenesisSelect
+                    label="${formatReadable(this.name)}"
+                    :options="${minStart(this.type)}Data"
+                    v-model="formModel.${minStart(this.name)}"
+                  />
+                </div>
+                {{else}}
+                <div class="col-md-12">
+                  <GenesisInput
+                    label="${formatReadable(this.name)}"
+                    placeholder="Entrer ${formatReadable(this.name)}"
+                    type="${this.uiType}"
+                    v-model="formModel.${minStart(this.name)}"
+                  />
+                </div>
+                {{/if}}
+                {{/each}}
+
+                <!-- Buttons -->
+                <div class="row mt-4 justify-content-end g-3">
+                  <div class="col-auto">
+                    <GenesisButton
+                      type="submit"
+                      class="btn-primary text-white"
+                      icon="bi bi-save me-2"
+                      :label="submitLabel"
+                    />
+                  </div>
+                  <div class="col-auto">
+                    <GenesisButton
+                      @click="cancelForm"
+                      class="btn-secondary"
+                      label="Cancel"
+                    />
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </template>
+      style: |
+        <style scoped></style>
+      export: |
+        props: {
+          ${minStart(EntityName)}: { type: Object as PropType<${majStart(EntityName)}FormDTO>, required: false },
+          submitLabel: { type: String, default: "Submit" },
+        },
+        emits: ["submit", "cancel"],
+        setup(props, { emit }) {
+          const formModel = ref<Partial<${majStart(EntityName)}FormDTO>>({ ...props.${minStart(EntityName)} });
+          {{#each fieldsFK}}
+          const ${minStart(this.type)}Data = ref<SelectOption[]>([]);
+          {{/each}}
+          {{#if hasFk}}
+          const { loadFkMapData } = use${majStart(EntityName)}s(false);
+          async function loadFkData() {
+            const { {{#each fieldsFK}}${minStart(this.type)}s{{#if !@last}}, {{/if}}{{/each}} } = await loadFkMapData();
+            {{#each fieldsFK}}
+            ${minStart(this.type)}Data.value = extractSelectOptionsFromOjectsData(${minStart(this.type)}s);
+            {{/each}}
+          }
+        
+          onMounted(loadFkData);
+          {{/if}}
+          function handleSubmit() {
+            emit("submit", formModel.value);
+          }
+
+          function cancelForm() {
+            emit("cancel", formModel.value);
+          }
+
+          return {
+            formModel,
+            {{#each fieldsFK}}${minStart(this.type)}Data, {{/each}}{{removeLine}}
+            handleSubmit,
+            cancelForm,
+          };
+        }
+      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
+      componentAdditionalFiles: [ ]
+
+    - componentType: "Update View"
+      generateForView: true
+      router:
+        link: "/${minPluralize(EntityName)}/update/:id"
+        label: "Update ${majStart(EntityName)}"
+      componentName: "${majStart(EntityName)}UpdateView"
+      importFile: |
+        import { defineComponent, ref, onMounted } from "vue";
+        import { useRoute } from "vue-router";
+        import ${majStart(EntityName)}Form from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}Form.vue";
+        import AlertPopup from "@/core/popup/AlertPopup.vue";
+        import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
+        import { ${majStart(EntityName)}FormDTO } from "@/models/${majStart(EntityName)}Model";
+        import { useLoading } from "@/composables/useLoading";
+        import { usePopup } from "@/composables/usePopup";
+      selector: "${majStart(EntityName)}UpdateView"
+      standalone: true
+      importComponent: |
+        components: { ${majStart(EntityName)}Form, AlertPopup }
+      template: |
+        <template>
+          <div class="container-fluid">
+            <div class="d-flex mb-4 justify-content-between align-items-center">
+              <div>
+                <h3>${majStart(EntityName)} / <span class="text-muted">Update</span></h3>
+              </div>
+            </div>
+
+            <div v-if="entity">
+              <${minStart(EntityName)}-form
+                :${minStart(EntityName)}="entity"
+                submit-label="Update ${majStart(EntityName)}"
+                @submit="updateHandler"
+                @cancel="view${majStart(EntityName)}"
+              ></${minStart(EntityName)}-form>
+            </div>
+
+            <AlertPopup
+              :message="message ?? undefined"
+              title="Error 500"
+              :visible="alertPopup"
+              @close="closePopup"
+            ></AlertPopup>
+          </div>
+        </template>
+      style: |
+        <style scoped></style>
+      export: |
+        setup() {
+          const route = useRoute();
+          const pathId = Number(route.params.id);
+          const { loading, startLoading, stopLoading } = useLoading();
+          const { closePopup, openPopup, visible: alertPopup } = usePopup();
+
+          const { get${majStart(EntityName)}ById, goToListView, update${majStart(EntityName)}, view${majStart(EntityName)}, message } = use${majPluralize(EntityName)}();
+          const entity = ref<${majStart(EntityName)}FormDTO | null>(null);
+
+          const updateHandler = async (formDTO: Partial<${majStart(EntityName)}FormDTO>) => {
+            startLoading();
+            const data = await update${majStart(EntityName)}(pathId, formDTO);
+            if (data && !message.value) {
+              view${majStart(EntityName)}(data);
+            } else {
+              openPopup();
+            }
+            stopLoading();
+          };
+
+          onMounted(async () => {
+            const result = await get${majStart(EntityName)}ById(pathId);
+            entity.value = ${majStart(EntityName)}FormDTO.parse(result.data) || null;
+          });
+
+          return {
+            entity,
+            route,
+            goToListView,
+            update${majStart(EntityName)},
+            view${majStart(EntityName)},
+            updateHandler,
+            loading,
+            message,
+            closePopup,
+            alertPopup,
+          };
+        }
+      destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
+      componentAdditionalFiles: [ ]
+
+    - componentType: "Create View"
+      generateForView: true
+      router:
+        link: "/${minPluralize(EntityName)}/create"
+        label: "Create ${majStart(EntityName)}"
+      componentName: "${majStart(EntityName)}CreateView"
+      importFile: |
+        import { defineComponent } from "vue";
+        import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
+        import ${majStart(EntityName)}Form from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}Form.vue";
+        import { ${majStart(EntityName)}FormDTO } from "@/models/${majStart(EntityName)}Model";
+        import AlertPopup from "@/core/popup/AlertPopup.vue";
+        import { usePopup } from "@/composables/usePopup";
+        import { useFreezeScreen } from "@/store/useFreezeScreen";
+      selector: "${majStart(EntityName)}CreateView"
+      standalone: true
+      importComponent: |
+        components: { ${majStart(EntityName)}Form, AlertPopup }
+      template: |
+        <template>
+          <div class="container-fluid">
+            <div class="d-flex mb-4 justify-content-between align-items-center">
+              <div>
+                <h3>${majStart(EntityName)} / <span class="text-muted">New</span></h3>
+              </div>
+            </div>
+
+            <${minStart(EntityName)}-form
+              submit-label="Save ${majStart(EntityName)}"
+              :${minStart(EntityName)}="${minStart(EntityName)}FormDto"
+              @submit="createHandler"
+              @cancel="goToListView"
+            />
+
+            <AlertPopup
+              :message="message ?? undefined"
+              title="Error 500"
+              :visible="alertPopup"
+              @close="closePopup"
+            />
+          </div>
+        </template>
+      style: |
+        <style scoped></style>
+      export: |
+        setup() {
+          const ${minStart(EntityName)}FormDto = new ${majStart(EntityName)}FormDTO();
+          const { create${majStart(EntityName)}, goToListView, message } = use${majPluralize(EntityName)}();
+          const { openPopup, closePopup, visible: alertPopup } = usePopup();
+          const { freeze, unfreeze } = useFreezeScreen();
+
+          const createHandler = async (formDTO: Partial<${majStart(EntityName)}FormDTO>) => {
+            freeze("Create a new ${majStart(EntityName)}...");
+            try {
+              const data = await create${majStart(EntityName)}(formDTO);
+              if (data && !message.value) goToListView();
+              else throw new Error();
+            } catch (error) {
+              openPopup();
+            } finally {
+              unfreeze();
+            }
+          };
+
+          return {
+            ${minStart(EntityName)}FormDto,
+            createHandler,
+            goToListView,
+            message,
+            alertPopup,
+            closePopup,
+          };
+        }
+      destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
+      componentAdditionalFiles: [ ]
+
   serviceComponent:
+    name: "${majStart(EntityName)}Service"
+    destinationPath: "${destinationFolder}/src/services"
     imports: |
       import useRestApi from "@/composables/useRestApi";
       import RestResponse from "@/models/api/RestResponseModel";
@@ -769,8 +1212,9 @@
       import type { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
     methods: |
       const restApiWithPage = useRestApi<IPageResponse<${majStart(EntityName)}>>();
+      const restApi = useRestApi<${majStart(EntityName)}>();
       const BASE_URL = "/${minPluralize(EntityName)}";
-  
+
       /** GET all avec pagination */
       export async function getAll(
         pagination?: PaginationRequestParameter,
@@ -780,76 +1224,155 @@
         const response = await restApiWithPage.GET(request.buildRequestUrl());
         return RestResponse.handleResponse<${majStart(EntityName)}[]>(response, true);
       }
-  
+
       /** GET by ID */
-      export async function getById(id: string) {
-        const response = await restApiWithPage.GET(BASE_URL+`/`+id);
+      export async function getById(id: number | string | undefined) {
+        const response = await restApi.GET(BASE_URL + `/` + id);
         return RestResponse.handleResponse<${majStart(EntityName)} | null>(response);
       }
-  
+
       /** POST create */
       export async function create(data: Partial<${majStart(EntityName)}>) {
-        const response = await restApiWithPage.POST(BASE_URL, data);
+        const response = await restApi.POST(BASE_URL, data);
         return RestResponse.handleResponse<${majStart(EntityName)} | null>(response);
       }
-  
+
       /** PUT update */
-      export async function update(id: string, data: Partial<${majStart(EntityName)}>) {
-        const response = await restApiWithPage.PUT(BASE_URL+`/`+id, data);
+      export async function update(
+        id: number | string | undefined,
+        data: Partial<${majStart(EntityName)}>
+      ) {
+        const response = await restApi.PUT(BASE_URL + `/` + id, data);
         return RestResponse.handleResponse<${majStart(EntityName)} | null>(response);
       }
-  
+
       /** DELETE remove */
-      export async function remove(id: string) {
-        const response = await restApiWithPage.DELETE(BASE_URL+`/`+id);
+      export async function remove(id: number | string | undefined) {
+        const response = await restApi.DELETE(BASE_URL + `/` + id);
         return {
           success: response.returnCode === 1,
           error: response.returnCode !== 1 ? response.message : null,
         };
       }
-  
+
       /** POST search avec pagination */
       export async function search(
         data: Partial<${majStart(EntityName)}>,
         pagination?: PaginationRequestParameter,
         sortFields?: SortFieldParameter[]
       ) {
-        const request = new RequestModel(BASE_URL+`/search`, pagination, sortFields);
+        const request = new RequestModel(BASE_URL + `/search`, pagination, sortFields);
         const response = await restApiWithPage.POST(request.buildRequestUrl(), data);
         return RestResponse.handleResponse<${majStart(EntityName)}[]>(response, true);
       }
-    destinationPath: "${destinationFolder}/src/services"
-    name: "${majStart(EntityName)}Service"
+
   modelComponent:
     imports: |
-      import { EntityListField } from "./EntityModel";
+      import { BaseModel } from "./BaseModel";
+      import { EntitySearchField } from "./EntityModel";
+      {{#each fieldsFK}}
+      import { ${majStart(this.type)} } from "./${majStart(this.type)}Model";
+      import * as ${minStart(this.type)}Service from "@/services/${majStart(this.type)}Service";
+      {{/each}}
+      import { createOptionsLoader } from "./SelectOption";
     exports: |
       export interface I${majStart(EntityName)} {
         {{#each fields}}
-        ${minStart(this.name)}: ${this.typeBase} | undefined;
+        {{#if this.isForeignKey}}
+        ${minStart(this.name)}?: ${majStart(this.type)};
+        {{else}}
+        ${minStart(this.name)}?: ${this.typeBase};
+        {{/if}}
         {{/each}}
       }
 
-      export class ${majStart(EntityName)} implements I${majStart(EntityName)} {
+      export class ${majStart(EntityName)} extends BaseModel implements I${majStart(EntityName)} {
         {{#each fields}}
-        ${minStart(this.name)}: ${this.typeBase} | undefined;
+        {{#if this.isForeignKey}}
+        ${minStart(this.name)}?: ${majStart(this.type)};
+        {{else}}
+        ${minStart(this.name)}?: ${this.typeBase};
+        {{/if}}
         {{/each}}
 
         constructor(data?: Partial<I${majStart(EntityName)}>) {
+          super();
+          Object.assign(this, data);
+        }
+
+        protected static override searchDaoMetadata: EntitySearchField[] = [
           {{#each fields}}
-            this.${minStart(this.name)} = data?.${minStart(this.name)};
+          {{#if this.isForeignKey}}
+          {
+            key: "${this.name}",
+            label: "${formatReadable(this.name)}",
+            type: "select",
+            searchKey: "id",
+            sortable: true,
+            optionsLoader: createOptionsLoader(${minStart(this.type)}Service.getAll),
+          },
+          {{elseIf this.isNumeric or this.isDate}}
+          { key: "${this.name}", label: "${formatReadable(this.name)}", type: "${this.uiType}", sortable: true },
+          { key: "${this.name}Min", label: "${formatReadable(this.name)} Min", type: "${this.uiType}", sortable: true },
+          { key: "${this.name}Max", label: "${formatReadable(this.name)} Max", type: "${this.uiType}", sortable: true },
+          {{else}}
+          { key: "${this.name}", label: "${formatReadable(this.name)}", type: "${this.uiType}", sortable: true },
+          {{/if}}
+          {{/each}}
+        ];
+      }
+
+      export class ${majStart(EntityName)}FormDTO {
+        {{#each fields}}
+        {{#if this.isForeignKey}}
+        ${minStart(this.name)}?: string;
+        {{else}}
+        ${minStart(this.name)}?: ${this.typeBase};
+        {{/if}}
+        {{/each}}
+
+        constructor(data?: Partial<${majStart(EntityName)}FormDTO>) {
+          {{#each fields}}
+          {{#if this.isForeignKey}}
+          this.${minStart(this.name)} = data?.${minStart(this.name)} ?? "";
+          {{else}}
+          this.${minStart(this.name)} = data?.${minStart(this.name)};
+          {{/if}}
           {{/each}}
         }
 
-        static getFieldListMetadata(): EntityListField[] {
-          return [
+        static parse(data?: Partial<I${majStart(EntityName)}> | I${majStart(EntityName)} | null) {
+          const instance = new ${majStart(EntityName)}FormDTO();
+          {{#each fields}}
+          {{#if this.isForeignKey}}
+          instance.${minStart(this.name)} = data?.${minStart(this.name)}?.id?.toString();
+          {{else}}
+          instance.${minStart(this.name)} = data?.${minStart(this.name)};
+          {{/if}}
+          {{/each}}
+          return instance;
+        }
+
+        async toEntity(): Promise<Partial<${majStart(EntityName)}>> {
+          const entity: Partial<${majStart(EntityName)}> = new ${majStart(EntityName)}({
             {{#each fields}}
-            { key: "${this.name}", label: "${formatReadable(this.name)}", type: "${this.uiType}", sortable: true },
+            {{#if this.isForeignKey}}{{removeLine}}
+            {{else}}
+            ${minStart(this.name)}: this.${minStart(this.name)},
+            {{/if}}
             {{/each}}
-          ];
+          });
+
+          {{#each fieldsFK}}
+          if (this.${minStart(this.name)}) {
+            const related = await ${minStart(this.type)}Service.getById(Number(this.${minStart(this.name)}));
+            entity.${minStart(this.name)} = related.data as ${majStart(this.type)};
+          }
+          {{/each}}
+
+          return entity;
         }
       }
     exportsComponents: |
     destinationPath: "${destinationFolder}/src/models"
     name: "${majStart(EntityName)}Model"
-

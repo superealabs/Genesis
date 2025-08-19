@@ -28,7 +28,9 @@ public class FrameworkFrontendMetadataProvider {
 
         metadata.put("fields", getFieldsList(tableMetadata));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
-        metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
+        List<Map<String, Object>> fieldsFK = getFieldsFKList(tableMetadata);
+        metadata.put("fieldsFK", fieldsFK);
+        metadata.put("hasFk", fieldsFK.size() > 0);
         metadata.put("EntityName",tableMetadata.getClassName());
         metadata.put("isView",tableMetadata.getIsView());
 
@@ -95,6 +97,9 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
         fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
+        fieldMap.put("isNumeric", field.isNumeric());
+        fieldMap.put("isDate", field.isDate());
+        fieldMap.put("isText",field.isText());
 
         return fieldMap;
     }
