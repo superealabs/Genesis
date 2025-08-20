@@ -74,6 +74,8 @@ public class ViewsTemplateEngine {
     public static class Create {
         private String modelType;
         private String backLink;
+        private String inputTagHelper;
+        private String selectTagHelper;
 //        private Input[] inputsList;
     }
 
@@ -83,6 +85,8 @@ public class ViewsTemplateEngine {
     public static class Edit {
         private String modelType;
         private String backLink;
+        private String inputTagHelper;
+        private String selectTagHelper;
 //        private Input[] inputsList;
     }
 }

@@ -269,7 +269,7 @@ public class MVCGenerator implements GenesisGenerator {
         String secondaryResult = engine.simpleRender(primaryResult, metadataSecondary);
 
         // Rendu final
-        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
+        HashMap<String, Object> metadataFinally = getViewHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
 
         // Ajustement du chemin de sauvegarde
         String fileSavePath;
@@ -311,7 +311,7 @@ public class MVCGenerator implements GenesisGenerator {
         String secondaryResult = engine.simpleRender(primaryResult, metadataSecondary);
 
         // Rendu final
-        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
+        HashMap<String, Object> metadataFinally = getViewHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
 
         // Ajustement du chemin de sauvegarde
         String fileSavePath;
@@ -345,15 +345,11 @@ public class MVCGenerator implements GenesisGenerator {
         String templateContent = loadViewCreateTemplate(viewsTemplate);
 
         // Rendu intermédiaire
-        HashMap<String, Object> metadataPrimary = getViewHashMap(framework, language, tableMetadata);
-        String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
-
-        // Rendu intermédiaire
         HashMap<String, Object> metadataSecondary = getAltViewCreateHashMap(viewsTemplateEngine);
-        String secondaryResult = engine.simpleRender(primaryResult, metadataSecondary);
+        String secondaryResult = engine.simpleRender(templateContent, metadataSecondary);
 
         // Rendu final
-        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
+        HashMap<String, Object> metadataFinally = getViewHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
 
         // Ajustement du chemin de sauvegarde
         String fileSavePath;

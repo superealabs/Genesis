@@ -208,6 +208,17 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
+    public static HashMap<String, Object> getViewHashMapIntermediaire(Language language, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) {
+        HashMap<String, Object> metadata = new HashMap<>();
+
+        addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
+        metadata.put("fields", getFieldsWithInputsTypeList(tableMetadata, language));
+        metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
+        metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
+
+        return metadata;
+    }
+
     private static void addGeneralMetadata(HashMap<String, Object> metadata, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkOptions, String destinationFolder, String projectName, String groupLink) {
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName", projectName);
@@ -271,6 +282,18 @@ public class FrameworkMetadataProvider {
             fields.add(fieldMap);
         }
         return fields;
+    }
+
+    private static List<Map<String, Object>> getFieldsWithInputsTypeList(TableMetadata tableMetadata, Language language) {
+        List<Map<String, Object>> fieldsInputType = new ArrayList<>();
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            Map<String, Object> fieldMap = getFieldHashMap(field, language);
+            InputTypeMapping inputTypeMapping = InputTypeMapping.getInputTypeMapping(language.getId());
+            fieldMap.put("inputType", inputTypeMapping.getTypes().get(field.getType()));
+            System.out.println(field.getName() + "inputType " + inputTypeMapping.getTypes().get(field.getColumnType()));
+            fieldsInputType.add(fieldMap);
+        }
+        return fieldsInputType;
     }
 
     private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata, Language language) {
@@ -473,6 +496,8 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> altMap = new HashMap<>();
         altMap.put("modelType", viewsTemplateEngine.getCreate().getModelType());
         altMap.put("backLink", viewsTemplateEngine.getCreate().getBackLink());
+        altMap.put("inputTagHelper", viewsTemplateEngine.getCreate().getInputTagHelper());
+        altMap.put("selectTagHelper", viewsTemplateEngine.getCreate().getSelectTagHelper());
         return altMap;
     }
 }
