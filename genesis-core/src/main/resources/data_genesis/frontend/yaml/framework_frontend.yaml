@@ -1436,7 +1436,7 @@
             type: 'select' as const,
             required: ${this.isRequired},
             foreignKey: {
-              endpoint: '/${toKebabCase(this.type)}s?page=0&size=1000',
+              endpoint: '/${lowerCase(classNameLink)}?page=0&size=1000',
               labelKey: '${this.referencedPrimaryKeyColumn}',
               valueKey: '${this.referencedPrimaryKeyColumn}'
             },
