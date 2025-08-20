@@ -4,6 +4,8 @@ import { useClickOutside } from '@/hooks/useClickOutside';
 import { Add, Close } from '@mui/icons-material';
 import type { FilterState, FilterType, FilterValue } from "@/types/filter";
 import { Button, TextField, InputAdornment, IconButton, Box } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 interface Props {
     availableFilters: Record<string, { label: string; type: string }>;
@@ -55,8 +57,44 @@ export default function ListFilterBuilder({
             <Box fontWeight="bold">Filters :</Box>
 
             {Object.entries(filters).map(([key, value]) => {
-                const meta = availableFilters[key] as { label: string; type: FilterType };
+                const meta = availableFilters[key];
                 if (!meta) return null;
+
+                const adornment = (
+                    <InputAdornment position="end">
+                        <IconButton
+                            size="small"
+                            onClick={() => removeFilter(key)}
+                            edge="end"
+                            title={`Remove ${meta.label} filter`}
+                        >
+                            <Close fontSize="inherit" />
+                        </IconButton>
+                    </InputAdornment>
+                );
+
+                if (meta.type === 'Date') {
+                    return (
+                        <DatePicker
+                            key={key}
+                            label={meta.label}
+                            value={value ? dayjs(value as string) : null}
+                            onChange={(newVal) =>
+                                setValue(key, newVal ? newVal.format('YYYY-MM-DD') : '')
+                            }
+                            slotProps={{
+                                textField: {
+                                    size: 'small',
+                                    variant: 'outlined',
+                                    sx: { width: 220, flexShrink: 0 },
+                                    InputProps: { endAdornment: adornment },
+                                },
+                            }}
+                        />
+                    );
+                }
+
+                // fallback TextField pour text / number
                 return (
                     <TextField
                         key={key}
@@ -74,20 +112,7 @@ export default function ListFilterBuilder({
                                     : e.target.value
                             )
                         }
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => removeFilter(key)}
-                                        edge="end"
-                                        title={`Remove ${meta.label} filter`}
-                                    >
-                                        <Close fontSize="inherit" />
-                                    </IconButton>
-                                </InputAdornment>
-                            ),
-                        }}
+                        InputProps={{ endAdornment: adornment }}
                     />
                 );
             })}
