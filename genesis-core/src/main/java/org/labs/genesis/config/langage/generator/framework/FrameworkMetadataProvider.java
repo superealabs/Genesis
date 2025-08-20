@@ -498,6 +498,7 @@ public class FrameworkMetadataProvider {
         altMap.put("backLink", viewsTemplateEngine.getCreate().getBackLink());
         altMap.put("inputTagHelper", viewsTemplateEngine.getCreate().getInputTagHelper());
         altMap.put("selectTagHelper", viewsTemplateEngine.getCreate().getSelectTagHelper());
+        altMap.put("createLink", viewsTemplateEngine.getCreate().getCreateLink());
         return altMap;
     }
 }

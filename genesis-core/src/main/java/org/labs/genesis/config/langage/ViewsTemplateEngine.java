@@ -76,6 +76,7 @@ public class ViewsTemplateEngine {
         private String backLink;
         private String inputTagHelper;
         private String selectTagHelper;
+        private String createLink;
 //        private Input[] inputsList;
     }
 
