@@ -2,7 +2,7 @@ ${modelType}
 <!-- Header -->
 <header class="header">
     <h3>${className} / <span class="page-action">List</span></h3>
-    <button class="btn-primary" type="button" onclick="window.location.href='${createLink}'">
+    {{#if !isView}}<button class="btn-primary" type="button" onclick="window.location.href='${createLink}'">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 59">
             <title>Add</title>
             <g id="Layer_2" data-name="Layer 2">
@@ -16,7 +16,7 @@ ${modelType}
             </g>
         </svg>
         <p>New ${className}</p>
-    </button>
+    </button>{{/if}}
 </header>
 
 <!-- Content -->
@@ -124,27 +124,86 @@ ${modelType}
             <thead>
                 <tr>
                     {{#each fields}}
-                    <th>{{#if this.isForeignKey}} ${this.type} {{else}} ${this.name} {{/if}}</th>
+                    <th>{{#if this.isForeignKey}} ${this.type} {{else}} ${majStart(this.name)} {{/if}}</th>
                     {{/each}}{{removeLine}}
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 ${blockLoopStatementStart}
-                    <tr ${inlineLoopStatement}>
+                    <tr class="table-content" ${inlineLoopStatement}>
                     {{#each fields}}
                         <td>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</td>
                     {{/each}}{{removeLine}}
-                        <td>
-                            <a ${detailsLink}>Details</a><br>
-                            {{#if isView}} {{else}}<button class="btn-delete" ${deleteLink}>Delete</button>{{/if}}
+                        <td class="actions-group">
+                            <button class="action-button" onclick="window.location.href='${detailsLink}'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 59">
+                                    <title>Details</title>
+                                    <g id="Layer_2" data-name="Layer 2">
+                                        <g id="Layer_1-2" data-name="Layer 1">
+                                            <g id="assignment">
+                                                <path
+                                                    d="M34.5,59h-24A10.51,10.51,0,0,1,0,48.5v-31A10.51,10.51,0,0,1,10.5,7h24A10.51,10.51,0,0,1,45,17.5v31A10.51,10.51,0,0,1,34.5,59Zm-24-47A5.51,5.51,0,0,0,5,17.5v31A5.51,5.51,0,0,0,10.5,54h24A5.51,5.51,0,0,0,40,48.5v-31A5.51,5.51,0,0,0,34.5,12Z" />
+                                                <path
+                                                    d="M30.5,47h-16a2.5,2.5,0,0,1,0-5h16a2.5,2.5,0,0,1,0,5Z" />
+                                                <path
+                                                    d="M31.5,35.5h-18a2.5,2.5,0,0,1,0-5h18a2.5,2.5,0,0,1,0,5Z" />
+                                                <path
+                                                    d="M31.5,24h-18a2.5,2.5,0,0,1,0-5h18a2.5,2.5,0,0,1,0,5Z" />
+                                                <path d="M29.5,9.5a7,7,0,0,0-14,0Z" />
+                                                <path
+                                                    d="M29.5,12h-14A2.5,2.5,0,0,1,13,9.5a9.5,9.5,0,0,1,19,0A2.5,2.5,0,0,1,29.5,12ZM18.76,7h7.48a4.5,4.5,0,0,0-7.48,0Z" />
+                                                <circle class="cls-1" cx="22.5" cy="7" r="2.5" />
+                                            </g>
+                                        </g>
+                                    </g>
+                                </svg>
+                            </button>
+                            {{#if !isView}}<button class="action-button" onclick="window.location.href='${updateLink}'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 59">
+                                    <title>Edit</title>
+                                    <g id="Layer_2" data-name="Layer 2">
+                                        <g id="Layer_1-2" data-name="Layer 1">
+                                            <g id="edit">
+                                                <path
+                                                    d="M2.5,59a2.54,2.54,0,0,1-1.77-.73,2.51,2.51,0,0,1-.65-2.39l3.1-12.12a2.54,2.54,0,0,1,.65-1.15L45.71.73a2.52,2.52,0,0,1,3.54,0l9,9a2.51,2.51,0,0,1,0,3.54L16.39,55.17a2.54,2.54,0,0,1-1.15.65L3.12,58.92A2.64,2.64,0,0,1,2.5,59Zm12.12-5.6h0ZM7.85,45.66,6,53l7.37-1.88L53,11.52,47.48,6Z" />
+                                                <path
+                                                    d="M48.76,21.76A2.53,2.53,0,0,1,47,21l-9-9a2.5,2.5,0,1,1,3.54-3.54l9,9a2.5,2.5,0,0,1-1.77,4.27Z" />
+                                                <path
+                                                    d="M46.89,59H26.62a2.5,2.5,0,0,1,0-5H46.89a2.5,2.5,0,0,1,0,5Z" />
+                                            </g>
+                                        </g>
+                                    </g>
+                                </svg>
+                            </button>
+                            <button class="action-button" onclick="window.location.href='${deleteLink}'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55.78 59">
+                                    <title>Delete</title>
+                                    <g id="Layer_2" data-name="Layer 2">
+                                        <g id="Layer_1-2" data-name="Layer 1">
+                                            <g id="delete">
+                                                <path
+                                                    d="M35.56,59H20.21a10.08,10.08,0,0,1-10-9.18L7.18,13.52l5-.42,3.05,36.3a5,5,0,0,0,5,4.6H35.56a5.06,5.06,0,0,0,5-4.6l3-36.3,5,.42-3.05,36.3A10.08,10.08,0,0,1,35.56,59Z" />
+                                                <path
+                                                    d="M53.28,15.81H2.5a2.5,2.5,0,0,1,0-5H53.28a2.5,2.5,0,0,1,0,5Z" />
+                                                <path
+                                                    d="M41.2,15.81h-5v-2.5A8.32,8.32,0,0,0,27.89,5a8.42,8.42,0,0,0-8.31,8.31v2.5h-5v-2.5a13.31,13.31,0,0,1,26.62,0Z" />
+                                                <path
+                                                    d="M32.56,45.39h-.17a2.5,2.5,0,0,1-2.33-2.66l1-14.41a2.5,2.5,0,1,1,5,.33l-1,14.41A2.51,2.51,0,0,1,32.56,45.39Z" />
+                                                <path
+                                                    d="M23.22,45.39a2.5,2.5,0,0,1-2.49-2.34l-1-14.41a2.5,2.5,0,1,1,5-.33l1,14.41a2.5,2.5,0,0,1-2.33,2.66Z" />
+                                            </g>
+                                        </g>
+                                    </g>
+                                </svg>
+                            </button>{{/if}}
                         </td>
                     </tr>
                 ${blockLoopStatementEnd}
             </tbody>
         </table>
 
-        <!-- Modal -->
+        {{#if !isView}}<!-- Modal -->
         <div id="customModal" class="modal-overlay"
              data-trigger=".btn-delete"
              data-input="${className}Id"
@@ -163,7 +222,7 @@ ${modelType}
                     </form>
                 </div>
             </div>
-        </div>
+        </div>{{/if}}
     </div>
 
     <!-- Content Footer -->

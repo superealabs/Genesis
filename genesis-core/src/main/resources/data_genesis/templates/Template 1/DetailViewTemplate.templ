@@ -27,16 +27,16 @@ ${modelType}
         {{#each fields}}
         <div class="form-input">
             <label for="">${this.name}</label>
-            <input type="text" name="${this.name}" id="${this.name}" placeholder="${this.name}" value="${dataValue}" readonly>
+            <input type="text" name="${this.name}" id="${this.name}" placeholder="${this.name}" value="{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}" readonly>
         </div>
         {{/each}}{{removeLine}}
 
-        <div class="form-actions">
+        {{#if !isView}}<div class="form-actions">
             <div class="action-options">
                 <button onclick="window.location.href='${updateLink}'" type="button" class="action-cancel">Update</button>
                 <button onclick="window.location.href='${deleteLink}'" type="button" class="action-save">Delete</button>
             </div>
-        </div>
+        </div>{{/if}}
     </form>
 </main>
 

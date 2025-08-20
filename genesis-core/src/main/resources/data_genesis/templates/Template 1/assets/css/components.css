@@ -173,12 +173,14 @@ table {
 
 thead {
     background: var(--color-active);
+    font-variant-caps: all-small-caps;
 }
 
 th,
 td {
     padding: 0.75rem;
     text-align: left;
+    vertical-align: top;
 }
 
 tr.table-content {
@@ -319,6 +321,7 @@ tr.table-content:hover {
     background: none;
     text-align: left;
     cursor: pointer;
+    font-variant-caps: all-small-caps;
 }
 
 .dropdown-menu button:hover,
