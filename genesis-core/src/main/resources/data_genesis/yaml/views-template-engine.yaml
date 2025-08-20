@@ -17,13 +17,13 @@
     modelType : |
       @model IEnumerable<${majStart(className)}>
     dataValue: "@${lowerCase(className)}.${majStart(this.name)}"
-    dataForeignValue: "@${lowerCase(className)}.${majStart(this.columnNameField)}"
+    dataForeignValue: "@${lowerCase(className)}.${majStart(this.name)}?.GetType().GetProperty((string)ViewBag.${majStart(this.type)}Column)?.GetValue(@${lowerCase(className)}.${majStart(this.name)})"
     inlineLoopStatement: |
     blockLoopStatementStart: |
       @foreach (var ${lowerCase(className)} in Model) {
     blockLoopStatementEnd: |
       }
-    detailsLink: "asp-action=\"Details\" asp-route-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
+    detailsLink: "@Url.Action(\"Details\", new { ${pkColumn} = @${lowerCase(className)}.${majStart(pkColumn)} })"
     deleteLink: "data-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
     createLink: "@Url.Action(\"Create\")"
     updateLink: "@Url.Action(\"Update\")"
@@ -33,7 +33,7 @@
     modelType: |
       @model ${majStart(className)}
     dataValue: "@Model.${majStart(this.name)}"
-    dataForeignValue: "@Model.${majStart(this.columnNameField)}"
+    dataForeignValue: "@Model.${majStart(this.name)}?.GetType().GetProperty((string)ViewBag.${majStart(this.type)}Column)?.GetValue(@Model.${majStart(this.name)})"
     deleteLink: "data-id=\"@Model.${majStart(pkColumn)}\""
     updateLink: "@Url.Action(\"Update\")"
     backLink: "@Url.Action(\"Index\")"
@@ -42,10 +42,14 @@
     modelType: |
       @model ${majStart(className)}
     backLink: "@Url.Action(\"Index\")"
+    inputTagHelper: "asp-for=\"${majStart(this.name)}\""
+    selectTagHelper: "asp-for=\"${majStart(this.name)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
   edit:
     modelType: |
       @model ${majStart(className)}
     backLink: "@Url.Action(\"Index\")"
+    inputTagHelper: "asp-for=\"${majStart(this.name)}\""
+    selectTagHelper: "asp-for=\"${majStart(this.name)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
 
   templateEngineFilesEdits:
     - fileType : "ViewImports"

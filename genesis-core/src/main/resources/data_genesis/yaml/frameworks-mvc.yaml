@@ -22,6 +22,7 @@
         using ${majStart(projectName)}.Repositories.Interface;
         using ${majStart(projectName)}.Services.Implementation;
         using ${majStart(projectName)}.Services.Interface;
+        using ${majStart(projectName)}.Utils;
         
         var builder = WebApplication.CreateBuilder(args);
         
@@ -40,6 +41,8 @@
         {{#each entities}}
         builder.Services.AddScoped<I${this}Service, ${this}Service>();
         {{/each}}
+        
+        builder.Services.AddScoped<DisplayColumnDetector>();  
         
         builder.Services.AddControllersWithViews();
         
@@ -1569,6 +1572,93 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
+    - fileType: "Display Column Detector For Foreign Key Values"
+      fileName: "DisplayColumnDetector"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+        
+        using Microsoft.EntityFrameworkCore;
+        using System;
+        using System.Collections.Generic;
+        using System.Linq;
+        using System.Threading.Tasks;
+        using Data;
+        
+        public class DisplayColumnDetector
+        {
+          private readonly ${majStart(projectName)}Context _context;
+      
+          public DisplayColumnDetector(${majStart(projectName)}Context context)
+          {
+            _context = context;
+          }
+      
+          /// <summary>
+          /// Detect the best column to display for an entity
+          /// </summary>
+          public async Task<string> DetectBestDisplayColumnAsync<TEntity>() where TEntity : class
+            {
+              var entityType = _context.Model.FindEntityType(typeof(TEntity));
+              var tableName = entityType.GetTableName();
+      
+              var candidates = entityType.GetProperties()
+              .Where(p => p.ClrType == typeof(string))
+              .Select(p => p.Name)
+              .ToList();
+      
+              if (!candidates.Any())
+              {
+                return entityType.FindPrimaryKey().Properties.First().Name;
+              }
+      
+              string bestColumn = candidates.First();
+              int bestScore = int.MinValue;
+              
+              foreach (var col in candidates)
+              {
+                var sample = await _context.Set<TEntity>()
+                .Select(e => EF.Property<string>(e, col))
+                .Where(s => s != null && s != "")
+                .Take(50)
+                .ToListAsync();
+                
+                if (!sample.Any())
+                continue;
+                
+                int total = sample.Count;
+                int distinctCount = sample.Distinct().Count();
+                double avgLength = sample.Average(s => s.Length);
+                
+                int score = 0;
+                
+                double diversity = (double)distinctCount / total;
+                score += (int)(diversity * 50);
+                
+                if (avgLength >= 3 && avgLength <= 50) score += 30;
+                else if (avgLength > 50) score -= 10;
+                else score -= 20;
+                
+                if (sample.All(s => s.All(char.IsLetterOrDigit)))
+                score += 20;
+                
+                if (score > bestScore)
+                {
+                  bestScore = score;
+                  bestColumn = col;
+                }
+              }
+      
+              if (bestScore == int.MinValue)
+              {
+                return entityType.FindPrimaryKey().Properties.First().Name;
+              }
+      
+              return bestColumn;
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
@@ -1822,8 +1912,10 @@
     toGenerate: true
     controllerImports: |
       using Microsoft.AspNetCore.Mvc;
+      using Microsoft.AspNetCore.Mvc.Rendering;
       using ${majStart(projectName)}.Services.Interface;
       using ${majStart(projectName)}.Models;
+      using ${majStart(projectName)}.Utils;
 
     controllerAnnotations: ""
     controllerExtends: " : Controller"
@@ -1831,18 +1923,23 @@
     controllerFieldContent: |
       {{tab}}private readonly I${majStart(className)}Service _service;
       {{tab}}{{#each fieldsFK}}private readonly I${majStart(this.type)}Service _${minStart(this.type)}Service;
-      {{tab}}{{/each}}
+      {{tab}}{{#if @last}}private readonly DisplayColumnDetector _detector;{{newline}}{{/if}}{{/each}}
     controllerConstructors: |
-      {{tab}}public ${majStart(className)}Controller(I${majStart(className)}Service service{{#each fieldsFK}}, I${majStart(this.type)}Service ${minStart(this.type)}Service{{/each}})
+      {{tab}}public ${majStart(className)}Controller(I${majStart(className)}Service service{{#each fieldsFK}}, I${majStart(this.type)}Service ${minStart(this.type)}Service{{#if @last}}, DisplayColumnDetector detector{{/if}}{{/each}})
       {{tab}}{
       {{tab}}{{tab}}_service = service;
-      {{tab}}{{tab}}{{#each fieldsFK}}_${minStart(this.type)}Service = ${minStart(this.type)}Service;{{/each}}
+      {{tab}}{{tab}}{{#each fieldsFK}}_${minStart(this.type)}Service = ${minStart(this.type)}Service;
+      {{tab}}{{tab}}{{#if @last}}_detector = detector;{{newline}}{{/if}}{{/each}}
       {{tab}}}
     controllerMethodContent: |
       {{tab}}// GET: /${majStart(className)}
       {{tab}}public async Task<IActionResult> Index()
       {{tab}}{
       {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync(0, int.MaxValue, null{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
+      {{tab}}{{tab}}{{#each fieldsFK}}
+      {{tab}}{{tab}}string ${minStart(this.type)}Column = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
+      {{tab}}{{tab}}ViewBag.${this.type}Column = ${minStart(this.type)}Column;
+      {{tab}}{{tab}}{{/each}}
       {{tab}}{{tab}}ViewData["Title"] = "${majStart(className)}";
       {{tab}}{{tab}}return View(${minStart(className)}s);
       {{tab}}}
@@ -1851,6 +1948,10 @@
       {{tab}}public async Task<IActionResult> Details(${pkColumnType} ${pkColumn})
       {{tab}}{
       {{tab}}{{tab}}var ${minStart(className)} = await _service.GetByIdAsync(${pkColumn}{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
+      {{tab}}{{tab}}{{#each fieldsFK}}
+      {{tab}}{{tab}}string ${minStart(this.type)}Column = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
+      {{tab}}{{tab}}ViewBag.${this.type}Column = ${minStart(this.type)}Column;
+      {{tab}}{{tab}}{{/each}}
       {{tab}}{{tab}}ViewData["Title"] = "${majStart(className)}";
       {{tab}}{{tab}}if (${minStart(className)} == null)
       {{tab}}{{tab}}{
@@ -1873,6 +1974,8 @@
       {{tab}}{
       {{tab}}{{tab}}{{#each fieldsFK}}
       {{tab}}{{tab}}var ${minStart(this.type)}s = await _${minStart(this.type)}Service.GetAllAsync(0, int.MaxValue, null);
+      {{tab}}{{tab}}string ${minStart(this.type)}Column = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
+      {{tab}}{{tab}}ViewBag.${this.type}s = new SelectList(${minStart(this.type)}s, "Id", ${minStart(this.type)}Column);
       {{tab}}{{tab}}{{/each}}
       {{tab}}{{tab}}ViewData["Title"] = "New ${majStart(className)}";
       {{tab}}{{tab}}return View();
