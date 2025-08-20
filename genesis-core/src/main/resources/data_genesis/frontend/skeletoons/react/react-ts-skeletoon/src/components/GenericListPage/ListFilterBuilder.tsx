@@ -75,22 +75,38 @@ export default function ListFilterBuilder({
 
                 if (meta.type === 'Date') {
                     return (
-                        <DatePicker
-                            key={key}
-                            label={meta.label}
-                            value={value ? dayjs(value as string) : null}
-                            onChange={(newVal) =>
-                                setValue(key, newVal ? newVal.format('YYYY-MM-DD') : '')
-                            }
-                            slotProps={{
-                                textField: {
-                                    size: 'small',
-                                    variant: 'outlined',
-                                    sx: { width: 220, flexShrink: 0 },
-                                    InputProps: { endAdornment: adornment },
-                                },
-                            }}
-                        />
+                        <Box key={key} position="relative" sx={{ width: 220, flexShrink: 0 }}>
+                            <DatePicker
+                                label={meta.label}
+                                value={value ? dayjs(value as string) : null}
+                                onChange={(newVal) =>
+                                    setValue(key, newVal ? newVal.format('YYYY-MM-DD') : '')
+                                }
+                                slotProps={{
+                                    textField: { size: 'small', variant: 'outlined', sx: { width: '100%' } },
+                                    popper: { sx: { zIndex: 2000 } },
+                                }}
+                            />
+
+                            {/* Croix flottant décalé de la largeur de l’icône calendrier */}
+                            <IconButton
+                                size="small"
+                                sx={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    right: 44,          // ≃ largeur calendrier (24 px) + petite marge
+                                    transform: 'translateY(-50%)',
+                                    bgcolor: '#fff',
+                                    border: '1px solid #ccc',
+                                    width: 20,
+                                    height: 20,
+                                }}
+                                onClick={() => removeFilter(key)}
+                                title={`Remove ${meta.label} filter`}
+                            >
+                                <Close fontSize="inherit" />
+                            </IconButton>
+                        </Box>
                     );
                 }
 
