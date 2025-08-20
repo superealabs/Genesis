@@ -28,7 +28,7 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 interface FormFieldConfig {
     label: string;
-    type: 'text' | 'number' | 'date' | 'datetime' | 'checkbox' | 'select';
+    type: 'text' | 'number' | 'Date' | 'datetime' | 'checkbox' | 'select';
     required?: boolean;
     readonly?: boolean;
     options?: readonly { readonly value: string | number; readonly label: string }[];
@@ -256,7 +256,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                             }
                                             slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
                                         />
-                                    ) : config.type === 'date' ? (
+                                    ) : config.type === 'Date' ? (
                                         <DatePicker
                                             label={config.label}
                                             value={value ? dayjs(value) : null}
