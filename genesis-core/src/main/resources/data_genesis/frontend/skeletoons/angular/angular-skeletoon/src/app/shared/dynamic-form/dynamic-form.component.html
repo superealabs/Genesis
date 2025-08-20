@@ -1,0 +1,16 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="detail-grid">
+  <ng-container *ngFor="let field of fields">
+    <app-dynamic-field [field]="field" [form]="form"></app-dynamic-field>
+  </ng-container>
+
+  <div class="delete-container">
+    <app-link-button
+      [isButton]="true"
+      buttonLabel="Submit"
+      (onClick)="submit()"
+      type="default"
+    ></app-link-button>
+  </div>
+
+  <app-loading-icon *ngIf="isLoading"></app-loading-icon>
+</form>

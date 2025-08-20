@@ -2,6 +2,13 @@ import { Component, Input } from '@angular/core';
 import { LinkButtonComponent } from '../link-button/link-button.component';
 import { NgIf } from '@angular/common';
 
+function toKebabCase(str: string): string {
+  return str
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/[\s_]+/g, '-')
+    .toLowerCase();
+}
+
 @Component({
   selector: 'app-page-header',
   standalone: true,
@@ -20,6 +27,11 @@ import { NgIf } from '@angular/common';
       </app-link-button>
       <app-link-button
         *ngIf="isDetail"
+        [links]="backList"
+        type="back">
+      </app-link-button>
+      <app-link-button
+        *ngIf="isForm"
         [links]="backList"
         type="back">
       </app-link-button>
@@ -53,8 +65,9 @@ export class PageHeaderComponent {
   @Input() name: string = '';
   @Input() isView: boolean = false;
   @Input() isDetail: boolean = false;
+  @Input() isForm: boolean = false;
   @Input() context: string = 'List';
-   // par défaut on affiche le bouton
+  // par défaut on affiche le bouton
 
 
   get singularLowercase(): string {
@@ -62,7 +75,8 @@ export class PageHeaderComponent {
       this.name.slice(0, -1).toLowerCase() :
       this.name.toLowerCase();
   }
-  
+
+
   get backList(): Record<string, string> {
     return {
       ['Back to list']: `/${this.name.toLowerCase()}`
@@ -71,7 +85,7 @@ export class PageHeaderComponent {
 
   get linkMap(): Record<string, string> {
     return {
-      ['Add new ' + this.singularLowercase]: `/${this.name.toLowerCase()}/add`
+      ['Add new ' + this.singularLowercase]: `/${toKebabCase(this.name)}/add`
     };
   }
 }

@@ -1,0 +1,68 @@
+<div class="form-group" *ngIf="field && form">
+  <label [for]="field.name">{{ field.label }}</label>
+
+  <!-- Input text / number / date -->
+  <input
+    *ngIf="['text','number','date'].includes(field.type)"
+    [type]="field.type"
+    class="form-control"
+    [id]="field.name"
+    [formControl]="getControl()"
+    [attr.required]="field.constraints?.required ? true : null"
+    [attr.minlength]="field.constraints?.minlength"
+    [attr.maxlength]="field.constraints?.maxlength"
+    [attr.min]="field.constraints?.min"
+    [attr.max]="field.constraints?.max"
+    [attr.pattern]="field.constraints?.pattern"
+  />
+
+  <!-- Textarea -->
+  <textarea
+    *ngIf="field.type === 'textarea'"
+    class="form-control"
+    [id]="field.name"
+    [formControl]="getControl()"
+    [attr.required]="field.constraints?.required ? true : null"
+    [attr.minlength]="field.constraints?.minlength"
+    [attr.maxlength]="field.constraints?.maxlength"
+  ></textarea>
+
+  <!-- Select -->
+  <select
+    *ngIf="field.type === 'select'"
+    class="form-control"
+    [id]="field.name"
+    [formControl]="getControl()"
+    [attr.required]="field.constraints?.required ? true : null"
+  >
+    <option value="" disabled selected>-- Select --</option>
+    <option *ngFor="let opt of field.options" [value]="opt.value">
+      {{ opt.label }}
+    </option>
+  </select>
+
+  <!-- Upload file -->
+  <input
+    *ngIf="field.type === 'file'"
+    type="file"
+    class="form-control"
+    [id]="field.name"
+    [formControl]="getControl()"
+    (change)="onFileChange($event)"
+  />
+
+  <!-- error message  -->
+  <div class="error" *ngIf="form.get(field.name)?.invalid && (form.get(field.name)?.dirty || form.get(field.name)?.touched)">
+    <div *ngIf="form.get(field.name)?.errors?.['required']">This field is mandatory</div>
+    <div *ngIf="form.get(field.name)?.errors?.['notBlank']">This field cannot be empty</div>
+    <div *ngIf="form.get(field.name)?.errors?.['minlength']">Value is too short</div>
+    <div *ngIf="form.get(field.name)?.errors?.['maxlength']">Value is too long</div>
+    <div *ngIf="form.get(field.name)?.errors?.['min']">Value is too small</div>
+    <div *ngIf="form.get(field.name)?.errors?.['max']">Value is too large</div>
+    <div *ngIf="form.get(field.name)?.errors?.['pattern']">Invalid format</div>
+    <div *ngIf="form.get(field.name)?.errors?.['past']">Date must be in the past</div>
+    <div *ngIf="form.get(field.name)?.errors?.['pastOrPresent']">Date must be in the past or today</div>
+    <div *ngIf="form.get(field.name)?.errors?.['future']">Date must be in the future</div>
+    <div *ngIf="form.get(field.name)?.errors?.['futureOrPresent']">Date must be today or later</div>
+  </div>
+</div>

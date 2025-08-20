@@ -146,6 +146,27 @@
           });
           return record;
         }
+        export  function expandSeparatorNotation(flatObj: Record<string, any>,separator:string): any {
+          const result: any = {};
+        
+          for (const key in flatObj) {
+            if (!flatObj.hasOwnProperty(key)) continue;
+            
+              const value = flatObj[key];
+              const keys = key.split(separator);
+              let current = result;
+              
+              keys.forEach((part, index) => {
+                if (index === keys.length - 1) {
+                current[part] = value;
+                } else {
+                if (!current[part]) current[part] = {};
+                current = current[part];
+                }
+              });
+            }
+          return result;
+        }
         export function recursiveObjectsTo2DArray(data: Record<string, any>[]): any[][] {
           if (data.length === 0) return [];
         
@@ -376,8 +397,7 @@
                           this.isLoading = false;
                       },
                       error: (err) => {
-                          console.error('Error loading sales and products:', err);
-                          warnMeUp('error','error while collecting sales-items');
+                          warnMeUp('error','error while collecting datas');
                           this.isLoading = false;
                       }
                   });
@@ -425,7 +445,7 @@
                 loadComponent: () => import('./${toKebabCase(className)}-list/${toKebabCase(className)}-list.component').then(m => m.${majStart(className)}ListComponent )
               }{{#if !isView}},
               {
-                path: 'add-${toKebabCase(className)}',
+                path: '${toKebabCase(className)}s/add',
                 loadComponent: () => import('./${toKebabCase(className)}-form/${toKebabCase(className)}-form.component').then(m => m.${majStart(className)}FormComponent)
               },
               {
@@ -439,16 +459,121 @@
         link: " "
         label: " "
       importFile: |
-        import { Component, OnInit } from '@angular/core';
+        import { Component, OnInit, OnDestroy } from '@angular/core';
+        import { CommonModule } from '@angular/common';
         import { HttpClientModule } from '@angular/common/http';
+        import { ReactiveFormsModule, FormGroup } from '@angular/forms';
+        import { Subject, forkJoin, takeUntil } from 'rxjs';
+        
+        
+        import { DynamicFieldComponent, FieldConfig } from '../../../shared/dynamic-field/dynamic-field.component';
+        import { DynamicFormComponent } from '../../../shared/dynamic-form/dynamic-form.component';
+        import { LinkButtonComponent } from '../../../shared/link-button/link-button.component';
+        import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+        import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
+        import { warnMeUp } from '../../../../utilities/utilities';
+
+        import { expandSeparatorNotation } from '../../../../utilities/utilities';
+        
+        import { ${className} } from '../models/${toKebabCase(className)}.model'
+        import { ${className}Service } from '../services/${toKebabCase(className)}.service'
+
+        {{#each fieldsFK}}
+        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
+        import {${toPascalCase(this.type)}Service} from '../../${toKebabCase(this.type)}/services/${toKebabCase(this.type)}.service'
+        {{/each}}
       selector: "app-${toKebabCase(className)}-form"
       generateForView: false
       standalone: true
-      importComponent: "[HttpClientModule]"
+      importComponent: "[CommonModule, HttpClientModule, ReactiveFormsModule, DynamicFieldComponent, LoadingIconComponent, PageHeaderComponent, LinkButtonComponent, DynamicFormComponent]"
       template: "./${toKebabCase(className)}-form.component.html"
       style: "./${toKebabCase(className)}-form.component.css"
       export: |
-        export class ${majStart(className)}FormComponent{}
+        export class ${majStart(className)}FormComponent implements OnInit, OnDestroy 
+        {
+          private destroy$ = new Subject<void>();
+          isLoading: boolean = false;
+          form: FormGroup = new FormGroup({});
+        
+          {{#each fieldsFK}}{{removeLine}}
+          ${minStart(this.type)}s: ${majStart(this.type)}[] = []; 
+          {{/each}}{{removeLine}}
+        
+          
+          fields: FieldConfig[] = [
+            {{tab}}{{tab}}{{#each fieldsFK}}
+              { type: 'select', name: '${this.name}-${this.referencedColumn}', label: '${this.type}', options: [] },
+            {{tab}}{{tab}}{{/each}}{{removeLine}}
+            {{tab}}{{tab}}{{#each simpleFields}}
+            {{#if this.isText}}{{removeLine}}
+              { type: 'text', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isNumeric }}
+              { type: 'number', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDate }}
+              { type: 'date', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{/if}}{{#if !@last}},{{/if}}
+              {{tab}}{{/each}}{{removeLine}}
+          ];
+  
+
+          constructor(
+                {{#each fieldsFK}}{{removeLine}}
+                 private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
+                {{/each}}{{removeLine}}
+                private ${minStart(className)}Service: ${majStart(className)}Service
+          ){}
+          
+          submit(): void {
+              this.isLoading = true;
+              const ${minStart(className)}: ${majStart(className)} = expandSeparatorNotation(this.form.value,'-');
+              this.${minStart(className)}Service.create${majStart(className)}(${minStart(className)})
+              .pipe(takeUntil(this.destroy$))
+              .subscribe({
+              next: res => {
+                warnMeUp('Success', '${majStart(className)} created successfully','#28a745','success');
+                this.form.reset();
+                this.isLoading = false;
+            },
+              error: err => {
+                console.error(err);
+                warnMeUp('Error', err.message );
+                this.isLoading = false;
+            }
+            });
+          }
+        
+          {{#if containsForeignKey}}
+            ngOnInit(): void {
+                this.isLoading = true;
+                forkJoin([
+                    {{#each fieldsFK}}{{removeLine}}
+                    this.${minStart(this.type)}Service.get${majStart(this.type)}s(),
+                     {{/each}}{{removeLine}}
+                 ]).pipe(takeUntil(this.destroy$)).subscribe({
+                      next: ([{{#each fieldsFK}}${minStart(this.type)}s,{{/each}}]) => {
+                          {{#each fieldsFK}}
+                          this.${minStart(this.type)}s = ${minStart(this.type)}s;
+                          const ${minStart(this.type)}Field = this.fields.find(f => f.name === '${this.name}-${this.referencedColumn}');
+                          if (${minStart(this.type)}Field) {
+                            ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: d.${this.referencedColumn},label: entries[1][1]};}); 
+                          }
+                          {{/each}}
+                          this.isLoading = false;
+                      },
+                      error: (err) => {
+                          warnMeUp('error','error while collecting data');
+                          this.isLoading = false;
+                      }
+                  });
+            }
+            {{else}}{{removeLine}}
+            ngOnInit(): void {
+            }
+            {{/if}}{{removeLine}}
+        
+          ngOnDestroy(): void {
+              this.destroy$.next();
+              this.destroy$.complete();
+          }
+          
+        }
       destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
       componentName: "${toKebabCase(className)}-form.component"
       componentAdditionalFiles:
@@ -456,7 +581,8 @@
           fileName: "${toKebabCase(className)}-form.component"
           extension: "html"
           content: |
-            {{newline}}
+            <app-page-header name="${majStart(className)}s" context="Form" [isView]=true [isForm]=true></app-page-header>
+            <app-dynamic-form [fields]="fields" [form]="form" [submitFn]="submit.bind(this)"></app-dynamic-form>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
         - fileType: "css template"
           fileName: "${toKebabCase(className)}-form.component"
@@ -581,7 +707,17 @@
       export class ${majStart(className)}Service{
       {{tab}}private readonly apiUrl = environment.apiUrl+'/${lowerCase(classNameLink)}';
       {{tab}}constructor(private http: HttpClient) {}
-      
+        
+        create${majStart(className)}(${minStart(className)}: Partial<${majStart(className)}>): Observable<${majStart(className)}> {
+          return this.http.post<${majStart(className)}>(this.apiUrl, ${minStart(className)}).pipe(
+            map(response => response),
+              catchError(err => {
+                const apiMessage = err.error?.message || JSON.stringify(err.error) || 'Unknown error';
+                return throwError(() => new Error(apiMessage));
+              })
+            );
+        }
+        
         search${majStart(classNameLink)}(
             criteria: Partial<${majStart(className)}>,
             page: number = 0,
