@@ -4600,7 +4600,7 @@
         import {errorHandler} from "./middlewares/error.middleware";
         import swaggerUi from "swagger-ui-express";
         {{#each entities}}
-        import ${this}Route from "./routes/${this}.route";
+        import ${this}Route from "./routes/${this}";
         {{/each}}   
         
         const app = express();
@@ -4624,6 +4624,15 @@
         .catch((error) => console.error("Error during data source initialization", error));
         export default app;
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src"
+    - fileType: "Model Index"
+      fileName: "index"
+      extension: "ts"
+      content: |
+        {{#each entities}}
+        export { ${majStart(this)} } from "./${majStart(this)}";
+        {{/each}}   
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/models"
     - fileType: "Data source"
       fileName: "data-source"
       extension: "ts"
@@ -4701,12 +4710,72 @@
             subscribers: [],
           });
         {{/if}}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/config"  
-        
-        
-        
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/config"
+  model:
+    toGenerate: true
+    modelImports: |
+      import {Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToOne} from "typeorm";
+      import * as Models from './index';
+    modelExtends: ""
+    modelAnnotations: |
+      @Entity('${tableName}')
+    modelFieldContent: |
+      {{tab}}{{#each fields}}
+      {{tab}}{{#if this.isIntAndPrimaryKey}}
+      @PrimaryGeneratedColumn()
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+    
+      {{elseIf this.isPrimaryKey}}
+      @PrimaryColumn()
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+    
+      {{elseIf this.isForeignKey}}
+      @Column({ name: "${this.columnName}", nullable: true })
+      {{tab}}{{this.referencedColumnType}} {{this.columnNameField}};
+      
+      @ManyToOne(() => ${this.type}, ${this.name} => ${this.namePlural}, { eager: true })
+      @JoinColumn({ name: "${this.columnName}" })
+      {{this.name}}!: ${this.type};
+    
+      {{else}}
+      @Column({ name: "${this.columnName}", unique: ${this.isUnique}, nullable: ${this.isNullable} })
+      {{tab}}{{#each this.attributeTypeAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}{{this.name}}!: ${this.type};
+      {{/if}}{{#if !@last}}{{newline}}{{/if}}
+      {{tab}}{{/each}}
 
-        
-        
+  modelGetterSetter: "{{removeLine}}"
+  modelConstructors: "{{removeLine}}"
+  modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/models"
+  modelPackage: "Models"
+  validationAnnotations:
+    notNull: '@IsNotEmpty({ message: "${majStart(name)} cannot be null" })'
+    maxSize: '@MaxLength(${columnSize})'
+    numericMinimumValue: '@Min(${value})'
+    numericMinimumInclusiveValue: '@Min(${value})'
+    numericMaximumValue: '@Max(${value})'
+    numericMaximumInclusiveValue: '@Max(${value})'
+    past: '@IsDate()'
+    pastOrPresent: '@IsDate()'
+    future: '@IsDate()'
+    futureOrPresent: '@IsDate() // custom check: >= now'
+    notBlank: '@IsNotEmpty()'
+    minAndMaxSize: '@Length(${minLength}, ${columnSize})'
+    regexPattern: '@Matches(${value})'
+  dependencies: []
+
+
+
+
+
+
+
+
 
 

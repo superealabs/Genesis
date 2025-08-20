@@ -353,3 +353,85 @@
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
 
   projectFolders: [ ]
+- id: 3
+  name: "Node js"
+  coreFrameworks:
+    - "Express JS"
+  projectFilesEdits:
+    - fileType: "Json"
+      fileName: "package"
+      extension: "json"
+      content: |
+        {
+          "name": "${projectName}",
+          "version": "0.0.1",
+          "description": "${projectDescription}",
+          "type": "commonjs",
+          "scripts": {
+            "start": "ts-node src/index.ts",
+            "dev": "nodemon --watch src --exec ts-node src/index.ts",
+            "typeorm": "typeorm-ts-node-commonjs -d src/config/data-source.ts",
+            "test": "jest"
+          },
+          "dependencies": {
+            "express": "^5.1.0",
+            "reflect-metadata": "^0.2.2",
+            "typeorm": "0.3.25",
+            {{#if useDB}}
+            "${DBartifactId}": "^${DBartifactId}",
+            {{/if}}
+            "body-parser": "^2.2.0",
+            "class-validator": "^0.14.0",
+            "class-transformer": "^0.5.1",
+            "swagger-jsdoc": "^6.2.8",
+            "swagger-ui-express": "^5.0.1",
+            "json2csv": "^6.0.0-alpha.2",
+            "jspdf": "^3.0.1",
+            "jspdf-autotable": "^5.0.2",
+            "pdf-lib": "^1.17.1",
+            "pdfkit": "^0.17.1",
+            "node-cache": "^5.1.2"
+          },
+          "devDependencies": {
+            "typescript": "^5.8.2",
+            "ts-node": "^10.9.2",
+            "ts-node-dev": "^2.0.0",
+            "nodemon": "^3.1.10",
+            "@types/node": "^22.13.10",
+            "@types/express": "^5.0.3",
+            "@types/jest": "^30.0.0",
+            "@types/json2csv": "^5.0.7",
+            "@types/pdfkit": "^0.17.2",
+            "@types/supertest": "^6.0.3",
+            "@types/swagger-ui-express": "^4.1.8",
+            "jest": "^30.0.5",
+            "supertest": "^7.1.4",
+            "ts-jest": "^29.4.1"
+          }
+        }
+      destinationPath: "${destinationFolder}/${projectName}/"
+    - fileType: "Json"
+      fileName: "tsconfig"
+      extension: "json"
+      content: |
+        {
+          "compilerOptions": {
+          "lib": [
+            "es2021"
+          ],
+            "target": "es2021",
+            "moduleResolution": "node",
+            "emitDecoratorMetadata": true,
+            "experimentalDecorators": true,
+            "sourceMap": true,
+            "module": "commonjs",
+            "strict": true,
+            "esModuleInterop": true,
+            "outDir": "./dist",
+            "rootDir": "./src",
+            "types": ["jest"]
+          },
+          "include": ["src/**/*.ts", "tests/**/*.test.ts"]
+        }
+      destinationPath: "${destinationFolder}/${projectName}/"
+  projectFolders: [ ]
