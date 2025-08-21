@@ -1458,7 +1458,11 @@
           ${this.name}: { label: '${formatReadable(this.name)}', type: 'DateTime' as const },
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'DateTime' as const },
           ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'DateTime' as const },
-          {{elseIf this.isTime or this.isInterval}}
+          {{elseIf this.isTime }}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'time' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'time' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'time' as const },
+          {{elseIf this.isInterval}}
           ${this.name}: { label: '${formatReadable(this.name)}', type: 'Date' as const },
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'Date' as const },
           ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'Date' as const },
