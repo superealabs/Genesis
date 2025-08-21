@@ -7,6 +7,7 @@ import { Button, TextField, InputAdornment, IconButton, Box } from '@mui/materia
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs from 'dayjs';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 
 interface Props {
     availableFilters: Record<string, { label: string; type: string }>;
@@ -49,6 +50,33 @@ export default function ListFilterBuilder({
 
     // Rendu d’un filtre date/datetime avec icône flottante unique
     const renderDateFilter = (
+        key: string,
+        label: string,
+        renderer: React.ReactNode
+    ) => (
+        <Box key={key} position="relative" sx={{ width: 220, flexShrink: 0 }}>
+            {renderer}
+            <IconButton
+                size="small"
+                sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: 44,
+                    transform: 'translateY(-50%)',
+                    bgcolor: '#fff',
+                    border: '1px solid #ccc',
+                    width: 20,
+                    height: 20,
+                }}
+                onClick={() => removeFilter(key)}
+                title={`Remove ${label} filter`}
+            >
+                <Close fontSize="inherit" />
+            </IconButton>
+        </Box>
+    );
+
+    const renderTimeFilter = (
         key: string,
         label: string,
         renderer: React.ReactNode
@@ -145,6 +173,32 @@ export default function ListFilterBuilder({
                             slotProps={{
                                 textField: { size: 'small', variant: 'outlined', sx: { width: '100%' } },
                                 popper:   { sx: { zIndex: 2000 } },
+                            }}
+                        />
+                    );
+                }
+
+                // TimePicker
+                if (meta.type === 'time') {
+                    return renderTimeFilter(
+                        key,
+                        meta.label,
+                        <TimePicker
+                            label={meta.label}
+                            value={value ? dayjs(`1970-01-01T${value}`) : null}
+                            onChange={(newVal) =>
+                                setValue(
+                                    key,
+                                    newVal ? newVal.format('HH:mm:ss') : ''
+                                )
+                            }
+                            slotProps={{
+                                textField: {
+                                    size: 'small',
+                                    variant: 'outlined',
+                                    sx: { width: '100%' },
+                                },
+                                popper: { sx: { zIndex: 2000 } },
                             }}
                         />
                     );
