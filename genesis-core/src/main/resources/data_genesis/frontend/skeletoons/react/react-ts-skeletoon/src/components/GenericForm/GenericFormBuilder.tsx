@@ -25,10 +25,12 @@ import {ApiResponse} from "@/services/api";
 import BackdropBlocker from "@/components/Backdrop/BackdropBlocker";
 import {pageContainerSx, breadcrumbSx} from "@/styles/mui-patterns";
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import {TimePicker} from "@mui/x-date-pickers";
+import { parseTimeString } from '@/utils/timeParser';
 
 interface FormFieldConfig {
     label: string;
-    type: 'text' | 'number' | 'Date' | 'datetime' | 'checkbox' | 'select';
+    type: 'text' | 'number' | 'Date' | 'datetime' | 'time' | 'checkbox' | 'select';
     required?: boolean;
     readonly?: boolean;
     options?: readonly { readonly value: string | number; readonly label: string }[];
@@ -164,160 +166,176 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
         <>
             <BackdropBlocker open={loading} />
             <Box sx={pageContainerSx}>
-            <Box
-                sx={{ width: 1, py: 3 }}
-            >
-                <Breadcrumbs sx={breadcrumbSx}>
-                    <Link underline="hover" color="inherit" component={RouterLink} to="/">
-                        Accueil
-                    </Link>
-                    <Link
-                        underline="hover"
-                        color="inherit"
-                        component={RouterLink}
-                        to={`/${entityName.toLowerCase()}s`}
-                    >
-                        {entityName}s
-                    </Link>
-                    <Typography color="text.primary">{title}</Typography>
-                </Breadcrumbs>
-            </Box>
-
-            <Paper
-                elevation={3}
-                sx={{
-                    maxWidth: 720,
-                    mx: 'auto', // centré
-                    p: { xs: 3, md: 5 },
-                    borderRadius: 4,
-                    bgcolor: 'background.paper',
-                }}
-            >
-                <Typography
-                    variant="h5"
-                    component="h1"
-                    sx={{ mb: 4, textAlign: 'center', fontWeight: 'bold', color: 'text' }}
+                <Box
+                    sx={{ width: 1, py: 3 }}
                 >
-                    {title}
-                </Typography>
+                    <Breadcrumbs sx={breadcrumbSx}>
+                        <Link underline="hover" color="inherit" component={RouterLink} to="/">
+                            Accueil
+                        </Link>
+                        <Link
+                            underline="hover"
+                            color="inherit"
+                            component={RouterLink}
+                            to={`/${entityName.toLowerCase()}s`}
+                        >
+                            {entityName}s
+                        </Link>
+                        <Typography color="text.primary">{title}</Typography>
+                    </Breadcrumbs>
+                </Box>
 
-                <form onSubmit={handleSubmit}>
-                    <Box
-                        sx={{
-                            display: 'grid',
-                            gridTemplateColumns: {
-                                base: '1fr',
-                                md: fieldCount > 10 ? 'repeat(2, 1fr)' : 'minmax(480px, 1fr)', // <-- élargi
-                            },
-                            gap: 4,
-                            mb: 4,
-                        }}
+                <Paper
+                    elevation={3}
+                    sx={{
+                        maxWidth: 720,
+                        mx: 'auto', // centré
+                        p: { xs: 3, md: 5 },
+                        borderRadius: 4,
+                        bgcolor: 'background.paper',
+                    }}
+                >
+                    <Typography
+                        variant="h5"
+                        component="h1"
+                        sx={{ mb: 4, textAlign: 'center', fontWeight: 'bold', color: 'text' }}
                     >
-                        {Object.entries(fields).map(([key, config]) => {
-                            const value = formData[key as keyof T] ?? '';
-                            const options = foreignOptions[key] || [...(config.options || [])];
+                        {title}
+                    </Typography>
 
-                            const isLong = ['description', 'notes', 'adresse'].includes(key);
+                    <form onSubmit={handleSubmit}>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: {
+                                    base: '1fr',
+                                    md: fieldCount > 10 ? 'repeat(2, 1fr)' : 'minmax(480px, 1fr)', // <-- élargi
+                                },
+                                gap: 4,
+                                mb: 4,
+                            }}
+                        >
+                            {Object.entries(fields).map(([key, config]) => {
+                                const value = formData[key as keyof T] ?? '';
+                                const options = foreignOptions[key] || [...(config.options || [])];
 
-                            return (
-                                <Box key={key} sx={{ gridColumn: isLong ? '1 / -1' : undefined }}>
-                                    {config.type === 'select' || config.foreignKey ? (
-                                        <FormControl fullWidth margin="normal">
-                                            <InputLabel>{config.label}</InputLabel>
-                                            <Select
-                                                value={value}
+                                const isLong = ['description', 'notes', 'adresse'].includes(key);
+
+                                return (
+                                    <Box key={key} sx={{ gridColumn: isLong ? '1 / -1' : undefined }}>
+                                        {config.type === 'select' || config.foreignKey ? (
+                                            <FormControl fullWidth margin="normal">
+                                                <InputLabel>{config.label}</InputLabel>
+                                                <Select
+                                                    value={value}
+                                                    label={config.label}
+                                                    onChange={(e) => handleChange(key, e.target.value)}
+                                                    disabled={config.readonly}
+                                                >
+                                                    {options.map((opt) => (
+                                                        <MenuItem key={opt.value} value={opt.value}>
+                                                            {opt.label}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        ) : config.type === 'checkbox' ? (
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        checked={Boolean(value)}
+                                                        onChange={(e) => handleChange(key, e.target.checked)}
+                                                    />
+                                                }
                                                 label={config.label}
+                                            />
+                                        ) : config.type === 'datetime' ? (
+                                            <DateTimePicker
+                                                label={config.label}
+                                                value={value ? dayjs(value) : null}
+                                                onChange={(val) =>
+                                                    handleChange(key, val ? val.utc().toISOString() : '')
+                                                }
+                                                slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
+                                            />
+                                        ) : config.type === 'time' ? (
+                                            <TimePicker
+                                                label={config.label}
+                                                value={value ? parseTimeString(String(value)) : null}
+                                                onChange={(val) => {
+                                                    const timeString = val ? val.format('HH:mm:ss') : '';
+                                                    handleChange(key, timeString);
+                                                }}
+                                                slotProps={{
+                                                    textField: {
+                                                        fullWidth: true,
+                                                        margin: 'normal',
+                                                        required: config.required
+                                                    }
+                                                }}
+                                            />
+                                        ) : config.type === 'Date' ? (
+                                            <DatePicker
+                                                label={config.label}
+                                                value={value ? dayjs(value) : null}
+                                                onChange={(val: Dayjs | null) =>
+                                                    handleChange(key, val ? val.format('YYYY-MM-DD') : '')
+                                                }
+                                                slotProps={{
+                                                    textField: { fullWidth: true, margin: 'normal' },
+                                                }}
+                                            />
+                                        ) : (
+                                            <TextField
+                                                fullWidth
+                                                margin="normal"
+                                                label={config.label}
+                                                type={config.type}
+                                                value={value}
                                                 onChange={(e) => handleChange(key, e.target.value)}
+                                                required={config.required}
+                                                variant="outlined"
+                                                InputProps={{ readOnly: config.readonly }}
                                                 disabled={config.readonly}
-                                            >
-                                                {options.map((opt) => (
-                                                    <MenuItem key={opt.value} value={opt.value}>
-                                                        {opt.label}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    ) : config.type === 'checkbox' ? (
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={Boolean(value)}
-                                                    onChange={(e) => handleChange(key, e.target.checked)}
-                                                />
-                                            }
-                                            label={config.label}
-                                        />
-                                    ) : config.type === 'datetime' ? (
-                                        <DateTimePicker
-                                            label={config.label}
-                                            value={value ? dayjs(value) : null}
-                                            onChange={(val) =>
-                                                handleChange(key, val ? val.utc().toISOString() : '')
-                                            }
-                                            slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
-                                        />
-                                    ) : config.type === 'Date' ? (
-                                        <DatePicker
-                                            label={config.label}
-                                            value={value ? dayjs(value) : null}
-                                            onChange={(val: Dayjs | null) =>
-                                                handleChange(key, val ? val.format('YYYY-MM-DD') : '')
-                                            }
-                                            slotProps={{
-                                                textField: { fullWidth: true, margin: 'normal' },
-                                            }}
-                                        />
-                                    ) : (
-                                        <TextField
-                                            fullWidth
-                                            margin="normal"
-                                            label={config.label}
-                                            type={config.type}
-                                            value={value}
-                                            onChange={(e) => handleChange(key, e.target.value)}
-                                            required={config.required}
-                                            variant="outlined"
-                                            InputProps={{ readOnly: config.readonly }}
-                                            disabled={config.readonly}
-                                        />
-                                    )}
-                                </Box>
-                            );
-                        })}
-                    </Box>
+                                            />
+                                        )}
+                                    </Box>
+                                );
+                            })}
+                        </Box>
 
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            gap: 3,
-                            justifyContent: 'center',
-                            mt: 4,
-                        }}
-                    >
-                        <Button
-                            variant="outlined"
-                            onClick={() => (window.location.href = redirectTo || '/')}
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                gap: 3,
+                                justifyContent: 'center',
+                                mt: 4,
+                            }}
                         >
-                            Annuler
-                        </Button>
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            color="primary"
-                            disabled={loading}
-                            startIcon={mode === 'create' ? <Add /> : <Save />}
-                        >
-                            {loading
-                                ? mode === 'create'
-                                    ? 'Création...'
-                                    : 'Mise à jour...'
-                                : mode === 'create'
-                                    ? 'Créer'
-                                    : 'Enregistrer'}
-                        </Button>
-                    </Box>
-                </form>
-            </Paper>
+                            <Button
+                                variant="outlined"
+                                onClick={() => (window.location.href = redirectTo || '/')}
+                            >
+                                Annuler
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                color="primary"
+                                disabled={loading}
+                                startIcon={mode === 'create' ? <Add /> : <Save />}
+                            >
+                                {loading
+                                    ? mode === 'create'
+                                        ? 'Création...'
+                                        : 'Mise à jour...'
+                                    : mode === 'create'
+                                        ? 'Créer'
+                                        : 'Enregistrer'}
+                            </Button>
+                        </Box>
+                    </form>
+                </Paper>
             </Box>
         </>
     );
