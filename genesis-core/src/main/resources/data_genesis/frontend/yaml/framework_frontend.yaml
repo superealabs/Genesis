@@ -1401,7 +1401,19 @@
             },
             sortKey: '${this.name}'
           },
-          {{elseIf this.isTime or this.isInterval}}
+          {{elseIf this.isTime }}
+          {
+            header: '${formatReadable(this.name)}',
+            accessor: (row: ${majStart(className)} ) => {
+                const timeStr = row.${this.name};  
+                if (!timeStr) return '-';
+                const [h, m, s] = timeStr.replace('Z', '').split(':').map(Number);
+                const dateObj = new Date(1970, 0, 1, h, m, s);
+                return format(dateObj, 'HH:mm:ss');
+            },
+            sortKey: '${this.name}'
+          },
+          {{elseIf this.isInterval}}
           {
             header: '${formatReadable(this.name)}',
             accessor: (row: ${majStart(className)} ) => {
