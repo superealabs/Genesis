@@ -1502,7 +1502,18 @@
             transform: (value: string) =>
                                  value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null,
           },
-          {{elseIf this.isTime or this.isInterval}}
+          {{elseIf this.isTime }}
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: 'time' as const,
+            required: ${this.isRequired},
+            transform: (value: any) => {
+                if (!value) return null;
+                const parsed = parseTimeString(String(value));
+                return parsed ? parsed.format('HH:mm:ss') : null;
+            },
+          },
+          {{elseIf this.isInterval}}
           ${this.name}: {
             label: '${formatReadable(this.name)}',
             type: 'datetime' as const,
