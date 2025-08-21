@@ -2,9 +2,10 @@
 import { useState, useRef } from 'react';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import { Add, Close } from '@mui/icons-material';
-import type { FilterState, FilterType, FilterValue } from "@/types/filter";
+import type { FilterState, FilterValue } from "@/types/filter";
 import { Button, TextField, InputAdornment, IconButton, Box } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs from 'dayjs';
 
 interface Props {
@@ -46,6 +47,34 @@ export default function ListFilterBuilder({
 
     const usedKeys = new Set(Object.keys(filters));
 
+    // Rendu d’un filtre date/datetime avec icône flottante unique
+    const renderDateFilter = (
+        key: string,
+        label: string,
+        renderer: React.ReactNode
+    ) => (
+        <Box key={key} position="relative" sx={{ width: 220, flexShrink: 0 }}>
+            {renderer}
+            <IconButton
+                size="small"
+                sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: 44,
+                    transform: 'translateY(-50%)',
+                    bgcolor: '#fff',
+                    border: '1px solid #ccc',
+                    width: 20,
+                    height: 20,
+                }}
+                onClick={() => removeFilter(key)}
+                title={`Remove ${label} filter`}
+            >
+                <Close fontSize="inherit" />
+            </IconButton>
+        </Box>
+    );
+
     return (
         <Box
             display="flex"
@@ -60,6 +89,68 @@ export default function ListFilterBuilder({
                 const meta = availableFilters[key];
                 if (!meta) return null;
 
+                // Date simple
+                if (meta.type === 'Date') {
+                    return renderDateFilter(
+                        key,
+                        meta.label,
+                        <DatePicker
+                            label={meta.label}
+                            value={value ? dayjs(value as string) : null}
+                            onChange={(newVal) =>
+                                setValue(key, newVal ? newVal.format('YYYY-MM-DD') : '')
+                            }
+                            slotProps={{
+                                textField: { size: 'small', variant: 'outlined', sx: { width: '100%' } },
+                                popper: { sx: { zIndex: 2000 } },
+                            }}
+                        />
+                    );
+                }
+
+                // DateTime avec fuseau horaire (UTC)
+                if (meta.type === 'DateTimeTZ') {
+                    return renderDateFilter(
+                        key,
+                        meta.label,
+                        <DateTimePicker
+                            label={meta.label}
+                            value={value ? dayjs(value as string) : null}
+                            onChange={(newVal) =>
+                                setValue(key, newVal ? dayjs(newVal).utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : '')
+                            }
+                            slotProps={{
+                                textField: { size: 'small', variant: 'outlined', sx: { width: '100%' } },
+                                popper: { sx: { zIndex: 2000 } },
+                            }}
+                        />
+                    );
+                }
+
+                // DateTime sans fuseau horaire (affichage local, stockage UTC)
+                // DateTime sans fuseau horaire
+                if (meta.type === 'DateTime') {
+                    return renderDateFilter(
+                        key,
+                        meta.label,
+                        <DateTimePicker
+                            label={meta.label}
+                            value={value ? dayjs(String(value).replace('Z', '')) : null}
+                            onChange={(newVal) =>
+                                setValue(
+                                    key,
+                                    newVal ? newVal.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : ''
+                                )
+                            }
+                            slotProps={{
+                                textField: { size: 'small', variant: 'outlined', sx: { width: '100%' } },
+                                popper:   { sx: { zIndex: 2000 } },
+                            }}
+                        />
+                    );
+                }
+
+                // fallback TextField pour text / number
                 const adornment = (
                     <InputAdornment position="end">
                         <IconButton
@@ -73,44 +164,6 @@ export default function ListFilterBuilder({
                     </InputAdornment>
                 );
 
-                if (meta.type === 'Date') {
-                    return (
-                        <Box key={key} position="relative" sx={{ width: 220, flexShrink: 0 }}>
-                            <DatePicker
-                                label={meta.label}
-                                value={value ? dayjs(value as string) : null}
-                                onChange={(newVal) =>
-                                    setValue(key, newVal ? newVal.format('YYYY-MM-DD') : '')
-                                }
-                                slotProps={{
-                                    textField: { size: 'small', variant: 'outlined', sx: { width: '100%' } },
-                                    popper: { sx: { zIndex: 2000 } },
-                                }}
-                            />
-
-                            {/* Croix flottant décalé de la largeur de l’icône calendrier */}
-                            <IconButton
-                                size="small"
-                                sx={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    right: 44,          // ≃ largeur calendrier (24 px) + petite marge
-                                    transform: 'translateY(-50%)',
-                                    bgcolor: '#fff',
-                                    border: '1px solid #ccc',
-                                    width: 20,
-                                    height: 20,
-                                }}
-                                onClick={() => removeFilter(key)}
-                                title={`Remove ${meta.label} filter`}
-                            >
-                                <Close fontSize="inherit" />
-                            </IconButton>
-                        </Box>
-                    );
-                }
-
-                // fallback TextField pour text / number
                 return (
                     <TextField
                         key={key}
