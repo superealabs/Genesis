@@ -486,6 +486,7 @@ public class OracleDatabase extends Database {
                 boolean isColumnDate = isColumnDate(columns);
                 boolean isColumnTime = isColumnTime(columns);
                 boolean isColumnDateTime = isColumnDateTime(columns);
+                boolean useTimeZone = useTimeZone(columns);
                 boolean isColumnInterval = isColumnInterval(columns);
 
                 column.setName(toCamelCase(columnName.toLowerCase()));
@@ -496,6 +497,7 @@ public class OracleDatabase extends Database {
                 column.setDate(isColumnDate);
                 column.setTime(isColumnTime);
                 column.setDateTime(isColumnDateTime);
+                column.setUseTimeZone(useTimeZone);
                 column.setInterval(isColumnInterval);
 
                 column.setNullable(isNullable,frameworkValidationAnnotations,engine);

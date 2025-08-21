@@ -5,7 +5,6 @@ import lombok.Setter;
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
-import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
@@ -16,7 +15,6 @@ import java.sql.*;
 import java.util.*;
 
 import static org.labs.utils.StringUtils.toCamelCase;
-import java.util.*;
 
 @Setter
 @Getter
@@ -215,6 +213,7 @@ public abstract class Database {
                 boolean isColumnTime = isColumnTime(columns);
                 boolean isColumnDateTime = isColumnDateTime(columns);
                 boolean isColumnInterval = isColumnInterval(columns);
+                boolean useTimeZone = useTimeZone(columns);
 
                 column.setName(toCamelCase(columnName.toLowerCase()));
                 column.setReferencedColumn(columnName);
@@ -224,6 +223,7 @@ public abstract class Database {
                 column.setDate(isColumnDate);
                 column.setTime(isColumnTime);
                 column.setDateTime(isColumnDateTime);
+                column.setUseTimeZone(useTimeZone);
                 column.setInterval(isColumnInterval);
 
                 column.setNullable(isNullable,frameworkValidationAnnotations,engine);
@@ -374,6 +374,29 @@ public abstract class Database {
                 || "DATETIME64".equals(upper)            // ClickHouse
                 || "DATETIME32".equals(upper)            // ClickHouse
                 || "DATETIMEV2".equals(upper);           // StarRocks
+    }
+
+    protected boolean useTimeZone(ResultSet column) throws SQLException {
+        int dataType = column.getInt("DATA_TYPE");
+
+        // Types JDBC avec fuseau horaire
+        if (dataType == Types.TIME_WITH_TIMEZONE || dataType == Types.TIMESTAMP_WITH_TIMEZONE) {
+            return true;
+        }
+
+        // Vérification via le TYPE_NAME pour les cas spécifiques aux bases de données
+        String typeName = column.getString("TYPE_NAME");
+        if (typeName == null) return false;
+
+        String upperTypeName = typeName.toUpperCase(Locale.ROOT);
+
+        // Patterns courants incluant le fuseau horaire
+        return upperTypeName.contains("TIMEZONE") ||
+                upperTypeName.contains("TZ") ||
+                upperTypeName.contains("WITH TIME ZONE") ||
+                upperTypeName.contains("TIMESTAMPTZ") ||
+                upperTypeName.contains("TIMETZ") ||
+                upperTypeName.contains("DATETIMEOFFSET"); // SQL Server
     }
 
     /* ---------- INTERVAL ---------- */

@@ -38,6 +38,7 @@ public class ColumnMetadata {
     private boolean isDate;
     private boolean isTime;
     private boolean isDateTime;
+    private boolean useTimeZone;
     private boolean isInterval;
     private String defaultValue;
     private int decimalDigits;
