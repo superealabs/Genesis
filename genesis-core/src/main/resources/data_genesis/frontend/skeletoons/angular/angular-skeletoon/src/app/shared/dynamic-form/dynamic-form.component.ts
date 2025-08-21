@@ -16,8 +16,9 @@ export class DynamicFormComponent {
 
   @Input() fields: FieldConfig[] = [];
   @Input() submitFn!: (formValue: any) => void;
-  @Input() form!: FormGroup; // le FormGroup est fourni depuis le parent
+  @Input() form!: FormGroup; 
   @Input() isLoading: boolean = false;
+  @Input() initialData: any = {};
 
   submit(): void {
     if (this.form.valid && this.submitFn) {

@@ -4,8 +4,8 @@ import { NgIf } from '@angular/common';
 
 function toKebabCase(str: string): string {
   return str
-    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-    .replace(/[\s_]+/g, '-')
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2') 
+    .replace(/[\s_]+/g, '-')               
     .toLowerCase();
 }
 
@@ -67,7 +67,7 @@ export class PageHeaderComponent {
   @Input() isDetail: boolean = false;
   @Input() isForm: boolean = false;
   @Input() context: string = 'List';
-  // par défaut on affiche le bouton
+   // par défaut on affiche le bouton
 
 
   get singularLowercase(): string {
@@ -75,11 +75,11 @@ export class PageHeaderComponent {
       this.name.slice(0, -1).toLowerCase() :
       this.name.toLowerCase();
   }
-
-
+  
+  
   get backList(): Record<string, string> {
     return {
-      ['Back to list']: `/${this.name.toLowerCase()}`
+      ['Back to list']: `/${toKebabCase(this.name)}`
     };
   }
 

@@ -51,6 +51,14 @@
     (change)="onFileChange($event)"
   />
 
+  <!-- Hidden input -->
+  <input
+    *ngIf="field.type === 'hidden'"
+    type="hidden"
+    [id]="field.name"
+    [formControl]="getControl()"
+  />
+
   <!-- error message  -->
   <div class="error" *ngIf="form.get(field.name)?.invalid && (form.get(field.name)?.dirty || form.get(field.name)?.touched)">
     <div *ngIf="form.get(field.name)?.errors?.['required']">This field is mandatory</div>

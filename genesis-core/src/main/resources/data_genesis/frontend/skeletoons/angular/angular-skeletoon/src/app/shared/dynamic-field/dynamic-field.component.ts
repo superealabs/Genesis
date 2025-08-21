@@ -3,7 +3,7 @@ import { FormGroup, FormControl, Validators, AbstractControl, ValidatorFn, React
 import { CommonModule } from '@angular/common'; // pour *ngIf et *ngFor
 
 export interface FieldConfig {
-  type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'file';
+  type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'file'| 'hidden';
   name: string;
   label: string;
   options?: { value: any; label: string }[];
@@ -32,6 +32,7 @@ export interface FieldConfig {
 export class DynamicFieldComponent implements OnInit {
   @Input() field!: FieldConfig;
   @Input() form!: FormGroup;
+  @Input() initialData: any = {};
 
   ngOnInit(): void {
     const validators: ValidatorFn[] = [];
@@ -51,9 +52,19 @@ export class DynamicFieldComponent implements OnInit {
     if (c.future) validators.push(this.futureValidator);
     if (c.futureOrPresent) validators.push(this.futureOrPresentValidator);
 
-    console.log(c);
+    let value = this.initialData?.[this.field.name];
+    let defaultValue = '';
 
-    this.form.addControl(this.field.name, new FormControl('', validators));
+    if (value !== undefined) {
+      if (typeof value === 'object' && value !== null) {
+        defaultValue = JSON.stringify(value);
+      } else {
+        defaultValue = String(value); // ou value.toString()
+      }
+    }
+     
+
+    this.form.addControl(this.field.name, new FormControl(defaultValue, validators));
   }
 
   getControl(): FormControl {

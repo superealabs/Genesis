@@ -1,11 +1,11 @@
 .sidebar {
   width: 220px;
-  margin-top: 2rem; /* marge en haut ajoutée */
+  margin-top: 2rem; 
   padding: 0 1rem 1rem 1rem;
   font-family: sans-serif;
-  background-color: #fbfcfd; /* gris très très clair */
+  background-color: #fbfcfd; 
   height: 100vh;
-  border-right: 1px solid #e7eaf0; /* gris clair plus doux */
+  border-right: 1px solid #e7eaf0; 
 }
 
 .app-title {
@@ -16,13 +16,12 @@
 }
 
 .app-title .blue {
-  color: #2263cb; /* bleu vif, inchangé */
+  color: #2263cb;
 }
 
 .section-label {
   font-size: 0.7rem;
-  color: #a1a9b8; /* gris clair doux */
-  text-transform: uppercase;
+  color: #a1a9b8; 
   margin-top: 1.2rem;
   margin-bottom: 0.25rem;
   font-weight: 600;
@@ -31,12 +30,12 @@
 
 a {
   display: block;
-  padding: calc(0.35rem * 1.15) calc(0.5rem * 1.15);
+  padding: 8px 14px;
   margin-top: 0;
   margin-bottom: calc(0.18rem * 1.15);
   border-radius: calc(0.5rem * 1.15);
   text-decoration: none;
-  color: #2a2c32; /* gris moyen clair */
+  color: #2a2c32; 
   font-weight: 600;
   font-size: 1rem;
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -55,11 +54,13 @@ a.views {
 }
 
 a:hover {
-  background-color: #e6f0ff; /* bleu très clair */
-  color: #2263cb; /* bleu vif, inchangé */
+  background-color: #e6f0ff; 
+  color: #2263cb; 
+  padding: 8px 14px;
 }
 
 a.active {
-  background-color: #dbe6ff; /* bleu pastel clair un peu plus foncé */
-  color: #2263cb; /* bleu vif, inchangé */
+  background-color: #dbe6ff; 
+  color: #2263cb; 
+  padding: 8px 14px;
 }

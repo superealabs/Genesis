@@ -22,7 +22,7 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
             <button (click)="redirect(routeToDetail, ligne[0])" title="View" aria-label="View">
               <i class="bi bi-file-text"></i>
             </button>
-            <button (click)="editFn?.(ligne)" title="Edit" aria-label="Edit">
+            <button (click)="redirect(routeToModify, ligne[0])" title="Edit" aria-label="Edit">
               <i class="bi bi-pencil"></i>
             </button>
             <button (click)="openConfirmation(ligne)" title="Delete" aria-label="Delete">
@@ -105,6 +105,7 @@ export class TableauComponent {
   @Input() colonnes: string[] = [];
   @Input() donnees: any[][] = [];
   @Input() routeToDetail: string = 'entity';
+  @Input() routeToModify: string = 'entity';
   @Input() editFn?: (ligne: any[]) => void;
   @Input() deleteFn?: (ligne: any[]) => void;
   @Input() isView: boolean = false;

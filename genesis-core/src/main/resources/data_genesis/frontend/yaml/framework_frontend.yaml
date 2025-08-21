@@ -424,7 +424,7 @@
             <app-page-header name="${formatReadable(classNameLink)}" [isView]=${isView}></app-page-header>
             <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)" [onRowsChange]="onNumberRowChange.bind(this)"></app-dynamic-search-form>
             <br>
-            <app-tableau [colonnes]="columns" [donnees]="data" {{#if !isView}}[deleteFn]="delete${majStart(className)}"{{/if}} [isView]=${isView} {{#if !isView}}routeToDetail="${toKebabCase(className)}-details" {{/if}}></app-tableau>
+            <app-tableau [colonnes]="columns" [donnees]="data" {{#if !isView}}[deleteFn]="delete${majStart(className)}"{{/if}} [isView]=${isView} {{#if !isView}}routeToDetail="${toKebabCase(className)}s/details" routeToModify="${toKebabCase(className)}s/modify"{{/if}}></app-tableau>
             <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
             <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="itemNumber" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
@@ -449,8 +449,12 @@
                 loadComponent: () => import('./${toKebabCase(className)}-form/${toKebabCase(className)}-form.component').then(m => m.${majStart(className)}FormComponent)
               },
               {
-                path: '${toKebabCase(className)}-details/:id',
+                path: '${toKebabCase(className)}s/details/:id',
                 loadComponent: () => import('./${toKebabCase(className)}-details/${toKebabCase(className)}-details.component').then(m => m.${majStart(className)}DetailsComponent)
+              },
+              {
+                path: '${toKebabCase(className)}s/modify/:id',
+                loadComponent: () => import('./${toKebabCase(className)}-form/${toKebabCase(className)}-form.component').then(m => m.${majStart(className)}FormComponent)
               }{{/if}}
             ];
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}"
@@ -464,8 +468,8 @@
         import { HttpClientModule } from '@angular/common/http';
         import { ReactiveFormsModule, FormGroup } from '@angular/forms';
         import { Subject, forkJoin, takeUntil } from 'rxjs';
-        
-        
+        import { ActivatedRoute } from '@angular/router';
+      
         import { DynamicFieldComponent, FieldConfig } from '../../../shared/dynamic-field/dynamic-field.component';
         import { DynamicFormComponent } from '../../../shared/dynamic-form/dynamic-form.component';
         import { LinkButtonComponent } from '../../../shared/link-button/link-button.component';
@@ -473,7 +477,7 @@
         import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
         import { warnMeUp } from '../../../../utilities/utilities';
 
-        import { expandSeparatorNotation } from '../../../../utilities/utilities';
+
         
         import { ${className} } from '../models/${toKebabCase(className)}.model'
         import { ${className}Service } from '../services/${toKebabCase(className)}.service'
@@ -494,15 +498,17 @@
           private destroy$ = new Subject<void>();
           isLoading: boolean = false;
           form: FormGroup = new FormGroup({});
+          formUpdate:boolean=false;
         
+          id:string ='';
+          ${minStart(className)}ToUpdate?: ${majStart(className)};
           {{#each fieldsFK}}{{removeLine}}
           ${minStart(this.type)}s: ${majStart(this.type)}[] = []; 
           {{/each}}{{removeLine}}
         
-          
           fields: FieldConfig[] = [
             {{tab}}{{tab}}{{#each fieldsFK}}
-              { type: 'select', name: '${this.name}-${this.referencedColumn}', label: '${this.type}', options: [] },
+              { type: 'select', name: '${this.name}', label: '${this.type}', options: [] },
             {{tab}}{{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each simpleFields}}
             {{#if this.isText}}{{removeLine}}
@@ -514,6 +520,7 @@
   
 
           constructor(
+                private route: ActivatedRoute,
                 {{#each fieldsFK}}{{removeLine}}
                  private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
                 {{/each}}{{removeLine}}
@@ -522,25 +529,51 @@
           
           submit(): void {
               this.isLoading = true;
-              const ${minStart(className)}: ${majStart(className)} = expandSeparatorNotation(this.form.value,'-');
-              this.${minStart(className)}Service.create${majStart(className)}(${minStart(className)})
-              .pipe(takeUntil(this.destroy$))
+              {{#each fieldsFK}}{{removeLine}}
+              this.form.value.${this.name}=JSON.parse(this.form.value.${this.name});
+              {{/each}}{{removeLine}}
+              var ${minStart(className)}: ${majStart(className)} = this.form.value;
+              const serviceCall = this.formUpdate?this.${minStart(className)}Service.update${majStart(className)}(${minStart(className)} ,this.id):this.${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
+              serviceCall.pipe(takeUntil(this.destroy$))
               .subscribe({
-              next: res => {
-                warnMeUp('Success', '${majStart(className)} created successfully','#28a745','success');
-                this.form.reset();
-                this.isLoading = false;
-            },
-              error: err => {
-                console.error(err);
-                warnMeUp('Error', err.message );
-                this.isLoading = false;
-            }
-            });
+                next: res => {
+                  warnMeUp('Success', '${majStart(className)} created successfully','#28a745','success');
+                  this.form.reset();
+                  this.isLoading = false;
+                },
+                  error: err => {
+                    console.error(err);
+                    warnMeUp('Error', err.message );
+                    this.isLoading = false;
+                }
+              });
           }
-        
-          {{#if containsForeignKey}}
+          
+            load${majStart(className)}(id: string): void {
+                  this.isLoading = true;
+                  this.${minStart(className)}Service.get${majStart(className)}ById(id)
+                      .pipe(takeUntil(this.destroy$))
+                      .subscribe({
+                      next: (${minStart(className)}: ${majStart(className)}) => {
+                          this.${minStart(className)}ToUpdate = ${minStart(className)};
+                          this.isLoading = false;
+                        },
+                      error: (err) => {
+                          console.error('Error while loading ${minStart(className)}:', err);
+                          warnMeUp('error', 'Error while fetching ${minStart(className)}');
+                          this.isLoading = false;
+                        }
+                    });
+            }
+
+            {{#if containsForeignKey}}
             ngOnInit(): void {
+                const ${minStart(className)}Id = this.route.snapshot.paramMap.get('id');
+                if (${minStart(className)}Id) {
+                  this.id=${minStart(className)}Id;
+                  this.formUpdate=true
+                  this.load${majStart(className)}(${minStart(className)}Id);
+                }
                 this.isLoading = true;
                 forkJoin([
                     {{#each fieldsFK}}{{removeLine}}
@@ -550,9 +583,9 @@
                       next: ([{{#each fieldsFK}}${minStart(this.type)}s,{{/each}}]) => {
                           {{#each fieldsFK}}
                           this.${minStart(this.type)}s = ${minStart(this.type)}s;
-                          const ${minStart(this.type)}Field = this.fields.find(f => f.name === '${this.name}-${this.referencedColumn}');
+                          const ${minStart(this.type)}Field = this.fields.find(f => f.name === '${this.name}');
                           if (${minStart(this.type)}Field) {
-                            ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: d.${this.referencedColumn},label: entries[1][1]};}); 
+                            ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: JSON.stringify(d),label: entries[1][1]};}); 
                           }
                           {{/each}}
                           this.isLoading = false;
@@ -565,6 +598,12 @@
             }
             {{else}}{{removeLine}}
             ngOnInit(): void {
+              const ${minStart(className)}Id = this.route.snapshot.paramMap.get('id');
+                if (${minStart(className)}Id) {
+                  this.id=${minStart(className)}Id;
+                  this.formUpdate=true
+                  this.load${majStart(className)}(${minStart(className)}Id);
+                }
             }
             {{/if}}{{removeLine}}
         
@@ -582,7 +621,23 @@
           extension: "html"
           content: |
             <app-page-header name="${majStart(className)}s" context="Form" [isView]=true [isForm]=true></app-page-header>
-            <app-dynamic-form [fields]="fields" [form]="form" [submitFn]="submit.bind(this)"></app-dynamic-form>
+            <ng-container *ngIf="formUpdate; else insertForm">
+              <app-dynamic-form
+                *ngIf="${minStart(className)}ToUpdate"
+                [fields]="fields"
+                [form]="form"
+                [submitFn]="submit.bind(this)"
+                [initialData]="${minStart(className)}ToUpdate">
+              </app-dynamic-form>
+            </ng-container>
+            
+            <ng-template #insertForm>
+              <app-dynamic-form
+                [fields]="fields"
+                [form]="form"
+                [submitFn]="submit.bind(this)">
+              </app-dynamic-form>
+            </ng-template>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
         - fileType: "css template"
           fileName: "${toKebabCase(className)}-form.component"
@@ -708,15 +763,7 @@
       {{tab}}private readonly apiUrl = environment.apiUrl+'/${lowerCase(classNameLink)}';
       {{tab}}constructor(private http: HttpClient) {}
         
-        create${majStart(className)}(${minStart(className)}: Partial<${majStart(className)}>): Observable<${majStart(className)}> {
-          return this.http.post<${majStart(className)}>(this.apiUrl, ${minStart(className)}).pipe(
-            map(response => response),
-              catchError(err => {
-                const apiMessage = err.error?.message || JSON.stringify(err.error) || 'Unknown error';
-                return throwError(() => new Error(apiMessage));
-              })
-            );
-        }
+        
         
         search${majStart(classNameLink)}(
             criteria: Partial<${majStart(className)}>,
@@ -754,6 +801,26 @@
             console.error('Error while deleting ${majStart(className)} with id: '+id, err);
                     return throwError(() => err);})
           );
+        }
+      
+        create${majStart(className)}(${minStart(className)}: Partial<${majStart(className)}>): Observable<${majStart(className)}> {
+          return this.http.post<${majStart(className)}>(this.apiUrl, ${minStart(className)}).pipe(
+            map(response => response),
+              catchError(err => {
+                const apiMessage = err.error?.message || JSON.stringify(err.error) || 'Unknown error';
+                return throwError(() => new Error(apiMessage));
+              })
+            );
+        }
+      
+        update${majStart(className)}(${minStart(className)}: Partial<${majStart(className)}>,id:string): Observable<${majStart(className)}> {
+            return this.http.put<${majStart(className)}>(this.apiUrl+"/"+id, ${minStart(className)}).pipe(
+              map(response => response),
+              catchError(err => {
+                const apiMessage = err.error?.message || JSON.stringify(err.error) || 'Unknown error';
+                return throwError(() => new Error(apiMessage));
+              })
+            );
         }
       {{/if}}{{removeLine}}
       
