@@ -1348,9 +1348,10 @@
       // src/models/${toKebabCase(className)}/${toKebabCase(className)}.model.ts
       import dayjs from "dayjs";
       import { format } from 'date-fns';
-      import 'dayjs/plugin/utc'; // Importe le plugin utc
-      import utc from 'dayjs/plugin/utc'; // Importe le plugin utc
+      import 'dayjs/plugin/utc'; 
+      import utc from 'dayjs/plugin/utc'; 
       dayjs.extend(utc); // Utilise le plugin utc
+      import { parseTimeString } from '@/utils/timeParser';
     exports : |
       export interface ${majStart(className)} {
       {{tab}}{{#each fields}}
