@@ -54,10 +54,7 @@
       "String": [],
       "java.time.LocalDate": [],
       "java.time.LocalDateTime": [],
-      "java.time.OffsetDateTime": [
-        "@org.hibernate.annotations.Type(io.hypersistence.utils.hibernate.type.basic.PostgreSQLZonedDateTimeType.class)",
-        "@Column(columnDefinition = \"TIMESTAMPTZ\")"
-      ],
+      "java.time.OffsetDateTime": [],
       "java.time.LocalDateTime[]": [
         "@Convert(converter=${groupLink}.${lowerCase(projectName)}.utils.TSRangeConverter.class)",
         "@org.hibernate.annotations.ColumnTransformer(read = \"CAST(${this.columnName} as varchar)\", write=\"CAST(? as tsrange)\")"
