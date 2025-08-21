@@ -43,7 +43,7 @@
       @model ${majStart(className)}
     backLink: "@Url.Action(\"Index\")"
     inputTagHelper: "asp-for=\"${majStart(this.name)}\""
-    selectTagHelper: "asp-for=\"${majStart(this.name)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
+    selectTagHelper: "asp-for=\"${majStart(this.columnNameField)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
     createLink: "asp-action=\"Create\" asp-controller=\"${className}\""
   edit:
     modelType: |

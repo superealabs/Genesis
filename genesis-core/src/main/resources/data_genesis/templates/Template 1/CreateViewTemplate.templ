@@ -26,15 +26,15 @@ ${modelType}
 
         {{#each fields}}
         {{#if !this.isForeignKey}}<div class="form-input">
-            <label for="">${this.name}</label>
+            <label for="${this.name}">${this.name}</label>
             <input type="${this.inputType}" name="${this.name}" id="${this.name}" placeholder="${this.name}" ${inputTagHelper}>
         </div>{{/if}}
         {{/each}}{{removeLine}}
 
         {{#each fieldsFK}}
         <div class="form-input">
-            <label for="">${this.name}</label>
-            <select name="${this.name}" id="${this.name}" ${selectTagHelper}>
+            <label for="">${this.columnNameField}</label>
+            <select name="${this.columnNameField}" id="${this.columnNameField}" ${selectTagHelper}>
                 <option value="">-- Select ${this.type} --</option>
             </select>
         </div>
