@@ -1389,7 +1389,18 @@
             },
             sortKey: '${this.name}'
           },
-          {{elseIf this.isTime or this.isDateTime or this.isInterval}}
+          {{elseIf this.isDateTime }}
+          {
+            header: '${formatReadable(this.name)}',
+            accessor: (row: ${majStart(className)} ) => {
+               const date = row.${this.name};
+               if (!date) return '-';
+               const dateObject = new Date(date);
+               return isNaN(dateObject.getTime()) ? '-' : format(dateObject, "dd/MM/yyyy HH:mm:ss");
+            },
+            sortKey: '${this.name}'
+          },
+          {{elseIf this.isTime or this.isInterval}}
           {
             header: '${formatReadable(this.name)}',
             accessor: (row: ${majStart(className)} ) => {
@@ -1422,7 +1433,19 @@
           ${this.name}: { label: '${formatReadable(this.name)}', type: 'number' as const },
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'number' as const },
           ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'number' as const },
-          {{elseIf this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+          {{elseIf this.isDate}}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'Date' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'Date' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'Date' as const },
+          {{elseIf this.isDateTime and this.useTimeZone}}  
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'DateTimeTZ' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'DateTimeTZ' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'DateTimeTZ' as const },
+          {{elseIf this.isDateTime}}  
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'DateTime' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'DateTime' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'DateTime' as const },
+          {{elseIf this.isTime or this.isInterval}}
           ${this.name}: { label: '${formatReadable(this.name)}', type: 'Date' as const },
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'Date' as const },
           ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'Date' as const },
@@ -1446,13 +1469,29 @@
           {{#each fieldsNotFK}}
           {{#if this.isPrimaryKey}}
           {{removeLine}}
-          {{elseIf this.isTime or this.isDateTime or this.isInterval}}
+          {{elseIf this.isDateTime and this.useTimeZone}}
           ${this.name}: {
             label: '${formatReadable(this.name)}',
             type: 'datetime' as const,
             required: ${this.isRequired},
             transform: (value: string) =>
-                                 value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : '',
+                                 value ? dayjs(value).utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null
+          },
+          {{elseIf this.isDateTime}}
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: 'datetime' as const,
+            required: ${this.isRequired},
+            transform: (value: string) =>
+                                 value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null,
+          },
+          {{elseIf this.isTime or this.isInterval}}
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: 'datetime' as const,
+            required: ${this.isRequired},
+            transform: (value: string) =>
+                                 value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null,
           },
           {{else}}
           ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const, required: ${this.isRequired} },
