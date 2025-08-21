@@ -49,6 +49,7 @@ public class ViewsTemplateEngine {
         private String blockLoopStatementEnd;
         private String inlineLoopStatement;
         private String detailsLink;
+        private String deleteTagHelper;
         private String deleteLink;
         private String createLink;
         private String updateLink;

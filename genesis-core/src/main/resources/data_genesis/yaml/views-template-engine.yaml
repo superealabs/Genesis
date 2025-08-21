@@ -24,11 +24,12 @@
     blockLoopStatementEnd: |
       }
     detailsLink: "@Url.Action(\"Details\", new { ${pkColumn} = @${lowerCase(className)}.${majStart(pkColumn)} })"
-    deleteLink: "data-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
+    deleteTagHelper: "data-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
+    deleteLink: "asp-action=\"Delete\""
     createLink: "@Url.Action(\"Create\")"
     updateLink: "@Url.Action(\"Update\")"
     backLink: "@Url.Action(\"Index\")"
-    assetsImportLink: "~/"
+    assetsImportLink: "~"
   detail:
     modelType: |
       @model ${majStart(className)}

@@ -498,23 +498,55 @@ tr.table-content:hover {
 
 }
 /* Modal */
-.modal-actions {
+.btn-cancel {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.btn-cancel:hover {
+    color: #000;
+}
+.warning-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    color: #e74c3c;
+}
+.modal-box h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+.modal-box p {
+    font-size: 0.95rem;
+    color: #555;
+    margin-bottom: 20px;
+}
+#deleteForm {
     display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
+    justify-content: center;
 }
-.modal-actions .btn-cancel {
-    background: #ccc;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-.modal-actions .btn-confirm {
-    background: #e74c3c;
+.btn-confirm {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
     color: white;
-    padding: 8px 15px;
-    border-radius: 5px;
+    padding: 10px 25px;
+    border-radius: 10px;
     border: none;
+    font-size: 0.95rem;
+    font-weight: 500;
     cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+.btn-confirm:hover {
+    background: linear-gradient(135deg, #ff5e4d, #d63031);
+    box-shadow: 0 6px 15px rgba(231, 76, 60, 0.5);
+    transform: translateY(-1px);
 }

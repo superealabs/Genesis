@@ -176,7 +176,7 @@ ${modelType}
                                     </g>
                                 </svg>
                             </button>
-                            <button class="action-button" onclick="window.location.href='${deleteLink}'">
+                            <button class="btn-delete action-button" ${deleteTagHelper}>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55.78 59">
                                     <title>Delete</title>
                                     <g id="Layer_2" data-name="Layer 2">
@@ -205,22 +205,19 @@ ${modelType}
 
         {{#if !isView}}<!-- Modal -->
         <div id="customModal" class="modal-overlay"
-             data-trigger=".btn-delete"
-             data-input="${className}Id"
-             data-text="${className}IdText">
+           data-trigger=".btn-delete"
+           data-input="${className}Id"
+           data-text="${className}IdText">
             <div class="modal-box">
+                <button type="button" id="cancelBtn" class="btn-cancel">&times;</button>
+                <div class="warning-icon">⚠️</div>
                 <h3>Are you sure you want to delete ${className} with id "<span id="${className}IdText"></span>"?</h3>
-                <p>This cannot be undone.</p>
-                <div class="modal-actions">
-                    <button type="button" id="cancelBtn" class="btn-cancel">Cancel</button>
-
-                    <!-- Formulaire POST -->
-                    <form id="deleteForm" method="post" asp-action="Delete">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" id="${className}Id" />
-                        <button type="submit" class="btn-confirm">Delete</button>
-                    </form>
-                </div>
+                <p>This action cannot be undone.</p>
+                <form id="deleteForm" method="post" ${deleteLink}>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="${className}Id" />
+                    <button type="submit" class="btn-confirm">Delete</button>
+                </form>
             </div>
         </div>{{/if}}
     </div>
@@ -279,5 +276,5 @@ ${modelType}
         </div>
     </div>
 </main>
-<script src="${assetsImportLink}js/utils.js"></script>
-<script src="${assetsImportLink}js/events.js"></script>
+<script src="${assetsImportLink}/js/utils.js"></script>
+<script src="${assetsImportLink}/js/events.js"></script>
