@@ -117,6 +117,7 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("isDate",field.isDate());
         fieldMap.put("isTime",field.isTime());
         fieldMap.put("isDateTime",field.isDateTime());
+        fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
         fieldMap.put("isText", field.isText());
         fieldMap.put("isNotForeignKey",!field.isForeign());
