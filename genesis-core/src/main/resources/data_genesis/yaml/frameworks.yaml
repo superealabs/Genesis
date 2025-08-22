@@ -77,6 +77,7 @@
             private String message;
             private int returnCode;
             private T data;
+            private T errors;
             private Instant timestamp;
 
             private RestResponse(int status, String message, int returnCode, T data) {
@@ -92,9 +93,11 @@
                 return new RestResponse<>(status.value(), message, OK, data);
             }
 
-            public static <T> RestResponse<T> buildErrorResponse(HttpStatus status, String message, T data) {
+            public static <T> RestResponse<T> buildErrorResponse(HttpStatus status, String message, T errors) {
                 int KO = 0;
-                return new RestResponse<>(status.value(), message, KO, data);
+                RestResponse ans= new RestResponse<>(status.value(), message, KO, null);
+                ans.setErrors(errors);
+                return ans;
             }
         }
 
@@ -1076,25 +1079,20 @@
       {{tab}}{{#if this.isIntAndPrimaryKey}}
       {{tab}}@Id
       {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
-      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable})
-      {{tab}}{{#each this.validationAnnotations}}
-      {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}{{elseIf this.isPrimaryKey}}
+      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isPrimaryKey}}
       {{tab}}@Id
       {{tab}}@org.hibernate.annotations.Generated(org.hibernate.annotations.GenerationTime.INSERT)
-      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable})
-      {{tab}}{{#each this.validationAnnotations}}
-      {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}{{elseIf this.isForeignKey}}
+      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
       {{tab}}@ManyToOne
       {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{/if}}
+      {{#if !this.isForeignKey}}{{removeLine}}
       {{tab}}{{#each this.attributeTypeAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}{{/each}}{{removeLine}}{{/if}}
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
@@ -1497,6 +1495,8 @@
       import io.swagger.v3.oas.annotations.responses.ApiResponses;
       import io.swagger.v3.oas.annotations.security.SecurityRequirement;
       import io.swagger.v3.oas.annotations.tags.Tag;
+      import jakarta.validation.Valid;
+      
       import org.springframework.http.HttpStatus;
       import org.springframework.http.ResponseEntity;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
@@ -1505,9 +1505,13 @@
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
       import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
       import org.springframework.data.domain.Page;
+      import org.springframework.validation.BindingResult;
       import org.springframework.data.domain.PageRequest;
       import org.springframework.data.domain.Pageable;
       import org.springframework.data.domain.Sort;
+      
+      import java.util.HashMap;
+      
       import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
 
@@ -1673,10 +1677,22 @@
       {{tab}}    )
       {{tab}}})
       {{tab}}@PostMapping
-      {{tab}}public ResponseEntity<RestResponse<${majStart(className)}>> create${majStart(className)}(
+      {{tab}}public ResponseEntity<?> create${majStart(className)}(
       {{tab}}    @Parameter(description = "${formatReadable(className)} object to be created", required = true)
-      {{tab}}    @RequestBody ${majStart(className)} ${lowerCase(className)}
+      {{tab}}    @RequestBody @Valid ${majStart(className)} ${lowerCase(className)}
+      {{tab}}    ,BindingResult bindingResult
       {{tab}}) {
+      {{tab}}    if (bindingResult.hasErrors()) {
+      {{tab}}       HashMap<String, String> errors = new HashMap<>();
+      {{tab}}       bindingResult.getFieldErrors().forEach(error -> {
+      {{tab}}           errors.put(error.getField(), error.getDefaultMessage());
+      {{tab}}       });
+      {{tab}}       RestResponse<HashMap<String, String>> errorResponse =
+      {{tab}}       RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST,
+      {{tab}}       "Validation failed", errors);
+      {{tab}}
+      {{tab}}       return ResponseEntity.badRequest().body(errorResponse);
+      {{tab}}    }
       {{tab}}    ${majStart(className)} new${majStart(className)} = ${lowerCase(className)}Service.create${majStart(className)}(${lowerCase(className)});
       {{tab}}    RestResponse<${majStart(className)}> response = RestResponse.buildSuccessResponse(HttpStatus.CREATED,
       {{tab}}            "${formatReadableLowerCase(className)} created successfully", new${majStart(className)});
@@ -1709,12 +1725,24 @@
       {{else}}{{removeLine}}{{/if}}
       {{#if !isView}} 
       {{tab}}@PutMapping("/{${pkColumn}}")
-      {{tab}}public ResponseEntity<RestResponse<${majStart(className)}>> update${majStart(className)}(
+      {{tab}}public ResponseEntity<?> update${majStart(className)}(
       {{tab}}    @Parameter(description = "ID of the ${formatReadableLowerCase(className)} to update", required = true)
       {{tab}}    @PathVariable ${pkColumnType} ${pkColumn},
       {{tab}}    @Parameter(description = "Updated ${formatReadableLowerCase(className)} object", required = true)
-      {{tab}}    @RequestBody ${majStart(className)} ${lowerCase(className)}
+      {{tab}}    @RequestBody @Valid ${majStart(className)} ${lowerCase(className)}
+      {{tab}}    ,BindingResult bindingResult
       {{tab}}) {
+      {{tab}}    if (bindingResult.hasErrors()) {
+      {{tab}}       HashMap<String, String> errors = new HashMap<>();
+      {{tab}}       bindingResult.getFieldErrors().forEach(error -> {
+      {{tab}}           errors.put(error.getField(), error.getDefaultMessage());
+      {{tab}}       });
+      {{tab}}       RestResponse<HashMap<String, String>> errorResponse =
+      {{tab}}       RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST,
+      {{tab}}       "Validation failed", errors);
+      {{tab}}
+      {{tab}}       return ResponseEntity.badRequest().body(errorResponse);
+      {{tab}}    }
       {{tab}}    ${majStart(className)} update${majStart(className)} = ${lowerCase(className)}Service.update${majStart(className)}(${pkColumn}, ${lowerCase(className)});
       {{tab}}    RestResponse<${majStart(className)}> response = RestResponse.buildSuccessResponse(HttpStatus.OK,
       {{tab}}            "${formatReadableLowerCase(className)} updated successfully", update${majStart(className)});

@@ -33,6 +33,7 @@ export class DynamicFieldComponent implements OnInit {
   @Input() field!: FieldConfig;
   @Input() form!: FormGroup;
   @Input() initialData: any = {};
+  @Input() validationErrors:any={};
 
   ngOnInit(): void {
     const validators: ValidatorFn[] = [];

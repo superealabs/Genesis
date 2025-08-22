@@ -19,6 +19,7 @@ export class DynamicFormComponent {
   @Input() form!: FormGroup; 
   @Input() isLoading: boolean = false;
   @Input() initialData: any = {};
+  @Input() validationErrors: any={};
 
   submit(): void {
     if (this.form.valid && this.submitFn) {

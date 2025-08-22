@@ -499,6 +499,7 @@
           isLoading: boolean = false;
           form: FormGroup = new FormGroup({});
           formUpdate:boolean=false;
+          validationErrors:any;
         
           id:string ='';
           ${minStart(className)}ToUpdate?: ${majStart(className)};
@@ -539,11 +540,13 @@
                 next: res => {
                   warnMeUp('Success', '${majStart(className)} created successfully','#28a745','success');
                   this.form.reset();
+                  this.validationErrors={};
                   this.isLoading = false;
                 },
                   error: err => {
-                    console.error(err);
-                    warnMeUp('Error', err.message );
+                    warnMeUp('error', 'Error while making a move on ${minStart(className)} ');
+                    const apiErrors = err.error?.errors;
+                    this.validationErrors=apiErrors;
                     this.isLoading = false;
                 }
               });
@@ -627,7 +630,9 @@
                 [fields]="fields"
                 [form]="form"
                 [submitFn]="submit.bind(this)"
-                [initialData]="${minStart(className)}ToUpdate">
+                [initialData]="${minStart(className)}ToUpdate"
+                [validationErrors]="validationErrors"
+            >
               </app-dynamic-form>
             </ng-container>
             
@@ -635,7 +640,9 @@
               <app-dynamic-form
                 [fields]="fields"
                 [form]="form"
-                [submitFn]="submit.bind(this)">
+                [submitFn]="submit.bind(this)"
+                [validationErrors]="validationErrors"
+            >
               </app-dynamic-form>
             </ng-template>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
@@ -807,8 +814,7 @@
           return this.http.post<${majStart(className)}>(this.apiUrl, ${minStart(className)}).pipe(
             map(response => response),
               catchError(err => {
-                const apiMessage = err.error?.message || JSON.stringify(err.error) || 'Unknown error';
-                return throwError(() => new Error(apiMessage));
+                return throwError(err);
               })
             );
         }
@@ -817,8 +823,7 @@
             return this.http.put<${majStart(className)}>(this.apiUrl+"/"+id, ${minStart(className)}).pipe(
               map(response => response),
               catchError(err => {
-                const apiMessage = err.error?.message || JSON.stringify(err.error) || 'Unknown error';
-                return throwError(() => new Error(apiMessage));
+                return throwError(err);
               })
             );
         }
@@ -891,6 +896,7 @@
       {{tab}}{{tab}}{{tab}}totalPages: number;
       {{tab}}{{tab}}};
       {{tab}}};
+      {{tab}}errors: any;
       {{tab}}timestamp: string;
       }
     destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/models"

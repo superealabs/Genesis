@@ -73,4 +73,8 @@
     <div *ngIf="form.get(field.name)?.errors?.['future']">Date must be in the future</div>
     <div *ngIf="form.get(field.name)?.errors?.['futureOrPresent']">Date must be today or later</div>
   </div>
+
+  <div class="error" *ngIf=" validationErrors && validationErrors[field.name]">
+    {{ validationErrors[field.name] }}
+  </div>
 </div>
