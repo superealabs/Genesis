@@ -1351,6 +1351,7 @@
       import 'dayjs/plugin/utc'; 
       import utc from 'dayjs/plugin/utc'; 
       import { parseTimeString } from '@/utils/timeParser';
+      import {formatDuration} from "@/utils/formatDuration";
       dayjs.extend(utc); // Utilise le plugin utc
     exports : |
       export interface ${majStart(className)} {
@@ -1433,12 +1434,7 @@
           {{elseIf this.isInterval}}
           {
             header: '${formatReadable(this.name)}',
-            accessor: (row: ${majStart(className)} ) => {
-               const date = row.${this.name};
-               if (!date) return '-';
-               const dateObject = new Date(date);
-               return isNaN(dateObject.getTime()) ? '-' : format(dateObject, "dd/MM/yyyy HH:mm:ss");
-            },
+            accessor: (row: ${majStart(className)}) => formatDuration(row.${this.name}),
             sortKey: '${this.name}'
           },
           {{else}}
@@ -1484,9 +1480,9 @@
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'time' as const },
           ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'time' as const },
           {{elseIf this.isInterval}}
-          ${this.name}: { label: '${formatReadable(this.name)}', type: 'Date' as const },
-          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'Date' as const },
-          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'Date' as const },
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'interval' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'interval' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'interval' as const },
           {{/if}}{{/each}}{{removeLine}}
       };
       
@@ -1548,10 +1544,8 @@
           {{elseIf this.isInterval}}
           ${this.name}: {
             label: '${formatReadable(this.name)}',
-            type: 'datetime' as const,
+            type: 'interval' as const,
             required: ${this.isRequired},
-            transform: (value: string) =>
-                                 value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null,
           },
           {{else}}
           ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const, required: ${this.isRequired} },
