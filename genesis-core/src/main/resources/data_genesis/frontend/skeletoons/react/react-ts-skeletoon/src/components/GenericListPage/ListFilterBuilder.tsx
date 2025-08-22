@@ -8,6 +8,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs from 'dayjs';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import {formatTimeTz, parseTimeTz} from "@/utils/timeTzParser";
 
 interface Props {
     availableFilters: Record<string, { label: string; type: string }>;
@@ -77,6 +78,34 @@ export default function ListFilterBuilder({
     );
 
     const renderTimeFilter = (
+        key: string,
+        label: string,
+        renderer: React.ReactNode
+    ) => (
+        <Box key={key} position="relative" sx={{ width: 220, flexShrink: 0 }}>
+            {renderer}
+            <IconButton
+                size="small"
+                sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    right: 44,
+                    transform: 'translateY(-50%)',
+                    bgcolor: '#fff',
+                    border: '1px solid #ccc',
+                    width: 20,
+                    height: 20,
+                }}
+                onClick={() => removeFilter(key)}
+                title={`Remove ${label} filter`}
+            >
+                <Close fontSize="inherit" />
+            </IconButton>
+        </Box>
+    );
+
+    // Rendu avec icône flottante
+    const renderTimeTzFilter = (
         key: string,
         label: string,
         renderer: React.ReactNode
@@ -192,6 +221,30 @@ export default function ListFilterBuilder({
                                     newVal ? newVal.format('HH:mm:ss') : ''
                                 )
                             }
+                            slotProps={{
+                                textField: {
+                                    size: 'small',
+                                    variant: 'outlined',
+                                    sx: { width: '100%' },
+                                },
+                                popper: { sx: { zIndex: 2000 } },
+                            }}
+                        />
+                    );
+                }
+
+                if (meta.type === 'timeTz') {
+                    return renderTimeTzFilter(
+                        key,
+                        meta.label,
+                        <TimePicker
+                            label={meta.label}
+                            value={value ? parseTimeTz(value as string) : null}
+                            onChange={(newVal) =>
+                                setValue(key, newVal ? formatTimeTz(newVal) : '')
+                            }
+                            timezone="UTC"
+                            ampm={false}
                             slotProps={{
                                 textField: {
                                     size: 'small',

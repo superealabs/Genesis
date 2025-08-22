@@ -27,10 +27,11 @@ import {pageContainerSx, breadcrumbSx} from "@/styles/mui-patterns";
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import {TimePicker} from "@mui/x-date-pickers";
 import { parseTimeString } from '@/utils/timeParser';
+import {formatTimeTz, parseTimeTz} from "@/utils/timeTzParser";
 
 interface FormFieldConfig {
     label: string;
-    type: 'text' | 'number' | 'Date' | 'datetime' | 'time' | 'checkbox' | 'select';
+    type: 'text' | 'number' | 'Date' | 'datetime' | 'time' | 'timeTz' | 'checkbox' | 'select';
     required?: boolean;
     readonly?: boolean;
     options?: readonly { readonly value: string | number; readonly label: string }[];
@@ -272,6 +273,26 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                         margin: 'normal',
                                                         required: config.required
                                                     }
+                                                }}
+                                            />
+                                        ) : config.type === 'timeTz' ? (
+                                            <TimePicker
+                                                label={config.label}
+                                                value={formData[key] ? parseTimeTz(String(formData[key])) : null}
+                                                onChange={(val) =>
+                                                    handleChange(
+                                                        key,
+                                                        val ? formatTimeTz(val) : ''
+                                                    )
+                                                }
+                                                timezone="UTC"
+                                                ampm={false}
+                                                slotProps={{
+                                                    textField: {
+                                                        fullWidth: true,
+                                                        margin: 'normal',
+                                                        required: config.required,
+                                                    },
                                                 }}
                                             />
                                         ) : config.type === 'Date' ? (
