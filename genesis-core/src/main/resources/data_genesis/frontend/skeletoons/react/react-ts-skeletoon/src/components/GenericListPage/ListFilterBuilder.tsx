@@ -9,6 +9,7 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs from 'dayjs';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import {formatTimeTz, parseTimeTz} from "@/utils/timeTzParser";
+import {DurationFilter} from "@/components/Input/DurationFilter";
 
 interface Props {
     availableFilters: Record<string, { label: string; type: string }>;
@@ -253,6 +254,18 @@ export default function ListFilterBuilder({
                                 },
                                 popper: { sx: { zIndex: 2000 } },
                             }}
+                        />
+                    );
+                }
+
+                if (meta.type === 'interval') {
+                    return (
+                        <DurationFilter
+                            key={key}
+                            label={meta.label}
+                            value={String(value)}
+                            onChange={(iso) => setValue(key, iso)}
+                            onRemove={() => removeFilter(key)}
                         />
                     );
                 }
