@@ -28,10 +28,11 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import {TimePicker} from "@mui/x-date-pickers";
 import { parseTimeString } from '@/utils/timeParser';
 import {formatTimeTz, parseTimeTz} from "@/utils/timeTzParser";
+import {DurationInput} from "@/components/Input/DurationInput";
 
 interface FormFieldConfig {
     label: string;
-    type: 'text' | 'number' | 'Date' | 'datetime' | 'time' | 'timeTz' | 'checkbox' | 'select';
+    type: 'text' | 'number' | 'Date' | 'datetime' | 'time' | 'timeTz' | 'checkbox' | 'select' | 'interval';
     required?: boolean;
     readonly?: boolean;
     options?: readonly { readonly value: string | number; readonly label: string }[];
@@ -305,6 +306,12 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                 slotProps={{
                                                     textField: { fullWidth: true, margin: 'normal' },
                                                 }}
+                                            />
+                                        ) : config.type === 'interval' ? (
+                                            <DurationInput
+                                                value={String(value)}
+                                                onChange={(iso) => handleChange(key, iso)}
+                                                label={config.label}
                                             />
                                         ) : (
                                             <TextField
