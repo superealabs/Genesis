@@ -1350,8 +1350,8 @@
       import { format } from 'date-fns';
       import 'dayjs/plugin/utc'; 
       import utc from 'dayjs/plugin/utc'; 
-      dayjs.extend(utc); // Utilise le plugin utc
       import { parseTimeString } from '@/utils/timeParser';
+      dayjs.extend(utc); // Utilise le plugin utc
     exports : |
       export interface ${majStart(className)} {
       {{tab}}{{#each fields}}
