@@ -76,28 +76,44 @@
       content: |
         namespace ${majStart(projectName)}.Data;
         using Microsoft.EntityFrameworkCore;
+        using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
         using Models;
         
         public class ${majStart(projectName)}Context : DbContext
         {
-            {{#each entities}}
-            public DbSet<${this}> ${this}s { get; set; }
-            {{/each}}
-            public ${majStart(projectName)}Context(DbContextOptions<${majStart(projectName)}Context> options) : base(options)
+          {{#each entities}}
+          public DbSet<${this}> ${this}s { get; set; }
+          {{/each}}
+          public ${majStart(projectName)}Context(DbContextOptions<${majStart(projectName)}Context> options) : base(options)
+          {
+          }
+      
+          protected override void OnModelCreating(ModelBuilder modelBuilder)
+          {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
+              foreach (var property in entityType.GetProperties())
+              {
+                if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                {
+                  property.SetValueConverter(new ValueConverter<DateTime, DateTime>(
+                    v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(),
+                    v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
+                  ));
+                }
+              }
             }
         
-            protected override void OnModelCreating(ModelBuilder modelBuilder)
+            base.OnModelCreating(modelBuilder);
+            
+            {{#each allEntities}}{{#if this.isView}}
+            modelBuilder.Entity<${this.className}>(entity =>
             {
-                base.OnModelCreating(modelBuilder);
-                {{#each allEntities}}{{#if this.isView}}
-                modelBuilder.Entity<${this.className}>(entity =>
-                {
-                  entity.HasNoKey();
-                  entity.ToView("${this.tableName}"); 
-                });
-                {{/if}}{{/each}}
-            }
+              entity.HasNoKey();
+              entity.ToView("${this.tableName}"); 
+            });
+            {{/if}}{{/each}}
+          }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Data/"
 
