@@ -27,7 +27,7 @@
     deleteTagHelper: "data-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
     deleteLink: "asp-action=\"Delete\""
     createLink: "@Url.Action(\"Create\")"
-    updateLink: "@Url.Action(\"Update\")"
+    updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @${lowerCase(className)}.${majStart(pkColumn)} })"
     backLink: "@Url.Action(\"Index\")"
     assetsImportLink: "~"
   detail:
@@ -36,7 +36,7 @@
     dataValue: "@Model.${majStart(this.name)}"
     dataForeignValue: "@Model.${majStart(this.name)}?.GetType().GetProperty((string)ViewBag.${majStart(this.type)}Column)?.GetValue(@Model.${majStart(this.name)})"
     deleteLink: "data-id=\"@Model.${majStart(pkColumn)}\""
-    updateLink: "@Url.Action(\"Update\")"
+    updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @Model.${majStart(pkColumn)} })"
     backLink: "@Url.Action(\"Index\")"
 
   create:
@@ -51,7 +51,8 @@
       @model ${majStart(className)}
     backLink: "@Url.Action(\"Index\")"
     inputTagHelper: "asp-for=\"${majStart(this.name)}\""
-    selectTagHelper: "asp-for=\"${majStart(this.name)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
+    selectTagHelper: "asp-for=\"${majStart(this.columnNameField)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
+    updateLink: "asp-action=\"Edit\" asp-controller=\"${className}\""
 
   templateEngineFilesEdits:
     - fileType : "ViewImports"

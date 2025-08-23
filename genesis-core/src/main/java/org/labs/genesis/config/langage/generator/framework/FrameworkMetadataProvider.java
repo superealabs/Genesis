@@ -502,4 +502,14 @@ public class FrameworkMetadataProvider {
         altMap.put("createLink", viewsTemplateEngine.getCreate().getCreateLink());
         return altMap;
     }
+
+    public static HashMap<String, Object> getAltViewEditHashMap (ViewsTemplateEngine viewsTemplateEngine) {
+        HashMap<String, Object> altMap = new HashMap<>();
+        altMap.put("modelType", viewsTemplateEngine.getEdit().getModelType());
+        altMap.put("backLink", viewsTemplateEngine.getEdit().getBackLink());
+        altMap.put("inputTagHelper", viewsTemplateEngine.getEdit().getInputTagHelper());
+        altMap.put("selectTagHelper", viewsTemplateEngine.getEdit().getSelectTagHelper());
+        altMap.put("updateLink", viewsTemplateEngine.getEdit().getUpdateLink());
+        return altMap;
+    }
 }
