@@ -2,10 +2,55 @@ ${modelType}
 <!-- Header -->
 <header class="header">
     <h3>${className} / <span class="page-action">Edit</span></h3>
+    <button class="btn-primary" type="button" onclick="window.location.href='${backLink}'">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
+            <title>Previous Page</title>
+            <g id="Layer_2" data-name="Layer 2">
+                <g id="Layer_1-2" data-name="Layer 1">
+                    <g id="arrow_back-1" data-name="arrow back-1">
+                        <path d="M56.5,26.13H2.5a2.5,2.5,0,0,1,0-5h54a2.5,2.5,0,0,1,0,5Z" />
+                        <path
+                            d="M23.63,47.26a2.49,2.49,0,0,1-1.77-.73L.73,25.4a2.51,2.51,0,0,1,0-3.54L21.86.73A2.5,2.5,0,0,1,25.4,4.27L6,23.63,25.4,43a2.5,2.5,0,0,1-1.77,4.27Z" />
+                    </g>
+                </g>
+            </g>
+        </svg>
+        <p>Back to list</p>
+    </button>
 </header>
 
 <!-- Content -->
 <main class="content">
+    <!-- Form -->
+    <form ${updateLink} method="post" class="form">
+        {{#each fields}}
+        {{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}<!-- Hidden field for ${this.name} -->
+         <input name="${this.name}" id="${this.name}" type="hidden" ${inputTagHelper}/>{{/if}}{{else}}{{removeLine}}{{/if}}
+        {{/each}}{{removeLine}}
 
+        {{#each fields}}
+        {{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = false}}<div class="form-input">
+            <label for="${this.name}">${this.name}</label>
+            <input type="${this.inputType}" name="${this.name}" id="${this.name}" placeholder="${this.name}" ${inputTagHelper}>
+        </div>{{/if}}{{else}}{{removeLine}}{{/if}}
+        {{/each}}{{removeLine}}
+
+        {{#each fieldsFK}}
+        <div class="form-input">
+            <label for="">${this.columnNameField}</label>
+            <select name="${this.columnNameField}" id="${this.columnNameField}" ${selectTagHelper}>
+                <option value="">-- Select ${this.type} --</option>
+            </select>
+        </div>
+        {{/each}}{{removeLine}}
+
+        <div class="form-actions">
+            <button type="reset" class="reset-button">Reset to original</button>
+            <div class="action-options">
+                <button onclick="window.location.href='${backLink}'" type="button" class="action-cancel">Cancel</button>
+                <button type="submit" class="action-save">Update</button>
+            </div>
+        </div>
+    </form>
 </main>
 
