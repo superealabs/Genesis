@@ -34,9 +34,27 @@ ${modelType}
         {{#if !isView}}<div class="form-actions">
             <div class="action-options">
                 <button onclick="window.location.href='${updateLink}'" type="button" class="action-cancel">Update</button>
-                <button onclick="window.location.href='${deleteLink}'" type="button" class="action-save">Delete</button>
+                <button ${deleteLink} type="button" class="btn-delete action-save">Delete</button>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div id="customModal" class="modal-overlay"
+           data-trigger=".btn-delete"
+           data-input="${className}Id"
+           data-text="${className}IdText">
+            <div class="modal-box">
+                <button type="button" id="cancelBtn" class="btn-cancel">&times;</button>
+                <div class="warning-icon">⚠️</div>
+                <h3>Are you sure you want to delete ${className} with id "<span id="${className}IdText"></span>"?</h3>
+                <p>This action cannot be undone.</p>
+                <form id="deleteForm" method="post" ${deleteLink}>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="${className}Id" />
+                    <button type="submit" class="btn-confirm">Delete</button>
+                </form>
             </div>
         </div>{{/if}}
     </form>
 </main>
-
+{{#if !isView}}<script src="~/js/events.js"></script>{{else}}{{removeLine}}{{/if}}
