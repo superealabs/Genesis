@@ -240,6 +240,7 @@ public class MVCGenerator implements GenesisGenerator {
 
         if (Boolean.FALSE.equals(tableMetadata.getIsView())) {
             generateCreateView(framework, frameworkOptions, language, viewsTemplate, viewsTemplateEngine, tableMetadata, destinationFolder, projectName, groupLink);
+            generateEditView(framework, frameworkOptions, language, viewsTemplate, viewsTemplateEngine, tableMetadata, destinationFolder, projectName, groupLink);
         }
 
         return "";
@@ -367,6 +368,44 @@ public class MVCGenerator implements GenesisGenerator {
         FileUtils.createFile(fileSavePath, fileName, viewsTemplateEngine.getViewExtension(), result);
     }
 
+    public void generateEditView(FrameworkMVC framework,
+                                   Map<String, Object> frameworkOptions,
+                                   Language language,
+                                   ViewsTemplate viewsTemplate,
+                                   ViewsTemplateEngine viewsTemplateEngine,
+                                   TableMetadata tableMetadata,
+                                   String destinationFolder,
+                                   String projectName,
+                                   String groupLink) throws Exception {
+        if (language.getId() != framework.getLanguageId()) {
+            throw new RuntimeException("Incompatibility detected: the language '" + language.getName() + "' (provided ID: " + language.getId() + ") is not compatible with the framework '" + framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
+        }
+
+        String templateContent = loadViewEditTemplate(viewsTemplate);
+
+        // Rendu intermédiaire
+        HashMap<String, Object> metadataSecondary = getAltViewEditHashMap(viewsTemplateEngine);
+        String secondaryResult = engine.simpleRender(templateContent, metadataSecondary);
+
+        // Rendu final
+        HashMap<String, Object> metadataFinally = getViewHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
+
+        // Ajustement du chemin de sauvegarde
+        String fileSavePath;
+        fileSavePath = framework.getView().getViewSavePath() + "/" + tableMetadata.getClassName();
+        fileSavePath = engine.simpleRender(fileSavePath, metadataFinally);
+
+        // S'assurer que le répertoire existe
+        FileUtils.createDirectory(fileSavePath);
+
+        // Création du fichier
+        String fileName = framework.getView().getEditViewName();
+        fileName = engine.simpleRender(fileName, metadataFinally);
+
+        String result = engine.render(secondaryResult, metadataFinally);
+        FileUtils.createFile(fileSavePath, fileName, viewsTemplateEngine.getViewExtension(), result);
+    }
+
     @Override
     public String generateViewMainLayout(FrameworkMVC framework,
                                          Map<String, Object> frameworkOptions,
@@ -421,4 +460,7 @@ public class MVCGenerator implements GenesisGenerator {
         return FileUtils.getFileContent(Constantes.TEMPLATES_PATH+ "/" + viewsTemplate.getTemplate() + "/" + viewsTemplate.getCreateTemplate() + "." + Constantes.TEMPLATE_EXT);
     }
 
+    private String loadViewEditTemplate(ViewsTemplate viewsTemplate) throws IOException {
+        return FileUtils.getFileContent(Constantes.TEMPLATES_PATH+ "/" + viewsTemplate.getTemplate() + "/" + viewsTemplate.getEditTemplate() + "." + Constantes.TEMPLATE_EXT);
+    }
 }
