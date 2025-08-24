@@ -3955,6 +3955,39 @@
           {{tab}}{{/each}}
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto/"
+      - fileType: "Specification File"
+        fileName: "${majStart(className)}FilterBuilder"
+        extension: "cs"
+        content: |
+          namespace ${majStart(projectName)}.Specification;
+
+          using System.Linq.Expressions;
+          using ${majStart(projectName)}.Models;
+          using ${majStart(projectName)}.Models.Dto;
+          using ${majStart(projectName)}.Utils;
+
+          public sealed class ${majStart(className)}FilterBuilder : FilterBuilder<${majStart(className)}, ${majStart(className)}SearchDto>
+          {
+              public override ${majStart(className)}FilterBuilder Build(${majStart(className)}SearchDto dto)
+              {
+              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+              {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});{{elseIf this.isForeignKey}}
+              {{tab}}
+              {{tab}}AddEquals(e => e.${majStart(this.columnNameField)}, dto.${majStart(this.columnNameField)});  
+              {{tab}}if (dto.${majStart(this.name)} is { } ${this.name})
+                      {{tab}}AddEquals(e => e.${majStart(this.columnNameField)}, ${this.name}.${majStart(this.referencedPrimaryKeyColumn)});
+              {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+              {{tab}}AddRange(e => e.${majStart(this.name)},  dto.${majStart(this.name)}Min,  dto.${majStart(this.name)}Max);
+              {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});
+              {{elseIf this.isText}}
+              {{tab}}AddLike(e => e.${majStart(this.name)}, dto.${majStart(this.name)});
+              {{tab}}{{else}}
+              {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});{{/if}}{{#if !@last}}{{newline}}{{/if}}
+              {{tab}}{{/each}}
+                  return this;
+              }
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Specification/"
     validationAnnotations:
       notNull: '[Required(ErrorMessage = "${majStart(name)} cannot be null")]'
       maxSize: "[StringLength(${columnSize})]"
