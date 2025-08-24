@@ -1942,12 +1942,14 @@
         });
         {{/if}}
         
+        {{#if useJWT}}
         builder.Services.AddAuthorization(options =>
         {
           options.DefaultPolicy = new AuthorizationPolicyBuilder("Bearer")
           .RequireAuthenticatedUser()
           .Build();
         });
+        {{/if}}
 
         var app = builder.Build();
         
