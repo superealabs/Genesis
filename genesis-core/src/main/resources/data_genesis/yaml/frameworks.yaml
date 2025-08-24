@@ -2233,11 +2233,17 @@
         namespace ${majStart(projectName)}.Repositories.Generic;
         
         using System.Linq.Expressions;
+        using ${majStart(projectName)}.Utils;
         
         public interface IRepository<T, in TKey> where T : class
         {
             Task<IEnumerable<T>> GetAllWithIncludes(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
-            Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting);
+            Task<PagedResponse<T>> SearchAsync(
+                Expression<Func<T, bool>> predicate,
+                int page,
+                int pageSize,
+                string? sorting,
+                params Expression<Func<T, object?>>[]? includes);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -2353,50 +2359,24 @@
                 return keyProperty.Name;
             }
         
-            public async Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting)
+            public async Task<PagedResponse<T>> SearchAsync(
+                Expression<Func<T, bool>> predicate,
+                int page, int pageSize, string? sorting,
+                params Expression<Func<T, object?>>[]? includes)
             {
-              IQueryable<T> query = _dbSet;
-              
-              // Récupère la propriété marquée [Key]
-              var keyProperty = typeof(T).GetProperties()
-              .FirstOrDefault(p => Attribute.IsDefined(p, typeof(KeyAttribute)));
-              
-              // Crée un filtre dynamique basé sur les propriétés non nulles (en ignorant la clé si elle vaut 0)
-              var properties = typeof(T).GetProperties()
-              .Where(p =>
-              {
-                if (!p.CanRead || !p.CanWrite)
-                return false;
-                
-                var value = p.GetValue(example);
-                
-                // Ignore les propriétés nulles
-                if (value == null)
-                return false;
-                
-                // Ignore la clé si elle vaut 0
-                if (p == keyProperty && value.Equals(Activator.CreateInstance(p.PropertyType)))
-                return false;
-                
-                return true;
-              });
-              
-              foreach (var prop in properties)
-              {
-                var value = prop.GetValue(example);
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var propertyAccess = Expression.Property(parameter, prop);
-                var constant = Expression.Constant(value);
-                var equal = Expression.Equal(propertyAccess, constant);
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-                query = query.Where(lambda);
-              }
-              
+              var query = GetQuery(_dbSet, includes).Where(predicate);
+          
               string sortOrder = sorting ?? $"{GetKeyPropertyName()},asc";
               query = WebUtils.ApplySort(query, WebUtils.ParseSortingString(sortOrder));
-              query = query.Skip(page * pageSize).Take(pageSize);
-              
-              return await query.ToListAsync();
+          
+              var total = await query.LongCountAsync();
+              var items = await query
+              .Skip(page * pageSize)
+              .Take(pageSize)
+              .ToListAsync();
+          
+              return await PaginationHelper.CreatePagedResponse(
+              items, page, pageSize, () => Task.FromResult(total));
             }
         
             public async Task<long> GetTotalCountAsync()
@@ -2414,11 +2394,15 @@
         namespace ${majStart(projectName)}.Services.Generic;
         
         using System.Linq.Expressions;
+        using ${majStart(projectName)}.Utils;
         
-        public interface IService<T, in TKey> where T : class
+        public interface IService<T, in TKey, in TSearch> where T : class
         {
-            Task<IEnumerable<T>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
-            Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting);
+            Task<PagedResponse<T>> GetAllAsync(
+                int page, int pageSize, string? sorting,
+                params Expression<Func<T, object?>>[]? includeProperties);
+            Task<PagedResponse<T>> SearchAsync(
+                TSearch searchDto, int page, int pageSize, string? sorting);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -4039,11 +4023,13 @@
     toGenerate: true
     serviceImports: |
       using Models;
+      using Models.Dto;
       using Generic;
+      using Services.Generic;
 
     serviceAnnotations: ""
     serviceClassKeyword: "public interface"
-    serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}>"
+    serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}, ${majStart(className)}SearchDto>"
     serviceName: "I${majStart(className)}Service"
     serviceFieldContent: "{{removeLine}}"
     serviceMethodContent: "{{removeLine}}"
@@ -4061,6 +4047,9 @@
           using ${majStart(projectName)}.Repositories.Interface;
           using ${majStart(projectName)}.Repositories.Implementation;
           using ${majStart(projectName)}.Services.Interface;
+          using ${majStart(projectName)}.Specification;
+          using ${majStart(projectName)}.Models.Dto;
+          using ${majStart(projectName)}.Utils;
           
           namespace ${majStart(projectName)}.Services.Implementation;
           
@@ -4073,29 +4062,35 @@
                   _repository = repository;
               }
           
-              public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
+              public async Task<PagedResponse<${majStart(className)}>> GetAllAsync(
+                  int page, int pageSize, string? sorting,
+                  params Expression<Func<${majStart(className)}, object?>>[]? includes)
               {
                   try
                   {
-                    return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                      return await _repository.SearchAsync(
+                          _ => true, page, pageSize, sorting, includes);
                   }
                   catch (Exception ex)
                   {
-                    throw new InternalServerErrorException("Error while retrieving all ${formatReadableLowerCase(className)}", ex);
+                      throw new InternalServerErrorException("Error while retrieving all ${formatReadableLowerCase(className)}", ex);
                   }
               }
           
-              public async Task<IEnumerable<${majStart(className)}>> SearchAsync(${majStart(className)} search, int page, int pageSize, string? sorting)
+              public async Task<PagedResponse<${majStart(className)}>> SearchAsync(
+                  ${majStart(className)}SearchDto searchDto,
+                  int page, int pageSize, string? sorting)
               {
-                try
-                {
-                  return await _repository.SearchAsync(search, page, pageSize, sorting);
-                }
-                catch (Exception ex)
-                {
-                  throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
-                }
-              }
+                  try
+                  {
+                      var predicate = new ${majStart(className)}FilterBuilder().Build(searchDto).Combine();
+                      return await _repository.SearchAsync(predicate, page, pageSize, sorting{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}} );
+                  }
+                  catch (Exception ex)
+                  {
+                      throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
+                  }
+              }  
           
               public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
