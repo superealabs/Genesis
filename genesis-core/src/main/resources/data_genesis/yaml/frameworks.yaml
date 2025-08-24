@@ -1950,6 +1950,17 @@
           .Build();
         });
         {{/if}}
+        
+        builder.Services.AddCors(options =>
+        {
+          options.AddPolicy("AllowFrontend", policy =>
+          {
+            policy.WithOrigins("http://localhost:3000") 
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // retire cette ligne si tu n’utilises pas de cookies / auth
+          });
+        });
 
         var app = builder.Build();
         
@@ -1969,6 +1980,8 @@
         {{#if useEurekaServer}}
         // Map all actuators and controllers directly
         app.MapAllActuators(_ => { });{{/if}}
+        
+        app.UseCors("AllowFrontend");
         
         {{#if useJWT}}
         app.UseAuthentication();
