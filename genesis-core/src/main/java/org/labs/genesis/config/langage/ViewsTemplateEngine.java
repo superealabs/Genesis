@@ -43,18 +43,28 @@ public class ViewsTemplateEngine {
     @ToString
     public static class List {
         private String modelType;
+        private String assetsImportLink;
         private String dataValue;
         private String dataForeignValue;
+        private String inlineLoopStatement;
         private String blockLoopStatementStart;
         private String blockLoopStatementEnd;
-        private String inlineLoopStatement;
+        private String backLink;
         private String detailsLink;
-        private String deleteTagHelper;
-        private String deleteLink;
         private String createLink;
         private String updateLink;
-        private String backLink;
-        private String assetsImportLink;
+        private String deleteLink;
+        private String deleteTagHelper;
+        private String pageSizeChangeLink;
+        private String pageSizeTagHelper;
+        private String previousPageLink;
+        private String previousClassCondition;
+        private String pagesListLoop;
+        private String nextPageLink;
+        private String nextClassCondition;
+        private String onGoingPageLink;
+        private String onGoingPageTagHelper;
+        private String onGoingPagesLoop;
     }
 
     @Getter

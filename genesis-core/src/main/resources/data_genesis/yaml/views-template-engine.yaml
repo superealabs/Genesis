@@ -15,21 +15,44 @@
       }
   list:
     modelType : |
-      @model IEnumerable<${majStart(className)}>
+      @model PagedResponse<${majStart(className)}>
+    assetsImportLink: "~"
     dataValue: "@${lowerCase(className)}.${majStart(this.name)}"
     dataForeignValue: "@${lowerCase(className)}.${majStart(this.name)}?.GetType().GetProperty((string)ViewBag.${majStart(this.type)}Column)?.GetValue(@${lowerCase(className)}.${majStart(this.name)})"
     inlineLoopStatement: |
     blockLoopStatementStart: |
-      @foreach (var ${lowerCase(className)} in Model) {
+      @foreach (var ${lowerCase(className)} in Model.Content) {
     blockLoopStatementEnd: |
       }
+    backLink: "@Url.Action(\"Index\")"
     detailsLink: "@Url.Action(\"Details\", new { ${pkColumn} = @${lowerCase(className)}.${majStart(pkColumn)} })"
-    deleteTagHelper: "data-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
-    deleteLink: "asp-action=\"Delete\""
     createLink: "@Url.Action(\"Create\")"
     updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @${lowerCase(className)}.${majStart(pkColumn)} })"
-    backLink: "@Url.Action(\"Index\")"
-    assetsImportLink: "~"
+    deleteLink: "asp-action=\"Delete\""
+    deleteTagHelper: "data-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
+    pageSizeChangeLink: "'@Url.Action(\"Index\")?page=1&pageSize='+this.value"
+    pageSizeTagHelper: "selected=\"@(Model.Page.Size == ${this})\""
+    previousPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size })"
+    previousClassCondition: " @(Model.Page.Number == 1 ? \"disabled\" : \"\")"
+    pagesListLoop: |
+      @for (int i = 1; i <= Model.Page.TotalPages; i++)
+      {{tab}}{{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}{{tab}}<a href="@Url.Action("Index", new { page = i, pageSize = Model.Page.Size })"
+      {{tab}}{{tab}}{{tab}}{{tab}}class="@(i == Model.Page.Number ? "active" : "")">
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}@i
+      {{tab}}{{tab}}{{tab}}{{tab}}</a>
+      {{tab}}{{tab}}{{tab}}}
+    nextPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number + 1, pageSize = Model.Page.Size })"
+    nextClassCondition: " @(Model.Page.Number == Model.Page.TotalPages ? \"disabled\" : \"\")"
+    onGoingPageLink: "@Url.Action(\"Index\")"
+    onGoingPageTagHelper: "value=\"@Model.Page.Size\""
+    onGoingPagesLoop: |
+      @for (int i = 1; i <= Model.Page.TotalPages; i++)
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}<option value="@i" selected="@(i == Model.Page.Number)">
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}@i
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}</option>
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}}
   detail:
     modelType: |
       @model ${majStart(className)}
@@ -61,6 +84,7 @@
       content: |
         @using ${majStart(projectName)}
         @using ${majStart(projectName)}.Models
+        @using ${majStart(projectName)}.Utils
         @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/"
     - fileType : "ViewStart"
