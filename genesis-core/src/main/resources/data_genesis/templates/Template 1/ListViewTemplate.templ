@@ -56,14 +56,10 @@ ${modelType}
 
         <div class="showing-content">
             <p>Showing: </p>
-            <select class="select" name="" id="" onchange="window.location.href='form.html'">
-                <option value="10">10</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="200">200</option>
-                <option value="300">300</option>
-                <option value="500">500</option>
-                <option value="1000">1000</option>
+            <select class="select" onchange="window.location.href=${pageSizeChangeLink}">
+                {{#each pageSizesList}}
+                <option value="${this}" ${pageSizeTagHelper}>${this}</option>
+                {{/each}}
             </select>
         </div>
         <div class="dropdown">
@@ -225,7 +221,9 @@ ${modelType}
     <!-- Content Footer -->
     <div class="content-footer">
         <div class="pagination">
-            <a href="#" class="prev disabled">
+            <!-- Previous -->
+            <a href="${previousPageLink}"
+                    class="prev ${previousClassCondition}">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
                     <title>Previous Page</title>
                     <g id="Layer_2" data-name="Layer 2">
@@ -239,14 +237,13 @@ ${modelType}
                     </g>
                 </svg>
             </a>
-            <a href="#" class="active">1</a>
-            <a href="#">2</a>
-            <a href="#">3</a>
-            <a href="#">4</a>
-            <a href="#">5</a>
-            <span class="dots">...</span>
-            <a href="#">10</a>
-            <a href="#" class="next">
+
+            <!-- Pages -->
+            ${pagesListLoop}
+
+            <!-- Next -->
+            <a href="${nextPageLink}"
+                    class="next ${nextClassCondition}">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
                     <title>Next Page</title>
                     <g id="Layer_2" data-name="Layer 2">
@@ -261,16 +258,15 @@ ${modelType}
                 </svg>
             </a>
         </div>
+
+        <!-- Go directly to a page -->
         <div class="ongoing-page">
-            <form action="" method="get" class="ongoing-page">
+            <form method="get" class="ongoing-page" action="${onGoingPageLink}">
                 <p>Going to page: </p>
-                <select class="select" name="" id="">
-                    <option value="10">1</option>
-                    <option value="10">1</option>
-                    <option value="10">1</option>
-                    <option value="10">1</option>
-                    <option value="10">1</option>
+                <select class="select" name="page" id="page">
+                    ${onGoingPagesLoop}
                 </select>
+                <input type="hidden" name="pageSize" ${onGoingPageTagHelper} />
                 <button type="submit" class="ongoing-button">Go</button>
             </form>
         </div>
