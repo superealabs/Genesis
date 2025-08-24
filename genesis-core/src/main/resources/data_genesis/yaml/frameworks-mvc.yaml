@@ -1516,22 +1516,6 @@
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
     - fileType: "Response Helper"
-      fileName: "ApiResponse"
-      extension: "cs"
-      content: |
-        namespace ${majStart(projectName)}.Utils;
-
-        public class ApiResponse<T>
-        {
-          public int Status { get; set; }
-          public string Message { get; set; }
-          public int ReturnCode { get; set; }
-          public T? Data { get; set; }
-          public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-        }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
-
-    - fileType: "Response Helper"
       fileName: "PageInfo"
       extension: "cs"
       content: |
@@ -1945,6 +1929,7 @@
       using Microsoft.AspNetCore.Mvc;
       using Microsoft.AspNetCore.Mvc.Rendering;
       using ${majStart(projectName)}.Services.Interface;
+      using ${majStart(projectName)}.Repositories.Interface;
       using ${majStart(projectName)}.Models;
       using ${majStart(projectName)}.Utils;
 
@@ -1953,26 +1938,35 @@
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
       {{tab}}private readonly I${majStart(className)}Service _service;
+      {{tab}}private readonly I${majStart(className)}Repository _repository;
       {{tab}}{{#each fieldsFK}}private readonly I${majStart(this.type)}Service _${minStart(this.type)}Service;
       {{tab}}{{#if @last}}private readonly EntityUtils _detector;{{newline}}{{/if}}{{/each}}
     controllerConstructors: |
-      {{tab}}public ${majStart(className)}Controller(I${majStart(className)}Service service{{#each fieldsFK}}, I${majStart(this.type)}Service ${minStart(this.type)}Service{{#if @last}}, EntityUtils detector{{/if}}{{/each}})
+      {{tab}}public ${majStart(className)}Controller(I${majStart(className)}Service service, I${majStart(className)}Repository repository{{#each fieldsFK}}, I${majStart(this.type)}Service ${minStart(this.type)}Service{{#if @last}}, EntityUtils detector{{/if}}{{/each}})
       {{tab}}{
       {{tab}}{{tab}}_service = service;
+      {{tab}}{{tab}}_repository = repository;
       {{tab}}{{tab}}{{#each fieldsFK}}_${minStart(this.type)}Service = ${minStart(this.type)}Service;
       {{tab}}{{tab}}{{#if @last}}_detector = detector;{{newline}}{{/if}}{{/each}}
       {{tab}}}
     controllerMethodContent: |
       {{tab}}// GET: /${majStart(className)}
-      {{tab}}public async Task<IActionResult> Index()
+      {{tab}}public async Task<IActionResult> Index(int page = 1, int pageSize = 10, string? sortOrder = null)
       {{tab}}{
-      {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync(0, int.MaxValue, null{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
+      {{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync((page - 1), pageSize, sortOrder{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
       {{tab}}{{tab}}{{#each fieldsFK}}
       {{tab}}{{tab}}string ${minStart(this.type)}Column = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
       {{tab}}{{tab}}ViewBag.${this.type}Column = ${minStart(this.type)}Column;
       {{tab}}{{tab}}{{/each}}
+      {{tab}}{{tab}}var pagedResponse = await PaginationHelper.CreatePagedResponse(
+      {{tab}}{{tab}}{{tab}}items: ${minStart(className)}s,
+      {{tab}}{{tab}}{{tab}}page: page,
+      {{tab}}{{tab}}{{tab}}pageSize: pageSize,
+      {{tab}}{{tab}}{{tab}}totalCountFunc: () => _repository.GetTotalCountAsync()
+      {{tab}}{{tab}});
+      {{tab}}{{tab}}
       {{tab}}{{tab}}ViewData["Title"] = "${majStart(className)}";
-      {{tab}}{{tab}}return View(${minStart(className)}s);
+      {{tab}}{{tab}}return View(pagedResponse);
       {{tab}}}
       {{tab}}
       {{tab}}// GET: /${majStart(className)}/Details/${pkColumn}
