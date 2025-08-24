@@ -215,6 +215,8 @@ public class FrameworkMetadataProvider {
         metadata.put("fields", getFieldsWithInputsTypeList(tableMetadata, language));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
+        List<Integer> pageSizesList = Arrays.asList(10, 50, 100, 200, 300, 500, 1000);
+        metadata.put("pageSizesList", pageSizesList);
 
         return metadata;
     }
@@ -479,6 +481,16 @@ public class FrameworkMetadataProvider {
         altMap.put("createLink", viewsTemplateEngine.getList().getCreateLink());
         altMap.put("backLink", viewsTemplateEngine.getList().getBackLink());
         altMap.put("assetsImportLink", viewsTemplateEngine.getList().getAssetsImportLink());
+        altMap.put("pageSizeChangeLink", viewsTemplateEngine.getList().getPageSizeChangeLink());
+        altMap.put("pageSizeTagHelper", viewsTemplateEngine.getList().getPageSizeTagHelper());
+        altMap.put("previousPageLink", viewsTemplateEngine.getList().getPreviousPageLink());
+        altMap.put("previousClassCondition", viewsTemplateEngine.getList().getPreviousClassCondition());
+        altMap.put("pagesListLoop", viewsTemplateEngine.getList().getPagesListLoop());
+        altMap.put("nextPageLink", viewsTemplateEngine.getList().getNextPageLink());
+        altMap.put("nextClassCondition", viewsTemplateEngine.getList().getNextClassCondition());
+        altMap.put("onGoingPageLink", viewsTemplateEngine.getList().getOnGoingPageLink());
+        altMap.put("onGoingPageTagHelper", viewsTemplateEngine.getList().getOnGoingPageTagHelper());
+        altMap.put("onGoingPagesLoop", viewsTemplateEngine.getList().getOnGoingPagesLoop());
         return altMap;
     }
 
