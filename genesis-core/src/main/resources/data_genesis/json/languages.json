@@ -290,7 +290,7 @@
     "extension": "ts",
     "configurations": [],
     "syntax": {
-      "classKeyword": "class",
+      "classKeyword": "export class",
       "namespace": "",
       "namespaceStart": "",
       "namespaceEnd": "",

@@ -4594,10 +4594,21 @@
       fileName: "index"
       extension: "ts"
       content: |
-        { { #each entities}}
+        {{#each entities}}
         export { ${ majStart(this) } } from "./${ majStart(this) }";
         {{/each}}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/models"
+    - fileType: "env"
+      fileName: ".env"
+      extension: ""
+      content: |
+        DB_HOST=localhost
+        DB_PORT=${databasePort}
+        DB_USERNAME=${databaseUsername}
+        DB_PASSWORD=${databasePassword}
+        DB_DATABASE=${databaseName}
+        APP_PORT=${projectPort}
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }"
     - fileType: "Index"
       fileName: "index"
       extension: "ts"
@@ -4713,7 +4724,7 @@
   model:
     toGenerate: true
     modelImports: |
-      import {Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToOne} from "typeorm";
+      import {Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToOne, JoinColumn} from "typeorm";
       import * as Models from './index';
     modelExtends: ""
     modelAnnotations: |
@@ -4726,21 +4737,15 @@
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}${this.name}!: ${this.type};
-      
       {{elseIf this.isPrimaryKey}}
       @PrimaryColumn()
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
-    
       {{elseIf this.isForeignKey}}
-      @Column({ name: "${this.columnName}", nullable: true })
-      {{tab}}{{this.referencedColumnType}} {{this.columnNameField}};
-      
-      @ManyToOne(() => ${this.type}, ${this.name} => ${this.namePlural}, { eager: true })
-      @JoinColumn({ name: "${this.columnName}" })
-      {{this.name}}!: ${this.type};
-    
+      {{tab}}@ManyToOne(() => Models.${this.type}, { eager: true })
+      {{tab}}@JoinColumn({ name: "${this.columnName}" })
+      {{tab}}${this.name}!: Models.${this.type};
       {{else}}
       @Column({ name: "${this.columnName}", unique: ${this.isUnique}, nullable: ${this.isNullable} })
       {{tab}}{{#each this.attributeTypeAnnotations}}
@@ -4749,7 +4754,6 @@
       {{tab}}${this.name}!: ${this.type};
       {{/if}}{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
-
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/models"

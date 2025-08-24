@@ -353,7 +353,7 @@
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
 
   projectFolders: [ ]
-- id: 3
+- id: 5
   name: "Node js"
   coreFrameworks:
     - "Express JS"
@@ -378,7 +378,7 @@
             "reflect-metadata": "^0.2.2",
             "typeorm": "0.3.25",
             {{#if useDB}}
-            "${DBartifactId}": "^${DBartifactId}",
+            "${DBartifactId}": "^${DBversion}",
             {{/if}}
             "body-parser": "^2.2.0",
             "class-validator": "^0.14.0",

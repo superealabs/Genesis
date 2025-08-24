@@ -94,11 +94,6 @@
         "artifactId": "Npgsql.EntityFrameworkCore.PostgreSQL"
       },
       "3": {
-        "groupId": "io.hypersistence",
-        "artifactId": "hypersistence-utils-hibernate-63",
-        "version": "3.8.4"
-      },
-      "5": {
         "groupId": "npm",
         "artifactId": "pg",
         "version": "8.13.0"
