@@ -64,7 +64,10 @@
         
         app.MapControllerRoute(
             name: "default",
-            pattern: "{controller=User}/{action=Index}/{id?}");
+        {{#each allEntities}}
+        {{#if @first}}    
+            pattern: "{controller=${this.entityName}}/{action=Index}/{${this.pkColumn}?}");{{/if}}
+        {{/each}}
         
         app.Run();
 
