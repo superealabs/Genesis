@@ -3927,6 +3927,28 @@
             }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
+      - fileType: "DTO search model class"
+        fileName: "${majStart(className)}SearchDto"
+        extension: "cs"
+        content: |
+          namespace ${majStart(projectName)}.Models.Dto;
+
+          public class ${majStart(className)}SearchDto
+          {
+          {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{elseIf this.isForeignKey}}
+          {{tab}}
+          {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
+          {{tab}}public ${this.type}SearchDto? ${majStart(this.name)} { get; set; }
+          {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+          public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
+          {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
+          {{tab}}{{else}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
+          {{tab}}{{/each}}
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto/"
     validationAnnotations:
       notNull: '[Required(ErrorMessage = "${majStart(name)} cannot be null")]'
       maxSize: "[StringLength(${columnSize})]"
