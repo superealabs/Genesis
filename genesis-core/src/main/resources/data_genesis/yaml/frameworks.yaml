@@ -4176,6 +4176,7 @@
     controllerImports: |
       using Microsoft.AspNetCore.Mvc;
       using Models;
+      using Models.Dto;
       using Services;
       using Services.Interface;
       using Swashbuckle.AspNetCore.Annotations;
@@ -4215,25 +4216,19 @@
       {{tab}}public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(className)}>>>> Get${majStart(className)}s(
       {{tab}}   [FromQuery, SwaggerParameter("Page number (0-indexed)", Required = false)] int page = 0,
       {{tab}}   [FromQuery, SwaggerParameter("Size of the page", Required = false)] int pageSize = 10,
-      {{tab}}   [FromQuery, SwaggerParameter("Sort order", Required = false)] string? sortOrder = null
+      {{tab}}   [FromQuery, SwaggerParameter("Sort order", Required = false)] string? sortParam = null
       {{tab}})
       {{tab}}{
       {{tab}}{{tab}}try {
-      {{tab}}{{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync(page, pageSize, sortOrder{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}});
-      {{tab}}{{tab}}{{tab}}var pagedResponse = await PaginationHelper.CreatePagedResponse(
-      {{tab}}{{tab}}{{tab}}{{tab}}items: ${minStart(className)}s,
-      {{tab}}{{tab}}{{tab}}{{tab}}page: page,
-      {{tab}}{{tab}}{{tab}}{{tab}}pageSize: pageSize,
-      {{tab}}{{tab}}{{tab}}{{tab}}totalCountFunc: () => _repository.GetTotalCountAsync()
-      {{tab}}{{tab}}{{tab}});
+      {{tab}}{{tab}}{{tab}}var data = await _service.GetAllAsync(page, pageSize, sortParam{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}});
       {{tab}}{{tab}}{{tab}}return Ok(new ApiResponse<PagedResponse<${majStart(className)}>>
       {{tab}}{{tab}}{{tab}}{
       {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status200OK,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = ${minStart(className)}s.Any()
+      {{tab}}{{tab}}{{tab}}{{tab}}Message = data.Content.Any()
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}? "${majStart(className)}s retrieved successfully"
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}: "No ${minStart(className)}s found",
       {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = pagedResponse
+      {{tab}}{{tab}}{{tab}}{{tab}}Data = data
       {{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}}
       {{tab}}{{tab}}catch (Exception ex)
@@ -4309,34 +4304,22 @@
       {{tab}}[ProducesResponseType(typeof(ApiResponse<PagedResponse<${majStart(className)}>>), 200)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
       {{tab}}public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(className)}>>>> Search${majStart(className)}s(
-      {{tab}}   [FromBody] ${majStart(className)}SearchModel search,
+      {{tab}}   [FromBody] ${majStart(className)}SearchDto dto,
       {{tab}}   [FromQuery] int page = 0,
       {{tab}}   [FromQuery] int pageSize = 10,
-      {{tab}}   [FromQuery] string? sortOrder = null
+      {{tab}}   [FromQuery] string? sortParam = null
       {{tab}})
       {{tab}}{
       {{tab}}{{tab}}try {
-      {{tab}}{{tab}}{{tab}}var filter = new GenericMapper().Map<${majStart(className)}SearchModel, ${majStart(className)}>(search);
-      {{tab}}{{tab}}{{tab}}var results = await _service.SearchAsync(filter, page, pageSize, sortOrder);
-      {{tab}}{{tab}}{{tab}}var pagedResponse = new PagedResponse<${majStart(className)}>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Content = results.ToList(),
-      {{tab}}{{tab}}{{tab}}{{tab}}Page = new PageInfo
-      {{tab}}{{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Size = pageSize,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Number = page,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}TotalElements = results.Count(),
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}TotalPages = (int)Math.Ceiling((double) results.Count() / pageSize)
-      {{tab}}{{tab}}{{tab}}{{tab}}}
-      {{tab}}{{tab}}{{tab}}};
+      {{tab}}{{tab}}{{tab}}var data = await _service.SearchAsync(dto, page, pageSize, sortParam);
       {{tab}}{{tab}}{{tab}}return Ok(new ApiResponse<PagedResponse<${majStart(className)}>>
       {{tab}}{{tab}}{{tab}}{
       {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status200OK,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = results.Any()
+      {{tab}}{{tab}}{{tab}}{{tab}}Message = data.Content.Any()
       {{tab}}{{tab}}{{tab}}{{tab}}? "${majStart(className)}s retrieved successfully"
       {{tab}}{{tab}}{{tab}}{{tab}}: "No ${formatReadableLowerCase(className)}s found for the given criteria",
       {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = pagedResponse
+      {{tab}}{{tab}}{{tab}}{{tab}}Data = data
       {{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}}
       {{tab}}{{tab}}catch (Exception ex)
