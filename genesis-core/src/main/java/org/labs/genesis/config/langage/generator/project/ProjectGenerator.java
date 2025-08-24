@@ -64,7 +64,7 @@ public class ProjectGenerator {
     }
 
     public static void renderAndCopyFiles(List<Project.ProjectFiles> projectFiles, HashMap<String, Object> initializeHashMap) throws IOException {
-        System.out.println("Generating PROJECT FILESSS");
+        System.out.println("Generating PROJECT FILESSS RenderCopyFiles");
         for (Project.ProjectFiles projectFile : projectFiles) {
             String sourceFilePath = projectFile.getSourcePath() + projectFile.getFileName();
             String destinationFilePathSimple = projectFile.getDestinationPath() + projectFile.getFileName();
@@ -127,7 +127,7 @@ public class ProjectGenerator {
                 context.getProjectName(),
                 context.getGroupLink()
         );
-        System.out.println("Generating PROJECT FILESSS");
+        System.out.println("Generating PROJECT FILESSS 1");
 
         HashMap<String, Object> projectFilesEditsHashMap = getProjectFilesEditsHashMap(
                 context.getDestinationFolder(),
@@ -148,6 +148,8 @@ public class ProjectGenerator {
             var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
             projectFilesEditsHashMap.putAll(mapDaoGlobal);
         }
+        System.out.println("Generating PROJECT FILESSS 3");
+
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);
@@ -261,6 +263,7 @@ public class ProjectGenerator {
                 generateProjectFiles(context, allEntities);
 
             } catch (Exception e) {
+                e.printStackTrace();
                 throw new RuntimeException("\nError in generateFullProject : \n" + e);
             }
         } else {

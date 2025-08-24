@@ -19,7 +19,16 @@ public class FrameworkMetadataProvider {
 
     public static @NotNull Map<String, Object> getCredentialsHashMap(Database database) {
         Credentials credentials = database.getCredentials();
-
+        System.out.println("=== DEBUG getCredentialsHashMap ===");
+        System.out.println("host=" + credentials.getHost());
+        System.out.println("port=" + credentials.getPort());
+        System.out.println("database=" + credentials.getDatabaseName());
+        System.out.println("schema=" + credentials.getSchemaName());
+        System.out.println("useSSL=" + credentials.isUseSSL());
+        System.out.println("username=" + credentials.getUser());
+        System.out.println("password=" + credentials.getPwd());
+        System.out.println("driverType=" + credentials.getDriverType());
+        System.out.println("sid=" + database.getSid());
         return new HashMap<>(
                 Map.of("host", credentials.getHost(),
                         "port", credentials.getPort(),
@@ -28,8 +37,8 @@ public class FrameworkMetadataProvider {
                         "useSSL", credentials.isUseSSL(),
                         "username", credentials.getUser(),
                         "password", credentials.getPwd(),
-                        "driverType", credentials.getDriverType(),
-                        "sid", database.getSid()
+                        "driverType", Objects.toString(credentials.getDriverType(), ""),
+                        "sid",Objects.toString(database.getSid(), "")
                 )
         );
     }
@@ -341,11 +350,15 @@ public class FrameworkMetadataProvider {
     public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName) throws Exception {
         String packageDefault = "";
         packageDefault = framework.getModelDao().getModelDaoSavePath();
-
+        System.out.println("Get hashmapDAO global " + packageDefault);
         Database database = tableMetadata.getFirst().getDatabase();
+        System.out.println("Get databaseee global ");
+
         String connectionString = database.getConnectionString().get(framework.getLanguageId());
         Map<String, Object> connectionStringMetadata = getCredentialsHashMap(database);
+
         connectionString = engine.render(connectionString, connectionStringMetadata);
+        System.out.println("Renderedeee");
 
         Map<String, Object> metadata = new HashMap<>(Map.of(
                 "projectName", projectName,

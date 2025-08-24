@@ -4769,6 +4769,22 @@
       notBlank: '@IsNotEmpty()'
       minAndMaxSize: '@Length(${minLength}, ${columnSize})'
       regexPattern: '@Matches(${value})'
+  modelDao:
+    toGenerate: false
+    modelDaoImports: ""
+    modelDaoAnnotations: ""
+    modelDaoClassKeyword: ""
+    modelDaoExtends: ""
+    modelDaoName: ""
+    modelDaoFieldContent: "{{removeLine}}"
+    modelDaoMethodContent: "{{removeLine}}"
+    modelDaoConstructors: "{{removeLine}}"
+    modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/src/models"
+    modelDaoPackage: "{{removeLine}}"
+    modelDaoAdditionalFiles: [ ]
+
+  service:
+  controller:
   configurations: []
   dependencies: []
 
