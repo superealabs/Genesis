@@ -434,4 +434,5 @@
           "include": ["src/**/*.ts", "tests/**/*.test.ts"]
         }
       destinationPath: "${destinationFolder}/${projectName}/"
+  projectFiles: [ ]
   projectFolders: [ ]

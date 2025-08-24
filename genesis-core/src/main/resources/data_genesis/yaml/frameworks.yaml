@@ -4590,6 +4590,14 @@
   useEurekaServer: false
   isGateway: false
   additionalFiles:
+    - fileType: "Model Index"
+      fileName: "index"
+      extension: "ts"
+      content: |
+        { { #each entities}}
+        export { ${ majStart(this) } } from "./${ majStart(this) }";
+        {{/each}}
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/models"
     - fileType: "Index"
       fileName: "index"
       extension: "ts"
@@ -4624,15 +4632,6 @@
         .catch((error) => console.error("Error during data source initialization", error));
         export default app;
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src"
-    - fileType: "Model Index"
-      fileName: "index"
-      extension: "ts"
-      content: |
-        {{#each entities}}
-        export { ${majStart(this)} } from "./${majStart(this)}";
-        {{/each}}   
-
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/models"
     - fileType: "Data source"
       fileName: "data-source"
       extension: "ts"
@@ -4726,7 +4725,8 @@
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
-    
+      {{tab}}${this.name}!: ${this.type};
+      
       {{elseIf this.isPrimaryKey}}
       @PrimaryColumn()
       {{tab}}{{#each this.validationAnnotations}}
@@ -4746,28 +4746,30 @@
       {{tab}}{{#each this.attributeTypeAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
-      {{tab}}{{this.name}}!: ${this.type};
+      {{tab}}${this.name}!: ${this.type};
       {{/if}}{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
 
-  modelGetterSetter: "{{removeLine}}"
-  modelConstructors: "{{removeLine}}"
-  modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/models"
-  modelPackage: "Models"
-  validationAnnotations:
-    notNull: '@IsNotEmpty({ message: "${majStart(name)} cannot be null" })'
-    maxSize: '@MaxLength(${columnSize})'
-    numericMinimumValue: '@Min(${value})'
-    numericMinimumInclusiveValue: '@Min(${value})'
-    numericMaximumValue: '@Max(${value})'
-    numericMaximumInclusiveValue: '@Max(${value})'
-    past: '@IsDate()'
-    pastOrPresent: '@IsDate()'
-    future: '@IsDate()'
-    futureOrPresent: '@IsDate() // custom check: >= now'
-    notBlank: '@IsNotEmpty()'
-    minAndMaxSize: '@Length(${minLength}, ${columnSize})'
-    regexPattern: '@Matches(${value})'
+    modelGetterSetter: "{{removeLine}}"
+    modelConstructors: "{{removeLine}}"
+    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/models"
+    modelPackage: "Models"
+    modelAdditionalFiles: [ ]
+    validationAnnotations:
+      notNull: '@IsNotEmpty({ message: "${majStart(name)} cannot be null" })'
+      maxSize: '@MaxLength(${columnSize})'
+      numericMinimumValue: '@Min(${value})'
+      numericMinimumInclusiveValue: '@Min(${value})'
+      numericMaximumValue: '@Max(${value})'
+      numericMaximumInclusiveValue: '@Max(${value})'
+      past: '@IsDate()'
+      pastOrPresent: '@IsDate()'
+      future: '@IsDate()'
+      futureOrPresent: '@IsDate() // custom check: >= now'
+      notBlank: '@IsNotEmpty()'
+      minAndMaxSize: '@Length(${minLength}, ${columnSize})'
+      regexPattern: '@Matches(${value})'
+  configurations: []
   dependencies: []
 
 

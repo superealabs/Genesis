@@ -27,8 +27,9 @@ public class ProjectMetadataProvider {
         configFile.put("projectPort", projectPort);
 
         if (framework.getUseDB()) {
+            System.out.println(" id language = "+language.getId()+ " database "+database.getName());
             String databaseUrl = database.getConnectionString().get(language.getId());
-
+            System.out.println("Database URL: " + databaseUrl);
             Map<String, Object> databaseMetadata = database.getDatabaseMetadataHashMap(credentials);
             databaseUrl = engine.render(databaseUrl, databaseMetadata);
 
@@ -132,7 +133,7 @@ public class ProjectMetadataProvider {
 
     static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName, String groupLink, String projectPort, Database database, Credentials credentials, @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
         HashMap<String, Object> combinedMap = new HashMap<>();
-
+        System.out.println("Project files edits hashmap");
         combinedMap.putAll(getConfigFileHashMap(projectPort, database, credentials, language, framework, frameworkOptions));
         combinedMap.putAll(getDependencyFileHashMap(projectDescription, database, language, framework, langageConfiguration, frameworkOptions));
         combinedMap.putAll(getInitialHashMap(destinationFolder, projectName, groupLink));

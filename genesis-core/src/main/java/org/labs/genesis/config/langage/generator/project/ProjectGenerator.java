@@ -64,6 +64,7 @@ public class ProjectGenerator {
     }
 
     public static void renderAndCopyFiles(List<Project.ProjectFiles> projectFiles, HashMap<String, Object> initializeHashMap) throws IOException {
+        System.out.println("Generating PROJECT FILESSS");
         for (Project.ProjectFiles projectFile : projectFiles) {
             String sourceFilePath = projectFile.getSourcePath() + projectFile.getFileName();
             String destinationFilePathSimple = projectFile.getDestinationPath() + projectFile.getFileName();
@@ -126,6 +127,7 @@ public class ProjectGenerator {
                 context.getProjectName(),
                 context.getGroupLink()
         );
+        System.out.println("Generating PROJECT FILESSS");
 
         HashMap<String, Object> projectFilesEditsHashMap = getProjectFilesEditsHashMap(
                 context.getDestinationFolder(),
@@ -140,6 +142,7 @@ public class ProjectGenerator {
                 context.getFramework(),
                 context.getFrameworkConfiguration()
         );
+        System.out.println("Generating PROJECT FILESSS 2");
 
         if (context.getFramework().getUseDB()) {
             var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
@@ -230,6 +233,7 @@ public class ProjectGenerator {
                 GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
 
                 for (TableMetadata tableMetadata : entities) {
+
                     generateBackendComponents(
                             context,
                             genesisGenerator,
@@ -237,6 +241,7 @@ public class ProjectGenerator {
                             false
                     );
                 }
+                System.out.println(" GENERATED ENTITIES FOR PROJECT");
 
                 for (TableMetadata tableMetadata : views) {
                     generateBackendComponents(
@@ -246,6 +251,8 @@ public class ProjectGenerator {
                             false
                     );
                 }
+                System.out.println(" GENERATED VIEWS FOR PROJECT");
+
 
                 List<TableMetadata> allEntities = new ArrayList<>();
                 allEntities.addAll(entities);
