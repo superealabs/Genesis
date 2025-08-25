@@ -11,11 +11,16 @@
       "DateTime": "datetime-local",
       "DateTimeOffset": "datetime-local",
       "TimeSpan": "time",
-      "Boolean": "checkbox",
+      "Boolean": "radio",
       "int[]": "multiple-int",
       "string[]": "multiple-string",
       "byte[]": "file",
       "System.Net.IPAddress": "text"
+    },
+    "validations": {
+      "notNull": "required",
+      "notBlank": "required",
+      "maxSize": "maxlength=\"${columnSize}\""
     }
   }
 ]
