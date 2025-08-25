@@ -4336,7 +4336,9 @@
       
       {{#if !isView}} 
       {{tab}}[HttpPost]
-      {{tab}}{{#if useJWT}}[Authorize]{{/if}}{{/if}}{{#if !isView}} 
+      {{/if}}
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
+      {{#if !isView}} 
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
@@ -4371,7 +4373,9 @@
       
       {{#if !isView}} 
       {{tab}}[HttpPut("{id}")]
-      {{tab}}{{#if useJWT}}[Authorize]{{/if}}{{/if}}{{#if !isView}}
+      {{/if}}
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
+      {{#if !isView}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
@@ -4433,7 +4437,9 @@
       
       {{#if !isView}} 
       {{tab}}[HttpDelete("{id}")]
-      {{tab}}{{#if useJWT}}[Authorize]{{/if}}{{/if}}{{#if !isView}}
+      {{/if}}
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
+      {{#if !isView}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Delete ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Delete a ${formatReadableLowerCase(className)} item by its ID"
