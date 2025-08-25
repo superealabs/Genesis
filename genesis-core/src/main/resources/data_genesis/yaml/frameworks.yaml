@@ -4580,7 +4580,7 @@
       scope: "{{removeLine}}"
 
 - id: 5
-  languageId: 5
+  languageId: 4
   coreFramework: "ExpressJs"
   name: "Express JS"
   template: "Template"
@@ -4602,7 +4602,7 @@
       fileName: ".env"
       extension: ""
       content: |
-        DB_HOST=localhost
+        DB_HOST=${host}
         DB_PORT=${databasePort}
         DB_USERNAME=${databaseUsername}
         DB_PASSWORD=${databasePassword}
@@ -4615,7 +4615,7 @@
       content: |
         import "reflect-metadata";
         import express from "express";
-        import {AppDataSource} from "./config/dataSource";
+        import {AppDataSource} from "./config/data-source";
         import {errorHandler} from "./middlewares/error.middleware";
         import swaggerUi from "swagger-ui-express";
         {{#each entities}}

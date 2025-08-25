@@ -12,7 +12,7 @@
         "groupId": "",
         "artifactId": "Pomelo.EntityFrameworkCore.MySql"
       },
-      "5": {
+      "4": {
         "groupId": "npm",
         "artifactId": "mysql2",
         "version": "3.11.0"
@@ -23,7 +23,7 @@
     "connectionString": {
       "1": "jdbc:mysql://${host}:${port}/${database}",
       "2": "Server=${host};Port=${port};Database=${database};User Id=${username};Password=${password};",
-      "3": "mysql://${username}:${password}@${host}:${port}/${database}"
+      "4": "mysql://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "MySql"
@@ -98,7 +98,7 @@
         "artifactId": "hypersistence-utils-hibernate-63",
         "version": "3.8.4"
       },
-      "5": {
+      "4": {
         "groupId": "npm",
         "artifactId": "pg",
         "version": "8.13.0"
@@ -109,7 +109,7 @@
     "connectionString": {
       "1": "jdbc:postgresql://${host}:${port}/${database}",
       "2": "Host=${host};Port=${port};Database=${database};Username=${username};Password=${password};",
-      "5": "postgres://${username}:${password}@${host}:${port}/${database}"
+      "4": "postgres://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "Npgsql"
@@ -179,7 +179,7 @@
         "groupId": "",
         "artifactId": "Microsoft.EntityFrameworkCore.SqlServer"
       },
-      "5": {
+      "4": {
         "groupId": "npm",
         "artifactId": "mssql",
         "version": "11.0.1"
@@ -190,7 +190,7 @@
     "connectionString": {
       "1": "jdbc:sqlserver://${host}:${port};databaseName=${database};encrypt=false;trustServerCertificate=true",
       "2": "Server=${host};Database=${database};User Id=${username};Password=${password};Encrypt=false;TrustServerCertificate=true",
-      "3": "mssql://${username}:${password}@${host}:${port}/${database}"
+      "4": "mssql://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "SqlServer"
@@ -269,7 +269,7 @@
         "groupId": "",
         "artifactId": "Oracle.EntityFrameworkCore"
       },
-      "5": {
+      "4": {
         "groupId": "npm",
         "artifactId": "oracledb",
         "version": "6.6.0"
@@ -280,7 +280,7 @@
     "connectionString": {
       "1": "jdbc:oracle:${driverType}:@//${host}:${port}/${sid}",
       "2": "User Id=${username};Password=${password};Data Source=${host}:${port}/${database}",
-      "3": "oracle://${username}:${password}@${host}:${port}/${database}"
+      "4": "oracle://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "Oracle"

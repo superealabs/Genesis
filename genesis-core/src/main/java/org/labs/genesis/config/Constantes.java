@@ -20,7 +20,7 @@ public class Constantes {
     // LANGUAGES
     public static final int Java_ID = 1;
     public static final int CSharp_ID = 2;
-    public static final int TypeScript_ID = 5;
+    public static final int TypeScript_ID = 4;
 
     // FRAMEWORKS
     public static final int Spring_REST_API_ID = 1;
@@ -32,5 +32,5 @@ public class Constantes {
     // PROJECTS
     public static final int Maven_ID = 1;
     public static final int ASP_ID = 2;
-    public static final int Node_ID = 5;
+    public static final int Node_ID = 3;
 }
