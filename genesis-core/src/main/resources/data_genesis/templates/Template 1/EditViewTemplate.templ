@@ -28,20 +28,41 @@ ${modelType}
          <input name="${this.name}" id="${this.name}" type="hidden" ${inputTagHelper}/>{{/if}}{{else}}{{removeLine}}{{/if}}
         {{/each}}{{removeLine}}
 
-        {{#each fields}}
-        {{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = false}}<div class="form-input">
-            <label for="${this.name}">${this.name}</label>
-            <input type="${this.inputType}" name="${this.name}" id="${this.name}" placeholder="${this.name}" ${inputTagHelper}>
+        {{#each inputs}}
+        {{#if this.isShowed = true}}{{#if this.isRequired = true}}<div class="form-input">
+            <label for="${this.name}">
+                ${this.name}
+                <span>*</span>
+            </label>
+            <input type="${this.type}" name="${this.name}" id="${this.id}" placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}${inputTagHelper}>
+        </div>{{/if}}{{else}}{{removeLine}}{{/if}}
+        {{/each}}{{removeLine}}
+        {{#each inputs}}
+        {{#if this.isShowed = true}}{{#if this.isRequired = false}}<div class="form-input">
+            <label for="${this.name}">
+                ${this.name}
+            </label>
+            <input type="${this.type}" name="${this.name}" id="${this.id}" placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}${inputTagHelper}>
         </div>{{/if}}{{else}}{{removeLine}}{{/if}}
         {{/each}}{{removeLine}}
 
         {{#each fieldsFK}}
-        <div class="form-input">
-            <label for="">${this.columnNameField}</label>
+        {{#if this.isNullable}}<div class="form-input">
+            <label for="">
+                ${this.columnNameField}
+            </label>
             <select name="${this.columnNameField}" id="${this.columnNameField}" ${selectTagHelper}>
                 <option value="">-- Select ${this.type} --</option>
             </select>
-        </div>
+        </div>{{else}}<div class="form-input">
+            <label for="${this.columnNameField}">
+                ${this.columnNameField}
+                <span>*</span>
+            </label>
+            <select name="${this.columnNameField}" id="${this.columnNameField}" ${selectTagHelper}>
+                <option value="">-- Select ${this.type} --</option>
+            </select>
+        </div>{{/if}}
         {{/each}}{{removeLine}}
 
         <div class="form-actions">

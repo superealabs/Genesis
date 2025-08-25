@@ -423,6 +423,10 @@ tr.table-content:hover {
     flex-wrap: wrap;
     flex-direction: column;
 }
+.form-input span {
+    color: red;
+    opacity: 30%;
+}
 .form-input input,
 .form-input select {
     float: inline-start;
