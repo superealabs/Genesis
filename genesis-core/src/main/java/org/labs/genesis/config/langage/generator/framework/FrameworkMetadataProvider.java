@@ -208,14 +208,16 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
-    public static HashMap<String, Object> getViewHashMapIntermediaire(Language language, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) {
+    public static HashMap<String, Object> getViewHashMapIntermediaire(Language language, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) throws Exception {
         HashMap<String, Object> metadata = new HashMap<>();
 
         addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
-        metadata.put("fields", getFieldsWithInputsTypeList(tableMetadata, language));
+        metadata.put("fields", getFieldsList(tableMetadata, language));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
-        List<Integer> pageSizesList = Arrays.asList(10, 50, 100, 200, 300, 500, 1000);
+        metadata.put("inputs", getInputsList(tableMetadata, language));
+
+        List<Integer> pageSizesList = Arrays.asList(5, 10, 50, 100, 200, 300, 500, 1000);
         metadata.put("pageSizesList", pageSizesList);
 
         return metadata;
@@ -286,16 +288,30 @@ public class FrameworkMetadataProvider {
         return fields;
     }
 
-    private static List<Map<String, Object>> getFieldsWithInputsTypeList(TableMetadata tableMetadata, Language language) {
-        List<Map<String, Object>> fieldsInputType = new ArrayList<>();
+    private static List<Map<String, Object>> getInputsList(TableMetadata tableMetadata, Language language) throws Exception {
+        List<Map<String, Object>> inputs = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
-            Map<String, Object> fieldMap = getFieldHashMap(field, language);
-            InputTypeMapping inputTypeMapping = InputTypeMapping.getInputTypeMapping(language.getId());
-            fieldMap.put("inputType", inputTypeMapping.getTypes().get(field.getType()));
-            System.out.println(field.getName() + "inputType " + inputTypeMapping.getTypes().get(field.getColumnType()));
-            fieldsInputType.add(fieldMap);
+            if (!field.isForeign()) {
+                InputTypeMapping.Input input = InputTypeMapping.getInput(field, language, engine);
+                Map<String, Object> inputMap = getInputHashMap(input);
+                inputs.add(inputMap);
+            }
         }
-        return fieldsInputType;
+        return inputs;
+    }
+
+    public static @NotNull Map<String, Object> getInputHashMap(InputTypeMapping.Input input) {
+        Map<String, Object> inputMap = new HashMap<>();
+
+        inputMap.put("name", input.getName());
+        inputMap.put("id", input.getId());
+        inputMap.put("placeholder", input.getPlaceholder());
+        inputMap.put("validations", input.getValidations());
+        inputMap.put("type", input.getType());
+        inputMap.put("isShowed", input.getIsShowed());
+        inputMap.put("isRequired", input.getIsRequired());
+
+        return inputMap;
     }
 
     private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata, Language language) {

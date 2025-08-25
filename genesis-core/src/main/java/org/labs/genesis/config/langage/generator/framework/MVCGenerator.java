@@ -345,7 +345,7 @@ public class MVCGenerator implements GenesisGenerator {
 
         String templateContent = loadViewCreateTemplate(viewsTemplate);
 
-        // Rendu intermédiaire
+        // Rendu avec les metadata du template engine
         HashMap<String, Object> metadataSecondary = getAltViewCreateHashMap(viewsTemplateEngine);
         String secondaryResult = engine.simpleRender(templateContent, metadataSecondary);
 
