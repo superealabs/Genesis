@@ -94,6 +94,11 @@
         "artifactId": "Npgsql.EntityFrameworkCore.PostgreSQL"
       },
       "3": {
+        "groupId": "io.hypersistence",
+        "artifactId": "hypersistence-utils-hibernate-63",
+        "version": "3.8.4"
+      },
+      "5": {
         "groupId": "npm",
         "artifactId": "pg",
         "version": "8.13.0"
@@ -104,7 +109,7 @@
     "connectionString": {
       "1": "jdbc:postgresql://${host}:${port}/${database}",
       "2": "Host=${host};Port=${port};Database=${database};Username=${username};Password=${password};",
-      "3": "postgres://${username}:${password}@${host}:${port}/${database}"
+      "5": "postgres://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "Npgsql"

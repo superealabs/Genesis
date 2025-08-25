@@ -4580,7 +4580,7 @@
       scope: "{{removeLine}}"
 
 - id: 5
-  languageId: 3
+  languageId: 5
   coreFramework: "ExpressJs"
   name: "Express JS"
   template: "Template"

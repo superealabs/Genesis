@@ -285,7 +285,7 @@
     "criteriaBuildSnippet": {}
   },
   {
-    "id": 3,
+    "id": 5,
     "name": "Typescript",
     "extension": "ts",
     "configurations": [],

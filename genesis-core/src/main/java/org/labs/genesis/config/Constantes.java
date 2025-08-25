@@ -20,7 +20,7 @@ public class Constantes {
     // LANGUAGES
     public static final int Java_ID = 1;
     public static final int CSharp_ID = 2;
-    public static final int TypeScript_ID = 3;
+    public static final int TypeScript_ID = 5;
 
     // FRAMEWORKS
     public static final int Spring_REST_API_ID = 1;
