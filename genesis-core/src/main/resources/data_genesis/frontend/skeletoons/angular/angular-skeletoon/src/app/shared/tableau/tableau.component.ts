@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ConfirmationBoxComponent } from '../confirmation-box.component/confirmation-box.component'; // chemin à ajuster
+import { ConfirmationBoxComponent } from '../confirmation-box.component/confirmation-box.component';
 
 @Component({
   selector: 'app-tableau',
@@ -11,7 +11,14 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
     <table class="styled-table">
       <thead>
         <tr>
-          <th *ngFor="let col of colonnes">{{ col }}</th>
+          <th *ngFor="let col of colonnes; let i = index"
+              (click)="setActiveColumn(i)">
+            {{ toTitle(col) }}
+            <span *ngIf="activeColumn === i">
+              <i class="bi"
+                 [ngClass]="sortAsc ? 'bi-caret-down-fill' : 'bi-caret-up-fill'"></i>
+            </span>
+          </th>
           <th *ngIf="!isView">Actions</th>
         </tr>
       </thead>
@@ -55,16 +62,18 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
     }
     .styled-table thead {
       background-color: #e6f0ff;
+      cursor: pointer;
     }
     .styled-table th,
     .styled-table td {
-      padding: 0.378rem 0.9rem; /* réduit d'environ 10% */
+      padding: 0.378rem 0.9rem;
       text-align: left;
       border-bottom: 1px solid #e2e8f0;
     }
     .styled-table th {
       font-weight: 600;
       color: #334155;
+      user-select: none;
     }
     .styled-table tbody tr:hover {
       background-color: #f9fafb;
@@ -74,27 +83,27 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
     .actions {
       display: flex;
       gap: 0;
-      transform: scale(1); /* réduit légèrement la taille */
+      transform: scale(1);
     }
     .actions button {
-  background-color: #f1f5f9;
-  border: none;
-  border-radius: 0; 
-  padding: 0.25rem;       /* réduit le padding */
-  font-size: 1rem;        /* réduit la taille du texte/icône */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #333;
-}
-.actions button:first-child {
-  border-top-left-radius: 0.75rem;
-  border-bottom-left-radius: 0.75rem;
-}
-.actions button:last-child {
-  border-top-right-radius: 0.75rem;
-  border-bottom-right-radius: 0.75rem;
-}
+      background-color: #f1f5f9;
+      border: none;
+      border-radius: 0;
+      padding: 0.25rem;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+    }
+    .actions button:first-child {
+      border-top-left-radius: 0.75rem;
+      border-bottom-left-radius: 0.75rem;
+    }
+    .actions button:last-child {
+      border-top-right-radius: 0.75rem;
+      border-bottom-right-radius: 0.75rem;
+    }
     .actions button:hover {
       background-color: #e2e8f0;
       color: #000;
@@ -109,12 +118,35 @@ export class TableauComponent {
   @Input() editFn?: (ligne: any[]) => void;
   @Input() deleteFn?: (ligne: any[]) => void;
   @Input() isView: boolean = false;
+  @Input() sortFn?: (colIndex: number, asc: boolean) => void;
+
+  activeColumn: number = 0;
+  sortAsc: boolean = true;
 
   showConfirmation = false;
   selectedItem: any[] | null = null;
   selectedItemName = '';
 
   constructor(private router: Router) {}
+
+
+  toTitle(text: string): string {
+    if (!text) return '';
+    return text
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, str => str.toUpperCase());
+  }
+  setActiveColumn(index: number) {
+    if (this.activeColumn === index) {
+      this.sortAsc = !this.sortAsc;
+    } else {
+      this.activeColumn = index;
+      this.sortAsc = true;
+    }
+    if (this.sortFn) {
+      this.sortFn(this.activeColumn, this.sortAsc);
+    }
+  }
 
   openConfirmation(ligne: any[]) {
     this.selectedItem = ligne;
