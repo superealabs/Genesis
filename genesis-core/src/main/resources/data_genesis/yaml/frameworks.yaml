@@ -3907,18 +3907,18 @@
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
       - fileType: "DTO search model class"
-        fileName: "${majStart(className)}SearchDto"
+        fileName: "${majStart(className)}Dto"
         extension: "cs"
         content: |
           namespace ${majStart(projectName)}.Models.Dto;
 
-          public class ${majStart(className)}SearchDto
+          public class ${majStart(className)}Dto
           {
           {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
           {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{elseIf this.isForeignKey}}
           {{tab}}
           {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
-          {{tab}}public ${this.type}SearchDto? ${majStart(this.name)} { get; set; }
+          {{tab}}public ${this.type}Dto? ${majStart(this.name)} { get; set; }
           {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
           public ${this.type}? ${majStart(this.name)} { get; set; }
           {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
@@ -3939,9 +3939,9 @@
           using ${majStart(projectName)}.Models.Dto;
           using ${majStart(projectName)}.Utils;
 
-          public sealed class ${majStart(className)}FilterBuilder : FilterBuilder<${majStart(className)}, ${majStart(className)}SearchDto>
+          public sealed class ${majStart(className)}FilterBuilder : FilterBuilder<${majStart(className)}, ${majStart(className)}Dto>
           {
-              public override ${majStart(className)}FilterBuilder Build(${majStart(className)}SearchDto dto)
+              public override ${majStart(className)}FilterBuilder Build(${majStart(className)}Dto dto)
               {
               {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
               {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});{{elseIf this.isForeignKey}}
@@ -4018,7 +4018,7 @@
 
     serviceAnnotations: ""
     serviceClassKeyword: "public interface"
-    serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}, ${majStart(className)}SearchDto>"
+    serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}, ${majStart(className)}Dto>"
     serviceName: "I${majStart(className)}Service"
     serviceFieldContent: "{{removeLine}}"
     serviceMethodContent: "{{removeLine}}"
@@ -4067,7 +4067,7 @@
               }
           
               public async Task<PagedResponse<${majStart(className)}>> SearchAsync(
-                  ${majStart(className)}SearchDto searchDto,
+                  ${majStart(className)}Dto searchDto,
                   int page, int pageSize, string? sorting)
               {
                   try
@@ -4293,7 +4293,7 @@
       {{tab}}[ProducesResponseType(typeof(ApiResponse<PagedResponse<${majStart(className)}>>), 200)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
       {{tab}}public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(className)}>>>> Search${majStart(className)}s(
-      {{tab}}   [FromBody] ${majStart(className)}SearchDto dto,
+      {{tab}}   [FromBody] ${majStart(className)}Dto dto,
       {{tab}}   [FromQuery] int page = 0,
       {{tab}}   [FromQuery] int pageSize = 10,
       {{tab}}   [FromQuery] string? sortParam = null
