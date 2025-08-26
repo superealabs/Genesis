@@ -231,7 +231,7 @@
         import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
         
         import { ${className} } from '../models/${toKebabCase(className)}.model'
-        import { ${toKebabCase(className)}Service } from '../services/${toKebabCase(className)}.service'
+        import { ${className}Service } from '../services/${toKebabCase(className)}.service'
         
         {{#each fieldsFK}}
         import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
