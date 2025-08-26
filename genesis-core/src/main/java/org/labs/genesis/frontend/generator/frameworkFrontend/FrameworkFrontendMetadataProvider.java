@@ -69,6 +69,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("projectName", context.getProjectName());
         metadata.put("webappFolder", context.getWebappFolder());
         metadata.put("webapp", webappFolder);
+        metadata.put("projectPort", context.getProjectPort());
 
         return metadata;
     }
@@ -104,14 +105,20 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("referencedColumnType", field.getFrontEndReferencedColumnType());
         fieldMap.put("referencedColumn", StringUtils.minStart(StringUtils.toPascalCase(field.getReferencedColumn())));
+        fieldMap.put("referencedPrimaryKeyColumn", field.getReferencedPrimaryKeyColumn());
         fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
         fieldMap.put("defaultValue", field.getDefaultValue());
         fieldMap.put("columnSize", field.getColumnSize());
         fieldMap.put("decimalDigits", field.getDecimalDigits());
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
+        fieldMap.put("isRequired", !field.isNullable());
         fieldMap.put("isNumeric",field.isNumeric());
         fieldMap.put("isDate",field.isDate());
+        fieldMap.put("isTime",field.isTime());
+        fieldMap.put("isDateTime",field.isDateTime());
+        fieldMap.put("useTimeZone",field.isUseTimeZone());
+        fieldMap.put("isInterval",field.isInterval());
         fieldMap.put("isText", field.isText());
         fieldMap.put("isNotForeignKey",!field.isForeign());
         fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
@@ -187,6 +194,7 @@ public class FrameworkFrontendMetadataProvider {
         data.put("componentSelector", route.getComponentSelector());
         data.put("routerLink", route.getLink());
         data.put("componentImport", route.getComponentImport());
+        data.put("componentImportWithoutExtension", route.getComponentImportWithoutExtension());
         data.put("routerLabel", route.getLabel());
         return  data;
     }

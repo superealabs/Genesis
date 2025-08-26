@@ -1030,3 +1030,539 @@
     destinationPath: "${destinationFolder}/src/models"
     name: "${majStart(EntityName)}Model"
 
+- id: 3
+  languageId: 1
+  coreFramework: "React"
+  name: "React App"
+  template: "React-template"
+  initPath: "react/react-ts-skeletoon"
+  componentExtension: "tsx"
+  additionalFiles:
+    - fileType: "App name config"
+      fileName: "app"
+      extension: "ts"
+      content: |
+        export const appConfig = {
+            title: '${projectName}',           // ou mettre undefined pour une image
+            logoUrl: undefined as string | undefined,
+        };
+      destinationPath: "${destinationFolder}/src/config/"
+    - fileType: "Navigation items config file"
+      fileName: "navItems"
+      extension: "tsx"
+      content: |
+        import { NavItem } from '@/types/navigation';
+        import { List, Add } from '@mui/icons-material';
+
+        export const navItems: NavItem[] = [
+            {{#each entities}}
+            {
+                label: '${formatReadable(this.className)}',
+                icon: <List />,
+                children: [
+                    {
+                        label: 'List',
+                        path: '/${toKebabCase(this.className)}s',
+                        icon: <List />,
+                    },
+                    {{#if !this.isView}}{{removeLine}}
+                    {
+                        label: 'Add',
+                        path: '/${toKebabCase(this.className)}s/create',
+                        icon: <Add />
+                    },
+                    {{/if}}{{removeLine}}
+                ]
+            },
+            {{/each}}{{removeLine}}
+        ];
+      destinationPath: "${destinationFolder}/src/config/"
+    - fileType: "Router file"
+      fileName: "router"
+      extension: "tsx"
+      content: |
+        // src/router.tsx
+        import RootLayout from './layouts/RootLayout';
+        import { createBrowserRouter } from 'react-router-dom';
+        {{#each routes}}
+        import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
+        {{/each}}
+
+        export const router = createBrowserRouter([
+            {
+                path: '/',
+                element: <RootLayout layout="vertical" />, // 'vertical' or 'horizontal' 
+                children: [
+                    {{#each routes}}
+                    {
+                      path: '${this.routerLink}',
+                      element: <${this.componentSelector} />,
+                    },
+                    {{/each}}
+                ],
+            },
+        ]);
+      destinationPath: "${destinationFolder}/src/"
+    - fileType: "App-files"
+      fileName: "index"
+      extension: "html"
+      content: |
+        <!doctype html>
+        <html lang="fr">
+        <head>
+          <meta charset="UTF-8" />
+          <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>${projectName}</title>
+        </head>
+        <body>
+        <div id="root"></div>
+        <script type="module" src="/src/index.tsx"></script>
+        </body>
+        </html>
+      destinationPath: "${destinationFolder}/"
+    - fileType: "Configuration file"
+      fileName: "{{removeLine}}"
+      extension: "env"
+      content: |
+        VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
+      destinationPath: "${destinationFolder}/"
+  components:
+    - componentType: "List"
+      generateForView: true
+      router:
+        link: "/${toKebabCase(className)}s"
+        label: "${formatReadable(classNameLink)}"
+      importFile: |
+        import { Edit, Delete } from '@mui/icons-material';
+        import { useNavigate } from 'react-router-dom';
+        
+        import {${majStart(className)}, ${toCamelCase(className)}Meta, ${toCamelCase(className)}Columns, ${toCamelCase(className)}Filters} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+      importComponent: |
+        import GenericListPage from '@/components/GenericListPage/GenericListPage';
+        import ActionButtons from '@/components/ActionButtons';
+        import {useDelete} from "@/hooks/useDelete";
+      selector: "${majStart(className)}List"
+      export: |
+        const columns = [
+            ...${toCamelCase(className)}Columns,
+            {{#if !isView}}{{removeLine}}
+            {
+                header: 'Actions',
+                accessor: (row: ${majStart(className)}) => <RowActions row={row} />, // ✅ composant séparé
+            },
+            {{/if}}{{removeLine}}
+        ];
+        {{removeLine}}
+        {{#if !isView}}
+        function RowActions({ row }: { row: ${majStart(className)} }) {
+            const navigate = useNavigate();
+            const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => window.location.reload());
+
+            return (
+                <ActionButtons
+                    actions={[
+                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`) },
+                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}) },
+                    ]}
+                />
+            );
+        }
+        {{/if}}
+        export default function ${majStart(className)}List() {
+            return GenericListPage<${majStart(className)}>({
+                entityName: ${toCamelCase(className)}Meta.entityName,
+                columns,
+                availableFilters: ${toCamelCase(className)}Filters,
+                defaultSort: ${toCamelCase(className)}Meta.defaultSort,
+                searchFn: ${toCamelCase(className)}Service.search,
+                pageTitle: '${majStart(className)} List'
+            })();
+        }
+      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+      componentName: "${toKebabCase(className)}-list"
+      componentAdditionalFiles: []
+    - componentType: "Detail"
+      generateForView: true
+      router:
+        link: "/${toKebabCase(className)}s/:id"
+        label: "${formatReadable(classNameLink)} Detail"
+      importFile: |
+        import { Edit, Delete } from '@mui/icons-material';
+        import { useNavigate } from 'react-router-dom';
+
+        import {${majStart(className)}, ${toCamelCase(className)}Meta, ${toCamelCase(className)}Columns } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+      importComponent: |
+        import GenericDetailPage from '@/components/GenericDetailPage/GenericDetailPage';
+        import {useDelete} from "@/hooks/useDelete";
+        import { Typography } from '@mui/material';
+      selector: "${majStart(className)}Detail"
+      export: |
+        export default function ${majStart(className)}Detail() {
+            const navigate = useNavigate();
+            {{#if !isView}}
+            const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => {
+                  navigate('/${toKebabCase(className)}s'); 
+            });
+            {{/if}}
+        
+            return GenericDetailPage({
+                entityName: ${toCamelCase(className)}Meta.entityName,
+                service: ${toCamelCase(className)}Service,
+                columns: ${toCamelCase(className)}Columns,
+                backRoute: '/${toKebabCase(className)}s',
+                actions: [
+                    {{#if !isView}}{{removeLine}}
+                    {
+                        label: 'Edit',
+                        icon: <Edit />,
+                        variant: 'outlined',
+                        color: 'primary',
+                        onClick: (row, navigate) => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`),
+                    },
+                    {
+                        label: 'Delete',
+                        icon: <Delete />,
+                        variant: 'outlined',
+                        color: 'error',
+                        onClick: (row) => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}), 
+                    },
+                    {{/if}}{{removeLine}}
+                ],
+                tabs: [
+                    //Example use of tab
+                    //{
+                        //label: 'Tab1',
+                        //render: (row: ${majStart(className)}) => (
+                            //<Typography>Content for ${majStart(className)} ID #{row.{{#each fieldsPK}}${this.name}{{/each}} }.</Typography>
+                        //),
+                    //},
+                ],
+            })();
+        }
+      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+      componentName: "${toKebabCase(className)}-detail"
+      componentAdditionalFiles: [ ]
+    - componentType: "Add"
+      router:
+        link: "/${toKebabCase(className)}s/create"
+        label: "Create ${formatReadable(classNameLink)}"
+      importFile: |
+        import {${majStart(className)}, ${toCamelCase(className)}Meta, formFields} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+      selector: "Create${majStart(className)}"
+      generateForView: false
+      importComponent: |
+        import GenericFormBuilder from '@/components/GenericForm/GenericFormBuilder';
+        import {ApiResponse} from "@/services/api";
+      export: |
+        export default function Create${majStart(className)}() {
+
+            const handleSubmit = async (data: any): Promise<ApiResponse<${majStart(className)}>> => {
+                return await ${toCamelCase(className)}Service.create(data);
+            };
+
+            return (
+                <GenericFormBuilder
+                    entityName={${toCamelCase(className)}Meta.entityName}
+                    fields={formFields as any}
+                    onSubmit={handleSubmit}
+                    redirectTo="/${toKebabCase(className)}s"
+                    title="Add ${toKebabCase(className)}"
+                    mode="create"
+                    idKey="{{#each fieldsPK}}${this.name}{{/each}}"
+                    detailRedirect="/${toKebabCase(className)}s/:id"
+                />
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+      componentName: "${toKebabCase(className)}-create"
+      componentAdditionalFiles: []
+    - componentType: "Update"
+      router:
+        link: "/${toKebabCase(className)}s/:id/edit"
+        label: "Update ${formatReadable(classNameLink)}"
+      importFile: |
+        import { ${majStart(className)}, ${toCamelCase(className)}Meta, updateFormFields } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+      selector: "Update${majStart(className)}"
+      generateForView: false
+      importComponent: |
+        import GenericUpdateFormBuilder from '@/components/GenericForm/GenericUpdateFormBuilder';
+      export: |
+        export default function Update${majStart(className)}() {
+            return (
+                <GenericUpdateFormBuilder<${majStart(className)}>
+                    entityName={${toCamelCase(className)}Meta.entityName}
+                    fields={updateFormFields}
+                    getById={${toCamelCase(className)}Service.getById}
+                    update={${toCamelCase(className)}Service.update}
+                    title="Update ${toKebabCase(className)}"
+                    detailRedirect="/${toKebabCase(className)}s/:id"
+                />
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+      componentName: "${toKebabCase(className)}-update"
+      componentAdditionalFiles: []
+  serviceComponent:
+    imports: |
+      // src/models/${toKebabCase(className)}/${toKebabCase(className)}.service.ts
+      import type { ${majStart(className)} } from './${toKebabCase(className)}.model';
+      import type { FilterState } from '@/types/filter';
+      import { getById, search {{#if !isView}},create,remove, update{{/if}} } from "@/services/api";
+    methods: |
+      export const ${toCamelCase(className)}Service = {
+          search(params: {
+              page: number;
+              size: number;
+              sort: `$[string],$['asc' | 'desc']`;
+              filter: FilterState;
+          }) {
+              return search<${majStart(className)}>({
+                  endpoint: '/${lowerCase(classNameLink)}/search',
+                  ...params,
+              });
+          },
+
+          async getById(id: number) {
+              return getById<${majStart(className)}>('/${lowerCase(classNameLink)}', id);
+          },
+
+          create(${toCamelCase(className)}: Omit<${majStart(className)}, 'id'>) {
+              return create<${majStart(className)}>('/${lowerCase(classNameLink)}', ${toCamelCase(className)});
+          },
+
+          async update(id: number, ${toCamelCase(className)}: Partial<${majStart(className)}>) {
+              return update<${majStart(className)}>('/${lowerCase(classNameLink)}', id, ${toCamelCase(className)});
+          },
+
+          delete: (id: string | number) => remove('/${toKebabCase(className)}s', id),
+      };
+    destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
+    name: "${toKebabCase(className)}.service"
+  modelComponent:
+    imports: |
+      // src/models/${toKebabCase(className)}/${toKebabCase(className)}.model.ts
+      import dayjs from "dayjs";
+      import { format } from 'date-fns';
+      import 'dayjs/plugin/utc'; 
+      import utc from 'dayjs/plugin/utc'; 
+      import { parseTimeString } from '@/utils/timeParser';
+      import {formatDuration} from "@/utils/formatDuration";
+      dayjs.extend(utc); // Utilise le plugin utc
+    exports : |
+      export interface ${majStart(className)} {
+      {{tab}}{{#each fields}}
+      {{tab}}{{#if this.isForeignKey}}${this.name}: ${this.referencedColumnType}{{else}}
+      {{tab}}${this.name}: ${this.typeBase}{{/if}}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}[key: string]: unknown;
+      }
+      
+      export const ${toCamelCase(className)}Meta = {
+          entityName: '${majStart(className)}',
+          endpoint: '/${toKebabCase(className)}s/search',
+          defaultSort: '{{#each fieldsPK}}${this.name}{{/each}},asc' as const
+      };
+      
+      export const ${toCamelCase(className)}Columns = [
+          {{#each fieldsFK}}
+          {
+            header: '${this.type}',
+            accessor: (row: ${majStart(className)}) => (row.${this.name} as any)?.${this.referencedPrimaryKeyColumn} ?? '-',
+            sortKey: '${this.name}',
+            link: (row: ${majStart(className)}) => `/${toKebabCase(this.type)}s/$[(row.${this.name} as any)?.${this.referencedPrimaryKeyColumn}]?from=/${toKebabCase(className)}s`
+          },
+          {{/each}}{{removeLine}}
+          {{#each fieldsNotFK}}
+          {{#if this.isPrimaryKey}}
+          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' ,link: (row: ${majStart(className)}) => `/${toKebabCase(className)}s/$[row.${this.name}]`},
+          {{elseIf this.isDate}}
+          {
+            header: '${formatReadable(this.name)}',
+            accessor: (row: ${majStart(className)}) => {
+              const d = new Date(row.${this.name} as unknown as string);
+              return isNaN(d.getTime())
+                  ? '-'
+                  : d.toLocaleDateString('fr-FR');  
+            },
+            sortKey: '${this.name}'
+          },
+          {{elseIf this.isDateTime }}
+          {
+            header: '${formatReadable(this.name)}',
+            accessor: (row: ${majStart(className)} ) => {
+               const date = row.${this.name};
+               if (!date) return '-';
+               const dateObject = new Date(date);
+               return isNaN(dateObject.getTime()) ? '-' : format(dateObject, "dd/MM/yyyy HH:mm:ss");
+            },
+            sortKey: '${this.name}'
+          },
+          {{elseIf this.isTime and this.useTimeZone}} 
+          {
+            header: '${formatReadable(this.name)}',
+              accessor: (row: ${majStart(className)}) => {
+                  const timeStr = row.${this.name};
+                  if (!timeStr) return '-';
+      
+                  const clean = timeStr.replace('Z', '');          
+                  const parts = clean.split(':');
+      
+                  if (parts.length < 2) return '-';                  
+                  const [h, m, s] = [...parts, '00'].map(Number);   
+                  const d = dayjs.utc(`1970-01-01 $[h]:$[m]:$[s]`, 'YYYY-MM-DD HH:mm:ss');
+                  return d.isValid() ? d.format('HH:mm:ss') : '-';
+              },
+            sortKey: '${this.name}'
+          },
+          {{elseIf this.isTime }}
+          {
+            header: '${formatReadable(this.name)}',
+            accessor: (row: ${majStart(className)} ) => {
+                const timeStr = row.${this.name};  
+                if (!timeStr) return '-';
+                const [h, m, s] = timeStr.replace('Z', '').split(':').map(Number);
+                const dateObj = new Date(1970, 0, 1, h, m, s);
+                return format(dateObj, 'HH:mm:ss');
+            },
+            sortKey: '${this.name}'
+          },
+          {{elseIf this.isInterval}}
+          {
+            header: '${formatReadable(this.name)}',
+            accessor: (row: ${majStart(className)}) => formatDuration(row.${this.name}),
+            sortKey: '${this.name}'
+          },
+          {{else}}
+          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' },
+          {{/if}}{{/each}}{{removeLine}}
+      ]
+      
+      export const ${toCamelCase(className)}Filters = {
+          {{#each fieldsFK}}
+          ${this.name}: {
+            label: '${formatReadable(this.type)}',
+            type: '${this.referencedColumnType}' as const,
+            nestedKey: '${this.referencedPrimaryKeyColumn}' as const
+          },
+          {{/each}}{{removeLine}}
+          {{#each fieldsNotFK}}
+          {{#if this.isPrimaryKey}}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const },
+          {{elseIf this.isText}}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'text' as const },
+          {{elseIf this.isNumeric }}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'number' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'number' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'number' as const },
+          {{elseIf this.isDate}}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'Date' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'Date' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'Date' as const },
+          {{elseIf this.isDateTime and this.useTimeZone}}  
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'DateTimeTZ' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'DateTimeTZ' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'DateTimeTZ' as const },
+          {{elseIf this.isDateTime}}  
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'DateTime' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'DateTime' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'DateTime' as const },
+          {{elseIf this.isTime and this.useTimeZone}} 
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'timeTz' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'timeTz' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'timeTz' as const },
+          {{elseIf this.isTime }}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'time' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'time' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'time' as const },
+          {{elseIf this.isInterval}}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'interval' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'interval' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'interval' as const },
+          {{/if}}{{/each}}{{removeLine}}
+      };
+      
+      export const formFields = {
+          {{#each fieldsFK}}
+          ${this.name}: {
+            label: '${this.type}',
+            type: 'select' as const,
+            required: ${this.isRequired},
+            foreignKey: {
+              endpoint: '/${lowerCase(classNameLink)}?page=0&size=1000',
+              labelKey: '${this.referencedPrimaryKeyColumn}',
+              valueKey: '${this.referencedPrimaryKeyColumn}'
+            },
+            transform: (value: any) => ({ ${this.referencedPrimaryKeyColumn}: Number(value) }),
+          },
+          {{/each}}{{removeLine}}
+          {{#each fieldsNotFK}}
+          {{#if this.isPrimaryKey}}
+          {{removeLine}}
+          {{elseIf this.isDateTime and this.useTimeZone}}
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: 'datetime' as const,
+            required: ${this.isRequired},
+            transform: (value: string) =>
+                                 value ? dayjs(value).utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null
+          },
+          {{elseIf this.isDateTime}}
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: 'datetime' as const,
+            required: ${this.isRequired},
+            transform: (value: string) =>
+                                 value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null,
+          },
+          {{elseIf this.isTime and this.useTimeZone}} 
+          ${this.name}: {
+                label: '${formatReadable(this.name)}',
+                type: 'timeTz' as const,
+                required: true,
+                transform: (value: any) => {
+                    if (!value || typeof value !== 'string') return null;
+                    const d = dayjs.utc(`1970-01-01T$[value]`); 
+                    return d.isValid() ? d.format('HH:mm:ss') + 'Z' : null;
+                },
+          },
+          {{elseIf this.isTime }}
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: 'time' as const,
+            required: ${this.isRequired},
+            transform: (value: any) => {
+                if (!value) return null;
+                const parsed = parseTimeString(String(value));
+                return parsed ? parsed.format('HH:mm:ss') : null;
+            },
+          },
+          {{elseIf this.isInterval}}
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: 'interval' as const,
+            required: ${this.isRequired},
+          },
+          {{else}}
+          ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const, required: ${this.isRequired} },
+          {{/if}}{{/each}}{{removeLine}}
+      } as const;
+      
+      export const updateFormFields = {
+          {{#each fieldsPK}}
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: '${this.typeBase}' as const,
+            required: true,
+            readonly: true, 
+          },
+          {{/each}}{{removeLine}}
+          ...formFields, 
+      };
+    destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
+    name: "${toKebabCase(className)}.model"
+

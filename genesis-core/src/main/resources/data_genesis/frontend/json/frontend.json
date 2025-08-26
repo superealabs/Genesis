@@ -69,6 +69,7 @@
       "timestamp with time zone": "Date",
       "timestamp(6)": "Date",
       "time": "string",
+      "timetz": "string",
       "interval": "string",
       "year": "number",
       "tsrange": "Date[]",

@@ -106,7 +106,10 @@ public class SQLServerDatabase extends Database {
                 while (rs.next()) {
                     String colName = rs.getString("column_name");
                     for (ColumnMetadata col : columns) {
-                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) &&
+                                (col.isDate() || col.isDateTime())
+                        )
+                        {
                             Map<String, Object> annotations = framework.getModel().getValidationAnnotations();
                             Map<String, Object> fieldMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             String template = (String) annotations.getOrDefault(key, "{{removeLine}}");
