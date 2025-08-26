@@ -4355,9 +4355,10 @@
       {{tab}})]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), 201)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
-      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Create([SwaggerParameter(Description = "${formatReadable(className)} object to be created", Required = true)] ${majStart(className)} ${minStart(className)})
+      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Create([SwaggerParameter(Description = "${formatReadable(className)} object to be created", Required = true)] ${majStart(className)}Dto dto)
       {{tab}}{
       {{tab}}{{tab}}try {
+      {{tab}}{{tab}}{{tab}}var ${minStart(className)} = dto.ToEntity();
       {{tab}}{{tab}}{{tab}}await _service.AddAsync(${minStart(className)});
       {{tab}}{{tab}}{{tab}}var created = await _service.GetByIdAsync(${minStart(className)}.${majStart(pkColumn)});
       {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status201Created, new ApiResponse<${majStart(className)}>
@@ -4394,10 +4395,10 @@
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 400)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 404)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
-      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Put${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to update", Required = true)] ${pkColumnType} id, [SwaggerParameter(Description = "Updated ${formatReadable(className)} object", Required = true)] ${majStart(className)} ${minStart(className)})
+      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Put${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to update", Required = true)] ${pkColumnType} id, [SwaggerParameter(Description = "Updated ${formatReadable(className)} object", Required = true)] ${majStart(className)}Dto dto)
       {{tab}}{
       {{tab}}{{tab}}try{
-      {{tab}}{{tab}}{{tab}}if (id != ${minStart(className)}.${majStart(pkColumn)})
+      {{tab}}{{tab}}{{tab}}if (id != dto.${majStart(pkColumn)})
       {{tab}}{{tab}}{{tab}}{
       {{tab}}{{tab}}{{tab}}{{tab}}return BadRequest(new ApiResponse<object>
       {{tab}}{{tab}}{{tab}}{{tab}}{
@@ -4420,6 +4421,7 @@
       {{tab}}{{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}{{tab}}}
       
+      {{tab}}{{tab}}{{tab}}var ${minStart(className)} = dto.ToEntity(id);
       {{tab}}{{tab}}{{tab}}await _service.UpdateAsync(${minStart(className)});
       {{tab}}{{tab}}{{tab}}var updatedObject = await _service.GetByIdAsync(id);
       
