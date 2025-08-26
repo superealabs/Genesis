@@ -3926,6 +3926,27 @@
           {{tab}}{{else}}
           {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
           {{tab}}{{/each}}
+          
+            public ${majStart(className)} ToEntity() => new()
+            {
+              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}{{removeLine}}
+              {{elseIf this.isForeignKey}}
+              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${majStart(this.referencedPrimaryKeyColumn)}
+              {{tab}}{{else}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}{{#if this.isPrimaryKey}}{{removeLine}}{{/if}}
+              {{tab}}{{/each}}
+            };
+          
+            public ${majStart(className)} ToEntity(${pkColumnType} id) => new()
+            {
+              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+              {{tab}}${majStart(this.name)} = id
+              {{elseIf this.isForeignKey}}
+              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${majStart(this.referencedPrimaryKeyColumn)}
+              {{tab}}{{else}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}
+              {{tab}}{{/each}}
+            };
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto/"
       - fileType: "Specification File"
