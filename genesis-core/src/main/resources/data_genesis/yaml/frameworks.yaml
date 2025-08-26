@@ -3658,30 +3658,19 @@
       {{tab}}[Key]
       {{tab}}[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
       {{tab}}[Column("${this.columnName}")]
-      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{elseIf this.isForeignKey and this.isNullable}}
-      {{tab}}
-      {{tab}}[Column("${this.columnName}")]
-      {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
-      {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
-      {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
+      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }
       {{elseIf this.isForeignKey}}
       {{tab}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
       {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
       {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
-      {{elseIf this.isNullable}}
-      {{tab}}[Column("${this.columnName}")]
-      {{tab}}{{#each this.validationAnnotations}}
-      {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}
-      {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
       {{tab}}{{else}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
-      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
+      {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
