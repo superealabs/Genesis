@@ -1503,6 +1503,17 @@
           {{#each fieldsNotFK}}
           {{#if this.isPrimaryKey}}
           {{removeLine}}
+          {{elseIf this.isTimeTz}} 
+          ${this.name}: {
+                label: '${formatReadable(this.name)}',
+                type: 'timeTz' as const,
+                required: true,
+                transform: (value: any) => {
+                    if (!value || typeof value !== 'string') return null;
+                    const d = dayjs.utc(`1970-01-01T$[value]`); 
+                    return d.isValid() ? d.format('HH:mm:ss') + 'Z' : null;
+                },
+          },
           {{elseIf this.isDateTime and this.useTimeZone}}
           ${this.name}: {
             label: '${formatReadable(this.name)}',
@@ -1518,17 +1529,6 @@
             required: ${this.isRequired},
             transform: (value: string) =>
                                  value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null,
-          },
-          {{elseIf this.isTime and this.useTimeZone}} 
-          ${this.name}: {
-                label: '${formatReadable(this.name)}',
-                type: 'timeTz' as const,
-                required: true,
-                transform: (value: any) => {
-                    if (!value || typeof value !== 'string') return null;
-                    const d = dayjs.utc(`1970-01-01T$[value]`); 
-                    return d.isValid() ? d.format('HH:mm:ss') + 'Z' : null;
-                },
           },
           {{elseIf this.isTime }}
           ${this.name}: {
