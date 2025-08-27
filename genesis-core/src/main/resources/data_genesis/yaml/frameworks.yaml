@@ -3805,7 +3805,17 @@
       {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
       {{elseIf this.isTimeTz}}
       {{tab}}[Column("${this.columnName}")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
       {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+      {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
+      {{elseIf this.isDateTimeTz}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}[JsonConverter(typeof(UtcZJsonConverter))]
       {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
       {{tab}}{{else}}
       {{tab}}[Column("${this.columnName}")]
