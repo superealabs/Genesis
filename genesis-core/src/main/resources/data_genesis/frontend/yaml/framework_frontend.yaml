@@ -1384,6 +1384,7 @@
           {
             header: '${formatReadable(this.name)}',
             accessor: (row: ${majStart(className)}) => {
+              if (!row.${this.name}) return '-';
               const d = new Date(row.${this.name} as unknown as string);
               return isNaN(d.getTime())
                   ? '-'
@@ -1493,7 +1494,7 @@
             type: 'select' as const,
             required: ${this.isRequired},
             foreignKey: {
-              endpoint: '/${lowerCase(classNameLink)}?page=0&size=1000',
+              endpoint: '/${toKebabCase(this.type)}s?page=0&size=1000',
               labelKey: '${this.referencedPrimaryKeyColumn}',
               valueKey: '${this.referencedPrimaryKeyColumn}'
             },
