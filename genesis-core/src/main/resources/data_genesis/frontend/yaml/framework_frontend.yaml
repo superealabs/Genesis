@@ -126,7 +126,47 @@
             confirmButtonText: 'close',
             confirmButtonColor: color
           });
-          }
+        }
+        export function objectToRecord<T extends object>(obj: T): Record<string, any> {
+          const record: Record<string, any> = {};
+        
+          Object.entries(obj).forEach(([key, value]) => {
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+              const entries = Object.entries(value);
+              if (entries.length >= 2) {
+                record[key] = entries[1][1];
+              } else if (entries.length === 1) {
+                record[key] = entries[0][1];
+              } else {
+              record[key] = '';
+              }
+            } else {
+            record[key] = value;
+            }
+          });
+          return record;
+        }
+        export  function expandSeparatorNotation(flatObj: Record<string, any>,separator:string): any {
+          const result: any = {};
+        
+          for (const key in flatObj) {
+            if (!flatObj.hasOwnProperty(key)) continue;
+            
+              const value = flatObj[key];
+              const keys = key.split(separator);
+              let current = result;
+              
+              keys.forEach((part, index) => {
+                if (index === keys.length - 1) {
+                current[part] = value;
+                } else {
+                if (!current[part]) current[part] = {};
+                current = current[part];
+                }
+              });
+            }
+          return result;
+        }
         export function recursiveObjectsTo2DArray(data: Record<string, any>[]): any[][] {
           if (data.length === 0) return [];
         
@@ -248,8 +288,11 @@
             private destroy$ = new Subject<void>();
             
             data:any[][]=[];
+            
+            sortOrientation: boolean=true;
+            sortColumn=0;
         
-            columns =[{{#each fields}}{{#if this.isNotForeignKey}}'${formatReadable(this.name)}'{{elseIf this.isForeignKey}}'${formatReadable(this.type)}'{{/if}}{{#if !@last}},{{/if}}{{/each}}];
+            columns =[{{#each fields}}{{#if this.isNotForeignKey}}'${this.name}'{{elseIf this.isForeignKey}}'${this.type}'{{/if}}{{#if !@last}},{{/if}}{{/each}}];
         
             ${minStart(className)}s: ${majStart(className)}[] = [];
             
@@ -259,7 +302,7 @@
             
             totalItems: number = 1000;
             currentPage: number=1;
-            itemNumber: number=10;
+            itemNumber: number=12;
         
             formValueAttribute: Record<string, any> = {};
             isLoading: boolean = false;
@@ -281,7 +324,20 @@
                 { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' }{{/if}}
             {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
             ];
-            
+        
+            sort(columnIndex:number,sortOrientation:boolean){
+                this.sortOrientation=sortOrientation;
+                this.sortColumn=columnIndex;
+                const mappedValue = expandDotNotation(this.formValueAttribute);
+                const sortParam=this.columns[this.sortColumn]+','+(this.sortOrientation?'asc':'desc');
+                this.load${majStart(className)}s(mappedValue,sortParam);
+            }
+        
+            onNumberRowChange(lineNumber:number):void
+            {
+              this.itemNumber=Number(lineNumber);
+              this.onSearch(this.formValueAttribute);
+            }
             onPageRangeChange(page:number): void {
                   this.currentPage =page;
                   this.onSearch(this.formValueAttribute);
@@ -300,9 +356,9 @@
                 private ${minStart(className)}Service: ${majStart(className)}Service
              ) {}
         
-            load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {}): void {
+            load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {},sortParam:string=this.columns[this.sortColumn]+',asc;'): void {
                 this.isLoading = true;
-                this.${minStart(className)}Service.search${majStart(className)}s(criteria, this.currentPage-1, this.itemNumber).pipe(takeUntil(this.destroy$)).subscribe({
+                this.${minStart(className)}Service.search${majStart(className)}s(criteria, this.currentPage-1, this.itemNumber,sortParam).pipe(takeUntil(this.destroy$)).subscribe({
                 next: (${minStart(className)}s: ${majStart(className)}[]) => {
                         this.${minStart(className)}s = ${minStart(className)}s;
                         this.data=recursiveObjectsTo2DArray(${minStart(className)}s);
@@ -352,8 +408,7 @@
                           this.isLoading = false;
                       },
                       error: (err) => {
-                          console.error('Error loading sales and products:', err);
-                          warnMeUp('error','error while collecting sales-items');
+                          warnMeUp('error','error while collecting datas');
                           this.isLoading = false;
                       }
                   });
@@ -378,9 +433,9 @@
           extension: "html"
           content: |
             <app-page-header name="${formatReadable(classNameLink)}" [isView]=${isView}></app-page-header>
-            <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)"></app-dynamic-search-form>
+            <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)" [onRowsChange]="onNumberRowChange.bind(this)"></app-dynamic-search-form>
             <br>
-            <app-tableau [colonnes]="columns" [donnees]="data" {{#if !isView}}[deleteFn]="delete${majStart(className)}"{{/if}} [isView]=${isView}></app-tableau>
+            <app-tableau [sortFn]="sort.bind(this)" [colonnes]="columns" [donnees]="data" {{#if !isView}}[deleteFn]="delete${majStart(className)}"{{/if}} [isView]=${isView} {{#if !isView}}routeToDetail="${toKebabCase(className)}s/details" routeToModify="${toKebabCase(className)}s/modify"{{/if}}></app-tableau>
             <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
             <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="itemNumber" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
@@ -397,11 +452,19 @@
             import { Routes } from '@angular/router';
             export const ${minStart(className)}Routes: Routes = [
               {
-              path: '${toKebabCase(className)}s',
-              loadComponent: () => import('./${toKebabCase(className)}-list/${toKebabCase(className)}-list.component').then(m => m.${majStart(className)}ListComponent )
-            }{{#if !isView}},
+                path: '${toKebabCase(className)}s',
+                loadComponent: () => import('./${toKebabCase(className)}-list/${toKebabCase(className)}-list.component').then(m => m.${majStart(className)}ListComponent )
+              }{{#if !isView}},
               {
-                path: 'add-${toKebabCase(className)}',
+                path: '${toKebabCase(className)}s/add',
+                loadComponent: () => import('./${toKebabCase(className)}-form/${toKebabCase(className)}-form.component').then(m => m.${majStart(className)}FormComponent)
+              },
+              {
+                path: '${toKebabCase(className)}s/details/:id',
+                loadComponent: () => import('./${toKebabCase(className)}-details/${toKebabCase(className)}-details.component').then(m => m.${majStart(className)}DetailsComponent)
+              },
+              {
+                path: '${toKebabCase(className)}s/modify/:id',
                 loadComponent: () => import('./${toKebabCase(className)}-form/${toKebabCase(className)}-form.component').then(m => m.${majStart(className)}FormComponent)
               }{{/if}}
             ];
@@ -411,16 +474,159 @@
         link: " "
         label: " "
       importFile: |
-        import { Component, OnInit } from '@angular/core';
+        import { Component, OnInit, OnDestroy } from '@angular/core';
+        import { CommonModule } from '@angular/common';
         import { HttpClientModule } from '@angular/common/http';
+        import { ReactiveFormsModule, FormGroup } from '@angular/forms';
+        import { Subject, forkJoin, takeUntil } from 'rxjs';
+        import { ActivatedRoute } from '@angular/router';
+      
+        import { DynamicFieldComponent, FieldConfig } from '../../../shared/dynamic-field/dynamic-field.component';
+        import { DynamicFormComponent } from '../../../shared/dynamic-form/dynamic-form.component';
+        import { LinkButtonComponent } from '../../../shared/link-button/link-button.component';
+        import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+        import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
+        import { warnMeUp } from '../../../../utilities/utilities';
+
+
+        
+        import { ${className} } from '../models/${toKebabCase(className)}.model'
+        import { ${className}Service } from '../services/${toKebabCase(className)}.service'
+
+        {{#each fieldsFK}}
+        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
+        import {${toPascalCase(this.type)}Service} from '../../${toKebabCase(this.type)}/services/${toKebabCase(this.type)}.service'
+        {{/each}}
       selector: "app-${toKebabCase(className)}-form"
       generateForView: false
       standalone: true
-      importComponent: "[HttpClientModule]"
+      importComponent: "[CommonModule, HttpClientModule, ReactiveFormsModule, DynamicFieldComponent, LoadingIconComponent, PageHeaderComponent, LinkButtonComponent, DynamicFormComponent]"
       template: "./${toKebabCase(className)}-form.component.html"
       style: "./${toKebabCase(className)}-form.component.css"
       export: |
-        export class ${majStart(className)}FormComponent{}
+        export class ${majStart(className)}FormComponent implements OnInit, OnDestroy 
+        {
+          private destroy$ = new Subject<void>();
+          isLoading: boolean = false;
+          form: FormGroup = new FormGroup({});
+          formUpdate:boolean=false;
+          validationErrors:any;
+        
+          id:string ='';
+          ${minStart(className)}ToUpdate?: ${majStart(className)};
+          {{#each fieldsFK}}{{removeLine}}
+          ${minStart(this.type)}s: ${majStart(this.type)}[] = []; 
+          {{/each}}{{removeLine}}
+        
+          fields: FieldConfig[] = [
+            {{tab}}{{tab}}{{#each fieldsFK}}
+              { type: 'select', name: '${this.name}', label: '${this.type}', options: [] },
+            {{tab}}{{tab}}{{/each}}{{removeLine}}
+            {{tab}}{{tab}}{{#each simpleFields}}
+            {{#if this.isText}}{{removeLine}}
+              { type: 'text', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isNumeric }}
+              { type: 'number', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDate }}
+              { type: 'date', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{/if}}{{#if !@last}},{{/if}}
+              {{tab}}{{/each}}{{removeLine}}
+          ];
+  
+
+          constructor(
+                private route: ActivatedRoute,
+                {{#each fieldsFK}}{{removeLine}}
+                 private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
+                {{/each}}{{removeLine}}
+                private ${minStart(className)}Service: ${majStart(className)}Service
+          ){}
+          
+          submit(): void {
+              this.isLoading = true;
+              {{#each fieldsFK}}{{removeLine}}
+              this.form.value.${this.name}=JSON.parse(this.form.value.${this.name});
+              {{/each}}{{removeLine}}
+              var ${minStart(className)}: ${majStart(className)} = this.form.value;
+              const serviceCall = this.formUpdate?this.${minStart(className)}Service.update${majStart(className)}(${minStart(className)} ,this.id):this.${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
+              serviceCall.pipe(takeUntil(this.destroy$))
+              .subscribe({
+                next: res => {
+                  warnMeUp('Success', '${majStart(className)} created successfully','#28a745','success');
+                  this.form.reset();
+                  this.validationErrors={};
+                  this.isLoading = false;
+                },
+                  error: err => {
+                    warnMeUp('error', 'Error while making a move on ${minStart(className)} ');
+                    const apiErrors = err.error?.errors;
+                    this.validationErrors=apiErrors;
+                    this.isLoading = false;
+                }
+              });
+          }
+          
+            load${majStart(className)}(id: string): void {
+                  this.isLoading = true;
+                  this.${minStart(className)}Service.get${majStart(className)}ById(id)
+                      .pipe(takeUntil(this.destroy$))
+                      .subscribe({
+                      next: (${minStart(className)}: ${majStart(className)}) => {
+                          this.${minStart(className)}ToUpdate = ${minStart(className)};
+                          this.isLoading = false;
+                        },
+                      error: (err) => {
+                          console.error('Error while loading ${minStart(className)}:', err);
+                          warnMeUp('error', 'Error while fetching ${minStart(className)}');
+                          this.isLoading = false;
+                        }
+                    });
+            }
+
+            {{#if containsForeignKey}}
+            ngOnInit(): void {
+                const ${minStart(className)}Id = this.route.snapshot.paramMap.get('id');
+                if (${minStart(className)}Id) {
+                  this.id=${minStart(className)}Id;
+                  this.formUpdate=true
+                  this.load${majStart(className)}(${minStart(className)}Id);
+                }
+                this.isLoading = true;
+                forkJoin([
+                    {{#each fieldsFK}}{{removeLine}}
+                    this.${minStart(this.type)}Service.get${majStart(this.type)}s(),
+                     {{/each}}{{removeLine}}
+                 ]).pipe(takeUntil(this.destroy$)).subscribe({
+                      next: ([{{#each fieldsFK}}${minStart(this.type)}s,{{/each}}]) => {
+                          {{#each fieldsFK}}
+                          this.${minStart(this.type)}s = ${minStart(this.type)}s;
+                          const ${minStart(this.type)}Field = this.fields.find(f => f.name === '${this.name}');
+                          if (${minStart(this.type)}Field) {
+                            ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: JSON.stringify(d),label: entries[1][1]};}); 
+                          }
+                          {{/each}}
+                          this.isLoading = false;
+                      },
+                      error: (err) => {
+                          warnMeUp('error','error while collecting data');
+                          this.isLoading = false;
+                      }
+                  });
+            }
+            {{else}}{{removeLine}}
+            ngOnInit(): void {
+              const ${minStart(className)}Id = this.route.snapshot.paramMap.get('id');
+                if (${minStart(className)}Id) {
+                  this.id=${minStart(className)}Id;
+                  this.formUpdate=true
+                  this.load${majStart(className)}(${minStart(className)}Id);
+                }
+            }
+            {{/if}}{{removeLine}}
+        
+          ngOnDestroy(): void {
+              this.destroy$.next();
+              this.destroy$.complete();
+          }
+          
+        }
       destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
       componentName: "${toKebabCase(className)}-form.component"
       componentAdditionalFiles:
@@ -428,7 +634,28 @@
           fileName: "${toKebabCase(className)}-form.component"
           extension: "html"
           content: |
-            {{newline}}
+            <app-page-header name="${majStart(className)}s" context="Form" [isView]=true [isForm]=true></app-page-header>
+            <ng-container *ngIf="formUpdate; else insertForm">
+              <app-dynamic-form
+                *ngIf="${minStart(className)}ToUpdate"
+                [fields]="fields"
+                [form]="form"
+                [submitFn]="submit.bind(this)"
+                [initialData]="${minStart(className)}ToUpdate"
+                [validationErrors]="validationErrors"
+            >
+              </app-dynamic-form>
+            </ng-container>
+            
+            <ng-template #insertForm>
+              <app-dynamic-form
+                [fields]="fields"
+                [form]="form"
+                [submitFn]="submit.bind(this)"
+                [validationErrors]="validationErrors"
+            >
+              </app-dynamic-form>
+            </ng-template>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
         - fileType: "css template"
           fileName: "${toKebabCase(className)}-form.component"
@@ -436,6 +663,111 @@
           content: |
             {{newline}}
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
+    - componentType: "details"
+      router:
+        link: " "
+        label: " "
+      importFile: |
+        import { Component, OnInit, OnDestroy } from '@angular/core';
+        import { CommonModule } from '@angular/common';
+        import { HttpClientModule } from '@angular/common/http';
+        import { ActivatedRoute,Router } from '@angular/router';
+        import { takeUntil } from 'rxjs/operators';
+        import { Subject } from 'rxjs';
+        
+        import { warnMeUp } from '../../../../utilities/utilities';
+
+        import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+        import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
+        import { DetailViewComponent } from '../../../shared/detail-view/detail-view.component';
+
+        import { ${majStart(className)} } from '../models/${toKebabCase(className)}.model';
+        import { ${majStart(className)}Service } from '../services/${toKebabCase(className)}.service';
+      selector: "app-${toKebabCase(className)}-details"
+      generateForView: false
+      standalone: true
+      importComponent: "[CommonModule, HttpClientModule, PageHeaderComponent, LoadingIconComponent, DetailViewComponent]"
+      template: "./${toKebabCase(className)}-details.component.html"
+      style: "./${toKebabCase(className)}-details.component.css"
+      export: |
+        export class ${majStart(className)}DetailsComponent implements OnInit, OnDestroy
+        {
+            private destroy$ = new Subject<void>();
+            
+            ${minStart(className)}?: ${majStart(className)};
+            id?:string ;
+            isLoading = false;
+            
+            constructor(
+              private route: ActivatedRoute,
+              private navigator: Router,
+              private ${minStart(className)}Service: ${majStart(className)}Service
+            ) {}
+            
+            ngOnInit(): void {
+                const ${minStart(className)}Id = this.route.snapshot.paramMap.get('id');
+                if (${minStart(className)}Id) {
+                this.id=${minStart(className)}Id;
+                this.load${majStart(className)}(${minStart(className)}Id);
+              }
+            }
+              load${majStart(className)}(id: string): void {
+                  this.isLoading = true;
+                  this.${minStart(className)}Service.get${majStart(className)}ById(id)
+                  .pipe(takeUntil(this.destroy$))
+                  .subscribe({
+                  next: (${minStart(className)}: ${majStart(className)}) => {
+                          this.${minStart(className)} = ${minStart(className)};
+                          this.isLoading = false;
+                },
+                  error: (err) => {
+                    console.error('Error loading product:', err);
+                    warnMeUp('error', 'Error while fetching ${minStart(className)}');
+                    this.isLoading = false;
+                }
+                });
+              }
+        
+            ngOnDestroy(): void {
+                this.destroy$.next();
+                this.destroy$.complete();
+            }
+            
+            delete${majStart(className)} = (id:string) => {
+                this.${minStart(className)}Service.delete${majStart(className)}ById(id.toString()).pipe(takeUntil(this.destroy$)).subscribe({
+                next: () => {
+                  warnMeUp('success','line of data deleted successfully','#28a745','success') ;
+                  this.navigator.navigate(['${toKebabCase(className)}s']);
+              },
+                error: (err) => {
+                  console.error('error while deleting ${minStart(className)} :', err);
+                  warnMeUp('error','error while deleting ${minStart(className)}');
+              }
+              });
+            }
+            
+        }
+      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-details"
+      componentName: "${toKebabCase(className)}-details.component"
+      componentAdditionalFiles:
+        - fileType: "html template"
+          fileName: "${toKebabCase(className)}-details.component"
+          extension: "html"
+          content: |
+            <app-page-header name="${majStart(className)}s" context="Details" [isView]=true [isDetail]=true></app-page-header>
+
+            <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
+
+            <div *ngIf="!isLoading && ${minStart(className)}">
+              <app-detail-view [object]="${minStart(className)}" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id"></app-detail-view>
+            </div>
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-details"
+        - fileType: "css template"
+          fileName: "${toKebabCase(className)}-details.component"
+          extension: "css"
+          content: |
+            {{newline}}
+          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-details"
   serviceComponent:
     imports: |
       import { Injectable } from '@angular/core';
@@ -448,7 +780,9 @@
       export class ${majStart(className)}Service{
       {{tab}}private readonly apiUrl = environment.apiUrl+'/${lowerCase(classNameLink)}';
       {{tab}}constructor(private http: HttpClient) {}
-      
+        
+        
+        
         search${majStart(classNameLink)}(
             criteria: Partial<${majStart(className)}>,
             page: number = 0,
@@ -485,6 +819,24 @@
             console.error('Error while deleting ${majStart(className)} with id: '+id, err);
                     return throwError(() => err);})
           );
+        }
+      
+        create${majStart(className)}(${minStart(className)}: Partial<${majStart(className)}>): Observable<${majStart(className)}> {
+          return this.http.post<${majStart(className)}>(this.apiUrl, ${minStart(className)}).pipe(
+            map(response => response),
+              catchError(err => {
+                return throwError(err);
+              })
+            );
+        }
+      
+        update${majStart(className)}(${minStart(className)}: Partial<${majStart(className)}>,id:string): Observable<${majStart(className)}> {
+            return this.http.put<${majStart(className)}>(this.apiUrl+"/"+id, ${minStart(className)}).pipe(
+              map(response => response),
+              catchError(err => {
+                return throwError(err);
+              })
+            );
         }
       {{/if}}{{removeLine}}
       
@@ -555,6 +907,7 @@
       {{tab}}{{tab}}{{tab}}totalPages: number;
       {{tab}}{{tab}}};
       {{tab}}};
+      {{tab}}errors: any;
       {{tab}}timestamp: string;
       }
     destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/models"

@@ -30,6 +30,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("fields", getFieldsList(tableMetadata));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", fkList);
+        metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata));
         metadata.put("fieldsNotFK",getNotFkFieldsList(tableMetadata));
         metadata.put("containsForeignKey",fkList.size()>0);
         metadata.put("EntityName",tableMetadata.getTableName());
@@ -86,6 +87,16 @@ public class FrameworkFrontendMetadataProvider {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if(!field.isForeign()) {
+                Map<String, Object> fieldMap = getFieldHashMap(field);
+                fields.add(fieldMap);
+            }
+        }
+        return fields;
+    }
+    private static List<Map<String, Object>> getNotFkAndPKFieldsList(TableMetadata tableMetadata) {
+        List<Map<String, Object>> fields = new ArrayList<>();
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            if(!field.isForeign() && !field.isPrimary()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field);
                 fields.add(fieldMap);
             }
