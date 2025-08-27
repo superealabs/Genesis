@@ -313,6 +313,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isNumeric",field.isNumeric());
         fieldMap.put("isDate",field.isDate());
         fieldMap.put("isTime",field.isTime());
+        fieldMap.put("isTimeTz",field.isTimeTz());
         fieldMap.put("isDateTime",field.isDateTime());
         fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
@@ -348,6 +349,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isNumeric",field.isNumeric());
         fieldMap.put("isDate",field.isDate());
         fieldMap.put("isTime",field.isTime());
+        fieldMap.put("isTimeTz",field.isTimeTz());
         fieldMap.put("isDateTime",field.isDateTime());
         fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
