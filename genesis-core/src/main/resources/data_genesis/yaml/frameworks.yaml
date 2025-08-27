@@ -3898,6 +3898,7 @@
           using Microsoft.Extensions.DependencyInjection;
           using Microsoft.EntityFrameworkCore;
           using ${majStart(projectName)}.Models;
+          using ${majStart(projectName)}.Models.Dto;
           using ${majStart(projectName)}.Services.Implementation;
           using ${majStart(projectName)}.Repositories.Implementation;
           using ${majStart(projectName)}.Data;
@@ -4054,7 +4055,7 @@
                 
                 Assert.NotNull(result);
                 {{#if !isView}}
-                Assert.True(result.Any(), "Aucun enregistrement trouvé dans GetAllAsync. Vérifiez si la base contient des données.");
+                Assert.True(result.Content.Any(), "Aucun enregistrement trouvé dans GetAllAsync. Vérifiez si la base contient des données.");
                 {{else}}{{removeLine}}{{/if}}
               }
             }
@@ -4067,24 +4068,16 @@
                 var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
                 var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
                 
-                var search = new ${majStart(className)}SearchModel
-                {
-                  {{#each fields}}
-                  {{#if this.isPrimaryKey}}{{removeLine}}
-                  {{elseIf this.isForeignKey}}{{removeLine}}
-                  {{else}}${majStart(this.name)} = ${this.mockdata},
-                  {{/if}} 
-                  {{/each}}
-                };
-                var objectSearch = new GenericMapper().Map<${majStart(className)}SearchModel, ${majStart(className)}>(search);
+                var search = new ${majStart(className)}Dto();
+                var objectSearch = new GenericMapper().Map<${majStart(className)}Dto, ${majStart(className)}>(search);
                 
                 // Act
-                var result = await service.SearchAsync(objectSearch, page: 0, pageSize: 10, sorting: null);
+                var result = await service.SearchAsync(search, page: 0, pageSize: 10, sorting: null);
                 
                 // Assert
                 Assert.NotNull(result);
                 {{#if !isView}} 
-                Assert.True(result.Any(), "Aucun ${className} trouvé avec le critère de recherche.");
+                Assert.True(result.Content.Any(), "Aucun ${className} trouvé avec le critère de recherche.");
                 {{else}}{{removeLine}}{{/if}}
               }
             }
@@ -4104,6 +4097,7 @@
                 Assert.NotNull(result);
                 {{#each fields}}
                 {{#if this.isForeignKey}}{{removeLine}}
+                {{tab}}{{elseIf this.isTime or this.isDateTime}}{{removeLine}}
                 {{else}}Assert.Equal(mockData.${majStart(this.name)}, result?.${majStart(this.name)});{{/if}}
                 {{/each}}
                 {{else}}{{removeLine}}{{/if}}
