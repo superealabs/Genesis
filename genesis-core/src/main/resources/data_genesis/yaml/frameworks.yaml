@@ -3691,6 +3691,8 @@
       using System.ComponentModel.DataAnnotations;
       using System.ComponentModel.DataAnnotations.Schema;
       using System.ComponentModel;
+      using System.Text.Json.Serialization;
+      using ${majStart(projectName)}.Serialization;
     modelExtends: ""
     modelAnnotations: |
       [Table("${tableName}")]
@@ -3706,6 +3708,10 @@
       {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
       {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
       {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
+      {{elseIf this.isTimeTz}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+      {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
       {{tab}}{{else}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}{{#each this.validationAnnotations}}
@@ -3952,6 +3958,9 @@
         extension: "cs"
         content: |
           namespace ${majStart(projectName)}.Models.Dto;
+          
+          using ${majStart(projectName)}.Serialization;
+          using System.Text.Json.Serialization;
 
           public class ${majStart(className)}Dto
           {
@@ -3960,8 +3969,15 @@
           {{tab}}
           {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
           {{tab}}public ${this.type}Dto? ${majStart(this.name)} { get; set; }
+          {{elseIf this.isTimeTz}}
+          {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
+          {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
           {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
-          public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
           {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
           {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
           {{tab}}{{else}}
