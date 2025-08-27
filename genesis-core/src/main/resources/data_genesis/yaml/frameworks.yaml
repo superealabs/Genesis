@@ -3609,6 +3609,47 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
+    - fileType: "TimeTzUtcConverter"
+      fileName: "TimeTzUtcConverter"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Serialization;
+
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using System.Globalization;
+
+        public class TimeTzUtcConverter : JsonConverter<DateTimeOffset>
+        {
+          public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+          {
+              // 1. Parse la chaîne (UTC ou déjà avec offset)
+              var dto = DateTimeOffset.Parse(reader.GetString()!, CultureInfo.InvariantCulture,
+                                             DateTimeStyles.AssumeUniversal);
+
+              // 2. Offset local à l’instant T (arrondi à l’heure)
+              var offset = TimeSpan.FromHours(
+                  Math.Round(TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow).TotalHours));
+
+              // 3. On applique le décalage (ici on SOUSTRAIT pour retrancher 3 h)
+              return dto.Add(offset.Negate());
+          }
+
+            public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options)
+            {
+                // Fuseau actuel de l’OS → on ne prend QUE son *offset* à l’instant T
+                var offset = TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow);
+
+                // … mais on arrondit au quart-heure le plus proche pour éviter
+                // les écarts de 10 min dus aux règles spécifiques Windows
+                var roundedOffset = TimeSpan.FromHours(Math.Round(offset.TotalHours));
+
+                var local = value.ToOffset(roundedOffset);
+                writer.WriteStringValue(local.ToString("HH:mm:ss") + "Z");
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
