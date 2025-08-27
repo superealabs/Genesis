@@ -3745,6 +3745,52 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
 
+    - fileType: "IsoDurationJsonConverter"
+      fileName: "IsoDurationJsonConverter"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Serialization;
+        
+        using System;
+        using System.Globalization;
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using System.Xml;
+
+        public class IsoDurationJsonConverter : JsonConverter<TimeSpan>
+        {
+            public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                var str = reader.GetString();
+                // XmlConvert gère ISO-8601 "PT..."
+                return XmlConvert.ToTimeSpan(str);
+            }
+
+            public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(XmlConvert.ToString(value)); // PT27H45M7.8S
+            }
+        }
+
+        public class NullableIsoDurationJsonConverter : JsonConverter<TimeSpan?>
+        {
+            public override TimeSpan? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                var str = reader.GetString();
+                if (string.IsNullOrWhiteSpace(str)) return null;
+                return XmlConvert.ToTimeSpan(str);
+            }
+
+            public override void Write(Utf8JsonWriter writer, TimeSpan? value, JsonSerializerOptions options)
+            {
+                if (value == null)
+                    writer.WriteNullValue();
+                else
+                    writer.WriteStringValue(XmlConvert.ToString(value.Value));
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
