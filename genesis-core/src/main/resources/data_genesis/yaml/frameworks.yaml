@@ -3863,6 +3863,13 @@
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}[JsonConverter(typeof(UtcZJsonConverter))]
       {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
+      {{elseIf this.isInterval}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+      {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
       {{tab}}{{else}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}{{#each this.validationAnnotations}}
@@ -4127,7 +4134,14 @@
           {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
           {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
           {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
-          {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+          {{elseIf this.isInterval}}
+          {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
+          {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
+          {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime}}
           {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
           {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
           {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
