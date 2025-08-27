@@ -213,6 +213,7 @@ public abstract class Database {
                 boolean isColumnTime = isColumnTime(columns);
                 boolean isColumnTimeTz = isColumnTimeTz(columns);
                 boolean isColumnDateTime = isColumnDateTime(columns);
+                boolean isColumnDateTimeTz = isColumnDateTimeTz(columns);
                 boolean isColumnInterval = isColumnInterval(columns);
                 boolean useTimeZone = useTimeZone(columns);
 
@@ -225,6 +226,7 @@ public abstract class Database {
                 column.setTime(isColumnTime);
                 column.setTimeTz(isColumnTimeTz);
                 column.setDateTime(isColumnDateTime);
+                column.setDateTimeTz(isColumnDateTimeTz);
                 column.setUseTimeZone(useTimeZone);
                 column.setInterval(isColumnInterval);
 
@@ -392,6 +394,23 @@ public abstract class Database {
                 || "DATETIME64".equals(upper)            // ClickHouse
                 || "DATETIME32".equals(upper)            // ClickHouse
                 || "DATETIMEV2".equals(upper);           // StarRocks
+    }
+
+    protected boolean isColumnDateTimeTz(ResultSet column) throws SQLException {
+        int jdbcType = column.getInt("DATA_TYPE");
+        if (jdbcType == Types.TIMESTAMP_WITH_TIMEZONE) {
+            return true;
+        }
+
+        String typeName = column.getString("TYPE_NAME");
+        if (typeName == null) return false;
+
+        String upper = typeName.toUpperCase(Locale.ROOT);
+
+        return upper.startsWith("TIMESTAMP") && (upper.contains("TZ") || upper.contains("WITH TIME ZONE"))
+                || "TIMESTAMPTZ".equals(upper)            // PostgreSQL
+                || "TIMESTAMPLTZ".equals(upper)           // Oracle WITH LOCAL TIME ZONE
+                || "DATETIMEOFFSET".equals(upper);        // SQL Server WITH TZ
     }
 
     protected boolean useTimeZone(ResultSet column) throws SQLException {
