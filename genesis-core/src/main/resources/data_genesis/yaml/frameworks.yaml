@@ -1139,7 +1139,14 @@
                       }
                       {{elseIf this.isText}}
                       WebUtils.addLikeIfPresent(criteriaBuilder, ${this.criteriaBuildSnippet}, predicates);
-                      {{elseIf this.isNumeric or this.isDate}}
+                      {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+                      if(object.get${majStart(this.name)}()!=null){
+                          predicates.add(
+                              criteriaBuilder.equal(
+                                  ${this.criteriaBuildSnippet}
+                              )
+                          );
+                      }
                       WebUtils.addInterval(criteriaBuilder, root.get("${this.name}"), object.get${majStart(this.name)}Min(), object.get${majStart(this.name)}Max(), predicates);
                       {{else}}
                       if(object.get${majStart(this.name)}()!=null){
@@ -1315,7 +1322,7 @@
           {{tab}}private ${this.type} ${this.name};
           {{elseIf this.isForeignKey}}{{removeLine}}
           {{tab}}private ${this.type} ${this.name};
-          {{tab}}{{elseIf this.isNumeric or this.isDate }}
+          {{tab}}{{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
           {{tab}}private ${this.type} ${this.name};
           {{tab}}private ${this.type} ${this.name}Min;
           {{tab}}private ${this.type} ${this.name}Max;
@@ -1963,11 +1970,24 @@
         });
         {{/if}}
         
+        {{#if useJWT}}
         builder.Services.AddAuthorization(options =>
         {
           options.DefaultPolicy = new AuthorizationPolicyBuilder("Bearer")
           .RequireAuthenticatedUser()
           .Build();
+        });
+        {{/if}}
+        
+        builder.Services.AddCors(options =>
+        {
+          options.AddPolicy("AllowFrontend", policy =>
+          {
+            policy.WithOrigins("http://localhost:3000") 
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // retire cette ligne si tu n’utilises pas de cookies / auth
+          });
         });
 
         var app = builder.Build();
@@ -1988,6 +2008,8 @@
         {{#if useEurekaServer}}
         // Map all actuators and controllers directly
         app.MapAllActuators(_ => { });{{/if}}
+        
+        app.UseCors("AllowFrontend");
         
         {{#if useJWT}}
         app.UseAuthentication();
@@ -2239,11 +2261,17 @@
         namespace ${majStart(projectName)}.Repositories.Generic;
         
         using System.Linq.Expressions;
+        using ${majStart(projectName)}.Utils;
         
         public interface IRepository<T, in TKey> where T : class
         {
             Task<IEnumerable<T>> GetAllWithIncludes(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
-            Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting);
+            Task<PagedResponse<T>> SearchAsync(
+                Expression<Func<T, bool>> predicate,
+                int page,
+                int pageSize,
+                string? sorting,
+                params Expression<Func<T, object?>>[]? includes);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -2359,50 +2387,24 @@
                 return keyProperty.Name;
             }
         
-            public async Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting)
+            public async Task<PagedResponse<T>> SearchAsync(
+                Expression<Func<T, bool>> predicate,
+                int page, int pageSize, string? sorting,
+                params Expression<Func<T, object?>>[]? includes)
             {
-              IQueryable<T> query = _dbSet;
-              
-              // Récupère la propriété marquée [Key]
-              var keyProperty = typeof(T).GetProperties()
-              .FirstOrDefault(p => Attribute.IsDefined(p, typeof(KeyAttribute)));
-              
-              // Crée un filtre dynamique basé sur les propriétés non nulles (en ignorant la clé si elle vaut 0)
-              var properties = typeof(T).GetProperties()
-              .Where(p =>
-              {
-                if (!p.CanRead || !p.CanWrite)
-                return false;
-                
-                var value = p.GetValue(example);
-                
-                // Ignore les propriétés nulles
-                if (value == null)
-                return false;
-                
-                // Ignore la clé si elle vaut 0
-                if (p == keyProperty && value.Equals(Activator.CreateInstance(p.PropertyType)))
-                return false;
-                
-                return true;
-              });
-              
-              foreach (var prop in properties)
-              {
-                var value = prop.GetValue(example);
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var propertyAccess = Expression.Property(parameter, prop);
-                var constant = Expression.Constant(value);
-                var equal = Expression.Equal(propertyAccess, constant);
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-                query = query.Where(lambda);
-              }
-              
+              var query = GetQuery(_dbSet, includes).Where(predicate);
+          
               string sortOrder = sorting ?? $"{GetKeyPropertyName()},asc";
               query = WebUtils.ApplySort(query, WebUtils.ParseSortingString(sortOrder));
-              query = query.Skip(page * pageSize).Take(pageSize);
-              
-              return await query.ToListAsync();
+          
+              var total = await query.LongCountAsync();
+              var items = await query
+              .Skip(page * pageSize)
+              .Take(pageSize)
+              .ToListAsync();
+          
+              return await PaginationHelper.CreatePagedResponse(
+              items, page, pageSize, () => Task.FromResult(total));
             }
         
             public async Task<long> GetTotalCountAsync()
@@ -2420,11 +2422,15 @@
         namespace ${majStart(projectName)}.Services.Generic;
         
         using System.Linq.Expressions;
+        using ${majStart(projectName)}.Utils;
         
-        public interface IService<T, in TKey> where T : class
+        public interface IService<T, in TKey, in TSearch> where T : class
         {
-            Task<IEnumerable<T>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
-            Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting);
+            Task<PagedResponse<T>> GetAllAsync(
+                int page, int pageSize, string? sorting,
+                params Expression<Func<T, object?>>[]? includeProperties);
+            Task<PagedResponse<T>> SearchAsync(
+                TSearch searchDto, int page, int pageSize, string? sorting);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -3517,6 +3523,120 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
+    - fileType: "Filter Builder Util"
+      fileName: "FilterBuilder"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+        
+        using System.Linq.Expressions;
+        using System.Reflection;
+        
+        public abstract class FilterBuilder<TEntity, TSearch>
+        {
+          protected readonly List<Expression<Func<TEntity, bool>>> Predicates = new();
+      
+          public abstract FilterBuilder<TEntity, TSearch> Build(TSearch dto);
+      
+          public Expression<Func<TEntity, bool>> Combine()
+          => Predicates.Aggregate(PredicateBuilder.True<TEntity>(),
+          (acc, pred) => acc.And(pred));
+      
+          protected void AddEquals<TProperty>(Expression<Func<TEntity, TProperty>> selector,
+          TProperty? value)
+          {
+            if (value is null) return;
+            var parameter = selector.Parameters.Single();
+            var body = Expression.Equal(selector.Body,
+            Expression.Constant(value, typeof(TProperty)));
+            Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(body, parameter));
+          }
+      
+          protected void AddRange<TProperty>(Expression<Func<TEntity, TProperty?>> selector,
+            TProperty? min, TProperty? max)
+            where TProperty : struct, IComparable<TProperty>
+          {
+            if (min.HasValue || max.HasValue)
+            {
+              var parameter = selector.Parameters.Single();
+              Expression propertyAccess = selector.Body;
+              
+              // Si la propriété est Nullable<T>, on accède à .Value
+              if (propertyAccess.Type.IsGenericType &&
+              propertyAccess.Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+              {
+                propertyAccess = Expression.Property(propertyAccess, "Value");
+              }
+              
+              Expression? body = null;
+              
+              if (min.HasValue)
+              {
+                var minCondition = Expression.GreaterThanOrEqual(
+                propertyAccess,
+                Expression.Constant(min.Value)
+                );
+                body = minCondition;
+              }
+              
+              if (max.HasValue)
+              {
+                var maxCondition = Expression.LessThanOrEqual(
+                propertyAccess,
+                Expression.Constant(max.Value)
+                );
+                body = body == null ? maxCondition : Expression.AndAlso(body, maxCondition);
+              }
+              
+              if (body != null)
+              {
+                Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(body, parameter));
+              }
+            }
+          }
+                              
+          protected void AddLike(Expression<Func<TEntity, string>> selector,string? value)
+          {
+            if (string.IsNullOrWhiteSpace(value)) return;
+            
+            var method = typeof(string).GetMethod("Contains",
+            BindingFlags.Public | BindingFlags.Instance,
+            new[] { typeof(string) })!;
+            
+            var parameter = selector.Parameters.Single();
+            var toLower = Expression.Call(selector.Body, "ToLower", null);
+            var contains = Expression.Call(toLower, method,
+            Expression.Constant(value.ToLower()));
+            Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(contains, parameter));
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
+    - fileType: "Predicate Builder Util"
+      fileName: "PredicateBuilder"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+
+        using System.Linq.Expressions;
+
+        public static class PredicateBuilder
+        {
+            public static Expression<Func<T, bool>> True<T>()  => _ => true;
+            public static Expression<Func<T, bool>> False<T>() => _ => false;
+
+            public static Expression<Func<T, bool>> And<T>(
+                this Expression<Func<T, bool>> left,
+                Expression<Func<T, bool>> right)
+            {
+                var p = left.Parameters[0];
+                var body = Expression.AndAlso(left.Body,
+                             Expression.Invoke(right, p));
+                return Expression.Lambda<Func<T, bool>>(body, p);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
@@ -3566,7 +3686,8 @@
       {{tab}}[Key]
       {{tab}}[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
       {{tab}}[Column("${this.columnName}")]
-      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{elseIf this.isForeignKey}}
+      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }
+      {{elseIf this.isForeignKey}}
       {{tab}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
@@ -3577,13 +3698,7 @@
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
-      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
-      {{tab}}{{/each}}
-      }
-      public class ${majStart(className)}SearchModel
-      {
-      {{tab}}{{#each fields}}
-      {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+      {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
@@ -3819,6 +3934,82 @@
             }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
+      - fileType: "DTO search model class"
+        fileName: "${majStart(className)}Dto"
+        extension: "cs"
+        content: |
+          namespace ${majStart(projectName)}.Models.Dto;
+
+          public class ${majStart(className)}Dto
+          {
+          {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{elseIf this.isForeignKey}}
+          {{tab}}
+          {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
+          {{tab}}public ${this.type}Dto? ${majStart(this.name)} { get; set; }
+          {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+          public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
+          {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
+          {{tab}}{{else}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
+          {{tab}}{{/each}}
+          
+            public ${majStart(className)} ToEntity() => new()
+            {
+              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}{{removeLine}}
+              {{elseIf this.isForeignKey}}
+              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${majStart(this.referencedPrimaryKeyColumn)}
+              {{tab}}{{else}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}{{#if this.isPrimaryKey}}{{removeLine}}{{/if}}
+              {{tab}}{{/each}}
+            };
+          
+            public ${majStart(className)} ToEntity(${pkColumnType} id) => new()
+            {
+              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+              {{tab}}${majStart(this.name)} = id
+              {{elseIf this.isForeignKey}}
+              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${majStart(this.referencedPrimaryKeyColumn)}
+              {{tab}}{{else}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}
+              {{tab}}{{/each}}
+            };
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto/"
+      - fileType: "Specification File"
+        fileName: "${majStart(className)}FilterBuilder"
+        extension: "cs"
+        content: |
+          namespace ${majStart(projectName)}.Specification;
+
+          using System.Linq.Expressions;
+          using ${majStart(projectName)}.Models;
+          using ${majStart(projectName)}.Models.Dto;
+          using ${majStart(projectName)}.Utils;
+
+          public sealed class ${majStart(className)}FilterBuilder : FilterBuilder<${majStart(className)}, ${majStart(className)}Dto>
+          {
+              public override ${majStart(className)}FilterBuilder Build(${majStart(className)}Dto dto)
+              {
+              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+              {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});{{elseIf this.isForeignKey}}
+              {{tab}}
+              {{tab}}AddEquals(e => e.${majStart(this.columnNameField)}, dto.${majStart(this.columnNameField)});  
+              {{tab}}if (dto.${majStart(this.name)} is { } ${this.name})
+                      {{tab}}AddEquals(e => e.${majStart(this.columnNameField)}, ${this.name}.${majStart(this.referencedPrimaryKeyColumn)});
+              {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+              {{tab}}AddRange(e => e.${majStart(this.name)},  dto.${majStart(this.name)}Min,  dto.${majStart(this.name)}Max);
+              {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});
+              {{elseIf this.isText}}
+              {{tab}}AddLike(e => e.${majStart(this.name)}, dto.${majStart(this.name)});
+              {{tab}}{{else}}
+              {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});{{/if}}{{#if !@last}}{{newline}}{{/if}}
+              {{tab}}{{/each}}
+                  return this;
+              }
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Specification/"
     validationAnnotations:
       notNull: '[Required(ErrorMessage = "${majStart(name)} cannot be null")]'
       maxSize: "[StringLength(${columnSize})]"
@@ -3870,11 +4061,13 @@
     toGenerate: true
     serviceImports: |
       using Models;
+      using Models.Dto;
       using Generic;
+      using Services.Generic;
 
     serviceAnnotations: ""
     serviceClassKeyword: "public interface"
-    serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}>"
+    serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}, ${majStart(className)}Dto>"
     serviceName: "I${majStart(className)}Service"
     serviceFieldContent: "{{removeLine}}"
     serviceMethodContent: "{{removeLine}}"
@@ -3892,6 +4085,9 @@
           using ${majStart(projectName)}.Repositories.Interface;
           using ${majStart(projectName)}.Repositories.Implementation;
           using ${majStart(projectName)}.Services.Interface;
+          using ${majStart(projectName)}.Specification;
+          using ${majStart(projectName)}.Models.Dto;
+          using ${majStart(projectName)}.Utils;
           
           namespace ${majStart(projectName)}.Services.Implementation;
           
@@ -3904,29 +4100,35 @@
                   _repository = repository;
               }
           
-              public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
+              public async Task<PagedResponse<${majStart(className)}>> GetAllAsync(
+                  int page, int pageSize, string? sorting,
+                  params Expression<Func<${majStart(className)}, object?>>[]? includes)
               {
                   try
                   {
-                    return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                      return await _repository.SearchAsync(
+                          _ => true, page, pageSize, sorting, includes);
                   }
                   catch (Exception ex)
                   {
-                    throw new InternalServerErrorException("Error while retrieving all ${formatReadableLowerCase(className)}", ex);
+                      throw new InternalServerErrorException("Error while retrieving all ${formatReadableLowerCase(className)}", ex);
                   }
               }
           
-              public async Task<IEnumerable<${majStart(className)}>> SearchAsync(${majStart(className)} search, int page, int pageSize, string? sorting)
+              public async Task<PagedResponse<${majStart(className)}>> SearchAsync(
+                  ${majStart(className)}Dto searchDto,
+                  int page, int pageSize, string? sorting)
               {
-                try
-                {
-                  return await _repository.SearchAsync(search, page, pageSize, sorting);
-                }
-                catch (Exception ex)
-                {
-                  throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
-                }
-              }
+                  try
+                  {
+                      var predicate = new ${majStart(className)}FilterBuilder().Build(searchDto).Combine();
+                      return await _repository.SearchAsync(predicate, page, pageSize, sorting{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}} );
+                  }
+                  catch (Exception ex)
+                  {
+                      throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
+                  }
+              }  
           
               public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
@@ -4012,6 +4214,7 @@
     controllerImports: |
       using Microsoft.AspNetCore.Mvc;
       using Models;
+      using Models.Dto;
       using Services;
       using Services.Interface;
       using Swashbuckle.AspNetCore.Annotations;
@@ -4051,25 +4254,19 @@
       {{tab}}public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(className)}>>>> Get${majStart(className)}s(
       {{tab}}   [FromQuery, SwaggerParameter("Page number (0-indexed)", Required = false)] int page = 0,
       {{tab}}   [FromQuery, SwaggerParameter("Size of the page", Required = false)] int pageSize = 10,
-      {{tab}}   [FromQuery, SwaggerParameter("Sort order", Required = false)] string? sortOrder = null
+      {{tab}}   [FromQuery, SwaggerParameter("Sort order", Required = false)] string? sortParam = null
       {{tab}})
       {{tab}}{
       {{tab}}{{tab}}try {
-      {{tab}}{{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync(page, pageSize, sortOrder{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}});
-      {{tab}}{{tab}}{{tab}}var pagedResponse = await PaginationHelper.CreatePagedResponse(
-      {{tab}}{{tab}}{{tab}}{{tab}}items: ${minStart(className)}s,
-      {{tab}}{{tab}}{{tab}}{{tab}}page: page,
-      {{tab}}{{tab}}{{tab}}{{tab}}pageSize: pageSize,
-      {{tab}}{{tab}}{{tab}}{{tab}}totalCountFunc: () => _repository.GetTotalCountAsync()
-      {{tab}}{{tab}}{{tab}});
+      {{tab}}{{tab}}{{tab}}var data = await _service.GetAllAsync(page, pageSize, sortParam{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}});
       {{tab}}{{tab}}{{tab}}return Ok(new ApiResponse<PagedResponse<${majStart(className)}>>
       {{tab}}{{tab}}{{tab}}{
       {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status200OK,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = ${minStart(className)}s.Any()
+      {{tab}}{{tab}}{{tab}}{{tab}}Message = data.Content.Any()
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}? "${majStart(className)}s retrieved successfully"
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}: "No ${minStart(className)}s found",
       {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = pagedResponse
+      {{tab}}{{tab}}{{tab}}{{tab}}Data = data
       {{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}}
       {{tab}}{{tab}}catch (Exception ex)
@@ -4145,34 +4342,22 @@
       {{tab}}[ProducesResponseType(typeof(ApiResponse<PagedResponse<${majStart(className)}>>), 200)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
       {{tab}}public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(className)}>>>> Search${majStart(className)}s(
-      {{tab}}   [FromBody] ${majStart(className)}SearchModel search,
+      {{tab}}   [FromBody] ${majStart(className)}Dto dto,
       {{tab}}   [FromQuery] int page = 0,
       {{tab}}   [FromQuery] int pageSize = 10,
-      {{tab}}   [FromQuery] string? sortOrder = null
+      {{tab}}   [FromQuery] string? sortParam = null
       {{tab}})
       {{tab}}{
       {{tab}}{{tab}}try {
-      {{tab}}{{tab}}{{tab}}var filter = new GenericMapper().Map<${majStart(className)}SearchModel, ${majStart(className)}>(search);
-      {{tab}}{{tab}}{{tab}}var results = await _service.SearchAsync(filter, page, pageSize, sortOrder);
-      {{tab}}{{tab}}{{tab}}var pagedResponse = new PagedResponse<${majStart(className)}>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Content = results.ToList(),
-      {{tab}}{{tab}}{{tab}}{{tab}}Page = new PageInfo
-      {{tab}}{{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Size = pageSize,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Number = page,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}TotalElements = results.Count(),
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}TotalPages = (int)Math.Ceiling((double) results.Count() / pageSize)
-      {{tab}}{{tab}}{{tab}}{{tab}}}
-      {{tab}}{{tab}}{{tab}}};
+      {{tab}}{{tab}}{{tab}}var data = await _service.SearchAsync(dto, page, pageSize, sortParam);
       {{tab}}{{tab}}{{tab}}return Ok(new ApiResponse<PagedResponse<${majStart(className)}>>
       {{tab}}{{tab}}{{tab}}{
       {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status200OK,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = results.Any()
+      {{tab}}{{tab}}{{tab}}{{tab}}Message = data.Content.Any()
       {{tab}}{{tab}}{{tab}}{{tab}}? "${majStart(className)}s retrieved successfully"
       {{tab}}{{tab}}{{tab}}{{tab}}: "No ${formatReadableLowerCase(className)}s found for the given criteria",
       {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = pagedResponse
+      {{tab}}{{tab}}{{tab}}{{tab}}Data = data
       {{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}}
       {{tab}}{{tab}}catch (Exception ex)
@@ -4189,16 +4374,19 @@
       
       {{#if !isView}} 
       {{tab}}[HttpPost]
+      {{/if}}
       {{tab}}{{#if useJWT}}[Authorize]{{/if}}
+      {{#if !isView}} 
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), 201)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
-      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Create([SwaggerParameter(Description = "${formatReadable(className)} object to be created", Required = true)] ${majStart(className)} ${minStart(className)})
+      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Create([SwaggerParameter(Description = "${formatReadable(className)} object to be created", Required = true)] ${majStart(className)}Dto dto)
       {{tab}}{
       {{tab}}{{tab}}try {
+      {{tab}}{{tab}}{{tab}}var ${minStart(className)} = dto.ToEntity();
       {{tab}}{{tab}}{{tab}}await _service.AddAsync(${minStart(className)});
       {{tab}}{{tab}}{{tab}}var created = await _service.GetByIdAsync(${minStart(className)}.${majStart(pkColumn)});
       {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status201Created, new ApiResponse<${majStart(className)}>
@@ -4220,9 +4408,13 @@
       {{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}}
       {{tab}}}
+      {{/if}}
       
+      {{#if !isView}} 
       {{tab}}[HttpPut("{id}")]
+      {{/if}}
       {{tab}}{{#if useJWT}}[Authorize]{{/if}}
+      {{#if !isView}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
@@ -4231,10 +4423,10 @@
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 400)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 404)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
-      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Put${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to update", Required = true)] ${pkColumnType} id, [SwaggerParameter(Description = "Updated ${formatReadable(className)} object", Required = true)] ${majStart(className)} ${minStart(className)})
+      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Put${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to update", Required = true)] ${pkColumnType} id, [SwaggerParameter(Description = "Updated ${formatReadable(className)} object", Required = true)] ${majStart(className)}Dto dto)
       {{tab}}{
       {{tab}}{{tab}}try{
-      {{tab}}{{tab}}{{tab}}if (id != ${minStart(className)}.${majStart(pkColumn)})
+      {{tab}}{{tab}}{{tab}}if (id != dto.${majStart(pkColumn)})
       {{tab}}{{tab}}{{tab}}{
       {{tab}}{{tab}}{{tab}}{{tab}}return BadRequest(new ApiResponse<object>
       {{tab}}{{tab}}{{tab}}{{tab}}{
@@ -4257,6 +4449,7 @@
       {{tab}}{{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}{{tab}}}
       
+      {{tab}}{{tab}}{{tab}}var ${minStart(className)} = dto.ToEntity(id);
       {{tab}}{{tab}}{{tab}}await _service.UpdateAsync(${minStart(className)});
       {{tab}}{{tab}}{{tab}}var updatedObject = await _service.GetByIdAsync(id);
       
@@ -4280,9 +4473,13 @@
       {{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}}    
       {{tab}}}
+      {{/if}}
       
+      {{#if !isView}} 
       {{tab}}[HttpDelete("{id}")]
+      {{/if}}
       {{tab}}{{#if useJWT}}[Authorize]{{/if}}
+      {{#if !isView}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Delete ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Delete a ${formatReadableLowerCase(className)} item by its ID"

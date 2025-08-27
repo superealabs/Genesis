@@ -134,6 +134,7 @@
       "timestamptz": "timestamptz",
       "bool": "boolean",
       "time": "time",
+      "timetz": "timetz",
       "tsrange": "timestamp[]",
       "json": "json",
       "jsonb": "json",

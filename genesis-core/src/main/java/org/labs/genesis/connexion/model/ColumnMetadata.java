@@ -29,12 +29,17 @@ public class ColumnMetadata {
     private String columnType;
     private String referencedColumn;
     private String referencedColumnType;
+    private String referencedPrimaryKeyColumn;
     private boolean unique;
     private boolean nullable;
     private boolean isNumeric;
     private boolean isNumericWithPrecision;
     private boolean isText;
     private boolean isDate;
+    private boolean isTime;
+    private boolean isDateTime;
+    private boolean useTimeZone;
+    private boolean isInterval;
     private String defaultValue;
     private int decimalDigits;
     private int columnSize;
@@ -70,7 +75,13 @@ public class ColumnMetadata {
 
     public void setDefaultValue(String defaultValue, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
         this.defaultValue = defaultValue;
-        if (defaultValue!=null && !this.isDate){
+        if (defaultValue!=null &&
+                (!this.isDate
+                || !this.isTime
+                || !this.isDateTime
+                || !this.isInterval)
+            )
+        {
             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(this);
             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("defaultValue","{{removeLine}}");
             String annotationResult = engine.render(annotationTemplate, fieldHashMap);
