@@ -1,0 +1,20 @@
+<div class="detail-grid">
+  <div class="detail-item" *ngFor="let item of entries">
+    <label>{{ item[0] }}</label>
+    <input type="text" [value]="item[1]" readonly>
+  </div>
+
+  <!-- Bouton Delete à la fin -->
+  <div class="delete-container" *ngIf="deletfn">
+    <button class="delete-btn" (click)="onDeleteClick()">
+      <i class="bi bi-trash-fill"></i> Delete
+    </button>
+  </div>
+  <app-confirmation-box
+      *ngIf="showConfirmation"
+      [message]="'Are you sure you want to delete <b>' + this.id+ '</b>?'"
+      [value]="this.id"
+      [onConfirm]="confirmDelete"
+      [onCancel]="cancelDelete">
+    </app-confirmation-box>
+</div>
