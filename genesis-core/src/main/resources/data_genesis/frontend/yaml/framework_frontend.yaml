@@ -1737,6 +1737,7 @@
           {
             header: '${formatReadable(this.name)}',
             accessor: (row: ${majStart(className)}) => {
+              if (!row.${this.name}) return '-';
               const d = new Date(row.${this.name} as unknown as string);
               return isNaN(d.getTime())
                   ? '-'
@@ -1755,7 +1756,7 @@
             },
             sortKey: '${this.name}'
           },
-          {{elseIf this.isTime and this.useTimeZone}} 
+          {{elseIf this.isTimeTz}} 
           {
             header: '${formatReadable(this.name)}',
               accessor: (row: ${majStart(className)}) => {
@@ -1816,7 +1817,11 @@
           ${this.name}: { label: '${formatReadable(this.name)}', type: 'Date' as const },
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'Date' as const },
           ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'Date' as const },
-          {{elseIf this.isDateTime and this.useTimeZone}}  
+          {{elseIf this.isTimeTz}} 
+          ${this.name}: { label: '${formatReadable(this.name)}', type: 'timeTz' as const },
+          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'timeTz' as const },
+          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'timeTz' as const },
+          {{elseIf this.isDateTimeTz}}  
           ${this.name}: { label: '${formatReadable(this.name)}', type: 'DateTimeTZ' as const },
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'DateTimeTZ' as const },
           ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'DateTimeTZ' as const },
@@ -1824,10 +1829,6 @@
           ${this.name}: { label: '${formatReadable(this.name)}', type: 'DateTime' as const },
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'DateTime' as const },
           ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'DateTime' as const },
-          {{elseIf this.isTime and this.useTimeZone}} 
-          ${this.name}: { label: '${formatReadable(this.name)}', type: 'timeTz' as const },
-          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'timeTz' as const },
-          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'timeTz' as const },
           {{elseIf this.isTime }}
           ${this.name}: { label: '${formatReadable(this.name)}', type: 'time' as const },
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'time' as const },
@@ -1846,7 +1847,7 @@
             type: 'select' as const,
             required: ${this.isRequired},
             foreignKey: {
-              endpoint: '/${lowerCase(classNameLink)}?page=0&size=1000',
+              endpoint: '/${toKebabCase(this.type)}s?page=0&size=1000',
               labelKey: '${this.referencedPrimaryKeyColumn}',
               valueKey: '${this.referencedPrimaryKeyColumn}'
             },
@@ -1856,7 +1857,18 @@
           {{#each fieldsNotFK}}
           {{#if this.isPrimaryKey}}
           {{removeLine}}
-          {{elseIf this.isDateTime and this.useTimeZone}}
+          {{elseIf this.isTimeTz}} 
+          ${this.name}: {
+                label: '${formatReadable(this.name)}',
+                type: 'timeTz' as const,
+                required: true,
+                transform: (value: any) => {
+                    if (!value || typeof value !== 'string') return null;
+                    const d = dayjs.utc(`1970-01-01T$[value]`); 
+                    return d.isValid() ? d.format('HH:mm:ss') + 'Z' : null;
+                },
+          },
+          {{elseIf this.isDateTimeTz}}
           ${this.name}: {
             label: '${formatReadable(this.name)}',
             type: 'datetime' as const,
@@ -1871,17 +1883,6 @@
             required: ${this.isRequired},
             transform: (value: string) =>
                                  value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null,
-          },
-          {{elseIf this.isTime and this.useTimeZone}} 
-          ${this.name}: {
-                label: '${formatReadable(this.name)}',
-                type: 'timeTz' as const,
-                required: true,
-                transform: (value: any) => {
-                    if (!value || typeof value !== 'string') return null;
-                    const d = dayjs.utc(`1970-01-01T$[value]`); 
-                    return d.isValid() ? d.format('HH:mm:ss') + 'Z' : null;
-                },
           },
           {{elseIf this.isTime }}
           ${this.name}: {

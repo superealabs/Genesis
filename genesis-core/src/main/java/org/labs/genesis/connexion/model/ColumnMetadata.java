@@ -37,7 +37,9 @@ public class ColumnMetadata {
     private boolean isText;
     private boolean isDate;
     private boolean isTime;
+    private boolean isTimeTz;
     private boolean isDateTime;
+    private boolean isDateTimeTz;
     private boolean useTimeZone;
     private boolean isInterval;
     private String defaultValue;
