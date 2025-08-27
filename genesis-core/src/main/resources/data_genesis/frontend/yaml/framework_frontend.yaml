@@ -1468,7 +1468,7 @@
           ${this.name}: { label: '${formatReadable(this.name)}', type: 'timeTz' as const },
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'timeTz' as const },
           ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'timeTz' as const },
-          {{elseIf this.isDateTime and this.useTimeZone}}  
+          {{elseIf this.isDateTimeTz}}  
           ${this.name}: { label: '${formatReadable(this.name)}', type: 'DateTimeTZ' as const },
           ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'DateTimeTZ' as const },
           ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'DateTimeTZ' as const },
@@ -1515,7 +1515,7 @@
                     return d.isValid() ? d.format('HH:mm:ss') + 'Z' : null;
                 },
           },
-          {{elseIf this.isDateTime and this.useTimeZone}}
+          {{elseIf this.isDateTimeTz}}
           ${this.name}: {
             label: '${formatReadable(this.name)}',
             type: 'datetime' as const,
