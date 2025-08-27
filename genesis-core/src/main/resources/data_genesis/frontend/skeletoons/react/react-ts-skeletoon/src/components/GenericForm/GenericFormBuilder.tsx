@@ -265,7 +265,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                 label={config.label}
                                                 value={value ? parseTimeString(String(value)) : null}
                                                 onChange={(val) => {
-                                                    const timeString = val ? val.format('HH:mm:ss') : '';
+                                                    const timeString = val ? val.format('HH:mm:ss') : null;
                                                     handleChange(key, timeString);
                                                 }}
                                                 slotProps={{
@@ -283,7 +283,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                 onChange={(val) =>
                                                     handleChange(
                                                         key,
-                                                        val ? formatTimeTz(val) : ''
+                                                        val ? formatTimeTz(val) : null
                                                     )
                                                 }
                                                 timezone="UTC"
@@ -301,7 +301,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                 label={config.label}
                                                 value={value ? dayjs(value) : null}
                                                 onChange={(val: Dayjs | null) =>
-                                                    handleChange(key, val ? val.format('YYYY-MM-DD') : '')
+                                                    handleChange(key, val ? val.format('YYYY-MM-DD') : null)
                                                 }
                                                 slotProps={{
                                                     textField: { fullWidth: true, margin: 'normal' },
