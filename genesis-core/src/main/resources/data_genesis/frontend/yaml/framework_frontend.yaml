@@ -98,7 +98,7 @@
       content: |
           export const environment = {
           {{tab}}production: false,
-          {{tab}}apiUrl: 'http://localhost:8070/${toKebabCase(projectName)}'
+          {{tab}}apiUrl: 'http://localhost:${port}/${toKebabCase(projectName)}'
           };
       destinationPath: "${destinationFolder}/src/environments/"
     - fileType: "Environment-file"
@@ -107,7 +107,7 @@
       content: |
         export const environment = {
         {{tab}}production: true,
-        {{tab}}apiUrl: 'http://localhost:8070/${toKebabCase(projectName)}'
+        {{tab}}apiUrl: 'http://localhost:${port}/${toKebabCase(projectName)}'
         };
       destinationPath: "${destinationFolder}/src/environments/"
     - fileType: "Utilities"

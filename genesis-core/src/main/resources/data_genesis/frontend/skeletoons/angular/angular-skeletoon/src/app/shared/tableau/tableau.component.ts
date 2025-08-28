@@ -49,6 +49,7 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
     </app-confirmation-box>
   `,
   styles: [`
+    @import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css');
     .styled-table {
       width: 100%;
       border-collapse: collapse;
@@ -61,7 +62,7 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
       box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
     }
     .styled-table thead {
-      background-color: #e6f0ff;
+      background-color: var(--bg-hover);
       cursor: pointer;
     }
     .styled-table th,

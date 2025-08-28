@@ -16,7 +16,7 @@
 }
 
 .app-title .blue {
-  color: #2263cb;
+  color: var(--primary);
 }
 
 .section-label {
@@ -54,13 +54,13 @@ a.views {
 }
 
 a:hover {
-  background-color: #e6f0ff; 
-  color: #2263cb; 
+  background-color: var(--bg-hover);
+  color: var(--primary);
   padding: 8px 14px;
 }
 
 a.active {
-  background-color: #dbe6ff; 
-  color: #2263cb; 
+  background-color: var(--bg-active);
+  color: var(--primary); 
   padding: 8px 14px;
 }

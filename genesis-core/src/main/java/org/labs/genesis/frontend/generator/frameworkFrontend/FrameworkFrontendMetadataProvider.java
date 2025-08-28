@@ -189,12 +189,13 @@ public class FrameworkFrontendMetadataProvider {
         }
         return tableMetadatasAns;
     }
-    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework,String projectName,String destinationFolder,List<TableMetadata> tableMetadatas){
+    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework,String projectName,String destinationFolder,String port,List<TableMetadata> tableMetadatas){
         HashMap<String, Object> data = new HashMap<>();
         data.put("routes",getRoutesHashMap(frontendFramework));
         data.put("projectName",projectName);
         data.put("destinationFolder",destinationFolder);
         data.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
+        data.put("port",port);
 //      data.put("components", frontendFramework.getComponents());
         return  data;
     }
