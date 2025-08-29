@@ -1,34 +1,42 @@
 <template>
-  <label
-    v-if="label"
-    class="text-nowrap me-1"
-    :class="{ 'form-label': !rowInput }"
-    :for="inputId"
-    >{{ label }}</label
-  >
-  <select
-    v-bind="$attrs"
-    :id="inputId"
-    class="form-select"
-    :value="modelValue ?? ''"
-    :disabled="loading"
-    @change="onChange"
-  >
-    <option value="">
-      {{ placeholder ?? `-- Select an option --` }}
-    </option>
-    <option v-for="option in options" :key="option.value" :value="option.value">
-      {{ option.label }}
-    </option>
-  </select>
+  <div class="flex items-center gap-2" :class="{ 'flex-col items-start': !rowInput }">
+    <!-- Label -->
+    <label
+      v-if="label"
+      :for="inputId"
+      class="label font-medium text-neutral"
+      :class="{ 'whitespace-nowrap': rowInput }"
+    >
+      {{ label }}
+    </label>
+
+    <!-- Select -->
+    <select
+      v-bind="$attrs"
+      ref="selectRef"
+      :id="inputId"
+      class="select w-full overflow-y-auto"
+      :value="modelValue ?? ''"
+      :disabled="loading"
+      @change="onChange"
+    >
+      <option value="" disabled selected>
+        {{ placeholder ?? `-- Select an option --` }}
+      </option>
+      <option v-for="option in options" :key="option.value" :value="option.value">
+        {{ option.label }}
+      </option>
+    </select>
+  </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, PropType } from "vue";
-import { SelectOption } from "../../models/SelectOption";
+import { defineComponent, ref, computed } from 'vue'
+import type { SelectOption } from '../../models/SelectOption'
+import type { PropType } from 'vue'
 
 export default defineComponent({
-  name: "GenesisSelect",
+  name: 'GenesisSelect',
   props: {
     label: { type: String, required: false },
     placeholder: { type: String, required: false },
@@ -44,20 +52,22 @@ export default defineComponent({
     loading: { type: Boolean, default: false },
     rowInput: { type: Boolean, default: false },
   },
-  emits: ["update:modelValue"],
+  emits: ['update:modelValue'],
   setup(props, { emit }) {
+    const selectRef = ref<HTMLSelectElement | null>(null)
+
     const inputId = computed(() => {
       return props.label
-        ? "select-" + props.label.replace(/\s+/g, "-").toLowerCase()
-        : "select-" + Math.random().toString(36).substring(2, 8);
-    });
+        ? 'select-' + props.label.replace(/\s+/g, '-').toLowerCase()
+        : 'select-' + Math.random().toString(36).substring(2, 8)
+    })
 
     const onChange = (e: Event) => {
-      const value = (e.target as HTMLSelectElement).value;
-      emit("update:modelValue", value === "" ? null : value);
-    };
+      const value = (e.target as HTMLSelectElement).value
+      emit('update:modelValue', value === '' ? null : value)
+    }
 
-    return { inputId, onChange };
+    return { inputId, selectRef, onChange }
   },
-});
+})
 </script>

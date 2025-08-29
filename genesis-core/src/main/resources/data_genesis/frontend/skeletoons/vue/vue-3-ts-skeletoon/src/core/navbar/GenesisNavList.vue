@@ -1,82 +1,78 @@
 <template>
-  <ul class="nav flex-column">
-    <li class="nav-item" v-for="item in items" :key="item.navTitle">
+  <ul class="flex flex-col gap-1">
+    <li v-for="item in items" :key="item.navTitle">
+      <!-- Lien actif -->
       <router-link
         v-if="item.navLink"
-        class="nav-link nav-link-action"
-        :class="{ 'router-link-active': isActive(item) }"
         :to="item.navLink"
+        class="block px-3 py-2 rounded-md transition-colors"
       >
         {{ item.navTitle }}
       </router-link>
 
-      <span
-        v-else
-        class="nav-link text-muted"
-        :class="{ active: hasActiveChild(item) }"
-      >
+      <!-- Pas de lien -->
+      <span v-else class="block px-3 py-2 text-gray-400">
         {{ item.navTitle }}
       </span>
 
-      <!-- Recursive children -->
-      <GenesisNavList
-        v-if="item.navChilds"
-        :items="item.navChilds"
-        class="ms-3"
-      />
+      <!-- Enfants -->
+      <GenesisNavList v-if="item.navChilds" :items="item.navChilds" class="ml-4" />
     </li>
   </ul>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
-import { useRoute } from "vue-router";
+import { defineComponent } from 'vue'
+import type { PropType } from 'vue'
 
 interface NavItem {
-  navTitle: string;
-  navLink?: string;
-  navChilds?: NavItem[];
+  navTitle: string
+  navLink?: string
+  navChilds?: NavItem[]
 }
 
 export default defineComponent({
-  name: "GenesisNavList",
+  name: 'GenesisNavList',
   props: {
     items: {
       type: Array as PropType<NavItem[]>,
       required: true,
     },
   },
-  setup(props) {
-    const route = useRoute();
-
-    function isActive(item: NavItem) {
-      //   if (!item.navLink) return false;
-      //   return route.path.startsWith(item.navLink); // partial match
-      return false;
-    }
-
-    function hasActiveChild(item: NavItem): boolean {
-      if (!item.navChilds) return false;
-      //   return item.navChilds.some(
-      //     (child) => isActive(child) || hasActiveChild(child)
-      //   );
-      return false;
-    }
-
-    return { isActive, hasActiveChild };
+  setup() {
+    return {}
   },
-});
+})
 </script>
 
 <style scoped>
 .nav-link.active {
   font-weight: bold;
-  color: var(--bs-primary);
+  color: var(--color-primary);
 }
+
 .nav-link-action:hover,
-.nav-link-action:focus {
-  color: var(--bs-primary);
-  background-color: var(--bs-secondary);
+.nav-link-action:focus,
+.router-link-active {
+  color: var(--color-primary);
+  background-color: var(--color-secondary);
   border-radius: 0.25rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.router-link-active {
+  position: relative;
+  font-weight: bold;
+}
+
+.router-link-active::before {
+  background-color: var(--color-primary);
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -7px;
+  height: 100%;
+  width: 5px;
+  border-radius: 10px;
 }
 </style>

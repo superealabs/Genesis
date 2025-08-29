@@ -1,23 +1,36 @@
 <template>
-  <GenesisOverlay :visible="freezeState" :text="freezeMessage"></GenesisOverlay>
+  <div
+    class="fixed inset-0 flex items-center justify-center bg-black/30 z-50"
+    :class="{ invisible: !freezeStore.$state.freezeState }"
+  >
+    <!-- Custom overlay content -->
+    <slot name="overlay">
+      <!-- Default: Spinner + Loading text -->
+      <div class="text-center">
+        <!-- Spinner Tailwind -->
+        <div
+          class="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-primary mx-auto"
+        ></div>
+        <div class="mt-3 text-gray-800 font-medium">
+          {{ freezeStore.$state.freezeMessage }}
+        </div>
+      </div>
+    </slot>
+  </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import GenesisOverlay from "./GenesisOverlay.vue";
-import { useFreezeScreen } from "@/store/useFreezeScreen";
+import { defineComponent } from 'vue'
+import { useFreezeScreen } from '@/stores/useFreezeScreen'
 
 export default defineComponent({
-  name: "FreezeScreen",
-  components: { GenesisOverlay },
+  name: 'FreezeScreen',
   setup() {
-    const store = useFreezeScreen();
-    store.debug("FreezeScreen setup");
+    const freezeStore = useFreezeScreen()
 
     return {
-      freezeState: store.freezeState,
-      freezeMessage: store.freezeMessage,
-    };
+      freezeStore,
+    }
   },
-});
+})
 </script>

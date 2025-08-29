@@ -1,24 +1,24 @@
 <template>
   <div
-    v-if="visible"
-    class="overlay position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+    class="absolute inset-0 flex items-center justify-center bg-black/20 z-50 transition-opacity"
+    :class="{ 'opacity-0 pointer-events-none': !visible, 'opacity-100': visible }"
   >
     <!-- Custom overlay content -->
     <slot name="overlay">
       <!-- Default: Spinner + Loading text -->
-      <div class="text-center">
-        <div class="spinner-border text-dark" role="status"></div>
-        <div class="mt-2">{{ text }}</div>
+      <div class="flex flex-col items-center gap-2">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+        <div class="text-white text font-medium">{{ text }}</div>
       </div>
     </slot>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent } from 'vue'
 
 export default defineComponent({
-  name: "GenesisOverlay",
+  name: 'GenesisOverlay',
   props: {
     visible: {
       type: Boolean,
@@ -26,10 +26,10 @@ export default defineComponent({
     },
     text: {
       type: String,
-      default: "Loading...",
+      default: 'Loading...',
     },
   },
-});
+})
 </script>
 
 <style scoped>

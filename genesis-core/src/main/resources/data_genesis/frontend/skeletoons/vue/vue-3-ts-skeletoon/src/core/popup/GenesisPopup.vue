@@ -1,64 +1,66 @@
 <template>
-  <!-- Backdrop -->
-  <div v-if="visible" class="modal-backdrop fade show" @click="close"></div>
-  <div
-    class="modal fade overflow-hidden"
-    data-bs-backdrop="static"
-    data-bs-keyboard="false"
-    tabindex="-1"
-    aria-labelledby="staticBackdropLabel"
-    :class="{ show: visible, 'd-block': visible }"
-    aria-hidden="true"
-    @click.self="close"
-  >
-    <div class="modal-dialog d-flex h-75 align-items-center">
-      <div class="modal-content">
-        <div class="modal-header border-0">
-          <h5 class="modal-title">{{ title }}</h5>
-          <button
-            type="button"
-            class="btn btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-            @click="close"
-          ></button>
+  <transition name="fade">
+    <div
+      v-if="visible"
+      class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center"
+      @click.self="close"
+    >
+      <div
+        class="bg-base-100 rounded-lg shadow-lg w-full max-w-lg mx-4 overflow-hidden flex flex-col"
+      >
+        <!-- Header -->
+        <div class="flex items-center justify-between p-1">
+          <h5 class="text-lg font-medium">{{ title }}</h5>
+          <button type="button" class="btn btn-ghost btn-square" @click="close">
+            <XIcon />
+          </button>
         </div>
-        <div class="modal-body">
+
+        <!-- Body -->
+        <div class="flex-1 overflow-auto">
           <slot />
         </div>
-        <div class="modal-footer border-0">
-          <button class="btn"></button>
+
+        <!-- Footer -->
+        <div class="flex justify-end p-4 gap-2">
+          <slot name="footer" />
         </div>
       </div>
     </div>
-  </div>
+  </transition>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent } from 'vue'
+import XIcon from '../icons/XIcon.vue'
 
 export default defineComponent({
-  name: "GenesisPopup",
+  name: 'GenesisPopup',
+  components: { XIcon },
   props: {
-    title: { type: String, default: "" },
+    title: { type: String, default: '' },
     visible: { type: Boolean, required: true },
   },
-  emits: ["close"],
+  emits: ['close'],
   setup(props, { emit }) {
     const close = () => {
-      emit("close", false);
-    };
+      emit('close', false)
+    }
 
     return {
       close,
-    };
+    }
   },
-});
+})
 </script>
 
-<style scoped>
-/* Smooth fade-in/out animation */
-.modal.fade {
-  transition: opacity 0.15s linear;
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

@@ -1,29 +1,73 @@
-import { useObjectUtils } from "@/composables/useObjectUtils";
-import { toRaw } from "vue";
+import { useObjectUtils } from '@/composables/useObjectUtils'
+import { toRaw } from 'vue'
+import type { PaginationRequestParameter } from '@/models/api/RequestModel'
+import type { PaginationData } from '@/models/api/PageResponseModel'
 
 export interface SelectOption {
-  label: string | number | undefined;
-  value: string | number | undefined;
+  label: string
+  value: string | number
 }
 
-export const createOptionsLoader = (serviceCall: () => any) => async () => {
-  const { data } = await serviceCall();
-  return extractSelectOptionsFromRawsData(data);
-};
+/**
+ * Generates a standardized selectSearch function for any entity
+ * @param ModelClass The class of the entity (e.g., Projet, Employe)
+ * @param service The service that provides search() for that entity
+ */
+export function createSelectSearchFunction<
+  T extends { getKeyValue(): string; getReferenceValue(): string },
+>(
+  ModelClass: { createLabelSearchFilter(term: string): object },
+  service: {
+    search: (
+      filter: object,
+      pagination: PaginationRequestParameter,
+    ) => Promise<{ data: T[]; pagination: PaginationData }>
+  },
+) {
+  return async (
+    searchTerm: string,
+    pagination: PaginationRequestParameter,
+  ): Promise<{ options: SelectOption[]; pagination: PaginationData }> => {
+    const response = await service.search(
+      ModelClass.createLabelSearchFilter(searchTerm),
+      pagination,
+    )
 
-export function extractSelectOptionsFromOjectsData(objects: object[]) {
-  return extractSelectOptionsFromRawsData(toRaw(objects));
+    return {
+      options: extractSelectOptionsFromOjectsData(response.data, (obj: object) => {
+        const entity = obj as T
+        return {
+          value: entity.getKeyValue(),
+          label: entity.getReferenceValue(),
+        }
+      }),
+      pagination: response.pagination,
+    }
+  }
 }
-export function extractSelectOptionsFromRawsData(
-  rawData: object[]
+
+export function extractSelectOptionsFromOjectsData<T>(
+  objects: T[],
+  parser?: (data: object) => SelectOption,
+) {
+  return extractSelectOptionsFromRawsData(toRaw(objects), parser)
+}
+export function extractSelectOptionsFromRawsData<T>(
+  rawData: T[],
+  parser?: (data: object) => SelectOption,
 ): SelectOption[] {
-  const options: SelectOption[] = [];
-  const { getNValue } = useObjectUtils();
+  const options: SelectOption[] = []
+  if (!parser) {
+    const { getNValue } = useObjectUtils()
+    parser = (r: object) => {
+      return {
+        value: getNValue(r, 0),
+        label: getNValue(r, 1),
+      }
+    }
+  }
   rawData.forEach((raw) => {
-    options.push({
-      value: getNValue(raw as object, 0),
-      label: getNValue(raw as object, 1),
-    });
-  });
-  return options;
+    options.push(parser(raw as object))
+  })
+  return options
 }
