@@ -920,7 +920,7 @@
         import { ${majStart(EntityName)}FormDTO } from "@/models/${majStart(EntityName)}Model";
         import GenesisButton from "@/core/button/GenesisButton.vue";
         import GenesisInput from "@/core/form/GenesisInput.vue";
-        {{#if hasFk}}
+        {{#if containsForeignKey}}
         import GenesisSelect from "@/core/form/GenesisSelect.vue";
         import {
           extractSelectOptionsFromOjectsData,
@@ -932,7 +932,7 @@
       selector: "${majStart(EntityName)}Form"
       standalone: true
       importComponent: |
-        components: { GenesisButton, GenesisInput{{#if hasFk}} ,GenesisSelect{{/if}} }
+        components: { GenesisButton, GenesisInput{{#if containsForeignKey}} ,GenesisSelect{{/if}} }
       template: |
         <template>
           <div class="card border-0 shadow-sm">

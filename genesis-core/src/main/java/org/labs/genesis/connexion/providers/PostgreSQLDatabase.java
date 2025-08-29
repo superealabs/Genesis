@@ -204,7 +204,10 @@ public class PostgreSQLDatabase extends Database {
                 while (rs.next()) {
                     String colName = rs.getString("column_name");
                     for (ColumnMetadata col : columns) {
-                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) &&
+                                    (col.isDate() || col.isDateTime())
+                        )
+                        {
                             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("past","{{removeLine}}");
@@ -228,7 +231,10 @@ public class PostgreSQLDatabase extends Database {
                 while (rs.next()) {
                     String colName = rs.getString("column_name");
                     for (ColumnMetadata col : columns) {
-                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) &&
+                                    (col.isDate() || col.isDateTime())
+                        )
+                        {
                             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("pastOrPresent","{{removeLine}}");
@@ -252,7 +258,10 @@ public class PostgreSQLDatabase extends Database {
                 while (rs.next()) {
                     String colName = rs.getString("column_name");
                     for (ColumnMetadata col : columns) {
-                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) &&
+                                    (col.isDate() || col.isDateTime())
+                        )
+                        {
                             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("future","{{removeLine}}");
@@ -278,7 +287,10 @@ public class PostgreSQLDatabase extends Database {
                     String operator = rs.getString("operator");
                     String dateFunc = rs.getString("date_function");
                     for (ColumnMetadata col : columns) {
-                        if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isDate()) {
+                        if (col.getReferencedColumn().equalsIgnoreCase(colName) &&
+                                (col.isDate() || col.isDateTime())
+                        )
+                        {
                             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("futureOrPresent","{{removeLine}}");

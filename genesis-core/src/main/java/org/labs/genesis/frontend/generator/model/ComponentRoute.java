@@ -14,6 +14,7 @@ public class ComponentRoute {
     private String componentSelector;
     private String link;
     private String componentImport;
+    private String componentImportWithoutExtension;
     private String label;
     private String entityName;
 
@@ -22,6 +23,7 @@ public class ComponentRoute {
         this.componentSelector = source.getComponentSelector();
         this.link = source.getLink();
         this.componentImport = source.getComponentImport();
+        this.componentImportWithoutExtension = source.getComponentImportWithoutExtension();
         this.label = source.getLabel();
         this.entityName = source.getEntityName();
     }

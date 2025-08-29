@@ -26,13 +26,17 @@ public class FrameworkFrontendMetadataProvider {
     public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata,String destinationFolder,String projectName) {
         HashMap<String, Object> metadata = new HashMap<>();
 
+        List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
         metadata.put("fields", getFieldsList(tableMetadata));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
-        List<Map<String, Object>> fieldsFK = getFieldsFKList(tableMetadata);
-        metadata.put("fieldsFK", fieldsFK);
-        metadata.put("hasFk", fieldsFK.size() > 0);
-        metadata.put("EntityName",tableMetadata.getClassName());
+        metadata.put("fieldsFK", fkList);
+        metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata));
+        metadata.put("fieldsNotFK",getNotFkFieldsList(tableMetadata));
+        metadata.put("containsForeignKey",fkList.size()>0);
+        metadata.put("EntityName",tableMetadata.getTableName());
         metadata.put("isView",tableMetadata.getIsView());
+        metadata.put("className",tableMetadata.getClassName());
+        metadata.put("classNameLink",tableMetadata.getClassName()+"s");
 
         metadata.putAll(getHashMapComponentSavePath(destinationFolder, projectName, tableMetadata));
 
@@ -66,6 +70,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("projectName", context.getProjectName());
         metadata.put("webappFolder", context.getWebappFolder());
         metadata.put("webapp", webappFolder);
+        metadata.put("projectPort", context.getProjectPort());
 
         return metadata;
     }
@@ -75,6 +80,26 @@ public class FrameworkFrontendMetadataProvider {
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             Map<String, Object> fieldMap = getFieldHashMap(field);
             fields.add(fieldMap);
+        }
+        return fields;
+    }
+    private static List<Map<String, Object>> getNotFkFieldsList(TableMetadata tableMetadata) {
+        List<Map<String, Object>> fields = new ArrayList<>();
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            if(!field.isForeign()) {
+                Map<String, Object> fieldMap = getFieldHashMap(field);
+                fields.add(fieldMap);
+            }
+        }
+        return fields;
+    }
+    private static List<Map<String, Object>> getNotFkAndPKFieldsList(TableMetadata tableMetadata) {
+        List<Map<String, Object>> fields = new ArrayList<>();
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            if(!field.isForeign() && !field.isPrimary()) {
+                Map<String, Object> fieldMap = getFieldHashMap(field);
+                fields.add(fieldMap);
+            }
         }
         return fields;
     }
@@ -90,16 +115,24 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("columnType", field.getColumnType());
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("referencedColumnType", field.getFrontEndReferencedColumnType());
+        fieldMap.put("referencedColumn", StringUtils.minStart(StringUtils.toPascalCase(field.getReferencedColumn())));
+        fieldMap.put("referencedPrimaryKeyColumn", field.getReferencedPrimaryKeyColumn());
         fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
         fieldMap.put("defaultValue", field.getDefaultValue());
         fieldMap.put("columnSize", field.getColumnSize());
         fieldMap.put("decimalDigits", field.getDecimalDigits());
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
+        fieldMap.put("isRequired", !field.isNullable());
+        fieldMap.put("isNumeric",field.isNumeric());
+        fieldMap.put("isDate",field.isDate());
+        fieldMap.put("isTime",field.isTime());
+        fieldMap.put("isDateTime",field.isDateTime());
+        fieldMap.put("useTimeZone",field.isUseTimeZone());
+        fieldMap.put("isInterval",field.isInterval());
+        fieldMap.put("isText", field.isText());
+        fieldMap.put("isNotForeignKey",!field.isForeign());
         fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
-        fieldMap.put("isNumeric", field.isNumeric());
-        fieldMap.put("isDate", field.isDate());
-        fieldMap.put("isText",field.isText());
 
         return fieldMap;
     }
@@ -140,12 +173,30 @@ public class FrameworkFrontendMetadataProvider {
         return data;
     }
 
-    public  static HashMap<String, Object> getGlobalComponentsHashMap(ProjectGenerationContext context){
-        FrontendFramework frontendFramework = context.getFrontendFramework();
+    public static HashMap<String,Object> getTableMetaDataHashSimple(TableMetadata tableMetadata)
+    {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("name",tableMetadata.getTableName());
+        data.put("className",tableMetadata.getClassName());
+        data.put("isView",tableMetadata.getIsView());
+        return  data;
+    }
+    private static List<Map<String, Object>> getTableMetaDataHashSimpleList(List<TableMetadata> tableMetadatas) {
+        List<Map<String, Object>> tableMetadatasAns = new ArrayList<>();
+        for (TableMetadata tableMetadata : tableMetadatas) {
+            Map<String, Object> tableMetadataMap = getTableMetaDataHashSimple(tableMetadata);
+            tableMetadatasAns.add(tableMetadataMap);
+        }
+        return tableMetadatasAns;
+    }
+    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework,String projectName,String destinationFolder,String port,List<TableMetadata> tableMetadatas){
         HashMap<String, Object> data = new HashMap<>();
         data.put("routes",getRoutesHashMap(frontendFramework));
-//        data.put("components", frontendFramework.getComponents());
-        data.putAll(getWebappHashMap(context));
+        data.put("projectName",projectName);
+        data.put("destinationFolder",destinationFolder);
+        data.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
+        data.put("port",port);
+//      data.put("components", frontendFramework.getComponents());
         return  data;
     }
 
@@ -155,6 +206,7 @@ public class FrameworkFrontendMetadataProvider {
         data.put("componentSelector", route.getComponentSelector());
         data.put("routerLink", route.getLink());
         data.put("componentImport", route.getComponentImport());
+        data.put("componentImportWithoutExtension", route.getComponentImportWithoutExtension());
         data.put("routerLabel", route.getLabel());
         data.put("hasLabel", route.hasLabel());
         data.put("entityName", route.getEntityName());
@@ -172,7 +224,7 @@ public class FrameworkFrontendMetadataProvider {
     private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata) {
         List<Map<String, Object>> fieldsPK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
-            if (!field.isPrimary()) {
+            if (field.isPrimary()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field);
                 fieldsPK.add(fieldMap);
             }

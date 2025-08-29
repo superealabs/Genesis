@@ -55,6 +55,26 @@ public class StringUtils {
         });
     }
 
+    public static String toPascalCase(String string) {
+        return string.transform(s -> {
+            // step 1 : normalizing by inserting separators where there is case change
+            s = s.replaceAll("([a-z])([A-Z])", "$1_$2")         // factSales → fact_Sales
+                    .replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2")   // ABCSales → ABC_Sales
+                    .replaceAll("[-\\s]+", "_");                   // kebab-case or spaces → snake_case
+
+            // step 2 : everything in min case  (except for separators)
+            String[] words = s.toLowerCase().split("_+");
+
+            StringBuilder result = new StringBuilder();
+            for (String word : words) {
+                result.append(majStart(word));
+            }
+
+            return result.toString();
+        });
+    }
+
+
     public static String toKebabCase(String input) {
         if (input == null || input.isEmpty()) return input;
 
