@@ -50,10 +50,10 @@
           fill="#00067F"
         ></path>
       </svg>
-      <h3 class="text-2xl font-semibold">
+      <h1 class="text-2xl font-semibold">
         Genesis
         <span class="text-primary">App</span>
-      </h3>
+      </h1>
     </div>
 
     <!-- Navigation -->

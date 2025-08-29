@@ -27,8 +27,10 @@ export const useFreezeScreen = defineStore('freezeScreen', () => {
     setFreeze(true)
   }
   const unfreeze = () => {
-    setFreezeMessage('')
-    setFreeze(false)
+    setTimeout(() => {
+      setFreezeMessage('')
+      setFreeze(false)
+    }, 300)
   }
   const debug = (location: string) => {
     console.log(

@@ -16,17 +16,11 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import GenesisSidebar from './core/navbar/GenesisSidebar.vue'
 import FreezeScreen from './core/loading/FreezeScreen.vue'
-import { defineComponent } from 'vue'
-
-export default defineComponent({
-  name: 'App',
-  components: { FreezeScreen, GenesisSidebar },
-})
 </script>
 
 <style scoped>
-/* Si tu veux garder un no-wrap explicite */
+/* keep styling here */
 </style>

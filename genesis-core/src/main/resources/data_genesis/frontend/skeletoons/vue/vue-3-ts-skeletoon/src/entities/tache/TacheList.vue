@@ -1,7 +1,7 @@
 <template>
   <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
     <table class="table w-full border-gray-200 rounded-md text-left">
-      <thead class="bg-secondary sticky top-0 z-10">
+      <thead class="bg-secondary">
         <tr>
           <th class="px-3 py-2 font-bold">Id</th>
           <th class="px-3 py-2 font-bold">Titre</th>

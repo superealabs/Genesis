@@ -1,6 +1,6 @@
 <template>
   <div
-    class="fixed inset-0 flex items-center justify-center bg-black/30 z-50"
+    class="fixed inset-0 flex items-center justify-center bg-gray-200/85 z-50"
     :class="{ invisible: !freezeStore.$state.freezeState }"
   >
     <!-- Custom overlay content -->
