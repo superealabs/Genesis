@@ -939,9 +939,11 @@
       fileName: "{{removeLine}}"
       extension: "env"
       content: |
-        VUE_APP_API_URL=http://localhost:8080/${lowerCase(projectName)}
-        VUE_APP_PORT=9000
+        VITE_APP_API_URL=http://${apiUrl}:${port}/${lowerCase(projectName)}
+        VITE_APP_PORT=${frontendPort}
       destinationPath: "${destinationFolder}"
+
+
 
     - fileType: "Home View"
       fileName: "HomeView"
@@ -2714,4 +2716,3 @@
       };
     destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
     name: "${toKebabCase(className)}.model"
-

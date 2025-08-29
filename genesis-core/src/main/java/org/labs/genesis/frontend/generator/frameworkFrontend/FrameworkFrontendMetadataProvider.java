@@ -198,6 +198,8 @@ public class FrameworkFrontendMetadataProvider {
         data.put("destinationFolder",destinationFolder);
         data.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
         data.put("port",port);
+        data.put("frontendPort",9000);
+        data.put("apiUrl", "localhost");
 //      data.put("components", frontendFramework.getComponents());
         return  data;
     }
