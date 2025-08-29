@@ -943,7 +943,25 @@
         VITE_APP_PORT=${frontendPort}
       destinationPath: "${destinationFolder}"
 
-
+    - fileType: "Index File"
+      fileName: "index"
+      extension: "html"
+      content: |
+        <!doctype html>
+        <html lang="">
+          <head>
+            <meta charset="UTF-8" />
+            <link rel="icon" href="/favicon.ico" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>${formatReadable(projectName)}</title>
+          </head>
+          <body>
+            <div id="app"></div>
+            <div id="freeze-screen"></div>
+            <script type="module" src="/src/main.ts"></script>
+          </body>
+        </html>
+      destinationPath: "${destinationFolder}"
 
     - fileType: "Home View"
       fileName: "HomeView"
