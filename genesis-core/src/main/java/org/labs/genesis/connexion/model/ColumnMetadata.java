@@ -8,9 +8,7 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.FrontendLanguage;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Setter
@@ -37,7 +35,9 @@ public class ColumnMetadata {
     private boolean isText;
     private boolean isDate;
     private boolean isTime;
+    private boolean isTimeTz;
     private boolean isDateTime;
+    private boolean isDateTimeTz;
     private boolean useTimeZone;
     private boolean isInterval;
     private String defaultValue;

@@ -12,6 +12,7 @@ import {
     Paper,
     Typography,
     Button,
+    FormHelperText
 } from '@mui/material';
 import {Add, Save} from '@mui/icons-material';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
@@ -76,6 +77,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
         Record<string, { value: string | number; label: string }[]>
     >({});
     const [loading, setLoading] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const loadForeignKeys = async () => {
@@ -124,6 +126,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setFieldErrors({});
 
         let payload: any = { ...formData };
         Object.entries(fields).forEach(([key, config]) => {
@@ -156,7 +159,11 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                 setTimeout(() => navigate(redirectTo), 1500);
             }
         } catch (err: any) {
-            enqueueSnackbar(err?.response?.data?.message || 'Erreur', { variant: 'error' });
+            const body = err?.response?.data;
+            if (body?.errors && typeof body.errors === 'object') {
+                setFieldErrors(body.errors);
+            }
+            enqueueSnackbar(body?.message || 'Erreur', { variant: 'error' });
         } finally {
             setLoading(false);
         }
@@ -240,6 +247,9 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                         </MenuItem>
                                                     ))}
                                                 </Select>
+                                                {fieldErrors[key] && (
+                                                    <FormHelperText>{fieldErrors[key]}</FormHelperText>
+                                                )}
                                             </FormControl>
                                         ) : config.type === 'checkbox' ? (
                                             <FormControlLabel
@@ -258,22 +268,31 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                 onChange={(val) =>
                                                     handleChange(key, val ? val.utc().toISOString() : '')
                                                 }
-                                                slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
+                                                slotProps={{
+                                                    textField: {
+                                                        fullWidth: true,
+                                                        margin: 'normal',
+                                                        error: Boolean(fieldErrors[key]),
+                                                        helperText: fieldErrors[key] ?? ' ',
+                                                    },
+                                                }}
                                             />
                                         ) : config.type === 'time' ? (
                                             <TimePicker
                                                 label={config.label}
                                                 value={value ? parseTimeString(String(value)) : null}
                                                 onChange={(val) => {
-                                                    const timeString = val ? val.format('HH:mm:ss') : '';
+                                                    const timeString = val ? val.format('HH:mm:ss') : null;
                                                     handleChange(key, timeString);
                                                 }}
                                                 slotProps={{
                                                     textField: {
                                                         fullWidth: true,
                                                         margin: 'normal',
-                                                        required: config.required
-                                                    }
+                                                        required: config.required,
+                                                        error: Boolean(fieldErrors[key]),
+                                                        helperText: fieldErrors[key] ?? ' ',
+                                                    },
                                                 }}
                                             />
                                         ) : config.type === 'timeTz' ? (
@@ -283,7 +302,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                 onChange={(val) =>
                                                     handleChange(
                                                         key,
-                                                        val ? formatTimeTz(val) : ''
+                                                        val ? formatTimeTz(val) : null
                                                     )
                                                 }
                                                 timezone="UTC"
@@ -293,6 +312,8 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                         fullWidth: true,
                                                         margin: 'normal',
                                                         required: config.required,
+                                                        error: Boolean(fieldErrors[key]),
+                                                        helperText: fieldErrors[key] ?? ' ',
                                                     },
                                                 }}
                                             />
@@ -301,10 +322,15 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                 label={config.label}
                                                 value={value ? dayjs(value) : null}
                                                 onChange={(val: Dayjs | null) =>
-                                                    handleChange(key, val ? val.format('YYYY-MM-DD') : '')
+                                                    handleChange(key, val ? val.format('YYYY-MM-DD') : null)
                                                 }
                                                 slotProps={{
-                                                    textField: { fullWidth: true, margin: 'normal' },
+                                                    textField: {
+                                                        fullWidth: true,
+                                                        margin: 'normal',
+                                                        error: Boolean(fieldErrors[key]),
+                                                        helperText: fieldErrors[key] ?? ' ',
+                                                    },
                                                 }}
                                             />
                                         ) : config.type === 'interval' ? (
@@ -312,6 +338,8 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                 value={String(value)}
                                                 onChange={(iso) => handleChange(key, iso)}
                                                 label={config.label}
+                                                error={Boolean(fieldErrors[key])}
+                                                helperText={fieldErrors[key] ?? ' '}
                                             />
                                         ) : (
                                             <TextField
@@ -325,6 +353,8 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                 variant="outlined"
                                                 InputProps={{ readOnly: config.readonly }}
                                                 disabled={config.readonly}
+                                                error={Boolean(fieldErrors[key])}
+                                                helperText={fieldErrors[key]}
                                             />
                                         )}
                                     </Box>

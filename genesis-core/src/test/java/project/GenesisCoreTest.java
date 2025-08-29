@@ -128,11 +128,15 @@ public class GenesisCoreTest {
             int languageId = Constantes.CSharp_ID;
             int frameworkId = Constantes.NET_ID;
             int projectId = Constantes.ASP_ID;
+            int frontendLangageId=Constantes.TYPESCRIPT_ID;
+            int frontendFrameworkId=Constantes.REACT_ID;
 
             var database = ProjectGenerator.databases.get(databaseId);
             var language = ProjectGenerator.languages.get(languageId);
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var project = ProjectGenerator.projects.get(projectId);
+            var frontendLangage=ProjectGenerator.frontendLanguage.get(frontendLangageId);
+            var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
 
             List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
             String projectName = "kw";
@@ -164,6 +168,8 @@ public class GenesisCoreTest {
             context.setDatabase(database);
             context.setLanguage(language);
             context.setFramework(framework);
+            context.setFrontendFramework(frontendFramework);
+            context.setFrontendLanguage(frontendLangage);
             context.setProject(project);
             context.setCredentials(credentials);
             context.setDestinationFolder(destinationFolder);
@@ -176,6 +182,7 @@ public class GenesisCoreTest {
             context.setEntityNames(entityNames);
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
+            context.setViewNames(new ArrayList<>());
 
             projectGenerator.generateProject(context);
 

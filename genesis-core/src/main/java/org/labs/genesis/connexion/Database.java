@@ -211,7 +211,9 @@ public abstract class Database {
                 boolean isColumnText = isColumnText(columns);
                 boolean isColumnDate = isColumnDate(columns);
                 boolean isColumnTime = isColumnTime(columns);
+                boolean isColumnTimeTz = isColumnTimeTz(columns);
                 boolean isColumnDateTime = isColumnDateTime(columns);
+                boolean isColumnDateTimeTz = isColumnDateTimeTz(columns);
                 boolean isColumnInterval = isColumnInterval(columns);
                 boolean useTimeZone = useTimeZone(columns);
 
@@ -222,7 +224,9 @@ public abstract class Database {
                 column.setText(isColumnText);
                 column.setDate(isColumnDate);
                 column.setTime(isColumnTime);
+                column.setTimeTz(isColumnTimeTz);
                 column.setDateTime(isColumnDateTime);
+                column.setDateTimeTz(isColumnDateTimeTz);
                 column.setUseTimeZone(useTimeZone);
                 column.setInterval(isColumnInterval);
 
@@ -307,12 +311,9 @@ public abstract class Database {
         int columnSize = column.getInt("COLUMN_SIZE");
         int decimalDigits = column.getInt("DECIMAL_DIGITS");
 
-        if ((dataType == Types.NUMERIC || dataType == Types.DECIMAL)
+        return (dataType == Types.NUMERIC || dataType == Types.DECIMAL)
                 && columnSize > 0
-                && decimalDigits > 0) {
-            return true;
-        }
-        return false;
+                && decimalDigits > 0;
     }
 
     protected boolean isColumnText(ResultSet column) throws SQLException {
@@ -355,6 +356,22 @@ public abstract class Database {
                 || "TIME64".equals(upper);           // ClickHouse
     }
 
+    protected boolean isColumnTimeTz(ResultSet column) throws SQLException {
+        int dataType = column.getInt("DATA_TYPE");
+        if (dataType == Types.TIME_WITH_TIMEZONE) {
+            return true;
+        }
+
+        String typeName = column.getString("TYPE_NAME");
+        if (typeName == null) return false;
+
+        String upper = typeName.toUpperCase(Locale.ROOT);
+
+        return "TIMETZ".equals(upper)        // PostgreSQL alias
+                || "TIME32".equals(upper)        // ClickHouse
+                || "TIME64".equals(upper);       // ClickHouse
+    }
+
     /* ---------- DATETIME / TIMESTAMP (date + heure) ---------- */
     protected boolean isColumnDateTime(ResultSet column) throws SQLException {
         int jdbcType = column.getInt("DATA_TYPE");
@@ -374,6 +391,23 @@ public abstract class Database {
                 || "DATETIME64".equals(upper)            // ClickHouse
                 || "DATETIME32".equals(upper)            // ClickHouse
                 || "DATETIMEV2".equals(upper);           // StarRocks
+    }
+
+    protected boolean isColumnDateTimeTz(ResultSet column) throws SQLException {
+        int jdbcType = column.getInt("DATA_TYPE");
+        if (jdbcType == Types.TIMESTAMP_WITH_TIMEZONE) {
+            return true;
+        }
+
+        String typeName = column.getString("TYPE_NAME");
+        if (typeName == null) return false;
+
+        String upper = typeName.toUpperCase(Locale.ROOT);
+
+        return upper.startsWith("TIMESTAMP") && (upper.contains("TZ") || upper.contains("WITH TIME ZONE"))
+                || "TIMESTAMPTZ".equals(upper)            // PostgreSQL
+                || "TIMESTAMPLTZ".equals(upper)           // Oracle WITH LOCAL TIME ZONE
+                || "DATETIMEOFFSET".equals(upper);        // SQL Server WITH TZ
     }
 
     protected boolean useTimeZone(ResultSet column) throws SQLException {

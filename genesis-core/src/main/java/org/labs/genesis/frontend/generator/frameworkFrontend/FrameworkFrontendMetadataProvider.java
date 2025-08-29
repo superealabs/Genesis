@@ -32,7 +32,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("fieldsFK", fkList);
         metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata));
         metadata.put("fieldsNotFK",getNotFkFieldsList(tableMetadata));
-        metadata.put("containsForeignKey",fkList.size()>0);
+        metadata.put("containsForeignKey",!fkList.isEmpty());
         metadata.put("EntityName",tableMetadata.getTableName());
         metadata.put("isView",tableMetadata.getIsView());
         metadata.put("className",tableMetadata.getClassName());
@@ -127,7 +127,9 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("isNumeric",field.isNumeric());
         fieldMap.put("isDate",field.isDate());
         fieldMap.put("isTime",field.isTime());
+        fieldMap.put("isTimeTz",field.isTimeTz());
         fieldMap.put("isDateTime",field.isDateTime());
+        fieldMap.put("isDateTimeTz",field.isDateTimeTz());
         fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
         fieldMap.put("isText", field.isText());
