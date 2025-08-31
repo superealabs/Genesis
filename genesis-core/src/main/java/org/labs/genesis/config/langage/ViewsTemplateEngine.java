@@ -50,6 +50,7 @@ public class ViewsTemplateEngine {
         private String blockLoopStatementStart;
         private String blockLoopStatementEnd;
         private String backLink;
+        private String sortLink;
         private String detailsLink;
         private String createLink;
         private String updateLink;
