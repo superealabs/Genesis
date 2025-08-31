@@ -90,10 +90,34 @@ ${modelType}
         </div>
 
         <div id="filter-templates" style="display:none;">
-            {{#each fields}}
+            {{#each inputs}}
             <div class="filter-content" data-type="${this.name}">
                 <p>${this.name} : </p>
-                <input class="filter-input" type="${this.inputType}">
+                <input class="filter-input" type="${this.type}">
+                <button type="button" class="remove-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55 55" width="14">
+                        <title>Remove</title>
+                        <g id="Layer_2" data-name="Layer 2">
+                            <g id="Layer_1-2" data-name="Layer 1">
+                                <g id="close">
+                                    <path
+                                        d="M2.5,55a2.49,2.49,0,0,1-1.77-.73,2.52,2.52,0,0,1,0-3.54l50-50a2.5,2.5,0,0,1,3.54,3.54l-50,50A2.49,2.49,0,0,1,2.5,55Z" />
+                                    <path
+                                        d="M52.5,55a2.49,2.49,0,0,1-1.77-.73l-50-50A2.5,2.5,0,0,1,4.27.73l50,50a2.52,2.52,0,0,1,0,3.54A2.49,2.49,0,0,1,52.5,55Z" />
+                                </g>
+                            </g>
+                        </g>
+                    </svg>
+                </button>
+            </div>
+            {{/each}}{{removeLine}}
+
+            {{#each fieldsFK}}
+            <div class="filter-content" data-type="${this.name}">
+                <p>${this.name} : </p>
+                <select name="${this.columnNameField}" id="${this.columnNameField}" ${selectTagHelper}>
+                    <option value="">-- Select ${this.type} --</option>
+                </select>
                 <button type="button" class="remove-item">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55 55" width="14">
                         <title>Remove</title>
