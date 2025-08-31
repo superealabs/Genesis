@@ -120,7 +120,16 @@ ${modelType}
             <thead>
                 <tr>
                     {{#each fields}}
-                    <th>{{#if this.isForeignKey}} ${this.type} {{else}} ${majStart(this.name)} {{/if}}</th>
+                    <th>
+                        {{#if this.isForeignKey}} ${this.type} {{else}} ${majStart(this.name)} {{/if}}
+                        <a ${sortLink} style="margin-left:5px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"
+                                fill="currentColor" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd"
+                                    d="M3.204 5h9.592L8 0.481 3.204 5zm9.592 6H3.204L8 15.519 12.796 11z"/>
+                            </svg>
+                        </a>
+                    </th>
                     {{/each}}{{removeLine}}
                     <th>Actions</th>
                 </tr>
