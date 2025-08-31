@@ -351,13 +351,23 @@
       fileName: "appsettings.Development.json"
       sourcePath: "data_genesis/csharp/"
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
-
   projectFolders: [ ]
 - id: 3
   name: "Node js"
   coreFrameworks:
     - "Express JS"
   projectFilesEdits:
+    - fileType: "env"
+      fileName: ".env"
+      extension: ""
+      content: |
+        DB_HOST=${host}
+        DB_PORT=${databasePort}
+        DB_USERNAME=${databaseUsername}
+        DB_PASSWORD=${databasePassword}
+        DB_DATABASE=${databaseName}
+        APP_PORT=${projectPort}
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }"
     - fileType: "Json"
       fileName: "package"
       extension: "json"

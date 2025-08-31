@@ -4590,6 +4590,44 @@
   useEurekaServer: false
   isGateway: false
   additionalFiles:
+    - fileType: "Exception"
+      fileName: "RessourceNotFoundError"
+      extension: "ts"
+      content: |
+        export class RessourceNotFoundError extends Error{  
+          cause?: Error;
+          constructor(message: string, cause?: Error) {
+              super(message);
+              this.name = "ResourceNotFoundException";
+              this.cause = cause;
+    
+              Object.setPrototypeOf(this, RessourceNotFoundError.prototype);
+          }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/exceptions"
+    - fileType: "Middleware"
+      fileName: "error.middleware"
+      extension: "ts"
+      content: |
+        import { NextFunction, Request, Response } from "express";
+        import { RessourceNotFoundError } from "../exceptions/RessourceNotFoundError";
+          
+        export const errorHandler = (
+          error: Error,
+          req: Request,
+          res: Response,
+          next: NextFunction
+            ) => {
+            if (error instanceof RessourceNotFoundError) {
+            return res.status(204).json({
+              error: error.name,
+              message: error.message,
+              cause: error.cause?.message,
+              });
+          }
+          return res.status(500).json({ message: "Internal server error" });
+        };
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/middlewares"
     - fileType: "Model Index"
       fileName: "index"
       extension: "ts"
@@ -4598,17 +4636,6 @@
         export { ${ majStart(this) } } from "./${ majStart(this) }";
         {{/each}}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/models"
-    - fileType: "env"
-      fileName: ".env"
-      extension: ""
-      content: |
-        DB_HOST=${host}
-        DB_PORT=${databasePort}
-        DB_USERNAME=${databaseUsername}
-        DB_PASSWORD=${databasePassword}
-        DB_DATABASE=${databaseName}
-        APP_PORT=${projectPort}
-      destinationPath: "${ destinationFolder }/${ majStart(projectName) }"
     - fileType: "Index"
       fileName: "index"
       extension: "ts"
@@ -4733,14 +4760,12 @@
       {{tab}}{{#each fields}}
       {{tab}}{{#if this.isIntAndPrimaryKey}}
       @PrimaryGeneratedColumn()
-      {{tab}}{{#each this.validationAnnotations}}
-      {{tab}}${this}
+      {{tab}}{{#each this.validationAnnotations}}{{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}${this.name}!: ${this.type};
       {{elseIf this.isPrimaryKey}}
       @PrimaryColumn()
-      {{tab}}{{#each this.validationAnnotations}}
-      {{tab}}${this}
+      {{tab}}{{#each this.validationAnnotations}}{{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
       {{elseIf this.isForeignKey}}
       {{tab}}@ManyToOne(() => Models.${this.type}, { eager: true })
@@ -4748,8 +4773,7 @@
       {{tab}}${this.name}!: Models.${this.type};
       {{else}}
       @Column({ name: "${this.columnName}", unique: ${this.isUnique}, nullable: ${this.isNullable} })
-      {{tab}}{{#each this.attributeTypeAnnotations}}
-      {{tab}}${this}
+      {{tab}}{{#each this.attributeTypeAnnotations}}{{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}${this.name}!: ${this.type};
       {{/if}}{{#if !@last}}{{newline}}{{/if}}
@@ -4786,7 +4810,6 @@
     modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/src/models"
     modelDaoPackage: "{{removeLine}}"
     modelDaoAdditionalFiles: [ ]
-
   service:
   controller:
   configurations: []
