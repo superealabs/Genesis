@@ -312,6 +312,52 @@
         
                 return result;
             }
+  
+            public static string AddSort(string existingSortOrder, string newSortOrder)
+            {
+              if (string.IsNullOrWhiteSpace(newSortOrder))
+              return existingSortOrder ?? "";
+          
+              var parts = newSortOrder.Split(',', StringSplitOptions.RemoveEmptyEntries);
+              if (parts.Length != 2)
+                return existingSortOrder ?? "";
+          
+              string newColumn = parts[0].Trim();
+              string newDirection = parts[1].Trim().ToLower();
+          
+              var sorts = string.IsNullOrWhiteSpace(existingSortOrder)
+                ? new List<string>()
+                : existingSortOrder.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
+          
+              bool found = false;
+              for (int i = 0; i < sorts.Count; i++)
+              {
+                var sParts = sorts[i].Split(',', StringSplitOptions.RemoveEmptyEntries);
+                if (sParts.Length != 2) continue;
+          
+                string col = sParts[0].Trim();
+                string dir = sParts[1].Trim().ToLower();
+          
+                if (col.Equals(newColumn, StringComparison.OrdinalIgnoreCase))
+                {
+                  if (dir == "asc")
+                  {
+                    sorts[i] = $"{col},desc";
+                  }
+                  else
+                  {
+                    sorts.RemoveAt(i);
+                  }
+                  found = true;
+                  break;
+                }
+              }
+          
+              if (!found)
+                sorts.Add($"{newColumn},{newDirection}");
+          
+              return string.Join(";", sorts);
+            }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
