@@ -16,6 +16,9 @@
   list:
     modelType : |
       @model PagedResponse<${majStart(className)}>
+      @{
+         string currentSort = Context.Request.Query["sortOrder"];
+      }
     assetsImportLink: "~"
     dataValue: "@${lowerCase(className)}.${majStart(this.name)}"
     dataForeignValue: "@${lowerCase(className)}.${majStart(this.name)}?.GetType().GetProperty((string)ViewBag.${majStart(this.type)}Column)?.GetValue(@${lowerCase(className)}.${majStart(this.name)})"
@@ -25,6 +28,7 @@
     blockLoopStatementEnd: |
       }
     backLink: "@Url.Action(\"Index\")"
+    sortLink: "asp-action=\"Index\" asp-route-page=\"@Model.Page.Number\" asp-route-pageSize=\"@Model.Page.Size\" asp-route-sortOrder=\"@WebUtils.AddSort(currentSort, \"${this.name},asc\")\""
     detailsLink: "@Url.Action(\"Details\", new { ${pkColumn} = @${lowerCase(className)}.${majStart(pkColumn)} })"
     createLink: "@Url.Action(\"Create\")"
     updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @${lowerCase(className)}.${majStart(pkColumn)} })"
@@ -32,17 +36,17 @@
     deleteTagHelper: "data-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
     pageSizeChangeLink: "'@Url.Action(\"Index\")?page=1&pageSize='+this.value"
     pageSizeTagHelper: "selected=\"@(Model.Page.Size == ${this})\""
-    previousPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size })"
+    previousPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size, sortOrder=currentSort })"
     previousClassCondition: " @(Model.Page.Number == 1 ? \"disabled\" : \"\")"
     pagesListLoop: |
       @for (int i = 1; i <= Model.Page.TotalPages; i++)
       {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}<a href="@Url.Action("Index", new { page = i, pageSize = Model.Page.Size })"
+      {{tab}}{{tab}}{{tab}}{{tab}}<a href="@Url.Action("Index", new { page = i, pageSize = Model.Page.Size, sortOrder=currentSort })"
       {{tab}}{{tab}}{{tab}}{{tab}}class="@(i == Model.Page.Number ? "active" : "")">
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}@i
       {{tab}}{{tab}}{{tab}}{{tab}}</a>
       {{tab}}{{tab}}{{tab}}}
-    nextPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number + 1, pageSize = Model.Page.Size })"
+    nextPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number + 1, pageSize = Model.Page.Size, sortOrder=currentSort })"
     nextClassCondition: " @(Model.Page.Number == Model.Page.TotalPages ? \"disabled\" : \"\")"
     onGoingPageLink: "@Url.Action(\"Index\")"
     onGoingPageTagHelper: "value=\"@Model.Page.Size\""
