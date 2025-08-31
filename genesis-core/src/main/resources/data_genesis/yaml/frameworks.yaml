@@ -4811,6 +4811,39 @@
     modelDaoPackage: "{{removeLine}}"
     modelDaoAdditionalFiles: [ ]
   service:
+    toGenerate: true
+    serviceImports: |
+      import * as Models from '../models/index';
+      import { AppDataSource } from '../config/data-source';
+      import { I${majStart(className)}Service } from './interfaces/I${majStart(className)}Service';
+    serviceAnnotations: ""
+    serviceClassKeyword: "export class"
+    serviceExtends: "implements I${majStart(className)}Service"
+    serviceName: "${majStart(className)}Service"
+    serviceFieldContent: |
+      {{tab}}private ${minStart(className)}Repository = AppDataSource.getRepository(Models.${className});
+    serviceConstructors: "{{removeLine}}"
+    serviceMethodContent: |
+      {{tab}}async save(body: any): Promise<Models.${className}>{
+      {{tab}}  try{
+      {{tab}}    const ${minStart(className)} = this.${minStart(className)}Repository.create(body);
+      {{tab}}    return await this.${minStart(className)}Repository.save(body);
+      {{tab}}  }catch(error){
+      {{tab}}    throw error;
+      {{tab}}  }
+      {{tab}} }
+    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/services"
+    servicePackage: ""
+    serviceAdditionalFiles:
+      - fileType: "Service interface"
+        fileName: "I${majStart(className)}Service"
+        extension: "ts"
+        content: |
+          import * as Models from '../../models/index';
+          export interface I${majStart(className)}Service {
+            save(body: any): Promise<Models.${className}>;
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/services/interfaces"
   controller:
   configurations: []
   dependencies: []

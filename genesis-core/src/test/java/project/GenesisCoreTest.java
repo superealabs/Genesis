@@ -338,7 +338,7 @@ public class GenesisCoreTest {
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var project = ProjectGenerator.projects.get(projectId);
 
-            List<String> generationOptions = List.of("Model");
+            List<String> generationOptions = List.of("Model", "Service");
             String projectName = "TestNode";
             String groupLink = "";
             String projectPort = "3000";
