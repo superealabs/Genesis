@@ -496,6 +496,7 @@ public class FrameworkMetadataProvider {
         altMap.put("updateLink", viewsTemplateEngine.getList().getUpdateLink());
         altMap.put("createLink", viewsTemplateEngine.getList().getCreateLink());
         altMap.put("backLink", viewsTemplateEngine.getList().getBackLink());
+        altMap.put("sortLink", viewsTemplateEngine.getList().getSortLink());
         altMap.put("assetsImportLink", viewsTemplateEngine.getList().getAssetsImportLink());
         altMap.put("pageSizeChangeLink", viewsTemplateEngine.getList().getPageSizeChangeLink());
         altMap.put("pageSizeTagHelper", viewsTemplateEngine.getList().getPageSizeTagHelper());
