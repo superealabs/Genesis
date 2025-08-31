@@ -425,7 +425,8 @@ tr.table-content:hover {
 }
 .form-input span {
     color: red;
-    opacity: 30%;
+    opacity: 50%;
+    font-size: small;
 }
 .form-input input,
 .form-input select {
@@ -553,4 +554,13 @@ tr.table-content:hover {
     background: linear-gradient(135deg, #ff5e4d, #d63031);
     box-shadow: 0 6px 15px rgba(231, 76, 60, 0.5);
     transform: translateY(-1px);
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
 }
