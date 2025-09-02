@@ -4971,14 +4971,6 @@
       {{tab}}private ${minStart(className)}Repository = AppDataSource.getRepository(Models.${className});
     serviceConstructors: "{{removeLine}}"
     serviceMethodContent: |
-      {{tab}}async save(body: any): Promise<Models.${className}>{
-      {{tab}}  try{
-      {{tab}}    const ${minStart(className)} = this.${minStart(className)}Repository.create(body);
-      {{tab}}    return await this.${minStart(className)}Repository.save(body);
-      {{tab}}  }catch(error){
-      {{tab}}    throw error;
-      {{tab}}  }
-      {{tab}} }
       
       {{tab}}async findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number] | null>{
       {{tab}}   try{
@@ -5024,6 +5016,15 @@
       {{tab}}     throw error;
       {{tab}}   }
       {{tab}} }
+      {{#if !isView}} 
+      {{tab}}async save(body: any): Promise<Models.${className}>{
+      {{tab}}  try{
+      {{tab}}    const ${minStart(className)} = this.${minStart(className)}Repository.create(body);
+      {{tab}}    return await this.${minStart(className)}Repository.save(body);
+      {{tab}}  }catch(error){
+      {{tab}}    throw error;
+      {{tab}}  }
+      {{tab}} }
       
       {{tab}}async update(id: number, body: any): Promise<Models.${className}>{
       {{tab}}   try{
@@ -5039,7 +5040,18 @@
       {{tab}}   }
       {{tab}}}
       
-
+      {{tab}}async delete(id: number) {
+      {{tab}}  try {
+      {{tab}}     const ${minStart(className)} = await this.${minStart(className)}Repository.findOneBy({ id });
+      {{tab}}     if (!${minStart(className)}) {
+      {{tab}}         throw new RessourceNotFoundError("${className} not found");
+      {{tab}}     }
+      {{tab}}     const result = await this.${minStart(className)}Repository.delete(${minStart(className)});
+      {{tab}}  } catch (error) {
+      {{tab}}      throw error;
+      {{tab}}  }
+      {{tab}}}
+      {{/if}}
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/services"
     servicePackage: ""
     serviceAdditionalFiles:
@@ -5052,7 +5064,8 @@
             save(body: any): Promise<Models.${className}>;
             findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number] | null>;
             findById(id: number): Promise<Models.${className}>;
-            async update(id: number, body: any): Promise<Models.${className}>
+            update(id: number, body: any): Promise<Models.${className}>
+            delete(id: number);
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/services/interfaces"
   controller:
