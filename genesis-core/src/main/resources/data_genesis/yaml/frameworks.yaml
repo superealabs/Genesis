@@ -4605,6 +4605,64 @@
           }
         }
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/exceptions"
+    - fileType: "Util"
+      fileName: "WebUtil"
+      extension: "ts"
+      content: |
+        export class WebUtils{ 
+          public static readonly DEFAULT_PAGE = 0;
+          public static readonly DEFAULT_SIZE = 10;
+          public static readonly DEFAULT_SORT_PARAM = "id, asc";
+          public static readonly SORT_CRITERIA_DELIMITER = ";";
+          public static readonly SORT_PART_DELIMITER = ",";
+      
+          static parsePaginationAndSort(query: Record<string, any>){
+            const page = parseInt(query.page as string) || this.DEFAULT_PAGE;
+            const size = parseInt(query.size as string) || this.DEFAULT_SIZE;
+            const sortParam = (query.sort as string) || this.DEFAULT_SORT_PARAM;
+            
+            // example: "id,asc;nom,desc"
+            const order: any = {};
+            const sortFields = sortParam.split(this.SORT_CRITERIA_DELIMITER);
+            for (const field of sortFields) {
+              const [key, dir] = field.split(this.SORT_PART_DELIMITER);
+              order[key] = dir?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+            }
+              
+            return {page, size, order};
+          }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/utils"
+    - fileType: "Util"
+      fileName: "RestResponse"
+      extension: "ts"
+      content: |
+        export class RestResponse<T> {
+          status: number;
+          message: string;
+          returnCode: number;
+          data: T | null;
+          timestamp: string;
+        
+          private constructor(status: number, message: string, returnCode: number, data: T | null) {
+            this.status = status;
+            this.message = message;
+            this.returnCode = returnCode;
+            this.data = data;
+            this.timestamp = new Date().toISOString();
+          }
+        
+          static buildSuccessResponse<T>(status: number, message: string, data: T): RestResponse<T> {
+             const OK = 1;
+             return new RestResponse<T>(status, message, OK, data);
+          }
+        
+          static buildErrorResponse<T>(status: number, message: string, data?: T): RestResponse<T> {
+             const KO = 0;
+             return new RestResponse<T>(status, message, KO, data ?? null);
+          }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/utils"
     - fileType: "Middleware"
       fileName: "error.middleware"
       extension: "ts"
