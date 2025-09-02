@@ -29,7 +29,7 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectSpring() {
-        var credentials = new Credentials().setHost("localhost").setPort("1522").setSchemaName("GENESIS").setDatabaseName("orcl").setUser("genesis").setPwd("root").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCL").setDriverType("Oracle");
+        var credentials = new Credentials().setSchemaName("").setHost("localhost").setPort("1521").setUser("C##ECOM").setPwd("ecom").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCLBDD").setDriverType("thin");
 
         try {
 
@@ -74,11 +74,11 @@ public class GenesisCoreTest {
             List<String> entityNames = new ArrayList<>();
 
             ProjectGenerationContext context = new ProjectGenerationContext();
-            context.setDatabase(database);
             context.setLanguage(language);
             context.setFramework(framework);
             context.setProject(project);
             context.setCredentials(credentials);
+            context.setDatabase(database);
             context.setDestinationFolder(destinationFolder);
             context.setProjectName(projectName);
             context.setGroupLink(groupLink);
@@ -89,6 +89,8 @@ public class GenesisCoreTest {
             context.setEntityNames(entityNames);
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
+
+
 
             projectGenerator.generateProject(context);
 

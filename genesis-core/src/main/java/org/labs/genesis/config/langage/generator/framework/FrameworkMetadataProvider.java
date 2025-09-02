@@ -306,6 +306,10 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
         fieldMap.put("validationAnnotations", getFieldValidationAnnotations(field));
+        fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
+        fieldMap.put("isText",field.isText());
+        fieldMap.put("isNumeric",field.isNumeric());
+        fieldMap.put("isDate",field.isDate());
 
         return fieldMap;
     }
@@ -332,6 +336,10 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
         fieldMap.put("validationAnnotations", getFieldValidationAnnotations(field));
+        fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
+        fieldMap.put("isText",field.isText());
+        fieldMap.put("isNumeric",field.isNumeric());
+        fieldMap.put("isDate",field.isDate());
 
         return fieldMap;
     }

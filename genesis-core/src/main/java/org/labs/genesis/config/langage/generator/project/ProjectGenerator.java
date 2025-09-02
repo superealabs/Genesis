@@ -219,6 +219,7 @@ public class ProjectGenerator {
         Database database = context.getDatabase();
         Framework framework = context.getFramework();
         Credentials credentials = context.getCredentials();
+        useRealSidAndDriverType(database,credentials);
         Connection connection = context.getConnection();
         Language language = context.getLanguage();
 
@@ -257,6 +258,18 @@ public class ProjectGenerator {
             }
         } else {
             generateProjectFiles(context, null);
+        }
+    }
+
+    private void useRealSidAndDriverType(Database database,Credentials credentials)
+    {
+        if(credentials.getSID()!=null)
+        {
+            database.setSid(credentials.getSID());
+        }
+        if(credentials.getDriverType()!=null)
+        {
+            database.setDriverType(credentials.getDriverType());
         }
     }
 

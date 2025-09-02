@@ -86,6 +86,11 @@
       "2": {
         "groupId": "",
         "artifactId": "Npgsql.EntityFrameworkCore.PostgreSQL"
+      },
+      "3": {
+        "groupId": "io.hypersistence",
+        "artifactId": "hypersistence-utils-hibernate-63",
+        "version": "3.8.4"
       }
     },
     "driverType": "",
@@ -124,7 +129,9 @@
       "numeric": "double",
       "date": "date",
       "timestamp without time zone": "timestamp",
+      "timestamp with time zone": "timestamptz",
       "timestamp": "timestamp",
+      "timestamptz": "timestamptz",
       "bool": "boolean",
       "time": "time",
       "tsrange": "timestamp[]",
@@ -238,7 +245,7 @@
       "1": {
         "groupId": "com.oracle.database.jdbc",
         "artifactId": "ojdbc8",
-        "version": "23.5.0.24.07"
+        "version": "19.8.0.0"
       },
       "2": {
         "groupId": "",
@@ -264,7 +271,7 @@
       "NUMBER(*,*)": "double",
       "VARCHAR2": "string",
       "DATE": "date",
-      "TIMESTAMP(*)": "timestamp",
+      "TIMESTAMP(6)": "timestamp",
       "TIMESTAMP": "timestamp",
       "TIME": "time",
       "BLOB": "bytea",

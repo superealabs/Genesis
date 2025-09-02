@@ -129,7 +129,7 @@ public class TableMetadata {
     }
 
     private void fetchPrimaryKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> columns) throws SQLException {
-        try (ResultSet primaryKeys = metaData.getPrimaryKeys(null, database.getCredentials().getSchemaName(), tableName)) {
+        try (ResultSet primaryKeys = metaData.getPrimaryKeys(null,  (database.getName().equals("Oracle")) ?database.getCredentials().getUser():database.getCredentials().getSchemaName(), tableName)) {
             while (primaryKeys.next()) {
                 String pkColumnName = primaryKeys.getString("COLUMN_NAME");
 
@@ -162,7 +162,7 @@ public class TableMetadata {
     }
 
     private void fetchForeignKeys(DatabaseMetaData metaData, String tableName, Language language, List<ColumnMetadata> listeCols) throws SQLException {
-        try (ResultSet foreignKeys = metaData.getImportedKeys(null, database.getCredentials().getSchemaName(), tableName)) {
+        try (ResultSet foreignKeys = metaData.getImportedKeys(null, (database.getName().equals("Oracle")) ?database.getCredentials().getUser():database.getCredentials().getSchemaName(), tableName)) {
 
             while (foreignKeys.next()) {
                 String fkColumnName = foreignKeys.getString("FKCOLUMN_NAME");
@@ -174,7 +174,6 @@ public class TableMetadata {
 
                         field.setReferencedColumn(field.getReferencedColumn());
                         field.setReferencedColumnType(field.getReferencedColumnType());
-                        field.setColumnType(toCamelCase(field.getType()));
                         field.setName(
                                 field.getName()
                                         .transform(StringUtils::toCamelCase)
@@ -182,17 +181,20 @@ public class TableMetadata {
                                         ));
                         field.setReferencedTable(pkTableName.transform(StringUtils::toCamelCase));
 
-                        try (ResultSet pkColumn = metaData.getColumns(null, database.getCredentials().getSchemaName(), pkTableName, pkColumnName)) {
+                        try (ResultSet pkColumn = metaData.getColumns(null, (database.getName().equals("Oracle")) ?database.getCredentials().getUser():database.getCredentials().getSchemaName(), pkTableName, pkColumnName)) {
                             if (pkColumn.next()) {
                                 String pkColumnType = pkColumn.getString("TYPE_NAME");
                                 field.setReferencedColumnType(language.getTypes().get(database.getTypes().get(pkColumnType)));
                             }
                         }
 
-                        field.setType(pkTableName
-                                .transform(StringUtils::toCamelCase)
-                                .transform(StringUtils::removeLastS)
-                                .transform(StringUtils::majStart)
+                        field.setType(Stream.of(pkTableName)
+                                .map(String::toLowerCase)
+                                .map(StringUtils::toCamelCase)
+                                .map(StringUtils::majStart)
+                                .map(StringUtils::removeLastS)
+                                .findFirst()
+                                .orElse("")
                         );
 
                     }
