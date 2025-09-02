@@ -4636,6 +4636,93 @@
         export { ${ majStart(this) } } from "./${ majStart(this) }";
         {{/each}}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/models"
+      fileName: "ExportService"
+      extension: "ts"
+      content: |
+        import { Response } from "express";
+        import { Parser } from "json2csv";
+        import {AppDataSource} from "../config/data-source";
+        import { jsPDF } from 'jspdf';
+        import autoTable from 'jspdf-autotable';
+        import { RessourceNotFoundError } from "../exceptions/RessourceNotFoundError";
+        
+        declare module 'jspdf' {
+          interface jsPDF {
+            autoTable: typeof autoTable;
+          }
+        }
+        export class ExportService {
+          private entityManager = AppDataSource.manager;
+          
+          // method to export CSV data from a table, either every row or a single one
+          async exportCSV(id: number | null, tableName: string){
+              try {
+                  // fetch the data to export
+                  let query = `SELECT * FROM ${tableName}`;
+                  if (id !== null) {
+                      query += ` WHERE id = ${id}`;
+                  }
+                  const data = await this.entityManager.query(query);
+                  const json2csv = new Parser();
+                  const csv = json2csv.parse(data);
+                  return csv;
+              } catch (error) {
+                  throw error;
+              }
+          }
+        
+          // method to export CSV data from a table, either every row or a single one
+          async exportPDF(id: number | null, tableName: string) {
+            try {
+                let query = `SELECT * FROM ${tableName}`;
+                if (id !== null) {
+                    query += ` WHERE id = ${id}`;
+                }
+    
+                const data = await AppDataSource.manager.query(query);
+    
+                if (data.length === 0) {
+                    throw new RessourceNotFoundError("No data found");
+                }
+    
+                const doc = new jsPDF();
+            
+                doc.text(`Export PDF – ${tableName}`, 14, 16);
+    
+                const columns = Object.keys(data[0]);
+                const rows = data.map((row: any) => 
+                    columns.map(col => row[col]?.toString() || '')
+                );
+    
+                autoTable(doc, {
+                    head: [columns],
+                    body: rows,     
+                    startY: 25,     
+                    margin: { top: 20 },
+                    styles: {
+                        fontSize: 10,
+                        cellPadding: 3,
+                        overflow: 'linebreak', 
+                    },
+                    headStyles: {
+                        fillColor: [41, 128, 185], 
+                        textColor: [255, 255, 255], 
+                        fontStyle: 'bold',
+                    },
+                    alternateRowStyles: {
+                        fillColor: [245, 245, 245],
+                    },
+                });
+    
+                const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+            
+                return pdfBuffer;
+            } catch (error) {
+                throw error;
+            }
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/services"
     - fileType: "Index"
       fileName: "index"
       extension: "ts"
@@ -4816,6 +4903,7 @@
       import * as Models from '../models/index';
       import { AppDataSource } from '../config/data-source';
       import { I${majStart(className)}Service } from './interfaces/I${majStart(className)}Service';
+      import { RessourceNotFoundError } from '../exceptions/RessourceNotFoundError';
     serviceAnnotations: ""
     serviceClassKeyword: "export class"
     serviceExtends: "implements I${majStart(className)}Service"
@@ -4832,6 +4920,67 @@
       {{tab}}    throw error;
       {{tab}}  }
       {{tab}} }
+      
+      {{tab}}async findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number] | null>{
+      {{tab}}   try{
+      {{tab}}     const [data, total] = await this.${minStart(className)}Repository.findAndCount({
+      {{tab}}            skip: page * size,
+      {{tab}}            take: size,
+      {{tab}}            order,
+      {{tab}}         });
+      {{tab}}         if (data.length === 0) {
+      {{tab}}              throw new RessourceNotFoundError("No ${minStart(className)} found");
+      {{tab}}         }
+      {{tab}}         return [data, total];
+      {{tab}}   }catch(error){
+      {{tab}}     throw error;
+      {{tab}}   }
+      {{tab}}}
+      
+      {{tab}}async search(body: any, page: number, size: number, order: any): Promise<[Models.${className}[], number] | null>{
+      {{tab}}   try{
+      {{tab}}     const [data, total] = await this.${minStart(className)}Repository.findAndCount({
+      {{tab}}           where: body,
+      {{tab}}           skip: page * size,
+      {{tab}}           take: size,
+      {{tab}}           order,
+      {{tab}}         });
+      {{tab}}         if (data.length === 0) {
+      {{tab}}              throw new RessourceNotFoundError("No ${minStart(className)} found");
+      {{tab}}         }
+      {{tab}}         return [data, total];
+      {{tab}}   }catch(error){
+      {{tab}}     throw error;
+      {{tab}}   }
+      {{tab}}}
+      
+      {{tab}}async findById(id: number): Promise<Models.${className}>{
+      {{tab}}   try{
+      {{tab}}     const ${minstart(className)} = await this.${minStart(className)}Repository.findOne({where: {id} });
+      {{tab}}     if(!${minstart(className)}){
+      {{tab}}       throw new RessourceNotFoundError("No ${minStart(className)} found");
+      {{tab}}     } 
+      {{tab}}     return ${minstart(className)};
+      {{tab}}   } catch(error){
+      {{tab}}     throw error;
+      {{tab}}   }
+      {{tab}} }
+      
+      {{tab}}async update(id: number, body: any): Promise<Models.${className}>{
+      {{tab}}   try{
+      {{tab}}      const ${minStart(className)} = await this.${minStart(className)}Repository.findOneBy({ id });
+      {{tab}}      
+      {{tab}}      if(!${minStart(className)}){
+      {{tab}}         throw new RessourceNotFoundError("No ${minStart(className)} found");
+      {{tab}}       } 
+      
+      {{tab}}      return await this.${minStart(className)}Repository.save(body);
+      {{tab}}   }catch(error){
+      {{tab}}      throw error;
+      {{tab}}   }
+      {{tab}}}
+      
+
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/services"
     servicePackage: ""
     serviceAdditionalFiles:
@@ -4842,6 +4991,9 @@
           import * as Models from '../../models/index';
           export interface I${majStart(className)}Service {
             save(body: any): Promise<Models.${className}>;
+            findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number] | null>;
+            findById(id: number): Promise<Models.${className}>;
+            async update(id: number, body: any): Promise<Models.${className}>
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/services/interfaces"
   controller:
