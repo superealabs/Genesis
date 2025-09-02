@@ -16,8 +16,7 @@ export interface SearchField {
   template: `
     <div class="filter-container">
       <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="search-form">
-
-        <!-- Plus button et champs dynamiques -->
+        <label class="label">Filter:</label>
         <div *ngIf="hiddenFields.length > 0" class="form-group-inline btn-inline">
           <button type="button" class="btn-plus" (click)="toggleSelect()">＋</button>
           <select *ngIf="showSelect" (change)="onAddField($event)" class="form-control select-dropdown">
@@ -26,7 +25,6 @@ export interface SearchField {
           </select>
         </div>
 
-        <!-- Champs visibles -->
         <div *ngFor="let field of visibleFields" class="form-group-inline">
           <div class="input-wrapper">
             <ng-container [ngSwitch]="field.type">
@@ -42,31 +40,29 @@ export interface SearchField {
           </div>
         </div>
 
-        <!-- Apply button -->
         <div class="form-group-inline btn-inline">
           <button type="button" class="btn-apply" (click)="searchForm.valid && onSearch()">Apply</button>
         </div>
 
-        <!-- Rows selector -->
         <div class="rows-selector">
-          <label for="rowsSelect">Showing:</label>
-          <select [formControl]="rowsControl" id="rowsSelect" class="form-control">
-            <option value="12">12</option>
-            <option *ngFor="let r of rowsOptions" [value]="r">{{ r }}</option>
-          </select>
+          <label for="rowsInput">Showing:</label>
+          <input
+            type="number"
+            id="rowsInput"
+            class="form-control"
+            [formControl]="rowsControl"
+            min="1"
+          />
         </div>
 
       </form>
     </div>
   `,
   styles: [`
-    /* Conteneur principal */
     .filter-container {
       display: flex;
       width: 100%;
     }
-
-    /* Formulaire */
     .search-form {
       display: flex;
       align-items: center;
@@ -74,8 +70,6 @@ export interface SearchField {
       flex-wrap: wrap;
       width: 100%;
     }
-
-    /* Groupes de champs en ligne */
     .form-group-inline {
       display: flex;
       align-items: center;
@@ -83,14 +77,10 @@ export interface SearchField {
       min-width: 150px;
       flex-wrap: nowrap;
     }
-
-    /* Wrapper des inputs pour positionner l'icône */
     .input-wrapper {
       position: relative;
       width: 150px;
     }
-
-    /* Inputs et selects génériques */
     .form-control {
       width: 100%;
       height: 30px;
@@ -102,8 +92,6 @@ export interface SearchField {
       line-height: 1.2;
       box-shadow: 0px 1px 4px rgba(0,0,0,0.15);
     }
-
-    /* Icône pour retirer un champ */
     .remove-icon {
       position: absolute;
       right: 10%;
@@ -117,15 +105,11 @@ export interface SearchField {
     .remove-icon:hover {
       color: #333;
     }
-
-    /* Boutons inline */
     .btn-inline {
       min-width: auto;
       width: auto;
       align-self: center;
     }
-
-    /* Bouton "+" pour ajouter un champ */
     .btn-plus {
       background-color: white;
       border: none;
@@ -146,8 +130,6 @@ export interface SearchField {
       background-color: #f9f9f9;
       box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
     }
-
-    /* Dropdown pour les champs cachés */
     .select-dropdown {
       width: 150px;
       height: 30px;
@@ -156,8 +138,6 @@ export interface SearchField {
       border: none;
       box-shadow: 0px 1px 4px rgba(0,0,0,0.15);
     }
-
-    /* Bouton Apply */
     .btn-apply {
       height: 30px;
       padding: 0 10px;
@@ -173,8 +153,6 @@ export interface SearchField {
     .btn-apply:hover {
       background-color: #dededeff;
     }
-
-    /* Rows selector */
     .rows-selector {
       display: flex;
       align-items: center;
@@ -184,7 +162,7 @@ export interface SearchField {
       width: 10%;
       min-width: 50px;
     }
-    .rows-selector select {
+    .rows-selector input {
       width: 100%;
       height: 28px;
       font-size: 14px;
@@ -195,6 +173,11 @@ export interface SearchField {
       padding: 0 3px;
       text-align: center;
       text-align-last: center;
+    }
+    .label
+    {
+      color: #555;
+      font-size: 16px;
     }
   `]
 })
@@ -212,11 +195,12 @@ export class DynamicSearchFormComponent implements OnInit {
   rowsControl!: FormControl;
 
   ngOnInit(): void {
-    // Valeur par défaut 12
     this.rowsControl = new FormControl(12);
 
     this.rowsControl.valueChanges.subscribe(val => {
-      if (this.onRowsChange) this.onRowsChange(Number(val));
+      console.log(val);
+      var number=val!=null?val:"12";
+      if (this.onRowsChange) this.onRowsChange(Number(number));
     });
 
     this.searchForm = new FormGroup({});

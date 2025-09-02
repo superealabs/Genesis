@@ -482,6 +482,7 @@
         import { ReactiveFormsModule, FormGroup } from '@angular/forms';
         import { Subject, forkJoin, takeUntil } from 'rxjs';
         import { ActivatedRoute } from '@angular/router';
+        import { Router } from '@angular/router';
       
         import { DynamicFieldComponent, FieldConfig } from '../../../shared/dynamic-field/dynamic-field.component';
         import { DynamicFormComponent } from '../../../shared/dynamic-form/dynamic-form.component';
@@ -535,6 +536,7 @@
 
           constructor(
                 private route: ActivatedRoute,
+                private router :Router,
                 {{#each fieldsFK}}{{removeLine}}
                  private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
                 {{/each}}{{removeLine}}
@@ -551,10 +553,11 @@
               serviceCall.pipe(takeUntil(this.destroy$))
               .subscribe({
                 next: res => {
+                  this.isLoading = false;
                   warnMeUp('Success', '${majStart(className)} created successfully','#28a745','success');
                   this.form.reset();
                   this.validationErrors={};
-                  this.isLoading = false;
+                  this.router.navigate(['${toKebabCase(className)}s']);
                 },
                   error: err => {
                     warnMeUp('error', 'Error while making a move on ${minStart(className)} ');
@@ -637,6 +640,7 @@
           extension: "html"
           content: |
             <app-page-header name="${majStart(className)}s" context="Form" [isView]=true [isForm]=true></app-page-header>
+            <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
             <ng-container *ngIf="formUpdate; else insertForm">
               <app-dynamic-form
                 *ngIf="${minStart(className)}ToUpdate"
@@ -761,7 +765,7 @@
             <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
 
             <div *ngIf="!isLoading && ${minStart(className)}">
-              <app-detail-view [object]="${minStart(className)}" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id"></app-detail-view>
+              <app-detail-view [object]="${minStart(className)}" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id" LinkContext='${toKebabCase(className)}s'></app-detail-view>
             </div>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-details"
         - fileType: "css template"
