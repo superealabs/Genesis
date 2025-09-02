@@ -40,6 +40,14 @@ public class Framework {
                 .collect(Collectors.toList());
     }
 
+    public Optional<FrameworkSecurity> getSelectedSecurityByName(String securityType){
+        return this
+                .getFrameworkSecurities()
+                .stream()
+                .filter(fs -> fs.getName().equalsIgnoreCase(securityType))
+                .findFirst();
+    }
+
     public void setFrameworkCaching() throws IOException {
         this.frameworkCaching = Arrays.stream(FileUtils.fromYaml(FrameworkCaching[].class, Constantes.FRAMEWORK_CACHING_YAML))
                 .filter(fs -> fs.getFrameworkId() == this.id)

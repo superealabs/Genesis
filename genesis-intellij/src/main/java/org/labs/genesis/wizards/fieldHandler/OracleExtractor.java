@@ -14,7 +14,7 @@ public class OracleExtractor extends ExtractorSignature {
             fields.setPort(matcher.group(2));
             fields.setSid(matcher.group(3));
             fields.setDriverType("oracle");
-            fields.setDriverName("oracle.jdbc.OracleDriver");
+            fields.setDriverName("thin");
         }
         return fields;
     }
