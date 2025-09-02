@@ -4636,6 +4636,7 @@
         export { ${ majStart(this) } } from "./${ majStart(this) }";
         {{/each}}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/models"
+    - fileType: "Export Service"
       fileName: "ExportService"
       extension: "ts"
       content: |
