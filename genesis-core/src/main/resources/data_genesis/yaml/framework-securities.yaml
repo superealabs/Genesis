@@ -1300,7 +1300,16 @@
           }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/controllers/"
+    - fileType: "README file"
+      fileName: "SpringSecurityJWTReadME"
+      extension: "md"
+      content: |
+        ## Authentication Details
 
+        Default Admin Credentials:
+          Username : admin
+          Password : admin
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
   additionalDependencies:
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-security"
@@ -1320,7 +1329,416 @@
       scope: "{{removeLine}}"
   metadataBooleanTrueKeys:
     - "useBearerToken"
+    - "useSpringSecurity"
     - "useSpringSecurityJWT"
+    - "useJavaJwtLibrary"
+
+- id: 2
+  frameworkId: 1
+  name: "Spring Security - OAuth 2.0 (Google)"
+  securityFiles:
+    - fileType: "Swagger Config"
+      fileName: "SwaggerConfig"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config;
+
+        import org.springframework.context.annotation.Configuration;
+        import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+        import io.swagger.v3.oas.annotations.security.SecurityScheme;
+
+        @Configuration
+        @SecurityScheme(
+            name = "bearerAuth",
+            type = SecuritySchemeType.HTTP,
+            scheme = "bearer",
+            bearerFormat = "JWT"
+        )
+        public class SwaggerConfig {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+
+    - fileType: "JwtService"
+      fileName: "JwtService"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.services;
+  
+        import io.jsonwebtoken.Jwts;
+        import io.jsonwebtoken.security.Keys;
+        import java.util.Date;
+        import io.jsonwebtoken.Claims;
+        import io.jsonwebtoken.Jws;
+        import org.springframework.beans.factory.annotation.Value;
+        import org.springframework.stereotype.Component;
+        import javax.crypto.SecretKey;
+  
+        @Component
+        public class JwtService {
+  
+          private final SecretKey secretKey;
+          private final long expirationTime;
+          
+          public JwtService(
+            @Value("$[jwt.secret]") String secret,
+            @Value("$[jwt.expiration]") long expirationTime
+          ) {
+            this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+            this.expirationTime = expirationTime;
+          }
+  
+          public String generateToken(String email) {
+            return Jwts.builder()
+            .setSubject(email)
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + 1000 * expirationTime))
+            .signWith(secretKey)
+            .compact();
+          }
+  
+          public Jws<Claims> validateToken(String token) {
+            return Jwts.parserBuilder()
+            .setSigningKey(secretKey)
+            .build()
+            .parseClaimsJws(token);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/services/"
+
+    - fileType: "JwtAccessDeniedHandler"
+      fileName: "JwtAccessDeniedHandler"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.handlers;
+
+        import java.io.IOException;
+
+        import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+        import org.springframework.http.HttpStatus;
+        import org.springframework.http.MediaType;
+        import org.springframework.security.access.AccessDeniedException;
+        import org.springframework.security.web.access.AccessDeniedHandler;
+        import org.springframework.stereotype.Component;
+
+        import com.fasterxml.jackson.databind.ObjectMapper;
+
+        import jakarta.servlet.http.HttpServletRequest;
+        import jakarta.servlet.http.HttpServletResponse;
+        
+        @Component
+        public class JwtAccessDeniedHandler implements AccessDeniedHandler {
+
+            private final ObjectMapper objectMapper;
+
+            // Injection de l'ObjectMapper via le constructeur
+            public JwtAccessDeniedHandler(ObjectMapper objectMapper) {
+                this.objectMapper = objectMapper;
+            }
+
+            @Override
+            public void handle(HttpServletRequest request,
+                               HttpServletResponse response,
+                               AccessDeniedException ex) throws IOException {
+
+                // Création de la réponse standardisée
+                RestResponse<Void> restResponse = RestResponse.buildErrorResponse(
+                    HttpStatus.FORBIDDEN,
+                    ex.getMessage(),
+                    null
+                );
+
+                // Conversion en JSON
+                String jsonResponse = objectMapper.writeValueAsString(restResponse);
+
+                // Configuration de la réponse HTTP
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.getWriter().write(jsonResponse);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/handlers/"
+
+    - fileType: "JwtAuthEntryPoint"
+      fileName: "JwtAuthEntryPoint"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.handlers;
+
+        import java.io.IOException;
+
+        import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+        import org.springframework.http.HttpStatus;
+        import org.springframework.http.MediaType;
+        import org.springframework.security.core.AuthenticationException;
+        import org.springframework.security.web.AuthenticationEntryPoint;
+        import org.springframework.stereotype.Component;
+
+        import com.fasterxml.jackson.databind.ObjectMapper;
+
+        import jakarta.servlet.http.HttpServletRequest;
+        import jakarta.servlet.http.HttpServletResponse;
+        
+        @Component
+        public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
+
+            private final ObjectMapper objectMapper;
+
+            public JwtAuthEntryPoint(ObjectMapper objectMapper) {
+                this.objectMapper = objectMapper;
+            }
+
+            @Override
+            public void commence(HttpServletRequest request, 
+                                 HttpServletResponse response,
+                                 AuthenticationException ex) throws IOException {
+
+                // Construire la réponse standardisée
+                RestResponse<Void> restResponse = RestResponse.buildErrorResponse(
+                    HttpStatus.UNAUTHORIZED,
+                    ex.getMessage(),
+                    null  // Aucune donnée supplémentaire
+                );
+
+                // Convertir en JSON
+                String jsonResponse = objectMapper.writeValueAsString(restResponse);
+
+                // Configurer la réponse HTTP
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write(jsonResponse);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/handlers/"
+
+    - fileType: "OAuth2SuccessHandler"
+      fileName: "OAuth2SuccessHandler"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.handlers;
+  
+        import ${groupLink}.${lowerCase(projectName)}.config.security.services.JwtService;
+        import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+        import org.springframework.http.HttpStatus;
+        import org.springframework.http.MediaType;
+        import org.springframework.security.core.Authentication;
+        import org.springframework.security.oauth2.core.user.OAuth2User;
+        import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+              
+        import jakarta.servlet.http.HttpServletRequest;
+        import jakarta.servlet.http.HttpServletResponse;
+        import java.io.IOException;
+        import org.springframework.stereotype.Component;
+  
+        import com.fasterxml.jackson.databind.ObjectMapper;
+  
+        @Component
+        public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
+        
+          private final JwtService jwtTokenUtil;
+          private final ObjectMapper objectMapper;
+  
+          public OAuth2SuccessHandler(JwtService jwtTokenUtil, ObjectMapper objectMapper) {
+            this.jwtTokenUtil = jwtTokenUtil;
+            this.objectMapper = objectMapper;
+          }
+  
+          @Override
+          public void onAuthenticationSuccess(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Authentication authentication
+          ) throws IOException {
+            
+            OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
+            String email = oauthUser.getAttribute("email");
+            
+            String jwt = jwtTokenUtil.generateToken(email);
+  
+            // Construire la réponse standardisée
+              RestResponse<String> restResponse = RestResponse.buildSuccessResponse(
+              HttpStatus.OK,
+              "Authentication successful",
+              jwt
+            );
+  
+            // Convertir en JSON
+            String jsonResponse = objectMapper.writeValueAsString(restResponse);
+            
+            // Configurer la réponse HTTP
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(jsonResponse);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/handlers/"
+
+    - fileType: "JwtAuthenticationFilter"
+      fileName: "JwtAuthenticationFilter"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.filters;
+  
+        import java.io.IOException;
+        import java.util.Collections;
+        
+        import ${groupLink}.${lowerCase(projectName)}.config.security.services.JwtService;
+        import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+        import org.springframework.security.core.context.SecurityContextHolder;
+        import org.springframework.web.filter.OncePerRequestFilter;
+        import io.jsonwebtoken.Claims;
+        import io.jsonwebtoken.Jws;
+        import jakarta.servlet.FilterChain;
+        import jakarta.servlet.ServletException;
+        import jakarta.servlet.http.HttpServletRequest;
+        import jakarta.servlet.http.HttpServletResponse;
+        import org.springframework.stereotype.Component;
+  
+        @Component
+        public class JwtAuthenticationFilter extends OncePerRequestFilter {
+          
+          private final JwtService jwtTokenUtil;
+          
+          public JwtAuthenticationFilter(JwtService jwtTokenUtil) {
+            this.jwtTokenUtil = jwtTokenUtil;
+          }
+          
+          @Override
+          protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain chain
+          ) throws ServletException, IOException {
+            
+            String header = request.getHeader("Authorization");
+            
+            if (header != null && header.startsWith("Bearer ")) {
+              String token = header.substring(7);
+              try {
+                Jws<Claims> claims = jwtTokenUtil.validateToken(token);
+                UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(
+                  claims.getBody().getSubject(),
+                  null,
+                  Collections.emptyList()
+                );
+                SecurityContextHolder.getContext().setAuthentication(auth);
+              } catch (Exception e) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+              }
+            }
+            chain.doFilter(request, response);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/filters/"
+
+    - fileType: "SecurityConfig"
+      fileName: "SecurityConfig"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.filters;
+
+        import org.springframework.context.annotation.Configuration;
+        import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+        import org.springframework.security.config.http.SessionCreationPolicy;
+        import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.handlers.JwtAccessDeniedHandler;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.handlers.JwtAuthEntryPoint;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.handlers.OAuth2SuccessHandler;
+        import org.springframework.context.annotation.Bean;
+        import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+        import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+        import org.springframework.security.web.SecurityFilterChain;
+
+        @Configuration
+        @EnableWebSecurity
+        @EnableMethodSecurity
+        public class SecurityConfig {
+
+            private final JwtAuthenticationFilter jwtFilter;
+            private final OAuth2SuccessHandler oAuth2SuccessHandler;
+            private final JwtAuthEntryPoint authenticationEntryPoint;
+            private final JwtAccessDeniedHandler accessDeniedHandler;
+
+            public SecurityConfig(JwtAuthenticationFilter jwtFilter, OAuth2SuccessHandler oAuth2SuccessHandler, JwtAccessDeniedHandler accessDeniedHandler, JwtAuthEntryPoint authenticationEntryPoint) {
+                this.jwtFilter = jwtFilter;
+                this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+                this.authenticationEntryPoint = authenticationEntryPoint;
+                this.accessDeniedHandler = accessDeniedHandler;
+            }
+
+            @Bean
+            public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http
+                    .csrf(csrf -> csrf.disable())
+                    .authorizeHttpRequests(authz -> authz
+                        //.requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers( "/welcome/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .anyRequest().authenticated()
+                    )
+                    .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2SuccessHandler)
+                    )
+                    .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    )
+                    .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                    .exceptionHandling()
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler);
+
+                return http.build();
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/filters/"
+
+    - fileType: "README file"
+      fileName: "OAuth2GoogleReadME"
+      extension: "md"
+      content: |
+        # Google OAuth2 Configuration
+
+        To use Google OAuth2 authentication in your project, you need to configure the authorized redirect URI in the Google Cloud Console.
+
+        ## Step-by-Step Configuration
+
+        1. Go to the Google Cloud Console and select your project
+        2. Navigate to **APIs & Services** > **OAuth 2.0 clients**
+        3. Find your OAuth 2.0 client ID
+        4. Click on **Authorized Redirect URIs**
+        5. Add the following URL:
+           ```
+           http://localhost:${projectPort}/${toKebabCase(projectName)}/login/oauth2/code/google
+           ```
+        6. Click **Save**
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+  additionalDependencies:
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-security"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-oauth2-client"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "io.jsonwebtoken"
+      artifactId: "jjwt-api"
+      version: "0.11.5"
+      scope: "{{removeLine}}"
+    - groupId: "io.jsonwebtoken"
+      artifactId: "jjwt-impl"
+      version: "0.11.5"
+      scope: "{{removeLine}}"
+    - groupId: "io.jsonwebtoken"
+      artifactId: "jjwt-jackson"
+      version: "0.11.5"
+      scope: "{{removeLine}}"
+  metadataBooleanTrueKeys:
+    - "useBearerToken"
+    - "useSpringSecurity"
+    - "useJavaJwtLibrary"
+    - "useOAuthGoogle"
+    - "useSpringSecurityOAuth2"
 - id: 2
   frameworkId: 2
   name: ".NET Security - JWT"
