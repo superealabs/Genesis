@@ -137,11 +137,6 @@
               "Microsoft.AspNetCore": "${loggingLevel}"
             }
           },
-          {{#if useJWT}}
-          "Jwt": {
-            "SecretKey": "Bel0Y8TSTrZyicQgAJdcabCbaMQo3s3BkBmP925Wb3g=",
-            "ExpirationMinutes": 30
-          },{{/if}}
           "AllowedHosts": "*"{{#if useDB}},
           "ConnectionStrings": {
             "DefaultConnection": "${connectionString}"
@@ -189,7 +184,6 @@
               }
             }
           }{{/if}}
-        
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
@@ -214,6 +208,7 @@
                     <PrivateAssets>all</PrivateAssets>
                 </PackageReference>
                 <PackageReference Include="${DBartifactId}" Version="${frameworkVersion}.0"/>{{/if}}
+                {{#if useMicrosoftExtensionsCachingMemory}}<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.7" />{{else}}{{removeLine}}{{/if}}
                 <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0"/>
                 <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.9.0"/>
                 {{#if useEurekaServer}}<PackageReference Include="Steeltoe.Discovery.Eureka" Version="3.2.0"/>{{/if}}
@@ -221,11 +216,6 @@
                 <PackageReference Include="Steeltoe.Management.Endpoint.Health" Version="1.1.0" />
                 <PackageReference Include="Steeltoe.Management.EndpointCore" Version="3.2.0" />
                 <PackageReference Include="Steeltoe.Management.TracingCore" Version="3.2.0" />
-                {{#if useJWT}}
-                <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.18" />
-                <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />
-                <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.18" />
-                {{/if}}
             </ItemGroup>
         </Project>
 

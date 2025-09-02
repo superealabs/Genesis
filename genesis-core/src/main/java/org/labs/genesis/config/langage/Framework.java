@@ -32,6 +32,7 @@ public class Framework {
     private Service service;
     private Controller controller;
     private List<FrameworkSecurity> frameworkSecurities;
+    private List<FrameworkCaching> frameworkCaching;
 
     public void setFrameworkSecurities() throws IOException {
         this.frameworkSecurities = Arrays.stream(FileUtils.fromYaml(FrameworkSecurity[].class, Constantes.FRAMEWORK_SECURITY_YAML))
@@ -39,11 +40,17 @@ public class Framework {
                 .collect(Collectors.toList());
     }
 
-    public Optional<FrameworkSecurity> getSelectedSecurityByName(String securityType){
+    public void setFrameworkCaching() throws IOException {
+        this.frameworkCaching = Arrays.stream(FileUtils.fromYaml(FrameworkCaching[].class, Constantes.FRAMEWORK_CACHING_YAML))
+                .filter(fs -> fs.getFrameworkId() == this.id)
+                .collect(Collectors.toList());
+    }
+
+    public Optional<FrameworkCaching> getSelectedCacheProviderByName(String cacheProvider){
         return this
-                .getFrameworkSecurities()
+                .getFrameworkCaching()
                 .stream()
-                .filter(fs -> fs.getName().equalsIgnoreCase(securityType))
+                .filter(fs -> fs.getName().equalsIgnoreCase(cacheProvider))
                 .findFirst();
     }
 

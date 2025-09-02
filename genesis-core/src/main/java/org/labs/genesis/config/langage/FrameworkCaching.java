@@ -7,9 +7,11 @@ import java.util.List;
 
 @Getter
 @Setter
-public class FrameworkSecurity {
+public class FrameworkCaching {
     private int id;
     private String name;
     private int frameworkId;
-    private List<FilesEdit> securityFiles;
+    private List<FilesEdit> configFiles;
+    private List<Framework.Dependency> additionalDependencies;
+    private List<String> metadataBooleanTrueKeys;
 }

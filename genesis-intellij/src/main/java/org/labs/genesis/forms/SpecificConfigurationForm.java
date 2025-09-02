@@ -2,7 +2,9 @@ package org.labs.genesis.forms;
 
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBList;
 import lombok.Getter;
+import lombok.Setter;
 import org.labs.genesis.config.langage.Framework;
 
 import javax.swing.*;
@@ -42,6 +44,13 @@ public class SpecificConfigurationForm {
     private JTextField roleField;
     private JLabel securityTypeLabel;
     private JComboBox<String> securityTypeOptions;
+    private JLabel cacheProviderLabel;
+    private JComboBox<String> cacheProviderOptions;
+    private JLabel cacheableLabel;
+    private JScrollPane allTablesAndViewsNamesPane;
+    private JBList<String> selectedTableAndViewNamesList;
+    @Setter
+    private List<String> allTablesAndViewsNames  = new ArrayList<>();
 
     public void initializeForm() {
         // Masquer tous les composants dépendants au début
@@ -59,7 +68,8 @@ public class SpecificConfigurationForm {
         loggingLevelOptions.setVisible(true);
         securityTypeLabel.setVisible(true);
         securityTypeOptions.setVisible(true);
-        useAnEurekaServerCheckBox.setVisible(true);
+        cacheProviderLabel.setVisible(true);
+        cacheProviderOptions.setVisible(true);
     }
 
     public void updateFormWithFramework(Framework framework) {
@@ -70,6 +80,8 @@ public class SpecificConfigurationForm {
             configureLoggingLevel(framework);
             // Configurer type de sécurité
             configureSecurityType(framework);
+            // Configure cache provider
+            configureCacheProvider(framework);
 
             if (framework.getIsGateway()) {
                 configureGatewayComponents();
@@ -77,6 +89,13 @@ public class SpecificConfigurationForm {
             if (frameworkUsesDatabase(framework)) {
                 configureDatabaseComponents(framework);
             }
+        }
+    }
+
+    public void updateFormWithTablesAndViews(List<String> selectedValues, List<String> selectedViewValues) {
+        if (!selectedValues.isEmpty() || !selectedViewValues.isEmpty()) {
+            // Configure selected tables and views
+            configureSelectedTablesAndViews(selectedValues, selectedViewValues);
         }
     }
 
@@ -97,6 +116,11 @@ public class SpecificConfigurationForm {
         // Masquer les composants de base de données
         hibernateDDLAutoLabel.setVisible(false);
         ddlAutoOptions.setVisible(false);
+
+        // Masquer la liste des tables & views
+        cacheableLabel.setVisible(false);
+        selectedTableAndViewNamesList.setVisible(false);
+        allTablesAndViewsNamesPane.setVisible(false);
 
         // Désactiver Eureka par défaut
         useAnEurekaServerCheckBox.setSelected(false);
@@ -130,6 +154,33 @@ public class SpecificConfigurationForm {
                 .filter(config -> "securityType".equals(config.getVariableName()))
                 .flatMap(config -> config.getOptions().stream())
                 .forEach(option -> securityTypeOptions.addItem(option));
+    }
+
+    private void configureCacheProvider(Framework framework) {
+        cacheProviderLabel.setVisible(true);
+        cacheProviderOptions.setVisible(true);
+
+        cacheProviderOptions.removeAllItems();
+        framework.getConfigurations().stream()
+                .filter(config -> "cacheProvider".equals(config.getVariableName()))
+                .flatMap(config -> config.getOptions().stream())
+                .forEach(option -> cacheProviderOptions.addItem(option));
+
+        // Add ActionListener to cacheProviderOptions
+        cacheProviderOptions.addActionListener(e -> {
+            String selectedOption = (String) cacheProviderOptions.getSelectedItem();
+            boolean showCacheComponents = selectedOption != null && !selectedOption.equalsIgnoreCase("NONE");
+
+            cacheableLabel.setVisible(showCacheComponents);
+            selectedTableAndViewNamesList.setVisible(showCacheComponents);
+            allTablesAndViewsNamesPane.setVisible(showCacheComponents);
+        });
+    }
+
+    private void configureSelectedTablesAndViews(List<String> selectedValues, List<String> selectedViewValues) {
+        this.allTablesAndViewsNames.addAll(selectedValues);
+        this.allTablesAndViewsNames.addAll(selectedViewValues);
+        selectedTableAndViewNamesList.setListData(this.allTablesAndViewsNames.toArray(new String[0]));
     }
 
     private void configureGatewayComponents() {
