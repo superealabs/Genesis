@@ -106,6 +106,7 @@
       extension: "ts"
       content: |
         export const environment = {
+        
         {{tab}}production: true,
         {{tab}}apiUrl: 'http://localhost:${port}/${toKebabCase(projectName)}'
         };
@@ -361,6 +362,7 @@
                 this.${minStart(className)}Service.search${majStart(className)}s(criteria, this.currentPage-1, this.itemNumber,sortParam).pipe(takeUntil(this.destroy$)).subscribe({
                 next: (${minStart(className)}s: ${majStart(className)}[]) => {
                         this.${minStart(className)}s = ${minStart(className)}s;
+                        this.totalItems=this.${minStart(className)}Service.elementNumber;  
                         this.data=recursiveObjectsTo2DArray(${minStart(className)}s);
                         this.isLoading = false;
               },
@@ -781,7 +783,7 @@
       {{tab}}private readonly apiUrl = environment.apiUrl+'/${lowerCase(classNameLink)}';
       {{tab}}constructor(private http: HttpClient) {}
         
-        
+        elementNumber:number=0;
         
         search${majStart(classNameLink)}(
             criteria: Partial<${majStart(className)}>,
@@ -798,7 +800,10 @@
             .set('sortParam', sortParam);
       
             return this.http.post<${majStart(className)}ListDTO>(url, cleanedCriteria, { params }).pipe(
-              map((response) => response.data?.content ?? []),
+              map((response) => {
+                this.elementNumber = response.data?.page?.totalElements ?? 0;
+                return response.data?.content ?? [];
+              }),
               catchError(err => {
                 const isNotFound = err.status === 404 ;
                 if (isNotFound) {
