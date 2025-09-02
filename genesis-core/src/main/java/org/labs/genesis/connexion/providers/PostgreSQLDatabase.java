@@ -1,6 +1,5 @@
 package org.labs.genesis.connexion.providers;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.connexion.Credentials;
@@ -355,7 +354,6 @@ public class PostgreSQLDatabase extends Database {
                 while (rs.next()) {
                     String colName = rs.getString("column_name");
                     String pattern = rs.getString("regex_pattern");
-                    pattern = StringEscapeUtils.escapeJava(pattern);
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
                             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();

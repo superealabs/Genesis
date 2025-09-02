@@ -29,10 +29,8 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectSpring() {
-        var credentials = new Credentials().setSchemaName("").setHost("localhost").setPort("1521").setUser("C##ECOM").setPwd("ecom").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCLBDD").setDriverType("thin");
-
-        //var credentials = new Credentials().setHost("localhost").setPort("1522").setSchemaName("GENESIS").setDatabaseName("orcl").setUser("genesis").setPwd("root").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCL").setDriverType("Oracle");
-
+        var credentials = new Credentials().setHost("localhost").setPort("1522").setSchemaName("GENESIS").setDatabaseName("orcl").setUser("genesis").setPwd("root").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCL").setDriverType("Oracle");
+//
         try {
 
             int databaseId = Constantes.Oracle_ID;//
@@ -92,8 +90,6 @@ public class GenesisCoreTest {
             context.setEntityNames(entityNames);
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
-
-
 
             projectGenerator.generateProject(context);
 

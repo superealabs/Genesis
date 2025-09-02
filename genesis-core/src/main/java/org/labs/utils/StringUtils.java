@@ -94,10 +94,4 @@ public class StringUtils {
         return baseFormat(s).toLowerCase();
     }
 
-    public static String skipEscape(String s ){
-        if (s == null) {
-            return s;
-        }
-        return  s.replaceAll(" ","");
-    }
 }

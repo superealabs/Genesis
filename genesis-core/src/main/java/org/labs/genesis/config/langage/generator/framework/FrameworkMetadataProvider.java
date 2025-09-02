@@ -2,7 +2,6 @@ package org.labs.genesis.config.langage.generator.framework;
 
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.FrameworkSecurity;
 import org.labs.genesis.config.langage.FrameworkCaching;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
@@ -238,8 +237,6 @@ public class FrameworkMetadataProvider {
         }
 
         metadata.putAll(getFrameworkCachingTrueBooleanHashMap(framework,frameworkOptions));
-
-        metadata.putAll(getFrameworkSecurityTrueBooleanHashMap(framework,frameworkOptions));
     }
 
 
@@ -324,10 +321,6 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
         fieldMap.put("validationAnnotations", getFieldValidationAnnotations(field));
-        fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
-        fieldMap.put("isText",field.isText());
-        fieldMap.put("isNumeric",field.isNumeric());
-        fieldMap.put("isDate",field.isDate());
 
         return fieldMap;
     }
@@ -354,10 +347,6 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
         fieldMap.put("validationAnnotations", getFieldValidationAnnotations(field));
-        fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
-        fieldMap.put("isText",field.isText());
-        fieldMap.put("isNumeric",field.isNumeric());
-        fieldMap.put("isDate",field.isDate());
 
         return fieldMap;
     }
@@ -423,18 +412,6 @@ public class FrameworkMetadataProvider {
         return field.getValidationAnnotations().values().stream()
                 .map(Object::toString)
                 .collect(Collectors.toList());
-    }
-
-    private static HashMap<String, Object> getFrameworkSecurityTrueBooleanHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
-        HashMap<String, Object> frameworkSecurityBooleanMetadata = new HashMap<>();
-        String securityType = (String) frameworkConfiguration.get("securityType");
-        Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
-        selectedSecurityOption.ifPresent(security -> {
-            for(String key : security.getMetadataBooleanTrueKeys()){
-                frameworkSecurityBooleanMetadata.put(key, true);
-            }
-        });
-        return frameworkSecurityBooleanMetadata;
     }
 
     private static HashMap<String, Object> getFrameworkCachingTrueBooleanHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
