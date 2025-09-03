@@ -4685,30 +4685,28 @@
           }
         }
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/utils"
-    - fileType: "Middleware"
-      fileName: "error.middleware"
+    - fileType: "Main"
+      fileName: "app.module"
       extension: "ts"
       content: |
-        import { NextFunction, Request, Response } from "express";
-        import { ResourceNotFoundException } from "../exceptions/ResourceNotFoundException";
-          
-        export const errorHandler = (
-          error: Error,
-          req: Request,
-          res: Response,
-          next: NextFunction
-            ) => {
-            if (error instanceof ResourceNotFoundException) {
-            return res.status(204).json({
-              error: error.name,
-              message: error.message,
-              cause: error.cause?.message,
-              });
-          }
-          return res.status(500).json({ message: "Internal server error" });
-        };
-      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/middlewares"
-
+        import { Module } from "@nestjs/common";
+        import { ConfigModule } from "@nestjs/config";
+        import { TypeOrmModule } from "@nestjs/typeorm";
+        import { typeOrmConfig } from "./config/typeorm.config";
+        {{#each entities}}
+        import { ${this}Module } from "./models/${this}/${this}.module";
+        {{/each}}
+        @Module({
+          imports: [
+              ConfigModule.forRoot({ isGlobal: true }),
+              TypeOrmModule.forRoot(typeOrmConfig),
+              {{#each entities}}
+              ${this}Module,
+              {{/each}}
+          ],
+        })
+        export class AppModule {}
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src"
     - fileType: "Service Index"
       fileName: "index"
       extension: "ts"
@@ -4821,143 +4819,163 @@
           }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/services"
-    - fileType: "Index"
-      fileName: "index"
+    - fileType: "Main"
+      fileName: "main"
       extension: "ts"
       content: |
         import "reflect-metadata";
-        import express from "express";
-        import {AppDataSource} from "./config/data-source";
-        import {errorHandler} from "./middlewares/error.middleware";
-        import swaggerUi from "swagger-ui-express";
-        {{#each entities}}
-        import ${this}Route from "./routes/${this}";
-        {{/each}}   
-        
-        const app = express();
-        app.use(express.json());
+        import { NestFactory } from "@nestjs/core";
+        import { AppModule } from "./app.module";
+        import { ValidationPipe, VersioningType } from "@nestjs/common";
+        import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
         
         const dotenv = require("dotenv");
         dotenv.config();
         
-        const port = process.env.APP_PORT || 3000;
+        async function bootstrap() {
+          const app = await NestFactory.create(AppModule);
         
-        app.use(errorHandler);
+          app.enableCors();
+          app.setGlobalPrefix("api");
+          app.enableVersioning({
+            type: VersioningType.URI,
+            defaultVersion: "1",
+          });
         
-        {{#each entities}}
-        app.use("/api", ${this}Route);
-        {{/each}}
+          app.useGlobalPipes(
+            new ValidationPipe({
+              whitelist: true,
+              transform: true,
+              forbidNonWhitelisted: false,
+              })
+          );
         
-        AppDataSource.initialize()
-        .then(()=>{
-          app.listen(port);
-        })
-        .catch((error) => console.error("Error during data source initialization", error));
-        export default app;
+          const config = new DocumentBuilder()
+            .setTitle(process.env.SWAGGER_TITLE || "API")
+            .setDescription(process.env.SWAGGER_DESCRIPTION || "Auto-generated CRUD API")
+            .setVersion(process.env.SWAGGER_VERSION || "1.0.0")
+            .build();
+        
+          const document = SwaggerModule.createDocument(app, config);
+          SwaggerModule.setup("docs", app, document, {
+            swaggerOptions: { persistAuthorization: true },
+          });
+          
+          const port = process.env.APP_PORT || 3000;
+          await app.listen(port);
+        }
+        bootstrap();
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src"
     - fileType: "Config"
-      fileName: "data-source"
+      fileName: "typeorm.config"
       extension: "ts"
       content: |
-        import "reflect-metadata";
-        import {DataSource} from "typeorm";
-        import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-        
+        import { DataSourceOptions } from "typeorm";
+        import { SnakeNamingStrategy } from "typeorm-naming-strategies";
+
         {{#if databaseType = PostgreSQL}}
-          export const AppDataSource =  new DataSource({
-            type: "postgres",
-            host: process.env.DB_HOST,
-            username: process.env.DB_USERNAME,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_DATABASE,
-            synchronize: false,
-            logging: false,
-            namingStrategy: new SnakeNamingStrategy(),
-            entities: [
-              __dirname + "/entity/*.{ts,js}"
-            ],
-            migrations: [],
-            subscribers: [],
-          })
+        export const typeOrmConfig: DataSourceOptions = {
+          type: "postgres",
+          host: process.env.DB_HOST,
+          port: parseInt(process.env.DB_PORT ?? "5432", 10),
+          username: process.env.DB_USERNAME,
+          password: process.env.DB_PASSWORD,
+          database: process.env.DB_DATABASE,
+          synchronize: false,
+          logging: false,
+          namingStrategy: new SnakeNamingStrategy(),
+          entities: [__dirname + "/../**/*.entity{.ts,.js}"],
+          migrations: [],
+          subscribers: [],
+        };
         {{/if}}
-        
+
         {{#if databaseType = Oracle}}
-          export const AppDataSource = new DataSource({
-            type: "oracle",
-            host: process.env.DB_HOST,
-            port: parseInt(process.env.DB_PORT ?? "1521", 10),
-            username: process.env.DB_USERNAME,
-            password: process.env.DB_PASSWORD,
-            sid: process.env.DB_SID, // Oracle utilise 'sid' plutôt que 'database'
-            synchronize: false,
-            logging: false,
-            namingStrategy: new SnakeNamingStrategy(),
-            entities: [__dirname + "/entity/*.{ts,js}"],
-            migrations: [],
-            subscribers: [],
-          });
+        export const typeOrmConfig: DataSourceOptions = {
+          type: "oracle",
+          host: process.env.DB_HOST,
+          port: parseInt(process.env.DB_PORT ?? "1521", 10),
+          username: process.env.DB_USERNAME,
+          password: process.env.DB_PASSWORD,
+          sid: process.env.DB_SID,
+          synchronize: false,
+          logging: false,
+          namingStrategy: new SnakeNamingStrategy(),
+          entities: [__dirname + "/../**/*.entity{.ts,.js}"],
+          migrations: [],
+          subscribers: [],
+        };
         {{/if}}
+
         {{#if databaseType = SQL Server}}
-          export const AppDataSource = new DataSource({
-            type: "mssql",
-            host: process.env.DB_HOST,
-            port: parseInt(process.env.DB_PORT ?? "1433", 10),
-            username: process.env.DB_USERNAME,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_DATABASE,
-            synchronize: false,
-            logging: false,
-            namingStrategy: new SnakeNamingStrategy(),
-            entities: [__dirname + "/entity/*.{ts,js}"],
-            migrations: [],
-            subscribers: [],
-            options: {
-              encrypt: false // mettre true si Azure ou connexion sécurisée
-            }
-          });
+        export const typeOrmConfig: DataSourceOptions = {
+          type: "mssql",
+          host: process.env.DB_HOST,
+          port: parseInt(process.env.DB_PORT ?? "1433", 10),
+          username: process.env.DB_USERNAME,
+          password: process.env.DB_PASSWORD,
+          database: process.env.DB_DATABASE,
+          synchronize: false,
+          logging: false,
+          namingStrategy: new SnakeNamingStrategy(),
+          entities: [__dirname + "/../**/*.entity{.ts,.js}"],
+          migrations: [],
+          subscribers: [],
+          options: {
+            encrypt: process.env.DB_ENCRYPT === "true",
+          },
+        };
         {{/if}}
+
         {{#if databaseType = MySQL}}
-          export const AppDataSource = new DataSource({
-            type: "mysql",
-            host: process.env.DB_HOST,
-            port: parseInt(process.env.DB_PORT ?? "3306", 10),
-            username: process.env.DB_USERNAME,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_DATABASE,
-            synchronize: false,
-            logging: false,
-            namingStrategy: new SnakeNamingStrategy(),
-            entities: [__dirname + "/entity/*.{ts,js}"],
-            migrations: [],
-            subscribers: [],
-          });
+        export const typeOrmConfig: DataSourceOptions = {
+          type: "mysql",
+          host: process.env.DB_HOST,
+          port: parseInt(process.env.DB_PORT ?? "3306", 10),
+          username: process.env.DB_USERNAME,
+          password: process.env.DB_PASSWORD,
+          database: process.env.DB_DATABASE,
+          synchronize: false,
+          logging: false,
+          namingStrategy: new SnakeNamingStrategy(),
+          entities: [__dirname + "/../**/*.entity{.ts,.js}"],
+          migrations: [],
+          subscribers: [],
+        };
         {{/if}}
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/config"
   model:
     toGenerate: true
     modelImports: |
-      import {Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToOne, JoinColumn} from "typeorm";
-      import * as Models from './index';
+      import { Entity, Column, PrimaryGeneratedColumn, PrimaryColumn, OneToMany, ManyToOne, JoinColumn } from "typeorm";
+      import { ApiProperty } from "@nestjs/swagger";
+      import { IsNotEmpty, MaxLength, Min, Max, Length, Matches, IsDate } from "class-validator";
+      import * as Models from "./index";
     modelExtends: ""
     modelAnnotations: |
       @Entity('${tableName}')
     modelFieldContent: |
       {{tab}}{{#each fields}}
       {{tab}}{{#if this.isIntAndPrimaryKey}}
-      @PrimaryGeneratedColumn()
+      {{tab}}@ApiProperty()
+      {{tab}}@PrimaryGeneratedColumn()
       {{tab}}{{#each this.validationAnnotations}}{{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}${this.name}!: ${this.type};
       {{elseIf this.isPrimaryKey}}
-      @PrimaryColumn()
+      {{tab}}@ApiProperty()
+      {{tab}}@PrimaryColumn()
       {{tab}}{{#each this.validationAnnotations}}{{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
+      {{tab}}${this.name}!: ${this.type};
       {{elseIf this.isForeignKey}}
+      {{tab}}@ApiProperty({ type: () => Models.${this.type} })
       {{tab}}@ManyToOne(() => Models.${this.type}, { eager: true })
       {{tab}}@JoinColumn({ name: "${this.columnName}" })
       {{tab}}${this.name}!: Models.${this.type};
       {{else}}
-      @Column({ name: "${this.columnName}", unique: ${this.isUnique}, nullable: ${this.isNullable} })
+      {{tab}}@ApiProperty()
+      {{tab}}@Column({ name: "${this.columnName}", unique: ${this.isUnique}, nullable: ${this.isNullable} })
       {{tab}}{{#each this.attributeTypeAnnotations}}{{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}${this.name}!: ${this.type};
@@ -4965,9 +4983,27 @@
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
-    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/models"
+    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/models/${tableName}"
     modelPackage: "Models"
-    modelAdditionalFiles: [ ]
+    modelAdditionalFiles:
+      - fileType: "Module"
+        fileName: "${tableName}.module"
+        extension: "ts"
+        content: |
+          import { Module } from "@nestjs/common";
+          import { TypeOrmModule } from "@nestjs/typeorm";
+          import { ${majStart(tableName)} } from "./${majStart(tableName)}";
+          import { ${tableName}Service } from "../../services/${tableName}.service";
+          import { ${tableName}Controller } from "../../services/${tableName}.controller";
+
+          @Module({
+            imports: [TypeOrmModule.forFeature([${this}])],
+            providers: [${tableName}Service],
+            controllers: [${tableName}Controller],
+            exports: [${tableName}Service],
+          })
+          export class ${this}Module {}
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/models/${tableName}"
     validationAnnotations:
       notNull: '@IsNotEmpty({ message: "${majStart(name)} cannot be null" })'
       maxSize: '@MaxLength(${columnSize})'
