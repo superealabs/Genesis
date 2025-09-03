@@ -4594,29 +4594,16 @@
       fileName: "ResourceNotFoundException"
       extension: "ts"
       content: |
-        export class ResourceNotFoundException extends Error{  
-          cause?: Error;
+        import { HttpException, HttpStatus } from "@nestjs/common";
+        export class ResourceNotFoundException extends HttpException {
           constructor(message: string, cause?: Error) {
-              super(message);
-              this.name = "ResourceNotFoundException";
-              this.cause = cause;
-    
-              Object.setPrototypeOf(this, ResourceNotFoundException.prototype);
+             super(message, HttpStatus.NOT_FOUND);
+             if (cause) {
+               (this as any).cause = cause;
+             }
           }
         }
-      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/exceptions"
-    - fileType: "Config"
-      fileName: "container"
-      extension: "ts"
-      content: |
-        import { container } from "tsyringe";
-        import * as Services from "../services/index";
-        import * as Interfaces from "../services/interfaces/index";
-        {{#each entities}}
-        container.registerSingleton<Interfaces.I${majStart(this)}Service>("I${majStart(this)}Service", Services.${majStart(this)}Service);
-        {{/each}}
-        export { container };
-      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/config"
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/exceptions"
     - fileType: "Util"
       fileName: "WebUtil"
       extension: "ts"
@@ -4654,7 +4641,7 @@
           
           }
         }
-      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/utils"
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/utils"
     - fileType: "Util"
       fileName: "RestResponse"
       extension: "ts"
@@ -4684,7 +4671,7 @@
              return new RestResponse<T>(status, message, KO, data ?? null);
           }
         }
-      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/utils"
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/utils"
     - fileType: "Main"
       fileName: "app.module"
       extension: "ts"
@@ -4715,14 +4702,6 @@
         export { ${majStart(this)}Service } from "./${ majStart(this) }Service";
         {{/each}}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/services"
-    - fileType: "IService Index"
-      fileName: "index"
-      extension: "ts"
-      content: |
-        {{#each entities}}
-        export { I${majStart(this)}Service } from "./I${ majStart(this) }Service";
-        {{/each}}
-      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/services/interfaces"
     - fileType: "Model Index"
       fileName: "index"
       extension: "ts"
@@ -4740,7 +4719,7 @@
         import {AppDataSource} from "../config/data-source";
         import { jsPDF } from 'jspdf';
         import autoTable from 'jspdf-autotable';
-        import { ResourceNotFoundException } from "../exceptions/ResourceNotFoundException";
+        import { ResourceNotFoundException } from "../common/exceptions/ResourceNotFoundException";
         
         declare module 'jspdf' {
           interface jsPDF {
@@ -5038,7 +5017,7 @@
       import { InjectRepository } from "@nestjs/typeorm";
       import { Repository } from "typeorm";
       import * as Models from "../models/index";
-      import { ResourceNotFoundException } from "../common/exceptions/resource-not-found.exception";
+      import { ResourceNotFoundException } from "../common/exceptions/ResourceNotFoundException";
     serviceAnnotations: |
       @Injectable()
     serviceClassKeyword: "export class"
@@ -5113,101 +5092,75 @@
   controller:
     toGenerate: true
     controllerImports: |
-      import {NextFunction, Request, Response} from "express";
-      import { inject, injectable } from "tsyringe";
-      import { ${majStart(className)}Service } from "../services/${majStart(className)}Service";
-      import { I${majStart(className)}Service } from "../services/interfaces/I${majStart(className)}Service";
-      import { ExportService } from "../services/ExportService";
-      import { WebUtils } from "../utils/WebUtil";
-      import { RestResponse } from "../utils/RestResponse";
-      import { ResourceNotFoundException } from '../exceptions/ResourceNotFoundException';
+      import { Controller, Get, Post, Put, Delete, Param, Body, Query, HttpException, HttpStatus } from "@nestjs/common";
+      import { ApiTags, ApiResponse } from "@nestjs/swagger";
+      import { ${majStart(className)}Service } from "../services";
+      import { RestResponse } from "../common/utils/RestResponse";
+      import { WebUtils } from "../common/utils/WebUtil";
+      import { ResourceNotFoundException } from "../common/exceptions/ResourceNotFoundException";
+      import * as Models from "../models/index";
     controllerAnnotations: |
-      @injectable()
+      @ApiTags("${minStart(className)}")
+      @Controller("${minStart(className)}")
     controllerExtends: ""
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: "{{removeLine}}"
     controllerConstructors: |
-      {{tab}}constructor (@inject("I${majStart(className)}Service") private ${minStart(className)}Service : I${majStart(className)}Service){}
+      {{tab}}constructor(private readonly ${minStart(className)}Service: ${majStart(className)}Service) {}
     controllerMethodContent: |
-      {{tab}}async findAll(request: Request, response: Response, next: NextFunction) {
-      {{tab}}{{tab}}try {
-      {{tab}}{{tab}}{{tab}}const {page, size, order} = WebUtils.parsePaginationAndSort(request.query);
-      {{tab}}{{tab}}{{tab}}const [data, total] = await this.${minStart(className)}Service.findAll(page, size, order);
-  
-      {{tab}}{{tab}}{{tab}}if (!data || data.length === 0 || total === 0) {
-      {{tab}}{{tab}}{{tab}}{{tab}}throw new ResourceNotFoundException("No ${minStart(className)} found.");
-      {{tab}}{{tab}}{{tab}}}
-  
-      {{tab}}{{tab}}{{tab}}const result = RestResponse.buildSuccessResponse(
-      {{tab}}{{tab}}{{tab}}{{tab}}200,
-      {{tab}}{{tab}}{{tab}}{{tab}}"${className} retrieved successfully",
-      {{tab}}{{tab}}{{tab}}{{tab}}WebUtils.buildPageData(data, total, size, page)
-      {{tab}}{{tab}}{{tab}});
-      {{tab}}{{tab}}{{tab}}response.status(200).json(result);
-      {{tab}}{{tab}}} catch (error) {
-      {{tab}}{{tab}}{{tab}}next(error);
+      {{tab}}@Get()
+      {{tab}}@ApiResponse({ status: 200, description: "Retrieve all ${minStart(className)}s" })
+      {{tab}}async findAll(@Query() query: any) {
+      {{tab}}{{tab}}const { page, size, order } = WebUtils.parsePaginationAndSort(query);
+      {{tab}}{{tab}}const [data, total] = await this.${minStart(className)}Service.findAll(page, size, order);
+
+      {{tab}}{{tab}}if (!data || data.length === 0 || total === 0) {
+      {{tab}}{{tab}}{{tab}}throw new ResourceNotFoundException("No ${minStart(className)} found.");
       {{tab}}{{tab}}}
-      {{tab}}}
-      {{tab}}async save(request: Request, response: Response, next: NextFunction) {
-      {{tab}}    try {
-      {{tab}}        const ${minStart(className)} = await this.${minStart(className)}Service.save(request.body);
-      {{tab}}        const res = RestResponse.buildSuccessResponse(201, "${className} saved successfully", ${minStart(className)});
-      {{tab}}        response.status(201).json(res);
-      {{tab}}    } catch (error) {
-      {{tab}}        next(error);
-      {{tab}}    }
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} retrieved successfully", WebUtils.buildPageData(data, total, size, page));
       {{tab}}}
 
-      {{tab}}async findById(request: Request, response: Response, next: NextFunction) {
-      {{tab}}    try {
-      {{tab}}        const id = parseInt(request.params.id, 10);
-      {{tab}}        const ${minStart(className)} = await this.${minStart(className)}Service.findById(id);
-      {{tab}}        if (!${minStart(className)}) {
-      {{tab}}            throw new ResourceNotFoundException("No ${minStart(className)} found.");
-      {{tab}}        }
-      {{tab}}        const res = RestResponse.buildSuccessResponse(200, "${className} retrieved successfully", ${minStart(className)});
-      {{tab}}        response.status(200).json(res);
-      {{tab}}    } catch (error) {
-      {{tab}}        next(error);
-      {{tab}}    }
+      {{tab}}@Post()
+      {{tab}}@ApiResponse({ status: 201, description: "Save new ${minStart(className)}" })
+      {{tab}}async save(@Body() body: any) {
+      {{tab}}{{tab}}const ${minStart(className)} = await this.${minStart(className)}Service.save(body);
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(201, "${className} saved successfully", ${minStart(className)});
       {{tab}}}
 
-      {{tab}}async delete(request: Request, response: Response, next: NextFunction) {
-      {{tab}}    try {
-      {{tab}}        const id = parseInt(request.params.id);
-      {{tab}}        await this.${minStart(className)}Service.delete(id);
-      {{tab}}        const res = RestResponse.buildSuccessResponse<null>(200, "${className} deleted successfully", null);
-      {{tab}}        return response.status(200).json(res);
-      {{tab}}    } catch (error) {
-      {{tab}}        next(error);
-      {{tab}}    }
+      {{tab}}@Get(":id")
+      {{tab}}@ApiResponse({ status: 200, description: "Find ${minStart(className)} by ID" })
+      {{tab}}async findById(@Param("id") id: number) {
+      {{tab}}{{tab}}const ${minStart(className)} = await this.${minStart(className)}Service.findById(id);
+      {{tab}}{{tab}}if (!${minStart(className)}) {
+      {{tab}}{{tab}}{{tab}}throw new ResourceNotFoundException("No ${minStart(className)} found.");
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} retrieved successfully", ${minStart(className)});
       {{tab}}}
 
-      {{tab}}async update(request: Request, response: Response, next: NextFunction) {
-      {{tab}}    try {
-      {{tab}}        const id = parseInt(request.params.id);
-      {{tab}}        const updated${className} = await this.${minStart(className)}Service.update(id, request.body);
-      {{tab}}        const res = RestResponse.buildSuccessResponse(200, "${className} updated successfully", updated${className});
-      {{tab}}        response.status(200).json(res);
-      {{tab}}    } catch (error) {
-      {{tab}}        next(error);
-      {{tab}}    }
+      {{tab}}@Delete(":id")
+      {{tab}}@ApiResponse({ status: 200, description: "Delete ${minStart(className)} by ID" })
+      {{tab}}async delete(@Param("id") id: number) {
+      {{tab}}{{tab}}await this.${minStart(className)}Service.delete(id);
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse<null>(200, "${className} deleted successfully", null);
       {{tab}}}
 
-      {{tab}}async search(request: Request, response: Response, next: NextFunction) {
-      {{tab}}    try {
-      {{tab}}        const { page, size, order } = WebUtils.parsePaginationAndSort(request.query);
-      {{tab}}        const [data, total] = await this.${minStart(className)}Service.search(request.body, page, size, order);
-      {{tab}}        if (!data || data.length === 0 || total === 0) {
-      {{tab}}            throw new ResourceNotFoundException("No ${minStart(className)} found.");
-      {{tab}}        }
-      {{tab}}        const result = RestResponse.buildSuccessResponse(200, "${className}s retrieved successfully", WebUtils.buildPageData(data, total, size, page));
-      {{tab}}        response.status(200).json(result);
-      {{tab}}    } catch (error) {
-      {{tab}}        next(error);
-      {{tab}}    }
+      {{tab}}@Put(":id")
+      {{tab}}@ApiResponse({ status: 200, description: "Update ${minStart(className)} by ID" })
+      {{tab}}async update(@Param("id") id: number, @Body() body: any) {
+      {{tab}}{{tab}}const updated${className} = await this.${minStart(className)}Service.update(id, body);
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} updated successfully", updated${className});
       {{tab}}}
 
+      {{tab}}@Post("search")
+      {{tab}}@ApiResponse({ status: 200, description: "Search ${minStart(className)}s" })
+      {{tab}}async search(@Body() body: any, @Query() query: any) {
+      {{tab}}{{tab}}const { page, size, order } = WebUtils.parsePaginationAndSort(query);
+      {{tab}}{{tab}}const [data, total] = await this.${minStart(className)}Service.search(body, page, size, order);
+      {{tab}}{{tab}}if (!data || data.length === 0 || total === 0) {
+      {{tab}}{{tab}}{{tab}}throw new ResourceNotFoundException("No ${minStart(className)} found.");
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className}s retrieved successfully", WebUtils.buildPageData(data, total, size, page));
+      {{tab}}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/controllers"
     controllerPackage: "{{removeLine}}"
     controllerAdditionalFiles: [ ]
