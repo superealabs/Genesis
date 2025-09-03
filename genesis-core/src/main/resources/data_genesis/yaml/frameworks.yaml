@@ -4728,7 +4728,7 @@
       extension: "ts"
       content: |
         {{#each entities}}
-        export { ${ majStart(this) } } from "./${ majStart(this) }";
+        export { ${ majStart(this) } } from "./${majStart(this)}/${ majStart(this) }";
         {{/each}}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/models"
     - fileType: "Export Service"
@@ -4950,7 +4950,7 @@
       import { Entity, Column, PrimaryGeneratedColumn, PrimaryColumn, OneToMany, ManyToOne, JoinColumn } from "typeorm";
       import { ApiProperty } from "@nestjs/swagger";
       import { IsNotEmpty, MaxLength, Min, Max, Length, Matches, IsDate } from "class-validator";
-      import * as Models from "./index";
+      import * as Models from "../index";
     modelExtends: ""
     modelAnnotations: |
       @Entity('${tableName}')
@@ -4983,8 +4983,8 @@
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
-    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/models/${tableName}"
-    modelPackage: "Models"
+    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/models/${className}"
+    modelPackage: "{{removeLine}}"
     modelAdditionalFiles:
       - fileType: "Module"
         fileName: "${tableName}.module"
@@ -5003,7 +5003,7 @@
             exports: [${tableName}Service],
           })
           export class ${this}Module {}
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/models/${tableName}"
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/models/${className}"
     validationAnnotations:
       notNull: '@IsNotEmpty({ message: "${majStart(name)} cannot be null" })'
       maxSize: '@MaxLength(${columnSize})'
