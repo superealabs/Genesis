@@ -4605,6 +4605,18 @@
           }
         }
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/exceptions"
+    - fileType: "Config"
+      fileName: "container"
+      extension: "ts"
+      content: |
+        import { container } from "tsyringe";
+        import * as Services from "../services/index";
+        import * as Interfaces from "../services/interfaces/index";
+        {{#each entities}}
+        container.registerSingleton<Interfaces.I${majStart(this)}Service>("I${majStart(this)}Service", Services.${majStart(this)}Service);
+        {{/each}}
+        export { container };
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/config"
     - fileType: "Util"
       fileName: "WebUtil"
       extension: "ts"
@@ -4686,6 +4698,23 @@
           return res.status(500).json({ message: "Internal server error" });
         };
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/middlewares"
+
+    - fileType: "Service Index"
+      fileName: "index"
+      extension: "ts"
+      content: |
+        {{#each entities}}
+        export { ${majStart(this)}Service } from "./${ majStart(this) }Service";
+        {{/each}}
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/services"
+    - fileType: "IService Index"
+      fileName: "index"
+      extension: "ts"
+      content: |
+        {{#each entities}}
+        export { I${majStart(this)}Service } from "./I${ majStart(this) }Service";
+        {{/each}}
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/services/interfaces"
     - fileType: "Model Index"
       fileName: "index"
       extension: "ts"
@@ -4816,7 +4845,7 @@
         .catch((error) => console.error("Error during data source initialization", error));
         export default app;
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src"
-    - fileType: "Data source"
+    - fileType: "Config"
       fileName: "data-source"
       extension: "ts"
       content: |
@@ -4971,7 +5000,6 @@
       {{tab}}private ${minStart(className)}Repository = AppDataSource.getRepository(Models.${className});
     serviceConstructors: "{{removeLine}}"
     serviceMethodContent: |
-      
       {{tab}}async findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number] | null>{
       {{tab}}   try{
       {{tab}}     const [data, total] = await this.${minStart(className)}Repository.findAndCount({
@@ -5065,10 +5093,18 @@
             findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number] | null>;
             findById(id: number): Promise<Models.${className}>;
             update(id: number, body: any): Promise<Models.${className}>
-            delete(id: number);
+            delete(id: number): void;
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/services/interfaces"
   controller:
+    toGenerate: true
+    controllerImports: |
+      import {NextFunction, Request, Response} from "express";
+      import { WebUtils } from "../utils/WebUtils";
+      import { I${majStart(className)}Service } from "../service/interfaces/I${majStart(className)}Service";
+      import { RestResponse } from "../utils/RestResponse";
+    controllerAnnotations: |
+
   configurations: []
   dependencies: []
 
