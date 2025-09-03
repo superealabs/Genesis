@@ -4694,6 +4694,54 @@
         })
         export class AppModule {}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src"
+
+    - fileType: "ExceptionFilter"
+      fileName: "AllExceptionsFilter"
+      extension: "ts"
+      content: |
+        import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from "@nestjs/common";
+        import { Request, Response } from "express";
+        import { ResourceNotFoundException } from "../exceptions/ResourceNotFoundException";
+
+        @Catch()
+        export class AllExceptionsFilter implements ExceptionFilter {
+          catch(exception: unknown, host: ArgumentsHost) {
+            const ctx = host.switchToHttp();
+            const response = ctx.getResponse<Response>();
+            const request = ctx.getRequest<Request>();
+
+            if (exception instanceof ResourceNotFoundException) {
+              return response.status(HttpStatus.NOT_FOUND).json({
+                error: exception.name,
+                message: exception.message,
+                cause: (exception as any).cause?.message,
+                timestamp: new Date().toISOString(),
+                path: request.url,
+              });
+            }
+
+            if (exception instanceof HttpException) {
+              const status = exception.getStatus();
+              const message = exception.getResponse();
+              return response.status(status).json({
+                statusCode: status,
+                error: (message as any).error || exception.name,
+                message: (message as any).message || message,
+                timestamp: new Date().toISOString(),
+                path: request.url,
+              });
+            }
+            return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+              statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+              error: "InternalServerError",
+              message: "Internal server error",
+              timestamp: new Date().toISOString(),
+              path: request.url,
+            });
+          }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/filters"
+
     - fileType: "Service Index"
       fileName: "index"
       extension: "ts"
@@ -4710,6 +4758,67 @@
         export { ${ majStart(this) } } from "./${majStart(this)}/${ majStart(this) }";
         {{/each}}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/models"
+    - fileType: "Main"
+      fileName: "main"
+      extension: "ts"
+      content: |
+        import "reflect-metadata";
+        import { NestFactory } from "@nestjs/core";
+        import { AppModule } from "./app.module";
+        import { ValidationPipe, VersioningType } from "@nestjs/common";
+        import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+        import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
+      
+        const dotenv = require("dotenv");
+        dotenv.config();
+      
+        async function bootstrap() {
+          const app = await NestFactory.create(AppModule);
+      
+          // Enable CORS
+          app.enableCors();
+      
+          // Global API prefix
+          app.setGlobalPrefix("api");
+      
+          // Versioning
+          app.enableVersioning({
+            type: VersioningType.URI,
+            defaultVersion: "1",
+          });
+      
+          // Global validation pipe
+          app.useGlobalPipes(
+            new ValidationPipe({
+              whitelist: true,
+              transform: true,
+              forbidNonWhitelisted: false,
+            })
+          );
+      
+          // Global exception filter
+          app.useGlobalFilters(new AllExceptionsFilter());
+      
+          // Swagger setup
+          const config = new DocumentBuilder()
+            .setTitle(process.env.SWAGGER_TITLE || "API")
+            .setDescription(process.env.SWAGGER_DESCRIPTION || "Auto-generated CRUD API")
+            .setVersion(process.env.SWAGGER_VERSION || "1.0.0")
+            .build();
+      
+          const document = SwaggerModule.createDocument(app, config);
+          SwaggerModule.setup("docs", app, document, {
+            swaggerOptions: { persistAuthorization: true },
+          });
+      
+          const port = process.env.APP_PORT || 3000;
+          await app.listen(port);
+          console.log(`Application is running on: http://localhost:${port}/api`);
+          console.log(`Swagger docs available at: http://localhost:${port}/docs`);
+        }
+      
+        bootstrap();
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src"
     - fileType: "Export Service"
       fileName: "ExportService"
       extension: "ts"
@@ -4798,60 +4907,14 @@
           }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/services"
-    - fileType: "Main"
-      fileName: "main"
-      extension: "ts"
-      content: |
-        import "reflect-metadata";
-        import { NestFactory } from "@nestjs/core";
-        import { AppModule } from "./app.module";
-        import { ValidationPipe, VersioningType } from "@nestjs/common";
-        import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-        
-        const dotenv = require("dotenv");
-        dotenv.config();
-        
-        async function bootstrap() {
-          const app = await NestFactory.create(AppModule);
-        
-          app.enableCors();
-          app.setGlobalPrefix("api");
-          app.enableVersioning({
-            type: VersioningType.URI,
-            defaultVersion: "1",
-          });
-        
-          app.useGlobalPipes(
-            new ValidationPipe({
-              whitelist: true,
-              transform: true,
-              forbidNonWhitelisted: false,
-              })
-          );
-        
-          const config = new DocumentBuilder()
-            .setTitle(process.env.SWAGGER_TITLE || "API")
-            .setDescription(process.env.SWAGGER_DESCRIPTION || "Auto-generated CRUD API")
-            .setVersion(process.env.SWAGGER_VERSION || "1.0.0")
-            .build();
-        
-          const document = SwaggerModule.createDocument(app, config);
-          SwaggerModule.setup("docs", app, document, {
-            swaggerOptions: { persistAuthorization: true },
-          });
-          
-          const port = process.env.APP_PORT || 3000;
-          await app.listen(port);
-        }
-        bootstrap();
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src"
+
     - fileType: "Config"
       fileName: "typeorm.config"
       extension: "ts"
       content: |
         import { DataSourceOptions } from "typeorm";
         import { SnakeNamingStrategy } from "typeorm-naming-strategies";
-
+  
         {{#if databaseType = PostgreSQL}}
         export const typeOrmConfig: DataSourceOptions = {
           type: "postgres",
@@ -4868,7 +4931,7 @@
           subscribers: [],
         };
         {{/if}}
-
+  
         {{#if databaseType = Oracle}}
         export const typeOrmConfig: DataSourceOptions = {
           type: "oracle",
@@ -4885,7 +4948,7 @@
           subscribers: [],
         };
         {{/if}}
-
+  
         {{#if databaseType = SQL Server}}
         export const typeOrmConfig: DataSourceOptions = {
           type: "mssql",
@@ -4905,7 +4968,7 @@
           },
         };
         {{/if}}
-
+  
         {{#if databaseType = MySQL}}
         export const typeOrmConfig: DataSourceOptions = {
           type: "mysql",
