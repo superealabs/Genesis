@@ -482,6 +482,14 @@ public class FrameworkMetadataProvider {
         return altMap;
     }
 
+    public static HashMap<String, Object> getAltViewErrorHashMap (ViewsTemplateEngine viewsTemplateEngine) {
+        HashMap<String, Object> altMap = new HashMap<>();
+        altMap.put("viewAnnotations", viewsTemplateEngine.getError().getViewAnnotations());
+        altMap.put("backLink", viewsTemplateEngine.getError().getBackLink());
+        altMap.put("errorMessage", viewsTemplateEngine.getError().getErrorMessage());
+        return altMap;
+    }
+
     public static HashMap<String, Object> getAltViewListHashMap (ViewsTemplateEngine viewsTemplateEngine) {
         HashMap<String, Object> altMap = new HashMap<>();
         altMap.put("modelType", viewsTemplateEngine.getList().getModelType());
