@@ -444,8 +444,50 @@ public class MVCGenerator implements GenesisGenerator {
         return "";
     }
 
+    @Override
+    public String generateViewErrorPage(FrameworkMVC framework,
+                                         Map<String, Object> frameworkOptions,
+                                         Language language,
+                                         ViewsTemplate viewsTemplate,
+                                         ViewsTemplateEngine viewsTemplateEngine,
+                                         TableMetadata[] tableMetadata, String destinationFolder,
+                                         String projectName,
+                                         String groupLink) throws Exception {
+        if (language.getId() != framework.getLanguageId()) {
+            throw new RuntimeException("Incompatibility detected: the language '" + language.getName() + "' (provided ID: " + language.getId() + ") is not compatible with the framework '" + framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
+        }
+
+        String templateContent = loadViewErrorTemplate(viewsTemplate);
+
+        HashMap<String, Object> altMap = getAltViewErrorHashMap(viewsTemplateEngine);
+        String firstResult = engine.simpleRender(templateContent, altMap);
+
+        HashMap<String, Object> metadataFinally = getViewMainLayoutHashMap(framework, frameworkOptions, Arrays.stream(tableMetadata).toList(), projectName, destinationFolder, groupLink);
+
+        // Ajustement du chemin de sauvegarde
+        String fileSavePath;
+        fileSavePath = viewsTemplateEngine.getError().getDestinationPath();
+        fileSavePath = engine.simpleRender(fileSavePath, metadataFinally);
+
+        // S'assurer que le répertoire existe
+        FileUtils.createDirectory(fileSavePath);
+
+        // Création du fichier
+        String fileName = viewsTemplateEngine.getError().getName();
+        fileName = engine.simpleRender(fileName, metadataFinally);
+
+        String result = engine.render(firstResult, metadataFinally);
+        FileUtils.createFile(fileSavePath, fileName, viewsTemplateEngine.getViewExtension(), result);
+
+        return "";
+    }
+
     private String loadViewMainLayoutTemplate(ViewsTemplate viewsTemplate) throws IOException {
         return FileUtils.getFileContent(Constantes.TEMPLATES_PATH+ "/" + viewsTemplate.getTemplate() + "/" + viewsTemplate.getLayoutTemplate() + "." + Constantes.TEMPLATE_EXT);
+    }
+
+    private String loadViewErrorTemplate(ViewsTemplate viewsTemplate) throws IOException {
+        return FileUtils.getFileContent(Constantes.TEMPLATES_PATH+ "/" + viewsTemplate.getTemplate() + "/" + viewsTemplate.getErrorTemplate() + "." + Constantes.TEMPLATE_EXT);
     }
 
     private String loadViewListTemplate(ViewsTemplate viewsTemplate) throws IOException {

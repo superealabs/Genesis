@@ -358,6 +358,7 @@ public class ProjectGenerator {
                 allEntities.addAll(views);
 
                 genesisGenerator.generateViewMainLayout(framework, frameworkOptions, language, viewsTemplate, viewsTemplateEngine, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
+                genesisGenerator.generateViewErrorPage(framework, frameworkOptions, language, viewsTemplate, viewsTemplateEngine, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
                 generateViewsFiles(context, viewsTemplateEngine, viewsTemplate);
 
                 for (TableMetadata tableMetadata : entities) {
