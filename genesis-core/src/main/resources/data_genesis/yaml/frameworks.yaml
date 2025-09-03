@@ -5034,116 +5034,82 @@
   service:
     toGenerate: true
     serviceImports: |
-      import * as Models from '../models/index';
-      import { AppDataSource } from '../config/data-source';
-      import { I${majStart(className)}Service } from './interfaces/I${majStart(className)}Service';
-      import { ResourceNotFoundException } from '../exceptions/ResourceNotFoundException';
+      import { Injectable } from "@nestjs/common";
+      import { InjectRepository } from "@nestjs/typeorm";
+      import { Repository } from "typeorm";
+      import * as Models from "../models/index";
+      import { ResourceNotFoundException } from "../common/exceptions/resource-not-found.exception";
     serviceAnnotations: |
-      @injectable()
+      @Injectable()
     serviceClassKeyword: "export class"
-    serviceExtends: "implements I${majStart(className)}Service"
+    serviceExtends: ""
     serviceName: "${majStart(className)}Service"
     serviceFieldContent: |
-      {{tab}}private ${minStart(className)}Repository = AppDataSource.getRepository(Models.${className});
+      {{tab}}constructor(
+      {{tab}}  @InjectRepository(Models.${className})
+      {{tab}}  private readonly ${minStart(className)}Repository: Repository<Models.${className}>,
+      {{tab}}) {}
     serviceConstructors: "{{removeLine}}"
     serviceMethodContent: |
-      {{tab}}async findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number]>{
-      {{tab}}   try{
-      {{tab}}     const [data, total] = await this.${minStart(className)}Repository.findAndCount({
-      {{tab}}            skip: page * size,
-      {{tab}}            take: size,
-      {{tab}}            order,
-      {{tab}}         });
-      {{tab}}         if (data.length === 0) {
-      {{tab}}              throw new ResourceNotFoundException("No ${minStart(className)} found");
-      {{tab}}         }
-      {{tab}}         return [data, total];
-      {{tab}}   }catch(error){
-      {{tab}}     throw error;
-      {{tab}}   }
-      {{tab}}}
-      
-      {{tab}}async search(body: any, page: number, size: number, order: any): Promise<[Models.${className}[], number]>{
-      {{tab}}   try{
-      {{tab}}     const [data, total] = await this.${minStart(className)}Repository.findAndCount({
-      {{tab}}           where: body,
-      {{tab}}           skip: page * size,
-      {{tab}}           take: size,
-      {{tab}}           order,
-      {{tab}}         });
-      {{tab}}         if (data.length === 0) {
-      {{tab}}              throw new ResourceNotFoundException("No ${minStart(className)} found");
-      {{tab}}         }
-      {{tab}}         return [data, total];
-      {{tab}}   }catch(error){
-      {{tab}}     throw error;
-      {{tab}}   }
-      {{tab}}}
-      
-      {{tab}}async findById(id: number): Promise<Models.${className}>{
-      {{tab}}   try{
-      {{tab}}     const ${minstart(className)} = await this.${minStart(className)}Repository.findOne({where: {id} });
-      {{tab}}     if(!${minstart(className)}){
-      {{tab}}       throw new ResourceNotFoundException("No ${minStart(className)} found");
-      {{tab}}     } 
-      {{tab}}     return ${minstart(className)};
-      {{tab}}   } catch(error){
-      {{tab}}     throw error;
-      {{tab}}   }
-      {{tab}} }
-      {{#if !isView}} 
-      {{tab}}async save(body: any): Promise<Models.${className}>{
-      {{tab}}  try{
-      {{tab}}    const ${minStart(className)} = this.${minStart(className)}Repository.create(body);
-      {{tab}}    return await this.${minStart(className)}Repository.save(body);
-      {{tab}}  }catch(error){
-      {{tab}}    throw error;
+      {{tab}}async findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number]> {
+      {{tab}}  const [data, total] = await this.${minStart(className)}Repository.findAndCount({
+      {{tab}}    skip: page * size,
+      {{tab}}    take: size,
+      {{tab}}    order,
+      {{tab}}  });
+      {{tab}}  if (data.length === 0) {
+      {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found");
       {{tab}}  }
-      {{tab}} }
-      
-      {{tab}}async update(id: number, body: any): Promise<Models.${className}>{
-      {{tab}}   try{
-      {{tab}}      const ${minStart(className)} = await this.${minStart(className)}Repository.findOneBy({ id });
-      {{tab}}      
-      {{tab}}      if(!${minStart(className)}){
-      {{tab}}         throw new ResourceNotFoundException("No ${minStart(className)} found");
-      {{tab}}       } 
-      
-      {{tab}}      return await this.${minStart(className)}Repository.save(body);
-      {{tab}}   }catch(error){
-      {{tab}}      throw error;
-      {{tab}}   }
+      {{tab}}  return [data, total];
       {{tab}}}
-      
-      {{tab}}async delete(id: number) {
-      {{tab}}  try {
-      {{tab}}     const ${minStart(className)} = await this.${minStart(className)}Repository.findOneBy({ id });
-      {{tab}}     if (!${minStart(className)}) {
-      {{tab}}         throw new ResourceNotFoundException("${className} not found");
-      {{tab}}     }
-      {{tab}}     const result = await this.${minStart(className)}Repository.delete(${minStart(className)});
-      {{tab}}  } catch (error) {
-      {{tab}}      throw error;
+
+      {{tab}}async search(body: any, page: number, size: number, order: any): Promise<[Models.${className}[], number]> {
+      {{tab}}  const [data, total] = await this.${minStart(className)}Repository.findAndCount({
+      {{tab}}    where: body,
+      {{tab}}    skip: page * size,
+      {{tab}}    take: size,
+      {{tab}}    order,
+      {{tab}}  });
+      {{tab}}  if (data.length === 0) {
+      {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found");
       {{tab}}  }
+      {{tab}}  return [data, total];
+      {{tab}}}
+
+      {{tab}}async findById(id: number): Promise<Models.${className}> {
+      {{tab}}  const ${minStart(className)} = await this.${minStart(className)}Repository.findOne({ where: { id } });
+      {{tab}}  if (!${minStart(className)}) {
+      {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found");
+      {{tab}}  }
+      {{tab}}  return ${minStart(className)};
+      {{tab}}}
+
+      {{#if !isView}}
+      {{tab}}async save(body: any): Promise<Models.${className}> {
+      {{tab}}  const ${minStart(className)} = this.${minStart(className)}Repository.create(body);
+      {{tab}}  return await this.${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}}
+
+      {{tab}}async update(id: number, body: any): Promise<Models.${className}> {
+      {{tab}}  const existing = await this.${minStart(className)}Repository.findOneBy({ id });
+      {{tab}}  if (!existing) {
+      {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found");
+      {{tab}}  }
+      {{tab}}  Object.assign(existing, body);
+      {{tab}}  return await this.${minStart(className)}Repository.save(existing);
+      {{tab}}}
+
+      {{tab}}async delete(id: number): Promise<void> {
+      {{tab}}  const existing = await this.${minStart(className)}Repository.findOneBy({ id });
+      {{tab}}  if (!existing) {
+      {{tab}}    throw new ResourceNotFoundException("${className} not found");
+      {{tab}}  }
+      {{tab}}  await this.${minStart(className)}Repository.delete(id);
       {{tab}}}
       {{/if}}
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/services"
     servicePackage: ""
-    serviceAdditionalFiles:
-      - fileType: "Service interface"
-        fileName: "I${majStart(className)}Service"
-        extension: "ts"
-        content: |
-          import * as Models from '../../models/index';
-          export interface I${majStart(className)}Service {
-            save(body: any): Promise<Models.${className}>;
-            findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number]>;
-            findById(id: number): Promise<Models.${className}>;
-            update(id: number, body: any): Promise<Models.${className}>;
-            delete(id: number): void;
-            search(body: any, page: number, size: number, order: any): Promise<[Models.${className}[], number]>;
-          }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/services/interfaces"
+    serviceAdditionalFiles: []
   controller:
     toGenerate: true
     controllerImports: |
