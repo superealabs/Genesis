@@ -8,7 +8,11 @@
     navLink: "class=\"@(currentController == \"${majStart(this.entityName)}\" ? \"active\" : \"\")\" asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
     pageName: "@ViewData[\"Title\"] -"
     rootPath: " ~/css/style.css\" asp-append-version=\"true "
-    callContent: "@RenderBody()"
+    callContent: |
+      @RenderBody()
+      @RenderSection("Scripts", required: false)
+      @await Html.PartialAsync("_PopupError")
+
     currentViewContext: |
       @{
           var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
@@ -80,6 +84,20 @@
     inputTagHelper: "asp-for=\"${majStart(this.name)}\""
     selectTagHelper: "asp-for=\"${majStart(this.columnNameField)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
     updateLink: "asp-action=\"Edit\" asp-controller=\"${className}\""
+  error:
+    name: "Error"
+    destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
+    viewAnnotations: |
+      @{
+          ViewData["Title"] = "Error";
+          var previousUrl = Context.Request.Headers["Referer"].ToString();
+          if (string.IsNullOrEmpty(previousUrl))
+          {
+              previousUrl = "/";
+          }
+      }
+    backLink: "@previousUrl"
+    errorMessage: "@ViewData[\"ErrorMessage\"]"
 
   templateEngineFilesEdits:
     - fileType : "ViewImports"
@@ -99,6 +117,26 @@
             Layout = "_Layout";
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/"
+    - fileType : "Validation Scripts Partial"
+      fileName: "_ValidationScriptsPartial"
+      extension: "cshtml"
+      content: |
+        <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+        <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
+    - fileType : "Popup Error"
+      fileName: "_PopupError"
+      extension: "cshtml"
+      content: |
+        @if (TempData["PopupError"] != null)
+        {
+            <script>
+                window.onload = function () {
+                    alert("@TempData["PopupError"]");
+                };  
+            </script>
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
 
   templateEngineFiles: []
   templateEngineFolders:

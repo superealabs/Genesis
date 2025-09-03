@@ -16,6 +16,7 @@ public class ViewsTemplateEngine {
     private Create create;
     private Edit edit;
     private Detail detail;
+    private Error error;
     private java.util.List<FilesEdit> templateEngineFilesEdits;
     private java.util.List<Project.ProjectFiles> templateEngineFiles;
     private java.util.List<Project.ProjectFolders> templateEngineFolders;
@@ -102,5 +103,16 @@ public class ViewsTemplateEngine {
         private String selectTagHelper;
         private String updateLink;
 //        private Input[] inputsList;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Error {
+        private String name;
+        private String destinationPath;
+        private String viewAnnotations;
+        private String backLink;
+        private String errorMessage;
     }
 }

@@ -18,6 +18,7 @@ public class ViewsTemplate {
     private String createTemplate;
     private String editTemplate;
     private String detailTemplate;
+    private String errorTemplate;
     private List<FilesEdit> templateFilesEdits;
     private List<Project.ProjectFiles> templateFiles;
     private List<Project.ProjectFolders> templateFolders;
