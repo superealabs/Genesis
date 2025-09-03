@@ -4767,7 +4767,7 @@
         import { AppModule } from "./app.module";
         import { ValidationPipe, VersioningType } from "@nestjs/common";
         import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-        import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
+        import { AllExceptionsFilter } from "./common/filters/AllExceptionsFilter";
       
         const dotenv = require("dotenv");
         dotenv.config();
@@ -4823,89 +4823,83 @@
       fileName: "ExportService"
       extension: "ts"
       content: |
-        import { Response } from "express";
-        import { Parser } from "json2csv";
-        import {AppDataSource} from "../config/data-source";
+        import { Injectable } from '@nestjs/common';
+        import { DataSource } from 'typeorm';
+        import { Parser } from 'json2csv';
         import { jsPDF } from 'jspdf';
         import autoTable from 'jspdf-autotable';
-        import { ResourceNotFoundException } from "../common/exceptions/ResourceNotFoundException";
+        import { ResourceNotFoundException } from '../common/exceptions/ResourceNotFoundException';
         
         declare module 'jspdf' {
           interface jsPDF {
-            autoTable: typeof autoTable;
+          autoTable: typeof autoTable;
           }
         }
-        export class ExportService {
-          private entityManager = AppDataSource.manager;
           
-          // method to export CSV data from a table, either every row or a single one
-          async exportCSV(id: number | null, tableName: string){
+        @Injectable()
+        export class ExportService {
+          constructor(private readonly dataSource: DataSource) {}
+          
+          // Export CSV from table, all rows or by id
+          async exportCSV(id: number | null, tableName: string): Promise<string> {
               try {
-                  // fetch the data to export
-                  let query = `SELECT * FROM ${tableName}`;
-                  if (id !== null) {
-                      query += ` WHERE id = ${id}`;
-                  }
-                  const data = await this.entityManager.query(query);
-                  const json2csv = new Parser();
-                  const csv = json2csv.parse(data);
-                  return csv;
-              } catch (error) {
-                  throw error;
-              }
-          }
-        
-          // method to export CSV data from a table, either every row or a single one
-          async exportPDF(id: number | null, tableName: string) {
-            try {
-                let query = `SELECT * FROM ${tableName}`;
-                if (id !== null) {
-                    query += ` WHERE id = ${id}`;
-                }
-    
-                const data = await AppDataSource.manager.query(query);
-    
-                if (data.length === 0) {
-                    throw new ResourceNotFoundException("No data found");
-                }
-    
-                const doc = new jsPDF();
-            
-                doc.text(`Export PDF – ${tableName}`, 14, 16);
-    
-                const columns = Object.keys(data[0]);
-                const rows = data.map((row: any) => 
-                    columns.map(col => row[col]?.toString() || '')
-                );
-    
-                autoTable(doc, {
-                    head: [columns],
-                    body: rows,     
-                    startY: 25,     
-                    margin: { top: 20 },
-                    styles: {
-                        fontSize: 10,
-                        cellPadding: 3,
-                        overflow: 'linebreak', 
-                    },
-                    headStyles: {
-                        fillColor: [41, 128, 185], 
-                        textColor: [255, 255, 255], 
-                        fontStyle: 'bold',
-                    },
-                    alternateRowStyles: {
-                        fillColor: [245, 245, 245],
-                    },
-                });
-    
-                const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-            
-                return pdfBuffer;
+              let query = `SELECT * FROM ${tableName}`;
+              if (id !== null) {
+              query += ` WHERE id = ${id}`;
+            }
+              const data = await this.dataSource.manager.query(query);
+              const json2csv = new Parser();
+              return json2csv.parse(data);
             } catch (error) {
-                throw error;
+              throw error;
+            }
+          }
+          
+          // Export PDF from table, all rows or by id
+          async exportPDF(id: number | null, tableName: string): Promise<Buffer> {
+            try {
+              let query = `SELECT * FROM ${tableName}`;
+              if (id !== null) {
+                query += ` WHERE id = ${id}`;
+              }
+              const data = await this.dataSource.manager.query(query);
+              if (!data || data.length === 0) {
+                throw new ResourceNotFoundException('No data found');
+              }
+              
+              const doc = new jsPDF();
+              doc.text(`Export PDF – ${tableName}`, 14, 16);
+              
+              const columns = Object.keys(data[0]);
+              const rows = data.map((row: any) => columns.map(col => row[col]?.toString() || ''));
+              
+              autoTable(doc, {
+                head: [columns],
+                body: rows,
+                startY: 25,
+                margin: { top: 20 },
+                styles: {
+                  fontSize: 10,
+                  cellPadding: 3,
+                  overflow: 'linebreak',
+                },
+                headStyles: {
+                  fillColor: [41, 128, 185],
+                  textColor: [255, 255, 255],
+                  fontStyle: 'bold',
+                },
+                alternateRowStyles: {
+                  fillColor: [245, 245, 245],
+                },
+              });
+              
+              return Buffer.from(doc.output('arraybuffer'));
+            } catch (error) {
+              throw error;
             }
           }
         }
+
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/services"
 
     - fileType: "Config"
@@ -5029,22 +5023,22 @@
     modelPackage: "{{removeLine}}"
     modelAdditionalFiles:
       - fileType: "Module"
-        fileName: "${tableName}.module"
+        fileName: "${className}.module"
         extension: "ts"
         content: |
           import { Module } from "@nestjs/common";
           import { TypeOrmModule } from "@nestjs/typeorm";
-          import { ${majStart(tableName)} } from "./${majStart(tableName)}";
-          import { ${tableName}Service } from "../../services/${tableName}.service";
-          import { ${tableName}Controller } from "../../services/${tableName}.controller";
+          import { ${className} } from "./${className}";
+          import { ${className}Service } from "../../services/${className}Service";
+          import { ${className}Controller } from "../../controllers/${className}Controller";
 
           @Module({
             imports: [TypeOrmModule.forFeature([${this}])],
-            providers: [${tableName}Service],
-            controllers: [${tableName}Controller],
-            exports: [${tableName}Service],
+            providers: [${className}Service],
+            controllers: [${className}Controller],
+            exports: [${className}Service],
           })
-          export class ${this}Module {}
+          export class ${className}Module {}
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/models/${className}"
     validationAnnotations:
       notNull: '@IsNotEmpty({ message: "${majStart(name)} cannot be null" })'
