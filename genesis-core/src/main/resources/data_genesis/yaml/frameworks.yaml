@@ -4591,17 +4591,17 @@
   isGateway: false
   additionalFiles:
     - fileType: "Exception"
-      fileName: "RessourceNotFoundError"
+      fileName: "ResourceNotFoundException"
       extension: "ts"
       content: |
-        export class RessourceNotFoundError extends Error{  
+        export class ResourceNotFoundException extends Error{  
           cause?: Error;
           constructor(message: string, cause?: Error) {
               super(message);
               this.name = "ResourceNotFoundException";
               this.cause = cause;
     
-              Object.setPrototypeOf(this, RessourceNotFoundError.prototype);
+              Object.setPrototypeOf(this, ResourceNotFoundException.prototype);
           }
         }
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/exceptions"
@@ -4643,6 +4643,16 @@
               
             return {page, size, order};
           }
+          static buildPageData(data: any, total: number, size: number, page: number){
+              return {
+              content: data,
+              totalElements: total,
+              totalPages: Math.ceil(total / size),
+              pageNumber: page,
+              pageSize: size,
+            };
+          
+          }
         }
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/utils"
     - fileType: "Util"
@@ -4680,7 +4690,7 @@
       extension: "ts"
       content: |
         import { NextFunction, Request, Response } from "express";
-        import { RessourceNotFoundError } from "../exceptions/RessourceNotFoundError";
+        import { ResourceNotFoundException } from "../exceptions/ResourceNotFoundException";
           
         export const errorHandler = (
           error: Error,
@@ -4688,7 +4698,7 @@
           res: Response,
           next: NextFunction
             ) => {
-            if (error instanceof RessourceNotFoundError) {
+            if (error instanceof ResourceNotFoundException) {
             return res.status(204).json({
               error: error.name,
               message: error.message,
@@ -4732,7 +4742,7 @@
         import {AppDataSource} from "../config/data-source";
         import { jsPDF } from 'jspdf';
         import autoTable from 'jspdf-autotable';
-        import { RessourceNotFoundError } from "../exceptions/RessourceNotFoundError";
+        import { ResourceNotFoundException } from "../exceptions/ResourceNotFoundException";
         
         declare module 'jspdf' {
           interface jsPDF {
@@ -4770,7 +4780,7 @@
                 const data = await AppDataSource.manager.query(query);
     
                 if (data.length === 0) {
-                    throw new RessourceNotFoundError("No data found");
+                    throw new ResourceNotFoundException("No data found");
                 }
     
                 const doc = new jsPDF();
@@ -4991,8 +5001,9 @@
       import * as Models from '../models/index';
       import { AppDataSource } from '../config/data-source';
       import { I${majStart(className)}Service } from './interfaces/I${majStart(className)}Service';
-      import { RessourceNotFoundError } from '../exceptions/RessourceNotFoundError';
-    serviceAnnotations: ""
+      import { ResourceNotFoundException } from '../exceptions/ResourceNotFoundException';
+    serviceAnnotations: |
+      @injectable()
     serviceClassKeyword: "export class"
     serviceExtends: "implements I${majStart(className)}Service"
     serviceName: "${majStart(className)}Service"
@@ -5000,7 +5011,7 @@
       {{tab}}private ${minStart(className)}Repository = AppDataSource.getRepository(Models.${className});
     serviceConstructors: "{{removeLine}}"
     serviceMethodContent: |
-      {{tab}}async findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number] | null>{
+      {{tab}}async findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number]>{
       {{tab}}   try{
       {{tab}}     const [data, total] = await this.${minStart(className)}Repository.findAndCount({
       {{tab}}            skip: page * size,
@@ -5008,7 +5019,7 @@
       {{tab}}            order,
       {{tab}}         });
       {{tab}}         if (data.length === 0) {
-      {{tab}}              throw new RessourceNotFoundError("No ${minStart(className)} found");
+      {{tab}}              throw new ResourceNotFoundException("No ${minStart(className)} found");
       {{tab}}         }
       {{tab}}         return [data, total];
       {{tab}}   }catch(error){
@@ -5016,7 +5027,7 @@
       {{tab}}   }
       {{tab}}}
       
-      {{tab}}async search(body: any, page: number, size: number, order: any): Promise<[Models.${className}[], number] | null>{
+      {{tab}}async search(body: any, page: number, size: number, order: any): Promise<[Models.${className}[], number]>{
       {{tab}}   try{
       {{tab}}     const [data, total] = await this.${minStart(className)}Repository.findAndCount({
       {{tab}}           where: body,
@@ -5025,7 +5036,7 @@
       {{tab}}           order,
       {{tab}}         });
       {{tab}}         if (data.length === 0) {
-      {{tab}}              throw new RessourceNotFoundError("No ${minStart(className)} found");
+      {{tab}}              throw new ResourceNotFoundException("No ${minStart(className)} found");
       {{tab}}         }
       {{tab}}         return [data, total];
       {{tab}}   }catch(error){
@@ -5037,7 +5048,7 @@
       {{tab}}   try{
       {{tab}}     const ${minstart(className)} = await this.${minStart(className)}Repository.findOne({where: {id} });
       {{tab}}     if(!${minstart(className)}){
-      {{tab}}       throw new RessourceNotFoundError("No ${minStart(className)} found");
+      {{tab}}       throw new ResourceNotFoundException("No ${minStart(className)} found");
       {{tab}}     } 
       {{tab}}     return ${minstart(className)};
       {{tab}}   } catch(error){
@@ -5059,7 +5070,7 @@
       {{tab}}      const ${minStart(className)} = await this.${minStart(className)}Repository.findOneBy({ id });
       {{tab}}      
       {{tab}}      if(!${minStart(className)}){
-      {{tab}}         throw new RessourceNotFoundError("No ${minStart(className)} found");
+      {{tab}}         throw new ResourceNotFoundException("No ${minStart(className)} found");
       {{tab}}       } 
       
       {{tab}}      return await this.${minStart(className)}Repository.save(body);
@@ -5072,7 +5083,7 @@
       {{tab}}  try {
       {{tab}}     const ${minStart(className)} = await this.${minStart(className)}Repository.findOneBy({ id });
       {{tab}}     if (!${minStart(className)}) {
-      {{tab}}         throw new RessourceNotFoundError("${className} not found");
+      {{tab}}         throw new ResourceNotFoundException("${className} not found");
       {{tab}}     }
       {{tab}}     const result = await this.${minStart(className)}Repository.delete(${minStart(className)});
       {{tab}}  } catch (error) {
@@ -5090,21 +5101,114 @@
           import * as Models from '../../models/index';
           export interface I${majStart(className)}Service {
             save(body: any): Promise<Models.${className}>;
-            findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number] | null>;
+            findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number]>;
             findById(id: number): Promise<Models.${className}>;
-            update(id: number, body: any): Promise<Models.${className}>
+            update(id: number, body: any): Promise<Models.${className}>;
             delete(id: number): void;
+            search(body: any, page: number, size: number, order: any): Promise<[Models.${className}[], number]>;
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/services/interfaces"
   controller:
     toGenerate: true
     controllerImports: |
       import {NextFunction, Request, Response} from "express";
-      import { WebUtils } from "../utils/WebUtils";
-      import { I${majStart(className)}Service } from "../service/interfaces/I${majStart(className)}Service";
+      import { inject, injectable } from "tsyringe";
+      import { ${majStart(className)}Service } from "../services/${majStart(className)}Service";
+      import { I${majStart(className)}Service } from "../services/interfaces/I${majStart(className)}Service";
+      import { ExportService } from "../services/ExportService";
+      import { WebUtils } from "../utils/WebUtil";
       import { RestResponse } from "../utils/RestResponse";
+      import { ResourceNotFoundException } from '../exceptions/ResourceNotFoundException';
     controllerAnnotations: |
+      @injectable()
+    controllerExtends: ""
+    controllerName: "${majStart(className)}Controller"
+    controllerFieldContent: "{{removeLine}}"
+    controllerConstructors: |
+      {{tab}}constructor (@inject("I${majStart(className)}Service") private ${minStart(className)}Service : I${majStart(className)}Service){}
+    controllerMethodContent: |
+      {{tab}}async findAll(request: Request, response: Response, next: NextFunction) {
+      {{tab}}{{tab}}try {
+      {{tab}}{{tab}}{{tab}}const {page, size, order} = WebUtils.parsePaginationAndSort(request.query);
+      {{tab}}{{tab}}{{tab}}const [data, total] = await this.${minStart(className)}Service.findAll(page, size, order);
+  
+      {{tab}}{{tab}}{{tab}}if (!data || data.length === 0 || total === 0) {
+      {{tab}}{{tab}}{{tab}}{{tab}}throw new ResourceNotFoundException("No ${minStart(className)} found.");
+      {{tab}}{{tab}}{{tab}}}
+  
+      {{tab}}{{tab}}{{tab}}const result = RestResponse.buildSuccessResponse(
+      {{tab}}{{tab}}{{tab}}{{tab}}200,
+      {{tab}}{{tab}}{{tab}}{{tab}}"${className} retrieved successfully",
+      {{tab}}{{tab}}{{tab}}{{tab}}WebUtils.buildPageData(data, total, size, page)
+      {{tab}}{{tab}}{{tab}});
+      {{tab}}{{tab}}{{tab}}response.status(200).json(result);
+      {{tab}}{{tab}}} catch (error) {
+      {{tab}}{{tab}}{{tab}}next(error);
+      {{tab}}{{tab}}}
+      {{tab}}}
+      {{tab}}async save(request: Request, response: Response, next: NextFunction) {
+      {{tab}}    try {
+      {{tab}}        const ${minStart(className)} = await this.${minStart(className)}Service.save(request.body);
+      {{tab}}        const res = RestResponse.buildSuccessResponse(201, "${className} saved successfully", ${minStart(className)});
+      {{tab}}        response.status(201).json(res);
+      {{tab}}    } catch (error) {
+      {{tab}}        next(error);
+      {{tab}}    }
+      {{tab}}}
 
+      {{tab}}async findById(request: Request, response: Response, next: NextFunction) {
+      {{tab}}    try {
+      {{tab}}        const id = parseInt(request.params.id, 10);
+      {{tab}}        const ${minStart(className)} = await this.${minStart(className)}Service.findById(id);
+      {{tab}}        if (!${minStart(className)}) {
+      {{tab}}            throw new ResourceNotFoundException("No ${minStart(className)} found.");
+      {{tab}}        }
+      {{tab}}        const res = RestResponse.buildSuccessResponse(200, "${className} retrieved successfully", ${minStart(className)});
+      {{tab}}        response.status(200).json(res);
+      {{tab}}    } catch (error) {
+      {{tab}}        next(error);
+      {{tab}}    }
+      {{tab}}}
+
+      {{tab}}async delete(request: Request, response: Response, next: NextFunction) {
+      {{tab}}    try {
+      {{tab}}        const id = parseInt(request.params.id);
+      {{tab}}        await this.${minStart(className)}Service.delete(id);
+      {{tab}}        const res = RestResponse.buildSuccessResponse<null>(200, "${className} deleted successfully", null);
+      {{tab}}        return response.status(200).json(res);
+      {{tab}}    } catch (error) {
+      {{tab}}        next(error);
+      {{tab}}    }
+      {{tab}}}
+
+      {{tab}}async update(request: Request, response: Response, next: NextFunction) {
+      {{tab}}    try {
+      {{tab}}        const id = parseInt(request.params.id);
+      {{tab}}        const updated${className} = await this.${minStart(className)}Service.update(id, request.body);
+      {{tab}}        const res = RestResponse.buildSuccessResponse(200, "${className} updated successfully", updated${className});
+      {{tab}}        response.status(200).json(res);
+      {{tab}}    } catch (error) {
+      {{tab}}        next(error);
+      {{tab}}    }
+      {{tab}}}
+
+      {{tab}}async search(request: Request, response: Response, next: NextFunction) {
+      {{tab}}    try {
+      {{tab}}        const { page, size, order } = WebUtils.parsePaginationAndSort(request.query);
+      {{tab}}        const [data, total] = await this.${minStart(className)}Service.search(request.body, page, size, order);
+      {{tab}}        if (!data || data.length === 0 || total === 0) {
+      {{tab}}            throw new ResourceNotFoundException("No ${minStart(className)} found.");
+      {{tab}}        }
+      {{tab}}        const result = RestResponse.buildSuccessResponse(200, "${className}s retrieved successfully", WebUtils.buildPageData(data, total, size, page));
+      {{tab}}        response.status(200).json(result);
+      {{tab}}    } catch (error) {
+      {{tab}}        next(error);
+      {{tab}}    }
+      {{tab}}}
+
+    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/controllers"
+    controllerPackage: "{{removeLine}}"
+    controllerAdditionalFiles: [ ]
   configurations: []
   dependencies: []
 
