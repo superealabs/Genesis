@@ -150,7 +150,7 @@ public class ProjectGenerator {
         if (!context.isGenerateFrontendApp()){
             return;
         }
-        HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(context.getFrontendFramework(),context.getProjectName(),context.getWebappFolder(),entities);
+        HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(context.getFrontendFramework(),context.getProjectName(),context.getWebappFolder(),context.getProjectPort(),entities);
         finalRenderData.putAll(FrameworkFrontendMetadataProvider.getWebappHashMap(context));
         renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
     }

@@ -6,11 +6,11 @@
 </template>
 
 <script lang="ts">
-import GenesisButton from "./GenesisButton.vue";
-import { defineComponent } from "vue";
+import GenesisButton from './GenesisButton.vue'
+import { defineComponent } from 'vue'
 
 export default defineComponent({
-  name: "GenesisAddButton",
+  name: 'GenesisAddButton',
   components: { GenesisButton },
   props: {
     label: {
@@ -18,5 +18,5 @@ export default defineComponent({
       type: String,
     },
   },
-});
+})
 </script>

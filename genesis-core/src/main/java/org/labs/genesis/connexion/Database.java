@@ -311,12 +311,9 @@ public abstract class Database {
         int columnSize = column.getInt("COLUMN_SIZE");
         int decimalDigits = column.getInt("DECIMAL_DIGITS");
 
-        if ((dataType == Types.NUMERIC || dataType == Types.DECIMAL)
+        return (dataType == Types.NUMERIC || dataType == Types.DECIMAL)
                 && columnSize > 0
-                && decimalDigits > 0) {
-            return true;
-        }
-        return false;
+                && decimalDigits > 0;
     }
 
     protected boolean isColumnText(ResultSet column) throws SQLException {

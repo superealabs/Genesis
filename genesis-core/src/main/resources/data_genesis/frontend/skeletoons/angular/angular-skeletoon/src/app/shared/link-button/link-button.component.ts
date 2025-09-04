@@ -52,7 +52,7 @@ import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/c
   padding: 0.6rem 1.5rem;
   font-size: 1rem;
   font-weight: 500;
-  background: linear-gradient(145deg, #2263cb, #3a7de0); 
+  background: linear-gradient(145deg, var(--primary), var(--primary-light)); 
   color: white;
   border-radius: 0.35rem;
   text-decoration: none;
@@ -83,7 +83,7 @@ import { NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/c
 }
 
 .link-btn:hover {
-  background: linear-gradient(145deg, #194a9c, #2263cb);
+  background: linear-gradient(145deg, var(--primary-dark), var(--primary));
   box-shadow: 0 6px 12px rgba(0,0,0,0.2);
 }
 

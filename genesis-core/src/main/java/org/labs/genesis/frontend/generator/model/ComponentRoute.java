@@ -16,6 +16,7 @@ public class ComponentRoute {
     private String componentImport;
     private String componentImportWithoutExtension;
     private String label;
+    private String entityName;
 
     public ComponentRoute(ComponentRoute source){
         this.componentName = source.getComponentName();
@@ -24,5 +25,10 @@ public class ComponentRoute {
         this.componentImport = source.getComponentImport();
         this.componentImportWithoutExtension = source.getComponentImportWithoutExtension();
         this.label = source.getLabel();
+        this.entityName = source.getEntityName();
+    }
+
+    public  boolean hasLabel(){
+        return label != null && !label.isEmpty();
     }
 }

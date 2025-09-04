@@ -87,6 +87,7 @@ public class FontendGenerator implements IFrontendGenerator{
                 router.setComponentSelector(componentSelector);
                 router.setComponentImport(componentImportPath);
                 router.setComponentImportWithoutExtension(componentImportWithoutExtensionPath);
+                router.setEntityName(tableMetadata.getClassName());
                 frontendFramework.addRoute(router);
             }
 

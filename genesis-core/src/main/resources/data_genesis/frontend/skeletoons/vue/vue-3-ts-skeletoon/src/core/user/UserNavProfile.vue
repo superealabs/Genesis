@@ -1,50 +1,49 @@
 <template>
-  <div class="d-flex align-items-center justify-content-between gap-2">
-    <div class="row align-items-center g-2">
-      <div class="col">
-        <div
-          class="avatar d-flex align-items-center justify-content-center rounded-circle bg-secondary text-muted fw-bold"
-          style="width: 40px; height: 40px"
-        >
-          <i class="bi bi-person"></i>
-        </div>
+  <div class="flex items-center justify-between gap-2">
+    <!-- Avatar + Nom -->
+    <div class="flex items-center gap-2">
+      <div
+        class="flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-600 font-bold"
+      >
+        <UserIcon />
       </div>
-      <div class="col-auto">
-        <p class="mb-0 fw-medium text-dark">{{ name }}</p>
-      </div>
+      <p class="m-0 font-medium text-gray-800">{{ name }}</p>
     </div>
+
+    <!-- Bouton Déconnexion -->
     <div>
-      <GenesisButton
-        icon="bi bi-box-arrow-right"
-        class=""
-        style="font-size: large"
-      ></GenesisButton>
+      <GenesisButton class="btn-ghost border-0">
+        <LogoutIcon />
+      </GenesisButton>
     </div>
   </div>
 </template>
+
 <script lang="ts">
-import { computed, defineComponent } from "vue";
-import GenesisButton from "../button/GenesisButton.vue";
+import { computed, defineComponent } from 'vue'
+import GenesisButton from '../button/GenesisButton.vue'
+import LogoutIcon from '../icons/LogoutIcon.vue'
+import UserIcon from '../icons/UserIcon.vue'
 
 export default defineComponent({
-  name: "UserNavProfile",
+  name: 'UserNavProfile',
+  components: { UserIcon, LogoutIcon, GenesisButton },
   props: {
     name: {
       required: true,
       type: String,
     },
   },
-  components: { GenesisButton },
   setup(props) {
     const initials = computed(() => {
-      if (!props.name) return "";
+      if (!props.name) return ''
       return props.name
-        .split(" ")
+        .split(' ')
         .map((n) => n[0])
-        .join("")
-        .toUpperCase();
-    });
-    return { initials };
+        .join('')
+        .toUpperCase()
+    })
+    return { initials }
   },
-});
+})
 </script>
