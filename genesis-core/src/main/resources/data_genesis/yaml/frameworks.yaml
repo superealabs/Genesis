@@ -4677,16 +4677,68 @@
       extension: "ts"
       content: |
         import { Module } from "@nestjs/common";
-        import { ConfigModule } from "@nestjs/config";
+        import { ConfigModule, ConfigService } from "@nestjs/config";
         import { TypeOrmModule } from "@nestjs/typeorm";
-        import { typeOrmConfig } from "./config/typeorm.config";
+        import { SnakeNamingStrategy } from "typeorm-naming-strategies";
         {{#each entities}}
         import { ${this}Module } from "./models/${this}/${this}.module";
         {{/each}}
         @Module({
           imports: [
               ConfigModule.forRoot({ isGlobal: true }),
-              TypeOrmModule.forRoot(typeOrmConfig),
+              TypeOrmModule.forRootAsync({
+                inject: [ConfigService],
+                useFactory: (config: ConfigService) => ({
+                  {{#if databaseType = PostgreSQL}}
+                  type: "postgres",
+                  host: config.get<string>("DB_HOST"),
+                  port: config.get<number>("DB_PORT", 5432),
+                  username: config.get<string>("DB_USERNAME"),
+                  password: config.get<string>("DB_PASSWORD"),
+                  database: config.get<string>("DB_DATABASE"),
+                  synchronize: false,
+                  logging: false,
+                  namingStrategy: new SnakeNamingStrategy(),
+                  entities: [__dirname + "/../**/*.entity{.ts,.js}"],
+                  {{/if}}
+                  {{#if databaseType = Oracle}}
+                  type: "oracle",
+                  host: config.get<string>("DB_HOST"),
+                  port: config.get<number>("DB_PORT", 1521),
+                  username: config.get<string>("DB_USERNAME"),
+                  password: config.get<string>("DB_PASSWORD"),
+                  database: config.get<string>("DB_DATABASE"),
+                  synchronize: false,
+                  logging: false,
+                  namingStrategy: new SnakeNamingStrategy(),
+                  entities: [__dirname + "/../**/*.entity{.ts,.js}"],
+                  {{/if}}
+                  {{#if databaseType = SQL Server}}
+                  type: "mssql",
+                  host: config.get<string>("DB_HOST"),
+                  port: config.get<number>("DB_PORT", 1433),
+                  username: config.get<string>("DB_USERNAME"),
+                  password: config.get<string>("DB_PASSWORD"),
+                  database: config.get<string>("DB_DATABASE"),
+                  synchronize: false,
+                  logging: false,
+                  namingStrategy: new SnakeNamingStrategy(),
+                  entities: [__dirname + "/../**/*.entity{.ts,.js}"],
+                  {{/if}}
+                  {{#if databaseType = MySQL}}
+                  type: "mysql",
+                  host: config.get<string>("DB_HOST"),
+                  port: config.get<number>("DB_PORT", 3306),
+                  username: config.get<string>("DB_USERNAME"),
+                  password: config.get<string>("DB_PASSWORD"),
+                  database: config.get<string>("DB_DATABASE"),
+                  synchronize: false,
+                  logging: false,
+                  namingStrategy: new SnakeNamingStrategy(),
+                  entities: [__dirname + "/../**/*.entity{.ts,.js}"],
+                  {{/if}}
+                })
+              }),
               {{#each entities}}
               ${this}Module,
               {{/each}}
@@ -4768,9 +4820,6 @@
         import { ValidationPipe, VersioningType } from "@nestjs/common";
         import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
         import { AllExceptionsFilter } from "./common/filters/AllExceptionsFilter";
-      
-        const dotenv = require("dotenv");
-        dotenv.config();
       
         async function bootstrap() {
           const app = await NestFactory.create(AppModule);
@@ -4901,85 +4950,6 @@
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/services"
-
-    - fileType: "Config"
-      fileName: "typeorm.config"
-      extension: "ts"
-      content: |
-        import { DataSourceOptions } from "typeorm";
-        import { SnakeNamingStrategy } from "typeorm-naming-strategies";
-  
-        {{#if databaseType = PostgreSQL}}
-        export const typeOrmConfig: DataSourceOptions = {
-          type: "postgres",
-          host: process.env.DB_HOST,
-          port: parseInt(process.env.DB_PORT ?? "5432", 10),
-          username: process.env.DB_USERNAME,
-          password: process.env.DB_PASSWORD,
-          database: process.env.DB_DATABASE,
-          synchronize: false,
-          logging: false,
-          namingStrategy: new SnakeNamingStrategy(),
-          entities: [__dirname + "/../**/*.entity{.ts,.js}"],
-          migrations: [],
-          subscribers: [],
-        };
-        {{/if}}
-  
-        {{#if databaseType = Oracle}}
-        export const typeOrmConfig: DataSourceOptions = {
-          type: "oracle",
-          host: process.env.DB_HOST,
-          port: parseInt(process.env.DB_PORT ?? "1521", 10),
-          username: process.env.DB_USERNAME,
-          password: process.env.DB_PASSWORD,
-          sid: process.env.DB_SID,
-          synchronize: false,
-          logging: false,
-          namingStrategy: new SnakeNamingStrategy(),
-          entities: [__dirname + "/../**/*.entity{.ts,.js}"],
-          migrations: [],
-          subscribers: [],
-        };
-        {{/if}}
-  
-        {{#if databaseType = SQL Server}}
-        export const typeOrmConfig: DataSourceOptions = {
-          type: "mssql",
-          host: process.env.DB_HOST,
-          port: parseInt(process.env.DB_PORT ?? "1433", 10),
-          username: process.env.DB_USERNAME,
-          password: process.env.DB_PASSWORD,
-          database: process.env.DB_DATABASE,
-          synchronize: false,
-          logging: false,
-          namingStrategy: new SnakeNamingStrategy(),
-          entities: [__dirname + "/../**/*.entity{.ts,.js}"],
-          migrations: [],
-          subscribers: [],
-          options: {
-            encrypt: process.env.DB_ENCRYPT === "true",
-          },
-        };
-        {{/if}}
-  
-        {{#if databaseType = MySQL}}
-        export const typeOrmConfig: DataSourceOptions = {
-          type: "mysql",
-          host: process.env.DB_HOST,
-          port: parseInt(process.env.DB_PORT ?? "3306", 10),
-          username: process.env.DB_USERNAME,
-          password: process.env.DB_PASSWORD,
-          database: process.env.DB_DATABASE,
-          synchronize: false,
-          logging: false,
-          namingStrategy: new SnakeNamingStrategy(),
-          entities: [__dirname + "/../**/*.entity{.ts,.js}"],
-          migrations: [],
-          subscribers: [],
-        };
-        {{/if}}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/config"
   model:
     toGenerate: true
     modelImports: |
@@ -5033,7 +5003,7 @@
           import { ${className}Controller } from "../../controllers/${className}Controller";
 
           @Module({
-            imports: [TypeOrmModule.forFeature([${this}])],
+            imports: [TypeOrmModule.forFeature([${className}])],
             providers: [${className}Service],
             controllers: [${className}Controller],
             exports: [${className}Service],
