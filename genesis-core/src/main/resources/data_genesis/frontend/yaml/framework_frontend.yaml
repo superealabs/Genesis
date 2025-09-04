@@ -5,6 +5,13 @@
   template: "Angular-template"
   initPath: "angular/angular-skeletoon"
   componentExtension: "ts"
+  authenticationFiles:
+    - fileType: "authentication files"
+      fileName: "test-auth"
+      extension: ".ts"
+      content: |
+        {{#if useJWT}} io eee JWT be{{else}}pas de jwt {{/if}}
+      destinationPath: "${destinationFolder}/src"
   additionalFiles:
     - fileType: "App-files"
       fileName: "app.component"
@@ -929,6 +936,12 @@
   template: "Vue3TS-template"
   initPath: "vue/vue-3-ts-skeletoon"
   componentExtension: "vue"
+  authenticationFiles:
+    - fileType: "authentication files"
+      fileName: ""
+      extension: ""
+      content:
+      destinationPath: ""
   additionalFiles:
     - fileType: "Env File"
       fileName: "{{removeLine}}"
@@ -1399,6 +1412,12 @@
   template: "React-template"
   initPath: "react/react-ts-skeletoon"
   componentExtension: "tsx"
+  authenticationFiles:
+    - fileType: "authentication files"
+      fileName: ""
+      extension: ""
+      content:
+      destinationPath: ""
   additionalFiles:
     - fileType: "App name config"
       fileName: "app"
