@@ -89,7 +89,10 @@ public class ViewsTemplateEngine {
     @ToString
     public static class Create {
         private String modelType;
+        private String validationSection;
         private String backLink;
+        private String validationTagHelper;
+        private String selectValidationTagHelper;
         private String inputTagHelper;
         private String selectTagHelper;
         private String createLink;
@@ -101,7 +104,10 @@ public class ViewsTemplateEngine {
     @ToString
     public static class Edit {
         private String modelType;
+        private String validationSection;
         private String backLink;
+        private String validationTagHelper;
+        private String selectValidationTagHelper;
         private String inputTagHelper;
         private String selectTagHelper;
         private String updateLink;

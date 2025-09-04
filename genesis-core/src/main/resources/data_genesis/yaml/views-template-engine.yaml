@@ -76,14 +76,30 @@
   create:
     modelType: |
       @model ${majStart(className)}
+    validationSection: |
+      @if (!ViewData.ModelState.IsValid)
+      {{tab}}{
+      {{tab}}{{tab}}<!-- Validation Summary -->
+      {{tab}}{{tab}}<div asp-validation-summary="All" class="error-message"></div>
+      {{tab}}}
     backLink: "@Url.Action(\"Index\")"
+    validationTagHelper: "asp-validation-for=\"${majStart(this.name)}\""
+    selectValidationTagHelper: "asp-validation-for=\"${majStart(this.columnNameField)}\""
     inputTagHelper: "asp-for=\"${majStart(this.name)}\""
     selectTagHelper: "asp-for=\"${majStart(this.columnNameField)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
     createLink: "asp-action=\"Create\" asp-controller=\"${className}\""
   edit:
     modelType: |
       @model ${majStart(className)}
+    validationSection: |
+      @if (!ViewData.ModelState.IsValid)
+      {{tab}}{
+      {{tab}}{{tab}}<!-- Validation Summary -->
+      {{tab}}{{tab}}<div asp-validation-summary="All" class="error-message"></div>
+      {{tab}}}
     backLink: "@Url.Action(\"Index\")"
+    validationTagHelper: "asp-validation-for=\"${majStart(this.name)}\""
+    selectValidationTagHelper: "asp-validation-for=\"${majStart(this.columnNameField)}\""
     inputTagHelper: "asp-for=\"${majStart(this.name)}\""
     selectTagHelper: "asp-for=\"${majStart(this.columnNameField)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
     updateLink: "asp-action=\"Edit\" asp-controller=\"${className}\""

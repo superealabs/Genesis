@@ -536,7 +536,10 @@ public class FrameworkMetadataProvider {
     public static HashMap<String, Object> getAltViewCreateHashMap (ViewsTemplateEngine viewsTemplateEngine) {
         HashMap<String, Object> altMap = new HashMap<>();
         altMap.put("modelType", viewsTemplateEngine.getCreate().getModelType());
+        altMap.put("validationSection", viewsTemplateEngine.getCreate().getValidationSection());
         altMap.put("backLink", viewsTemplateEngine.getCreate().getBackLink());
+        altMap.put("validationTagHelper", viewsTemplateEngine.getCreate().getValidationTagHelper());
+        altMap.put("selectValidationTagHelper", viewsTemplateEngine.getCreate().getSelectValidationTagHelper());
         altMap.put("inputTagHelper", viewsTemplateEngine.getCreate().getInputTagHelper());
         altMap.put("selectTagHelper", viewsTemplateEngine.getCreate().getSelectTagHelper());
         altMap.put("createLink", viewsTemplateEngine.getCreate().getCreateLink());
@@ -546,7 +549,10 @@ public class FrameworkMetadataProvider {
     public static HashMap<String, Object> getAltViewEditHashMap (ViewsTemplateEngine viewsTemplateEngine) {
         HashMap<String, Object> altMap = new HashMap<>();
         altMap.put("modelType", viewsTemplateEngine.getEdit().getModelType());
+        altMap.put("validationSection", viewsTemplateEngine.getEdit().getValidationSection());
         altMap.put("backLink", viewsTemplateEngine.getEdit().getBackLink());
+        altMap.put("validationTagHelper", viewsTemplateEngine.getCreate().getValidationTagHelper());
+        altMap.put("selectValidationTagHelper", viewsTemplateEngine.getCreate().getSelectValidationTagHelper());
         altMap.put("inputTagHelper", viewsTemplateEngine.getEdit().getInputTagHelper());
         altMap.put("selectTagHelper", viewsTemplateEngine.getEdit().getSelectTagHelper());
         altMap.put("updateLink", viewsTemplateEngine.getEdit().getUpdateLink());
