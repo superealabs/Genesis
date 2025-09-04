@@ -14,19 +14,10 @@
       />
 
       <!-- Right section -->
-      <div class="ml-auto flex items-center gap-4">
+      <div class="ml-auto items-center gap-4">
         <div class="flex items-center gap-2">
           <label for="select-itemsPerPage" class="text font-medium"> Showing: </label>
-          <select
-            v-model="itemsPerPage"
-            id="select-itemsPerPage"
-            class="select select-bordered"
-            @change="() => changePage(1)"
-          >
-            <option v-for="option in pageSizeOptions" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
+          <input v-model="itemsPerPage" id="inputItemsPerPage" type="number" class="input w-12 focus:border-0" @focusout="() => changePage(1)" >
         </div>
 
         <!-- Future export (example DaisyUI style) -->
@@ -63,69 +54,45 @@
   </div>
 </template>
 
-<script lang="ts">
-import GenesisPopup from '../popup/GenesisPopup.vue'
-import { defineComponent, onMounted } from 'vue'
-import type { PropType } from 'vue'
+<script setup lang="ts">
+import { onMounted } from 'vue'
+
 import GenesisSearch from '@/core/search/GenesisSearch.vue'
-import GenesisButton from '@/core/button/GenesisButton.vue'
 import PaginationLayout from '@/core/pagination/PaginationLayout.vue'
+
 import { useEntityTable } from '@/composables/useEntityTable'
 import type { EntitySearchField } from '@/models/EntityModel'
-import { PaginationData } from '@/models/api/PageResponseModel'
+import type { PaginationData } from '@/models/api/PageResponseModel'
 import type { PaginationRequestParameter, SortFieldParameter } from '@/models/api/RequestModel'
 
-export default defineComponent({
-  name: 'EntityTable',
-  components: {
-    GenesisSearch,
-    GenesisButton,
-    PaginationLayout,
-    GenesisPopup,
-  },
-  props: {
-    entityModel: {
-      type: Object,
-      required: true,
-    },
-    entitySearchFields: {
-      type: Array as PropType<EntitySearchField[]>,
-      required: true,
-    },
-    searchFn: {
-      type: Function as PropType<
-        (
-          filters: Record<string, unknown>,
-          pagination: PaginationRequestParameter,
-          sortFields: SortFieldParameter[],
-        ) => Promise<void>
-      >,
-      required: true,
-    },
-    getPaginationData: {
-      type: Function as PropType<() => PaginationData>,
-      required: true,
-    },
-    listComponent: { type: Object, required: true },
-    entities: { type: Array, required: true },
-    loading: { type: Boolean, default: false },
-    message: { type: [String, null], required: false },
-  },
-  setup(props) {
-    const table = useEntityTable(props.searchFn, props.getPaginationData)
-    const multiCriteriaSearch = () => {
-      table.changePage(1)
-    }
+const props = defineProps<{
+  entityModel: Record<string, unknown>
+  entitySearchFields: EntitySearchField[]
+  searchFn: (
+    unpagined: boolean,
+    filters: Record<string, unknown>,
+    pagination: PaginationRequestParameter,
+    sortFields: SortFieldParameter[],
+  ) => Promise<void>
+  getPaginationData: () => PaginationData
+  listComponent: object
+  entities: unknown[]
+  loading?: boolean
+  message?: string | null
+}>()
 
-    onMounted(() => {
-      multiCriteriaSearch()
-    })
-    return {
-      ...table,
-      multiCriteriaSearch,
-    }
-  },
+const table = useEntityTable(props.searchFn, props.getPaginationData)
+
+function multiCriteriaSearch() {
+  table.changePage(1)
+}
+
+onMounted(() => {
+  multiCriteriaSearch()
 })
+
+const { updateFilters, changePage, page, totalPages, itemsPerPage, doSearch } =
+  table
 </script>
 
 <style scoped>

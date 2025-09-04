@@ -3,15 +3,12 @@
     <div class="d-flex flex-column text-center p-3">
       <!-- Icon -->
       <div>
-        <i
-          class="bi bi-exclamation-triangle text-danger"
-          style="font-size: 4rem"
-        ></i>
+        <i class="bi bi-exclamation-triangle text-danger" style="font-size: 4rem"></i>
       </div>
 
       <!-- Message -->
       <div class="">
-        <h5 class="text-danger">{{ title || "Error" }}</h5>
+        <h5 class="text-danger">{{ title || 'Error' }}</h5>
         <p class="mb-1">{{ message }}</p>
         <small v-if="subMessage" class="text-muted">{{ subMessage }}</small>
       </div>
@@ -25,23 +22,23 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import GenesisPopup from "@/core/popup/GenesisPopup.vue";
-import GenesisButton from "@/core/button/GenesisButton.vue";
+import { defineComponent } from 'vue'
+import GenesisPopup from '@/core/popup/GenesisPopup.vue'
+import GenesisButton from '@/core/button/GenesisButton.vue'
 
 export default defineComponent({
-  name: "AlertPopup",
+  name: 'AlertPopup',
   components: { GenesisPopup, GenesisButton },
   props: {
     visible: { type: Boolean, required: true },
-    title: { type: String, default: "Error" },
-    message: { type: String, default: "Alert Message" },
-    subMessage: { type: String, default: "" },
+    title: { type: String, default: 'Error' },
+    message: { type: String, default: 'Alert Message' },
+    subMessage: { type: String, default: '' },
   },
-  emits: ["close"],
+  emits: ['close'],
   setup(props, { emit }) {
-    const close = () => emit("close", false);
-    return { close };
+    const close = () => emit('close', false)
+    return { close }
   },
-});
+})
 </script>

@@ -90,9 +90,7 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
-import type { PropType } from 'vue'
+<script setup lang="ts">
 import { useSearch } from '@/composables/useSearch'
 import GenesisInput from '@/core/form/GenesisInput.vue'
 import GenesisButton from '@/core/button/GenesisButton.vue'
@@ -103,85 +101,62 @@ import ReloadIcon from '@/core/icons/ReloadIcon.vue'
 import XIcon from '@/core/icons/XIcon.vue'
 import GenesisSelectSearch from '@/core/form/GenesisSelectSearch.vue'
 
-export default defineComponent({
-  name: 'GenesisSearch',
-  components: {
-    GenesisInput,
-    GenesisButton,
-    GenesisSelectSearch,
-    PlusIcon,
-    FilterIcon,
-    ReloadIcon,
-    XIcon,
-  },
-  props: {
-    initialModel: {
-      type: Object as PropType<Record<string, unknown>>,
-      required: true,
-    },
-    searchFields: {
-      type: Array as PropType<EntitySearchField[]>,
-      required: true,
-    },
-    defaultActive: { type: Array as PropType<string[]>, default: () => [] },
-  },
-  emits: ['update:filter', 'search'], // renamed from "search" to match your intention
-  setup(props, { emit }) {
-    const {
-      searchModel,
-      activeFieldKeys,
-      selectedFieldToAdd,
-      activeFields,
-      availableFields,
-      activateField,
-      desactivateField,
-      resetFilters,
-      getFiltersValues,
-    } = useSearch(props.initialModel, props.searchFields)
+// ✅ Props
+const props = defineProps<{
+  initialModel: Record<string, unknown>
+  searchFields: EntitySearchField[]
+  defaultActive?: string[]
+}>()
 
-    if (props.defaultActive.length) {
-      activeFieldKeys.value.push(...props.defaultActive)
-    }
+// ✅ Emits
+const emit = defineEmits<{
+  (e: 'update:filter', filters: Record<string, unknown>): void
+  (e: 'search', event?: Event): void
+}>()
 
-    const onFilterSelected = (key: string) => {
-      selectedFieldToAdd.value = key
-      activateField()
-    }
+// ✅ Use composable
+const {
+  searchModel,
+  activeFieldKeys,
+  selectedFieldToAdd,
+  activeFields,
+  availableFields,
+  activateField,
+  desactivateField,
+  resetFilters,
+  getFiltersValues,
+} = useSearch(props.initialModel, props.searchFields)
 
-    const updateFilters = () => {
-      emit('update:filter', getFiltersValues())
-    }
+// ✅ Initialize active fields
+if (props.defaultActive?.length) {
+  activeFieldKeys.value.push(...props.defaultActive)
+}
 
-    const removeFilter = (key: string) => {
-      desactivateField(key)
-      updateFilters()
-      emitSearch()
-    }
+// ✅ Handlers
+const onFilterSelected = (key: string) => {
+  selectedFieldToAdd.value = key
+  activateField()
+}
 
-    const clearAllFilters = () => {
-      resetFilters()
-      updateFilters()
-      emitSearch()
-    }
+const updateFilters = () => {
+  emit('update:filter', getFiltersValues())
+}
 
-    const emitSearch = (e?: Event) => {
-      updateFilters()
-      emit('search', e)
-    }
+const emitSearch = (e?: Event) => {
+  updateFilters()
+  emit('search', e)
+}
 
-    return {
-      searchModel,
-      activeFields,
-      availableFields,
-      selectedFieldToAdd,
-      activeFieldKeys,
-      onFilterSelected,
-      removeFilter,
-      clearAllFilters,
-      updateFilters,
-      resetFilters,
-      emitSearch,
-    }
-  },
-})
+const removeFilter = (key: string) => {
+  desactivateField(key)
+  updateFilters()
+  emitSearch()
+}
+
+const clearAllFilters = () => {
+  resetFilters()
+  updateFilters()
+  emitSearch()
+}
 </script>
+

@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 
-const themes = ['genesis-light', 'genesis-dark']
+const themes = ['genesis-light', 'genesis-dark', 'valentine', 'retro']
 const theme = ref('genesis-light')
 
 const applyTheme = () => {

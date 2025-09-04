@@ -1,18 +1,18 @@
-import { ref } from "vue";
+import { ref } from 'vue'
 
 export function usePopup(initialVisible = false) {
-  const visible = ref(initialVisible);
+  const visible = ref(initialVisible)
 
   function openPopup() {
-    visible.value = true;
+    visible.value = true
   }
 
   function closePopup() {
-    visible.value = false;
+    visible.value = false
   }
 
   function togglePopup() {
-    visible.value = !visible.value;
+    visible.value = !visible.value
   }
 
   return {
@@ -20,5 +20,5 @@ export function usePopup(initialVisible = false) {
     openPopup,
     closePopup,
     togglePopup,
-  };
+  }
 }

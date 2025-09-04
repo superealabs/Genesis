@@ -2,20 +2,19 @@
 import { ref } from 'vue'
 import { usePagination } from '@/composables/usePagination'
 import { useSortData } from '@/composables/useSortData'
-import { usePaginationOptionsStore } from '@/stores/usePaginationOptionsStore'
 import { PaginationData } from '@/models/api/PageResponseModel'
 import type { PaginationRequestParameter, SortFieldParameter } from '@/models/api/RequestModel'
 import { useFreezeScreen } from '@/stores/useFreezeScreen'
 
 export function useEntityTable(
   searchFn: (
+    unpagined: boolean,
     filters: Record<string, unknown>,
     pagination: PaginationRequestParameter,
     sort: SortFieldParameter[],
   ) => Promise<void>,
   getPaginationDataRef: () => PaginationData,
 ) {
-  const defaultValueStore = usePaginationOptionsStore()
   const freezeScreenStore = useFreezeScreen()
 
   // State
@@ -36,7 +35,12 @@ export function useEntityTable(
   // Actions
   const doSearch = async () => {
     freezeScreenStore.freeze('Fetching data ...')
-    await searchFn(currentFilters.value, getPaginationRequestParameter(), sortFieldsParameters)
+    await searchFn(
+      false,
+      currentFilters.value,
+      getPaginationRequestParameter(),
+      sortFieldsParameters,
+    )
     setPagination(getPaginationDataRef())
     freezeScreenStore.unfreeze()
   }
@@ -50,16 +54,12 @@ export function useEntityTable(
     doSearch()
   }
 
-  // Options pour select pagination
-  const pageSizeOptions = defaultValueStore.pagination.itemsPerPageOptions
-
   return {
     // State exposé
     currentFilters,
     page,
     itemsPerPage,
     totalPages,
-    pageSizeOptions,
     jsonPaginationData,
 
     // Actions exposées
