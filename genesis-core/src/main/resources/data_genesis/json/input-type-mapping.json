@@ -20,7 +20,14 @@
     "validations": {
       "notNull": "required",
       "notBlank": "required",
-      "maxSize": "maxlength=\"${columnSize}\""
+      "maxSize": "maxlength=\"${maxLength}\"",
+      "numericMinimumValue": "min=\"${min}\"",
+      "numericMinimumInclusiveValue": "min=\"${min}\"",
+      "numericMaximumValue": "max=\"${max}\"",
+      "numericMaximumInclusiveValue": "max=\"${max}\"",
+      "minAndMaxSize": "minlength=\"${minLength}\" maxlength=\"${maxLength}\"",
+      "regexPattern": " ",
+      "defaultValue":  "value=\"${value}\""
     }
   }
 ]
