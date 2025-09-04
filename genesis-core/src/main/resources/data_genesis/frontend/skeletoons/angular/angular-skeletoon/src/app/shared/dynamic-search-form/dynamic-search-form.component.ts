@@ -27,14 +27,29 @@ export interface SearchField {
 
         <div *ngFor="let field of visibleFields" class="form-group-inline">
           <div class="input-wrapper">
-            <ng-container [ngSwitch]="field.type">
-              <input *ngSwitchCase="'text'" [formControlName]="field.key" type="text" class="form-control" [placeholder]="field.label">
-              <input *ngSwitchCase="'number'" [formControlName]="field.key" type="number" class="form-control" [placeholder]="field.label">
-              <input *ngSwitchCase="'date'" [formControlName]="field.key" type="date" class="form-control" [placeholder]="field.label">
-              <select *ngSwitchCase="'select'" [formControlName]="field.key" class="form-control">
+          <ng-container [ngSwitch]="field.type">
+            <input *ngSwitchCase="'text'" [formControlName]="field.key" type="text" class="form-control" [placeholder]="field.label">
+            <input *ngSwitchCase="'number'" [formControlName]="field.key" type="number" class="form-control" [placeholder]="field.label">
+            <input *ngSwitchCase="'date'" [formControlName]="field.key" type="date" class="form-control" [placeholder]="field.label">
+            <ng-container *ngSwitchCase="'select'">
+              <select *ngIf="field.options && field.options.length <= 8"
+                      [formControlName]="field.key"
+                      class="form-control">
                 <option value="">{{ field.label }}</option>
                 <option *ngFor="let option of field.options" [value]="option.value">{{ option.label }}</option>
               </select>
+              <ng-container *ngIf="field.options && field.options.length > 8">
+                <input type="text"
+                      class="form-control"
+                      [formControlName]="field.key"
+                      [attr.list]="'list-' + field.key"
+                      [placeholder]="field.label"
+                />
+                <datalist [id]="'list-' + field.key">
+                  <option *ngFor="let option of field.options" [value]="option.label"></option>
+                </datalist>
+              </ng-container>
+            </ng-container>
             </ng-container>
             <span class="remove-icon" (click)="removeField(field)">✖</span>
           </div>
@@ -194,6 +209,14 @@ export class DynamicSearchFormComponent implements OnInit {
   rowsOptions = [3, 5, 10, 15, 20, 25, 50];
   rowsControl!: FormControl;
 
+  mapLabelToValue(field: SearchField) {
+    const label = this.searchForm.get(field.key)?.value;
+    const option = field.options?.find(opt => opt.label === label);
+
+    if (option) {
+      this.searchForm.get(field.key)?.setValue(option.value, { emitEvent: false });
+    }
+  }
   ngOnInit(): void {
     this.rowsControl = new FormControl(12);
 
@@ -235,6 +258,21 @@ export class DynamicSearchFormComponent implements OnInit {
   }
 
   onSearch(): void {
-    if (this.onSubmitFn) this.onSubmitFn(this.searchForm.value);
+    const payload = { ...this.searchForm.value };
+
+    this.searchFields.forEach(field => {
+      if (field.type === 'select' && field.options && field.options.length > 8) {
+        const label = payload[field.key]; // <-- on lit directement dans le payload
+        const option = field.options.find(o => o.label === label);
+
+        if (option) {
+          payload[field.key] = option.value; // on remplace par l'ID
+        } else {
+          payload[field.key] = null; // pas de correspondance
+        }
+      }
+    });
+    console.log(payload)
+    if (this.onSubmitFn) this.onSubmitFn(payload);
   }
 }

@@ -543,12 +543,12 @@
                 private ${minStart(className)}Service: ${majStart(className)}Service
           ){}
           
-          submit(): void {
+          submit(payload:any): void {
               this.isLoading = true;
               {{#each fieldsFK}}{{removeLine}}
-              this.form.value.${this.name}=JSON.parse(this.form.value.${this.name});
+              payload.${this.name}=JSON.parse(payload.${this.name});
               {{/each}}{{removeLine}}
-              var ${minStart(className)}: ${majStart(className)} = this.form.value;
+              var ${minStart(className)}: ${majStart(className)} = payload;
               const serviceCall = this.formUpdate?this.${minStart(className)}Service.update${majStart(className)}(${minStart(className)} ,this.id):this.${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
               serviceCall.pipe(takeUntil(this.destroy$))
               .subscribe({

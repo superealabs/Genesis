@@ -28,18 +28,28 @@
   ></textarea>
 
   <!-- Select -->
-  <select
-    *ngIf="field.type === 'select'"
-    class="form-control"
-    [id]="field.name"
-    [formControl]="getControl()"
-    [attr.required]="field.constraints?.required ? true : null"
-  >
-    <option value="" disabled selected>-- Select --</option>
-    <option *ngFor="let opt of field.options" [value]="opt.value">
-      {{ opt.label }}
-    </option>
-  </select>
+  <ng-container *ngIf="field.type === 'select'">
+    <select *ngIf="field.options && field.options.length <= 8 || initialData?.[field.name]"
+            class="form-control"
+            [id]="field.name"
+            [formControl]="getControl()"
+            [attr.required]="field.constraints?.required ? true : null">
+      <option value="" disabled selected>-- Select --</option>
+      <option *ngFor="let opt of field.options" [value]="opt.value">
+        {{ opt.label }}
+      </option>
+    </select>
+    <ng-container *ngIf="field.options && field.options.length > 8  && !initialData?.[field.name]">
+      <input type="text"
+             class="form-control"
+             [attr.list]="'list-' + field.name"
+             [placeholder]="field.label"
+             [formControl]="getControl()" />
+      <datalist [id]="'list-' + field.name">
+        <option *ngFor="let opt of field.options" [value]="opt.label"></option>
+      </datalist>
+    </ng-container>
+  </ng-container>
 
   <!-- Upload file -->
   <input
