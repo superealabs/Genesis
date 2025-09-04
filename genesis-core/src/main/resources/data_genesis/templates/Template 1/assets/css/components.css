@@ -423,11 +423,41 @@ tr.table-content:hover {
     flex-wrap: wrap;
     flex-direction: column;
 }
-.form-input span {
-    color: red;
+.form-input .required-sign {
+    color: #e74c3c;
     opacity: 50%;
     font-size: small;
 }
+.form-input .field-validation-error {
+    color: #e74c3c;
+    font-size: small;
+    margin-top: 0.5rem;
+    display: block;
+}
+.validation-summary-errors {
+    background-color: #fadbd8;
+    color: #c0392b;
+    padding: 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+}
+.validation-summary-errors ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.form-input input.input-validation-error,
+.form-input select.input-validation-error {
+    border-color: #e74c3c !important;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
+}
+
+.form-input input:focus, .form-input select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-soft)
+}
+
 .form-input input,
 .form-input select {
     float: inline-start;

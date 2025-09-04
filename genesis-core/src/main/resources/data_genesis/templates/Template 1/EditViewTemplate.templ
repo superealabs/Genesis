@@ -21,6 +21,8 @@ ${modelType}
 
 <!-- Content -->
 <main class="content">
+    ${validationSection}
+
     <!-- Form -->
     <form ${updateLink} method="post" class="form">
         {{#each fields}}
@@ -32,9 +34,10 @@ ${modelType}
         {{#if this.isShowed = true}}{{#if this.isRequired = true}}<div class="form-input">
             <label for="${this.name}">
                 ${this.name}
-                <span>*</span>
+                <span class="required-sign">*</span>
             </label>
             <input type="${this.type}" name="${this.name}" id="${this.id}" placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}${inputTagHelper}>
+            <span ${validationTagHelper} class="field-validation-error"></span>
         </div>{{/if}}{{else}}{{removeLine}}{{/if}}
         {{/each}}{{removeLine}}
         {{#each inputs}}
@@ -43,6 +46,7 @@ ${modelType}
                 ${this.name}
             </label>
             <input type="${this.type}" name="${this.name}" id="${this.id}" placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}${inputTagHelper}>
+            <span ${validationTagHelper} class="field-validation-error"></span>
         </div>{{/if}}{{else}}{{removeLine}}{{/if}}
         {{/each}}{{removeLine}}
 
@@ -54,14 +58,16 @@ ${modelType}
             <select name="${this.columnNameField}" id="${this.columnNameField}" ${selectTagHelper}>
                 <option value="">-- Select ${this.type} --</option>
             </select>
+            <span ${selectValidationTagHelper} class="field-validation-error"></span>
         </div>{{else}}<div class="form-input">
             <label for="${this.columnNameField}">
                 ${this.columnNameField}
-                <span>*</span>
+                <span class="required-sign">*</span>
             </label>
             <select name="${this.columnNameField}" id="${this.columnNameField}" ${selectTagHelper}>
                 <option value="">-- Select ${this.type} --</option>
             </select>
+            <span ${selectValidationTagHelper} class="field-validation-error"></span>
         </div>{{/if}}
         {{/each}}{{removeLine}}
 
@@ -75,3 +81,7 @@ ${modelType}
     </form>
 </main>
 
+<!-- Include client-side validation scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
