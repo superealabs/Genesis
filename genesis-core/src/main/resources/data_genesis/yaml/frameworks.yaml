@@ -5072,7 +5072,7 @@
     serviceImports: |
       import { Injectable } from "@nestjs/common";
       import { InjectRepository } from "@nestjs/typeorm";
-      import { Repository } from "typeorm";
+      import { Repository, DeepPartial } from "typeorm";
       import * as Models from "../models/index";
       import { ResourceNotFoundException } from "../common/exceptions/ResourceNotFoundException";
     serviceAnnotations: |
@@ -5119,11 +5119,14 @@
       {{tab}}  }
       {{tab}}  return ${minStart(className)};
       {{tab}}}
-
       {{#if !isView}}
-      {{tab}}async save(body: any): Promise<Models.${className}> {
+      {{tab}}async save(body: DeepPartial<Models.${className}>): Promise<Models.${className}> {
+      {{tab}}  if (Array.isArray(body)) {
+      {{tab}}     throw new Error("Expected a single object, but received an array.");
+      {{tab}}  }
       {{tab}}  const ${minStart(className)} = this.${minStart(className)}Repository.create(body);
-      {{tab}}  return await this.${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}  const saved = await this.${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}  return saved;
       {{tab}}}
 
       {{tab}}async update(id: number, body: any): Promise<Models.${className}> {
@@ -5177,12 +5180,6 @@
       {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} retrieved successfully", WebUtils.buildPageData(data, total, size, page));
       {{tab}}}
 
-      {{tab}}@Post()
-      {{tab}}@ApiResponse({ status: 201, description: "Save new ${minStart(className)}" })
-      {{tab}}async save(@Body() body: any) {
-      {{tab}}{{tab}}const ${minStart(className)} = await this.${minStart(className)}Service.save(body);
-      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(201, "${className} saved successfully", ${minStart(className)});
-      {{tab}}}
 
       {{tab}}@Get(":id")
       {{tab}}@ApiResponse({ status: 200, description: "Find ${minStart(className)} by ID" })
@@ -5193,7 +5190,23 @@
       {{tab}}{{tab}}}
       {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} retrieved successfully", ${minStart(className)});
       {{tab}}}
-
+      {{tab}}@Post("search")
+      {{tab}}@ApiResponse({ status: 200, description: "Search ${minStart(className)}s" })
+      {{tab}}async search(@Body() body: any, @Query() query: any) {
+      {{tab}}{{tab}}const { page, size, order } = WebUtils.parsePaginationAndSort(query);
+      {{tab}}{{tab}}const [data, total] = await this.${minStart(className)}Service.search(body, page, size, order);
+      {{tab}}{{tab}}if (!data || data.length === 0 || total === 0) {
+      {{tab}}{{tab}}{{tab}}throw new ResourceNotFoundException("No ${minStart(className)} found.");
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className}s retrieved successfully", WebUtils.buildPageData(data, total, size, page));
+      {{tab}}}
+      {{#if !isView}}
+      {{tab}}@Post()
+      {{tab}}@ApiResponse({ status: 201, description: "Save new ${minStart(className)}" })
+      {{tab}}async save(@Body() body: any) {
+      {{tab}}{{tab}}const ${minStart(className)} = await this.${minStart(className)}Service.save(body);
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(201, "${className} saved successfully", ${minStart(className)});
+      {{tab}}}
       {{tab}}@Delete(":id")
       {{tab}}@ApiResponse({ status: 200, description: "Delete ${minStart(className)} by ID" })
       {{tab}}async delete(@Param("id") id: number) {
@@ -5207,17 +5220,8 @@
       {{tab}}{{tab}}const updated${className} = await this.${minStart(className)}Service.update(id, body);
       {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} updated successfully", updated${className});
       {{tab}}}
+      {{/if}}
 
-      {{tab}}@Post("search")
-      {{tab}}@ApiResponse({ status: 200, description: "Search ${minStart(className)}s" })
-      {{tab}}async search(@Body() body: any, @Query() query: any) {
-      {{tab}}{{tab}}const { page, size, order } = WebUtils.parsePaginationAndSort(query);
-      {{tab}}{{tab}}const [data, total] = await this.${minStart(className)}Service.search(body, page, size, order);
-      {{tab}}{{tab}}if (!data || data.length === 0 || total === 0) {
-      {{tab}}{{tab}}{{tab}}throw new ResourceNotFoundException("No ${minStart(className)} found.");
-      {{tab}}{{tab}}}
-      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className}s retrieved successfully", WebUtils.buildPageData(data, total, size, page));
-      {{tab}}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/controllers"
     controllerPackage: "{{removeLine}}"
     controllerAdditionalFiles: [ ]
