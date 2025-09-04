@@ -499,6 +499,9 @@ public class FrameworkMetadataProvider {
         altMap.put("blockLoopStatementEnd", viewsTemplateEngine.getList().getBlockLoopStatementEnd());
         altMap.put("inlineLoopStatement", viewsTemplateEngine.getList().getInlineLoopStatement());
         altMap.put("detailsLink", viewsTemplateEngine.getList().getDetailsLink());
+        altMap.put("filterLink", viewsTemplateEngine.getList().getFilterLink());
+        altMap.put("inputTagHelper", viewsTemplateEngine.getList().getInputTagHelper());
+        altMap.put("selectTagHelper", viewsTemplateEngine.getList().getSelectTagHelper());
         altMap.put("deleteTagHelper", viewsTemplateEngine.getList().getDeleteTagHelper());
         altMap.put("deleteLink", viewsTemplateEngine.getList().getDeleteLink());
         altMap.put("updateLink", viewsTemplateEngine.getList().getUpdateLink());

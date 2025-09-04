@@ -45,6 +45,9 @@ public class ViewsTemplateEngine {
     public static class List {
         private String modelType;
         private String assetsImportLink;
+        private String filterLink;
+        private String inputTagHelper;
+        private String selectTagHelper;
         private String dataValue;
         private String dataForeignValue;
         private String inlineLoopStatement;

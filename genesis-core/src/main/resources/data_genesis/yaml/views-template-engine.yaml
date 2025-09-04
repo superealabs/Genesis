@@ -24,6 +24,9 @@
          string currentSort = Context.Request.Query["sortOrder"];
       }
     assetsImportLink: "~"
+    filterLink: "asp-action=\"Search\" asp-controller=\"${majStart(className)}\""
+    inputTagHelper: "name=\"${majStart(this.name)}\""
+    selectTagHelper: "name=\"${majStart(this.columnNameField)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
     dataValue: "@${lowerCase(className)}.${majStart(this.name)}"
     dataForeignValue: "@${lowerCase(className)}.${majStart(this.name)}?.GetType().GetProperty((string)ViewBag.${majStart(this.type)}Column)?.GetValue(@${lowerCase(className)}.${majStart(this.name)})"
     inlineLoopStatement: |
