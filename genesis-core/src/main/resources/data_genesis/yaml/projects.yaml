@@ -144,7 +144,7 @@
           },{{/if}}
           "AllowedHosts": "*"{{#if useDB}},
           "ConnectionStrings": {
-            "DefaultConnection": "${connectionString}"
+            "DefaultConnection": "${connectionString}{{#if isMvcProject}}Include Error Detail=true{{/if}}"
           }{{/if}},
           "PathBase": "/${toKebabCase(projectName)}"{{#if useEurekaServer}},
           "spring": {
