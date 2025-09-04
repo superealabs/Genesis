@@ -230,7 +230,7 @@
                 context.ExceptionHandled = true;
             }
         
-            private static string GetInnermostMessage(Exception ex)
+            public static string GetInnermostMessage(Exception ex)
             {
                 if (ex == null) return string.Empty;
                 while (ex.InnerException != null) ex = ex.InnerException;
@@ -2025,6 +2025,7 @@
       using ${majStart(projectName)}.Repositories.Interface;
       using ${majStart(projectName)}.Models;
       using ${majStart(projectName)}.Utils;
+      using ${majStart(projectName)}.Filters;
 
     controllerAnnotations: ""
     controllerExtends: " : Controller"
@@ -2126,8 +2127,16 @@
       {{tab}}{
       {{tab}}    if (ModelState.IsValid)
       {{tab}}    {
-      {{tab}}        await _service.AddAsync(${minStart(className)});
-      {{tab}}        return RedirectToAction(nameof(Index));
+      {{tab}}        try
+      {{tab}}        {
+      {{tab}}            await _service.AddAsync(${minStart(className)});
+      {{tab}}            return RedirectToAction(nameof(Index));
+      {{tab}}        }
+      {{tab}}        catch (Exception ex)
+      {{tab}}        {
+      {{tab}}            string detailedMessage = GlobalExceptionFilter.GetInnermostMessage(ex);
+      {{tab}}            ModelState.AddModelError("", detailedMessage);
+      {{tab}}        }
       {{tab}}    }
       
       {{tab}}    {{#each fieldsFK}}{{#if @last}}await PopulateDropdowns(${minStart(className)});{{/if}}{{/each}}
@@ -2150,12 +2159,24 @@
       {{tab}}[ValidateAntiForgeryToken]
       {{tab}}public async Task<IActionResult> Edit(${pkColumnType} ${pkColumn}, ${majStart(className)} ${minStart(className)})
       {{tab}}{
-      {{tab}}    if (${pkColumn} != ${minStart(className)}.${majStart(pkColumn)}) return BadRequest();
+      {{tab}}    if (${pkColumn} != ${minStart(className)}.${majStart(pkColumn)}) 
+      {{tab}}    {
+      {{tab}}        ModelState.AddModelError("", "${majStart(pkColumn)} mismatch");
+      {{tab}}        return View(${minStart(className)});
+      {{tab}}    }
       
       {{tab}}    if (ModelState.IsValid)
       {{tab}}    {
-      {{tab}}        await _service.UpdateAsync(${minStart(className)});
-      {{tab}}        return RedirectToAction(nameof(Index));
+      {{tab}}        try
+      {{tab}}        {
+      {{tab}}            await _service.UpdateAsync(${minStart(className)});
+      {{tab}}            return RedirectToAction(nameof(Index));
+      {{tab}}        }
+      {{tab}}        catch (Exception ex)
+      {{tab}}        {
+      {{tab}}            string detailedMessage = GlobalExceptionFilter.GetInnermostMessage(ex);
+      {{tab}}            ModelState.AddModelError("", detailedMessage);
+      {{tab}}        }
       {{tab}}    }
       
       {{tab}}    {{#each fieldsFK}}{{#if @last}}await PopulateDropdowns(${minStart(className)});{{/if}}{{/each}}
