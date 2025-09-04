@@ -4642,15 +4642,21 @@
           }
         }
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/utils"
-    - fileType: "Util"
+    - fileType: "DTO"
       fileName: "RestResponse"
       extension: "ts"
       content: |
+        import { ApiProperty } from "@nestjs/swagger";
         export class RestResponse<T> {
+          @ApiProperty({example: 200})
           status: number;
+          @ApiProperty({example: "Data retrieved successfully"})
           message: string;
+          @ApiProperty({example: 0})
           returnCode: number;
+          @ApiProperty()
           data: T | null;
+          @ApiProperty({example: 200})
           timestamp: string;
         
           private constructor(status: number, message: string, returnCode: number, data: T | null) {
@@ -4671,7 +4677,37 @@
              return new RestResponse<T>(status, message, KO, data ?? null);
           }
         }
-      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/utils"
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/dto"
+    - fileType: "DTO"
+      fileName: "Page"
+      extension: "ts"
+      content: |
+        import { ApiProperty } from '@nestjs/swagger';
+        export class Page<T> {
+          @ApiProperty({ description: "Page content", isArray: true })
+          content: T[];
+
+          @ApiProperty({ description: "Total number of elements", example: 50 })
+          totalElements: number;
+
+          @ApiProperty({ description: "Total number of pages", example: 5 })
+          totalPages: number;
+
+          @ApiProperty({ description: "Page num (0-indexed)", example: 0 })
+          pageNumber: number;
+
+          @ApiProperty({ description: "Page size", example: 10 })
+          pageSize: number;
+        
+           constructor(content: T[], totalElements: number, pageSize: number, pageNumber: number) {
+              this.content = content;
+              this.totalElements = totalElements;
+              this.totalPages = Math.ceil(totalElements / pageSize);
+              this.pageNumber = pageNumber;
+              this.pageSize = pageSize;
+            }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/dto"
     - fileType: "Main"
       fileName: "app.module"
       extension: "ts"
@@ -5093,12 +5129,13 @@
     toGenerate: true
     controllerImports: |
       import { Controller, Get, Post, Put, Delete, Param, Body, Query, HttpException, HttpStatus } from "@nestjs/common";
-      import { ApiTags, ApiResponse } from "@nestjs/swagger";
+      import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiExtraModels, getSchemaPath  } from "@nestjs/swagger";
       import { ${majStart(className)}Service } from "../services";
-      import { RestResponse } from "../common/utils/RestResponse";
+      import { RestResponse } from "../common/dto/RestResponse";
       import { WebUtils } from "../common/utils/WebUtil";
       import { ResourceNotFoundException } from "../common/exceptions/ResourceNotFoundException";
       import * as Models from "../models/index";
+      import { Page } from "../common/dto/Page";
     controllerAnnotations: |
       @ApiTags("${minStart(className)}")
       @Controller("${minStart(className)}")
@@ -5108,8 +5145,65 @@
     controllerConstructors: |
       {{tab}}constructor(private readonly ${minStart(className)}Service: ${majStart(className)}Service) {}
     controllerMethodContent: |
-      {{tab}}@Get()
+      {{tab}}@ApiExtraModels(RestResponse, Page, Models.${majStart(className)})
+      {{tab}}@ApiOperation({
+      {{tab}}   summary: "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}   description: "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 200,
+      {{tab}}  description: "Successfully retrieved the paginated list of ${formatReadableLowerCase(className)}",
+      {{tab}}  content: {
+      {{tab}}    'application/json': {
+      {{tab}}      schema: {
+      {{tab}}        allOf: [
+      {{tab}}          { $ref: getSchemaPath(RestResponse) },
+      {{tab}}          {
+      {{tab}}            properties: {
+      {{tab}}              data: {
+      {{tab}}                allOf: [
+      {{tab}}                  { $ref: getSchemaPath(Page) },
+      {{tab}}                  {
+      {{tab}}                    properties: {
+      {{tab}}                       content: {
+      {{tab}}                         type: "array",
+      {{tab}}                         items: { $ref: getSchemaPath(Models.${majStart(className)}) }
+      {{tab}}                       }
+      {{tab}}                     }
+      {{tab}}                   }
+      {{tab}}                 ]
+      {{tab}}              }
+      {{tab}}            }
+      {{tab}}          }
+      {{tab}}        ]
+      {{tab}}      }
+      {{tab}}    }
+      {{tab}}  }
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}} status: 204,
+      {{tab}} description: "No auteur found"
+      {{tab}}})
+      {{tab}}@ApiQuery({
+      {{tab}} name: "page",
+      {{tab}} required: false,
+      {{tab}} description: "Page number (0-indexed)",
+      {{tab}} example: 0
+      {{tab}}})
+      {{tab}}@ApiQuery({
+      {{tab}} name: "size",
+      {{tab}} required: false,
+      {{tab}} description: "Size of the page",
+      {{tab}} example: 10
+      {{tab}}})
+      {{tab}}@ApiQuery({
+      {{tab}} name: "sortParam",
+      {{tab}} required: false,
+      {{tab}} description: "Sorting criteria in the format: property,(asc|desc). Multiple sort criteria can be passed using semicolon separator. Example: id,asc;name,desc",
+      {{tab}} example: "id,asc"
+      {{tab}}})
       {{tab}}@ApiResponse({ status: 200, description: "Retrieve all ${minStart(className)}s" })
+      {{tab}}@Get()
       {{tab}}async findAll(@Query() query: any) {
       {{tab}}{{tab}}const { page, size, order } = WebUtils.parsePaginationAndSort(query);
       {{tab}}{{tab}}const [data, total] = await this.${minStart(className)}Service.findAll(page, size, order);
@@ -5117,12 +5211,15 @@
       {{tab}}{{tab}}if (!data || data.length === 0 || total === 0) {
       {{tab}}{{tab}}{{tab}}throw new ResourceNotFoundException("No ${minStart(className)} found.");
       {{tab}}{{tab}}}
-      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} retrieved successfully", WebUtils.buildPageData(data, total, size, page));
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} retrieved successfully", new Page(data, total, size, page));
       {{tab}}}
-
-
-      {{tab}}@Get(":id")
+      
+      {{tab}}@ApiOperation({
+      {{tab}}   summary: "Get ${formatReadableLowerCase(className)} by ID",
+      {{tab}}   description: "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
+      {{tab}}})
       {{tab}}@ApiResponse({ status: 200, description: "Find ${minStart(className)} by ID" })
+      {{tab}}@Get(":id")
       {{tab}}async findById(@Param("id") id: number) {
       {{tab}}{{tab}}const ${minStart(className)} = await this.${minStart(className)}Service.findById(id);
       {{tab}}{{tab}}if (!${minStart(className)}) {
@@ -5138,7 +5235,7 @@
       {{tab}}{{tab}}if (!data || data.length === 0 || total === 0) {
       {{tab}}{{tab}}{{tab}}throw new ResourceNotFoundException("No ${minStart(className)} found.");
       {{tab}}{{tab}}}
-      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className}s retrieved successfully", WebUtils.buildPageData(data, total, size, page));
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className}s retrieved successfully", new Page(data, total, size, page));
       {{tab}}}
       {{#if !isView}}
       {{tab}}@Post()
