@@ -24,7 +24,7 @@ ${modelType}
 
     <!-- Content Header -->
     <div class="content-header">
-        <form action="" method="post" id="inputContainer" class="filter-container">
+        <form method="post" ${filterLink} id="inputContainer" class="filter-container">
             <p>Filter:</p>
 
             <!-- Dropdown Add -->
@@ -93,7 +93,7 @@ ${modelType}
             {{#each inputs}}
             <div class="filter-content" data-type="${this.name}">
                 <p>${this.name} : </p>
-                <input class="filter-input" type="${this.type}">
+                <input class="filter-input" type="${this.type}" ${inputTagHelper}>
                 <button type="button" class="remove-item">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55 55" width="14">
                         <title>Remove</title>
