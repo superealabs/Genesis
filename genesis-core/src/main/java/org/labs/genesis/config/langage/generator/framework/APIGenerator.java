@@ -61,6 +61,11 @@ public class APIGenerator implements GenesisGenerator {
 
         // Création du fichier correspondant
         String fileName = tableMetadata.getClassName();
+
+        // convention de nommage pour node
+        if(framework.getId()==Constantes.ExpressJs_ID){
+            fileName = tableMetadata.getClassName() + ".entity";
+        }
         result = engine.render(result, metadataFinally);
         FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
 

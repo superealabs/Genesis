@@ -4680,6 +4680,7 @@
         import { ConfigModule, ConfigService } from "@nestjs/config";
         import { TypeOrmModule } from "@nestjs/typeorm";
         import { SnakeNamingStrategy } from "typeorm-naming-strategies";
+        import * as Models from "./models/index";
         {{#each entities}}
         import { ${this}Module } from "./models/${this}/${this}.module";
         {{/each}}
@@ -4689,32 +4690,7 @@
               TypeOrmModule.forRootAsync({
                 inject: [ConfigService],
                 useFactory: (config: ConfigService) => ({
-                  {{#if databaseType = PostgreSQL}}
-                  type: "postgres",
-                  host: config.get<string>("DB_HOST"),
-                  port: config.get<number>("DB_PORT", 5432),
-                  username: config.get<string>("DB_USERNAME"),
-                  password: config.get<string>("DB_PASSWORD"),
-                  database: config.get<string>("DB_DATABASE"),
-                  synchronize: false,
-                  logging: false,
-                  namingStrategy: new SnakeNamingStrategy(),
-                  entities: [__dirname + "/../**/*.entity{.ts,.js}"],
-                  {{/if}}
-                  {{#if databaseType = Oracle}}
-                  type: "oracle",
-                  host: config.get<string>("DB_HOST"),
-                  port: config.get<number>("DB_PORT", 1521),
-                  username: config.get<string>("DB_USERNAME"),
-                  password: config.get<string>("DB_PASSWORD"),
-                  database: config.get<string>("DB_DATABASE"),
-                  synchronize: false,
-                  logging: false,
-                  namingStrategy: new SnakeNamingStrategy(),
-                  entities: [__dirname + "/../**/*.entity{.ts,.js}"],
-                  {{/if}}
-                  {{#if databaseType = SQL Server}}
-                  type: "mssql",
+                  {{#if databaseType = PostgreSQL}}type: "postgres",{{/if}}{{#if databaseType = Oracle}}type: "oracle",{{/if}}{{#if databaseType = SQL Server}}type: "mssql",{{/if}}{{#if databaseType = MySQL}}type: "mysql",{{/if}}
                   host: config.get<string>("DB_HOST"),
                   port: config.get<number>("DB_PORT", 1433),
                   username: config.get<string>("DB_USERNAME"),
@@ -4723,20 +4699,10 @@
                   synchronize: false,
                   logging: false,
                   namingStrategy: new SnakeNamingStrategy(),
-                  entities: [__dirname + "/../**/*.entity{.ts,.js}"],
-                  {{/if}}
-                  {{#if databaseType = MySQL}}
-                  type: "mysql",
-                  host: config.get<string>("DB_HOST"),
-                  port: config.get<number>("DB_PORT", 3306),
-                  username: config.get<string>("DB_USERNAME"),
-                  password: config.get<string>("DB_PASSWORD"),
-                  database: config.get<string>("DB_DATABASE"),
-                  synchronize: false,
-                  logging: false,
-                  namingStrategy: new SnakeNamingStrategy(),
-                  entities: [__dirname + "/../**/*.entity{.ts,.js}"],
-                  {{/if}}
+                  entities: [
+                    {{#each entities}}Models.${this},
+                    {{/each}}
+                  ],
                 })
               }),
               {{#each entities}}
@@ -4751,17 +4717,21 @@
       fileName: "AllExceptionsFilter"
       extension: "ts"
       content: |
-        import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from "@nestjs/common";
+        import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus,Logger, } from "@nestjs/common";
         import { Request, Response } from "express";
         import { ResourceNotFoundException } from "../exceptions/ResourceNotFoundException";
 
         @Catch()
         export class AllExceptionsFilter implements ExceptionFilter {
+          private readonly logger = new Logger(AllExceptionsFilter.name);
           catch(exception: unknown, host: ArgumentsHost) {
             const ctx = host.switchToHttp();
             const response = ctx.getResponse<Response>();
             const request = ctx.getRequest<Request>();
-
+            this.logger.error(
+              `Error processing request ${request.method} ${request.url}`,
+              (exception as any).stack || exception,
+            );
             if (exception instanceof ResourceNotFoundException) {
               return response.status(HttpStatus.NOT_FOUND).json({
                 error: exception.name,
@@ -4807,7 +4777,7 @@
       extension: "ts"
       content: |
         {{#each entities}}
-        export { ${ majStart(this) } } from "./${majStart(this)}/${ majStart(this) }";
+        export { ${ majStart(this) } } from "./${majStart(this)}/${ majStart(this) }.entity";
         {{/each}}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/models"
     - fileType: "Main"
@@ -4998,7 +4968,7 @@
         content: |
           import { Module } from "@nestjs/common";
           import { TypeOrmModule } from "@nestjs/typeorm";
-          import { ${className} } from "./${className}";
+          import { ${className} } from "./${className}.entity";
           import { ${className}Service } from "../../services/${className}Service";
           import { ${className}Controller } from "../../controllers/${className}Controller";
 
