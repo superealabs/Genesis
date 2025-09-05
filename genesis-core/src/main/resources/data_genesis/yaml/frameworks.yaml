@@ -4881,77 +4881,42 @@
         import { Injectable } from '@nestjs/common';
         import { DataSource } from 'typeorm';
         import { Parser } from 'json2csv';
-        import { jsPDF } from 'jspdf';
-        import autoTable from 'jspdf-autotable';
+        import * as puppeteer from 'puppeteer';
         import { ResourceNotFoundException } from '../common/exceptions/ResourceNotFoundException';
-        
-        declare module 'jspdf' {
-          interface jsPDF {
-          autoTable: typeof autoTable;
-          }
-        }
           
         @Injectable()
         export class ExportService {
           constructor(private readonly dataSource: DataSource) {}
           
-          // Export CSV from table, all rows or by id
-          async exportCSV(id: number | null, tableName: string): Promise<string> {
-              try {
-              let query = `SELECT * FROM ${tableName}`;
-              if (id !== null) {
-              query += ` WHERE id = ${id}`;
-            }
-              const data = await this.dataSource.manager.query(query);
-              const json2csv = new Parser();
-              return json2csv.parse(data);
-            } catch (error) {
-              throw error;
-            }
-          }
-          
-          // Export PDF from table, all rows or by id
-          async exportPDF(id: number | null, tableName: string): Promise<Buffer> {
-            try {
-              let query = `SELECT * FROM ${tableName}`;
-              if (id !== null) {
-                query += ` WHERE id = ${id}`;
-              }
-              const data = await this.dataSource.manager.query(query);
+          // Generate a csv file from a given list of object
+           async exportCSV<T extends object>(data: T[],fields?: (keyof T)[]): Promise<string> {
               if (!data || data.length === 0) {
-                throw new ResourceNotFoundException('No data found');
+                return '';
               }
-              
-              const doc = new jsPDF();
-              doc.text(`Export PDF – ${tableName}`, 14, 16);
-              
-              const columns = Object.keys(data[0]);
-              const rows = data.map((row: any) => columns.map(col => row[col]?.toString() || ''));
-              
-              autoTable(doc, {
-                head: [columns],
-                body: rows,
-                startY: 25,
-                margin: { top: 20 },
-                styles: {
-                  fontSize: 10,
-                  cellPadding: 3,
-                  overflow: 'linebreak',
-                },
-                headStyles: {
-                  fillColor: [41, 128, 185],
-                  textColor: [255, 255, 255],
-                  fontStyle: 'bold',
-                },
-                alternateRowStyles: {
-                  fillColor: [245, 245, 245],
-                },
+          
+              const csvFields = fields ?? (Object.keys(data[0]) as (keyof T)[]);
+              const parser = new Parser({ fields: csvFields as string[] });
+          
+              return parser.parse(data);
+           }
+  
+          // Generate a PDF file from an html 
+          async generatePDF(html: string): Promise<Buffer> {
+              // create a browser instance
+              const browser = await puppeteer.launch({
+                headless: true,
               });
-              
-              return Buffer.from(doc.output('arraybuffer'));
-            } catch (error) {
-              throw error;
-            }
+              // create a new page
+              const page = await browser.newPage();
+              await page.setContent(html, { waitUntil: 'networkidle0' });
+          
+              const pdfBuffer = Buffer.from(await page.pdf({
+                format: 'A4',
+                printBackground: true,
+              }));
+          
+              await browser.close();
+              return pdfBuffer;
           }
         }
 

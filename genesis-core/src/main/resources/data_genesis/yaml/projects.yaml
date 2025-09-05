@@ -402,8 +402,7 @@
             "json2csv": "^6.0.0-alpha.2",
             "jspdf": "^3.0.1",
             "jspdf-autotable": "^5.0.2",
-            "pdf-lib": "^1.17.1",
-            "pdfkit": "^0.17.1",
+            "puppeteer": "^24.19.0",
             "node-cache": "^5.1.2"
           },
           "devDependencies": {
@@ -416,7 +415,6 @@
             "@types/node": "^22.13.10",
             "@types/jest": "^30.0.0",
             "@types/json2csv": "^5.0.7",
-            "@types/pdfkit": "^0.17.2",
             "@types/supertest": "^6.0.3",
             "@types/express": "^5.0.3",
             "jest": "^30.0.5",
