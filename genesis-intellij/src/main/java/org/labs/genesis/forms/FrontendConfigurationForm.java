@@ -14,19 +14,21 @@ public class FrontendConfigurationForm {
     private JComboBox frameworkSelect;
     private JLabel languageLabel;
     private JLabel frameworkLabel;
-    private JComboBox comboBox1;
+    private JComboBox navbarSelect;
     private JTextField primaryColorField;
-    private JButton colorPickerButton;
+    private JButton primaryColorPickerButton;
     private JLabel primaryColorLabel;
     private JTextField secondaryColorField;
     private JLabel secondaryColorLabel;
-    private JButton button1;
-    private JTextField textField1;
-    private TextFieldWithBrowseButton locationField;
-    private JBList tableNamesList;
+    private JButton secondaryColorPickerButton;
+    private JTextField logoLinkField;
+    private TextFieldWithBrowseButton logoFileField;
+    private JTextArea cssTextArea;
+    private TextFieldWithBrowseButton faviconFileField;
+    private JTextField faviconLinkField;
 
     public FrontendConfigurationForm() {
-        colorPickerButton.addActionListener(new ActionListener() {
+        primaryColorPickerButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 JColorChooser colorChooser = new JColorChooser();
