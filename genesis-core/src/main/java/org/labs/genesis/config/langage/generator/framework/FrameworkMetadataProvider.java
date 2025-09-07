@@ -208,11 +208,12 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
-    public static HashMap<String, Object> getViewHashMapIntermediaire(Language language, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) throws Exception {
+    public static HashMap<String, Object> getMvcHashMapIntermediaire(Language language, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) throws Exception {
         HashMap<String, Object> metadata = new HashMap<>();
 
         addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
         metadata.put("fields", getFieldsList(tableMetadata, language));
+        metadata.put("fieldsRegular", getRegularFieldsList(tableMetadata, language));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
         metadata.put("inputs", getInputsList(tableMetadata, language));
@@ -284,6 +285,17 @@ public class FrameworkMetadataProvider {
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             Map<String, Object> fieldMap = getFieldHashMap(field, language);
             fields.add(fieldMap);
+        }
+        return fields;
+    }
+
+    private static List<Map<String, Object>> getRegularFieldsList(TableMetadata tableMetadata, Language language) {
+        List<Map<String, Object>> fields = new ArrayList<>();
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            if (!field.isForeign() && !field.isPrimary()) {
+                Map<String, Object> fieldMap = getFieldHashMap(field);
+                fields.add(fieldMap);
+            }
         }
         return fields;
     }

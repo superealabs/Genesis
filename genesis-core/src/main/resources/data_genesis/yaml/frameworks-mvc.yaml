@@ -1803,18 +1803,20 @@
       {{tab}}[Key]
       {{tab}}[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
       {{tab}}[Column("${this.columnName}")]
-      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{elseIf this.isForeignKey}}
-      {{tab}}
+      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }
+      {{tab}}{{elseIf this.isForeignKey}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
       {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
       {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
-      {{tab}}{{else}}
+      {{tab}}{{else}}{{removeLine}}{{/if}}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}{{#each fieldsRegular}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
-      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
+      {{tab}}public ${this.type}{{#if this.isNullable}}?{{/if}} ${majStart(this.name)} { get; set; }{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
       }
       public class ${majStart(className)}SearchModel
