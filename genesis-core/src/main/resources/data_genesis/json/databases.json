@@ -142,7 +142,7 @@
       "_int4": "integer[]",
       "_text": "text[]",
       "bytea": "bytea",
-      "inet": "string",
+      "inet": "inet",
       "cidr": "string",
       "macaddr": "string",
       "xml": "string"
