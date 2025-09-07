@@ -43,4 +43,9 @@ public class FrontendFramework
         }
         return componentRoutes;
     }
+
+    @Override
+    public String toString() {
+        return this.getName();
+    }
 }
