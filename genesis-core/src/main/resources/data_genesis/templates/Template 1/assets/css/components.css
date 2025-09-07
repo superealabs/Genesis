@@ -183,6 +183,10 @@ td {
     vertical-align: top;
 }
 
+td a {
+    color: var(--color-primary);
+}
+
 tr.table-content {
     border-bottom: 1px solid var(--color-bg);
 }

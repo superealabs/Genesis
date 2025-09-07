@@ -28,7 +28,7 @@
     inputTagHelper: "name=\"${majStart(this.name)}\""
     selectTagHelper: "name=\"${majStart(this.columnNameField)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
     dataValue: "@${lowerCase(className)}.${majStart(this.name)}"
-    dataForeignValue: "@${lowerCase(className)}.${majStart(this.name)}?.GetType().GetProperty((string)ViewBag.${majStart(this.type)}Column)?.GetValue(@${lowerCase(className)}.${majStart(this.name)})"
+    dataForeignValue: "<a asp-controller=\"${this.type}\" asp-action=\"Details\" asp-route-id=\"@${lowerCase(className)}.${majStart(this.columnNameField)}\"> @${lowerCase(className)}.${majStart(this.name)}?.GetType().GetProperty((string)ViewBag.${majStart(this.type)}Column)?.GetValue(@${lowerCase(className)}.${majStart(this.name)}) </a>"
     inlineLoopStatement: |
     blockLoopStatementStart: |
       @foreach (var ${lowerCase(className)} in Model.Content) {
@@ -67,11 +67,18 @@
   detail:
     modelType: |
       @model ${majStart(className)}
+      @{
+          var previousUrl = Context.Request.Headers["Referer"].ToString();
+          if (string.IsNullOrEmpty(previousUrl))
+          {
+              previousUrl = "/";
+          }
+      }
     dataValue: "@Model.${majStart(this.name)}"
     dataForeignValue: "@Model.${majStart(this.name)}?.GetType().GetProperty((string)ViewBag.${majStart(this.type)}Column)?.GetValue(@Model.${majStart(this.name)})"
     deleteLink: "data-id=\"@Model.${majStart(pkColumn)}\""
     updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @Model.${majStart(pkColumn)} })"
-    backLink: "@Url.Action(\"Index\")"
+    backLink: "@previousUrl"
 
   create:
     modelType: |
