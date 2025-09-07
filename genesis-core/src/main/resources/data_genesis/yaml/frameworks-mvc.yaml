@@ -1672,6 +1672,7 @@
         namespace ${majStart(projectName)}.Utils;
         
         using Microsoft.EntityFrameworkCore;
+        using Microsoft.EntityFrameworkCore.Metadata;
         using System;
         using System.Collections.Generic;
         using System.Linq;
@@ -1680,90 +1681,70 @@
         
         public class EntityUtils
         {
-          private readonly ${majStart(projectName)}Context _context;
-      
-          public EntityUtils(${majStart(projectName)}Context context)
-          {
-            _context = context;
-          }
-      
-          /// <summary>
-          /// Detect the best column to display for an entity
-          /// </summary>
-          public async Task<string> DetectBestDisplayColumnAsync<TEntity>() where TEntity : class
-          {
-            var entityType = _context.Model.FindEntityType(typeof(TEntity));
-            var tableName = entityType.GetTableName();
-    
-            var candidates = entityType.GetProperties()
-            .Where(p => p.ClrType == typeof(string))
-            .Select(p => p.Name)
-            .ToList();
-    
-            if (!candidates.Any())
-            {
-              return entityType.FindPrimaryKey().Properties.First().Name;
-            }
-    
-            string bestColumn = candidates.First();
-            int bestScore = int.MinValue;
-            
-            foreach (var col in candidates)
-            {
-              var sample = await _context.Set<TEntity>()
-              .Select(e => EF.Property<string>(e, col))
-              .Where(s => s != null && s != "")
-              .Take(50)
-              .ToListAsync();
-              
-              if (!sample.Any())
-              continue;
-              
-              int total = sample.Count;
-              int distinctCount = sample.Distinct().Count();
-              double avgLength = sample.Average(s => s.Length);
-              
-              int score = 0;
-              
-              double diversity = (double)distinctCount / total;
-              score += (int)(diversity * 50);
-              
-              if (avgLength >= 3 && avgLength <= 50) score += 30;
-              else if (avgLength > 50) score -= 10;
-              else score -= 20;
-              
-              if (sample.All(s => s.All(char.IsLetterOrDigit)))
-              score += 20;
-              
-              if (score > bestScore)
-              {
-                bestScore = score;
-                bestColumn = col;
-              }
-            }
-    
-            if (bestScore == int.MinValue)
-            {
-              return entityType.FindPrimaryKey().Properties.First().Name;
-            }
-    
-            return bestColumn;
-          }
-        
-          /// <summary>
-          /// Detect the primary column for an entity
-          /// </summary>
-          public string GetPrimaryKeyName<TEntity>() where TEntity : class
-          {
-            var entityType = _context.Model.FindEntityType(typeof(TEntity));
-            var primaryKey = entityType.FindPrimaryKey();
-        
-            if (primaryKey == null)
-            throw new InvalidOperationException($"Entity {typeof(TEntity).Name} has no primary key defined.");
-        
-            // Return the first column of the primary key
-            return primaryKey.Properties.First().Name;
-          }
+        {{tab}}private readonly FormTestingContext _context;
+
+        {{tab}}public EntityUtils(FormTestingContext context)
+        {{tab}}{
+        {{tab}}{{tab}}_context = context;
+        {{tab}}}
+
+        {{tab}}/// <summary>
+        {{tab}}/// Detect the best column to display for an entity
+        {{tab}}/// </summary>
+        {{tab}}public async Task<string> DetectBestDisplayColumnAsync<T>() where T : class
+        {{tab}}{
+        {{tab}}{{tab}}var entityType = _context.Model.FindEntityType(typeof(T));
+        {{tab}}{{tab}}if (entityType == null)
+        {{tab}}{{tab}}{{tab}}throw new InvalidOperationException($"Entity type {typeof(T).Name} not found in the model.");
+
+        {{tab}}{{tab}}var properties = entityType.GetProperties()
+        {{tab}}{{tab}}{{tab}}.Where(p => !p.IsPrimaryKey()) 
+        {{tab}}{{tab}}{{tab}}.ToList();
+
+        {{tab}}{{tab}}if (!properties.Any())
+        {{tab}}{{tab}}{{tab}}return entityType.GetProperties().First().Name; 
+
+        {{tab}}{{tab}}var priorities = new List<Func<IProperty, bool>>
+        {{tab}}{{tab}}{
+        {{tab}}{{tab}}{{tab}}p => p.ClrType == typeof(string) && 
+        {{tab}}{{tab}}{{tab}}{{tab}}(p.GetColumnType()?.Contains("json") == true ||
+        {{tab}}{{tab}}{{tab}}{{tab}}p.GetColumnType()?.Contains("xml") == true ||
+        {{tab}}{{tab}}{{tab}}{{tab}}p.GetColumnType()?.Contains("inet") == true),
+
+        {{tab}}{{tab}}{{tab}}p => p.ClrType == typeof(string),
+
+        {{tab}}{{tab}}{{tab}}p => p.ClrType == typeof(DateTime) || p.ClrType == typeof(DateTime?),
+
+        {{tab}}{{tab}}{{tab}}p => p.ClrType == typeof(int) || p.ClrType == typeof(int?) ||
+        {{tab}}{{tab}}{{tab}}{{tab}}p.ClrType == typeof(long) || p.ClrType == typeof(long?) ||
+        {{tab}}{{tab}}{{tab}}{{tab}}p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?) ||
+        {{tab}}{{tab}}{{tab}}{{tab}}p.ClrType == typeof(double) || p.ClrType == typeof(double?)
+        {{tab}}{{tab}}{{tab}}};
+
+        {{tab}}{{tab}}foreach (var match in priorities)
+        {{tab}}{{tab}}{
+        {{tab}}{{tab}}{{tab}}var prop = properties.FirstOrDefault(match);
+        {{tab}}{{tab}}{{tab}}if (prop != null)
+        {{tab}}{{tab}}{{tab}}{{tab}}return prop.Name;
+        {{tab}}{{tab}}}
+
+        {{tab}}{{tab}}return properties.First().Name;
+        {{tab}}}
+
+        {{tab}}/// <summary>
+        {{tab}}/// Detect the primary column for an entity
+        {{tab}}/// </summary>
+        {{tab}}public string GetPrimaryKeyName<TEntity>() where TEntity : class
+        {{tab}}{
+        {{tab}}{{tab}}var entityType = _context.Model.FindEntityType(typeof(TEntity));
+        {{tab}}{{tab}}var primaryKey = entityType.FindPrimaryKey();
+
+        {{tab}}{{tab}}if (primaryKey == null)
+        {{tab}}{{tab}}{{tab}}throw new InvalidOperationException($"Entity {typeof(TEntity).Name} has no primary key defined.");
+
+        {{tab}}{{tab}}// Return the first column of the primary key
+        {{tab}}{{tab}}return primaryKey.Properties.First().Name;
+        {{tab}}}
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
