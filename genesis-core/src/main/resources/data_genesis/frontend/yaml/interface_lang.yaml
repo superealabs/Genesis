@@ -1,0 +1,12 @@
+- id: 1
+  name: "English"
+  locale: "en-EN"
+  filename: "english"
+  extension: "json"
+  content: |
+- id: 2
+  name: "French"
+  locale: "fr-FR"
+  filename: "english"
+  extension: "json"
+  content: |

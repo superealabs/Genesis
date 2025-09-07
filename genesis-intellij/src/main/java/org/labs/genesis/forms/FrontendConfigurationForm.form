@@ -167,7 +167,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="a02d6" class="com.intellij.ui.components.JBList" binding="interfaceLan">
+                  <component id="a02d6" class="com.intellij.ui.components.JBList" binding="interfaceLangOptions">
                     <constraints/>
                     <properties>
                       <model>

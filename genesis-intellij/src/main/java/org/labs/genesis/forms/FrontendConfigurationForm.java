@@ -8,10 +8,18 @@ import lombok.Getter;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
+import org.labs.genesis.frontend.generator.model.InterfaceLang;
+import org.labs.genesis.frontend.generator.model.ProjectBranding;
 import org.labs.genesis.listener.ColorPicker;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 
 @Getter
@@ -33,7 +41,10 @@ public class FrontendConfigurationForm {
     private TextFieldWithBrowseButton faviconFileField;
     private JTextField logoLinkField;
     private JTextField faviconLinkField;
-    private JBList interfaceLan;
+    private JBList<InterfaceLang> interfaceLangOptions;
+
+    private File logoFile;
+    private File faviconFile;
 
     public FrontendConfigurationForm() {
         initializeListners();
@@ -61,12 +72,105 @@ public class FrontendConfigurationForm {
                 });
 
         logoFileField.addBrowseFolderListener(null, logoChooserDescriptor);
+        logoFileField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent documentEvent) {
+                onLogoFileChange();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent documentEvent) {
+                onLogoFileChange();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent documentEvent) {
+                onLogoFileChange();
+            }
+        });
+        logoLinkField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                onLogoLinkChange();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                onLogoLinkChange();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                onLogoLinkChange();
+            }
+        });
+
         faviconFileField.addBrowseFolderListener(null, faviconChooserDescriptor);
+        faviconFileField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent documentEvent) {
+                onFaviconFileChange();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent documentEvent) {
+                onFaviconFileChange();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent documentEvent) {
+                onFaviconFileChange();
+            }
+        });
+        faviconLinkField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent documentEvent) {
+                onFaviconLinkChange();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent documentEvent) {
+                onFaviconLinkChange();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent documentEvent) {
+                onFaviconLinkChange();
+            }
+        });
+    }
+    private void onLogoFileChange() {
+        String filePath = logoFileField.getText();
+        if (filePath == null || filePath.isEmpty()) return;
+        File file = new File(filePath);
+        if (!file.exists() || !file.isFile()) return;
+        logoFile = file;
+    }
+    private void onLogoLinkChange() {
+        String text = logoLinkField.getText();
+        boolean hasText = text != null && !text.trim().isEmpty();
+        // disable the file chooser if link is typed
+        logoFileField.setEnabled(!hasText);
+    }
+
+    private void onFaviconFileChange() {
+        String filePath = faviconFileField.getText();
+        if (filePath == null || filePath.isEmpty()) return;
+        File file = new File(filePath);
+        if (!file.exists() || !file.isFile()) return;
+        faviconFile = file;
+    }
+    private void onFaviconLinkChange() {
+        String text = faviconLinkField.getText();
+        boolean hasText = text != null && !text.trim().isEmpty();
+        // disable the file chooser if link is typed
+        faviconFileField.setEnabled(!hasText);
     }
 
     private  void initializeOptions(){
         populateLanguageOptions();
         populateFrameworkOptions((FrontendLanguage) frontendLanguageOptions.getSelectedItem());
+        interfaceLangOptions.setListData(ProjectGenerator.langs.values().toArray(new InterfaceLang[0]));
     }
 
     private void populateLanguageOptions() {
