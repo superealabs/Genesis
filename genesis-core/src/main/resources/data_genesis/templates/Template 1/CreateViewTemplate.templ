@@ -22,48 +22,37 @@ ${modelType}
 <!-- Content -->
 <main class="content">
     ${validationSection}
-
     <!-- Form -->
     <form ${createLink} method="post" class="form" id="${className}Form">
         {{#each inputs}}
-        {{#if this.isShowed = true}}{{#if this.isRequired = true}}<div class="form-input">
+        <div class="form-input">
             <label for="${this.name}">
                 ${this.name}
-                <span class="required-sign">*</span>
+                {{#if this.isRequired = true}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
             </label>
+            {{#if this.type = radio}}{{removeLine}}
+            <div class="input-boolean-options">
+                <input type="${this.type}" ${inputTagHelper} value="true"><p>True</p>
+                <input type="${this.type}" ${inputTagHelper} value="false"><p>False</p>
+            </div>
+            {{else}}{{removeLine}}
             <input type="${this.type}" ${inputTagHelper} placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>
+            {{/if}}{{removeLine}}
             <span ${validationTagHelper} class="field-validation-error"></span>
-        </div>{{/if}}{{else}}{{removeLine}}{{/if}}
-        {{/each}}{{removeLine}}
-        {{#each inputs}}
-        {{#if this.isShowed = true}}{{#if this.isRequired = false}}<div class="form-input">
-            <label for="${this.name}">
-                ${this.name}
-            </label>
-            <input type="${this.type}" ${inputTagHelper} placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>
-            <span ${validationTagHelper} class="field-validation-error"></span>
-        </div>{{/if}}{{else}}{{removeLine}}{{/if}}
+        </div>
         {{/each}}{{removeLine}}
 
         {{#each fieldsFK}}
-        {{#if this.isNullable}}<div class="form-input">
+        <div class="form-input">
             <label for="${this.columnNameField}">
                 ${this.columnNameField}
+                {{#if this.isNullable}}<span class="required-sign">*</span>{{/if}}
             </label>
             <select ${selectTagHelper}>
                 <option value="">-- Select ${this.type} --</option>
             </select>
             <span ${selectValidationTagHelper} class="field-validation-error"></span>
-        </div>{{else}}<div class="form-input">
-            <label for="${this.columnNameField}">
-                ${this.columnNameField}
-                <span class="required-sign">*</span>
-            </label>
-            <select ${selectTagHelper}>
-                <option value="">-- Select ${this.type} --</option>
-            </select>
-            <span ${selectValidationTagHelper} class="field-validation-error"></span>
-        </div>{{/if}}
+        </div>
         {{/each}}{{removeLine}}
 
         <div class="form-actions">
