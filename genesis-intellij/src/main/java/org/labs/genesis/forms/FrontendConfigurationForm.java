@@ -2,12 +2,14 @@ package org.labs.genesis.forms;
 
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBList;
+import lombok.Getter;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@Getter
 public class FrontendConfigurationForm {
     private JPanel mainPanel;
     private JComboBox languageSelect;
