@@ -9,6 +9,7 @@ import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
 
 import java.io.IOException;
+import java.security.CodeSigner;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,7 +65,8 @@ public class APIGenerator implements GenesisGenerator {
 
         // convention de nommage pour node
         if(framework.getId()==Constantes.ExpressJs_ID){
-            fileName = tableMetadata.getClassName() + ".entity";
+            String className = tableMetadata.getClassName();
+            fileName = className.substring(0,1).toLowerCase() + className.substring(1)+".entity";
         }
         result = engine.render(result, metadataFinally);
         FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
@@ -158,10 +160,23 @@ public class APIGenerator implements GenesisGenerator {
         // Création du fichier
         String fileName;
         if (generateComponentOnly) {
-            fileName = tableMetadata.getClassName() + "Service";
+            // convention de nommage node
+            if(framework.getId()== Constantes.ExpressJs_ID){
+                String className = tableMetadata.getClassName();
+                fileName = className.substring(0,1).toLowerCase() + className.substring(1) + ".service";
+            }else {
+                fileName = tableMetadata.getClassName() + "Service";
+            }
         } else {
-            fileName = framework.getService().getServiceName();
-            fileName = engine.simpleRender(fileName, metadataFinally);
+            System.out.println ("GENERATE SERVICE FRAMEWORK = "+ framework.getId());
+            if(framework.getId()== Constantes.ExpressJs_ID){
+                String className = tableMetadata.getClassName();
+                fileName = className.substring(0,1).toLowerCase() + className.substring(1) + ".service";
+                fileName = engine.simpleRender(fileName, metadataFinally);
+            }else {
+                fileName = framework.getService().getServiceName();
+                fileName = engine.simpleRender(fileName, metadataFinally);
+            }
         }
 
         result = engine.render(result, metadataFinally);
@@ -210,10 +225,23 @@ public class APIGenerator implements GenesisGenerator {
         // Création du fichier
         String fileName;
         if (generateComponentOnly) {
-            fileName = tableMetadata.getClassName() + "Controller";
+            // convention de nommage node
+            if(framework.getId()== Constantes.ExpressJs_ID){
+                String className = tableMetadata.getClassName();
+                fileName = className.substring(0,1).toLowerCase() + className.substring(1) + ".controller";
+            }else {
+                fileName = tableMetadata.getClassName() + "Controller";
+            }
         } else {
-            fileName = framework.getController().getControllerName();
-            fileName = engine.simpleRender(fileName, metadataFinally);
+            if(framework.getId()== Constantes.ExpressJs_ID){
+                String className = tableMetadata.getClassName();
+                fileName = className.substring(0,1).toLowerCase() + className.substring(1) + ".controller";
+                fileName = engine.simpleRender(fileName, metadataFinally);
+            }else {
+
+                fileName = framework.getController().getControllerName();
+                fileName = engine.simpleRender(fileName, metadataFinally);
+            }
         }
 
         result = engine.render(result, metadataFinally);

@@ -4716,9 +4716,9 @@
         import { ConfigModule, ConfigService } from "@nestjs/config";
         import { TypeOrmModule } from "@nestjs/typeorm";
         import { SnakeNamingStrategy } from "typeorm-naming-strategies";
-        import * as Models from "./models/index";
+        import * as Models from "./models.index";
         {{#each entities}}
-        import { ${this}Module } from "./models/${this}/${this}.module";
+        import { ${this}Module } from "./${minStart(this)}/${minStart(this)}.module";
         {{/each}}
         @Module({
           imports: [
@@ -4769,53 +4769,51 @@
               (exception as any).stack || exception,
             );
             if (exception instanceof ResourceNotFoundException) {
-              return response.status(HttpStatus.NOT_FOUND).json({
-                error: exception.name,
-                message: exception.message,
-                cause: (exception as any).cause?.message,
-                timestamp: new Date().toISOString(),
-                path: request.url,
-              });
-            }
-
-            if (exception instanceof HttpException) {
               const status = exception.getStatus();
               const message = exception.getResponse();
-              return response.status(status).json({
-                statusCode: status,
-                error: (message as any).error || exception.name,
-                message: (message as any).message || message,
-                timestamp: new Date().toISOString(),
-                path: request.url,
-              });
+              const responseBody = RestResponse.buildErrorResponse(
+              status,
+              typeof message === "string" ? message : (message as any)?.message ?? exception.message,
+              null
+              );
+              return response.status(status).json(responseBody);
             }
-            return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-              statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-              error: "InternalServerError",
-              message: "Internal server error",
-              timestamp: new Date().toISOString(),
-              path: request.url,
-            });
+            if (exception instanceof HttpException) {
+              const message = exception.getResponse();
+              const responseBody = RestResponse.buildErrorResponse(
+              status,
+              typeof message === "string" ? message : (message as any)?.message ?? exception.message,
+              null
+              );
+              return response.status(status).json(responseBody);
+            }
+            // handle generic error 
+            const responseBody = RestResponse.buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred",
+                null
+            );
+            return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(responseBody);
           }
         }
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/filters"
 
     - fileType: "Service Index"
-      fileName: "index"
+      fileName: "services.index"
       extension: "ts"
       content: |
         {{#each entities}}
-        export { ${majStart(this)}Service } from "./${ majStart(this) }Service";
+        export { ${majStart(this)}Service } from "./${minStart(this)}/${ minStart(this) }.service";
         {{/each}}
-      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/services"
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src"
     - fileType: "Model Index"
-      fileName: "index"
+      fileName: "models.index"
       extension: "ts"
       content: |
         {{#each entities}}
-        export { ${ majStart(this) } } from "./${majStart(this)}/${ majStart(this) }.entity";
+        export { ${ majStart(this) } } from "./${minStart(this)}/${ minStart(this) }.entity";
         {{/each}}
-      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/models"
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src"
     - fileType: "Main"
       fileName: "main"
       extension: "ts"
@@ -4874,8 +4872,8 @@
       
         bootstrap();
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src"
-    - fileType: "Export Service"
-      fileName: "ExportService"
+    - fileType: "Service"
+      fileName: "export.service"
       extension: "ts"
       content: |
         import { Injectable } from '@nestjs/common';
@@ -4920,14 +4918,14 @@
           }
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/services"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/export"
   model:
     toGenerate: true
     modelImports: |
       import { Entity, Column, PrimaryGeneratedColumn, PrimaryColumn, OneToMany, ManyToOne, JoinColumn } from "typeorm";
       import { ApiProperty } from "@nestjs/swagger";
       import { IsNotEmpty, MaxLength, Min, Max, Length, Matches, IsDate } from "class-validator";
-      import * as Models from "../index";
+      import * as Models from "../models.index";
     modelExtends: ""
     modelAnnotations: |
       @Entity('${tableName}')
@@ -4960,18 +4958,18 @@
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
-    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/models/${className}"
+    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/${minStart(className)}"
     modelPackage: "{{removeLine}}"
     modelAdditionalFiles:
       - fileType: "Module"
-        fileName: "${className}.module"
+        fileName: "${minStart(className)}.module"
         extension: "ts"
         content: |
           import { Module } from "@nestjs/common";
           import { TypeOrmModule } from "@nestjs/typeorm";
-          import { ${className} } from "./${className}.entity";
-          import { ${className}Service } from "../../services/${className}Service";
-          import { ${className}Controller } from "../../controllers/${className}Controller";
+          import { ${className} } from "./${minStart(className)}.entity";
+          import { ${className}Service } from "./${minStart(className)}.service";
+          import { ${className}Controller } from "./${minStart(className)}.controller";
 
           @Module({
             imports: [TypeOrmModule.forFeature([${className}])],
@@ -4980,7 +4978,7 @@
             exports: [${className}Service],
           })
           export class ${className}Module {}
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/models/${className}"
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/${minStart(className)}"
     validationAnnotations:
       notNull: '@IsNotEmpty({ message: "${majStart(name)} cannot be null" })'
       maxSize: '@MaxLength(${columnSize})'
@@ -5014,13 +5012,13 @@
       import { Injectable } from "@nestjs/common";
       import { InjectRepository } from "@nestjs/typeorm";
       import { Repository, DeepPartial } from "typeorm";
-      import * as Models from "../models/index";
+      import * as Models from "../models.index";
       import { ResourceNotFoundException } from "../common/exceptions/ResourceNotFoundException";
     serviceAnnotations: |
       @Injectable()
     serviceClassKeyword: "export class"
     serviceExtends: ""
-    serviceName: "${majStart(className)}Service"
+    serviceName: "${className}Service"
     serviceFieldContent: |
       {{tab}}constructor(
       {{tab}}  @InjectRepository(Models.${className})
@@ -5056,7 +5054,7 @@
       {{tab}}async findById(id: number): Promise<Models.${className}> {
       {{tab}}  const ${minStart(className)} = await this.${minStart(className)}Repository.findOne({ where: { id } });
       {{tab}}  if (!${minStart(className)}) {
-      {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found");
+      {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found with id:"+id);
       {{tab}}  }
       {{tab}}  return ${minStart(className)};
       {{tab}}}
@@ -5087,7 +5085,7 @@
       {{tab}}  await this.${minStart(className)}Repository.delete(id);
       {{tab}}}
       {{/if}}
-    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/services"
+    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/${minStart(className)}"
     servicePackage: ""
     serviceAdditionalFiles: []
   controller:
@@ -5095,11 +5093,11 @@
     controllerImports: |
       import { Controller, Get, Post, Put, Delete, Param, Body, Query, HttpException, HttpStatus } from "@nestjs/common";
       import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiExtraModels, getSchemaPath, ApiBody } from "@nestjs/swagger";
-      import { ${majStart(className)}Service } from "../services";
+      import { ${className}Service } from "./${minStart(className)}.service";
       import { RestResponse } from "../common/dto/RestResponse";
       import { WebUtils } from "../common/utils/WebUtil";
       import { ResourceNotFoundException } from "../common/exceptions/ResourceNotFoundException";
-      import * as Models from "../models/index";
+      import * as Models from "../models.index";
       import { Page } from "../common/dto/Page";
     controllerAnnotations: |
       @ApiTags("${minStart(className)}")
@@ -5390,7 +5388,7 @@
       {{tab}}}
       {{/if}}{{removeLine}}
 
-    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/controllers"
+    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/${minStart(className)}"
     controllerPackage: "{{removeLine}}"
     controllerAdditionalFiles: [ ]
   configurations: []

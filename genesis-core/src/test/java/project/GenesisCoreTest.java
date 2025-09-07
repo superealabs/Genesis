@@ -339,7 +339,7 @@ public class GenesisCoreTest {
             var project = ProjectGenerator.projects.get(projectId);
 
             List<String> generationOptions = List.of("Model", "Service", "Controller");
-            String projectName = "TestNode";
+            String projectName = "NestApp";
             String groupLink = "";
             String projectPort = "3000";
             String logLevel = "Information";
