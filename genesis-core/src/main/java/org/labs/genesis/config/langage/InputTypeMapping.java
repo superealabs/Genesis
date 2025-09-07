@@ -144,7 +144,7 @@ public class InputTypeMapping {
     }
 
     private static boolean getIsShowed(ColumnMetadata field) {
-        return !(field.getValidationAnnotations().containsKey("defaultValue"));
+        return !(field.getValidationAnnotations().containsKey("defaultValue") && field.isPrimary());
     }
 
     private static boolean getIsRequired(ColumnMetadata field) {

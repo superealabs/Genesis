@@ -306,7 +306,9 @@ public class FrameworkMetadataProvider {
             if (!field.isForeign()) {
                 InputTypeMapping.Input input = InputTypeMapping.getInput(field, language, engine);
                 Map<String, Object> inputMap = getInputHashMap(input);
-                inputs.add(inputMap);
+                if (Boolean.TRUE.equals(inputMap.get("isShowed"))) {
+                    inputs.add(inputMap);
+                }
             }
         }
         return inputs;
