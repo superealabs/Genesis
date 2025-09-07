@@ -216,7 +216,8 @@ public class FrameworkMetadataProvider {
         metadata.put("fieldsRegular", getRegularFieldsList(tableMetadata, language));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
-        metadata.put("inputs", getInputsList(tableMetadata, language));
+        metadata.put("inputs", getRegularInputsList(tableMetadata, language));
+        metadata.put("inputsFilter", getInputsList(tableMetadata, language));
 
         List<Integer> pageSizesList = Arrays.asList(5, 10, 50, 100, 200, 300, 500, 1000);
         metadata.put("pageSizesList", pageSizesList);
@@ -300,7 +301,7 @@ public class FrameworkMetadataProvider {
         return fields;
     }
 
-    private static List<Map<String, Object>> getInputsList(TableMetadata tableMetadata, Language language) throws Exception {
+    private static List<Map<String, Object>> getRegularInputsList(TableMetadata tableMetadata, Language language) throws Exception {
         List<Map<String, Object>> inputs = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (!field.isForeign()) {
@@ -309,6 +310,18 @@ public class FrameworkMetadataProvider {
                 if (Boolean.TRUE.equals(inputMap.get("isShowed"))) {
                     inputs.add(inputMap);
                 }
+            }
+        }
+        return inputs;
+    }
+
+    private static List<Map<String, Object>> getInputsList(TableMetadata tableMetadata, Language language) throws Exception {
+        List<Map<String, Object>> inputs = new ArrayList<>();
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            if (!field.isForeign()) {
+                InputTypeMapping.Input input = InputTypeMapping.getInput(field, language, engine);
+                Map<String, Object> inputMap = getInputHashMap(input);
+                inputs.add(inputMap);
             }
         }
         return inputs;
