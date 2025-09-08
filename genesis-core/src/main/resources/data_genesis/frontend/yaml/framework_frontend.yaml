@@ -9144,8 +9144,8 @@
           --color-primary: ${primaryColor};
           --color-primary-content: oklch(93% 0.034 272.788);
 
-          // --color-secondary: color-mix(in oklch, var(--color-primary) 15%, white);
-          --color-secondary: ${secondaryColor};
+          --color-secondary: color-mix(in oklch, var(--color-primary) 15%, white);
+          /* --color-secondary: ${secondaryColor}; */
           --color-secondary-content: var(--color-base-content);
 
           --color-accent: oklch(87% 0.15 154.449);
@@ -9298,20 +9298,26 @@
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
 
-    - componentType: "List Entity Component"
+    - componentType: "List Component"
       generateForView: true
       router:
         label: "{{removeLine}}"
         link: ""
       componentName: "${majStart(EntityName)}List"
       importFile: |
-        import { ref } from "vue";
-        import type { PropType } from "vue";
+        
         import ${majStart(EntityName)}Row from "./${majStart(EntityName)}Row.vue";
-        import DeleteConfirmationPopup from "@/core/popup/DeleteConfirmationPopup.vue";
+        
         import { usePopup } from "@/composables/usePopup";
         import { use${majStart(EntityName)}s } from "@/composables/use${majStart(EntityName)}s";
         import type { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
+        {{#if isView}}
+        {{removeLine}}
+        {{else}}
+        import DeleteConfirmationPopup from "@/core/popup/DeleteConfirmationPopup.vue";
+        import { ref } from "vue";
+        import type { PropType } from "vue";
+        {{/if}}
       selector: "${majStart(EntityName)}List"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -9329,7 +9335,7 @@
             <tbody>
               <!-- Empty message -->
               <tr v-if="!loading && message">
-                <td class="text-center py-4 text-gray-500">
+                <td colspan="100" class="text-center py-4 text-gray-500">
                   {{ message }}
                 </td>
               </tr>
@@ -9340,13 +9346,19 @@
                 v-for="${minStart(EntityName)} in data"
                 :key="${minStart(EntityName)}.getKeyValue()"
                 :${minStart(EntityName)}="${minStart(EntityName)}"
-                @request-delete="openDeletePopup"
                 @request-view="view${majStart(EntityName)}"
+                {{#if isView}}
+                {{removeLine}}
+                {{else}}
+                @request-delete="openDeletePopup"
                 @request-update="goToUpdateFormView"
+                {{/if}}
               />
             </tbody>
           </table>
-
+          {{#if isView}}
+          {{removeLine}}
+          {{else}}
           <!-- Delete confirmation popup -->
           <DeleteConfirmationPopup
             :visible="deletePopup"
@@ -9354,6 +9366,7 @@
             @confirm="confirmDelete"
             @cancel="closePopup"
           />
+          {{/if}}
         </div>
       style: "{{removeLine}}"
       export: |
@@ -9380,7 +9393,12 @@
             default: false,
           },
         })
-
+        {{#if isView}}
+        /**
+         * Composables
+         */
+        const { view${majStart(EntityName)} } = use${majStart(EntityName)}s()
+        {{else}}
         /**
          * Emits
          */
@@ -9394,15 +9412,14 @@
         /**
          * Reactive state
          */
-        const selectedEntity = ref<Partial<${majStart(EntityName)}>>({})
-
+        const selectedEntity = ref()
         /**
          * Composables
          */
         const { visible: deletePopup, closePopup } = usePopup(false)
         const { delete${majStart(EntityName)}, view${majStart(EntityName)}, goToUpdateFormView } = use${majStart(EntityName)}s()
-
         /**
+
          * Methods
          */
         function openDeletePopup(entity: ${majStart(EntityName)}) {
@@ -9410,8 +9427,8 @@
           selectedEntity.value = entity
           deletePopup.value = true
         }
-
         async function confirmDelete() {
+
           const { success, error } = await delete${majStart(EntityName)}(selectedEntity.value)
           if (success) {
             deletePopup.value = false
@@ -9420,6 +9437,8 @@
             console.error(error)
           }
         }
+       {{/if}}
+
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
 
@@ -9435,8 +9454,10 @@
         import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
         import ${majStart(EntityName)}List from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}List.vue";
         import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
+        {{#if isView}} {{removeLine}}
+        {{else}}
         import GenesisButton from "@/core/button/GenesisButton.vue";
-        import PlusIcon from "@/core/icons/PlusIcon.vue";
+        import PlusIcon from "@/core/icons/PlusIcon.vue";{{/if}}
         import EntityTable from "@/core/table/EntityTable.vue";
       selector: "${majStart(EntityName)}ListView"
       standalone: true
@@ -9449,10 +9470,12 @@
               ${majStart(EntityName)} /
               <span class="text-gray-500 font-normal">List</span>
             </h3>
+            {{#if isView}}{{removeLine}}
+            {{else}}
             <GenesisButton title="Create new ${minStart(EntityName)}" @click="goToCreateFormView" class="btn-primary">
               <PlusIcon />
               Add new ${minStart(EntityName)}
-            </GenesisButton>
+            </GenesisButton>{{/if}}
           </div>
 
           <!-- Table -->
@@ -9467,22 +9490,25 @@
           />
         </div>
       style: "{{removeLine}}"
+      destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
       export: |
         // Composable for managing entities
         const {
           ${minPluralize(EntityName)},
           search${majPluralize(EntityName)},
-          paginationData,
           message,
           getPaginationData,
+          {{#if isView}}{{removeLine}}
+          {{else}}
           goToCreateFormView,
+          {{/if}}
         } = use${majPluralize(EntityName)}();
 
         // Reactive search fields
         const searchFields = ref<EntitySearchField[]>(
           ${majStart(EntityName)}.getAllSearchFieldsMetadata()
         );
-      destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
+
       componentAdditionalFiles:
         - fileType: "Entity Composable"
           fileName: "use${majPluralize(EntityName)}"
@@ -9759,12 +9785,15 @@
       importFile: |
         import type { PropType } from "vue";
         import type { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
+        {{#if isView}}
+        {{removeLine}}
+        {{else}}
         import GenesisButton from "@/core/button/GenesisButton.vue";
         import { usePopup } from "@/composables/usePopup";
         import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
         import DeleteConfirmationPopup from "@/core/popup/DeleteConfirmationPopup.vue";
         import TrashIcon from "@/core/icons/TrashIcon.vue";
-        import EditIcon from "@/core/icons/EditIcon.vue";
+        import EditIcon from "@/core/icons/EditIcon.vue";{{/if}}
       selector: "${majStart(EntityName)}Details"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -9788,7 +9817,9 @@
                 </div>
                 {{/each}}
               </div>
-
+              {{#if isView}}
+              {{removeLine}}
+              {{else}}
               <div class="flex justify-end gap-3 mt-6">
                 <GenesisButton @click="openDeletePopup(${minStart(EntityName)})" class="btn-outline btn-error hover:text-white">
                   <TrashIcon class="mr-2" />
@@ -9799,10 +9830,13 @@
                   <span>Update</span>
                 </GenesisButton>
               </div>
+              {{/if}}
             </div>
           </div>
         </div>
-
+        {{#if isView}}
+        {{removeLine}}
+        {{else}}
         <DeleteConfirmationPopup
           :visible="deletePopup"
           :message="`Êtes-vous sûr de vouloir supprimer ${majStart(EntityName)} ${minStart(EntityName)}?.id ?`"
@@ -9810,15 +9844,24 @@
           @confirm="confirmDelete"
           @cancel="closePopup"
         />
+        {{/if}}
       export: |
         // Props
+        {{#if isView}}
+        defineProps({
+          ${minStart(EntityName)}: {
+            type: Object as PropType<${majStart(EntityName)}>,
+            required: true,
+          },
+        })
+        {{else}}
         const props = defineProps({
           ${minStart(EntityName)}: {
             type: Object as PropType<${majStart(EntityName)}>,
             required: true,
           },
         })
-
+        
         // Popup composable
         const { closePopup, openPopup, visible: deletePopup } = usePopup(false)
 
@@ -9838,6 +9881,7 @@
           closePopup()
           goToListView()
         }
+        {{/if}}
       style: "{{removeLine}}"
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
@@ -9856,8 +9900,6 @@
         import { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
         import GenesisButton from "@/core/button/GenesisButton.vue";
         import LeftArrowIcon from "@/core/icons/LeftArrowIcon.vue";
-        import { usePopup } from '@/composables/usePopup.ts'
-        import AlertPopup from '@/core/popup/AlertPopup.vue'
       selector: "${majStart(EntityName)}DetailsView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -9879,20 +9921,12 @@
 
           <!-- Entity details -->
           <${majStart(EntityName)}Details v-if="entity" :${minStart(EntityName)}="entity" />
-          
-          <AlertPopup
-            :message="message ?? undefined"
-            title="Error 500"
-            :visible="alertPopup"
-            @close="closePopup"
-          />
         </div>
       style: "{{removeLine}}"
       export: |
         const route = useRoute();
         const { get${majStart(EntityName)}ById, goToListView } = use${majPluralize(EntityName)}();
         const entity = ref<${majStart(EntityName)} | null>(null);
-        const { closePopup, openPopup, visible: alertPopup } = usePopup()
 
         onMounted(async () => {
           const result = await get${majStart(EntityName)}ById(Number(route.params.id));
@@ -10002,7 +10036,7 @@
         import ${majStart(EntityName)}Form from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}Form.vue";
         import AlertPopup from "@/core/popup/AlertPopup.vue";
         import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
-        import { ${majStart(EntityName)}FormDTO } from "@/models/${majStart(EntityName)}Model";
+        import { ${majStart(EntityName)}, ${majStart(EntityName)}FormDTO } from "@/models/${majStart(EntityName)}Model";
         import { usePopup } from "@/composables/usePopup";
         import GenesisButton from "@/core/button/GenesisButton.vue";
         import LeftArrowIcon from "@/core/icons/LeftArrowIcon.vue";
@@ -10060,7 +10094,7 @@
         const freezeStore = useFreezeScreen()
         /** Update handler */
         const updateHandler = async (formDTO: Partial<${majStart(EntityName)}FormDTO>) => {        
-          freezeStore.freeze('Updating tache '+pathId+' ...')
+          freezeStore.freeze('Updating ${minStart(EntityName)} '+pathId+' ...')
           try {
             const data = await update${majStart(EntityName)}(pathId, formDTO)
             if (data && !message.value) view${majStart(EntityName)}(data)
@@ -10076,7 +10110,7 @@
         /** On cancel Handler */
         const cancelHandler = () => {
           if (entity.value){
-            viewTache(entity.value)
+            view${majStart(EntityName)}(entity.value)
           }
         }
 
@@ -10105,7 +10139,7 @@
         import AlertPopup from "@/core/popup/AlertPopup.vue";
         import GenesisButton from "@/core/button/GenesisButton.vue";
         import LeftArrowIcon from "@/core/icons/LeftArrowIcon.vue";
-        import { ${majStart(EntityName)}, ${majStart(EntityName)}FormDTO } from "@/models/${majStart(EntityName)}Model";
+        import { ${majStart(EntityName)}FormDTO } from "@/models/${majStart(EntityName)}Model";
         import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
         import { usePopup } from "@/composables/usePopup";
         import { useFreezeScreen } from "@/stores/useFreezeScreen";
@@ -10126,7 +10160,6 @@
           </div>
 
           <${minStart(EntityName)}-form
-            :${minStart(EntityName)}="${minStart(EntityName)}FormDto"
             submit-label="Save ${majStart(EntityName)}"
             @submit="createHandler"
             @cancel="goToListView"
@@ -10149,7 +10182,7 @@
           freezeStore.freeze("Creating a new ${majStart(EntityName)} ...")
           try {
             const data = await create${majStart(EntityName)}(formDTO)
-            if (data && !message.value) goToListView()
+            if (data && !message.value) view${majStart(EntityName)}(data)
             else throw new Error(String(message.value))
           } catch (error: unknown) {
             console.error(error)
@@ -10293,7 +10326,7 @@
         }
         
         {{#each fieldsPK}}
-        {{#if this.name != id}}
+        {{#if @first}}
         static override getKey(): string {
             return '${this.name}'
         }
@@ -10339,7 +10372,10 @@
           {{/each}}
         ];
       }
-
+      
+      {{#if isView}}
+      {{removeLine}}
+      {{else}}
       export class ${majStart(EntityName)}FormDTO {
         {{#each fields}}
         {{#if this.isForeignKey}}
@@ -10387,7 +10423,7 @@
 
           return entity;
         }
-      }
+      }{{/if}}
     exportsComponents: |
     destinationPath: "${destinationFolder}/src/models"
     name: "${majStart(EntityName)}Model"
