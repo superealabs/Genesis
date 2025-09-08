@@ -9543,72 +9543,33 @@
 
               // Navigation functions
               /** Navigate to ${minStart(EntityName)} detail view */
-              const view${majStart(EntityName)} = (${minStart(EntityName)}: Partial<${majStart(EntityName)}>) => {
-                router.push({ name: "${minStart(EntityName)}detailsview", params: { id: ${minStart(EntityName)}.id } });
+              const view${majStart(EntityName)} = (${minStart(EntityName)}: ${majStart(EntityName)}) => {
+                router.push({ name: "${minStart(EntityName)}detailsview", params: { id: ${minStart(EntityName)}.getKeyValue() } });
               };
 
               /** Navigate to ${minStart(EntityName)} list view */
               const goToListView = () => {
                 router.push({ path: "/${minStart(EntityName)}s" });
               };
-
+              {{#if isView}}
+              {{removeLine}}
+              {{else}}
               /** Navigate to ${minStart(EntityName)} create form */
               const goToCreateFormView = () => {
                 router.push({ path: "/${minStart(EntityName)}s/create" });
               };
 
               /** Navigate to ${minStart(EntityName)} update form */
-              const goToUpdateFormView = (${minStart(EntityName)}: Partial<${majStart(EntityName)}>) => {
-                router.push({ name: "${minStart(EntityName)}updateview", params: { id: ${minStart(EntityName)}.id } });
+              const goToUpdateFormView = (${minStart(EntityName)}: ${majStart(EntityName)}) => {
+                router.push({ name: "${minStart(EntityName)}updateview", params: { id: ${minStart(EntityName)}.getKeyValue() } });
               };
-
-              // API Requests
-              /** Load all ${minStart(EntityName)}s from the API */
-              const load${majStart(EntityName)}s = async (
-                unpagined: boolean = false,
-                pagination?: PaginationRequestParameter,
-                sortFields?: SortFieldParameter[],
-              ): Promise<void> => {
-                message.value = null
-                startLoading()
-                const {
-                  data,
-                  error: err,
-                  pagination: paginationresult,
-                } = await ${minStart(EntityName)}Service.getAll(pagination, sortFields)
-                handleResponse(data, err, paginationresult)
-                
-                if (unpagined) {
-                  while (paginationData.value.hasNext()) {
-                    paginationData.value.nextPage()
-                    const {
-                      data: nextData,
-                      error: nextErr,
-                      pagination: nextPagination,
-                    } = await ${minStart(EntityName)}Service.getAll(paginationData.value.toParameter(), sortFields)
-                    handleResponse(nextData, nextErr, nextPagination, true)
-                  }
-                }
-                stopLoading()
-              }
+            
               /**
                * Delete a ${minStart(EntityName)} by id
                * @param ${minStart(EntityName)} ${majStart(EntityName)} object to delete
                */
-              const delete${majStart(EntityName)} = async (${minStart(EntityName)}: Partial<${majStart(EntityName)}>) => {
-                const result = await ${minStart(EntityName)}Service.remove(${minStart(EntityName)}.id);
-                if (result.error) {
-                  message.value = result.error
-                }
-                return result
-              };
-
-              /**
-               * Get a single ${minStart(EntityName)} by id
-               * @param id ${majStart(EntityName)} ID
-               */
-              const get${majStart(EntityName)}ById = async (id: number | string) => {
-                const result = ${minStart(EntityName)}Service.getById(id);
+              const delete${majStart(EntityName)} = async (${minStart(EntityName)}: ${majStart(EntityName)}) => {
+                const result = await ${minStart(EntityName)}Service.remove(${minStart(EntityName)}.getKeyValue());
                 if (result.error) {
                   message.value = result.error
                 }
@@ -9644,6 +9605,49 @@
                   message.value = error;
                 }
                 return data;
+              };
+              {{/if}}
+
+              // API Requests
+              /** Load all ${minStart(EntityName)}s from the API */
+              const load${majStart(EntityName)}s = async (
+                unpagined: boolean = false,
+                pagination?: PaginationRequestParameter,
+                sortFields?: SortFieldParameter[],
+              ): Promise<void> => {
+                message.value = null
+                startLoading()
+                const {
+                  data,
+                  error: err,
+                  pagination: paginationresult,
+                } = await ${minStart(EntityName)}Service.getAll(pagination, sortFields)
+                handleResponse(data, err, paginationresult)
+                
+                if (unpagined) {
+                  while (paginationData.value.hasNext()) {
+                    paginationData.value.nextPage()
+                    const {
+                      data: nextData,
+                      error: nextErr,
+                      pagination: nextPagination,
+                    } = await ${minStart(EntityName)}Service.getAll(paginationData.value.toParameter(), sortFields)
+                    handleResponse(nextData, nextErr, nextPagination, true)
+                  }
+                }
+                stopLoading()
+              }
+            
+              /**
+               * Get a single ${minStart(EntityName)} by id
+               * @param id ${majStart(EntityName)} ID
+               */
+              const get${majStart(EntityName)}ById = async (id: number | string) => {
+                const result = await ${minStart(EntityName)}Service.getById(id);
+                if (result.error) {
+                  message.value = result.error
+                }
+                return result
               };
 
               /**
@@ -9688,18 +9692,23 @@
                 ${minStart(EntityName)}s,
                 loading,
                 message,
+                paginationData,
+                getPaginationData,
+
                 load${majStart(EntityName)}s,
                 search${majStart(EntityName)}s,
                 get${majStart(EntityName)}ById,
+                view${majStart(EntityName)},
+                goToListView,
+                {{#if isView}}
+                {{removeLine}}
+                {{else}}
+                goToCreateFormView,
+                goToUpdateFormView,
                 delete${majStart(EntityName)},
                 create${majStart(EntityName)},
                 update${majStart(EntityName)},
-                paginationData,
-                getPaginationData,
-                view${majStart(EntityName)},
-                goToListView,
-                goToCreateFormView,
-                goToUpdateFormView,
+                {{/if}}
               };
             }
           destinationPath: "${destinationFolder}/src/composables"
@@ -10169,7 +10178,7 @@
     methods: |
       const restApiWithPage = useRestApi<IPageResponse<${majStart(EntityName)}>>();
       const restApi = useRestApi<${majStart(EntityName)}>();
-      const BASE_URL = "/${minPluralize(EntityName)}";
+      const BASE_URL = "/${lowerCase(classNameLink)}";
 
       /** Helper to wrap response data in ${majStart(EntityName)} instances */
       function wrap${majStart(EntityName)}(
@@ -10192,6 +10201,17 @@
         const response = await restApiWithPage.GET(request.buildRequestUrl());
         return wrap${majStart(EntityName)}(RestResponse.handlePagedResponse<${majStart(EntityName)}>(response)) as PagedDataResponse<${majStart(EntityName)}>;
       }
+      
+      /** POST search with pagination */
+      export async function search(
+        data: Partial<${majStart(EntityName)}>,
+        pagination?: PaginationRequestParameter,
+        sortFields?: SortFieldParameter[]
+      ) {
+        const request = new RequestModel(BASE_URL+'/search', pagination, sortFields);
+        const response = await restApiWithPage.POST(request.buildRequestUrl(), data);
+        return wrap${majStart(EntityName)}(RestResponse.handlePagedResponse<${majStart(EntityName)}>(response)) as PagedDataResponse<${majStart(EntityName)}>;
+      }
 
       /** GET by ID */
       export async function getById(id: number | string | undefined) {
@@ -10199,7 +10219,9 @@
         const response = await restApi.GET(BASE_URL+'/'+id);
         return wrap${majStart(EntityName)}(RestResponse.handleDataResponse<${majStart(EntityName)}>(response)) as DataResponse<${majStart(EntityName)}>;
       }
-
+      {{#if isView}}
+      {{removeLine}}
+      {{else}}
       /** POST create */
       export async function create(data: Partial<${majStart(EntityName)}>) {
         const response = await restApi.POST(BASE_URL, data);
@@ -10222,17 +10244,7 @@
           error: response.returnCode !== 1 ? response.message : null,
         };
       }
-
-      /** POST search with pagination */
-      export async function search(
-        data: Partial<${majStart(EntityName)}>,
-        pagination?: PaginationRequestParameter,
-        sortFields?: SortFieldParameter[]
-      ) {
-        const request = new RequestModel(BASE_URL+'/search', pagination, sortFields);
-        const response = await restApiWithPage.POST(request.buildRequestUrl(), data);
-        return wrap${majStart(EntityName)}(RestResponse.handlePagedResponse<${majStart(EntityName)}>(response)) as PagedDataResponse<${majStart(EntityName)}>;
-      }
+      {{/if}}
 
   modelComponent:
     imports: |
