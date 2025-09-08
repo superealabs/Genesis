@@ -9,8 +9,6 @@ public class InterfaceLang {
     public int id;
     public String name;
     public String locale;
-    public String filename;
-    public String extension;
     public String content;
 
     @Override

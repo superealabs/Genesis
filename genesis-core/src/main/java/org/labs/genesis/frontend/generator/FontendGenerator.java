@@ -1,7 +1,6 @@
 package org.labs.genesis.frontend.generator;
 
 import org.labs.genesis.config.Constantes;
-import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.TableMetadata;

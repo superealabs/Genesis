@@ -38,8 +38,8 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
                 initConditionalWizardStep,
                 sqlRunnerWizardStep,
                 genConfigConditionalWizardStep,
-                specificConfigurationWizardStep,
                 frontendConfigurationWizardStep,
+                specificConfigurationWizardStep,
         };
     }
 

@@ -206,8 +206,6 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
     private void generateProject() throws Exception {
         try {
-            projectGenerationContext.setFrontendLanguage( ProjectGenerator.frontendLanguage.get(Constantes.TYPESCRIPT_ID));
-            projectGenerationContext.setFrontendFramework( ProjectGenerator.frontendFrameworks.get(Constantes.VUE_JS_ID));
             projectGenerator.generateProject(projectGenerationContext);
         } catch (Exception e) {
             e.printStackTrace();

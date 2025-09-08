@@ -28,6 +28,7 @@ public class FrontendFramework
     private Map<String,String> validationRules;
     private FrontendLayout frontendLayout;
     private ProjectBranding projectBranding;
+    private FrontendDestinationPaths frontendDestinationPaths;
 
     public void addRoute(ComponentRoute route){
         if (route.getLabel() == null || route.getLabel().isEmpty()){
