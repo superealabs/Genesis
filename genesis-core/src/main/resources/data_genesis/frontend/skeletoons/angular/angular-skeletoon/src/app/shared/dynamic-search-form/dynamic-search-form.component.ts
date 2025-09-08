@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 export interface SearchField {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'date' | 'select';
+  type: 'text' | 'number' | 'date' | 'select' | 'datetime-local' | 'time';
   options?: { value: any; label: any }[];
 }
 
@@ -31,6 +31,9 @@ export interface SearchField {
             <input *ngSwitchCase="'text'" [formControlName]="field.key" type="text" class="form-control" [placeholder]="field.label">
             <input *ngSwitchCase="'number'" [formControlName]="field.key" type="number" class="form-control" [placeholder]="field.label">
             <input *ngSwitchCase="'date'" [formControlName]="field.key" type="date" class="form-control" [placeholder]="field.label">
+            <input *ngSwitchCase="'time'" [formControlName]="field.key" type="time" class="form-control" [placeholder]="field.label">
+            <input *ngSwitchCase="'datetime-local'" [formControlName]="field.key" type="datetime-local" class="form-control" [placeholder]="field.label">
+
             <ng-container *ngSwitchCase="'select'">
               <select *ngIf="field.options && field.options.length <= 8"
                       [formControlName]="field.key"

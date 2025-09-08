@@ -3,7 +3,7 @@ import { FormGroup, FormControl, Validators, AbstractControl, ValidatorFn, React
 import { CommonModule } from '@angular/common'; // pour *ngIf et *ngFor
 
 export interface FieldConfig {
-  type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'file'| 'hidden';
+  type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'file'| 'hidden' | 'datetime-local' | 'time';
   name: string;
   label: string;
   options?: { value: any; label: string }[];
@@ -63,14 +63,14 @@ export class DynamicFieldComponent implements OnInit {
         defaultValue = String(value); // ou value.toString()
       }
     }
-     
+
 
     this.form.addControl(this.field.name, new FormControl(defaultValue, validators));
   }
 
   getControl(): FormControl {
-  return this.form.get(this.field.name) as FormControl;
-}
+    return this.form.get(this.field.name) as FormControl;
+  }
 
   // === Validators personnalisés ===
   notBlankValidator(control: AbstractControl) {

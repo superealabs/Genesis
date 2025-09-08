@@ -3,7 +3,7 @@
 
   <!-- Input text / number / date -->
   <input
-    *ngIf="['text','number','date'].includes(field.type)"
+    *ngIf="['text','number','date','time','datetime-local'].includes(field.type)"
     [type]="field.type"
     class="form-control"
     [id]="field.name"
