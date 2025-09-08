@@ -956,7 +956,8 @@
             "node": "^20.19.0 || >=22.12.0"
           },
           "scripts": {
-            "dev": "vite",
+            "dev": "run-s format seerve",
+            "serve": "vite",
             "build": "run-p type-check \"build-only {@}\" --",
             "preview": "vite preview",
             "test:unit": "vitest",
