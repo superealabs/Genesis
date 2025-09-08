@@ -50,12 +50,17 @@
       extension: "ts"
       content: |
         import { Routes } from '@angular/router';
+        import { WelcomeComponent } from './shared/welcome/welcome.component';
         
         {{#each entities}}{{removeLine}}
         import { ${minStart(this.className)}Routes } from './features/${toKebabCase(this.className)}/${toKebabCase(this.className)}.routes'
         {{/each}}{{removeLine}}
       
         export const routes: Routes = [
+          {
+                path: '',
+                component: WelcomeComponent,
+          },
           {{#each entities}}{{removeLine}}
           ...${minStart(this.className)}Routes
           {{#if !@last}},{{/if}}{{/each}}{{removeLine}}

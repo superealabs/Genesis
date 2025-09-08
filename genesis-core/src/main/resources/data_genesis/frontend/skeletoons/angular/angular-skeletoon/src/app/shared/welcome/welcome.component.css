@@ -1,0 +1,100 @@
+@import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css');
+
+.welcome-container {
+  display: flex;
+  align-items: flex-start; /* texte plus haut */
+  justify-content: flex-start; /* texte plus à gauche */
+  width: 100%;
+  height: 100%;
+  background: #f9fbff;
+  padding: 5rem; /* plus de marge */
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.welcome-text {
+  max-width: 60%;
+  z-index: 2;
+}
+
+.title {
+  font-size: 4rem;   /* titre plus grand */
+  font-weight: bold;
+  color: var(--primary);
+  margin-bottom: 2rem;
+}
+
+.subtitle {
+  font-size: 1.8rem;   /* sous-texte plus grand */
+  line-height: 2.6rem;
+  color: #333;
+}
+
+.subtitle .create {
+  color: var(--primary);
+  font-weight: bold;
+}
+
+.subtitle .read {
+  color: var(--primary-light);
+  font-weight: bold;
+}
+
+.subtitle .update {
+  color: var(--primary-dark);
+  font-weight: bold;
+}
+
+.subtitle .delete {
+  color: var(--primary-light) ;
+  font-weight: bold;
+}
+
+.icons {
+  margin-top: 2.5rem;
+}
+
+.icon-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 1rem 1.4rem; /* boutons plus imposants */
+  margin-right: 0.8rem;
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: 0.3s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn i {
+  font-size: 1.6rem;
+}
+
+.icon-btn:hover {
+  background: var(--primary-dark);
+}
+
+.icon-btn:active {
+  background: var(--primary-light);
+}
+
+.circle {
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--primary-light), var(--primary-dark));
+  position: absolute;
+  right: -150px;   /* encore plus à droite */
+  bottom: -150px;  /* vraiment en bas */
+  z-index: 1;
+
+  /* effet glace / glossy */
+  box-shadow: inset -20px -20px 40px rgba(255, 255, 255, 0.4),
+              inset 20px 20px 40px rgba(0, 0, 0, 0.1),
+              0 0 50px rgba(0, 0, 0, 0.2);
+}
