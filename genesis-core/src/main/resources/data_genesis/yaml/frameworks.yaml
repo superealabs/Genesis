@@ -4716,6 +4716,7 @@
         import { ConfigModule, ConfigService } from "@nestjs/config";
         import { TypeOrmModule } from "@nestjs/typeorm";
         import { SnakeNamingStrategy } from "typeorm-naming-strategies";
+        import { ExportModule } from "./export/export.module";
         import * as Models from "./models.index";
         {{#each entities}}
         import { ${this}Module } from "./${minStart(this)}/${minStart(this)}.module";
@@ -4741,6 +4742,7 @@
                   ],
                 })
               }),
+              ExportModule,
               {{#each entities}}
               ${this}Module,
               {{/each}}
@@ -4756,7 +4758,7 @@
         import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus,Logger, } from "@nestjs/common";
         import { Request, Response } from "express";
         import { ResourceNotFoundException } from "../exceptions/ResourceNotFoundException";
-
+        import { RestResponse } from "../dto/RestResponse";
         @Catch()
         export class AllExceptionsFilter implements ExceptionFilter {
           private readonly logger = new Logger(AllExceptionsFilter.name);
@@ -4779,6 +4781,7 @@
               return response.status(status).json(responseBody);
             }
             if (exception instanceof HttpException) {
+              const status = exception.getStatus();
               const message = exception.getResponse();
               const responseBody = RestResponse.buildErrorResponse(
               status,

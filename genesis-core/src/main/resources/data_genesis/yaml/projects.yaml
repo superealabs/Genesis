@@ -361,7 +361,18 @@
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM node:20=4
+        node_modules
+        npm-debug.log
+        dist
+        .git
+        *.md
+        .gitignore
+      destinationPath: "${destinationFolder}/${majStart(projectName)}"
+    - fileType: "docker"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM node:20.4
         WORKDIR /usr/src/app
         
         # Copy package.json and package-lock.json
