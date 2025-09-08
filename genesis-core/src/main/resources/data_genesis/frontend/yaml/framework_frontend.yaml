@@ -5,6 +5,10 @@
   template: "Angular-template"
   initPath: "angular/angular-skeletoon"
   componentExtension: "ts"
+  frontendPaths:
+    faviconPath: ""
+    logoPath: ""
+    langsPath: ""
   additionalFiles:
     - fileType: "App-files"
       fileName: "app.component"
@@ -920,7 +924,7 @@
   template: "Vue3TS-template"
   initPath: "vue/vue-3-ts-skeletoon"
   componentExtension: "vue"
-  frontendDestinationPaths:
+  frontendPaths:
     faviconPath: ""
     logoPath: ""
     langsPath: ""
@@ -10383,6 +10387,10 @@
   template: "React-template"
   initPath: "react/react-ts-skeletoon"
   componentExtension: "tsx"
+  frontendPaths:
+    faviconPath: ""
+    logoPath: ""
+    langsPath: ""
   additionalFiles:
     - fileType: "App name config"
       fileName: "app"

@@ -7,6 +7,6 @@ import lombok.Setter;
 @Setter
 public class FrontendDestinationPaths {
     public String faviconPath;
-    public String logoPaht;
+    public String logoPath;
     public String langsPath;
 }

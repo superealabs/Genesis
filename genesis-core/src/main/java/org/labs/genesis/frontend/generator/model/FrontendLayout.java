@@ -3,7 +3,6 @@ package org.labs.genesis.frontend.generator.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.naming.ConfigurationException;
 import java.util.List;
 @Getter
 @Setter
