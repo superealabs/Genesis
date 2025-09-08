@@ -90,15 +90,13 @@ public class FrameworkFrontendMetadataProvider {
     public static HashMap<String, Object> getBrandingHashMap(FrontendFramework frontendFramework){
         ProjectBranding branding = frontendFramework.getProjectBranding();
         HashMap<String, Object> metadata = new HashMap<>();
-        metadata.put("faviconFilename",branding.getFaviconFilename());
-        metadata.put("faviconLink",branding.getFaviconLink());
-        metadata.put("useFaviconLink",branding.useFaviconLink());
-        metadata.put("hasFavicon",branding.hasFavicon());
+        metadata.put("faviconUrl", branding.getFaviconUrl());
+        metadata.put("useFaviconLink", branding.useFaviconLink());
+        metadata.put("hasFavicon", branding.hasFavicon());
 
-        metadata.put("logoFilename", branding.getLogoFilename()+"."+branding.getLogoExtension());
-        metadata.put("logoLink",branding.getLogoLink());
-        metadata.put("useLogoLink",branding.useLogoLink());
-        metadata.put("hasLogo",branding.hasLogo());
+        metadata.put("logoUrl",branding.getLogoUrl());
+        metadata.put("useLogoLink", branding.useLogoLink());
+        metadata.put("hasLogo", branding.hasLogo());
 
         return  metadata;
     }

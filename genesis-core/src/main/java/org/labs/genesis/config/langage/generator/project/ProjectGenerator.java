@@ -297,8 +297,9 @@ public class ProjectGenerator {
     }
     private  void generateFullFrontendProject(ProjectGenerationContext context, List<TableMetadata> entities, List<TableMetadata> views) throws Exception {
         if (!context.isGenerateFrontendApp()) { return; }
-        initFrontendProjectFiles(context);
         IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
+        initFrontendProjectFiles(context);
+        frontendGenerator.generateRessources(context);
         for (TableMetadata tableMetadata : entities) {
             generateFrontendComponents(
                     context,

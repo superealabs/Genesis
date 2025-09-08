@@ -38,4 +38,42 @@ public class ProjectBranding {
     public boolean useFaviconLink(){
         return faviconLink != null && !faviconLink.isEmpty();
     }
+
+    public String getLogoUrl(){
+        if (useLogoLink()){
+            return  "/"+this.getLogoLink();
+        }
+        else if (hasLogo()){
+            return  "/"+getFileFullName();
+        }
+        return  null;
+    }
+
+    public String getFileFullName(){
+        return  this.getLogoFilename() + "." + this.getLogoExtension();
+    }
+
+    public String getFaviconUrl(){
+        if (useFaviconLink()){
+            return  this.getFaviconLink();
+        }
+        else if (hasFavicon()){
+            return  this.getFaviconFilename();
+        }
+        return null;
+    }
+
+    public void setLogoFile(File logoFile) {
+        this.logoFile = logoFile;
+
+        String fileName = logoFile.getName();
+        String extension = "";
+
+        int i = fileName.lastIndexOf('.');
+        if (i > 0) {
+            extension = fileName.substring(i + 1); // e.g. "png", "svg"
+            setLogoExtension(extension);
+        }
+
+    }
 }

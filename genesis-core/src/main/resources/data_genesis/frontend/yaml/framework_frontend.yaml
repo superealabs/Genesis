@@ -925,9 +925,9 @@
   initPath: "vue/vue-3-ts-skeletoon"
   componentExtension: "vue"
   frontendPaths:
-    faviconPath: ""
-    logoPath: ""
-    langsPath: ""
+    faviconPath: "${destinationFolder}/public"
+    logoPath: "${destinationFolder}/src/assets/images"
+    langsPath: "${destinationFolder}/src/lang"
   validationRules:
     notNull: 'required="true"'
     maxSize: 'maxlength="${columnSize}"'
@@ -8878,7 +8878,7 @@
         <html lang="">
           <head>
             <meta charset="UTF-8" />
-            <link rel="icon" href="/favicon.ico" />
+            <link rel="icon" href="{{#if useFaviconLink}}${faviconUrl}{{else}}/favicon.ico{{/if}}" />
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <title>${formatReadable(projectName)}</title>
           </head>
@@ -8960,6 +8960,89 @@
         </script>
       destinationPath: "${destinationFolder}/src/views"
 
+    - fileType: "Navbar"
+      fileName: "GenesisNavbar"
+      extension: "vue"
+      content: |
+        <template>
+          <nav
+            id="sidebar"
+            class="sticky top-0 h-full w-2/12 p-4 flex flex-col bg-base-100 shadow-md"
+          >
+            <!-- Brand -->
+            <div class="text-center flex justify-center gap-2 items-center mb-6 uppercase">
+              <LogoIcon
+                {{#if useLogoLink}}
+                src="${logoUrl}"
+                {{else}}
+                :src="logo"
+                {{/if}}
+                alt="Branding Logo"
+                width="60"
+              />
+              <h1 class="text-2xl font-semibold">
+                ${majStart(projectName)}
+                <span class="text-primary">App</span>
+              </h1>
+            </div>
+
+            <!-- Navigation -->
+            <ul class="menu flex-col flex flex-nowrap w-full overflow-y-auto">
+              <li
+                v-for="section in navigations"
+                :key="section.sectionName"
+                class="mb-2"
+              >
+                <span
+                  class="menu-title font-semibold text-neutral uppercase opacity-30"
+                >
+                  <font-awesome-icon
+                    v-if="section.icon"
+                    :icon="section.icon"
+                    class="mr-2"
+                  />
+                  {{ section.sectionName }}
+                </span>
+                <GenesisNavList :items="section.navChilds" />
+              </li>
+            </ul>
+
+            <!-- Footer part -->
+            <div class="mt-auto pt-4">
+              <UserNavProfile name="John Doe" />
+            </div>
+          </nav>
+        </template>
+
+        <script setup lang="ts">
+        import { storeToRefs } from 'pinia'
+        import { useNavigationsStore } from '@/stores/useNavigationsStore'
+
+        // Components
+        import UserNavProfile from '../user/UserNavProfile.vue'
+        import GenesisNavList from './GenesisNavList.vue'
+        import LogoIcon from '@/core/icons/LogoIcon.vue'
+        {{#if useLogoLink}}
+        {{removeLine}}
+        {{elseIf hasLogo}}
+        import logo from '@/assets/images${logoUrl}'
+        {{else}}
+        import logo from '@/assets/images/logo.png'
+        {{/if}}
+
+        // Store
+        const navigationsStore = useNavigationsStore()
+        const { navigations } = storeToRefs(navigationsStore)
+        </script>
+
+        <style scoped>
+        #sidebar {
+          position: fixed; /* sticky ne peut pas dépasser le parent scrollable */
+        }
+        </style>
+
+      destinationPath: "${destinationFolder}/src/core/navbar"
+
     - fileType: "App-Vue"
       fileName: "App"
       extension: "vue"
@@ -8972,7 +9055,7 @@
           <div class="md:flex flex-col md:flex-row md:min-h-screen w-full">
             <!-- Sidebar -->
             <aside class="w-2/12 h-screen overflow-y-auto">
-              <GenesisSidebar />
+              <GenesisNavbar />
             </aside>
 
             <!-- Main content -->
@@ -8983,7 +9066,7 @@
         </template>
 
         <script setup lang="ts">
-        import GenesisSidebar from './core/navbar/GenesisSidebar.vue'
+        import GenesisNavbar from './core/navbar/GenesisNavbar.vue'
         import FreezeScreen from './core/loading/FreezeScreen.vue'
         </script>
 
@@ -9305,9 +9388,7 @@
         link: ""
       componentName: "${majStart(EntityName)}List"
       importFile: |
-        
         import ${majStart(EntityName)}Row from "./${majStart(EntityName)}Row.vue";
-        
         import { usePopup } from "@/composables/usePopup";
         import { use${majStart(EntityName)}s } from "@/composables/use${majStart(EntityName)}s";
         import type { ${majStart(EntityName)} } from "@/models/${majStart(EntityName)}Model";
@@ -9437,7 +9518,7 @@
             console.error(error)
           }
         }
-       {{/if}}
+        {{/if}}
 
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]

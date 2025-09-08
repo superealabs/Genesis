@@ -1,9 +1,9 @@
 - id: 1
   name: "English"
-  locale: "en-EN"
+  locale: "en"
   content: |
 
 - id: 2
   name: "Francais"
-  locale: "fr-FR"
+  locale: "fr"
   content: |

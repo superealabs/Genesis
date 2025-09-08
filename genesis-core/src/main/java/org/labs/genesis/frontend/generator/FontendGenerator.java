@@ -1,21 +1,25 @@
 package org.labs.genesis.frontend.generator;
 
 import org.labs.genesis.config.Constantes;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMetadataProvider;
-import org.labs.genesis.frontend.generator.model.Component;
-import org.labs.genesis.frontend.generator.model.ComponentRoute;
-import org.labs.genesis.frontend.generator.model.ModelComponent;
-import org.labs.genesis.frontend.generator.model.ServiceComponent;
+import org.labs.genesis.frontend.generator.model.*;
 import org.labs.utils.FileUtils;
 import org.labs.utils.StringUtils;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
+import java.util.List;
 
 public class FontendGenerator implements IFrontendGenerator{
     private final GenesisTemplateEngine engine;
@@ -173,6 +177,48 @@ public class FontendGenerator implements IFrontendGenerator{
 
         FileUtils.createFile(fileSavePath,fileName, language.getExtension(), finalStringForModel);
 
+        return "";
+    }
+
+    @Override
+    public  String generateRessources(ProjectGenerationContext context) throws  Exception{
+        FrontendFramework frontendFramework = context.getFrontendFramework();
+        HashMap<String, Object> metadata = FrameworkFrontendMetadataProvider.getWebappHashMap(context);
+        // Generate logo
+        String logoPath = frontendFramework.getFrontendPaths().getLogoPath();
+        logoPath = engine.simpleRender(logoPath, metadata);
+        logoPath += frontendFramework.getProjectBranding().getLogoUrl();
+        if (!frontendFramework.getProjectBranding().useLogoLink() && frontendFramework.getProjectBranding().hasLogo()){
+            File logoFile = frontendFramework.getProjectBranding().getLogoFile();
+            try{
+                Path targetPath = Paths.get(logoPath);
+                Files.copy(logoFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+            catch (IOException e){
+                throw new Exception("Unable to upload the logo file at "+logoPath+" : "+e.getMessage(),e);
+            }
+        }
+
+        // Generate favicon
+        String faviconPath = frontendFramework.getFrontendPaths().getFaviconPath();
+        faviconPath = engine.simpleRender(faviconPath, metadata);
+        faviconPath += frontendFramework.getProjectBranding().getFaviconUrl();
+        if (!frontendFramework.getProjectBranding().useFaviconLink() && frontendFramework.getProjectBranding().hasFavicon()){
+            File faviconFile = frontendFramework.getProjectBranding().getFaviconFile();
+            try{
+                Path targetPath = Paths.get(faviconPath);
+                Files.copy(faviconFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+            catch (IOException e){
+                throw new Exception("Unable to updload the favicon at "+faviconPath+" : "+e.getMessage(),e);
+            }
+        }
+        // Generate lang files
+        List<InterfaceLang> langs = frontendFramework.getFrontendLayout().getLangs();
+        String langPath = engine.simpleRender(frontendFramework.getFrontendPaths().langsPath, metadata);
+        for (InterfaceLang lang : langs) {
+            FileUtils.createFile(langPath,lang.getName().toLowerCase(), "js",lang.getContent());
+        }
         return "";
     }
 
