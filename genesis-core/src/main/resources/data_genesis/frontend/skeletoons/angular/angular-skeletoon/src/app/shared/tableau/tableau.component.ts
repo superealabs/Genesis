@@ -1,7 +1,15 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input,OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ConfirmationBoxComponent } from '../confirmation-box.component/confirmation-box.component';
+import { Language,LanguageService } from '../services/language/language.service';
+
+
+export interface Colonne {
+  type: 'string' | 'number' | 'Date';
+  label: string;
+  fieldName: string;
+}
 
 @Component({
   selector: 'app-tableau',
@@ -11,12 +19,10 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
     <table class="styled-table">
       <thead>
         <tr>
-          <th *ngFor="let col of colonnes; let i = index"
-              (click)="setActiveColumn(i)">
-            {{ toTitle(col) }}
+          <th *ngFor="let col of colonnes; let i = index" (click)="setActiveColumn(i)">
+            {{ col.label }}
             <span *ngIf="activeColumn === i">
-              <i class="bi"
-                 [ngClass]="sortAsc ? 'bi-caret-down-fill' : 'bi-caret-up-fill'"></i>
+              <i class="bi" [ngClass]="sortAsc ? 'bi-caret-down-fill' : 'bi-caret-up-fill'"></i>
             </span>
           </th>
           <th *ngIf="!isView">Actions</th>
@@ -24,7 +30,9 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
       </thead>
       <tbody>
         <tr *ngFor="let ligne of donnees">
-          <td *ngFor="let valeur of ligne">{{ valeur }}</td>
+          <td *ngFor="let col of colonnes; let i = index">
+            {{ formatValue(ligne[i], col.type) }}
+          </td>
           <td class="actions" *ngIf="!isView">
             <button (click)="redirect(routeToDetail, ligne[0])" title="View" aria-label="View">
               <i class="bi bi-file-text"></i>
@@ -79,8 +87,6 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
     .styled-table tbody tr:hover {
       background-color: #f9fafb;
     }
-
-    /* Actions buttons */
     .actions {
       display: flex;
       gap: 0;
@@ -111,32 +117,86 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
     }
   `]
 })
-export class TableauComponent {
-  @Input() colonnes: string[] = [];
-  @Input() donnees: any[][] = [];
+export class TableauComponent implements OnInit{
+  @Input() colonnes: Colonne[] = [];
+  @Input() donnees: any[] = [];
   @Input() routeToDetail: string = 'entity';
   @Input() routeToModify: string = 'entity';
-  @Input() editFn?: (ligne: any[]) => void;
-  @Input() deleteFn?: (ligne: any[]) => void;
+  @Input() editFn?: (ligne: any) => void;
+  @Input() deleteFn?: (ligne: any) => void;
   @Input() isView: boolean = false;
   @Input() sortFn?: (colIndex: number, asc: boolean) => void;
+  @Input() language: Language = Language.EN;
 
   activeColumn: number = 0;
   sortAsc: boolean = true;
 
   showConfirmation = false;
-  selectedItem: any[] | null = null;
+  selectedItem: any | null = null;
   selectedItemName = '';
 
-  constructor(private router: Router) {}
-
-
-  toTitle(text: string): string {
-    if (!text) return '';
-    return text
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/^./, str => str.toUpperCase());
+  ngOnInit() {
+    this.langService.language$.subscribe(lang => {
+      this.language= lang;
+    });
   }
+
+  constructor(private router: Router,private langService: LanguageService) {}
+
+  formatNumber(value: number): string {
+    if (value == null) return '';
+    return new Intl.NumberFormat(this.language).format(value);
+  }
+
+  formatDate(value: Date | string | number): string {
+    if (!value) return '';
+    const date = new Date(value);
+    const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0;
+    if (hasTime) {
+      return new Intl.DateTimeFormat(this.language, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }).format(date);
+    } else {
+      return new Intl.DateTimeFormat(this.language, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(date);
+    }
+  }
+
+
+  formatDateTime(value: Date | string | number): string {
+    if (!value) return '';
+    const date = new Date(value);
+    return new Intl.DateTimeFormat(this.language, {
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit'
+    }).format(date);
+  }
+
+  formatTime(value: Date | string | number): string {
+    if (!value) return '';
+    const date = new Date(value);
+    return new Intl.DateTimeFormat(this.language, { hour:'2-digit', minute:'2-digit', second:'2-digit' }).format(date);
+  }
+
+  formatValue(value: any, type: 'string' | 'number' | 'Date'): string {
+    if (value == null) return '';
+    switch(type) {
+      case 'number': return this.formatNumber(value);
+      case 'Date': return this.formatDate(value);
+      case 'string': return value;
+        console.log(value)
+      default: return value;
+    }
+  }
+
   setActiveColumn(index: number) {
     if (this.activeColumn === index) {
       this.sortAsc = !this.sortAsc;
@@ -149,16 +209,14 @@ export class TableauComponent {
     }
   }
 
-  openConfirmation(ligne: any[]) {
+  openConfirmation(ligne: any) {
     this.selectedItem = ligne;
-    this.selectedItemName = ligne[1] || 'Item';
+    this.selectedItemName = ligne[this.colonnes[1]?.fieldName] || 'Item';
     this.showConfirmation = true;
   }
 
   confirmDelete = (item: any) => {
-    if (this.deleteFn) {
-      this.deleteFn(item);
-    }
+    if (this.deleteFn) this.deleteFn(item);
     this.showConfirmation = false;
   };
 
@@ -166,7 +224,8 @@ export class TableauComponent {
     this.showConfirmation = false;
   };
 
-  redirect(componentName: string, id: any) {
-    this.router.navigate([componentName, id]);
+  redirect(route: string, id: any) {
+    this.router.navigate([route, id]);
   }
+  
 }

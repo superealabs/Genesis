@@ -277,6 +277,7 @@
         import { PaginationComponent } from '../../../shared/pagination/pagination.component';
         import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
         import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
+        import { Colonne } from '../../../shared/tableau/tableau.component';
         
         import { ${className} } from '../models/${toKebabCase(className)}.model'
         import { ${className}Service } from '../services/${toKebabCase(className)}.service'
@@ -300,7 +301,7 @@
             sortOrientation: boolean=true;
             sortColumn=0;
         
-            columns =[{{#each fields}}{{#if this.isNotForeignKey}}'${this.name}'{{elseIf this.isForeignKey}}'${this.type}'{{/if}}{{#if !@last}},{{/if}}{{/each}}];
+            columns: Colonne[] =[{{#each fields}}{{#if this.isNotForeignKey}}{ fieldName: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.typeBase}' }{{elseIf this.isForeignKey}}{ fieldName: '${this.type}', label: '${formatReadable(this.type)}', type: 'string' }{{/if}}{{#if !@last}},{{/if}}{{/each}}];
         
             ${minStart(className)}s: ${majStart(className)}[] = [];
             
@@ -326,7 +327,7 @@
             {{tab}}{{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each fieldsNotFK}}
                 {{#if this.isPrimaryKey}}
-                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isText}}
+                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isText or this.isInterval }}
                 { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isNumeric }}
                 { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'number' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'number' }{{elseIf this.isDate }}
                 { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' }{{elseIf this.isDateTime}}
@@ -339,7 +340,7 @@
                 this.sortOrientation=sortOrientation;
                 this.sortColumn=columnIndex;
                 const mappedValue = expandDotNotation(this.formValueAttribute);
-                const sortParam=this.columns[this.sortColumn]+','+(this.sortOrientation?'asc':'desc');
+                const sortParam=(this.columns[this.sortColumn]).fieldName+','+(this.sortOrientation?'asc':'desc');
                 this.load${majStart(className)}s(mappedValue,sortParam);
             }
         
@@ -366,7 +367,7 @@
                 private ${minStart(className)}Service: ${majStart(className)}Service
              ) {}
         
-            load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {},sortParam:string=this.columns[this.sortColumn]+',asc;'): void {
+            load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {},sortParam:string=(this.columns[this.sortColumn]).fieldName+',asc;'): void {
                 this.isLoading = true;
                 this.${minStart(className)}Service.search${majStart(className)}s(criteria, this.currentPage-1, this.itemNumber,sortParam).pipe(takeUntil(this.destroy$)).subscribe({
                 next: (${minStart(className)}s: ${majStart(className)}[]) => {
@@ -536,7 +537,7 @@
             {{tab}}{{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each simpleFields}}
             {{#if this.isText}}{{removeLine}}
-              { type: 'text', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isNumeric }}
+              { type: 'text', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isNumeric or this.isInterval}}
               { type: 'number', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDate }}
               { type: 'date', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDateTime}}
               { type: 'datetime-local', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isTime}}
