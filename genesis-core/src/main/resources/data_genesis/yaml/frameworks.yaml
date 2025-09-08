@@ -4872,7 +4872,7 @@
       
         bootstrap();
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src"
-    - fileType: "Service"
+    - fileType: "Export"
       fileName: "export.service"
       extension: "ts"
       content: |
@@ -4899,25 +4899,99 @@
            }
   
           // Generate a PDF file from an html 
-          async generatePDF(html: string): Promise<Buffer> {
-              // create a browser instance
-              const browser = await puppeteer.launch({
-                headless: true,
-              });
-              // create a new page
-              const page = await browser.newPage();
-              await page.setContent(html, { waitUntil: 'networkidle0' });
-          
-              const pdfBuffer = Buffer.from(await page.pdf({
-                format: 'A4',
-                printBackground: true,
-              }));
-          
-              await browser.close();
-              return pdfBuffer;
+          async generatePDF(url: string, fileName: string): Promise<Buffer> {
+           // create a browser instance
+            const browser = await puppeteer.launch({
+              headless: true,
+            });
+            // create a new page
+            const page = await browser.newPage();
+            await page.goto(url, { waitUntil: 'networkidle0' });
+            await page.emulateMediaType('screen');
+            const pdfBuffer = Buffer.from(await page.pdf({
+              path: fileName+".pdf",
+              format: 'A4',
+              printBackground: true,
+            }));
+            
+            await browser.close();
+            return pdfBuffer;
           }
         }
 
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/export"
+    - fileType: "Export"
+      fileName: "export.controller"
+      extension: "ts"
+      content: |
+        import { Controller, Get, Post, Res, HttpStatus, Req, Query, Body } from '@nestjs/common';
+        import { Response, Request } from 'express';
+        import { ExportService } from './export.service';
+        import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+        
+        @ApiTags('Export')
+        @Controller('export')
+        export class ExportController {
+          constructor(private readonly exportService: ExportService) {}
+        
+          @Post('csv')
+          @ApiOperation({
+            summary: 'Export CSV',
+            description: 'Exports a sample CSV of users (predefined data)',
+          })
+          @ApiBody({
+            description: "Data to be exported to CSV",
+          })
+          @ApiResponse({
+            status: 200,
+            description: 'CSV file downloaded successfully',
+            content: {
+              'text/csv': { example: 'id,name,email\n1,Alice,alice@mail.com\n2,Bob,bob@mail.com' },
+            },
+          })
+          async exportCsv(@Body() body:
+            Record<string, any>[], @Res() res: Response) {
+              console.log(body);
+              const csv = await this.exportService.exportCSV(body);
+              
+              res.setHeader('Content-Type', 'text/csv');
+              res.setHeader('Content-Disposition', 'attachment; filename=users.csv');
+              return res.status(HttpStatus.OK).send(csv);
+          }
+        
+          @Get('pdf')
+          @ApiOperation({
+            summary: 'Export PDF',
+            description: 'Exports a sample PDF from predefined HTML content',
+          })
+          @ApiResponse({
+            status: 200,
+            description: 'PDF file downloaded successfully',
+            content: {
+              'application/pdf': { example: 'binary content' },
+            },
+          })
+          async exportPdf(@Query('url')url:string, @Query('fileName')fileName:string, @Res() res: Response) {
+                const pdfBuffer = await this.exportService.generatePDF(url, fileName);
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', 'attachment; filename=sample.pdf');
+                return res.status(HttpStatus.OK).send(pdfBuffer);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/export"
+    - fileType: "Export"
+      fileName: "export.module"
+      extension: "ts"
+      content: |
+        import { Module } from '@nestjs/common';
+        import { ExportController } from './export.controller';
+        import { ExportService } from './export.service';
+        @Module({
+          controllers: [ExportController],
+          providers: [ExportService],
+          exports: [ExportService], 
+        })
+        export class ExportModule {}
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/export"
   model:
     toGenerate: true

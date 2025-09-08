@@ -227,7 +227,6 @@ public class ProjectGenerator {
         useRealSidAndDriverType(database,credentials);
         Connection connection = context.getConnection();
         Language language = context.getLanguage();
-
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
                 List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language, framework);

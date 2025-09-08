@@ -351,6 +351,7 @@ public class FrameworkMetadataProvider {
         String packageDefault = "";
         packageDefault = framework.getModelDao().getModelDaoSavePath();
         System.out.println("Get hashmapDAO global " + packageDefault);
+        System.out.println(tableMetadata.size()+ " SIZEEEEE");
         Database database = tableMetadata.getFirst().getDatabase();
         System.out.println("Get databaseee global ");
 

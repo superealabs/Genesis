@@ -325,6 +325,16 @@ public class GenesisCoreTest {
                 .setTrustCertificate(true)
                 .setUseSSL(true)
                 .setAllowPublicKeyRetrieval(true);
+//        var credentials = new Credentials()
+//                .setHost("localhost")
+//                .setPort("1433")
+//                .setSchemaName("public")
+//                .setDatabaseName("Bibliotheque")
+//                .setUser("SA")
+//                .setPwd("Etu002610")
+//                .setTrustCertificate(true)
+//                .setUseSSL(true)
+//                .setAllowPublicKeyRetrieval(true);
 
         try {
             int databaseId = Constantes.PostgreSQL_ID;
