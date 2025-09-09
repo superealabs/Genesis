@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
@@ -17,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.labs.utils.StringUtils.toCamelCase;
 
 
 @Setter
@@ -184,7 +182,7 @@ public class TableMetadata {
 
                         field.setReferencedColumn(field.getReferencedColumn());
                         field.setReferencedColumnType(field.getReferencedColumnType());
-                        field.setReferencedPrimaryKeyColumn(pkColumnName);
+                        field.setReferencedPrimaryKeyColumn(pkColumnName.transform(StringUtils::toCamelCase));
                         field.setName(
                                 field.getName()
                                         .transform(StringUtils::toCamelCase)

@@ -3610,6 +3610,76 @@
             Expression.Constant(value.ToLower()));
             Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(contains, parameter));
           }
+          
+          protected void AddEqualsTimeOfDay<TProperty>(
+              Expression<Func<TEntity, TProperty?>> selector,
+              TProperty? value)
+              where TProperty : struct
+          {
+            if (value is null) return;
+            
+            var parameter = selector.Parameters.Single();
+            var propertyAccess = selector.Body;
+            
+            // Si c'est un Nullable<T>, on accède à .Value
+            if (propertyAccess.Type.IsGenericType &&
+            propertyAccess.Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+              propertyAccess = Expression.Property(propertyAccess, "Value");
+            }
+            
+            // On vérifie que c'est bien un DateTimeOffset
+            if (propertyAccess.Type != typeof(DateTimeOffset)) return;
+            
+            var timeOfDay = Expression.Property(propertyAccess, "TimeOfDay");
+            var targetTime = Expression.Constant(((DateTimeOffset)(object)value).TimeOfDay);
+            
+            var body = Expression.Equal(timeOfDay, targetTime);
+            Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(body, parameter));
+          }
+          
+          protected void AddRangeTimeOfDay<TProperty>(
+              Expression<Func<TEntity, TProperty?>> selector,
+              TProperty? min,
+              TProperty? max)
+              where TProperty : struct
+          {
+            if (!min.HasValue && !max.HasValue) return;
+            
+            var parameter = selector.Parameters.Single();
+            var propertyAccess = selector.Body;
+            
+            if (propertyAccess.Type.IsGenericType &&
+            propertyAccess.Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+              propertyAccess = Expression.Property(propertyAccess, "Value");
+            }
+            
+            if (propertyAccess.Type != typeof(DateTimeOffset)) return;
+            
+            var timeOfDay = Expression.Property(propertyAccess, "TimeOfDay");
+            
+            Expression? body = null;
+            
+            if (min.HasValue)
+            {
+              var minTime = ((DateTimeOffset)(object)min.Value).TimeOfDay;
+              var minCondition = Expression.GreaterThanOrEqual(timeOfDay, Expression.Constant(minTime));
+              body = minCondition;
+            }
+            
+            if (max.HasValue)
+            {
+              var maxTime = ((DateTimeOffset)(object)max.Value).TimeOfDay;
+              var maxCondition = Expression.LessThanOrEqual(timeOfDay, Expression.Constant(maxTime));
+              body = body == null ? maxCondition : Expression.AndAlso(body, maxCondition);
+            }
+            
+            if (body != null)
+            {
+              Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(body, parameter));
+            }
+          }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
@@ -3637,6 +3707,118 @@
             }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
+    - fileType: "TimeTzUtcConverter"
+      fileName: "TimeTzUtcConverter"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Serialization;
+
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using System.Globalization;
+
+        public class TimeTzUtcConverter : JsonConverter<DateTimeOffset>
+        {
+          public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+          {
+              // 1. Parse la chaîne (UTC ou déjà avec offset)
+              var dto = DateTimeOffset.Parse(reader.GetString()!, CultureInfo.InvariantCulture,
+                                             DateTimeStyles.AssumeUniversal);
+
+              // 2. Offset local à l’instant T (arrondi à l’heure)
+              var offset = TimeSpan.FromHours(
+                  Math.Round(TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow).TotalHours));
+
+              // 3. On applique le décalage (ici on SOUSTRAIT pour retrancher 3 h)
+              return dto.Add(offset.Negate());
+          }
+
+            public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options)
+            {
+                // Fuseau actuel de l’OS → on ne prend QUE son *offset* à l’instant T
+                var offset = TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow);
+
+                // … mais on arrondit au quart-heure le plus proche pour éviter
+                // les écarts de 10 min dus aux règles spécifiques Windows
+                var roundedOffset = TimeSpan.FromHours(Math.Round(offset.TotalHours));
+
+                var local = value.ToOffset(roundedOffset);
+                writer.WriteStringValue(local.ToString("HH:mm:ss") + "Z");
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
+    - fileType: "UtcZJsonConverter"
+      fileName: "UtcZJsonConverter"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Serialization;
+
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using System.Globalization;
+
+        public class UtcZJsonConverter : JsonConverter<DateTimeOffset>
+        {
+            public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                return DateTimeOffset.Parse(reader.GetString()!, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+            }
+
+            public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options)
+            {
+                var utc = value.ToUniversalTime();
+                writer.WriteStringValue(utc.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture));
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
+    - fileType: "IsoDurationJsonConverter"
+      fileName: "IsoDurationJsonConverter"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Serialization;
+        
+        using System;
+        using System.Globalization;
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using System.Xml;
+
+        public class IsoDurationJsonConverter : JsonConverter<TimeSpan>
+        {
+            public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                var str = reader.GetString();
+                // XmlConvert gère ISO-8601 "PT..."
+                return XmlConvert.ToTimeSpan(str);
+            }
+
+            public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(XmlConvert.ToString(value)); // PT27H45M7.8S
+            }
+        }
+
+        public class NullableIsoDurationJsonConverter : JsonConverter<TimeSpan?>
+        {
+            public override TimeSpan? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                var str = reader.GetString();
+                if (string.IsNullOrWhiteSpace(str)) return null;
+                return XmlConvert.ToTimeSpan(str);
+            }
+
+            public override void Write(Utf8JsonWriter writer, TimeSpan? value, JsonSerializerOptions options)
+            {
+                if (value == null)
+                    writer.WriteNullValue();
+                else
+                    writer.WriteStringValue(XmlConvert.ToString(value.Value));
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
 
   configurations:
     - name: "Logging Level"
@@ -3679,6 +3861,8 @@
       using System.ComponentModel.DataAnnotations;
       using System.ComponentModel.DataAnnotations.Schema;
       using System.ComponentModel;
+      using System.Text.Json.Serialization;
+      using ${majStart(projectName)}.Serialization;
     modelExtends: ""
     modelAnnotations: |
       [Table("${tableName}")]
@@ -3694,6 +3878,27 @@
       {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
       {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
       {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
+      {{elseIf this.isTimeTz}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+      {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
+      {{elseIf this.isDateTimeTz}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}[JsonConverter(typeof(UtcZJsonConverter))]
+      {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
+      {{elseIf this.isInterval}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+      {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
       {{tab}}{{else}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}{{#each this.validationAnnotations}}
@@ -3722,6 +3927,7 @@
           using Microsoft.Extensions.DependencyInjection;
           using Microsoft.EntityFrameworkCore;
           using ${majStart(projectName)}.Models;
+          using ${majStart(projectName)}.Models.Dto;
           using ${majStart(projectName)}.Services.Implementation;
           using ${majStart(projectName)}.Repositories.Implementation;
           using ${majStart(projectName)}.Data;
@@ -3878,7 +4084,7 @@
                 
                 Assert.NotNull(result);
                 {{#if !isView}}
-                Assert.True(result.Any(), "Aucun enregistrement trouvé dans GetAllAsync. Vérifiez si la base contient des données.");
+                Assert.True(result.Content.Any(), "Aucun enregistrement trouvé dans GetAllAsync. Vérifiez si la base contient des données.");
                 {{else}}{{removeLine}}{{/if}}
               }
             }
@@ -3891,24 +4097,16 @@
                 var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
                 var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
                 
-                var search = new ${majStart(className)}SearchModel
-                {
-                  {{#each fields}}
-                  {{#if this.isPrimaryKey}}{{removeLine}}
-                  {{elseIf this.isForeignKey}}{{removeLine}}
-                  {{else}}${majStart(this.name)} = ${this.mockdata},
-                  {{/if}} 
-                  {{/each}}
-                };
-                var objectSearch = new GenericMapper().Map<${majStart(className)}SearchModel, ${majStart(className)}>(search);
+                var search = new ${majStart(className)}Dto();
+                var objectSearch = new GenericMapper().Map<${majStart(className)}Dto, ${majStart(className)}>(search);
                 
                 // Act
-                var result = await service.SearchAsync(objectSearch, page: 0, pageSize: 10, sorting: null);
+                var result = await service.SearchAsync(search, page: 0, pageSize: 10, sorting: null);
                 
                 // Assert
                 Assert.NotNull(result);
                 {{#if !isView}} 
-                Assert.True(result.Any(), "Aucun ${className} trouvé avec le critère de recherche.");
+                Assert.True(result.Content.Any(), "Aucun ${className} trouvé avec le critère de recherche.");
                 {{else}}{{removeLine}}{{/if}}
               }
             }
@@ -3928,6 +4126,7 @@
                 Assert.NotNull(result);
                 {{#each fields}}
                 {{#if this.isForeignKey}}{{removeLine}}
+                {{tab}}{{elseIf this.isTime or this.isDateTime}}{{removeLine}}
                 {{else}}Assert.Equal(mockData.${majStart(this.name)}, result?.${majStart(this.name)});{{/if}}
                 {{/each}}
                 {{else}}{{removeLine}}{{/if}}
@@ -3940,6 +4139,9 @@
         extension: "cs"
         content: |
           namespace ${majStart(projectName)}.Models.Dto;
+          
+          using ${majStart(projectName)}.Serialization;
+          using System.Text.Json.Serialization;
 
           public class ${majStart(className)}Dto
           {
@@ -3948,8 +4150,22 @@
           {{tab}}
           {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
           {{tab}}public ${this.type}Dto? ${majStart(this.name)} { get; set; }
-          {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
-          public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{elseIf this.isTimeTz}}
+          {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
+          {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
+          {{elseIf this.isInterval}}
+          {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
+          {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
+          {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
           {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
           {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
           {{tab}}{{else}}
@@ -3999,6 +4215,9 @@
               {{tab}}AddEquals(e => e.${majStart(this.columnNameField)}, dto.${majStart(this.columnNameField)});  
               {{tab}}if (dto.${majStart(this.name)} is { } ${this.name})
                       {{tab}}AddEquals(e => e.${majStart(this.columnNameField)}, ${this.name}.${toPascalCase(this.referencedPrimaryKeyColumn)});
+              {{elseIf this.isTimeTz}}
+              {{tab}}AddEqualsTimeOfDay(e => e.${majStart(this.name)}, dto.${majStart(this.name)});
+              {{tab}}AddRangeTimeOfDay(e => e.${majStart(this.name)}, dto.${majStart(this.name)}Min, dto.${majStart(this.name)}Max);
               {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
               {{tab}}AddRange(e => e.${majStart(this.name)},  dto.${majStart(this.name)}Min,  dto.${majStart(this.name)}Max);
               {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});

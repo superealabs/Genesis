@@ -45,7 +45,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("fieldsFK", fkList);
         metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata));
         metadata.put("fieldsNotFK",getNotFkFieldsList(tableMetadata));
-        metadata.put("containsForeignKey",fkList.size()>0);
+        metadata.put("containsForeignKey",!fkList.isEmpty());
         metadata.put("EntityName",tableMetadata.getTableName());
         metadata.put("isView",tableMetadata.getIsView());
         metadata.put("className",tableMetadata.getClassName());
@@ -140,7 +140,9 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("isNumeric",field.isNumeric());
         fieldMap.put("isDate",field.isDate());
         fieldMap.put("isTime",field.isTime());
+        fieldMap.put("isTimeTz",field.isTimeTz());
         fieldMap.put("isDateTime",field.isDateTime());
+        fieldMap.put("isDateTimeTz",field.isDateTimeTz());
         fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
         fieldMap.put("isText", field.isText());
@@ -209,6 +211,8 @@ public class FrameworkFrontendMetadataProvider {
         data.put("destinationFolder",destinationFolder);
         data.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
         data.put("port",port);
+        data.put("frontendPort",9000);
+        data.put("apiUrl", "localhost");
 //      data.put("components", frontendFramework.getComponents());
         return  data;
     }
@@ -221,6 +225,8 @@ public class FrameworkFrontendMetadataProvider {
         data.put("componentImport", route.getComponentImport());
         data.put("componentImportWithoutExtension", route.getComponentImportWithoutExtension());
         data.put("routerLabel", route.getLabel());
+        data.put("hasLabel", route.hasLabel());
+        data.put("entityName", route.getEntityName());
         return  data;
     }
 

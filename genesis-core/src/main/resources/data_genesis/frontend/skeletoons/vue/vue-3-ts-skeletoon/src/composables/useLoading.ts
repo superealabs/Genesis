@@ -1,15 +1,15 @@
-import { ref } from "vue";
+import { ref } from 'vue'
 
 export function useLoading() {
-  const loading = ref(false);
+  const loading = ref(false)
   const startLoading = () => {
-    loading.value = true;
-  };
+    loading.value = true
+  }
   const stopLoading = () => {
-    loading.value = false;
-  };
+    loading.value = false
+  }
 
-  //   const loadingAction = (action: any) => {
+  //   const loadingAction = (action: unknown) => {
   //     startLoading();
   //     action.call();
   //     stopLoading();
@@ -19,5 +19,5 @@ export function useLoading() {
     loading,
     startLoading,
     stopLoading,
-  };
+  }
 }

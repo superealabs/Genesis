@@ -6,6 +6,8 @@ interface Props {
     value: string;            // ISO-8601
     onChange: (iso: string) => void;
     label?: string;
+    error?: boolean;
+    helperText?: string;
 }
 
 const units = [
@@ -17,12 +19,21 @@ const units = [
     { key: 'seconds', label: 's', max: 59, step: 0.01 },
 ];
 
-export const DurationInput: React.FC<Props> = ({ value, onChange, label = 'Durée' }) => {
+export const DurationInput: React.FC<Props> = ({
+                                                   value,
+                                                   onChange,
+                                                   label = 'Durée',
+                                                   error,
+                                                   helperText,
+                                               }) => {
     const obj = React.useMemo(() => parseISO(value), [value]);
 
     const handle = (k: string, v: string) => {
         const num = parseFloat(v) || 0;
-        onChange(toISO({ ...obj, [k]: num }));
+        const next = { ...obj, [k]: num };
+        // si tout est à 0 → null, sinon ISO
+        const isEmpty = Object.values(next).every((v) => !v);
+        onChange(isEmpty ? null : toISO(next));
     };
 
     return (
@@ -41,7 +52,7 @@ export const DurationInput: React.FC<Props> = ({ value, onChange, label = 'Duré
                 sx={{
                     p: 1,
                     border: 1,
-                    borderColor: 'divider',
+                    borderColor: error ? 'error.main' : 'divider',
                     borderRadius: 1,
                     bgcolor: 'background.paper',
                 }}
@@ -59,6 +70,11 @@ export const DurationInput: React.FC<Props> = ({ value, onChange, label = 'Duré
                     />
                 ))}
             </Stack>
+            {helperText && (
+                <Typography variant="caption" color="error" sx={{ ml: 1, mt: 0.5 }}>
+                    {helperText}
+                </Typography>
+            )}
         </Box>
     );
 };

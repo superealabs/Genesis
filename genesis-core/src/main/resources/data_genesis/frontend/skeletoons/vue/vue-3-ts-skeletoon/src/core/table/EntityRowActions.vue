@@ -1,33 +1,44 @@
 <template>
-  <GenesisButton
-    icon="bi bi-eye"
-    class="border-0 btn-secondary rounded-0"
-    title="Voir Details"
-  />
+  <GenesisButton class="btn-outline btn-square border-0" title="Voir Details" @click="viewRow">
+    <ViewIcon />
+  </GenesisButton>
+
   <GenesisButton
     icon="bi bi-pen"
-    class="border-0 btn-secondary rounded-0"
+    class="btn-outline btn-square border-0"
     title="Modifier"
-  />
+    @click="editRow"
+  >
+    <EditIcon />
+  </GenesisButton>
+
   <GenesisButton
     icon="bi bi-trash"
-    class="border-0 btn-secondary rounded-0"
+    class="btn-outline btn-square border-0 text-error"
     title="Supprimer"
-  />
+    @click="deleteRow"
+  >
+    <TrashIcon />
+  </GenesisButton>
 </template>
 
-<script lang="ts">
-import GenesisButton from "@/core/button/GenesisButton.vue";
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import GenesisButton from '@/core/button/GenesisButton.vue'
+import ViewIcon from '../icons/ViewIcon.vue'
+import EditIcon from '../icons/EditIcon.vue'
+import TrashIcon from '../icons/TrashIcon.vue'
 
-export default defineComponent({
-  name: "DepartementRow",
-  components: { GenesisButton },
-  emits: ["delete-row", "view-row", "edit-row"],
-  setup(props, { emit }) {
-    return {};
-  },
-});
+// ✅ Declare emits
+const emit = defineEmits<{
+  (e: 'delete-row'): void
+  (e: 'view-row'): void
+  (e: 'edit-row'): void
+}>()
+
+// ✅ Handlers
+const deleteRow = () => emit('delete-row')
+const viewRow = () => emit('view-row')
+const editRow = () => emit('edit-row')
 </script>
 
 <style scoped></style>

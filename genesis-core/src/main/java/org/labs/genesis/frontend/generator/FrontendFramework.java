@@ -10,6 +10,7 @@ import org.labs.genesis.frontend.generator.model.ServiceComponent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -28,6 +29,7 @@ public class FrontendFramework
     private ModelComponent modelComponent;
     private String initPath;
     private List<ComponentRoute> componentRoutes;
+    private Map<String,String> validationRules;
 
     public void addRoute(ComponentRoute route){
         if (route.getLabel() == null || route.getLabel().isEmpty()){
