@@ -4,17 +4,22 @@
     <input type="text" [value]="item[1]" readonly>
   </div>
 
-  <!-- Bouton Delete à la fin -->
-  <div class="delete-container" *ngIf="deletfn">
-    <button class="delete-btn" (click)="onDeleteClick()">
+  <div class="action-buttons">
+    <button class="update-btn" (click)="onUpdateClick()" >
+      <i class="bi bi-pencil-fill"></i> Update
+    </button>
+
+    <button class="delete-btn" *ngIf="deletfn" (click)="onDeleteClick()">
       <i class="bi bi-trash-fill"></i> Delete
     </button>
   </div>
+
+
   <app-confirmation-box
-      *ngIf="showConfirmation"
-      [message]="'Are you sure you want to delete <b>' + this.id+ '</b>?'"
-      [value]="this.id"
-      [onConfirm]="confirmDelete"
-      [onCancel]="cancelDelete">
-    </app-confirmation-box>
+    *ngIf="showConfirmation"
+    [message]="'Are you sure you want to delete <b>' + this.id+ '</b>?'"
+    [value]="this.id"
+    [onConfirm]="confirmDelete"
+    [onCancel]="cancelDelete">
+  </app-confirmation-box>
 </div>

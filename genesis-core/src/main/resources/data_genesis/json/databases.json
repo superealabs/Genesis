@@ -271,6 +271,7 @@
       "NUMBER": "int",
       "NUMBER(*,*)": "double",
       "VARCHAR2": "string",
+      "INTERVAL": "interval",
       "DATE": "date",
       "TIMESTAMP(6)": "timestamp",
       "TIMESTAMP": "timestamp",

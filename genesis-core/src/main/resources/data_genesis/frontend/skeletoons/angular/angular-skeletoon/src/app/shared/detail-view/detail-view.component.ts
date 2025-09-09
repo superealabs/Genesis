@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { objectToRecord } from '../../../utilities/utilities';
 import { ConfirmationBoxComponent } from '../confirmation-box.component/confirmation-box.component';
@@ -14,11 +15,13 @@ export class DetailViewComponent implements OnChanges {
   @Input() object: any = {};
   @Input() id?: string = "";
   @Input() deletfn?: (id: string) => void;
+  @Input() LinkContext:string="";
 
   data: Record<string, any> = {};
 
-  // Gestion confirmation
   showConfirmation = false;
+
+  constructor(private router: Router) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['object'] && this.object) {
@@ -30,7 +33,6 @@ export class DetailViewComponent implements OnChanges {
     return Object.entries(this.data);
   }
 
-  // Ouvre la confirmation avant suppression
   onDeleteClick() {
     if (this.id && this.deletfn) {
       this.showConfirmation = true;
@@ -39,7 +41,12 @@ export class DetailViewComponent implements OnChanges {
     }
   }
 
-  // Confirmer la suppression
+  onUpdateClick() {
+    if (this.id ) {
+      this.router.navigate(['/'+this.LinkContext+"/modify", this.id]);
+    }
+  }
+
   confirmDelete = () => {
     if (this.id && this.deletfn) {
       this.deletfn(this.id);

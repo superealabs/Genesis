@@ -23,6 +23,19 @@ public class FrameworkFrontendMetadataProvider {
     private static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
 
 
+    public static HashMap<String, Object> getHashMapForSecurity(String securityType,ProjectGenerationContext context) {
+        HashMap<String, Object> metadata = new HashMap<>();
+
+        if(securityType.contains("JWT")) {
+            metadata.put("useJWT",true);
+        }else
+        {
+            metadata.put("useJWT",false);
+        }
+        metadata.putAll(getWebappHashMap(context));
+        return metadata;
+    }
+
     public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata,String destinationFolder,String projectName) {
         HashMap<String, Object> metadata = new HashMap<>();
 

@@ -23,6 +23,7 @@ public class FrontendFramework
     private String template;
     private String componentExtension;
     private List<FilesEdit> additionalFiles;
+    private List<FilesEdit> authenticationFiles;
     private List<Component> components;
     private ServiceComponent serviceComponent;
     private ModelComponent modelComponent;
