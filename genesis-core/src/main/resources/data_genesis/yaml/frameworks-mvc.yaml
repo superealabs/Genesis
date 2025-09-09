@@ -1681,9 +1681,9 @@
         
         public class EntityUtils
         {
-        {{tab}}private readonly FormTestingContext _context;
+        {{tab}}private readonly ${majStart(projectName)}Context _context;
 
-        {{tab}}public EntityUtils(FormTestingContext context)
+        {{tab}}public EntityUtils(${majStart(projectName)}Context context)
         {{tab}}{
         {{tab}}{{tab}}_context = context;
         {{tab}}}
