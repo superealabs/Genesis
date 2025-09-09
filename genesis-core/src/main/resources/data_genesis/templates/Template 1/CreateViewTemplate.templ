@@ -32,8 +32,8 @@ ${modelType}
             </label>
             {{#if this.type = radio}}{{removeLine}}
             <div class="input-boolean-options">
-                <input type="${this.type}" ${inputTagHelper} value="true"><p>True</p>
-                <input type="${this.type}" ${inputTagHelper} value="false"><p>False</p>
+                <input type="${this.type}" ${inputTagHelper} ${checkedRadioTagHelper} value="true"><p>True</p>
+                <input type="${this.type}" ${inputTagHelper} ${checkedRadioTagHelper} value="false"><p>False</p>
             </div>
             {{else}}{{removeLine}}
             <input type="${this.type}" ${inputTagHelper} placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>

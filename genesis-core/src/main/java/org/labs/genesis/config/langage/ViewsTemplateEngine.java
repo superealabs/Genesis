@@ -94,6 +94,7 @@ public class ViewsTemplateEngine {
         private String validationTagHelper;
         private String selectValidationTagHelper;
         private String inputTagHelper;
+        private String checkedRadioTagHelper;
         private String selectTagHelper;
         private String createLink;
 //        private Input[] inputsList;

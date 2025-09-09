@@ -93,6 +93,7 @@
     validationTagHelper: "asp-validation-for=\"${majStart(this.name)}\""
     selectValidationTagHelper: "asp-validation-for=\"${majStart(this.columnNameField)}\""
     inputTagHelper: "name=\"${majStart(this.name)}\" id=\"${majStart(this.name)}\" asp-for=\"${majStart(this.name)}\""
+    checkedRadioTagHelper: "checked=\"@(Model?.${majStart(this.name)} != false ? \"checked\" : null)\""
     selectTagHelper: "name=\"${majStart(this.columnNameField)}\" id=\"${majStart(this.columnNameField)}\" asp-for=\"${majStart(this.columnNameField)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
     createLink: "asp-action=\"Create\" asp-controller=\"${className}\""
   edit:

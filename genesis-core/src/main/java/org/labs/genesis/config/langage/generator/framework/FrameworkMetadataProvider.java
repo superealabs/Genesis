@@ -568,6 +568,7 @@ public class FrameworkMetadataProvider {
         altMap.put("validationTagHelper", viewsTemplateEngine.getCreate().getValidationTagHelper());
         altMap.put("selectValidationTagHelper", viewsTemplateEngine.getCreate().getSelectValidationTagHelper());
         altMap.put("inputTagHelper", viewsTemplateEngine.getCreate().getInputTagHelper());
+        altMap.put("checkedRadioTagHelper", viewsTemplateEngine.getCreate().getCheckedRadioTagHelper());
         altMap.put("selectTagHelper", viewsTemplateEngine.getCreate().getSelectTagHelper());
         altMap.put("createLink", viewsTemplateEngine.getCreate().getCreateLink());
         return altMap;
