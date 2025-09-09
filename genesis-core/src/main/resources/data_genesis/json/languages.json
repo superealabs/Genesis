@@ -29,6 +29,7 @@
       "double": "Double",
       "string": "String",
       "date": "java.time.LocalDate",
+      "datetime": "java.time.LocalDateTime",
       "timestamp": "java.time.LocalDateTime",
       "timestamptz": "java.time.OffsetDateTime",
       "timestamp[]": "java.time.LocalDateTime[]",
@@ -74,6 +75,7 @@
       "Float": []
     },
     "mockData": {
+      "datetime": "java.time.LocalDateTime.now()",
       "int": "0",
       "double": "0.",
       "json": "\"{}\"",
@@ -131,6 +133,7 @@
       "DECIMAL": "0."
     },
     "criteriaBuildSnippet": {
+      "datetime": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "int": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "int identity": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "double": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
@@ -210,6 +213,7 @@
       "double": "double",
       "string": "string",
       "date": "DateOnly",
+      "datetime": "DateTime",
       "timestamp": "DateTime",
       "timestamptz": "DateTimeOffset",
       "time": "TimeSpan",
@@ -228,6 +232,7 @@
     },
     "attributeTypeAnnotations": {},
     "mockData": {
+      "datetime": "DateTime.UtcNow",
       "int": "0",
       "double": "0.0",
       "json": "\"{}\"",
