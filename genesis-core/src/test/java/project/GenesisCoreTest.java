@@ -322,7 +322,7 @@ public class GenesisCoreTest {
                 .setHost("localhost")
                 .setPort("5432")
                 .setSchemaName("")
-                .setDatabaseName("genesis")
+                .setDatabaseName("genesis_app")
                 .setUser("postgres")
                 .setPwd("root")
                 .setTrustCertificate(true)
@@ -352,14 +352,14 @@ public class GenesisCoreTest {
             framework.setFrameworkSecurities();
 
             List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
-            String projectName = "mvcfirsttry";
+            String projectName = "test";
             String groupLink = "";
             String projectPort = "8080";
             String logLevel = "Information";
             String projectDescription = "An ASP.NET BEGIN Project";
             String frameworkVersion = "8.0";
             String languageVersion = "";
-            String destinationFolder = "E:/stage/test dotnet mvc";
+            String destinationFolder = "E:/stage/dotnet mvc/hotfix/generated";
 
             int viewsTemplateEngineId = Constantes.Razor_ID;
             int viewsTemplateId = Constantes.Template_1_ID;
