@@ -156,10 +156,11 @@ public class ProjectGenerator {
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
 
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
-
+        System.out.println(securityType+ " SECURITYYY");
         Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
 
         selectedSecurityOption.ifPresent(security -> {
+
             try {
                 renderFilesEdits(security.getSecurityFiles(), projectFilesEditsHashMap);
             } catch (Exception e) {

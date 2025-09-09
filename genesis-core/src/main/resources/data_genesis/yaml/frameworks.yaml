@@ -4713,9 +4713,8 @@
       extension: "ts"
       content: |
         import { Module } from "@nestjs/common";
-        import { ConfigModule, ConfigService } from "@nestjs/config";
-        import { TypeOrmModule } from "@nestjs/typeorm";
-        import { SnakeNamingStrategy } from "typeorm-naming-strategies";
+        import { ConfigModule } from "@nestjs/config";
+        import { DatabaseModule } from './database/database.module';
         import { ExportModule } from "./export/export.module";
         import * as Models from "./models.index";
         {{#each entities}}
@@ -4724,24 +4723,7 @@
         @Module({
           imports: [
               ConfigModule.forRoot({ isGlobal: true }),
-              TypeOrmModule.forRootAsync({
-                inject: [ConfigService],
-                useFactory: (config: ConfigService) => ({
-                  {{#if databaseType = PostgreSQL}}type: "postgres",{{/if}}{{#if databaseType = Oracle}}type: "oracle",{{/if}}{{#if databaseType = SQL Server}}type: "mssql",{{/if}}{{#if databaseType = MySQL}}type: "mysql",{{/if}}
-                  host: config.get<string>("DB_HOST"),
-                  port: config.get<number>("DB_PORT", 1433),
-                  username: config.get<string>("DB_USERNAME"),
-                  password: config.get<string>("DB_PASSWORD"),
-                  database: config.get<string>("DB_DATABASE"),
-                  synchronize: false,
-                  logging: false,
-                  namingStrategy: new SnakeNamingStrategy(),
-                  entities: [
-                    {{#each entities}}Models.${this},
-                    {{/each}}
-                  ],
-                })
-              }),
+              DatabaseModule,
               ExportModule,
               {{#each entities}}
               ${this}Module,
@@ -4750,6 +4732,68 @@
         })
         export class AppModule {}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src"
+    - fileType: "Database module"
+      fileName: "database.module"
+      extension: "ts"
+      content: |
+        import { Module } from '@nestjs/common';
+        import { ConfigService, ConfigModule } from '@nestjs/config';
+        import { TypeOrmModule } from '@nestjs/typeorm';
+        import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+        import * as Models from '../models.index';
+        import { SqlInitService } from './sql-init.service';
+
+        @Module({
+          imports: [
+            ConfigModule,
+            TypeOrmModule.forRootAsync({
+                inject: [ConfigService],
+                useFactory: (config: ConfigService) => ({
+                  {{#if databaseType = PostgreSQL}}type: "postgres",{{/if}}{{#if databaseType = Oracle}}type: "oracle",{{/if}}{{#if databaseType = SQL Server}}type: "mssql",{{/if}}{{#if databaseType = MySQL}}type: "mysql",{{/if}}
+                  host: config.get<string>("DB_HOST"),
+                  port: config.get<number>("DB_PORT"),
+                  username: config.get<string>("DB_USERNAME"),
+                  password: config.get<string>("DB_PASSWORD"),
+                  database: config.get<string>("DB_DATABASE"),
+                  synchronize: false,
+                  logging: false,
+                  namingStrategy: new SnakeNamingStrategy(),
+                  entities: [
+                    {{#each entities}}Models.${this},
+                    {{/each}}{{removeLine}}
+                  ],
+              }),
+            }),
+          ],
+          providers: [SqlInitService], 
+        })
+        export class DatabaseModule {}
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/database"
+    - fileType: "Database service"
+      fileName: "sql-init.service"
+      extension: "ts"
+      content: |
+        import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+        import { DataSource } from 'typeorm';
+        import * as fs from 'fs';
+        import * as path from 'path';
+
+        @Injectable()
+        export class SqlInitService implements OnApplicationBootstrap {
+          constructor(private readonly dataSource: DataSource) {}
+
+          async onApplicationBootstrap() {
+            const sqlPath = path.join(__dirname, '../../db/init.sql');
+            if (!fs.existsSync(sqlPath)) {
+              console.log('No sql file found for database initialization');
+              return;
+            }
+            const sql = fs.readFileSync(sqlPath, 'utf8');
+            await this.dataSource.query(sql);
+            console.log('init.sql executed');
+          }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/database"
 
     - fileType: "ExceptionFilter"
       fileName: "AllExceptionsFilter"
@@ -5468,7 +5512,13 @@
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/${minStart(className)}"
     controllerPackage: "{{removeLine}}"
     controllerAdditionalFiles: [ ]
-  configurations: []
+  configurations:
+    - name: "Security Type"
+      variableName: "securityType"
+      options:
+        - "NONE"
+        - "Nest Security - JWT"
+      defaultOption: "Nest Security - JWT"
   dependencies: []
 
 
