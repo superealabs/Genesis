@@ -156,8 +156,19 @@ public class ProjectGenerator {
             return;
         }
         HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(context.getFrontendFramework(),context.getProjectName(),context.getWebappFolder(),context.getProjectPort(),entities);
-        finalRenderData.putAll(FrameworkFrontendMetadataProvider.getWebappHashMap(context));
+        HashMap<String,Object> folder=FrameworkFrontendMetadataProvider.getWebappHashMap(context);
+        finalRenderData.putAll(folder);
         renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
+
+        String securityType = (String) context.getFrameworkConfiguration().get("securityType");
+        Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
+        selectedSecurityOption.ifPresent(security -> {
+            try {
+                renderFilesEdits(context.getFrontendFramework().getAuthenticationFiles(),FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType,context));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private void generateProjectFiles(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {

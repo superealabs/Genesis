@@ -3,13 +3,28 @@
     <span>Your</span><span class="blue">App</span>
   </div>
 
+
+  <div class="language-selector">
+    <label for="language">Language :</label>
+    <select id="language" [(ngModel)]="selectedLanguage" (change)="changeLanguage(selectedLanguage)">
+      <option *ngFor="let lang of Language | keyvalue" [value]="lang.value">
+        {{ lang.value }}
+      </option>
+    </select>
+  </div>
+
+
   <div class="section-label entities-label">ENTITIES</div>
   <ng-container *ngFor="let entry of entities | keyvalue">
-    <a class="entities" routerLink="{{ entry.value }}" routerLinkActive="active">{{ entry.key }}</a>
+    <a class="entities" routerLink="{{ entry.value }}" routerLinkActive="active">
+       {{ entry.key }}
+    </a>
   </ng-container>
 
   <div class="section-label views-label">VIEWS</div>
   <ng-container *ngFor="let entry of views | keyvalue">
-    <a class="views" routerLink="{{ entry.value }}" routerLinkActive="active">{{ entry.key }}</a>
+    <a class="views" routerLink="{{ entry.value }}" routerLinkActive="active">
+       {{ entry.key }}
+    </a>
   </ng-container>
 </div>

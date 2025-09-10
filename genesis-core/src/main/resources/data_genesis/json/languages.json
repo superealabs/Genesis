@@ -118,6 +118,7 @@
       "INT": "0",
       "VARCHAR": "\"mock\"",
       "DATE": "java.time.LocalDate.now()",
+      "TIMESTAMP": "java.time.LocalDateTime.now()",
       "BIGINT": "0L",
       "SMALLINT": "0",
       "TEXT": "\"mock\"",

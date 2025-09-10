@@ -9,6 +9,13 @@
     faviconPath: ""
     logoPath: ""
     langsPath: ""
+  authenticationFiles:
+    - fileType: "authentication files"
+      fileName: "test-auth"
+      extension: ".ts"
+      content: |
+        {{#if useJWT}} io eee JWT be{{else}}pas de jwt {{/if}}
+      destinationPath: "${destinationFolder}/src"
   additionalFiles:
     - fileType: "App-files"
       fileName: "app.component"
@@ -47,12 +54,17 @@
       extension: "ts"
       content: |
         import { Routes } from '@angular/router';
+        import { WelcomeComponent } from './shared/welcome/welcome.component';
         
         {{#each entities}}{{removeLine}}
         import { ${minStart(this.className)}Routes } from './features/${toKebabCase(this.className)}/${toKebabCase(this.className)}.routes'
         {{/each}}{{removeLine}}
       
         export const routes: Routes = [
+          {
+                path: '',
+                component: WelcomeComponent,
+          },
           {{#each entities}}{{removeLine}}
           ...${minStart(this.className)}Routes
           {{#if !@last}},{{/if}}{{/each}}{{removeLine}}
@@ -110,6 +122,7 @@
       extension: "ts"
       content: |
         export const environment = {
+        
         {{tab}}production: true,
         {{tab}}apiUrl: 'http://localhost:8070/${toKebabCase(projectName)}'
         };
@@ -273,6 +286,7 @@
         import { PaginationComponent } from '../../../shared/pagination/pagination.component';
         import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
         import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
+        import { Colonne } from '../../../shared/tableau/tableau.component';
         
         import { ${className} } from '../models/${toKebabCase(className)}.model'
         import { ${className}Service } from '../services/${toKebabCase(className)}.service'
@@ -296,7 +310,7 @@
             sortOrientation: boolean=true;
             sortColumn=0;
         
-            columns =[{{#each fields}}{{#if this.isNotForeignKey}}'${this.name}'{{elseIf this.isForeignKey}}'${this.type}'{{/if}}{{#if !@last}},{{/if}}{{/each}}];
+            columns: Colonne[] =[{{#each fields}}{{#if this.isNotForeignKey}}{ fieldName: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.typeBase}' }{{elseIf this.isForeignKey}}{ fieldName: '${this.type}', label: '${formatReadable(this.type)}', type: 'string' }{{/if}}{{#if !@last}},{{/if}}{{/each}}];
         
             ${minStart(className)}s: ${majStart(className)}[] = [];
             
@@ -322,10 +336,12 @@
             {{tab}}{{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each fieldsNotFK}}
                 {{#if this.isPrimaryKey}}
-                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isText}}
+                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isText or this.isInterval }}
                 { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isNumeric }}
                 { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'number' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'number' }{{elseIf this.isDate }}
-                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' }{{/if}}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' }{{elseIf this.isDateTime}}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'datetime-local' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'datetime-local' }{{elseIf this.isTime}}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'time' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' }{{/if}}
             {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
             ];
         
@@ -333,7 +349,7 @@
                 this.sortOrientation=sortOrientation;
                 this.sortColumn=columnIndex;
                 const mappedValue = expandDotNotation(this.formValueAttribute);
-                const sortParam=this.columns[this.sortColumn]+','+(this.sortOrientation?'asc':'desc');
+                const sortParam=(this.columns[this.sortColumn]).fieldName+','+(this.sortOrientation?'asc':'desc');
                 this.load${majStart(className)}s(mappedValue,sortParam);
             }
         
@@ -360,11 +376,12 @@
                 private ${minStart(className)}Service: ${majStart(className)}Service
              ) {}
         
-            load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {},sortParam:string=this.columns[this.sortColumn]+',asc;'): void {
+            load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {},sortParam:string=(this.columns[this.sortColumn]).fieldName+',asc;'): void {
                 this.isLoading = true;
                 this.${minStart(className)}Service.search${majStart(className)}s(criteria, this.currentPage-1, this.itemNumber,sortParam).pipe(takeUntil(this.destroy$)).subscribe({
                 next: (${minStart(className)}s: ${majStart(className)}[]) => {
                         this.${minStart(className)}s = ${minStart(className)}s;
+                        this.totalItems=this.${minStart(className)}Service.elementNumber;  
                         this.data=recursiveObjectsTo2DArray(${minStart(className)}s);
                         this.isLoading = false;
               },
@@ -484,6 +501,7 @@
         import { ReactiveFormsModule, FormGroup } from '@angular/forms';
         import { Subject, forkJoin, takeUntil } from 'rxjs';
         import { ActivatedRoute } from '@angular/router';
+        import { Router } from '@angular/router';
       
         import { DynamicFieldComponent, FieldConfig } from '../../../shared/dynamic-field/dynamic-field.component';
         import { DynamicFormComponent } from '../../../shared/dynamic-form/dynamic-form.component';
@@ -528,35 +546,39 @@
             {{tab}}{{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each simpleFields}}
             {{#if this.isText}}{{removeLine}}
-              { type: 'text', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isNumeric }}
+              { type: 'text', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isNumeric or this.isInterval}}
               { type: 'number', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDate }}
-              { type: 'date', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{/if}}{{#if !@last}},{{/if}}
+              { type: 'date', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDateTime}}
+              { type: 'datetime-local', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isTime}}
+              { type: 'time', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{/if}}{{#if !@last}},{{/if}}
               {{tab}}{{/each}}{{removeLine}}
           ];
   
 
           constructor(
                 private route: ActivatedRoute,
+                private router :Router,
                 {{#each fieldsFK}}{{removeLine}}
                  private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
                 {{/each}}{{removeLine}}
                 private ${minStart(className)}Service: ${majStart(className)}Service
           ){}
           
-          submit(): void {
+          submit(payload:any): void {
               this.isLoading = true;
               {{#each fieldsFK}}{{removeLine}}
-              this.form.value.${this.name}=JSON.parse(this.form.value.${this.name});
+              payload.${this.name}=JSON.parse(payload.${this.name});
               {{/each}}{{removeLine}}
-              var ${minStart(className)}: ${majStart(className)} = this.form.value;
+              var ${minStart(className)}: ${majStart(className)} = payload;
               const serviceCall = this.formUpdate?this.${minStart(className)}Service.update${majStart(className)}(${minStart(className)} ,this.id):this.${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
               serviceCall.pipe(takeUntil(this.destroy$))
               .subscribe({
                 next: res => {
+                  this.isLoading = false;
                   warnMeUp('Success', '${majStart(className)} created successfully','#28a745','success');
                   this.form.reset();
                   this.validationErrors={};
-                  this.isLoading = false;
+                  this.router.navigate(['${toKebabCase(className)}s']);
                 },
                   error: err => {
                     warnMeUp('error', 'Error while making a move on ${minStart(className)} ');
@@ -639,6 +661,7 @@
           extension: "html"
           content: |
             <app-page-header name="${majStart(className)}s" context="Form" [isView]=true [isForm]=true></app-page-header>
+            <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
             <ng-container *ngIf="formUpdate; else insertForm">
               <app-dynamic-form
                 *ngIf="${minStart(className)}ToUpdate"
@@ -763,7 +786,7 @@
             <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
 
             <div *ngIf="!isLoading && ${minStart(className)}">
-              <app-detail-view [object]="${minStart(className)}" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id"></app-detail-view>
+              <app-detail-view [object]="${minStart(className)}" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id" LinkContext='${toKebabCase(className)}s'></app-detail-view>
             </div>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-details"
         - fileType: "css template"
@@ -785,7 +808,7 @@
       {{tab}}private readonly apiUrl = environment.apiUrl+'/${lowerCase(classNameLink)}';
       {{tab}}constructor(private http: HttpClient) {}
         
-        
+        elementNumber:number=0;
         
         search${majStart(classNameLink)}(
             criteria: Partial<${majStart(className)}>,
@@ -802,7 +825,10 @@
             .set('sortParam', sortParam);
       
             return this.http.post<${majStart(className)}ListDTO>(url, cleanedCriteria, { params }).pipe(
-              map((response) => response.data?.content ?? []),
+              map((response) => {
+                this.elementNumber = response.data?.page?.totalElements ?? 0;
+                return response.data?.content ?? [];
+              }),
               catchError(err => {
                 const isNotFound = err.status === 404 ;
                 if (isNotFound) {
@@ -928,6 +954,12 @@
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/src/assets/images"
     langsPath: "${destinationFolder}/src/lang"
+  authenticationFiles:
+    - fileType: "authentication files"
+      fileName: ""
+      extension: ""
+      content:
+      destinationPath: ""
   validationRules:
     notNull: 'required="true"'
     maxSize: 'maxlength="${columnSize}"'
@@ -10521,6 +10553,12 @@
     faviconPath: ""
     logoPath: ""
     langsPath: ""
+  authenticationFiles:
+    - fileType: "authentication files"
+      fileName: ""
+      extension: ""
+      content:
+      destinationPath: ""
   additionalFiles:
     - fileType: "App name config"
       fileName: "app"
