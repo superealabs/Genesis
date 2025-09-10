@@ -8,10 +8,7 @@ import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
-import org.labs.genesis.frontend.generator.model.Component;
-import org.labs.genesis.frontend.generator.model.ComponentRoute;
-import org.labs.genesis.frontend.generator.model.ModelComponent;
-import org.labs.genesis.frontend.generator.model.ServiceComponent;
+import org.labs.genesis.frontend.generator.model.*;
 import org.labs.utils.StringUtils;
 
 import java.util.ArrayList;
@@ -74,6 +71,47 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("webappFolder", context.getWebappFolder());
         String webappFolder = engine.simpleRender(Constantes.WEBAPP_DIR_TEMPLATE, metadata);
         return  webappFolder;
+    }
+
+    public  static  HashMap<String, Object> getInterfaceLangHashMap(InterfaceLang lang){
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("name", lang.getName());
+        metadata.put("locale", lang.getLocale());
+        return metadata;
+    }
+
+    public static List<Map<String, Object>> getInerfaceLangList(List<InterfaceLang> langs) {
+        List<Map<String, Object>> langList = new ArrayList<>();
+        for (InterfaceLang field : langs) {
+            Map<String, Object> fieldMap = getInterfaceLangHashMap(field);
+            langList.add(fieldMap);
+        }
+        return langList;
+    }
+
+    public static HashMap<String, Object> getLayoutHashMap(FrontendFramework frontendFramework){
+        FrontendLayout layout = frontendFramework.getFrontendLayout();
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("additionalCss",layout.additionalCss);
+        metadata.put("primaryColor",layout.primaryColor);
+        metadata.put("secondaryColor",layout.secondaryColor);
+        metadata.put("navbarPreference",layout.navbar);
+        metadata.put("langList",getInerfaceLangList(layout.langs));
+        return  metadata;
+    }
+
+    public static HashMap<String, Object> getBrandingHashMap(FrontendFramework frontendFramework){
+        ProjectBranding branding = frontendFramework.getProjectBranding();
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("faviconUrl", branding.getFaviconUrl());
+        metadata.put("useFaviconLink", branding.useFaviconLink());
+        metadata.put("hasFavicon", branding.hasFavicon());
+
+        metadata.put("logoUrl",branding.getLogoUrl());
+        metadata.put("useLogoLink", branding.useLogoLink());
+        metadata.put("hasLogo", branding.hasLogo());
+
+        return  metadata;
     }
 
     public static HashMap<String, Object> getWebappHashMap(ProjectGenerationContext context){
@@ -213,8 +251,15 @@ public class FrameworkFrontendMetadataProvider {
         data.put("port",port);
         data.put("frontendPort",9000);
         data.put("apiUrl", "localhost");
-//      data.put("components", frontendFramework.getComponents());
+        data.putAll(getRessourceHashMap(frontendFramework));
         return  data;
+    }
+
+    public static HashMap<String, Object> getRessourceHashMap(FrontendFramework frontendFramework) {
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.putAll(getBrandingHashMap(frontendFramework));
+        metadata.putAll(getLayoutHashMap(frontendFramework));
+        return  metadata;
     }
 
     public  static  HashMap<String,Object> getRouteHashMap(ComponentRoute route){

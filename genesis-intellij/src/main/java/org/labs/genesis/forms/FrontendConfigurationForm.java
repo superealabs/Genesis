@@ -60,7 +60,7 @@ public class FrontendConfigurationForm {
                 .withDescription("Choose a .ico file to load into the editor")
                 .withFileFilter(file -> {
                     String extension = file.getExtension();
-                    return extension.equals("ico") || extension.equals(".ico");
+                    return extension.equals("ico") || extension.equals("svg");
                 });
 
         FileChooserDescriptor logoChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
@@ -68,7 +68,7 @@ public class FrontendConfigurationForm {
                 .withDescription("Choose image or icon file to load into the editor")
                 .withFileFilter(file -> {
                     String extension = file.getExtension();
-                    return extension.equals("png") || extension.equals("jpeg") || extension.equals("jpg") || extension.equals("ico");
+                    return extension.equals("png") || extension.equals("jpeg") || extension.equals("jpg") || extension.equals("svg") || extension.equals("ico");
                 });
 
         logoFileField.addBrowseFolderListener(null, logoChooserDescriptor);

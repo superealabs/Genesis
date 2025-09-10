@@ -64,8 +64,8 @@ export class RequestModel {
     this.sortFields.forEach((f) => {
       fields.push(`${f.fieldName},${f.direction}`)
     })
-    const sortString = fields.join(';')
-    parameters.push(`sortParam=${sortString}`)
+    // const sortString = fields.join(';')
+    // parameters.push(`sortParam=${sortString}`)
 
     const parameterString = parameters.join('&')
 

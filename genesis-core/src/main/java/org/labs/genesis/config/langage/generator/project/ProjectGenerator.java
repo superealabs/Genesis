@@ -217,7 +217,8 @@ public class ProjectGenerator {
 
     public void generateFrontendComponents(ProjectGenerationContext context,
                                            IFrontendGenerator frontendGenerator,
-                                           TableMetadata tableMetadata) throws Exception {
+                                           TableMetadata tableMetadata,
+                                           boolean generateComponentOnly) throws Exception {
          // Create missing Webapp folder
         String webappFolder = FrameworkFrontendMetadataProvider.getWebappFolder(context);
         FileUtils.createDirectory(webappFolder);
@@ -228,9 +229,9 @@ public class ProjectGenerator {
         String projectName=context.getProjectName();
 
         tableMetadata.setColumnsFrontendTypes(frontendLanguage, database);
-        frontendGenerator.generateComponent(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName,  false);
-        frontendGenerator.generateService(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
-        frontendGenerator.generateModel(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, false);
+        frontendGenerator.generateComponent(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName,  generateComponentOnly);
+        frontendGenerator.generateService(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, generateComponentOnly);
+        frontendGenerator.generateModel(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, generateComponentOnly);
         return;
     }
 
@@ -307,20 +308,23 @@ public class ProjectGenerator {
     }
     private  void generateFullFrontendProject(ProjectGenerationContext context, List<TableMetadata> entities, List<TableMetadata> views) throws Exception {
         if (!context.isGenerateFrontendApp()) { return; }
-        initFrontendProjectFiles(context);
         IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
+        initFrontendProjectFiles(context);
+        frontendGenerator.generateRessources(context);
         for (TableMetadata tableMetadata : entities) {
             generateFrontendComponents(
                     context,
                     frontendGenerator,
-                    tableMetadata
+                    tableMetadata,
+                    false
             );
         }
         for (TableMetadata tableMetadata : views) {
             generateFrontendComponents(
                     context,
                     frontendGenerator,
-                    tableMetadata
+                    tableMetadata,
+                    false
             );
         }
     }
