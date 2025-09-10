@@ -2189,6 +2189,31 @@
               }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Specification/"
+      - fileType: "View Model File"
+        fileName: "${majStart(className)}ViewModel"
+        extension: "cs"
+        content: |
+          namespace ${majStart(projectName)}.ViewModels;
+          
+          using Models;
+          using Models.Dto;
+          using ${majStart(projectName)}.Utils;
+          using Microsoft.AspNetCore.Mvc.Rendering;
+
+          public class ${majStart(className)}ViewModel
+          {
+              public ${majStart(className)}? ${majStart(className)} { get; set; }
+              public ${majStart(className)}Dto? Search${majStart(className)}Criteria { get; set; }
+
+              {{#each fieldsFK}}public string ${majStart(this.type)}DisplayColumn { get; set; } = string.Empty;
+              public string ${majStart(this.type)}PkColumn { get; set; } = string.Empty;{{#if !@last}}{{newline}}{{/if}}{{/each}}
+
+              public List<${majStart(className)}> ${majStart(className)}s { get; set; } = new List<${majStart(className)}>();
+              public PageInfo Page { get; set; } = new PageInfo();
+
+              {{#each fieldsFK}}public IEnumerable<SelectListItem> ${majStart(this.type)}s { get; set; } = new List<SelectListItem>();{{/each}}
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/ViewModels/"
     validationAnnotations:
       notNull: '[Required(ErrorMessage = "${majStart(name)} cannot be null")]'
       maxSize: "[StringLength(${columnSize})]"
@@ -2396,26 +2421,22 @@
       using Microsoft.AspNetCore.Mvc.Rendering;
       using Models;
       using Models.Dto;
-      using Services;
       using Services.Interface;
-      using Swashbuckle.AspNetCore.Annotations;
       using ${majStart(projectName)}.Utils;
       using ${majStart(projectName)}.Filters;
-      using ${majStart(projectName)}.Repositories.Interface;
+      using ${majStart(projectName)}.ViewModels;
 
     controllerAnnotations: ""
     controllerExtends: " : Controller"
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
       {{tab}}private readonly I${majStart(className)}Service _service;
-      {{tab}}private readonly I${majStart(className)}Repository _repository;
       {{tab}}{{#each fieldsFK}}private readonly I${majStart(this.type)}Service _${minStart(this.type)}Service;
       {{tab}}{{#if @last}}private readonly EntityUtils _detector;{{newline}}{{/if}}{{/each}}
     controllerConstructors: |
-      {{tab}}public ${majStart(className)}Controller(I${majStart(className)}Service service, I${majStart(className)}Repository repository{{#each fieldsFK}}, I${majStart(this.type)}Service ${minStart(this.type)}Service{{#if @last}}, EntityUtils detector{{/if}}{{/each}})
+      {{tab}}public ${majStart(className)}Controller(I${majStart(className)}Service service{{#each fieldsFK}}, I${majStart(this.type)}Service ${minStart(this.type)}Service{{#if @last}}, EntityUtils detector{{/if}}{{/each}})
       {{tab}}{
       {{tab}}   _service = service;
-      {{tab}}   _repository = repository;
       {{tab}}   {{#each fieldsFK}}_${minStart(this.type)}Service = ${minStart(this.type)}Service;
       {{tab}}   {{#if @last}}_detector = detector;{{newline}}{{/if}}{{/each}}
       {{tab}}}
@@ -2424,16 +2445,24 @@
       {{tab}}public async Task<IActionResult> Index(int page = 0, int pageSize = 10, string? sortOrder = null)
       {{tab}}{
       {{tab}}    var results = await _service.GetAllAsync(page, pageSize, sortOrder{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
-
+      
       {{tab}}    {{#each fieldsFK}}
-      {{tab}}        string ${minStart(this.type)}Column = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
-      {{tab}}        ViewBag.${this.type}Column = ${minStart(this.type)}Column;
+      {{tab}}    string ${minStart(this.type)}DisplayColumn = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
+      {{tab}}    string ${minStart(this.type)}PkColumn = _detector.GetPrimaryKeyName<${this.type}>();
+      {{tab}}    var ${minStart(this.type)}s = await _${minStart(this.type)}Service.GetAllAsync(0, int.MaxValue, null);
       {{tab}}    {{/each}}{{removeLine}}
       
-      {{tab}}    {{#each fieldsFK}}{{#if @last}}await PopulateDropdowns(null);{{/if}}{{/each}}
+      {{tab}}    var vm = new ${majStart(className)}ViewModel
+      {{tab}}    {
+      {{tab}}        ${majStart(className)}s = results.Content ?? new List<${majStart(className)}>(),
+      {{tab}}        Page = results.Page ?? new PageInfo { Number = page, Size = pageSize },
+      {{tab}}        {{#each fieldsFK}}${majStart(this.type)}DisplayColumn = ${minStart(this.type)}DisplayColumn,
+      {{tab}}        ${majStart(this.type)}PkColumn = ${minStart(this.type)}PkColumn,
+      {{tab}}        ${majStart(this.type)}s = new SelectList(${minStart(this.type)}s?.Content ?? new List<${this.type}>(), ${minStart(this.type)}PkColumn, ${minStart(this.type)}DisplayColumn),
+      {{tab}}        {{/each}}{{removeLine}}
+      {{tab}}    };
       
-      {{tab}}    ViewData["Title"] = "${majStart(className)}";
-      {{tab}}    return View(results);
+      {{tab}}    return View(vm);
       {{tab}}}
       
       {{tab}}// POST: /${majStart(className)}/Search
@@ -2443,53 +2472,62 @@
       {{tab}}    var results = await _service.SearchAsync(dto, page, pageSize, sortOrder);
       
       {{tab}}    {{#each fieldsFK}}
-      {{tab}}    string ${minStart(this.type)}Column = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
-      {{tab}}    ViewBag.${this.type}Column = ${minStart(this.type)}Column;
-      {{tab}}    {{/each}}
+      {{tab}}    string ${minStart(this.type)}DisplayColumn = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
+      {{tab}}    string ${minStart(this.type)}PkColumn = _detector.GetPrimaryKeyName<${this.type}>();
+      {{tab}}    var ${minStart(this.type)}s = await _${minStart(this.type)}Service.GetAllAsync(0, int.MaxValue, null);
+      {{tab}}    {{/each}}{{removeLine}}
       
-      {{tab}}    {{#each fieldsFK}}{{#if @last}}await PopulateDropdowns(null);{{/if}}{{/each}}
+      {{tab}}    var vm = new ${majStart(className)}ViewModel
+      {{tab}}    {
+      {{tab}}        ${majStart(className)}s = results.Content ?? new List<${majStart(className)}>(),
+      {{tab}}        Page = results.Page ?? new PageInfo { Number = page, Size = pageSize },
+      {{tab}}        {{#each fieldsFK}}${majStart(this.type)}DisplayColumn = ${minStart(this.type)}DisplayColumn,
+      {{tab}}        ${majStart(this.type)}PkColumn = ${minStart(this.type)}PkColumn,
+      {{tab}}        ${majStart(this.type)}s = new SelectList(${minStart(this.type)}s?.Content ?? new List<${this.type}>(), ${minStart(this.type)}PkColumn, ${minStart(this.type)}DisplayColumn),
+      {{tab}}        {{/each}}{{removeLine}}
+      {{tab}}        Search${majStart(className)}Criteria = dto
+      {{tab}}    };
       
-      {{tab}}    ViewData["Title"] = "${majStart(className)}";
-      {{tab}}    return View("Index", results);
+      {{tab}}    return View("Index", vm);
       {{tab}}}
       
       {{tab}}// GET: /${majStart(className)}/Details/${pkColumn}
       {{tab}}public async Task<IActionResult> Details(${pkColumnType} ${pkColumn})
       {{tab}}{
       {{tab}}    var ${minStart(className)} = await _service.GetByIdAsync(${pkColumn}{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
+      {{tab}}    if (${minStart(className)} == null) return NotFound();
       
       {{tab}}    {{#each fieldsFK}}
-      {{tab}}    string ${minStart(this.type)}Column = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
-      {{tab}}    ViewBag.${this.type}Column = ${minStart(this.type)}Column;
-      {{tab}}    {{/each}}  
+      {{tab}}    string ${minStart(this.type)}DisplayColumn = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
+      {{tab}}    {{/each}}{{removeLine}}
       
-      {{tab}}    ViewData["Title"] = "${majStart(className)}";
-      
-      {{tab}}    if (${minStart(className)} == null)
+      {{tab}}    var vm = new ${majStart(className)}ViewModel
       {{tab}}    {
-      {{tab}}         return NotFound();
-      {{tab}}    }
-      {{tab}}    return View(${minStart(className)});
+      {{tab}}        ${majStart(className)} = ${minStart(className)},
+      {{tab}}        {{#each fieldsFK}}${majStart(this.type)}DisplayColumn = ${minStart(this.type)}DisplayColumn,
+      {{tab}}        {{/each}}{{removeLine}}
+      {{tab}}    };
+      
+      {{tab}}    return View(vm);
       {{tab}}}
       
       {{tab}}{{#if !isView}}// GET: /${majStart(className)}/Create
       {{tab}}public async Task<IActionResult> Create()
       {{tab}}{
-      {{tab}}    {{#each fieldsFK}}{{#if @last}}await PopulateDropdowns(null);{{/if}}{{/each}}
-      {{tab}}    ViewData["Title"] = "New ${majStart(className)}";
-      {{tab}}    return View();
+      {{tab}}    var vm = await BuildFormViewModel(new ${majStart(className)}());
+      {{tab}}    return View(vm);
       {{tab}}}
-
+      
       {{tab}}// POST: /${majStart(className)}/Create
       {{tab}}[HttpPost]
       {{tab}}[ValidateAntiForgeryToken]
-      {{tab}}public async Task<IActionResult> Create(${majStart(className)} ${minStart(className)})
+      {{tab}}public async Task<IActionResult> Create(${majStart(className)}ViewModel vm)
       {{tab}}{
       {{tab}}    if (ModelState.IsValid)
       {{tab}}    {
       {{tab}}        try
       {{tab}}        {
-      {{tab}}            await _service.AddAsync(${minStart(className)});
+      {{tab}}            await _service.AddAsync(vm.${majStart(className)});
       {{tab}}            return RedirectToAction(nameof(Index));
       {{tab}}        }
       {{tab}}        catch (Exception ex)
@@ -2499,37 +2537,36 @@
       {{tab}}        }
       {{tab}}    }
       
-      {{tab}}    {{#each fieldsFK}}{{#if @last}}await PopulateDropdowns(${minStart(className)});{{/if}}{{/each}}
-      {{tab}}    return View(${minStart(className)});
+      {{tab}}    var reloadedVm = await BuildFormViewModel(vm.${majStart(className)});
+      {{tab}}    return View(reloadedVm);
       {{tab}}}
-
+      
       {{tab}}// GET: /${majStart(className)}/Edit/${pkColumn}
       {{tab}}public async Task<IActionResult> Edit(${pkColumnType} ${pkColumn})
       {{tab}}{
       {{tab}}    var ${minStart(className)} = await _service.GetByIdAsync(${pkColumn});
       {{tab}}    if (${minStart(className)} == null) return NotFound();
       
-      {{tab}}    {{#each fieldsFK}}{{#if @last}}await PopulateDropdowns(${minStart(className)});{{/if}}{{/each}}
-      {{tab}}    ViewData["Title"] = "Edit ${majStart(className)}";
-      {{tab}}    return View(${minStart(className)});
+      {{tab}}    var vm = await BuildFormViewModel(${minStart(className)});
+      {{tab}}    return View(vm);
       {{tab}}}
-
+      
       {{tab}}// POST: /${majStart(className)}/Edit/${pkColumn}
       {{tab}}[HttpPost]
       {{tab}}[ValidateAntiForgeryToken]
-      {{tab}}public async Task<IActionResult> Edit(${pkColumnType} ${pkColumn}, ${majStart(className)} ${minStart(className)})
+      {{tab}}public async Task<IActionResult> Edit(${pkColumnType} ${pkColumn}, ${majStart(className)}ViewModel vm)
       {{tab}}{
-      {{tab}}    if (${pkColumn} != ${minStart(className)}.${majStart(pkColumn)}) 
+      {{tab}}    if (${pkColumn} != vm.${majStart(className)}?.${majStart(pkColumn)})
       {{tab}}    {
       {{tab}}        ModelState.AddModelError("", "${majStart(pkColumn)} mismatch");
-      {{tab}}        return View(${minStart(className)});
+      {{tab}}        return View(vm);
       {{tab}}    }
       
       {{tab}}    if (ModelState.IsValid)
       {{tab}}    {
       {{tab}}        try
       {{tab}}        {
-      {{tab}}            await _service.UpdateAsync(${minStart(className)});
+      {{tab}}            await _service.UpdateAsync(vm.${majStart(className)});
       {{tab}}            return RedirectToAction(nameof(Index));
       {{tab}}        }
       {{tab}}        catch (Exception ex)
@@ -2539,10 +2576,10 @@
       {{tab}}        }
       {{tab}}    }
       
-      {{tab}}    {{#each fieldsFK}}{{#if @last}}await PopulateDropdowns(${minStart(className)});{{/if}}{{/each}}
-      {{tab}}    ViewData["Title"] = "Edit ${majStart(className)}";
-      {{tab}}    return View(${minStart(className)});
+      {{tab}}    var reloadedVm = await BuildFormViewModel(vm.${majStart(className)});
+      {{tab}}    return View(reloadedVm);
       {{tab}}}
+      
       
       {{tab}}// POST: /${majStart(className)}/Delete/${pkColumn}
       {{tab}}[HttpPost, ActionName("Delete")]
@@ -2553,13 +2590,22 @@
       {{tab}}    return RedirectToAction(nameof(Index));
       {{tab}}}{{else}}{{removeLine}}{{/if}}
       
-      {{tab}}{{#each fieldsFK}}
-      {{tab}}{{#if @first}}private async Task PopulateDropdowns(${majStart(className)}? ${minStart(className)})
-      {{tab}}{{{/if}}
-      {{tab}}{{tab}}var ${minStart(this.type)}s = await _${minStart(this.type)}Service.GetAllAsync(0, int.MaxValue, null);
-      {{tab}}    string ${minStart(this.type)}Column = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
-      {{tab}}    ViewBag.${this.type}s = new SelectList(${minStart(this.type)}s.Content, _detector.GetPrimaryKeyName<${this.type}>(), ${minStart(this.type)}Column); 
-      {{tab}}{{#if @last}}}{{/if}}{{/each}}
+      {{tab}}private async Task<${majStart(className)}ViewModel> BuildFormViewModel(${majStart(className)} ${minStart(className)})
+      {{tab}}{
+      {{tab}}    {{#each fieldsFK}}
+      {{tab}}    string ${minStart(this.type)}DisplayColumn = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
+      {{tab}}    string ${minStart(this.type)}PkColumn = _detector.GetPrimaryKeyName<${this.type}>();
+      {{tab}}    var ${minStart(this.type)}s = await _${minStart(this.type)}Service.GetAllAsync(0, int.MaxValue, null);
+      {{tab}}    {{/each}}{{removeLine}}
+      {{tab}}    return new ${majStart(className)}ViewModel
+      {{tab}}    {
+      {{tab}}        ${majStart(className)} = ${minStart(className)},
+      {{tab}}        {{#each fieldsFK}}${majStart(this.type)}DisplayColumn = ${minStart(this.type)}DisplayColumn,
+      {{tab}}        ${majStart(this.type)}PkColumn = ${minStart(this.type)}PkColumn,
+      {{tab}}        ${majStart(this.type)}s = new SelectList(${minStart(this.type)}s?.Content ?? new List<${this.type}>(), ${minStart(this.type)}PkColumn, ${minStart(this.type)}DisplayColumn),
+      {{tab}}        {{/each}}{{removeLine}}
+      {{tab}}    };
+      {{tab}}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"
     controllerAdditionalFiles: [ ]
