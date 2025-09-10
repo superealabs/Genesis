@@ -44,9 +44,9 @@
     pageSizeChangeLink: "'@Url.Action(\"Index\")?page=1&pageSize='+this.value"
     pageSizeTagHelper: "selected=\"@(Model.Page.Size == ${this})\""
     previousPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size, sortOrder=currentSort })"
-    previousClassCondition: " @(Model.Page.Number == 1 ? \"disabled\" : \"\")"
+    previousClassCondition: " @(Model.Page.Number == 0 ? \"disabled\" : \"\")"
     pagesListLoop: |
-      @for (int i = 1; i <= Model.Page.TotalPages; i++)
+      @for (int i = 0; i < Model.Page.TotalPages; i++)
       {{tab}}{{tab}}{{tab}}{
       {{tab}}{{tab}}{{tab}}{{tab}}<a href="@Url.Action("Index", new { page = i, pageSize = Model.Page.Size, sortOrder=currentSort })"
       {{tab}}{{tab}}{{tab}}{{tab}}class="@(i == Model.Page.Number ? "active" : "")">
@@ -54,11 +54,11 @@
       {{tab}}{{tab}}{{tab}}{{tab}}</a>
       {{tab}}{{tab}}{{tab}}}
     nextPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number + 1, pageSize = Model.Page.Size, sortOrder=currentSort })"
-    nextClassCondition: " @(Model.Page.Number == Model.Page.TotalPages ? \"disabled\" : \"\")"
+    nextClassCondition: " @(Model.Page.Number == Model.Page.TotalPages - 1 ? \"disabled\" : \"\")"
     onGoingPageLink: "@Url.Action(\"Index\")"
     onGoingPageTagHelper: "value=\"@Model.Page.Size\""
     onGoingPagesLoop: |
-      @for (int i = 1; i <= Model.Page.TotalPages; i++)
+      @for (int i = 0; i < Model.Page.TotalPages; i++)
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}<option value="@i" selected="@(i == Model.Page.Number)">
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}@i

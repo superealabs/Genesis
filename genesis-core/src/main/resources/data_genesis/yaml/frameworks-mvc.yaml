@@ -18,6 +18,7 @@
         using Microsoft.EntityFrameworkCore;
         using ${majStart(projectName)}.Data;
         using ${majStart(projectName)}.Filters;
+        using ${majStart(projectName)}.Models;
         using ${majStart(projectName)}.Repositories.Implementation;
         using ${majStart(projectName)}.Repositories.Interface;
         using ${majStart(projectName)}.Services.Implementation;
@@ -41,16 +42,17 @@
         {{#each entities}}
         builder.Services.AddScoped<I${this}Service, ${this}Service>();
         {{/each}}
-        
-        builder.Services.AddScoped<EntityUtils>();  
-        
+        // Adding controllers ...
         builder.Services.AddControllersWithViews(options =>
         {
+            // Adding the global exception filter to all controllers
             options.Filters.Add<GlobalExceptionFilter>();
         });
         
+        builder.Services.AddScoped<EntityUtils>();  
+        
         var app = builder.Build();
-  
+        
         app.UseStatusCodePagesWithReExecute("/Error/{0}");
         
         // Configure the HTTP request pipeline.
@@ -94,25 +96,10 @@
           public ${majStart(projectName)}Context(DbContextOptions<${majStart(projectName)}Context> options) : base(options)
           {
           }
-      
+        
           protected override void OnModelCreating(ModelBuilder modelBuilder)
           {
-            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-            {
-              foreach (var property in entityType.GetProperties())
-              {
-                if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
-                {
-                  property.SetValueConverter(new ValueConverter<DateTime, DateTime>(
-                    v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(),
-                    v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
-                  ));
-                }
-              }
-            }
-        
             base.OnModelCreating(modelBuilder);
-            
             {{#each allEntities}}{{#if this.isView}}
             modelBuilder.Entity<${this.className}>(entity =>
             {
@@ -170,7 +157,7 @@
         {
             private readonly ILogger<GlobalExceptionFilter> _logger;
             private readonly ITempDataDictionaryFactory _tempDataFactory;
-          
+        
             public GlobalExceptionFilter(
                 ILogger<GlobalExceptionFilter> logger,
                 ITempDataDictionaryFactory tempDataFactory)
@@ -183,7 +170,7 @@
             {
                 string message;
                 int statusCode;
-              
+        
                 switch (context.Exception)
                 {
                     case ResourceNotFoundException notFoundEx:
@@ -191,31 +178,31 @@
                         message = notFoundEx.Message;
                         statusCode = StatusCodes.Status404NotFound;
                         break;
-                  
+        
                     case ArgumentException argEx:
                         _logger.LogError(argEx, "Bad argument: {Message}", argEx.Message);
                         message = argEx.Message;
                         statusCode = StatusCodes.Status400BadRequest;
                         break;
-                  
+        
                     case InternalServerErrorException internalEx:
                         _logger.LogError(internalEx, "Internal server error: {Message}", internalEx.Message);
                         message = internalEx.Message + " : " + GetInnermostMessage(internalEx);
                         statusCode = StatusCodes.Status500InternalServerError;
                         break;
-            
+        
                     default:
                         _logger.LogError(context.Exception, "Unexpected error: {Message}", context.Exception.Message);
                         message = "An unexpected error occurred.";
                         statusCode = StatusCodes.Status500InternalServerError;
                         break;
                 }
-              
+        
                 if (statusCode == StatusCodes.Status500InternalServerError)
                 {
                     var tempData = _tempDataFactory.GetTempData(context.HttpContext);
                     tempData["PopupError"] = JsonSerializer.Serialize(message);
-                
+        
                     var referer = context.HttpContext.Request.Headers["Referer"].ToString();
                     if (!string.IsNullOrEmpty(referer))
                     {
@@ -224,7 +211,7 @@
                         return;
                     }
                 }
-              
+        
                 context.HttpContext.Response.StatusCode = statusCode;
                 context.HttpContext.Items["ErrorMessage"] = message;
                 context.ExceptionHandled = true;
@@ -329,32 +316,32 @@
         
                 return result;
             }
-  
+        
             public static string AddSort(string existingSortOrder, string newSortOrder)
             {
               if (string.IsNullOrWhiteSpace(newSortOrder))
               return existingSortOrder ?? "";
-          
+        
               var parts = newSortOrder.Split(',', StringSplitOptions.RemoveEmptyEntries);
               if (parts.Length != 2)
                 return existingSortOrder ?? "";
-          
+        
               string newColumn = parts[0].Trim();
               string newDirection = parts[1].Trim().ToLower();
-          
+        
               var sorts = string.IsNullOrWhiteSpace(existingSortOrder)
                 ? new List<string>()
                 : existingSortOrder.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
-          
+        
               bool found = false;
               for (int i = 0; i < sorts.Count; i++)
               {
                 var sParts = sorts[i].Split(',', StringSplitOptions.RemoveEmptyEntries);
                 if (sParts.Length != 2) continue;
-          
+        
                 string col = sParts[0].Trim();
                 string dir = sParts[1].Trim().ToLower();
-          
+        
                 if (col.Equals(newColumn, StringComparison.OrdinalIgnoreCase))
                 {
                   if (dir == "asc")
@@ -369,10 +356,10 @@
                   break;
                 }
               }
-          
+        
               if (!found)
                 sorts.Add($"{newColumn},{newDirection}");
-          
+        
               return string.Join(";", sorts);
             }
         }
@@ -385,11 +372,17 @@
         namespace ${majStart(projectName)}.Repositories.Generic;
         
         using System.Linq.Expressions;
+        using ${majStart(projectName)}.Utils;
         
         public interface IRepository<T, in TKey> where T : class
         {
             Task<IEnumerable<T>> GetAllWithIncludes(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
-            Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting);
+            Task<PagedResponse<T>> SearchAsync(
+                Expression<Func<T, bool>> predicate,
+                int page,
+                int pageSize,
+                string? sorting,
+                params Expression<Func<T, object?>>[]? includes);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -406,7 +399,7 @@
         namespace ${majStart(projectName)}.Controllers;
         
         using Microsoft.AspNetCore.Mvc;
-      
+        
         public class ErrorController : Controller
         {
             [Route("Error/{statusCode}")]
@@ -419,7 +412,7 @@
                     500 => "An internal error occured.",
                     _ => "An unexpected error occurred."
                 };
-              
+        
                 ViewData["ErrorMessage"] = message;
                 return View("Error");
             }
@@ -532,50 +525,24 @@
                 return keyProperty.Name;
             }
         
-            public async Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting)
+            public async Task<PagedResponse<T>> SearchAsync(
+                Expression<Func<T, bool>> predicate,
+                int page, int pageSize, string? sorting,
+                params Expression<Func<T, object?>>[]? includes)
             {
-              IQueryable<T> query = _dbSet;
-        
-              // Récupère la propriété marquée [Key]
-              var keyProperty = typeof(T).GetProperties()
-              .FirstOrDefault(p => Attribute.IsDefined(p, typeof(KeyAttribute)));
-        
-              // Crée un filtre dynamique basé sur les propriétés non nulles (en ignorant la clé si elle vaut 0)
-              var properties = typeof(T).GetProperties()
-              .Where(p =>
-              {
-                if (!p.CanRead || !p.CanWrite)
-                return false;
-        
-                var value = p.GetValue(example);
-        
-                // Ignore les propriétés nulles
-                if (value == null)
-                return false;
-        
-                // Ignore la clé si elle vaut 0
-                if (p == keyProperty && value.Equals(Activator.CreateInstance(p.PropertyType)))
-                return false;
-        
-                return true;
-              });
-        
-              foreach (var prop in properties)
-              {
-                var value = prop.GetValue(example);
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var propertyAccess = Expression.Property(parameter, prop);
-                var constant = Expression.Constant(value);
-                var equal = Expression.Equal(propertyAccess, constant);
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-                query = query.Where(lambda);
-              }
+              var query = GetQuery(_dbSet, includes).Where(predicate);
         
               string sortOrder = sorting ?? $"{GetKeyPropertyName()},asc";
               query = WebUtils.ApplySort(query, WebUtils.ParseSortingString(sortOrder));
-              query = query.Skip(page * pageSize).Take(pageSize);
         
-              return await query.ToListAsync();
+              var total = await query.LongCountAsync();
+              var items = await query
+              .Skip(page * pageSize)
+              .Take(pageSize)
+              .ToListAsync();
+        
+              return await PaginationHelper.CreatePagedResponse(
+              items, page, pageSize, () => Task.FromResult(total));
             }
         
             public async Task<long> GetTotalCountAsync()
@@ -593,11 +560,15 @@
         namespace ${majStart(projectName)}.Services.Generic;
         
         using System.Linq.Expressions;
+        using ${majStart(projectName)}.Utils;
         
-        public interface IService<T, in TKey> where T : class
+        public interface IService<T, in TKey, in TSearch> where T : class
         {
-            Task<IEnumerable<T>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
-            Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting);
+            Task<PagedResponse<T>> GetAllAsync(
+                int page, int pageSize, string? sorting,
+                params Expression<Func<T, object?>>[]? includeProperties);
+            Task<PagedResponse<T>> SearchAsync(
+                TSearch searchDto, int page, int pageSize, string? sorting);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -1665,7 +1636,7 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
-    - fileType: "Display Column Detector For Foreign Key Values"
+    - fileType: "Entity Utils"
       fileName: "EntityUtils"
       extension: "cs"
       content: |
@@ -1748,6 +1719,302 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
+    - fileType: "Filter Builder Util"
+      fileName: "FilterBuilder"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+        
+        using System.Linq.Expressions;
+        using System.Reflection;
+        
+        public abstract class FilterBuilder<TEntity, TSearch>
+        {
+          protected readonly List<Expression<Func<TEntity, bool>>> Predicates = new();
+        
+          public abstract FilterBuilder<TEntity, TSearch> Build(TSearch dto);
+        
+          public Expression<Func<TEntity, bool>> Combine()
+          => Predicates.Aggregate(PredicateBuilder.True<TEntity>(),
+          (acc, pred) => acc.And(pred));
+        
+          protected void AddEquals<TProperty>(Expression<Func<TEntity, TProperty>> selector,
+          TProperty? value)
+          {
+            if (value is null) return;
+            var parameter = selector.Parameters.Single();
+            var body = Expression.Equal(selector.Body,
+            Expression.Constant(value, typeof(TProperty)));
+            Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(body, parameter));
+          }
+        
+          protected void AddRange<TProperty>(Expression<Func<TEntity, TProperty?>> selector,
+            TProperty? min, TProperty? max)
+            where TProperty : struct, IComparable<TProperty>
+          {
+            if (min.HasValue || max.HasValue)
+            {
+              var parameter = selector.Parameters.Single();
+              Expression propertyAccess = selector.Body;
+        
+              // Si la propriété est Nullable<T>, on accède à .Value
+              if (propertyAccess.Type.IsGenericType &&
+              propertyAccess.Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+              {
+                propertyAccess = Expression.Property(propertyAccess, "Value");
+              }
+        
+              Expression? body = null;
+        
+              if (min.HasValue)
+              {
+                var minCondition = Expression.GreaterThanOrEqual(
+                propertyAccess,
+                Expression.Constant(min.Value)
+                );
+                body = minCondition;
+              }
+        
+              if (max.HasValue)
+              {
+                var maxCondition = Expression.LessThanOrEqual(
+                propertyAccess,
+                Expression.Constant(max.Value)
+                );
+                body = body == null ? maxCondition : Expression.AndAlso(body, maxCondition);
+              }
+        
+              if (body != null)
+              {
+                Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(body, parameter));
+              }
+            }
+          }
+        
+          protected void AddLike(Expression<Func<TEntity, string>> selector,string? value)
+          {
+            if (string.IsNullOrWhiteSpace(value)) return;
+        
+            var method = typeof(string).GetMethod("Contains",
+            BindingFlags.Public | BindingFlags.Instance,
+            new[] { typeof(string) })!;
+        
+            var parameter = selector.Parameters.Single();
+            var toLower = Expression.Call(selector.Body, "ToLower", null);
+            var contains = Expression.Call(toLower, method,
+            Expression.Constant(value.ToLower()));
+            Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(contains, parameter));
+          }
+        
+          protected void AddEqualsTimeOfDay<TProperty>(
+              Expression<Func<TEntity, TProperty?>> selector,
+              TProperty? value)
+              where TProperty : struct
+          {
+            if (value is null) return;
+        
+            var parameter = selector.Parameters.Single();
+            var propertyAccess = selector.Body;
+        
+            // Si c'est un Nullable<T>, on accède à .Value
+            if (propertyAccess.Type.IsGenericType &&
+            propertyAccess.Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+              propertyAccess = Expression.Property(propertyAccess, "Value");
+            }
+        
+            // On vérifie que c'est bien un DateTimeOffset
+            if (propertyAccess.Type != typeof(DateTimeOffset)) return;
+        
+            var timeOfDay = Expression.Property(propertyAccess, "TimeOfDay");
+            var targetTime = Expression.Constant(((DateTimeOffset)(object)value).TimeOfDay);
+        
+            var body = Expression.Equal(timeOfDay, targetTime);
+            Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(body, parameter));
+          }
+        
+          protected void AddRangeTimeOfDay<TProperty>(
+              Expression<Func<TEntity, TProperty?>> selector,
+              TProperty? min,
+              TProperty? max)
+              where TProperty : struct
+          {
+            if (!min.HasValue && !max.HasValue) return;
+        
+            var parameter = selector.Parameters.Single();
+            var propertyAccess = selector.Body;
+        
+            if (propertyAccess.Type.IsGenericType &&
+            propertyAccess.Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+              propertyAccess = Expression.Property(propertyAccess, "Value");
+            }
+        
+            if (propertyAccess.Type != typeof(DateTimeOffset)) return;
+        
+            var timeOfDay = Expression.Property(propertyAccess, "TimeOfDay");
+        
+            Expression? body = null;
+        
+            if (min.HasValue)
+            {
+              var minTime = ((DateTimeOffset)(object)min.Value).TimeOfDay;
+              var minCondition = Expression.GreaterThanOrEqual(timeOfDay, Expression.Constant(minTime));
+              body = minCondition;
+            }
+        
+            if (max.HasValue)
+            {
+              var maxTime = ((DateTimeOffset)(object)max.Value).TimeOfDay;
+              var maxCondition = Expression.LessThanOrEqual(timeOfDay, Expression.Constant(maxTime));
+              body = body == null ? maxCondition : Expression.AndAlso(body, maxCondition);
+            }
+        
+            if (body != null)
+            {
+              Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(body, parameter));
+            }
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
+    - fileType: "Predicate Builder Util"
+      fileName: "PredicateBuilder"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+
+        using System.Linq.Expressions;
+
+        public static class PredicateBuilder
+        {
+            public static Expression<Func<T, bool>> True<T>()  => _ => true;
+            public static Expression<Func<T, bool>> False<T>() => _ => false;
+
+            public static Expression<Func<T, bool>> And<T>(
+                this Expression<Func<T, bool>> left,
+                Expression<Func<T, bool>> right)
+            {
+                var p = left.Parameters[0];
+                var body = Expression.AndAlso(left.Body,
+                             Expression.Invoke(right, p));
+                return Expression.Lambda<Func<T, bool>>(body, p);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
+    - fileType: "TimeTzUtcConverter"
+      fileName: "TimeTzUtcConverter"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Serialization;
+
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using System.Globalization;
+
+        public class TimeTzUtcConverter : JsonConverter<DateTimeOffset>
+        {
+          public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+          {
+              // 1. Parse la chaîne (UTC ou déjà avec offset)
+              var dto = DateTimeOffset.Parse(reader.GetString()!, CultureInfo.InvariantCulture,
+                                             DateTimeStyles.AssumeUniversal);
+
+              // 2. Offset local à l’instant T (arrondi à l’heure)
+              var offset = TimeSpan.FromHours(
+                  Math.Round(TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow).TotalHours));
+
+              // 3. On applique le décalage (ici on SOUSTRAIT pour retrancher 3 h)
+              return dto.Add(offset.Negate());
+          }
+
+            public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options)
+            {
+                // Fuseau actuel de l’OS → on ne prend QUE son *offset* à l’instant T
+                var offset = TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow);
+
+                // … mais on arrondit au quart-heure le plus proche pour éviter
+                // les écarts de 10 min dus aux règles spécifiques Windows
+                var roundedOffset = TimeSpan.FromHours(Math.Round(offset.TotalHours));
+
+                var local = value.ToOffset(roundedOffset);
+                writer.WriteStringValue(local.ToString("HH:mm:ss") + "Z");
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
+    - fileType: "UtcZJsonConverter"
+      fileName: "UtcZJsonConverter"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Serialization;
+
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using System.Globalization;
+
+        public class UtcZJsonConverter : JsonConverter<DateTimeOffset>
+        {
+            public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                return DateTimeOffset.Parse(reader.GetString()!, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+            }
+
+            public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options)
+            {
+                var utc = value.ToUniversalTime();
+                writer.WriteStringValue(utc.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture));
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
+    - fileType: "IsoDurationJsonConverter"
+      fileName: "IsoDurationJsonConverter"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Serialization;
+        
+        using System;
+        using System.Globalization;
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using System.Xml;
+
+        public class IsoDurationJsonConverter : JsonConverter<TimeSpan>
+        {
+            public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                var str = reader.GetString();
+                // XmlConvert gère ISO-8601 "PT..."
+                return XmlConvert.ToTimeSpan(str);
+            }
+
+            public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(XmlConvert.ToString(value)); // PT27H45M7.8S
+            }
+        }
+
+        public class NullableIsoDurationJsonConverter : JsonConverter<TimeSpan?>
+        {
+            public override TimeSpan? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                var str = reader.GetString();
+                if (string.IsNullOrWhiteSpace(str)) return null;
+                return XmlConvert.ToTimeSpan(str);
+            }
+
+            public override void Write(Utf8JsonWriter writer, TimeSpan? value, JsonSerializerOptions options)
+            {
+                if (value == null)
+                    writer.WriteNullValue();
+                else
+                    writer.WriteStringValue(XmlConvert.ToString(value.Value));
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
@@ -1776,6 +2043,8 @@
       using System.ComponentModel.DataAnnotations;
       using System.ComponentModel.DataAnnotations.Schema;
       using System.ComponentModel;
+      using System.Text.Json.Serialization;
+      using ${majStart(projectName)}.Serialization;
     modelExtends: ""
     modelAnnotations: |
       [Table("${tableName}")]
@@ -1785,31 +2054,141 @@
       {{tab}}[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
       {{tab}}[Column("${this.columnName}")]
       {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }
-      {{tab}}{{elseIf this.isForeignKey}}
+      {{elseIf this.isForeignKey}}
+      {{tab}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
       {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
       {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
-      {{tab}}{{else}}{{removeLine}}{{/if}}
-      {{tab}}{{/each}}{{removeLine}}
-      {{tab}}{{#each fieldsRegular}}
+      {{elseIf this.isTimeTz}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
-      {{tab}}public ${this.type}{{#if this.isNullable}}?{{/if}} ${majStart(this.name)} { get; set; }{{#if !@last}}{{newline}}{{/if}}
-      {{tab}}{{/each}}
-      }
-      public class ${majStart(className)}SearchModel
-      {
-      {{tab}}{{#each fields}}
-      {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+      {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+      {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
+      {{elseIf this.isDateTimeTz}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}[JsonConverter(typeof(UtcZJsonConverter))]
+      {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
+      {{elseIf this.isInterval}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+      {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
+      {{tab}}{{else}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/"
     modelPackage: "${majStart(projectName)}.Models"
-    modelAdditionalFiles: [ ]
+    modelAdditionalFiles:
+      - fileType: "DTO search model class"
+        fileName: "${majStart(className)}Dto"
+        extension: "cs"
+        content: |
+          namespace ${majStart(projectName)}.Models.Dto;
+          
+          using ${majStart(projectName)}.Serialization;
+          using System.Text.Json.Serialization;
+
+          public class ${majStart(className)}Dto
+          {
+          {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{elseIf this.isForeignKey}}
+          {{tab}}
+          {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
+          {{tab}}public ${this.type}Dto? ${majStart(this.name)} { get; set; }
+          {{elseIf this.isTimeTz}}
+          {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
+          {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
+          {{elseIf this.isInterval}}
+          {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
+          {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
+          {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
+          {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
+          {{tab}}{{else}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
+          {{tab}}{{/each}}
+          
+            public ${majStart(className)} ToEntity() => new()
+            {
+              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}{{removeLine}}
+              {{elseIf this.isForeignKey}}
+              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
+              {{tab}}{{else}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}{{#if this.isPrimaryKey}}{{removeLine}}{{/if}}
+              {{tab}}{{/each}}
+            };
+          
+            public ${majStart(className)} ToEntity(${pkColumnType} id) => new()
+            {
+              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+              {{tab}}${majStart(this.name)} = id
+              {{elseIf this.isForeignKey}}
+              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
+              {{tab}}{{else}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}
+              {{tab}}{{/each}}
+            };
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto/"
+      - fileType: "Specification File"
+        fileName: "${majStart(className)}FilterBuilder"
+        extension: "cs"
+        content: |
+          namespace ${majStart(projectName)}.Specification;
+
+          using System.Linq.Expressions;
+          using ${majStart(projectName)}.Models;
+          using ${majStart(projectName)}.Models.Dto;
+          using ${majStart(projectName)}.Utils;
+
+          public sealed class ${majStart(className)}FilterBuilder : FilterBuilder<${majStart(className)}, ${majStart(className)}Dto>
+          {
+              public override ${majStart(className)}FilterBuilder Build(${majStart(className)}Dto dto)
+              {
+              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+              {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});{{elseIf this.isForeignKey}}
+              {{tab}}
+              {{tab}}AddEquals(e => e.${majStart(this.columnNameField)}, dto.${majStart(this.columnNameField)});  
+              {{tab}}if (dto.${majStart(this.name)} is { } ${this.name})
+                      {{tab}}AddEquals(e => e.${majStart(this.columnNameField)}, ${this.name}.${toPascalCase(this.referencedPrimaryKeyColumn)});
+              {{elseIf this.isTimeTz}}
+              {{tab}}AddEqualsTimeOfDay(e => e.${majStart(this.name)}, dto.${majStart(this.name)});
+              {{tab}}AddRangeTimeOfDay(e => e.${majStart(this.name)}, dto.${majStart(this.name)}Min, dto.${majStart(this.name)}Max);
+              {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+              {{tab}}AddRange(e => e.${majStart(this.name)},  dto.${majStart(this.name)}Min,  dto.${majStart(this.name)}Max);
+              {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});
+              {{elseIf this.isText}}
+              {{tab}}AddLike(e => e.${majStart(this.name)}, dto.${majStart(this.name)});
+              {{tab}}{{else}}
+              {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});{{/if}}{{#if !@last}}{{newline}}{{/if}}
+              {{tab}}{{/each}}
+                  return this;
+              }
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Specification/"
     validationAnnotations:
       notNull: '[Required(ErrorMessage = "${majStart(name)} cannot be null")]'
       maxSize: "[StringLength(${columnSize})]"
@@ -1862,11 +2241,13 @@
     toGenerate: true
     serviceImports: |
       using Models;
+      using Models.Dto;
       using Generic;
+      using Services.Generic;
 
     serviceAnnotations: ""
     serviceClassKeyword: "public interface"
-    serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}>"
+    serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}, ${majStart(className)}Dto>"
     serviceName: "I${majStart(className)}Service"
     serviceFieldContent: "{{removeLine}}"
     serviceMethodContent: "{{removeLine}}"
@@ -1884,6 +2265,9 @@
           using ${majStart(projectName)}.Repositories.Interface;
           using ${majStart(projectName)}.Repositories.Implementation;
           using ${majStart(projectName)}.Services.Interface;
+          using ${majStart(projectName)}.Specification;
+          using ${majStart(projectName)}.Models.Dto;
+          using ${majStart(projectName)}.Utils;
           
           namespace ${majStart(projectName)}.Services.Implementation;
           
@@ -1896,29 +2280,35 @@
                   _repository = repository;
               }
           
-              public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
+              public async Task<PagedResponse<${majStart(className)}>> GetAllAsync(
+                  int page, int pageSize, string? sorting,
+                  params Expression<Func<${majStart(className)}, object?>>[]? includes)
               {
                   try
                   {
-                    return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                      return await _repository.SearchAsync(
+                          _ => true, page, pageSize, sorting, includes);
                   }
                   catch (Exception ex)
                   {
-                    throw new InternalServerErrorException("Error while retrieving all ${formatReadableLowerCase(className)}", ex);
+                      throw new InternalServerErrorException("Error while retrieving all ${formatReadableLowerCase(className)}", ex);
                   }
               }
           
-              public async Task<IEnumerable<${majStart(className)}>> SearchAsync(${majStart(className)} search, int page, int pageSize, string? sorting)
+              public async Task<PagedResponse<${majStart(className)}>> SearchAsync(
+                  ${majStart(className)}Dto searchDto,
+                  int page, int pageSize, string? sorting)
               {
-                try
-                {
-                  return await _repository.SearchAsync(search, page, pageSize, sorting);
-                }
-                catch (Exception ex)
-                {
-                  throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
-                }
-              }
+                  try
+                  {
+                      var predicate = new ${majStart(className)}FilterBuilder().Build(searchDto).Combine();
+                      return await _repository.SearchAsync(predicate, page, pageSize, sorting{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}} );
+                  }
+                  catch (Exception ex)
+                  {
+                      throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
+                  }
+              }  
           
               public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
@@ -2004,11 +2394,14 @@
     controllerImports: |
       using Microsoft.AspNetCore.Mvc;
       using Microsoft.AspNetCore.Mvc.Rendering;
-      using ${majStart(projectName)}.Services.Interface;
-      using ${majStart(projectName)}.Repositories.Interface;
-      using ${majStart(projectName)}.Models;
+      using Models;
+      using Models.Dto;
+      using Services;
+      using Services.Interface;
+      using Swashbuckle.AspNetCore.Annotations;
       using ${majStart(projectName)}.Utils;
       using ${majStart(projectName)}.Filters;
+      using ${majStart(projectName)}.Repositories.Interface;
 
     controllerAnnotations: ""
     controllerExtends: " : Controller"
@@ -2021,16 +2414,16 @@
     controllerConstructors: |
       {{tab}}public ${majStart(className)}Controller(I${majStart(className)}Service service, I${majStart(className)}Repository repository{{#each fieldsFK}}, I${majStart(this.type)}Service ${minStart(this.type)}Service{{#if @last}}, EntityUtils detector{{/if}}{{/each}})
       {{tab}}{
-      {{tab}}{{tab}}_service = service;
-      {{tab}}{{tab}}_repository = repository;
-      {{tab}}{{tab}}{{#each fieldsFK}}_${minStart(this.type)}Service = ${minStart(this.type)}Service;
-      {{tab}}{{tab}}{{#if @last}}_detector = detector;{{newline}}{{/if}}{{/each}}
+      {{tab}}   _service = service;
+      {{tab}}   _repository = repository;
+      {{tab}}   {{#each fieldsFK}}_${minStart(this.type)}Service = ${minStart(this.type)}Service;
+      {{tab}}   {{#if @last}}_detector = detector;{{newline}}{{/if}}{{/each}}
       {{tab}}}
     controllerMethodContent: |
       {{tab}}// GET: /${majStart(className)}
-      {{tab}}public async Task<IActionResult> Index(int page = 1, int pageSize = 10, string? sortOrder = null)
+      {{tab}}public async Task<IActionResult> Index(int page = 0, int pageSize = 10, string? sortOrder = null)
       {{tab}}{
-      {{tab}}    var ${minStart(className)}s = await _service.GetAllAsync((page - 1), pageSize, sortOrder{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
+      {{tab}}    var results = await _service.GetAllAsync(page, pageSize, sortOrder{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
 
       {{tab}}    {{#each fieldsFK}}
       {{tab}}        string ${minStart(this.type)}Column = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
@@ -2039,24 +2432,15 @@
       
       {{tab}}    {{#each fieldsFK}}{{#if @last}}await PopulateDropdowns(null);{{/if}}{{/each}}
       
-      {{tab}}    var pagedResponse = await PaginationHelper.CreatePagedResponse(
-      {{tab}}        items: ${minStart(className)}s,
-      {{tab}}        page: page,
-      {{tab}}        pageSize: pageSize,
-      {{tab}}        totalCountFunc: () => _repository.GetTotalCountAsync()
-      {{tab}}    );
-      
       {{tab}}    ViewData["Title"] = "${majStart(className)}";
-      {{tab}}    return View(pagedResponse);
+      {{tab}}    return View(results);
       {{tab}}}
       
       {{tab}}// POST: /${majStart(className)}/Search
       {{tab}}[HttpPost]
-      {{tab}}public async Task<IActionResult> Search(${majStart(className)}SearchModel search, int page = 0, int pageSize = 10, string? sortOrder = null)
+      {{tab}}public async Task<IActionResult> Search(${majStart(className)}Dto dto, int page = 0, int pageSize = 10, string? sortOrder = null)
       {{tab}}{
-      {{tab}}    var filter = new GenericMapper().Map<${majStart(className)}SearchModel, ${majStart(className)}>(search);
-      
-      {{tab}}    var results = await _service.SearchAsync(filter, page, pageSize, sortOrder);
+      {{tab}}    var results = await _service.SearchAsync(dto, page, pageSize, sortOrder);
       
       {{tab}}    {{#each fieldsFK}}
       {{tab}}    string ${minStart(this.type)}Column = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
@@ -2065,15 +2449,8 @@
       
       {{tab}}    {{#each fieldsFK}}{{#if @last}}await PopulateDropdowns(null);{{/if}}{{/each}}
       
-      {{tab}}    var pagedResponse = await PaginationHelper.CreatePagedResponse(
-      {{tab}}        items: results.ToList(),
-      {{tab}}        page: page,
-      {{tab}}        pageSize: pageSize,
-      {{tab}}        totalCountFunc: () => Task.FromResult((long)results.Count())
-      {{tab}}    );
-      
       {{tab}}    ViewData["Title"] = "${majStart(className)}";
-      {{tab}}    return View("Index", pagedResponse);
+      {{tab}}    return View("Index", results);
       {{tab}}}
       
       {{tab}}// GET: /${majStart(className)}/Details/${pkColumn}
@@ -2181,7 +2558,7 @@
       {{tab}}{{{/if}}
       {{tab}}{{tab}}var ${minStart(this.type)}s = await _${minStart(this.type)}Service.GetAllAsync(0, int.MaxValue, null);
       {{tab}}    string ${minStart(this.type)}Column = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
-      {{tab}}    ViewBag.${this.type}s = new SelectList(${minStart(this.type)}s, _detector.GetPrimaryKeyName<${this.type}>(), ${minStart(this.type)}Column); 
+      {{tab}}    ViewBag.${this.type}s = new SelectList(${minStart(this.type)}s.Content, _detector.GetPrimaryKeyName<${this.type}>(), ${minStart(this.type)}Column); 
       {{tab}}{{#if @last}}}{{/if}}{{/each}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"
