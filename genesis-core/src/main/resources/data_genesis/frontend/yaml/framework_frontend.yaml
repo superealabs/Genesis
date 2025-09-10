@@ -17,6 +17,30 @@
         {{#if useJWT}} io eee JWT be{{else}}pas de jwt {{/if}}
       destinationPath: "${destinationFolder}/src"
   additionalFiles:
+    - fileType: "Index page"
+      fileName: "index"
+      extension: ".html"
+      content: |
+        <!doctype html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <title>FirstAngularProject</title>
+          <base href="/">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <link rel="icon" type="image/x-icon" href="{{#if useFaviconLink}}${faviconUrl}{{else}}favicon.ico{{/if}}">
+        </head>
+        <body>
+          <app-root></app-root>
+        </body>
+        </html>
+      destinationPath: "${destinationFolder}/src"
+    - fileType: "App-files"
+      fileName: "app.constante"
+      extension: "ts"
+      content: |
+        {{#if useLogoLink}}export const linkToImage="${logoUrl}";{{else}}export const linkToImage="assets/icon/logo.jpg";{{/if}}
+      destinationPath: "${destinationFolder}/src/app/"
     - fileType: "css for layout"
       fileName: "styles"
       extension: "css"
@@ -33,7 +57,6 @@
           --bg-active: color-mix(in srgb, var(--secondary) 15%, white); 
         }
       destinationPath: "${destinationFolder}/src"
-
     - fileType: "App-files"
       fileName: "app.component"
       extension: "ts"

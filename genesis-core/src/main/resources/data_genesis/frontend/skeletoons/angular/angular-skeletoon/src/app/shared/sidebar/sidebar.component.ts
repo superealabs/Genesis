@@ -3,6 +3,7 @@ import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Language,LanguageService } from '../services/language/language.service'
+import { linkToImage } from '../../app.constante';
 
 
 @Component({
