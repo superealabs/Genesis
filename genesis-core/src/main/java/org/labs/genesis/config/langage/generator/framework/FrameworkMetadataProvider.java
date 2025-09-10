@@ -375,6 +375,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnType", field.getColumnType());
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("referencedColumnType", field.getReferencedColumnType());
+        fieldMap.put("referencedPrimaryKeyColumn", field.getReferencedPrimaryKeyColumn());
         fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
         fieldMap.put("defaultValue", field.getDefaultValue());
         fieldMap.put("columnSize", field.getColumnSize());
@@ -383,6 +384,15 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isNullable", field.isNullable());
         fieldMap.put("validationAnnotations", getFieldValidationAnnotations(field));
         fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
+        fieldMap.put("isText",field.isText());
+        fieldMap.put("isNumeric",field.isNumeric());
+        fieldMap.put("isDate",field.isDate());
+        fieldMap.put("isTime",field.isTime());
+        fieldMap.put("isTimeTz",field.isTimeTz());
+        fieldMap.put("isDateTime",field.isDateTime());
+        fieldMap.put("isDateTimeTz",field.isDateTimeTz());
+        fieldMap.put("useTimeZone",field.isUseTimeZone());
+        fieldMap.put("isInterval",field.isInterval());
 
         return fieldMap;
     }
@@ -399,6 +409,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnType", field.getColumnType());
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("referencedColumnType", field.getReferencedColumnType());
+        fieldMap.put("referencedPrimaryKeyColumn", field.getReferencedPrimaryKeyColumn());
         fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
         fieldMap.put("attributeTypeAnnotations", language.getAttributeTypeAnnotations().get(field.getType()));
         fieldMap.put("mockdata", language.getMockData().get(field.getColumnType()));
@@ -410,6 +421,15 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isNullable", field.isNullable());
         fieldMap.put("validationAnnotations", getFieldValidationAnnotations(field));
         fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
+        fieldMap.put("isText",field.isText());
+        fieldMap.put("isNumeric",field.isNumeric());
+        fieldMap.put("isDate",field.isDate());
+        fieldMap.put("isTime",field.isTime());
+        fieldMap.put("isTimeTz",field.isTimeTz());
+        fieldMap.put("isDateTime",field.isDateTime());
+        fieldMap.put("isDateTimeTz",field.isDateTimeTz());
+        fieldMap.put("useTimeZone",field.isUseTimeZone());
+        fieldMap.put("isInterval",field.isInterval());
 
         return fieldMap;
     }
