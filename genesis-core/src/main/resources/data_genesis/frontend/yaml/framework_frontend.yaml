@@ -8870,7 +8870,7 @@
             },
             "node_modules/yoctocolors": {
               "version": "2.1.2",
-              "resolved": "https://registry.npmjs.org/yoctocolors/-/yoctocolors-2.1.2.tgz",
+              "resolved": "https://registry.npmjs.org/yoctoc olors/-/yoctocolors-2.1.2.tgz",
               "integrity": "sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==",
               "dev": true,
               "license": "MIT",

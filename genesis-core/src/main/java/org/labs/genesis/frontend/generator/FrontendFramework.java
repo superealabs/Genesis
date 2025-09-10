@@ -3,10 +3,7 @@ package org.labs.genesis.frontend.generator;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.langage.FilesEdit;
-import org.labs.genesis.frontend.generator.model.Component;
-import org.labs.genesis.frontend.generator.model.ComponentRoute;
-import org.labs.genesis.frontend.generator.model.ModelComponent;
-import org.labs.genesis.frontend.generator.model.ServiceComponent;
+import org.labs.genesis.frontend.generator.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +27,8 @@ public class FrontendFramework
     private String initPath;
     private List<ComponentRoute> componentRoutes;
     private Map<String,String> validationRules;
+    private FrontendLayout frontendLayout;
+    private ProjectBranding projectBranding;
 
     public void addRoute(ComponentRoute route){
         if (route.getLabel() == null || route.getLabel().isEmpty()){
@@ -43,5 +42,10 @@ public class FrontendFramework
             componentRoutes = new ArrayList<>();
         }
         return componentRoutes;
+    }
+
+    @Override
+    public String toString() {
+        return this.coreFramework;
     }
 }

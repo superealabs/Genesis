@@ -6,11 +6,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.icon.SdkIcons;
-import org.labs.genesis.wizards.DatabaseConfigurationWizardStep;
-import org.labs.genesis.wizards.GenerationOptionWizardStep;
-import org.labs.genesis.wizards.InitializationWizardStep;
-import org.labs.genesis.wizards.SpecificConfigurationWizardStep;
-import org.labs.genesis.wizards.SQLRunnerWizardStep;
+import org.labs.genesis.wizards.*;
 import org.labs.genesis.wizards.conditionals.GenConfigConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.InitConditionalWizardStep;
 
@@ -36,13 +32,14 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
         SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(projectGenerationContext);
         GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext);
         GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(projectGenerationContext, generationOptionWizardStep);
-
+        FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(projectGenerationContext );
         return new ModuleWizardStep[]{
                 new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep),
                 initConditionalWizardStep,
                 sqlRunnerWizardStep,
                 genConfigConditionalWizardStep,
-                specificConfigurationWizardStep
+                specificConfigurationWizardStep,
+                frontendConfigurationWizardStep,
         };
     }
 

@@ -14,6 +14,7 @@ import org.labs.genesis.frontend.generator.FontendGenerator;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.genesis.frontend.generator.IFrontendGenerator;
 import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMetadataProvider;
+import org.labs.genesis.frontend.generator.model.InterfaceLang;
 import org.labs.utils.FileUtils;
 
 import java.io.IOException;
@@ -36,6 +37,7 @@ public class ProjectGenerator {
     public static final GenesisTemplateEngine engine;
     public static final Map<Integer, FrontendLanguage> frontendLanguage;
     public static final Map<Integer, FrontendFramework> frontendFrameworks;
+    public static final Map<Integer, InterfaceLang> langs;
 
     static {
         try {
@@ -68,6 +70,9 @@ public class ProjectGenerator {
 
             frontendFrameworks = Arrays.stream(FileUtils.fromYaml(FrontendFramework[].class, Constantes.FRONTEND_FRAMEWORK_YAML))
                     .collect(Collectors.toMap(FrontendFramework::getId, frontFr -> frontFr));
+
+            langs = Arrays.stream(FileUtils.fromYaml(InterfaceLang[].class, Constantes.LANGS_YAML))
+                    .collect(Collectors.toMap(InterfaceLang::getId, lang -> lang));
 
         } catch (IOException e) {
             throw new RuntimeException(e);
