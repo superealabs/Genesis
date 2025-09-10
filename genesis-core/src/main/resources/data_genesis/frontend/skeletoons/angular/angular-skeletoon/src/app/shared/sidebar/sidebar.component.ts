@@ -15,12 +15,17 @@ import { Language,LanguageService } from '../services/language/language.service'
 export class SidebarComponent {
   @Input() entities: { [key: string]: string } = {};
   @Input() views: { [key: string]: string } = {};
+  logoPath: string="assets/icon/logo.jpg"
+  logoAvailable = true;
+  onLogoError() {
+    this.logoAvailable = false;
+  }
 
   selectedLanguage: Language = Language.EN;
   Language = Language;
 
   constructor(public langService: LanguageService) {}
-  
+
   changeLanguage(lang: Language) {
     this.langService.setLanguage(lang);
   }

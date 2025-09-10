@@ -6,9 +6,9 @@
   initPath: "angular/angular-skeletoon"
   componentExtension: "ts"
   frontendPaths:
-    faviconPath: ""
-    logoPath: ""
-    langsPath: ""
+    faviconPath: "${destinationFolder}/src"
+    logoPath: "${destinationFolder}/src/assets/icon"
+    langsPath: "${destinationFolder}/src/lang"
   authenticationFiles:
     - fileType: "authentication files"
       fileName: "test-auth"
@@ -17,6 +17,23 @@
         {{#if useJWT}} io eee JWT be{{else}}pas de jwt {{/if}}
       destinationPath: "${destinationFolder}/src"
   additionalFiles:
+    - fileType: "css for layout"
+      fileName: "styles"
+      extension: "css"
+      content: |
+        :root {
+
+          --primary: ${primaryColor};
+          --secondary: ${secondaryColor};
+
+          --primary-light: color-mix(in srgb, var(--primary) 75%, white); 
+          --primary-dark: color-mix(in srgb, var(--primary) 85%, black);
+
+          --bg-hover: color-mix(in srgb, var(--secondary) 10%, white);   
+          --bg-active: color-mix(in srgb, var(--secondary) 15%, white); 
+        }
+      destinationPath: "${destinationFolder}/src"
+
     - fileType: "App-files"
       fileName: "app.component"
       extension: "ts"
