@@ -26,7 +26,7 @@ ${modelType}
     <form ${updateLink} method="post" class="form" id="${className}Form">
         {{#each fields}}
         {{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}<!-- Hidden field for ${this.name} -->
-        <input name="${this.name}" id="${this.name}" type="hidden" ${inputTagHelper}/>{{/if}}{{else}}{{removeLine}}{{/if}}
+        <input type="hidden" ${inputTagHelper}/>{{/if}}{{else}}{{removeLine}}{{/if}}
         {{/each}}{{removeLine}}
 
         {{#each inputs}}

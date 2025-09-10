@@ -19,28 +19,29 @@
       }
   list:
     modelType : |
-      @model PagedResponse<${majStart(className)}>
+      @model ${majStart(className)}ViewModel
       @{
          string currentSort = Context.Request.Query["sortOrder"];
+         ViewData["Title"] = "${majStart(className)}s";
       }
     assetsImportLink: "~"
     filterLink: "asp-action=\"Search\" asp-controller=\"${majStart(className)}\""
     inputTagHelper: "name=\"${majStart(this.name)}\""
-    selectTagHelper: "name=\"${majStart(this.columnNameField)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
-    dataValue: "@${lowerCase(className)}.${majStart(this.name)}"
-    dataForeignValue: "<a asp-controller=\"${this.type}\" asp-action=\"Details\" asp-route-id=\"@${lowerCase(className)}.${majStart(this.columnNameField)}\"> @${lowerCase(className)}.${majStart(this.name)}?.GetType().GetProperty((string)ViewBag.${majStart(this.type)}Column)?.GetValue(@${lowerCase(className)}.${majStart(this.name)}) </a>"
+    selectTagHelper: "name=\"${majStart(this.columnNameField)}\" asp-items=\"@(Model?.${majStart(this.type)}s ?? new List<SelectListItem>())\""
+    dataValue: "@${minStart(className)}.${majStart(this.name)}"
+    dataForeignValue: "<a asp-controller=\"${this.type}\" asp-action=\"Details\" asp-route-id=\"@${minStart(className)}.${majStart(this.columnNameField)}\"> @${minStart(className)}.${majStart(this.name)}?.GetType().GetProperty((string)Model.${majStart(this.type)}DisplayColumn)?.GetValue(@${minStart(className)}.${majStart(this.name)}) </a>"
     inlineLoopStatement: |
     blockLoopStatementStart: |
-      @foreach (var ${lowerCase(className)} in Model.Content) {
+      @foreach (var ${minStart(className)} in Model.${majStart(className)}s) {
     blockLoopStatementEnd: |
       }
     backLink: "@Url.Action(\"Index\")"
     sortLink: "asp-action=\"Index\" asp-route-page=\"@Model.Page.Number\" asp-route-pageSize=\"@Model.Page.Size\" asp-route-sortOrder=\"@WebUtils.AddSort(currentSort, \"${this.name},asc\")\""
-    detailsLink: "@Url.Action(\"Details\", new { ${pkColumn} = @${lowerCase(className)}.${majStart(pkColumn)} })"
+    detailsLink: "@Url.Action(\"Details\", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"
     createLink: "@Url.Action(\"Create\")"
-    updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @${lowerCase(className)}.${majStart(pkColumn)} })"
+    updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"
     deleteLink: "asp-action=\"Delete\""
-    deleteTagHelper: "data-id=\"@${lowerCase(className)}.${majStart(pkColumn)}\""
+    deleteTagHelper: "data-id=\"@${minStart(className)}.${majStart(pkColumn)}\""
     pageSizeChangeLink: "'@Url.Action(\"Index\")?page=1&pageSize='+this.value"
     pageSizeTagHelper: "selected=\"@(Model.Page.Size == ${this})\""
     previousPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size, sortOrder=currentSort })"
@@ -66,23 +67,27 @@
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}}
   detail:
     modelType: |
-      @model ${majStart(className)}
+      @model ${majStart(className)}ViewModel
       @{
+          ViewData["Title"] = "${majStart(className)} details";
           var previousUrl = Context.Request.Headers["Referer"].ToString();
           if (string.IsNullOrEmpty(previousUrl))
           {
               previousUrl = "/";
           }
       }
-    dataValue: "@Model.${majStart(this.name)}"
-    dataForeignValue: "@Model.${majStart(this.name)}?.GetType().GetProperty((string)ViewBag.${majStart(this.type)}Column)?.GetValue(@Model.${majStart(this.name)})"
-    deleteLink: "data-id=\"@Model.${majStart(pkColumn)}\""
-    updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @Model.${majStart(pkColumn)} })"
+    dataValue: "@Model.${majStart(className)}.${majStart(this.name)}"
+    dataForeignValue: "@Model.${majStart(className)}.${majStart(this.name)}?.GetType().GetProperty((string)Model.${majStart(this.type)}DisplayColumn)?.GetValue(@Model.${majStart(className)}.${majStart(this.name)})"
+    deleteLink: "data-id=\"@Model.${majStart(className)}.${majStart(pkColumn)}\""
+    updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @Model.${majStart(className)}.${majStart(pkColumn)} })"
     backLink: "@previousUrl"
 
   create:
     modelType: |
-      @model ${majStart(className)}
+      @model ${majStart(className)}ViewModel      
+      @{
+         ViewData["Title"] = "Create ${majStart(className)}";
+      }
     validationSection: |
       @if (!ViewData.ModelState.IsValid)
       {{tab}}{
@@ -90,15 +95,18 @@
       {{tab}}{{tab}}<div asp-validation-summary="All" class="error-message"></div>
       {{tab}}}
     backLink: "@Url.Action(\"Index\")"
-    validationTagHelper: "asp-validation-for=\"${majStart(this.name)}\""
-    selectValidationTagHelper: "asp-validation-for=\"${majStart(this.columnNameField)}\""
-    inputTagHelper: "name=\"${majStart(this.name)}\" id=\"${majStart(this.name)}\" asp-for=\"${majStart(this.name)}\""
-    checkedRadioTagHelper: "checked=\"@(Model?.${majStart(this.name)} != false ? \"checked\" : null)\""
-    selectTagHelper: "name=\"${majStart(this.columnNameField)}\" id=\"${majStart(this.columnNameField)}\" asp-for=\"${majStart(this.columnNameField)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
+    validationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.name)}\""
+    selectValidationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.columnNameField)}\""
+    inputTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.name)}\""
+    checkedRadioTagHelper: "checked=\"@(Model?.${majStart(className)}.${majStart(this.name)} != false ? \"checked\" : null)\""
+    selectTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.columnNameField)}\" asp-items=\"@(Model?.${majStart(this.type)}s)\""
     createLink: "asp-action=\"Create\" asp-controller=\"${className}\""
   edit:
     modelType: |
-      @model ${majStart(className)}
+      @model ${majStart(className)}ViewModel
+      @{
+         ViewData["Title"] = "Edit ${majStart(className)}";
+      }
     validationSection: |
       @if (!ViewData.ModelState.IsValid)
       {{tab}}{
@@ -106,10 +114,10 @@
       {{tab}}{{tab}}<div asp-validation-summary="All" class="error-message"></div>
       {{tab}}}
     backLink: "@Url.Action(\"Index\")"
-    validationTagHelper: "asp-validation-for=\"${majStart(this.name)}\""
-    selectValidationTagHelper: "asp-validation-for=\"${majStart(this.columnNameField)}\""
-    inputTagHelper: "name=\"${majStart(this.name)}\" id=\"${majStart(this.name)}\" asp-for=\"${majStart(this.name)}\""
-    selectTagHelper: "name=\"${majStart(this.columnNameField)}\" id=\"${majStart(this.columnNameField)}\" asp-for=\"${majStart(this.columnNameField)}\" asp-items=\"ViewBag.${majStart(this.type)}s\""
+    validationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.name)}\""
+    selectValidationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.columnNameField)}\""
+    inputTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.name)}\""
+    selectTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.columnNameField)}\" asp-items=\"Model.${majStart(this.type)}s\""
     updateLink: "asp-action=\"Edit\" asp-controller=\"${className}\""
   error:
     name: "Error"
@@ -134,6 +142,7 @@
         @using ${majStart(projectName)}
         @using ${majStart(projectName)}.Models
         @using ${majStart(projectName)}.Utils
+        @using ${majStart(projectName)}.ViewModels
         @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/"
     - fileType : "ViewStart"
