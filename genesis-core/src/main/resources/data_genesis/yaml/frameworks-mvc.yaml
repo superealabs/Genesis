@@ -2043,6 +2043,7 @@
       using System.ComponentModel.DataAnnotations;
       using System.ComponentModel.DataAnnotations.Schema;
       using System.ComponentModel;
+      using System.Text.Json;
       using System.Text.Json.Serialization;
       using ${majStart(projectName)}.Serialization;
     modelExtends: ""
@@ -2081,6 +2082,54 @@
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
       {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
+      {{elseIf this.columnType = json}}
+      {{tab}}[Column("${this.name}", TypeName = "jsonb")]
+      {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+      {{tab}}[NotMapped]
+      {{tab}}public Dictionary<string, object>? ${majStart(this.name)}Object
+      {{tab}}{
+      {{tab}}{{tab}}get
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}if (string.IsNullOrEmpty(${majStart(this.name)}))
+      {{tab}}{{tab}}{{tab}}{{tab}}return null;
+      {{tab}}{{tab}}{{tab}}try
+      {{tab}}{{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}{{tab}}return JsonSerializer.Deserialize<Dictionary<string, object>>(${majStart(this.name)});
+      {{tab}}{{tab}}{{tab}}}
+      {{tab}}{{tab}}{{tab}}catch
+      {{tab}}{{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}{{tab}}return null;
+      {{tab}}{{tab}}{{tab}}}
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}set
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}${majStart(this.name)} = value != null ? JsonSerializer.Serialize(value) : null;
+      {{tab}}{{tab}}}
+      {{tab}}}
+      {{elseIf this.columnType = jsonb}}
+      {{tab}}[Column("${this.name}", TypeName = "jsonb")]
+      {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+      {{tab}}[NotMapped]
+      {{tab}}public Dictionary<string, object>? ${majStart(this.name)}Object
+      {{tab}}{
+      {{tab}}{{tab}}get
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}if (string.IsNullOrEmpty(${majStart(this.name)}))
+      {{tab}}{{tab}}{{tab}}{{tab}}return null;
+      {{tab}}{{tab}}{{tab}}try
+      {{tab}}{{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}{{tab}}return JsonSerializer.Deserialize<Dictionary<string, object>>(${majStart(this.name)});
+      {{tab}}{{tab}}{{tab}}}
+      {{tab}}{{tab}}{{tab}}catch
+      {{tab}}{{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}{{tab}}return null;
+      {{tab}}{{tab}}{{tab}}}
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}set
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}${majStart(this.name)} = value != null ? JsonSerializer.Serialize(value) : null;
+      {{tab}}{{tab}}}
+      {{tab}}}
       {{tab}}{{else}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}{{#each this.validationAnnotations}}
@@ -2194,7 +2243,8 @@
         extension: "cs"
         content: |
           namespace ${majStart(projectName)}.ViewModels;
-          
+  
+          using System.ComponentModel.DataAnnotations;
           using Models;
           using Models.Dto;
           using ${majStart(projectName)}.Utils;
@@ -2208,6 +2258,17 @@
               {{#each fieldsFK}}public string ${majStart(this.type)}DisplayColumn { get; set; } = string.Empty;
               public string ${majStart(this.type)}PkColumn { get; set; } = string.Empty;{{#if !@last}}{{newline}}{{/if}}{{/each}}
 
+              {{#each fields}}{{#if this.columnType = json}}
+              [Display(Name = "${majStart(this.name)} (JSON)")]
+              public string? ${majStart(this.name)}Json { get; set; }
+              {{elseIf this.columnType = jsonb}}
+              [Display(Name = "${majStart(this.name)} (JSON)")]
+              public string? ${majStart(this.name)}Json { get; set; }
+              {{elseIf this.columnType = xml}}
+              public string? ${majStart(this.name)}Xml { get; set; }
+              {{else}}{{removeLine}}{{/if}}
+              {{/each}}{{removeLine}}
+          
               public List<${majStart(className)}> ${majStart(className)}s { get; set; } = new List<${majStart(className)}>();
               public PageInfo Page { get; set; } = new PageInfo();
 
@@ -2425,6 +2486,7 @@
       using ${majStart(projectName)}.Utils;
       using ${majStart(projectName)}.Filters;
       using ${majStart(projectName)}.ViewModels;
+      using System.Text.Json;
 
     controllerAnnotations: ""
     controllerExtends: " : Controller"
@@ -2506,6 +2568,11 @@
       {{tab}}        ${majStart(className)} = ${minStart(className)},
       {{tab}}        {{#each fieldsFK}}${majStart(this.type)}DisplayColumn = ${minStart(this.type)}DisplayColumn,
       {{tab}}        {{/each}}{{removeLine}}
+      {{tab}}        {{#each fields}}
+      {{tab}}        {{#if this.columnType = json}}${majStart(this.name)}Json = ${minStart(className)}.${majStart(this.name)},
+      {{tab}}        {{elseIf this.columnType = jsonb}}${majStart(this.name)}Json = ${minStart(className)}.${majStart(this.name)},
+      {{tab}}        {{else}}{{removeLine}}{{/if}}
+      {{tab}}        {{/each}}{{removeLine}}
       {{tab}}    };
       
       {{tab}}    return View(vm);
@@ -2527,6 +2594,38 @@
       {{tab}}    {
       {{tab}}        try
       {{tab}}        {
+      {{tab}}            // Validate and process the JSON ${majStart(this.name)}
+      {{tab}}            {{#each fields}}
+      {{tab}}            {{#if this.columnType = json}}
+      {{tab}}            if (!string.IsNullOrEmpty(vm.${majStart(this.name)}Json))
+      {{tab}}            {
+      {{tab}}                try
+      {{tab}}                {
+      {{tab}}                    var jsonDocument = JsonDocument.Parse(vm.${majStart(this.name)}Json);
+      {{tab}}                    vm.${majStart(className)}.${majStart(this.name)} = vm.${majStart(this.name)}Json;
+      {{tab}}                }
+      {{tab}}                catch (JsonException)
+      {{tab}}                {
+      {{tab}}                    ModelState.AddModelError("${majStart(this.name)}Json", "The JSON format is invalid.");
+      {{tab}}                    return View(vm);
+      {{tab}}                }
+      {{tab}}            }
+      {{tab}}            {{elseIf this.columnType = jsonb}}
+      {{tab}}            if (!string.IsNullOrEmpty(vm.${majStart(this.name)}Json))
+      {{tab}}            {
+      {{tab}}                try
+      {{tab}}                {
+      {{tab}}                    var jsonDocument = JsonDocument.Parse(vm.${majStart(this.name)}Json);
+      {{tab}}                    vm.${majStart(className)}.${majStart(this.name)} = vm.${majStart(this.name)}Json;
+      {{tab}}                }
+      {{tab}}                catch (JsonException)
+      {{tab}}                {
+      {{tab}}                    ModelState.AddModelError("${majStart(this.name)}Json", "The JSON format is invalid.");
+      {{tab}}                    return View(vm);
+      {{tab}}                }
+      {{tab}}            }
+      {{tab}}            {{else}}{{removeLine}}{{/if}}
+      {{tab}}            {{/each}}{{removeLine}}
       {{tab}}            await _service.AddAsync(vm.${majStart(className)});
       {{tab}}            return RedirectToAction(nameof(Index));
       {{tab}}        }
@@ -2566,6 +2665,38 @@
       {{tab}}    {
       {{tab}}        try
       {{tab}}        {
+      {{tab}}            // Validate and process the JSON ${majStart(this.name)}
+      {{tab}}            {{#each fields}}
+      {{tab}}            {{#if this.columnType = json}}
+      {{tab}}            if (!string.IsNullOrEmpty(vm.${majStart(this.name)}Json))
+      {{tab}}            {
+      {{tab}}                try
+      {{tab}}                {
+      {{tab}}                    var jsonDocument = JsonDocument.Parse(vm.${majStart(this.name)}Json);
+      {{tab}}                    vm.${majStart(className)}.${majStart(this.name)} = vm.${majStart(this.name)}Json;
+      {{tab}}                }
+      {{tab}}                catch (JsonException)
+      {{tab}}                {
+      {{tab}}                    ModelState.AddModelError("${majStart(this.name)}Json", "The JSON format is invalid.");
+      {{tab}}                    return View(vm);
+      {{tab}}                }
+      {{tab}}            }
+      {{tab}}            {{elseIf this.columnType = jsonb}}
+      {{tab}}            if (!string.IsNullOrEmpty(vm.${majStart(this.name)}Json))
+      {{tab}}            {
+      {{tab}}                try
+      {{tab}}                {
+      {{tab}}                    var jsonDocument = JsonDocument.Parse(vm.${majStart(this.name)}Json);
+      {{tab}}                    vm.${majStart(className)}.${majStart(this.name)} = vm.${majStart(this.name)}Json;
+      {{tab}}                }
+      {{tab}}                catch (JsonException)
+      {{tab}}                {
+      {{tab}}                    ModelState.AddModelError("${majStart(this.name)}Json", "The JSON format is invalid.");
+      {{tab}}                    return View(vm);
+      {{tab}}                }
+      {{tab}}            }
+      {{tab}}            {{else}}{{removeLine}}{{/if}}
+      {{tab}}            {{/each}}{{removeLine}}
       {{tab}}            await _service.UpdateAsync(vm.${majStart(className)});
       {{tab}}            return RedirectToAction(nameof(Index));
       {{tab}}        }
@@ -2603,6 +2734,11 @@
       {{tab}}        {{#each fieldsFK}}${majStart(this.type)}DisplayColumn = ${minStart(this.type)}DisplayColumn,
       {{tab}}        ${majStart(this.type)}PkColumn = ${minStart(this.type)}PkColumn,
       {{tab}}        ${majStart(this.type)}s = new SelectList(${minStart(this.type)}s?.Content ?? new List<${this.type}>(), ${minStart(this.type)}PkColumn, ${minStart(this.type)}DisplayColumn),
+      {{tab}}        {{/each}}{{removeLine}}
+      {{tab}}        {{#each fields}}
+      {{tab}}        {{#if this.columnType = json}}${majStart(this.name)}Json = ${minStart(className)}?.${majStart(this.name)},
+      {{tab}}        {{elseIf this.columnType = jsonb}}${majStart(this.name)}Json = ${minStart(className)}?.${majStart(this.name)},
+      {{tab}}        {{else}}{{removeLine}}{{/if}}
       {{tab}}        {{/each}}{{removeLine}}
       {{tab}}    };
       {{tab}}}
