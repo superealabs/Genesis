@@ -450,14 +450,18 @@ public class FrameworkMetadataProvider {
         List<Map<String, Object>> inputs = new ArrayList<>();
 
         for (ColumnMetadata field : tableMetadata.getColumns()) {
+            boolean isRangeType = field.isNumeric() || field.isDate() || field.isTime()
+                    || field.isTimeTz() || field.isDateTime() || field.isDateTimeTz() || field.isInterval();
+
+            boolean excluded = field.isForeign() || field.isPrimary();
+
             InputTypeMapping.Input input = InputTypeMapping.getInput(field, language, engine);
 
-            if (field.isNumeric() || field.isDate() || field.isTime() ||
-                    field.isTimeTz() || field.isDateTime() || field.isDateTimeTz() || field.isInterval() &&
-                    !field.isForeign() && !field.isPrimary()) {
+            if (isRangeType && !excluded) {
                 inputs.add(getInputHashMap(input, field.getName() + "Min"));
                 inputs.add(getInputHashMap(input, field.getName() + "Max"));
-            } else {
+            }
+            if (!isRangeType && !excluded) {
                 inputs.add(getInputHashMap(input));
             }
         }
