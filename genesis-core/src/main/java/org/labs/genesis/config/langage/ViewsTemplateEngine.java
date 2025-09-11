@@ -94,9 +94,12 @@ public class ViewsTemplateEngine {
         private String validationTagHelper;
         private String selectValidationTagHelper;
         private String inputTagHelper;
+        private String textAreaTagHelper;
+        private String textAreaValidationTagHelper;
         private String checkedRadioTagHelper;
         private String selectTagHelper;
         private String createLink;
+        private String scriptSection;
 //        private Input[] inputsList;
     }
 
@@ -110,8 +113,11 @@ public class ViewsTemplateEngine {
         private String validationTagHelper;
         private String selectValidationTagHelper;
         private String inputTagHelper;
+        private String textAreaTagHelper;
+        private String textAreaValidationTagHelper;
         private String selectTagHelper;
         private String updateLink;
+        private String scriptSection;
 //        private Input[] inputsList;
     }
 

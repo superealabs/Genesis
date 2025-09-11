@@ -98,9 +98,15 @@
     validationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.name)}\""
     selectValidationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.columnNameField)}\""
     inputTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.name)}\""
+    textAreaTagHelper: "asp-for=\"${majStart(this.name)}\""
+    textAreaValidationTagHelper: " asp-validation-for=\"${majStart(this.name)}\""
     checkedRadioTagHelper: "checked=\"@(Model?.${majStart(className)}.${majStart(this.name)} != false ? \"checked\" : null)\""
     selectTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.columnNameField)}\" asp-items=\"@(Model?.${majStart(this.type)}s)\""
     createLink: "asp-action=\"Create\" asp-controller=\"${className}\""
+    scriptSection: |
+      @section Scripts {
+          @await Html.PartialAsync("_ValidationScriptsPartial")
+      }
   edit:
     modelType: |
       @model ${majStart(className)}ViewModel
@@ -117,8 +123,14 @@
     validationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.name)}\""
     selectValidationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.columnNameField)}\""
     inputTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.name)}\""
+    textAreaTagHelper: "asp-for=\"${majStart(this.name)}\""
+    textAreaValidationTagHelper: " asp-validation-for=\"${majStart(this.name)}\""
     selectTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.columnNameField)}\" asp-items=\"Model.${majStart(this.type)}s\""
     updateLink: "asp-action=\"Edit\" asp-controller=\"${className}\""
+    scriptSection: |
+      @section Scripts {
+          @await Html.PartialAsync("_ValidationScriptsPartial")
+      }
   error:
     name: "Error"
     destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
@@ -172,6 +184,33 @@
                 };  
             </script>
         }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
+    - fileType : "Form Validation"
+      fileName: "_ValidationScriptsPartial"
+      extension: "cshtml"
+      content: |
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const jsonTextarea = document.querySelector('.json-textarea');
+                    if (jsonTextarea) {
+                    jsonTextarea.addEventListener('blur', function() {
+                        try {
+                            if (this.value.trim() !== '') {
+                                JSON.parse(this.value);
+                                this.style.borderColor = '#28a745';
+                            }
+                        } catch (e) {
+                            this.style.borderColor = '#dc3545';
+                        }
+                    });
+                }
+            });
+        </script>
+    
+        <!-- Include client-side validation scripts -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
 
   templateEngineFiles: []
