@@ -649,7 +649,7 @@ public class FrameworkMetadataProvider {
         altMap.put("textAreaValidationTagHelper", viewsTemplateEngine.getEdit().getTextAreaValidationTagHelper());
         altMap.put("selectTagHelper", viewsTemplateEngine.getEdit().getSelectTagHelper());
         altMap.put("updateLink", viewsTemplateEngine.getEdit().getUpdateLink());
-        altMap.put("scriptSection", viewsTemplateEngine.getEdit().getUpdateLink());
+        altMap.put("scriptSection", viewsTemplateEngine.getEdit().getScriptSection());
         return altMap;
     }
 }

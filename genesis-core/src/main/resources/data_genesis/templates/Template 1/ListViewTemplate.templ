@@ -45,6 +45,9 @@ ${modelType}
                     {{#each inputsFilter}}
                     <button type="button" data-type="${this.name}">${this.name}</button>
                     {{/each}}{{removeLine}}
+                    {{#each fieldsFK}}
+                    <button type="button" data-type="${this.name}">${this.name}</button>
+                    {{/each}}{{removeLine}}
                 </div>
             </div>
 
