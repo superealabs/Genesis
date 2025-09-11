@@ -213,11 +213,11 @@ public class FrameworkMetadataProvider {
 
         addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
         metadata.put("fields", getFieldsList(tableMetadata, language));
-        metadata.put("fieldsRegular", getRegularFieldsList(tableMetadata, language));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
-        metadata.put("inputs", getRegularInputsList(tableMetadata, language));
-        metadata.put("inputsFilter", getInputsList(tableMetadata, language));
+        metadata.put("inputs", getInputsList(tableMetadata, language));
+        metadata.put("textAreas", getTextAreasList(tableMetadata, language));
+        metadata.put("inputsFilter", getFilterInputsList(tableMetadata, language));
 
         List<Integer> pageSizesList = Arrays.asList(5, 10, 50, 100, 200, 300, 500, 1000);
         metadata.put("pageSizesList", pageSizesList);
@@ -288,57 +288,6 @@ public class FrameworkMetadataProvider {
             fields.add(fieldMap);
         }
         return fields;
-    }
-
-    private static List<Map<String, Object>> getRegularFieldsList(TableMetadata tableMetadata, Language language) {
-        List<Map<String, Object>> fields = new ArrayList<>();
-        for (ColumnMetadata field : tableMetadata.getColumns()) {
-            if (!field.isForeign() && !field.isPrimary()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field);
-                fields.add(fieldMap);
-            }
-        }
-        return fields;
-    }
-
-    private static List<Map<String, Object>> getRegularInputsList(TableMetadata tableMetadata, Language language) throws Exception {
-        List<Map<String, Object>> inputs = new ArrayList<>();
-        for (ColumnMetadata field : tableMetadata.getColumns()) {
-            if (!field.isForeign()) {
-                InputTypeMapping.Input input = InputTypeMapping.getInput(field, language, engine);
-                Map<String, Object> inputMap = getInputHashMap(input);
-                if (Boolean.TRUE.equals(inputMap.get("isShowed"))) {
-                    inputs.add(inputMap);
-                }
-            }
-        }
-        return inputs;
-    }
-
-    private static List<Map<String, Object>> getInputsList(TableMetadata tableMetadata, Language language) throws Exception {
-        List<Map<String, Object>> inputs = new ArrayList<>();
-        for (ColumnMetadata field : tableMetadata.getColumns()) {
-            if (!field.isForeign()) {
-                InputTypeMapping.Input input = InputTypeMapping.getInput(field, language, engine);
-                Map<String, Object> inputMap = getInputHashMap(input);
-                inputs.add(inputMap);
-            }
-        }
-        return inputs;
-    }
-
-    public static @NotNull Map<String, Object> getInputHashMap(InputTypeMapping.Input input) {
-        Map<String, Object> inputMap = new HashMap<>();
-
-        inputMap.put("name", input.getName());
-        inputMap.put("id", input.getId());
-        inputMap.put("placeholder", input.getPlaceholder());
-        inputMap.put("validations", input.getValidations());
-        inputMap.put("type", input.getType());
-        inputMap.put("isShowed", input.getIsShowed());
-        inputMap.put("isRequired", input.getIsRequired());
-
-        return inputMap;
     }
 
     private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata, Language language) {
@@ -460,6 +409,93 @@ public class FrameworkMetadataProvider {
         metadata.put("allEntities", getTableMetadataList(tableMetadata));
         return metadata;
     }
+
+    private static List<Map<String, Object>> getInputsList(TableMetadata tableMetadata, Language language) throws Exception {
+        List<Map<String, Object>> inputs = new ArrayList<>();
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            if (!field.isForeign()) {
+                if (!field.getColumnType().equals("json")
+                        && !field.getColumnType().equals("jsonb")
+                        && !field.getColumnType().equals("xml")
+                ) {
+                    InputTypeMapping.Input input = InputTypeMapping.getInput(field, language, engine);
+                    Map<String, Object> inputMap = getInputHashMap(input);
+                    if (Boolean.TRUE.equals(inputMap.get("isShowed"))) {
+                        inputs.add(inputMap);
+                    }
+                }
+            }
+        }
+        return inputs;
+    }
+
+    private static List<Map<String, Object>> getTextAreasList(TableMetadata tableMetadata, Language language) throws Exception {
+        List<Map<String, Object>> textAreas = new ArrayList<>();
+
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            if (!field.isForeign()) {
+                if (field.getColumnType().equals("json")
+                        || field.getColumnType().equals("jsonb")
+                        || field.getColumnType().equals("xml")
+                ) {
+                    textAreas.add(getTextAreaHashMap(field, language));
+                }
+            }
+        }
+
+        return textAreas;
+    }
+
+    private static List<Map<String, Object>> getFilterInputsList(TableMetadata tableMetadata, Language language) throws Exception {
+        List<Map<String, Object>> inputs = new ArrayList<>();
+
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            InputTypeMapping.Input input = InputTypeMapping.getInput(field, language, engine);
+
+            if (field.isNumeric() || field.isDate() || field.isTime() ||
+                    field.isTimeTz() || field.isDateTime() || field.isDateTimeTz() || field.isInterval() &&
+                    !field.isForeign() && !field.isPrimary()) {
+                inputs.add(getInputHashMap(input, field.getName() + "Min"));
+                inputs.add(getInputHashMap(input, field.getName() + "Max"));
+            } else {
+                inputs.add(getInputHashMap(input));
+            }
+        }
+
+        return inputs;
+    }
+
+
+    public static @NotNull Map<String, Object> getInputHashMap(InputTypeMapping.Input input) {
+        return getInputHashMap(input, input.getName());
+    }
+
+    public static @NotNull Map<String, Object> getInputHashMap(InputTypeMapping.Input input, String inputName) {
+        Map<String, Object> inputMap = new HashMap<>();
+
+        inputMap.put("name", inputName);
+        inputMap.put("id", input.getId());
+        inputMap.put("placeholder", input.getPlaceholder());
+        inputMap.put("validations", input.getValidations());
+        inputMap.put("type", input.getType());
+        inputMap.put("isShowed", input.getIsShowed());
+        inputMap.put("isRequired", input.getIsRequired());
+
+        return inputMap;
+    }
+
+
+    public static @NotNull Map<String, Object> getTextAreaHashMap(ColumnMetadata columnMetadata, Language language) {
+        Map<String, Object> inputMap = new HashMap<>();
+
+        inputMap.put("name", StringUtils.majStart(columnMetadata.getName()) + StringUtils.majStart(columnMetadata.getColumnType().toLowerCase()));
+        inputMap.put("class", columnMetadata.getColumnType().toLowerCase() + "-textarea");
+        inputMap.put("placeholder", language.getMockData().get(columnMetadata.getColumnType()));
+        inputMap.put("validFormat", language.getMockData().get(columnMetadata.getColumnType()));
+
+        return inputMap;
+    }
+
 
     public static HashMap<String, Object>  getViewMainLayoutHashMap (FrameworkMVC framework, Map<String, Object> frameworkConfiguration, List<TableMetadata> tableMetadata, String projectName, String destinationFolder, String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
@@ -588,9 +624,12 @@ public class FrameworkMetadataProvider {
         altMap.put("validationTagHelper", viewsTemplateEngine.getCreate().getValidationTagHelper());
         altMap.put("selectValidationTagHelper", viewsTemplateEngine.getCreate().getSelectValidationTagHelper());
         altMap.put("inputTagHelper", viewsTemplateEngine.getCreate().getInputTagHelper());
+        altMap.put("textAreaTagHelper", viewsTemplateEngine.getCreate().getTextAreaTagHelper());
+        altMap.put("textAreaValidationTagHelper", viewsTemplateEngine.getCreate().getTextAreaValidationTagHelper());
         altMap.put("checkedRadioTagHelper", viewsTemplateEngine.getCreate().getCheckedRadioTagHelper());
         altMap.put("selectTagHelper", viewsTemplateEngine.getCreate().getSelectTagHelper());
         altMap.put("createLink", viewsTemplateEngine.getCreate().getCreateLink());
+        altMap.put("scriptSection", viewsTemplateEngine.getCreate().getScriptSection());
         return altMap;
     }
 
@@ -602,8 +641,11 @@ public class FrameworkMetadataProvider {
         altMap.put("validationTagHelper", viewsTemplateEngine.getCreate().getValidationTagHelper());
         altMap.put("selectValidationTagHelper", viewsTemplateEngine.getCreate().getSelectValidationTagHelper());
         altMap.put("inputTagHelper", viewsTemplateEngine.getEdit().getInputTagHelper());
+        altMap.put("textAreaTagHelper", viewsTemplateEngine.getEdit().getTextAreaTagHelper());
+        altMap.put("textAreaValidationTagHelper", viewsTemplateEngine.getEdit().getTextAreaValidationTagHelper());
         altMap.put("selectTagHelper", viewsTemplateEngine.getEdit().getSelectTagHelper());
         altMap.put("updateLink", viewsTemplateEngine.getEdit().getUpdateLink());
+        altMap.put("scriptSection", viewsTemplateEngine.getEdit().getUpdateLink());
         return altMap;
     }
 }
