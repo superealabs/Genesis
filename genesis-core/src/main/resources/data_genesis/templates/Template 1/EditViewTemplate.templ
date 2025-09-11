@@ -47,6 +47,19 @@ ${modelType}
         </div>
         {{/each}}{{removeLine}}
 
+        {{#each textAreas}}
+        <div class="form-input">
+            <label for="${this.name}">
+                ${this.name}
+                {{#if this.isRequired}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
+            </label>
+            <textarea ${textAreaTagHelper} placeholder='${this.placeholder}'
+                    rows="5" class="${this.class}"></textarea>
+            <span ${textAreaValidationTagHelper} class="field-validation-error"></span>
+            <small class="form-text">Valid format: ${this.validFormat}</small>
+        </div>
+        {{/each}}{{removeLine}}
+
         {{#each fieldsFK}}
         <div class="form-input">
             <label for="${this.columnNameField}">
@@ -69,8 +82,4 @@ ${modelType}
         </div>
     </form>
 </main>
-
-<!-- Include client-side validation scripts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+${scriptSection}

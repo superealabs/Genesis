@@ -427,6 +427,18 @@ tr.table-content:hover {
     flex-wrap: wrap;
     flex-direction: column;
 }
+.json-textarea, .xml-textarea {
+    font-family: 'Courier New', monospace;
+    margin-top: 5px;
+    font-size: 14px;
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+}
+.form-text {
+    color: #6c757d;
+    font-size: 0.5rem;
+}
 .form-input .required-sign {
     color: #e74c3c;
     opacity: 50%;
@@ -456,7 +468,7 @@ tr.table-content:hover {
     box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
 }
 
-.form-input input:focus, .form-input select:focus {
+.form-input input:focus, .form-input select:focus, .json-textarea:focus {
     outline: none;
     border-color: var(--color-primary);
     box-shadow: var(--shadow-soft)
