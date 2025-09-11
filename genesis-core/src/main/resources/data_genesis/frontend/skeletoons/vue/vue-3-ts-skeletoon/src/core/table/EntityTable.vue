@@ -16,8 +16,17 @@
       <!-- Right section -->
       <div class="ml-auto items-center gap-4">
         <div class="flex items-center gap-2">
-          <label for="select-itemsPerPage" class="text font-medium"> Showing: </label>
-          <input v-model="itemsPerPage" id="inputItemsPerPage" type="number" class="input w-12 focus:border-0" @focusout="() => changePage(1)" >
+          <label for="select-itemsPerPage" class="text font-medium">
+            {{ $t('pagination.sizeLabel') }}
+          </label>
+          <input
+            v-model="itemsPerPage"
+            id="inputItemsPerPage"
+            type="number"
+            class="input w-20 focus:border-0"
+            @change="() => multiCriteriaSearch"
+            @keydown.enter="() => multiCriteriaSearch"
+          />
         </div>
 
         <!-- Future export (example DaisyUI style) -->
@@ -81,18 +90,15 @@ const props = defineProps<{
   message?: string | null
 }>()
 
-const table = useEntityTable(props.searchFn, props.getPaginationData)
+const { updateFilters, changePage, page, totalPages, itemsPerPage, doSearch } = useEntityTable(props.searchFn, props.getPaginationData)
 
 function multiCriteriaSearch() {
-  table.changePage(1)
+  changePage(1)
 }
 
 onMounted(() => {
   multiCriteriaSearch()
 })
-
-const { updateFilters, changePage, page, totalPages, itemsPerPage, doSearch } =
-  table
 </script>
 
 <style scoped>

@@ -2,12 +2,12 @@
 import { computed } from 'vue'
 
 const props = defineProps<{
-  src: string        // logo path or URL
-  alt?: string       // alt text for the logo
-  link?: string      // optional hyperlink
-  width?: string     // optional width (default: auto)
-  height?: string    // optional height (default: auto)
-  newTab?: boolean   // open link in new tab (default: false)
+  src: string // logo path or URL
+  alt?: string // alt text for the logo
+  link?: string // optional hyperlink
+  width?: string // optional width (default: auto)
+  height?: string // optional height (default: auto)
+  newTab?: boolean // open link in new tab (default: false)
 }>()
 
 const target = computed(() => (props.newTab ? '_blank' : '_self'))
@@ -21,13 +21,7 @@ const target = computed(() => (props.newTab ? '_blank' : '_self'))
     rel="noopener noreferrer"
     class="inline-block"
   >
-    <img
-      :src="src"
-      :alt="alt || 'Logo'"
-      :width="width"
-      :height="height"
-      class="object-contain"
-    />
+    <img :src="src" :alt="alt || 'Logo'" :width="width" :height="height" class="object-contain" />
   </component>
 </template>
 

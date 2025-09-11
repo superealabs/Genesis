@@ -34,8 +34,8 @@
         title="Apply filter"
         @click="emitSearch"
         class="btn-secondary dark:btn-neutral border-0 shadow"
-        ><FilterIcon class="mr-2" />
-        <span>Apply</span>
+      ><FilterIcon class="mr-2" />
+        <span>{{ $t('button.applySearch') }}</span>
       </GenesisButton>
 
       <!-- Reset -->
@@ -48,7 +48,7 @@
         <ReloadIcon />
       </GenesisButton>
 
-      <span class="font-semibold mr-2">Filtres :</span>
+      <span class="font-semibold mr-2">{{ $t('search.filters', 1) }} :</span>
 
       <template v-if="activeFields.length">
         <div
@@ -85,7 +85,7 @@
         </div>
       </template>
 
-      <span v-else class="text-gray-400 italic">No filter</span>
+      <span v-else class="text-gray-400 italic">{{ $t('search.filters', 0) }}</span>
     </div>
   </div>
 </template>
@@ -159,4 +159,3 @@ const clearAllFilters = () => {
   emitSearch()
 }
 </script>
-

@@ -7,7 +7,7 @@
         type="button"
         class="btn btn-ghost rounded shadow mr-2"
         :class="{ 'btn-disabled': page <= 1 }"
-        aria-label="Previous"
+        :aria-label="$t('pagination.previous')"
         @click.prevent="goToPreviousPage"
       >
         <CheveronLeftIcon />
@@ -31,7 +31,7 @@
         type="button"
         class="btn btn-ghost rounded shadow ml-2"
         :class="{ 'btn-disabled': page >= end }"
-        aria-label="Next"
+        :aria-label="$t('pagination.next')"
         @click.prevent="goToNextPage"
       >
         <CheveronRightIcon />
@@ -40,123 +40,119 @@
 
     <!-- Quick form -->
     <div v-if="quickForm" class="flex items-center gap-2">
-      <label for="select-page" class="whitespace-nowrap text font-medium"> Going to page: </label>
-      <select id="select-page" v-model="selectedPage" class="select select-bordered">
-        <option v-for="option in pageSelectOptions" :key="option.value" :value="option.value">
-          {{ option.label }}
-        </option>
-      </select>
+      <label for="select-page" class="whitespace-nowrap text font-medium">
+        {{ $t('pagination.goToLabel') }}
+      </label>
+      <input
+        class="input"
+        type="number"
+        v-model="selectedPage"
+        min="1"
+        :max="end"
+        id="select-page"
+      />
+      <span class="text-nowrap">/ {{ end }}</span>
       <GenesisButton class="btn btn-outline border-0 shadow" @click="goToSelectedPage">
-        GO
+        {{ $t('button.go') }}
       </GenesisButton>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, ref } from 'vue'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 import type { SelectOption } from '@/models/SelectOption'
 import GenesisButton from '@/core/button/GenesisButton.vue'
 import CheveronLeftIcon from '../icons/CheveronLeftIcon.vue'
 import CheveronRightIcon from '../icons/CheveronRightIcon.vue'
 
-export default defineComponent({
-  name: 'PaginationLayout',
-  components: { GenesisButton, CheveronLeftIcon, CheveronRightIcon },
-  props: {
-    start: { required: true, type: Number },
-    end: { required: true, type: Number },
-    page: { required: true, type: Number },
-    quickForm: { required: false, type: Boolean },
-  },
-  emits: ['update:page'],
-  setup(props, { emit }) {
-    const selectedPage = ref<number>(1)
+// Props definition using defineProps (Composition API)
+const props = defineProps<{
+  start: number
+  end: number
+  page: number
+  quickForm?: boolean
+}>()
 
-    const pageNumbers = computed(() => {
-      const pages: (number | string)[] = []
-      const maxVisible = 10 // show 10 pages at a time
-      const totalPages = props.end
-      const currentPage = props.page
+// Emits using defineEmits (Composition API)
+const emit = defineEmits<{
+  (e: 'update:page', value: number): void
+}>()
 
-      // Figure out the current "block" of pages
-      const currentBlock = Math.floor((currentPage - 1) / maxVisible)
-      const startPage = currentBlock * maxVisible + 1
-      const endPage = Math.min(startPage + maxVisible - 1, totalPages)
+const selectedPage = ref<number>(1)
 
-      // Add first page + ellipsis if we are not in the first block
-      if (startPage > 1) {
-        pages.push(1)
-        if (startPage > 2) {
-          pages.push('...')
-        }
-      }
+const pageNumbers = computed(() => {
+  const pages: (number | string)[] = []
+  const maxVisible = 10 // show 10 pages at a time
+  const totalPages = props.end
+  const currentPage = props.page
 
-      // Add the block of pages
-      for (let i = startPage; i <= endPage; i++) {
-        pages.push(i)
-      }
+  // Figure out the current "block" of pages
+  const currentBlock = Math.floor((currentPage - 1) / maxVisible)
+  const startPage = currentBlock * maxVisible + 1
+  const endPage = Math.min(startPage + maxVisible - 1, totalPages)
 
-      // Add ellipsis + last page if not in the last block
-      if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-          pages.push('...')
-        }
-        pages.push(totalPages)
-      }
-
-      return pages
-    })
-
-    const pageSelectOptions = computed(() => {
-      const totalPages = props.end
-      const options: SelectOption[] = []
-      for (let index = 1; index <= totalPages; index++) {
-        options.push({
-          label: index.toString(),
-          value: index,
-        })
-      }
-      return options
-    })
-
-    const onChangePage = (page: number | string) => {
-      if (!page) {
-        page = 1
-      }
-      if (typeof page == 'string') {
-        page = Number.parseInt(page)
-      }
-      emit('update:page', page)
+  // Add first page + ellipsis if we are not in the first block
+  if (startPage > 1) {
+    pages.push(1)
+    if (startPage > 2) {
+      pages.push('...')
     }
+  }
 
-    const goToSelectedPage = () => {
-      onChangePage(selectedPage.value)
-    }
+  // Add the block of pages
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i)
+  }
 
-    const goToPreviousPage = () => {
-      if (props.page > 1) {
-        emit('update:page', props.page - 1)
-      }
+  // Add ellipsis + last page if not in the last block
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      pages.push('...')
     }
+    pages.push(totalPages)
+  }
 
-    const goToNextPage = () => {
-      if (props.page < props.end) {
-        emit('update:page', props.page + 1)
-      }
-    }
-
-    return {
-      pageNumbers,
-      onChangePage,
-      goToPreviousPage,
-      goToNextPage,
-      selectedPage,
-      pageSelectOptions,
-      goToSelectedPage,
-    }
-  },
+  return pages
 })
+
+const pageSelectOptions = computed(() => {
+  const totalPages = props.end
+  const options: SelectOption[] = []
+  for (let index = 1; index <= totalPages; index++) {
+    options.push({
+      label: index.toString(),
+      value: index,
+    })
+  }
+  return options
+})
+
+function onChangePage(page: number | string) {
+  if (!page) {
+    page = 1
+  }
+  if (typeof page == 'string') {
+    page = Number.parseInt(page)
+  }
+  emit('update:page', page)
+}
+
+function goToSelectedPage() {
+  onChangePage(selectedPage.value)
+}
+
+function goToPreviousPage() {
+  if (props.page > 1) {
+    emit('update:page', props.page - 1)
+  }
+}
+
+function goToNextPage() {
+  if (props.page < props.end) {
+    emit('update:page', props.page + 1)
+  }
+}
 </script>
 
 <style scoped></style>
