@@ -90,7 +90,10 @@ const props = defineProps<{
   message?: string | null
 }>()
 
-const { updateFilters, changePage, page, totalPages, itemsPerPage, doSearch } = useEntityTable(props.searchFn, props.getPaginationData)
+const { updateFilters, changePage, page, totalPages, itemsPerPage, doSearch } = useEntityTable(
+  props.searchFn,
+  props.getPaginationData
+)
 
 function multiCriteriaSearch() {
   changePage(1)

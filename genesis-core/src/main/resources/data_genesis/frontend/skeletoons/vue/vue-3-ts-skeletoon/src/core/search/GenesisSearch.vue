@@ -1,55 +1,7 @@
 <template>
-  <div class="flex flex-wrap items-center gap-2 py-2">
+  <div class="flex flex-wrap items-center gap-2">
     <!-- Filtres actifs -->
     <div class="flex flex-wrap items-center gap-2">
-      <!-- Dropdown ajout de filtre -->
-      <div class="dropdown">
-        <GenesisButton
-          class="btn btn-outline border-0 shadow"
-          type="button"
-          tabindex="0"
-          title="Add filter criteria"
-        >
-          <PlusIcon />
-        </GenesisButton>
-
-        <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-          <template v-if="availableFields.length">
-            <li v-for="field in availableFields" :key="field.key">
-              <button
-                class="btn btn-ghost justify-start"
-                :disabled="activeFieldKeys.includes(field.key)"
-                @click="onFilterSelected(field.key)"
-              >
-                {{ field.label }}
-              </button>
-            </li>
-          </template>
-          <li v-else class="text-center text-gray-400 italic">No available filter</li>
-        </ul>
-      </div>
-
-      <!-- Bouton Apply -->
-      <GenesisButton
-        title="Apply filter"
-        @click="emitSearch"
-        class="btn-secondary dark:btn-neutral border-0 shadow"
-      ><FilterIcon class="mr-2" />
-        <span>{{ $t('button.applySearch') }}</span>
-      </GenesisButton>
-
-      <!-- Reset -->
-      <GenesisButton
-        class="btn-md shadow border-0"
-        title="Reset filter"
-        :class="activeFields.length ? 'btn-outline text-error' : 'btn-disabled'"
-        @click="clearAllFilters"
-      >
-        <ReloadIcon />
-      </GenesisButton>
-
-      <span class="font-semibold mr-2">{{ $t('search.filters', 1) }} :</span>
-
       <template v-if="activeFields.length">
         <div
           v-for="field in activeFields"
@@ -62,7 +14,12 @@
             class="border-0"
             :rowInput="true"
             :search-function="field.selectSearch"
-            @option-selected="(selectedValue) => (searchModel[field.key] = selectedValue)"
+            @option-selected="
+              (selectedValue) => {
+                searchModel[field.key] = selectedValue
+                updateFilters()
+              }
+            "
           />
 
           <GenesisInput
@@ -72,7 +29,12 @@
             :label="field.label"
             :type="field.type"
             :rowInput="true"
-            v-model="searchModel[field.key] as string | number | Date | undefined"
+            @update:model-value="
+              (newVal) => {
+                searchModel[field.key] = newVal
+                updateFilters()
+              }
+            "
           />
 
           <GenesisButton
@@ -86,6 +48,58 @@
       </template>
 
       <span v-else class="text-gray-400 italic">{{ $t('search.filters', 0) }}</span>
+
+      <!-- Dropdown ajout de filtre -->
+      <div class="dropdown">
+        <GenesisButton
+          class="btn btn-outline border-0 shadow"
+          type="button"
+          tabindex="0"
+          title="Add filter criteria"
+        >
+          <PlusIcon />
+        </GenesisButton>
+
+        <ul
+          tabindex="0"
+          class="dropdown-content p-2 menu shadow bg-base-100 rounded-box w-72 h-72 overflow-y-scroll"
+        >
+          <template v-if="availableFields.length">
+            <li v-for="field in availableFields" :key="field.key">
+              <button
+                class="btn btn-ghost w-full"
+                :disabled="activeFieldKeys.includes(field.key)"
+                @click="onFilterSelected(field.key)"
+              >
+                {{ field.label }}
+              </button>
+            </li>
+          </template>
+          <li v-else class="text-center text-gray-400 italic">No available filter</li>
+        </ul>
+      </div>
+
+      <!-- Bouton Apply -->
+      <GenesisButton
+        v-if="!auto"
+        title="Apply filter"
+        @click="emitSearch"
+        type="button"
+        class="btn-secondary dark:btn-neutral border-0 shadow"
+      ><FilterIcon class="mr-2" />
+        <span>{{ $t('button.applySearch') }}</span>
+      </GenesisButton>
+
+      <!-- Reset -->
+      <GenesisButton
+        class="btn-md shadow border-0"
+        title="Reset filter"
+        type="button"
+        :class="activeFields.length ? 'btn-outline text-error' : 'btn-disabled'"
+        @click="clearAllFilters"
+      >
+        <ReloadIcon />
+      </GenesisButton>
     </div>
   </div>
 </template>
@@ -102,16 +116,22 @@ import XIcon from '@/core/icons/XIcon.vue'
 import GenesisSelectSearch from '@/core/form/GenesisSelectSearch.vue'
 
 // ✅ Props
-const props = defineProps<{
-  initialModel: Record<string, unknown>
-  searchFields: EntitySearchField[]
-  defaultActive?: string[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    initialModel: Record<string, unknown>
+    searchFields: EntitySearchField[]
+    defaultActive?: string[]
+    auto?: boolean
+  }>(),
+  {
+    auto: false,
+  },
+)
 
 // ✅ Emits
 const emit = defineEmits<{
   (e: 'update:filter', filters: Record<string, unknown>): void
-  (e: 'search', event?: Event): void
+  (e: 'search', filters: Record<string, unknown>): void
 }>()
 
 // ✅ Use composable
@@ -140,11 +160,13 @@ const onFilterSelected = (key: string) => {
 
 const updateFilters = () => {
   emit('update:filter', getFiltersValues())
+  if (props.auto) {
+    emitSearch()
+  }
 }
 
-const emitSearch = (e?: Event) => {
-  updateFilters()
-  emit('search', e)
+const emitSearch = () => {
+  emit('search', getFiltersValues())
 }
 
 const removeFilter = (key: string) => {
@@ -158,4 +180,5 @@ const clearAllFilters = () => {
   updateFilters()
   emitSearch()
 }
+
 </script>

@@ -1,10 +1,6 @@
-<template>
 ${template}
-</template>
-
 <script setup lang="ts">
 ${importFile}
-
 ${export}
 </script>
 

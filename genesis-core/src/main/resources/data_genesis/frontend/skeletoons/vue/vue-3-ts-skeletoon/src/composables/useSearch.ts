@@ -41,7 +41,6 @@ export function useSearch(
 
   function getFiltersValues() {
     const filtered: Record<string, unknown> = {}
-
     for (const key of activeFieldKeys.value) {
       const value = searchModel.value[key]
       if (value === undefined || value === null || value === '') continue
@@ -55,7 +54,6 @@ export function useSearch(
         filtered[key] = value
       }
     }
-
     return filtered
   }
 

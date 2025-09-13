@@ -25,26 +25,25 @@
   </GenesisPopup>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
 import GenesisPopup from '@/core/popup/GenesisPopup.vue'
 import GenesisButton from '@/core/button/GenesisButton.vue'
 import WarningIcon from '../icons/WarningIcon.vue'
 
-export default defineComponent({
-  name: 'DeleteConfirmationPopup',
-  components: { GenesisPopup, GenesisButton, WarningIcon },
-  props: {
-    visible: { type: Boolean, required: true },
-    message: { type: String, required: true },
-    subMessage: { type: String, default: 'This action is irreversible.' },
-  },
-  emits: ['confirm', 'cancel'],
-  setup(props, { emit }) {
-    return {
-      confirm: () => emit('confirm'),
-      cancel: () => emit('cancel'),
-    }
-  },
-})
+// Props
+const props = defineProps<{
+  visible: boolean
+  message: string
+  subMessage?: string
+}>()
+
+// Emits
+const emit = defineEmits<{
+  (e: 'confirm'): void
+  (e: 'cancel'): void
+}>()
+
+// Methods
+const confirm = () => emit('confirm')
+const cancel = () => emit('cancel')
 </script>

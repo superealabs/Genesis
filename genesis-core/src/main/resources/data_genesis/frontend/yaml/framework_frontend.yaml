@@ -4275,9 +4275,9 @@
               }
             },
             "node_modules/axios": {
-              "version": "1.11.0",
-              "resolved": "https://registry.npmjs.org/axios/-/axios-1.11.0.tgz",
-              "integrity": "sha512-1Lx3WLFQWm3ooKDYZD1eXmoGO9fxYQjrycfHFC8P0sCfQVXyROp0p9PFWBehewBOdCwHc+f/b8I0fMto5eSfwA==",
+              "version": "1.12.1",
+              "resolved": "https://registry.npmjs.org/axios/-/axios-1.12.1.tgz",
+              "integrity": "sha512-Kn4kbSXpkFHCGE6rBFNwIv0GQs4AvDT80jlveJDKFxjbTYMUeB4QtsdPCv6H8Cm19Je7IU6VFtRl2zWZI0rudQ==",
               "license": "MIT",
               "dependencies": {
                 "follow-redirects": "^1.15.6",
@@ -8926,7 +8926,7 @@
         /* Import lang Files */
         {{#each langList}}
         import ${lowerCase(this.name)} from '@/lang/${lowerCase(this.name)}.js'
-        {{/each}}
+        {{/each}}{{removeLine}}
         
         library.add(fas, far, fab)
         const i18n = createI18n({
@@ -8989,8 +8989,7 @@
             <!-- Quick Actions -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
               {{#each entities}}
-              {{#if !this.isView }}
-              <div
+              {{#if !this.isView }}<div
                 class="p-4 bg-base-100 shadow-md rounded-xl flex flex-col border border-gray-200 items-start"
               >
                 <h3 class="font-semibold text-lg mb-2">${majStart(this.className)}s</h3>
@@ -9010,16 +9009,15 @@
                   </li>
                 </ul>
               </div>{{/if}}
-        {{/each}}{{removeLine}}
+              {{/each}}{{removeLine}}
             </div>
-        
+
             <h2 class="text-xl font-bold text-neutral">{{ $t('home.titles.views') }}</h2>
             <hr class="border-gray-200 mb-4" />
             <!-- Quick Actions -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
               {{#each entities}}
-              {{#if this.isView }}
-              <div
+              {{#if this.isView }}<div
                 class="p-4 bg-base-100 shadow-md rounded-xl flex flex-col border border-gray-200 items-start"
               >
                 <h3 class="font-semibold text-lg mb-2">${majStart(this.className)}s</h3>
@@ -9059,7 +9057,7 @@
             <!-- Brand -->
             <div class="text-center flex justify-center gap-2 items-center mb-6 uppercase">
               <LogoIcon {{#if useLogoLink}}src="${logoUrl}"{{else}}:src="logo"{{/if}} alt="Branding Logo" width="60" />
-              <h1 class="text-2xl font-semibold">{{ $t('projctName') }}</h1>
+              <h1 class="text-2xl font-semibold">{{ $t('projectName') }}</h1>
             </div>
 
             <!-- Navigation -->
@@ -9083,19 +9081,16 @@
 
         <script setup lang="ts">
         import { storeToRefs } from 'pinia'
+        import { useNavigationsStore } from '@/stores/useNavigationsStore'
         import LanguageSwitcher from '@/core/language/LanguageSwitcher.vue'
 
         // Components
         import UserNavProfile from '../user/UserNavProfile.vue'
         import GenesisNavList from './GenesisNavList.vue'
         import LogoIcon from '@/core/icons/LogoIcon.vue'
-        {{#if useLogoLink}}
-        {{removeLine}}
-        {{elseIf hasLogo}}
-        import logo from '@/assets/images${logoUrl}'
-        {{else}}
-        import logo from '@/assets/images/logo.png'
-        {{/if}}
+        {{#if useLogoLink}}{{removeLine}}
+        {{elseIf hasLogo}}import logo from '@/assets/images${logoUrl}'
+        {{else}}import logo from '@/assets/images/logo.png'{{/if}}
 
         // Store
         const navigationsStore = useNavigationsStore()
@@ -9187,7 +9182,7 @@
           { path: '/customisation', name: 'customisation', component: CustomisationView },
           {{#each entities}}
           ...${minStart(this.className)}Routes,
-          {{/each}}
+          {{/each}}{{removeLine}}
         ]
         export default routes
 
@@ -9378,20 +9373,22 @@
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
+        <template>
           <tr class="hover:bg-gray-50">
             {{#each fields}}
             {{#if this.isForeignKey}}
             <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name}?.getReferenceValue() }}</td>
             {{else}}
             <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} }}</td>{{/if}}
-            {{/each}}
+            {{/each}}{{removeLine}}
   
             <td class="px-3 py-2 text-right">
               <div class="inline-flex rounded-md shadow overflow-hidden">
-                <EntityRowActions @delete-row="deleteRow"@view-row="viewRow"@edit-row="updateRow" />
+                <EntityRowActions @delete-row="deleteRow" @view-row="viewRow" @edit-row="updateRow" />
               </div>
             </td>
           </tr>
+        </template>
       style: "{{removeLine}}"
       export: |
         /**
@@ -9458,6 +9455,7 @@
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
+        <template>
           <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
             <table class="table w-full border-gray-200 rounded-md text-left">
               <thead class="bg-secondary">
@@ -9482,11 +9480,9 @@
                   v-for="${minStart(EntityName)} in data"
                   :key="${minStart(EntityName)}.getKeyValue()"
                   :${minStart(EntityName)}="${minStart(EntityName)}"
-                  @request-view="view${majStart(EntityName)}"
-                  {{#if !isView}}
+                  @request-view="view${majStart(EntityName)}"{{#if !isView}}
                   @request-delete="openDeletePopup"
-                  @request-update="goToUpdateFormView"
-                  {{/if}}
+                  @request-update="goToUpdateFormView"{{/if}}
                 />
               </tbody>
             </table>{{#if !isView}}
@@ -9498,6 +9494,7 @@
               @cancel="closePopup"
             />{{/if}}
           </div>
+        </template>
       style: "{{removeLine}}"
       export: |
         /**
@@ -9590,6 +9587,7 @@
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
+        <template>
           <div class="w-full">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
@@ -9614,22 +9612,15 @@
               :message="message"
             />
           </div>
+        </template>
       style: "{{removeLine}}"
       destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
       export: |
         // Composable for managing entities
-        const {
-          ${minPluralize(EntityName)},
-          search${majPluralize(EntityName)},
-          message,
-          getPaginationData,{{#if !isView}}
-          goToCreateFormView,{{/if}}
-        } = use${majPluralize(EntityName)}()
+        const {${minPluralize(EntityName)},search${majPluralize(EntityName)},message,getPaginationData,{{#if !isView}}goToCreateFormView,{{/if}}} = use${majPluralize(EntityName)}()
 
         // Reactive search fields
-        const searchFields = ref<EntitySearchField[]>(
-          ${majStart(EntityName)}.getAllSearchFieldsMetadata()
-        );
+        const searchFields = ref<EntitySearchField[]>(${majStart(EntityName)}.getAllSearchFieldsMetadata());
       componentAdditionalFiles:
         - fileType: "Entity Composable"
           fileName: "use${majPluralize(EntityName)}"
@@ -9902,22 +9893,21 @@
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
+        <template>
           <div class="card bg-base-100">
             <div class="card-body">
               <div v-if="${minStart(EntityName)}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {{#each fields}}
                   <div>
-                    <label for="${minStart(EntityName)}${majStart(this.name)}" class="block text-sm font-medium mb-1">
-                      ${formatReadable(this.name)}
-                    </label>
+                    <label for="${minStart(EntityName)}${majStart(this.name)}" class="block text-sm font-medium mb-1">${formatReadable(this.name)}</label>
                     <div id="${minStart(EntityName)}${majStart(this.name)}" class="input w-full bg-base-100 cursor-default">
                       <span>{{ ${minStart(EntityName)}.${this.name}{{#if this.isForeignKey}}?.getReferenceValue(){{/if}} ?? '' }}</span>
                     </div>
                   </div>
-                  {{/each}}
+                  {{/each}}{{removeLine}}
                 </div>
-                {{#if !isView}}
+                {{removeLine}}{{#if !isView}}
                 <div class="flex justify-end gap-3 mt-6">
                   <GenesisButton 
                     @click="openDeletePopup(${minStart(EntityName)})" 
@@ -9930,8 +9920,7 @@
                     <EditIcon class="mr-2" />
                     <span>{{ $t('common.update') }}</span>
                   </GenesisButton>
-                </div>
-                {{/if}}
+                </div>{{/if}}
               </div>
             </div>
           </div>{{#if !isView}}
@@ -9942,6 +9931,7 @@
             @confirm="confirmDelete"
             @cancel="closePopup"
           />{{/if}}
+        </template>
       export: |
         // Props{{#if isView}}
         defineProps({
@@ -9998,6 +9988,7 @@
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
+        <template>
           <div class="w-full">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
@@ -10015,10 +10006,11 @@
                 <LeftArrowIcon />
                 {{ $t('button.backToList') }}
               </GenesisButton>
-  
+            </div>
             <!-- Entity details -->
             <${majStart(EntityName)}Details v-if="entity" :${minStart(EntityName)}="entity" />
           </div>
+        </template>
       style: "{{removeLine}}"
       export: |
         const route = useRoute()
@@ -10044,7 +10036,7 @@
         import { ${majStart(EntityName)}, ${majStart(EntityName)}FormDTO } from '@/models/${majStart(EntityName)}Model'
         import GenesisButton from '@/core/button/GenesisButton.vue'
         import GenesisInput from '@/core/form/GenesisInput.vue'
-        {{#if containsForeignKey}}import GenesisSelectSearch from '@/core/form/GenesisSelectSearch.vue'{{/if}}
+        {{#if containsForeignKey}}import GenesisSelectSearchCriteria from '@/core/form/GenesisSelectSearchCriteria.vue'{{/if}}
         {{#each fieldsFK}}
         import { ${majStart(this.type)} } from '@/models/${majStart(this.type)}Model'
         {{removeLine}}
@@ -10053,6 +10045,7 @@
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
+        <template>
           <div class="card bg-base-100">
             <div class="card-body">
               <!-- <form @submit.prevent="handleSubmit" class="grid grid-cols-1 w-6/12 gap-4 mx-auto"> -->
@@ -10062,12 +10055,13 @@
                   {{#if this.isPrimaryKey}}{{removeLine}}
                   {{elseIf this.isForeignKey}}
                   <!-- ${formatReadable(this.name)} FK -->
-                  <GenesisSelectSearch
+                  <GenesisSelectSearchCriteria
+                    v-if="${minStart(this.type)}SearchField?.multicriteriaSelect"
                     label="${formatReadable(this.name)}"
-                    v-if="${minStart(this.type)}SearchField?.selectSearch"
-                    :placeholder="'-- Search ${minStart(this.type)} by '+${majStart(this.type)}.getReferenceKey()"
+                    key="${minStart(EntityName)}${majStart(this.name)}"
+                    :search-function="${minStart(this.type)}SearchField?.multicriteriaSelect.searchFunction"
+                    :filters="${minStart(this.type)}SearchField?.multicriteriaSelect.filters"
                     :default-value="${minStart(this.type)}DefaultValue"
-                    :search-function="${minStart(this.type)}SearchField?.selectSearch"
                     @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = selectedValue)"
                   />
                   {{else}}
@@ -10090,6 +10084,7 @@
               </form>
             </div>
           </div>
+        </template>
       style: "{{removeLine}}"
       export: |
         const props = defineProps<{
@@ -10098,7 +10093,7 @@
         }>()
 
         const emit = defineEmits<{
-          (e: 'submit', payload: Partial<${majStart(EntityName)}FormDTO>): void,
+          (e: 'submit', payload: Partial<${majStart(EntityName)}FormDTO>): void
           (e: 'cancel', payload: Partial<${majStart(EntityName)}FormDTO>): void
         }>()
 
@@ -10107,8 +10102,8 @@
         {{#each fieldsFK}}
         const ${minStart(this.type)}SearchField = ${majStart(EntityName)}.getSearchFieldByKey('${minStart(this.name)}')
         const ${minStart(this.type)}DefaultValue = props.${minStart(EntityName)}
-        ? (props.${minStart(EntityName)}?.${this.name}?.getReferenceValue?.() ?? '')
-        : ''
+        ? (props.${minStart(EntityName)}?.${this.name}?.getReferenceValue?.() ?? undefined)
+        : undefined
         {{/each}}
 
         function handleSubmit() {
@@ -10142,6 +10137,7 @@
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
+        <template>
           <div class="w-full">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
@@ -10173,6 +10169,7 @@
               @close="closePopup"
             />
           </div>
+        </template>
       style: "{{removeLine}}"
       export: |
         /** Route params */
@@ -10244,15 +10241,16 @@
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
+        <template>
           <div class="w-full">
             <div class="flex items-center justify-between mb-6">
               <h3 class="text-xl font-semibold">
                 {{ $t('entity.nav', { entity: '${majStart(EntityName)}' }) }}
                 <span class="text-gray-500 font-normal">{{ $t('entity.create.nav') }}</span>
               </h3>
-              <GenesisButton 
-                :title="$t('button.backToListDescription')" 
-                @click="goToListView" 
+              <GenesisButton
+                :title="$t('button.backToListDescription')"
+                @click="goToListView"
                 class="btn-primary"
               >
                 <LeftArrowIcon />
@@ -10273,6 +10271,7 @@
               @close="closePopup"
             />
           </div>
+        </template>
       style: "{{removeLine}}"
       export: |
         const { create${majStart(EntityName)}, goToListView, message, view${majStart(EntityName)} } = use${majPluralize(EntityName)}()
@@ -10318,7 +10317,7 @@
       function wrap${majStart(EntityName)}(response: DataResponse<${majStart(EntityName)}> | PagedDataResponse<${majStart(EntityName)}>) {
         if (Array.isArray(response.data)) {
           response.data = response.data.map((r) => new ${majStart(EntityName)}(r))
-        } else if (response.data && typeof response.data === "object") {
+        } else if (response.data && typeof response.data === 'object') {
           response.data = new ${majStart(EntityName)}(response.data)
         }
         return response
@@ -10340,7 +10339,7 @@
         pagination?: PaginationRequestParameter,
         sortFields?: SortFieldParameter[],
       ) {
-        const request = new RequestModel(BASE_URL+'/search', pagination, sortFields)
+        const request = new RequestModel(BASE_URL + '/search', pagination, sortFields)
         const response = await restApiWithPage.POST(request.buildRequestUrl(), data)
         return wrap${majStart(EntityName)}(RestResponse.handlePagedResponse<${majStart(EntityName)}>(response)) as PagedDataResponse<${majStart(EntityName)}>
       }
@@ -10348,7 +10347,7 @@
       /** GET by ID */
       export async function getById(id: number | string | undefined) {
         if (!id) throw new Error('getById: id is required')
-        const response = await restApi.GET(BASE_URL+'/'+id)
+        const response = await restApi.GET(BASE_URL + '/' + id)
         return wrap${majStart(EntityName)}(RestResponse.handleDataResponse<${majStart(EntityName)}>(response)) as DataResponse<${majStart(EntityName)}>
       }
       {{#if !isView}}
@@ -10361,46 +10360,44 @@
       /** PUT update */
       export async function update(id: number | string | undefined, data: Partial<${majStart(EntityName)}>) {
         if (!id) throw new Error("update: id is required")
-        const response = await restApi.PUT(BASE_URL+'/'+id, data)
+        const response = await restApi.PUT(BASE_URL + '/' + id, data)
         return wrap${majStart(EntityName)}(RestResponse.handleDataResponse<${majStart(EntityName)}>(response)) as DataResponse<${majStart(EntityName)}>
       }
 
       /** DELETE remove */
       export async function remove(id: number | string | undefined) {
         if (!id) throw new Error("remove: id is required")
-        const response = await restApi.DELETE(BASE_URL+'/'+id)
+        const response = await restApi.DELETE(BASE_URL + '/' + id)
         return {
           success: response.returnCode === 1,
           error: response.returnCode !== 1 ? response.message : null,
         };
       }{{/if}}
+
   modelComponent:
     imports: |
       import { BaseModel } from './BaseModel'
-      import { type EntitySearchField } from './EntityModel'{{#each fieldsFK}}
+      import { type EntitySearchField } from './EntityModel'
+      {{#each fieldsFK}}
       import { ${majStart(this.type)} } from './${majStart(this.type)}Model'
-      import * as ${minStart(this.type)}Service from '@/services/${majStart(this.type)}Service'{{/each}}{{#if containsForeignKey}}
+      import * as ${minStart(this.type)}Service from '@/services/${majStart(this.type)}Service'
+      {{/each}}
+      {{#if containsForeignKey}}
       import { createSelectSearchFunction } from './SelectOption'{{/if}}
     exports: |
       export interface I${majStart(EntityName)} {
         {{#each fields}}
-        {{#if this.isForeignKey}}
-        ${minStart(this.name)}?: ${majStart(this.type)};
-        {{elseIf this.isPrimaryKey}}
-        ${minStart(this.name)}?: ${this.typeBase};
-        {{else}}
-        ${minStart(this.name)}?: ${this.typeBase};{{/if}}
+        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}
+        {{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}
+        {{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
       }
 
       export class ${majStart(EntityName)} extends BaseModel implements I${majStart(EntityName)} {
         {{#each fields}}
-        {{#if this.isForeignKey}}
-        ${minStart(this.name)}?: ${majStart(this.type)}
-        {{elseIf this.isPrimaryKey}}
-        ${minStart(this.name)}?: ${this.typeBase}
-        {{else}}
-        ${minStart(this.name)}?: ${this.typeBase}{{/if}}
+        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}
+        {{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}
+        {{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
 
         constructor(data?: Partial<I${majStart(EntityName)}>) {
@@ -10420,9 +10417,9 @@
         }
 
         public override getKeyValue(): string {
-            return String(this.${this.name})
+          return String(this.${this.name})
         }{{/if}}
-        {{/each}}
+        {{/each}}{{removeLine}}
       
         static override getReferenceKey(): string {
           {{#each simpleFields}}
@@ -10438,28 +10435,28 @@
 
         protected static override searchDaoMetadata: EntitySearchField[] = [
           {{#each fields}}
-          {{#if this.isForeignKey}}
-          {
+          {{#if this.isForeignKey}}{
             key: '${this.name}',
             label: '${formatReadable(this.name)}',
             type: 'select',
             searchKey: ${majStart(this.type)}.getKey(),
             sortable: false,
             selectSearch: createSelectSearchFunction(${majStart(this.type)}, ${minStart(this.type)}Service),
-          },{{elseIf this.isPrimaryKey}}
-          { key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true },
-          {{elseIf this.isNumeric or this.isDate}}
-          { key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true },
+            multicriteriaSelect: {
+              filters: ${majStart(this.type)}.getAllSearchFieldsMetadata(),
+              searchFunction: createMulticriteriatSearchFunction(${minStart(this.type)}Service),
+            },
+          },
+          {{elseIf this.isPrimaryKey}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true },
+          {{elseIf this.isNumeric or this.isDate}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true },
           { key: '${this.name}Min', label: '${formatReadable(this.name)} Min', type: '${this.uiType}', sortable: true },
           { key: '${this.name}Max', label: '${formatReadable(this.name)} Max', type: '${this.uiType}', sortable: true },
-          {{else}}
-          { key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true },{{/if}}
+          {{else}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true },{{/if}}
           {{/each}}{{removeLine}}
         ]
       }
       
-      {{#if !isView}}
-      export class ${majStart(EntityName)}FormDTO {
+      {{#if !isView}}export class ${majStart(EntityName)}FormDTO {
         {{#each fields}}
         {{#if this.isForeignKey}}
         ${minStart(this.name)}?: string
@@ -10469,23 +10466,17 @@
 
         constructor(data?: Partial<${majStart(EntityName)}FormDTO>) {
           {{#each fields}}
-          {{#if this.isForeignKey}}
-          this.${minStart(this.name)} = data?.${minStart(this.name)} ?? ""
-          {{else}}
-          this.${minStart(this.name)} = data?.${minStart(this.name)}
-          {{/if}}{{removeLine}}
-          {{/each}}
+          {{#if this.isForeignKey}}this.${minStart(this.name)} = data?.${minStart(this.name)} ?? ""
+          {{else}}this.${minStart(this.name)} = data?.${minStart(this.name)}{{/if}}
+          {{/each}}{{removeLine}}
         }
 
         static parse(data?: Partial<I${majStart(EntityName)}> | I${majStart(EntityName)} | null) {
           const instance = new ${majStart(EntityName)}FormDTO()
           {{#each fields}}
-          {{#if this.isForeignKey}}
-          instance.${minStart(this.name)} = data?.${minStart(this.name)}?.getKeyValue()?.toString()
-          {{else}}
-          instance.${minStart(this.name)} = data?.${minStart(this.name)}
-          {{/if}}{{removeLine}}
-          {{/each}}
+          {{#if this.isForeignKey}}instance.${minStart(this.name)} = data?.${minStart(this.name)}?.getKeyValue()?.toString()
+          {{else}}instance.${minStart(this.name)} = data?.${minStart(this.name)}{{/if}}
+          {{/each}}{{removeLine}}
           return instance
         }
 
@@ -10494,7 +10485,7 @@
             {{#each fieldsNotFK}}
             ${minStart(this.name)}: this.${minStart(this.name)},
             {{/each}}{{removeLine}}
-          });
+          })
 
           {{#each fieldsFK}}
           if (this.${minStart(this.name)}) {
@@ -10503,7 +10494,7 @@
           }
           {{/each}}{{removeLine}}
 
-          return entity;
+          return entity
         }
       }{{/if}}
     exportsComponents: |

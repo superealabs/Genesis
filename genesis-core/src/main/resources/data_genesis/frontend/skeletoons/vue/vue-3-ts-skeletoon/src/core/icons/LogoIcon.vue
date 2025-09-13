@@ -1,3 +1,14 @@
+<template>
+  <component
+    :is="link ? 'a' : 'span'"
+    :href="link"
+    :target="link ? target : undefined"
+    rel="noopener noreferrer"
+    class="inline-block"
+  >
+    <img :src="src" :alt="alt || 'Logo'" :width="width" :height="height" class="object-contain" />
+  </component>
+</template>
 <script setup lang="ts">
 import { computed } from 'vue'
 
@@ -12,18 +23,6 @@ const props = defineProps<{
 
 const target = computed(() => (props.newTab ? '_blank' : '_self'))
 </script>
-
-<template>
-  <component
-    :is="link ? 'a' : 'span'"
-    :href="link"
-    :target="link ? target : undefined"
-    rel="noopener noreferrer"
-    class="inline-block"
-  >
-    <img :src="src" :alt="alt || 'Logo'" :width="width" :height="height" class="object-contain" />
-  </component>
-</template>
 
 <style scoped>
 img {

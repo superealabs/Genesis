@@ -7,25 +7,21 @@
   </button>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+const props = defineProps<{
+  icon?: string
+  label?: string
+}>()
 
-export default defineComponent({
+const emit = defineEmits<{
+  (e: 'click', event: MouseEvent): void
+}>()
+
+const onClick = (event: MouseEvent) => {
+  emit('click', event)
+}
+
+defineOptions({
   name: 'GenesisButton',
-  props: {
-    icon: { type: String, required: false }, // icône optionnelle
-    label: { type: String, required: false },
-  },
-  emits: {
-    click: (event: MouseEvent) => event instanceof MouseEvent,
-  },
-  setup(props, { emit }) {
-    const onClick = (event: MouseEvent) => {
-      emit('click', event)
-    }
-    return {
-      onClick,
-    }
-  },
 })
 </script>
