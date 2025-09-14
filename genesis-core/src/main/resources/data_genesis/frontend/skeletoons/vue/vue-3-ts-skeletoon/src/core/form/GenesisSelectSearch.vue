@@ -11,159 +11,160 @@
     </label>
 
     <!-- Search Input -->
-    <div class="relative w-full">
-      <input
-        v-bind="$attrs"
-        :id="inputId"
-        v-model="searchModel"
-        type="text"
-        class="select pr-8 w-full"
-        :placeholder="placeholder ?? 'Search...'"
-        @input="onSearchInput"
-        :disabled="loading"
-        @focusin="showDropdown"
-        @focusout="hideDropdown"
-        autocomplete="off"
-      />
+    <div class="relative w-full min-w-25">
+      <!-- Button to toggle dropdown -->
+      <button
+        @click="dropdownSwithcer"
+        type="button"
+        class="btn w-full select"
+        :aria-expanded="showDropdownState"
+        :aria-controls="'dropdown-' + inputId"
+      >
+        <!-- Show selected value or placeholder -->
+        <span>
+          {{ selectedOption ?? '-- Select an option' }}
+        </span>
+      </button>
 
-      <!-- Dropdown Options -->
+      <!-- Dropdown (Card style) -->
       <div
         ref="dropdownRef"
-        @scroll="onScroll"
-        :class="[
-          'mt-1 max-h-72',
-          'w-full overflow-y-auto',
-          'bg-base-100',
-          'absolute',
-          'top-11/12',
-          'border',
-          'z-10',
-          { invisible: !showDropdownState },
-        ]"
+        :id="'dropdown-' + inputId"
+        v-show="showDropdownState"
+        :class="['absolute mt-1 w-full z-10 top-full', 'card border-1 bg-base-100 shadow-lg']"
+        tabindex="-1"
       >
-        <div v-if="options.length == 0" class="px-3 py-2 text-neutral">No result</div>
-        <div
-          v-for="option in options"
-          :key="option.value"
-          @mousedown="selectOption(option)"
-          class="cursor-pointer px-3 py-2 hover:bg-primary hover:text-primary-content"
-        >
-          {{ option.label }}
+        <!-- Card header: search input -->
+        <div class="card-header p-3 border-b flex items-center gap-2 bg-base-200">
+          <input
+            v-bind="$attrs"
+            :id="inputId"
+            v-model="searchModel"
+            type="text"
+            class="input input-bordered w-full"
+            :placeholder="placeholder ?? 'Search...'"
+            @input="onSearchInput"
+            :disabled="loading"
+            autocomplete="off"
+          />
         </div>
-        <div v-if="loadingPage">
-          <span class="loading-spinner"></span>
+        <!-- Card body: options list -->
+        <div @scroll="onScroll" class="card-body p-0 max-h-72 overflow-y-auto">
+          <div v-if="options.length === 0" class="px-3 py-2 text-neutral">No result</div>
+          <div
+            v-for="option in options"
+            :key="option.value"
+            @mousedown.left="selectOption(option)"
+            class="cursor-pointer px-3 py-2 hover:bg-primary hover:text-primary-content"
+          >
+            {{ option.label }}
+          </div>
+          <div v-if="loadingPage" class="flex justify-center py-2">
+            <span class="loading loading-spinner"></span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-<script lang="ts">
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 import { PaginationData } from '@/models/api/PageResponseModel'
 import type { PaginationRequestParameter } from '@/models/api/RequestModel'
-import { type SelectOption } from '@/models/SelectOption'
-import { defineComponent, ref, computed, type PropType } from 'vue'
+import type { SelectOption } from '@/models/SelectOption'
 
-export default defineComponent({
+const props = defineProps<{
+  label?: string
+  placeholder?: string
+  searchFunction: (
+    searchTerm: string,
+    pagination: PaginationRequestParameter,
+  ) => Promise<{ options: SelectOption[]; pagination: PaginationData }>
+  defaultValue?: string
+  loading?: boolean
+  rowInput?: boolean
+  pageSize?: number
+}>()
+
+const emit = defineEmits<{
+  (e: 'option-selected', value: string): void
+}>()
+
+// ---------------- State ----------------
+const showDropdownState = ref(false)
+const dropdownRef = ref<HTMLDivElement | null>(null)
+const selectedOption = ref(props.defaultValue ?? '')
+const searchModel = ref(props.defaultValue ?? '')
+const loadingPage = ref(false)
+const hasMore = ref(true)
+const pagination = ref<PaginationData>(
+  new PaginationData({
+    size: props.pageSize ?? 10,
+    number: 0,
+  }),
+)
+const options = ref<SelectOption[]>([])
+
+// ---------------- Logic ----------------
+const loadOptions = async (reset = false) => {
+  if (loadingPage.value || !hasMore.value) return
+
+  loadingPage.value = true
+  if (reset) {
+    pagination.value.reset(props.pageSize ?? 10)
+  } else {
+    pagination.value = pagination.value.nextPage()
+  }
+
+  const result = await props.searchFunction(searchModel.value, pagination.value.toParameter())
+
+  options.value = reset ? result.options : options.value.concat(result.options)
+  pagination.value = result.pagination
+  hasMore.value = pagination.value.hasNext()
+  loadingPage.value = false
+}
+
+const onSearchInput = async () => {
+  hasMore.value = true
+  await loadOptions(true)
+}
+
+const onScroll = async () => {
+  const el = dropdownRef.value
+  if (!el) return
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 1) {
+    await loadOptions(false)
+  }
+}
+
+const selectOption = (option: SelectOption) => {
+  searchModel.value = option.label
+  selectedOption.value = option.label
+  emit('option-selected', option.value)
+  hideDropdown()
+}
+
+const showDropdown = async () => {
+  showDropdownState.value = true
+  await loadOptions(true)
+}
+
+const dropdownSwithcer = () => {
+  showDropdownState.value ? hideDropdown() : showDropdown()
+}
+
+const hideDropdown = () => {
+  showDropdownState.value = false
+}
+
+const inputId = computed(() =>
+  props.label
+    ? 'select-search-' + props.label.replace(/\s+/g, '-').toLowerCase()
+    : 'select-search-' + Math.random().toString(36).substring(2, 8),
+)
+
+defineOptions({
   name: 'GenesisSelectSearch',
-  props: {
-    label: { type: String, required: false },
-    placeholder: { type: String, required: false },
-    searchFunction: {
-      type: Function as PropType<
-        (
-          searchTerm: string,
-          pagination: PaginationRequestParameter,
-        ) => Promise<{ options: SelectOption[]; pagination: PaginationData }>
-      >,
-      required: true,
-    },
-    defaultValue: { type: String, default: '' },
-    loading: { type: Boolean, default: false },
-    rowInput: { type: Boolean, default: false },
-    pageSize: { type: Number, default: 10 },
-  },
-  emits: ['option-selected'],
-  setup(props, { emit }) {
-    const showDropdownState = ref(false)
-    const dropdownRef = ref<HTMLDivElement | null>(null)
-    const searchModel = ref(props.defaultValue)
-    const loadingPage = ref(false)
-    const hasMore = ref(true)
-    const pagination = ref<PaginationData>(
-      new PaginationData({
-        size: props.pageSize,
-        number: 0,
-      }),
-    )
-    const options = ref<SelectOption[]>([])
-
-    const loadOptions = async (reset = false) => {
-      if (loadingPage.value || !hasMore.value) return
-
-      loadingPage.value = true
-      if (reset) {
-        pagination.value.reset(props.pageSize)
-      } else {
-        pagination.value = pagination.value.nextPage()
-      }
-
-      const result = await props.searchFunction(searchModel.value, pagination.value.toParameter())
-      if (reset) {
-        options.value = result.options
-      } else {
-        options.value = options.value.concat(result.options)
-      }
-      pagination.value = result.pagination
-      hasMore.value = pagination.value.hasNext()
-      loadingPage.value = false
-    }
-
-    const onSearchInput = async () => {
-      hasMore.value = true
-      await loadOptions(true)
-    }
-
-    const onScroll = async () => {
-      const el = dropdownRef.value
-
-      if (!el) return
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 1) {
-        await loadOptions(false)
-      }
-    }
-
-    const selectOption = (option: SelectOption) => {
-      searchModel.value = option.label
-      emit('option-selected', option.value)
-      hideDropdown()
-    }
-
-    const showDropdown = async () => {
-      showDropdownState.value = true
-      await loadOptions(true)
-    }
-
-    const hideDropdown = () => (showDropdownState.value = false)
-
-    const inputId = computed(() =>
-      props.label
-        ? 'select-search-' + props.label.replace(/\s+/g, '-').toLowerCase()
-        : 'select-search-' + Math.random().toString(36).substring(2, 8),
-    )
-
-    return {
-      showDropdownState,
-      dropdownRef,
-      searchModel,
-      options,
-      selectOption,
-      showDropdown,
-      hideDropdown,
-      inputId,
-      onSearchInput,
-      onScroll,
-      loadingPage,
-    }
-  },
 })
 </script>

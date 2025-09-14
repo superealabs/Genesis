@@ -1,16 +1,8 @@
 <template>
-  <font-awesome-icon icon="fas fa-xmark"></font-awesome-icon>
+  <font-awesome-icon class="cursor-pointer" icon="fas fa-xmark" />
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { defineComponent } from 'vue'
-
-export default defineComponent({
-  name: 'XIcon',
-  components: { FontAwesomeIcon },
-  setup() {
-    return {}
-  },
-})
+defineExpose({})
 </script>

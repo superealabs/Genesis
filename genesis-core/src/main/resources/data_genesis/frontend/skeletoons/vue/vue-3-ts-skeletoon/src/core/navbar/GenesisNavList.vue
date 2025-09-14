@@ -21,8 +21,7 @@
   </ul>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
 import type { PropType } from 'vue'
 
 interface NavItem {
@@ -31,18 +30,9 @@ interface NavItem {
   navChilds?: NavItem[]
 }
 
-export default defineComponent({
-  name: 'GenesisNavList',
-  props: {
-    items: {
-      type: Array as PropType<NavItem[]>,
-      required: true,
-    },
-  },
-  setup() {
-    return {}
-  },
-})
+defineProps<{
+  items: NavItem[]
+}>()
 </script>
 
 <style scoped>

@@ -1,7 +1,7 @@
 <template>
   <div
     class="fixed inset-0 flex items-center justify-center bg-gray-200/85 z-50"
-    :class="{ invisible: !freezeStore.$state.freezeState }"
+    :class="{ invisible: !freezeStore.freezeState }"
   >
     <!-- Custom overlay content -->
     <slot name="overlay">
@@ -12,25 +12,15 @@
           class="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-primary mx-auto"
         ></div>
         <div class="mt-3 text-gray-800 font-medium">
-          {{ freezeStore.$state.freezeMessage }}
+          {{ freezeStore.freezeMessage }}
         </div>
       </div>
     </slot>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
 import { useFreezeScreen } from '@/stores/useFreezeScreen'
 
-export default defineComponent({
-  name: 'FreezeScreen',
-  setup() {
-    const freezeStore = useFreezeScreen()
-
-    return {
-      freezeStore,
-    }
-  },
-})
+const freezeStore = useFreezeScreen()
 </script>

@@ -2,6 +2,7 @@ import { useObjectUtils } from '@/composables/useObjectUtils'
 import { toRaw } from 'vue'
 import type { PaginationRequestParameter } from '@/models/api/RequestModel'
 import type { PaginationData } from '@/models/api/PageResponseModel'
+import type { BaseModel } from '@/models/BaseModel.ts'
 
 export interface SelectOption {
   label: string
@@ -13,9 +14,7 @@ export interface SelectOption {
  * @param ModelClass The class of the entity (e.g., Projet, Employe)
  * @param service The service that provides search() for that entity
  */
-export function createSelectSearchFunction<
-  T extends { getKeyValue(): string; getReferenceValue(): string },
->(
+export function createSelectSearchFunction<T extends BaseModel>(
   ModelClass: { createLabelSearchFilter(term: string): object },
   service: {
     search: (
@@ -32,7 +31,30 @@ export function createSelectSearchFunction<
       ModelClass.createLabelSearchFilter(searchTerm),
       pagination,
     )
+    return {
+      options: extractSelectOptionsFromOjectsData(response.data, (obj: object) => {
+        const entity = obj as T
+        return {
+          value: entity.getKeyValue(),
+          label: entity.getReferenceValue(),
+        }
+      }),
+      pagination: response.pagination,
+    }
+  }
+}
 
+export function createMulticriteriatSearchFunction<T extends BaseModel>(service: {
+  search: (
+    filter: object,
+    pagination: PaginationRequestParameter,
+  ) => Promise<{ data: T[]; pagination: PaginationData }>
+}) {
+  return async (
+    filters: Record<string, unknown>,
+    pagination: PaginationRequestParameter,
+  ): Promise<{ options: SelectOption[]; pagination: PaginationData }> => {
+    const response = await service.search(filters, pagination)
     return {
       options: extractSelectOptionsFromOjectsData(response.data, (obj: object) => {
         const entity = obj as T
