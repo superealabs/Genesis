@@ -10383,7 +10383,7 @@
       import * as ${minStart(this.type)}Service from '@/services/${majStart(this.type)}Service'
       {{/each}}
       {{#if containsForeignKey}}
-      import { createSelectSearchFunction } from './SelectOption'{{/if}}
+      import { createSelectSearchFunction, createMulticriteriatSearchFunction } from './SelectOption'{{/if}}
     exports: |
       export interface I${majStart(EntityName)} {
         {{#each fields}}

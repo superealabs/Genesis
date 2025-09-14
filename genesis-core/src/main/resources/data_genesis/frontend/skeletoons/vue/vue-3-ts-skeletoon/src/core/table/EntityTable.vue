@@ -24,8 +24,8 @@
             id="inputItemsPerPage"
             type="number"
             class="input w-20 focus:border-0"
-            @change="() => multiCriteriaSearch"
-            @keydown.enter="() => multiCriteriaSearch"
+            @change="multiCriteriaSearch"
+            @keydown.enter="multiCriteriaSearch"
           />
         </div>
 

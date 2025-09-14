@@ -49,6 +49,7 @@
         v-model="selectedPage"
         min="1"
         :max="end"
+        @keydown.enter="goToSelectedPage"
         id="select-page"
       />
       <span class="text-nowrap">/ {{ end }}</span>
