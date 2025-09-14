@@ -54,9 +54,15 @@ public class ProjectGenerator {
                     })
                     .collect(Collectors.toMap(Framework::getId, framework -> framework));
 
-            // Load all MVCs
+            // Load MVC
             Map<Integer, FrameworkMVC> mvcFrameworks = Arrays.stream(FileUtils.fromYaml(FrameworkMVC[].class, Constantes.FRAMEWORK_MVC_YAML))
-                    .collect(Collectors.toMap(Framework::getId, frameworkMvc -> frameworkMvc));
+                    .peek(f -> {
+                        try { f.setFrameworkSecurities(); }
+                        catch (IOException e) { throw new RuntimeException("Error initializing frameworkSecurities for ID: " + f.getId(), e); }
+                    })
+                    .collect(Collectors.toMap(Framework::getId, f -> f));
+
+            // Ajouter tout dans la map principale
             frameworks.putAll(mvcFrameworks);
 
             llmApiConfigs = Arrays.stream(FileUtils.fromJson(LlmApiConfig[].class, Constantes.LLM_API_CONFIG_JSON))
