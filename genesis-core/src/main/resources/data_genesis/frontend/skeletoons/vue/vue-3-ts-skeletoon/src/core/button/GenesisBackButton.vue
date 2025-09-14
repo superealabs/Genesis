@@ -1,5 +1,6 @@
 <template>
-  <GenesisButton icon="fa fa-plus">
+  <GenesisButton v-bind="$attrs" class="btn-primary">
+    <LeftArrowIcon />
     <span v-if="label">{{ label }}</span>
     <span v-else><slot /></span>
   </GenesisButton>
@@ -7,6 +8,7 @@
 
 <script setup lang="ts">
 import GenesisButton from './GenesisButton.vue'
+import LeftArrowIcon from '@/core/icons/LeftArrowIcon.vue'
 defineProps<{
   label: string
 }>()

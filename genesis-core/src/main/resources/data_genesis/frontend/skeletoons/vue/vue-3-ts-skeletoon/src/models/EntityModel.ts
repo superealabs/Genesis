@@ -3,14 +3,12 @@ import type { SelectOption } from './SelectOption'
 import type { PaginationRequestParameter } from './api/RequestModel'
 import type { PaginationData } from './api/PageResponseModel'
 
-export class SelectSearchField<T = unknown> {
-  optionsRef: Ref<T[]>
-  loader: (modelValue: unknown) => Promise<void>
-
-  constructor(optionsRef: Ref<T[]>, loader: (modelValue: unknown) => Promise<void>) {
-    this.optionsRef = optionsRef
-    this.loader = loader
-  }
+export interface MultiCriteriaSelectSearch {
+  filters: EntitySearchField[]
+  searchFunction: (
+    filters: Record<string, unknown>,
+    pagination: PaginationRequestParameter,
+  ) => Promise<{ options: SelectOption[]; pagination: PaginationData }>
 }
 
 // SearchModel.ts
@@ -25,4 +23,5 @@ export interface EntitySearchField {
     searchTerm: string,
     pagination: PaginationRequestParameter,
   ) => Promise<{ options: SelectOption[]; pagination: PaginationData }>
+  multicriteriaSelect?: MultiCriteriaSelectSearch
 }

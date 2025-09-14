@@ -7,8 +7,8 @@
       </div>
 
       <!-- Message -->
-      <div class="">
-        <h5 class="text-danger">{{ title || 'Error' }}</h5>
+      <div>
+        <h5 class="text-danger">{{ title }}</h5>
         <p class="mb-1">{{ message }}</p>
         <small v-if="subMessage" class="text-muted">{{ subMessage }}</small>
       </div>
@@ -21,24 +21,23 @@
   </GenesisPopup>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
 import GenesisPopup from '@/core/popup/GenesisPopup.vue'
 import GenesisButton from '@/core/button/GenesisButton.vue'
 
-export default defineComponent({
-  name: 'AlertPopup',
-  components: { GenesisPopup, GenesisButton },
-  props: {
-    visible: { type: Boolean, required: true },
-    title: { type: String, default: 'Error' },
-    message: { type: String, default: 'Alert Message' },
-    subMessage: { type: String, default: '' },
-  },
-  emits: ['close'],
-  setup(props, { emit }) {
-    const close = () => emit('close', false)
-    return { close }
-  },
-})
+// Props
+const props = defineProps<{
+  visible: boolean
+  title?: string
+  message?: string
+  subMessage?: string
+}>()
+
+// Emit
+const emit = defineEmits<{
+  (e: 'close', value: boolean): void
+}>()
+
+// Methods
+const close = () => emit('close', false)
 </script>

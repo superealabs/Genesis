@@ -30,28 +30,22 @@
   </transition>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
 import XIcon from '../icons/XIcon.vue'
 
-export default defineComponent({
-  name: 'GenesisPopup',
-  components: { XIcon },
-  props: {
-    title: { type: String, default: '' },
-    visible: { type: Boolean, required: true },
-  },
-  emits: ['close'],
-  setup(props, { emit }) {
-    const close = () => {
-      emit('close', false)
-    }
+// Props
+const props = defineProps<{
+  title?: string
+  visible: boolean
+}>()
 
-    return {
-      close,
-    }
-  },
-})
+// Emits
+const emit = defineEmits<{
+  (e: 'close', value: boolean): void
+}>()
+
+// Methods
+const close = () => emit('close', false)
 </script>
 
 <style>
