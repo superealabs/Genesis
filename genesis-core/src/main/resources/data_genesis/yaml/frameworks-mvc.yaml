@@ -13,6 +13,12 @@
       fileName: "Program"
       extension: "cs"
       content: |
+        {{#if useJWT}}using Microsoft.AspNetCore.Identity;
+        using System.Security.Claims;
+        using Microsoft.AspNetCore.Authorization;
+        using ${majStart(projectName)}.Services.Startup;
+        using Microsoft.IdentityModel.Tokens;
+        using System.Text;{{/if}}
         using System.Net;
         using Microsoft.OpenApi.Models;
         using Microsoft.EntityFrameworkCore;
@@ -33,7 +39,16 @@
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         builder.Services.AddDbContext<${majStart(projectName)}Context>(options =>
             options.Use${daoName}(connectionString${addOptions}));
+        {{#if useJWT}}
+        builder.Services.AddHostedService<SqlSchemaBootstrapper>();
+        builder.Services
+          .AddIdentity<ApplicationUser, IdentityRole>()
+          .AddEntityFrameworkStores<${majStart(projectName)}Context>()
+          .AddDefaultTokenProviders();
         
+        builder.Services.AddScoped<ApplicationUserService>();
+        builder.Services.AddScoped<JwtService>();
+        {{/if}}
         // Adding repositories ...
         {{#each entities}}
         builder.Services.AddScoped<I${this}Repository, ${this}Repository>();
@@ -67,6 +82,7 @@
         
         app.UseRouting();
         
+        {{#if useJWT}}app.UseAuthentication();{{/if}}
         app.UseAuthorization();
         
         app.MapControllerRoute(
@@ -84,11 +100,17 @@
       extension: "cs"
       content: |
         namespace ${majStart(projectName)}.Data;
+        {{#if useJWT}}
+        using Microsoft.AspNetCore.Identity;
+        using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+        {{/if}}
         using Microsoft.EntityFrameworkCore;
         using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
         using Models;
-        
-        public class ${majStart(projectName)}Context : DbContext
+        {{#if useJWT}}
+        public class ${majStart(projectName)}Context : IdentityDbContext<ApplicationUser>
+        {{else}}
+        public class ${majStart(projectName)}Context : DbContext{{/if}}
         {
           {{#each entities}}
           public DbSet<${this}> ${this}s { get; set; }
@@ -2034,6 +2056,12 @@
         - "7.0"
         - "6.0"
       defaultOption: "8.0"
+    - name: "Security Type"
+      variableName: "securityType"
+      options:
+        - "NONE"
+        - ".NET Security - JWT"
+      defaultOption: "NONE"
 
   dependencies: [ ]
 
@@ -2487,6 +2515,7 @@
       using ${majStart(projectName)}.Filters;
       using ${majStart(projectName)}.ViewModels;
       using System.Text.Json;
+      {{#if useJWT}}using Microsoft.AspNetCore.Authorization;{{/if}}
 
     controllerAnnotations: ""
     controllerExtends: " : Controller"
@@ -2504,6 +2533,7 @@
       {{tab}}}
     controllerMethodContent: |
       {{tab}}// GET: /${majStart(className)}
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}public async Task<IActionResult> Index(int page = 0, int pageSize = 10, string? sortOrder = null)
       {{tab}}{
       {{tab}}    var results = await _service.GetAllAsync(page, pageSize, sortOrder{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
@@ -2528,6 +2558,7 @@
       {{tab}}}
       
       {{tab}}// POST: /${majStart(className)}/Search
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[HttpPost]
       {{tab}}public async Task<IActionResult> Search(${majStart(className)}Dto dto, int page = 0, int pageSize = 10, string? sortOrder = null)
       {{tab}}{
@@ -2554,6 +2585,7 @@
       {{tab}}}
       
       {{tab}}// GET: /${majStart(className)}/Details/${pkColumn}
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}public async Task<IActionResult> Details(${pkColumnType} ${pkColumn})
       {{tab}}{
       {{tab}}    var ${minStart(className)} = await _service.GetByIdAsync(${pkColumn}{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
@@ -2579,6 +2611,7 @@
       {{tab}}}
       
       {{tab}}{{#if !isView}}// GET: /${majStart(className)}/Create
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}public async Task<IActionResult> Create()
       {{tab}}{
       {{tab}}    var vm = await BuildFormViewModel(new ${majStart(className)}());
@@ -2586,6 +2619,7 @@
       {{tab}}}
       
       {{tab}}// POST: /${majStart(className)}/Create
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[HttpPost]
       {{tab}}[ValidateAntiForgeryToken]
       {{tab}}public async Task<IActionResult> Create(${majStart(className)}ViewModel vm)
@@ -2641,6 +2675,7 @@
       {{tab}}}
       
       {{tab}}// GET: /${majStart(className)}/Edit/${pkColumn}
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}public async Task<IActionResult> Edit(${pkColumnType} ${pkColumn})
       {{tab}}{
       {{tab}}    var ${minStart(className)} = await _service.GetByIdAsync(${pkColumn});
@@ -2651,6 +2686,7 @@
       {{tab}}}
       
       {{tab}}// POST: /${majStart(className)}/Edit/${pkColumn}
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[HttpPost]
       {{tab}}[ValidateAntiForgeryToken]
       {{tab}}public async Task<IActionResult> Edit(${pkColumnType} ${pkColumn}, ${majStart(className)}ViewModel vm)
@@ -2713,6 +2749,7 @@
       
       
       {{tab}}// POST: /${majStart(className)}/Delete/${pkColumn}
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[HttpPost, ActionName("Delete")]
       {{tab}}[ValidateAntiForgeryToken]
       {{tab}}public async Task<IActionResult> Delete(${pkColumnType} ${pkColumn})
