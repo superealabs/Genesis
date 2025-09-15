@@ -57,5 +57,40 @@
       "time": "TimeSpan",
       "boolean": "Boolean"
     }
+  },
+  {
+    "id": 5,
+    "name": "Python",
+    "extension": "py",
+    "configurations": [
+      {
+        "name": "Language version",
+        "variableName": "languageVersion",
+        "options": [
+          "3.8",
+          "3.10",
+          "3.12"
+        ],
+        "defaultOption": "3.10"
+      }
+    ],
+    "syntax": {
+      "classKeyword": "class",
+      "namespace": "",
+      "namespaceStart": "",
+      "namespaceEnd": "{{removeLine}}",
+      "bracketStart": ":",
+      "bracketEnd": "{{removeLine}}"
+    },
+    "types": {
+      "int": "int",
+      "long": "int",
+      "double": "float",
+      "string": "str",
+      "date": "datetime.date",
+      "timestamp": "datetime.datetime",
+      "time": "datetime.time",
+      "boolean": "bool"
+    }
   }
 ]

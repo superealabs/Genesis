@@ -580,3 +580,59 @@
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
 
   projectFolders: [ ]
+
+- id: 4
+  name: "Django"
+  coreFrameworks:
+    - "Django"
+  projectFilesEdits:
+    - fileType: "Requirements"
+      fileName: "requirements"
+      extension: "txt"
+      content: |
+        Django==${frameworkVersion}
+        {{#if useDB}}${DBdriver}{{/if}}
+        {{#each dependencies}}
+        ${this.artifactId}==${this.version}
+        {{/each}}
+      destinationPath: "${destinationFolder}/${projectName}/"
+
+    - fileType: "Manage"
+      fileName: "manage.py"
+      content: |
+        #!/usr/bin/env python
+        """Django's command-line utility for administrative tasks."""
+        import os
+        import sys
+
+
+        def main():
+            """Run administrative tasks."""
+            os.environ.setdefault('DJANGO_SETTINGS_MODULE', '${projectName}.settings')
+            try:
+                from django.core.management import execute_from_command_line
+            except ImportError as exc:
+                raise ImportError(
+                    "Couldn't import Django. Are you sure it's installed and "
+                    "available on your PYTHONPATH environment variable? Did you "
+                    "forget to activate a virtual environment?"
+                ) from exc
+            execute_from_command_line(sys.argv)
+
+
+        if __name__ == '__main__':
+            main()
+      destinationPath: "${destinationFolder}/${projectName}/"
+
+  projectFiles:
+
+    - fileType: "ModelGenerator"
+      fileName: "generate_models.py"
+      sourcePath: "data_genesis/django/"
+      destinationPath: "${destinationFolder}/${projectName}/"
+
+  projectFolders:
+    - folderType: "DjangoApp"
+      folderName: "${projectName}"
+      sourcePath: "data_genesis/django/app_template"
+      destinationPath: "${destinationFolder}/${projectName}/"
