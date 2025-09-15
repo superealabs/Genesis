@@ -17,14 +17,17 @@ public class Constantes {
     // LANGUAGES
     public static final int Java_ID = 1;
     public static final int CSharp_ID = 2;
+    public static final int Python_ID = 5;
 
     // FRAMEWORKS
     public static final int Spring_REST_API_ID = 1;
     public static final int NET_ID = 2;
     public static final int Spring_Eureka_Server_ID = 3;
     public static final int Spring_Api_Gateway_ID = 4;
+    public static final int Django_ID = 6;
 
     // PROJECTS
     public static final int Maven_ID = 1;
     public static final int ASP_ID = 2;
+    public static final int Django_Project_ID = 4;
 }
