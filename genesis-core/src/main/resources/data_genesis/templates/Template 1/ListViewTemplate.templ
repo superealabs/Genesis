@@ -247,7 +247,9 @@ ${modelType}
                 <p>This action cannot be undone.</p>
                 <form id="deleteForm" method="post" ${deleteLink}>
                     @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" id="${className}Id" />
+                    {{#each fields}}{{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}
+                    <input type="hidden" name="${this.name}" id="${className}Id" />{{/if}}{{else}}{{removeLine}}{{/if}}
+                    {{/each}}{{removeLine}}
                     <button type="submit" class="btn-confirm">Delete</button>
                 </form>
             </div>
@@ -302,11 +304,11 @@ ${modelType}
                 <select class="select" name="page" id="page">
                     ${onGoingPagesLoop}
                 </select>
-                <input type="hidden" name="pageSize" ${onGoingPageTagHelper} />
+                <input type="hidden" name="pageSize" ${onGoingPageSizeTagHelper} />
+                <input type="hidden" name="sortOrder" ${onGoingSortOrderTagHelper} />
                 <button type="submit" class="ongoing-button">Go</button>
             </form>
         </div>
     </div>
 </main>
-<script src="${assetsImportLink}/js/utils.js"></script>
-<script src="${assetsImportLink}/js/events.js"></script>
+${scriptSection}

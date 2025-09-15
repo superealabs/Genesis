@@ -1,4 +1,5 @@
 :root {
+  /* Thème light par défaut */
   --color-primary: #5164b1;
   --color-secondary: #ffffff;
   --color-bg: #f9f9f9;
@@ -13,6 +14,19 @@
   --radius: 10px;
   --shadow: 0 4px 6px #09090910;
   --shadow-soft: 0 2px 3px #09090910;
+}
+
+/* Thème dark */
+[data-theme="dark"] {
+  --color-primary: #5164b1;
+  --color-secondary: #353535;
+  --color-bg: #262626;
+  --color-text: #f9f9f9;
+  --color-border: #444;
+  --color-active: #5164b180;
+  --color-hover: #5164b140;
+  --color-buton-hover: #5164b170;
+  --color-buton-clicked: #5164b160;
 }
 
 @font-face {

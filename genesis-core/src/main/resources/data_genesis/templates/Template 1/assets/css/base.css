@@ -3,10 +3,12 @@
     padding: 0;
     box-sizing: border-box;
 }
+
 body {
-    font-family: 'Inter', sans-serif;
-    background: var(--color-bg);
+    background-color: var(--color-bg);
     color: var(--color-text);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-family: 'Inter', sans-serif;
 }
 a {
     color: inherit;

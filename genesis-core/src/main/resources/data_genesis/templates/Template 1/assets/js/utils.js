@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const templates = document.getElementById("filter-templates");
     const dropdownWrapper = addFilterBtn.closest(".dropdown");
 
+
     // Ouvrir/fermer le menu
     addFilterBtn.addEventListener("click", (e) => {
         e.stopPropagation();
