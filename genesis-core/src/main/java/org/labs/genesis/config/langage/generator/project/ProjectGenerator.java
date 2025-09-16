@@ -164,7 +164,9 @@ public class ProjectGenerator {
         Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
         selectedSecurityOption.ifPresent(security -> {
             try {
-                renderFilesEdits(context.getFrontendFramework().getAuthenticationFiles(),FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType,context));
+                HashMap<String, Object> securityMap=FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType,context);
+                securityMap.putAll(finalRenderData);
+                renderFilesEdits(context.getFrontendFramework().getAuthenticationFiles(),securityMap);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

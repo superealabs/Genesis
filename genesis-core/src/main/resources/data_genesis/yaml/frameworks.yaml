@@ -4596,7 +4596,7 @@
       {{#if !isView}} 
       {{tab}}[HttpPost]
       {{/if}}
-      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
+      {{tab}}{{#if useJWT and !isView}}[Authorize]{{/if}}
       {{#if !isView}} 
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
@@ -4652,7 +4652,7 @@
       {{#if !isView}} 
       {{tab}}[HttpPut("{id}")]
       {{/if}}
-      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
+      {{tab}}{{#if useJWT and !isView}}[Authorize]{{/if}}
       {{#if !isView}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)}",
@@ -4725,7 +4725,7 @@
       {{#if !isView}} 
       {{tab}}[HttpDelete("{id}")]
       {{/if}}
-      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
+      {{tab}}{{#if useJWT and !isView}}[Authorize]{{/if}}
       {{#if !isView}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Delete ${formatReadableLowerCase(className)}",

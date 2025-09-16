@@ -186,12 +186,12 @@ public class FontendGenerator implements IFrontendGenerator{
         HashMap<String, Object> metadata = FrameworkFrontendMetadataProvider.getWebappHashMap(context);
         // Generate logo
         String logoPath = frontendFramework.getFrontendPaths().getLogoPath();
-        logoPath = engine.simpleRender(logoPath, metadata);
-        logoPath += frontendFramework.getProjectBranding().getLogoUrl();
+        logoPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(logoPath, metadata));
         if (!frontendFramework.getProjectBranding().useLogoLink() && frontendFramework.getProjectBranding().hasLogo()){
             File logoFile = frontendFramework.getProjectBranding().getLogoFile();
             try{
-                Path targetPath = Paths.get(logoPath);
+                Path targetPath = Paths.get(logoPath, frontendFramework.getProjectBranding().getLogoUrl());
+                Files.createDirectories(targetPath.getParent());
                 Files.copy(logoFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
             }
             catch (IOException e){
@@ -201,12 +201,11 @@ public class FontendGenerator implements IFrontendGenerator{
 
         // Generate favicon
         String faviconPath = frontendFramework.getFrontendPaths().getFaviconPath();
-        faviconPath = engine.simpleRender(faviconPath, metadata);
-        faviconPath += frontendFramework.getProjectBranding().getFaviconUrl();
+        faviconPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(faviconPath, metadata));
         if (!frontendFramework.getProjectBranding().useFaviconLink() && frontendFramework.getProjectBranding().hasFavicon()){
             File faviconFile = frontendFramework.getProjectBranding().getFaviconFile();
             try{
-                Path targetPath = Paths.get(faviconPath);
+                Path targetPath = Paths.get(faviconPath,frontendFramework.getProjectBranding().getFaviconUrl());
                 Files.copy(faviconFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
             }
             catch (IOException e){
@@ -215,7 +214,7 @@ public class FontendGenerator implements IFrontendGenerator{
         }
         // Generate lang files
         List<InterfaceLang> langs = frontendFramework.getFrontendLayout().getLangs();
-        String langPath = engine.simpleRender(frontendFramework.getFrontendPaths().langsPath, metadata);
+        String langPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(frontendFramework.getFrontendPaths().langsPath, metadata));
         for (InterfaceLang lang : langs) {
             String content = engine.simpleRender(lang.getContent(),metadata);
             FileUtils.createFile(langPath,lang.getName().toLowerCase(), "js", content);
