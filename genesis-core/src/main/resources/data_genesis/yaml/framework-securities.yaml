@@ -1594,152 +1594,157 @@
           {{else}}{{removeLine}}{{/if}}
         
         {{#if databaseType = Oracle}}
+          
+          CREATE TABLE "AspNetRoles" (
+          "Id" VARCHAR2(255) NOT NULL,
+          "Name" VARCHAR2(256),
+          "NormalizedName" VARCHAR2(256),
+          "ConcurrencyStamp" VARCHAR2(4000),
+          CONSTRAINT "PK_AspNetRoles" PRIMARY KEY ("Id"),
+          CONSTRAINT "RoleNameIndex" UNIQUE ("NormalizedName")
+          );
+          
+          CREATE TABLE "AspNetUsers" (
+          "Id" VARCHAR2(255) NOT NULL,
+          "UserName" VARCHAR2(256),
+          "NormalizedUserName" VARCHAR2(256),
+          "Email" VARCHAR2(256),
+          "NormalizedEmail" VARCHAR2(256),
+          "EmailConfirmed" NUMBER(1) NOT NULL,
+          "PasswordHash" VARCHAR2(4000),
+          "SecurityStamp" VARCHAR2(4000),
+          "ConcurrencyStamp" VARCHAR2(4000),
+          "PhoneNumber" VARCHAR2(4000),
+          "PhoneNumberConfirmed" NUMBER(1) NOT NULL,
+          "TwoFactorEnabled" NUMBER(1) NOT NULL,
+          "LockoutEnd" TIMESTAMP,
+          "LockoutEnabled" NUMBER(1) NOT NULL,
+          "AccessFailedCount" NUMBER(10) NOT NULL,
+          CONSTRAINT "PK_AspNetUsers" PRIMARY KEY ("Id"),
+          CONSTRAINT "UserNameIndex" UNIQUE ("NormalizedUserName")
+          );
+          
+          CREATE INDEX "EmailIndex" ON "AspNetUsers"("NormalizedEmail");
+          
+          CREATE TABLE "AspNetRoleClaims" (
+          "Id" NUMBER(10) NOT NULL,
+          "RoleId" VARCHAR2(255) NOT NULL,
+          "ClaimType" VARCHAR2(4000),
+          "ClaimValue" VARCHAR2(4000),
+          CONSTRAINT "PK_AspNetRoleClaims" PRIMARY KEY ("Id"),
+          CONSTRAINT "FK_AspNetRoleClaims_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles"("Id") ON DELETE CASCADE
+          );
+          
+          CREATE SEQUENCE "AspNetRoleClaims_seq" START WITH 1 INCREMENT BY 1;
+          
+          CREATE OR REPLACE TRIGGER "AspNetRoleClaims_trigger"
+          BEFORE INSERT ON "AspNetRoleClaims"
+          FOR EACH ROW
           BEGIN
-            EXECUTE IMMEDIATE '
-            CREATE TABLE AspNetRoles (
-            Id VARCHAR2(255) NOT NULL,
-            Name VARCHAR2(256),
-            NormalizedName VARCHAR2(256),
-            ConcurrencyStamp VARCHAR2(4000),
-            CONSTRAINT PK_AspNetRoles PRIMARY KEY (Id),
-            CONSTRAINT RoleNameIndex UNIQUE (NormalizedName)
-            )';
-        
-            EXECUTE IMMEDIATE '
-            CREATE TABLE AspNetUsers (
-            Id VARCHAR2(255) NOT NULL,
-            UserName VARCHAR2(256),
-            NormalizedUserName VARCHAR2(256),
-            Email VARCHAR2(256),
-            NormalizedEmail VARCHAR2(256),
-            EmailConfirmed NUMBER(1) NOT NULL DEFAULT 0,
-            PasswordHash VARCHAR2(4000),
-            SecurityStamp VARCHAR2(4000),
-            ConcurrencyStamp VARCHAR2(4000),
-            PhoneNumber VARCHAR2(4000),
-            PhoneNumberConfirmed NUMBER(1) NOT NULL DEFAULT 0,
-            TwoFactorEnabled NUMBER(1) NOT NULL DEFAULT 0,
-            LockoutEnd TIMESTAMP,
-            LockoutEnabled NUMBER(1) NOT NULL DEFAULT 0,
-            AccessFailedCount NUMBER(10) NOT NULL DEFAULT 0,
-            CONSTRAINT PK_AspNetUsers PRIMARY KEY (Id),
-            CONSTRAINT UserNameIndex UNIQUE (NormalizedUserName)
-            )';
-        
-            EXECUTE IMMEDIATE '
-            CREATE INDEX EmailIndex ON AspNetUsers(NormalizedEmail)';
-        
-            EXECUTE IMMEDIATE '
-            CREATE TABLE AspNetRoleClaims (
-            Id NUMBER(10) NOT NULL,
-            RoleId VARCHAR2(255) NOT NULL,
-            ClaimType VARCHAR2(4000),
-            ClaimValue VARCHAR2(4000),
-            CONSTRAINT PK_AspNetRoleClaims PRIMARY KEY (Id),
-            CONSTRAINT FK_AspNetRoleClaims_AspNetRoles_RoleId FOREIGN KEY (RoleId) REFERENCES AspNetRoles(Id) ON DELETE CASCADE
-            )';
-        
-            EXECUTE IMMEDIATE '
-            CREATE SEQUENCE AspNetRoleClaims_seq START WITH 1 INCREMENT BY 1';
-        
-            EXECUTE IMMEDIATE '
-            CREATE OR REPLACE TRIGGER AspNetRoleClaims_trigger
-            BEFORE INSERT ON AspNetRoleClaims
-            FOR EACH ROW
-            BEGIN
-            SELECT AspNetRoleClaims_seq.NEXTVAL INTO :new.Id FROM dual;
-            END;';
-        
-            EXECUTE IMMEDIATE '
-            CREATE INDEX IX_AspNetRoleClaims_RoleId ON AspNetRoleClaims(RoleId)';
-        
-            EXECUTE IMMEDIATE '
-            CREATE TABLE AspNetUserClaims (
-            Id NUMBER(10) NOT NULL,
-            UserId VARCHAR2(255) NOT NULL,
-            ClaimType VARCHAR2(4000),
-            ClaimValue VARCHAR2(4000),
-            CONSTRAINT PK_AspNetUserClaims PRIMARY KEY (Id),
-            CONSTRAINT FK_AspNetUserClaims_AspNetUsers_UserId FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE
-            )';
-        
-            EXECUTE IMMEDIATE '
-            CREATE SEQUENCE AspNetUserClaims_seq START WITH 1 INCREMENT BY 1';
-        
-            EXECUTE IMMEDIATE '
-            CREATE OR REPLACE TRIGGER AspNetUserClaims_trigger
-            BEFORE INSERT ON AspNetUserClaims
-            FOR EACH ROW
-            BEGIN
-            SELECT AspNetUserClaims_seq.NEXTVAL INTO :new.Id FROM dual;
-            END;';
-        
-            EXECUTE IMMEDIATE '
-            CREATE INDEX IX_AspNetUserClaims_UserId ON AspNetUserClaims(UserId)';
-        
-            EXECUTE IMMEDIATE '
-            CREATE TABLE AspNetUserLogins (
-            LoginProvider VARCHAR2(255) NOT NULL,
-            ProviderKey VARCHAR2(255) NOT NULL,
-            ProviderDisplayName VARCHAR2(4000),
-            UserId VARCHAR2(255) NOT NULL,
-            CONSTRAINT PK_AspNetUserLogins PRIMARY KEY (LoginProvider, ProviderKey),
-            CONSTRAINT FK_AspNetUserLogins_AspNetUsers_UserId FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE
-            )';
-        
-            EXECUTE IMMEDIATE '
-            CREATE INDEX IX_AspNetUserLogins_UserId ON AspNetUserLogins(UserId)';
-        
-            EXECUTE IMMEDIATE '
-            CREATE TABLE AspNetUserRoles (
-            UserId VARCHAR2(255) NOT NULL,
-            RoleId VARCHAR2(255) NOT NULL,
-            CONSTRAINT PK_AspNetUserRoles PRIMARY KEY (UserId, RoleId),
-            CONSTRAINT FK_AspNetUserRoles_AspNetUsers_UserId FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE,
-            CONSTRAINT FK_AspNetUserRoles_AspNetRoles_RoleId FOREIGN KEY (RoleId) REFERENCES AspNetRoles(Id) ON DELETE CASCADE
-            )';
-        
-            EXECUTE IMMEDIATE '
-            CREATE INDEX IX_AspNetUserRoles_RoleId ON AspNetUserRoles(RoleId)';
-        
-            EXECUTE IMMEDIATE '
-            CREATE TABLE AspNetUserTokens (
-            UserId VARCHAR2(255) NOT NULL,
-            LoginProvider VARCHAR2(255) NOT NULL,
-            Name VARCHAR2(255) NOT NULL,
-            Value VARCHAR2(4000),
-            CONSTRAINT PK_AspNetUserTokens PRIMARY KEY (UserId, LoginProvider, Name),
-            CONSTRAINT FK_AspNetUserTokens_AspNetUsers_UserId FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE
-            )';
-        
-            -- Seed data
-            EXECUTE IMMEDIATE '
-            MERGE INTO AspNetRoles r
-            USING (SELECT ''1'' AS Id, ''ROLE_ADMIN'' AS Name, ''ROLE_ADMIN'' AS NormalizedName, SYS_GUID() AS ConcurrencyStamp FROM dual) s
-            ON (r.Id = s.Id)
-            WHEN NOT MATCHED THEN
-            INSERT (Id, Name, NormalizedName, ConcurrencyStamp)
-            VALUES (s.Id, s.Name, s.NormalizedName, s.ConcurrencyStamp)';
-        
-            EXECUTE IMMEDIATE '
-            MERGE INTO AspNetUsers u
-            USING (SELECT ''1'' AS Id, ''admin'' AS UserName, ''ADMIN'' AS NormalizedUserName, ''admin@user.com'' AS Email, ''ADMIN@USER.COM'' AS NormalizedEmail,
-            1 AS EmailConfirmed, 'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==' AS PasswordHash,
-            SYS_GUID() AS SecurityStamp, SYS_GUID() AS ConcurrencyStamp, 0 AS LockoutEnabled, 0 AS AccessFailedCount FROM dual) s
-            ON (u.Id = s.Id)
-            WHEN NOT MATCHED THEN
-            INSERT (Id, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp, LockoutEnabled, AccessFailedCount)
-            VALUES (s.Id, s.UserName, s.NormalizedUserName, s.Email, s.NormalizedEmail, s.EmailConfirmed, s.PasswordHash, s.SecurityStamp, s.ConcurrencyStamp, s.LockoutEnabled, s.AccessFailedCount)';
-        
-            EXECUTE IMMEDIATE '
-            MERGE INTO AspNetUserRoles ur
-            USING (SELECT ''1'' AS UserId, ''1'' AS RoleId FROM dual) s
-            ON (ur.UserId = s.UserId AND ur.RoleId = s.RoleId)
-            WHEN NOT MATCHED THEN
-            INSERT (UserId, RoleId)
-            VALUES (s.UserId, s.RoleId)';
+          SELECT "AspNetRoleClaims_seq".NEXTVAL INTO :new."Id" FROM dual;
           END;
           /
+          
+          CREATE INDEX "IX_AspNetRoleClaims_RoleId" ON "AspNetRoleClaims"("RoleId");
+          
+          CREATE TABLE "AspNetUserClaims" (
+          "Id" NUMBER(10) NOT NULL,
+          "UserId" VARCHAR2(255) NOT NULL,
+          "ClaimType" VARCHAR2(4000),
+          "ClaimValue" VARCHAR2(4000),
+          CONSTRAINT "PK_AspNetUserClaims" PRIMARY KEY ("Id"),
+          CONSTRAINT "FK_AspNetUserClaims_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
+          );
+          
+          CREATE SEQUENCE "AspNetUserClaims_seq" START WITH 1 INCREMENT BY 1;
+          
+          CREATE OR REPLACE TRIGGER "AspNetUserClaims_trigger"
+          BEFORE INSERT ON "AspNetUserClaims"
+          FOR EACH ROW
+          BEGIN
+          SELECT "AspNetUserClaims_seq".NEXTVAL INTO :new."Id" FROM dual;
+          END;
+          /
+          
+          CREATE INDEX "IX_AspNetUserClaims_UserId" ON "AspNetUserClaims"("UserId");
+          
+          CREATE TABLE "AspNetUserLogins" (
+          "LoginProvider" VARCHAR2(255) NOT NULL,
+          "ProviderKey" VARCHAR2(255) NOT NULL,
+          "ProviderDisplayName" VARCHAR2(4000),
+          "UserId" VARCHAR2(255) NOT NULL,
+          CONSTRAINT "PK_AspNetUserLogins" PRIMARY KEY ("LoginProvider", "ProviderKey"),
+          CONSTRAINT "FK_AspNetUserLogins_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
+          );
+          
+          CREATE INDEX "IX_AspNetUserLogins_UserId" ON "AspNetUserLogins"("UserId");
+          
+          CREATE TABLE "AspNetUserRoles" (
+          "UserId" VARCHAR2(255) NOT NULL,
+          "RoleId" VARCHAR2(255) NOT NULL,
+          CONSTRAINT "PK_AspNetUserRoles" PRIMARY KEY ("UserId", "RoleId"),
+          CONSTRAINT "FK_AspNetUserRoles_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_AspNetUserRoles_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles"("Id") ON DELETE CASCADE
+          );
+          
+          CREATE INDEX "IX_AspNetUserRoles_RoleId" ON "AspNetUserRoles"("RoleId");
+          
+          CREATE TABLE "AspNetUserTokens" (
+          "UserId" VARCHAR2(255) NOT NULL,
+          "LoginProvider" VARCHAR2(255) NOT NULL,
+          "Name" VARCHAR2(255) NOT NULL,
+          "Value" VARCHAR2(4000),
+          CONSTRAINT "PK_AspNetUserTokens" PRIMARY KEY ("UserId", "LoginProvider", "Name"),
+          CONSTRAINT "FK_AspNetUserTokens_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
+          );
+          
+          -- Données initiales
+          MERGE INTO "AspNetRoles" r
+          USING (SELECT '1' AS "Id", 'ROLE_ADMIN' AS "Name", 'ROLE_ADMIN' AS "NormalizedName", SYS_GUID() AS "ConcurrencyStamp" FROM dual) s
+          ON (r."Id" = s."Id")
+          WHEN NOT MATCHED THEN
+          INSERT ("Id", "Name", "NormalizedName", "ConcurrencyStamp")
+          VALUES (s."Id", s."Name", s."NormalizedName", s."ConcurrencyStamp");
+          
+          MERGE INTO "AspNetUsers" u
+          USING (
+          SELECT
+          '1' AS "Id",
+          'admin' AS "UserName",
+          'ADMIN' AS "NormalizedUserName",
+          'admin@user.com' AS "Email",
+          'ADMIN@USER.COM' AS "NormalizedEmail",
+          1 AS "EmailConfirmed",
+          'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==' AS "PasswordHash",
+          SYS_GUID() AS "SecurityStamp",
+          SYS_GUID() AS "ConcurrencyStamp",
+          0 AS "LockoutEnabled",
+          0 AS "AccessFailedCount",
+          0 AS "PhoneNumberConfirmed",
+          0 AS "TwoFactorEnabled",
+          NULL AS "PhoneNumber",
+          NULL AS "LockoutEnd"
+          FROM dual
+          ) s
+          ON (u."Id" = s."Id")
+          WHEN NOT MATCHED THEN
+          INSERT (
+          "Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail", "EmailConfirmed",
+          "PasswordHash", "SecurityStamp", "ConcurrencyStamp", "LockoutEnabled", "AccessFailedCount",
+          "PhoneNumberConfirmed", "TwoFactorEnabled", "PhoneNumber", "LockoutEnd"
+          )
+          VALUES (
+          s."Id", s."UserName", s."NormalizedUserName", s."Email", s."NormalizedEmail", s."EmailConfirmed",
+          s."PasswordHash", s."SecurityStamp", s."ConcurrencyStamp", s."LockoutEnabled", s."AccessFailedCount",
+          s."PhoneNumberConfirmed", s."TwoFactorEnabled", s."PhoneNumber", s."LockoutEnd"
+          );
+          
+          MERGE INTO "AspNetUserRoles" ur
+          USING (SELECT '1' AS "UserId", '1' AS "RoleId" FROM dual) s
+          ON (ur."UserId" = s."UserId" AND ur."RoleId" = s."RoleId")
+          WHEN NOT MATCHED THEN
+          INSERT ("UserId", "RoleId")
+          VALUES (s."UserId", s."RoleId");
           {{else}}{{removeLine}}{{/if}}
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Data"
 

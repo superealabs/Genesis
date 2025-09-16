@@ -135,15 +135,20 @@
         import { Observable, throwError } from 'rxjs';
         import { catchError } from 'rxjs/operators';
         import { Router } from '@angular/router';
+        import { environment } from '../../../environments/environment';
 
         @Injectable()
         export class AuthInterceptor implements HttpInterceptor {
-
+        
+          private readonly apiUrl = environment.apiUrl;
           constructor(private router: Router) {}
-
+          
           intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+            if (req.url === this.apiUrl+"/auth/login") {
+              return next.handle(req);
+            }
             const token = localStorage.getItem('authToken'); 
-            console.log(token);
+            
             let authReq = req;
             if (token) {
               authReq = req.clone({
@@ -1262,7 +1267,8 @@
             return this.http.post<${majStart(className)}ListDTO>(url, cleanedCriteria, { params }).pipe(
               map((response) => {
                 this.elementNumber = response.data?.page?.totalElements ?? 0;
-                return response.data?.content ?? [];
+                const ${minStart(className)}s: ${majStart(className)}[] = (response.data?.content ?? []).map(item => new  ${majStart(className)}(item));
+                return ${minStart(className)}s;
               }),
               catchError(err => {
                 const isNotFound = err.status === 404 ;
@@ -1343,12 +1349,18 @@
         import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
       {{/each}}
     exports : |
-      export interface ${majStart(className)}
+      export class ${majStart(className)}
       {
       {{tab}}{{#each fields}}
       {{tab}}{{#if this.isForeignKey}}${this.name}: ${toPascalCase(this.type)}{{else}}
       {{tab}}${this.name}: ${this.typeBase}{{/if}}
       {{tab}}{{/each}}{{removeLine}}
+        
+         constructor(data: any) {
+            {{tab}}{{#each fields}}
+            {{tab}}this.${this.name}=data.${this.name}
+            {{tab}}{{/each}}{{removeLine}}  
+         }
       }
       
       export interface ${majStart(className)}DTO{

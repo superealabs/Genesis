@@ -217,7 +217,7 @@
       "long": "long",
       "double": "double",
       "string": "string",
-      "date": "DateOnly",
+      "date": "DateTime",
       "datetime": "DateTime",
       "timestamp": "DateTime",
       "timestamptz": "DateTimeOffset",
