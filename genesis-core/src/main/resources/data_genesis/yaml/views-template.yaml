@@ -43,4 +43,8 @@
       fileName: "events.js"
       sourcePath: "data_genesis/templates/Template 1/assets/js/"
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/wwwroot/js/"
+    - fileType: "ThemeJs"
+      fileName: "theme.js"
+      sourcePath: "data_genesis/templates/Template 1/assets/js/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/wwwroot/js/"
   templateFolders: []

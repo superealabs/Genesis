@@ -34,6 +34,7 @@ public class ViewsTemplateEngine {
         private String destinationPath;
         private String navLink;
         private String rootPath;
+        private String assetsImportLink;
         private String pageName;
         private String callContent;
         private String currentViewContext;
@@ -44,7 +45,6 @@ public class ViewsTemplateEngine {
     @ToString
     public static class List {
         private String modelType;
-        private String assetsImportLink;
         private String filterLink;
         private String inputTagHelper;
         private String selectTagHelper;
@@ -68,8 +68,10 @@ public class ViewsTemplateEngine {
         private String nextPageLink;
         private String nextClassCondition;
         private String onGoingPageLink;
-        private String onGoingPageTagHelper;
+        private String onGoingPageSizeTagHelper;
+        private String onGoingSortOrderTagHelper;
         private String onGoingPagesLoop;
+        private String scriptSection;
     }
 
     @Getter
