@@ -563,6 +563,7 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> altMap = new HashMap<>();
         altMap.put("navLink", viewsTemplateEngine.getLayout().getNavLink());
         altMap.put("rootPath", viewsTemplateEngine.getLayout().getRootPath());
+        altMap.put("assetsImportLink", viewsTemplateEngine.getLayout().getAssetsImportLink());
         altMap.put("pageName", viewsTemplateEngine.getLayout().getPageName());
         altMap.put("callContent", viewsTemplateEngine.getLayout().getCallContent());
         altMap.put("currentViewContext", viewsTemplateEngine.getLayout().getCurrentViewContext());
@@ -595,7 +596,6 @@ public class FrameworkMetadataProvider {
         altMap.put("createLink", viewsTemplateEngine.getList().getCreateLink());
         altMap.put("backLink", viewsTemplateEngine.getList().getBackLink());
         altMap.put("sortLink", viewsTemplateEngine.getList().getSortLink());
-        altMap.put("assetsImportLink", viewsTemplateEngine.getList().getAssetsImportLink());
         altMap.put("pageSizeChangeLink", viewsTemplateEngine.getList().getPageSizeChangeLink());
         altMap.put("pageSizeTagHelper", viewsTemplateEngine.getList().getPageSizeTagHelper());
         altMap.put("previousPageLink", viewsTemplateEngine.getList().getPreviousPageLink());
@@ -604,8 +604,10 @@ public class FrameworkMetadataProvider {
         altMap.put("nextPageLink", viewsTemplateEngine.getList().getNextPageLink());
         altMap.put("nextClassCondition", viewsTemplateEngine.getList().getNextClassCondition());
         altMap.put("onGoingPageLink", viewsTemplateEngine.getList().getOnGoingPageLink());
-        altMap.put("onGoingPageTagHelper", viewsTemplateEngine.getList().getOnGoingPageTagHelper());
+        altMap.put("onGoingPageSizeTagHelper", viewsTemplateEngine.getList().getOnGoingPageSizeTagHelper());
+        altMap.put("onGoingSortOrderTagHelper", viewsTemplateEngine.getList().getOnGoingSortOrderTagHelper());
         altMap.put("onGoingPagesLoop", viewsTemplateEngine.getList().getOnGoingPagesLoop());
+        altMap.put("scriptSection", viewsTemplateEngine.getList().getScriptSection());
         return altMap;
     }
 
