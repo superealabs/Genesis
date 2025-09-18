@@ -233,6 +233,17 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("columnNameField", FileUtils.toCamelCase(field.getReferencedColumn()));
 
+        // Ajouter des variables booléennes pour les types Django
+        // Un champ ne peut avoir qu'un seul type à la fois
+        String fieldType = field.getType();
+        fieldMap.put("isStringType", "str".equals(fieldType) && !field.isPrimary() && !field.isForeign());
+        fieldMap.put("isIntType", "int".equals(fieldType) && !field.isPrimary() && !field.isForeign());
+        fieldMap.put("isFloatType", "float".equals(fieldType) && !field.isPrimary() && !field.isForeign());
+        fieldMap.put("isBoolType", "bool".equals(fieldType) && !field.isPrimary() && !field.isForeign());
+        fieldMap.put("isDateType", "datetime.date".equals(fieldType) && !field.isPrimary() && !field.isForeign());
+        fieldMap.put("isDateTimeType", "datetime.datetime".equals(fieldType) && !field.isPrimary() && !field.isForeign());
+        fieldMap.put("isTimeType", "datetime.time".equals(fieldType) && !field.isPrimary() && !field.isForeign());
+
         return fieldMap;
     }
 

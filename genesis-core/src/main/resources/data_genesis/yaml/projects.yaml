@@ -598,7 +598,8 @@
       destinationPath: "${destinationFolder}/${projectName}/"
 
     - fileType: "Manage"
-      fileName: "manage.py"
+      fileName: "manage"
+      extension: "py"
       content: |
         #!/usr/bin/env python
         """Django's command-line utility for administrative tasks."""
@@ -624,12 +625,7 @@
             main()
       destinationPath: "${destinationFolder}/${projectName}/"
 
-  projectFiles:
-
-    - fileType: "ModelGenerator"
-      fileName: "generate_models.py"
-      sourcePath: "data_genesis/django/"
-      destinationPath: "${destinationFolder}/${projectName}/"
+  projectFiles: []
 
   projectFolders:
     - folderType: "DjangoApp"

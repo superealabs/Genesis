@@ -11,13 +11,19 @@
       "2": {
         "groupId": "",
         "artifactId": "Pomelo.EntityFrameworkCore.MySql"
+      },
+      "5": {
+        "groupId": "",
+        "artifactId": "mysqlclient",
+        "version": "2.2.4"
       }
     },
     "driverType": "",
     "sid": "",
     "connectionString": {
       "1": "jdbc:mysql://${host}:${port}/${database}",
-      "2": "Server=${host};Port=${port};Database=${database};User Id=${username};Password=${password};"
+      "2": "Server=${host};Port=${port};Database=${database};User Id=${username};Password=${password};",
+      "5": "mysql://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "MySql"
