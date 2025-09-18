@@ -38,6 +38,7 @@ public class ViewsTemplateEngine {
         private String pageName;
         private String callContent;
         private String currentViewContext;
+        private String logoutTagHelper;
     }
 
     @Getter

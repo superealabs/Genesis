@@ -567,6 +567,7 @@ public class FrameworkMetadataProvider {
         altMap.put("pageName", viewsTemplateEngine.getLayout().getPageName());
         altMap.put("callContent", viewsTemplateEngine.getLayout().getCallContent());
         altMap.put("currentViewContext", viewsTemplateEngine.getLayout().getCurrentViewContext());
+        altMap.put("logoutTagHelper", viewsTemplateEngine.getLayout().getLogoutTagHelper());
         return altMap;
     }
 

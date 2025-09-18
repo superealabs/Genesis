@@ -260,16 +260,23 @@
     background: var(--color-hover);
 }
 
-.settings-menu .log-out a {
+.settings-menu .log-out .logout-button {
     display: flex;
     justify-content: space-between;
     align-items: center;
     text-decoration: none;
     padding: 10px 15px;
+    width: 100%;
+    border-radius: var(--radius);
     color: var(--color-text);
+    background: transparent;
 }
 
-.settings-menu .log-out a:hover {
+.settings-menu .log-out form {
+    width: 100%;
+}
+
+.settings-menu .log-out .logout-button:hover {
     background: var(--color-hover);
 }
 

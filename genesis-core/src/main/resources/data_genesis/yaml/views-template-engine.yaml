@@ -9,6 +9,7 @@
     pageName: "@ViewData[\"Title\"] -"
     rootPath: " ~/css/style.css\" asp-append-version=\"true "
     assetsImportLink: "~"
+    logoutTagHelper: "asp-controller=\"Auth\" asp-action=\"Logout\""
     callContent: |
       @RenderBody()
       @RenderSection("Scripts", required: false)
