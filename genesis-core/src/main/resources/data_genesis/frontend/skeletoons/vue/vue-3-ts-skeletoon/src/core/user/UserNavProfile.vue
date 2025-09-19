@@ -3,27 +3,23 @@
     <!-- Avatar + Nom -->
     <div class="flex items-center gap-2">
       <div
-        class="flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-gray-600 font-bold"
+        class="flex items-center justify-center w-10 h-10 rounded-full bg-base-100 text-base-content font-bold"
       >
         {{ initials }}
       </div>
-      <p class="m-0 font-medium text-gray-800">{{ name }}</p>
+      <p class="m-0 font-medium">{{ name }}</p>
     </div>
 
     <!-- Bouton Déconnexion -->
     <div>
-      <GenesisButton class="btn-ghost border-0">
-        <LogoutIcon />
-      </GenesisButton>
+      <LogoutButton />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import GenesisButton from '../button/GenesisButton.vue'
-import LogoutIcon from '../icons/LogoutIcon.vue'
-import UserIcon from '../icons/UserIcon.vue'
+import LogoutButton from '@/core/button/LogoutButton.vue'
 
 // Props
 const props = defineProps<{

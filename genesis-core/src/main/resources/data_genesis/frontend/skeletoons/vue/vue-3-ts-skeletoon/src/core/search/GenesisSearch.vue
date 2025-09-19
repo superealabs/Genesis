@@ -86,7 +86,7 @@
         @click="emitSearch"
         type="button"
         class="btn-secondary dark:btn-neutral border-0 shadow"
-      ><FilterIcon class="mr-2" />
+        ><FilterIcon class="mr-2" />
         <span>{{ $t('button.applySearch') }}</span>
       </GenesisButton>
 
@@ -180,5 +180,4 @@ const clearAllFilters = () => {
   updateFilters()
   emitSearch()
 }
-
 </script>
