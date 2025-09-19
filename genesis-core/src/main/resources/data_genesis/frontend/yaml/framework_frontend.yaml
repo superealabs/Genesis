@@ -1407,20 +1407,6 @@
       extension: ""
       content: " ,foevoe,v"
       destinationPath: ""
-  validationRules:
-    notNull: 'required="true"'
-    maxSize: 'maxlength="${columnSize}"'
-    numericMinimumValue: 'min="${value}"'
-    numericMinimumInclusiveValue: 'min="${value}"'
-    numericMaximumValue: 'max="${value}"'
-    numericMaximumInclusiveValue: 'max="${value}"'
-    past: 'max="${today}"'
-    pastOrPresent: 'max="${today}"'
-    future: 'min="${today}"'
-    futureOrPresent: 'min="${today}"'
-    notBlank: 'required="true"'
-    minAndMaxSize: 'minlength="${minLength}" maxlength="${columnSize}"'
-    regexPattern: 'pattern="${value}"'
   additionalFiles:
     - fileType: "Package File"
       fileName: "package"
@@ -10740,7 +10726,6 @@
         }
       destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
-
   serviceComponent:
     name: "${majStart(EntityName)}Service"
     destinationPath: "${destinationFolder}/src/services"
