@@ -30,57 +30,6 @@ public class InputTypeMapping {
         }
     }
 
-    private static Map<String, Object> parseAnnotation(String annotation) {
-        if (annotation == null || annotation.trim().isEmpty())
-            return Map.of("type", "invalid", "error", "Annotation must not be null");
-
-        if (annotation.contains("[Range(")) return parseRange(annotation);
-        if (annotation.contains("[StringLength(")) return parseStringLength(annotation);
-        if (annotation.contains("[RegularExpression("))
-            return Map.of("type", "regex", "pattern", extract(annotation, "\"([^\"]+)\""), "original", annotation);
-        if (annotation.contains("[DefaultValue("))
-            return Map.of("type", "defaultValue", "value", extract(annotation, "\"([^\"]+)\""), "original", annotation);
-
-        return Map.of("type", "unknown", "original", annotation);
-    }
-
-    private static Map<String, Object> parseRange(String annotation) {
-        Matcher matcher = Pattern.compile("\\[Range\\(([^,]+),\\s*([^)]+)\\)\\]").matcher(annotation);
-        if (!matcher.find()) return Map.of("type", "range", "error", "Invalid Range format");
-
-        return Map.of("type", "range", "min", parseNumericValue(matcher.group(1)),
-                "max", parseNumericValue(matcher.group(2)), "original", annotation);
-    }
-
-    private static Map<String, Object> parseStringLength(String annotation) {
-        Matcher matcher = Pattern.compile("\\[StringLength\\(([^,]+)(?:,\\s*MinimumLength\\s*=\\s*([^)]+))?\\)\\]").matcher(annotation);
-        if (!matcher.find()) return Map.of("type", "stringLength", "error", "Invalid StringLength format");
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("type", "stringLength");
-        result.put("maxLength", Integer.parseInt(matcher.group(1).trim()));
-        if (matcher.group(2) != null) result.put("minLength", Integer.parseInt(matcher.group(2).trim()));
-        result.put("original", annotation);
-        return result;
-    }
-
-    private static String extract(String text, String regex) {
-        Matcher m = Pattern.compile(regex).matcher(text);
-        return m.find() ? m.group(1) : "";
-    }
-
-    private static Object parseNumericValue(String value) {
-        value = value.trim();
-        Map<String, Double> constants = Map.of(
-                "double.MaxValue", Double.MAX_VALUE, "double.MinValue", Double.MIN_VALUE,
-                "int.MaxValue", (double) Integer.MAX_VALUE, "int.MinValue", (double) Integer.MIN_VALUE
-        );
-
-        if (constants.containsKey(value)) return constants.get(value);
-        try { return Double.parseDouble(value); }
-        catch (NumberFormatException e) { return value; }
-    }
-
     private static String getInputValidationByModelValidation(
             String validationType,
             Object validationValue,
@@ -89,29 +38,29 @@ public class InputTypeMapping {
 
         String validation = inputTypeMapping.getValidations()
                 .getOrDefault(validationType, null);
-        Map<String, Object> values = parseAnnotation((String) validationValue);
+//        Map<String, Object> values = parseAnnotation((String) validationValue);
 
         if (validation == null) {
             return null;
         }
 
         switch (validationType) {
-            case "maxSize":
-            case "minAndMaxSize":
-                return engine.render(validation, values);
-
-            case "numericMinimumValue":
-            case "numericMinimumInclusiveValue":
-            case "numericMaximumValue":
-            case "numericMaximumInclusiveValue":
-            case "numericMinimumAndMaximumValue":
-                return engine.render(validation, values);
-
-            case "regexPattern":
-                return engine.render(validation, values);
-
-            case "defaultValue":
-                return engine.render(validation, values);
+//            case "maxSize":
+//            case "minAndMaxSize":
+//                return engine.render(validation, values);
+//
+//            case "numericMinimumValue":
+//            case "numericMinimumInclusiveValue":
+//            case "numericMaximumValue":
+//            case "numericMaximumInclusiveValue":
+//            case "numericMinimumAndMaximumValue":
+//                return engine.render(validation, values);
+//
+//            case "regexPattern":
+//                return engine.render(validation, values);
+//
+//            case "defaultValue":
+//                return engine.render(validation, values);
 
             default:
                 return "";
@@ -144,7 +93,7 @@ public class InputTypeMapping {
     }
 
     private static boolean getIsShowed(ColumnMetadata field) {
-        return !(field.getValidationAnnotations().containsKey("defaultValue") && field.isPrimary());
+        return !field.isPrimary();
     }
 
     private static boolean getIsRequired(ColumnMetadata field) {
