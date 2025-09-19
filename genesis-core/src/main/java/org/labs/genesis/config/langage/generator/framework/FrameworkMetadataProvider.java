@@ -275,7 +275,15 @@ public class FrameworkMetadataProvider {
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field);
-                fieldsFK.add(fieldMap);
+
+                String fieldType = field.getType();
+
+                boolean exists = fieldsFK.stream()
+                        .anyMatch(existing -> fieldType.equals(existing.get("type")));
+
+                if (!exists) {
+                    fieldsFK.add(fieldMap);
+                }
             }
         }
         return fieldsFK;
@@ -306,12 +314,19 @@ public class FrameworkMetadataProvider {
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field, language);
-                fieldsFK.add(fieldMap);
+
+                String fieldType = field.getType();
+
+                boolean exists = fieldsFK.stream()
+                        .anyMatch(existing -> fieldType.equals(existing.get("type")));
+
+                if (!exists) {
+                    fieldsFK.add(fieldMap);
+                }
             }
         }
         return fieldsFK;
     }
-
     public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field) {
         Map<String, Object> fieldMap = new HashMap<>();
 
