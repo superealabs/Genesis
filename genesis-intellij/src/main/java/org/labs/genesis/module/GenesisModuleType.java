@@ -13,6 +13,9 @@ import org.labs.genesis.wizards.SpecificConfigurationWizardStep;
 import org.labs.genesis.wizards.SQLRunnerWizardStep;
 import org.labs.genesis.wizards.conditionals.GenConfigConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.InitConditionalWizardStep;
+import org.labs.genesis.wizards.FirstWizardStep ;
+import org.labs.genesis.wizards.RuleToCodeWizardAIStep ;
+import org.labs.genesis.wizards.RuleToCodeWizardStep ;
 
 import javax.swing.*;
 
@@ -37,8 +40,17 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
         GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext);
         GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(projectGenerationContext, generationOptionWizardStep);
 
+        //Rule to code
+        FirstWizardStep firstWizardStep = new FirstWizardStep(projectGenerationContext);
+        RuleToCodeWizardStep ruleToCodeWizardStep = new RuleToCodeWizardStep(projectGenerationContext , firstWizardStep );
+        RuleToCodeWizardAIStep ruleToCodeWizardAIStep =  new RuleToCodeWizardAIStep(projectGenerationContext , firstWizardStep );
+
+
         return new ModuleWizardStep[]{
-                new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep),
+                firstWizardStep,
+                ruleToCodeWizardStep,
+                ruleToCodeWizardAIStep ,
+                new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep) ,
                 initConditionalWizardStep,
                 sqlRunnerWizardStep,
                 genConfigConditionalWizardStep,

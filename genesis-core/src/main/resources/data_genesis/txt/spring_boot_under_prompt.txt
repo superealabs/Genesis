@@ -1,0 +1,59 @@
+Framework ciblé : Spring Boot
+
+Contraintes spécifiques :
+- Respect strict des conventions Spring Data JPA.
+- Utilisation exclusive, par défaut, des méthodes CRUD natives et des Specifications (Spring Data JPA )  pour les requêtes complexes.
+- Utilisation exclusive, des Specifications (Spring Data JPA ) pour les requêtes complexes si necessaire uniquement et si on utilise pas des méthodes repository dérivées.
+- Pour la pagination, utilise `Page<T>` et `Pageable`.
+- Pour les relations, utilise les mécanismes JPA standards (fetch types, `@EntityGraph` si nécessaire).
+- Le code peut utiliser des `Optional<T>`, `List<T>`, et `Page<T>` selon le contexte.
+- Pas d’utilisation de requêtes JPQL ou SQL personnalisées sauf via Specifications — **sauf dérogation contrôlée pour cas extrême** (voir ci-dessous).
+- Exceptions métier doivent être levées via exceptions runtime ou custom Spring exceptions.
+
+Méthodes CRUD et outils permis (exemples non exhaustifs) :
+- `findAll(Pageable pageable)`
+- `findAll(Specification<T> spec, Pageable pageable)`
+- `findById(ID id)`
+- `save(S entity)`
+- `deleteById(ID id)`
+-  Utilisation des getters/setters des entités pour la navigation des relations.
+
+### Cas extrême – Dérogations contrôlées
+- **JPQL ou SQL custom** :
+  - Autorisé uniquement si la règle métier est impossible ou inefficace à implémenter avec Specifications et CRUD natif.
+  - Privilégier `@Query` JPQL dans un repository existant.
+  - SQL natif permis uniquement si justifié techniquement (ex. optimisation critique, manipulation de très grands volumes de données).
+  - Pour les gros volumes :
+    - Utiliser la pagination native (`Pageable`) ou le traitement par lot (`batch size`, `stream()`, `scroll()`).
+    - Minimiser les jointures inutiles et limiter les champs sélectionnés.
+    - Éviter de charger tout le dataset en mémoire en une seule requête.
+    - En cas de grand volume de données, privilégier les approches paginées ou par flux pour éviter les surcharges mémoire.
+
+Format de sortie attendu :
+  - Générer uniquement une ou plusieurs méthodes métier (règles de gestion) à placer dans la classe service correspondante.
+  - Si des méthodes repository dérivées sont nécessaires à la règle, fournir également leurs signatures dans l’interface repository correspondante.
+  - Préciser en entête le nom du service ou repository concerné, sous la forme :
+    @Service: NomDuService
+    @Repository: NomDuRepository
+  - Ne générer aucun autre code (pas de classes complètes, pas d’implémentations repository, ni annotations).
+  - Supposer que l’injection des dépendances et la configuration du projet sont déjà en place.
+
+Example de sortie attendu :
+  (Pas de commentaires de reponnse ni autre chose juste du code !!!)
+  @Repository: "name entity"Repository ( necessaire si utiliser dans le service )
+    import xxx.xxx.xxx; (if necessary, no `public class` or anything else …)
+    type de retour findByXXX( param ) ; ( si la fonction a un type de retour en liste de donnee, il faut utiliser un type de retour paginé (ex: "Page<T>") )
+
+  @Service: Defautl"name entity"Service ( example : DefaultEntityService non EntityService)
+    import xxx.xxx.xxx ; ( si  necessaire )
+    type de retour regleMetier ( param ) { ... code ... }
+
+  @Repository: "name entity"Repository ( necessaire si utiliser dans le service )
+    import xxx.xxx.xxx; (if necessary, no `public class` or anything else …)
+    type de retour findByXXX( param ) ; ( si la fonction a un type de retour en liste de donnee, il faut utiliser un type de retour paginé (ex: "Page<T>") )
+
+  @Service: Defautl"name entity"Service ( example : DefaultEntityService non EntityService)
+    import xxx.xxx.xxx ; ( si  necessaire )
+    type de retour regleMetier ( param ) { ... code ... }
+
+Il faut appliquer tous les regles de gestion present dans le fichier YAML!!!
