@@ -81,6 +81,7 @@
       "xml": "\"<mock>mock</mock>\"",
       "date": "java.time.LocalDate.now()",
       "timestamp": "java.time.LocalDateTime.now()",
+      "TIMESTAMP": "java.time.LocalDateTime.now()",
       "timestamptz": "java.time.OffsetDateTime.now()",
       "time": "java.time.LocalTime.now()",
       "timetz": "java.time.OffsetTime.now()",
@@ -128,7 +129,13 @@
       "NCHAR": "\"mock\"",
       "VARCHAR2": "\"mock\"",
       "NVARCHAR2": "\"mock\"",
-      "DECIMAL": "0."
+      "DECIMAL": "0.",
+      "SMALLINT": "0",
+      "ENUM": "\"mock\"",
+      "enum": "\"mock\"",
+      "BIT": "true",
+      "TIME": "java.time.LocalTime.now()",
+      "BIGINT UNSIGNED": "0L"
     },
     "criteriaBuildSnippet": {
       "int": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
@@ -179,6 +186,7 @@
       "TEXT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TIMESTAMP": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TIMESTAMP(*)": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "TIME": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "NUMBER": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "NUMBER(*,*)": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "FLOAT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
@@ -188,7 +196,12 @@
       "NCHAR": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "VARCHAR2": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "NVARCHAR2": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
-      "SMALLINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
+      "SMALLINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "ENUM": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "enum": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "BIGINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "BIT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "BIGINT UNSIGNED": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
     }
   },
   {
