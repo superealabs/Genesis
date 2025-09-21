@@ -83,7 +83,6 @@
       "xml": "\"<mock>mock</mock>\"",
       "date": "java.time.LocalDate.now()",
       "timestamp": "java.time.LocalDateTime.now()",
-      "TIMESTAMP": "java.time.LocalDateTime.now()",
       "timestamptz": "java.time.OffsetDateTime.now()",
       "time": "java.time.LocalTime.now()",
       "timetz": "java.time.OffsetTime.now()",
