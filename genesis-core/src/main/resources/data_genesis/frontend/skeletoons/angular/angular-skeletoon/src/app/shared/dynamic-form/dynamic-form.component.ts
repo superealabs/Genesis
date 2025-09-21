@@ -16,16 +16,30 @@ export class DynamicFormComponent {
 
   @Input() fields: FieldConfig[] = [];
   @Input() submitFn!: (formValue: any) => void;
-  @Input() form!: FormGroup; 
+  @Input() form!: FormGroup;
   @Input() isLoading: boolean = false;
   @Input() initialData: any = {};
   @Input() validationErrors: any={};
 
   submit(): void {
-    if (this.form.valid && this.submitFn) {
-      this.submitFn(this.form.value);
-    } else {
+    if (!this.form.valid) {
       this.form.markAllAsTouched();
+      return;
     }
+    if (!this.submitFn) return;
+    const payload = { ...this.form.value };
+    this.fields.forEach(field => {
+      if (field.type === 'select' && field.options && field.options.length > 8 && Object.keys(this.initialData).length === 0) {
+        const label = payload[field.name];
+        const option = field.options.find(o => o.label === label);
+        if (option) {
+          payload[field.name] = option.value;
+        } else {
+          payload[field.name] = null;
+        }
+      }
+    });
+    this.submitFn(payload);
   }
+
 }

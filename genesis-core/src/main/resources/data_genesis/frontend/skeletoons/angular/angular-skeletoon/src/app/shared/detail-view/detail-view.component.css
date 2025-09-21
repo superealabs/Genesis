@@ -1,25 +1,29 @@
+/* Container principal */
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* toujours 2 colonnes */
   gap: 1rem 2rem;
   background-color: white;
-  padding: 1rem 2rem; /* <-- ajoute un espace intérieur */
+  padding: 1rem 2rem;
   border-radius: 8px;
 }
 
+/* Item individuel */
 .detail-item {
   display: flex;
   flex-direction: column;
 }
 
+/* Labels */
 label {
-  font-weight: 500;   
-  font-size: 1rem;   
+  font-weight: 500;
+  font-size: 1rem;
   margin-bottom: 4px;
   font-family: 'Segoe UI', 'Roboto', sans-serif;
-  color: #1f2937;    
+  color: #1f2937;
 }
 
+/* Inputs */
 input {
   padding: 10px 12px;
   border: 1px solid #ccc;
@@ -33,33 +37,67 @@ input {
 }
 
 input:focus {
-  border-color: #4f9cf9;
+  border-color:var(--primary-light);
   outline: none;
 }
 
-/* Container pour bouton Delete */
-.delete-container {
-  grid-column: 1 / -1; /* occupe toutes les colonnes */
+
+.action-buttons {
   display: flex;
-  justify-content: flex-end; /* bouton à droite */
+  justify-content: flex-end;
+  gap: 10px;
   margin-top: 10px;
+  width: 100%;
+  grid-column: 1 / -1;
 }
 
-.delete-btn {
+@media (max-width: 700px) {
+  .action-buttons {
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}
+
+.update-btn, .delete-btn {
   height: 42px;
   padding: 0 1rem;
-  border: 2px solid #dc3545;
-  background-color: transparent;
-  color: #dc3545;
   border-radius: 0.5rem;
   cursor: pointer;
   font-weight: 500;
   font-size: 1rem;
   display: flex;
-  align-items: center;       /* centrer verticalement */
-  justify-content: center;   /* centrer horizontalement */
-  gap: 0.5rem;               /* espace entre icône et texte */
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem; /* espace icône/texte */
   transition: background-color 0.2s, color 0.2s;
+}
+
+/* Bouton Update */
+.update-btn {
+  border: 2px solid var(--primary);
+  background-color: transparent;
+  color:var(--primary);
+}
+
+.update-btn:hover {
+  background-color:var(--primary);
+  color: white;
+}
+
+.update-btn i {
+  color: var(--primary);
+  font-size: 1.2rem;
+}
+
+.update-btn:hover i {
+  color: white;
+}
+
+/* Bouton Delete */
+.delete-btn {
+  border: 2px solid #dc3545;
+  background-color: transparent;
+  color: #dc3545;
 }
 
 .delete-btn:hover {
@@ -68,15 +106,13 @@ input:focus {
 }
 
 .delete-btn i {
-  color: #dc3545;            /* icône rouge */
+  color: #dc3545;
   font-size: 1.2rem;
 }
 
 .delete-btn:hover i {
-  color: white;              /* icône devient blanche au hover */
+  color: white;
 }
-
-
 
 /* Responsive pour petits écrans */
 @media (max-width: 700px) {
@@ -88,5 +124,10 @@ input:focus {
   input {
     font-size: 0.9rem;
     height: 40px;
+  }
+
+  .action-buttons {
+    justify-content: flex-start; /* boutons alignés à gauche si besoin */
+    gap: 8px;
   }
 }

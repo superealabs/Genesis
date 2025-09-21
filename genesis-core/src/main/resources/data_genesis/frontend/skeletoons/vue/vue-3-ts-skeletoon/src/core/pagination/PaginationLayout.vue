@@ -1,177 +1,159 @@
 <template>
-  <div class="row my-3">
-    <nav class="col">
-      <ul class="pagination gap-2">
-        <!-- Previous -->
-        <li class="page-item me-2">
-          <button
-            typ="button"
-            class="page-link border-0 rounded-3 shadow-sm"
-            :class="{
-              disabled: page <= 1,
-            }"
-            aria-label="Previous"
-            @click.prevent="goToPreviousPage"
-          >
-            <i class="bi bi-chevron-left text-dark"></i>
-          </button>
-        </li>
+  <div class="flex flex-wrap items-center justify-between py-2 gap-2">
+    <!-- Pagination -->
+    <nav class="flex items-center gap-2 flex-wrap join">
+      <!-- Previous -->
+      <button
+        type="button"
+        class="btn btn-ghost rounded shadow mr-2"
+        :class="{ 'btn-disabled': page <= 1 }"
+        :aria-label="$t('pagination.previous')"
+        @click.prevent="goToPreviousPage"
+      >
+        <CheveronLeftIcon />
+      </button>
 
-        <!-- Pages -->
-        <li
-          v-for="pageNum in pageNumbers"
-          :key="pageNum"
-          class="page-item"
-          :class="{
-            active: pageNum === page,
-            disabled: pageNum === '...',
-          }"
+      <!-- Pages -->
+      <template v-for="pageNum in pageNumbers" :key="pageNum">
+        <button
+          v-if="pageNum !== '...'"
+          class="btn rounded join-item"
+          :class="pageNum === page ? 'btn-primary' : 'btn-ghost'"
+          @click.prevent="onChangePage(pageNum)"
         >
-          <a
-            v-if="pageNum !== '...'"
-            class="page-link border-0 rounded-3 fw-medium"
-            :class="{
-              'bg-light text-dark': pageNum !== page,
-              'shadow-sm': pageNum === page,
-            }"
-            href="#"
-            @click.prevent="onChangePage(pageNum)"
-          >
-            {{ pageNum }}
-          </a>
-          <span v-else class="page-link bg-light border-0 text-muted">
-            ...
-          </span>
-        </li>
+          {{ pageNum }}
+        </button>
+        <span v-else class="text-gray-400 px-2"> ... </span>
+      </template>
 
-        <!-- Next -->
-        <li class="page-item ms-2 rounded-3">
-          <button
-            class="page-link rounded-3 shadow-sm border-0"
-            :class="{
-              disabled: page >= end,
-            }"
-            aria-label="Next"
-            @click.prevent="goToNextPage"
-          >
-            <i class="bi bi-chevron-right text-dark"></i>
-          </button>
-        </li>
-      </ul>
+      <!-- Next -->
+      <button
+        type="button"
+        class="btn btn-ghost rounded shadow ml-2"
+        :class="{ 'btn-disabled': page >= end }"
+        :aria-label="$t('pagination.next')"
+        @click.prevent="goToNextPage"
+      >
+        <CheveronRightIcon />
+      </button>
     </nav>
-    <div class="col-auto" v-if="quickForm">
-      <div class="d-flex align-items-center gap-2">
-        <label class="text-nowrap" for="select-page">Going to page:</label>
-        <select
-          id="select-page"
-          class="border-0 bg-white shadow-sm form-select"
-          v-model="selectedPage"
-          @change="goToSelectedPage"
-        >
-          <option
-            v-for="option in pageSelectOptions"
-            :key="option.value"
-            :value="option.value"
-          >
-            {{ option.label }}
-          </option>
-        </select>
-        <GenesisButton
-          class="btn-light border-0 shadow-sm"
-          @click="goToSelectedPage"
-          >GO</GenesisButton
-        >
-      </div>
+
+    <!-- Quick form -->
+    <div v-if="quickForm" class="flex items-center gap-2">
+      <label for="select-page" class="whitespace-nowrap text font-medium">
+        {{ $t('pagination.goToLabel') }}
+      </label>
+      <input
+        class="input"
+        type="number"
+        v-model="selectedPage"
+        min="1"
+        :max="end"
+        @keydown.enter="goToSelectedPage"
+        id="select-page"
+      />
+      <span class="text-nowrap">/ {{ end }}</span>
+      <GenesisButton class="btn btn-outline border-0 shadow" @click="goToSelectedPage">
+        {{ $t('button.go') }}
+      </GenesisButton>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, ref } from "vue";
-import { SelectOption } from "../../models/SelectOption";
-import GenesisButton from "../button/GenesisButton.vue";
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import type { SelectOption } from '@/models/SelectOption'
+import GenesisButton from '@/core/button/GenesisButton.vue'
+import CheveronLeftIcon from '../icons/CheveronLeftIcon.vue'
+import CheveronRightIcon from '../icons/CheveronRightIcon.vue'
 
-export default defineComponent({
-  name: "PaginationLayout",
-  components: { GenesisButton },
-  props: {
-    start: { required: true, type: Number },
-    end: { required: true, type: Number },
-    page: { required: true, type: Number },
-    quickForm: { required: false, type: Boolean },
-  },
-  emits: ["update:page"],
-  setup(props, { emit }) {
-    const selectedPage = ref<number>(1);
+// Props definition using defineProps (Composition API)
+const props = defineProps<{
+  start: number
+  end: number
+  page: number
+  quickForm?: boolean
+}>()
 
-    const pageNumbers = computed(() => {
-      const pages: (number | string)[] = [];
+// Emits using defineEmits (Composition API)
+const emit = defineEmits<{
+  (e: 'update:page', value: number): void
+}>()
 
-      const maxVisible = 5;
-      const totalPages = props.end;
+const selectedPage = ref<number>(1)
 
-      // Add first 5 pages
-      for (let i = props.start; i <= Math.min(maxVisible, totalPages); i++) {
-        pages.push(i);
-      }
+const pageNumbers = computed(() => {
+  const pages: (number | string)[] = []
+  const maxVisible = 10 // show 10 pages at a time
+  const totalPages = props.end
+  const currentPage = props.page
 
-      // Add ellipsis if there are more pages
-      if (totalPages > maxVisible) {
-        pages.push("...");
-        pages.push(totalPages);
-      }
+  // Figure out the current "block" of pages
+  const currentBlock = Math.floor((currentPage - 1) / maxVisible)
+  const startPage = currentBlock * maxVisible + 1
+  const endPage = Math.min(startPage + maxVisible - 1, totalPages)
 
-      return pages;
-    });
-    const pageSelectOptions = computed(() => {
-      const totalPages = props.end;
-      const options: SelectOption[] = [];
-      for (let index = 1; index <= totalPages; index++) {
-        options.push({
-          label: index.toString(),
-          value: index,
-        });
-      }
-      return options;
-    });
+  // Add first page + ellipsis if we are not in the first block
+  if (startPage > 1) {
+    pages.push(1)
+    if (startPage > 2) {
+      pages.push('...')
+    }
+  }
 
-    const onChangePage = (page: number | string) => {
-      if (!page) {
-        page = 1;
-      }
-      if (typeof page == "string") {
-        page = Number.parseInt(page);
-      }
-      emit("update:page", page);
-    };
+  // Add the block of pages
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i)
+  }
 
-    const goToSelectedPage = () => {
-      onChangePage(selectedPage.value);
-    };
+  // Add ellipsis + last page if not in the last block
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      pages.push('...')
+    }
+    pages.push(totalPages)
+  }
 
-    const goToPreviousPage = () => {
-      if (props.page > 1) {
-        emit("update:page", props.page - 1);
-      }
-    };
+  return pages
+})
 
-    const goToNextPage = () => {
-      if (props.page < props.end) {
-        emit("update:page", props.page + 1);
-      }
-    };
+const pageSelectOptions = computed(() => {
+  const totalPages = props.end
+  const options: SelectOption[] = []
+  for (let index = 1; index <= totalPages; index++) {
+    options.push({
+      label: index.toString(),
+      value: index,
+    })
+  }
+  return options
+})
 
-    return {
-      pageNumbers,
-      onChangePage,
-      goToPreviousPage,
-      goToNextPage,
-      selectedPage,
-      pageSelectOptions,
-      goToSelectedPage,
-    };
-  },
-});
+function onChangePage(page: number | string) {
+  if (!page) {
+    page = 1
+  }
+  if (typeof page == 'string') {
+    page = Number.parseInt(page)
+  }
+  emit('update:page', page)
+}
+
+function goToSelectedPage() {
+  onChangePage(selectedPage.value)
+}
+
+function goToPreviousPage() {
+  if (props.page > 1) {
+    emit('update:page', props.page - 1)
+  }
+}
+
+function goToNextPage() {
+  if (props.page < props.end) {
+    emit('update:page', props.page + 1)
+  }
+}
 </script>
 
 <style scoped></style>

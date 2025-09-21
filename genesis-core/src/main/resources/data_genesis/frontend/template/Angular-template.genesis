@@ -7,5 +7,4 @@ ${importFile}
   templateUrl: '${template}',
   styleUrls: ['${style}']
 })
-
 ${export}

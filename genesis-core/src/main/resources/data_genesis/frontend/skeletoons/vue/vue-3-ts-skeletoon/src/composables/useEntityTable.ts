@@ -1,19 +1,21 @@
 // src/composables/useEntityTable.ts
-import { ref } from "vue";
-import { usePagination } from "@/composables/usePagination";
-import { useSortData } from "@/composables/useSortData";
-import { useDefaultDataStore } from "@/store/useDefaultDataStore";
-import { PaginationData } from "@/models/api/PageResponseModel";
+import { ref } from 'vue'
+import { usePagination } from '@/composables/usePagination'
+import { useSortData } from '@/composables/useSortData'
+import { PaginationData } from '@/models/api/PageResponseModel'
+import type { PaginationRequestParameter, SortFieldParameter } from '@/models/api/RequestModel'
+import { useFreezeScreen } from '@/stores/useFreezeScreen'
 
 export function useEntityTable(
   searchFn: (
-    filters: Record<string, any>,
-    pagination: any,
-    sort: any
+    unpagined: boolean,
+    filters: Record<string, unknown>,
+    pagination: PaginationRequestParameter,
+    sort: SortFieldParameter[],
   ) => Promise<void>,
-  getPaginationDataRef: () => PaginationData
+  getPaginationDataRef: () => PaginationData,
 ) {
-  const defaultValueStore = useDefaultDataStore();
+  const freezeScreenStore = useFreezeScreen()
 
   // State
   const {
@@ -24,33 +26,33 @@ export function useEntityTable(
     getPaginationRequestParameter,
     setPagination,
     jsonPaginationData,
-  } = usePagination();
+  } = usePagination()
 
-  const { sortFieldsParameters } = useSortData();
+  const { sortFieldsParameters } = useSortData()
 
-  const currentFilters = ref<Record<string, any>>({});
+  const currentFilters = ref<Record<string, unknown>>({})
 
   // Actions
   const doSearch = async () => {
+    freezeScreenStore.freeze('Fetching data ...')
     await searchFn(
+      false,
       currentFilters.value,
       getPaginationRequestParameter(),
-      sortFieldsParameters
-    );
-    setPagination(getPaginationDataRef());
-  };
+      sortFieldsParameters,
+    )
+    setPagination(getPaginationDataRef())
+    freezeScreenStore.unfreeze()
+  }
 
-  const updateFilters = (filters: Record<string, any>) => {
-    currentFilters.value = filters;
-  };
+  const updateFilters = (filters: Record<string, unknown>) => {
+    currentFilters.value = filters
+  }
 
   const changePage = (newPage: number) => {
-    goToPage(newPage);
-    doSearch();
-  };
-
-  // Options pour select pagination
-  const pageSizeOptions = defaultValueStore.pagination.itemsPerPageOptions;
+    goToPage(newPage)
+    doSearch()
+  }
 
   return {
     // State exposé
@@ -58,12 +60,11 @@ export function useEntityTable(
     page,
     itemsPerPage,
     totalPages,
-    pageSizeOptions,
     jsonPaginationData,
 
     // Actions exposées
     doSearch,
     updateFilters,
     changePage,
-  };
+  }
 }

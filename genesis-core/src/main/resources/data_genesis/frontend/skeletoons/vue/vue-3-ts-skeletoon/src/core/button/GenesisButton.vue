@@ -1,38 +1,27 @@
 <template>
-  <button v-bind="$attrs" :class="btnClassNames" @click="onClick">
+  <button v-bind="$attrs" class="btn" @click="onClick">
     <i v-if="icon" :class="icon" />
-    <span v-if="label">{{ label }}</span>
-    <span v-else><slot></slot></span>
+    <slot>
+      <span v-if="label">{{ label }}</span>
+    </slot>
   </button>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent } from "vue";
+<script setup lang="ts">
+const props = defineProps<{
+  icon?: string
+  label?: string
+}>()
 
-export default defineComponent({
-  name: "GenesisButton",
-  props: {
-    icon: { type: String, required: false }, // icône optionnelle
-    label: { type: String, required: false },
-    class: { type: String, required: false },
-  },
-  emits: {
-    click: (event: MouseEvent) => event instanceof MouseEvent,
-  },
-  setup(props, { emit }) {
-    const onClick = (event: MouseEvent) => {
-      emit("click", event);
-    };
+const emit = defineEmits<{
+  (e: 'click', event: MouseEvent): void
+}>()
 
-    const btnClassNames = computed(() => {
-      const base = "btn d-flex align-items-center ";
-      return base + (props.class ?? "btn-primary text-white");
-    });
+const onClick = (event: MouseEvent) => {
+  emit('click', event)
+}
 
-    return {
-      onClick,
-      btnClassNames,
-    };
-  },
-});
+defineOptions({
+  name: 'GenesisButton',
+})
 </script>

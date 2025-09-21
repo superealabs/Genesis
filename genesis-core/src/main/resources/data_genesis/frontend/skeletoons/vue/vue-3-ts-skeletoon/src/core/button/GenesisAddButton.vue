@@ -5,18 +5,9 @@
   </GenesisButton>
 </template>
 
-<script lang="ts">
-import GenesisButton from "./GenesisButton.vue";
-import { defineComponent } from "vue";
-
-export default defineComponent({
-  name: "GenesisAddButton",
-  components: { GenesisButton },
-  props: {
-    label: {
-      required: false,
-      type: String,
-    },
-  },
-});
+<script setup lang="ts">
+import GenesisButton from './GenesisButton.vue'
+defineProps<{
+  label: string
+}>()
 </script>

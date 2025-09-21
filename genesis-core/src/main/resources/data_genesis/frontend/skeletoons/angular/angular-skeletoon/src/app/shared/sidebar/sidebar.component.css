@@ -1,27 +1,85 @@
 .sidebar {
   width: 220px;
-  margin-top: 2rem; 
+  margin-top: 2rem;
   padding: 0 1rem 1rem 1rem;
   font-family: sans-serif;
-  background-color: #fbfcfd; 
-  height: 100vh;
-  border-right: 1px solid #e7eaf0; 
+  background-color: #fbfcfd;
+  border-right: 1px solid #e7eaf0;
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+  margin-left: auto;
+  margin-right: auto;
 }
+
+.sidebar-header {
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.sidebar-content::-webkit-scrollbar {
+  display: none;
+}
+
 
 .app-title {
   font-size: 1.4rem;
   font-weight: 700;
   margin-top: 0;
   margin-bottom: 2.4rem;
+  text-align: center;
 }
 
 .app-title .blue {
-  color: #2263cb;
+  color: var(--primary);
+}
+
+.app-title img {
+  height: 70px;
+  width: auto;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: -10%;
+}
+
+.language-selector {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+}
+
+.language-selector label {
+  margin-bottom: 0.25rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.language-selector select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: #fff;
+  font-size: 0.95rem;
+  color: #2a2c32;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.language-selector select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .section-label {
   font-size: 0.7rem;
-  color: #a1a9b8; 
+  color: #a1a9b8;
   margin-top: 1.2rem;
   margin-bottom: 0.25rem;
   font-weight: 600;
@@ -35,7 +93,7 @@ a {
   margin-bottom: calc(0.18rem * 1.15);
   border-radius: calc(0.5rem * 1.15);
   text-decoration: none;
-  color: #2a2c32; 
+  color: #2a2c32;
   font-weight: 600;
   font-size: 1rem;
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -44,7 +102,7 @@ a {
 a.entities,
 a.views {
   font-size: 1.1rem;
-  font-weight: 550; 
+  font-weight: 550;
   padding-left: 0;
   padding-right: 0;
   padding-top: calc(0.5rem * 1.15);
@@ -54,13 +112,13 @@ a.views {
 }
 
 a:hover {
-  background-color: #e6f0ff; 
-  color: #2263cb; 
+  background-color: var(--bg-hover);
+  color: var(--primary);
   padding: 8px 14px;
 }
 
 a.active {
-  background-color: #dbe6ff; 
-  color: #2263cb; 
+  background-color: var(--bg-active);
+  color: var(--primary);
   padding: 8px 14px;
 }

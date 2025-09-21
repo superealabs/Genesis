@@ -1,13 +1,9 @@
 ${template}
-
-<script lang="ts">
+<script setup lang="ts">
 ${importFile}
-
-export default defineComponent({
-  name: "${selector}",
-  ${importComponent},
-  ${export}
-});
+${export}
 </script>
 
+<style scoped>
 ${style}
+</style>
