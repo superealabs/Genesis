@@ -10960,6 +10960,42 @@
     logoPath: "${destinationFolder}/src"
     langsPath: "{{removeLine}}"
   authenticationFiles:
+    - fileType: "Service Auth"
+      fileName: "auth"
+      extension: "ts"
+      content: |
+        // src/services/auth.ts
+        import axios from 'axios';
+        import { ApiResponse } from './api';
+
+        const API_BASE = import.meta.env.VITE_API_BASE; // déjà présent
+
+        interface AuthRequest {
+            username: string;
+            password: string;
+        }
+
+        export const authService = {
+            login: (payload: AuthRequest) =>
+                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/login`, payload)
+                    .then(res => res.data),
+
+            logout: (token: string) =>
+                axios.post<ApiResponse<void>>(`$[API_BASE]/auth/logout`, {}, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }).then(res => res.data),
+
+            me: (token: string) =>
+                axios.get<ApiResponse<any>>(`$[API_BASE]/auth/current`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }).then(res => res.data),
+
+            /* ------------ nouvelle méthode ------------ */
+            refresh: (token: string) =>
+                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/refresh`, { refreshToken: token })
+                    .then(res => res.data),
+        };
+      destinationPath: "${destinationFolder}/src/services"
     - fileType: "Configuration file"
       fileName: "{{removeLine}}"
       extension: "env"
