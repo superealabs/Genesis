@@ -11097,6 +11097,26 @@
         VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
         VITE_REFRESH_INTERVAL_MS=60000
       destinationPath: "${destinationFolder}/"
+    - fileType: "ProtectedRoute"
+      fileName: "ProtectedRoute"
+      extension: "tsx"
+      content: |
+        // src/router/ProtectedRoute.tsx
+        import { Navigate, Outlet, useLocation } from 'react-router-dom';
+        import { useAuth } from '@/contexts/AuthContext';
+        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
+
+        export default function ProtectedRoute() {
+          const { user, loading } = useAuth();
+          const location = useLocation();
+
+          /* déjà sur login → on laisse le flux se terminer sans re-navigation */
+          if (location.pathname === '/login') return <Outlet />;
+
+          if (loading) return <BackdropBlocker open />;
+          return user ? <Outlet /> : <Navigate to="/login" replace state={{ from: location }} />;
+        }
+      destinationPath: "${destinationFolder}/src/router"
   additionalFiles:
     - fileType: "App name config"
       fileName: "app"
