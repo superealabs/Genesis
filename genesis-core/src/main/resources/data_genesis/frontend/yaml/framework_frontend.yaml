@@ -10956,9 +10956,9 @@
   initPath: "react/react-ts-skeletoon"
   componentExtension: "tsx"
   frontendPaths:
-    faviconPath: ""
-    logoPath: ""
-    langsPath: ""
+    faviconPath: "${destinationFolder}/public"
+    logoPath: "${destinationFolder}/src"
+    langsPath: "{{removeLine}}"
   authenticationFiles:
     - fileType: "authentication files"
       fileName: ""
