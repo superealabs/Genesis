@@ -11248,6 +11248,71 @@
             </React.StrictMode>
         );
       destinationPath: "${destinationFolder}/src"
+    - fileType: "api"
+      fileName: "api"
+      extension: "ts"
+      content: |
+        // src/services/api.ts
+        import axios from 'axios';
+
+        const API_BASE = import.meta.env.VITE_API_BASE as string;
+
+        export interface ApiResponse<T> {
+            status: number;
+            message: string;
+            returnCode: number;
+            data: T;
+            timestamp: string;
+        }
+
+        interface SearchParams {
+            endpoint: string;
+            page: number;
+            size: number;
+            sort: `$[string],$['asc' | 'desc']`;
+            filter: Record<string, unknown>;
+        }
+
+        /* =============== REQUEST : toujours mettre le token =============== */
+        axios.interceptors.request.use(config => {
+            const tok = localStorage.getItem('token');
+            if (tok) config.headers.Authorization = `Bearer $[tok]`;
+            return config;
+        });
+
+        /* ===============  EXPORT DES FONCTIONS EXISTANTES =============== */
+        export async function search<T>({ endpoint, page, size, sort, filter }: SearchParams) {
+            const { data } = await axios.post(
+                `$[API_BASE]$[endpoint]`,
+                filter,
+                { params: { page, size, sortParam: sort } }
+            );
+            return {
+                content: (data.data?.content as T[]) ?? [],
+                totalPages: data.data?.page?.totalPages ?? 0,
+            };
+        }
+
+        export async function create<T>(endpoint: string, payload: Omit<T, 'id'>) {
+            const { data } = await axios.post<ApiResponse<T>>(`$[API_BASE]$[endpoint]`, payload);
+            return data;
+        }
+
+        export async function getById<T>(endpoint: string, id: number) {
+            const { data } = await axios.get<ApiResponse<T>>(`$[API_BASE]$[endpoint]/$[id]`);
+            return data.data;
+        }
+
+        export async function update<T>(endpoint: string, id: number, payload: Partial<T>) {
+            const { data } = await axios.put<ApiResponse<T>>(`$[API_BASE]$[endpoint]/$[id]`, payload);
+            return data;
+        }
+
+        export async function remove(endpoint: string, id: string | number) {
+            const { data } = await axios.delete<ApiResponse<void>>(`$[API_BASE]$[endpoint]/$[id]`);
+            return data;
+        }
+      destinationPath: "${destinationFolder}/src/services"
   additionalFiles:
     - fileType: "App name config"
       fileName: "app"
