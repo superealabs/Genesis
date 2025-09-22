@@ -203,7 +203,6 @@
       "VARCHAR2": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "NVARCHAR2": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "NVARCHAR": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
-      "SMALLINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
       "SMALLINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "ENUM": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "enum": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
