@@ -11169,6 +11169,50 @@
             );
         }
       destinationPath: "${destinationFolder}/src/pages/auth"
+    - fileType: "Router file"
+      fileName: "router"
+      extension: "tsx"
+      content: |
+        // src/router.tsx
+        import RootLayout from './layouts/RootLayout';
+        import { createBrowserRouter, Navigate } from 'react-router-dom';
+        import ProtectedRoute from '@/router/ProtectedRoute';
+        import Login from '@/pages/auth/Login';
+        {{#each routes}}
+        import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
+        {{/each}}
+
+        export const router = createBrowserRouter([
+            {
+                path: '/login',
+                element: <Login />,
+            },
+            {
+                path: '/',
+                element: (
+                    <ProtectedRoute /> // ← tout ce qui est en-dessous nécessite auth
+                ),
+                children: [
+                    {
+                        path: '/',
+                        element: <Navigate to="{{#each routes}}{{#if @first}}${this.routerLink}{{/if}}{{/each}}" replace />,
+                    },
+                    {
+                        path: '/',
+                        element: <RootLayout layout="vertical" />,
+                        children: [
+                            {{#each routes}}
+                            {
+                              path: '${this.routerLink}',
+                              element: <${this.componentSelector} />,
+                            },
+                            {{/each}}
+                        ],
+                    },
+                ],
+            },
+        ]);
+      destinationPath: "${destinationFolder}/src"
   additionalFiles:
     - fileType: "App name config"
       fileName: "app"
