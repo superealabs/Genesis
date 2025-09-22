@@ -10960,11 +10960,13 @@
     logoPath: "${destinationFolder}/src"
     langsPath: "{{removeLine}}"
   authenticationFiles:
-    - fileType: "authentication files"
-      fileName: ""
-      extension: ""
-      content:
-      destinationPath: ""
+    - fileType: "Configuration file"
+      fileName: "{{removeLine}}"
+      extension: "env"
+      content: |
+        VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
+        VITE_REFRESH_INTERVAL_MS=60000
+      destinationPath: "${destinationFolder}/"
   additionalFiles:
     - fileType: "App name config"
       fileName: "app"
