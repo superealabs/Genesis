@@ -379,6 +379,17 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/models/"
 
+    - fileType: "RefreshRequest DTO"
+      fileName: "RefreshRequest"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.models;
+        
+        import jakarta.validation.constraints.NotBlank;
+        
+        public record RefreshRequest(@NotBlank String refreshToken) {}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/models/"
+
     - fileType: "JwtService"
       fileName: "JwtService"
       extension: "java"
