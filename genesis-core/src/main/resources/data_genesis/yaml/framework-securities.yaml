@@ -597,6 +597,22 @@
                 throw new UsernameNotFoundException("Invalid user request!");
             }
           }
+        
+          public String refreshAccessToken(String oldToken) {
+              // 1. extrait l’identité
+              String username = jwtService.extractUsername(oldToken);
+              if (username == null) throw new IllegalArgumentException("Invalid token");
+          
+              // 2. charge l’utilisateur
+              UserDetails user = loadUserByUsername(username);
+          
+              // 3. valide encore la signature / expiration
+              if (!jwtService.validateToken(oldToken, user))
+              throw new IllegalArgumentException("Token validation failed");
+          
+              // 5. génère un nouveau
+              return jwtService.generateToken(username);
+          }
           
           // Ajoutez ces méthodes dans UserInfoService
           public void updateUser(String username, UserUpdateRequest updateRequest) {
