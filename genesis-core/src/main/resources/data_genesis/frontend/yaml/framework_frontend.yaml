@@ -10996,6 +10996,100 @@
                     .then(res => res.data),
         };
       destinationPath: "${destinationFolder}/src/services"
+    - fileType: "AuthContext"
+      fileName: "AuthContext"
+      extension: "tsx"
+      content: |
+        // src/contexts/AuthContext.tsx
+        import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+        import { authService } from '@/services/auth';
+
+        type User = { username: string; email?: string };
+
+        interface AuthCtx {
+            user: User | null;
+            token: string | null;
+            login: (u: string, p: string) => Promise<void>;
+            logout: () => void;
+            loading: boolean;
+        }
+
+        const AuthContext = createContext<AuthCtx>(null!);
+
+        const REFRESH_INTERVAL_MS = Number(
+            import.meta.env.VITE_REFRESH_INTERVAL_MS ?? 60000
+        );
+
+        export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+            const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+            const [user, setUser] = useState<User | null>(null);
+            const [loading, setLoading] = useState(true);
+            const intervalRef = useRef<number | null>(null);
+
+            const clearTimer = () => {
+                if (intervalRef.current) {
+                    window.clearInterval(intervalRef.current);
+                    intervalRef.current = null;
+                }
+            };
+
+            const logout = () => {
+                clearTimer();
+                if (token) authService.logout(token).catch(() => {});
+                localStorage.removeItem('token');
+                setToken(null);
+                setUser(null);
+                // ❌ on ne fait plus window.location.href ici
+            };
+
+            const startRefreshTimer = (tk: string) => {
+                clearTimer();
+                intervalRef.current = window.setInterval(async () => {
+                    try {
+                        const res = await authService.refresh(tk);
+                        const newToken = res.data;
+                        localStorage.setItem('token', newToken);
+                        setToken(newToken);
+                        console.log('Token refreshed silently');
+                    } catch {
+                        logout(); // échec → on déconnecte
+                    }
+                }, REFRESH_INTERVAL_MS);
+            };
+
+            useEffect(() => {
+                if (!token) {
+                    setLoading(false);
+                    return;
+                }
+                authService
+                    .me(token)
+                    .then(res => {
+                        setUser({ username: res.data.username, email: res.data.email });
+                        startRefreshTimer(token);
+                    })
+                    .catch(() => logout())
+                    .finally(() => setLoading(false));
+                return clearTimer;
+            }, [token]);
+
+            const login = async (username: string, password: string) => {
+                const res = await authService.login({ username, password });
+                const jwt = res.data;
+                localStorage.setItem('token', jwt);
+                setToken(jwt);
+                startRefreshTimer(jwt);
+            };
+
+            return (
+                <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+                    {children}
+                </AuthContext.Provider>
+            );
+        };
+
+        export const useAuth = () => useContext(AuthContext);
+      destinationPath: "${destinationFolder}/src/contexts"
     - fileType: "Configuration file"
       fileName: "{{removeLine}}"
       extension: "env"
