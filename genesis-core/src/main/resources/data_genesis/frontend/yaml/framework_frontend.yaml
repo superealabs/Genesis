@@ -11117,6 +11117,58 @@
           return user ? <Outlet /> : <Navigate to="/login" replace state={{ from: location }} />;
         }
       destinationPath: "${destinationFolder}/src/router"
+    - fileType: "Login page"
+      fileName: "Login"
+      extension: "tsx"
+      content: |
+        // src/pages/auth/Login.tsx
+        import { useState, useEffect, useRef } from 'react';
+        import { useAuth } from '@/contexts/AuthContext';
+        import { useNavigate, useLocation } from 'react-router-dom';
+        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+        import { useSnackbar } from 'notistack';
+
+        export default function Login() {
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
+            const { login, token, user } = useAuth(); // ← user ajouté
+            const navigate = useNavigate();
+            const { enqueueSnackbar } = useSnackbar();
+            const location = useLocation();
+            const from = location.state?.from?.pathname || '/';
+
+            const hasNavigatedRef = useRef(false);
+
+            useEffect(() => {
+                if (token && user && !hasNavigatedRef.current) {
+                    hasNavigatedRef.current = true;
+                    navigate(from, { replace: true });
+                }
+            }, [token, user, from, navigate]);
+
+            const handleSubmit = async (e: React.FormEvent) => {
+                e.preventDefault();
+                try {
+                    await login(username, password);
+                } catch {
+                    enqueueSnackbar('Identifiants invalides', { variant: 'error' });
+                }
+            };
+
+            return (
+                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Paper sx={{ p: 4, width: 360 }}>
+                        <Typography variant="h5" mb={3} textAlign="center">Connexion</Typography>
+                        <form onSubmit={handleSubmit}>
+                            <TextField fullWidth label="Nom d’utilisateur" value={username} onChange={e => setUsername(e.target.value)} required />
+                            <TextField fullWidth label="Mot de passe" type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
+                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>Se connecter</Button>
+                        </form>
+                    </Paper>
+                </Box>
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/auth"
   additionalFiles:
     - fileType: "App name config"
       fileName: "app"
