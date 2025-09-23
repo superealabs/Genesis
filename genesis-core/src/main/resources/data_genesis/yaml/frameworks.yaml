@@ -4750,11 +4750,7 @@
                 inject: [ConfigService],
                 useFactory: (config: ConfigService) => ({
                   {{#if databaseType = PostgreSQL}}type: "postgres",{{/if}}{{#if databaseType = Oracle}}type: "oracle",{{/if}}{{#if databaseType = SQL Server}}type: "mssql",{{/if}}{{#if databaseType = MySQL}}type: "mysql",{{/if}}
-                  host: config.get<string>("DB_HOST"),
-                  port: config.get<number>("DB_PORT"),
-                  username: config.get<string>("DB_USERNAME"),
-                  password: config.get<string>("DB_PASSWORD"),
-                  database: config.get<string>("DB_DATABASE"),
+                  url: '${connectionString}',
                   synchronize: false,
                   logging: false,
                   namingStrategy: new SnakeNamingStrategy(),
@@ -5291,9 +5287,6 @@
       {{tab}}async findAll(@Query() query: any) {
       {{tab}}{{tab}}const { page, size, order } = WebUtils.parsePaginationAndSort(query);
       {{tab}}{{tab}}const [data, total] = await this.${minStart(className)}Service.findAll(page, size, order);
-      {{tab}}{{tab}}if (!data || data.length === 0 || total === 0) {
-      {{tab}}{{tab}}{{tab}}throw new ResourceNotFoundException("No ${minStart(className)} found.");
-      {{tab}}{{tab}}}
       {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} retrieved successfully", new Page(data, total, size, page));
       {{tab}}}
       
@@ -5327,9 +5320,6 @@
       {{tab}}@Get(":id")
       {{tab}}async findById(@Param("id") id: number) {
       {{tab}}{{tab}}const ${minStart(className)} = await this.${minStart(className)}Service.findById(id);
-      {{tab}}{{tab}}if (!${minStart(className)}) {
-      {{tab}}{{tab}}{{tab}}throw new ResourceNotFoundException("No ${minStart(className)} found.");
-      {{tab}}{{tab}}}
       {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} retrieved successfully", ${minStart(className)});
       {{tab}}}
 
@@ -5394,9 +5384,6 @@
       {{tab}}async search(@Body() body: any, @Query() query: any) {
       {{tab}}{{tab}}const { page, size, order } = WebUtils.parsePaginationAndSort(query);
       {{tab}}{{tab}}const [data, total] = await this.${minStart(className)}Service.search(body, page, size, order);
-      {{tab}}{{tab}}if (!data || data.length === 0 || total === 0) {
-      {{tab}}{{tab}}{{tab}}throw new ResourceNotFoundException("No ${minStart(className)} found.");
-      {{tab}}{{tab}}}
       {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className}s retrieved successfully", new Page(data, total, size, page));
       {{tab}}}
       

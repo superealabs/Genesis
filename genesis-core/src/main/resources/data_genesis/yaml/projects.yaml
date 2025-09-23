@@ -358,7 +358,7 @@
     - "Nest JS"
   projectFilesEdits:
     - fileType: "docker"
-      fileName: "Dockerfile"
+      fileName: ".dockerignore"
       extension: ""
       content: |
         node_modules

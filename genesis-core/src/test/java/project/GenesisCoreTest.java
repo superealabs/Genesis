@@ -319,7 +319,7 @@ public class GenesisCoreTest {
                 .setHost("localhost")
                 .setPort("5432")
                 .setSchemaName("public")
-                .setDatabaseName("test_genesis")
+                .setDatabaseName("restaurant")
                 .setUser("postgres")
                 .setPwd("Etu002610")
                 .setTrustCertificate(true)
@@ -349,7 +349,7 @@ public class GenesisCoreTest {
             var project = ProjectGenerator.projects.get(projectId);
 
             List<String> generationOptions = List.of("Model", "Service", "Controller");
-            String projectName = "NestApp";
+            String projectName = "AppNode";
             String groupLink = "";
             String projectPort = "3000";
             String logLevel = "Information";
