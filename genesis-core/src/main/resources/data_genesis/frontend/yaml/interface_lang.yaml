@@ -4,7 +4,7 @@
   content: |
     const english = {
       messages: {
-        projectName: '${formatReadable(projectName)}',
+        projectName: 'Sprort',
         common: {
           update: 'Update',
           delete: 'Delete',
@@ -74,15 +74,13 @@
       },
     }
     export default english
-
-
 - id: 2
   name: "French"
   locale: "fr"
   content: |
     const french = {
       messages: {
-        projectName: '${formatReadable(projectName)}',
+        projectName: 'Sport',
         common: {
           update: 'Modifier',
           delete: 'Supprimer',
@@ -143,4 +141,3 @@
       },
     }
     export default french
-

@@ -1402,11 +1402,77 @@
     logoPath: "${destinationFolder}/src/assets/images"
     langsPath: "${destinationFolder}/src/lang"
   authenticationFiles:
-    - fileType: "authentication files"
-      fileName: ""
-      extension: ""
-      content: " ,foevoe,v"
-      destinationPath: ""
+    - fileType: "Login Form"
+      fileName: "LoginForm"
+      extension: "vue"
+      content: |
+        <template>
+          <form class="space-y-4">
+            <div>
+              <GenesisInput v-model="login" label="Login" placeholder="username or email" type="text" />
+            </div>
+            <div>
+              <GenesisInput v-model="password" placeholder="*****" type="password" label="Password" />
+            </div>
+            <button type="submit" class="btn btn-primary w-full">Login</button>
+          </form>
+        </template>
+        <script setup lang="ts">
+        import GenesisInput from '@/core/form/GenesisInput.vue'
+        import { ref } from 'vue'
+
+        const login = ref('')
+        const password = ref('')
+        </script>
+      destinationPath: "${destinationFolder}/src/auth"
+    - fileType: "Auth Layout"
+      fileName: "AuthLayout"
+      extension: "vue"
+      content: |
+        <template>
+          <main class="min-h-screen bg-base-100">
+            <router-view />
+          </main>
+        </template>
+    
+        <script setup lang="ts"></script>
+      destinationPath: "${destinationFolder}/src/layouts"
+    - fileType: "Auth Routes"
+      fileName: "authRoutes"
+      extension: "ts"
+      content: |
+        import type { RouteRecordRaw } from 'vue-router'
+
+        const authRouts: Array<RouteRecordRaw> = [
+          {
+            path: 'login',
+            name: 'login',
+            component: () => import('@/views/auth/LoginView.vue'),
+          },
+        ]
+
+        export default authRoutes
+      destinationPath: "${destinationFolder}/src/layouts"
+    - fileType: "Login View"
+      fileName: "LoginView"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="h-screen flex items-center justify-center">
+            <div class="w-full max-w-md p-6 bg-base-100 rounded-2xl shadow-lg">
+              <h1 class="text-2xl font-bold text-center mb-6">
+                <PresenceLogo size="150" />
+              </h1>
+              <LoginForm />
+            </div>
+          </div>
+        </template>
+
+        <script lang="ts" setup>
+        import LoginForm from '@/auth/LoginForm.vue'
+        import PresenceLogo from '@/core/PresenceLogo.vue'
+        </script>
+      destinationPath: "${destinationFolder}/src/views"
   additionalFiles:
     - fileType: "Package File"
       fileName: "package"
@@ -9543,31 +9609,17 @@
       extension: "vue"
       content: |
         <template>
-          <!-- FreezeScreen -->
           <teleport to="#freeze-screen">
             <FreezeScreen />
           </teleport>
-          <div class="md:flex flex-col md:flex-row md:min-h-screen w-full">
-            <!-- Sidebar -->
-            <aside class="w-2/12 h-screen overflow-y-auto">
-              <GenesisNavbar />
-            </aside>
-
-            <!-- Main content -->
-            <main class="flex-1 overflow-y-auto bg-base-100 p-4">
-              <router-view />
-            </main>
-          </div>
+          <router-view />
         </template>
 
         <script setup lang="ts">
-        import GenesisNavbar from './core/navbar/GenesisNavbar.vue'
-        import FreezeScreen from './core/loading/FreezeScreen.vue'
+        import FreezeScreen from '@/core/loading/FreezeScreen.vue'
         </script>
 
-        <style scoped>
-        /* keep styling here */
-        </style>
+        <style scoped></style>
       destinationPath: "${destinationFolder}/src"
 
     - fileType: "Router Index"
@@ -9604,18 +9656,44 @@
         import type { RouteRecordRaw } from 'vue-router'
         import HomeView from '@/views/HomeView.vue'
         import CustomisationView from '@/views/settings/CustomisationView.vue'
-
-        // Entity routes
+        import SideBarLayout from '@/layouts/SideBarLayout.vue'
+        {{#if useJWT}}
+        import AuthLayout from '@/layouts/AuthLayout.vue'
+        {{/if}}
         {{#each entities}}
         import ${minStart(this.className)}Routes from './entities/${minStart(this.className)}Routes'
         {{/each}}{{removeLine}}
+        
 
         const routes: Array<RouteRecordRaw> = [
-          { path: '/', name: 'home', component: HomeView },
-          { path: '/customisation', name: 'customisation', component: CustomisationView },
-          {{#each entities}}
-          ...${minStart(this.className)}Routes,
-          {{/each}}{{removeLine}}
+          {
+            path: '/',
+            redirect: '/home',
+          },
+          {
+            path: '/',
+            component: SideBarLayout,
+            children: [
+              { path: '/', name: 'home', component: HomeView },
+              { path: '/customisation', name: 'customisation', component: CustomisationView },
+              {{#each entities}}
+              ...${minStart(this.className)}Routes,
+              {{/each}}{{removeLine}}
+            ],
+          },
+          {{#if useJWT}}
+          {
+            path: '/auth',
+            component: AuthLayout,
+            children: [
+              {
+                path: 'login',
+                name: 'login',
+                component: () => import('@/views/auth/LoginView.vue'),
+              },
+            ],
+          },
+          {{/if}}
         ]
         export default routes
 
@@ -9703,7 +9781,9 @@
       extension: "css"
       content: |
         @import 'tailwindcss';
-
+        * {
+          scrollbar-width: thin;
+        }
         @plugin "daisyui";
 
         /* Thème custom Genesis */
@@ -9809,14 +9889,16 @@
         <template>
           <tr class="hover:bg-gray-50">
             {{#each fields}}
-            {{#if this.isForeignKey}}
+            {{#if @first}}
+            <td class="px-3 py-2 bg-base-100 sticky text-center left-0">{{ ${minStart(EntityName)}.${this.name} }}</td>
+            {{elseIf this.isForeignKey}}
             <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name}?.getReferenceValue() }}</td>
             {{else}}
             <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} }}</td>{{/if}}
             {{/each}}{{removeLine}}
   
-            <td class="px-3 py-2 text-right">
-              <div class="inline-flex rounded-md shadow overflow-hidden">
+            <td class="px-3 py-2 bg-base-100 sticky right-0">
+              <div class="inline-flex rounded-md shadow">
                 <EntityRowActions @delete-row="deleteRow" @view-row="viewRow" @edit-row="updateRow" />
               </div>
             </td>
@@ -9824,45 +9906,19 @@
         </template>
       style: "{{removeLine}}"
       export: |
-        /**
-         * Props
-         */
         const props = defineProps({
-          /**
-           * ${majStart(EntityName)} object representing a single row in the table
-           */
           ${minStart(EntityName)}: {
             type: Object as PropType<${majStart(EntityName)}>,
             required: true,
           },
         })
 
-        /**
-         * Emits
-         */
         const emit = defineEmits<{
-          /**
-           * Triggered when user requests to delete a row
-           * @param ${minStart(EntityName)} The ${majStart(EntityName)} object to delete
-           */
           (e: 'request-delete', ${minStart(EntityName)}: ${majStart(EntityName)}): void
-
-          /**
-           * Triggered when user requests to view a row
-           * @param ${minStart(EntityName)} The ${majStart(EntityName)} object to view
-           */
           (e: 'request-view', ${minStart(EntityName)}: ${majStart(EntityName)}): void
-
-          /**
-           * Triggered when user requests to update a row
-           * @param ${minStart(EntityName)} The ${majStart(EntityName)} object to update
-           */
           (e: 'request-update', ${minStart(EntityName)}: ${majStart(EntityName)}): void
         }>()
 
-        /**
-         * Event Handlers
-         */
         const deleteRow = () => emit('request-delete', props.${minStart(EntityName)})
         const viewRow = () => emit('request-view', props.${minStart(EntityName)})
         const updateRow = () => emit('request-update', props.${minStart(EntityName)})
@@ -9889,14 +9945,14 @@
       importComponent: "{{removeLine}}"
       template: |
         <template>
-          <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
-            <table class="table w-full border-gray-200 rounded-md text-left">
-              <thead class="bg-secondary">
+          <div class="rounded-box border border-base-content/5 bg-base-100">
+            <table class="table table-auto w-full border-gray-200 rounded-md relative">
+              <thead>
                 <tr>
                   {{#each fields}}
-                  <th class="px-3 py-2 font-bold">${formatReadable(this.name)}</th>
+                  <th class="sticky top-0 bg-secondary px-3 py-2 font-bold min-w-35">${formatReadable(this.name)}</th>
                   {{/each}}
-                  <th class="px-3 py-2 font-bold text-right">{{ $t('table.actions') }}</th>
+                  <th class="sticky top-0 right-0 bg-secondary px-3 py-2 font-bold z-10"></th>
                 </tr>
               </thead>
               <tbody>
@@ -9930,63 +9986,36 @@
         </template>
       style: "{{removeLine}}"
       export: |
-        /**
-         * Props
-         */
         defineProps({
-          /**
-           * Array of ${majStart(EntityName)} entities to display
-           */
           data: {
             type: Array as PropType<${majStart(EntityName)}[]>,
             required: true,
           },
-          /**
-           * Optional message to show when no data is available
-           */
           message: String,
-          /**
-           * Loading indicator
-           */
           loading: {
             type: Boolean,
             default: false,
           },
         })
+        
         {{#if isView}}
-        /**
-         * Composables
-         */
         const { view${majStart(EntityName)} } = use${majStart(EntityName)}s()
         {{else}}
-        /**
-         * Emits
-         */
         const emit = defineEmits<{
-          /**
-           * Triggered to request a refresh of the list
-           */
           (e: 'request:refresh'): void
         }>()
 
-        /**
-         * Reactive state
-         */
         const selectedEntity = ref()
-        /**
-         * Composables
-         */
+
         const { visible: deletePopup, closePopup } = usePopup(false)
         const { delete${majStart(EntityName)}, view${majStart(EntityName)}, goToUpdateFormView } = use${majStart(EntityName)}s()
-        /**
 
-         * Methods
-         */
         function openDeletePopup(entity: ${majStart(EntityName)}) {
           if (!entity) return
           selectedEntity.value = entity
           deletePopup.value = true
         }
+
         async function confirmDelete() {
           const { success, error } = await delete${majStart(EntityName)}(selectedEntity.value)
           if (success) {
@@ -9997,7 +10026,6 @@
           }
         }
         {{/if}}
-
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
 
@@ -10282,22 +10310,22 @@
 
             const ${minStart(EntityName)}Routes: Array<RouteRecordRaw> = [
               {
-                path: '/${minStart(EntityName)}s',
+                path: '${minStart(EntityName)}s',
                 name: '${minStart(EntityName)}listview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}ListView.vue'),
               },
               {
-                path: '/${minStart(EntityName)}s/:id',
+                path: '${minStart(EntityName)}s/:id',
                 name: '${minStart(EntityName)}detailsview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}DetailsView.vue'),
               },{{#if !isView}}
               {
-                path: '/${minStart(EntityName)}s/update/:id',
+                path: '${minStart(EntityName)}s/update/:id',
                 name: '${minStart(EntityName)}updateview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}UpdateView.vue'),
               },
               {
-                path: '/${minStart(EntityName)}s/create',
+                path: '${minStart(EntityName)}s/create',
                 name: '${minStart(EntityName)}createview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}CreateView.vue'),
               },{{/if}}
@@ -10366,7 +10394,7 @@
           />{{/if}}
         </template>
       export: |
-        // Props{{#if isView}}
+        {{#if isView}}
         defineProps({
           ${minStart(EntityName)}: {
             type: Object as PropType<${majStart(EntityName)}>,
@@ -10379,20 +10407,16 @@
             required: true,
           },
         })
-        
-        // Popup composable
+        // Stores
         const { closePopup, openPopup, visible: deletePopup } = usePopup(false)
-
-        // Entity composable for CRUD and navigation
         const { delete${majStart(EntityName)}, goToListView, goToUpdateFormView } = use${majPluralize(EntityName)}()
-
-        // Open delete popup
+        
+        // Methods
         const openDeletePopup = (entity: ${majStart(EntityName)}) => {
           if (!entity) return
           openPopup()
         }
 
-        // Confirm deletion
         const confirmDelete = async () => {
           const { success, error } = await delete${majStart(EntityName)}(props.${minStart(EntityName)})
           if (!success) console.error(error)
@@ -10501,9 +10525,10 @@
                   <!-- ${formatReadable(this.name)} -->
                   <GenesisInput
                     label="${formatReadable(this.name)}"
-                    placeholder="Entrer ${formatReadable(this.name)}"
+                    placeholder="Enter ${formatReadable(this.name)}"
                     type="${this.uiType}"
                     v-model="formModel.${minStart(this.name)}"
+                    :value="formModel.${minStart(this.name)}"
                   />
                   {{/if}}
                   {{/each}}{{removeLine}}
