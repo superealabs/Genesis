@@ -2247,14 +2247,14 @@
           exports: [],
         })
         export class RoleEntityModule {}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/user-entity"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/role-entity"
     - fileType: "User Entity"
       fileName: "user-entity.entity"
       extension: "ts"
       content: |
-        import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+        import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, BeforeInsert } from 'typeorm';
         import { RoleEntity } from '../role-entity/role-entity.entity';
-  
+        import * as bcrypt from 'bcryptjs';
         @Entity({ name: 'users' })
         export class UserEntity {
           @PrimaryGeneratedColumn({ type: 'bigint', name: 'id' })
@@ -2272,6 +2272,17 @@
           @ManyToOne(() => RoleEntity, { nullable: true, eager: true })
           @JoinColumn({ name: 'role_id' })
           roleidRoleEntity!: RoleEntity;
+        
+          @BeforeInsert()
+            async hashPassword() {
+            if (this.password) {
+              this.password = await bcrypt.hash(this.password, 10);
+            }
+          }
+          
+          async comparePassword(plain: string) {
+            return bcrypt.compare(plain, this.password);
+          }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/user-entity"
     - fileType: "User Module"
@@ -2343,7 +2354,7 @@
       content: |
         --Default login
         --Username: admin
-        --Password: admin
+        --Password: admin123
         {{#if databaseType = PostgreSQL}}
         CREATE TABLE IF NOT EXISTS roles
         (
@@ -2364,7 +2375,7 @@
         ON CONFLICT (name) DO NOTHING;
 
         INSERT INTO users (name, email, password, role_id)
-        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1)
+        VALUES ('admin', 'admin@user.com', '$2b$10$7qRz1zFQG2F7dL57V97dRuG5I8YFqCnnAHLW7q9m0PpSbsroGQ5aG', 1)
         ON CONFLICT (email) DO NOTHING;
         {{else}}{{removeLine}}{{/if}}
 
@@ -2513,11 +2524,37 @@
       fileName: "jwt-auth.guard"
       extension: "ts"
       content: |
-        import { Injectable } from '@nestjs/common';
+        import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
         import { AuthGuard } from '@nestjs/passport';
-        
+        import { BlacklistService } from '../blacklist.service';
+          
         @Injectable()
-        export class JwtAuthGuard extends AuthGuard('jwt') {}
+        export class JwtAuthGuard extends AuthGuard('jwt') {
+          constructor(private blacklistService: BlacklistService) {
+            super();
+          }
+          
+          handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+             const request = context.switchToHttp().getRequest();
+             const token = this.extractToken(request);
+             
+             if (token && this.blacklistService?.isBlacklisted(token)) {
+               throw new UnauthorizedException('Token invalidated');
+             }
+               
+             if (err || !user) {
+               throw err || new UnauthorizedException((info as any)?.message || 'Unauthorized');
+             }
+             
+             return user;
+          }
+          
+          private extractToken(request: any): string | null {
+              const authHeader = request.headers.authorization;
+              return authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+          }
+        }
+
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth/guards"
     - fileType: "Interface"
       fileName: "jwt-payload.interface"
@@ -2536,7 +2573,7 @@
         import { ExtractJwt, Strategy } from 'passport-jwt';
         import { PassportStrategy } from '@nestjs/passport';
         import { Injectable } from '@nestjs/common';
-        import { JwtPayload } from '../interfaces/jwt-payload.interfaces';
+        import { JwtPayload } from '../interfaces/jwt-payload.interface';
         import { ConfigService } from '@nestjs/config';
         
         @Injectable()
@@ -2562,32 +2599,120 @@
       fileName: "auth.controller"
       extension: "ts"
       content: |
-        import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+        import { Controller, Post, Body, UseGuards, HttpStatus, Get, Headers, Request } from '@nestjs/common';
         import { AuthService } from './auth.service';
         import { LoginDto } from './dto/login.dto';
         import { RegisterDto } from './dto/register.dto';
-        import { ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
-          
+        import { ApiOperation, ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+        import { RestResponse } from '../common/dto/RestResponse';
+        import { AuthGuard } from '@nestjs/passport';
+        import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
         @ApiTags('auth')
         @Controller('auth')
         export class AuthController {
           constructor(private readonly authService: AuthService) {}
-        
+
           @ApiOperation({ summary: 'User login', description: "Authenticate user and generate JWT token" })
           @ApiResponse({ status: 201, description: 'Authentication successful' })
           @ApiResponse({ status: 401, description: 'Invalid credentials' })
           @Post('login')
           async login(@Body() loginDto: LoginDto) {
-            return this.authService.login(loginDto);
+            try {
+              return RestResponse.buildSuccessResponse(
+                201,
+                "Authentication successful",
+                await this.authService.login(loginDto)
+              );
+
+            } catch (error) {
+              return RestResponse.buildErrorResponse(
+                400,
+                "Registration failed: "+ error,
+                null
+              );
+            }
           }
-        
+
          @ApiOperation({ summary: 'Register new user', description: "Create a new user account"}) 
          @ApiResponse({ status: 201, description: 'User created successfully' })
          @ApiResponse({ status: 400, description: 'Invalid user data' })
          @Post('register')
           async register(@Body() registerDto: RegisterDto) {
-            return this.authService.register(registerDto);
+             try {
+              return RestResponse.buildSuccessResponse(
+                201,
+                "User registered successfully",
+                await this.authService.register(registerDto)
+              );
+
+            } catch (error) {
+              return RestResponse.buildErrorResponse(
+                400,
+                "Registration failed: "+ error,
+                null
+              );
+            }
           }
+          @ApiBearerAuth('jwt')
+          @UseGuards(JwtAuthGuard)
+          @ApiOperation({
+            summary: 'Get current user',
+            description: 'Retrieve details of the currently authenticated user',
+          })
+          @ApiResponse({ status: 200, description: 'Successfully retrieved user details', })
+          @ApiResponse({ status: 400, description: 'No valid user session' })
+          @Get('current')
+          async currentUser(@Request() req: any) {
+            try {
+              const userConnected = (req as any).user;
+              if (userConnected) {
+                return RestResponse.buildSuccessResponse(
+                  HttpStatus.OK,
+                  "User details retrieved",
+                  userConnected
+                );
+              }
+            } catch (e) {
+              return RestResponse.buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Error retrieving user: " + (e),
+                null
+              );
+            }
+            return RestResponse.buildErrorResponse(
+              HttpStatus.BAD_REQUEST,
+              "No user connected",
+              null
+            );
+          }
+          @ApiBearerAuth('jwt')
+          @UseGuards(JwtAuthGuard)
+          @ApiOperation({
+            summary: 'Logout',
+            description: 'Invalidate the provided JWT token (if supported)',
+          })
+          @ApiResponse({ status: 200, description: 'Logged out successfully' })
+          @ApiResponse({ status: 400, description: 'Invalid Authorization Header' })
+          @Post('logout')
+          async logout(@Headers('authorization') authHeader: string) {
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+              const token = authHeader.substring(7);
+              await this.authService.invalidateToken(token);
+
+              return RestResponse.buildSuccessResponse(
+                HttpStatus.OK,
+                "Logged out successfully",
+                null
+              );
+            }
+            return RestResponse.buildErrorResponse(
+              HttpStatus.BAD_REQUEST,
+              "Invalid Authorization Header",
+              null
+            );
+          }
+
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth"
     - fileType: "Service"
@@ -2686,7 +2811,7 @@
         import { UserEntity } from '../user-entity/user-entity.entity';
         import { RoleEntity } from '../role-entity/role-entity.entity';
         import { ConfigModule, ConfigService } from '@nestjs/config';
-        
+        import { BlacklistService } from './blacklist.service';
         @Module({
           imports: [
             TypeOrmModule.forFeature([UserEntity, RoleEntity]),
@@ -2702,11 +2827,31 @@
               }),
             }),
           ],
-          providers: [AuthService, JwtStrategy],
+          providers: [AuthService, JwtStrategy, BlacklistService],
           controllers: [AuthController],
-          exports: [AuthService],
+          exports: [AuthService, BlacklistService],
           })
           export class AuthModule {}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth"
+
+    - fileType: "Service"
+      fileName: "blacklist.service"
+      extension: "ts"
+      content: |
+        import { Injectable } from '@nestjs/common';
+
+        @Injectable()
+        export class BlacklistService {
+          private blacklistedTokens = new Set<string>();
+
+          addToBlacklist(token: string): void {
+            this.blacklistedTokens.add(token);
+          }
+
+          isBlacklisted(token: string): boolean {
+            return this.blacklistedTokens.has(token);
+          }
+        }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth"
   additionalDependencies: [ ]
   metadataBooleanTrueKeys:

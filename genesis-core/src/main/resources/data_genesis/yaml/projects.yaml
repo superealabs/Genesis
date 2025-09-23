@@ -394,12 +394,10 @@
       fileName: ".env"
       extension: ""
       content: |
-        DB_HOST=${host}
-        DB_PORT=${databasePort}
-        DB_USERNAME=${databaseUsername}
-        DB_PASSWORD=${databasePassword}
-        DB_DATABASE=${databaseName}
         APP_PORT=${projectPort}
+        {{#if useJWT}}JWT_SECRET=ecadf03942ea050f90abc4ce66eadda7b4183e98ac36a518820f78b0b020d02d
+        JWT_EXPIRES_IN=48h
+        BCRYPT_SALT_ROUNDS=12{{/if}}
       destinationPath: "${destinationFolder}/${majStart(projectName)}"
 
     - fileType: "Json"
@@ -437,6 +435,12 @@
             "jspdf-autotable": "^5.0.2",
             "puppeteer": "^24.19.0",
             "node-cache": "^5.1.2"
+            {{#if useJWT}},"@nestjs/jwt": "^11.0.0",
+            "@nestjs/passport": "^11.0.5",
+            "bcryptjs": "^3.0.2",
+            "passport": "^0.7.0",
+            "passport-jwt": "^4.0.1",
+            "passport-local": "^1.0.0"{{/if}}
           },
           "devDependencies": {
             "@nestjs/cli": "^10.0.0",
@@ -456,6 +460,9 @@
             "eslint": "^8.50.0",
             "@typescript-eslint/eslint-plugin": "^6.0.0",
             "@typescript-eslint/parser": "^6.0.0"
+            {{#if useJWT}}, "@types/bcryptjs": "^2.4.6",
+            "@types/passport-jwt": "^4.0.1",
+            "@types/passport-local": "^1.0.38"{{/if}}
           }
         }
       destinationPath: "${destinationFolder}/${projectName}/"
