@@ -10966,15 +10966,511 @@
   initPath: "react/react-ts-skeletoon"
   componentExtension: "tsx"
   frontendPaths:
-    faviconPath: ""
-    logoPath: ""
-    langsPath: ""
+    faviconPath: "${destinationFolder}/public"
+    logoPath: "${destinationFolder}/src"
+    langsPath: "{{removeLine}}"
   authenticationFiles:
-    - fileType: "authentication files"
-      fileName: ""
-      extension: ""
-      content:
-      destinationPath: ""
+    - fileType: "Service Auth"
+      fileName: "auth"
+      extension: "ts"
+      content: |
+        // src/services/auth.ts
+        import axios from 'axios';
+        import { ApiResponse } from './api';
+
+        const API_BASE = import.meta.env.VITE_API_BASE; // déjà présent
+
+        interface AuthRequest {
+            username: string;
+            password: string;
+        }
+
+        export const authService = {
+            login: (payload: AuthRequest) =>
+                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/login`, payload)
+                    .then(res => res.data),
+
+            logout: (token: string) =>
+                axios.post<ApiResponse<void>>(`$[API_BASE]/auth/logout`, {}, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }).then(res => res.data),
+
+            me: (token: string) =>
+                axios.get<ApiResponse<any>>(`$[API_BASE]/auth/current`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }).then(res => res.data),
+
+            /* ------------ nouvelle méthode ------------ */
+            refresh: (token: string) =>
+                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/refresh`, { refreshToken: token })
+                    .then(res => res.data),
+        };
+      destinationPath: "${destinationFolder}/src/services"
+    - fileType: "AuthContext"
+      fileName: "AuthContext"
+      extension: "tsx"
+      content: |
+        // src/contexts/AuthContext.tsx
+        import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+        import { authService } from '@/services/auth';
+
+        type User = { username: string; email?: string };
+
+        interface AuthCtx {
+            user: User | null;
+            token: string | null;
+            login: (u: string, p: string) => Promise<void>;
+            logout: () => void;
+            loading: boolean;
+        }
+
+        const AuthContext = createContext<AuthCtx>(null!);
+
+        const REFRESH_INTERVAL_MS = Number(
+            import.meta.env.VITE_REFRESH_INTERVAL_MS ?? 60000
+        );
+
+        export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+            const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+            const [user, setUser] = useState<User | null>(null);
+            const [loading, setLoading] = useState(true);
+            const intervalRef = useRef<number | null>(null);
+
+            const clearTimer = () => {
+                if (intervalRef.current) {
+                    window.clearInterval(intervalRef.current);
+                    intervalRef.current = null;
+                }
+            };
+
+            const logout = () => {
+                clearTimer();
+                if (token) authService.logout(token).catch(() => {});
+                localStorage.removeItem('token');
+                setToken(null);
+                setUser(null);
+                // ❌ on ne fait plus window.location.href ici
+            };
+
+            const startRefreshTimer = (tk: string) => {
+                clearTimer();
+                intervalRef.current = window.setInterval(async () => {
+                    try {
+                        const res = await authService.refresh(tk);
+                        const newToken = res.data;
+                        localStorage.setItem('token', newToken);
+                        setToken(newToken);
+                        console.log('Token refreshed silently');
+                    } catch {
+                        logout(); // échec → on déconnecte
+                    }
+                }, REFRESH_INTERVAL_MS);
+            };
+
+            useEffect(() => {
+                if (!token) {
+                    setLoading(false);
+                    return;
+                }
+                authService
+                    .me(token)
+                    .then(res => {
+                        setUser({ username: res.data.username, email: res.data.email });
+                        startRefreshTimer(token);
+                    })
+                    .catch(() => logout())
+                    .finally(() => setLoading(false));
+                return clearTimer;
+            }, [token]);
+
+            const login = async (username: string, password: string) => {
+                const res = await authService.login({ username, password });
+                const jwt = res.data;
+                localStorage.setItem('token', jwt);
+                setToken(jwt);
+                startRefreshTimer(jwt);
+            };
+
+            return (
+                <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+                    {children}
+                </AuthContext.Provider>
+            );
+        };
+
+        export const useAuth = () => useContext(AuthContext);
+      destinationPath: "${destinationFolder}/src/contexts"
+    - fileType: "Configuration file"
+      fileName: "{{removeLine}}"
+      extension: "env"
+      content: |
+        VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
+        VITE_REFRESH_INTERVAL_MS=60000
+      destinationPath: "${destinationFolder}/"
+    - fileType: "ProtectedRoute"
+      fileName: "ProtectedRoute"
+      extension: "tsx"
+      content: |
+        // src/router/ProtectedRoute.tsx
+        import { Navigate, Outlet, useLocation } from 'react-router-dom';
+        import { useAuth } from '@/contexts/AuthContext';
+        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
+
+        export default function ProtectedRoute() {
+          const { user, loading } = useAuth();
+          const location = useLocation();
+
+          /* déjà sur login → on laisse le flux se terminer sans re-navigation */
+          if (location.pathname === '/login') return <Outlet />;
+
+          if (loading) return <BackdropBlocker open />;
+          return user ? <Outlet /> : <Navigate to="/login" replace state={{ from: location }} />;
+        }
+      destinationPath: "${destinationFolder}/src/router"
+    - fileType: "Login page"
+      fileName: "Login"
+      extension: "tsx"
+      content: |
+        // src/pages/auth/Login.tsx
+        import { useState, useEffect, useRef } from 'react';
+        import { useAuth } from '@/contexts/AuthContext';
+        import { useNavigate, useLocation } from 'react-router-dom';
+        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+        import { useSnackbar } from 'notistack';
+
+        export default function Login() {
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
+            const { login, token, user } = useAuth(); // ← user ajouté
+            const navigate = useNavigate();
+            const { enqueueSnackbar } = useSnackbar();
+            const location = useLocation();
+            const from = location.state?.from?.pathname || '/';
+
+            const hasNavigatedRef = useRef(false);
+
+            useEffect(() => {
+                if (token && user && !hasNavigatedRef.current) {
+                    hasNavigatedRef.current = true;
+                    navigate(from, { replace: true });
+                }
+            }, [token, user, from, navigate]);
+
+            const handleSubmit = async (e: React.FormEvent) => {
+                e.preventDefault();
+                try {
+                    await login(username, password);
+                } catch {
+                    enqueueSnackbar('Identifiants invalides', { variant: 'error' });
+                }
+            };
+
+            return (
+                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Paper sx={{ p: 4, width: 360 }}>
+                        <Typography variant="h5" mb={3} textAlign="center">Connexion</Typography>
+                        <form onSubmit={handleSubmit}>
+                            <TextField fullWidth label="Nom d’utilisateur" value={username} onChange={e => setUsername(e.target.value)} required />
+                            <TextField fullWidth label="Mot de passe" type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
+                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>Se connecter</Button>
+                        </form>
+                    </Paper>
+                </Box>
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/auth"
+    - fileType: "Router file"
+      fileName: "router"
+      extension: "tsx"
+      content: |
+        // src/router.tsx
+        import RootLayout from './layouts/RootLayout';
+        import { createBrowserRouter, Navigate } from 'react-router-dom';
+        import ProtectedRoute from '@/router/ProtectedRoute';
+        import Login from '@/pages/auth/Login';
+        {{#each routes}}
+        import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
+        {{/each}}
+
+        export const router = createBrowserRouter([
+            {
+                path: '/login',
+                element: <Login />,
+            },
+            {
+                path: '/',
+                element: (
+                    <ProtectedRoute /> // ← tout ce qui est en-dessous nécessite auth
+                ),
+                children: [
+                    {
+                        path: '/',
+                        element: <Navigate to="{{#each routes}}{{#if @first}}${this.routerLink}{{/if}}{{/each}}" replace />,
+                    },
+                    {
+                        path: '/',
+                        element: <RootLayout layout="vertical" />,
+                        children: [
+                            {{#each routes}}
+                            {
+                              path: '${this.routerLink}',
+                              element: <${this.componentSelector} />,
+                            },
+                            {{/each}}
+                        ],
+                    },
+                ],
+            },
+        ]);
+      destinationPath: "${destinationFolder}/src"
+    - fileType: "index file"
+      fileName: "index"
+      extension: "tsx"
+      content: |
+        // src/index.tsx
+        import React from 'react';
+        import ReactDOM from 'react-dom/client';
+        import { RouterProvider } from 'react-router-dom';
+        import { router } from './router';
+        import './index.css';
+        import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+        import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+        import { SnackbarProvider } from 'notistack';
+        import { ThemeProvider } from './contexts/ThemeContext';
+        import { CssBaseline } from '@mui/material';
+        import 'dayjs/locale/fr';
+        import dayjs from 'dayjs';
+        import { AuthProvider } from '@/contexts/AuthContext';
+        dayjs.locale('fr');
+
+        ReactDOM.createRoot(document.getElementById('root')!).render(
+            <React.StrictMode>
+                <ThemeProvider>
+                    <CssBaseline />
+                        <AuthProvider>
+                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                                <SnackbarProvider maxSnack={3} autoHideDuration={1500}>
+                                    <RouterProvider router={router} />
+                                </SnackbarProvider>
+                            </LocalizationProvider>
+                        </AuthProvider>
+                </ThemeProvider>
+            </React.StrictMode>
+        );
+      destinationPath: "${destinationFolder}/src"
+    - fileType: "api"
+      fileName: "api"
+      extension: "ts"
+      content: |
+        // src/services/api.ts
+        import axios from 'axios';
+
+        const API_BASE = import.meta.env.VITE_API_BASE as string;
+
+        export interface ApiResponse<T> {
+            status: number;
+            message: string;
+            returnCode: number;
+            data: T;
+            timestamp: string;
+        }
+
+        interface SearchParams {
+            endpoint: string;
+            page: number;
+            size: number;
+            sort: `$[string],$['asc' | 'desc']`;
+            filter: Record<string, unknown>;
+        }
+
+        /* =============== REQUEST : toujours mettre le token =============== */
+        axios.interceptors.request.use(config => {
+            const tok = localStorage.getItem('token');
+            if (tok) config.headers.Authorization = `Bearer $[tok]`;
+            return config;
+        });
+
+        /* ===============  EXPORT DES FONCTIONS EXISTANTES =============== */
+        export async function search<T>({ endpoint, page, size, sort, filter }: SearchParams) {
+            const { data } = await axios.post(
+                `$[API_BASE]$[endpoint]`,
+                filter,
+                { params: { page, size, sortParam: sort } }
+            );
+            return {
+                content: (data.data?.content as T[]) ?? [],
+                totalPages: data.data?.page?.totalPages ?? 0,
+            };
+        }
+
+        export async function create<T>(endpoint: string, payload: Omit<T, 'id'>) {
+            const { data } = await axios.post<ApiResponse<T>>(`$[API_BASE]$[endpoint]`, payload);
+            return data;
+        }
+
+        export async function getById<T>(endpoint: string, id: number) {
+            const { data } = await axios.get<ApiResponse<T>>(`$[API_BASE]$[endpoint]/$[id]`);
+            return data.data;
+        }
+
+        export async function update<T>(endpoint: string, id: number, payload: Partial<T>) {
+            const { data } = await axios.put<ApiResponse<T>>(`$[API_BASE]$[endpoint]/$[id]`, payload);
+            return data;
+        }
+
+        export async function remove(endpoint: string, id: string | number) {
+            const { data } = await axios.delete<ApiResponse<void>>(`$[API_BASE]$[endpoint]/$[id]`);
+            return data;
+        }
+      destinationPath: "${destinationFolder}/src/services"
+    - fileType: "Sidebar"
+      fileName: "Sidebar"
+      extension: "tsx"
+      content: |
+        // src/components/Sidebar/Sidebar.tsx
+        import { useState } from 'react';
+        import {AppBar, Drawer, Toolbar, IconButton, Box, FormControlLabel, Switch} from '@mui/material';
+        import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+        import { navItems } from '../../config/navItems';   // new file
+        import { drawerWidth, closedWidth } from '@/styles/sidebar';
+        import HorizontalDropdown from './HorizontalDropdown';
+        import VerticalDropdown from './VerticalDropdown';
+        import { useThemeMode } from '@/contexts/ThemeContext';   // 👈 nouveau
+        import { Brightness4, Brightness7 } from '@mui/icons-material';
+        import { SidebarTitle } from './SidebarTitle';
+        import { Logout } from '@mui/icons-material';
+        import {useAuth} from "@/contexts/AuthContext";
+        import {useNavigate} from "react-router-dom";
+
+        interface Props {
+            layout?: 'vertical' | 'horizontal';
+        }
+
+        export default function Sidebar({ layout = 'vertical' }: Props) {
+            const [open, setOpen] = useState(true);
+            const { mode, toggleTheme } = useThemeMode();
+            const toggle = () => setOpen((prev) => !prev);
+            const { logout } = useAuth();
+            const navigate = useNavigate(); // ← ajout
+
+            const handleLogout = () => {
+                logout();       // vide le state + localStorage
+                navigate('/login', { replace: true }); // ← navigation sans reload
+            };
+
+            if (layout === 'horizontal') {
+                return (
+                    <AppBar position="sticky">
+                        <Toolbar sx={{ gap: 2, justifyContent: 'space-between' }}>
+                            <Box display="flex" gap={2} alignItems="center">
+                                <SidebarTitle />
+                                {navItems.map((item) => (
+                                    <HorizontalDropdown key={item.label} item={item} />
+                                ))}
+                            </Box>
+
+                            {/* Switch stylisé */}
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={mode === 'dark'}
+                                        onChange={toggleTheme}
+                                        icon={<Brightness4 sx={{ fontSize: 20 }} />}
+                                        checkedIcon={<Brightness7 sx={{ fontSize: 20 }} />}
+                                        color="default"
+                                    />
+                                }
+                                label=""
+                                sx={{ mr: 2 }}
+                            />
+                        </Toolbar>
+                    </AppBar>
+                );
+            }
+
+            /* ---------- Vertical (default) ---------- */
+            return (
+                <>
+                    <Drawer
+                        variant="permanent"
+                        sx={{
+                            width: open ? drawerWidth : closedWidth,
+                            flexShrink: 0,
+                            '& .MuiDrawer-paper': {
+                                width: open ? drawerWidth : closedWidth,
+                                transition: (t) => t.transitions.create('width'),
+                                overflowX: 'hidden',
+                                display: 'flex',               // ← permet de pousser le switch en bas
+                                flexDirection: 'column',
+                            },
+                        }}
+                    >
+                        {/* Header */}
+                        <Toolbar
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                px: 1,
+                                justifyContent: 'space-between', // ← pousse le chevron à droite
+                            }}
+                        >
+                            <SidebarTitle compact={!open} />
+                            <IconButton onClick={toggle} color="inherit">
+                                {open ? <ChevronLeft /> : <ChevronRight />}
+                            </IconButton>
+                        </Toolbar>
+
+                        {/* Contenu du menu */}
+                        {navItems.map((i, idx) => (
+                            <Box key={i.label} sx={{ mb: idx < navItems.length - 1 ? 0.75 : 0 }}>
+                                <VerticalDropdown item={i} compact={!open} />
+                            </Box>
+                        ))}
+
+                        {/* Switch en bas */}
+                        <Box
+                            sx={{
+                                mt: 'auto',
+                                p: 1,
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={mode === 'dark'}
+                                        onChange={toggleTheme}
+                                        icon={<Brightness4 sx={{ fontSize: 18 }} />}
+                                        checkedIcon={<Brightness7 sx={{ fontSize: 18 }} />}
+                                        color="default"
+                                    />
+                                }
+                                label={open ? (mode === 'dark' ? 'Sombre' : 'Clair') : ''}
+                                labelPlacement="bottom"
+                                sx={{
+                                    color: 'inherit',
+                                    m: 0,
+                                    // si le drawer est fermé, on cache le label et on centre l’icône
+                                    ...(open
+                                        ? {}
+                                        : {
+                                            '& .MuiFormControlLabel-label': { display: 'none' },
+                                            '& .MuiSwitch-root': { m: 0 },
+                                        }),
+                                }}
+                            />
+
+                            <IconButton onClick={handleLogout} title="Déconnexion">
+                                <Logout />
+                            </IconButton>
+                        </Box>
+                    </Drawer>
+                </>
+            );
+        }
+      destinationPath: "${destinationFolder}/src/components/Sidebar"
   additionalFiles:
     - fileType: "App name config"
       fileName: "app"

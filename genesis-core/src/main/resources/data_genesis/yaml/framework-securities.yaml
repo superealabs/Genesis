@@ -379,6 +379,17 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/models/"
 
+    - fileType: "RefreshRequest DTO"
+      fileName: "RefreshRequest"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.models;
+        
+        import jakarta.validation.constraints.NotBlank;
+        
+        public record RefreshRequest(@NotBlank String refreshToken) {}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/models/"
+
     - fileType: "JwtService"
       fileName: "JwtService"
       extension: "java"
@@ -585,6 +596,22 @@
             } else {
                 throw new UsernameNotFoundException("Invalid user request!");
             }
+          }
+        
+          public String refreshAccessToken(String oldToken) {
+              // 1. extrait l’identité
+              String username = jwtService.extractUsername(oldToken);
+              if (username == null) throw new IllegalArgumentException("Invalid token");
+          
+              // 2. charge l’utilisateur
+              UserDetails user = loadUserByUsername(username);
+          
+              // 3. valide encore la signature / expiration
+              if (!jwtService.validateToken(oldToken, user))
+              throw new IllegalArgumentException("Token validation failed");
+          
+              // 5. génère un nouveau
+              return jwtService.generateToken(username);
           }
           
           // Ajoutez ces méthodes dans UserInfoService
@@ -974,6 +1001,7 @@
         import ${groupLink}.${lowerCase(projectName)}.config.security.models.AuthRequest;
         import ${groupLink}.${lowerCase(projectName)}.config.security.models.PasswordChangeRequest;
         import ${groupLink}.${lowerCase(projectName)}.config.security.models.UserUpdateRequest;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.models.RefreshRequest;
         import ${groupLink}.${lowerCase(projectName)}.config.security.services.JwtService;
         import ${groupLink}.${lowerCase(projectName)}.config.security.services.TokenBlacklistService;
         import ${groupLink}.${lowerCase(projectName)}.config.security.services.UserInfoService;
@@ -1171,6 +1199,34 @@
                       )
                   );
               }
+          }
+          
+          @Operation(
+              summary = "Refresh access token",
+              description = "Provide the current access-token to obtain a new one; the old one is invalidated."
+          )
+          @ApiResponses({
+            @ApiResponse(
+              responseCode = "200",
+              description = "New token issued",
+              content = @Content(schema = @Schema(implementation = RestResponse.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Token invalid or expired")
+          })
+          @PostMapping("/refresh")
+          public ResponseEntity<RestResponse<String>> refresh(
+            @Valid @RequestBody RefreshRequest req) {
+            try {
+              String newToken = userInfoService.refreshAccessToken(req.refreshToken());
+              tokenBlacklistService.invalidateToken(req.refreshToken());
+              return ResponseEntity.ok(
+                RestResponse.buildSuccessResponse(HttpStatus.OK, "Token refreshed", newToken)
+              );
+            } catch (Exception e) {
+              return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                RestResponse.buildErrorResponse(HttpStatus.UNAUTHORIZED, e.getMessage(), null)
+              );
+            }
           }
         
           @Operation(
