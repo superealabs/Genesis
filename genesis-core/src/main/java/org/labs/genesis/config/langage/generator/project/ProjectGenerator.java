@@ -56,11 +56,15 @@ public class ProjectGenerator {
 
             // Load MVC
             Map<Integer, FrameworkMVC> mvcFrameworks = Arrays.stream(FileUtils.fromYaml(FrameworkMVC[].class, Constantes.FRAMEWORK_MVC_YAML))
-                    .peek(f -> {
-                        try { f.setFrameworkSecurities(); }
-                        catch (IOException e) { throw new RuntimeException("Error initializing frameworkSecurities for ID: " + f.getId(), e); }
+                    .peek(framework -> {
+                        try {
+                            framework.setFrameworkSecurities();
+                            framework.setViewsTemplateEngine();
+                            framework.setViewsTemplate();
+                        }
+                        catch (IOException e) { throw new RuntimeException("Error initializing frameworkMvc components for ID: " + framework.getId(), e); }
                     })
-                    .collect(Collectors.toMap(Framework::getId, f -> f));
+                    .collect(Collectors.toMap(Framework::getId, framework -> framework));
 
             // Ajouter tout dans la map principale
             frameworks.putAll(mvcFrameworks);

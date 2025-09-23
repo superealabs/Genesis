@@ -46,15 +46,6 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         Map<String, Object> frameworkConfiguration = new HashMap<>();
 
         if (framework instanceof FrameworkMVC) {
-            FrameworkMVC frameworkMvc = (FrameworkMVC) framework;
-
-            try {
-                frameworkMvc.setViewsTemplateEngine();
-                frameworkMvc.setViewsTemplate();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
             frameworkConfiguration.put("templateEngineId", 1);
             frameworkConfiguration.put("templateId", 1);
         }
