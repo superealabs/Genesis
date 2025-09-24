@@ -2728,7 +2728,7 @@
         import { LoginDto } from './dto/login.dto';
         import { RegisterDto } from './dto/register.dto';
         import { RoleEntity } from '../role-entity/role-entity.entity';
-        
+        import { BlacklistService } from './blacklist.service';
         @Injectable()
         export class AuthService {
           constructor(
@@ -2737,6 +2737,7 @@
               @InjectRepository(RoleEntity)
             private roleRepository: Repository<RoleEntity>,
             private jwtService: JwtService,
+            private blacklistService: BlacklistService,
           ) {}
         
           async validateUser(loginDto: LoginDto): Promise<UserEntity | null> {
@@ -2751,7 +2752,10 @@
              }
              return null;
           }
-          
+          async invalidateToken(token: string): Promise<{ message: string }> {
+              this.blacklistService.addToBlacklist(token);
+              return { message: 'User logged out successfully' };
+          }
           async login(loginDto: LoginDto) {
             const user = await this.validateUser(loginDto);
             if (!user) {

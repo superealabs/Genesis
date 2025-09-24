@@ -445,6 +445,7 @@
           "devDependencies": {
             "@nestjs/cli": "^10.0.0",
             "@nestjs/schematics": "^10.0.0",
+            "@nestjs/testing": "^10.4.20",
             "typescript": "^5.8.2",
             "ts-node": "^10.9.2",
             "ts-node-dev": "^2.0.0",
@@ -484,10 +485,34 @@
             "esModuleInterop": true,
             "outDir": "./dist",
             "rootDir": "./src",
-            "types": ["jest"]
+            "types": ["node", "jest"]
           },
-          "include": ["src/**/*.ts", "tests/**/*.test.ts"]
+          "include": ["src/**/*.ts", "tests/**/*.test.ts", "test/**/*.spec.ts",]
         }
+      destinationPath: "${destinationFolder}/${projectName}/"
+    - fileType: "Test config file"
+      fileName: "jest.config"
+      extension: "js"
+      content: |
+        const { createDefaultPreset } = require("ts-jest");
+
+        const tsJestTransformCfg = createDefaultPreset().transform;
+
+        /** @type {import("jest").Config} **/
+        module.exports = {
+          preset: "ts-jest",
+          testEnvironment: "node",
+          rootDir: ".",
+          moduleFileExtensions: ["js", "json", "ts"],
+          testRegex: ".*\\.(spec|e2e-spec)\\.ts$", 
+          transform: {
+            ...tsJestTransformCfg,
+          },
+          collectCoverageFrom: [
+            "src/**/*.(t|j)s", 
+          ],
+          coverageDirectory: "./coverage",
+        };
       destinationPath: "${destinationFolder}/${projectName}/"
   projectFiles: [ ]
   projectFolders: [ ]
