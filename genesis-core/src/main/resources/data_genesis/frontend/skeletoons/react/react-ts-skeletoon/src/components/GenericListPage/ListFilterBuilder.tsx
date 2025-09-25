@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import {formatTimeTz, parseTimeTz} from "@/utils/timeTzParser";
 import {DurationFilter} from "@/components/Input/DurationFilter";
+import { useTranslation } from 'react-i18next';
 
 interface Props {
     availableFilters: Record<string, { label: string; type: string }>;
@@ -29,6 +30,7 @@ export default function ListFilterBuilder({
     const [openMenu, setOpenMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     useClickOutside(menuRef, () => setOpenMenu(false));
+    const { t } = useTranslation();
 
     const addFilter = (key: string) => {
         onChange({ ...filters, [key]: '' });
@@ -71,7 +73,7 @@ export default function ListFilterBuilder({
                     height: 20,
                 }}
                 onClick={() => removeFilter(key)}
-                title={`Remove ${label} filter`}
+                title={t('list.removeFilter', { label })}
             >
                 <Close fontSize="inherit" />
             </IconButton>
@@ -98,7 +100,7 @@ export default function ListFilterBuilder({
                     height: 20,
                 }}
                 onClick={() => removeFilter(key)}
-                title={`Remove ${label} filter`}
+                title={t('list.removeFilter', { label })}
             >
                 <Close fontSize="inherit" />
             </IconButton>
@@ -126,7 +128,7 @@ export default function ListFilterBuilder({
                     height: 20,
                 }}
                 onClick={() => removeFilter(key)}
-                title={`Remove ${label} filter`}
+                title={t('list.removeFilter', { label })}
             >
                 <Close fontSize="inherit" />
             </IconButton>
@@ -141,7 +143,7 @@ export default function ListFilterBuilder({
             gap="8px 12px"
             mb={4}
         >
-            <Box fontWeight="bold">Filters :</Box>
+            <Box fontWeight="bold">{t('list.filters')} :</Box>
 
             {Object.entries(filters).map(([key, value]) => {
                 const meta = availableFilters[key];
@@ -277,7 +279,7 @@ export default function ListFilterBuilder({
                             size="small"
                             onClick={() => removeFilter(key)}
                             edge="end"
-                            title={`Remove ${meta.label} filter`}
+                            title={t('list.removeFilter', { label: meta.label })}
                         >
                             <Close fontSize="inherit" />
                         </IconButton>
@@ -311,7 +313,7 @@ export default function ListFilterBuilder({
                     <Button
                         size="small"
                         variant="text"
-                        title="Ajouter un filtre"
+                        title={t('list.addFilter')}
                         onClick={() => setOpenMenu((o) => !o)}
                     >
                         <Add />
@@ -353,7 +355,7 @@ export default function ListFilterBuilder({
                 </Box>
 
                 <Button variant="contained" onClick={onSearch}>
-                    Apply
+                    {t('list.apply')}
                 </Button>
             </Box>
         </Box>
