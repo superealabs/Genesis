@@ -11485,13 +11485,13 @@
                 icon: <List />,
                 children: [
                     {
-                        label: 'List',
+                        label: 'nav.list',
                         path: '/${toKebabCase(this.className)}s',
                         icon: <List />,
                     },
                     {{#if !this.isView}}{{removeLine}}
                     {
-                        label: 'Add',
+                        label: 'nav.add',
                         path: '/${toKebabCase(this.className)}s/create',
                         icon: <Add />
                     },
