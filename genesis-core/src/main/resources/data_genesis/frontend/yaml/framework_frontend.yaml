@@ -11331,6 +11331,8 @@
         import { Logout } from '@mui/icons-material';
         import {useAuth} from "@/contexts/AuthContext";
         import {useNavigate} from "react-router-dom";
+        import { useTranslation } from 'react-i18next';
+        import LanguageSwitcher from "@/components/LanguageSwitcher";
 
         interface Props {
             layout?: 'vertical' | 'horizontal';
@@ -11342,6 +11344,7 @@
             const toggle = () => setOpen((prev) => !prev);
             const { logout } = useAuth();
             const navigate = useNavigate(); // ← ajout
+            const { t } = useTranslation();
 
             const handleLogout = () => {
                 logout();       // vide le state + localStorage
@@ -11452,9 +11455,10 @@
                                 }}
                             />
 
-                            <IconButton onClick={handleLogout} title="Déconnexion">
+                            <IconButton onClick={handleLogout} title={t('sidebar.logout')}>
                                 <Logout />
                             </IconButton>
+                            <LanguageSwitcher />
                         </Box>
                     </Drawer>
                 </>
