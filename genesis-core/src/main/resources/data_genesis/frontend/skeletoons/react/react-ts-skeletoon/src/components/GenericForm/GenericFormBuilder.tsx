@@ -30,6 +30,7 @@ import {TimePicker} from "@mui/x-date-pickers";
 import { parseTimeString } from '@/utils/timeParser';
 import {formatTimeTz, parseTimeTz} from "@/utils/timeTzParser";
 import {DurationInput} from "@/components/Input/DurationInput";
+import { useTranslation } from 'react-i18next';
 
 interface FormFieldConfig {
     label: string;
@@ -78,6 +79,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
     >({});
     const [loading, setLoading] = useState(false);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const { t } = useTranslation();
 
     useEffect(() => {
         const loadForeignKeys = async () => {
@@ -180,7 +182,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                 >
                     <Breadcrumbs sx={breadcrumbSx}>
                         <Link underline="hover" color="inherit" component={RouterLink} to="/">
-                            Accueil
+                            {t('sidebar.title')}
                         </Link>
                         <Link
                             underline="hover"
@@ -374,7 +376,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                 variant="outlined"
                                 onClick={() => (window.location.href = redirectTo || '/')}
                             >
-                                Annuler
+                                {t('actions.cancel')}
                             </Button>
                             <Button
                                 type="submit"
@@ -384,12 +386,8 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                 startIcon={mode === 'create' ? <Add /> : <Save />}
                             >
                                 {loading
-                                    ? mode === 'create'
-                                        ? 'Création...'
-                                        : 'Mise à jour...'
-                                    : mode === 'create'
-                                        ? 'Créer'
-                                        : 'Enregistrer'}
+                                    ? t(mode === 'create' ? 'actions.creating' : 'actions.updating')
+                                    : t(mode === 'create' ? 'actions.create' : 'actions.save')}
                             </Button>
                         </Box>
                     </form>
