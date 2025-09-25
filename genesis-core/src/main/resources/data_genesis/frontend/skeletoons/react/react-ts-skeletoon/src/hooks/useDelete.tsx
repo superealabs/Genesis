@@ -1,23 +1,25 @@
 import { useSnackbar } from 'notistack';
 import { useCallback } from 'react';
 import {ApiResponse} from "@/services/api";
+import {useTranslation} from "react-i18next";
 
 export function useDelete<T>(
     deleteFn: (id: string | number) => Promise<ApiResponse<void>>,
     onSuccess?: () => void
 ) {
+    const { t } = useTranslation();
     const { enqueueSnackbar } = useSnackbar();
 
     const handleDelete = useCallback(
         async (id: string | number) => {
-            if (!confirm('Confirmer la suppression ?')) return;
+            if (!confirm(t('actions.confirmDelete'))) return;
 
             try {
                 await deleteFn(id);
-                enqueueSnackbar('Supprimé avec succès', { variant: 'success' });
+                enqueueSnackbar(t('state.success'), { variant: 'success' });
                 onSuccess?.();
             } catch {
-                enqueueSnackbar('Erreur lors de la suppression', { variant: 'error' });
+                enqueueSnackbar(t('state.error'), { variant: 'error' });
             }
         },
         [deleteFn, enqueueSnackbar, onSuccess]
