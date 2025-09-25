@@ -1,6 +1,7 @@
 // src/components/PaginationSize/PaginationSize.tsx
 import { Select as MuiSelect, MenuItem, FormControl, SelectChangeEvent } from '@mui/material';
 import { smallSelectSx,smallFormControlSx, smallMenuItemSx, inlineLabelSx} from '@/styles/mui-patterns';
+import {useTranslation} from "react-i18next";
 
 interface Props {
     size: number;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function PaginationSize({ size, onChange, onResetPage }: Props) {
+    const { t } = useTranslation();
     const options = [
         { value: 1, label: '1' },
         { value: 2, label: '2' },
@@ -26,7 +28,7 @@ export default function PaginationSize({ size, onChange, onResetPage }: Props) {
 
     return (
         <label style={inlineLabelSx}>
-            Show : &nbsp;&nbsp;
+            {t('list.show')} : &nbsp;&nbsp;
             <FormControl sx={smallFormControlSx}>
                 <MuiSelect
                     value={size}
