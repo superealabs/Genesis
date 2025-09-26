@@ -109,7 +109,7 @@ export default function Sidebar({ layout = 'vertical' }: Props) {
                                 color="default"
                             />
                         }
-                        label={open ? (mode === 'dark' ? 'Sombre' : 'Clair') : ''}
+                        label={open ? t(mode === 'dark' ? 'sidebar.dark' : 'sidebar.light') : ''}
                         labelPlacement="bottom"
                         sx={{
                             color: 'inherit',
