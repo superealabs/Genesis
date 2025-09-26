@@ -33,6 +33,8 @@
         import { RouterOutlet,RouterModule } from '@angular/router';
         import {HttpClientModule } from '@angular/common/http';
         
+        import { BannerComponent } from './shared/banner/banner.component';
+        
         import { SidebarComponent } from './shared/sidebar/sidebar.component';
         import { CommonModule } from '@angular/common';
         import { AuthService } from './features/authentication/services/authentication.service';
@@ -44,7 +46,7 @@
         @Component({
           selector: 'app-root',
           standalone: true,
-          imports: [RouterOutlet,RouterModule,SidebarComponent,CommonModule,HttpClientModule],
+          imports: [RouterOutlet,RouterModule,SidebarComponent,CommonModule,HttpClientModule,BannerComponent],
           templateUrl: './app.component.html',
           styleUrls: ['./app.component.css']
         })
@@ -475,13 +477,14 @@
       content: |
         import { Component } from '@angular/core';
         import { RouterOutlet,RouterModule } from '@angular/router';
+        import { BannerComponent } from './shared/banner/banner.component';
         
         import { SidebarComponent } from './shared/sidebar/sidebar.component';
         
         @Component({
           selector: 'app-root',
           standalone: true,
-          imports: [RouterOutlet,RouterModule,SidebarComponent],  
+          imports: [RouterOutlet,RouterModule,SidebarComponent,BannerComponent],  
           templateUrl: './app.component.html',
           styleUrls: ['./app.component.css']      
         })
