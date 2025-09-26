@@ -11127,6 +11127,7 @@
         import { useNavigate, useLocation } from 'react-router-dom';
         import { TextField, Button, Paper, Typography, Box } from '@mui/material';
         import { useSnackbar } from 'notistack';
+        import { useTranslation } from 'react-i18next';
 
         export default function Login() {
             const [username, setUsername] = useState('');
@@ -11134,6 +11135,7 @@
             const { login, token, user } = useAuth(); // ← user ajouté
             const navigate = useNavigate();
             const { enqueueSnackbar } = useSnackbar();
+            const { t } = useTranslation();
             const location = useLocation();
             const from = location.state?.from?.pathname || '/';
 
@@ -11151,18 +11153,18 @@
                 try {
                     await login(username, password);
                 } catch {
-                    enqueueSnackbar('Identifiants invalides', { variant: 'error' });
+                    enqueueSnackbar(t('auth.invalid'), { variant: 'error' });
                 }
             };
 
             return (
                 <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Paper sx={{ p: 4, width: 360 }}>
-                        <Typography variant="h5" mb={3} textAlign="center">Connexion</Typography>
+                        <Typography variant="h5" mb={3} textAlign="center">{t('auth.title')}  </Typography>
                         <form onSubmit={handleSubmit}>
-                            <TextField fullWidth label="Nom d’utilisateur" value={username} onChange={e => setUsername(e.target.value)} required />
-                            <TextField fullWidth label="Mot de passe" type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
-                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>Se connecter</Button>
+                            <TextField fullWidth label={t('auth.username')} value={username} onChange={e => setUsername(e.target.value)} required />
+                            <TextField fullWidth label={t('auth.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
+                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>{t('auth.submit')} </Button>
                         </form>
                     </Paper>
                 </Box>
