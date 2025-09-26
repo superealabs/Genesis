@@ -7,7 +7,7 @@
         :to="item.navLink"
         class="block px-3 py-2 rounded-md transition-colors hover:bg-base-300"
       >
-        {{ item.navTitle }}
+        {{ $t(item.navTitle) }}
       </router-link>
 
       <!-- Nested items -->
@@ -17,7 +17,7 @@
         :open="item.navChilds?.some((child) => child.navLink === $route.path)"
       >
         <summary class="cursor-pointer px-3 py-2 rounded-md hover:bg-base-300">
-          {{ item.navTitle }}
+          {{ $t(item.navTitle) }}
         </summary>
         <GenesisNavList :items="item.navChilds" />
       </details>

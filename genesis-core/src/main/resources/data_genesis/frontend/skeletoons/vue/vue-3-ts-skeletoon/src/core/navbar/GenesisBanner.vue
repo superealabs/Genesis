@@ -7,7 +7,7 @@
     <div class="h-full flex items-center justify-between px-4 bg-primary">
       <!-- Brand -->
       <div class="flex items-center gap-2 uppercase">
-        <PresenceLogo />
+        <AppLogo />
         <h1 class="text-xl md:text-2xl font-semibold">{{ $t('projectName') }}</h1>
       </div>
 
@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import UserNavProfile from '@/core/user/UserNavProfile.vue'
 import LanguageSwitcher from '@/core/language/LanguageSwitcher.vue'
-import PresenceLogo from '@/core/PresenceLogo.vue'
+import AppLogo from '@/core/AppLogo.vue'
 
 defineProps<{
   height?: string
