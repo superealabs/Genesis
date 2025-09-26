@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-pagination',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <nav *ngIf="totalPages > 1" class="pagination-container">
       <button
@@ -32,6 +32,20 @@ import { CommonModule } from '@angular/common';
         [disabled]="currentPage === totalPages"
         aria-label="Page suivante"
       >&gt;</button>
+
+      <!-- Input "Aller à la page" à droite -->
+      <div class="goto-container">
+        <label for="gotoPage">Going to :</label>
+        <input
+          id="gotoPage"
+          type="number"
+          [min]="1"
+          [max]="totalPages"
+          [(ngModel)]="currentPage"
+          (keydown.enter)="changePage(currentPage)"
+        />
+        <button (click)="changePage(currentPage)">OK</button>
+      </div>
     </nav>
   `,
   styles: [`
@@ -41,6 +55,7 @@ import { CommonModule } from '@angular/common';
       padding: 0.5rem 0;
       margin-top: 1%;
       font-family: Arial, sans-serif;
+      align-items: center;
     }
 
     .pagination-container button {
@@ -57,7 +72,7 @@ import { CommonModule } from '@angular/common';
       line-height: 1.2;
       text-align: center;
       user-select: none;
-      margin-right: 18px; /* 10% de moins que 40px */
+      margin-right: 18px;
     }
 
     .pagination-container button:last-child {
@@ -67,7 +82,7 @@ import { CommonModule } from '@angular/common';
     .pagination-container button.arrow {
       background-color: #e0e0e0;
       color: #374151;
-      border-color: #c0c0c0;
+      border-color: transparent;
       min-width: 36px;
     }
 
@@ -96,6 +111,45 @@ import { CommonModule } from '@angular/common';
       border-color: #d1d5db;
       color: #9ca3af;
     }
+
+    .goto-container {
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+    }
+
+    .goto-container label {
+      margin-right: 0.5rem;
+      font-size: 1.0rem;
+      color: #374151;
+    }
+
+    .goto-container input {
+      width: 60px;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.85rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      margin-right: 0.5rem;
+      text-align: center;
+      height: 22px;
+      width:30px;
+      line-height: 1.2;
+    }
+
+    .goto-container button {
+      padding: 0.15rem 0.6rem;
+      font-size: 0.85rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background:  #cfcfcfff;
+      cursor: pointer;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .goto-container button:hover {
+      background-color: #f9f9f9;
+    }
   `]
 })
 export class PaginationComponent {
@@ -105,7 +159,6 @@ export class PaginationComponent {
   @Input() onPageRangeChange!: (page:number) => void;
 
   maxVisiblePages: number = 4;
-
   private pageWindowStartIndex: number = 0;
 
   get totalPages(): number {
@@ -150,7 +203,8 @@ export class PaginationComponent {
   }
 
   changePage(page: number): void {
-    if (page < 1 || page > this.totalPages) return;
+    if (page < 1) page = 1;
+    if (page > this.totalPages) page = this.totalPages;
 
     this.currentPage = page;
 
