@@ -144,3 +144,109 @@
     }
     export default french
 
+- id: 3
+  name: "en"
+  locale: "en"
+  content: |
+    export default {
+        // Sidebar
+        sidebar: {
+            title: '${formatReadable(projectName)}',
+            dark:  'Dark',
+            light: 'Light',
+            logout:'Logout',
+        },
+        // Generic actions
+        actions: {
+            add:    'Add',
+            edit:   'Edit',
+            delete: 'Delete',
+            save:   'Save',
+            cancel: 'Cancel',
+            backToList:   'Back to list',
+            create: 'Create',
+            confirmDelete: 'Confirm deletion?',
+            creating: 'Creating...',
+            updating: 'Updating...',
+        },
+        // Generic states
+        state: {
+            loading: 'Loading…',
+            notFound:'Not found',
+            success: 'Success',
+            error:   'Error',
+        },
+        // List
+        list: {
+            title: 'List',
+            filters:    'Filters',
+            apply:      'Apply',
+            show:       'Show',
+            goToPage:   'Go to page',
+            addFilter:  'Add filter',
+            removeFilter: 'Remove {{label}} filter',
+        },
+        nav: {
+            list: 'List',
+            add:  'Add',
+        },
+        auth: {
+            title: 'Sign in',
+            username: 'Username',
+            password: 'Password',
+            submit: 'Sign in',
+            invalid: 'Invalid credentials',
+        },
+    };
+
+- id: 3
+  name: "fr"
+  locale: "fr"
+  content: |
+    export default {
+        sidebar: {
+            title: '${formatReadable(projectName)}',
+            dark:  'Sombre',
+            light: 'Clair',
+            logout:'Déconnexion',
+        },
+        actions: {
+            add:    'Ajouter',
+            edit:   'Modifier',
+            delete: 'Supprimer',
+            save:   'Enregistrer',
+            cancel: 'Annuler',
+            backToList: 'Retour à la liste',
+            create: 'Créer',
+            confirmDelete: 'Confirmer la suppression ?',
+            creating: 'Création...',
+            updating: 'Mise à jour...',
+        },
+        state: {
+            loading: 'Chargement…',
+            notFound:'Introuvable',
+            success: 'Succès',
+            error:   'Erreur',
+        },
+        list: {
+            title: 'Liste',
+            filters:    'Filtres',
+            apply:      'Appliquer',
+            show:       'Afficher',
+            goToPage:   'Aller à la page',
+            addFilter:  'Ajouter un filtre',
+            removeFilter: 'Supprimer le filtre {{label}}',
+        },
+        nav: {
+            list: 'Liste',
+            add:  'Saisie',
+        },
+        auth: {
+            title: 'Connexion',
+            username: 'Nom d’utilisateur',
+            password: 'Mot de passe',
+            submit: 'Se connecter',
+            invalid: 'Identifiants invalides',
+        },
+    };
+
