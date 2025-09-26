@@ -11558,6 +11558,34 @@
       content: |
         VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
       destinationPath: "${destinationFolder}/"
+    - fileType: "i18n file"
+      fileName: "i18n"
+      extension: "js"
+      content: |
+        // src/i18n.js
+        import i18n from 'i18next';
+        import { initReactI18next } from 'react-i18next';
+        import LanguageDetector from 'i18next-browser-languagedetector';
+        
+        {{#each langList}}
+        import ${lowerCase(this.name)} from './locales/${lowerCase(this.name)}.js'
+        {{/each}}{{removeLine}}
+
+        i18n
+            .use(LanguageDetector)
+            .use(initReactI18next)
+            .init({
+                resources: {
+                    {{#each langList}}
+                    ${this.locale}: { ${lowerCase(this.name)}: ${this.locale} },
+                    {{/each}}{{removeLine}}
+                },
+                fallbackLng: {{#each langList}}{{#if @first}}'${this.locale}'{{/if}}{{/each}},
+                interpolation: { escapeValue: false },
+            });
+
+        export default i18n;
+      destinationPath: "${destinationFolder}/src"
   components:
     - componentType: "List"
       generateForView: true
