@@ -11572,6 +11572,7 @@
         import GenericListPage from '@/components/GenericListPage/GenericListPage';
         import ActionButtons from '@/components/ActionButtons';
         import {useDelete} from "@/hooks/useDelete";
+        import {useTranslation} from "react-i18next";
       selector: "${majStart(className)}List"
       export: |
         const columns = [
@@ -11586,27 +11587,29 @@
         {{removeLine}}
         {{#if !isView}}
         function RowActions({ row }: { row: ${majStart(className)} }) {
+            const { t } = useTranslation();
             const navigate = useNavigate();
             const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => window.location.reload());
 
             return (
                 <ActionButtons
                     actions={[
-                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`) },
-                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}) },
+                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`), title:`$[t('actions.edit')]` },
+                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}), title:`$[t('actions.delete')]` },
                     ]}
                 />
             );
         }
         {{/if}}
         export default function ${majStart(className)}List() {
+            const { t } = useTranslation();
             return GenericListPage<${majStart(className)}>({
                 entityName: ${toCamelCase(className)}Meta.entityName,
                 columns,
                 availableFilters: ${toCamelCase(className)}Filters,
                 defaultSort: ${toCamelCase(className)}Meta.defaultSort,
                 searchFn: ${toCamelCase(className)}Service.search,
-                pageTitle: '${majStart(className)} List'
+                pageTitle: '${majStart(className)} $[t('list.title')]'
             })();
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
@@ -11627,10 +11630,12 @@
         import GenericDetailPage from '@/components/GenericDetailPage/GenericDetailPage';
         import {useDelete} from "@/hooks/useDelete";
         import { Typography } from '@mui/material';
+        import {useTranslation} from "react-i18next";
       selector: "${majStart(className)}Detail"
       export: |
         export default function ${majStart(className)}Detail() {
             const navigate = useNavigate();
+            const { t } = useTranslation();
             {{#if !isView}}
             const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => {
                   navigate('/${toKebabCase(className)}s'); 
@@ -11645,14 +11650,14 @@
                 actions: [
                     {{#if !isView}}{{removeLine}}
                     {
-                        label: 'Edit',
+                        label: `$[t('actions.edit')]`,
                         icon: <Edit />,
                         variant: 'outlined',
                         color: 'primary',
                         onClick: (row, navigate) => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`),
                     },
                     {
-                        label: 'Delete',
+                        label: `$[t('actions.delete')]`,
                         icon: <Delete />,
                         variant: 'outlined',
                         color: 'error',
@@ -11686,8 +11691,10 @@
       importComponent: |
         import GenericFormBuilder from '@/components/GenericForm/GenericFormBuilder';
         import {ApiResponse} from "@/services/api";
+        import {useTranslation} from "react-i18next";
       export: |
         export default function Create${majStart(className)}() {
+            const { t } = useTranslation();
 
             const handleSubmit = async (data: any): Promise<ApiResponse<${majStart(className)}>> => {
                 return await ${toCamelCase(className)}Service.create(data);
@@ -11699,7 +11706,7 @@
                     fields={formFields as any}
                     onSubmit={handleSubmit}
                     redirectTo="/${toKebabCase(className)}s"
-                    title="Add ${toKebabCase(className)}"
+                    title={`$[t('actions.add')] ${toKebabCase(className)}`}
                     mode="create"
                     idKey="{{#each fieldsPK}}${this.name}{{/each}}"
                     detailRedirect="/${toKebabCase(className)}s/:id"
@@ -11720,15 +11727,17 @@
       generateForView: false
       importComponent: |
         import GenericUpdateFormBuilder from '@/components/GenericForm/GenericUpdateFormBuilder';
+        import {useTranslation} from "react-i18next";
       export: |
         export default function Update${majStart(className)}() {
+            const { t } = useTranslation();
             return (
                 <GenericUpdateFormBuilder<${majStart(className)}>
                     entityName={${toCamelCase(className)}Meta.entityName}
                     fields={updateFormFields}
                     getById={${toCamelCase(className)}Service.getById}
                     update={${toCamelCase(className)}Service.update}
-                    title="Update ${toKebabCase(className)}"
+                    title={`$[t('actions.edit')] ${toKebabCase(className)}`}
                     detailRedirect="/${toKebabCase(className)}s/:id"
                 />
             );
