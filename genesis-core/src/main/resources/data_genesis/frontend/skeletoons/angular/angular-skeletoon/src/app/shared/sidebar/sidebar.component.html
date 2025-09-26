@@ -1,26 +1,6 @@
 <div class="sidebar">
 
-  <!-- Logo / titre fixe -->
-  <div class="sidebar-header">
-    <div class="app-title" *ngIf="!logoAvailable">
-      <span>Your</span><span class="blue">App</span>
-    </div>
-    <div class="app-title" *ngIf="logoAvailable">
-      <img [src]="logoPath" alt="App Logo" (error)="onLogoError()" />
-    </div>
-  </div>
-
-
   <div class="sidebar-content">
-    <div class="language-selector">
-      <label for="language">Language :</label>
-      <select id="language" [(ngModel)]="selectedLanguage" (change)="changeLanguage(selectedLanguage)">
-        <option *ngFor="let lang of Language | keyvalue" [value]="lang.value">
-          {{ lang.value }}
-        </option>
-      </select>
-    </div>
-
     <div class="section-label entities-label">ENTITIES</div>
     <ng-container *ngFor="let entry of entities | keyvalue">
       <a class="entities" routerLink="{{ entry.value }}" routerLinkActive="active">

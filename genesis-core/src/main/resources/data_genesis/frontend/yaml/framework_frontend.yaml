@@ -15,6 +15,7 @@
       extension: "html"
       content: |
         {{#if useJWT}}
+        <app-banner *ngIf="isLoggedIn"></app-banner>
         <div class="app-layout">
           <app-sidebar *ngIf="isLoggedIn" [entities]="entities" [views]="views"></app-sidebar>
             <div class="main-content">
@@ -445,6 +446,17 @@
       fileName: "styles"
       extension: "css"
       content: |
+        html, body {
+          height: 100%;
+          margin: 0;
+          padding: 0;
+        }
+          app-root {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+          }
         :root {
 
           --primary: ${primaryColor};
@@ -514,6 +526,7 @@
       fileName: "app.component"
       extension: "html"
       content: |
+        <app-banner></app-banner>
         <div class="app-layout">
           <app-sidebar [entities]="entities" [views]="views"></app-sidebar>
             <div class="main-content">
