@@ -15,7 +15,7 @@
       extension: "html"
       content: |
         {{#if useJWT}}
-        <app-banner *ngIf="isLoggedIn"></app-banner>
+        <app-banner *ngIf="isLoggedIn" title="${title}"></app-banner>
         <div class="app-layout">
           <app-sidebar *ngIf="isLoggedIn" [entities]="entities" [views]="views"></app-sidebar>
             <div class="main-content">
@@ -52,7 +52,7 @@
         })
 
         export class AppComponent {
-          title = 'first-angular-project';
+          title = '${title}';
           isLoggedIn: boolean = false;
           
           constructor(private authService: AuthService, private router: Router ) {
@@ -428,7 +428,7 @@
         <html lang="en">
         <head>
           <meta charset="utf-8">
-          <title>Genesis-App</title>
+          <title>${title}</title>
           <base href="/">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <link rel="icon" type="image/x-icon" href="{{#if useFaviconLink}}${faviconUrl}{{else}}favicon.ico{{/if}}">
@@ -490,7 +490,7 @@
         })
         
         export class AppComponent {
-          title = 'first-angular-project';
+          title = '${title}';
 
           entities={
           {{tab}}{{#each entities}}{{removeLine}}
@@ -529,7 +529,7 @@
       fileName: "app.component"
       extension: "html"
       content: |
-        <app-banner></app-banner>
+        <app-banner title="${title}"></app-banner>
         <div class="app-layout">
           <app-sidebar [entities]="entities" [views]="views"></app-sidebar>
             <div class="main-content">
