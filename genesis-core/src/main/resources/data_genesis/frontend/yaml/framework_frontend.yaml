@@ -10958,7 +10958,7 @@
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/src"
-    langsPath: "{{removeLine}}"
+    langsPath: "${destinationFolder}/src/locales"
   authenticationFiles:
     - fileType: "Service Auth"
       fileName: "auth"
@@ -11577,7 +11577,7 @@
             .init({
                 resources: {
                     {{#each langList}}
-                    ${this.locale}: { ${lowerCase(this.name)}: ${this.locale} },
+                    ${this.locale}: { translation: ${lowerCase(this.name)} },
                     {{/each}}{{removeLine}}
                 },
                 fallbackLng: {{#each langList}}{{#if @first}}'${this.locale}'{{/if}}{{/each}},
@@ -11639,7 +11639,7 @@
                 availableFilters: ${toCamelCase(className)}Filters,
                 defaultSort: ${toCamelCase(className)}Meta.defaultSort,
                 searchFn: ${toCamelCase(className)}Service.search,
-                pageTitle: '${majStart(className)} $[t('list.title')]'
+                pageTitle: `${majStart(className)} $[t('list.title')]`
             })();
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"

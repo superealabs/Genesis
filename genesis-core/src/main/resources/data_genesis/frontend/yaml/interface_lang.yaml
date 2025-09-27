@@ -9,6 +9,10 @@
           update: 'Update',
           delete: 'Delete',
           create: 'Create',
+          add:    'Add',
+          save: 'Save',
+          cancel: 'Cancel',
+          edit: 'Edit',
         },
         navbar: {
           core: 'Core',
@@ -18,7 +22,14 @@
           home: 'Home',
           customisation: 'Layout customisation',
         },
-        authentication: {},
+        authentication: {
+          title: 'Sign in',
+          username: 'Username',
+          password: 'Password',
+          submit: 'Sign in',
+          invalid: 'Invalid credentials',
+          logout: 'Logout',
+        },//auth
         home: {
           greet: 'Hello',
           greetDeveloper: '@.capitalize:home.greet Developer',
@@ -45,6 +56,9 @@
           nav: '{entity} / ',
           list: {
             nav: 'List',
+            filters: 'Filters',
+            addFilter: 'Add filter',
+            removeFilter: 'Remove {{label}} filter',
           },
           create: {
             nav: 'New',
@@ -66,14 +80,33 @@
           backToListDescription: 'Return to the list view',
         },
         error: {
+          error: 'Error',
           400: '',
           403: '',
           404: '',
           500: 'Error 500',
         },
+        theme: {
+          dark: 'Dark',
+          light: 'Light',
+        },
+        state: {
+          loading: 'Loading…',
+          notFound: 'Not found',
+          success: 'Success',
+          creating: 'Creating...',
+          updating: 'Updating...',
+        },
+        confirmation: {
+          delete: 'Confirm deletion?',
+        },
+        navigation: {
+          list: 'List',
+          add: 'Add',
+        },
       },
-    }
-    export default english
+    };
+    export default english;
 
 
 - id: 2
@@ -199,7 +232,7 @@
         },
     };
 
-- id: 3
+- id: 4
   name: "fr"
   locale: "fr"
   content: |
