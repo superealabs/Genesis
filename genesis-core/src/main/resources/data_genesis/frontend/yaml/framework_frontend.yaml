@@ -422,7 +422,7 @@
   additionalFiles:
     - fileType: "Index page"
       fileName: "index"
-      extension: ".html"
+      extension: "html"
       content: |
         <!doctype html>
         <html lang="en">
