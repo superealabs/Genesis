@@ -30,44 +30,37 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 import type { SelectOption } from '../../models/SelectOption'
-import type { PropType } from 'vue'
 
-export default defineComponent({
+const props = defineProps<{
+  label?: string
+  placeholder?: string
+  modelValue?: string | number | null
+  options: SelectOption[]
+  loading?: boolean
+  rowInput?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string | number | null): void
+}>()
+
+const selectRef = ref<HTMLSelectElement | null>(null)
+
+const inputId = computed(() => {
+  return props.label
+    ? 'select-' + props.label.replace(/\s+/g, '-').toLowerCase()
+    : 'select-' + Math.random().toString(36).substring(2, 8)
+})
+
+const onChange = (e: Event) => {
+  const value = (e.target as HTMLSelectElement).value
+  emit('update:modelValue', value === '' ? null : value)
+}
+
+defineOptions({
   name: 'GenesisSelect',
-  props: {
-    label: { type: String, required: false },
-    placeholder: { type: String, required: false },
-    modelValue: {
-      type: [String, Number, null] as PropType<string | number | null>,
-      required: false,
-      default: null,
-    },
-    options: {
-      type: Array as PropType<SelectOption[]>,
-      required: true,
-    },
-    loading: { type: Boolean, default: false },
-    rowInput: { type: Boolean, default: false },
-  },
-  emits: ['update:modelValue'],
-  setup(props, { emit }) {
-    const selectRef = ref<HTMLSelectElement | null>(null)
-
-    const inputId = computed(() => {
-      return props.label
-        ? 'select-' + props.label.replace(/\s+/g, '-').toLowerCase()
-        : 'select-' + Math.random().toString(36).substring(2, 8)
-    })
-
-    const onChange = (e: Event) => {
-      const value = (e.target as HTMLSelectElement).value
-      emit('update:modelValue', value === '' ? null : value)
-    }
-
-    return { inputId, selectRef, onChange }
-  },
 })
 </script>

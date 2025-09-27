@@ -1,6 +1,6 @@
 <template>
   <div
-    class="absolute inset-0 flex items-center justify-center bg-black/20 z-50 transition-opacity"
+    class="absolute inset-0 flex items-center justify-center bg-black/20 z-50 transition-opacity duration-300"
     :class="{ 'opacity-0 pointer-events-none': !visible, 'opacity-100': visible }"
   >
     <!-- Custom overlay content -->
@@ -8,33 +8,21 @@
       <!-- Default: Spinner + Loading text -->
       <div class="flex flex-col items-center gap-2">
         <span class="loading loading-spinner loading-lg text-primary"></span>
-        <div class="text-white text font-medium">{{ text }}</div>
+        <div class="text-white font-medium">{{ text }}</div>
       </div>
     </slot>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+defineProps<{
+  visible?: boolean
+  text?: string
+}>()
 
-export default defineComponent({
-  name: 'GenesisOverlay',
-  props: {
-    visible: {
-      type: Boolean,
-      default: false,
-    },
-    text: {
-      type: String,
-      default: 'Loading...',
-    },
-  },
-})
+// Defaults are already handled in defineProps
 </script>
 
 <style scoped>
-.overlay {
-  background-color: rgba(255, 255, 255, 0.7);
-  z-index: 100;
-}
+/* The previous .overlay style is unused, so can be removed */
 </style>

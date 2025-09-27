@@ -2,8 +2,145 @@
   name: "English"
   locale: "en"
   content: |
+    const english = {
+      messages: {
+        projectName: '${formatReadable(projectName)}',
+        common: {
+          update: 'Update',
+          delete: 'Delete',
+          create: 'Create',
+        },
+        navbar: {
+          core: 'Core',
+          entities: 'Entities',
+          views: 'Views',
+          settings: 'Settings',
+          home: 'Home',
+          customisation: 'Layout customisation',
+        },
+        authentication: {},
+        home: {
+          greet: 'Hello',
+          greetDeveloper: '@.capitalize:home.greet Developer',
+          welcome: 'Welcome on @.capitalize:projectName frontend app',
+          titles: {
+            entities: 'List of entities',
+            views: 'List of views',
+          },
+        },
+        table: {
+          actions: 'Actions',
+        },
+        pagination: {
+          sizeLabel: 'Showing :',
+          previous: 'Previous',
+          next: 'Next',
+          goToLabel: 'Going to page:',
+          pageOf: 'Page {page} of {total}',
+        },
+        search: {
+          filters: 'No filter | Filters | Filters ({count})',
+        },
+        entity: {
+          nav: '{entity} / ',
+          list: {
+            nav: 'List',
+          },
+          create: {
+            nav: 'New',
+            submitLabel: '@:common.create {entity}',
+          },
+          update: {
+            nav: '@:common.update',
+            submitLabel: '@:common.update {entity}',
+          },
+          details: {
+            nav: 'Details',
+          },
+        },
+        button: {
+          addEntity: 'Add new {entity}',
+          applySearch: 'Apply',
+          go: 'GO',
+          backToList: 'Back to list',
+          backToListDescription: 'Return to the list view',
+        },
+        error: {
+          400: '',
+          403: '',
+          404: '',
+          500: 'Error 500',
+        },
+      },
+    }
+    export default english
+
 
 - id: 2
-  name: "Francais"
+  name: "French"
   locale: "fr"
   content: |
+    const french = {
+      messages: {
+        projectName: '${formatReadable(projectName)}',
+        common: {
+          update: 'Modifier',
+          delete: 'Supprimer',
+          create: 'Creer',
+        },
+        home: {
+          greet: 'Bonjour',
+          greetDeveloper: '@.capitalize:home.greet Developpeur',
+          welcome: 'Bienvenue sur l application frontend @.capitalize:projectName',
+          titles: {
+            entities: 'Liste des entites',
+            views: 'Liste des vues',
+          },
+        },
+        table: {
+          actions: 'Actions',
+        },
+        pagination: {
+          sizeLabel: 'Affichage :',
+          previous: 'Precedent',
+          next: 'Suivant',
+          goToLabel: 'Aller a la page :',
+          pageOf: 'Page {page} sur {total}',
+        },
+        search: {
+          filters: 'Aucun filtre | Filtres | Filtres ({count})',
+        },
+        entity: {
+          nav: '{entity} / ',
+          list: {
+            nav: 'Liste',
+          },
+          create: {
+            nav: 'Nouveau',
+            submitLabel: '@:common.create {entity}',
+          },
+          update: {
+            nav: '@:common.update',
+            submitLabel: '@:common.update {entity}',
+          },
+          details: {
+            nav: 'Details',
+          },
+        },
+        button: {
+          addEntity: 'Ajouter un nouveau {entity}',
+          applySearch: 'Appliquer',
+          go: 'Aller',
+          backToList: 'Retour a la liste',
+          backToListDescription: 'Revenir a la page de liste',
+        },
+        error: {
+          400: 'Requete invalide',
+          403: 'Interdit',
+          404: 'Introuvable',
+          500: 'Erreur 500',
+        },
+      },
+    }
+    export default french
+

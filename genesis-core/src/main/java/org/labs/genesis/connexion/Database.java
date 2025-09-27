@@ -236,7 +236,7 @@ public abstract class Database {
                 column.setDecimalDigits(decimalDigits,frameworkValidationAnnotations,engine);
 
                 if (language.getTypes().get(getDatabaseType(columns)) == null)
-                    throw new RuntimeException("Database type not supported yet : " + columnType);
+                    throw new RuntimeException("Database type not supported yet : " + columnType +" ["+tableName+"("+columnName+")]");
                 else
                     column.setType(language.getTypes().get(getDatabaseType(columns)));
 

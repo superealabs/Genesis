@@ -101,6 +101,7 @@
       "text": "\"mock\"",
       "varchar": "\"mock\"",
       "nvarchar": "\"mock\"",
+      "sysname": "\"mock\"",
       "real": "0.",
       "float4": "0.",
       "float8": "0.",
@@ -133,7 +134,13 @@
       "VARCHAR2": "\"mock\"",
       "NVARCHAR": "\"mock\"",
       "NVARCHAR2": "\"mock\"",
-      "DECIMAL": "0."
+      "DECIMAL": "0.",
+      "SMALLINT": "0",
+      "ENUM": "\"mock\"",
+      "enum": "\"mock\"",
+      "BIT": "true",
+      "TIME": "java.time.LocalTime.now()",
+      "BIGINT UNSIGNED": "0L"
     },
     "criteriaBuildSnippet": {
       "datetime": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
@@ -163,6 +170,7 @@
       "text": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "varchar": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "nvarchar": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "sysname": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "real": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "float4": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "float8": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
@@ -186,6 +194,7 @@
       "TEXT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TIMESTAMP": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TIMESTAMP(*)": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "TIME": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "NUMBER": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "NUMBER(*,*)": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "FLOAT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
@@ -196,7 +205,12 @@
       "VARCHAR2": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "NVARCHAR2": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "NVARCHAR": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
-      "SMALLINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
+      "SMALLINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "ENUM": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "enum": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "BIGINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "BIT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "BIGINT UNSIGNED": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
     }
   },
   {
@@ -263,6 +277,7 @@
       "text": "\"mock\"",
       "varchar": "\"mock\"",
       "nvarchar": "\"mock\"",
+      "sysname": "\"mock\"",
       "real": "0.0f",
       "float4": "0.0f",
       "float8": "0.0d",
@@ -292,6 +307,7 @@
       "BINARY_DOUBLE": "0.0",
       "CHAR": "\"mock\"",
       "NCHAR": "\"mock\"",
+      "SYSNAME": "\"mock\"",
       "VARCHAR2": "\"mock\"",
       "NVARCHAR2": "\"mock\"",
       "DECIMAL": "0.0"
