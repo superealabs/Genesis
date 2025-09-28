@@ -4,6 +4,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.forms.RuleToCodeForm ;
 import javax.swing.*;
 
@@ -35,14 +36,22 @@ public class RuleToCodeWizardStep extends ModuleWizardStep {
 
     @Override
     public void updateDataModel() {
+        // Get name framework selected in combobox
+        String selectedFrameworkName = (String) form.getSelectFramework().getSelectedItem();
+
+        Framework selectedFramework = ProjectGenerator.frameworks.values().stream()
+                .filter(f -> f.getCoreFramework().equals(selectedFrameworkName))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Framework non trouvé : " + selectedFrameworkName));
+
         initializeAttributes(
-                form.getFolderField().getText() ,
-                (Framework) form.getFrameworkOptions().getSelectedItem() ,
+                form.getFolderField().getText(),
+                selectedFramework,
                 form.getYamlContentArea().getText()
         );
         context
                 .setDestinationFolder(pathProject)
-                .setFramework(framework)
+                .setFramework(selectedFramework)
                 .setProjectDescription(yamlContent);
 
     }

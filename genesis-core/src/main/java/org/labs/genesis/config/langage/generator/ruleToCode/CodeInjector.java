@@ -1,6 +1,8 @@
 package org.labs.genesis.config.langage.generator.ruleToCode;
 
 
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,9 +18,14 @@ public class CodeInjector {
     public List<CodeBlock> splitCode(String bigString, int idFramework) {
         List<CodeBlock> blocks = new ArrayList<>();
         String pattern = "";
-
+        String nameImport = "" ;
         if (idFramework == 1 ) {
             pattern = "@(Service|Repository):\\s*(\\w+)\\s*((?:import\\s+[\\w\\.\\*]+;\\s*)*)(.*?)(?=@Service|@Repository|$)";
+            nameImport = "import" ;
+        }
+        if (idFramework == 2 ) {
+            pattern = "@(Service|Repository):\\s*(\\w+)\\s*((?:using\\s+[\\w\\.\\*]+;\\s*)*)(.*?)(?=@Service|@Repository|$)";
+            nameImport = "using" ;
         }
         Pattern p = Pattern.compile(pattern, Pattern.DOTALL);
         Matcher m = p.matcher(bigString);
@@ -32,41 +39,62 @@ public class CodeInjector {
             if (!importsBlock.isEmpty()) {
                 String[] imports = importsBlock.split("\\r?\\n");
                 for (String imp : imports) {
-                    blocks.add(new CodeBlock("import", className, imp.trim()));
+                    blocks.add(new CodeBlock( nameImport , layer, className, imp.trim()));
                 }
             }
             if (!code.isEmpty()) {
                 code = code.replaceAll("^```\\s*", "");
                 code = code.replaceAll("\\s*```$", "");
-                blocks.add(new CodeBlock(layer, className, code));
+                blocks.add(new CodeBlock("none" , layer, className, code));
             }
         }
         return blocks;
     }
 
-    public void injectBlocks(List<CodeBlock> blocks, String projectPath , int idFramework , String projectName ) throws Exception {
-        String targetDir="";
+    public Path injectBlockCondition( int idFramework , String projectPath , String projectName , Path filePath , CodeBlock block ) throws Exception {
+        String layer = block.layer.trim();
+        layer = layer.replaceAll("\\s", "") ;
+
+        String targetDir = "" ;
+        String subDir ="";
+        String fileType = "" ;
+
+        if ( idFramework == 1 ) {
+            if (layer.equalsIgnoreCase("Service") || (layer.equalsIgnoreCase(block.nameImport) && block.className.endsWith("Service"))) {
+                subDir = "services";
+            } else if (layer.equalsIgnoreCase("Repository") || (layer.equalsIgnoreCase(block.nameImport) && block.className.endsWith("Repository"))) {
+                subDir = "repositories";
+            }
+            targetDir = projectPath + "/" + projectName + "/src/main/java/org/example/" + projectName + "/" + subDir;
+            fileType = ".java" ;
+        }
+        if ( idFramework == 2 ) {
+            if (layer.equalsIgnoreCase("Service") || (layer.equalsIgnoreCase(block.nameImport) && block.className.endsWith("Service"))) {
+                subDir = "services";
+            } else if (layer.equalsIgnoreCase("Repository") || (layer.equalsIgnoreCase(block.nameImport) && block.className.endsWith("Repository"))) {
+                subDir = "repositories";
+            }
+            targetDir = projectPath + "/" + projectName + "/" + projectName + "/" + subDir + "/implementation";
+            fileType = ".cs" ;
+        }
+
+        System.out.println(targetDir) ;
+        filePath = Paths.get(targetDir, block.className + fileType) ;
+        return  filePath;
+    }
+
+    public void injectBlocks(@NotNull List<CodeBlock> blocks, String projectPath , int idFramework , String projectName ) throws Exception {
         Path filePath = null ;
         for (CodeBlock block : blocks) {
 
-            String layer = block.layer.trim();
-            layer = layer.replaceAll("\\s", "") ;
-
-            if ( idFramework == 1 ) {
-                String subDir = "";
-                if (layer.equalsIgnoreCase("Service") || (layer.equalsIgnoreCase("import") && block.className.endsWith("Service"))) {
-                    subDir = "services";
-                } else if (layer.equalsIgnoreCase("Repository") || (layer.equalsIgnoreCase("import") && block.className.endsWith("Repository"))) {
-                    subDir = "repositories";
-                }
-                targetDir = projectPath + "/" + projectName + "/src/main/java/org/example/" + projectName + "/" + subDir;
-                System.out.println(targetDir) ;
-                filePath = Paths.get(targetDir, block.className + ".java");
-            }
-
-            if (block.layer.equals("import")) {
+            filePath = injectBlockCondition(idFramework, projectPath, projectName, filePath, block);
+            if (block.nameImport.equals("import")) {
                 injectImportInClass(filePath, block.code);
-            } else {
+            }
+            if (block.nameImport.equals("using")) {
+                injectImportInClass(filePath, block.code);
+            }
+            if(block.nameImport.equals("none")) {
                 injectCodeInClass(filePath, block.code);
             }
         }
@@ -76,7 +104,7 @@ public class CodeInjector {
         String content = Files.readString(filePath);
         int insertPos = content.lastIndexOf("}");
         if (insertPos == -1) {
-            throw new Exception("Classe mal formée, accolade fermante non trouvée");
+            throw new Exception("Malformed class, closing brace not found");
         }
         String before = content.substring(0, insertPos).trim();
         String after = content.substring(insertPos);
@@ -93,7 +121,6 @@ public class CodeInjector {
             importToInject = importToInject.trim() + ";";
         }
         if (content.contains(importToInject)) {
-            System.out.println("Import déjà présent : " + importToInject);
             return;
         }
         int packageIndex = content.indexOf("package ");

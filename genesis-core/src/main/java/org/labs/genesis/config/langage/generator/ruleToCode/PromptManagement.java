@@ -16,9 +16,8 @@ public class PromptManagement {
     public void managementPrompt(int idFramework) {
         try {
             generalPrompt =  readPrompt( ConstantesPrompt.GENERAL_PROMPT_TXT ) ;
-            if (idFramework == 1) {
-                underPrompt = readPrompt( ConstantesPrompt.SPRING_UNDER_PROMPT_TXT ) ;
-            }
+            if (idFramework == 1) { underPrompt = readPrompt( ConstantesPrompt.SPRING_UNDER_PROMPT_TXT ) ;}
+            if (idFramework == 2) { underPrompt = readPrompt( ConstantesPrompt.DOTNET_UNDER_PROMPT_TXT ) ;}
         } catch (Exception e) {
             throw new RuntimeException("Error reading prompt ", e.getCause());
         }
