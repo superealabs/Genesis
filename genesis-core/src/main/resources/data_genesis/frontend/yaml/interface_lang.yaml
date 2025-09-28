@@ -125,6 +125,14 @@
           cancel: 'Annuler',
           edit: 'Éditer',
         },
+        navbar: {
+          core: 'Noyau',
+          entities: 'Entités',
+          views: 'Vues',
+          settings: 'Paramètres',
+          home: 'Accueil',
+          customisation: 'Personnalisation de l’interface',
+        },
         authentication: {
           title: 'Connexion',
           username: 'Nom d’utilisateur',
