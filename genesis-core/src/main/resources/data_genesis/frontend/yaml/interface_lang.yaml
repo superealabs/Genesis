@@ -125,6 +125,14 @@
           cancel: 'Annuler',
           edit: 'Éditer',
         },
+        authentication: {
+          title: 'Connexion',
+          username: 'Nom d’utilisateur',
+          password: 'Mot de passe',
+          submit: 'Se connecter',
+          invalid: 'Identifiants invalides',
+          logout: 'Déconnexion',
+        },
         home: {
           greet: 'Bonjour',
           greetDeveloper: '@.capitalize:home.greet Développeur',
