@@ -53,7 +53,6 @@ public class RuleToCodeForm {
             if (seen.add(framework.getCoreFramework())) {
                 selectFramework.addItem(framework.getCoreFramework());
                 frameworkIds.put(framework.getCoreFramework(), framework.getId());
-                frameworkOptions.addItem(framework);
             }
         }
     }
@@ -64,12 +63,19 @@ public class RuleToCodeForm {
         // ---------------- Generate YAML ----------------
         generateYamlButton.addActionListener(e -> {
             try {
+                String[] meta = new String[0];
+                String yamlMeta = "" ;
                 String folderPath = folderField.getText();
                 Path folderBaseProject = Paths.get(folderPath);
-                String[] meta = yamlData.extractGroupAndArtifact( folderBaseProject);
                 Integer frameworkId = frameworkIds.get( (String) selectFramework.getSelectedItem() );
 
-                String yamlMeta = yamlData.extractMetaData( folderBaseProject, meta[0], meta[1], frameworkId );
+                if ( frameworkId == 1 ) {
+                    meta = yamlData.extractGroupAndArtifact( folderBaseProject);
+                    yamlMeta = yamlData.extractMetaData( folderBaseProject, meta[0], meta[1], frameworkId );
+                }
+                if ( frameworkId == 2 ) {
+                    yamlMeta = yamlData.extractMetaData( folderBaseProject, "", yamlData.getProjectName(folderBaseProject), frameworkId );
+                }
 
                 yamlContentArea.setText(yamlMeta);
             } catch (Exception ex) {

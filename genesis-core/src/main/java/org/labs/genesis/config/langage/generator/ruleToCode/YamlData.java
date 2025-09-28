@@ -4,21 +4,20 @@ package org.labs.genesis.config.langage.generator.ruleToCode;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.io.File;
+
+import org.labs.genesis.config.langage.generator.ruleToCode.DataExtractor.DotNetMetaDataExtractor;
+import org.labs.genesis.config.langage.generator.ruleToCode.DataExtractor.IMetaDataExtractor;
+import org.labs.genesis.config.langage.generator.ruleToCode.DataExtractor.SpringMetaDataExtractor;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
-import com.github.javaparser.StaticJavaParser;
-import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.FieldDeclaration;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -73,49 +72,18 @@ public class YamlData {
         }
     }
 
-    public File pathModel (String projectBasePath , String groupId, String projectName , int idFramework ) throws Exception {
-        if ( idFramework == 1 ) {
-            return new File(projectBasePath.toString(), "src/main/java/" + groupId.replace('.', '/') + "/" + projectName + "/models");
+    public String getProjectName(Path projectDir) {
+        if (projectDir == null) {
+            throw new IllegalArgumentException("Project directory cannot be null");
         }
-        return null ;
+        Path fileName = projectDir.getFileName();
+        if (fileName == null) {
+            throw new IllegalArgumentException("Invalid project path: " + projectDir);
+        }
+        return fileName.toString();
     }
 
-    public String typeClass ( int idFramework ){
-        String typeClass = "" ;
-        if ( idFramework == 1 ) {
-            typeClass = ".java" ;
-        }
-        return typeClass;
-    }
-
-    public String extractMetaData(Path projectBasePath , String groupId, String projectName, int idFramework ) throws Exception {
-
-        File srcDir = pathModel( projectBasePath.toString() , groupId , projectName , idFramework ) ;
-        String typeClass = typeClass(idFramework);
-
-        List<Map<String, Object>> entities = new ArrayList<>();
-
-        for (File file : Objects.requireNonNull(srcDir.listFiles((dir, name) -> name.endsWith(typeClass)))) {
-            CompilationUnit cu = StaticJavaParser.parse(file);
-
-            cu.findAll(ClassOrInterfaceDeclaration.class).forEach(clazz -> {
-                Map<String, Object> entity = new LinkedHashMap<>();
-                entity.put("name", clazz.getNameAsString());
-                List<Map<String, String>> fields = new ArrayList<>();
-                for (FieldDeclaration field : clazz.getFields()) {
-                    String fieldName = field.getVariable(0).getNameAsString();
-                    String fieldType = field.getElementType().asString();
-
-                    Map<String, String> f = new LinkedHashMap<>();
-                    f.put("name", fieldName);
-                    f.put("type", fieldType);
-                    fields.add(f);
-                }
-                entity.put("fields", fields);
-                entities.add(entity);
-            });
-        }
-
+    public String convertToYaml(List<Map<String, Object>> entities) {
         Map<String, Object> root = new LinkedHashMap<>();
         root.put("entities", entities);
 
@@ -125,10 +93,37 @@ public class YamlData {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
 
         Yaml yaml = new Yaml(options);
-
         StringWriter stringWriter = new StringWriter();
         yaml.dump(root, stringWriter);
 
         return stringWriter.toString();
     }
+
+    public File pathModel (String projectBasePath , String groupId, String projectName , int idFramework ) throws Exception {
+        if ( idFramework == 1 ) { // Spring boot
+            File modelsDir = new File(projectBasePath.toString(), "src/main/java/" + groupId.replace('.', '/') + "/" + projectName + "/models");
+            if (!modelsDir.exists() || !modelsDir.isDirectory()) {
+                throw new RuntimeException("Path not foud projet Spring boot : " + modelsDir.getAbsolutePath());
+            }
+            return modelsDir;
+        }
+        if (idFramework == 2) { // .NET
+            File modelsDir = new File(projectBasePath.toString(), projectName + "/Models");
+            if (!modelsDir.exists() || !modelsDir.isDirectory()) {
+                throw new RuntimeException("Path not foud projet .NET : " + modelsDir.getAbsolutePath());
+            }
+            return modelsDir;
+        }
+        return null ;
+    }
+
+    public String extractMetaData(Path projectBasePath, String groupId, String projectName, int idFramework) throws Exception {
+        IMetaDataExtractor extractor = switch (idFramework) {
+            case 1 -> new SpringMetaDataExtractor(idFramework);
+            case 2 -> new DotNetMetaDataExtractor(idFramework);
+            default -> throw new IllegalArgumentException("Unsupported framework id: " + idFramework);
+        };
+        return extractor.extractMetaData(projectBasePath, groupId, projectName);
+    }
+
 }
