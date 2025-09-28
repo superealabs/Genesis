@@ -73,7 +73,7 @@ export default function ListFilterBuilder({
                     height: 20,
                 }}
                 onClick={() => removeFilter(key)}
-                title={t('list.removeFilter', { label })}
+                title={t('messages.entity.list.removeFilter', { label })}
             >
                 <Close fontSize="inherit" />
             </IconButton>
@@ -100,7 +100,7 @@ export default function ListFilterBuilder({
                     height: 20,
                 }}
                 onClick={() => removeFilter(key)}
-                title={t('list.removeFilter', { label })}
+                title={t('messages.entity.list.removeFilter', { label })}
             >
                 <Close fontSize="inherit" />
             </IconButton>
@@ -128,7 +128,7 @@ export default function ListFilterBuilder({
                     height: 20,
                 }}
                 onClick={() => removeFilter(key)}
-                title={t('list.removeFilter', { label })}
+                title={t('messages.entity.list.removeFilter', { label })}
             >
                 <Close fontSize="inherit" />
             </IconButton>
@@ -143,7 +143,7 @@ export default function ListFilterBuilder({
             gap="8px 12px"
             mb={4}
         >
-            <Box fontWeight="bold">{t('list.filters')} :</Box>
+            <Box fontWeight="bold">{t('messages.entity.list.filters')} :</Box>
 
             {Object.entries(filters).map(([key, value]) => {
                 const meta = availableFilters[key];
@@ -279,7 +279,7 @@ export default function ListFilterBuilder({
                             size="small"
                             onClick={() => removeFilter(key)}
                             edge="end"
-                            title={t('list.removeFilter', { label: meta.label })}
+                            title={t('messages.entity.list.removeFilter', { label: meta.label })}
                         >
                             <Close fontSize="inherit" />
                         </IconButton>
@@ -313,7 +313,7 @@ export default function ListFilterBuilder({
                     <Button
                         size="small"
                         variant="text"
-                        title={t('list.addFilter')}
+                        title={t('messages.entity.list.addFilter')}
                         onClick={() => setOpenMenu((o) => !o)}
                     >
                         <Add />
@@ -355,7 +355,7 @@ export default function ListFilterBuilder({
                 </Box>
 
                 <Button variant="contained" onClick={onSearch}>
-                    {t('list.apply')}
+                    {t('messages.button.applySearch')}
                 </Button>
             </Box>
         </Box>

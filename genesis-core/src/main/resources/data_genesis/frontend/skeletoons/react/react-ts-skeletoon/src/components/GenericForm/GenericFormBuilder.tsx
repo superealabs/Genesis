@@ -182,7 +182,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                 >
                     <Breadcrumbs sx={breadcrumbSx}>
                         <Link underline="hover" color="inherit" component={RouterLink} to="/">
-                            {t('sidebar.title')}
+                            {t('messages.projectName')}
                         </Link>
                         <Link
                             underline="hover"
@@ -376,7 +376,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                 variant="outlined"
                                 onClick={() => (window.location.href = redirectTo || '/')}
                             >
-                                {t('actions.cancel')}
+                                {t('messages.common.cancel')}
                             </Button>
                             <Button
                                 type="submit"
@@ -386,8 +386,8 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                 startIcon={mode === 'create' ? <Add /> : <Save />}
                             >
                                 {loading
-                                    ? t(mode === 'create' ? 'actions.creating' : 'actions.updating')
-                                    : t(mode === 'create' ? 'actions.create' : 'actions.save')}
+                                    ? t(mode === 'create' ? 'messages.state.creating' : 'messages.state.updating')
+                                    : t(mode === 'create' ? 'messages.common.create' : 'messages.common.save')}
                             </Button>
                         </Box>
                     </form>

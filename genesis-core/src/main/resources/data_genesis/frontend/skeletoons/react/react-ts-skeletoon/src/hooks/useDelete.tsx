@@ -12,14 +12,14 @@ export function useDelete<T>(
 
     const handleDelete = useCallback(
         async (id: string | number) => {
-            if (!confirm(t('actions.confirmDelete'))) return;
+            if (!confirm(t('messages.confirmation.delete'))) return;
 
             try {
                 await deleteFn(id);
-                enqueueSnackbar(t('state.success'), { variant: 'success' });
+                enqueueSnackbar(t('messages.state.success'), { variant: 'success' });
                 onSuccess?.();
             } catch {
-                enqueueSnackbar(t('state.error'), { variant: 'error' });
+                enqueueSnackbar(t('messages.state.error'), { variant: 'error' });
             }
         },
         [deleteFn, enqueueSnackbar, onSuccess]

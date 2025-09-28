@@ -13,7 +13,7 @@ export default function BackdropBlocker({ open }: Props) {
             open={open}
             sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
         >
-            <CircularProgress color="inherit" title={t('state.loading')} />
+            <CircularProgress color="inherit" title={t('messages.state.loading')} />
         </Backdrop>
     );
 }

@@ -11153,18 +11153,18 @@
                 try {
                     await login(username, password);
                 } catch {
-                    enqueueSnackbar(t('auth.invalid'), { variant: 'error' });
+                    enqueueSnackbar(t('messages.authentication.invalid'), { variant: 'error' });
                 }
             };
 
             return (
                 <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Paper sx={{ p: 4, width: 360 }}>
-                        <Typography variant="h5" mb={3} textAlign="center">{t('auth.title')}  </Typography>
+                        <Typography variant="h5" mb={3} textAlign="center">{t('messages.authentication.title')}  </Typography>
                         <form onSubmit={handleSubmit}>
-                            <TextField fullWidth label={t('auth.username')} value={username} onChange={e => setUsername(e.target.value)} required />
-                            <TextField fullWidth label={t('auth.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
-                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>{t('auth.submit')} </Button>
+                            <TextField fullWidth label={t('messages.authentication.username')} value={username} onChange={e => setUsername(e.target.value)} required />
+                            <TextField fullWidth label={t('messages.authentication.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
+                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>{t('messages.authentication.submit')} </Button>
                         </form>
                     </Paper>
                 </Box>
@@ -11443,7 +11443,7 @@
                                         color="default"
                                     />
                                 }
-                                label={open ? t(mode === 'dark' ? 'sidebar.dark' : 'sidebar.light') : ''}
+                                label={open ? t(mode === 'dark' ? 'messages.theme.dark' : 'messages.theme.light') : ''}
                                 labelPlacement="bottom"
                                 sx={{
                                     color: 'inherit',
@@ -11458,7 +11458,7 @@
                                 }}
                             />
 
-                            <IconButton onClick={handleLogout} title={t('sidebar.logout')}>
+                            <IconButton onClick={handleLogout} title={t('messages.authentication.logout')}>
                                 <Logout />
                             </IconButton>
                             <LanguageSwitcher />
@@ -11492,13 +11492,13 @@
                 icon: <List />,
                 children: [
                     {
-                        label: 'nav.list',
+                        label: 'messages.navigation.list',
                         path: '/${toKebabCase(this.className)}s',
                         icon: <List />,
                     },
                     {{#if !this.isView}}{{removeLine}}
                     {
-                        label: 'nav.add',
+                        label: 'messages.navigation.add',
                         path: '/${toKebabCase(this.className)}s/create',
                         icon: <Add />
                     },
@@ -11624,8 +11624,8 @@
             return (
                 <ActionButtons
                     actions={[
-                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`), title:`$[t('actions.edit')]` },
-                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}), title:`$[t('actions.delete')]` },
+                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`), title:`$[t('messages.common.edit')]` },
+                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}), title:`$[t('messages.common.delete')]` },
                     ]}
                 />
             );
@@ -11639,7 +11639,7 @@
                 availableFilters: ${toCamelCase(className)}Filters,
                 defaultSort: ${toCamelCase(className)}Meta.defaultSort,
                 searchFn: ${toCamelCase(className)}Service.search,
-                pageTitle: `${majStart(className)} $[t('list.title')]`
+                pageTitle: `${majStart(className)} $[t('messages.entity.list.nav')]`
             })();
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
@@ -11680,14 +11680,14 @@
                 actions: [
                     {{#if !isView}}{{removeLine}}
                     {
-                        label: `$[t('actions.edit')]`,
+                        label: `$[t('messages.common.edit')]`,
                         icon: <Edit />,
                         variant: 'outlined',
                         color: 'primary',
                         onClick: (row, navigate) => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`),
                     },
                     {
-                        label: `$[t('actions.delete')]`,
+                        label: `$[t('messages.common.delete')]`,
                         icon: <Delete />,
                         variant: 'outlined',
                         color: 'error',
@@ -11736,7 +11736,7 @@
                     fields={formFields as any}
                     onSubmit={handleSubmit}
                     redirectTo="/${toKebabCase(className)}s"
-                    title={`$[t('actions.add')] ${toKebabCase(className)}`}
+                    title={`$[t('messages.common.add')] ${toKebabCase(className)}`}
                     mode="create"
                     idKey="{{#each fieldsPK}}${this.name}{{/each}}"
                     detailRedirect="/${toKebabCase(className)}s/:id"
@@ -11767,7 +11767,7 @@
                     fields={updateFormFields}
                     getById={${toCamelCase(className)}Service.getById}
                     update={${toCamelCase(className)}Service.update}
-                    title={`$[t('actions.edit')] ${toKebabCase(className)}`}
+                    title={`$[t('messages.common.edit')] ${toKebabCase(className)}`}
                     detailRedirect="/${toKebabCase(className)}s/:id"
                 />
             );

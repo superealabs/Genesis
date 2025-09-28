@@ -61,7 +61,7 @@ export default function GenericListPage<T extends Record<string, unknown>>(
                 <Box sx={pageContainerSx}>
                     <MuiBreadcrumbs sx={breadcrumbSx} separator="/">
                         <Link underline="hover" color="inherit" href="/" sx={{ fontWeight: 'normal' }}>
-                            {t('sidebar.title')}
+                            {t('messages.projectName')}
                         </Link>
                         <Link
                             underline="hover"
@@ -72,7 +72,7 @@ export default function GenericListPage<T extends Record<string, unknown>>(
                             {config.entityName}s
                         </Link>
                         <Typography color="text.primary" fontWeight="bold">
-                            {t('list.title')}
+                            {t('messages.entity.list.nav')}
                         </Typography>
                     </MuiBreadcrumbs>
 

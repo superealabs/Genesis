@@ -28,7 +28,7 @@ export default function PaginationSize({ size, onChange, onResetPage }: Props) {
 
     return (
         <label style={inlineLabelSx}>
-            {t('list.show')} : &nbsp;&nbsp;
+            {t('messages.pagination.sizeLabel')} : &nbsp;&nbsp;
             <FormControl sx={smallFormControlSx}>
                 <MuiSelect
                     value={size}

@@ -61,7 +61,7 @@ export default function GenericDetailPage<T extends AnyRecord>(config: DetailCon
         }, [id]);
 
         if (loading) return <BackdropBlocker open />;
-        if (!record) return <Typography color="error">{t('state.notFound')}</Typography>;
+        if (!record) return <Typography color="error">{t('messages.state.notFound')}</Typography>;
 
         const resolveValue = (accessor: keyof T | ((row: T) => React.ReactNode)) =>
             typeof accessor === 'function' ? accessor(record) : record[accessor];
@@ -86,7 +86,7 @@ export default function GenericDetailPage<T extends AnyRecord>(config: DetailCon
                             startIcon={<ArrowBack />}
                             onClick={() => navigate(backTo)}
                         >
-                            {t('actions.backToList')}
+                            {t('messages.button.backToList')}
                         </Button>
                     </Box>
 

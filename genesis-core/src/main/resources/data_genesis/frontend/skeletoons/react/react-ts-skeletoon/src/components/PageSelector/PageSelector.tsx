@@ -18,7 +18,7 @@ export default function PageSelector({ totalPages, currentPage, onChangePage }: 
 
     return (
         <Box display="flex" alignItems="center" gap={2}>
-            <label style={inlineLabelSx}>{t('list.goToPage')} :</label>
+            <label style={inlineLabelSx}>{t('messages.pagination.goToLabel')} :</label>
             <FormControl sx={smallFormControlSx}>
                 <MuiSelect
                     value={currentPage}
