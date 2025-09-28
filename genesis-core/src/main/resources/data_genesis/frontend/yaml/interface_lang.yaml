@@ -81,9 +81,9 @@
         },
         error: {
           error: 'Error',
-          400: '',
-          403: '',
-          404: '',
+          400: 'Bad request',
+          403: 'Access denied',
+          404: 'Page not found',
           500: 'Error 500',
         },
         theme: {
