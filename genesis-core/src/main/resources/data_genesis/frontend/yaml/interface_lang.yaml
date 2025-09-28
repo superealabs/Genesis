@@ -197,10 +197,9 @@
           404: 'Page introuvable',
           500: 'Erreur interne (500)',
         },
-      },
-    }
-    export default french
-
+        theme: {
+          dark: 'Sombre',
+          light: 'Clair',
         },
         state: {
           loading: 'Chargement…',
@@ -216,7 +215,9 @@
           list: 'Liste',
           add: 'Ajouter',
         },
+      }
     };
+    export default french;
 
 - id: 4
   name: "fr"
