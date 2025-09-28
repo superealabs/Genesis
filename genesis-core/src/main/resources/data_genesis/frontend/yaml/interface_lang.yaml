@@ -167,6 +167,9 @@
           nav: '{entity} / ',
           list: {
             nav: 'Liste',
+            filters: 'Filtres',
+            addFilter: 'Ajouter un filtre',
+            removeFilter: 'Supprimer le filtre {{label}}',
           },
           create: {
             nav: 'Nouveau',
@@ -200,8 +203,18 @@
 
         },
         state: {
+          loading: 'Chargement…',
+          notFound: 'Introuvable',
+          success: 'Succès',
+          creating: 'Création en cours…',
+          updating: 'Mise à jour en cours…',
         },
+        confirmation: {
+          delete: 'Confirmer la suppression ?',
         },
+        navigation: {
+          list: 'Liste',
+          add: 'Ajouter',
         },
     };
 
