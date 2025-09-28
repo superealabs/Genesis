@@ -127,10 +127,10 @@
         },
         home: {
           greet: 'Bonjour',
-          greetDeveloper: '@.capitalize:home.greet Developpeur',
-          welcome: 'Bienvenue sur l application frontend @.capitalize:projectName',
+          greetDeveloper: '@.capitalize:home.greet Développeur',
+          welcome: 'Bienvenue sur l’application frontend @.capitalize:projectName',
           titles: {
-            entities: 'Liste des entites',
+            entities: 'Liste des entités',
             views: 'Liste des vues',
           },
         },
@@ -139,9 +139,9 @@
         },
         pagination: {
           sizeLabel: 'Affichage :',
-          previous: 'Precedent',
+          previous: 'Précédent',
           next: 'Suivant',
-          goToLabel: 'Aller a la page :',
+          goToLabel: 'Aller à la page :',
           pageOf: 'Page {page} sur {total}',
         },
         search: {
@@ -161,15 +161,15 @@
             submitLabel: '@:common.update {entity}',
           },
           details: {
-            nav: 'Details',
+            nav: 'Détails',
           },
         },
         button: {
-          addEntity: 'Ajouter un nouveau {entity}',
+          addEntity: 'Ajouter un(e) nouveau(elle) {entity}',
           applySearch: 'Appliquer',
           go: 'Aller',
-          backToList: 'Retour a la liste',
-          backToListDescription: 'Revenir a la page de liste',
+          backToList: 'Retour à la liste',
+          backToListDescription: 'Revenir à la vue en liste',
         },
         error: {
           400: 'Requete invalide',
