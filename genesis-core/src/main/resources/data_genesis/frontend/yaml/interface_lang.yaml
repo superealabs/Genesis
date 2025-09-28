@@ -180,10 +180,11 @@
           backToListDescription: 'Revenir à la vue en liste',
         },
         error: {
-          400: 'Requete invalide',
-          403: 'Interdit',
-          404: 'Introuvable',
-          500: 'Erreur 500',
+          error: 'Erreur',
+          400: 'Requête invalide',
+          403: 'Accès interdit',
+          404: 'Page introuvable',
+          500: 'Erreur interne (500)',
         },
       },
     }
