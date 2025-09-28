@@ -29,7 +29,7 @@
           submit: 'Sign in',
           invalid: 'Invalid credentials',
           logout: 'Logout',
-        },//auth
+        },
         home: {
           greet: 'Hello',
           greetDeveloper: '@.capitalize:home.greet Developer',
@@ -119,7 +119,11 @@
         common: {
           update: 'Modifier',
           delete: 'Supprimer',
-          create: 'Creer',
+          create: 'Créer',
+          add: 'Ajouter',
+          save: 'Enregistrer',
+          cancel: 'Annuler',
+          edit: 'Éditer',
         },
         home: {
           greet: 'Bonjour',
