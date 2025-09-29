@@ -782,7 +782,7 @@
         {{/each}}
       selector: "app-${toKebabCase(className)}-list"
       standalone: true
-      importComponent: "[CommonModule, HttpClientModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent,PageHeaderComponent,LoadingIconComponent]"
+      importComponent: "[CommonModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent,PageHeaderComponent,LoadingIconComponent]"
       template: "./${toKebabCase(className)}-list.component.html"
       style: "./${toKebabCase(className)}-list.component.css"
       export: |
@@ -1007,7 +1007,7 @@
       selector: "app-${toKebabCase(className)}-form"
       generateForView: false
       standalone: true
-      importComponent: "[CommonModule, HttpClientModule, ReactiveFormsModule, DynamicFieldComponent, LoadingIconComponent, PageHeaderComponent, LinkButtonComponent, DynamicFormComponent]"
+      importComponent: "[CommonModule, ReactiveFormsModule, DynamicFieldComponent, LoadingIconComponent, PageHeaderComponent, LinkButtonComponent, DynamicFormComponent]"
       template: "./${toKebabCase(className)}-form.component.html"
       style: "./${toKebabCase(className)}-form.component.css"
       export: |
@@ -1198,7 +1198,7 @@
       selector: "app-${toKebabCase(className)}-details"
       generateForView: false
       standalone: true
-      importComponent: "[CommonModule, HttpClientModule, PageHeaderComponent, LoadingIconComponent, DetailViewComponent]"
+      importComponent: "[CommonModule, PageHeaderComponent, LoadingIconComponent, DetailViewComponent]"
       template: "./${toKebabCase(className)}-details.component.html"
       style: "./${toKebabCase(className)}-details.component.css"
       export: |
