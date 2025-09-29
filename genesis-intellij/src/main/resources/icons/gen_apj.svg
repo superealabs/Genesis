@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+    <g fill="none" transform="translate(0 0)">
+        <!-- Fond noir -->
+        <rect width="16" height="16" fill="#000"/>
+        
+        <!-- Texte GEN centré et gras -->
+        <text x="8" y="5" font-family="Arial, sans-serif" font-size="5" fill="#FFFEFE" text-anchor="middle" font-weight="bold">GEN</text>
+        
+        <!-- Texte APJ centré et gras -->
+        <text x="8" y="11" font-family="Arial, sans-serif" font-size="5" fill="#FFFEFE" text-anchor="middle" font-weight="bold">APJ</text>
+        
+        <!-- Petit underscore moins gras et plus haut -->
+        <rect x="1" y="13.8" width="4" height="0.6" fill="#FFFEFE"/>
+    </g>
+</svg>

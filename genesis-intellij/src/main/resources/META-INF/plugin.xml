@@ -29,6 +29,12 @@
                        order="first"/>
     </extensions>
 
+    <actions>
+        <action id="APJ_FILE" class="org.labs.genesis.action.NewApjFileAction">
+            <add-to-group group-id="NewGroup" anchor="first"/>
+        </action>
+    </actions>
+
 </idea-plugin>
 
 
