@@ -11,7 +11,12 @@
     </label>
 
     <!-- Input -->
-    <input v-bind="$attrs" :id="inputFormId" class="w-full min-w-25 focus:border-0 input" @input="onInput" />
+    <input
+      v-bind="$attrs"
+      :id="inputFormId"
+      class="w-full min-w-25 focus:border-0 input"
+      @input="onInput"
+    />
   </div>
 </template>
 

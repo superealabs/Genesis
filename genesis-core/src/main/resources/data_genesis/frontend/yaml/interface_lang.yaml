@@ -4,7 +4,7 @@
   content: |
     const english = {
       messages: {
-        projectName: '${formatReadable(projectName)}',
+        projectName: '${projectName}',
         common: {
           update: 'Update',
           delete: 'Delete',
@@ -16,7 +16,6 @@
           views: 'Views',
           settings: 'Settings',
           home: 'Home',
-          customisation: 'Layout customisation',
         },
         authentication: {},
         home: {
@@ -66,27 +65,78 @@
           backToListDescription: 'Return to the list view',
         },
         error: {
-          400: '',
-          403: '',
-          404: '',
-          500: 'Error 500',
-        },
-      },
-    }
-    export default english
+              400: '',
+              403: '',
+              404: '',
+              500: 'Error 500',
+            },
+          },
 
+          // DateTime formatting
+          dateTimeFormats: {
+            short: {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            },
+            long: {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              weekday: 'long',
+            },
+            time: {
+              hour: '2-digit',
+              minute: '2-digit',
+            },
+            full: {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              weekday: 'long',
+              hour: '2-digit',
+              minute: '2-digit',
+            },
+          },
 
+          // Number formatting
+          numberFormats: {
+            currency: {
+              style: 'currency',
+              currency: 'USD',
+              currencyDisplay: 'symbol', // $1,234.56
+            },
+            decimal: {
+              style: 'decimal',
+              minimumFractionDigits: 2, // 1,234.50
+              maximumFractionDigits: 2,
+            },
+            percent: {
+              style: 'percent',
+              useGrouping: true,
+            },
+          },
+        }
+
+        export default english
 - id: 2
   name: "French"
   locale: "fr"
   content: |
     const french = {
       messages: {
-        projectName: '${formatReadable(projectName)}',
+        projectName: '${projectName}',
         common: {
           update: 'Modifier',
           delete: 'Supprimer',
           create: 'Creer',
+        },
+        navbar: {
+          core: 'Core',
+          entities: 'Entites',
+          views: 'Vues',
+          settings: 'Parametres',
+          home: 'Accueil',
         },
         home: {
           greet: 'Bonjour',
@@ -141,6 +191,50 @@
           500: 'Erreur 500',
         },
       },
+    
+      // Formatage des dates
+      dateTimeFormats: {
+        short: {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        },
+        long: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+        },
+        time: {
+          hour: '2-digit',
+          minute: '2-digit',
+        },
+        full: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+          hour: '2-digit',
+          minute: '2-digit',
+        },
+      },
+    
+      // Formatage des nombres
+      numberFormats: {
+        currency: {
+          style: 'currency',
+          currency: 'EUR',
+          currencyDisplay: 'symbol', // 1 234,56 €
+        },
+        decimal: {
+          style: 'decimal',
+          minimumFractionDigits: 2, // 1 234,50
+          maximumFractionDigits: 2,
+        },
+        percent: {
+          style: 'percent',
+          useGrouping: true, // 88 %
+        },
+      },
     }
     export default french
-

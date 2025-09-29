@@ -1,28 +1,32 @@
 <template>
-  <ul class="flex flex-col gap-1">
-    <li v-for="item in items" :key="item.navTitle">
-      <!-- Lien actif -->
+  <ul class="menu rounded-box w-full overflow-hidden">
+    <li v-for="item in items" :key="item.navTitle" class="">
+      <!-- Item with link -->
       <router-link
         v-if="item.navLink"
         :to="item.navLink"
-        class="block px-3 py-2 rounded-md transition-colors"
+        class="block px-3 py-2 rounded-md transition-colors hover:bg-base-300"
       >
-        {{ item.navTitle }}
+        {{ $t(item.navTitle) }}
       </router-link>
 
-      <!-- Pas de lien -->
-      <span v-else class="block px-3 py-2 text-gray-400">
-        {{ item.navTitle }}
-      </span>
-
-      <!-- Enfants -->
-      <GenesisNavList v-if="item.navChilds" :items="item.navChilds" class="ml-4" />
+      <!-- Nested items -->
+      <details
+        v-if="item.navChilds"
+        class="ml-2 mt-1"
+        :open="item.navChilds?.some((child) => child.navLink === $route.path)"
+      >
+        <summary class="cursor-pointer px-3 py-2 rounded-md hover:bg-base-300">
+          {{ $t(item.navTitle) }}
+        </summary>
+        <GenesisNavList :items="item.navChilds" />
+      </details>
     </li>
   </ul>
 </template>
 
 <script setup lang="ts">
-import type { PropType } from 'vue'
+import { useRoute } from 'vue-router'
 
 interface NavItem {
   navTitle: string
@@ -30,39 +34,29 @@ interface NavItem {
   navChilds?: NavItem[]
 }
 
-defineProps<{
+const props = defineProps<{
   items: NavItem[]
 }>()
+
+const $route = useRoute()
 </script>
 
 <style scoped>
-.nav-link.active {
+/* Active link styling */
+.router-link-active {
   font-weight: bold;
   color: var(--color-primary);
-}
-
-.nav-link-action:hover,
-.nav-link-action:focus,
-.router-link-active {
-  color: var(--color-primary);
-  background-color: var(--color-secondary);
-  border-radius: 0.25rem;
-  transition: all 0.2s ease-in-out;
-}
-
-.router-link-active {
   position: relative;
-  font-weight: bold;
 }
 
 .router-link-active::before {
-  background-color: var(--color-primary);
   content: '';
   position: absolute;
   top: 0;
   left: -7px;
-  height: 100%;
   width: 5px;
+  height: 100%;
+  background-color: var(--color-primary);
   border-radius: 10px;
 }
 </style>

@@ -96,7 +96,7 @@ public class GenesisCoreTest {
             context.setViewNames(new ArrayList<>());
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
-
+            context.setGenerateFrontendApp(false);
 
 
             projectGenerator.generateProject(context);
@@ -183,6 +183,7 @@ public class GenesisCoreTest {
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
             context.setViewNames(new ArrayList<>());
+            context.setGenerateFrontendApp(false);
 
             projectGenerator.generateProject(context);
 
@@ -238,6 +239,7 @@ public class GenesisCoreTest {
             context.setProjectDescription(projectDescription);
             context.setLanguageConfiguration(languageConfiguration);
             context.setFrameworkConfiguration(frameworkConfiguration);
+            context.setGenerateFrontendApp(false);
 
             projectGenerator.generateProject(context);
 
@@ -315,6 +317,7 @@ public class GenesisCoreTest {
             context.setProjectDescription(projectDescription);
             context.setLanguageConfiguration(languageConfiguration);
             context.setFrameworkConfiguration(frameworkConfiguration);
+            context.setGenerateFrontendApp(false);
 
             projectGenerator.generateProject(context);
 
