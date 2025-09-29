@@ -9,6 +9,10 @@
           update: 'Update',
           delete: 'Delete',
           create: 'Create',
+          add:    'Add',
+          save: 'Save',
+          cancel: 'Cancel',
+          edit: 'Edit',
         },
         navbar: {
           core: 'Core',
@@ -17,7 +21,14 @@
           settings: 'Settings',
           home: 'Home',
         },
-        authentication: {},
+        authentication: {
+          title: 'Sign in',
+          username: 'Username',
+          password: 'Password',
+          submit: 'Sign in',
+          invalid: 'Invalid credentials',
+          logout: 'Logout',
+        },
         home: {
           greet: 'Hello',
           greetDeveloper: '@.capitalize:home.greet Developer',
@@ -44,6 +55,9 @@
           nav: '{entity} / ',
           list: {
             nav: 'List',
+            filters: 'Filters',
+            addFilter: 'Add filter',
+            removeFilter: 'Remove {{label}} filter',
           },
           create: {
             nav: 'New',
@@ -65,60 +79,76 @@
           backToListDescription: 'Return to the list view',
         },
         error: {
-              400: '',
-              403: '',
-              404: '',
-              500: 'Error 500',
-            },
-          },
+          error: 'Error',
+          400: 'Bad request',
+          403: 'Access denied',
+          404: 'Page not found',
+          500: 'Error 500',
+        },
+        theme: {
+          dark: 'Dark',
+          light: 'Light',
+        },
+        state: {
+          loading: 'Loading…',
+          notFound: 'Not found',
+          success: 'Success',
+          creating: 'Creating...',
+          updating: 'Updating...',
+        },
+        confirmation: {
+          delete: 'Confirm deletion?',
+        },
+        navigation: {
+          list: 'List',
+          add: 'Add',
+        },
+      },
+      // DateTime formatting
+      dateTimeFormats: {
+        short: {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        },
+        long: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+        },
+        time: {
+          hour: '2-digit',
+          minute: '2-digit',
+        },
+        full: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+          hour: '2-digit',
+          minute: '2-digit',
+        },
+      },
+      numberFormats: {
+        currency: {
+          style: 'currency',
+          currency: 'USD',
+          currencyDisplay: 'symbol', // $1,234.56
+        },
+        decimal: {
+          style: 'decimal',
+          minimumFractionDigits: 2, // 1,234.50
+          maximumFractionDigits: 2,
+        },
+        percent: {
+          style: 'percent',
+          useGrouping: true,
+        },
+      },
+    };
+    export default english;
 
-          // DateTime formatting
-          dateTimeFormats: {
-            short: {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            },
-            long: {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              weekday: 'long',
-            },
-            time: {
-              hour: '2-digit',
-              minute: '2-digit',
-            },
-            full: {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              weekday: 'long',
-              hour: '2-digit',
-              minute: '2-digit',
-            },
-          },
-
-          // Number formatting
-          numberFormats: {
-            currency: {
-              style: 'currency',
-              currency: 'USD',
-              currencyDisplay: 'symbol', // $1,234.56
-            },
-            decimal: {
-              style: 'decimal',
-              minimumFractionDigits: 2, // 1,234.50
-              maximumFractionDigits: 2,
-            },
-            percent: {
-              style: 'percent',
-              useGrouping: true,
-            },
-          },
-        }
-
-        export default english
 - id: 2
   name: "French"
   locale: "fr"
@@ -129,21 +159,33 @@
         common: {
           update: 'Modifier',
           delete: 'Supprimer',
-          create: 'Creer',
+          create: 'Créer',
+          add: 'Ajouter',
+          save: 'Enregistrer',
+          cancel: 'Annuler',
+          edit: 'Éditer',
         },
         navbar: {
-          core: 'Core',
-          entities: 'Entites',
+          core: 'Noyau',
+          entities: 'Entités',
           views: 'Vues',
-          settings: 'Parametres',
+          settings: 'Paramètres',
           home: 'Accueil',
+        },
+        authentication: {
+          title: 'Connexion',
+          username: 'Nom d’utilisateur',
+          password: 'Mot de passe',
+          submit: 'Se connecter',
+          invalid: 'Identifiants invalides',
+          logout: 'Déconnexion',
         },
         home: {
           greet: 'Bonjour',
-          greetDeveloper: '@.capitalize:home.greet Developpeur',
-          welcome: 'Bienvenue sur l application frontend @.capitalize:projectName',
+          greetDeveloper: '@.capitalize:home.greet Développeur',
+          welcome: 'Bienvenue sur l’application frontend @.capitalize:projectName',
           titles: {
-            entities: 'Liste des entites',
+            entities: 'Liste des entités',
             views: 'Liste des vues',
           },
         },
@@ -152,9 +194,9 @@
         },
         pagination: {
           sizeLabel: 'Affichage :',
-          previous: 'Precedent',
+          previous: 'Précédent',
           next: 'Suivant',
-          goToLabel: 'Aller a la page :',
+          goToLabel: 'Aller à la page :',
           pageOf: 'Page {page} sur {total}',
         },
         search: {
@@ -164,6 +206,9 @@
           nav: '{entity} / ',
           list: {
             nav: 'Liste',
+            filters: 'Filtres',
+            addFilter: 'Ajouter un filtre',
+            removeFilter: 'Supprimer le filtre {{label}}',
           },
           create: {
             nav: 'Nouveau',
@@ -174,24 +219,42 @@
             submitLabel: '@:common.update {entity}',
           },
           details: {
-            nav: 'Details',
+            nav: 'Détails',
           },
         },
         button: {
-          addEntity: 'Ajouter un nouveau {entity}',
+          addEntity: 'Ajouter un(e) nouveau(elle) {entity}',
           applySearch: 'Appliquer',
           go: 'Aller',
-          backToList: 'Retour a la liste',
-          backToListDescription: 'Revenir a la page de liste',
+          backToList: 'Retour à la liste',
+          backToListDescription: 'Revenir à la vue en liste',
         },
         error: {
-          400: 'Requete invalide',
-          403: 'Interdit',
-          404: 'Introuvable',
-          500: 'Erreur 500',
+          error: 'Erreur',
+          400: 'Requête invalide',
+          403: 'Accès interdit',
+          404: 'Page introuvable',
+          500: 'Erreur interne (500)',
+        },
+        theme: {
+          dark: 'Sombre',
+          light: 'Clair',
+        },
+        state: {
+          loading: 'Chargement…',
+          notFound: 'Introuvable',
+          success: 'Succès',
+          creating: 'Création en cours…',
+          updating: 'Mise à jour en cours…',
+        },
+        confirmation: {
+          delete: 'Confirmer la suppression ?',
+        },
+        navigation: {
+          list: 'Liste',
+          add: 'Ajouter',
         },
       },
-    
       // Formatage des dates
       dateTimeFormats: {
         short: {
@@ -218,7 +281,6 @@
           minute: '2-digit',
         },
       },
-    
       // Formatage des nombres
       numberFormats: {
         currency: {
@@ -236,5 +298,5 @@
           useGrouping: true, // 88 %
         },
       },
-    }
+    };
     export default french

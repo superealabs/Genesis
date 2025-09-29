@@ -11096,7 +11096,7 @@
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/src"
-    langsPath: "{{removeLine}}"
+    langsPath: "${destinationFolder}/src/locales"
   authenticationFiles:
     - fileType: "Service Auth"
       fileName: "auth"
@@ -11265,6 +11265,7 @@
         import { useNavigate, useLocation } from 'react-router-dom';
         import { TextField, Button, Paper, Typography, Box } from '@mui/material';
         import { useSnackbar } from 'notistack';
+        import { useTranslation } from 'react-i18next';
 
         export default function Login() {
             const [username, setUsername] = useState('');
@@ -11272,6 +11273,7 @@
             const { login, token, user } = useAuth(); // ← user ajouté
             const navigate = useNavigate();
             const { enqueueSnackbar } = useSnackbar();
+            const { t } = useTranslation();
             const location = useLocation();
             const from = location.state?.from?.pathname || '/';
 
@@ -11289,18 +11291,18 @@
                 try {
                     await login(username, password);
                 } catch {
-                    enqueueSnackbar('Identifiants invalides', { variant: 'error' });
+                    enqueueSnackbar(t('messages.authentication.invalid'), { variant: 'error' });
                 }
             };
 
             return (
                 <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Paper sx={{ p: 4, width: 360 }}>
-                        <Typography variant="h5" mb={3} textAlign="center">Connexion</Typography>
+                        <Typography variant="h5" mb={3} textAlign="center">{t('messages.authentication.title')}  </Typography>
                         <form onSubmit={handleSubmit}>
-                            <TextField fullWidth label="Nom d’utilisateur" value={username} onChange={e => setUsername(e.target.value)} required />
-                            <TextField fullWidth label="Mot de passe" type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
-                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>Se connecter</Button>
+                            <TextField fullWidth label={t('messages.authentication.username')} value={username} onChange={e => setUsername(e.target.value)} required />
+                            <TextField fullWidth label={t('messages.authentication.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
+                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>{t('messages.authentication.submit')} </Button>
                         </form>
                     </Paper>
                 </Box>
@@ -11361,6 +11363,7 @@
         import { RouterProvider } from 'react-router-dom';
         import { router } from './router';
         import './index.css';
+        import './i18n'; 
         import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
         import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
         import { SnackbarProvider } from 'notistack';
@@ -11375,13 +11378,13 @@
             <React.StrictMode>
                 <ThemeProvider>
                     <CssBaseline />
-                        <AuthProvider>
-                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
-                                <SnackbarProvider maxSnack={3} autoHideDuration={1500}>
-                                    <RouterProvider router={router} />
-                                </SnackbarProvider>
-                            </LocalizationProvider>
-                        </AuthProvider>
+                    <AuthProvider>
+                        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                            <SnackbarProvider maxSnack={3} autoHideDuration={1500}>
+                                <RouterProvider router={router} />
+                            </SnackbarProvider>
+                        </LocalizationProvider>
+                    </AuthProvider>
                 </ThemeProvider>
             </React.StrictMode>
         );
@@ -11469,6 +11472,8 @@
         import { Logout } from '@mui/icons-material';
         import {useAuth} from "@/contexts/AuthContext";
         import {useNavigate} from "react-router-dom";
+        import { useTranslation } from 'react-i18next';
+        import LanguageSwitcher from "@/components/LanguageSwitcher";
 
         interface Props {
             layout?: 'vertical' | 'horizontal';
@@ -11480,6 +11485,7 @@
             const toggle = () => setOpen((prev) => !prev);
             const { logout } = useAuth();
             const navigate = useNavigate(); // ← ajout
+            const { t } = useTranslation();
 
             const handleLogout = () => {
                 logout();       // vide le state + localStorage
@@ -11575,7 +11581,7 @@
                                         color="default"
                                     />
                                 }
-                                label={open ? (mode === 'dark' ? 'Sombre' : 'Clair') : ''}
+                                label={open ? t(mode === 'dark' ? 'messages.theme.dark' : 'messages.theme.light') : ''}
                                 labelPlacement="bottom"
                                 sx={{
                                     color: 'inherit',
@@ -11590,9 +11596,10 @@
                                 }}
                             />
 
-                            <IconButton onClick={handleLogout} title="Déconnexion">
+                            <IconButton onClick={handleLogout} title={t('messages.authentication.logout')}>
                                 <Logout />
                             </IconButton>
+                            <LanguageSwitcher />
                         </Box>
                     </Drawer>
                 </>
@@ -11623,13 +11630,13 @@
                 icon: <List />,
                 children: [
                     {
-                        label: 'List',
+                        label: 'messages.navigation.list',
                         path: '/${toKebabCase(this.className)}s',
                         icon: <List />,
                     },
                     {{#if !this.isView}}{{removeLine}}
                     {
-                        label: 'Add',
+                        label: 'messages.navigation.add',
                         path: '/${toKebabCase(this.className)}s/create',
                         icon: <Add />
                     },
@@ -11689,6 +11696,34 @@
       content: |
         VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
       destinationPath: "${destinationFolder}/"
+    - fileType: "i18n file"
+      fileName: "i18n"
+      extension: "js"
+      content: |
+        // src/i18n.js
+        import i18n from 'i18next';
+        import { initReactI18next } from 'react-i18next';
+        import LanguageDetector from 'i18next-browser-languagedetector';
+        
+        {{#each langList}}
+        import ${lowerCase(this.name)} from './locales/${lowerCase(this.name)}.js'
+        {{/each}}{{removeLine}}
+
+        i18n
+            .use(LanguageDetector)
+            .use(initReactI18next)
+            .init({
+                resources: {
+                    {{#each langList}}
+                    ${this.locale}: { translation: ${lowerCase(this.name)} },
+                    {{/each}}{{removeLine}}
+                },
+                fallbackLng: {{#each langList}}{{#if @first}}'${this.locale}'{{/if}}{{/each}},
+                interpolation: { escapeValue: false },
+            });
+
+        export default i18n;
+      destinationPath: "${destinationFolder}/src"
   components:
     - componentType: "List"
       generateForView: true
@@ -11705,6 +11740,7 @@
         import GenericListPage from '@/components/GenericListPage/GenericListPage';
         import ActionButtons from '@/components/ActionButtons';
         import {useDelete} from "@/hooks/useDelete";
+        import {useTranslation} from "react-i18next";
       selector: "${majStart(className)}List"
       export: |
         const columns = [
@@ -11719,27 +11755,29 @@
         {{removeLine}}
         {{#if !isView}}
         function RowActions({ row }: { row: ${majStart(className)} }) {
+            const { t } = useTranslation();
             const navigate = useNavigate();
             const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => window.location.reload());
 
             return (
                 <ActionButtons
                     actions={[
-                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`) },
-                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}) },
+                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`), title:`$[t('messages.common.edit')]` },
+                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}), title:`$[t('messages.common.delete')]` },
                     ]}
                 />
             );
         }
         {{/if}}
         export default function ${majStart(className)}List() {
+            const { t } = useTranslation();
             return GenericListPage<${majStart(className)}>({
                 entityName: ${toCamelCase(className)}Meta.entityName,
                 columns,
                 availableFilters: ${toCamelCase(className)}Filters,
                 defaultSort: ${toCamelCase(className)}Meta.defaultSort,
                 searchFn: ${toCamelCase(className)}Service.search,
-                pageTitle: '${majStart(className)} List'
+                pageTitle: `${majStart(className)} $[t('messages.entity.list.nav')]`
             })();
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
@@ -11760,10 +11798,12 @@
         import GenericDetailPage from '@/components/GenericDetailPage/GenericDetailPage';
         import {useDelete} from "@/hooks/useDelete";
         import { Typography } from '@mui/material';
+        import {useTranslation} from "react-i18next";
       selector: "${majStart(className)}Detail"
       export: |
         export default function ${majStart(className)}Detail() {
             const navigate = useNavigate();
+            const { t } = useTranslation();
             {{#if !isView}}
             const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => {
                   navigate('/${toKebabCase(className)}s'); 
@@ -11778,14 +11818,14 @@
                 actions: [
                     {{#if !isView}}{{removeLine}}
                     {
-                        label: 'Edit',
+                        label: `$[t('messages.common.edit')]`,
                         icon: <Edit />,
                         variant: 'outlined',
                         color: 'primary',
                         onClick: (row, navigate) => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`),
                     },
                     {
-                        label: 'Delete',
+                        label: `$[t('messages.common.delete')]`,
                         icon: <Delete />,
                         variant: 'outlined',
                         color: 'error',
@@ -11819,8 +11859,10 @@
       importComponent: |
         import GenericFormBuilder from '@/components/GenericForm/GenericFormBuilder';
         import {ApiResponse} from "@/services/api";
+        import {useTranslation} from "react-i18next";
       export: |
         export default function Create${majStart(className)}() {
+            const { t } = useTranslation();
 
             const handleSubmit = async (data: any): Promise<ApiResponse<${majStart(className)}>> => {
                 return await ${toCamelCase(className)}Service.create(data);
@@ -11832,7 +11874,7 @@
                     fields={formFields as any}
                     onSubmit={handleSubmit}
                     redirectTo="/${toKebabCase(className)}s"
-                    title="Add ${toKebabCase(className)}"
+                    title={`$[t('messages.common.add')] ${toKebabCase(className)}`}
                     mode="create"
                     idKey="{{#each fieldsPK}}${this.name}{{/each}}"
                     detailRedirect="/${toKebabCase(className)}s/:id"
@@ -11853,15 +11895,17 @@
       generateForView: false
       importComponent: |
         import GenericUpdateFormBuilder from '@/components/GenericForm/GenericUpdateFormBuilder';
+        import {useTranslation} from "react-i18next";
       export: |
         export default function Update${majStart(className)}() {
+            const { t } = useTranslation();
             return (
                 <GenericUpdateFormBuilder<${majStart(className)}>
                     entityName={${toCamelCase(className)}Meta.entityName}
                     fields={updateFormFields}
                     getById={${toCamelCase(className)}Service.getById}
                     update={${toCamelCase(className)}Service.update}
-                    title="Update ${toKebabCase(className)}"
+                    title={`$[t('messages.common.edit')] ${toKebabCase(className)}`}
                     detailRedirect="/${toKebabCase(className)}s/:id"
                 />
             );
