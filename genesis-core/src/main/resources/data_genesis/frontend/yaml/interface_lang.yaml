@@ -16,7 +16,6 @@
           views: 'Views',
           settings: 'Settings',
           home: 'Home',
-          customisation: 'Layout customisation',
         },
         authentication: {},
         home: {
@@ -131,6 +130,13 @@
           update: 'Modifier',
           delete: 'Supprimer',
           create: 'Creer',
+        },
+        navbar: {
+          core: 'Core',
+          entities: 'Entites',
+          views: 'Vues',
+          settings: 'Parametres',
+          home: 'Accueil',
         },
         home: {
           greet: 'Bonjour',

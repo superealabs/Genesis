@@ -1489,6 +1489,69 @@
           }
         }
       destinationPath: "${destinationFolder}/src/composables"
+    - fileType: "Logout Button"
+      fileName: "LogoutButton"
+      extension: "vue"
+      content: |
+        <template>
+          <GenesisButton class="btn-ghost border-0" @click="logout">
+            <LogoutIcon />
+          </GenesisButton>
+        </template>
+        <script setup lang="ts">
+        import LogoutIcon from '@/core/icons/LogoutIcon.vue'
+        import GenesisButton from '@/core/button/GenesisButton.vue'
+        import { useAuth } from '@/composables/useAuth.ts'
+
+        const auth = useAuth()
+        const logout = () => {
+          auth.goToLoginView()
+        }
+        </script>
+      destinationPath: "${destinationFolder}/src/core/button"
+    - fileType: "User Nav Profile"
+      fileName: "UserNavProfile"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="flex items-center justify-between gap-2">
+            <!-- Avatar + Nom -->
+            <div class="flex items-center gap-2">
+              <div
+                class="flex items-center justify-center w-10 h-10 rounded-full bg-base-100 text-base-content font-bold"
+              >
+                {{ initials }}
+              </div>
+              <p class="m-0 font-medium">{{ name }}</p>
+            </div>
+
+            <!-- Bouton Déconnexion -->
+            <div>
+              <LogoutButton />
+            </div>
+          </div>
+        </template>
+
+        <script setup lang="ts">
+        import { computed } from 'vue'
+        import LogoutButton from '@/core/button/LogoutButton.vue'
+
+        // Props
+        const props = defineProps<{
+          name: string
+        }>()
+
+        // Computed: initials
+        const initials = computed(() => {
+          if (!props.name) return ''
+          return props.name
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()
+        })
+        </script>
+      destinationPath: "${destinationFolder}/src/core/navbar"
   additionalFiles:
     - fileType: "Package File"
       fileName: "package"
@@ -9567,8 +9630,7 @@
           },
         })
         </script>
-
-      destinationPath: "${destinationFolder}"
+      destinationPath: "${destinationFolder}/src/core"
 
     - fileType: "Navbar"
       fileName: "GenesisNavbar"
@@ -9810,28 +9872,11 @@
             {{/each}}{{removeLine}}
           },
         })
-        const i18n = createI18n({
-          legacy: false,
-          locale: 'en', // default locale
-          fallbackLocale: 'en', // fallback if translation missing
-          messages: {
-            en: english.messages,
-            fr: french.messages,
-          },
-          datetimeFormats: {
-            en: english.dateTimeFormats,
-            fr: french.dateTimeFormats,
-          },
-          numberFormats: {
-            en: english.numberFormats,
-            fr: french.numberFormats,
-          },
-        })
         export default i18n
       destinationPath: "${destinationFolder}/src/config"
 
     - fileType: "Style Css"
-      fileName: "index"
+      fileName: "main"
       extension: "css"
       content: |
         @import 'tailwindcss';
@@ -9925,7 +9970,44 @@
           --noise: 0;
         }
         ${additionalCss}
-      destinationPath: "${destinationFolder}/src/assets/styles/css"
+      destinationPath: "${destinationFolder}/src/assets/styles"
+    - fileType: "Banner"
+      fileName: "GenesisBanner"
+      extension: "vue"
+      content: |
+        <template>
+          <header
+            class="w-full bg-base-200 fixed top-0 left-0 text-primary-content shadow-lg z-30"
+            :style="{ height }"
+            aria-region="topbar"
+          >
+            <div class="h-full flex items-center justify-between px-4 bg-primary">
+              <!-- Brand -->
+              <div class="flex items-center gap-2 uppercase">
+                <AppLogo />
+                <h1 class="text-xl md:text-2xl font-semibold">{{ $t('projectName') }}</h1>
+              </div>
+
+              <!-- Right side -->
+              <div class="flex items-center gap-4">
+                <LanguageSwitcher />
+                <UserNavProfile name="John Doe" />
+              </div>
+            </div>
+          </header>
+        </template>
+
+        <script setup lang="ts">
+        import LanguageSwitcher from '@/core/language/LanguageSwitcher.vue'
+        {{#if useJWT}}
+        import UserNavProfile from '@/core/user/UserNavProfile.vue'
+        import AppLogo from '@/core/AppLogo.vue'
+        {{/if}}
+        defineProps<{
+          height?: string
+        }>()
+        </script>
+      destinationPath: "${destinationFolder}/src/core/navbar"
   components:
     - componentType: "Entity Row"
       generateForView: true
@@ -9948,9 +10030,9 @@
             {{elseIf this.isForeignKey}}
             <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name}?.getReferenceValue() }}</td>
             {{elseIf this.isDate}}
-            <td class="px-3 py-2">{{ $d(${minStart(EntityName)}.${this.name}, 'long') }}</td>{{/if}}
+            <td class="px-3 py-2">{{ $d(${minStart(EntityName)}.${this.name}, 'long') }}</td>
             {{elseIf this.isNumeric}}
-            <td class="px-3 py-2">{{ $n(${minStart(EntityName)}.${this.name}, 'decimal') }}</td>{{/if}}
+            <td class="px-3 py-2">{{ $n(${minStart(EntityName)}.${this.name}, 'decimal') }}</td>
             {{else}}
             <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} }}</td>{{/if}}
             {{/each}}{{removeLine}}
