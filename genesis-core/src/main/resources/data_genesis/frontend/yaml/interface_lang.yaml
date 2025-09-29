@@ -55,6 +55,9 @@
           nav: '{entity} / ',
           list: {
             nav: 'List',
+            filters: 'Filters',
+            addFilter: 'Add filter',
+            removeFilter: 'Remove {{label}} filter',
           },
           create: {
             nav: 'New',
@@ -127,7 +130,7 @@
           minute: '2-digit',
         },
       },
-     numberFormats: {
+      numberFormats: {
         currency: {
           style: 'currency',
           currency: 'USD',
@@ -278,7 +281,6 @@
           minute: '2-digit',
         },
       },
-    
       // Formatage des nombres
       numberFormats: {
         currency: {
@@ -296,5 +298,5 @@
           useGrouping: true, // 88 %
         },
       },
-    }
+    };
     export default french
