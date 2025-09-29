@@ -420,6 +420,35 @@
             {{else}}no css{{/if}}
       destinationPath: "${destinationFolder}/src/app/features/authentication/login"
   additionalFiles:
+    - fileType: "Language file"
+      fileName: "language.service"
+      extension: "ts"
+      content: |
+        import { Injectable } from '@angular/core';
+        import { BehaviorSubject } from 'rxjs';
+
+        export enum Language 
+        { {{#each langList}}
+          ${upperCase(this.locale)} = '${this.locale}',
+          {{/each}}{{removeLine}}
+        }
+
+        @Injectable({
+          providedIn: 'root'
+        })
+        export class LanguageService {
+          private languageSubject = new BehaviorSubject<Language>(Language.EN);
+          language$ = this.languageSubject.asObservable();
+
+          setLanguage(lang: Language) {
+            this.languageSubject.next(lang);
+          }
+
+          get currentLanguage(): Language {
+            return this.languageSubject.value;
+          }
+        }
+      destinationPath: "${destinationFolder}/src/app/shared/services/language"
     - fileType: "Index page"
       fileName: "index"
       extension: "html"

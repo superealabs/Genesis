@@ -1,6 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MotherComponent } from '../mother-component/mother.component';
 
 @Component({
   selector: 'app-pagination',
@@ -35,7 +36,7 @@ import { FormsModule } from '@angular/forms';
 
       <!-- Input "Aller à la page" à droite -->
       <div class="goto-container">
-        <label for="gotoPage">Going to :</label>
+        <label for="gotoPage">{{this.content.pagination.goToLabel}} :</label>
         <input
           id="gotoPage"
           type="number"
@@ -44,7 +45,7 @@ import { FormsModule } from '@angular/forms';
           [(ngModel)]="currentPage"
           (keydown.enter)="changePage(currentPage)"
         />
-        <button (click)="changePage(currentPage)">OK</button>
+        <button (click)="changePage(currentPage)">{{this.content.button.go}}</button>
       </div>
     </nav>
   `,
@@ -152,7 +153,7 @@ import { FormsModule } from '@angular/forms';
     }
   `]
 })
-export class PaginationComponent {
+export class PaginationComponent extends MotherComponent implements OnInit{
   @Input() totalItems: number = 0;
   @Input() itemsPerPage: number = 12;
   @Input() currentPage: number = 1;

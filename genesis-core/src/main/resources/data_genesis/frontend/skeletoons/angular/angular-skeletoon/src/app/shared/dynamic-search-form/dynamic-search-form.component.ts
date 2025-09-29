@@ -1,6 +1,7 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { MotherComponent } from '../mother-component/mother.component';
 
 export interface SearchField {
   key: string;
@@ -16,11 +17,11 @@ export interface SearchField {
   template: `
     <div class="filter-container">
       <form [formGroup]="searchForm" (ngSubmit)="onSearch()" class="search-form">
-        <label class="label">Filter:</label>
+        <label class="label">{{this.content.search.simple_filter}}:</label>
         <div *ngIf="hiddenFields.length > 0" class="form-group-inline btn-inline">
           <button type="button" class="btn-plus" (click)="toggleSelect()">＋</button>
           <select *ngIf="showSelect" (change)="onAddField($event)" class="form-control select-dropdown">
-            <option value="">Select a field...</option>
+            <option value="">{{this.content.search.selection}}...</option>
             <option *ngFor="let field of hiddenFields" [value]="field.key">{{ field.label }}</option>
           </select>
         </div>
@@ -59,11 +60,11 @@ export interface SearchField {
         </div>
 
         <div class="form-group-inline btn-inline">
-          <button type="button" class="btn-apply" (click)="searchForm.valid && onSearch()">Apply</button>
+          <button type="button" class="btn-apply" (click)="searchForm.valid && onSearch()">{{this.content.button.applySearch}}</button>
         </div>
 
         <div class="rows-selector">
-          <label for="rowsInput">Showing:</label>
+          <label for="rowsInput">{{this.content.pagination.sizeLabel}}</label>
           <input
             type="number"
             id="rowsInput"
@@ -199,7 +200,7 @@ export interface SearchField {
     }
   `]
 })
-export class DynamicSearchFormComponent implements OnInit {
+export class DynamicSearchFormComponent extends MotherComponent implements OnInit {
   @Input() searchFields: SearchField[] = [];
   @Input() onRowsChange: (rows: number) => void = () => {};
   @Input() onSubmitFn?: (formValue: any) => void;
@@ -220,7 +221,8 @@ export class DynamicSearchFormComponent implements OnInit {
       this.searchForm.get(field.key)?.setValue(option.value, { emitEvent: false });
     }
   }
-  ngOnInit(): void {
+  override ngOnInit(): void {
+    super.ngOnInit()
     this.rowsControl = new FormControl(12);
 
     this.rowsControl.valueChanges.subscribe(val => {

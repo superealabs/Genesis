@@ -1,8 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Language, LanguageService } from '../services/language/language.service';
+import { MotherComponent } from '../mother-component/mother.component';
+
+
 
 @Component({
   selector: 'app-banner',
@@ -11,7 +14,7 @@ import { Language, LanguageService } from '../services/language/language.service
   templateUrl: './banner.component.html',
   styleUrls: ['./banner.component.css']
 })
-export class BannerComponent {
+export class BannerComponent extends MotherComponent implements OnInit{
   @Input() title: string = "YourApp";
   @Input() logoPath: string = "assets/icon/logo.jpg";
 
@@ -19,7 +22,6 @@ export class BannerComponent {
   selectedLanguage: Language = Language.EN;
   Language = Language;
 
-  constructor(public langService: LanguageService) {}
 
   onLogoError() {
     this.logoAvailable = false;

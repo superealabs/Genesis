@@ -12,7 +12,7 @@
 
   <!-- Actions -->
   <div class="banner-actions">
-    <label for="language">Language :</label>
+    <label for="language">{{this.content.banner.lang}} :</label>
     <select id="language" [(ngModel)]="selectedLanguage" (change)="changeLanguage(selectedLanguage)">
       <option *ngFor="let lang of Language | keyvalue" [value]="lang.value">
         {{ lang.value }}
@@ -20,7 +20,7 @@
     </select>
 
     <button class="banner-btn outline">
-      <i class="bi bi-box-arrow-in-right"></i> Disconnect
+      <i class="bi bi-box-arrow-in-right"></i> {{this.content.banner.disconnect}}
     </button>
   </div>
 </header>
