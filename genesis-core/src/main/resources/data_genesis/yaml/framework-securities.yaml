@@ -2215,7 +2215,7 @@
     - "useJWT"
 - id: 3
   frameworkId: 5
-  name: ".NET Security - JWT"
+  name: ".NET Security - Cookie Authentication"
   securityFiles:
     - fileType: "Init Script"
       fileName: "identity_schema"
@@ -2723,154 +2723,73 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
 
-    - fileType: "JWT Service"
-      fileName: "JwtService"
-      extension: "cs"
-      content: |
-        namespace ${majStart(projectName)}.Services.Implementation;
-        using System.IdentityModel.Tokens.Jwt;
-        using System.Security.Claims;
-        using System.Text;
-        using Microsoft.Extensions.Configuration;
-        using Microsoft.IdentityModel.Tokens;
-        
-        public class JwtService
-        {
-          private readonly IConfiguration _config;
-          public JwtService(IConfiguration config) => _config = config;
-        
-          public string GenerateToken(string username)
-          {
-            var claims = new[]
-            {
-              new Claim(JwtRegisteredClaimNames.Sub, username),
-              new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-        
-            var key = new SymmetricSecurityKey(Convert.FromBase64String(_config["Jwt:SecretKey"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        
-            var token = new JwtSecurityToken(
-              claims: claims,
-              expires: DateTime.UtcNow.AddMinutes(30),
-              signingCredentials: creds
-            );
-            return new JwtSecurityTokenHandler().WriteToken(token);
-          }
-        
-          public string ExtractUsername(string token)
-          {
-            var principal = new JwtSecurityTokenHandler()
-            .ValidateToken(token, new TokenValidationParameters
-            {
-              ValidateIssuerSigningKey = true,
-              IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(_config["Jwt:SecretKey"])),
-              ValidateIssuer = false,
-              ValidateAudience = false,
-              ClockSkew = TimeSpan.Zero
-            }, out _);
-            return principal.Identity.Name;
-          }
-        }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
-
-    - fileType: "Token Blacklist Service"
-      fileName: "TokenBlacklistService"
-      extension: "cs"
-      content: |
-        namespace ${majStart(projectName)}.Services.Implementation;
-        public class TokenBlacklistService
-        {
-            private readonly Dictionary<string, DateTime> _invalidatedTokens = new();
-
-            public void InvalidateToken(string token, DateTime expiration)
-            {
-                _invalidatedTokens[token] = expiration;
-            }
-
-            public bool IsTokenInvalidated(string token)
-            {
-                return _invalidatedTokens.TryGetValue(token, out var exp) && exp > DateTime.UtcNow;
-            }
-
-            public void CleanExpiredTokens()
-            {
-                var now = DateTime.UtcNow;
-                foreach (var key in _invalidatedTokens.Where(x => x.Value < now).Select(x => x.Key).ToList())
-                {
-                    _invalidatedTokens.Remove(key);
-                }
-            }
-        }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
-
     - fileType: "User Service"
       fileName: "ApplicationUserService"
       extension: "cs"
       content: |
         namespace ${majStart(projectName)}.Services.Implementation;
-
-        namespace ${majStart(projectName)}.Models.Dto;
-        using Microsoft.AspNetCore.Identity;      
+        
+        using ${majStart(projectName)}.Models.Dto;
+        using Microsoft.AspNetCore.Identity;
         using ${majStart(projectName)}.Models;
-
+        
         public class ApplicationUserService
         {
-            private readonly UserManager<ApplicationUser> _userManager;
-            private readonly JwtService _jwtService;
-
-            public ApplicationUserService(UserManager<ApplicationUser> userManager, JwtService jwtService)
-            {
-                _userManager = userManager;
-                _jwtService = jwtService;
-            }
-
-            public async Task<string> Authenticate(AuthRequest request)
-            {
-                var user = await _userManager.FindByNameAsync(request.Username);
-                if (user != null && await _userManager.CheckPasswordAsync(user, request.Password))
-                {
-                    return _jwtService.GenerateToken(user.UserName);
-                }
-                throw new UnauthorizedAccessException("Invalid credentials");
-            }
-
-            public async Task<string> Register(RegisterRequest request)
-            {
-                var user = new ApplicationUser
-                {
-                    UserName = request.Username,
-                    Email = request.Email
-                };
-
-                var result = await _userManager.CreateAsync(user, request.Password);
-                if (!result.Succeeded)
-                    throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
-                return user.Id;
-            }
-
-
-            public async Task ChangePassword(string username, PasswordChangeRequest model)
-            {
-                var user = await _userManager.FindByNameAsync(username);
-                if (user == null || !await _userManager.CheckPasswordAsync(user, model.OldPassword))
-                    throw new Exception("Invalid current password");
-
-                if (model.NewPassword != model.ConfirmPassword)
-                    throw new Exception("Passwords do not match");
-
-                await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
-            }
-
-            public async Task UpdateUser(string username, UserUpdateRequest update)
-            {
-                var user = await _userManager.FindByNameAsync(username);
-                if (user == null) throw new Exception("User not found");
-                user.Email = update.Email;
-                user.UserName = update.Name;
-                await _userManager.UpdateAsync(user);
-            }
+        {{tab}}private readonly UserManager<ApplicationUser> _userManager;
+          
+        {{tab}}public ApplicationUserService(UserManager<ApplicationUser> userManager)
+        {{tab}}{
+        {{tab}}    _userManager = userManager;
+        {{tab}}}
+        
+        {{tab}}public async Task<bool> Authenticate(AuthRequest request)
+        {{tab}}{
+        {{tab}}    var user = await _userManager.FindByNameAsync(request.Username);
+        {{tab}}    if (user != null && await _userManager.CheckPasswordAsync(user, request.Password))
+        {{tab}}    {
+        {{tab}}        return true; // Authentication successful
+        {{tab}}    }
+        {{tab}}    return false; // Invalid credentials
+        {{tab}}}
+        
+        {{tab}}public async Task<string> Register(RegisterRequest request)
+        {{tab}}{
+        {{tab}}    var user = new ApplicationUser
+        {{tab}}    {
+        {{tab}}        UserName = request.Username,
+        {{tab}}        Email = request.Email
+        {{tab}}    };
+        
+        {{tab}}    var result = await _userManager.CreateAsync(user, request.Password);
+        {{tab}}    if (!result.Succeeded)
+        {{tab}}        throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
+        
+        {{tab}}    return user.Id;
+        {{tab}}}
+        
+        {{tab}}public async Task ChangePassword(string username, PasswordChangeRequest model)
+        {{tab}}{
+        {{tab}}    var user = await _userManager.FindByNameAsync(username);
+        {{tab}}    if (user == null || !await _userManager.CheckPasswordAsync(user, model.OldPassword))
+        {{tab}}        throw new Exception("Invalid current password");
+        
+        {{tab}}    if (model.NewPassword != model.ConfirmPassword)
+        {{tab}}        throw new Exception("Passwords do not match");
+        
+        {{tab}}    await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
+        {{tab}}}
+        
+        {{tab}}public async Task UpdateUser(string username, UserUpdateRequest update)
+        {{tab}}{
+        {{tab}}    var user = await _userManager.FindByNameAsync(username);
+        {{tab}}    if (user == null) throw new Exception("User not found");
+        
+        {{tab}}    user.Email = update.Email;
+        {{tab}}    user.UserName = update.Name;
+        {{tab}}    await _userManager.UpdateAsync(user);
+        {{tab}}}
         }
+
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
 
     - fileType: "Authentication Controller"
@@ -2880,149 +2799,247 @@
         namespace ${majStart(projectName)}.Controllers;
   
         using Microsoft.AspNetCore.Authorization;
+        using Microsoft.AspNetCore.Identity;
         using Microsoft.AspNetCore.Mvc;
         using ${majStart(projectName)}.Models.Dto;
+        using ${majStart(projectName)}.Models;
         using ${majStart(projectName)}.Services.Implementation;
-        
-        [Authorize]
+  
+        [AllowAnonymous]
         public class AuthController : Controller
         {
-        {{tab}}private readonly ApplicationUserService _userService;
-    
-        {{tab}}public AuthController(ApplicationUserService userService)
+        {{tab}}private readonly UserManager<ApplicationUser> _userManager;
+        {{tab}}private readonly SignInManager<ApplicationUser> _signInManager;
+        
+        {{tab}}public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
         {{tab}}{
-        {{tab}}    _userService = userService;
+        {{tab}}    _userManager = userManager;
+        {{tab}}    _signInManager = signInManager;
         {{tab}}}
   
-        {{tab}}// Login
-        {{tab}}[AllowAnonymous]
         {{tab}}[HttpGet]
         {{tab}}public IActionResult Login()
         {{tab}}{
         {{tab}}    return View();
         {{tab}}}
   
-        {{tab}}[AllowAnonymous]
         {{tab}}[HttpPost]
-        {{tab}}public async Task<IActionResult> Login(AuthRequest request)
+        {{tab}}public async Task<IActionResult> Login(AuthRequest model)
         {{tab}}{
-        {{tab}}    if (!ModelState.IsValid) return View(request);
+        {{tab}}    if (!ModelState.IsValid)
+        {{tab}}        return View(model);
         
-        {{tab}}    try
-        {{tab}}    {
-        {{tab}}        var token = await _userService.Authenticate(request);
+        {{tab}}    var result = await _signInManager.PasswordSignInAsync(
+        {{tab}}        model.Username, model.Password, isPersistent: false, lockoutOnFailure: false);
         
-        {{tab}}        Response.Cookies.Append("jwt", token, new CookieOptions
-        {{tab}}        {
-        {{tab}}            HttpOnly = true,
-        {{tab}}            Secure = true,
-        {{tab}}            SameSite = SameSiteMode.Strict
-        {{tab}}        });
-        
+        {{tab}}    if (result.Succeeded)
         {{tab}}    {{#each allEntities}}
         {{tab}}    {{#if @first}}
         {{tab}}        return RedirectToAction("Index", "${this.entityName}");{{/if}}{{/each}}
-        {{tab}}    }
-        {{tab}}    catch (Exception e)
-        {{tab}}    {
-        {{tab}}        ModelState.AddModelError("", $"Connection failed : {e.Message}");
-        {{tab}}        return View(request);
-        {{tab}}    }
+        
+        {{tab}}    ModelState.AddModelError("", "Invalid username or password");
+        {{tab}}    return View(model);
         {{tab}}}
-
-        {{tab}}// Register
-        {{tab}}[AllowAnonymous]
+  
         {{tab}}[HttpGet]
         {{tab}}public IActionResult Register()
         {{tab}}{
         {{tab}}    return View();
         {{tab}}}
         
-        {{tab}}[AllowAnonymous]
         {{tab}}[HttpPost]
-        {{tab}}public async Task<IActionResult> Register(RegisterRequest request)
+        {{tab}}public async Task<IActionResult> Register(RegisterRequest model)
         {{tab}}{
-        {{tab}}    if (!ModelState.IsValid) return View(request);
+        {{tab}}    if (!ModelState.IsValid)
+        {{tab}}        return View(model);
         
-        {{tab}}    try
-        {{tab}}    {
-        {{tab}}        await _userService.Register(request);
-        {{tab}}        TempData["Success"] = "Account created succesfully, you can log in now.";
+        {{tab}}    var user = new ApplicationUser { UserName = model.Username, Email = model.Email };
+        {{tab}}    var result = await _userManager.CreateAsync(user, model.Password);
+        
+        {{tab}}    if (result.Succeeded)
         {{tab}}        return RedirectToAction("Login");
-        {{tab}}    }
-        {{tab}}    catch (Exception e)
-        {{tab}}    {
-        {{tab}}        ModelState.AddModelError("", $"Register failed : {e.Message}");
-        {{tab}}        return View(request);
-        {{tab}}    }
-        {{tab}}}
-
-        {{tab}}// Change Password
-        {{tab}}[HttpGet]
-        {{tab}}public IActionResult ChangePassword()
-        {{tab}}{
-        {{tab}}    return View();
+        
+        {{tab}}    foreach (var error in result.Errors)
+        {{tab}}        ModelState.AddModelError("", error.Description);
+        
+        {{tab}}    return View(model);
         {{tab}}}
         
         {{tab}}[HttpPost]
-        {{tab}}public async Task<IActionResult> ChangePassword(PasswordChangeRequest model)
+        {{tab}}[Authorize]
+        {{tab}}public async Task<IActionResult> Logout()
         {{tab}}{
-        {{tab}}    if (!ModelState.IsValid) return View(model);
-        
-        {{tab}}    try
-        {{tab}}    {
-        {{tab}}        var username = User.Identity?.Name;
-        {{tab}}        await _userService.ChangePassword(username, model);
-        {{tab}}        TempData["Success"] = "Password changed successfully.";
-        {{tab}}    {{#each allEntities}}
-        {{tab}}    {{#if @first}}
-        {{tab}}        return RedirectToAction("Index", "${this.entityName}");{{/if}}{{/each}}
-        {{tab}}    }
-        {{tab}}    catch (Exception e)
-        {{tab}}    {
-        {{tab}}        ModelState.AddModelError("", $"Error : {e.Message}");
-        {{tab}}        return View(model);
-        {{tab}}    }
-        {{tab}}}
-
-        {{tab}}// Update User
-        {{tab}}[HttpGet]
-        {{tab}}public IActionResult Update()
-        {{tab}}{
-        {{tab}}    return View();
-        {{tab}}}
-        
-        {{tab}}[HttpPost]
-        {{tab}}public async Task<IActionResult> Update(UserUpdateRequest model)
-        {{tab}}{
-        {{tab}}    if (!ModelState.IsValid) return View(model);
-        
-        {{tab}}    try
-        {{tab}}    {
-        {{tab}}        var username = User.Identity?.Name;
-        {{tab}}        await _userService.UpdateUser(username, model);
-        {{tab}}        TempData["Success"] = "Profile updated successfully.";
-        {{tab}}    {{#each allEntities}}
-        {{tab}}    {{#if @first}}
-        {{tab}}        return RedirectToAction("Index", "${this.entityName}");{{/if}}{{/each}}
-        {{tab}}    }
-        {{tab}}    catch (Exception e)
-        {{tab}}    {
-        {{tab}}        ModelState.AddModelError("", $"Error : {e.Message}");
-        {{tab}}        return View(model);
-        {{tab}}    }
-        {{tab}}}
-
-        {{tab}}// Logout
-        {{tab}}[HttpPost]
-        {{tab}}public IActionResult Logout()
-        {{tab}}{
-        {{tab}}    Response.Cookies.Delete("jwt");
+        {{tab}}    await _signInManager.SignOutAsync();
         {{tab}}    return RedirectToAction("Login");
         {{tab}}}
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
+
+    - fileType: "Login Page"
+      fileName: "Login"
+      extension: "cshtml"
+      content: |
+        @model ${majStart(projectName)}.Models.Dto.AuthRequest
+  
+        @{
+            ViewData["Title"] = "Login";
+            Layout = null;
+        }
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Login | ${majStart(projectName)}</title>
+            <link rel="stylesheet" href=" ~/css/style.css" asp-append-version="true " />
+            <style>
+                /* Reset CSS */
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+              
+                body {
+                    background-color: var(--color-bg);
+                    height: 100vh;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 20px;
+                }
+              
+                .app-name {
+                    color: var(--color-primary);
+                }
+              
+              
+                .login-container {
+                    background-color: var(--color-secondary);
+                    border-radius: var(--radius);
+                    box-shadow: var(--shadow);
+                    width: 100%;
+                    max-width: 400px;
+                    overflow: hidden;
+                }
+              
+                .login-header {
+                    padding: 30px 20px;
+                    text-align: center;
+                    color: var(--color-text);
+                }
+              
+                .login-header h1 {
+                    font-size: 24px;
+                    font-weight: 600;
+                    margin-bottom: 10px;
+                }
+              
+                .login-header p {
+                    font-size: 14px;
+                    opacity: 0.9;
+                }
+              
+                .login-form {
+                    padding: 0px 30px 30px 30px;
+                }
+              
+                .form-group {
+                    margin-bottom: 20px;
+                }
+              
+                .form-group label {
+                    display: block;
+                    font-size: 14px;
+                    margin-bottom: 8px;
+                    color: #555;
+                    font-weight: 500;
+                }
+              
+                .form-group input {
+                    width: 100%;
+                    padding: 0.65rem 1rem;
+                    border: 1px solid var(--color-border);
+                    border-radius: var(--radius);
+                    font-size: 14px;
+                    transition: border-color 0.3s;
+                }
+                
+                .form-group input:focus {
+                    border-color: var(--color-primary);
+                    outline: none;
+                    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+                }
+              
+                .btn-login {
+                    width: 100%;
+                    background: linear-gradient(to right, var(--color-primary), var(--color-buton-hover));
+                    color: white;
+                    border: none;
+                    padding: 0.65rem 1rem;
+                    cursor: pointer;
+                    font-size: medium;
+                    border-radius: var(--radius);
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 8px;
+            
+                    transition: all 0.3s ease;
+                    box-shadow: var(--shadow);
+                }   
+              
+                .error-message {
+                    margin: 25px;
+                }
+              
+                .btn-login:hover {
+                    background: linear-gradient(to top, var(--color-buton-hover), var(--color-primary));
+                    transform: translateY(-2px) scale(1.05);
+                }
+              
+                .btn-login:active {
+                    transform: translateY(1px) scale(0.98);
+                    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+                }
+            </style>
+        </head>
+          
+        <body>
+            <div class="login-container">
+                <div class="login-header">
+                    <h1>${majStart(projectName)}<span class="app-name">App</span></h1>
+                </div>
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="error-message">
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <p>@error.ErrorMessage</p>
+                    }
+                    </div>
+                }
+                <form class="login-form" asp-action="Login" method="post">
+                    <div class="form-group">
+                        <label asp-for="Username">Login</label>
+                        <input type="text" asp-for="Username" placeholder="login" required>
+                    </div>
+            
+                    <div class="form-group">
+                        <label asp-for="Password">Password</label>
+                        <input type="password" asp-for="Password" placeholder="password" required>
+                    </div>
+            
+                    <button type="submit" class="btn-login">Se connecter</button>
+                </form>
+          </div>
+        </body>
+          
+        </html>
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Auth"
 
     - fileType: "SQL Schema Bootstrapper Service"
       fileName: "SqlSchemaBootstrapper"
@@ -3105,4 +3122,4 @@
 
   additionalDependencies: [ ]
   metadataBooleanTrueKeys:
-    - "useJWT"
+    - "useAuthCookie"
