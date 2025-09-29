@@ -1,5 +1,7 @@
 @import 'tailwindcss';
-
+* {
+  scrollbar-width: thin;
+}
 @plugin "daisyui";
 
 /* Thème custom Genesis */

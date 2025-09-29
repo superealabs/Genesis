@@ -4,7 +4,7 @@
   content: |
     const english = {
       messages: {
-        projectName: '${formatReadable(projectName)}',
+        projectName: '${projectName}',
         common: {
           update: 'Update',
           delete: 'Delete',
@@ -20,7 +20,6 @@
           views: 'Views',
           settings: 'Settings',
           home: 'Home',
-          customisation: 'Layout customisation',
         },
         authentication: {
           title: 'Sign in',
@@ -56,9 +55,6 @@
           nav: '{entity} / ',
           list: {
             nav: 'List',
-            filters: 'Filters',
-            addFilter: 'Add filter',
-            removeFilter: 'Remove {{label}} filter',
           },
           create: {
             nav: 'New',
@@ -105,9 +101,50 @@
           add: 'Add',
         },
       },
+      // DateTime formatting
+      dateTimeFormats: {
+        short: {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        },
+        long: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+        },
+        time: {
+          hour: '2-digit',
+          minute: '2-digit',
+        },
+        full: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+          hour: '2-digit',
+          minute: '2-digit',
+        },
+      },
+     numberFormats: {
+        currency: {
+          style: 'currency',
+          currency: 'USD',
+          currencyDisplay: 'symbol', // $1,234.56
+        },
+        decimal: {
+          style: 'decimal',
+          minimumFractionDigits: 2, // 1,234.50
+          maximumFractionDigits: 2,
+        },
+        percent: {
+          style: 'percent',
+          useGrouping: true,
+        },
+      },
     };
     export default english;
-
 
 - id: 2
   name: "French"
@@ -115,7 +152,7 @@
   content: |
     const french = {
       messages: {
-        projectName: '${formatReadable(projectName)}',
+        projectName: '${projectName}',
         common: {
           update: 'Modifier',
           delete: 'Supprimer',
@@ -131,7 +168,6 @@
           views: 'Vues',
           settings: 'Paramètres',
           home: 'Accueil',
-          customisation: 'Personnalisation de l’interface',
         },
         authentication: {
           title: 'Connexion',
@@ -215,58 +251,50 @@
           list: 'Liste',
           add: 'Ajouter',
         },
-      }
-    };
-    export default french;
-
-- id: 4
-  name: "fr"
-  locale: "fr"
-  content: |
-    export default {
-        sidebar: {
-            title: '${formatReadable(projectName)}',
-            dark:  'Sombre',
-            light: 'Clair',
-            logout:'Déconnexion',
+      },
+      // Formatage des dates
+      dateTimeFormats: {
+        short: {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
         },
-        actions: {
-            add:    'Ajouter',
-            edit:   'Modifier',
-            delete: 'Supprimer',
-            save:   'Enregistrer',
-            cancel: 'Annuler',
-            backToList: 'Retour à la liste',
-            create: 'Créer',
-            confirmDelete: 'Confirmer la suppression ?',
-            creating: 'Création...',
-            updating: 'Mise à jour...',
+        long: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
         },
-        state: {
-            loading: 'Chargement…',
-            notFound:'Introuvable',
-            success: 'Succès',
-            error:   'Erreur',
+        time: {
+          hour: '2-digit',
+          minute: '2-digit',
         },
-        list: {
-            title: 'Liste',
-            filters:    'Filtres',
-            apply:      'Appliquer',
-            show:       'Afficher',
-            goToPage:   'Aller à la page',
-            addFilter:  'Ajouter un filtre',
-            removeFilter: 'Supprimer le filtre {{label}}',
+        full: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+          hour: '2-digit',
+          minute: '2-digit',
         },
-        nav: {
-            list: 'Liste',
-            add:  'Saisie',
+      },
+    
+      // Formatage des nombres
+      numberFormats: {
+        currency: {
+          style: 'currency',
+          currency: 'EUR',
+          currencyDisplay: 'symbol', // 1 234,56 €
         },
-        auth: {
-            title: 'Connexion',
-            username: 'Nom d’utilisateur',
-            password: 'Mot de passe',
-            submit: 'Se connecter',
-            invalid: 'Identifiants invalides',
+        decimal: {
+          style: 'decimal',
+          minimumFractionDigits: 2, // 1 234,50
+          maximumFractionDigits: 2,
         },
-    };
-
+        percent: {
+          style: 'percent',
+          useGrouping: true, // 88 %
+        },
+      },
+    }
+    export default french

@@ -62,7 +62,6 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { SelectOption } from '@/models/SelectOption'
 import GenesisButton from '@/core/button/GenesisButton.vue'
 import CheveronLeftIcon from '../icons/CheveronLeftIcon.vue'
 import CheveronRightIcon from '../icons/CheveronRightIcon.vue'
@@ -115,18 +114,6 @@ const pageNumbers = computed(() => {
   }
 
   return pages
-})
-
-const pageSelectOptions = computed(() => {
-  const totalPages = props.end
-  const options: SelectOption[] = []
-  for (let index = 1; index <= totalPages; index++) {
-    options.push({
-      label: index.toString(),
-      value: index,
-    })
-  }
-  return options
 })
 
 function onChangePage(page: number | string) {
