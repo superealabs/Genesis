@@ -1,5 +1,5 @@
 <template>
-  <ul class="menu bg-base-200 rounded-box w-full overflow-hidden">
+  <ul class="menu rounded-box w-full overflow-hidden">
     <li v-for="item in items" :key="item.navTitle" class="">
       <!-- Item with link -->
       <router-link

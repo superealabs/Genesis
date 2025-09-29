@@ -217,7 +217,7 @@ public class FontendGenerator implements IFrontendGenerator{
         String langPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(frontendFramework.getFrontendPaths().langsPath, metadata));
         for (InterfaceLang lang : langs) {
             String content = engine.simpleRender(lang.getContent(),metadata);
-            FileUtils.createFile(langPath,lang.getName().toLowerCase(), "js", content);
+            FileUtils.createFile(langPath,lang.getName().toLowerCase(), context.getFrontendLanguage().getExtension(), content);
         }
         return "";
     }

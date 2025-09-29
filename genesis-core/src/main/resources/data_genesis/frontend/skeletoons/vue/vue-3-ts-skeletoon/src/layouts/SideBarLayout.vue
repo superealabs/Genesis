@@ -8,8 +8,8 @@
       <!-- Sidebar -->
       <aside
         id="navbar"
-        class="bg-base-100 shadow-sm flex flex-col overflow-y-scroll"
-        :style="{ height: `calc(100vh - ${topbarHeight})` }"
+        class="bg-base-100 shadow-sm flex-col overflow-y-scroll"
+        :style="{ height: `calc(100vh - ${topbarHeight})`, width: sidebarWidth }"
       >
         <GenesisNavbar />
       </aside>

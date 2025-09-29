@@ -2,13 +2,14 @@
   <div class="flex items-center gap-2">
     <!-- Custom Dropdown -->
     <div class="dropdown">
-      <label tabindex="0" class="btn m-1 flex items-center gap-2">
+      <label tabindex="0" class="btn m-1 bg-transparent border-0 flex items-center gap-2">
+        <WorldIcon />
         <img
           :src="'https://flagsapi.com/' + $i18n.locale.toUpperCase() + '/shiny/32.png'"
           :alt="$i18n.locale"
           class="w-5 h-5 rounded"
         />
-        <span>{{ $i18n.locale.toUpperCase() }}</span>
+        <!--        <span>{{ $i18n.locale.toUpperCase() }}</span>-->
       </label>
 
       <ul
@@ -34,7 +35,9 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import WorldIcon from '@/core/icons/WorldIcon.vue'
+</script>
 
 <style scoped>
 .menu li {

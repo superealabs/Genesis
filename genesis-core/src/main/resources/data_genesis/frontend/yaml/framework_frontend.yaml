@@ -1551,7 +1551,7 @@
             .toUpperCase()
         })
         </script>
-      destinationPath: "${destinationFolder}/src/core/navbar"
+      destinationPath: "${destinationFolder}/src/core/user"
   additionalFiles:
     - fileType: "Package File"
       fileName: "package"
@@ -9826,17 +9826,6 @@
               {{/each}}
             ],
           },
-          // SETTINGS NAVIGATION
-          {
-            icon: 'fas fa-gear',
-            sectionName: 'Settings',
-            navChilds: [
-              {
-                navTitle: 'Customisation',
-                navLink: '/customisation',
-              },
-            ],
-          },
         ]
         export default navigations
       destinationPath: "${destinationFolder}/src/config"
@@ -9850,7 +9839,6 @@
         import french from '@/lang/french.ts'
         import { createI18n } from 'vue-i18n'
         const i18n = createI18n({
-          legacy: false,
           {{#each langList}}
           {{#if @first}}
           locale: '${this.locale}',
@@ -9880,8 +9868,8 @@
       extension: "css"
       content: |
         @import 'tailwindcss';
-        * {
-          scrollbar-width: thin;
+        .menu {
+          width: auto;
         }
         @plugin "daisyui";
 
@@ -9971,17 +9959,17 @@
         }
         ${additionalCss}
       destinationPath: "${destinationFolder}/src/assets/styles"
-    - fileType: "Banner"
+    - fileType: "App Banner"
       fileName: "GenesisBanner"
       extension: "vue"
       content: |
         <template>
           <header
-            class="w-full bg-base-200 fixed top-0 left-0 text-primary-content shadow-lg z-30"
+            class="w-full fixed top-0 left-0 shadow-sm z-30"
             :style="{ height }"
             aria-region="topbar"
           >
-            <div class="h-full flex items-center justify-between px-4 bg-primary">
+            <div class="h-full flex items-center justify-between px-4">
               <!-- Brand -->
               <div class="flex items-center gap-2 uppercase">
                 <AppLogo />
@@ -9991,7 +9979,8 @@
               <!-- Right side -->
               <div class="flex items-center gap-4">
                 <LanguageSwitcher />
-                <UserNavProfile name="John Doe" />
+                {{#if useJWT}}
+                <UserNavProfile name="John Doe" /> {{/if}}
               </div>
             </div>
           </header>
@@ -9999,9 +9988,9 @@
 
         <script setup lang="ts">
         import LanguageSwitcher from '@/core/language/LanguageSwitcher.vue'
+        import AppLogo from '@/core/AppLogo.vue'
         {{#if useJWT}}
         import UserNavProfile from '@/core/user/UserNavProfile.vue'
-        import AppLogo from '@/core/AppLogo.vue'
         {{/if}}
         defineProps<{
           height?: string
@@ -10026,19 +10015,19 @@
           <tr class="hover:bg-gray-50">
             {{#each fields}}
             {{#if @first}}
-            <td class="px-3 py-2 bg-base-100 sticky text-center left-0">{{ ${minStart(EntityName)}.${this.name} }}</td>
+            <td class="px-3 py-2 sticky bg-base-200 shadow-sm left-0">{{ ${minStart(EntityName)}.${this.name} }}</td>
             {{elseIf this.isForeignKey}}
             <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name}?.getReferenceValue() }}</td>
             {{elseIf this.isDate}}
-            <td class="px-3 py-2">{{ $d(${minStart(EntityName)}.${this.name}, 'long') }}</td>
+            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $d(${minStart(EntityName)}.${this.name}, 'long') : '--/--/--' }}</td>
             {{elseIf this.isNumeric}}
-            <td class="px-3 py-2">{{ $n(${minStart(EntityName)}.${this.name}, 'decimal') }}</td>
+            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $n(${minStart(EntityName)}.${this.name}, 'decimal') : '--' }}</td>
             {{else}}
             <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} }}</td>{{/if}}
             {{/each}}{{removeLine}}
   
-            <td class="px-3 py-2 bg-base-100 sticky right-0">
-              <div class="inline-flex rounded-md shadow">
+            <td class="px-3 py-2 bg-base-200 shadow-sm sticky text-end right-0">
+              <div class="rounded-md">
                 <EntityRowActions @delete-row="deleteRow" @view-row="viewRow" @edit-row="updateRow" />
               </div>
             </td>
@@ -10090,9 +10079,12 @@
               <thead>
                 <tr>
                   {{#each fields}}
-                  <th class="sticky top-0 bg-secondary px-3 py-2 font-bold min-w-35">${formatReadable(this.name)}</th>
+                  {{#if @first}}
+                  <th class="sticky top-0 left-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2">${formatReadable(this.name)}</th>
+                  {{else}}
+                  <th class="sticky top-0 bg-secondary px-3 py-2 font-bold min-w-35 z-1">${formatReadable(this.name)}</th>{{/if}}
                   {{/each}}
-                  <th class="sticky top-0 right-0 bg-secondary px-3 py-2 font-bold z-10"></th>
+                  <th class="sticky top-0 right-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2"></th>
                 </tr>
               </thead>
               <tbody>
@@ -10503,7 +10495,7 @@
                   <div>
                     <label for="${minStart(EntityName)}${majStart(this.name)}" class="block text-sm font-medium mb-1">${formatReadable(this.name)}</label>
                     <div id="${minStart(EntityName)}${majStart(this.name)}" class="input w-full bg-base-100 cursor-default">
-                      <span>{{ ${minStart(EntityName)}.${this.name}{{#if this.isForeignKey}}?.getReferenceValue(){{/if}} ?? '' }}</span>
+                      <span>{{ ${minStart(EntityName)}.${this.name}{{#if this.isForeignKey}}?.getReferenceValue() ?? ''{{elseIf this.isDate}}? $d(${minStart(EntityName)}.${this.name}, 'long'):'--/--/--' {{elseIf this.isNumeric}}? $n(${minStart(EntityName)}.${this.name}, 'decimal'): '--'{{else}} ?? ''{{/if}} }}</span>
                     </div>
                   </div>
                   {{/each}}{{removeLine}}
@@ -10634,10 +10626,6 @@
         import GenesisButton from '@/core/button/GenesisButton.vue'
         import GenesisInput from '@/core/form/GenesisInput.vue'
         {{#if containsForeignKey}}import GenesisSelectSearchCriteria from '@/core/form/GenesisSelectSearchCriteria.vue'{{/if}}
-        {{#each fieldsFK}}
-        import { ${majStart(this.type)} } from '@/models/${majStart(this.type)}Model'
-        {{removeLine}}
-        {{/each}}
       selector: "${majStart(EntityName)}Form"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -10645,9 +10633,9 @@
         <template>
           <div class="card bg-base-100">
             <div class="card-body">
-              <!-- <form @submit.prevent="handleSubmit" class="grid grid-cols-1 w-6/12 gap-4 mx-auto"> -->
-              <form @submit.prevent="handleSubmit" class="">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form @submit.prevent="handleSubmit" class="grid grid-cols-1 w-7/12 gap-4 mx-auto">
+              <!-- <form @submit.prevent="handleSubmit" class=""> -->
+                <div class="grid grid-cols-1 gap-4">
                   {{#each fields}}
                   {{#if this.isPrimaryKey}}{{removeLine}}
                   {{elseIf this.isForeignKey}}
@@ -10659,7 +10647,7 @@
                     :search-function="${minStart(this.type)}SearchField?.multicriteriaSelect.searchFunction"
                     :filters="${minStart(this.type)}SearchField?.multicriteriaSelect.filters"
                     :default-value="${minStart(this.type)}DefaultValue"
-                    @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = selectedValue)"
+                    @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = String(selectedValue))"
                   />
                   {{else}}
                   <!-- ${formatReadable(this.name)} -->

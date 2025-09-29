@@ -4,7 +4,7 @@
   content: |
     const english = {
       messages: {
-        projectName: 'Sprort',
+        projectName: '${projectName}',
         common: {
           update: 'Update',
           delete: 'Delete',
@@ -125,7 +125,7 @@
   content: |
     const french = {
       messages: {
-        projectName: 'Sport',
+        projectName: '${projectName}',
         common: {
           update: 'Modifier',
           delete: 'Supprimer',
