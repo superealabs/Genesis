@@ -11455,7 +11455,7 @@
         }
       destinationPath: "${destinationFolder}/src/services"
     - fileType: "SettingsMenu"
-      fileName: "SettingsMenu"
+      fileName: "index"
       extension: "tsx"
       content: |
         // src/components/SettingsMenu/index.tsx
@@ -11605,7 +11605,7 @@
                                         <MenuItem key={lang} value={lang}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                 <span>{getFlagEmoji(lang)}</span>
-                                                <span>{t(`messages.language.${lang}`)}</span>
+                                                <span>{t(`messages.language.$[lang]`)}</span>
                                             </Box>
                                         </MenuItem>
                                     ))}
