@@ -1,10 +1,10 @@
 ${modelType}
 <!-- Header -->
 <header class="header">
-    <h3>${className} / <span class="page-action">Details</span></h3>
+    <h3>${className} / <span class="page-action" data-i18n="details"></span></h3>
     <button class="btn-primary" type="button" onclick="window.location.href='${backLink}'">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
-            <title>Previous Page</title>
+            <title data-i18n="previous_page"></title>
             <g id="Layer_2" data-name="Layer 2">
                 <g id="Layer_1-2" data-name="Layer 1">
                     <g id="arrow_back-1" data-name="arrow back-1">
@@ -15,7 +15,7 @@ ${modelType}
                 </g>
             </g>
         </svg>
-        <p>Back to list</p>
+        <p data-i18n="back_list"></p>
     </button>
 </header>
 
@@ -33,8 +33,8 @@ ${modelType}
 
         {{#if !isView}}<div class="form-actions">
             <div class="action-options">
-                <button onclick="window.location.href='${updateLink}'" type="button" class="action-cancel">Update</button>
-                <button ${deleteLink} type="button" class="btn-delete action-save">Delete</button>
+                <button onclick="window.location.href='${updateLink}'" type="button" class="action-cancel"><span data-i18n="update"></span></button>
+                <button ${deleteLink} type="button" class="btn-delete action-save"><span data-i18n="delete"></span></button>
             </div>
         </div>
 
@@ -46,14 +46,17 @@ ${modelType}
             <div class="modal-box">
                 <button type="button" id="cancelBtn" class="btn-cancel">&times;</button>
                 <div class="warning-icon">⚠️</div>
-                <h3>Are you sure you want to delete ${className} with id "<span id="${className}IdText"></span>"?</h3>
-                <p>This action cannot be undone.</p>
+                <h3><span data-i18n="delete_confirmation"></span> "<span id="${className}IdText"></span>"?</h3>
+                <p data-i18n="delete_warning"></p>
                 <form id="deleteForm" method="post" ${deleteLink}>
                     @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" id="${className}Id" />
-                    <button type="submit" class="btn-confirm">Delete</button>
+                    {{#each fields}}{{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}
+                    <input type="hidden" name="${this.name}" id="${className}Id" />{{/if}}{{else}}{{removeLine}}{{/if}}
+                    {{/each}}{{removeLine}}
+                    <button type="submit" class="btn-confirm"><span data-i18n="delete"></span></button>
                 </form>
             </div>
         </div>{{/if}}
     </form>
 </main>
+{{#if !isView}}${scriptSection}{{/if}}

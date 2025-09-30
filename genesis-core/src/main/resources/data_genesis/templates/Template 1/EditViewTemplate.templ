@@ -1,10 +1,10 @@
 ${modelType}
 <!-- Header -->
 <header class="header">
-    <h3>${className} / <span class="page-action">Edit</span></h3>
+    <h3>${className} / <span class="page-action" data-i18n="edit"></span></h3>
     <button class="btn-primary" type="button" onclick="window.location.href='${backLink}'">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
-            <title>Previous Page</title>
+            <title data-i18n="previous_page"></title>
             <g id="Layer_2" data-name="Layer 2">
                 <g id="Layer_1-2" data-name="Layer 1">
                     <g id="arrow_back-1" data-name="arrow back-1">
@@ -15,7 +15,7 @@ ${modelType}
                 </g>
             </g>
         </svg>
-        <p>Back to list</p>
+        <p data-i18n="back_list"></p>
     </button>
 </header>
 
@@ -67,17 +67,17 @@ ${modelType}
                 {{#if !this.isNullable}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
             </label>
             <select ${selectTagHelper}>
-                <option value="">-- Select ${this.type} --</option>
+                <option value="">-- <span data-i18n="select"></span> ${this.type} --</option>
             </select>
             <span ${selectValidationTagHelper} class="field-validation-error"></span>
         </div>
         {{/each}}{{removeLine}}
 
         <div class="form-actions">
-            <button type="reset" class="reset-button">Reset to original</button>
+            <button type="reset" class="reset-button"><span data-i18n="reset"></span></button>
             <div class="action-options">
-                <button onclick="window.location.href='${backLink}'" type="button" class="action-cancel">Cancel</button>
-                <button type="submit" class="action-save">Update</button>
+                <button onclick="window.location.href='${backLink}'" type="button" class="action-cancel"><span data-i18n="cancel"></span></button>
+                <button type="submit" class="action-save"><span data-i18n="update"></span></button>
             </div>
         </div>
     </form>

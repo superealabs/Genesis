@@ -1,10 +1,10 @@
 ${modelType}
 <!-- Header -->
 <header class="header">
-    <h3>${className} / <span class="page-action">List</span></h3>
+    <h3>${className} / <span class="page-action" data-i18n="list"></span></h3>
     {{#if !isView}}<button class="btn-primary" type="button" onclick="window.location.href='${createLink}'">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 59">
-            <title>Add</title>
+            <title data-i18n="create"></title>
             <g id="Layer_2" data-name="Layer 2">
                 <g id="Layer_1-2" data-name="Layer 1">
                     <g id="add">
@@ -15,7 +15,7 @@ ${modelType}
                 </g>
             </g>
         </svg>
-        <p>New ${className}</p>
+        <p data-i18n="create"></p>
     </button>{{/if}}
 </header>
 
@@ -25,7 +25,7 @@ ${modelType}
     <!-- Content Header -->
     <div class="content-header">
         <form method="post" ${filterLink} id="inputContainer" class="filter-container">
-            <p>Filter:</p>
+            <p data-i18n="filter"></p>
 
             <!-- Dropdown Add -->
             <div class="dropdown">
@@ -33,7 +33,7 @@ ${modelType}
                     style="display:flex; align-items:center; gap:5px;">
                     <!-- Icône Add -->
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 59" width="18">
-                        <title>Add</title>
+                        <title data-i18n="add"></title>
                         <path d="M56.5,32H2.5a2.5,2.5,0,0,1,0-5h54a2.5,2.5,0,0,1,0,5Z" />
                         <path
                             d="M29.5,59A2.5,2.5,0,0,1,27,56.5V2.5a2.5,2.5,0,0,1,5,0v54A2.5,2.5,0,0,1,29.5,59Z" />
@@ -53,12 +53,12 @@ ${modelType}
 
             <!-- Bouton Apply -->
             <button class="btn-third" type="submit" style="display:flex; align-items:center; gap:5px;">
-                Apply
+                <span data-i18n="apply"></span>
             </button>
         </form>
 
         <div class="showing-content">
-            <p>Showing: </p>
+            <p data-i18n="showing"></p>
             <select class="select" onchange="window.location.href=${pageSizeChangeLink}">
                 {{#each pageSizesList}}
                 <option value="${this}" ${pageSizeTagHelper}>${this}</option>
@@ -68,7 +68,7 @@ ${modelType}
         <div class="dropdown">
             <button id="export-btn" class="btn-secondary">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 53 59">
-                    <title>Export</title>
+                    <title data-i18n="export"></title>
                     <g id="Layer_2" data-name="Layer 2">
                         <g id="Layer_1-2" data-name="Layer 1">
                             <g id="export">
@@ -82,7 +82,7 @@ ${modelType}
                         </g>
                     </g>
                 </svg>
-                Export
+                <span data-i18n="export"></span>
             </button>
 
             <!-- Menu déroulant -->
@@ -99,7 +99,7 @@ ${modelType}
                 <input class="filter-input" type="${this.type}" ${inputTagHelper}>
                 <button type="button" class="remove-item">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55 55" width="14">
-                        <title>Remove</title>
+                        <title data-i18n="remove"></title>
                         <g id="Layer_2" data-name="Layer 2">
                             <g id="Layer_1-2" data-name="Layer 1">
                                 <g id="close">
@@ -119,11 +119,11 @@ ${modelType}
             <div class="filter-content" data-type="${this.name}">
                 <p>${this.name} : </p>
                 <select name="${this.columnNameField}" id="${this.columnNameField}" ${selectTagHelper}>
-                    <option value="">-- Select ${this.type} --</option>
+                    <option value="">-- <span data-i18n="select"></span> ${this.type} --</option>
                 </select>
                 <button type="button" class="remove-item">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55 55" width="14">
-                        <title>Remove</title>
+                        <title data-i18n="remove"></title>
                         <g id="Layer_2" data-name="Layer 2">
                             <g id="Layer_1-2" data-name="Layer 1">
                                 <g id="close">
@@ -170,7 +170,7 @@ ${modelType}
                         <td class="actions-group">
                             <button class="action-button" onclick="window.location.href='${detailsLink}'">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 59">
-                                    <title>Details</title>
+                                    <title data-i18n="details"></title>
                                     <g id="Layer_2" data-name="Layer 2">
                                         <g id="Layer_1-2" data-name="Layer 1">
                                             <g id="assignment">
@@ -193,7 +193,7 @@ ${modelType}
                             </button>
                             {{#if !isView}}<button class="action-button" onclick="window.location.href='${updateLink}'">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 59">
-                                    <title>Edit</title>
+                                    <title data-i18n="edit"></title>
                                     <g id="Layer_2" data-name="Layer 2">
                                         <g id="Layer_1-2" data-name="Layer 1">
                                             <g id="edit">
@@ -210,7 +210,7 @@ ${modelType}
                             </button>
                             <button class="btn-delete action-button" ${deleteTagHelper}>
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55.78 59">
-                                    <title>Delete</title>
+                                    <title data-i18n="delete"></title>
                                     <g id="Layer_2" data-name="Layer 2">
                                         <g id="Layer_1-2" data-name="Layer 1">
                                             <g id="delete">
@@ -243,14 +243,14 @@ ${modelType}
             <div class="modal-box">
                 <button type="button" id="cancelBtn" class="btn-cancel">&times;</button>
                 <div class="warning-icon">⚠️</div>
-                <h3>Are you sure you want to delete ${className} with id "<span id="${className}IdText"></span>"?</h3>
-                <p>This action cannot be undone.</p>
+                <h3><span data-i18n="delete_confirmation"></span> "<span id="${className}IdText"></span>"?</h3>
+                <p data-i18n="delete_warning"></p>
                 <form id="deleteForm" method="post" ${deleteLink}>
                     @Html.AntiForgeryToken()
                     {{#each fields}}{{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}
                     <input type="hidden" name="${this.name}" id="${className}Id" />{{/if}}{{else}}{{removeLine}}{{/if}}
                     {{/each}}{{removeLine}}
-                    <button type="submit" class="btn-confirm">Delete</button>
+                    <button type="submit" class="btn-confirm"><span data-i18n="delete"></span></button>
                 </form>
             </div>
         </div>{{/if}}
@@ -263,7 +263,7 @@ ${modelType}
             <a href="${previousPageLink}"
                     class="prev ${previousClassCondition}">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
-                    <title>Previous Page</title>
+                    <title data-i18n="previous_page"></title>
                     <g id="Layer_2" data-name="Layer 2">
                         <g id="Layer_1-2" data-name="Layer 1">
                             <g id="arrow_back-1" data-name="arrow back-1">
@@ -283,7 +283,7 @@ ${modelType}
             <a href="${nextPageLink}"
                     class="next ${nextClassCondition}">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
-                    <title>Next Page</title>
+                    <title data-i18n="next_page"></title>
                     <g id="Layer_2" data-name="Layer 2">
                         <g id="Layer_1-2" data-name="Layer 1">
                             <g id="arrow_back-2" data-name="arrow back-2">
@@ -300,13 +300,13 @@ ${modelType}
         <!-- Go directly to a page -->
         <div class="ongoing-page">
             <form method="get" class="ongoing-page" action="${onGoingPageLink}">
-                <p>Going to page: </p>
+                <p data-i18n="ongoing_page"></p>
                 <select class="select" name="page" id="page">
                     ${onGoingPagesLoop}
                 </select>
                 <input type="hidden" name="pageSize" ${onGoingPageSizeTagHelper} />
                 <input type="hidden" name="sortOrder" ${onGoingSortOrderTagHelper} />
-                <button type="submit" class="ongoing-button">Go</button>
+                <button type="submit" class="ongoing-button"><span data-i18n="go"></span></button>
             </form>
         </div>
     </div>

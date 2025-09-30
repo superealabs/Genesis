@@ -22,7 +22,7 @@ ${currentViewContext}
                 <h3>${projectName}<span class="app-name">App</span></h3>
             </div>
             <nav class="sidebar-nav">
-                <p class="menu-title">ENTITIES</p>
+                <p class="menu-title" data-i18n="entities"></p>
                 <ul>
                     {{#each entities}}
                     <li><a ${navLink}>${this.entityName}</a></li>
@@ -37,7 +37,7 @@ ${currentViewContext}
                 <!-- Settings button -->
                 <button class="settings-btn" id="settingsBtn">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 57.76 59">
-                        <title>settings</title>
+                        <title data-i18n="settings"></title>
                         <g id="Layer_2" data-name="Layer 2">
                             <g id="Layer_1-2" data-name="Layer 1">
                                 <g id="settings">
@@ -49,24 +49,24 @@ ${currentViewContext}
                             </g>
                         </g>
                     </svg>
-                    <span>Settings</span>
+                    <span data-i18n="settings"></span>
                 </button>
                 <!-- Popup Menu -->
                 <div class="settings-menu" id="settingsMenu">
                     <ul>
-                        <!-- <li>
-                            <label for="languageSelect">Language</label>
-                            <select id="languageSelect">
+                        <li>
+                            <label for="langSelect" data-i18n="language"></label>
+                            <select id="langSelect">
                                 <option value="en">EN</option>
                                 <option value="fr">FR</option>
                             </select>
-                        </li> -->
+                        </li>
 
                         <li>
-                            <label for="themeSelect">Theme</label>
+                            <label for="themeSelect" data-i18n="theme"></label>
                             <select id="themeSelect">
-                                <option value="light">Light</option>
-                                <option value="dark">Dark</option>
+                                <option value="light" data-i18n="light"></option>
+                                <option value="dark" data-i18n="dark"></option>
                             </select>
                         </li>
 
@@ -76,7 +76,7 @@ ${currentViewContext}
                         <li class="log-out">
                             <form ${logoutTagHelper} method="post" id="logoutForm">
                                 <button type="submit" class="logout-button">
-                                    Log out
+                                    <span data-i18n="log_out"></span>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="logout-icon" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -93,6 +93,7 @@ ${currentViewContext}
         <!-- Main Section -->
         <div class="main-section">
             <script src="${assetsImportLink}/js/theme.js"></script>
+            <script src="${assetsImportLink}/js/lang.js"></script>
             ${callContent}
         </div>
 
