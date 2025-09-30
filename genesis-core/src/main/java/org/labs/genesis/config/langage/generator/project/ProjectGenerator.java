@@ -79,11 +79,11 @@ public class ProjectGenerator {
     public ProjectGenerator() {
     }
 
-    public static void renderAndCopyFiles(List<Project.ProjectFiles> projectFiles, HashMap<String, Object> initializeHashMap) throws IOException {
+    public static void renderAndCopyFiles(List<Project.ProjectFiles> projectFiles, HashMap<String, Object> initializeHashMap) throws Exception {
         for (Project.ProjectFiles projectFile : projectFiles) {
             String sourceFilePath = projectFile.getSourcePath() + projectFile.getFileName();
             String destinationFilePathSimple = projectFile.getDestinationPath() + projectFile.getFileName();
-            String destinationFilePath = engine.simpleRender(destinationFilePathSimple, initializeHashMap);
+            String destinationFilePath = engine.render(destinationFilePathSimple, initializeHashMap);
 
             System.out.println("Rendering and copying file:");
             System.out.println("Source: " + sourceFilePath);
@@ -93,10 +93,10 @@ public class ProjectGenerator {
         }
     }
 
-    public static void renderAndCopyFolders(List<Project.ProjectFolders> projectFolders, HashMap<String, Object> initializeHashMap) throws IOException {
+    public static void renderAndCopyFolders(List<Project.ProjectFolders> projectFolders, HashMap<String, Object> initializeHashMap) throws Exception {
         for (Project.ProjectFolders projectFolder : projectFolders) {
             String sourceFolderPath = projectFolder.getSourcePath();
-            String destinationFolderPath = engine.simpleRender(projectFolder.getDestinationPath() + projectFolder.getFolderName(), initializeHashMap);
+            String destinationFolderPath = engine.render(projectFolder.getDestinationPath() + projectFolder.getFolderName(), initializeHashMap);
 
             System.out.println("Rendering and copying folder:");
             System.out.println("Source folder: " + sourceFolderPath);
@@ -108,7 +108,7 @@ public class ProjectGenerator {
 
     public static void renderFilesEdits(List<FilesEdit> filesEdits, HashMap<String, Object> initializeHashMap) throws Exception {
         for (FilesEdit projectFile : filesEdits) {
-            String destinationFilePath = engine.simpleRender(projectFile.getDestinationPath(), initializeHashMap);
+            String destinationFilePath = engine.render(projectFile.getDestinationPath(), initializeHashMap);
             String fileName = engine.render(projectFile.getFileName(), initializeHashMap);
             String content = engine.render(projectFile.getContent(), initializeHashMap);
             String extension = projectFile.getExtension();
@@ -161,7 +161,7 @@ public class ProjectGenerator {
             var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
             projectFilesEditsHashMap.putAll(mapDaoGlobal);
         }
-        renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
+        renderAndCopyFiles(context.getProject().getProjectFiles(), projectFilesEditsHashMap);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
