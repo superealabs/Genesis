@@ -11706,7 +11706,7 @@
         import LanguageDetector from 'i18next-browser-languagedetector';
         
         {{#each langList}}
-        import ${lowerCase(this.name)} from './locales/${lowerCase(this.name)}.js'
+        import ${lowerCase(this.name)} from './locales/${lowerCase(this.name)}'
         {{/each}}{{removeLine}}
 
         i18n
