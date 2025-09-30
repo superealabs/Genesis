@@ -4673,7 +4673,7 @@
 
           constructor(
             @InjectConnection() private readonly connection: Connection,
-          ) {}
+          ) { }
 
           async onModuleInit() {
             this.dbType = await this.detectDatabaseType();
@@ -4690,7 +4690,7 @@
               if (version.includes('microsoft sql server')) return DbType.SQLSERVER;
               if (version.includes('oracle')) return DbType.ORACLE;
 
-              throw new Error(`SGBD non pris en charge: ${version}`);
+              throw new Error("SGBD non pris en charge");
             } finally {
               await queryRunner.release();
             }
@@ -4709,7 +4709,7 @@
             if (this.processedTables.has(tableName)) return;
 
             this.processedTables.add(tableName);
-            this.logger.log(`Désactivation des contraintes pour la table: ${tableName}`);
+            this.logger.log("Désactivation des contraintes pour la table: " + tableName);
 
             switch (this.dbType) {
               case DbType.POSTGRESQL:
@@ -4725,22 +4725,22 @@
                 await this.disableOracleConstraints(tableName);
                 break;
               default:
-                throw new Error(`SGBD non supporté: ${this.dbType}`);
+                throw new Error("SGBD non supporté: " + this.dbType);
             }
           }
 
           async restoreConstraints(): Promise<void> {
-            this.logger.log(`Restauration de ${this.restoreQueries.length} contraintes`);
+            this.logger.log("Restauration de " + this.restoreQueries.length + " contraintes");
 
             const queryRunner = this.connection.createQueryRunner();
 
             try {
               for (const query of this.restoreQueries.reverse()) {
                 try {
-                  this.logger.debug(`Exécution: ${query}`);
+                  this.logger.debug("Exécution: " + query);
                   await queryRunner.query(query);
                 } catch (error) {
-                  this.logger.error(`Erreur lors de la restauration: ${query}`, error);
+                  this.logger.error("Erreur lors de la restauration:" + query, error);
                 }
               }
               this.restoreQueries = [];
@@ -4763,11 +4763,11 @@
               `, [tableName]);
 
               for (const constraint of referencedConstraints) {
-                const restoreSQL = `ALTER TABLE ${constraint.source_table} ADD CONSTRAINT ${constraint.conname} ${constraint.definition}`;
+                const restoreSQL = "ALTER TABLE " + constraint.source_table + " ADD CONSTRAINT " + constraint.conname + " " + constraint.definition;
                 this.restoreQueries.push(restoreSQL);
 
                 await queryRunner.query(
-                  `ALTER TABLE ${constraint.source_table} DROP CONSTRAINT ${constraint.conname} CASCADE`
+                  "ALTER TABLE " + constraint.source_table + " DROP CONSTRAINT " + constraint.conname + " CASCADE"
                 );
               }
 
@@ -4779,11 +4779,11 @@
               `, [tableName]);
 
               for (const constraint of localConstraints) {
-                const restoreSQL = `ALTER TABLE ${tableName} ADD CONSTRAINT ${constraint.conname} ${constraint.definition}`;
+                const restoreSQL = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + constraint.conname + " " + constraint.definition;
                 this.restoreQueries.push(restoreSQL);
 
                 await queryRunner.query(
-                  `ALTER TABLE ${tableName} DROP CONSTRAINT ${constraint.conname} CASCADE`
+                  "ALTER TABLE " + tableName + " DROP CONSTRAINT " + constraint.conname + " CASCADE"
                 );
               }
 
@@ -4800,11 +4800,11 @@
               `, [tableName]);
 
               for (const column of notNullColumns) {
-                const restoreSQL = `ALTER TABLE ${tableName} ALTER COLUMN ${column.column_name} SET NOT NULL`;
+                const restoreSQL = "ALTER TABLE " + tableName + " ALTER COLUMN " + column.column_name + " SET NOT NULL";
                 this.restoreQueries.push(restoreSQL);
 
                 await queryRunner.query(
-                  `ALTER TABLE ${tableName} ALTER COLUMN ${column.column_name} DROP NOT NULL`
+                  "ALTER TABLE " + tableName + " ALTER COLUMN " + column.column_name + " DROP NOT NULL"
                 );
               }
             } finally {
@@ -4812,32 +4812,31 @@
             }
           }
 
-            private async disableMySQLConstraints(tableName: string): Promise<void> {
-                const queryRunner = this.connection.createQueryRunner();
+          private async disableMySQLConstraints(tableName: string): Promise<void> {
+            const queryRunner = this.connection.createQueryRunner();
 
-                try {
-                    const schema = await queryRunner.query('SELECT DATABASE() as db');
-                    const dbName = schema[0].db;
+            try {
+              const schema = await queryRunner.query('SELECT DATABASE() as db');
+              const dbName = schema[0].db;
 
-                    // FOREIGN KEYS
-                    const foreignKeys = await queryRunner.query(`
+              // FOREIGN KEYS
+              const foreignKeys = await queryRunner.query(`
                         SELECT constraint_name, column_name, referenced_table_name, referenced_column_name 
                         FROM information_schema.key_column_usage 
                         WHERE table_schema = ? AND table_name = ? AND referenced_table_name IS NOT NULL
                     `, [dbName, tableName]);
 
-                    for (const fk of foreignKeys) {
-                        const restoreSQL = `ALTER TABLE ${tableName} ADD CONSTRAINT \`${fk.constraint_name}\` 
-                                        FOREIGN KEY (\`${fk.column_name}\`) REFERENCES \`${fk.referenced_table_name}\`(\`${fk.referenced_column_name}\`)`;
-                        this.restoreQueries.push(restoreSQL);
+              for (const fk of foreignKeys) {
+                const restoreSQL = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + fk.constraint_name + " FOREIGN KEY " + fk.column_name + " REFERENCES " + fk.referenced_table_name + " (" + fk.referenced_column_name + ")";
+                this.restoreQueries.push(restoreSQL);
 
-                        await queryRunner.query(
-                            `ALTER TABLE ${tableName} DROP FOREIGN KEY \`${fk.constraint_name}\``
-                        );
-                    }
+                await queryRunner.query(
+                  "ALTER TABLE " + tableName + " DROP FOREIGN KEY " + fk.constraint_name
+                );
+              }
 
-                    // Contraintes UNIQUE
-                    const uniqueConstraints = await queryRunner.query(`
+              // Contraintes UNIQUE
+              const uniqueConstraints = await queryRunner.query(`
                         SELECT DISTINCT tc.constraint_name 
                         FROM information_schema.table_constraints tc 
                         WHERE tc.table_schema = ? 
@@ -4846,12 +4845,12 @@
                         AND tc.constraint_name != 'PRIMARY'
                     `, [dbName, tableName]);
 
-                    for (const unique of uniqueConstraints) {
-                        const name = unique.constraint_name;
+              for (const unique of uniqueConstraints) {
+                const name = unique.constraint_name;
 
-                        try {
-                            // Récupérer toutes les colonnes de la contrainte UNIQUE
-                            const columns = await queryRunner.query(`
+                try {
+                  // Récupérer toutes les colonnes de la contrainte UNIQUE
+                  const columns = await queryRunner.query(`
                                 SELECT column_name 
                                 FROM information_schema.key_column_usage 
                                 WHERE constraint_schema = ? 
@@ -4860,102 +4859,103 @@
                                 ORDER BY ordinal_position
                             `, [dbName, tableName, name]);
 
-                            const columnsStr = columns.map((col: any) => `\`${col.column_name}\``).join(',');
+                  const columnsStr = columns.map((col: any) => '`' + col.column_name + '`').join(',');
+                  // Créer la commande de restauration
+                  const restoreSQL = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name + " UNIQUE (" + columnsStr + ")";
+                  this.restoreQueries.push(restoreSQL);
 
-                            // Créer la commande de restauration
-                            const restoreSQL = `ALTER TABLE ${tableName} ADD CONSTRAINT \`${name}\` UNIQUE (${columnsStr})`;
-                            this.restoreQueries.push(restoreSQL);
+                  // Supprimer la contrainte UNIQUE
+                  await queryRunner.query("ALTER TABLE DROP INDEX " + name);
+                  console.log("Dropped UNIQUE constraint:" + name);
 
-                            // Supprimer la contrainte UNIQUE
-                            await queryRunner.query(`ALTER TABLE ${tableName} DROP INDEX \`${name}\``);
-                            console.log(`Dropped UNIQUE constraint: ${name}`);
-
-                        } catch (error) {
-                            console.error(`Failed to drop UNIQUE constraint: ${name}`);
-                            console.error(`Reason: ${error}`);
-                        }
-                    }
-
-                    // Contraintes CHECK
-                    await this.disableMySQLCheckConstraints(tableName, dbName, queryRunner);
-
-                    // Colonnes avec valeur par défaut explicite (sauf auto_increment)
-                    const columnsWithDefault = await queryRunner.query(`
-                        SELECT column_name, column_type, data_type, column_default, extra 
-                        FROM information_schema.columns 
-                        WHERE table_schema = ? AND table_name = ? 
-                        AND column_default IS NOT NULL
-                    `, [dbName, tableName]);
-
-                    for (const col of columnsWithDefault) {
-                        const colName = col.column_name;
-                        const typeDef = col.column_type;
-                        const dataType = col.data_type;
-                        const defaultValue = col.column_default;
-                        const extra = col.extra;
-
-                        // Exclure les colonnes auto_increment
-                        if (!extra || !extra.includes('auto_increment')) {
-                            // Gestion spéciale de CURDATE() et autres fonctions
-                            const defaultValueExpr = this.formatDefaultValueMySQL(defaultValue);
-
-                            // Enregistre la commande de restauration
-                            const restoreSQL = `ALTER TABLE ${tableName} ALTER COLUMN \`${colName}\` SET DEFAULT ${defaultValueExpr}`;
-                            this.restoreQueries.push(restoreSQL);
-                        }
-                    }
-
-                    // NOT NULL (sauf colonnes AUTO_INCREMENT)
-                    const notNullColumns = await queryRunner.query(`
-                        SELECT column_name, column_type, extra 
-                        FROM information_schema.columns 
-                        WHERE table_schema = ? AND table_name = ? AND is_nullable = 'NO'
-                    `, [dbName, tableName]);
-
-                    for (const col of notNullColumns) {
-                        const colName = col.column_name;
-                        const typeDef = col.column_type;
-                        const extra = col.extra;
-
-                        if (!extra || !extra.includes('auto_increment')) {
-                            const modifySQL = `ALTER TABLE ${tableName} MODIFY \`${colName}\` ${typeDef}`;
-                            await queryRunner.query(modifySQL);
-                            this.restoreQueries.push(`${modifySQL} NOT NULL`);
-                        }
-                    }
-
-                } finally {
-                    await queryRunner.release();
+                } catch (error) {
+                  console.error("Failed to drop UNIQUE constraint:" + name);
+                  console.error("Reason: " + error);
                 }
+              }
+
+              // Contraintes CHECK
+              await this.disableMySQLCheckConstraints(tableName, dbName, queryRunner);
+
+              // Colonnes avec valeur par défaut explicite (sauf auto_increment)
+              const columnsWithDefault = await queryRunner.query(
+                'SELECT column_name, column_type, data_type, column_default, extra ' +
+                'FROM information_schema.columns ' +
+                'WHERE table_schema = ? AND table_name = ? ' +
+                'AND column_default IS NOT NULL',
+                [dbName, tableName]
+              );
+
+              for (const col of columnsWithDefault) {
+                const colName = col.column_name;
+                const typeDef = col.column_type;
+                const dataType = col.data_type;
+                const defaultValue = col.column_default;
+                const extra = col.extra;
+
+                // Exclure les colonnes auto_increment
+                if (!extra || !extra.includes('auto_increment')) {
+                  // Gestion spéciale de CURDATE() et autres fonctions
+                  const defaultValueExpr = this.formatDefaultValueMySQL(defaultValue);
+
+                  // Enregistre la commande de restauration
+                  const restoreSQL = 'ALTER TABLE ' + tableName + ' ALTER COLUMN `' + colName + '` SET DEFAULT ' + defaultValueExpr;
+                  this.restoreQueries.push(restoreSQL);
+                }
+              }
+
+              // NOT NULL (sauf colonnes AUTO_INCREMENT)
+              const notNullColumns = await queryRunner.query(
+                'SELECT column_name, column_type, extra ' +
+                'FROM information_schema.columns ' +
+                'WHERE table_schema = ? AND table_name = ? AND is_nullable = \'NO\'',
+                [dbName, tableName]
+              );
+
+              for (const col of notNullColumns) {
+                const colName = col.column_name;
+                const typeDef = col.column_type;
+                const extra = col.extra;
+
+                if (!extra || !extra.includes('auto_increment')) {
+                  const modifySQL = 'ALTER TABLE ' + tableName + ' MODIFY `' + colName + '` ' + typeDef;
+                  await queryRunner.query(modifySQL);
+                  this.restoreQueries.push(modifySQL + ' NOT NULL');
+                }
+              }
+
+            } finally {
+              await queryRunner.release();
             }
+          }
 
-            private formatDefaultValueMySQL(defaultValue: string): string {
-                if (!defaultValue) return '';
+          private formatDefaultValueMySQL(defaultValue: string): string {
+            if (!defaultValue) return '';
 
-                // Convertir CURDATE() en CURRENT_DATE
-                if (defaultValue.toUpperCase() === 'CURDATE()') {
-                    return '(CURRENT_DATE)';
-                }
-                // Convertir les autres fonctions courantes si nécessaire
-                else if (defaultValue.toUpperCase() === 'CURTIME()') {
-                    return '(CURRENT_TIME)';
-                }
-                else if (defaultValue.toUpperCase() === 'NOW()' || defaultValue.toUpperCase() === 'CURRENT_TIMESTAMP()') {
-                    return '(CURRENT_TIMESTAMP)';
-                }
-                // Conserver les expressions spéciales entre parenthèses
-                else if (defaultValue.startsWith('(') && defaultValue.endsWith(')')) {
-                    return defaultValue; // e.g. (UUID()), (RAND() * 100)
-                }
-                // Chaînes de caractères (déjà correctement échappées par MySQL)
-                else {
-                    return defaultValue;
-                }
+            // Convertir CURDATE() en CURRENT_DATE
+            if (defaultValue.toUpperCase() === 'CURDATE()') {
+              return '(CURRENT_DATE)';
             }
+            // Convertir les autres fonctions courantes si nécessaire
+            else if (defaultValue.toUpperCase() === 'CURTIME()') {
+              return '(CURRENT_TIME)';
+            }
+            else if (defaultValue.toUpperCase() === 'NOW()' || defaultValue.toUpperCase() === 'CURRENT_TIMESTAMP()') {
+              return '(CURRENT_TIMESTAMP)';
+            }
+            // Conserver les expressions spéciales entre parenthèses
+            else if (defaultValue.startsWith('(') && defaultValue.endsWith(')')) {
+              return defaultValue; // e.g. (UUID()), (RAND() * 100)
+            }
+            // Chaînes de caractères (déjà correctement échappées par MySQL)
+            else {
+              return defaultValue;
+            }
+          }
 
-            private async disableMySQLCheckConstraints(tableName: string, schema: string, queryRunner: any): Promise<void> {
-                // 1. Contraintes CHECK au niveau TABLE et niveau COLONNE
-                const checkConstraints = await queryRunner.query(`
+          private async disableMySQLCheckConstraints(tableName: string, schema: string, queryRunner: any): Promise<void> {
+            // 1. Contraintes CHECK au niveau TABLE et niveau COLONNE
+            const checkConstraints = await queryRunner.query(`
                     SELECT cc.constraint_name, cc.check_clause 
                     FROM information_schema.table_constraints tc 
                     JOIN information_schema.check_constraints cc 
@@ -4966,282 +4966,288 @@
                     AND tc.constraint_type = 'CHECK'
                 `, [schema, tableName]);
 
-                for (const ch of checkConstraints) {
-                    const name = ch.constraint_name;
-                    let clause = ch.check_clause;
+            for (const ch of checkConstraints) {
+              const name = ch.constraint_name;
+              let clause = ch.check_clause;
 
-                    // Déséscape les caractères Java (similaire à StringEscapeUtils.unescapeJava)
-                    clause = clause.replace(/\\'/g, "'");
-                    clause = clause.replace(/_utf8mb4'/g, "'"); // remplace _utf8mb4' par '
+              // Déséscape les caractères Java (similaire à StringEscapeUtils.unescapeJava)
+              clause = clause.replace(/\\'/g, "'");
+              clause = clause.replace(/_utf8mb4'/g, "'"); // remplace _utf8mb4' par '
 
-                    if (clause.toLowerCase().includes('regexp_like')) {
-                        clause = `(${clause})`;
-                    }
+              if (clause.toLowerCase().includes('regexp_like')) {
+                clause = "(" + clause + ")"; // MySQL nécessite des parenthèses autour de l'expression
+              }
 
-                    try {
-                        await queryRunner.query(`ALTER TABLE ${tableName} DROP CONSTRAINT \`${name}\``);
-                        this.restoreQueries.push(`ALTER TABLE ${tableName} ADD CONSTRAINT \`${name}\` CHECK ${clause}`);
-                    } catch (error) {
-                        console.error(`Failed to drop table-level CHECK constraint: ${name}`);
-                    }
-                }
+              try {
+                await queryRunner.query('ALTER TABLE ' + tableName + ' DROP CONSTRAINT `' + name + '`');
+                this.restoreQueries.push('ALTER TABLE ' + tableName + ' ADD CONSTRAINT `' + name + '` CHECK ' + clause);
+              } catch (error) {
+                console.error('Failed to drop table-level CHECK constraint: ' + name);
+              }
             }
+          }
 
-            private async disableSQLServerConstraints(tableName: string): Promise<void> {
-                const queryRunner = this.connection.createQueryRunner();
-                const schema = 'dbo';
-                const qualifiedTableName = `[${schema}].[${tableName}]`;
+          private async disableSQLServerConstraints(tableName: string): Promise<void> {
+            const queryRunner = this.connection.createQueryRunner();
+            const schema = 'dbo';
+            const qualifiedTableName = '[' + schema + '].[' + tableName + ']';
 
-                await queryRunner.connect();
+            await queryRunner.connect();
+
+            try {
+              // Begin transaction
+              await queryRunner.query('BEGIN TRANSACTION');
+
+              // 1. UNIQUE Constraints
+              const uniqueConstraints = await queryRunner.query(
+                'SELECT i.name AS constraint_name, ' +
+                'STRING_AGG(COL_NAME(ic.object_id, ic.column_id), \',\') AS columns ' +
+                'FROM sys.indexes i ' +
+                'JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id ' +
+                'JOIN sys.tables t ON i.object_id = t.object_id ' +
+                'JOIN sys.schemas s ON t.schema_id = s.schema_id ' +
+                'WHERE i.is_unique = 1 AND i.is_primary_key = 0 ' +
+                'AND t.name = ? AND s.name = ? ' +
+                'GROUP BY i.name',
+                [tableName, schema]
+              );
+
+              for (const unique of uniqueConstraints) {
+                const name = unique.constraint_name;
+                const columns = unique.columns;
+
+                if (!name || !columns) {
+                  console.warn('Skipping invalid UNIQUE constraint for table ' + schema + '.' + tableName + ': name=' + name + ', columns=' + columns);
+                  continue;
+                }
+
+                const restoreSQL = 'ALTER TABLE ' + qualifiedTableName + ' ADD CONSTRAINT [' + name + '] UNIQUE ([' + columns.replace(/,/g, '],[') + '])';
+                this.restoreQueries.push(restoreSQL);
 
                 try {
-                    // Begin transaction
-                    await queryRunner.query('BEGIN TRANSACTION');
-
-                    // 1. UNIQUE Constraints
-                    const uniqueConstraints = await queryRunner.query(`
-                        SELECT i.name AS constraint_name, 
-                        STRING_AGG(COL_NAME(ic.object_id, ic.column_id), ',') AS columns 
-                        FROM sys.indexes i 
-                        JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id 
-                        JOIN sys.tables t ON i.object_id = t.object_id 
-                        JOIN sys.schemas s ON t.schema_id = s.schema_id 
-                        WHERE i.is_unique = 1 AND i.is_primary_key = 0 
-                        AND t.name = ? AND s.name = ? 
-                        GROUP BY i.name
-                    `, [tableName, schema]);
-
-                    for (const unique of uniqueConstraints) {
-                        const name = unique.constraint_name;
-                        const columns = unique.columns;
-
-                        if (!name || !columns) {
-                            console.warn(`Skipping invalid UNIQUE constraint for table ${schema}.${tableName}: name=${name}, columns=${columns}`);
-                            continue;
-                        }
-
-                        const restoreSQL = `ALTER TABLE ${qualifiedTableName} ADD CONSTRAINT [${name}] UNIQUE ([${columns.replace(/,/g, '],[')}])`;
-                        this.restoreQueries.push(restoreSQL);
-
-                        try {
-                            await queryRunner.query(`ALTER TABLE ${qualifiedTableName} DROP CONSTRAINT [${name}]`);
-                            console.debug(`Dropped UNIQUE constraint [${name}] on table ${schema}.${tableName}`);
-                        } catch (error) {
-                            console.error(`Failed to drop UNIQUE constraint [${name}] on table ${schema}.${tableName}: ${error}`);
-                            throw error;
-                        }
-                    }
-
-                    // 2. CHECK Constraints
-                    const checkConstraints = await queryRunner.query(`
-                        SELECT cc.name AS name, cc.definition AS def 
-                        FROM sys.check_constraints cc 
-                        JOIN sys.objects t ON cc.parent_object_id = t.object_id 
-                        JOIN sys.schemas s ON t.schema_id = s.schema_id 
-                        WHERE t.name = ? AND s.name = ?
-                    `, [tableName, schema]);
-
-                    for (const ch of checkConstraints) {
-                        const name = ch.name;
-                        const def = ch.def;
-
-                        if (!name || !def) {
-                            console.warn(`Skipping invalid CHECK constraint for table ${schema}.${tableName}: name=${name}, def=${def}`);
-                            continue;
-                        }
-
-                        const restoreSQL = `ALTER TABLE ${qualifiedTableName} ADD CONSTRAINT [${name}] CHECK (${def})`;
-                        this.restoreQueries.push(restoreSQL);
-
-                        try {
-                            await queryRunner.query(`ALTER TABLE ${qualifiedTableName} DROP CONSTRAINT [${name}]`);
-                            console.debug(`Dropped CHECK constraint [${name}] on table ${schema}.${tableName}`);
-                        } catch (error) {
-                            console.error(`Failed to drop CHECK constraint [${name}] on table ${schema}.${tableName}: ${error}`);
-                            throw error;
-                        }
-                    }
-
-                    // 3. FOREIGN KEY Constraints
-                    const foreignKeys = await queryRunner.query(`
-                        SELECT fk.name AS name, 
-                        COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS col, 
-                        OBJECT_NAME(fk.referenced_object_id) AS refTable, 
-                        COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id) AS refCol 
-                        FROM sys.foreign_keys fk 
-                        JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id 
-                        JOIN sys.tables t ON fk.parent_object_id = t.object_id 
-                        JOIN sys.schemas s ON t.schema_id = s.schema_id 
-                        WHERE t.name = ? AND s.name = ?
-                    `, [tableName, schema]);
-
-                    for (const fk of foreignKeys) {
-                        const name = fk.name;
-                        const col = fk.col;
-                        const refTable = fk.refTable;
-                        const refCol = fk.refCol;
-
-                        if (!name || !col || !refTable || !refCol) {
-                            console.warn(`Skipping invalid FOREIGN KEY constraint for table ${schema}.${tableName}: name=${name}, col=${col}, refTable=${refTable}, refCol=${refCol}`);
-                            continue;
-                        }
-
-                        const restoreSQL = `ALTER TABLE ${qualifiedTableName} ADD CONSTRAINT [${name}] FOREIGN KEY ([${col}]) REFERENCES [${refTable}]([${refCol}])`;
-                        this.restoreQueries.push(restoreSQL);
-
-                        try {
-                            await queryRunner.query(`ALTER TABLE ${qualifiedTableName} DROP CONSTRAINT [${name}]`);
-                            console.debug(`Dropped FOREIGN KEY constraint [${name}] on table ${schema}.${tableName}`);
-                        } catch (error) {
-                            console.error(`Failed to drop FOREIGN KEY constraint [${name}] on table ${schema}.${tableName}: ${error}`);
-                            throw error;
-                        }
-                    }
-
-                    // 4. NOT NULL Constraints (excluding IDENTITY columns)
-                    const notNullColumns = await queryRunner.query(`
-                        SELECT c.name, t.name AS type_name, 
-                        CASE 
-                            WHEN t.name IN ('decimal', 'numeric') THEN t.name + '(' + CAST(c.precision AS VARCHAR) + ',' + CAST(c.scale AS VARCHAR) + ')' 
-                            WHEN t.name IN ('varchar', 'nvarchar', 'char', 'nchar') THEN t.name + '(' + CASE WHEN c.max_length = -1 THEN 'MAX' ELSE CAST(c.max_length AS VARCHAR) END + ')' 
-                            ELSE t.name 
-                        END AS def 
-                        FROM sys.columns c 
-                        JOIN sys.types t ON c.system_type_id = t.system_type_id 
-                        WHERE c.object_id = OBJECT_ID(?) AND c.is_nullable = 0 AND c.is_identity = 0
-                    `, [qualifiedTableName]);
-
-                    for (const col of notNullColumns) {
-                        const colName = col.name;
-                        const def = col.def;
-
-                        if (!colName || !def) {
-                            console.warn(`Skipping invalid NOT NULL column for table ${schema}.${tableName}: name=${colName}, def=${def}`);
-                            continue;
-                        }
-
-                        const restoreSQL = `ALTER TABLE ${qualifiedTableName} ALTER COLUMN [${colName}] ${def} NOT NULL`;
-                        this.restoreQueries.push(restoreSQL);
-
-                        try {
-                            await queryRunner.query(`ALTER TABLE ${qualifiedTableName} ALTER COLUMN [${colName}] ${def} NULL`);
-                            console.debug(`Dropped NOT NULL constraint on column [${colName}] in table ${schema}.${tableName}`);
-                        } catch (error) {
-                            console.error(`Failed to drop NOT NULL constraint on column [${colName}] in table ${schema}.${tableName}: ${error}`);
-                            throw error;
-                        }
-                    }
-
-                    // Commit transaction
-                    await queryRunner.query('COMMIT TRANSACTION');
-
+                  await queryRunner.query('ALTER TABLE ' + qualifiedTableName + ' DROP CONSTRAINT [' + name + ']');
+                  console.debug('Dropped UNIQUE constraint [' + name + '] on table ' + schema + '.' + tableName);
                 } catch (error) {
-                    // Rollback transaction on error
-                    try {
-                        await queryRunner.query('ROLLBACK TRANSACTION');
-                    } catch (rollbackError) {
-                        console.error(`Failed to rollback transaction for table ${schema}.${tableName}: ${rollbackError}`);
-                    }
-                    throw error;
-                } finally {
-                    await queryRunner.release();
+                  console.error('Failed to drop UNIQUE constraint [' + name + '] on table ' + schema + '.' + tableName + ': ' + error);
+                  throw error;
                 }
-            }
-            private async disableOracleConstraints(tableName: string): Promise<void> {
-                const queryRunner = this.connection.createQueryRunner();
+              }
+
+              // 2. CHECK Constraints
+              const checkConstraints = await queryRunner.query(
+                'SELECT cc.name AS name, cc.definition AS def ' +
+                'FROM sys.check_constraints cc ' +
+                'JOIN sys.objects t ON cc.parent_object_id = t.object_id ' +
+                'JOIN sys.schemas s ON t.schema_id = s.schema_id ' +
+                'WHERE t.name = ? AND s.name = ?',
+                [tableName, schema]
+              );
+
+              for (const ch of checkConstraints) {
+                const name = ch.name;
+                const def = ch.def;
+
+                if (!name || !def) {
+                  console.warn('Skipping invalid CHECK constraint for table ' + schema + '.' + tableName + ': name=' + name + ', def=' + def);
+                  continue;
+                }
+
+                const restoreSQL = 'ALTER TABLE ' + qualifiedTableName + ' ADD CONSTRAINT [' + name + '] CHECK (' + def + ')';
+                this.restoreQueries.push(restoreSQL);
 
                 try {
-                    await queryRunner.connect();
-
-                    // Récupération du schema (utilisateur courant)
-                    const schemaResult = await queryRunner.query('SELECT USER FROM DUAL');
-                    const schema = schemaResult[0].USER.toUpperCase();
-                    const tableUpper = tableName.toUpperCase();
-
-                    // Récupération des contraintes
-                    const constraints = await queryRunner.query(
-                        `SELECT constraint_name, constraint_type, search_condition, r_constraint_name 
-                        FROM all_constraints ac 
-                        WHERE owner = ? 
-                        AND table_name = ? 
-                        AND constraint_type IN ('R', 'C', 'U', 'P') 
-                        AND ( 
-                                constraint_name NOT LIKE 'SYS_%' 
-                                OR ( 
-                                constraint_name LIKE 'SYS_%' 
-                                AND EXISTS ( 
-                                    SELECT 1 FROM all_cons_columns acc 
-                                    WHERE acc.owner = ac.owner 
-                                        AND acc.constraint_name = ac.constraint_name 
-                                ) 
-                                ) 
-                        ) 
-                        ORDER BY constraint_name`,
-                        [schema, tableUpper]
-                    );
-
-                    for (const row of constraints) {
-                        const name = row.CONSTRAINT_NAME;
-                        const type = row.CONSTRAINT_TYPE;
-                        const searchCond = row.SEARCH_CONDITION;
-
-                        // Ignorer les PRIMARY KEYS
-                        if (type === 'P') {
-                            console.log(`Constraint ${name} ignored (PRIMARY KEY)`);
-                            continue;
-                        }
-
-                        // Ignorer les contraintes NOT NULL implicites
-                        if (type === 'C' && searchCond && searchCond.toUpperCase().includes('IS NOT NULL')) {
-                            console.log(`Constraint ${name} ignored (NOT NULL implicit)`);
-                            continue;
-                        }
-
-                        // Ajouter la commande de restauration
-                        this.restoreQueries.push(`ALTER TABLE ${tableUpper} ENABLE CONSTRAINT ${name}`);
-
-                        // Traitement spécial pour les FOREIGN KEYS (R)
-                        if (type === 'R') {
-                            // Récupérer les colonnes de la clé étrangère
-                            const fkCols = await queryRunner.query(
-                                `SELECT column_name FROM all_cons_columns 
-                                WHERE owner = ? AND constraint_name = ? 
-                                ORDER BY position`,
-                                [schema, name]
-                            );
-
-                            for (const colRow of fkCols) {
-                                const col = colRow.COLUMN_NAME;
-                                const alterToNull = `ALTER TABLE ${tableUpper} MODIFY (${col} NULL)`;
-
-                                try {
-                                    await queryRunner.query(alterToNull);
-                                    console.log(`Column ${tableUpper}.${col} made nullable`);
-
-                                    // Ajouter la commande de restauration pour NOT NULL
-                                    this.restoreQueries.push(`ALTER TABLE ${tableUpper} MODIFY (${col} NOT NULL)`);
-                                } catch (error) {
-                                    console.error(`Error modifying NULL for column ${col}: ${error}`);
-                                }
-                            }
-                        }
-
-                        // Désactiver la contrainte
-                        try {
-                            await queryRunner.query(`ALTER TABLE ${tableUpper} DISABLE CONSTRAINT ${name}`);
-                            console.log(`Constraint ${name} disabled`);
-                        } catch (error) {
-                            console.error(`Error disabling constraint ${name}: ${error}`);
-                        }
-                    }
-
-                    console.log(`Processing finished for table ${tableUpper}`);
-
-                } finally {
-                    await queryRunner.release();
+                  await queryRunner.query('ALTER TABLE ' + qualifiedTableName + ' DROP CONSTRAINT [' + name + ']');
+                  console.debug('Dropped CHECK constraint [' + name + '] on table ' + schema + '.' + tableName);
+                } catch (error) {
+                  console.error('Failed to drop CHECK constraint [' + name + '] on table ' + schema + '.' + tableName + ': ' + error);
+                  throw error;
                 }
+              }
+
+              // 3. FOREIGN KEY Constraints
+              const foreignKeys = await queryRunner.query(
+                'SELECT fk.name AS name, ' +
+                'COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS col, ' +
+                'OBJECT_NAME(fk.referenced_object_id) AS refTable, ' +
+                'COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id) AS refCol ' +
+                'FROM sys.foreign_keys fk ' +
+                'JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id ' +
+                'JOIN sys.tables t ON fk.parent_object_id = t.object_id ' +
+                'JOIN sys.schemas s ON t.schema_id = s.schema_id ' +
+                'WHERE t.name = ? AND s.name = ?',
+                [tableName, schema]
+              );
+
+              for (const fk of foreignKeys) {
+                const name = fk.name;
+                const col = fk.col;
+                const refTable = fk.refTable;
+                const refCol = fk.refCol;
+
+                if (!name || !col || !refTable || !refCol) {
+                  console.warn('Skipping invalid FOREIGN KEY constraint for table ' + schema + '.' + tableName + ': name=' + name + ', col=' + col + ', refTable=' + refTable + ', refCol=' + refCol);
+                  continue;
+                }
+
+                const restoreSQL = 'ALTER TABLE ' + qualifiedTableName + ' ADD CONSTRAINT [' + name + '] FOREIGN KEY ([' + col + ']) REFERENCES [' + refTable + ']([' + refCol + '])';
+                this.restoreQueries.push(restoreSQL);
+
+                try {
+                  await queryRunner.query('ALTER TABLE ' + qualifiedTableName + ' DROP CONSTRAINT [' + name + ']');
+                  console.debug('Dropped FOREIGN KEY constraint [' + name + '] on table ' + schema + '.' + tableName);
+                } catch (error) {
+                  console.error('Failed to drop FOREIGN KEY constraint [' + name + '] on table ' + schema + '.' + tableName + ': ' + error);
+                  throw error;
+                }
+              }
+
+              // 4. NOT NULL Constraints (excluding IDENTITY columns)
+              const notNullColumns = await queryRunner.query(
+                'SELECT c.name, t.name AS type_name, ' +
+                'CASE ' +
+                'WHEN t.name IN (\'decimal\', \'numeric\') THEN t.name + \'(\' + CAST(c.precision AS VARCHAR) + \',\' + CAST(c.scale AS VARCHAR) + \')\' ' +
+                'WHEN t.name IN (\'varchar\', \'nvarchar\', \'char\', \'nchar\') THEN t.name + \'(\' + CASE WHEN c.max_length = -1 THEN \'MAX\' ELSE CAST(c.max_length AS VARCHAR) END + \')\' ' +
+                'ELSE t.name ' +
+                'END AS def ' +
+                'FROM sys.columns c ' +
+                'JOIN sys.types t ON c.system_type_id = t.system_type_id ' +
+                'WHERE c.object_id = OBJECT_ID(?) AND c.is_nullable = 0 AND c.is_identity = 0',
+                [qualifiedTableName]
+              );
+
+              for (const col of notNullColumns) {
+                const colName = col.name;
+                const def = col.def;
+
+                if (!colName || !def) {
+                  console.warn('Skipping invalid NOT NULL column for table ' + schema + '.' + tableName + ': name=' + colName + ', def=' + def);
+                  continue;
+                }
+
+                const restoreSQL = 'ALTER TABLE ' + qualifiedTableName + ' ALTER COLUMN [' + colName + '] ' + def + ' NOT NULL';
+                this.restoreQueries.push(restoreSQL);
+
+                try {
+                  await queryRunner.query('ALTER TABLE ' + qualifiedTableName + ' ALTER COLUMN [' + colName + '] ' + def + ' NULL');
+                  console.debug('Dropped NOT NULL constraint on column [' + colName + '] in table ' + schema + '.' + tableName);
+                } catch (error) {
+                  console.error('Failed to drop NOT NULL constraint on column [' + colName + '] in table ' + schema + '.' + tableName + ': ' + error);
+                  throw error;
+                }
+              }
+
+              // Commit transaction
+              await queryRunner.query('COMMIT TRANSACTION');
+
+            } catch (error) {
+              // Rollback transaction on error
+              try {
+                await queryRunner.query('ROLLBACK TRANSACTION');
+              } catch (rollbackError) {
+                console.error('Failed to rollback transaction for table ' + schema + '.' + tableName + ': ' + rollbackError);
+              }
+              throw error;
+            } finally {
+              await queryRunner.release();
             }
+            // Close method disableSQLServerConstraints
+          }
+          private async disableOracleConstraints(tableName: string): Promise<void> {
+            const queryRunner = this.connection.createQueryRunner();
+
+            try {
+              await queryRunner.connect();
+
+              // Récupération du schema (utilisateur courant)
+              const schemaResult = await queryRunner.query('SELECT USER FROM DUAL');
+              const schema = schemaResult[0].USER.toUpperCase();
+              const tableUpper = tableName.toUpperCase();
+
+              // Récupération des contraintes
+              const constraints = await queryRunner.query(
+                'SELECT constraint_name, constraint_type, search_condition, r_constraint_name ' +
+                'FROM all_constraints ac ' +
+                'WHERE owner = ? ' +
+                'AND table_name = ? ' +
+                'AND constraint_type IN (\'R\', \'C\', \'U\', \'P\') ' +
+                'AND ( ' +
+                'constraint_name NOT LIKE \'SYS_%\' ' +
+                'OR ( ' +
+                'constraint_name LIKE \'SYS_%\' ' +
+                'AND EXISTS ( ' +
+                'SELECT 1 FROM all_cons_columns acc ' +
+                'WHERE acc.owner = ac.owner ' +
+                'AND acc.constraint_name = ac.constraint_name ' +
+                ') ' +
+                ') ' +
+                ') ' +
+                'ORDER BY constraint_name',
+                [schema, tableUpper]
+              );
+
+              for (const row of constraints) {
+                const name = row.CONSTRAINT_NAME;
+                const type = row.CONSTRAINT_TYPE;
+                const searchCond = row.SEARCH_CONDITION;
+
+                // Ignorer les PRIMARY KEYS
+                if (type === 'P') {
+                  console.log('Constraint ' + name + ' ignored (PRIMARY KEY)');
+                  continue;
+                }
+
+                // Ignorer les contraintes NOT NULL implicites
+                if (type === 'C' && searchCond && searchCond.toUpperCase().includes('IS NOT NULL')) {
+                  console.log('Constraint ' + name + ' ignored (NOT NULL implicit)');
+                  continue;
+                }
+
+                // Ajouter la commande de restauration
+                this.restoreQueries.push('ALTER TABLE ' + tableUpper + ' ENABLE CONSTRAINT ' + name);
+
+                // Traitement spécial pour les FOREIGN KEYS (R)
+                if (type === 'R') {
+                  // Récupérer les colonnes de la clé étrangère
+                  const fkCols = await queryRunner.query(
+                    'SELECT column_name FROM all_cons_columns ' +
+                    'WHERE owner = ? AND constraint_name = ? ' +
+                    'ORDER BY position',
+                    [schema, name]
+                  );
+
+                  for (const colRow of fkCols) {
+                    const col = colRow.COLUMN_NAME;
+                    const alterToNull = 'ALTER TABLE ' + tableUpper + ' MODIFY (' + col + ' NULL)';
+
+                    try {
+                      await queryRunner.query(alterToNull);
+                      console.log('Column ' + tableUpper + '.' + col + ' made nullable');
+
+                      // Ajouter la commande de restauration pour NOT NULL
+                      this.restoreQueries.push('ALTER TABLE ' + tableUpper + ' MODIFY (' + col + ' NOT NULL)');
+                    } catch (error) {
+                      console.error('Error modifying NULL for column ' + col + ': ' + error);
+                    }
+                  }
+                }
+
+                // Désactiver la contrainte
+                try {
+                  await queryRunner.query('ALTER TABLE ' + tableUpper + ' DISABLE CONSTRAINT ' + name);
+                  console.log('Constraint ' + name + ' disabled');
+                } catch (error) {
+                  console.error('Error disabling constraint ' + name + ': ' + error);
+                }
+              }
+
+              console.log('Processing finished for table ' + tableUpper);
+
+            } finally {
+              await queryRunner.release();
+            }
+          }
         }
+
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/utils"
     - fileType: "DTO"
       fileName: "RestResponse"
@@ -5348,7 +5354,7 @@
         import { TypeOrmModule } from '@nestjs/typeorm';
         import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
         import * as Models from '../models.index';
-        import { SqlInitService } from './sql-init.service';
+        {{#if useJWT}}import { SqlInitService } from './sql-init.service';{{/if}}
         {{#if useJWT}}import { UserEntity } from '../user-entity/user-entity.entity';
         import { RoleEntity } from '../role-entity/role-entity.entity';{{/if}}
 
@@ -5372,36 +5378,10 @@
               }),
             }),
           ],
-          providers: [SqlInitService], 
+          providers: [{{#if useJWT}}SqlInitService{{/if}}], 
         })
         export class DatabaseModule {}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/database"
-    - fileType: "Database service"
-      fileName: "sql-init.service"
-      extension: "ts"
-      content: |
-        import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
-        import { DataSource } from 'typeorm';
-        import * as fs from 'fs';
-        import * as path from 'path';
-
-        @Injectable()
-        export class SqlInitService implements OnApplicationBootstrap {
-          constructor(private readonly dataSource: DataSource) {}
-
-          async onApplicationBootstrap() {
-            const sqlPath = path.join(__dirname, '../../db/init.sql');
-            if (!fs.existsSync(sqlPath)) {
-              console.log('No sql file found for database initialization');
-              return;
-            }
-            const sql = fs.readFileSync(sqlPath, 'utf8');
-            await this.dataSource.query(sql);
-            console.log('init.sql executed');
-          }
-        }
-      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/database"
-
     - fileType: "ExceptionFilter"
       fileName: "AllExceptionsFilter"
       extension: "ts"
@@ -5727,6 +5707,7 @@
           import { ${majStart(className)} } from '../src/${minStart(className)}/${minStart(className)}.entity';
           import { Page } from '../src/common/dto/Page';
           import { RestResponse } from '../src/common/dto/RestResponse';
+          import { ConstraintDisablerService } from '../src/common/utils/constraint-disabler.service';
 
           jest.setTimeout(30000);
 
@@ -5734,17 +5715,19 @@
             let app: INestApplication;
             let dataSource: DataSource;
             let mockData: ${majStart(className)};
+            let constraintDisablerService: ConstraintDisablerService;
 
             beforeAll(async () => {
               const moduleFixture: TestingModule = await Test.createTestingModule({
                 imports: [AppModule],
+                providers: [ConstraintDisablerService],
               }).compile();
 
               app = moduleFixture.createNestApplication();
               await app.init();
-
               dataSource = moduleFixture.get<DataSource>(DataSource);
-
+              constraintDisablerService = moduleFixture.get<ConstraintDisablerService>(ConstraintDisablerService);
+              await constraintDisablerService.disableConstraintsForTable("${tableName}");
               if (!dataSource.isInitialized) {
                 await dataSource.initialize();
               }
@@ -5768,6 +5751,7 @@
             });
 
             afterAll(async () => {
+              await constraintDisablerService.restoreConstraints();
               await app.close();
             });
 
@@ -5799,7 +5783,7 @@
             describe('GET /${minStart(className)}/:id', () => {
               it('should get ${minStart(className)} by ID', async () => {
                 const response = await request(app.getHttpServer())
-                  .get(`/${minStart(className)}/${mockData.id}`)
+                  .get("/${minStart(className)}/"+mockData.id)
                   .expect(200);
 
                 const restResponse = response.body as RestResponse<${majStart(className)}>;
@@ -5814,7 +5798,13 @@
 
             describe('POST /${minStart(className)}/search', () => {
               it('should search ${minStart(className)}s with criteria', async () => {
-                const searchCriteria = JSON.stringify(mockData);
+                const searchCriteria = {
+                  {{#each fields}}
+                  {{#if this.isPrimaryKey}}{{removeLine}}
+                  {{elseIf this.isForeignKey}}{{removeLine}}
+                  {{else}}${minStart(this.name)}:(${this.mockdata}), {{/if}}
+                  {{/each}}
+                };
 
                 const response = await request(app.getHttpServer())
                   .post('/${minStart(className)}/search')
@@ -5873,7 +5863,7 @@
                 };
 
                 const response = await request(app.getHttpServer())
-                  .put(`/${minStart(className)}/${mockData.id}`)
+                  .put("/${minStart(className)}/"+mockData.id)
                   .send(updateData)
                   .expect(200);
 
@@ -5889,7 +5879,7 @@
             describe('DELETE /${minStart(className)}/:id', () => {
               it('should delete ${minStart(className)} successfully', async () => {
                 const response = await request(app.getHttpServer())
-                  .delete(`/${minStart(className)}/${mockData.id}`)
+                  .delete("/${minStart(className)}/"+mockData.id)
                   .expect(200);
 
                 const restResponse = response.body as RestResponse<null>;

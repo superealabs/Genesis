@@ -2348,6 +2348,31 @@
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/user-entity"
+    - fileType: "Database service"
+      fileName: "sql-init.service"
+      extension: "ts"
+      content: |
+        import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+        import { DataSource } from 'typeorm';
+        import * as fs from 'fs';
+        import * as path from 'path';
+  
+        @Injectable()
+        export class SqlInitService implements OnApplicationBootstrap {
+          constructor(private readonly dataSource: DataSource) {}
+  
+          async onApplicationBootstrap() {
+            const sqlPath = path.join(__dirname, '../../db/init.sql');
+            if (!fs.existsSync(sqlPath)) {
+              console.log('No sql file found for database initialization');
+              return;
+            }
+            const sql = fs.readFileSync(sqlPath, 'utf8');
+            await this.dataSource.query(sql);
+            console.log('init.sql executed');
+          }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/database"
     - fileType: "User table and data init script"
       fileName: "init"
       extension: "sql"

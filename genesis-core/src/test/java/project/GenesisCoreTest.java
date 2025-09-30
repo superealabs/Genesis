@@ -367,7 +367,7 @@ public class GenesisCoreTest {
 //
             HashMap<String, Object> languageConfiguration = new HashMap<>();
             HashMap<String, Object> frameworkConfiguration = new HashMap<>();
-            frameworkConfiguration.put("securityType", "Nest Security - JWT");
+            // frameworkConfiguration.put("securityType", "Nest Security - JWT");
 
             List<String> entityNames = new ArrayList<>();
             List<String> viewNames = new ArrayList<>();
