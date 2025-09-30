@@ -4,7 +4,7 @@
   viewExtension: "cshtml"
   layout:
     name: "_Layout"
-    destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
+    destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
     navLink: "class=\"@(currentController == \"${majStart(this.entityName)}\" ? \"active\" : \"\")\" asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
     pageName: "@ViewData[\"Title\"] -"
     rootPath: " ~/css/style.css\" asp-append-version=\"true "
@@ -140,7 +140,7 @@
       }
   error:
     name: "Error"
-    destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
+    destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
     viewAnnotations: |
       @{
           ViewData["Title"] = "Error";
@@ -163,7 +163,7 @@
         @using ${majStart(projectName)}.Utils
         @using ${majStart(projectName)}.ViewModels
         @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/"
     - fileType : "ViewStart"
       fileName: "_ViewStart"
       extension: "cshtml"
@@ -171,14 +171,14 @@
         @{
             Layout = "_Layout";
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/"
     - fileType : "Validation Scripts Partial"
       fileName: "_ValidationScriptsPartial"
       extension: "cshtml"
       content: |
         <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
         <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
     - fileType : "Popup Error"
       fileName: "_PopupError"
       extension: "cshtml"
@@ -191,7 +191,7 @@
                 };  
             </script>
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
     - fileType : "Form Validation"
       fileName: "_ValidationScriptsPartial"
       extension: "cshtml"
@@ -218,11 +218,11 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views/Shared/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
 
   templateEngineFiles: []
   templateEngineFolders:
     - folderType: "wwwroot"
       folderName: "wwwroot"
       sourcePath: "data_genesis/template_engine_folders/wwwroot"
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"

@@ -103,7 +103,7 @@
         {{/each}}
         app.Run();
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
 
     - fileType: "DbContextFile"
       fileName: "${majStart(projectName)}Context"
@@ -141,7 +141,7 @@
             {{/if}}{{/each}}
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Data/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Data/"
 
     - fileType: "Exception"
       fileName: "ResourceNotFoundException"
@@ -156,7 +156,7 @@
           public ResourceNotFoundException(string message) : base(message) {}
           public ResourceNotFoundException(string message, Exception cause) : base(message, cause) {}
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Exceptions/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Exceptions/"
 
     - fileType: "Exception"
       fileName: "InternalServerErrorException"
@@ -171,7 +171,7 @@
           public InternalServerErrorException(string message) : base(message) {}
           public InternalServerErrorException(string message, Exception cause) : base(message, cause) {}
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Exceptions/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Exceptions/"
 
     - fileType: "ExceptionFilter"
       fileName: "GlobalExceptionFilter"
@@ -257,7 +257,7 @@
             }
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Filters/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Filters/"
 
     - fileType: "WebUtils"
       fileName: "WebUtils"
@@ -395,7 +395,7 @@
               return string.Join(";", sorts);
             }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
 
     - fileType: "Generic  file"
       fileName: "IRepository"
@@ -422,7 +422,7 @@
             Task<bool> ExistsAsync(TKey id);
             Task<long> GetTotalCountAsync();
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Generic/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Repositories/Generic/"
 
     - fileType: "Error Controller"
       fileName: "ErrorController"
@@ -449,7 +449,7 @@
                 return View("Error");
             }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Controllers/"
 
     - fileType: "Generic Repository file"
       fileName: "Repository"
@@ -583,7 +583,7 @@
             }
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Generic/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Repositories/Generic/"
 
     - fileType: "Generic file"
       fileName: "IService"
@@ -607,7 +607,7 @@
             Task DeleteAsync(TKey id);
             Task<bool> ExistsAsync(TKey id);
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Generic/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Services/Generic/"
 
     - fileType: "GenericMapper"
       fileName: "GenericMapper"
@@ -655,7 +655,7 @@
             return target;
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
 
     - fileType: "ConstraintDisabler"
       fileName: "ConstraintDisabler"
@@ -1609,7 +1609,7 @@
           {{else}}{{removeLine}}{{/if}}
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
 
     - fileType: "Response Helper"
       fileName: "PageInfo"
@@ -1624,7 +1624,7 @@
             public long TotalElements { get; set; }
             public int TotalPages { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
 
     - fileType: "Response Helper"
       fileName: "PaginationHelper"
@@ -1653,7 +1653,7 @@
               };
             }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
 
     - fileType: "Response Helper"
       fileName: "PagedResponse"
@@ -1666,7 +1666,7 @@
           public List<T> Content { get; set; }
           public PageInfo Page { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
 
     - fileType: "Entity Utils"
       fileName: "EntityUtils"
@@ -1749,7 +1749,7 @@
         {{tab}}{{tab}}return primaryKey.Properties.First().Name;
         {{tab}}}
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
 
     - fileType: "Filter Builder Util"
       fileName: "FilterBuilder"
@@ -1908,7 +1908,7 @@
             }
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
 
     - fileType: "Predicate Builder Util"
       fileName: "PredicateBuilder"
@@ -1933,7 +1933,7 @@
                 return Expression.Lambda<Func<T, bool>>(body, p);
             }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
 
   configurations:
     - name: "Logging Level"
@@ -2055,7 +2055,7 @@
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
-    modelSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/"
+    modelSavePath: "${destinationFolder}/${majStart(projectName)}/Models/"
     modelPackage: "${majStart(projectName)}.Models"
     modelAdditionalFiles:
       - fileType: "DTO search model class"
@@ -2110,7 +2110,7 @@
               {{tab}}{{/each}}
             };
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto/"
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/Models/Dto/"
       - fileType: "Specification File"
         fileName: "${majStart(className)}FilterBuilder"
         extension: "cs"
@@ -2146,7 +2146,7 @@
                   return this;
               }
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Specification/"
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/Specification/"
       - fileType: "View Model File"
         fileName: "${majStart(className)}ViewModel"
         extension: "cs"
@@ -2183,7 +2183,7 @@
 
               {{#each fieldsFK}}public IEnumerable<SelectListItem> ${majStart(this.type)}s { get; set; } = new List<SelectListItem>();{{/each}}
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/ViewModels/"
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/ViewModels/"
     validationAnnotations:
       notNull: '[Required(ErrorMessage = "${majStart(name)} cannot be null")]'
       maxSize: "[StringLength(${columnSize})]"
@@ -2211,7 +2211,7 @@
     modelDaoFieldContent: "{{removeLine}}"
     modelDaoMethodContent: "{{removeLine}}"
     modelDaoConstructors: "{{removeLine}}"
-    modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Interface/"
+    modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/Repositories/Interface/"
     modelDaoPackage: "${majStart(projectName)}.Repositories.Interface"
     modelDaoAdditionalFiles:
       - fileType: "Repository inherited from Generic Repository"
@@ -2230,7 +2230,7 @@
               {
               }
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Implementation/"
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/Repositories/Implementation/"
 
   service:
     toGenerate: true
@@ -2247,7 +2247,7 @@
     serviceFieldContent: "{{removeLine}}"
     serviceMethodContent: "{{removeLine}}"
     serviceConstructors: "{{removeLine}}"
-    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
+    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/Services/Interface"
     servicePackage: "${majStart(projectName)}.Services.Interface"
     serviceAdditionalFiles:
       - fileType: "Service inherited from Service Interface"
@@ -2382,7 +2382,7 @@
                 }
               }
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation/"
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/Services/Implementation/"
 
   controller:
     toGenerate: true
@@ -2653,13 +2653,13 @@
       {{tab}}        {{/each}}{{removeLine}}
       {{tab}}    };
       {{tab}}}
-    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
+    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"
     controllerAdditionalFiles: [ ]
 
   view:
     toGenerate: true
-    viewSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Views"
+    viewSavePath: "${destinationFolder}/${majStart(projectName)}/Views"
     listViewName: "Index"
     createViewName: "Create"
     editViewName: "Edit"
