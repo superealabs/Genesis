@@ -11454,158 +11454,197 @@
             return data;
         }
       destinationPath: "${destinationFolder}/src/services"
-    - fileType: "Sidebar"
-      fileName: "Sidebar"
+    - fileType: "SettingsMenu"
+      fileName: "SettingsMenu"
       extension: "tsx"
       content: |
-        // src/components/Sidebar/Sidebar.tsx
+        // src/components/SettingsMenu/index.tsx
         import { useState } from 'react';
-        import {AppBar, Drawer, Toolbar, IconButton, Box, FormControlLabel, Switch} from '@mui/material';
-        import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-        import { navItems } from '../../config/navItems';   // new file
-        import { drawerWidth, closedWidth } from '@/styles/sidebar';
-        import HorizontalDropdown from './HorizontalDropdown';
-        import VerticalDropdown from './VerticalDropdown';
-        import { useThemeMode } from '@/contexts/ThemeContext';   // 👈 nouveau
-        import { Brightness4, Brightness7 } from '@mui/icons-material';
-        import { SidebarTitle } from './SidebarTitle';
-        import { Logout } from '@mui/icons-material';
-        import {useAuth} from "@/contexts/AuthContext";
-        import {useNavigate} from "react-router-dom";
+        import {
+            IconButton,
+            Menu,
+            MenuItem,
+            ListItemIcon,
+            ListItemText,
+            Divider,
+            FormControl,
+            InputLabel,
+            Select,
+            SelectChangeEvent,
+            Box,
+        } from '@mui/material';
+        import { Settings, Brightness4, Brightness7, ViewSidebar, ViewAgenda, Logout } from '@mui/icons-material';
+        import { useThemeMode } from '@/contexts/ThemeContext';
+        import { useAuth } from '@/contexts/AuthContext';
         import { useTranslation } from 'react-i18next';
-        import LanguageSwitcher from "@/components/LanguageSwitcher";
+        import { useNavigate } from 'react-router-dom';
 
-        interface Props {
-            layout?: 'vertical' | 'horizontal';
+        interface SettingsMenuProps {
+            layout: 'vertical' | 'horizontal';
+            onLayoutChange: (layout: 'vertical' | 'horizontal') => void;
+            compact?: boolean;
         }
 
-        export default function Sidebar({ layout = 'vertical' }: Props) {
-            const [open, setOpen] = useState(true);
+        export default function SettingsMenu({ layout, onLayoutChange, compact = false }: SettingsMenuProps) {
+            const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
             const { mode, toggleTheme } = useThemeMode();
-            const toggle = () => setOpen((prev) => !prev);
             const { logout } = useAuth();
-            const navigate = useNavigate(); // ← ajout
-            const { t } = useTranslation();
+            const { i18n, t } = useTranslation();
+            const navigate = useNavigate();
 
-            const handleLogout = () => {
-                logout();       // vide le state + localStorage
-                navigate('/login', { replace: true }); // ← navigation sans reload
+            const open = Boolean(anchorEl);
+
+            const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+                setAnchorEl(event.currentTarget);
             };
 
-            if (layout === 'horizontal') {
-                return (
-                    <AppBar position="sticky">
-                        <Toolbar sx={{ gap: 2, justifyContent: 'space-between' }}>
-                            <Box display="flex" gap={2} alignItems="center">
-                                <SidebarTitle />
-                                {navItems.map((item) => (
-                                    <HorizontalDropdown key={item.label} item={item} />
-                                ))}
-                            </Box>
+            const handleClose = () => {
+                setAnchorEl(null);
+            };
 
-                            {/* Switch stylisé */}
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={mode === 'dark'}
-                                        onChange={toggleTheme}
-                                        icon={<Brightness4 sx={{ fontSize: 20 }} />}
-                                        checkedIcon={<Brightness7 sx={{ fontSize: 20 }} />}
-                                        color="default"
-                                    />
-                                }
-                                label=""
-                                sx={{ mr: 2 }}
-                            />
-                        </Toolbar>
-                    </AppBar>
-                );
-            }
+            const handleLayoutChange = (newLayout: 'vertical' | 'horizontal') => {
+                onLayoutChange(newLayout);
+                handleClose();
+            };
 
-            /* ---------- Vertical (default) ---------- */
+            const handleLanguageChange = (event: SelectChangeEvent<string>) => {
+                i18n.changeLanguage(event.target.value);
+            };
+
+            const handleLogout = () => {
+                logout();
+                navigate('/login', { replace: true });
+                handleClose();
+            };
+
+            // Fonction sécurisée pour obtenir les langues supportées
+            const getSupportedLanguages = (): string[] => {
+                if (Array.isArray(i18n.options.supportedLngs)) {
+                    return i18n.options.supportedLngs.filter((l) => l !== 'cimode');
+                }
+
+                // Alternative: utiliser les ressources chargées
+                if (i18n.services.resourceStore.data) {
+                    return Object.keys(i18n.services.resourceStore.data).filter((l) => l !== 'cimode');
+                }
+
+                // Fallback: utiliser la langue actuelle
+                return [i18n.language || 'en'];
+            };
+
+            const supportedLanguages = getSupportedLanguages();
+
             return (
                 <>
-                    <Drawer
-                        variant="permanent"
-                        sx={{
-                            width: open ? drawerWidth : closedWidth,
-                            flexShrink: 0,
-                            '& .MuiDrawer-paper': {
-                                width: open ? drawerWidth : closedWidth,
-                                transition: (t) => t.transitions.create('width'),
-                                overflowX: 'hidden',
-                                display: 'flex',               // ← permet de pousser le switch en bas
-                                flexDirection: 'column',
+                    <IconButton onClick={handleClick} color="inherit" size={compact ? 'small' : 'medium'}>
+                        <Settings />
+                    </IconButton>
+
+                    <Menu
+                        anchorEl={anchorEl}
+                        open={open}
+                        onClose={handleClose}
+                        onClick={handleClose}
+                        PaperProps={{
+                            elevation: 0,
+                            sx: {
+                                overflow: 'visible',
+                                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                                mt: 1.5,
+                                '& .MuiAvatar-root': {
+                                    width: 32,
+                                    height: 32,
+                                    ml: -0.5,
+                                    mr: 1,
+                                },
                             },
                         }}
+                        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                     >
-                        {/* Header */}
-                        <Toolbar
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                px: 1,
-                                justifyContent: 'space-between', // ← pousse le chevron à droite
-                            }}
-                        >
-                            <SidebarTitle compact={!open} />
-                            <IconButton onClick={toggle} color="inherit">
-                                {open ? <ChevronLeft /> : <ChevronRight />}
-                            </IconButton>
-                        </Toolbar>
-
-                        {/* Contenu du menu */}
-                        {navItems.map((i, idx) => (
-                            <Box key={i.label} sx={{ mb: idx < navItems.length - 1 ? 0.75 : 0 }}>
-                                <VerticalDropdown item={i} compact={!open} />
-                            </Box>
-                        ))}
-
-                        {/* Switch en bas */}
-                        <Box
-                            sx={{
-                                mt: 'auto',
-                                p: 1,
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                            }}
-                        >
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={mode === 'dark'}
-                                        onChange={toggleTheme}
-                                        icon={<Brightness4 sx={{ fontSize: 18 }} />}
-                                        checkedIcon={<Brightness7 sx={{ fontSize: 18 }} />}
-                                        color="default"
-                                    />
+                        {/* Mode disposition */}
+                        <MenuItem onClick={() => handleLayoutChange(layout === 'vertical' ? 'horizontal' : 'vertical')}>
+                            <ListItemIcon>
+                                {layout === 'vertical' ? <ViewAgenda fontSize="small" /> : <ViewSidebar fontSize="small" />}
+                            </ListItemIcon>
+                            <ListItemText>
+                                {layout === 'vertical'
+                                    ? t('messages.layout.switchToHorizontal')
+                                    : t('messages.layout.switchToVertical')
                                 }
-                                label={open ? t(mode === 'dark' ? 'messages.theme.dark' : 'messages.theme.light') : ''}
-                                labelPlacement="bottom"
-                                sx={{
-                                    color: 'inherit',
-                                    m: 0,
-                                    // si le drawer est fermé, on cache le label et on centre l’icône
-                                    ...(open
-                                        ? {}
-                                        : {
-                                            '& .MuiFormControlLabel-label': { display: 'none' },
-                                            '& .MuiSwitch-root': { m: 0 },
-                                        }),
-                                }}
-                            />
+                            </ListItemText>
+                        </MenuItem>
 
-                            <IconButton onClick={handleLogout} title={t('messages.authentication.logout')}>
-                                <Logout />
-                            </IconButton>
-                            <LanguageSwitcher />
-                        </Box>
-                    </Drawer>
+                        <Divider />
+
+                        {/* Mode clair/sombre */}
+                        <MenuItem onClick={toggleTheme}>
+                            <ListItemIcon>
+                                {mode === 'dark' ? <Brightness7 fontSize="small" /> : <Brightness4 fontSize="small" />}
+                            </ListItemIcon>
+                            <ListItemText>
+                                {mode === 'dark'
+                                    ? t('messages.theme.switchToLight')
+                                    : t('messages.theme.switchToDark')
+                                }
+                            </ListItemText>
+                        </MenuItem>
+
+                        <Divider />
+
+                        {/* Choix de langue */}
+                        <MenuItem>
+                            <FormControl fullWidth size="small" sx={{ minWidth: 120 }}>
+                                <InputLabel>{t('messages.language.choose')}</InputLabel>
+                                <Select
+                                    value={i18n.language}
+                                    label={t('messages.language.choose')}
+                                    onChange={handleLanguageChange}
+                                >
+                                    {supportedLanguages.map((lang) => (
+                                        <MenuItem key={lang} value={lang}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <span>{getFlagEmoji(lang)}</span>
+                                                <span>{t(`messages.language.${lang}`)}</span>
+                                            </Box>
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </MenuItem>
+
+                        <Divider />
+
+                        {/* Déconnexion */}
+                        <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                            <ListItemIcon sx={{ color: 'error.main' }}>
+                                <Logout fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>
+                                {t('messages.authentication.logout')}
+                            </ListItemText>
+                        </MenuItem>
+                    </Menu>
                 </>
             );
         }
-      destinationPath: "${destinationFolder}/src/components/Sidebar"
+
+        // Helper function pour les emojis de drapeaux
+        function getFlagEmoji(langCode: string): string {
+            const languageFlags: Record<string, string> = {
+                en: '🇬🇧',
+                fr: '🇫🇷',
+                es: '🇪🇸',
+                de: '🇩🇪',
+                it: '🇮🇹',
+                pt: '🇵🇹',
+                'pt-BR': '🇧🇷',
+                zh: '🇨🇳',
+                ja: '🇯🇵',
+            };
+            return languageFlags[langCode] || languageFlags[langCode.split('-')[0]] || '🏳️';
+        }
+      destinationPath: "${destinationFolder}/src/components/SettingsMenu"
   additionalFiles:
     - fileType: "App name config"
       fileName: "app"

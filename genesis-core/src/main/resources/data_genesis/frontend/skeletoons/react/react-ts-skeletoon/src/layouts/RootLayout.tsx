@@ -1,22 +1,21 @@
 // src/layouts/RootLayout.tsx
 import Sidebar from '@/components/Sidebar/Sidebar';
 import { Outlet } from 'react-router-dom';
+import { useState } from 'react';
 
-interface Props {
-    layout?: 'vertical' | 'horizontal';
-}
+export default function RootLayout() {
+    const [layout, setLayout] = useState<'vertical' | 'horizontal'>('vertical');
 
-export default function RootLayout({ layout = 'vertical' }: Props) {
     return (
         <>
             {layout === 'horizontal' ? (
                 <>
-                    <Sidebar layout="horizontal" />
+                    <Sidebar layout="horizontal" onLayoutChange={setLayout} />
                     <Outlet />
                 </>
             ) : (
                 <div style={{ display: 'flex', minHeight: '100vh' }}>
-                    <Sidebar layout="vertical" />
+                    <Sidebar layout="vertical" onLayoutChange={setLayout} />
                     <main style={{ flex: 1, padding: '1rem' }}>
                         <Outlet />
                     </main>

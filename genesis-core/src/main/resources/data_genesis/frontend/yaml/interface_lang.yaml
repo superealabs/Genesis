@@ -45,7 +45,7 @@
           sizeLabel: 'Showing :',
           previous: 'Previous',
           next: 'Next',
-          goToLabel: 'Going to page:',
+          goToLabel: 'Going to page :',
           pageOf: 'Page {page} of {total}',
         },
         search: {
@@ -85,9 +85,25 @@
           404: 'Page not found',
           500: 'Error 500',
         },
+        layout: {
+          switchToHorizontal: 'Switch to horizontal',
+          switchToVertical: 'Switch to vertical',
+        },
         theme: {
-          dark: 'Dark',
-          light: 'Light',
+          switchToLight: 'Light mode',
+          switchToDark: 'Dark mode'
+        },
+        language: {
+          choose: 'Language',
+          en: 'English',
+          fr: 'French',
+          es: 'Spanish',
+          de: 'German',
+          it: 'Italian',
+          pt: 'Portuguese',
+          'pt-BR': 'Portuguese (Brazil)',
+          zh: 'Chinese',
+          ja: 'Japanese',
         },
         state: {
           loading: 'Loading…',
@@ -236,9 +252,25 @@
           404: 'Page introuvable',
           500: 'Erreur interne (500)',
         },
+        layout: {
+          switchToHorizontal: 'Passer à l\'horizontal',
+          switchToVertical: 'Passer à la vertical',
+        },
         theme: {
-          dark: 'Sombre',
-          light: 'Clair',
+          switchToLight: 'Mode clair',
+          switchToDark: 'Mode sombre'
+        },
+        language: {
+          choose: 'Langue',
+          en: 'Anglais',
+          fr: 'Français',
+          es: 'Espagnol',
+          de: 'Allemand',
+          it: 'Italien',
+          pt: 'Portugais',
+          'pt-BR': 'Portugais (Brésil)',
+          zh: 'Chinois',
+          ja: 'Japonais',
         },
         state: {
           loading: 'Chargement…',
