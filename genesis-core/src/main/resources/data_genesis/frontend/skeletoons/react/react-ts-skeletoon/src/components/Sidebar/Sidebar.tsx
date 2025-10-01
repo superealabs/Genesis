@@ -9,7 +9,7 @@ import VerticalDropdown from './VerticalDropdown';
 import { useThemeMode } from '@/contexts/ThemeContext';   // 👈 nouveau
 import { Brightness4, Brightness7 } from '@mui/icons-material';
 import { SidebarTitle } from './SidebarTitle';
-
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 interface Props {
     layout?: 'vertical' | 'horizontal';
@@ -109,7 +109,7 @@ export default function Sidebar({ layout = 'vertical' }: Props) {
                                 color="default"
                             />
                         }
-                        label={open ? (mode === 'dark' ? 'Sombre' : 'Clair') : ''}
+                        label={open ? t(mode === 'dark' ? 'messages.theme.dark' : 'messages.theme.light') : ''}
                         labelPlacement="bottom"
                         sx={{
                             color: 'inherit',
@@ -123,6 +123,7 @@ export default function Sidebar({ layout = 'vertical' }: Props) {
                                 }),
                         }}
                     />
+                    <LanguageSwitcher />
                 </Box>
             </Drawer>
         </>

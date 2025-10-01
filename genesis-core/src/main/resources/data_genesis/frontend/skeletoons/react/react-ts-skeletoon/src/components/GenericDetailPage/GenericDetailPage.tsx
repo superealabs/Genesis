@@ -7,6 +7,7 @@ import type { ApiResponse } from '@/services/api';
 import {ArrowBack} from "@mui/icons-material";
 import { Tabs, Tab } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 type AnyRecord = Record<string, any>;
 
@@ -37,6 +38,7 @@ interface DetailConfig<T extends AnyRecord> {
 }
 
 export default function GenericDetailPage<T extends AnyRecord>(config: DetailConfig<T>) {
+    const { t } = useTranslation();
     return function DetailPage() {
         const { id } = useParams<{ id: string }>();
         const navigate = useNavigate();
@@ -59,7 +61,7 @@ export default function GenericDetailPage<T extends AnyRecord>(config: DetailCon
         }, [id]);
 
         if (loading) return <BackdropBlocker open />;
-        if (!record) return <Typography color="error">Introuvable</Typography>;
+        if (!record) return <Typography color="error">{t('messages.state.notFound')}</Typography>;
 
         const resolveValue = (accessor: keyof T | ((row: T) => React.ReactNode)) =>
             typeof accessor === 'function' ? accessor(record) : record[accessor];
@@ -84,7 +86,7 @@ export default function GenericDetailPage<T extends AnyRecord>(config: DetailCon
                             startIcon={<ArrowBack />}
                             onClick={() => navigate(backTo)}
                         >
-                            Back
+                            {t('messages.button.backToList')}
                         </Button>
                     </Box>
 

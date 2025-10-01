@@ -11,6 +11,7 @@ import ListDataTable from "../GenericListPage/ListDataTable";
 import { FilterState } from "@/types/filter";
 import BackdropBlocker from "@/components/Backdrop/BackdropBlocker";
 import {pageContainerSx, breadcrumbSx} from "@/styles/mui-patterns";
+import { useTranslation } from 'react-i18next';
 
 export default function GenericListPage<T extends Record<string, unknown>>(
     config: ListConfig<T>
@@ -28,6 +29,8 @@ export default function GenericListPage<T extends Record<string, unknown>>(
             setFilter,
             loading
         } = usePaginatedResource<T>(config.searchFn, config.defaultSort);
+
+        const { t } = useTranslation();
 
         const [pendingFilters, setPendingFilters] = useState<FilterState>({});
 
@@ -58,7 +61,7 @@ export default function GenericListPage<T extends Record<string, unknown>>(
                 <Box sx={pageContainerSx}>
                     <MuiBreadcrumbs sx={breadcrumbSx} separator="/">
                         <Link underline="hover" color="inherit" href="/" sx={{ fontWeight: 'normal' }}>
-                            Home
+                            {t('messages.projectName')}
                         </Link>
                         <Link
                             underline="hover"
@@ -69,7 +72,7 @@ export default function GenericListPage<T extends Record<string, unknown>>(
                             {config.entityName}s
                         </Link>
                         <Typography color="text.primary" fontWeight="bold">
-                            List
+                            {t('messages.entity.list.nav')}
                         </Typography>
                     </MuiBreadcrumbs>
 

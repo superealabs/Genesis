@@ -1447,25 +1447,156 @@
     logoPath: "${destinationFolder}/src/assets/images"
     langsPath: "${destinationFolder}/src/lang"
   authenticationFiles:
-    - fileType: "authentication files"
-      fileName: ""
-      extension: ""
-      content: " ,foevoe,v"
-      destinationPath: ""
-  validationRules:
-    notNull: 'required="true"'
-    maxSize: 'maxlength="${columnSize}"'
-    numericMinimumValue: 'min="${value}"'
-    numericMinimumInclusiveValue: 'min="${value}"'
-    numericMaximumValue: 'max="${value}"'
-    numericMaximumInclusiveValue: 'max="${value}"'
-    past: 'max="${today}"'
-    pastOrPresent: 'max="${today}"'
-    future: 'min="${today}"'
-    futureOrPresent: 'min="${today}"'
-    notBlank: 'required="true"'
-    minAndMaxSize: 'minlength="${minLength}" maxlength="${columnSize}"'
-    regexPattern: 'pattern="${value}"'
+    - fileType: "Login Form"
+      fileName: "LoginForm"
+      extension: "vue"
+      content: |
+        <template>
+          <form class="space-y-4">
+            <div>
+              <GenesisInput v-model="login" label="Login" placeholder="username or email" type="text" />
+            </div>
+            <div>
+              <GenesisInput v-model="password" placeholder="*****" type="password" label="Password" />
+            </div>
+            <button type="submit" class="btn btn-primary w-full">Login</button>
+          </form>
+        </template>
+        <script setup lang="ts">
+        import GenesisInput from '@/core/form/GenesisInput.vue'
+        import { ref } from 'vue'
+
+        const login = ref('')
+        const password = ref('')
+        </script>
+      destinationPath: "${destinationFolder}/src/auth"
+    - fileType: "Auth Layout"
+      fileName: "AuthLayout"
+      extension: "vue"
+      content: |
+        <template>
+          <main class="min-h-screen bg-base-100">
+            <router-view />
+          </main>
+        </template>
+    
+        <script setup lang="ts"></script>
+      destinationPath: "${destinationFolder}/src/layouts"
+    - fileType: "Auth Routes"
+      fileName: "authRoutes"
+      extension: "ts"
+      content: |
+        import type { RouteRecordRaw } from 'vue-router'
+
+        const authRouts: Array<RouteRecordRaw> = [
+          {
+            path: 'login',
+            name: 'login',
+            component: () => import('@/views/auth/LoginView.vue'),
+          },
+        ]
+
+        export default authRoutes
+      destinationPath: "${destinationFolder}/src/layouts"
+    - fileType: "Login View"
+      fileName: "LoginView"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="h-screen flex items-center justify-center">
+            <div class="w-full max-w-md p-6 bg-base-100 rounded-2xl shadow-lg">
+              <h1 class="text-2xl font-bold text-center mb-6">
+                <AppLogo size="150" />
+              </h1>
+              <LoginForm />
+            </div>
+          </div>
+        </template>
+
+        <script lang="ts" setup>
+        import LoginForm from '@/auth/LoginForm.vue'
+        import AppLogo from '@/core/AppLogo.vue'
+        </script>
+      destinationPath: "${destinationFolder}/src/views"
+    - fileType: "Auth Composable"
+      fileName: "useAuth"
+      extension: "ts"
+      content: |
+        import { useRouter } from 'vue-router'
+
+        export function useAuth() {
+          const router = useRouter()
+          const goToLoginView = () => {
+            router.push({ path: '/auth/login' })
+          }
+          return {
+            goToLoginView,
+          }
+        }
+      destinationPath: "${destinationFolder}/src/composables"
+    - fileType: "Logout Button"
+      fileName: "LogoutButton"
+      extension: "vue"
+      content: |
+        <template>
+          <GenesisButton class="btn-ghost border-0" @click="logout">
+            <LogoutIcon />
+          </GenesisButton>
+        </template>
+        <script setup lang="ts">
+        import LogoutIcon from '@/core/icons/LogoutIcon.vue'
+        import GenesisButton from '@/core/button/GenesisButton.vue'
+        import { useAuth } from '@/composables/useAuth.ts'
+
+        const auth = useAuth()
+        const logout = () => {
+          auth.goToLoginView()
+        }
+        </script>
+      destinationPath: "${destinationFolder}/src/core/button"
+    - fileType: "User Nav Profile"
+      fileName: "UserNavProfile"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="flex items-center justify-between gap-2">
+            <!-- Avatar + Nom -->
+            <div class="flex items-center gap-2">
+              <div
+                class="flex items-center justify-center w-10 h-10 rounded-full bg-base-100 text-base-content font-bold"
+              >
+                {{ initials }}
+              </div>
+              <p class="m-0 font-medium">{{ name }}</p>
+            </div>
+
+            <!-- Bouton Déconnexion -->
+            <div>
+              <LogoutButton />
+            </div>
+          </div>
+        </template>
+
+        <script setup lang="ts">
+        import { computed } from 'vue'
+        import LogoutButton from '@/core/button/LogoutButton.vue'
+
+        // Props
+        const props = defineProps<{
+          name: string
+        }>()
+
+        // Computed: initials
+        const initials = computed(() => {
+          if (!props.name) return ''
+          return props.name
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()
+        })
+        </script>
+      destinationPath: "${destinationFolder}/src/core/user"
   additionalFiles:
     - fileType: "Package File"
       fileName: "package"
@@ -8263,13 +8394,13 @@
               "license": "MIT"
             },
             "node_modules/tinyglobby": {
-              "version": "0.2.14",
-              "resolved": "https://registry.npmjs.org/tinyglobby/-/tinyglobby-0.2.14.tgz",
-              "integrity": "sha512-tX5e7OM1HnYr2+a2C/4V0htOcSQcoSTH9KgJnVvNm5zm/cyEWKJ7j7YutsH9CxMdtOkkLFy2AHrMci9IM8IPZQ==",
+              "version": "0.2.15",
+              "resolved": "https://registry.npmjs.org/tinyglobby/-/tinyglobby-0.2.15.tgz",
+              "integrity": "sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ==",
               "license": "MIT",
               "dependencies": {
-                "fdir": "^6.4.4",
-                "picomatch": "^4.0.2"
+                "fdir": "^6.5.0",
+                "picomatch": "^4.0.3"
               },
               "engines": {
                 "node": ">=12.0.0"
@@ -8594,9 +8725,9 @@
               }
             },
             "node_modules/vite": {
-              "version": "7.1.3",
-              "resolved": "https://registry.npmjs.org/vite/-/vite-7.1.3.tgz",
-              "integrity": "sha512-OOUi5zjkDxYrKhTV3V7iKsoS37VUM7v40+HuwEmcrsf11Cdx9y3DIr2Px6liIcZFwt3XSRpQvFpL3WVy7ApkGw==",
+              "version": "7.1.6",
+              "resolved": "https://registry.npmjs.org/vite/-/vite-7.1.6.tgz",
+              "integrity": "sha512-SRYIB8t/isTwNn8vMB3MR6E+EQZM/WG1aKmmIUCfDXfVvKfc20ZpamngWHKzAmmu9ppsgxsg4b2I7c90JZudIQ==",
               "license": "MIT",
               "dependencies": {
                 "esbuild": "^0.25.0",
@@ -8604,7 +8735,7 @@
                 "picomatch": "^4.0.3",
                 "postcss": "^8.5.6",
                 "rollup": "^4.43.0",
-                "tinyglobby": "^0.2.14"
+                "tinyglobby": "^0.2.15"
               },
               "bin": {
                 "vite": "bin/vite.js"
@@ -9403,8 +9534,7 @@
         import App from './App.vue'
         import router from './router'
         import { createPinia } from 'pinia'
-        import { createI18n } from 'vue-i18n'
-        import '@/assets/styles/css/index.css'
+        import '@/assets/styles/main.css'
         
         /* import the fontawesome core */
         import { library } from '@fortawesome/fontawesome-svg-core'
@@ -9414,26 +9544,9 @@
         import { fas } from '@fortawesome/free-solid-svg-icons'
         import { far } from '@fortawesome/free-regular-svg-icons'
         import { fab } from '@fortawesome/free-brands-svg-icons'
-        
-        /* Import lang Files */
-        {{#each langList}}
-        import ${lowerCase(this.name)} from '@/lang/${lowerCase(this.name)}.js'
-        {{/each}}{{removeLine}}
+        import i18n from '@/config/i18n.ts'
         
         library.add(fas, far, fab)
-        const i18n = createI18n({
-          legacy: false,
-          {{#each langList}}
-          {{#if @first}}
-          locale: '${this.locale}',
-          fallbackLocale: '${this.locale}',{{/if}}
-        {{/each}}{{removeLine}}
-          messages: {
-            {{#each langList}}
-            ${this.locale}: ${lowerCase(this.name)}.messages,
-            {{/each}}{{removeLine}}
-          },
-        })
         const pinia = createPinia()
         const app = createApp(App)
         
@@ -9442,6 +9555,7 @@
         app.use(router)
         app.use(pinia)
         app.mount('#app')
+
       destinationPath: "${destinationFolder}/src"
 
     - fileType: "Index File"
@@ -9540,58 +9654,62 @@
         </script>
       destinationPath: "${destinationFolder}/src/views"
 
-    - fileType: "Navbar"
-      fileName: "GenesisNavbar"
+    - fileType: "Logo Icon"
+      fileName: "AppLogo"
       extension: "vue"
       content: |
         <template>
-          <nav id="sidebar" class="h-full w-2/12 p-4 flex flex-col bg-base-100 shadow-md">
-            <!-- Brand -->
-            <div class="text-center flex justify-center gap-2 items-center mb-6 uppercase">
-              <LogoIcon {{#if useLogoLink}}src="${logoUrl}"{{else}}:src="logo"{{/if}} alt="Branding Logo" width="60" />
-              <h1 class="text-2xl font-semibold">{{ $t('projectName') }}</h1>
-            </div>
-
-            <!-- Navigation -->
-            <ul class="menu flex-col flex flex-nowrap w-full overflow-y-auto">
-              <li v-for="section in navigations" :key="section.sectionName" class="mb-2">
-                <span class="menu-title font-semibold text-neutral uppercase opacity-30">
-                  <font-awesome-icon v-if="section.icon" :icon="section.icon" class="mr-2" />
-                  {{ section.sectionName }}
-                </span>
-                <GenesisNavList :items="section.navChilds" />
-              </li>
-            </ul>
-
-            <!-- Footer part -->
-            <div class="mt-auto pt-4">
-              <LanguageSwitcher />
-              <UserNavProfile name="John Doe" />
-            </div>
-          </nav>
+          <LogoIcon {{#if useLogoLink}}src="${logoUrl}"{{else}}:src="logo"{{/if}} alt="${majStart(projectName)} Logo" :width="size" />
         </template>
 
         <script setup lang="ts">
-        import { storeToRefs } from 'pinia'
-        import { useNavigationsStore } from '@/stores/useNavigationsStore'
-        import LanguageSwitcher from '@/core/language/LanguageSwitcher.vue'
-
-        // Components
-        import UserNavProfile from '../user/UserNavProfile.vue'
-        import GenesisNavList from './GenesisNavList.vue'
         import LogoIcon from '@/core/icons/LogoIcon.vue'
         {{#if useLogoLink}}{{removeLine}}
         {{elseIf hasLogo}}import logo from '@/assets/images${logoUrl}'
         {{else}}import logo from '@/assets/images/logo.png'{{/if}}
 
-        // Store
-        const navigationsStore = useNavigationsStore()
-        const { navigations } = storeToRefs(navigationsStore)
+        defineProps({
+          size: {
+            type: String,
+            default: '60',
+          },
+        })
+        </script>
+      destinationPath: "${destinationFolder}/src/core"
+
+    - fileType: "Navbar"
+      fileName: "GenesisNavbar"
+      extension: "vue"
+      content: |
+        <template>
+          <nav class="flex-1 flex flex-col">
+            <ul class="menu flex-1 flex flex-col gap-2 overflow-hidden">
+              <li v-for="section in navigations" :key="section.sectionName">
+                <!-- Section title -->
+                <span
+                  class="menu-title font-semibold text-neutral uppercase opacity-30 flex items-center gap-2"
+                >
+                  <font-awesome-icon v-if="section.icon" :icon="section.icon" />
+                  {{ $t(section.sectionName) }}
+                </span>
+                <!-- Items -->
+                <GenesisNavList :items="section.navChilds" class="" />
+              </li>
+            </ul>
+          </nav>
+        </template>
+
+        <script setup lang="ts">
+        import GenesisNavList from './GenesisNavList.vue'
+        import navigations from '@/config/navigations.ts'
         </script>
 
         <style scoped>
-        #sidebar {
-          position: fixed; /* sticky ne peut pas dépasser le parent scrollable */
+        .menu {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
         }
         </style>
 
@@ -9602,31 +9720,17 @@
       extension: "vue"
       content: |
         <template>
-          <!-- FreezeScreen -->
           <teleport to="#freeze-screen">
             <FreezeScreen />
           </teleport>
-          <div class="md:flex flex-col md:flex-row md:min-h-screen w-full">
-            <!-- Sidebar -->
-            <aside class="w-2/12 h-screen overflow-y-auto">
-              <GenesisNavbar />
-            </aside>
-
-            <!-- Main content -->
-            <main class="flex-1 overflow-y-auto bg-base-100 p-4">
-              <router-view />
-            </main>
-          </div>
+          <router-view />
         </template>
 
         <script setup lang="ts">
-        import GenesisNavbar from './core/navbar/GenesisNavbar.vue'
-        import FreezeScreen from './core/loading/FreezeScreen.vue'
+        import FreezeScreen from '@/core/loading/FreezeScreen.vue'
         </script>
 
-        <style scoped>
-        /* keep styling here */
-        </style>
+        <style scoped></style>
       destinationPath: "${destinationFolder}/src"
 
     - fileType: "Router Index"
@@ -9663,106 +9767,155 @@
         import type { RouteRecordRaw } from 'vue-router'
         import HomeView from '@/views/HomeView.vue'
         import CustomisationView from '@/views/settings/CustomisationView.vue'
-
-        // Entity routes
+        import SideBarLayout from '@/layouts/SideBarLayout.vue'
+        {{#if useJWT}}
+        import AuthLayout from '@/layouts/AuthLayout.vue'
+        {{/if}}
         {{#each entities}}
         import ${minStart(this.className)}Routes from './entities/${minStart(this.className)}Routes'
         {{/each}}{{removeLine}}
+        
 
         const routes: Array<RouteRecordRaw> = [
-          { path: '/', name: 'home', component: HomeView },
-          { path: '/customisation', name: 'customisation', component: CustomisationView },
-          {{#each entities}}
-          ...${minStart(this.className)}Routes,
-          {{/each}}{{removeLine}}
+          {
+            path: '/',
+            redirect: '/home',
+          },
+          {
+            path: '/',
+            component: SideBarLayout,
+            children: [
+              { path: 'home', name: 'home', component: HomeView },
+              { path: 'customisation', name: 'customisation', component: CustomisationView },
+              {{#each entities}}
+              ...${minStart(this.className)}Routes,
+              {{/each}}{{removeLine}}
+            ],
+          },
+          {{#if useJWT}}
+          {
+            path: '/auth',
+            component: AuthLayout,
+            children: [
+              {
+                path: 'login',
+                name: 'login',
+                component: () => import('@/views/auth/LoginView.vue'),
+              },
+            ],
+          },
+          {{/if}}
         ]
         export default routes
 
       destinationPath: "${destinationFolder}/src/router"
 
-    - fileType: "Navigation Store"
-      fileName: "useNavigationsStore"
+    - fileType: "Navigation Config"
+      fileName: "navigations"
       extension: "ts"
       content: |
-        import { defineStore } from "pinia";
-        export const useNavigationsStore = defineStore("navigations", {
-          state: () => ({
-            navigations: [
-              // CORE NAVIGATION
+        const navigations = [
+          // CORE NAVIGATION
+          {
+            icon: 'fas fa-microchip',
+            sectionName: 'navbar.core',
+            navChilds: [
               {
-                icon: 'fas fa-microchip',
-                sectionName: "Core",
-                navChilds: [
-                  {
-                    navLink: "/",
-                    navTitle: "Home",
-                  },
-                ],
+                navLink: "/home",
+                navTitle: "navbar.home",
               },
-              // ENTITIES NAVIGATION
               {
-                icon: 'fas fa-layer-group',
-                sectionName: "Entities",
-                navChilds: [
-                  {{#each entities}}
-                  {{#if this.isView = false}}
-                  {
-                    navTitle:"${majStart(this.className)}",
-                    navChilds:[
-                      {
-                        navTitle: "${majStart(this.className)} List",
-                        navLink: "/${minStart(this.className)}s",
-                      },
-                      {
-                        navTitle: "Create ${majStart(this.className)}",
-                        navLink: "/${minStart(this.className)}s/create",
-                      },
-                    ]
-                  },
-                  {{removeLine}}
-                  {{/if}}
-                  {{/each}}
-                ],
-              },
-              // VIEWS NAVIGATION
-              {
-                icon: 'fas fa-box',
-                sectionName: 'Views',
-                navChilds: [
-                  {{#each entities}}
-                  {{#if this.isView}}
-                  {
-                    navTitle:"${majStart(this.className)}",
-                    navLink: "/${minStart(this.className)}s",
-                  },
-                  {{removeLine}}
-                  {{/if}}
-                  {{/each}}
-                ],
-              },
-              // SETTINGS NAVIGATION
-              {
-                icon: 'fas fa-gear',
-                sectionName: 'Settings',
-                navChilds: [
-                  {
-                    navTitle: 'Customisation',
-                    navLink: '/customisation',
-                  },
-                ],
+                navTitle: 'navbar.settings',
+                navLink: '/customisation',
               },
             ],
-          }),
-          actions: {},
+          },
+          // ENTITIES NAVIGATION
+          {
+            icon: 'fas fa-layer-group',
+            sectionName: 'navbar.entities',
+            navChilds: [
+              {{#each entities}}
+              {{#if this.isView = false}}
+              {
+                navTitle:"${majStart(this.className)}",
+                navChilds:[
+                  {
+                    navTitle: "${majStart(this.className)} List",
+                    navLink: "/${minStart(this.className)}s",
+                  },
+                  {
+                    navTitle: "Create ${majStart(this.className)}",
+                    navLink: "/${minStart(this.className)}s/create",
+                  },
+                ]
+              },
+              {{removeLine}}
+              {{/if}}
+              {{/each}}
+            ],
+          },
+          // VIEWS NAVIGATION
+          {
+            icon: 'fas fa-box',
+            sectionName: 'navbar.views',
+            navChilds: [
+              {{#each entities}}
+              {{#if this.isView}}
+              {
+                navTitle:"${majStart(this.className)}",
+                navLink: "/${minStart(this.className)}s",
+              },
+              {{removeLine}}
+              {{/if}}
+              {{/each}}
+            ],
+          },
+        ]
+        export default navigations
+      destinationPath: "${destinationFolder}/src/config"
+
+    - fileType: "i18n Config"
+      fileName: "i18n"
+      extension: "ts"
+      content: |
+        /* Import lang Files */
+        import english from '@/lang/english.ts'
+        import french from '@/lang/french.ts'
+        import { createI18n } from 'vue-i18n'
+        const i18n = createI18n({
+          {{#each langList}}
+          {{#if @first}}
+          locale: '${this.locale}',
+          fallbackLocale: '${this.locale}',{{/if}}
+        {{/each}}{{removeLine}}
+          messages: {
+            {{#each langList}}
+            ${this.locale}: ${lowerCase(this.name)}.messages,
+            {{/each}}{{removeLine}}
+          },
+          datetimeFormats: {
+            {{#each langList}}
+            ${this.locale}: ${lowerCase(this.name)}.datetimeFormats,
+            {{/each}}{{removeLine}}
+          },
+          numberFormats: {
+            {{#each langList}}
+            ${this.locale}: ${lowerCase(this.name)}.numberFormats,
+            {{/each}}{{removeLine}}
+          },
         })
-      destinationPath: "${destinationFolder}/src/stores"
+        export default i18n
+      destinationPath: "${destinationFolder}/src/config"
 
     - fileType: "Style Css"
-      fileName: "index"
+      fileName: "main"
       extension: "css"
       content: |
         @import 'tailwindcss';
-
+        .menu {
+          width: auto;
+        }
         @plugin "daisyui";
 
         /* Thème custom Genesis */
@@ -9850,7 +10003,45 @@
           --noise: 0;
         }
         ${additionalCss}
-      destinationPath: "${destinationFolder}/src/assets/styles/css"
+      destinationPath: "${destinationFolder}/src/assets/styles"
+    - fileType: "App Banner"
+      fileName: "GenesisBanner"
+      extension: "vue"
+      content: |
+        <template>
+          <header
+            class="w-full fixed top-0 left-0 shadow-sm z-30"
+            :style="{ height }"
+            aria-region="topbar"
+          >
+            <div class="h-full flex items-center justify-between px-4">
+              <!-- Brand -->
+              <div class="flex items-center gap-2 uppercase">
+                <AppLogo />
+                <h1 class="text-xl md:text-2xl font-semibold">{{ $t('projectName') }}</h1>
+              </div>
+
+              <!-- Right side -->
+              <div class="flex items-center gap-4">
+                <LanguageSwitcher />
+                {{#if useJWT}}
+                <UserNavProfile name="John Doe" /> {{/if}}
+              </div>
+            </div>
+          </header>
+        </template>
+
+        <script setup lang="ts">
+        import LanguageSwitcher from '@/core/language/LanguageSwitcher.vue'
+        import AppLogo from '@/core/AppLogo.vue'
+        {{#if useJWT}}
+        import UserNavProfile from '@/core/user/UserNavProfile.vue'
+        {{/if}}
+        defineProps<{
+          height?: string
+        }>()
+        </script>
+      destinationPath: "${destinationFolder}/src/core/navbar"
   components:
     - componentType: "Entity Row"
       generateForView: true
@@ -9868,14 +10059,20 @@
         <template>
           <tr class="hover:bg-gray-50">
             {{#each fields}}
-            {{#if this.isForeignKey}}
+            {{#if @first}}
+            <td class="px-3 py-2 sticky bg-base-200 shadow-sm left-0">{{ ${minStart(EntityName)}.${this.name} }}</td>
+            {{elseIf this.isForeignKey}}
             <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name}?.getReferenceValue() }}</td>
+            {{elseIf this.isDate}}
+            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $d(${minStart(EntityName)}.${this.name}, 'long') : '--/--/--' }}</td>
+            {{elseIf this.isNumeric}}
+            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $n(${minStart(EntityName)}.${this.name}, 'decimal') : '--' }}</td>
             {{else}}
             <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} }}</td>{{/if}}
             {{/each}}{{removeLine}}
   
-            <td class="px-3 py-2 text-right">
-              <div class="inline-flex rounded-md shadow overflow-hidden">
+            <td class="px-3 py-2 bg-base-200 shadow-sm sticky text-end right-0">
+              <div class="rounded-md">
                 <EntityRowActions @delete-row="deleteRow" @view-row="viewRow" @edit-row="updateRow" />
               </div>
             </td>
@@ -9883,45 +10080,19 @@
         </template>
       style: "{{removeLine}}"
       export: |
-        /**
-         * Props
-         */
         const props = defineProps({
-          /**
-           * ${majStart(EntityName)} object representing a single row in the table
-           */
           ${minStart(EntityName)}: {
             type: Object as PropType<${majStart(EntityName)}>,
             required: true,
           },
         })
 
-        /**
-         * Emits
-         */
         const emit = defineEmits<{
-          /**
-           * Triggered when user requests to delete a row
-           * @param ${minStart(EntityName)} The ${majStart(EntityName)} object to delete
-           */
           (e: 'request-delete', ${minStart(EntityName)}: ${majStart(EntityName)}): void
-
-          /**
-           * Triggered when user requests to view a row
-           * @param ${minStart(EntityName)} The ${majStart(EntityName)} object to view
-           */
           (e: 'request-view', ${minStart(EntityName)}: ${majStart(EntityName)}): void
-
-          /**
-           * Triggered when user requests to update a row
-           * @param ${minStart(EntityName)} The ${majStart(EntityName)} object to update
-           */
           (e: 'request-update', ${minStart(EntityName)}: ${majStart(EntityName)}): void
         }>()
 
-        /**
-         * Event Handlers
-         */
         const deleteRow = () => emit('request-delete', props.${minStart(EntityName)})
         const viewRow = () => emit('request-view', props.${minStart(EntityName)})
         const updateRow = () => emit('request-update', props.${minStart(EntityName)})
@@ -9948,14 +10119,17 @@
       importComponent: "{{removeLine}}"
       template: |
         <template>
-          <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
-            <table class="table w-full border-gray-200 rounded-md text-left">
-              <thead class="bg-secondary">
+          <div class="rounded-box border border-base-content/5 bg-base-100">
+            <table class="table table-auto w-full border-gray-200 rounded-md relative">
+              <thead>
                 <tr>
                   {{#each fields}}
-                  <th class="px-3 py-2 font-bold">${formatReadable(this.name)}</th>
+                  {{#if @first}}
+                  <th class="sticky top-0 left-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2">${formatReadable(this.name)}</th>
+                  {{else}}
+                  <th class="sticky top-0 bg-secondary px-3 py-2 font-bold min-w-35 z-1">${formatReadable(this.name)}</th>{{/if}}
                   {{/each}}
-                  <th class="px-3 py-2 font-bold text-right">{{ $t('table.actions') }}</th>
+                  <th class="sticky top-0 right-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2"></th>
                 </tr>
               </thead>
               <tbody>
@@ -9989,63 +10163,36 @@
         </template>
       style: "{{removeLine}}"
       export: |
-        /**
-         * Props
-         */
         defineProps({
-          /**
-           * Array of ${majStart(EntityName)} entities to display
-           */
           data: {
             type: Array as PropType<${majStart(EntityName)}[]>,
             required: true,
           },
-          /**
-           * Optional message to show when no data is available
-           */
           message: String,
-          /**
-           * Loading indicator
-           */
           loading: {
             type: Boolean,
             default: false,
           },
         })
+        
         {{#if isView}}
-        /**
-         * Composables
-         */
         const { view${majStart(EntityName)} } = use${majStart(EntityName)}s()
         {{else}}
-        /**
-         * Emits
-         */
         const emit = defineEmits<{
-          /**
-           * Triggered to request a refresh of the list
-           */
           (e: 'request:refresh'): void
         }>()
 
-        /**
-         * Reactive state
-         */
         const selectedEntity = ref()
-        /**
-         * Composables
-         */
+
         const { visible: deletePopup, closePopup } = usePopup(false)
         const { delete${majStart(EntityName)}, view${majStart(EntityName)}, goToUpdateFormView } = use${majStart(EntityName)}s()
-        /**
 
-         * Methods
-         */
         function openDeletePopup(entity: ${majStart(EntityName)}) {
           if (!entity) return
           selectedEntity.value = entity
           deletePopup.value = true
         }
+
         async function confirmDelete() {
           const { success, error } = await delete${majStart(EntityName)}(selectedEntity.value)
           if (success) {
@@ -10056,7 +10203,6 @@
           }
         }
         {{/if}}
-
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
 
@@ -10341,22 +10487,22 @@
 
             const ${minStart(EntityName)}Routes: Array<RouteRecordRaw> = [
               {
-                path: '/${minStart(EntityName)}s',
+                path: '${minStart(EntityName)}s',
                 name: '${minStart(EntityName)}listview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}ListView.vue'),
               },
               {
-                path: '/${minStart(EntityName)}s/:id',
+                path: '${minStart(EntityName)}s/:id',
                 name: '${minStart(EntityName)}detailsview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}DetailsView.vue'),
               },{{#if !isView}}
               {
-                path: '/${minStart(EntityName)}s/update/:id',
+                path: '${minStart(EntityName)}s/update/:id',
                 name: '${minStart(EntityName)}updateview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}UpdateView.vue'),
               },
               {
-                path: '/${minStart(EntityName)}s/create',
+                path: '${minStart(EntityName)}s/create',
                 name: '${minStart(EntityName)}createview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}CreateView.vue'),
               },{{/if}}
@@ -10394,7 +10540,7 @@
                   <div>
                     <label for="${minStart(EntityName)}${majStart(this.name)}" class="block text-sm font-medium mb-1">${formatReadable(this.name)}</label>
                     <div id="${minStart(EntityName)}${majStart(this.name)}" class="input w-full bg-base-100 cursor-default">
-                      <span>{{ ${minStart(EntityName)}.${this.name}{{#if this.isForeignKey}}?.getReferenceValue(){{/if}} ?? '' }}</span>
+                      <span>{{ ${minStart(EntityName)}.${this.name}{{#if this.isForeignKey}}?.getReferenceValue() ?? ''{{elseIf this.isDate}}? $d(${minStart(EntityName)}.${this.name}, 'long'):'--/--/--' {{elseIf this.isNumeric}}? $n(${minStart(EntityName)}.${this.name}, 'decimal'): '--'{{else}} ?? ''{{/if}} }}</span>
                     </div>
                   </div>
                   {{/each}}{{removeLine}}
@@ -10425,7 +10571,7 @@
           />{{/if}}
         </template>
       export: |
-        // Props{{#if isView}}
+        {{#if isView}}
         defineProps({
           ${minStart(EntityName)}: {
             type: Object as PropType<${majStart(EntityName)}>,
@@ -10438,20 +10584,16 @@
             required: true,
           },
         })
-        
-        // Popup composable
+        // Stores
         const { closePopup, openPopup, visible: deletePopup } = usePopup(false)
-
-        // Entity composable for CRUD and navigation
         const { delete${majStart(EntityName)}, goToListView, goToUpdateFormView } = use${majPluralize(EntityName)}()
-
-        // Open delete popup
+        
+        // Methods
         const openDeletePopup = (entity: ${majStart(EntityName)}) => {
           if (!entity) return
           openPopup()
         }
 
-        // Confirm deletion
         const confirmDelete = async () => {
           const { success, error } = await delete${majStart(EntityName)}(props.${minStart(EntityName)})
           if (!success) console.error(error)
@@ -10529,10 +10671,6 @@
         import GenesisButton from '@/core/button/GenesisButton.vue'
         import GenesisInput from '@/core/form/GenesisInput.vue'
         {{#if containsForeignKey}}import GenesisSelectSearchCriteria from '@/core/form/GenesisSelectSearchCriteria.vue'{{/if}}
-        {{#each fieldsFK}}
-        import { ${majStart(this.type)} } from '@/models/${majStart(this.type)}Model'
-        {{removeLine}}
-        {{/each}}
       selector: "${majStart(EntityName)}Form"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -10540,9 +10678,9 @@
         <template>
           <div class="card bg-base-100">
             <div class="card-body">
-              <!-- <form @submit.prevent="handleSubmit" class="grid grid-cols-1 w-6/12 gap-4 mx-auto"> -->
-              <form @submit.prevent="handleSubmit" class="">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form @submit.prevent="handleSubmit" class="grid grid-cols-1 w-7/12 gap-4 mx-auto">
+              <!-- <form @submit.prevent="handleSubmit" class=""> -->
+                <div class="grid grid-cols-1 gap-4">
                   {{#each fields}}
                   {{#if this.isPrimaryKey}}{{removeLine}}
                   {{elseIf this.isForeignKey}}
@@ -10554,15 +10692,16 @@
                     :search-function="${minStart(this.type)}SearchField?.multicriteriaSelect.searchFunction"
                     :filters="${minStart(this.type)}SearchField?.multicriteriaSelect.filters"
                     :default-value="${minStart(this.type)}DefaultValue"
-                    @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = selectedValue)"
+                    @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = String(selectedValue))"
                   />
                   {{else}}
                   <!-- ${formatReadable(this.name)} -->
                   <GenesisInput
                     label="${formatReadable(this.name)}"
-                    placeholder="Entrer ${formatReadable(this.name)}"
+                    placeholder="Enter ${formatReadable(this.name)}"
                     type="${this.uiType}"
                     v-model="formModel.${minStart(this.name)}"
+                    :value="formModel.${minStart(this.name)}"
                   />
                   {{/if}}
                   {{/each}}{{removeLine}}
@@ -10785,7 +10924,6 @@
         }
       destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
-
   serviceComponent:
     name: "${majStart(EntityName)}Service"
     destinationPath: "${destinationFolder}/src/services"
@@ -11003,7 +11141,7 @@
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/src"
-    langsPath: "{{removeLine}}"
+    langsPath: "${destinationFolder}/src/locales"
   authenticationFiles:
     - fileType: "Service Auth"
       fileName: "auth"
@@ -11172,6 +11310,7 @@
         import { useNavigate, useLocation } from 'react-router-dom';
         import { TextField, Button, Paper, Typography, Box } from '@mui/material';
         import { useSnackbar } from 'notistack';
+        import { useTranslation } from 'react-i18next';
 
         export default function Login() {
             const [username, setUsername] = useState('');
@@ -11179,6 +11318,7 @@
             const { login, token, user } = useAuth(); // ← user ajouté
             const navigate = useNavigate();
             const { enqueueSnackbar } = useSnackbar();
+            const { t } = useTranslation();
             const location = useLocation();
             const from = location.state?.from?.pathname || '/';
 
@@ -11196,18 +11336,18 @@
                 try {
                     await login(username, password);
                 } catch {
-                    enqueueSnackbar('Identifiants invalides', { variant: 'error' });
+                    enqueueSnackbar(t('messages.authentication.invalid'), { variant: 'error' });
                 }
             };
 
             return (
                 <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Paper sx={{ p: 4, width: 360 }}>
-                        <Typography variant="h5" mb={3} textAlign="center">Connexion</Typography>
+                        <Typography variant="h5" mb={3} textAlign="center">{t('messages.authentication.title')}  </Typography>
                         <form onSubmit={handleSubmit}>
-                            <TextField fullWidth label="Nom d’utilisateur" value={username} onChange={e => setUsername(e.target.value)} required />
-                            <TextField fullWidth label="Mot de passe" type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
-                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>Se connecter</Button>
+                            <TextField fullWidth label={t('messages.authentication.username')} value={username} onChange={e => setUsername(e.target.value)} required />
+                            <TextField fullWidth label={t('messages.authentication.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
+                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>{t('messages.authentication.submit')} </Button>
                         </form>
                     </Paper>
                 </Box>
@@ -11268,6 +11408,7 @@
         import { RouterProvider } from 'react-router-dom';
         import { router } from './router';
         import './index.css';
+        import './i18n'; 
         import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
         import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
         import { SnackbarProvider } from 'notistack';
@@ -11282,13 +11423,13 @@
             <React.StrictMode>
                 <ThemeProvider>
                     <CssBaseline />
-                        <AuthProvider>
-                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
-                                <SnackbarProvider maxSnack={3} autoHideDuration={1500}>
-                                    <RouterProvider router={router} />
-                                </SnackbarProvider>
-                            </LocalizationProvider>
-                        </AuthProvider>
+                    <AuthProvider>
+                        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                            <SnackbarProvider maxSnack={3} autoHideDuration={1500}>
+                                <RouterProvider router={router} />
+                            </SnackbarProvider>
+                        </LocalizationProvider>
+                    </AuthProvider>
                 </ThemeProvider>
             </React.StrictMode>
         );
@@ -11376,6 +11517,8 @@
         import { Logout } from '@mui/icons-material';
         import {useAuth} from "@/contexts/AuthContext";
         import {useNavigate} from "react-router-dom";
+        import { useTranslation } from 'react-i18next';
+        import LanguageSwitcher from "@/components/LanguageSwitcher";
 
         interface Props {
             layout?: 'vertical' | 'horizontal';
@@ -11387,6 +11530,7 @@
             const toggle = () => setOpen((prev) => !prev);
             const { logout } = useAuth();
             const navigate = useNavigate(); // ← ajout
+            const { t } = useTranslation();
 
             const handleLogout = () => {
                 logout();       // vide le state + localStorage
@@ -11482,7 +11626,7 @@
                                         color="default"
                                     />
                                 }
-                                label={open ? (mode === 'dark' ? 'Sombre' : 'Clair') : ''}
+                                label={open ? t(mode === 'dark' ? 'messages.theme.dark' : 'messages.theme.light') : ''}
                                 labelPlacement="bottom"
                                 sx={{
                                     color: 'inherit',
@@ -11497,9 +11641,10 @@
                                 }}
                             />
 
-                            <IconButton onClick={handleLogout} title="Déconnexion">
+                            <IconButton onClick={handleLogout} title={t('messages.authentication.logout')}>
                                 <Logout />
                             </IconButton>
+                            <LanguageSwitcher />
                         </Box>
                     </Drawer>
                 </>
@@ -11530,13 +11675,13 @@
                 icon: <List />,
                 children: [
                     {
-                        label: 'List',
+                        label: 'messages.navigation.list',
                         path: '/${toKebabCase(this.className)}s',
                         icon: <List />,
                     },
                     {{#if !this.isView}}{{removeLine}}
                     {
-                        label: 'Add',
+                        label: 'messages.navigation.add',
                         path: '/${toKebabCase(this.className)}s/create',
                         icon: <Add />
                     },
@@ -11596,6 +11741,34 @@
       content: |
         VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
       destinationPath: "${destinationFolder}/"
+    - fileType: "i18n file"
+      fileName: "i18n"
+      extension: "js"
+      content: |
+        // src/i18n.js
+        import i18n from 'i18next';
+        import { initReactI18next } from 'react-i18next';
+        import LanguageDetector from 'i18next-browser-languagedetector';
+        
+        {{#each langList}}
+        import ${lowerCase(this.name)} from './locales/${lowerCase(this.name)}.js'
+        {{/each}}{{removeLine}}
+
+        i18n
+            .use(LanguageDetector)
+            .use(initReactI18next)
+            .init({
+                resources: {
+                    {{#each langList}}
+                    ${this.locale}: { translation: ${lowerCase(this.name)} },
+                    {{/each}}{{removeLine}}
+                },
+                fallbackLng: {{#each langList}}{{#if @first}}'${this.locale}'{{/if}}{{/each}},
+                interpolation: { escapeValue: false },
+            });
+
+        export default i18n;
+      destinationPath: "${destinationFolder}/src"
   components:
     - componentType: "List"
       generateForView: true
@@ -11612,6 +11785,7 @@
         import GenericListPage from '@/components/GenericListPage/GenericListPage';
         import ActionButtons from '@/components/ActionButtons';
         import {useDelete} from "@/hooks/useDelete";
+        import {useTranslation} from "react-i18next";
       selector: "${majStart(className)}List"
       export: |
         const columns = [
@@ -11626,27 +11800,29 @@
         {{removeLine}}
         {{#if !isView}}
         function RowActions({ row }: { row: ${majStart(className)} }) {
+            const { t } = useTranslation();
             const navigate = useNavigate();
             const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => window.location.reload());
 
             return (
                 <ActionButtons
                     actions={[
-                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`) },
-                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}) },
+                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`), title:`$[t('messages.common.edit')]` },
+                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}), title:`$[t('messages.common.delete')]` },
                     ]}
                 />
             );
         }
         {{/if}}
         export default function ${majStart(className)}List() {
+            const { t } = useTranslation();
             return GenericListPage<${majStart(className)}>({
                 entityName: ${toCamelCase(className)}Meta.entityName,
                 columns,
                 availableFilters: ${toCamelCase(className)}Filters,
                 defaultSort: ${toCamelCase(className)}Meta.defaultSort,
                 searchFn: ${toCamelCase(className)}Service.search,
-                pageTitle: '${majStart(className)} List'
+                pageTitle: `${majStart(className)} $[t('messages.entity.list.nav')]`
             })();
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
@@ -11667,10 +11843,12 @@
         import GenericDetailPage from '@/components/GenericDetailPage/GenericDetailPage';
         import {useDelete} from "@/hooks/useDelete";
         import { Typography } from '@mui/material';
+        import {useTranslation} from "react-i18next";
       selector: "${majStart(className)}Detail"
       export: |
         export default function ${majStart(className)}Detail() {
             const navigate = useNavigate();
+            const { t } = useTranslation();
             {{#if !isView}}
             const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => {
                   navigate('/${toKebabCase(className)}s'); 
@@ -11685,14 +11863,14 @@
                 actions: [
                     {{#if !isView}}{{removeLine}}
                     {
-                        label: 'Edit',
+                        label: `$[t('messages.common.edit')]`,
                         icon: <Edit />,
                         variant: 'outlined',
                         color: 'primary',
                         onClick: (row, navigate) => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`),
                     },
                     {
-                        label: 'Delete',
+                        label: `$[t('messages.common.delete')]`,
                         icon: <Delete />,
                         variant: 'outlined',
                         color: 'error',
@@ -11726,8 +11904,10 @@
       importComponent: |
         import GenericFormBuilder from '@/components/GenericForm/GenericFormBuilder';
         import {ApiResponse} from "@/services/api";
+        import {useTranslation} from "react-i18next";
       export: |
         export default function Create${majStart(className)}() {
+            const { t } = useTranslation();
 
             const handleSubmit = async (data: any): Promise<ApiResponse<${majStart(className)}>> => {
                 return await ${toCamelCase(className)}Service.create(data);
@@ -11739,7 +11919,7 @@
                     fields={formFields as any}
                     onSubmit={handleSubmit}
                     redirectTo="/${toKebabCase(className)}s"
-                    title="Add ${toKebabCase(className)}"
+                    title={`$[t('messages.common.add')] ${toKebabCase(className)}`}
                     mode="create"
                     idKey="{{#each fieldsPK}}${this.name}{{/each}}"
                     detailRedirect="/${toKebabCase(className)}s/:id"
@@ -11760,15 +11940,17 @@
       generateForView: false
       importComponent: |
         import GenericUpdateFormBuilder from '@/components/GenericForm/GenericUpdateFormBuilder';
+        import {useTranslation} from "react-i18next";
       export: |
         export default function Update${majStart(className)}() {
+            const { t } = useTranslation();
             return (
                 <GenericUpdateFormBuilder<${majStart(className)}>
                     entityName={${toCamelCase(className)}Meta.entityName}
                     fields={updateFormFields}
                     getById={${toCamelCase(className)}Service.getById}
                     update={${toCamelCase(className)}Service.update}
-                    title="Update ${toKebabCase(className)}"
+                    title={`$[t('messages.common.edit')] ${toKebabCase(className)}`}
                     detailRedirect="/${toKebabCase(className)}s/:id"
                 />
             );
