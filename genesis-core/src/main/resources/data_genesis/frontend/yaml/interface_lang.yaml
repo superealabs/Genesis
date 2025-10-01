@@ -183,7 +183,6 @@
     };
     export default english;
 
-
 - id: 2
   name: "French"
   locale: "fr"
@@ -361,5 +360,4 @@
           },
         },
       };
-
-   export default french;
+      export default french;
