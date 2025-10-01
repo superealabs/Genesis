@@ -15,6 +15,7 @@
       extension: "html"
       content: |
         {{#if useJWT}}
+        <app-banner *ngIf="isLoggedIn" title="${projectName}"></app-banner>
         <div class="app-layout">
           <app-sidebar *ngIf="isLoggedIn" [entities]="entities" [views]="views"></app-sidebar>
             <div class="main-content">
@@ -32,6 +33,8 @@
         import { RouterOutlet,RouterModule } from '@angular/router';
         import {HttpClientModule } from '@angular/common/http';
         
+        import { BannerComponent } from './shared/banner/banner.component';
+        
         import { SidebarComponent } from './shared/sidebar/sidebar.component';
         import { CommonModule } from '@angular/common';
         import { AuthService } from './features/authentication/services/authentication.service';
@@ -43,13 +46,13 @@
         @Component({
           selector: 'app-root',
           standalone: true,
-          imports: [RouterOutlet,RouterModule,SidebarComponent,CommonModule,HttpClientModule],
+          imports: [RouterOutlet,RouterModule,SidebarComponent,CommonModule,HttpClientModule,BannerComponent],
           templateUrl: './app.component.html',
           styleUrls: ['./app.component.css']
         })
 
         export class AppComponent {
-          title = 'first-angular-project';
+          title = '${projectName}';
           isLoggedIn: boolean = false;
           
           constructor(private authService: AuthService, private router: Router ) {
@@ -417,15 +420,44 @@
             {{else}}no css{{/if}}
       destinationPath: "${destinationFolder}/src/app/features/authentication/login"
   additionalFiles:
+    - fileType: "Language file"
+      fileName: "language.service"
+      extension: "ts"
+      content: |
+        import { Injectable } from '@angular/core';
+        import { BehaviorSubject } from 'rxjs';
+
+        export enum Language 
+        { {{#each langList}}
+          ${upperCase(this.locale)} = '${this.locale}',
+          {{/each}}{{removeLine}}
+        }
+
+        @Injectable({
+          providedIn: 'root'
+        })
+        export class LanguageService {
+          private languageSubject = new BehaviorSubject<Language>(Language.EN);
+          language$ = this.languageSubject.asObservable();
+
+          setLanguage(lang: Language) {
+            this.languageSubject.next(lang);
+          }
+
+          get currentLanguage(): Language {
+            return this.languageSubject.value;
+          }
+        }
+      destinationPath: "${destinationFolder}/src/app/shared/services/language"
     - fileType: "Index page"
       fileName: "index"
-      extension: ".html"
+      extension: "html"
       content: |
         <!doctype html>
         <html lang="en">
         <head>
           <meta charset="utf-8">
-          <title>FirstAngularProject</title>
+          <title>${projectName}</title>
           <base href="/">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <link rel="icon" type="image/x-icon" href="{{#if useFaviconLink}}${faviconUrl}{{else}}favicon.ico{{/if}}">
@@ -445,6 +477,17 @@
       fileName: "styles"
       extension: "css"
       content: |
+        html, body {
+          height: 100%;
+          margin: 0;
+          padding: 0;
+        }
+          app-root {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+          }
         :root {
 
           --primary: ${primaryColor};
@@ -463,19 +506,20 @@
       content: |
         import { Component } from '@angular/core';
         import { RouterOutlet,RouterModule } from '@angular/router';
+        import { BannerComponent } from './shared/banner/banner.component';
         
         import { SidebarComponent } from './shared/sidebar/sidebar.component';
         
         @Component({
           selector: 'app-root',
           standalone: true,
-          imports: [RouterOutlet,RouterModule,SidebarComponent],  
+          imports: [RouterOutlet,RouterModule,SidebarComponent,BannerComponent],  
           templateUrl: './app.component.html',
           styleUrls: ['./app.component.css']      
         })
         
         export class AppComponent {
-          title = 'first-angular-project';
+          title = '${projectName}';
 
           entities={
           {{tab}}{{#each entities}}{{removeLine}}
@@ -514,6 +558,7 @@
       fileName: "app.component"
       extension: "html"
       content: |
+        <app-banner title="${projectName}"></app-banner>
         <div class="app-layout">
           <app-sidebar [entities]="entities" [views]="views"></app-sidebar>
             <div class="main-content">
@@ -737,7 +782,7 @@
         {{/each}}
       selector: "app-${toKebabCase(className)}-list"
       standalone: true
-      importComponent: "[CommonModule, HttpClientModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent,PageHeaderComponent,LoadingIconComponent]"
+      importComponent: "[CommonModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent,PageHeaderComponent,LoadingIconComponent]"
       template: "./${toKebabCase(className)}-list.component.html"
       style: "./${toKebabCase(className)}-list.component.css"
       export: |
@@ -962,7 +1007,7 @@
       selector: "app-${toKebabCase(className)}-form"
       generateForView: false
       standalone: true
-      importComponent: "[CommonModule, HttpClientModule, ReactiveFormsModule, DynamicFieldComponent, LoadingIconComponent, PageHeaderComponent, LinkButtonComponent, DynamicFormComponent]"
+      importComponent: "[CommonModule, ReactiveFormsModule, DynamicFieldComponent, LoadingIconComponent, PageHeaderComponent, LinkButtonComponent, DynamicFormComponent]"
       template: "./${toKebabCase(className)}-form.component.html"
       style: "./${toKebabCase(className)}-form.component.css"
       export: |
@@ -1153,7 +1198,7 @@
       selector: "app-${toKebabCase(className)}-details"
       generateForView: false
       standalone: true
-      importComponent: "[CommonModule, HttpClientModule, PageHeaderComponent, LoadingIconComponent, DetailViewComponent]"
+      importComponent: "[CommonModule, PageHeaderComponent, LoadingIconComponent, DetailViewComponent]"
       template: "./${toKebabCase(className)}-details.component.html"
       style: "./${toKebabCase(className)}-details.component.css"
       export: |

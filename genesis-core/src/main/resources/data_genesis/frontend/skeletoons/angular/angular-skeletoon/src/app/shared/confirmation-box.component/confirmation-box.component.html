@@ -10,11 +10,11 @@
       </svg>
     </div>
 
-    <p [innerHTML]="message" style="margin: 1% 0 2% 0; line-height: 1.1;"></p>
-    <small class="undo-warning" style="display: block; margin: 0 0 8px 0; line-height: 1.1;">This cannot be undone.</small>
+    <p  style="margin: 1% 0 2% 0; line-height: 1.1;">{{ this.content.box_confirm.H1Se }}</p>
+    <small class="undo-warning" style="display: block; margin: 0 0 8px 0; line-height: 1.1;">{{this.content.box_confirm.H2Se }}</small>
 
     <div class="button-container" style="text-align:center;">
-      <button class="confirm-btn action-btn" (click)="confirm()">Delete</button>
+      <button class="confirm-btn action-btn" (click)="confirm()">{{this.content.button.delete}}</button>
     </div>
   </div>
 </div>

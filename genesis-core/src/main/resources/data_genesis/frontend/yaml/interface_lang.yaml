@@ -4,7 +4,7 @@
   content: |
     const english = {
       messages: {
-        projectName: '${projectName}',
+        projectName: 'Ora test',
         common: {
           update: 'Update',
           delete: 'Delete',
@@ -13,13 +13,42 @@
           save: 'Save',
           cancel: 'Cancel',
           edit: 'Edit',
+          read:'read'
         },
+        box_confirm:
+          {
+            H1Se:"Are you sure you want to delete this item?",
+            H2Se:"This cannot be undone"
+          },
+        header:
+          {
+            backList:"Back to list",
+            list:"List",
+            details:"Details",
+            add:"Add new",
+            form:"Form"
+          },
+        banner:
+          {
+            lang: 'Language',
+            disconnect:"disconnect"
+          
+          },
+        saying_words:
+          {
+            entries:"new entries",
+            details:"details",
+            information:"information",
+            and:"and",
+            needs:"what you don't need"
+          },
         navbar: {
           core: 'Core',
-          entities: 'Entities',
-          views: 'Views',
-          settings: 'Settings',
-          home: 'Home',
+          entities: 'ENTITIES',
+          views: 'VIEWS',
+          settings: 'SETTING',
+          home: 'HOME',
+          customisation: 'LAYOUT CUSTOMISATION',
         },
         authentication: {
           title: 'Sign in',
@@ -33,6 +62,8 @@
           greet: 'Hello',
           greetDeveloper: '@.capitalize:home.greet Developer',
           welcome: 'Welcome on @.capitalize:projectName frontend app',
+          simple_welcome:'Welcome',
+    
           titles: {
             entities: 'List of entities',
             views: 'List of views',
@@ -42,13 +73,15 @@
           actions: 'Actions',
         },
         pagination: {
-          sizeLabel: 'Showing :',
+          sizeLabel: 'Showing:',
           previous: 'Previous',
           next: 'Next',
           goToLabel: 'Going to page:',
           pageOf: 'Page {page} of {total}',
         },
         search: {
+                  simple_filter:"Filters",
+                  selection:"select a field",
           filters: 'No filter | Filters | Filters ({count})',
         },
         entity: {
@@ -73,10 +106,12 @@
         },
         button: {
           addEntity: 'Add new {entity}',
+                  validate:'Submit',
           applySearch: 'Apply',
           go: 'GO',
           backToList: 'Back to list',
           backToListDescription: 'Return to the list view',
+                  delete:'delete'
         },
         error: {
           error: 'Error',
@@ -104,7 +139,6 @@
           add: 'Add',
         },
       },
-      // DateTime formatting
       dateTimeFormats: {
         short: {
           year: 'numeric',
@@ -134,11 +168,11 @@
         currency: {
           style: 'currency',
           currency: 'USD',
-          currencyDisplay: 'symbol', // $1,234.56
+          currencyDisplay: 'symbol', 
         },
         decimal: {
           style: 'decimal',
-          minimumFractionDigits: 2, // 1,234.50
+          minimumFractionDigits: 2, 
           maximumFractionDigits: 2,
         },
         percent: {
@@ -149,154 +183,183 @@
     };
     export default english;
 
+
 - id: 2
   name: "French"
   locale: "fr"
   content: |
     const french = {
-      messages: {
-        projectName: '${projectName}',
-        common: {
-          update: 'Modifier',
-          delete: 'Supprimer',
-          create: 'Créer',
-          add: 'Ajouter',
-          save: 'Enregistrer',
-          cancel: 'Annuler',
-          edit: 'Éditer',
-        },
-        navbar: {
-          core: 'Noyau',
-          entities: 'Entités',
-          views: 'Vues',
-          settings: 'Paramètres',
-          home: 'Accueil',
-        },
-        authentication: {
-          title: 'Connexion',
-          username: 'Nom d’utilisateur',
-          password: 'Mot de passe',
-          submit: 'Se connecter',
-          invalid: 'Identifiants invalides',
-          logout: 'Déconnexion',
-        },
-        home: {
-          greet: 'Bonjour',
-          greetDeveloper: '@.capitalize:home.greet Développeur',
-          welcome: 'Bienvenue sur l’application frontend @.capitalize:projectName',
+        messages: {
+          projectName: '${projectName}',
+          common: {
+            update: 'Modifier',
+            delete: 'Supprimer',
+            create: 'Enregistrer',
+            read: 'lire'
+          },
+          box_confirm: {
+            H1Se: "Voulez-vous effacer cet élément définitivement?",
+            H2Se: "Pas de retour en arrière possible"
+          },
+          header: {
+            backList: "Revenir à la liste",
+            list: "Liste",
+            details: "Détails",
+            add: "Formulaire d'ajout de",
+            form: "Formulaire"
+          },
+          banner: {
+            lang: 'Langue',
+            disconnect: "se déconnecter"
+          },
+          saying_words: {
+            entries: "de nouvelles entrées",
+            details: "les détails",
+            information: "les informations",
+            and: "et",
+            needs: "ce dont vous n'avez pas besoin"
+          },
+          navbar: {
+            core: 'Noyau',
+            entities: 'Entités',
+            views: 'Vues',
+            settings: 'Paramètres',
+            home: 'Accueil',
+            customisation: 'Personnalisation de layout'
+          },
+          home: {
+            greet: 'Bonjour',
+            greetDeveloper: '@.capitalize:home.greet Developpeur',
+            welcome: 'Bienvenue sur l application frontend @.capitalize:projectName',
+            simple_welcome: 'Bienvenue',
+            add: 'Ajouter',
+            save: 'Enregistrer',
+            cancel: 'Annuler',
+            edit: 'Éditer',
+          },
+          authentication: {
+            title: 'Connexion',
+            username: 'Nom d’utilisateur',
+            password: 'Mot de passe',
+            submit: 'Se connecter',
+            invalid: 'Identifiants invalides',
+            logout: 'Déconnexion',
+          },
           titles: {
             entities: 'Liste des entités',
             views: 'Liste des vues',
           },
-        },
-        table: {
-          actions: 'Actions',
-        },
-        pagination: {
-          sizeLabel: 'Affichage :',
-          previous: 'Précédent',
-          next: 'Suivant',
-          goToLabel: 'Aller à la page :',
-          pageOf: 'Page {page} sur {total}',
-        },
-        search: {
-          filters: 'Aucun filtre | Filtres | Filtres ({count})',
-        },
-        entity: {
-          nav: '{entity} / ',
-          list: {
-            nav: 'Liste',
-            filters: 'Filtres',
-            addFilter: 'Ajouter un filtre',
-            removeFilter: 'Supprimer le filtre {{label}}',
+          table: {
+            actions: 'Actions',
           },
-          create: {
-            nav: 'Nouveau',
-            submitLabel: '@:common.create {entity}',
+          pagination: {
+            sizeLabel: 'Affichage:',
+            previous: 'Precedent',
+            next: 'Suivant',
+            goToLabel: 'Aller à la page',
+            pageOf: 'Page {page} sur {total}',
           },
-          update: {
-            nav: '@:common.update',
-            submitLabel: '@:common.update {entity}',
+          search: {
+            simple_filter: "Filtres",
+            selection: "choisir un champ",
+            filters: 'Aucun filtre | Filtres | Filtres ({count})',
           },
-          details: {
-            nav: 'Détails',
+          entity: {
+            nav: '{entity} / ',
+            list: {
+              nav: 'Liste',
+              filters: 'Filtres',
+              addFilter: 'Ajouter un filtre',
+              removeFilter: 'Supprimer le filtre {{label}}',
+            },
+            create: {
+              nav: 'Nouveau',
+              submitLabel: '@:common.create {entity}',
+            },
+            update: {
+              nav: '@:common.update',
+              submitLabel: '@:common.update {entity}',
+            },
+            details: {
+              nav: 'Détails',
+            },
+          },
+          button: {
+            addEntity: 'Ajouter un(e) nouveau(elle) {entity}',
+            applySearch: 'Appliquer',
+            go: 'Aller',
+            validate: 'Valider',
+            delete: 'Supprimer',
+            backToList: 'Retour à la liste',
+            backToListDescription: 'Revenir à la vue en liste',
+          },
+          error: {
+            error: 'Erreur',
+            400: 'Requête invalide',
+            403: 'Accès interdit',
+            404: 'Page introuvable',
+            500: 'Erreur interne (500)',
+          },
+          theme: {
+            dark: 'Sombre',
+            light: 'Clair',
+          },
+          state: {
+            loading: 'Chargement…',
+            notFound: 'Introuvable',
+            success: 'Succès',
+            creating: 'Création en cours…',
+            updating: 'Mise à jour en cours…',
+          },
+          confirmation: {
+            delete: 'Confirmer la suppression ?',
+          },
+          navigation: {
+            list: 'Liste',
+            add: 'Ajouter',
           },
         },
-        button: {
-          addEntity: 'Ajouter un(e) nouveau(elle) {entity}',
-          applySearch: 'Appliquer',
-          go: 'Aller',
-          backToList: 'Retour à la liste',
-          backToListDescription: 'Revenir à la vue en liste',
+        dateTimeFormats: {
+          short: {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          },
+          long: {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long',
+          },
+          time: {
+            hour: '2-digit',
+            minute: '2-digit',
+          },
+          full: {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+          },
         },
-        error: {
-          error: 'Erreur',
-          400: 'Requête invalide',
-          403: 'Accès interdit',
-          404: 'Page introuvable',
-          500: 'Erreur interne (500)',
+        numberFormats: {
+          currency: {
+            style: 'currency',
+            currency: 'EUR',
+            currencyDisplay: 'symbol',
+          },
+          decimal: {
+            style: 'decimal',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          },
+          percent: {
+            style: 'percent',
+            useGrouping: true,
+          },
         },
-        theme: {
-          dark: 'Sombre',
-          light: 'Clair',
-        },
-        state: {
-          loading: 'Chargement…',
-          notFound: 'Introuvable',
-          success: 'Succès',
-          creating: 'Création en cours…',
-          updating: 'Mise à jour en cours…',
-        },
-        confirmation: {
-          delete: 'Confirmer la suppression ?',
-        },
-        navigation: {
-          list: 'Liste',
-          add: 'Ajouter',
-        },
-      },
-      // Formatage des dates
-      dateTimeFormats: {
-        short: {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        },
-        long: {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          weekday: 'long',
-        },
-        time: {
-          hour: '2-digit',
-          minute: '2-digit',
-        },
-        full: {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          weekday: 'long',
-          hour: '2-digit',
-          minute: '2-digit',
-        },
-      },
-      // Formatage des nombres
-      numberFormats: {
-        currency: {
-          style: 'currency',
-          currency: 'EUR',
-          currencyDisplay: 'symbol', // 1 234,56 €
-        },
-        decimal: {
-          style: 'decimal',
-          minimumFractionDigits: 2, // 1 234,50
-          maximumFractionDigits: 2,
-        },
-        percent: {
-          style: 'percent',
-          useGrouping: true, // 88 %
-        },
-      },
-    };
-    export default french
+      };
+
+   export default french;

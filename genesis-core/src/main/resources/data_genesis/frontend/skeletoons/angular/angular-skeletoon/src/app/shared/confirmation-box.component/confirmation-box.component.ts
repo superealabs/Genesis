@@ -1,6 +1,6 @@
-// confirmation-box.component.ts
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MotherComponent } from '../mother-component/mother.component';
 
 @Component({
   selector: 'app-confirmation-box',
@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './confirmation-box.component.html',
   styleUrls: ['./confirmation-box.component.css']
 })
-export class ConfirmationBoxComponent {
+export class ConfirmationBoxComponent extends MotherComponent implements OnInit{
   @Input() message: string = 'Are you sure you want to delete this item?';
   @Input() value: any;
   @Input() onConfirm!: (value: any) => void;
