@@ -8,6 +8,9 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  excludeProjectFilesEdits:
+    - "SolutionFile"
+    - "TestProjectFile"
   additionalFiles:
     - fileType: "ProgramFile"
       fileName: "Program"

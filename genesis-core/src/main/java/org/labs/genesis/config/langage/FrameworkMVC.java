@@ -16,6 +16,7 @@ public class FrameworkMVC extends Framework {
     private View view;
     private List<ViewsTemplateEngine> viewsTemplateEngine;
     private List<ViewsTemplate> viewsTemplate;
+    private List<String> excludeProjectFilesEdits;
 
     public void setViewsTemplateEngine() throws IOException {
         this.viewsTemplateEngine = Arrays.stream(FileUtils.fromYaml(ViewsTemplateEngine[].class, Constantes.VIEWS_TEMPLATE_ENGINE_YAML))

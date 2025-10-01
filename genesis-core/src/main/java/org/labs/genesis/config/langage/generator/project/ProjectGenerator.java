@@ -161,9 +161,21 @@ public class ProjectGenerator {
             var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
             projectFilesEditsHashMap.putAll(mapDaoGlobal);
         }
+
+        List<FilesEdit> projectFilesEdits;
+
+        if (context.getFramework() instanceof FrameworkMVC mvcFramework) {
+            List<String> excludeFilesEdits = mvcFramework.getExcludeProjectFilesEdits();
+            projectFilesEdits = context.getProject().getProjectFilesEdits().stream()
+                    .filter(file -> !excludeFilesEdits.contains(file.getFileType()))
+                    .toList();
+        } else {
+            projectFilesEdits = new ArrayList<>(context.getProject().getProjectFilesEdits());
+        }
+
         renderAndCopyFiles(context.getProject().getProjectFiles(), projectFilesEditsHashMap);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
-        renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);
+        renderFilesEdits(projectFilesEdits, projectFilesEditsHashMap);
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
 
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
