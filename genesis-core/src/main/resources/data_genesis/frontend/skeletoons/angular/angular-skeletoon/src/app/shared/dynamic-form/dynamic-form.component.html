@@ -6,7 +6,7 @@
   <div class="delete-container">
     <app-link-button
       [isButton]="true"
-      buttonLabel="Submit"
+      buttonLabel={{this.content.button.validate}}
       (onClick)="submit()"
       type="default"
     ></app-link-button>

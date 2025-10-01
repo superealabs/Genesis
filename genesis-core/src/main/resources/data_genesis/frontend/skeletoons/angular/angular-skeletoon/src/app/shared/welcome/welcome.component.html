@@ -1,11 +1,11 @@
 <div class="welcome-container">
   <div class="welcome-text">
-    <h1 class="title">Welcome</h1>
+    <h1 class="title">{{ this.content.home.simple_welcome}}</h1>
     <p class="subtitle">
-      <span class="create">Create</span> new entries, 
-      <span class="read">Read</span> details, 
-      <span class="update">Update</span> information, 
-      and <span class="delete">Delete</span> what you don’t need.
+      <span class="create">{{this.content.common.create}}</span> {{this.content.saying_words.entries}}, 
+      <span class="read">{{this.content.common.read}}</span> {{this.content.saying_words.details}}, 
+      <span class="update">{{this.content.common.update}}</span> {{this.content.saying_words.information}}, 
+      {{this.content.saying_words.and}} <span class="delete"> {{this.content.common.delete}}</span> {{this.content.saying_words.needs}}
     </p>
 
     <div class="icons">

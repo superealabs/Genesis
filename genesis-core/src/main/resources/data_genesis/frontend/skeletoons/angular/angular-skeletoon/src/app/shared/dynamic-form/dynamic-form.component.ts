@@ -1,9 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup } from '@angular/forms';
 import { DynamicFieldComponent, FieldConfig } from '../dynamic-field/dynamic-field.component';
 import { LinkButtonComponent } from '../link-button/link-button.component';
 import { LoadingIconComponent } from '../loading-icon/loading-icon.component';
+import { MotherComponent } from '../mother-component/mother.component';
 
 @Component({
   selector: 'app-dynamic-form',
@@ -12,7 +13,7 @@ import { LoadingIconComponent } from '../loading-icon/loading-icon.component';
   templateUrl: './dynamic-form.component.html',
   styleUrls: ['./dynamic-form.component.css']
 })
-export class DynamicFormComponent {
+export class DynamicFormComponent extends MotherComponent implements OnInit{
 
   @Input() fields: FieldConfig[] = [];
   @Input() submitFn!: (formValue: any) => void;

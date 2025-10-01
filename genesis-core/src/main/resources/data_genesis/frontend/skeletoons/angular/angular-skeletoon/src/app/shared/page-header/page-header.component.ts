@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { LinkButtonComponent } from '../link-button/link-button.component';
+import { MotherComponent } from '../mother-component/mother.component';
 import { NgIf } from '@angular/common';
 
 function toKebabCase(str: string): string {
@@ -18,7 +19,7 @@ function toKebabCase(str: string): string {
       <div class="page-title">
         <span class="light-name">{{ name }}</span>
         <span class="light-name"> / </span>
-        <span class="bold-list">{{ context}}</span>
+        <span class="bold-list">{{ contextValue}}</span>
       </div>
       <app-link-button
         *ngIf="!isView"
@@ -61,15 +62,29 @@ function toKebabCase(str: string): string {
     }
   `]
 })
-export class PageHeaderComponent {
+export class PageHeaderComponent extends MotherComponent implements OnInit{
   @Input() name: string = '';
   @Input() isView: boolean = false;
   @Input() isDetail: boolean = false;
   @Input() isForm: boolean = false;
   @Input() context: string = 'List';
-   // par défaut on affiche le bouton
 
-
+  get contextValue(): string
+  {
+      if(this.context=="List")
+      {
+          return this.content.header.list;
+      }
+      else if(this.context=="Details")
+        {
+          return this.content.header.details
+        }
+      else if(this.context=="Form")
+        {
+          return this.content.header.form
+        }  
+        return "";
+  }
   get singularLowercase(): string {
     return this.name.endsWith('s') ?
       this.name.slice(0, -1).toLowerCase() :
@@ -79,13 +94,13 @@ export class PageHeaderComponent {
   
   get backList(): Record<string, string> {
     return {
-      ['Back to list']: `/${toKebabCase(this.name)}`
+      [this.content.header.backList]: `/${toKebabCase(this.name)}`
     };
   }
 
   get linkMap(): Record<string, string> {
     return {
-      ['Add new ' + this.singularLowercase]: `/${toKebabCase(this.name)}/add`
+      [this.content.header.add +" "+this.singularLowercase]: `/${toKebabCase(this.name)}/add`
     };
   }
 }
