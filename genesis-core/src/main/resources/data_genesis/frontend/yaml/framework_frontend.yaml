@@ -11184,26 +11184,30 @@
       extension: "tsx"
       content: |
         // src/contexts/AuthContext.tsx
+        // src/contexts/AuthContext.tsx
         import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
         import { authService } from '@/services/auth';
+        import { useSnackbar } from 'notistack';
 
         type User = { username: string; email?: string };
-
-        interface AuthCtx {
+        type AuthCtx = {
             user: User | null;
             token: string | null;
             login: (u: string, p: string) => Promise<void>;
             logout: () => void;
             loading: boolean;
-        }
+            // nouvelles
+            register: (payload: { name: string; email: string; password: string }) => Promise<{ message?: string } | void>;
+            fetchCurrent: () => Promise<void>;
+            updateProfile: (payload: { name?: string; email?: string }) => Promise<void>;
+            changePassword: (payload: { oldPassword: string; newPassword: string; confirmPassword: string }) => Promise<void>;
+        };
 
         const AuthContext = createContext<AuthCtx>(null!);
-
-        const REFRESH_INTERVAL_MS = Number(
-            import.meta.env.VITE_REFRESH_INTERVAL_MS ?? 60000
-        );
+        const REFRESH_INTERVAL_MS = Number(import.meta.env.VITE_REFRESH_INTERVAL_MS ?? 60000);
 
         export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+            const { enqueueSnackbar } = useSnackbar();
             const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
             const [user, setUser] = useState<User | null>(null);
             const [loading, setLoading] = useState(true);
@@ -11222,7 +11226,6 @@
                 localStorage.removeItem('token');
                 setToken(null);
                 setUser(null);
-                // ❌ on ne fait plus window.location.href ici
             };
 
             const startRefreshTimer = (tk: string) => {
@@ -11233,11 +11236,15 @@
                         const newToken = res.data;
                         localStorage.setItem('token', newToken);
                         setToken(newToken);
-                        console.log('Token refreshed silently');
                     } catch {
-                        logout(); // échec → on déconnecte
+                        logout();
                     }
                 }, REFRESH_INTERVAL_MS);
+            };
+
+            const fetchCurrent = async () => {
+                const res = await authService.me();
+                setUser({ username: res.data.username, email: (res.data as any).email });
             };
 
             useEffect(() => {
@@ -11246,26 +11253,45 @@
                     return;
                 }
                 authService
-                    .me(token)
+                    .me()
                     .then(res => {
-                        setUser({ username: res.data.username, email: res.data.email });
+                        setUser({ username: res.data.username, email: (res.data as any).email });
                         startRefreshTimer(token);
                     })
                     .catch(() => logout())
                     .finally(() => setLoading(false));
-                return clearTimer;
             }, [token]);
 
-            const login = async (username: string, password: string) => {
                 const res = await authService.login({ username, password });
                 const jwt = res.data;
                 localStorage.setItem('token', jwt);
                 setToken(jwt);
                 startRefreshTimer(jwt);
+                await fetchCurrent();
+            };
+
+            const register = async (payload: { name: string; email: string; password: string }) => {
+                // laisser la page gérer les toasts/navigation
+                const res = await authService.register(payload);
+                return res; // retourner pour permettre l’affichage du message
+            };
+
+            const updateProfile = async (payload: { name?: string; email?: string }) => {
+                await authService.updateProfile(payload);
+                await fetchCurrent();
+                enqueueSnackbar('Profile updated', { variant: 'success' });
+            };
+
+            const changePassword = async (payload: {oldPassword: string; newPassword: string; confirmPassword: string;}) => {
+                await authService.changePassword(payload);
+                enqueueSnackbar('Password changed, please sign in again', { variant: 'success' });
+                logout(); // ProtectedRoute enverra vers /login quand user=null
             };
 
             return (
-                <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+                <AuthContext.Provider
+                    value={{ user, token, loading, login, logout, register, fetchCurrent, updateProfile, changePassword }}
+                >
                     {children}
                 </AuthContext.Provider>
             );
