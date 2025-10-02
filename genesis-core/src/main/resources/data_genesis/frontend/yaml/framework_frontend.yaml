@@ -11347,6 +11347,7 @@
         import { TextField, Button, Paper, Typography, Box } from '@mui/material';
         import { useSnackbar } from 'notistack';
         import { useTranslation } from 'react-i18next';
+        import LanguageSwitcher from '@/components/LanguageSwitcher';
 
         export default function Login() {
             const [username, setUsername] = useState('');
@@ -11377,13 +11378,19 @@
             };
 
             return (
-                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                    <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+                        <LanguageSwitcher />
+                    </Box>
                     <Paper sx={{ p: 4, width: 360 }}>
                         <Typography variant="h5" mb={3} textAlign="center">{t('messages.authentication.title')}  </Typography>
                         <form onSubmit={handleSubmit}>
                             <TextField fullWidth label={t('messages.authentication.username')} value={username} onChange={e => setUsername(e.target.value)} required />
                             <TextField fullWidth label={t('messages.authentication.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
                             <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>{t('messages.authentication.submit')} </Button>
+                            <Button fullWidth variant="text" sx={{ mt: 1 }} onClick={() => navigate('/register')}>
+                                {t('messages.authentication.createAccount')}
+                            </Button>
                         </form>
                     </Paper>
                 </Box>
