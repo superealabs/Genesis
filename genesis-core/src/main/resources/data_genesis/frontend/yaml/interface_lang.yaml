@@ -56,6 +56,18 @@
           submit: 'Sign in',
           invalid: 'Invalid credentials',
           logout: 'Logout',
+          createAccount: "Create account",
+          backToSignIn: "Back to sign in",
+        },
+        register: {
+          title: "Create account",
+          name: "Name",
+          email: "Email",
+          password: "Password",
+          submit: "Register",
+          backToSignIn: "Back to sign in",
+          success: "Account created successfully",
+          error: "Registration failed"
         },
         home: {
           greet: 'Hello',
@@ -246,12 +258,24 @@
           customisation: 'Personnalisation de layout'
         },
         authentication: {
-          title: 'Connexion',
+          title: "Se connecter",
           username: 'Nom d’utilisateur',
           password: 'Mot de passe',
           submit: 'Se connecter',
           invalid: 'Identifiants invalides',
           logout: 'Déconnexion',
+          createAccount: "Créer un compte",
+          backToSignIn: "Retour à la connexion",
+        },
+        register: {
+          title: "Créer un compte",
+          name: "Nom",
+          email: "Email",
+          password: "Mot de passe",
+          submit: "S'inscrire",
+          backToSignIn: "Retour à la connexion",
+          success: "Compte créé avec succès",
+          error: "Échec de l'inscription"
         },
         home: {
           greet: 'Bonjour',
