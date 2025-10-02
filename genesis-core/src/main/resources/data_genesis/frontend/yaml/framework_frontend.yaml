@@ -11399,6 +11399,7 @@
         import { createBrowserRouter, Navigate } from 'react-router-dom';
         import ProtectedRoute from '@/router/ProtectedRoute';
         import Login from '@/pages/auth/Login';
+        import Register from '@/pages/auth/Register';
         {{#each routes}}
         import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
         {{/each}}
@@ -11408,6 +11409,7 @@
                 path: '/login',
                 element: <Login />,
             },
+            { path: 'register', element: <Register /> },
             {
                 path: '/',
                 element: (
