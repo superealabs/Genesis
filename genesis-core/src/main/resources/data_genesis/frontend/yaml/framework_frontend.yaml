@@ -11151,29 +11151,39 @@
         import axios from 'axios';
         import { ApiResponse } from './api';
 
-        const API_BASE = import.meta.env.VITE_API_BASE; // déjà présent
+        const API_BASE = import.meta.env.VITE_API_BASE as string;
 
-        interface AuthRequest {
-            username: string;
+        interface AuthRequest { username: string; password: string; }
+        interface RegisterPayload {
+            name: string;
+            email: string;
             password: string;
+            roleidRoleEntity?: { id: number };
         }
+        interface UpdateRequest { name?: string; email?: string; }
+        interface ChangePasswordRequest { oldPassword: string; newPassword: string; confirmPassword: string; }
 
         export const authService = {
             login: (payload: AuthRequest) =>
                 axios.post<ApiResponse<string>>(`$[API_BASE]/auth/login`, payload)
-                    .then(res => res.data),
+                      .then(r => r.data),
 
-            logout: (token: string) =>
-                axios.post<ApiResponse<void>>(`$[API_BASE]/auth/logout`, {}, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }).then(res => res.data),
+            // S’appuie sur l’intercepteur axios pour Authorization
+            me: () =>
+                axios.get<ApiResponse<any>>(`$[API_BASE]/auth/current`).then(r => r.data),
 
-            me: (token: string) =>
-                axios.get<ApiResponse<any>>(`$[API_BASE]/auth/current`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }).then(res => res.data),
+            register: (payload: RegisterPayload) =>
+                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/register`, payload).then(r => r.data),
 
-            /* ------------ nouvelle méthode ------------ */
+            updateProfile: (payload: UpdateRequest) =>
+                axios.patch<ApiResponse<string>>(`$[API_BASE]/auth/update`, payload).then(r => r.data),
+
+            changePassword: (payload: ChangePasswordRequest) =>
+                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/change-password`, payload).then(r => r.data),
+
+            logout: () =>
+                axios.post<ApiResponse<void>>(`$[API_BASE]/auth/logout`, {}).then(r => r.data),
+
             refresh: (token: string) =>
                 axios.post<ApiResponse<string>>(`$[API_BASE]/auth/refresh`, { refreshToken: token })
                     .then(res => res.data),
