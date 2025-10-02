@@ -209,7 +209,7 @@
           update: 'Modifier',
           delete: 'Supprimer',
           create: 'Enregistrer',
-          read: 'lire'
+          read: 'lire',
           add: 'Ajouter',
           save: 'Enregistrer',
           cancel: 'Annuler',
