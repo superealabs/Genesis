@@ -155,22 +155,19 @@ public class ProjectGenerator {
         if (!context.isGenerateFrontendApp()){
             return;
         }
-        HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(context.getFrontendFramework(),context.getProjectName(),context.getWebappFolder(),context.getProjectPort(),entities);
-        HashMap<String,Object> folder=FrameworkFrontendMetadataProvider.getWebappHashMap(context);
-        finalRenderData.putAll(folder);
-        renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
-
+        HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(entities, context);
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
         selectedSecurityOption.ifPresent(security -> {
             try {
                 HashMap<String, Object> securityMap=FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType,context);
-                securityMap.putAll(finalRenderData);
-                renderFilesEdits(context.getFrontendFramework().getAuthenticationFiles(),securityMap);
+                finalRenderData.putAll(securityMap);
+                renderFilesEdits(context.getFrontendFramework().getAuthenticationFiles(),finalRenderData);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
+        renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
     }
 
     private void generateProjectFiles(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {

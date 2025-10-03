@@ -22,7 +22,6 @@ public class FrameworkFrontendMetadataProvider {
 
     public static HashMap<String, Object> getHashMapForSecurity(String securityType,ProjectGenerationContext context) {
         HashMap<String, Object> metadata = new HashMap<>();
-
         if(securityType.contains("JWT")) {
             metadata.put("useJWT",true);
         }else
@@ -119,8 +118,6 @@ public class FrameworkFrontendMetadataProvider {
         String webappFolder = getWebappFolder(context);
         metadata.put("destinationFolder", webappFolder);
         metadata.put("projectName", context.getProjectName());
-        metadata.put("webappFolder", context.getWebappFolder());
-        metadata.put("webapp", webappFolder);
         metadata.put("projectPort", context.getProjectPort());
 
         return metadata;
@@ -242,16 +239,19 @@ public class FrameworkFrontendMetadataProvider {
         }
         return tableMetadatasAns;
     }
-    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework,String projectName,String destinationFolder,String port,List<TableMetadata> tableMetadatas){
+    public  static HashMap<String, Object> getGlobalComponentsHashMap(List<TableMetadata> tableMetadatas, ProjectGenerationContext context){
+        FrontendFramework frontendFramework = context.getFrontendFramework();
+        String projectPort = context.getProjectPort() ;
+
         HashMap<String, Object> data = new HashMap<>();
         data.put("routes",getRoutesHashMap(frontendFramework));
-        data.put("projectName",projectName);
-        data.put("destinationFolder",destinationFolder);
         data.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
-        data.put("port",port);
+        data.put("port",projectPort);
         data.put("frontendPort",9000);
         data.put("apiUrl", "localhost");
         data.putAll(getRessourceHashMap(frontendFramework));
+        HashMap<String,Object> folder=FrameworkFrontendMetadataProvider.getWebappHashMap(context);
+        data.putAll(folder);
         return  data;
     }
 

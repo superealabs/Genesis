@@ -1443,7 +1443,7 @@
       content: |
         import type { RouteRecordRaw } from 'vue-router'
 
-        const authRouts: Array<RouteRecordRaw> = [
+        const authRoutes: Array<RouteRecordRaw> = [
           {
             path: 'login',
             name: 'login',
@@ -1452,7 +1452,7 @@
         ]
 
         export default authRoutes
-      destinationPath: "${destinationFolder}/src/layouts"
+      destinationPath: "${destinationFolder}/src/router"
     - fileType: "Login View"
       fileName: "LoginView"
       extension: "vue"
@@ -1472,7 +1472,7 @@
         import LoginForm from '@/auth/LoginForm.vue'
         import AppLogo from '@/core/AppLogo.vue'
         </script>
-      destinationPath: "${destinationFolder}/src/views"
+      destinationPath: "${destinationFolder}/src/views/auth"
     - fileType: "Auth Composable"
       fileName: "useAuth"
       extension: "ts"
@@ -9477,7 +9477,7 @@
       fileName: "{{removeLine}}"
       extension: "env"
       content: |
-        VITE_APP_API_URL=http://${apiUrl}:${port}/${toKebabCase(projectName)}
+        VITE_APP_API_URL=http://${apiUrl}:${projectPort}/${toKebabCase(projectName)}
         VITE_APP_PORT=${frontendPort}
       destinationPath: "${destinationFolder}"
 
@@ -9730,7 +9730,6 @@
         import ${minStart(this.className)}Routes from './entities/${minStart(this.className)}Routes'
         {{/each}}{{removeLine}}
         
-
         const routes: Array<RouteRecordRaw> = [
           {
             path: '/',
@@ -9776,8 +9775,8 @@
             sectionName: 'navbar.core',
             navChilds: [
               {
-                navLink: "/home",
-                navTitle: "navbar.home",
+                navLink: '/home',
+                navTitle: 'navbar.home',
               },
               {
                 navTitle: 'navbar.settings',
@@ -9793,15 +9792,15 @@
               {{#each entities}}
               {{#if this.isView = false}}
               {
-                navTitle:"${majStart(this.className)}",
+                navTitle:'${majStart(this.className)}',
                 navChilds:[
                   {
-                    navTitle: "${majStart(this.className)} List",
-                    navLink: "/${minStart(this.className)}s",
+                    navTitle: '${majStart(this.className)} List',
+                    navLink: '/${minStart(this.className)}s',
                   },
                   {
-                    navTitle: "Create ${majStart(this.className)}",
-                    navLink: "/${minStart(this.className)}s/create",
+                    navTitle: 'Create ${majStart(this.className)}',
+                    navLink: '/${minStart(this.className)}s/create',
                   },
                 ]
               },
@@ -9818,8 +9817,8 @@
               {{#each entities}}
               {{#if this.isView}}
               {
-                navTitle:"${majStart(this.className)}",
-                navLink: "/${minStart(this.className)}s",
+                navTitle:'${majStart(this.className)}',
+                navLink: '/${minStart(this.className)}s',
               },
               {{removeLine}}
               {{/if}}
@@ -9964,11 +9963,7 @@
       extension: "vue"
       content: |
         <template>
-          <header
-            class="w-full fixed top-0 left-0 shadow-sm z-30"
-            :style="{ height }"
-            aria-region="topbar"
-          >
+          <header class="w-full fixed top-0 left-0 shadow-sm z-30" :style="{ height }" aria-region="topbar">
             <div class="h-full flex items-center justify-between px-4">
               <!-- Brand -->
               <div class="flex items-center gap-2 uppercase">
@@ -9979,8 +9974,7 @@
               <!-- Right side -->
               <div class="flex items-center gap-4">
                 <LanguageSwitcher />
-                {{#if useJWT}}
-                <UserNavProfile name="John Doe" /> {{/if}}
+                {{#if useJWT}}<UserNavProfile name="John Doe" /> {{/if}}
               </div>
             </div>
           </header>
@@ -10027,7 +10021,7 @@
             {{/each}}{{removeLine}}
   
             <td class="px-3 py-2 bg-base-200 shadow-sm sticky text-end right-0">
-              <div class="rounded-md">
+              <div class="rounded-md inline-flex">
                 <EntityRowActions @delete-row="deleteRow" @view-row="viewRow" @edit-row="updateRow" />
               </div>
             </td>
@@ -10966,9 +10960,8 @@
       {{#each fieldsFK}}
       import { ${majStart(this.type)} } from './${majStart(this.type)}Model'
       import * as ${minStart(this.type)}Service from '@/services/${majStart(this.type)}Service'
-      {{/each}}
-      {{#if containsForeignKey}}
-      import { createSelectSearchFunction, createMulticriteriatSearchFunction } from './SelectOption'{{/if}}
+      {{/each}}{{removeLine}}
+      {{#if containsForeignKey}}import { createSelectSearchFunction, createMulticriteriatSearchFunction } from './SelectOption'{{/if}}
     exports: |
       export interface I${majStart(EntityName)} {
         {{#each fields}}
