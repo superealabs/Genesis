@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.labs.genesis.config.Constantes;
+import org.labs.genesis.frontend.generator.model.FrontendLayout;
+import org.labs.genesis.frontend.generator.model.ProjectBranding;
 import org.labs.utils.FileUtils;
 
 import java.io.IOException;
@@ -17,6 +19,8 @@ public class FrameworkMVC extends Framework {
     private List<ViewsTemplateEngine> viewsTemplateEngine;
     private List<ViewsTemplate> viewsTemplate;
     private List<String> excludeProjectFilesEdits;
+    private FrontendLayout frontendLayout;
+    private ProjectBranding projectBranding;
 
     public void setViewsTemplateEngine() throws IOException {
         this.viewsTemplateEngine = Arrays.stream(FileUtils.fromYaml(ViewsTemplateEngine[].class, Constantes.VIEWS_TEMPLATE_ENGINE_YAML))
@@ -27,13 +31,6 @@ public class FrameworkMVC extends Framework {
     public void setViewsTemplate() throws IOException {
         this.viewsTemplate = Arrays.stream(FileUtils.fromYaml(ViewsTemplate[].class, Constantes.VIEWS_TEMPLATES_YAML))
                 .collect(Collectors.toList());
-    }
-
-    public ViewsTemplateEngine findViewsTemplateEngineById(int idViewsTemplateEngine) {
-        return viewsTemplateEngine.stream()
-                .filter(viewsTemplateEngine -> viewsTemplateEngine.getId() == idViewsTemplateEngine)
-                .findFirst()
-                .orElse(null);
     }
 
     public ViewsTemplate findViewsTemplateById(int idViewsTemplate) {

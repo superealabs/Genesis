@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.labs.genesis.config.ProjectGenerationContext.*;
+import static org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider.getCssLayoutHashMap;
 import static org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider.getHashMapDaoGlobal;
 import static org.labs.genesis.config.langage.generator.project.ProjectMetadataProvider.getInitialHashMap;
 import static org.labs.genesis.config.langage.generator.project.ProjectMetadataProvider.getProjectFilesEditsHashMap;
@@ -314,8 +315,14 @@ public class ProjectGenerator {
                 context.getFrameworkConfiguration()
         );
 
+        FrameworkMVC frameworkMVC = (FrameworkMVC) context.getFramework();
+        HashMap<String, Object> frontendHashMap = getCssLayoutHashMap(frameworkMVC.getFrontendLayout());
+
+        frontendHashMap.putAll(initializeHashMap);
+
         renderAndCopyFolders(viewsTemplateEngine.getTemplateEngineFolders(), initializeHashMap);
         renderAndCopyFiles(viewsTemplate.getTemplateFiles(), initializeHashMap);
+        renderFilesEdits(viewsTemplate.getTemplateFilesEdits(), frontendHashMap);
         renderFilesEdits(viewsTemplateEngine.getTemplateEngineFilesEdits(), projectFilesEditsHashMap);
     }
 
@@ -334,10 +341,8 @@ public class ProjectGenerator {
         Language language = context.getLanguage();
         String projectName = context.getProjectName();
         Map<String, Object> frameworkOptions = context.getFrameworkConfiguration();
-        int templateId = (int) frameworkOptions.get("templateId");
-        int templateEngineId = (int) frameworkOptions.get("templateEngineId");
-        ViewsTemplate viewsTemplate = framework.findViewsTemplateById(templateId);
-        ViewsTemplateEngine viewsTemplateEngine = framework.findViewsTemplateEngineById(templateEngineId);
+        ViewsTemplate viewsTemplate = context.getViewsTemplate();
+        ViewsTemplateEngine viewsTemplateEngine = context.getViewsTemplateEngine();
         String groupLink = context.getGroupLink();
 
         genesisGenerator.generateViews(framework,
@@ -363,10 +368,8 @@ public class ProjectGenerator {
         Language language = context.getLanguage();
 
         Map<String, Object> frameworkOptions = context.getFrameworkConfiguration();
-        int templateId = (int) frameworkOptions.get("templateId");
-        int templateEngineId = (int) frameworkOptions.get("templateEngineId");
-        ViewsTemplate viewsTemplate = framework.findViewsTemplateById(templateId);
-        ViewsTemplateEngine viewsTemplateEngine = framework.findViewsTemplateEngineById(templateEngineId);
+        ViewsTemplate viewsTemplate = context.getViewsTemplate();
+        ViewsTemplateEngine viewsTemplateEngine = context.getViewsTemplateEngine();
         String groupLink = context.getGroupLink();
 
         if (framework.getUseDB()) {

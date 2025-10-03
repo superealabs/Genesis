@@ -7,6 +7,7 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
+import org.labs.genesis.frontend.generator.model.FrontendLayout;
 import org.labs.utils.StringUtils;
 
 import java.util.*;
@@ -573,6 +574,13 @@ public class FrameworkMetadataProvider {
         return frameworkSecurityBooleanMetadata;
     }
 
+    public static HashMap<String, Object> getCssLayoutHashMap(FrontendLayout layout){
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("primaryColor", layout.primaryColor);
+        metadata.put("secondaryColor", layout.secondaryColor);
+        metadata.put("navbarPreference", layout.navbar);
+        return  metadata;
+    }
 
     public static HashMap<String, Object> getAltViewMainLayoutHashMap (ViewsTemplateEngine viewsTemplateEngine) {
         HashMap<String, Object> altMap = new HashMap<>();

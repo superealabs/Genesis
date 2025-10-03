@@ -2,9 +2,7 @@ package org.labs.genesis.config;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.Language;
-import org.labs.genesis.config.langage.Project;
+import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 
@@ -38,6 +36,9 @@ public class ProjectGenerationContext {
     private Connection connection;
     private List<String> generationOptions;
     private boolean generateProjectStructure = true;
+    // FrameworkMVC specific configurations
+    private ViewsTemplateEngine viewsTemplateEngine;
+    private ViewsTemplate viewsTemplate;
 
     public ProjectGenerationContext setDatabase(Database database) {
         this.database = database;
