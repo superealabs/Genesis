@@ -4,7 +4,6 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.FrameworkMVC;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.forms.SpecificConfigurationForm;
 
@@ -44,12 +43,6 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
     public void updateDataModel() {
         Framework framework = projectGenerationContext.getFramework();
         Map<String, Object> frameworkConfiguration = new HashMap<>();
-
-        if (framework instanceof FrameworkMVC) {
-            frameworkConfiguration.put("templateEngineId", 1);
-            frameworkConfiguration.put("templateId", 1);
-        }
-
 
         // Gestion d'Eureka
         if (specificConfigurationForm.getUseAnEurekaServerCheckBox().isSelected()) {
