@@ -11272,6 +11272,7 @@
                     .finally(() => setLoading(false));
             }, [token]);
 
+            const login = async (username: string, password: string) => {
                 const res = await authService.login({ username, password });
                 const jwt = res.data;
                 localStorage.setItem('token', jwt);
