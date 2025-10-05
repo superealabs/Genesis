@@ -1032,6 +1032,8 @@
           private final JwtService jwtService;
           private final UserInfoService userInfoService;
           private final TokenBlacklistService tokenBlacklistService;
+          @Autowired
+          private RoleEntityRepository roleEntityRepository;
           
           @Autowired
           public UserAuthController(JwtService jwtService, UserInfoService userInfoService, TokenBlacklistService tokenBlacklistService) {
