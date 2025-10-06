@@ -11,14 +11,15 @@ import org.labs.genesis.config.langage.generator.framework.GenesisGenerator;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.TableMetadata;
-import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.labs.genesis.config.ProjectGenerationContext.*;
@@ -58,24 +59,20 @@ public class ProjectGenerator {
     }
 
     public static void renderAndCopyFiles(List<Project.ProjectFiles> projectFiles, HashMap<String, Object> initializeHashMap) throws IOException {
-        System.out.println("🔧 [renderAndCopyFiles] Début du rendu et copie des fichiers...");
-        if (projectFiles == null || projectFiles.isEmpty()) {
-            System.out.println("   ℹ️  Aucun fichier à copier (projectFiles est vide ou nul)");
-            return;
-        }
         for (Project.ProjectFiles projectFile : projectFiles) {
             String sourceFilePath = projectFile.getSourcePath() + projectFile.getFileName();
             String destinationFilePathSimple = projectFile.getDestinationPath() + projectFile.getFileName();
             String destinationFilePath = engine.simpleRender(destinationFilePathSimple, initializeHashMap);
+
+            System.out.println("Rendering and copying file:");
+            System.out.println("Source: " + sourceFilePath);
+            System.out.println("Rendered destination: " + destinationFilePath);
+            System.out.println();
             FileUtils.copyFile(sourceFilePath, destinationFilePath, "");
         }
     }
+
     public static void renderAndCopyFolders(List<Project.ProjectFolders> projectFolders, HashMap<String, Object> initializeHashMap) throws IOException {
-        System.out.println("🔧 [renderAndCopyFolders] Début du rendu et copie des dossiers...");
-        if (projectFolders == null || projectFolders.isEmpty()) {
-            System.out.println("   ℹ️  Aucun dossier à copier (projectFolders est vide ou nul)");
-            return;
-        }
         for (Project.ProjectFolders projectFolder : projectFolders) {
             String sourceFolderPath = projectFolder.getSourcePath();
             String destinationFolderPath = engine.simpleRender(projectFolder.getDestinationPath() + projectFolder.getFolderName(), initializeHashMap);
@@ -87,12 +84,8 @@ public class ProjectGenerator {
             FileUtils.copyDirectory(sourceFolderPath, destinationFolderPath);
         }
     }
+
     public static void renderFilesEdits(List<FilesEdit> filesEdits, HashMap<String, Object> initializeHashMap) throws Exception {
-        System.out.println("🔧 [renderFilesEdits] Début de l’édition des fichiers...");
-        if (filesEdits == null || filesEdits.isEmpty()) {
-            System.out.println("   ℹ️  Aucun fichier à éditer (filesEdits est vide ou nul)");
-            return;
-        }
         for (FilesEdit projectFile : filesEdits) {
             String destinationFilePath = engine.simpleRender(projectFile.getDestinationPath(), initializeHashMap);
             String fileName = engine.render(projectFile.getFileName(), initializeHashMap);
@@ -104,7 +97,9 @@ public class ProjectGenerator {
             content = engine.simpleRenderAlt(content, Map.of("spring.application.name", "${spring.application.name}"));
             content = engine.simpleRenderAlt(content, Map.of("server.port", "${server.port}"));
             content = engine.simpleRenderAlt(content, Map.of("spring.datasource.url", "${spring.datasource.url}"));
+            content = engine.simpleRenderAlt(content, Map.of("spring.datasource.url", "${spring.datasource.url}"));
             content = engine.simpleRenderAlt(content, Map.of("HOSTNAME", "${HOSTNAME}"));
+            content = engine.simpleRenderAlt(content, Map.of("server.port", "${server.port}"));
             content = engine.simpleRenderAlt(content, Map.of("spring.cloud.client.ip-address", "${spring.cloud.client.ip-address}"));
             content = engine.simpleRenderAlt(content, Map.of("security.user.username:admin", "${security.user.username:admin}"));
             content = engine.simpleRenderAlt(content, Map.of("security.user.password:admin", "${security.user.password:admin}"));
@@ -119,13 +114,14 @@ public class ProjectGenerator {
             System.out.println("File edited and created successfully: " + fileName + "\n");
         }
     }
+
     private void generateProjectFiles(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {
-        System.out.println("🔧 [generateProjectFiles] Début de la génération pour le projet : " + context.getProjectName());
         HashMap<String, Object> initializeHashMap = getInitialHashMap(
                 context.getDestinationFolder(),
                 context.getProjectName(),
                 context.getGroupLink()
         );
+
         HashMap<String, Object> projectFilesEditsHashMap = getProjectFilesEditsHashMap(
                 context.getDestinationFolder(),
                 context.getProjectName(),
@@ -140,80 +136,13 @@ public class ProjectGenerator {
                 context.getFrameworkConfiguration()
         );
 
-        if (context.getFramework().getUseDB() && context.getFramework().getModelDao() != null) {
+        if (context.getFramework().getUseDB())
             projectFilesEditsHashMap.putAll(getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName()));
-        }
 
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
-
-        // Post-setup for Django: create venv and install requirements
-//        try {
-//            if (context.getFramework().getCoreFramework().equalsIgnoreCase("Django")) {
-//                String projectPath = engine.simpleRender(context.getDestinationFolder() + "/" + context.getProjectName(),
-//                        Map.of("projectName", context.getProjectName()));
-//                setupDjangoEnvironment(projectPath);
-//            }
-//        } catch (Exception e) {
-//            System.err.println("   ⚠️  Post-setup Django échoué: " + e.getMessage());
-//        }
-    }
-
-    /**
-     * Configure a Python virtual environment and installs requirements for Django projects
-     */
-    private void setupDjangoEnvironment(String projectPath) throws Exception {
-        System.out.println("🐍 Configuration de l'environnement Django...");
-        File projectDir = new File(projectPath);
-        if (!projectDir.exists()) {
-            System.out.println("   ⚠️  Dossier projet introuvable: " + projectPath);
-            return;
-        }
-
-        // 1) Create venv
-        if (!createVirtualEnvironment(projectPath)) {
-            System.out.println("   ⚠️  Impossible de créer le venv. Étape ignorée.");
-            return;
-        }
-
-        // 2) Ensure manage.py is executable
-        File manage = new File(projectPath + "/manage.py");
-        if (manage.exists()) {
-            try { manage.setExecutable(true); } catch (Exception ignored) {}
-        }
-
-        // 3) Install requirements using venv pip
-        File pipFile = new File(projectPath + "/venv/bin/pip");
-        if (!pipFile.exists()) {
-            System.out.println("   ⚠️  pip introuvable dans le venv, installation des deps ignorée.");
-            return;
-        }
-
-        File requirements = new File(projectPath + "/requirements.txt");
-        if (!requirements.exists()) {
-            System.out.println("   ℹ️  Aucun requirements.txt trouvé, rien à installer.");
-            return;
-        }
-
-        System.out.println("   📦 Installation des dépendances à partir de requirements.txt...");
-        ProcessBuilder pipInstall = new ProcessBuilder(pipFile.getAbsolutePath(), "install", "-r", "requirements.txt");
-        pipInstall.directory(projectDir);
-        pipInstall.redirectErrorStream(true);
-        Process p = pipInstall.start();
-        try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream()))) {
-            String line;
-            while ((line = r.readLine()) != null) {
-                System.out.println("   " + line);
-            }
-        }
-        int code = p.waitFor();
-        if (code == 0) {
-            System.out.println("   ✅ Dépendances installées avec succès");
-        } else {
-            System.out.println("   ⚠️  pip install a retourné le code: " + code);
-        }
     }
 
     public void generateBackendComponents(ProjectGenerationContext context,
@@ -234,16 +163,9 @@ public class ProjectGenerator {
         String projectName = context.getProjectName();
         String groupLink = context.getGroupLink();
 
-        System.out.println("🔍 DEBUG: generationOptions = " + generationOptions);
-        System.out.println("🔍 DEBUG: COMPONENT_MODEL = " + COMPONENT_MODEL);
-        System.out.println("🔍 DEBUG: contains Model = " + generationOptions.contains(COMPONENT_MODEL));
-        System.out.println("🔍 DEBUG: framework.getModel().getToGenerate() = " + framework.getModel().getToGenerate());
-        
         if (generationOptions.contains(COMPONENT_MODEL) && framework.getModel().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_MODEL + " component...");
             genesisGenerator.generateModel(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
-        } else {
-            System.out.println("❌ Model generation skipped - conditions not met");
         }
 
         if (generationOptions.contains(COMPONENT_DAO) && framework.getModelDao().getToGenerate()) {
@@ -267,18 +189,14 @@ public class ProjectGenerator {
     public void generateProject(ProjectGenerationContext context) throws Exception {
         if (context.isGenerateProjectStructure()) {
             // Générer le projet complet
-            System.out.println("Generate Full Project cz isGenerateProjectStructure is true");
             generateFullProject(context);
         } else {
             // Générer uniquement les composants
-            System.out.println("Generate Components Only cz isGenerateProjectStructure is false");
             generateComponentsOnly(context);
         }
     }
 
     private void generateFullProject(ProjectGenerationContext context) throws Exception {
-        System.out.println("=====================================================");
-        System.out.println("📂 Début de generateFullProject...");
         Database database = context.getDatabase();
         Framework framework = context.getFramework();
         Credentials credentials = context.getCredentials();
@@ -306,81 +224,6 @@ public class ProjectGenerator {
             }
         } else {
             generateProjectFiles(context, null);
-        }
-    }
-
-    private boolean createVirtualEnvironment(String projectPath) {
-        try {
-            System.out.println("🐍 Création d'un nouvel environnement virtuel Python...");
-            
-            // Supprimer l'ancien venv s'il existe
-            File oldVenv = new File(projectPath + "/venv");
-            if (oldVenv.exists()) {
-                System.out.println("   🗑️  Suppression de l'ancien environnement virtuel...");
-                deleteDirectory(oldVenv);
-            }
-            
-            // Créer un nouvel environnement virtuel
-            ProcessBuilder venvBuilder = new ProcessBuilder("python3", "-m", "venv", "venv");
-            venvBuilder.directory(new File(projectPath));
-            venvBuilder.redirectErrorStream(true);
-            
-            Process venvProcess = venvBuilder.start();
-            
-            // Lire la sortie
-            java.io.BufferedReader reader = new java.io.BufferedReader(
-                new java.io.InputStreamReader(venvProcess.getInputStream())
-            );
-            
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println("   " + line);
-            }
-            
-            int exitCode = venvProcess.waitFor();
-            
-            if (exitCode == 0) {
-                System.out.println("   ✅ Environnement virtuel créé avec succès");
-                
-                // Donner les permissions d'exécution
-                File venvPython = new File(projectPath + "/venv/bin/python");
-                if (venvPython.exists()) {
-                    venvPython.setExecutable(true);
-                    File venvDir = new File(projectPath + "/venv/bin");
-                    File[] pythonFiles = venvDir.listFiles((dir, name) -> name.startsWith("python"));
-                    if (pythonFiles != null) {
-                        for (File pythonFile : pythonFiles) {
-                            pythonFile.setExecutable(true);
-                        }
-                    }
-                    System.out.println("   ✅ Permissions d'exécution accordées");
-                }
-                
-                return true;
-            } else {
-                System.err.println("   ❌ Erreur lors de la création de l'environnement virtuel (code: " + exitCode + ")");
-                return false;
-            }
-            
-        } catch (Exception e) {
-            System.err.println("   ❌ Erreur lors de la création de l'environnement virtuel: " + e.getMessage());
-            return false;
-        }
-    }
-
-    private void deleteDirectory(File directory) {
-        if (directory.exists()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        deleteDirectory(file);
-                    } else {
-                        file.delete();
-                    }
-                }
-            }
-            directory.delete();
         }
     }
 

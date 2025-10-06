@@ -1088,16 +1088,6 @@
         USE_TZ = True
 
         STATIC_URL = '/static/'
-        STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-        
-        # Configuration pour les fichiers média
-        MEDIA_URL = '/media/'
-        MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-        
-        # Configuration pour l'interface admin
-        ADMIN_SITE_HEADER = "Administration ${projectName}"
-        ADMIN_SITE_TITLE = "Admin ${projectName}"
-        ADMIN_INDEX_TITLE = "Gestion des données"
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
 
@@ -1107,31 +1097,9 @@
       content: |
         from django.contrib import admin
         from .models import *
-        
-        # Configuration admin automatique pour tous les modèles
-        {{#each entities}}
-        @admin.register({{this}})
-        class {{this}}Admin(admin.ModelAdmin):
-            list_display = ({{#each fields}}{{#unless @first}}, {{/unless}}'{{name}}'{{/each}})
-            {{#if fields}}
-            list_filter = ({{#each fields}}{{#if isIntType}}{{#unless @first}}, {{/unless}}'{{name}}'{{/if}}{{/each}})
-            search_fields = ({{#each fields}}{{#if isStringType}}{{#unless @first}}, {{/unless}}'{{name}}'{{/if}}{{/each}})
-            {{/if}}
-            ordering = ({{#each fields}}{{#unless @first}}, {{/unless}}'{{name}}'{{/each}})
-            list_per_page = 20
-            
-            fieldsets = (
-                ('Informations principales', {
-                    'fields': ({{#each fields}}{{#unless @first}}, {{/unless}}'{{name}}'{{/each}})
-                }),
-            )
-        
-        {{/each}}
-        
-        # Configuration personnalisée pour l'interface admin
-        admin.site.site_header = "Administration ${projectName}"
-        admin.site.site_title = "Admin ${projectName}"
-        admin.site.index_title = "Gestion des données"
+
+        # Register your models here
+        # admin.site.register(MyModel)
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
     - fileType: "mainApp"
@@ -1146,127 +1114,14 @@
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
     - fileType: "mainApp"
-      fileName: "urls_api"
-      extension: "py"
-      content: |
-        from django.urls import path
-        from . import views_api
-        
-        urlpatterns = [
-            # URLs API pour les modèles générés
-            {{#each entities}}
-            path('{{lowerCase this}}/', views_api.{{lowerCase this}}_list, name='{{lowerCase this}}_list'),
-            path('{{lowerCase this}}/<int:pk>/', views_api.{{lowerCase this}}_detail, name='{{lowerCase this}}_detail'),
-            {{/each}}
-        ]
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
-
-    - fileType: "mainApp"
-      fileName: "views_api"
-      extension: "py"
-      content: |
-        from django.shortcuts import render
-        from django.http import JsonResponse
-        from django.views.decorators.csrf import csrf_exempt
-        from django.views.decorators.http import require_http_methods
-        from .models import *
-        import json
-        
-        # Vues API pour les modèles générés
-        {{#each entities}}
-        @csrf_exempt
-        @require_http_methods(["GET", "POST"])
-        def {{lowerCase this}}_list(request):
-            if request.method == 'GET':
-                {{lowerCase this}}_objects = {{this}}.objects.all()
-                data = [{'id': obj.id{{#each fields}}, '{{name}}': obj.{{name}}{{/each}}} for obj in {{lowerCase this}}_objects]
-                return JsonResponse(data, safe=False)
-            elif request.method == 'POST':
-                try:
-                    data = json.loads(request.body)
-                    {{lowerCase this}} = {{this}}.objects.create(**data)
-                    return JsonResponse({'id': {{lowerCase this}}.id{{#each fields}}, '{{name}}': {{lowerCase this}}.{{name}}{{/each}}}, status=201)
-                except Exception as e:
-                    return JsonResponse({'error': str(e)}, status=400)
-        
-        @csrf_exempt
-        @require_http_methods(["GET", "PUT", "DELETE"])
-        def {{lowerCase this}}_detail(request, pk):
-            try:
-                {{lowerCase this}} = {{this}}.objects.get(pk=pk)
-            except {{this}}.DoesNotExist:
-                return JsonResponse({'error': '{{this}} not found'}, status=404)
-            
-            if request.method == 'GET':
-                return JsonResponse({'id': {{lowerCase this}}.id{{#each fields}}, '{{name}}': {{lowerCase this}}.{{name}}{{/each}}})
-            elif request.method == 'PUT':
-                try:
-                    data = json.loads(request.body)
-                    for field, value in data.items():
-                        setattr({{lowerCase this}}, field, value)
-                    {{lowerCase this}}.save()
-                    return JsonResponse({'id': {{lowerCase this}}.id{{#each fields}}, '{{name}}': {{lowerCase this}}.{{name}}{{/each}}})
-                except Exception as e:
-                    return JsonResponse({'error': str(e)}, status=400)
-            elif request.method == 'DELETE':
-                {{lowerCase this}}.delete()
-                return JsonResponse({'message': '{{this}} deleted successfully'}, status=204)
-        
-        {{/each}}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
-
-    - fileType: "mainApp"
       fileName: "views"
       extension: "py"
       content: |
         from django.shortcuts import render
         from django.http import HttpResponse
-        from django.contrib.auth.decorators import login_required
 
         def index(request):
-            html_content = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>{request.META.get('HTTP_HOST', 'Django Project')}</title>
-                <style>
-                    body {{ font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }}
-                    .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-                    h1 {{ color: #2c3e50; text-align: center; }}
-                    .links {{ margin: 20px 0; }}
-                    .links a {{ display: inline-block; margin: 10px; padding: 12px 24px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; }}
-                    .links a:hover {{ background: #2980b9; }}
-                    .info {{ background: #ecf0f1; padding: 15px; border-radius: 5px; margin: 20px 0; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>🚀 Projet Django ${projectName}</h1>
-                    <div class="info">
-                        <p><strong>✅ Projet Django généré avec succès!</strong></p>
-                        <p>Votre projet est maintenant prêt avec l'interface admin intégrée.</p>
-                    </div>
-                    <div class="links">
-                        <a href="/admin/">🔧 Interface Admin</a>
-                        <a href="/api/">📡 API REST</a>
-                    </div>
-                    <div class="info">
-                        <h3>📋 Informations de connexion Admin:</h3>
-                        <p><strong>Username:</strong> admin</p>
-                        <p><strong>Password:</strong> admin123</p>
-                        <p><strong>Email:</strong> admin@${projectName}.com</p>
-                    </div>
-                    <div class="info">
-                        <h3>🛠️ Commandes utiles:</h3>
-                        <p><code>python manage.py runserver</code> - Démarrer le serveur</p>
-                        <p><code>python setup_database.py</code> - Initialiser la base de données</p>
-                        <p><code>python create_superuser.py</code> - Créer un superutilisateur</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-            return HttpResponse(html_content)
+            return HttpResponse("Hello, Django project is running!")
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
     - fileType: "mainProject"
@@ -1274,21 +1129,13 @@
       extension: "py"
       content: |
         from django.contrib import admin
-        from django.urls import path, include
-        from django.conf import settings
-        from django.conf.urls.static import static
+        from django.urls import path
         from ${projectName} import views
 
         urlpatterns = [
             path('admin/', admin.site.urls),
             path('', views.index, name='home'),
-            path('api/', include('${projectName}.urls_api')),
         ]
-        
-        # Servir les fichiers statiques en mode développement
-        if settings.DEBUG:
-            urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-            urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
     - fileType: "mainProject"
@@ -1301,150 +1148,6 @@
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', '${projectName}.settings')
         application = get_wsgi_application()
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
-
-    - fileType: "mainProject"
-      fileName: "create_superuser"
-      extension: "py"
-      content: |
-        #!/usr/bin/env python
-        """Script pour créer automatiquement un superutilisateur Django."""
-        import os
-        import sys
-        import django
-        from django.contrib.auth import get_user_model
-
-        def create_superuser():
-            """Crée un superutilisateur avec des valeurs par défaut."""
-            os.environ.setdefault('DJANGO_SETTINGS_MODULE', '${projectName}.settings')
-            django.setup()
-            
-            User = get_user_model()
-            
-            # Vérifier si un superutilisateur existe déjà
-            if User.objects.filter(is_superuser=True).exists():
-                print("✅ Un superutilisateur existe déjà.")
-                return
-            
-            # Créer le superutilisateur
-            try:
-                User.objects.create_superuser(
-                    username='admin',
-                    email='admin@${projectName}.com',
-                    password='admin123'
-                )
-                print("✅ Superutilisateur créé avec succès!")
-                print("   Username: admin")
-                print("   Password: admin123")
-                print("   Email: admin@${projectName}.com")
-            except Exception as e:
-                print(f"❌ Erreur lors de la création du superutilisateur: {e}")
-
-        if __name__ == '__main__':
-            create_superuser()
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
-
-    - fileType: "mainProject"
-      fileName: "setup_database"
-      extension: "py"
-      content: |
-        #!/usr/bin/env python
-        """Script pour initialiser la base de données Django."""
-        import os
-        import sys
-        import django
-        from django.core.management import execute_from_command_line
-
-        def setup_database():
-            """Initialise la base de données avec les migrations."""
-            os.environ.setdefault('DJANGO_SETTINGS_MODULE', '${projectName}.settings')
-            
-            print("🔄 Initialisation de la base de données...")
-            
-            # Créer les migrations
-            print("📝 Création des migrations...")
-            execute_from_command_line(['manage.py', 'makemigrations'])
-            
-            # Appliquer les migrations
-            print("🚀 Application des migrations...")
-            execute_from_command_line(['manage.py', 'migrate'])
-            
-            print("✅ Base de données initialisée avec succès!")
-
-        if __name__ == '__main__':
-            setup_database()
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
-
-    - fileType: "mainProject"
-      fileName: "start_project"
-      extension: "py"
-      content: |
-        #!/usr/bin/env python
-        """Script de démarrage complet pour le projet Django."""
-        import os
-        import sys
-        import subprocess
-        import django
-        from django.core.management import execute_from_command_line
-
-        def start_project():
-            """Initialise et démarre le projet Django."""
-            os.environ.setdefault('DJANGO_SETTINGS_MODULE', '${projectName}.settings')
-            
-            print("🚀 Démarrage du projet Django ${projectName}")
-            print("=" * 50)
-            
-            # 1. Créer les migrations
-            print("📝 Création des migrations...")
-            try:
-                execute_from_command_line(['manage.py', 'makemigrations'])
-                print("✅ Migrations créées avec succès")
-            except Exception as e:
-                print(f"⚠️  Erreur lors de la création des migrations: {e}")
-            
-            # 2. Appliquer les migrations
-            print("🚀 Application des migrations...")
-            try:
-                execute_from_command_line(['manage.py', 'migrate'])
-                print("✅ Migrations appliquées avec succès")
-            except Exception as e:
-                print(f"⚠️  Erreur lors de l'application des migrations: {e}")
-            
-            # 3. Créer le superutilisateur
-            print("👤 Création du superutilisateur...")
-            try:
-                django.setup()
-                from django.contrib.auth import get_user_model
-                User = get_user_model()
-                
-                if not User.objects.filter(is_superuser=True).exists():
-                    User.objects.create_superuser(
-                        username='admin',
-                        email='admin@${projectName}.com',
-                        password='admin123'
-                    )
-                    print("✅ Superutilisateur créé avec succès!")
-                    print("   Username: admin")
-                    print("   Password: admin123")
-                else:
-                    print("✅ Superutilisateur existe déjà")
-            except Exception as e:
-                print(f"⚠️  Erreur lors de la création du superutilisateur: {e}")
-            
-            print("=" * 50)
-            print("🎉 Projet initialisé avec succès!")
-            print("📋 Informations importantes:")
-            print("   • Interface Admin: http://localhost:8000/admin/")
-            print("   • API REST: http://localhost:8000/api/")
-            print("   • Page d'accueil: http://localhost:8000/")
-            print("=" * 50)
-            print("🔄 Démarrage du serveur de développement...")
-            
-            # 4. Démarrer le serveur
-            execute_from_command_line(['manage.py', 'runserver'])
-
-        if __name__ == '__main__':
-            start_project()
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
   configurations:
     - name: "Framework Version"
       variableName: "frameworkVersion"
