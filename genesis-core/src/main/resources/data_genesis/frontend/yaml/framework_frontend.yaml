@@ -11232,7 +11232,7 @@
 
             const logout = () => {
                 clearTimer();
-                if (token) authService.logout(token).catch(() => {});
+                if (token) authService.logout().catch(() => {});
                 localStorage.removeItem('token');
                 setToken(null);
                 setUser(null);
@@ -11288,9 +11288,16 @@
             };
 
             const updateProfile = async (payload: { name?: string; email?: string }) => {
+                const oldUsername = user?.username;
                 await authService.updateProfile(payload);
-                await fetchCurrent();
-                enqueueSnackbar('Profile updated', { variant: 'success' });
+
+                if (payload.name && payload.name !== oldUsername) {
+                    enqueueSnackbar('Username changed successfully', { variant: 'success' });
+                } else {
+                    // Seulement l'email a changé, on peut rafraîchir
+                    await fetchCurrent();
+                    enqueueSnackbar('Profile updated successfully', { variant: 'success' });
+                }
             };
 
             const changePassword = async (payload: {oldPassword: string; newPassword: string; confirmPassword: string;}) => {
