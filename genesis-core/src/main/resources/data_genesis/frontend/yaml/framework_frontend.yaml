@@ -11496,8 +11496,16 @@
                     },
                     {
                         path: '/',
-                        element: <RootLayout layout="vertical" />,
+                        element: <RootLayout/>,
                         children: [
+                            {
+                                path: '/profile',
+                                element: <Profile />,
+                            },
+                            {
+                                path: '/change-password',
+                                element: <ChangePassword />,
+                            },
                             {{#each routes}}
                             {
                               path: '${this.routerLink}',
@@ -11856,7 +11864,7 @@
         export const router = createBrowserRouter([
             {
                 path: '/',
-                element: <RootLayout layout="vertical" />, // 'vertical' or 'horizontal' 
+                element: <RootLayout/>,  
                 children: [
                     {{#each routes}}
                     {
