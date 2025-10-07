@@ -14,12 +14,14 @@ import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.labs.genesis.config.ProjectGenerationContext.*;
@@ -136,13 +138,80 @@ public class ProjectGenerator {
                 context.getFrameworkConfiguration()
         );
 
-        if (context.getFramework().getUseDB())
+        if (context.getFramework().getUseDB() && context.getFramework().getModelDao() != null) {
             projectFilesEditsHashMap.putAll(getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName()));
+        }
 
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
+
+        // Post-setup for Django: create venv and install requirements
+//        try {
+//            if (context.getFramework().getCoreFramework().equalsIgnoreCase("Django")) {
+//                String projectPath = engine.simpleRender(context.getDestinationFolder() + "/" + context.getProjectName(),
+//                        Map.of("projectName", context.getProjectName()));
+//                setupDjangoEnvironment(projectPath);
+//            }
+//        } catch (Exception e) {
+//            System.err.println("   ⚠️  Post-setup Django échoué: " + e.getMessage());
+//        }
+    }
+
+    /**
+     * Configure a Python virtual environment and installs requirements for Django projects
+     */
+    private void setupDjangoEnvironment(String projectPath) throws Exception {
+        System.out.println("🐍 Configuration de l'environnement Django...");
+        File projectDir = new File(projectPath);
+        if (!projectDir.exists()) {
+            System.out.println("   ⚠️  Dossier projet introuvable: " + projectPath);
+            return;
+        }
+
+        // 1) Create venv
+        if (!createVirtualEnvironment(projectPath)) {
+            System.out.println("   ⚠️  Impossible de créer le venv. Étape ignorée.");
+            return;
+        }
+
+        // 2) Ensure manage.py is executable
+        File manage = new File(projectPath + "/manage.py");
+        if (manage.exists()) {
+            try { manage.setExecutable(true); } catch (Exception ignored) {}
+        }
+
+        // 3) Install requirements using venv pip
+        File pipFile = new File(projectPath + "/venv/bin/pip");
+        if (!pipFile.exists()) {
+            System.out.println("   ⚠️  pip introuvable dans le venv, installation des deps ignorée.");
+            return;
+        }
+
+        File requirements = new File(projectPath + "/requirements.txt");
+        if (!requirements.exists()) {
+            System.out.println("   ℹ️  Aucun requirements.txt trouvé, rien à installer.");
+            return;
+        }
+
+        System.out.println("   📦 Installation des dépendances à partir de requirements.txt...");
+        ProcessBuilder pipInstall = new ProcessBuilder(pipFile.getAbsolutePath(), "install", "-r", "requirements.txt");
+        pipInstall.directory(projectDir);
+        pipInstall.redirectErrorStream(true);
+        Process p = pipInstall.start();
+        try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream()))) {
+            String line;
+            while ((line = r.readLine()) != null) {
+                System.out.println("   " + line);
+            }
+        }
+        int code = p.waitFor();
+        if (code == 0) {
+            System.out.println("   ✅ Dépendances installées avec succès");
+        } else {
+            System.out.println("   ⚠️  pip install a retourné le code: " + code);
+        }
     }
 
     public void generateBackendComponents(ProjectGenerationContext context,
@@ -224,6 +293,81 @@ public class ProjectGenerator {
             }
         } else {
             generateProjectFiles(context, null);
+        }
+    }
+
+    private boolean createVirtualEnvironment(String projectPath) {
+        try {
+            System.out.println("🐍 Création d'un nouvel environnement virtuel Python...");
+            
+            // Supprimer l'ancien venv s'il existe
+            File oldVenv = new File(projectPath + "/venv");
+            if (oldVenv.exists()) {
+                System.out.println("   🗑️  Suppression de l'ancien environnement virtuel...");
+                deleteDirectory(oldVenv);
+            }
+            
+            // Créer un nouvel environnement virtuel
+            ProcessBuilder venvBuilder = new ProcessBuilder("python3", "-m", "venv", "venv");
+            venvBuilder.directory(new File(projectPath));
+            venvBuilder.redirectErrorStream(true);
+            
+            Process venvProcess = venvBuilder.start();
+            
+            // Lire la sortie
+            java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(venvProcess.getInputStream())
+            );
+            
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println("   " + line);
+            }
+            
+            int exitCode = venvProcess.waitFor();
+            
+            if (exitCode == 0) {
+                System.out.println("   ✅ Environnement virtuel créé avec succès");
+                
+                // Donner les permissions d'exécution
+                File venvPython = new File(projectPath + "/venv/bin/python");
+                if (venvPython.exists()) {
+                    venvPython.setExecutable(true);
+                    File venvDir = new File(projectPath + "/venv/bin");
+                    File[] pythonFiles = venvDir.listFiles((dir, name) -> name.startsWith("python"));
+                    if (pythonFiles != null) {
+                        for (File pythonFile : pythonFiles) {
+                            pythonFile.setExecutable(true);
+                        }
+                    }
+                    System.out.println("   ✅ Permissions d'exécution accordées");
+                }
+                
+                return true;
+            } else {
+                System.err.println("   ❌ Erreur lors de la création de l'environnement virtuel (code: " + exitCode + ")");
+                return false;
+            }
+            
+        } catch (Exception e) {
+            System.err.println("   ❌ Erreur lors de la création de l'environnement virtuel: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private void deleteDirectory(File directory) {
+        if (directory.exists()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectory(file);
+                    } else {
+                        file.delete();
+                    }
+                }
+            }
+            directory.delete();
         }
     }
 
