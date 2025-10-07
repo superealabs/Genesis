@@ -83,14 +83,19 @@
       "bracketEnd": "{{removeLine}}"
     },
     "types": {
-      "int": "int",
-      "long": "int",
-      "double": "float",
-      "string": "str",
-      "date": "datetime.date",
-      "timestamp": "datetime.datetime",
-      "time": "datetime.time",
-      "boolean": "bool"
+      "int": "IntegerField",
+      "long": "IntegerField",
+      "double": "FloatField",
+      "string": "CharField",
+      "text": "CharField",
+      "decimal": "decimal.Decimal",
+      "numeric": "decimal.Decimal",
+      "date": "DateField",
+      "timestamp": "DateTimeField",
+      "datetime": "DateTimeField",
+      "time": "TimeField",
+      "boolean": "BooleanField"
+
     }
   }
 ]
