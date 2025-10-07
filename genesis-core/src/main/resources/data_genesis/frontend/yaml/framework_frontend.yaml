@@ -11471,6 +11471,219 @@
             );
         }
       destinationPath: "${destinationFolder}/src/pages/auth"
+    - fileType: "Profile update page"
+      fileName: "Profile"
+      extension: "tsx"
+      content: |
+        // src/pages/auth/Profile.tsx
+        import { useState, useEffect } from 'react';
+        import { TextField, Button, Paper, Typography, Box, Alert } from '@mui/material';
+        import { useAuth } from '@/contexts/AuthContext';
+        import { useSnackbar } from 'notistack';
+        import { useTranslation } from 'react-i18next';
+        import { useNavigate } from 'react-router-dom';
+        import { pageContainerSx } from '@/styles/mui-patterns';
+        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
+
+        export default function Profile() {
+            const { user, updateProfile, logout } = useAuth();
+            const { enqueueSnackbar } = useSnackbar();
+            const { t } = useTranslation();
+            const navigate = useNavigate();
+
+            const [name, setName] = useState('');
+            const [email, setEmail] = useState('');
+            const [submitting, setSubmitting] = useState(false);
+
+            useEffect(() => {
+                if (user) {
+                    setName(user.username || '');
+                    setEmail(user.email || '');
+                }
+            }, [user]);
+
+            const handleSubmit = async (e: React.FormEvent) => {
+                e.preventDefault();
+                if (submitting) return;
+
+                // ✅ Vérifier si le username change
+                const usernameChanged = name !== user?.username;
+
+                setSubmitting(true);
+                try {
+                    await updateProfile({ name, email });
+
+                    // ✅ Si le username a changé, déconnecter l'utilisateur
+                    if (usernameChanged) {
+                        enqueueSnackbar(
+                            t('messages.profile.usernameChangedLogout'),
+                            { variant: 'warning', autoHideDuration: 3000 }
+                        );
+
+                        // Déconnexion après 2 secondes
+                        setTimeout(() => {
+                            logout();
+                            navigate('/login', { replace: true });
+                        }, 2000);
+                    } else {
+                        enqueueSnackbar(t('messages.profile.updateSuccess'), { variant: 'success' });
+                    }
+                } catch (err: any) {
+                    const body = err?.response?.data;
+                    enqueueSnackbar(body?.message || t('messages.profile.updateError'), { variant: 'error' });
+                } finally {
+                    setSubmitting(false);
+                }
+            };
+
+            return (
+                <>
+                    <BackdropBlocker open={submitting} />
+                    <Box sx={pageContainerSx}>
+                        <Paper sx={{ p: 4, maxWidth: 480, mx: 'auto', mt: 4 }}>
+                            <Typography variant="h5" mb={3} textAlign="center">
+                                {t('messages.profile.edit')}
+                            </Typography>
+
+                            {/* ✅ Avertissement si le username va changer */}
+                            {name !== user?.username && (
+                                <Alert severity="warning" sx={{ mb: 2 }}>
+                                    {t('messages.profile.usernameChangeWarning')}
+                                </Alert>
+                            )}
+
+                            <form onSubmit={handleSubmit}>
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.register.name')}
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    required
+                                    sx={{ mb: 2 }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.register.email')}
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    sx={{ mb: 3 }}
+                                />
+
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    type="submit"
+                                    disabled={submitting}
+                                >
+                                    {t('messages.common.save')}
+                                </Button>
+                            </form>
+                        </Paper>
+                    </Box>
+                </>
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/auth"
+    - fileType: "ChangePassword page"
+      fileName: "ChangePassword"
+      extension: "tsx"
+      content: |
+        // src/pages/auth/ChangePassword.tsx
+        import { useState } from 'react';
+        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+        import { useAuth } from '@/contexts/AuthContext';
+        import { useSnackbar } from 'notistack';
+        import { useTranslation } from 'react-i18next';
+        import { pageContainerSx } from '@/styles/mui-patterns';
+        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
+
+        export default function ChangePassword() {
+            const { changePassword } = useAuth();
+            const { enqueueSnackbar } = useSnackbar();
+            const { t } = useTranslation();
+
+            const [oldPassword, setOldPassword] = useState('');
+            const [newPassword, setNewPassword] = useState('');
+            const [confirmPassword, setConfirmPassword] = useState('');
+            const [submitting, setSubmitting] = useState(false);
+
+            const handleSubmit = async (e: React.FormEvent) => {
+                e.preventDefault();
+                if (submitting) return;
+
+                if (newPassword !== confirmPassword) {
+                    enqueueSnackbar(t('messages.profile.passwordMismatch'), { variant: 'error' });
+                    return;
+                }
+
+                setSubmitting(true);
+                try {
+                    await changePassword({ oldPassword, newPassword, confirmPassword });
+                    enqueueSnackbar(t('messages.profile.passwordChangeSuccess'), { variant: 'success' });
+                    // Redirection automatique vers login par le contexte
+                } catch (err: any) {
+                    const body = err?.response?.data;
+                    enqueueSnackbar(body?.message || t('messages.profile.passwordChangeError'), { variant: 'error' });
+                } finally {
+                    setSubmitting(false);
+                }
+            };
+
+            return (
+                <>
+                    <BackdropBlocker open={submitting} />
+                    <Box sx={pageContainerSx}>
+                        <Paper sx={{ p: 4, maxWidth: 480, mx: 'auto', mt: 4 }}>
+                            <Typography variant="h5" mb={3} textAlign="center">
+                                {t('messages.profile.changePassword')}
+                            </Typography>
+
+                            <form onSubmit={handleSubmit}>
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.profile.oldPassword')}
+                                    type="password"
+                                    value={oldPassword}
+                                    onChange={(e) => setOldPassword(e.target.value)}
+                                    required
+                                    sx={{ mb: 2 }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.profile.newPassword')}
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    required
+                                    sx={{ mb: 2 }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.profile.confirmPassword')}
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    sx={{ mb: 3 }}
+                                />
+
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    type="submit"
+                                    disabled={submitting}
+                                >
+                                    {t('messages.common.save')}
+                                </Button>
+                            </form>
+                        </Paper>
+                    </Box>
+                </>
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/auth"
     - fileType: "Router file"
       fileName: "router"
       extension: "tsx"
