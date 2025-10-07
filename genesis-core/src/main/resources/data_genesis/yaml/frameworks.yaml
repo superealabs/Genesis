@@ -1003,7 +1003,7 @@
   languageId: 5
   coreFramework: "Django"
   name: "Django - Full Project from Existing DB"
-  template: "Django"
+  template: "Template"
   useDB: true
   withGroupId: true
   useCloud: false
@@ -1206,20 +1206,13 @@
     modelImports: |
       from django.db import models
       from django.core.validators import MinValueValidator, MaxValueValidator
-    modelExtends: ""
-    modelAnnotations: |
-      # Django models don't need special annotations
+    modelExtends: " (models.Model)"
+    modelAnnotations: ""
     modelFieldContent: |
       {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
-      {{tab}}${this.name} = models.AutoField(primary_key=True){{/if}}{{#if this.isForeignKey}}
-      {{tab}}${this.name} = models.ForeignKey('${this.type}', on_delete=models.CASCADE){{/if}}{{#if this.isIntType}}
-      {{tab}}${this.name} = models.IntegerField(){{/if}}{{#if this.isFloatType}}
-      {{tab}}${this.name} = models.FloatField(){{/if}}{{#if this.isBoolType}}
-      {{tab}}${this.name} = models.BooleanField(){{/if}}{{#if this.isDateType}}
-      {{tab}}${this.name} = models.DateField(){{/if}}{{#if this.isDateTimeType}}
-      {{tab}}${this.name} = models.DateTimeField(){{/if}}{{#if this.isTimeType}}
-      {{tab}}${this.name} = models.TimeField(){{/if}}{{#if this.isStringType}}
-      {{tab}}${this.name} = models.CharField(max_length=255){{/if}}
+      {{tab}}${this.name} = models.AutoField(primary_key=True){{elseIf this.isForeignKey}}
+      {{tab}}${this.name} = models.ForeignKey('${this.type}', on_delete=models.CASCADE){{else}}
+      {{tab}}${this.name} = models.${this.type}(){{/if}}
       {{tab}}{{/each}}
     modelGetterSetter: |
       {{tab}}def __str__(self):
@@ -1228,4 +1221,4 @@
       {{tab}}class Meta:
       {{tab}}{{tab}}db_table = '${tableName}'
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/models"
-    modelPackage: "${projectName}.models"
+    modelPackage: "{{removeLine}}"
