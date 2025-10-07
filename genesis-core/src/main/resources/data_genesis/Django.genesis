@@ -1,6 +1,0 @@
-${imports}
-
-${classAnnotations}${classKeyword} ${entityName}(models.Model):
-${fields}
-${constructors}
-${methods}

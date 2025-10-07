@@ -59,6 +59,7 @@ public class FrameworkMetadataProvider {
         metadata.put("methods", framework.getModel().getModelGetterSetter());
         metadata.put("constructors", framework.getModel().getModelConstructors());
         metadata.put("classAnnotations", framework.getModel().getModelAnnotations());
+        metadata.put("extends", framework.getModel().getModelExtends());
         metadata.put("namespaceEnd", language.getSyntax().get("namespaceEnd") == null ? "{{removeLine}}" : language.getSyntax().get("namespaceEnd"));
         metadata.put("bracketEnd", language.getSyntax().get("bracketEnd") == null ? "{{removeLine}}" : language.getSyntax().get("namespaceEnd"));
 
@@ -232,17 +233,6 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnType", field.getColumnType());
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("columnNameField", FileUtils.toCamelCase(field.getReferencedColumn()));
-
-        // Ajouter des variables booléennes pour les types Django
-        // Un champ ne peut avoir qu'un seul type à la fois
-        String fieldType = field.getType();
-        fieldMap.put("isStringType", "str".equals(fieldType) && !field.isPrimary() && !field.isForeign());
-        fieldMap.put("isIntType", "int".equals(fieldType) && !field.isPrimary() && !field.isForeign());
-        fieldMap.put("isFloatType", "float".equals(fieldType) && !field.isPrimary() && !field.isForeign());
-        fieldMap.put("isBoolType", "bool".equals(fieldType) && !field.isPrimary() && !field.isForeign());
-        fieldMap.put("isDateType", "datetime.date".equals(fieldType) && !field.isPrimary() && !field.isForeign());
-        fieldMap.put("isDateTimeType", "datetime.datetime".equals(fieldType) && !field.isPrimary() && !field.isForeign());
-        fieldMap.put("isTimeType", "datetime.time".equals(fieldType) && !field.isPrimary() && !field.isForeign());
 
         return fieldMap;
     }
