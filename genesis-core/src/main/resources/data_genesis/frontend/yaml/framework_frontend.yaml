@@ -11151,29 +11151,39 @@
         import axios from 'axios';
         import { ApiResponse } from './api';
 
-        const API_BASE = import.meta.env.VITE_API_BASE; // déjà présent
+        const API_BASE = import.meta.env.VITE_API_BASE as string;
 
-        interface AuthRequest {
-            username: string;
+        interface AuthRequest { username: string; password: string; }
+        interface RegisterPayload {
+            name: string;
+            email: string;
             password: string;
+            roleidRoleEntity?: { id: number };
         }
+        interface UpdateRequest { name?: string; email?: string; }
+        interface ChangePasswordRequest { oldPassword: string; newPassword: string; confirmPassword: string; }
 
         export const authService = {
             login: (payload: AuthRequest) =>
                 axios.post<ApiResponse<string>>(`$[API_BASE]/auth/login`, payload)
-                    .then(res => res.data),
+                      .then(r => r.data),
 
-            logout: (token: string) =>
-                axios.post<ApiResponse<void>>(`$[API_BASE]/auth/logout`, {}, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }).then(res => res.data),
+            // S’appuie sur l’intercepteur axios pour Authorization
+            me: () =>
+                axios.get<ApiResponse<any>>(`$[API_BASE]/auth/current`).then(r => r.data),
 
-            me: (token: string) =>
-                axios.get<ApiResponse<any>>(`$[API_BASE]/auth/current`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }).then(res => res.data),
+            register: (payload: RegisterPayload) =>
+                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/register`, payload).then(r => r.data),
 
-            /* ------------ nouvelle méthode ------------ */
+            updateProfile: (payload: UpdateRequest) =>
+                axios.patch<ApiResponse<string>>(`$[API_BASE]/auth/update`, payload).then(r => r.data),
+
+            changePassword: (payload: ChangePasswordRequest) =>
+                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/change-password`, payload).then(r => r.data),
+
+            logout: () =>
+                axios.post<ApiResponse<void>>(`$[API_BASE]/auth/logout`, {}).then(r => r.data),
+
             refresh: (token: string) =>
                 axios.post<ApiResponse<string>>(`$[API_BASE]/auth/refresh`, { refreshToken: token })
                     .then(res => res.data),
@@ -11184,26 +11194,30 @@
       extension: "tsx"
       content: |
         // src/contexts/AuthContext.tsx
+        // src/contexts/AuthContext.tsx
         import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
         import { authService } from '@/services/auth';
+        import { useSnackbar } from 'notistack';
 
         type User = { username: string; email?: string };
-
-        interface AuthCtx {
+        type AuthCtx = {
             user: User | null;
             token: string | null;
             login: (u: string, p: string) => Promise<void>;
             logout: () => void;
             loading: boolean;
-        }
+            // nouvelles
+            register: (payload: { name: string; email: string; password: string }) => Promise<{ message?: string } | void>;
+            fetchCurrent: () => Promise<void>;
+            updateProfile: (payload: { name?: string; email?: string }) => Promise<void>;
+            changePassword: (payload: { oldPassword: string; newPassword: string; confirmPassword: string }) => Promise<void>;
+        };
 
         const AuthContext = createContext<AuthCtx>(null!);
-
-        const REFRESH_INTERVAL_MS = Number(
-            import.meta.env.VITE_REFRESH_INTERVAL_MS ?? 60000
-        );
+        const REFRESH_INTERVAL_MS = Number(import.meta.env.VITE_REFRESH_INTERVAL_MS ?? 60000);
 
         export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+            const { enqueueSnackbar } = useSnackbar();
             const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
             const [user, setUser] = useState<User | null>(null);
             const [loading, setLoading] = useState(true);
@@ -11218,11 +11232,10 @@
 
             const logout = () => {
                 clearTimer();
-                if (token) authService.logout(token).catch(() => {});
+                if (token) authService.logout().catch(() => {});
                 localStorage.removeItem('token');
                 setToken(null);
                 setUser(null);
-                // ❌ on ne fait plus window.location.href ici
             };
 
             const startRefreshTimer = (tk: string) => {
@@ -11233,11 +11246,15 @@
                         const newToken = res.data;
                         localStorage.setItem('token', newToken);
                         setToken(newToken);
-                        console.log('Token refreshed silently');
                     } catch {
-                        logout(); // échec → on déconnecte
+                        logout();
                     }
                 }, REFRESH_INTERVAL_MS);
+            };
+
+            const fetchCurrent = async () => {
+                const res = await authService.me();
+                setUser({ username: res.data.username, email: (res.data as any).email });
             };
 
             useEffect(() => {
@@ -11246,14 +11263,13 @@
                     return;
                 }
                 authService
-                    .me(token)
+                    .me()
                     .then(res => {
-                        setUser({ username: res.data.username, email: res.data.email });
+                        setUser({ username: res.data.username, email: (res.data as any).email });
                         startRefreshTimer(token);
                     })
                     .catch(() => logout())
                     .finally(() => setLoading(false));
-                return clearTimer;
             }, [token]);
 
             const login = async (username: string, password: string) => {
@@ -11262,10 +11278,38 @@
                 localStorage.setItem('token', jwt);
                 setToken(jwt);
                 startRefreshTimer(jwt);
+                await fetchCurrent();
+            };
+
+            const register = async (payload: { name: string; email: string; password: string }) => {
+                // laisser la page gérer les toasts/navigation
+                const res = await authService.register(payload);
+                return res; // retourner pour permettre l’affichage du message
+            };
+
+            const updateProfile = async (payload: { name?: string; email?: string }) => {
+                const oldUsername = user?.username;
+                await authService.updateProfile(payload);
+
+                if (payload.name && payload.name !== oldUsername) {
+                    enqueueSnackbar('Username changed successfully', { variant: 'success' });
+                } else {
+                    // Seulement l'email a changé, on peut rafraîchir
+                    await fetchCurrent();
+                    enqueueSnackbar('Profile updated successfully', { variant: 'success' });
+                }
+            };
+
+            const changePassword = async (payload: {oldPassword: string; newPassword: string; confirmPassword: string;}) => {
+                await authService.changePassword(payload);
+                enqueueSnackbar('Password changed, please sign in again', { variant: 'success' });
+                logout(); // ProtectedRoute enverra vers /login quand user=null
             };
 
             return (
-                <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+                <AuthContext.Provider
+                    value={{ user, token, loading, login, logout, register, fetchCurrent, updateProfile, changePassword }}
+                >
                     {children}
                 </AuthContext.Provider>
             );
@@ -11311,6 +11355,7 @@
         import { TextField, Button, Paper, Typography, Box } from '@mui/material';
         import { useSnackbar } from 'notistack';
         import { useTranslation } from 'react-i18next';
+        import LanguageSwitcher from '@/components/LanguageSwitcher';
 
         export default function Login() {
             const [username, setUsername] = useState('');
@@ -11341,16 +11386,301 @@
             };
 
             return (
-                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                    <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+                        <LanguageSwitcher />
+                    </Box>
                     <Paper sx={{ p: 4, width: 360 }}>
                         <Typography variant="h5" mb={3} textAlign="center">{t('messages.authentication.title')}  </Typography>
                         <form onSubmit={handleSubmit}>
                             <TextField fullWidth label={t('messages.authentication.username')} value={username} onChange={e => setUsername(e.target.value)} required />
                             <TextField fullWidth label={t('messages.authentication.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
                             <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>{t('messages.authentication.submit')} </Button>
+                            <Button fullWidth variant="text" sx={{ mt: 1 }} onClick={() => navigate('/register')}>
+                                {t('messages.authentication.createAccount')}
+                            </Button>
                         </form>
                     </Paper>
                 </Box>
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/auth"
+    - fileType: "Register page"
+      fileName: "Register"
+      extension: "tsx"
+      content: |
+        // src/pages/auth/Register.tsx
+        import { useState } from 'react';
+        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+        import { useAuth } from '@/contexts/AuthContext';
+        import { useSnackbar } from 'notistack';
+        import { useNavigate } from 'react-router-dom';
+        import {useTranslation} from "react-i18next";
+        import LanguageSwitcher from '@/components/LanguageSwitcher';
+
+        export default function Register() {
+            const { register } = useAuth();
+            const { enqueueSnackbar } = useSnackbar();
+            const navigate = useNavigate();
+            const { t } = useTranslation();
+
+            const [name, setName] = useState('');
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [submitting, setSubmitting] = useState(false);
+
+            const handleSubmit = async (e: React.FormEvent) => {
+                e.preventDefault();
+                if (submitting) return;
+                setSubmitting(true);
+                try {
+                    // Aucun rôle envoyé: le backend affecte le rôle par défaut
+                    const res = await register({ name, email, password });
+                    enqueueSnackbar(res?.message || t('messages.register.success'), { variant: 'success' });
+                    // Laisser le toast s’afficher puis rediriger vers le login
+                    setTimeout(() => navigate('/login', { replace: true }), 1500);
+                } catch (err: any) {
+                    const body = err?.response?.data;
+                    enqueueSnackbar(t('messages.register.error'), { variant: 'error' });
+                } finally {
+                    setSubmitting(false);
+                }
+
+            };
+
+            return (
+                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                    <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+                        <LanguageSwitcher />
+                    </Box>
+                    <Paper sx={{ p: 4, width: 380 }}>
+                        <Typography variant="h5" mb={3} textAlign="center">{t('messages.register.title')}</Typography>
+                        <form onSubmit={handleSubmit}>
+                            <TextField fullWidth label={t('messages.register.name')} value={name} onChange={e => setName(e.target.value)} required />
+                            <TextField fullWidth sx={{ mt: 2 }} label={t('messages.register.email')} type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                            <TextField fullWidth sx={{ mt: 2 }} label={t('messages.register.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+                            <Button fullWidth sx={{ mt: 3 }} variant="contained" type="submit" disabled={submitting}>
+                                {t('messages.register.submit')}
+                            </Button>
+                            <Button fullWidth sx={{ mt: 1 }} variant="text" onClick={() => navigate('/login')}>
+                                {t('messages.register.backToSignIn')}
+                            </Button>
+                        </form>
+                    </Paper>
+                </Box>
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/auth"
+    - fileType: "Profile update page"
+      fileName: "Profile"
+      extension: "tsx"
+      content: |
+        // src/pages/auth/Profile.tsx
+        import { useState, useEffect } from 'react';
+        import { TextField, Button, Paper, Typography, Box, Alert } from '@mui/material';
+        import { useAuth } from '@/contexts/AuthContext';
+        import { useSnackbar } from 'notistack';
+        import { useTranslation } from 'react-i18next';
+        import { useNavigate } from 'react-router-dom';
+        import { pageContainerSx } from '@/styles/mui-patterns';
+        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
+
+        export default function Profile() {
+            const { user, updateProfile, logout } = useAuth();
+            const { enqueueSnackbar } = useSnackbar();
+            const { t } = useTranslation();
+            const navigate = useNavigate();
+
+            const [name, setName] = useState('');
+            const [email, setEmail] = useState('');
+            const [submitting, setSubmitting] = useState(false);
+
+            useEffect(() => {
+                if (user) {
+                    setName(user.username || '');
+                    setEmail(user.email || '');
+                }
+            }, [user]);
+
+            const handleSubmit = async (e: React.FormEvent) => {
+                e.preventDefault();
+                if (submitting) return;
+
+                // ✅ Vérifier si le username change
+                const usernameChanged = name !== user?.username;
+
+                setSubmitting(true);
+                try {
+                    await updateProfile({ name, email });
+
+                    // ✅ Si le username a changé, déconnecter l'utilisateur
+                    if (usernameChanged) {
+                        enqueueSnackbar(
+                            t('messages.profile.usernameChangedLogout'),
+                            { variant: 'warning', autoHideDuration: 3000 }
+                        );
+
+                        // Déconnexion après 2 secondes
+                        setTimeout(() => {
+                            logout();
+                            navigate('/login', { replace: true });
+                        }, 2000);
+                    } else {
+                        enqueueSnackbar(t('messages.profile.updateSuccess'), { variant: 'success' });
+                    }
+                } catch (err: any) {
+                    const body = err?.response?.data;
+                    enqueueSnackbar(body?.message || t('messages.profile.updateError'), { variant: 'error' });
+                } finally {
+                    setSubmitting(false);
+                }
+            };
+
+            return (
+                <>
+                    <BackdropBlocker open={submitting} />
+                    <Box sx={pageContainerSx}>
+                        <Paper sx={{ p: 4, maxWidth: 480, mx: 'auto', mt: 4 }}>
+                            <Typography variant="h5" mb={3} textAlign="center">
+                                {t('messages.profile.edit')}
+                            </Typography>
+
+                            {/* ✅ Avertissement si le username va changer */}
+                            {name !== user?.username && (
+                                <Alert severity="warning" sx={{ mb: 2 }}>
+                                    {t('messages.profile.usernameChangeWarning')}
+                                </Alert>
+                            )}
+
+                            <form onSubmit={handleSubmit}>
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.register.name')}
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    required
+                                    sx={{ mb: 2 }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.register.email')}
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    sx={{ mb: 3 }}
+                                />
+
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    type="submit"
+                                    disabled={submitting}
+                                >
+                                    {t('messages.common.save')}
+                                </Button>
+                            </form>
+                        </Paper>
+                    </Box>
+                </>
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/auth"
+    - fileType: "ChangePassword page"
+      fileName: "ChangePassword"
+      extension: "tsx"
+      content: |
+        // src/pages/auth/ChangePassword.tsx
+        import { useState } from 'react';
+        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+        import { useAuth } from '@/contexts/AuthContext';
+        import { useSnackbar } from 'notistack';
+        import { useTranslation } from 'react-i18next';
+        import { pageContainerSx } from '@/styles/mui-patterns';
+        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
+
+        export default function ChangePassword() {
+            const { changePassword } = useAuth();
+            const { enqueueSnackbar } = useSnackbar();
+            const { t } = useTranslation();
+
+            const [oldPassword, setOldPassword] = useState('');
+            const [newPassword, setNewPassword] = useState('');
+            const [confirmPassword, setConfirmPassword] = useState('');
+            const [submitting, setSubmitting] = useState(false);
+
+            const handleSubmit = async (e: React.FormEvent) => {
+                e.preventDefault();
+                if (submitting) return;
+
+                if (newPassword !== confirmPassword) {
+                    enqueueSnackbar(t('messages.profile.passwordMismatch'), { variant: 'error' });
+                    return;
+                }
+
+                setSubmitting(true);
+                try {
+                    await changePassword({ oldPassword, newPassword, confirmPassword });
+                    enqueueSnackbar(t('messages.profile.passwordChangeSuccess'), { variant: 'success' });
+                    // Redirection automatique vers login par le contexte
+                } catch (err: any) {
+                    const body = err?.response?.data;
+                    enqueueSnackbar(body?.message || t('messages.profile.passwordChangeError'), { variant: 'error' });
+                } finally {
+                    setSubmitting(false);
+                }
+            };
+
+            return (
+                <>
+                    <BackdropBlocker open={submitting} />
+                    <Box sx={pageContainerSx}>
+                        <Paper sx={{ p: 4, maxWidth: 480, mx: 'auto', mt: 4 }}>
+                            <Typography variant="h5" mb={3} textAlign="center">
+                                {t('messages.profile.changePassword')}
+                            </Typography>
+
+                            <form onSubmit={handleSubmit}>
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.profile.oldPassword')}
+                                    type="password"
+                                    value={oldPassword}
+                                    onChange={(e) => setOldPassword(e.target.value)}
+                                    required
+                                    sx={{ mb: 2 }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.profile.newPassword')}
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    required
+                                    sx={{ mb: 2 }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.profile.confirmPassword')}
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    sx={{ mb: 3 }}
+                                />
+
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    type="submit"
+                                    disabled={submitting}
+                                >
+                                    {t('messages.common.save')}
+                                </Button>
+                            </form>
+                        </Paper>
+                    </Box>
+                </>
             );
         }
       destinationPath: "${destinationFolder}/src/pages/auth"
@@ -11363,6 +11693,9 @@
         import { createBrowserRouter, Navigate } from 'react-router-dom';
         import ProtectedRoute from '@/router/ProtectedRoute';
         import Login from '@/pages/auth/Login';
+        import Register from '@/pages/auth/Register';
+        import Profile from '@/pages/auth/Profile';
+        import ChangePassword from '@/pages/auth/ChangePassword';
         {{#each routes}}
         import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
         {{/each}}
@@ -11372,6 +11705,7 @@
                 path: '/login',
                 element: <Login />,
             },
+            { path: 'register', element: <Register /> },
             {
                 path: '/',
                 element: (
@@ -11384,8 +11718,16 @@
                     },
                     {
                         path: '/',
-                        element: <RootLayout layout="vertical" />,
+                        element: <RootLayout/>,
                         children: [
+                            {
+                                path: '/profile',
+                                element: <Profile />,
+                            },
+                            {
+                                path: '/change-password',
+                                element: <ChangePassword />,
+                            },
                             {{#each routes}}
                             {
                               path: '${this.routerLink}',
@@ -11517,8 +11859,22 @@
             Select,
             SelectChangeEvent,
             Box,
+            Card,
+            CardContent,
+            Typography,
+            Avatar,
         } from '@mui/material';
-        import { Settings, Brightness4, Brightness7, ViewSidebar, ViewAgenda, Logout } from '@mui/icons-material';
+        import {
+            Settings,
+            Brightness4,
+            Brightness7,
+            ViewSidebar,
+            ViewAgenda,
+            Logout,
+            Person,
+            Edit,
+            Lock
+        } from '@mui/icons-material';
         import { useThemeMode } from '@/contexts/ThemeContext';
         import { useAuth } from '@/contexts/AuthContext';
         import { useTranslation } from 'react-i18next';
@@ -11533,7 +11889,7 @@
         export default function SettingsMenu({ layout, onLayoutChange, compact = false }: SettingsMenuProps) {
             const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
             const { mode, toggleTheme } = useThemeMode();
-            const { logout } = useAuth();
+            const { logout, user } = useAuth(); 
             const { i18n, t } = useTranslation();
             const navigate = useNavigate();
 
@@ -11562,18 +11918,23 @@
                 handleClose();
             };
 
-            // Fonction sécurisée pour obtenir les langues supportées
+            const handleNavigateProfile = () => {
+                navigate('/profile');
+                handleClose();
+            };
+
+            const handleNavigatePassword = () => {
+                navigate('/change-password');
+                handleClose();
+            };
+
             const getSupportedLanguages = (): string[] => {
                 if (Array.isArray(i18n.options.supportedLngs)) {
                     return i18n.options.supportedLngs.filter((l) => l !== 'cimode');
                 }
-
-                // Alternative: utiliser les ressources chargées
                 if (i18n.services.resourceStore.data) {
                     return Object.keys(i18n.services.resourceStore.data).filter((l) => l !== 'cimode');
                 }
-
-                // Fallback: utiliser la langue actuelle
                 return [i18n.language || 'en'];
             };
 
@@ -11596,17 +11957,64 @@
                                 overflow: 'visible',
                                 filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
                                 mt: 1.5,
-                                '& .MuiAvatar-root': {
-                                    width: 32,
-                                    height: 32,
-                                    ml: -0.5,
-                                    mr: 1,
-                                },
+                                minWidth: 280,
                             },
                         }}
                         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                     >
+                        {/* ✅ CARD PROFIL UTILISATEUR */}
+                        {user && (
+                            <>
+                                <Box sx={{ p: 2 }}>
+                                    <Card
+                                        elevation={0}
+                                        sx={{
+                                            bgcolor: 'action.hover',
+                                            borderRadius: 2
+                                        }}
+                                    >
+                                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                                            <Box display="flex" alignItems="center" gap={1.5}>
+                                                <Avatar sx={{ bgcolor: 'primary.main' }}>
+                                                    <Person />
+                                                </Avatar>
+                                                <Box>
+                                                    <Typography variant="subtitle2" fontWeight={600}>
+                                                        {user.username}
+                                                    </Typography>
+                                                    {user.email && (
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {user.email}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </Box>
+                                        </CardContent>
+                                    </Card>
+                                </Box>
+                                <Divider />
+                            </>
+                        )}
+
+                        {/* ✅ MODIFIER MON PROFIL */}
+                        <MenuItem onClick={handleNavigateProfile}>
+                            <ListItemIcon>
+                                <Edit fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>{t('messages.profile.edit')}</ListItemText>
+                        </MenuItem>
+
+                        {/* ✅ CHANGER MOT DE PASSE */}
+                        <MenuItem onClick={handleNavigatePassword}>
+                            <ListItemIcon>
+                                <Lock fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>{t('messages.profile.changePassword')}</ListItemText>
+                        </MenuItem>
+
+                        <Divider />
+
                         {/* Mode disposition */}
                         <MenuItem onClick={() => handleLayoutChange(layout === 'vertical' ? 'horizontal' : 'vertical')}>
                             <ListItemIcon>
@@ -11674,7 +12082,6 @@
             );
         }
 
-        // Helper function pour les emojis de drapeaux
         function getFlagEmoji(langCode: string): string {
             const languageFlags: Record<string, string> = {
                 en: '🇬🇧',
@@ -11744,7 +12151,7 @@
         export const router = createBrowserRouter([
             {
                 path: '/',
-                element: <RootLayout layout="vertical" />, // 'vertical' or 'horizontal' 
+                element: <RootLayout/>,  
                 children: [
                     {{#each routes}}
                     {

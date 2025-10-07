@@ -56,6 +56,18 @@
           submit: 'Sign in',
           invalid: 'Invalid credentials',
           logout: 'Logout',
+          createAccount: "Create account",
+          backToSignIn: "Back to sign in",
+        },
+        register: {
+          title: "Create account",
+          name: "Name",
+          email: "Email",
+          password: "Password",
+          submit: "Register",
+          backToSignIn: "Back to sign in",
+          success: "Account created successfully",
+          error: "Registration failed"
         },
         home: {
           greet: 'Hello',
@@ -152,6 +164,20 @@
           list: 'List',
           add: 'Add',
         },
+        profile: {
+          edit: 'Edit Profile',
+          changePassword: 'Change Password',
+          oldPassword: 'Current Password',
+          newPassword: 'New Password',
+          confirmPassword: 'Confirm Password',
+          updateSuccess: 'Profile updated successfully',
+          updateError: 'Failed to update profile',
+          usernameChangedLogout: 'Username changed. You will be logged out to sign in with your new credentials.',
+          usernameChangeWarning: '⚠️ Warning: Changing your username will log you out. You will need to sign in with your new credentials.',
+          passwordChangeSuccess: 'Password changed successfully',
+          passwordChangeError: 'Failed to change password',
+          passwordMismatch: 'Passwords do not match',
+        },
       },
       // DateTime formatting
       dateTimeFormats: {
@@ -209,7 +235,7 @@
           update: 'Modifier',
           delete: 'Supprimer',
           create: 'Enregistrer',
-          read: 'lire'
+          read: 'lire',
           add: 'Ajouter',
           save: 'Enregistrer',
           cancel: 'Annuler',
@@ -246,12 +272,24 @@
           customisation: 'Personnalisation de layout'
         },
         authentication: {
-          title: 'Connexion',
+          title: "Se connecter",
           username: 'Nom d’utilisateur',
           password: 'Mot de passe',
           submit: 'Se connecter',
           invalid: 'Identifiants invalides',
           logout: 'Déconnexion',
+          createAccount: "Créer un compte",
+          backToSignIn: "Retour à la connexion",
+        },
+        register: {
+          title: "Créer un compte",
+          name: "Nom",
+          email: "Email",
+          password: "Mot de passe",
+          submit: "S'inscrire",
+          backToSignIn: "Retour à la connexion",
+          success: "Compte créé avec succès",
+          error: "Échec de l'inscription"
         },
         home: {
           greet: 'Bonjour',
@@ -351,6 +389,20 @@
         navigation: {
           list: 'Liste',
           add: 'Ajouter',
+        },
+        profile: {
+          edit: 'Modifier mon profil',
+          changePassword: 'Changer mot de passe',
+          oldPassword: 'Mot de passe actuel',
+          newPassword: 'Nouveau mot de passe',
+          confirmPassword: 'Confirmer mot de passe',
+          updateSuccess: 'Profil mis à jour avec succès',
+          updateError: 'Échec de la mise à jour',
+          usernameChangedLogout: 'Nom d\'utilisateur modifié. Vous allez être déconnecté pour vous reconnecter avec vos nouveaux identifiants.',
+          usernameChangeWarning: '⚠️ Attention : Changer votre nom d\'utilisateur vous déconnectera. Vous devrez vous reconnecter avec vos nouveaux identifiants.',
+          passwordChangeSuccess: 'Mot de passe modifié avec succès',
+          passwordChangeError: 'Échec du changement de mot de passe',
+          passwordMismatch: 'Les mots de passe ne correspondent pas',
         },
       },
       // Formatage des dates
