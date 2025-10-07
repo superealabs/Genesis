@@ -11644,8 +11644,22 @@
             Select,
             SelectChangeEvent,
             Box,
+            Card,
+            CardContent,
+            Typography,
+            Avatar,
         } from '@mui/material';
-        import { Settings, Brightness4, Brightness7, ViewSidebar, ViewAgenda, Logout } from '@mui/icons-material';
+        import {
+            Settings,
+            Brightness4,
+            Brightness7,
+            ViewSidebar,
+            ViewAgenda,
+            Logout,
+            Person,
+            Edit,
+            Lock
+        } from '@mui/icons-material';
         import { useThemeMode } from '@/contexts/ThemeContext';
         import { useAuth } from '@/contexts/AuthContext';
         import { useTranslation } from 'react-i18next';
@@ -11660,7 +11674,7 @@
         export default function SettingsMenu({ layout, onLayoutChange, compact = false }: SettingsMenuProps) {
             const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
             const { mode, toggleTheme } = useThemeMode();
-            const { logout } = useAuth();
+            const { logout, user } = useAuth(); 
             const { i18n, t } = useTranslation();
             const navigate = useNavigate();
 
@@ -11689,18 +11703,23 @@
                 handleClose();
             };
 
-            // Fonction sécurisée pour obtenir les langues supportées
+            const handleNavigateProfile = () => {
+                navigate('/profile');
+                handleClose();
+            };
+
+            const handleNavigatePassword = () => {
+                navigate('/change-password');
+                handleClose();
+            };
+
             const getSupportedLanguages = (): string[] => {
                 if (Array.isArray(i18n.options.supportedLngs)) {
                     return i18n.options.supportedLngs.filter((l) => l !== 'cimode');
                 }
-
-                // Alternative: utiliser les ressources chargées
                 if (i18n.services.resourceStore.data) {
                     return Object.keys(i18n.services.resourceStore.data).filter((l) => l !== 'cimode');
                 }
-
-                // Fallback: utiliser la langue actuelle
                 return [i18n.language || 'en'];
             };
 
@@ -11723,17 +11742,64 @@
                                 overflow: 'visible',
                                 filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
                                 mt: 1.5,
-                                '& .MuiAvatar-root': {
-                                    width: 32,
-                                    height: 32,
-                                    ml: -0.5,
-                                    mr: 1,
-                                },
+                                minWidth: 280,
                             },
                         }}
                         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                     >
+                        {/* ✅ CARD PROFIL UTILISATEUR */}
+                        {user && (
+                            <>
+                                <Box sx={{ p: 2 }}>
+                                    <Card
+                                        elevation={0}
+                                        sx={{
+                                            bgcolor: 'action.hover',
+                                            borderRadius: 2
+                                        }}
+                                    >
+                                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                                            <Box display="flex" alignItems="center" gap={1.5}>
+                                                <Avatar sx={{ bgcolor: 'primary.main' }}>
+                                                    <Person />
+                                                </Avatar>
+                                                <Box>
+                                                    <Typography variant="subtitle2" fontWeight={600}>
+                                                        {user.username}
+                                                    </Typography>
+                                                    {user.email && (
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {user.email}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </Box>
+                                        </CardContent>
+                                    </Card>
+                                </Box>
+                                <Divider />
+                            </>
+                        )}
+
+                        {/* ✅ MODIFIER MON PROFIL */}
+                        <MenuItem onClick={handleNavigateProfile}>
+                            <ListItemIcon>
+                                <Edit fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>{t('messages.profile.edit')}</ListItemText>
+                        </MenuItem>
+
+                        {/* ✅ CHANGER MOT DE PASSE */}
+                        <MenuItem onClick={handleNavigatePassword}>
+                            <ListItemIcon>
+                                <Lock fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>{t('messages.profile.changePassword')}</ListItemText>
+                        </MenuItem>
+
+                        <Divider />
+
                         {/* Mode disposition */}
                         <MenuItem onClick={() => handleLayoutChange(layout === 'vertical' ? 'horizontal' : 'vertical')}>
                             <ListItemIcon>
@@ -11801,7 +11867,6 @@
             );
         }
 
-        // Helper function pour les emojis de drapeaux
         function getFlagEmoji(langCode: string): string {
             const languageFlags: Record<string, string> = {
                 en: '🇬🇧',
