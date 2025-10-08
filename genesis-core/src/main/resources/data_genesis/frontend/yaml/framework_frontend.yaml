@@ -12268,7 +12268,10 @@
                 availableFilters: ${toCamelCase(className)}Filters,
                 defaultSort: ${toCamelCase(className)}Meta.defaultSort,
                 searchFn: ${toCamelCase(className)}Service.search,
-                pageTitle: `${majStart(className)} $[t('messages.entity.list.nav')]`
+                pageTitle: `${majStart(className)} $[t('messages.entity.list.nav')]`,
+                {{#if !isView}}{{removeLine}}
+                createRoute: '/${toKebabCase(className)}s/create'
+                {{/if}}{{removeLine}}
             })();
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
