@@ -4,7 +4,7 @@ import { usePagination } from '@/composables/usePagination'
 import { useSortData } from '@/composables/useSortData'
 import { PaginationData } from '@/models/api/PageResponseModel'
 import type { PaginationRequestParameter, SortFieldParameter } from '@/models/api/RequestModel'
-import { useFreezeScreen } from '@/stores/useFreezeScreen'
+import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
 
 export function useEntityTable(
   searchFn: (
@@ -15,7 +15,7 @@ export function useEntityTable(
   ) => Promise<void>,
   getPaginationDataRef: () => PaginationData,
 ) {
-  const freezeScreenStore = useFreezeScreen()
+  const freezeScreenStore = useFreezeScreenStore()
 
   // State
   const {

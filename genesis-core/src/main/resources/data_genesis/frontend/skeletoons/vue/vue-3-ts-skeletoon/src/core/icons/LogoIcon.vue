@@ -6,7 +6,7 @@
     rel="noopener noreferrer"
     class="inline-block"
   >
-    <img :src="src" :alt="alt || 'Logo'" :width="width" :height="height" class="object-contain" />
+    <img :src="src" :alt="alt || 'Logo'" :width="width" :height="height" class="object-contain text-base-content" />
   </component>
 </template>
 <script setup lang="ts">

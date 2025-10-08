@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { useFreezeScreen } from '@/stores/useFreezeScreen'
+import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
 
-const freezeStore = useFreezeScreen()
+const freezeStore = useFreezeScreenStore()
 </script>

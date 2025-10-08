@@ -21,6 +21,12 @@ public class FrameworkFrontendMetadataProvider {
 
 
     public static HashMap<String, Object> getHashMapForSecurity(String securityType,ProjectGenerationContext context) {
+        HashMap<String, Object> metadata = getHashMapForSecurity(securityType);
+        metadata.putAll(getWebappHashMap(context));
+        return metadata;
+    }
+
+    public static HashMap<String, Object> getHashMapForSecurity(String securityType) {
         HashMap<String, Object> metadata = new HashMap<>();
         if(securityType.contains("JWT")) {
             metadata.put("useJWT",true);
@@ -28,11 +34,10 @@ public class FrameworkFrontendMetadataProvider {
         {
             metadata.put("useJWT",false);
         }
-        metadata.putAll(getWebappHashMap(context));
         return metadata;
     }
 
-    public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata,String destinationFolder,String projectName) {
+    public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata, String destinationFolder, String projectName) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
@@ -259,6 +264,13 @@ public class FrameworkFrontendMetadataProvider {
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.putAll(getBrandingHashMap(frontendFramework));
         metadata.putAll(getLayoutHashMap(frontendFramework));
+        return  metadata;
+    }
+
+    public static HashMap<String, Object> getLangsHashMap(ProjectGenerationContext context, List<TableMetadata> tableMetadatas) {
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.putAll(getWebappHashMap(context));
+        metadata.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
         return  metadata;
     }
 

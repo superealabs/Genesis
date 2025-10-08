@@ -39,6 +39,7 @@ export default class RestResponse<T> implements IRestResponse<T> {
   static handlePagedResponse<T>(response: RestResponse<IPageResponse<T>>): PagedDataResponse<T> {
     const success = response.returnCode === 1
     return {
+      success: success,
       status: response.status,
       data: response.data?.content ?? [],
       error: success ? undefined : response.message,
@@ -51,6 +52,7 @@ export default class RestResponse<T> implements IRestResponse<T> {
   static handleDataResponse<T>(response: RestResponse<T>): DataResponse<T> {
     const success = response.returnCode === 1
     return {
+      success: success,
       status: response.status,
       data: response.data,
       error: success ? undefined : response.message,

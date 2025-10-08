@@ -5,6 +5,7 @@ export interface DataResponse<T> {
   data?: T
   error?: string
   pagination?: PaginationData
+  success: boolean
 }
 
 export interface PagedDataResponse<T> {
@@ -12,4 +13,5 @@ export interface PagedDataResponse<T> {
   data: T[]
   error?: string
   pagination: PaginationData
+  success: boolean
 }

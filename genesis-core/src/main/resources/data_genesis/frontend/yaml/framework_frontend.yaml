@@ -1407,22 +1407,73 @@
       extension: "vue"
       content: |
         <template>
-          <form class="space-y-4">
+          <form class="space-y-4" @submit.prevent="handleLogin">
             <div>
-              <GenesisInput v-model="login" label="Login" placeholder="username or email" type="text" />
+              <ErrorMessage :message="usernameError" />
+              <GenesisInput
+                v-model="login"
+                required
+                :label="$t('authentication.login')"
+                :placeholder="$t('authentication.login')"
+                type="text"
+              />
             </div>
             <div>
-              <GenesisInput v-model="password" placeholder="*****" type="password" label="Password" />
+              <ErrorMessage :message="passwordError" />
+              <GenesisInput
+                v-model="password"
+                required
+                type="password"
+                :label="$t('authentication.password')"
+              :placeholder="$t('authentication.password')"
+              />
             </div>
-            <button type="submit" class="btn btn-primary w-full">Login</button>
+            <button type="submit" class="mt-3 btn btn-primary w-full">
+              {{ $t('authentication.login') }}
+            </button>
           </form>
         </template>
+
         <script setup lang="ts">
         import GenesisInput from '@/core/form/GenesisInput.vue'
         import { ref } from 'vue'
+        import * as authService from '@/services/AuthService.ts'
+        import { LoginValidator } from '@/models/validators/LoginValidator.ts'
+        import { validators } from '@/utils/validators.ts'
+        import ErrorMessage from '@/core/common/ErrorMessage.vue'
+        import type { DataResponse } from '@/models/api/DataResponseModel.ts'
+        import { useRouter } from 'vue-router'
+        import { useAuth } from '@/composables/useAuth.ts'
 
+        const authentication = useAuth()
+        const router = useRouter()
         const login = ref('')
         const password = ref('')
+        const usernameError = ref<string | null>('')
+        const passwordError = ref<string | null>('')
+
+        const handleLogin = async () => {
+          let valid = true
+          usernameError.value = validators.checkRules(login.value, LoginValidator.usernameRules)
+          if (usernameError.value) valid = false
+
+          passwordError.value = validators.checkRules(password.value, LoginValidator.passwordRules)
+          if (passwordError.value) valid = false
+
+          if (!valid) return
+
+          try {
+            const loginData: DataResponse<string> = await authService.login(login.value, password.value)
+            if (loginData.success) {
+              await authentication.loginUser(loginData.data as string)
+              router.push({ name: 'home' })
+            } else {
+              throw new Error(loginData.error)
+            }
+          } catch (e: unknown) {
+            usernameError.value = String((e as Error).message)
+          }
+        }
         </script>
       destinationPath: "${destinationFolder}/src/auth"
     - fileType: "Auth Layout"
@@ -1437,6 +1488,7 @@
     
         <script setup lang="ts"></script>
       destinationPath: "${destinationFolder}/src/layouts"
+
     - fileType: "Auth Routes"
       fileName: "authRoutes"
       extension: "ts"
@@ -1453,6 +1505,7 @@
 
         export default authRoutes
       destinationPath: "${destinationFolder}/src/router"
+
     - fileType: "Login View"
       fileName: "LoginView"
       extension: "vue"
@@ -1473,22 +1526,69 @@
         import AppLogo from '@/core/AppLogo.vue'
         </script>
       destinationPath: "${destinationFolder}/src/views/auth"
+
     - fileType: "Auth Composable"
       fileName: "useAuth"
       extension: "ts"
       content: |
         import { useRouter } from 'vue-router'
+        import * as authService from '@/services/AuthService.ts'
+        import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
+        import { computed } from 'vue'
 
         export function useAuth() {
           const router = useRouter()
           const goToLoginView = () => {
             router.push({ path: '/auth/login' })
           }
+          const loginUser = async (token: string) => {
+            useAuthenticationStore().setToken(token)
+            const responseData = await authService.currentUser()
+            if (responseData.success && responseData.data) {
+              useAuthenticationStore().setCurrentUser(responseData.data)
+            } else {
+              throw new Error('Authentcation succed but the token is invalid')
+            }
+          }
+
+          const isLoggedIn = computed(() => {
+            const token = useAuthenticationStore().getToken()
+            return token != null && token.length > 0
+          })
+
+          const getAuthorizationHeader = () => {
+            if (useAuthenticationStore().getToken() == null || useAuthenticationStore().getToken().length == 0)
+              return {}
+            return {
+              Authorization: `Bearer ${useAuthenticationStore().getToken()}`,
+            }
+          }
+
+          const getCurrentUser = () => {
+            const user = useAuthenticationStore().getCurrentUser()
+            return  user;
+          }
+
+          const logout = async () => {
+            const responseData = await authService.logout()
+            if (!responseData.success) {
+              console.error('Logout failed:', responseData.error)
+            }
+            useAuthenticationStore().clear()
+            goToLoginView()
+          }
+
           return {
             goToLoginView,
+            loginUser,
+            getAuthorizationHeader,
+            getCurrentUser,
+            logout,
+            isLoggedIn
           }
         }
       destinationPath: "${destinationFolder}/src/composables"
+
     - fileType: "Logout Button"
       fileName: "LogoutButton"
       extension: "vue"
@@ -1505,54 +1605,157 @@
 
         const auth = useAuth()
         const logout = () => {
-          auth.goToLoginView()
+          auth.logout()
         }
         </script>
       destinationPath: "${destinationFolder}/src/core/button"
-    - fileType: "User Nav Profile"
-      fileName: "UserNavProfile"
+
+    - fileType: "Login Validator"
+      fileName: "LoginValidator"
+      extension: "ts"
+      content: |
+        import type { ValidationRule } from '@/models/validators/ValidationRule.ts'
+        import { validators } from '@/utils/validators.ts'
+
+        export class LoginValidator {
+          static usernameRules: ValidationRule[] = [
+            {
+              message: 'Username is required',
+              validate: (value: string) => {
+                return validators.required(value)
+              },
+            },
+            {
+              message: 'Username must be at least 3 characters',
+              validate: (value: string) => {
+                return validators.minLength(value, 3)
+              },
+            },
+            {
+              message: 'Username must be at most 20 characters',
+              validate: (value: string) => {
+                return validators.maxLength(value, 20)
+              },
+            },
+            {
+              message: 'Username can only contain letters, numbers, and underscores',
+              validate: (value: string) => {
+                return validators.pattern(value, /^[a-zA-Z0-9_]+$/)
+              },
+            },
+          ]
+
+          static passwordRules: ValidationRule[] = [
+            {
+              message: 'Password is required',
+              validate: (value: string) => {
+                return validators.required(value)
+              },
+            },
+            {
+              message: 'Password must be at least 4 characters',
+              validate: (value: string) => {
+                return validators.minLength(value, 4)
+              },
+            },
+            {
+              message: 'Password must be at most 100 characters',
+              validate: (value: string) => {
+                return validators.maxLength(value, 100)
+              },
+            },
+          ]
+        }
+      destinationPath: "${destinationFolder}/src/models/validators"
+
+    - fileType: "Auth Service"
+      fileName: "AuthService"
+      extension: "ts"
+      content: |
+        import useRestApi from '@/composables/useRestApi.ts'
+        import type { IUser } from '@/models/auth/UserModel.ts'
+        import { RequestModel } from '@/models/api/RequestModel.ts'
+        import type { DataResponse } from '@/models/api/DataResponseModel.ts'
+        import { User } from '@/models/auth/UserModel.ts'
+        import RestResponse from '@/models/api/RestResponseModel.ts'
+
+        const BASE_URL = '/auth'
+        const userApi = useRestApi<IUser>()
+        const stringApi = useRestApi<string>()
+
+        function wrapUser(response: DataResponse<User>) {
+          response.data = new User(response.data)
+          return response
+        }
+
+        export async function currentUser() {
+          const request = new RequestModel(BASE_URL + '/current')
+          const response = await userApi.GET(request.buildRequestUrl([], false))
+          return wrapUser(RestResponse.handleDataResponse(response))
+        }
+
+        export async function login(username: string, password: string) {
+          const request = new RequestModel(BASE_URL + '/login')
+          const response = await stringApi.POST(request.buildRequestUrl([], false), { username, password })
+          return RestResponse.handleDataResponse(response)
+        }
+
+        export async  function logout(){
+          const request = new RequestModel(BASE_URL + '/logout')
+          const response = await stringApi.POST(request.buildRequestUrl([], false))
+          return RestResponse.handleDataResponse(response)
+        }
+      destinationPath: "${destinationFolder}/src/services"
+  additionalFiles:
+    - fileType: "Sidebar Layout"
+      fileName: "SideBarLayour"
       extension: "vue"
       content: |
         <template>
-          <div class="flex items-center justify-between gap-2">
-            <!-- Avatar + Nom -->
-            <div class="flex items-center gap-2">
-              <div
-                class="flex items-center justify-center w-10 h-10 rounded-full bg-base-100 text-base-content font-bold"
+          <div>
+            <GenesisBanner :height="topbarHeight" />
+            <div
+              class="w-full grid fixed top-0 left-0"
+              :style="{ gridTemplateColumns: `auto 1fr`, marginTop: topbarHeight }"
+            >
+              <!-- Sidebar -->
+              <aside
+                id="navbar"
+                class="bg-base-100 shadow-sm flex-col flex justify-between"
+                :style="{ height: `calc(100vh - ${topbarHeight})`, width: sidebarWidth }"
               >
-                {{ initials }}
-              </div>
-              <p class="m-0 font-medium">{{ name }}</p>
-            </div>
+                <div class="overflow-y-scroll flex-1">
+                  <GenesisNavbar />
+                </div>{{if useJWT}}
+                <div class="border-t-2 border-t-gray-100 p-2" >
+                  <UserNavProfile :name="useAuthenticationStore().getCurrentUsername" />
+                </div>{{/if}}
+              </aside>
 
-            <!-- Bouton Déconnexion -->
-            <div>
-              <LogoutButton />
+              <!-- Main content -->
+              <main class="overflow-auto p-4" :style="{ height: `calc(100vh - ${topbarHeight})` }">
+                <router-view />
+              </main>
             </div>
           </div>
         </template>
 
         <script setup lang="ts">
-        import { computed } from 'vue'
-        import LogoutButton from '@/core/button/LogoutButton.vue'
+        import GenesisBanner from '@/core/navbar/GenesisBanner.vue'
+        import GenesisNavbar from '@/core/navbar/GenesisNavbar.vue'{{#if useJWT}}
+        import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
+        import UserNavProfile from '@/core/user/UserNavProfile.vue'{{/if}}
 
-        // Props
-        const props = defineProps<{
-          name: string
-        }>()
-
-        // Computed: initials
-        const initials = computed(() => {
-          if (!props.name) return ''
-          return props.name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
+        defineProps({
+          topbarHeight: { type: String, default: '56px' },
+          sidebarWidth: { type: String, default: '300px' },
         })
         </script>
-      destinationPath: "${destinationFolder}/src/core/user"
-  additionalFiles:
+
+        <style scoped></style>
+
+      destinationPath: "${destinationFolder}/src/layouts"
+
     - fileType: "Package File"
       fileName: "package"
       extension: "json"
@@ -4885,25 +5088,6 @@
               "integrity": "sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==",
               "dev": true,
               "license": "ISC"
-            },
-            "node_modules/bootstrap": {
-              "version": "5.3.7",
-              "resolved": "https://registry.npmjs.org/bootstrap/-/bootstrap-5.3.7.tgz",
-              "integrity": "sha512-7KgiD8UHjfcPBHEpDNg+zGz8L3LqR3GVwqZiBRFX04a1BCArZOz1r2kjly2HQ0WokqTO0v1nF+QAt8dsW4lKlw==",
-              "funding": [
-                {
-                  "type": "github",
-                  "url": "https://github.com/sponsors/twbs"
-                },
-                {
-                  "type": "opencollective",
-                  "url": "https://opencollective.com/bootstrap"
-                }
-              ],
-              "license": "MIT",
-              "peerDependencies": {
-                "@popperjs/core": "^2.11.8"
-              }
             },
             "node_modules/bootstrap-icons": {
               "version": "1.13.1",
@@ -9490,27 +9674,22 @@
         import router from './router'
         import { createPinia } from 'pinia'
         import '@/assets/styles/main.css'
-        
-        /* import the fontawesome core */
         import { library } from '@fortawesome/fontawesome-svg-core'
-        /* import font awesome icon component */
         import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-        /* import all the icons in Free Solid, Duotone Solid, and Duotone Thin styles */
         import { fas } from '@fortawesome/free-solid-svg-icons'
         import { far } from '@fortawesome/free-regular-svg-icons'
         import { fab } from '@fortawesome/free-brands-svg-icons'
         import i18n from '@/config/i18n.ts'
-        
+
         library.add(fas, far, fab)
         const pinia = createPinia()
         const app = createApp(App)
-        
+
         app.component('font-awesome-icon', FontAwesomeIcon)
-        app.use(i18n)
         app.use(router)
+        app.use(i18n)
         app.use(pinia)
         app.mount('#app')
-
       destinationPath: "${destinationFolder}/src"
 
     - fileType: "Index File"
@@ -9683,6 +9862,8 @@
 
         <script setup lang="ts">
         import FreezeScreen from '@/core/loading/FreezeScreen.vue'
+        import { useGlobalStore } from '@/stores/useGlobalStore.ts'
+        useGlobalStore()
         </script>
 
         <style scoped></style>
@@ -9694,7 +9875,8 @@
       content: |
         import { createRouter, createWebHistory } from 'vue-router'
         import routes from './routes'
-        import { useFreezeScreen } from '@/stores/useFreezeScreen'
+        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
+        {{#if useJWT}}import { useAuth } from '@/composables/useAuth.ts'{{/if}}
 
         const router = createRouter({
           history: createWebHistory(import.meta.env.BASE_URL),
@@ -9702,13 +9884,20 @@
         })
 
         router.beforeEach((to, from, next) => {
-          const loading = useFreezeScreen()
+          const loading = useFreezeScreenStore()
           loading.freeze('Loading')
-          next()
+          {{#if useJWT}}
+          const auth = useAuth()
+          const isAuthenticated = auth.isLoggedIn.value // or check auth.user/token
+          if (to.meta.requiresAuth && !isAuthenticated) {
+            next({ name: 'login' })
+          } else {
+            next()
+          }{{else}}next(){{/if}}
         })
 
         router.afterEach(() => {
-          const loading = useFreezeScreen()
+          const loading = useFreezeScreenStore()
           setTimeout(() => loading.unfreeze(), 150) // small delay to prevent flicker
         })
 
@@ -9722,10 +9911,9 @@
         import type { RouteRecordRaw } from 'vue-router'
         import HomeView from '@/views/HomeView.vue'
         import CustomisationView from '@/views/settings/CustomisationView.vue'
-        import SideBarLayout from '@/layouts/SideBarLayout.vue'
-        {{#if useJWT}}
+        import SideBarLayout from '@/layouts/SideBarLayout.vue'{{#if useJWT}}
         import AuthLayout from '@/layouts/AuthLayout.vue'
-        {{/if}}
+        import authRoutes from './authRoutes'{{/if}}
         {{#each entities}}
         import ${minStart(this.className)}Routes from './entities/${minStart(this.className)}Routes'
         {{/each}}{{removeLine}}
@@ -9739,8 +9927,8 @@
             path: '/',
             component: SideBarLayout,
             children: [
-              { path: 'home', name: 'home', component: HomeView },
-              { path: 'customisation', name: 'customisation', component: CustomisationView },
+              { path: 'home', name: 'home', component: HomeView {{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },
+              { path: 'customisation', name: 'customisation', component: CustomisationView {{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },
               {{#each entities}}
               ...${minStart(this.className)}Routes,
               {{/each}}{{removeLine}}
@@ -9750,18 +9938,11 @@
           {
             path: '/auth',
             component: AuthLayout,
-            children: [
-              {
-                path: 'login',
-                name: 'login',
-                component: () => import('@/views/auth/LoginView.vue'),
-              },
-            ],
+            children: [...authRoutes]
           },
           {{/if}}
         ]
         export default routes
-
       destinationPath: "${destinationFolder}/src/router"
 
     - fileType: "Navigation Config"
@@ -9792,14 +9973,14 @@
               {{#each entities}}
               {{#if this.isView = false}}
               {
-                navTitle:'${majStart(this.className)}',
+                navTitle:'entities.${minStart(this.className)}.nav.title',
                 navChilds:[
                   {
-                    navTitle: '${majStart(this.className)} List',
+                    navTitle: 'entities.${minStart(this.className)}.nav.list',
                     navLink: '/${minStart(this.className)}s',
                   },
                   {
-                    navTitle: 'Create ${majStart(this.className)}',
+                    navTitle: 'entities.${minStart(this.className)}.nav.create',
                     navLink: '/${minStart(this.className)}s/create',
                   },
                 ]
@@ -9817,7 +9998,7 @@
               {{#each entities}}
               {{#if this.isView}}
               {
-                navTitle:'${majStart(this.className)}',
+                navTitle:'views.${minStart(this.className)}.nav.title',
                 navLink: '/${minStart(this.className)}s',
               },
               {{removeLine}}
@@ -9838,6 +10019,7 @@
         import french from '@/lang/french.ts'
         import { createI18n } from 'vue-i18n'
         const i18n = createI18n({
+          legacy: false,
           {{#each langList}}
           {{#if @first}}
           locale: '${this.locale}',
@@ -9850,7 +10032,7 @@
           },
           datetimeFormats: {
             {{#each langList}}
-            ${this.locale}: ${lowerCase(this.name)}.datetimeFormats,
+            ${this.locale}: ${lowerCase(this.name)}.dateTimeFormats,
             {{/each}}{{removeLine}}
           },
           numberFormats: {
@@ -9974,7 +10156,6 @@
               <!-- Right side -->
               <div class="flex items-center gap-4">
                 <LanguageSwitcher />
-                {{#if useJWT}}<UserNavProfile name="John Doe" /> {{/if}}
               </div>
             </div>
           </header>
@@ -9983,9 +10164,6 @@
         <script setup lang="ts">
         import LanguageSwitcher from '@/core/language/LanguageSwitcher.vue'
         import AppLogo from '@/core/AppLogo.vue'
-        {{#if useJWT}}
-        import UserNavProfile from '@/core/user/UserNavProfile.vue'
-        {{/if}}
         defineProps<{
           height?: string
         }>()
@@ -10439,12 +10617,27 @@
                 path: '${minStart(EntityName)}s',
                 name: '${minStart(EntityName)}listview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}ListView.vue'),
+                {{#if useJWT}}meta: { requiresAuth: true },{{/if}}
               },
               {
                 path: '${minStart(EntityName)}s/:id',
                 name: '${minStart(EntityName)}detailsview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}DetailsView.vue'),
-              },{{#if !isView}}
+                {{#if useJWT}}meta: { requiresAuth: true },{{/if}}
+              },
+              {{#if !isView and useJWT}}
+              {
+                path: '${minStart(EntityName)}s/update/:id',
+                name: '${minStart(EntityName)}updateview',
+                component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}UpdateView.vue'),
+                meta: { requiresAuth: true },
+              },
+              {
+                path: '${minStart(EntityName)}s/create',
+                name: '${minStart(EntityName)}createview',
+                component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}CreateView.vue'),
+                meta: { requiresAuth: true },
+              },{{elseIf !isView}}
               {
                 path: '${minStart(EntityName)}s/update/:id',
                 name: '${minStart(EntityName)}updateview',
@@ -10712,7 +10905,7 @@
         import { usePopup } from "@/composables/usePopup";
         import GenesisButton from "@/core/button/GenesisButton.vue";
         import LeftArrowIcon from "@/core/icons/LeftArrowIcon.vue";
-        import { useFreezeScreen } from '@/stores/useFreezeScreen.ts'
+        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
       selector: "${majStart(EntityName)}UpdateView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -10765,7 +10958,7 @@
         /** Entity reference */
         const entity = ref<${majStart(EntityName)} | null>(null)
 
-        const freezeStore = useFreezeScreen()
+        const freezeStore = useFreezeScreenStore()
         /** Update handler */
         const updateHandler = async (formDTO: Partial<${majStart(EntityName)}FormDTO>) => {        
           freezeStore.freeze('Updating ${minStart(EntityName)} '+pathId+' ...')
@@ -10816,7 +11009,7 @@
         import { ${majStart(EntityName)}FormDTO } from '@/models/${majStart(EntityName)}Model'
         import { use${majPluralize(EntityName)} } from '@/composables/use${majPluralize(EntityName)}'
         import { usePopup } from '@/composables/usePopup'
-        import { useFreezeScreen } from '@/stores/useFreezeScreen'
+        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
       selector: "${majStart(EntityName)}CreateView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -10856,7 +11049,7 @@
       export: |
         const { create${majStart(EntityName)}, goToListView, message, view${majStart(EntityName)} } = use${majPluralize(EntityName)}()
         const { openPopup, closePopup, visible: alertPopup } = usePopup()
-        const freezeStore = useFreezeScreen()
+        const freezeStore = useFreezeScreenStore()
 
         const createHandler = async (formDTO: Partial<${majStart(EntityName)}FormDTO>) => {
           freezeStore.freeze('Creating a new ${majStart(EntityName)} ...')

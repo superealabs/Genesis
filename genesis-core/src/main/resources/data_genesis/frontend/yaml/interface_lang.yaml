@@ -9,15 +9,30 @@
           update: 'Update',
           delete: 'Delete',
           create: 'Create',
+          details: 'Details',
+          list: 'List',
+          new: 'New',
+          actions: 'Actions',
+          back: 'Back',
         },
+
         navbar: {
           core: 'Core',
           entities: 'Entities',
           views: 'Views',
           settings: 'Settings',
           home: 'Home',
+          entityName: '@.capitalize:{entity}',
         },
-        authentication: {},
+
+        authentication: {
+          login: 'Login',
+          logout: 'Logout',
+          register: 'Register',
+          profile: 'Profile',
+          password: 'Password',
+        },
+
         home: {
           greet: 'Hello',
           greetDeveloper: '@.capitalize:home.greet Developer',
@@ -27,9 +42,7 @@
             views: 'List of views',
           },
         },
-        table: {
-          actions: 'Actions',
-        },
+
         pagination: {
           sizeLabel: 'Showing :',
           previous: 'Previous',
@@ -37,16 +50,18 @@
           goToLabel: 'Going to page:',
           pageOf: 'Page {page} of {total}',
         },
+
         search: {
           filters: 'No filter | Filters | Filters ({count})',
         },
+
         entity: {
           nav: '{entity} / ',
           list: {
-            nav: 'List',
+            nav: '@:common.list',
           },
           create: {
-            nav: 'New',
+            nav: '@:common.new',
             submitLabel: '@:common.create {entity}',
           },
           update: {
@@ -54,9 +69,11 @@
             submitLabel: '@:common.update {entity}',
           },
           details: {
-            nav: 'Details',
+            nav: '@:common.details',
           },
         },
+
+        // Generic button labels
         button: {
           addEntity: 'Add new {entity}',
           applySearch: 'Apply',
@@ -64,31 +81,47 @@
           backToList: 'Back to list',
           backToListDescription: 'Return to the list view',
         },
+
+        // Entity definitions (scalable for many entities)
+        entities: {
+          {{#each entities}}
+          {{#if !this.isView}}
+          ${minStart(this.className)}: {
+            name: '${minStart(this.className)} | ${minStart(this.className)}s',
+            nav: {
+              title: '@.capitalize:entities.${minStart(this.className)}.name',
+              create: '@:common.create @.capitalize:entities.${minStart(this.className)}.name',
+              list: '@.capitalize:entities.${minStart(this.className)}.name @:common.list',
+            },
+          },{{/if}}
+          {{/each}}
+        },
+        views: {
+          {{#each entities}}
+          {{#if this.isView}}
+          ${minStart(this.className)}: {
+            name: '${minStart(this.className)} | ${minStart(this.className)}s',
+            nav: {
+              title: '@.capitalize:views.${minStart(this.className)}.name',
+              list: '@.capitalize:views.${minStart(this.className)}.name @:common.list',
+            },
+          },{{/if}}
+          {{/each}}
+        },
+
         error: {
-          400: '',
-          403: '',
-          404: '',
+          400: 'Bad request',
+          403: 'Forbidden',
+          404: 'Not found',
           500: 'Error 500',
         },
       },
 
       // DateTime formatting
       dateTimeFormats: {
-        short: {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        },
-        long: {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          weekday: 'long',
-        },
-        time: {
-          hour: '2-digit',
-          minute: '2-digit',
-        },
+        short: { year: 'numeric', month: 'short', day: 'numeric' },
+        long: { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' },
+        time: { hour: '2-digit', minute: '2-digit' },
         full: {
           year: 'numeric',
           month: 'long',
@@ -108,7 +141,7 @@
         },
         decimal: {
           style: 'decimal',
-          minimumFractionDigits: 2, // 1,234.50
+          minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         },
         percent: {
@@ -129,44 +162,60 @@
         common: {
           update: 'Modifier',
           delete: 'Supprimer',
-          create: 'Creer',
+          create: 'Créer',
+          details: 'Détails',
+          list: 'Liste',
+          new: 'Nouveau',
+          actions: 'Actions',
+          back: 'Retour',
         },
+
         navbar: {
           core: 'Core',
-          entities: 'Entites',
+          entities: 'Entités',
           views: 'Vues',
-          settings: 'Parametres',
+          settings: 'Paramètres',
           home: 'Accueil',
+          entityName: '@.capitalize:{entity}',
         },
+
+        authentication: {
+          login: 'Connexion',
+          logout: 'Déconnexion',
+          register: 'Inscription',
+          profile: 'Profil',
+          password: 'Mot de passe',
+        },
+
         home: {
           greet: 'Bonjour',
-          greetDeveloper: '@.capitalize:home.greet Developpeur',
-          welcome: 'Bienvenue sur l application frontend @.capitalize:projectName',
+          greetDeveloper: '@.capitalize:home.greet Développeur',
+          welcome: 'Bienvenue sur l’application frontend @.capitalize:projectName',
           titles: {
-            entities: 'Liste des entites',
+            entities: 'Liste des entités',
             views: 'Liste des vues',
           },
         },
-        table: {
-          actions: 'Actions',
-        },
+
         pagination: {
           sizeLabel: 'Affichage :',
-          previous: 'Precedent',
+          previous: 'Précédent',
           next: 'Suivant',
-          goToLabel: 'Aller a la page :',
+          goToLabel: 'Aller à la page :',
           pageOf: 'Page {page} sur {total}',
         },
+
         search: {
           filters: 'Aucun filtre | Filtres | Filtres ({count})',
         },
+
         entity: {
           nav: '{entity} / ',
           list: {
-            nav: 'Liste',
+            nav: '@:common.list',
           },
           create: {
-            nav: 'Nouveau',
+            nav: '@:common.new',
             submitLabel: '@:common.create {entity}',
           },
           update: {
@@ -174,41 +223,59 @@
             submitLabel: '@:common.update {entity}',
           },
           details: {
-            nav: 'Details',
+            nav: '@:common.details',
           },
         },
+
+        // Libellés des boutons
         button: {
           addEntity: 'Ajouter un nouveau {entity}',
           applySearch: 'Appliquer',
           go: 'Aller',
-          backToList: 'Retour a la liste',
-          backToListDescription: 'Revenir a la page de liste',
+          backToList: 'Retour à la liste',
+          backToListDescription: 'Revenir à la vue liste',
         },
+
+        // Définitions d’entités (scalable)
+        entities: {
+          {{#each entities}}
+          {{#if !this.isView}}
+          ${minStart(this.className)}: {
+            name: '${minStart(this.className)} | ${minStart(this.className)}s',
+            nav: {
+              title: '@.capitalize:entities.${minStart(this.className)}.name',
+              create: '@:common.create @.capitalize:entities.${minStart(this.className)}.name',
+              list: '@.capitalize:entities.${minStart(this.className)}.name @:common.list',
+            },
+          },{{/if}}
+          {{/each}}
+        },
+        views: {
+          {{#each entities}}
+          {{#if this.isView}}
+          ${minStart(this.className)}: {
+            name: '${minStart(this.className)} | ${minStart(this.className)}s',
+            nav: {
+              title: '@.capitalize:views.${minStart(this.className)}.name',
+              list: '@.capitalize:views.${minStart(this.className)}.name @:common.list',
+            },
+          },{{/if}}
+          {{/each}}
+        },
+
         error: {
-          400: 'Requete invalide',
+          400: 'Requête invalide',
           403: 'Interdit',
           404: 'Introuvable',
           500: 'Erreur 500',
         },
       },
-    
+
       // Formatage des dates
       dateTimeFormats: {
-        short: {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        },
-        long: {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          weekday: 'long',
-        },
-        time: {
-          hour: '2-digit',
-          minute: '2-digit',
-        },
+        short: { year: 'numeric', month: 'short', day: 'numeric' },
+        long: { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' },
+        time: { hour: '2-digit', minute: '2-digit' },
         full: {
           year: 'numeric',
           month: 'long',
@@ -218,7 +285,7 @@
           minute: '2-digit',
         },
       },
-    
+
       // Formatage des nombres
       numberFormats: {
         currency: {
@@ -228,7 +295,7 @@
         },
         decimal: {
           style: 'decimal',
-          minimumFractionDigits: 2, // 1 234,50
+          minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         },
         percent: {
@@ -237,4 +304,5 @@
         },
       },
     }
+
     export default french

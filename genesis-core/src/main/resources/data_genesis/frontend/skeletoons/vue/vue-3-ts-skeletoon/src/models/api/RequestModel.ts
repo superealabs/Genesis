@@ -37,8 +37,8 @@ export class SortFieldParameter {
 
 export class RequestModel {
   url: string
-  pagination: PaginationRequestParameter
-  sortFields: SortFieldParameter[]
+  pagination?: PaginationRequestParameter
+  sortFields?: SortFieldParameter[]
   data?: Record<string, unknown>
 
   constructor(
@@ -53,22 +53,28 @@ export class RequestModel {
     this.data = data
   }
 
-  buildRequestUrl(): string {
+  buildRequestUrl(parameters: string[] = [], paged: boolean = true): string {
     let urlParameter: string = this.url
     const fields: string[] = []
-    const parameters: string[] = []
 
-    parameters.push(`page=${this.pagination.page}`)
-    parameters.push(`size=${this.pagination.size}`)
+    if (this.pagination && paged) {
+      parameters.push(`page=${this.pagination.page}`)
+      parameters.push(`size=${this.pagination.size}`)
+    }
 
-    this.sortFields.forEach((f) => {
-      fields.push(`${f.fieldName},${f.direction}`)
-    })
-    // const sortString = fields.join(';')
-    // parameters.push(`sortParam=${sortString}`)
+    if (this.sortFields && paged) {
+      this.sortFields.forEach((f) => {
+        fields.push(`${f.fieldName},${f.direction}`)
+      })
+      // const sortString = fields.join(';')
+      // parameters.push(`sortParam=${sortString}`)
+    }
 
-    const parameterString = parameters.join('&')
+    if (parameters.length > 0) {
+      const parameterString = parameters.join('&')
+      urlParameter += '?' + parameterString
+    }
 
-    return (urlParameter += '?' + parameterString)
+    return urlParameter
   }
 }

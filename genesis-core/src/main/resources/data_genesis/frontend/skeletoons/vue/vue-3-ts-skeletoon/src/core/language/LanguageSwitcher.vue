@@ -2,14 +2,16 @@
   <div class="flex items-center gap-2">
     <!-- Custom Dropdown -->
     <div class="dropdown">
-      <label tabindex="0" class="btn m-1 bg-transparent border-0 flex items-center gap-2">
+      <label
+        tabindex="0"
+        class="btn m-1 bg-transparent flex items-center gap-2 hover:shadow-none"
+      >
         <WorldIcon />
         <img
-          :src="'https://flagsapi.com/' + $i18n.locale.toUpperCase() + '/shiny/32.png'"
-          :alt="$i18n.locale"
+          :src="'https://flagsapi.com/' + languageStore.language.toUpperCase() + '/shiny/32.png'"
+          :alt="languageStore.language"
           class="w-5 h-5 rounded"
         />
-        <!--        <span>{{ $i18n.locale.toUpperCase() }}</span>-->
       </label>
 
       <ul
@@ -19,7 +21,7 @@
         <li
           v-for="locale in $i18n.availableLocales"
           :key="`locale-${locale}`"
-          @click="$i18n.locale = locale"
+          @click="languageStore.setLanguage(locale)"
         >
           <a class="flex items-center gap-2">
             <img
@@ -37,6 +39,9 @@
 
 <script setup lang="ts">
 import WorldIcon from '@/core/icons/WorldIcon.vue'
+import { useLanguageStore } from '@/stores/useLanguageStore'
+
+const languageStore = useLanguageStore()
 </script>
 
 <style scoped>

@@ -44,7 +44,6 @@ const inputFormId = computed(() => {
 
 const onInput = (e: Event) => {
   const newVal = (e.target as HTMLInputElement).value
-  console.log('Input Val: ' + newVal)
   emit('update:model-value', newVal)
 }
 </script>

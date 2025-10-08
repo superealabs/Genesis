@@ -1,18 +1,20 @@
 // src/services/api.ts
 import type { AxiosRequestConfig } from 'axios'
 import axios, { AxiosError } from 'axios'
-import RestResponse from '../models/api/RestResponseModel'
-
+import RestResponse from '@/models/api/RestResponseModel'
+import { useAuth } from '@/composables/useAuth.ts'
+const instance = axios.create({
+  baseURL: import.meta.env.VITE_APP_API_URL || 'http://localhost:8080',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+const authentication = useAuth()
 export default function useRestApi<T>() {
-  const instance = axios.create({
-    baseURL: import.meta.env.VITE_APP_API_URL || 'http://localhost:8080',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
-
   async function request(config: AxiosRequestConfig): Promise<RestResponse<T>> {
     try {
+      const authHeader = authentication.getAuthorizationHeader()
+      config.headers = { ...config.headers, ...authHeader }
       const response = await instance.request(config)
       return RestResponse.fromJson<T>(response.data)
     } catch (error: unknown) {

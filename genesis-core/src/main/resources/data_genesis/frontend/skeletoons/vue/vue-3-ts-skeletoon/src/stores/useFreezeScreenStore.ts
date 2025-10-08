@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
-export const useFreezeScreen = defineStore('freezeScreen', () => {
+export const useFreezeScreenStore = defineStore('freezeScreen', () => {
   const freezeState = ref(false)
   const freezeMessage = ref('')
 
