@@ -96,7 +96,14 @@ ${modelType}
             {{#each inputsFilter}}
             <div class="filter-content" data-type="${this.name}">
                 <p>${this.name} : </p>
+                {{#if this.type = radio}}{{removeLine}}
+                <select name="${this.name}" id="${this.name}" ${inputTagHelper}>
+                    <option value="true">True</option>
+                    <option value="false">False</option>
+                </select>
+                {{else}}{{removeLine}}
                 <input class="filter-input" type="${this.type}" ${inputTagHelper}>
+                {{/if}}{{removeLine}}
                 <button type="button" class="remove-item">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55 55" width="14">
                         <title data-i18n="remove"></title>
