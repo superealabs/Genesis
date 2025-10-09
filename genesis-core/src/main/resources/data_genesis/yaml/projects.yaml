@@ -124,7 +124,7 @@
         
         ###{{#if !@last}}{{newline}}{{/if}}{{/each}}
 
-      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/{{/if}}"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
 
     - fileType: "AppSettings"
       fileName: "appsettings"

@@ -11,6 +11,7 @@
   excludeProjectFilesEdits:
     - "SolutionFile"
     - "TestProjectFile"
+    - "HttpFile"
   additionalFiles:
     - fileType: "ProgramFile"
       fileName: "Program"
