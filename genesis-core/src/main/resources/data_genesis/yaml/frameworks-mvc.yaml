@@ -108,6 +108,59 @@
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/"
 
+    - fileType: "ReadmeFile"
+      fileName: "README"
+      extension: "md"
+      content: |
+        - Project Description: 
+        "${projectDescription}"
+        
+        - Project Architecture: 
+        ${majStart(projectName)}/
+        ├── Controllers/                        # Generated MVC Controllers
+        ├── Data/                               # Database context
+        │   └── ${majStart(projectName)}Context
+        ├── Models/
+        │   └── Dto/                            # Data Transfer Objects
+        ├── Repositories/                       # Data Access Layer
+        ├── Services/                           # Business Logic
+        ├── ViewModels/                         # View Models
+        ├── Views/                              # Generated Razor Views
+        ├── Filters/                            # Filters (including GlobalExceptionFilter)
+        ├── Specification/                      # DTO ↔ Entity Mapping
+        ├── Utils/                              # Utility Classes
+        ├── wwwroot/                            # Static Files
+        │   ├── css/                            # Stylesheets
+        │   ├── js/                             # JavaScript scripts
+        │   ├── img/                            # Images
+        │   └── i18n/                           # Internationalization files
+        └── Program.cs                          # Application Entry Point
+        
+        - Technical Prerequisites: 
+          - IDE: Visual Studio 2022 or VS Code
+          - .NET ${frameworkVersion}
+          - Database : {{#if databaseType = PostgreSQL}}PostgreSQL 16{{elseIf databaseType = MySQL}}MySQL 8.4{{elseIf databaseType = SQL Server}}SQL Server 2022{{elseIf databaseType = Oracle}}Oracle 19.3.0{{/if}}
+        
+        - Run the Application: 
+          - Option 1 - Terminal:
+              dotnet run
+          - Option 2 - Visual Studio:
+              Press F5 or Ctrl+F5
+          -Option 3 - VS Code:
+              Terminal → Run Task → build
+              Press F5
+        
+        -Access the Application:
+          Open your browser and navigate to: https://localhost:7273 or http://localhost:${projectPort}
+        
+        {{#if useAuthCookie}}- Authentication:
+          - Login URL: /Auth/Login
+          - Default Account:
+            - Email/Username: admin
+            - Password : Pwd@123
+        {{else}}{{removeLine}}{{/if}}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
     - fileType: "DbContextFile"
       fileName: "${majStart(projectName)}Context"
       extension: "cs"
