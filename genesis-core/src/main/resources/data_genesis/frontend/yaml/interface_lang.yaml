@@ -14,6 +14,7 @@
           new: 'New',
           actions: 'Actions',
           back: 'Back',
+          go: 'Go',
         },
 
         navbar: {
@@ -30,7 +31,10 @@
           logout: 'Logout',
           register: 'Register',
           profile: 'Profile',
+          username: 'Username',
+          email: 'Email',
           password: 'Password',
+          confirmPassword: 'Confirm your password',
         },
 
         home: {
@@ -77,7 +81,6 @@
         button: {
           addEntity: 'Add new {entity}',
           applySearch: 'Apply',
-          go: 'GO',
           backToList: 'Back to list',
           backToListDescription: 'Return to the list view',
         },
@@ -168,6 +171,7 @@
           new: 'Nouveau',
           actions: 'Actions',
           back: 'Retour',
+          go: 'Aller',
         },
 
         navbar: {
@@ -184,7 +188,10 @@
           logout: 'Déconnexion',
           register: 'Inscription',
           profile: 'Profil',
+          username: `Nom d'utilisateur`,
+          email: 'Addresse Mail',
           password: 'Mot de passe',
+          confirmPassword: 'Confirmer votre mot de passe',
         },
 
         home: {
