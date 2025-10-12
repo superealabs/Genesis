@@ -1435,12 +1435,12 @@
         </template>
 
         <script setup lang="ts">
-        import GenesisInput from '@/core/form/GenesisInput.vue'
+        import GenesisInput from '@/components/form/GenesisInput.vue'
         import { ref } from 'vue'
         import * as authService from '@/services/AuthService.ts'
         import { LoginValidator } from '@/models/validators/LoginValidator.ts'
         import { validators } from '@/utils/validators.ts'
-        import ErrorMessage from '@/core/common/ErrorMessage.vue'
+        import ErrorMessage from '@/components/common/ErrorMessage.vue'
         import type { DataResponse } from '@/models/api/DataResponseModel.ts'
         import { useRouter } from 'vue-router'
         import { useAuth } from '@/composables/useAuth.ts'
@@ -1475,7 +1475,7 @@
           }
         }
         </script>
-      destinationPath: "${destinationFolder}/src/core/auth"
+      destinationPath: "${destinationFolder}/src/components/auth"
 
     - fileType: "Register Form"
       fileName: "RegisterForm"
@@ -1534,8 +1534,8 @@
         </template>
 
         <script setup lang="ts">
-        import GenesisInput from '@/core/form/GenesisInput.vue'
-        import ErrorMessage from '@/core/common/ErrorMessage.vue'
+        import GenesisInput from '@/components/form/GenesisInput.vue'
+        import ErrorMessage from '@/components/common/ErrorMessage.vue'
         import { ref } from 'vue'
         import { useRouter } from 'vue-router'
         import * as authService from '@/services/AuthService.ts'
@@ -1587,7 +1587,7 @@
           }
         }
         </script>
-      destinationPath: "${destinationFolder}/src/core/auth"
+      destinationPath: "${destinationFolder}/src/components/auth"
 
     - fileType: "Auth Layout"
       fileName: "AuthLayout"
@@ -1629,8 +1629,8 @@
       extension: "vue"
       content: |
         <template>
-          <div class="h-screen flex items-center justify-center bg-base-200">
-            <div class="w-full max-w-md p-8 bg-base-100 rounded-2xl shadow-xl">
+          <div class="h-screen flex items-center justify-center bg-base-100">
+            <div class="w-full max-w-md p-8 bg-base-200 rounded-2xl shadow-xl">
               <div class="text-center mb-6">
                 <AppLogo size="150" />
               </div>
@@ -1641,10 +1641,7 @@
                 <hr class="my-4 border-gray-200" />
                 <p class="text-sm text-gray-600">
                   Already have an account?
-                  <RouterLink
-                    to="/auth/login"
-                    class="text-primary font-medium hover:underline ml-1"
-                  >
+                  <RouterLink to="/auth/login" class="text-primary font-medium hover:underline ml-1">
                     Login
                   </RouterLink>
                 </p>
@@ -1654,9 +1651,66 @@
         </template>
 
         <script setup lang="ts">
-        import RegisterForm from '@/core/auth/RegisterForm.vue'
-        import AppLogo from '@/core/AppLogo.vue'
+        import RegisterForm from '@/components/auth/RegisterForm.vue'
+        import AppLogo from '@/components/AppLogo.vue'
         </script>
+      destinationPath: "${destinationFolder}/src/views/auth"
+
+    - fileType: "Profile View"
+      fileName: "ProfileView"
+      extension: "vue"
+      content: |
+        <script setup lang="ts">
+        import { useAuth } from '@/composables/useAuth.ts'
+
+        const auth = useAuth()
+        const user = auth.getCurrentUser()
+        console.log(user)
+        </script>
+
+        <template>
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-semibold text-base-content">Profile View</h2>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="">
+              <label for="userName" class="block text-sm font-medium mb-1">Username</label>
+              <div id="userName" class="input w-full bg-base-100 cursor-default">
+                <span>{{ user.username ?? '' }}</span>
+              </div>
+            </div>
+
+            <div class="">
+              <label for="userName" class="block text-sm font-medium mb-1">Email</label>
+              <div id="userName" class="input w-full bg-base-100 cursor-default">
+                <span>{{ user.email ?? '' }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4">
+            <div>
+              <h3 class="font-semibold">Roles</h3>
+            </div>
+            <table class="table">
+              <thead class="table-header">
+                <tr>
+                  <th>Authority</th>
+                  <th>Authorizations</th>
+                  <th>Restrictions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="a in user.authorities" :key="`role-${a.authority}`">
+                  <td>{{ a.authority }}</td>
+                  <td>*</td>
+                  <td>None</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
+
+        <style scoped></style>
       destinationPath: "${destinationFolder}/src/views/auth"
 
     - fileType: "Login View"
@@ -1664,8 +1718,8 @@
       extension: "vue"
       content: |
         <template>
-          <div class="h-screen flex items-center justify-center bg-base-200">
-            <div class="w-full max-w-md p-8 bg-base-100 rounded-2xl shadow-xl">
+          <div class="h-screen flex items-center justify-center bg-base-100">
+            <div class="w-full max-w-md p-8 bg-base-200 rounded-2xl shadow-xl">
               <div class="text-center mb-6">
                 <AppLogo size="150" />
               </div>
@@ -1676,10 +1730,7 @@
                 <hr class="my-4 border-gray-200" />
                 <p class="text-sm text-gray-600">
                   Don't have an account?
-                  <RouterLink
-                    to="/auth/register"
-                    class="text-primary font-medium hover:underline ml-1"
-                  >
+                  <RouterLink to="/auth/register" class="text-primary font-medium hover:underline ml-1">
                     Register
                   </RouterLink>
                 </p>
@@ -1689,8 +1740,8 @@
         </template>
 
         <script setup lang="ts">
-        import LoginForm from '@/core/auth/LoginForm.vue'
-        import AppLogo from '@/core/AppLogo.vue'
+        import LoginForm from '@/components/auth/LoginForm.vue'
+        import AppLogo from '@/components/AppLogo.vue'
         </script>
       destinationPath: "${destinationFolder}/src/views/auth"
 
@@ -1769,8 +1820,8 @@
           </GenesisButton>
         </template>
         <script setup lang="ts">
-        import LogoutIcon from '@/core/icons/LogoutIcon.vue'
-        import GenesisButton from '@/core/button/GenesisButton.vue'
+        import LogoutIcon from '@/components/icons/LogoutIcon.vue'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
         import { useAuth } from '@/composables/useAuth.ts'
 
         const auth = useAuth()
@@ -1778,7 +1829,7 @@
           auth.logout()
         }
         </script>
-      destinationPath: "${destinationFolder}/src/core/button"
+      destinationPath: "${destinationFolder}/src/components/button"
 
     - fileType: "Login Validator"
       fileName: "LoginValidator"
@@ -1918,10 +1969,10 @@
         </template>
 
         <script setup lang="ts">
-        import GenesisBanner from '@/core/navbar/GenesisBanner.vue'
-        import GenesisNavbar from '@/core/navbar/GenesisNavbar.vue'
+        import GenesisBanner from '@/components/navbar/GenesisBanner.vue'
+        import GenesisNavbar from '@/components/navbar/GenesisNavbar.vue'
         import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
-        import UserNavProfile from '@/core/user/UserNavProfile.vue'
+        import UserNavProfile from '@/components/user/UserNavProfile.vue'
         import { computed } from 'vue'
 
         const props = defineProps({
@@ -9846,34 +9897,6 @@
         VITE_APP_PORT=${frontendPort}
       destinationPath: "${destinationFolder}"
 
-    - fileType: "Global Store"
-      fileName: "useGlobalStore"
-      extension: "ts"
-      content: |
-        import { defineStore } from 'pinia'
-        import { useLanguageStore } from '@/stores/useLanguageStore.ts'
-        import { useThemeStore } from '@/stores/useThemeStore.ts'
-        import { onMounted } from 'vue'
-        {{#if useJWT}}import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
-        import { useAuth } from '@/composables/useAuth.ts'{{/if}}
-
-        export const useGlobalStore = defineStore('global', () => {
-          useLanguageStore()
-          useThemeStore()
-          {{#if useJWT}}const authStore = useAuthenticationStore()
-          onMounted(async () => {
-            const token = authStore.getToken()
-            const auth = useAuth()
-            try {
-              await auth.loginUser(token)
-            } catch (e: unknown) {
-              await auth.logout()
-            }
-          }){{/if}}
-          return {}
-        })
-      destinationPath: "${destinationFolder}/src/stores"
-
     - fileType: "Vue App Main"
       fileName: "main"
       extension: "ts"
@@ -9985,7 +10008,7 @@
         </template>
 
         <script setup lang="ts">
-        import LinkIcon from '@/core/icons/LinkIcon.vue'
+        import LinkIcon from '@/components/icons/LinkIcon.vue'
         {{#each entities}}
         import { use${majStart(this.className)}s } from '@/composables/use${majStart(this.className)}s'
         {{/each}}{{removeLine}}
@@ -10006,7 +10029,7 @@
         </template>
 
         <script setup lang="ts">
-        import LogoIcon from '@/core/icons/LogoIcon.vue'
+        import LogoIcon from '@/components/icons/LogoIcon.vue'
         {{#if useLogoLink}}{{removeLine}}
         {{elseIf hasLogo}}import logo from '@/assets/images${logoUrl}'
         {{else}}import logo from '@/assets/images/logo.png'{{/if}}
@@ -10018,7 +10041,7 @@
           },
         })
         </script>
-      destinationPath: "${destinationFolder}/src/core"
+      destinationPath: "${destinationFolder}/src/components"
 
     - fileType: "Navbar"
       fileName: "GenesisNavbar"
@@ -10056,7 +10079,7 @@
         }
         </style>
 
-      destinationPath: "${destinationFolder}/src/core/navbar"
+      destinationPath: "${destinationFolder}/src/components/navbar"
 
     - fileType: "App-Vue"
       fileName: "App"
@@ -10070,9 +10093,7 @@
         </template>
 
         <script setup lang="ts">
-        import FreezeScreen from '@/core/loading/FreezeScreen.vue'
-        import { useGlobalStore } from '@/stores/useGlobalStore.ts'
-        useGlobalStore()
+        import FreezeScreen from '@/components/loading/FreezeScreen.vue'
         </script>
 
         <style scoped></style>
@@ -10159,21 +10180,6 @@
       extension: "ts"
       content: |
         const navigations = [
-          // CORE NAVIGATION
-          {
-            icon: 'fas fa-microchip',
-            sectionName: 'navbar.core',
-            navChilds: [
-              {
-                navLink: '/home',
-                navTitle: 'navbar.home',
-              },
-              {
-                navTitle: 'navbar.settings',
-                navLink: '/customisation',
-              },
-            ],
-          },
           // ENTITIES NAVIGATION
           {
             icon: 'fas fa-layer-group',
@@ -10218,6 +10224,29 @@
         ]
         export default navigations
       destinationPath: "${destinationFolder}/src/config"
+
+    - fileType: "Layout Store"
+      fileName: "useLayoutStore"
+      extension: "ts"
+      content: |
+        import { defineStore } from 'pinia'
+        import { ref, watch } from 'vue'
+
+        export const useLayoutStore = defineStore('layout', () => {
+          const currentLayout = ref(localStorage.getItem('layoutMode') || 'sidebar')
+
+          function setLayout(mode: 'sidebar' | 'topbar') {
+            currentLayout.value = mode
+            localStorage.setItem('layoutMode', mode)
+          }
+
+          watch(currentLayout, (newVal) => {
+            document.body.dataset.layout = newVal
+          }, { immediate: true })
+
+          return { currentLayout, setLayout }
+        })
+      destinationPath: "${destinationFolder}/src/stores"
 
     - fileType: "i18n Config"
       fileName: "i18n"
@@ -11528,13 +11557,13 @@
         </template>
 
         <script setup lang="ts">
-        import LanguageSwitcher from '@/core/language/LanguageSwitcher.vue'
-        import AppLogo from '@/core/AppLogo.vue'
+        import LanguageSwitcher from '@/components/language/LanguageSwitcher.vue'
+        import AppLogo from '@/components/AppLogo.vue'
         defineProps<{
           height?: string
         }>()
         </script>
-      destinationPath: "${destinationFolder}/src/core/navbar"
+      destinationPath: "${destinationFolder}/src/components/navbar"
   components:
     - componentType: "Entity Row"
       generateForView: true
@@ -11544,7 +11573,7 @@
       importFile: |
         import type { PropType } from 'vue'
         import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'
-        import EntityRowActions from '@/core/table/EntityRowActions.vue'
+        import EntityRowActions from '@/components/table/EntityRowActions.vue'
       selector: "${majStart(EntityName)}Row"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -11604,7 +11633,7 @@
         import { usePopup } from '@/composables/usePopup'
         import { use${majStart(EntityName)}s } from '@/composables/use${majStart(EntityName)}s'
         import type { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'{{#if !isView}}
-        import DeleteConfirmationPopup from '@/core/popup/DeleteConfirmationPopup.vue'
+        import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
         import { ref } from 'vue'
         import type { PropType } from 'vue'{{/if}}
       selector: "${majStart(EntityName)}List"
@@ -11710,10 +11739,10 @@
         import type { EntitySearchField } from '@/models/EntityModel'
         import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'
         import ${majStart(EntityName)}List from '@/entities/${minStart(EntityName)}/${majStart(EntityName)}List.vue'
-        import EntityTable from '@/core/table/EntityTable.vue'
+        import EntityTable from '@/components/table/EntityTable.vue'
         import { use${majPluralize(EntityName)} } from '@/composables/use${majPluralize(EntityName)}'{{#if !isView}}
-        import GenesisButton from '@/core/button/GenesisButton.vue'
-        import PlusIcon from '@/core/icons/PlusIcon.vue'{{/if}}
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+        import PlusIcon from '@/components/icons/PlusIcon.vue'{{/if}}
       selector: "${majStart(EntityName)}ListView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -11850,11 +11879,11 @@
               const create${majStart(EntityName)} = async (${minStart(EntityName)}FormDTO: Partial<${majStart(EntityName)}FormDTO>) => {
                 const dto = new ${majStart(EntityName)}FormDTO(${minStart(EntityName)}FormDTO)
                 const ${minStart(EntityName)}: Partial<${majStart(EntityName)}> = await dto.toEntity()
-                const { data, error } = await ${minStart(EntityName)}Service.create(${minStart(EntityName)})
+                const { data, error, errors } = await ${minStart(EntityName)}Service.create(${minStart(EntityName)})
                 if (error) {
                   message.value = error
                 }
-                return data
+                return { data, errors }
               }
 
               /**
@@ -12029,12 +12058,12 @@
       importFile: |
         import type { PropType } from 'vue'
         import type { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'{{#if !isView}}
-        import GenesisButton from '@/core/button/GenesisButton.vue'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
         import { usePopup } from '@/composables/usePopup'
         import { use${majPluralize(EntityName)} } from '@/composables/use${majPluralize(EntityName)}'
-        import DeleteConfirmationPopup from '@/core/popup/DeleteConfirmationPopup.vue'
-        import TrashIcon from '@/core/icons/TrashIcon.vue'
-        import EditIcon from '@/core/icons/EditIcon.vue'{{/if}}
+        import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
+        import TrashIcon from '@/components/icons/TrashIcon.vue'
+        import EditIcon from '@/components/icons/EditIcon.vue'{{/if}}
       selector: "${majStart(EntityName)}Details"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -12124,8 +12153,8 @@
         import ${majStart(EntityName)}Details from '@/entities/${minStart(EntityName)}/${majStart(EntityName)}Details.vue'
         import { use${majPluralize(EntityName)} } from '@/composables/use${majPluralize(EntityName)}'
         import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'
-        import GenesisButton from '@/core/button/GenesisButton.vue'
-        import LeftArrowIcon from '@/core/icons/LeftArrowIcon.vue'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+        import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'
       selector: "${majStart(EntityName)}DetailsView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -12176,9 +12205,9 @@
       importFile: |
         import { ref } from 'vue'
         import { ${majStart(EntityName)}, ${majStart(EntityName)}FormDTO } from '@/models/${majStart(EntityName)}Model'
-        import GenesisButton from '@/core/button/GenesisButton.vue'
-        import GenesisInput from '@/core/form/GenesisInput.vue'
-        {{#if containsForeignKey}}import GenesisSelectSearchCriteria from '@/core/form/GenesisSelectSearchCriteria.vue'{{/if}}
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+        import GenesisInput from '@/components/form/GenesisInput.vue'
+        {{#if containsForeignKey}}import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'{{/if}}
       selector: "${majStart(EntityName)}Form"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -12265,7 +12294,7 @@
         import { ref, onMounted } from "vue";
         import { useRoute } from "vue-router";
         import ${majStart(EntityName)}Form from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}Form.vue";
-        import AlertPopup from "@/core/popup/AlertPopup.vue";
+        import AlertPopup from "@/components/popup/AlertPopup.vue";
         import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
         import { ${majStart(EntityName)}, ${majStart(EntityName)}FormDTO } from "@/models/${majStart(EntityName)}Model";
         import { usePopup } from "@/composables/usePopup";
@@ -12369,9 +12398,9 @@
       componentName: "${majStart(EntityName)}CreateView"
       importFile: |
         import ${majStart(EntityName)}Form from '@/entities/${minStart(EntityName)}/${majStart(EntityName)}Form.vue'
-        import AlertPopup from '@/core/popup/AlertPopup.vue'
-        import GenesisButton from '@/core/button/GenesisButton.vue'
-        import LeftArrowIcon from '@/core/icons/LeftArrowIcon.vue'
+        import AlertPopup from '@/components/popup/AlertPopup.vue'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+        import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'
         import { ${majStart(EntityName)}FormDTO } from '@/models/${majStart(EntityName)}Model'
         import { use${majPluralize(EntityName)} } from '@/composables/use${majPluralize(EntityName)}'
         import { usePopup } from '@/composables/usePopup'
