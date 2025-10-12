@@ -2,14 +2,50 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useThemeStore = defineStore('theme', () => {
-  const availableThemes = ['genesis-light', 'genesis-dark', 'valentine', 'retro']
-  const defaultTheme = availableThemes[0]
+  const themes = [
+    'genesis-light',
+    'genesis-dark',
+    'cupcake',
+    'bumblebee',
+    'emerald',
+    'corporate',
+    'synthwave',
+    'retro',
+    'cyberpunk',
+    'valentine',
+    'halloween',
+    'garden',
+    'forest',
+    'aqua',
+    'lofi',
+    'pastel',
+    'fantasy',
+    'wireframe',
+    'black',
+    'luxury',
+    'dracula',
+    'cmyk',
+    'autumn',
+    'business',
+    'acid',
+    'lemonade',
+    'night',
+    'coffee',
+    'winter',
+    'dim',
+    'nord',
+    'sunset',
+    'caramellatte',
+    'abyss',
+    'silk',
+  ]
+  const defaultTheme = themes[0]
   const storedTheme = localStorage.getItem('theme')
 
   const theme = ref<string>(storedTheme || defaultTheme) // genesis-light | genesis-dark | valentine | retro
 
   const applyTheme = (newTheme: string) => {
-    if (availableThemes.includes(newTheme)) {
+    if (themes.includes(newTheme)) {
       theme.value = newTheme
       localStorage.setItem('theme', newTheme)
       document.documentElement.setAttribute('data-theme', theme.value)
@@ -22,5 +58,5 @@ export const useThemeStore = defineStore('theme', () => {
     applyTheme(defaultTheme)
   }
   applyTheme(theme.value)
-  return { theme, applyTheme, resetTheme, availableThemes, defaultTheme }
+  return { theme, applyTheme, resetTheme, availableThemes: themes, defaultTheme }
 })

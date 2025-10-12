@@ -1,10 +1,6 @@
 <template>
   <div class="flex gap-2">
-    <select
-      v-model="themeStore.theme"
-      @change="applyTheme"
-      class="select select-bordered"
-    >
+    <select v-model="themeStore.theme" @change="applyTheme" class="select bottom-0">
       <option v-for="t in themeStore.availableThemes" :key="t" :value="t">
         {{ t }}
       </option>
