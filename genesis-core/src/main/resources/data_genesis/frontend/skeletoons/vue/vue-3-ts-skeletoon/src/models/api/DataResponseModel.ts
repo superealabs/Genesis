@@ -6,6 +6,7 @@ export interface DataResponse<T> {
   error?: string
   pagination?: PaginationData
   success: boolean
+  errors: Record<string, string> | null
 }
 
 export interface PagedDataResponse<T> {
@@ -14,4 +15,5 @@ export interface PagedDataResponse<T> {
   error?: string
   pagination: PaginationData
   success: boolean
+  errors: Record<string, string> | null
 }

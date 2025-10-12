@@ -12621,12 +12621,14 @@
               filters: ${majStart(this.type)}.getAllSearchFieldsMetadata(),
               searchFunction: createMulticriteriatSearchFunction(${minStart(this.type)}Service),
             },
+            showInTable: true,
+            showInFilter: true,
           },
-          {{elseIf this.isPrimaryKey}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true },
-          {{elseIf this.isNumeric or this.isDate}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true },
-          { key: '${this.name}Min', label: '${formatReadable(this.name)} Min', type: '${this.uiType}', sortable: true },
-          { key: '${this.name}Max', label: '${formatReadable(this.name)} Max', type: '${this.uiType}', sortable: true },
-          {{else}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true },{{/if}}
+          {{elseIf this.isPrimaryKey}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true, showInTable: true, showInFilter: true, identifier: true },
+          {{elseIf this.isNumeric or this.isDate}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true, showInTable: true, showInFilter: true },
+          { key: '${this.name}Min', label: '${formatReadable(this.name)} Min', type: '${this.uiType}', sortable: false, showInTable: false, showInFilter: true },
+          { key: '${this.name}Max', label: '${formatReadable(this.name)} Max', type: '${this.uiType}', sortable: false, showInTable: false, showInFilter: true },
+          {{else}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true, showInTable: true, showInFilter: true },{{/if}}
           {{/each}}{{removeLine}}
         ]
       }

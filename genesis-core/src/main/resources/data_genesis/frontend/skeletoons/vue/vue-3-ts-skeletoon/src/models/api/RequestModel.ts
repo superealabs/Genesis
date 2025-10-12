@@ -18,10 +18,14 @@ export class PaginationRequestParameter {
 export class SortFieldParameter {
   fieldName: string
   direction: string
+  ascending?: boolean
 
-  constructor(fieldName: string, direction: string) {
+  constructor(fieldName: string, direction?: string, ascending?: boolean) {
     this.fieldName = fieldName
-    this.direction = direction
+    this.direction = direction ?? 'asc'
+    if (ascending !== undefined) {
+      this.setAscending(ascending)
+    }
   }
 
   changeDirection() {
@@ -32,6 +36,11 @@ export class SortFieldParameter {
     } else {
       this.direction = 'asc'
     }
+  }
+
+  setAscending(ascending: boolean) {
+    this.direction = ascending ? 'asc' : 'desc'
+    this.ascending = ascending
   }
 }
 
@@ -49,7 +58,7 @@ export class RequestModel {
   ) {
     this.url = url
     this.pagination = pagination ?? new PaginationRequestParameter(0, 10)
-    this.sortFields = sortFields ?? [new SortFieldParameter('id', 'asc')]
+    this.sortFields = sortFields
     this.data = data
   }
 
@@ -63,11 +72,12 @@ export class RequestModel {
     }
 
     if (this.sortFields && paged) {
+      console.log(this.sortFields)
       this.sortFields.forEach((f) => {
         fields.push(`${f.fieldName},${f.direction}`)
       })
-      // const sortString = fields.join(';')
-      // parameters.push(`sortParam=${sortString}`)
+      const sortString = fields.join(';')
+      parameters.push(`sortParam=${sortString}`)
     }
 
     if (parameters.length > 0) {
