@@ -11751,11 +11751,11 @@
           <div class="w-full">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-semibold">
+              <h3 class="text-xl font-semibold text-base-content">
                 {{ $t('entity.nav', { entity: '${majStart(EntityName)}' }) }}
-                <span class="text-gray-500 font-normal"> {{ $t('entity.list.nav') }}</span>
+                <span class="text-base-content/50 font-normal"> {{ $t('entity.list.nav') }}</span>
               </h3>{{#if !isView}}
-              <GenesisButton title="Create new ${minStart(EntityName)}" @click="goToCreateFormView" class="btn-primary">
+              <GenesisButton title="Create new ${minStart(EntityName)}" @click="goToCreateFormView" class="btn-secondary">
                 <PlusIcon />
                 {{ $t('button.addEntity', { entity: '${majStart(EntityName)}' }) }}
               </GenesisButton>{{/if}}
@@ -12163,9 +12163,9 @@
           <div class="w-full">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-semibold text-gray-800">
+              <h3 class="text-xl font-semibold text-base-content">
                 {{ $t('entity.nav', { entity: '${majStart(EntityName)}' }) }}
-                <span class="text-gray-500 font-normal">{{ $t('entity.details.nav') }}</span>
+                <span class="text-base-content/50 font-normal">{{ $t('entity.details.nav') }}</span>
               </h3>
   
               <!-- Back button -->
@@ -12291,15 +12291,15 @@
         label: "{{removeLine}}"
       componentName: "${majStart(EntityName)}UpdateView"
       importFile: |
-        import { ref, onMounted } from "vue";
-        import { useRoute } from "vue-router";
-        import ${majStart(EntityName)}Form from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}Form.vue";
-        import AlertPopup from "@/components/popup/AlertPopup.vue";
-        import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
-        import { ${majStart(EntityName)}, ${majStart(EntityName)}FormDTO } from "@/models/${majStart(EntityName)}Model";
-        import { usePopup } from "@/composables/usePopup";
-        import GenesisButton from "@/core/button/GenesisButton.vue";
-        import LeftArrowIcon from "@/core/icons/LeftArrowIcon.vue";
+        import { ref, onMounted } from 'vue';
+        import { useRoute } from 'vue-router';
+        import ${majStart(EntityName)}Form from '@/entities/${minStart(EntityName)}/${majStart(EntityName)}Form.vue';
+        import AlertPopup from '@/components/popup/AlertPopup.vue';
+        import { use${majPluralize(EntityName)} } from '@/composables/use${majPluralize(EntityName)}';
+        import { ${majStart(EntityName)}, ${majStart(EntityName)}FormDTO } from '@/models/${majStart(EntityName)}Model';
+        import { usePopup } from '@/composables/usePopup';
+        import GenesisButton from '@/components/button/GenesisButton.vue';
+        import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue';
         import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
       selector: "${majStart(EntityName)}UpdateView"
       standalone: true
@@ -12309,9 +12309,9 @@
           <div class="w-full">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-semibold">
+              <h3 class="text-xl font-semibold text-base-content">
                 ${majStart(EntityName)} /
-                <span class="text-gray-500 font-normal">Update</span>
+                <span class="text-base-content/50 font-normal">Update</span>
               </h3>
               <GenesisButton title="Back to list" @click="goToListView" class="btn-primary">
                 <LeftArrowIcon />
@@ -12405,6 +12405,7 @@
         import { use${majPluralize(EntityName)} } from '@/composables/use${majPluralize(EntityName)}'
         import { usePopup } from '@/composables/usePopup'
         import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
+        import { ref } from 'vue'
       selector: "${majStart(EntityName)}CreateView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -12412,9 +12413,9 @@
         <template>
           <div class="w-full">
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-semibold">
+              <h3 class="text-xl font-semibold text-base-content">
                 {{ $t('entity.nav', { entity: '${majStart(EntityName)}' }) }}
-                <span class="text-gray-500 font-normal">{{ $t('entity.create.nav') }}</span>
+                <span class="text-base-content/50 font-normal">{{ $t('entity.create.nav') }}</span>
               </h3>
               <GenesisButton
                 :title="$t('button.backToListDescription')"
@@ -12428,6 +12429,7 @@
   
             <${minStart(EntityName)}-form
               :submit-label="$t('entity.create.submitLabel', { entity: '${majStart(EntityName)}' })"
+              :violations="violations"
               @submit="createHandler"
               @cancel="goToListView"
             />
@@ -12444,17 +12446,20 @@
       export: |
         const { create${majStart(EntityName)}, goToListView, message, view${majStart(EntityName)} } = use${majPluralize(EntityName)}()
         const { openPopup, closePopup, visible: alertPopup } = usePopup()
+        const violations = ref<Record<string, string> | null>(null)
         const freezeStore = useFreezeScreenStore()
 
         const createHandler = async (formDTO: Partial<${majStart(EntityName)}FormDTO>) => {
           freezeStore.freeze('Creating a new ${majStart(EntityName)} ...')
           try {
-            const data = await create${majStart(EntityName)}(formDTO)
+            const { data, errors } = await create${majStart(EntityName)}(formDTO)
             if (data && !message.value) view${majStart(EntityName)}(data)
-            else throw new Error(String(message.value))
+            else {
+              violations.value = errors
+              throw new Error(String(message.value))
+            }
           } catch (error: unknown) {
             console.error(error)
-            openPopup()
           } finally {
             freezeStore.unfreeze()
           }
