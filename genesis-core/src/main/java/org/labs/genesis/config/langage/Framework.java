@@ -3,8 +3,12 @@ package org.labs.genesis.config.langage;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.labs.genesis.config.Constantes;
+import org.labs.utils.FileUtils;
 
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -27,6 +31,28 @@ public class Framework {
     private ModelDao modelDao;
     private Service service;
     private Controller controller;
+    private List<FrameworkSecurity> frameworkSecurities;
+    private List<FrameworkCaching> frameworkCaching;
+
+    public void setFrameworkSecurities() throws IOException {
+        this.frameworkSecurities = Arrays.stream(FileUtils.fromYaml(FrameworkSecurity[].class, Constantes.FRAMEWORK_SECURITY_YAML))
+                .filter(fs -> fs.getFrameworkId() == this.id)
+                .collect(Collectors.toList());
+    }
+
+    public void setFrameworkCaching() throws IOException {
+        this.frameworkCaching = Arrays.stream(FileUtils.fromYaml(FrameworkCaching[].class, Constantes.FRAMEWORK_CACHING_YAML))
+                .filter(fs -> fs.getFrameworkId() == this.id)
+                .collect(Collectors.toList());
+    }
+
+    public Optional<FrameworkCaching> getSelectedCacheProviderByName(String cacheProvider){
+        return this
+                .getFrameworkCaching()
+                .stream()
+                .filter(fs -> fs.getName().equalsIgnoreCase(cacheProvider))
+                .findFirst();
+    }
 
     @Override
     public String toString() {
@@ -57,6 +83,8 @@ public class Framework {
         private String modelSavePath;
         private String modelForeignContextAttribute;
         private String modelPackage;
+        private List<FilesEdit> modelAdditionalFiles;
+        private Map<String, Object> validationAnnotations;
     }
 
     @Getter

@@ -15,10 +15,12 @@ import static org.labs.genesis.forms.GenerationOptionForm.SELECT_ALL;
 public class GenerationOptionWizardStep extends ModuleWizardStep {
     private final GenerationOptionForm generationOptionForm;
     private final ProjectGenerationContext projectGenerationContext;
+    public final SpecificConfigurationWizardStep specificConfigurationWizardStep;
 
-    public GenerationOptionWizardStep(ProjectGenerationContext projectGenerationContext) {
+    public GenerationOptionWizardStep(ProjectGenerationContext projectGenerationContext, SpecificConfigurationWizardStep specificConfigurationWizardStep) {
         this.projectGenerationContext = projectGenerationContext;
         this.generationOptionForm = new GenerationOptionForm(projectGenerationContext);
+        this.specificConfigurationWizardStep = specificConfigurationWizardStep;
     }
 
     @Override
@@ -30,20 +32,32 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
     public void updateDataModel() {
         try {
             // Obtenir toutes les tables disponibles
-            List<String> allTableNames = generationOptionForm.getAllTableNames();
+            List<String> allTableNames = generationOptionForm.getTableNameStrategy().getTableNames();
+
+            // Obtenir toutes les vues disponibles
+            List<String> allViewNames = generationOptionForm.getTableNameStrategy().getViewNames();
 
             // Obtenir les valeurs sélectionnées depuis l'interface utilisateur
             List<String> selectedValues = generationOptionForm.getTableNamesList().getSelectedValuesList();
 
+            // Obtenir les vues sélectionnées depuis l'interface utilisateur
+            List<String> selectedViewValues = generationOptionForm.getViewNamesList().getSelectedValuesList();
+
             // Gérer la sélection des entités
             List<String> selectedEntities = handleEntitySelection(allTableNames, selectedValues);
             projectGenerationContext.setEntityNames(selectedEntities);
+
+            // Gérer la sélection des vues
+            List<String> selectedViews = handleEntitySelection(allViewNames, selectedViewValues);
+            projectGenerationContext.setViewNames(selectedViews);
 
             // Gérer la sélection des composants
             List<String> selectedComponent = generationOptionForm.getComponentChoice().getSelectedValuesList();
             if (selectedComponent != null) {
                 projectGenerationContext.setGenerationOptions(selectedComponent);
             }
+
+            specificConfigurationWizardStep.onTablesAndViewsSelected(handleSelectAll(selectedValues, generationOptionForm.getAllTableNames()), handleSelectAll(selectedViewValues, generationOptionForm.getAllViewsNames()));
         } catch (Exception e) {
             Messages.showErrorDialog(
                     generationOptionForm.getMainPanel(),
@@ -52,6 +66,15 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
             );
             throw new RuntimeException(e);
         }
+    }
+
+    private List<String> handleSelectAll(List<String> selectedValues, List<String> allValues) {
+        if (selectedValues.contains(SELECT_ALL)) {
+            List<String> result = new ArrayList<>(allValues);
+            result.remove(SELECT_ALL);
+            return result;
+        }
+        return selectedValues;
     }
 
     private List<String> handleEntitySelection(List<String> allTableNames, List<String> selectedValues) throws Exception {

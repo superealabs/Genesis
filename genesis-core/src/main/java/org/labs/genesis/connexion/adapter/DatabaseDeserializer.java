@@ -26,7 +26,8 @@ public class DatabaseDeserializer extends JsonDeserializer<Database> {
             case "SQL Server" -> SQLServerDatabase.class;
             default -> throw new IllegalArgumentException("Unknow database type : " + typeName);
         };
-
-        return parser.getCodec().treeToValue(node, databaseType);
+        Database db = parser.getCodec().treeToValue(node, databaseType);
+        db.setConstraintQueries();
+        return db;
     }
 }

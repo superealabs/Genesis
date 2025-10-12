@@ -2,10 +2,7 @@ package org.labs.genesis.config.langage.generator.project;
 
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
-import org.labs.genesis.config.langage.FilesEdit;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.Language;
-import org.labs.genesis.config.langage.Project;
+import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.framework.APIGenerator;
 import org.labs.genesis.config.langage.generator.framework.GenesisGenerator;
 import org.labs.genesis.connexion.Credentials;
@@ -17,10 +14,6 @@ import org.labs.utils.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,6 +28,7 @@ public class ProjectGenerator {
     public static final Map<Integer, Database> databases;
     public static final Map<Integer, Language> languages;
     public static final Map<Integer, Framework> frameworks;
+    public static final Map<Integer, LlmApiConfig> llmApiConfigs;
     public static final GenesisTemplateEngine engine;
 
     static {
@@ -51,7 +45,18 @@ public class ProjectGenerator {
                     .collect(Collectors.toMap(Project::getId, project -> project));
 
             frameworks = Arrays.stream(FileUtils.fromYaml(Framework[].class, Constantes.FRAMEWORK_YAML))
+                    .peek(framework -> {
+                        try {
+                            framework.setFrameworkSecurities();
+                            framework.setFrameworkCaching();
+                        } catch (IOException e) {
+                            throw new RuntimeException("Error while initializing frameworkSecurities for Framework ID: " + framework.getId(), e);
+                        }
+                    })
                     .collect(Collectors.toMap(Framework::getId, framework -> framework));
+
+            llmApiConfigs = Arrays.stream(FileUtils.fromJson(LlmApiConfig[].class, Constantes.LLM_API_CONFIG_JSON))
+                    .collect(Collectors.toMap(LlmApiConfig::getId, llmApiConfig -> llmApiConfig));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -138,14 +143,44 @@ public class ProjectGenerator {
                 context.getFrameworkConfiguration()
         );
 
-        if (context.getFramework().getUseDB() && context.getFramework().getModelDao() != null) {
-            projectFilesEditsHashMap.putAll(getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName()));
+        if (context.getFramework().getUseDB()) {
+            var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
+            projectFilesEditsHashMap.putAll(mapDaoGlobal);
         }
 
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         renderFilesEdits(context.getProject().getProjectFilesEdits(), projectFilesEditsHashMap);
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
+
+        String securityType = (String) context.getFrameworkConfiguration().get("securityType");
+
+        if (securityType != null && !securityType.isBlank()) {
+            Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework()
+                    .getFrameworkSecurities()
+                    .stream()
+                    .filter(fs -> fs.getName().equalsIgnoreCase(securityType))
+                    .findFirst();
+
+            selectedSecurityOption.ifPresent(security -> {
+                try {
+                    renderFilesEdits(security.getSecurityFiles(), projectFilesEditsHashMap);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+
+        String cacheProvider = (String) context.getFrameworkConfiguration().get("cacheProvider");
+        Optional<FrameworkCaching> selectedCacheProviderOption = context.getFramework().getSelectedCacheProviderByName(cacheProvider);
+
+        selectedCacheProviderOption.ifPresent(frameworkCaching -> {
+            try {
+                renderFilesEdits(frameworkCaching.getConfigFiles(), projectFilesEditsHashMap);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         // Post-setup for Django: create venv and install requirements
 //        try {
@@ -231,25 +266,26 @@ public class ProjectGenerator {
         Language language = context.getLanguage();
         String projectName = context.getProjectName();
         String groupLink = context.getGroupLink();
+        Map<String, Object> frameworkOptions = context.getFrameworkConfiguration();
 
         if (generationOptions.contains(COMPONENT_MODEL) && framework.getModel().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_MODEL + " component...");
-            genesisGenerator.generateModel(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateModel(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         if (generationOptions.contains(COMPONENT_DAO) && framework.getModelDao().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_DAO + " component..." + tableMetadata.getClassName());
-            genesisGenerator.generateDao(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateDao(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         if (generationOptions.contains(COMPONENT_SERVICE) && framework.getService().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_SERVICE + " component...");
-            genesisGenerator.generateService(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateService(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         if (generationOptions.contains(COMPONENT_CONTROLLER) && framework.getController().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_CONTROLLER + " component...");
-            genesisGenerator.generateController(framework, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
+            genesisGenerator.generateController(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
         System.out.println("Backend component generation completed for project: " + projectName);
@@ -274,7 +310,8 @@ public class ProjectGenerator {
 
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
-                List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language);
+                List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language, framework);
+                List<TableMetadata> views = database.getViewsByNames(context.getViewNames(), connex, credentials, language, framework);
                 GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
 
                 for (TableMetadata tableMetadata : entities) {
@@ -286,7 +323,20 @@ public class ProjectGenerator {
                     );
                 }
 
-                generateProjectFiles(context, entities);
+                for (TableMetadata tableMetadata : views) {
+                    generateBackendComponents(
+                            context,
+                            genesisGenerator,
+                            tableMetadata,
+                            false
+                    );
+                }
+
+                List<TableMetadata> allEntities = new ArrayList<>();
+                allEntities.addAll(entities);
+                allEntities.addAll(views);
+
+                generateProjectFiles(context, allEntities);
 
             } catch (Exception e) {
                 throw new RuntimeException("\nError in generateFullProject : \n" + e);
@@ -299,36 +349,36 @@ public class ProjectGenerator {
     private boolean createVirtualEnvironment(String projectPath) {
         try {
             System.out.println("🐍 Création d'un nouvel environnement virtuel Python...");
-            
+
             // Supprimer l'ancien venv s'il existe
             File oldVenv = new File(projectPath + "/venv");
             if (oldVenv.exists()) {
                 System.out.println("   🗑️  Suppression de l'ancien environnement virtuel...");
                 deleteDirectory(oldVenv);
             }
-            
+
             // Créer un nouvel environnement virtuel
             ProcessBuilder venvBuilder = new ProcessBuilder("python3", "-m", "venv", "venv");
             venvBuilder.directory(new File(projectPath));
             venvBuilder.redirectErrorStream(true);
-            
+
             Process venvProcess = venvBuilder.start();
-            
+
             // Lire la sortie
             java.io.BufferedReader reader = new java.io.BufferedReader(
                 new java.io.InputStreamReader(venvProcess.getInputStream())
             );
-            
+
             String line;
             while ((line = reader.readLine()) != null) {
                 System.out.println("   " + line);
             }
-            
+
             int exitCode = venvProcess.waitFor();
-            
+
             if (exitCode == 0) {
                 System.out.println("   ✅ Environnement virtuel créé avec succès");
-                
+
                 // Donner les permissions d'exécution
                 File venvPython = new File(projectPath + "/venv/bin/python");
                 if (venvPython.exists()) {
@@ -342,13 +392,13 @@ public class ProjectGenerator {
                     }
                     System.out.println("   ✅ Permissions d'exécution accordées");
                 }
-                
+
                 return true;
             } else {
                 System.err.println("   ❌ Erreur lors de la création de l'environnement virtuel (code: " + exitCode + ")");
                 return false;
             }
-            
+
         } catch (Exception e) {
             System.err.println("   ❌ Erreur lors de la création de l'environnement virtuel: " + e.getMessage());
             return false;
@@ -380,10 +430,20 @@ public class ProjectGenerator {
 
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
-                List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language);
+                List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language, framework);
+                List<TableMetadata> views = database.getViewsByNames(context.getViewNames(), connex, credentials, language, framework);
                 GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
 
                 for (TableMetadata tableMetadata : entities) {
+                    generateBackendComponents(
+                            context,
+                            genesisGenerator,
+                            tableMetadata,
+                            true
+                    );
+                }
+
+                for (TableMetadata tableMetadata : views) {
                     generateBackendComponents(
                             context,
                             genesisGenerator,

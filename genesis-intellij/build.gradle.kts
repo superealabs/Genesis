@@ -13,12 +13,13 @@ intellij {
 
 dependencies {
     implementation(project(":genesis-core"))
+    implementation("com.fifesoft:rsyntaxtextarea:3.3.3")
 }
 
 tasks {
     patchPluginXml {
         sinceBuild.set("243")
-        untilBuild.set("243.*")
+        untilBuild.set("251.*")
     }
 
     signPlugin {

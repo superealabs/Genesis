@@ -10,6 +10,7 @@ import org.labs.utils.FileUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider.*;
 
@@ -20,17 +21,13 @@ public class APIGenerator implements GenesisGenerator {
         this.engine = engine;
     }
 
-    public APIGenerator() {
-        this.engine = new GenesisTemplateEngine();
-    }
-
 
     private String loadTemplate(Framework framework) throws IOException {
         return FileUtils.getFileContent(Constantes.DATA_PATH + "/" + framework.getTemplate() + "." + Constantes.MODEL_TEMPLATE_EXT);
     }
 
     @Override
-    public String generateModel(Framework framework, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
+    public String generateModel(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
         // Vérification de compatibilité
         if (language.getId() != framework.getLanguageId()) {
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
@@ -46,7 +43,7 @@ public class APIGenerator implements GenesisGenerator {
         String result = engine.simpleRender(templateContent, metadataPrimary);
 
         // Rendu final
-        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, groupLink);
+        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
 
         // Ajustement du chemin de sauvegarde en fonction de generateComponentOnly
         String fileSavePath;
@@ -67,11 +64,13 @@ public class APIGenerator implements GenesisGenerator {
         result = engine.render(result, metadataFinally);
         FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
 
+        ProjectGenerator.renderFilesEdits(framework.getModel().getModelAdditionalFiles(), metadataFinally);
+
         return result;
     }
 
     @Override
-    public String generateDao(Framework framework, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
+    public String generateDao(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
         // Vérification de compatibilité
         if (language.getId() != framework.getLanguageId()) {
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
@@ -87,7 +86,7 @@ public class APIGenerator implements GenesisGenerator {
         String result = engine.simpleRender(templateContent, metadataPrimary);
 
         // Rendu final
-        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, groupLink);
+        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
         metadataFinally.putAll(getPrimaryModelDaoHashMap(framework, tableMetadata));
 
         // Ajustement du chemin de sauvegarde
@@ -118,19 +117,17 @@ public class APIGenerator implements GenesisGenerator {
         if (!generateComponentOnly) {
             ProjectGenerator.renderFilesEdits(framework.getModelDao().getModelDaoAdditionalFiles(), metadataFinally);
         }
-
         return result;
     }
 
     @Override
-    public String generateService(Framework framework, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
+    public String generateService(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
         // Vérification de compatibilité
         if (language.getId() != framework.getLanguageId()) {
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the framework '" +
                     framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
         }
-
         // Chargement du template
         String templateContent = loadTemplate(framework);
 
@@ -139,7 +136,7 @@ public class APIGenerator implements GenesisGenerator {
         String result = engine.simpleRender(templateContent, metadataPrimary);
 
         // Rendu final
-        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, groupLink);
+        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
 
         // Ajustement du chemin de sauvegarde
         String fileSavePath;
@@ -174,13 +171,14 @@ public class APIGenerator implements GenesisGenerator {
     }
 
     @Override
-    public String generateController(Framework framework, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
+    public String generateController(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
         // Vérification de compatibilité
         if (language.getId() != framework.getLanguageId()) {
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the framework '" +
                     framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
         }
+
 
         // Chargement du template
         String templateContent = loadTemplate(framework);
@@ -190,7 +188,7 @@ public class APIGenerator implements GenesisGenerator {
         String result = engine.simpleRender(templateContent, metadataPrimary);
 
         // Rendu final
-        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, groupLink);
+        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
 
         // Ajustement du chemin de sauvegarde
         String fileSavePath;

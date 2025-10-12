@@ -10,6 +10,7 @@ import org.labs.genesis.wizards.DatabaseConfigurationWizardStep;
 import org.labs.genesis.wizards.GenerationOptionWizardStep;
 import org.labs.genesis.wizards.InitializationWizardStep;
 import org.labs.genesis.wizards.SpecificConfigurationWizardStep;
+import org.labs.genesis.wizards.SQLRunnerWizardStep;
 import org.labs.genesis.wizards.conditionals.GenConfigConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.InitConditionalWizardStep;
 
@@ -32,12 +33,14 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
         SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(projectGenerationContext);
         DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(projectGenerationContext);
         InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(projectGenerationContext, databaseConfigurationWizardStep);
-        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext);
+        SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(projectGenerationContext);
+        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext, specificConfigurationWizardStep);
         GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(projectGenerationContext, generationOptionWizardStep);
 
         return new ModuleWizardStep[]{
                 new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep),
                 initConditionalWizardStep,
+                sqlRunnerWizardStep,
                 genConfigConditionalWizardStep,
                 specificConfigurationWizardStep
         };
