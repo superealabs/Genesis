@@ -1936,56 +1936,94 @@
       destinationPath: "${destinationFolder}/src/services"
   additionalFiles:
     - fileType: "Sidebar Layout"
-      fileName: "SideBarLayout"
+      fileName: "SidebarLayout"
       extension: "vue"
       content: |
         <template>
-          <div>
-            <GenesisBanner :height="topbarHeight" />
-            <div
-              class="w-full grid fixed top-0 left-0"
-              :style="{ gridTemplateColumns: `auto 1fr`, marginTop: topbarHeight }"
-            >
-              <!-- Sidebar -->
-              <aside
-                id="navbar"
-                class="bg-base-100 shadow-sm flex-col flex justify-between"
-                :style="{ height: contentHeight, width: sidebarWidth }"
-              >
-                <div class="overflow-y-scroll flex-1">
-                  <GenesisNavbar />
-                </div>
-                <div class="border-t-2 border-t-gray-100 p-2">
-                  <UserNavProfile :name="useAuthenticationStore().getCurrentUsername" />
-                </div>
-              </aside>
+          <div class="w-full h-screen flex">
+            <GenesisSideNavbar />
 
-              <!-- Main content -->
-              <main class="overflow-y-scroll p-4" :style="{ height: contentHeight }">
-                <router-view />
-              </main>
-            </div>
+            <!-- Main content -->
+            <main class="flex-1 h-full overflow-y-auto p-6 bg-base-100">
+              <router-view />
+            </main>
           </div>
         </template>
 
         <script setup lang="ts">
-        import GenesisBanner from '@/components/navbar/GenesisBanner.vue'
-        import GenesisNavbar from '@/components/navbar/GenesisNavbar.vue'
-        import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
-        import UserNavProfile from '@/components/user/UserNavProfile.vue'
+        import GenesisSideNavbar from '@/components/navbar/GenesisSideNavbar.vue'
+        </script>
+      destinationPath: "${destinationFolder}/src/layouts"
+
+    - fileType: "Main Layout"
+      fileName: "MainLayout"
+      extension: "vue"
+      content: |
+        <template>
+          <transition name="fade" mode="out-in">
+            <component :is="currentLayout" :key="layoutState" />
+          </transition>
+        </template>
+
+        <script setup lang="ts">
         import { computed } from 'vue'
+        import { useLayoutStore } from '@/stores/useLayoutStore.ts'
 
-        const props = defineProps({
-          topbarHeight: { type: String, default: '56px' },
-          sidebarWidth: { type: String, default: '300px' },
-        })
+        // Import the available layouts
+        import SidebarLayout from '@/layouts/SidebarLayout.vue'
+        import TopbarLayout from '@/layouts/TopbarLayout.vue'
 
-        const contentHeight = computed(() => {
-          return 'calc(100vh - ' + props.topbarHeight + ')'
+        // Access layout store
+        const layoutStore = useLayoutStore()
+
+        // Reactive state for layout
+        const layoutState = computed(() => layoutStore.currentLayout)
+
+        // Dynamically choose layout component
+        const currentLayout = computed(() => {
+          switch (layoutState.value) {
+            case 'sidebar':
+              return SidebarLayout
+            case 'topbar':
+              return TopbarLayout
+            default:
+              return SidebarLayout
+          }
         })
         </script>
 
-        <style scoped></style>
+        <style scoped>
+        /* Smooth layout switch animation */
+        .fade-enter-active,
+        .fade-leave-active {
+          transition: opacity 0.3s ease;
+        }
+        .fade-enter-from,
+        .fade-leave-to {
+          opacity: 0;
+        }
+        </style>
+      destinationPath: "${destinationFolder}/src/layouts"
+
+    - fileType: "Topbar Layout Layout"
+      fileName: "TopbarLayout"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="flex flex-col w-full h-screen">
+            <!-- Top Navigation -->
+            <GenesisTopNavbar />
+
+            <!-- Main content -->
+            <main class="flex-1 overflow-y-auto bg-base-100 p-6">
+              <router-view />
+            </main>
+          </div>
+        </template>
+
+        <script setup lang="ts">
+        import GenesisTopNavbar from '@/components/navbar/GenesisTopNavbar.vue'
+        </script>
       destinationPath: "${destinationFolder}/src/layouts"
 
     - fileType: "Package File"
