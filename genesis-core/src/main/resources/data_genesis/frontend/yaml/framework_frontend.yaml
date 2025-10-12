@@ -10140,8 +10140,8 @@
       content: |
         import type { RouteRecordRaw } from 'vue-router'
         import HomeView from '@/views/HomeView.vue'
-        import CustomisationView from '@/views/settings/CustomisationView.vue'
-        import SideBarLayout from '@/layouts/SideBarLayout.vue'{{#if useJWT}}
+        import SettingsView from '@/views/settings/SettingsView.vue'
+        import MainLayout from '@/layouts/MainLayout.vue'{{#if useJWT}}
         import AuthLayout from '@/layouts/AuthLayout.vue'
         import authRoutes from './authRoutes'{{/if}}
         {{#each entities}}
@@ -10155,16 +10155,20 @@
           },
           {
             path: '/',
-            component: SideBarLayout,
+            component: MainLayout,
             children: [
               { path: 'home', name: 'home', component: HomeView {{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },
-              { path: 'customisation', name: 'customisation', component: CustomisationView {{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },
+              { path: 'settings', name: 'settings', component: SettingsView {{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },{{#if useJWT}}
+              {
+                path: 'profile',
+                name: 'profile',
+                component: () => import('@/views/auth/ProfileView.vue'),
+              }, {{/if}}
               {{#each entities}}
               ...${minStart(this.className)}Routes,
               {{/each}}{{removeLine}}
             ],
-          },
-          {{#if useJWT}}
+          },{{#if useJWT}}
           {
             path: '/auth',
             component: AuthLayout,
