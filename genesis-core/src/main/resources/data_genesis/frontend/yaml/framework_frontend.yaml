@@ -11607,35 +11607,106 @@
         </script>
       destinationPath: "${destinationFolder}/src/components/navbar"
   components:
+#    - componentType: "Entity Row"
+#      generateForView: true
+#      router:
+#        label: "{{removeLine}}"
+#        link: ""
+#      importFile: |
+#        import type { PropType } from 'vue'
+#        import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'
+#        import EntityRowActions from '@/components/table/EntityRowActions.vue'
+#      selector: "${majStart(EntityName)}Row"
+#      standalone: true
+#      importComponent: "{{removeLine}}"
+#      template: |
+#        <template>
+#          <tr class="hover:bg-gray-50">
+#            {{#each fields}}
+#            {{#if @first}}
+#            <td class="px-3 py-2 sticky bg-base-200 shadow-sm left-0">{{ ${minStart(EntityName)}.${this.name} }}</td>
+#            {{elseIf this.isForeignKey}}
+#            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name}?.getReferenceValue() }}</td>
+#            {{elseIf this.isDate}}
+#            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $d(${minStart(EntityName)}.${this.name}, 'long') : '--/--/--' }}</td>
+#            {{elseIf this.isNumeric}}
+#            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $n(${minStart(EntityName)}.${this.name}, 'decimal') : '--' }}</td>
+#            {{else}}
+#            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} }}</td>{{/if}}
+#            {{/each}}{{removeLine}}
+#
+#            <td class="px-3 py-2 bg-base-200 shadow-sm sticky text-end right-0">
+#              <div class="rounded-md inline-flex">
+#                <EntityRowActions @delete-row="deleteRow" @view-row="viewRow" @edit-row="updateRow" />
+#              </div>
+#            </td>
+#          </tr>
+#        </template>
+#      style: "{{removeLine}}"
+#      export: |
+#        const props = defineProps({
+#          ${minStart(EntityName)}: {
+#            type: Object as PropType<${majStart(EntityName)}>,
+#            required: true,
+#          },
+#        })
+#
+#        const emit = defineEmits<{
+#          (e: 'request-delete', ${minStart(EntityName)}: ${majStart(EntityName)}): void
+#          (e: 'request-view', ${minStart(EntityName)}: ${majStart(EntityName)}): void
+#          (e: 'request-update', ${minStart(EntityName)}: ${majStart(EntityName)}): void
+#        }>()
+#
+#        const deleteRow = () => emit('request-delete', props.${minStart(EntityName)})
+#        const viewRow = () => emit('request-view', props.${minStart(EntityName)})
+#        const updateRow = () => emit('request-update', props.${minStart(EntityName)})
+#      componentName: "${majStart(EntityName)}Row"
+#      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
+#      componentAdditionalFiles: [ ]
     - componentType: "Entity Row"
       generateForView: true
       router:
         label: "{{removeLine}}"
         link: ""
       importFile: |
-        import type { PropType } from 'vue'
+        import { computed, type PropType } from 'vue'
         import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'
         import EntityRowActions from '@/components/table/EntityRowActions.vue'
       selector: "${majStart(EntityName)}Row"
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
+        
         <template>
-          <tr class="hover:bg-gray-50">
-            {{#each fields}}
-            {{#if @first}}
-            <td class="px-3 py-2 sticky bg-base-200 shadow-sm left-0">{{ ${minStart(EntityName)}.${this.name} }}</td>
-            {{elseIf this.isForeignKey}}
-            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name}?.getReferenceValue() }}</td>
-            {{elseIf this.isDate}}
-            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $d(${minStart(EntityName)}.${this.name}, 'long') : '--/--/--' }}</td>
-            {{elseIf this.isNumeric}}
-            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $n(${minStart(EntityName)}.${this.name}, 'decimal') : '--' }}</td>
-            {{else}}
-            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} }}</td>{{/if}}
-            {{/each}}{{removeLine}}
-  
-            <td class="px-3 py-2 bg-base-200 shadow-sm sticky text-end right-0">
+          <tr class="hover:bg-base-200/40">
+            <template v-for="field in ${majStart(EntityName)}.getAllSearchFieldsMetadata()" :key="field.key">
+              <td
+                v-show="field.showInTable"
+                class="px-3 py-2"
+                :class="{
+                  'sticky left-0 bg-base-200/40 font-semibold': field.identifier,
+                }"
+              >
+                <template v-if="field.type === 'date'">
+                  {{ ${minStart(EntityName)}Data[field.key] ? $d(${minStart(EntityName)}Data[field.key], 'long') : '--/--/--' }}
+                </template>
+    
+                <template v-else-if="field.type === 'number'">
+                  {{ ${minStart(EntityName)}Data[field.key] != null ? $n(${minStart(EntityName)}Data[field.key], 'decimal') : '--' }}
+                </template>
+        
+                <template v-else-if="field.type === 'select'">
+                  {{ ${minStart(EntityName)}Data[field.key] != null ? ${minStart(EntityName)}Data[field.key].getReferenceValue() : '--' }}
+                </template>
+    
+                <template v-else>
+                  {{ ${minStart(EntityName)}Data[field.key] ?? '--' }}
+                </template>
+              </td>
+            </template>
+
+            <!-- Actions -->
+            <td class="px-3 py-2 bg-base-200/40 sticky right-0 text-end">
               <div class="rounded-md inline-flex">
                 <EntityRowActions @delete-row="deleteRow" @view-row="viewRow" @edit-row="updateRow" />
               </div>
@@ -11649,6 +11720,10 @@
             type: Object as PropType<${majStart(EntityName)}>,
             required: true,
           },
+        })
+        
+        const ${minStart(EntityName)}Data = computed(() => {
+          return props.${minStart(EntityName)} as Record<string, any>
         })
 
         const emit = defineEmits<{
@@ -11664,6 +11739,112 @@
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
 
+#    - componentType: "List Component"
+#      generateForView: true
+#      router:
+#        label: "{{removeLine}}"
+#        link: ""
+#      componentName: "${majStart(EntityName)}List"
+#      importFile: |
+#        import ${majStart(EntityName)}Row from './${majStart(EntityName)}Row.vue'
+#        import { usePopup } from '@/composables/usePopup'
+#        import { use${majStart(EntityName)}s } from '@/composables/use${majStart(EntityName)}s'
+#        import type { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'{{#if !isView}}
+#        import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
+#        import { ref } from 'vue'
+#        import type { PropType } from 'vue'{{/if}}
+#      selector: "${majStart(EntityName)}List"
+#      standalone: true
+#      importComponent: "{{removeLine}}"
+#      template: |
+#        <template>
+#          <div class="rounded-box border border-base-content/5 bg-base-100">
+#            <table class="table table-auto w-full border-gray-200 rounded-md relative">
+#              <thead>
+#                <tr>
+#                  {{#each fields}}
+#                  {{#if @first}}
+#                  <th class="sticky top-0 left-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2">${formatReadable(this.name)}</th>
+#                  {{else}}
+#                  <th class="sticky top-0 bg-secondary px-3 py-2 font-bold min-w-35 z-1">${formatReadable(this.name)}</th>{{/if}}
+#                  {{/each}}
+#                  <th class="sticky top-0 right-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2"></th>
+#                </tr>
+#              </thead>
+#              <tbody>
+#                <!-- Empty message -->
+#                <tr v-if="!loading && message">
+#                  <td colspan="100" class="text-center py-4 text-gray-500">
+#                    {{ message }}
+#                  </td>
+#                </tr>
+#
+#                <!-- Entity rows -->
+#                <${majStart(EntityName)}Row
+#                  v-else
+#                  v-for="${minStart(EntityName)} in data"
+#                  :key="${minStart(EntityName)}.getKeyValue()"
+#                  :${minStart(EntityName)}="${minStart(EntityName)}"
+#                  @request-view="view${majStart(EntityName)}"{{#if !isView}}
+#                  @request-delete="openDeletePopup"
+#                  @request-update="goToUpdateFormView"{{/if}}
+#                />
+#              </tbody>
+#            </table>{{#if !isView}}
+#            <!-- Delete confirmation popup -->
+#            <DeleteConfirmationPopup
+#              :visible="deletePopup"
+#              :message="`Are you sure you want to delete ${majStart(EntityName)} ${selectedEntity?.id}?`"
+#              @confirm="confirmDelete"
+#              @cancel="closePopup"
+#            />{{/if}}
+#          </div>
+#        </template>
+#      style: "{{removeLine}}"
+#      export: |
+#        defineProps({
+#          data: {
+#            type: Array as PropType<${majStart(EntityName)}[]>,
+#            required: true,
+#          },
+#          message: String,
+#          loading: {
+#            type: Boolean,
+#            default: false,
+#          },
+#        })
+#
+#        {{#if isView}}
+#        const { view${majStart(EntityName)} } = use${majStart(EntityName)}s()
+#        {{else}}
+#        const emit = defineEmits<{
+#          (e: 'request:refresh'): void
+#        }>()
+#
+#        const selectedEntity = ref()
+#
+#        const { visible: deletePopup, closePopup } = usePopup(false)
+#        const { delete${majStart(EntityName)}, view${majStart(EntityName)}, goToUpdateFormView } = use${majStart(EntityName)}s()
+#
+#        function openDeletePopup(entity: ${majStart(EntityName)}) {
+#          if (!entity) return
+#          selectedEntity.value = entity
+#          deletePopup.value = true
+#        }
+#
+#        async function confirmDelete() {
+#          const { success, error } = await delete${majStart(EntityName)}(selectedEntity.value)
+#          if (success) {
+#            deletePopup.value = false
+#            emit('request:refresh')
+#          } else {
+#            console.error(error)
+#          }
+#        }
+#        {{/if}}
+#      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
+#      componentAdditionalFiles: [ ]
+
     - componentType: "List Component"
       generateForView: true
       router:
@@ -11674,56 +11855,67 @@
         import ${majStart(EntityName)}Row from './${majStart(EntityName)}Row.vue'
         import { usePopup } from '@/composables/usePopup'
         import { use${majStart(EntityName)}s } from '@/composables/use${majStart(EntityName)}s'
-        import type { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'{{#if !isView}}
+        import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'{{#if !isView}}
         import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
         import { ref } from 'vue'
         import type { PropType } from 'vue'{{/if}}
+        import { SortFieldParameter } from '@/models/api/RequestModel.ts'
+        import SortButton from '@/components/button/SortButton.vue'
       selector: "${majStart(EntityName)}List"
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
         <template>
-          <div class="rounded-box border border-base-content/5 bg-base-100">
-            <table class="table table-auto w-full border-gray-200 rounded-md relative">
-              <thead>
-                <tr>
-                  {{#each fields}}
-                  {{#if @first}}
-                  <th class="sticky top-0 left-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2">${formatReadable(this.name)}</th>
-                  {{else}}
-                  <th class="sticky top-0 bg-secondary px-3 py-2 font-bold min-w-35 z-1">${formatReadable(this.name)}</th>{{/if}}
-                  {{/each}}
-                  <th class="sticky top-0 right-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Empty message -->
-                <tr v-if="!loading && message">
-                  <td colspan="100" class="text-center py-4 text-gray-500">
-                    {{ message }}
-                  </td>
-                </tr>
-  
-                <!-- Entity rows -->
-                <${majStart(EntityName)}Row
-                  v-else
-                  v-for="${minStart(EntityName)} in data"
-                  :key="${minStart(EntityName)}.getKeyValue()"
-                  :${minStart(EntityName)}="${minStart(EntityName)}"
-                  @request-view="view${majStart(EntityName)}"{{#if !isView}}
-                  @request-delete="openDeletePopup"
-                  @request-update="goToUpdateFormView"{{/if}}
-                />
-              </tbody>
-            </table>{{#if !isView}}
-            <!-- Delete confirmation popup -->
-            <DeleteConfirmationPopup
-              :visible="deletePopup"
-              :message="`Are you sure you want to delete ${majStart(EntityName)} ${selectedEntity?.id}?`"
-              @confirm="confirmDelete"
-              @cancel="closePopup"
-            />{{/if}}
-          </div>
+          <table class="table table-auto relative">
+            <thead>
+              <tr>
+                <template v-for="field in ${majStart(EntityName)}.getAllSearchFieldsMetadata()" :key="field">
+                  <th
+                    v-show="field.showInTable"
+                    class="sticky top-0 bg-primary text-primary-content px-3 py-2 font-bold min-w-35 z-1"
+                    :class="{ 'left-0 z-2': field.identifier }"
+                  >
+                    <div class="flex items-center justify-between gap-1">
+                      <span>{{ field.label }}</span>
+        
+                      <!-- Sort Buttons -->
+                      <SortButton v-show="field.sortable" :field-key="field.key" @sort="sortBy" />
+                    </div>
+                  </th>
+                </template>
+                <!-- Right sticky column -->
+                <th
+                  class="sticky top-0 right-0 bg-primary text-primary-content px-3 py-2 font-bold min-w-35 z-2"
+                ></th>
+              </tr>
+            </thead>
+            <tbody class="bg-base-100">
+              <!-- Empty message -->
+              <tr v-if="!loading && message">
+                <td colspan="100" class="text-center py-4 text-gray-500">
+                  {{ message }}
+                </td>
+              </tr>
+
+              <!-- Entity rows -->
+              <${majStart(EntityName)}Row
+                v-else
+                v-for="${minStart(EntityName)} in data"
+                :key="${minStart(EntityName)}.getKeyValue()"
+                :${minStart(EntityName)}="${minStart(EntityName)}"
+                @request-view="view${majStart(EntityName)}"{{#if !isView}}
+                @request-delete="openDeletePopup"
+                @request-update="goToUpdateFormView"{{/if}}
+              />
+            </tbody>
+          </table>{{#if !isView}}
+          <!-- Delete confirmation popup -->
+          <DeleteConfirmationPopup
+            :visible="deletePopup"
+            :message="`Are you sure you want to delete ${majStart(EntityName)} ${selectedEntity?.id}?`"
+            @confirm="confirmDelete"
+            @cancel="closePopup"
+          />{{/if}}
         </template>
       style: "{{removeLine}}"
       export: |
@@ -11738,7 +11930,7 @@
             default: false,
           },
         })
-        
+
         {{#if isView}}
         const { view${majStart(EntityName)} } = use${majStart(EntityName)}s()
         {{else}}
@@ -12277,6 +12469,7 @@
                   <!-- ${formatReadable(this.name)} -->
                   <GenesisInput
                     label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : null"
                     placeholder="Enter ${formatReadable(this.name)}"
                     type="${this.uiType}"
                     v-model="formModel.${minStart(this.name)}"
@@ -12299,6 +12492,7 @@
       export: |
         const props = defineProps<{
           ${minStart(EntityName)}?: ${majStart(EntityName)}
+          violations: Record<string, string> | null
           submitLabel?: string
         }>()
 
@@ -12364,8 +12558,7 @@
             <!-- Form -->
             <div v-if="entity">
               <${minStart(EntityName)}-form
-                :${minStart(EntityName)}="entity"
-                submit-label="Update ${majStart(EntityName)}"
+                :submit-label="$t('entity.update.submitLabel', { entity: '${majStart(EntityName)}' })"
                 @submit="updateHandler"
                 @cancel="cancelHandler"
               />
@@ -12382,21 +12575,13 @@
         </template>
       style: "{{removeLine}}"
       export: |
-        /** Route params */
         const route = useRoute()
         const pathId = Number(route.params.id)
-
-        /** Alert popup */
         const { closePopup, openPopup, visible: alertPopup } = usePopup()
-
-        /** Composable */
         const { get${majStart(EntityName)}ById, goToListView, update${majStart(EntityName)}, view${majStart(EntityName)}, message } = use${majPluralize(EntityName)}()
-
-        /** Entity reference */
         const entity = ref<${majStart(EntityName)} | null>(null)
-
         const freezeStore = useFreezeScreenStore()
-        /** Update handler */
+
         const updateHandler = async (formDTO: Partial<${majStart(EntityName)}FormDTO>) => {        
           freezeStore.freeze('Updating ${minStart(EntityName)} '+pathId+' ...')
           try {
@@ -12405,20 +12590,17 @@
             else throw new Error(String(message.value))
           } catch (error:unknown) {
             console.error(error)
-            openPopup()
           } finally {
             freezeStore.unfreeze()
           }
         }
         
-        /** On cancel Handler */
         const cancelHandler = () => {
           if (entity.value){
             view${majStart(EntityName)}(entity.value)
           }
         }
 
-        /** Fetch entity on mount */
         onMounted(async () => {
           const result = await get${majStart(EntityName)}ById(pathId)
           if (result.data){
@@ -12427,7 +12609,6 @@
           else {
             openPopup()
           }
-        
         })
       destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
