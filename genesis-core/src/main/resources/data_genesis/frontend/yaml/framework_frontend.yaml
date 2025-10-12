@@ -1425,7 +1425,7 @@
                 required
                 type="password"
                 :label="$t('authentication.password')"
-              :placeholder="$t('authentication.password')"
+                :placeholder="$t('authentication.password')"
               />
             </div>
             <button type="submit" class="mt-3 btn btn-primary w-full">
@@ -1475,7 +1475,120 @@
           }
         }
         </script>
-      destinationPath: "${destinationFolder}/src/auth"
+      destinationPath: "${destinationFolder}/src/core/auth"
+
+    - fileType: "Register Form"
+      fileName: "RegisterForm"
+      extension: "vue"
+      content: |
+        <template>
+          <form class="space-y-4" @submit.prevent="handleRegister">
+            <div>
+              <ErrorMessage :message="usernameError" />
+              <GenesisInput
+                v-model="username"
+                required
+                :label="$t('authentication.username')"
+                :placeholder="$t('authentication.username')"
+                type="text"
+              />
+            </div>
+
+            <div>
+              <ErrorMessage :message="emailError" />
+              <GenesisInput
+                v-model="email"
+                required
+                type="email"
+                :label="$t('authentication.email')"
+                :placeholder="$t('authentication.email')"
+              />
+            </div>
+
+            <div>
+              <ErrorMessage :message="passwordError" />
+              <GenesisInput
+                v-model="password"
+                required
+                type="password"
+                :label="$t('authentication.password')"
+                :placeholder="$t('authentication.password')"
+              />
+            </div>
+
+            <div>
+              <ErrorMessage :message="confirmPasswordError" />
+              <GenesisInput
+                v-model="confirmPassword"
+                required
+                type="password"
+                :label="$t('authentication.confirmPassword')"
+                :placeholder="$t('authentication.confirmPassword')"
+              />
+            </div>
+
+            <button type="submit" class="mt-3 btn btn-primary w-full">
+              {{ $t('authentication.register') }}
+            </button>
+          </form>
+        </template>
+
+        <script setup lang="ts">
+        import GenesisInput from '@/core/form/GenesisInput.vue'
+        import ErrorMessage from '@/core/common/ErrorMessage.vue'
+        import { ref } from 'vue'
+        import { useRouter } from 'vue-router'
+        import * as authService from '@/services/AuthService.ts'
+        import { validators } from '@/utils/validators.ts'
+        import { RegisterValidator } from '@/models/validators/RegisterValidator.ts'
+        import type { DataResponse } from '@/models/api/DataResponseModel.ts'
+        import { RegisterDTO } from '@/models/auth/RegisterDTO.ts'
+
+        const router = useRouter()
+
+        const username = ref('')
+        const email = ref('')
+        const password = ref('')
+        const confirmPassword = ref('')
+
+        const usernameError = ref<string | null>(null)
+        const emailError = ref<string | null>(null)
+        const passwordError = ref<string | null>(null)
+        const confirmPasswordError = ref<string | null>(null)
+
+        const handleRegister = async () => {
+          let valid = true
+          usernameError.value = validators.checkRules(username.value, RegisterValidator.usernameRules)
+          if (usernameError.value) valid = false
+
+          emailError.value = validators.checkRules(email.value, RegisterValidator.emailRules)
+          if (emailError.value) valid = false
+
+          passwordError.value = validators.checkRules(password.value, RegisterValidator.passwordRules)
+          if (passwordError.value) valid = false
+
+          if (password.value !== confirmPassword.value) {
+            confirmPasswordError.value = 'Passwords do not match'
+            valid = false
+          } else {
+            confirmPasswordError.value = null
+          }
+
+          if (!valid) return
+          try {
+            const registerData: DataResponse<string> = await authService.register(new RegisterDTO(username.value,email.value,password.value,1))
+            if (registerData.success) {
+              router.push({ name: 'login' })
+            } else {
+              throw new Error(registerData.error)
+            }
+          } catch (e: unknown) {
+            usernameError.value = String((e as Error).message)
+          }
+        }
+        </script>
+      destinationPath: "${destinationFolder}/src/core/auth"
+
     - fileType: "Auth Layout"
       fileName: "AuthLayout"
       extension: "vue"
@@ -1501,28 +1614,82 @@
             name: 'login',
             component: () => import('@/views/auth/LoginView.vue'),
           },
+          {
+            path: 'register',
+            name: 'register',
+            component: () => import('@/views/auth/RegisterView.vue'),
+          },
         ]
 
         export default authRoutes
       destinationPath: "${destinationFolder}/src/router"
+
+    - fileType: "Register View"
+      fileName: "RegisterView"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="h-screen flex items-center justify-center bg-base-200">
+            <div class="w-full max-w-md p-8 bg-base-100 rounded-2xl shadow-xl">
+              <div class="text-center mb-6">
+                <AppLogo size="150" />
+              </div>
+
+              <RegisterForm />
+
+              <div class="mt-6 text-center">
+                <hr class="my-4 border-gray-200" />
+                <p class="text-sm text-gray-600">
+                  Already have an account?
+                  <RouterLink
+                    to="/auth/login"
+                    class="text-primary font-medium hover:underline ml-1"
+                  >
+                    Login
+                  </RouterLink>
+                </p>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <script setup lang="ts">
+        import RegisterForm from '@/core/auth/RegisterForm.vue'
+        import AppLogo from '@/core/AppLogo.vue'
+        </script>
+      destinationPath: "${destinationFolder}/src/views/auth"
 
     - fileType: "Login View"
       fileName: "LoginView"
       extension: "vue"
       content: |
         <template>
-          <div class="h-screen flex items-center justify-center">
-            <div class="w-full max-w-md p-6 bg-base-100 rounded-2xl shadow-lg">
-              <h1 class="text-2xl font-bold text-center mb-6">
+          <div class="h-screen flex items-center justify-center bg-base-200">
+            <div class="w-full max-w-md p-8 bg-base-100 rounded-2xl shadow-xl">
+              <div class="text-center mb-6">
                 <AppLogo size="150" />
-              </h1>
+              </div>
+
               <LoginForm />
+
+              <div class="mt-6 text-center">
+                <hr class="my-4 border-gray-200" />
+                <p class="text-sm text-gray-600">
+                  Don't have an account?
+                  <RouterLink
+                    to="/auth/register"
+                    class="text-primary font-medium hover:underline ml-1"
+                  >
+                    Register
+                  </RouterLink>
+                </p>
+              </div>
             </div>
           </div>
         </template>
 
-        <script lang="ts" setup>
-        import LoginForm from '@/auth/LoginForm.vue'
+        <script setup lang="ts">
+        import LoginForm from '@/core/auth/LoginForm.vue'
         import AppLogo from '@/core/AppLogo.vue'
         </script>
       destinationPath: "${destinationFolder}/src/views/auth"
@@ -1557,16 +1724,19 @@
           })
 
           const getAuthorizationHeader = () => {
-            if (useAuthenticationStore().getToken() == null || useAuthenticationStore().getToken().length == 0)
+            if (
+              useAuthenticationStore().getToken() == null ||
+              useAuthenticationStore().getToken().length == 0
+            )
               return {}
             return {
-              Authorization: `Bearer ${useAuthenticationStore().getToken()}`,
+              Authorization: 'Bearer ' + useAuthenticationStore().getToken(),
             }
           }
 
           const getCurrentUser = () => {
             const user = useAuthenticationStore().getCurrentUser()
-            return  user;
+            return user
           }
 
           const logout = async () => {
@@ -1584,7 +1754,7 @@
             getAuthorizationHeader,
             getCurrentUser,
             logout,
-            isLoggedIn
+            isLoggedIn,
           }
         }
       destinationPath: "${destinationFolder}/src/composables"
@@ -1672,16 +1842,17 @@
       fileName: "AuthService"
       extension: "ts"
       content: |
-        import useRestApi from '@/composables/useRestApi.ts'
+        import api from '@/services/api.ts'
         import type { IUser } from '@/models/auth/UserModel.ts'
         import { RequestModel } from '@/models/api/RequestModel.ts'
         import type { DataResponse } from '@/models/api/DataResponseModel.ts'
         import { User } from '@/models/auth/UserModel.ts'
         import RestResponse from '@/models/api/RestResponseModel.ts'
+        import type { RegisterDTO } from '@/models/auth/RegisterDTO.ts'
 
         const BASE_URL = '/auth'
-        const userApi = useRestApi<IUser>()
-        const stringApi = useRestApi<string>()
+        const userApi = api<IUser>()
+        const stringApi = api<string>()
 
         function wrapUser(response: DataResponse<User>) {
           response.data = new User(response.data)
@@ -1700,15 +1871,21 @@
           return RestResponse.handleDataResponse(response)
         }
 
-        export async  function logout(){
+        export async function logout() {
           const request = new RequestModel(BASE_URL + '/logout')
           const response = await stringApi.POST(request.buildRequestUrl([], false))
+          return RestResponse.handleDataResponse(response)
+        }
+
+        export async function register(data:RegisterDTO){
+          const request = new RequestModel(BASE_URL + '/register')
+          const response = await stringApi.POST(request.buildRequestUrl([],false),data)
           return RestResponse.handleDataResponse(response)
         }
       destinationPath: "${destinationFolder}/src/services"
   additionalFiles:
     - fileType: "Sidebar Layout"
-      fileName: "SideBarLayour"
+      fileName: "SideBarLayout"
       extension: "vue"
       content: |
         <template>
@@ -1722,18 +1899,18 @@
               <aside
                 id="navbar"
                 class="bg-base-100 shadow-sm flex-col flex justify-between"
-                :style="{ height: `calc(100vh - ${topbarHeight})`, width: sidebarWidth }"
+                :style="{ height: contentHeight, width: sidebarWidth }"
               >
                 <div class="overflow-y-scroll flex-1">
                   <GenesisNavbar />
-                </div>{{if useJWT}}
-                <div class="border-t-2 border-t-gray-100 p-2" >
+                </div>
+                <div class="border-t-2 border-t-gray-100 p-2">
                   <UserNavProfile :name="useAuthenticationStore().getCurrentUsername" />
-                </div>{{/if}}
+                </div>
               </aside>
 
               <!-- Main content -->
-              <main class="overflow-auto p-4" :style="{ height: `calc(100vh - ${topbarHeight})` }">
+              <main class="overflow-y-scroll p-4" :style="{ height: contentHeight }">
                 <router-view />
               </main>
             </div>
@@ -1742,18 +1919,22 @@
 
         <script setup lang="ts">
         import GenesisBanner from '@/core/navbar/GenesisBanner.vue'
-        import GenesisNavbar from '@/core/navbar/GenesisNavbar.vue'{{#if useJWT}}
+        import GenesisNavbar from '@/core/navbar/GenesisNavbar.vue'
         import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
-        import UserNavProfile from '@/core/user/UserNavProfile.vue'{{/if}}
+        import UserNavProfile from '@/core/user/UserNavProfile.vue'
+        import { computed } from 'vue'
 
-        defineProps({
+        const props = defineProps({
           topbarHeight: { type: String, default: '56px' },
           sidebarWidth: { type: String, default: '300px' },
+        })
+
+        const contentHeight = computed(() => {
+          return 'calc(100vh - ' + props.topbarHeight + ')'
         })
         </script>
 
         <style scoped></style>
-
       destinationPath: "${destinationFolder}/src/layouts"
 
     - fileType: "Package File"
@@ -9665,6 +9846,34 @@
         VITE_APP_PORT=${frontendPort}
       destinationPath: "${destinationFolder}"
 
+    - fileType: "Global Store"
+      fileName: "useGlobalStore"
+      extension: "ts"
+      content: |
+        import { defineStore } from 'pinia'
+        import { useLanguageStore } from '@/stores/useLanguageStore.ts'
+        import { useThemeStore } from '@/stores/useThemeStore.ts'
+        import { onMounted } from 'vue'
+        {{#if useJWT}}import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
+        import { useAuth } from '@/composables/useAuth.ts'{{/if}}
+
+        export const useGlobalStore = defineStore('global', () => {
+          useLanguageStore()
+          useThemeStore()
+          {{#if useJWT}}const authStore = useAuthenticationStore()
+          onMounted(async () => {
+            const token = authStore.getToken()
+            const auth = useAuth()
+            try {
+              await auth.loginUser(token)
+            } catch (e: unknown) {
+              await auth.logout()
+            }
+          }){{/if}}
+          return {}
+        })
+      destinationPath: "${destinationFolder}/src/stores"
+
     - fileType: "Vue App Main"
       fileName: "main"
       extension: "ts"
@@ -11070,7 +11279,7 @@
     name: "${majStart(EntityName)}Service"
     destinationPath: "${destinationFolder}/src/services"
     imports: |
-      import useRestApi from '@/composables/useRestApi'
+      import api from '@/services/api'
       import RestResponse from '@/models/api/RestResponseModel'
       import { type IPageResponse } from '@/models/api/PageResponseModel'
       import {
@@ -11081,8 +11290,8 @@
       import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'
       import type { DataResponse, PagedDataResponse } from '@/models/api/DataResponseModel'
     methods: |
-      const restApiWithPage = useRestApi<IPageResponse<${majStart(EntityName)}>>()
-      const restApi = useRestApi<${majStart(EntityName)}>()
+      const restApiWithPage = api<IPageResponse<${majStart(EntityName)}>>()
+      const restApi = api<${majStart(EntityName)}>()
       const BASE_URL = '/${lowerCase(classNameLink)}'
 
       /** Helper to wrap response data in ${majStart(EntityName)} instances */

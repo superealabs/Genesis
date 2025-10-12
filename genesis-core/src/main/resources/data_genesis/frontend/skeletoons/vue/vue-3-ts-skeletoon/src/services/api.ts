@@ -1,7 +1,7 @@
 // src/services/api.ts
 import type { AxiosRequestConfig } from 'axios'
 import axios, { AxiosError } from 'axios'
-import RestResponse from '@/models/api/RestResponseModel'
+import RestResponse from '@/models/api/RestResponseModel.ts'
 import { useAuth } from '@/composables/useAuth.ts'
 const instance = axios.create({
   baseURL: import.meta.env.VITE_APP_API_URL || 'http://localhost:8080',
@@ -10,7 +10,7 @@ const instance = axios.create({
   },
 })
 const authentication = useAuth()
-export default function useRestApi<T>() {
+export default function api<T>() {
   async function request(config: AxiosRequestConfig): Promise<RestResponse<T>> {
     try {
       const authHeader = authentication.getAuthorizationHeader()
