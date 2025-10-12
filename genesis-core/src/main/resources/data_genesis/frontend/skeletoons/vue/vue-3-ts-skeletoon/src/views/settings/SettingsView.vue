@@ -67,8 +67,8 @@
 </template>
 
 <script setup lang="ts">
-import ThemeSwitcher from '@/components/theme/ThemeSwitcher.vue'
-import LanguageSwitcher from '@/components/language/LanguageSwitcher.vue'
+import ThemeSwitcher from '@/components/switcher/ThemeSwitcher.vue'
+import LanguageSwitcher from '@/components/switcher/LanguageSwitcher.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import LayoutSwitcher from '@/components/switcher/LayoutSwitcher.vue'
 </script>
