@@ -29,16 +29,34 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectSpring() {
-        var credentials = new Credentials().setSchemaName("").setHost("localhost").setPort("1521").setUser("C##SUPER").setPwd("super").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCLBDD").setDriverType("thin");
+        var credentials = new Credentials().
+                setSchemaName("").
+                setHost("localhost").
+                setPort("1521").
+                setUser("C##SUPER").
+                setPwd("super").
+                setTrustCertificate(true).
+                setUseSSL(true).
+                setAllowPublicKeyRetrieval(true).
+                setSID("ORCLBDD").
+                setDriverType("thin");
+
+        credentials
+                .setHost("localhost")
+                .setPort("5432")
+                .setSchemaName("public")
+                .setDatabaseName("fanamby_presence")
+                .setUser("chan_alex")
+                .setPwd("chanalex");
 
         try {
 
-            int databaseId = Constantes.Oracle_ID;
+            int databaseId = Constantes.PostgreSQL_ID;
             int languageId = Constantes.Java_ID;
             int frameworkId = Constantes.Spring_REST_API_ID;
             int projectId = Constantes.Maven_ID;
             int frontendLangageId=Constantes.TYPESCRIPT_ID;
-            int frontendFrameworkId=Constantes.ANGULAR_ID;
+            int frontendFrameworkId=Constantes.VUE_JS_ID;
 
             var database = ProjectGenerator.databases.get(databaseId);
             var language = ProjectGenerator.languages.get(languageId);
@@ -47,7 +65,7 @@ public class GenesisCoreTest {
             var frontendLangage=ProjectGenerator.frontendLanguage.get(frontendLangageId);
             var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
 
-            String projectName = "oraTest";
+            String projectName = "javatest";
             String groupLink = "org.labs";
             String projectPort = "8000";
             String logLevel = "INFO";
@@ -55,7 +73,7 @@ public class GenesisCoreTest {
             String projectDescription = "test";
             String frameworkVersion = "3.3.6";
             String languageVersion = "21";
-            String destinationFolder = "D:\\tahiana\\test\\";
+            String destinationFolder = "/home/itu-chan-alex/Stage/generated";
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
 
@@ -63,6 +81,9 @@ public class GenesisCoreTest {
             frameworkConfiguration.put("hibernateDdlAuto", hibernateDdlAuto);
             frameworkConfiguration.put("loggingLevel", logLevel);
             frameworkConfiguration.put("frameworkVersion", frameworkVersion);
+
+            //======SECURITY CONFIG ==========//
+            frameworkConfiguration.put("securityType", "Spring Security - JWT");
 
             //===== USE EUREKA SERVER =======//
             framework.setUseCloud(false);
@@ -96,8 +117,7 @@ public class GenesisCoreTest {
             context.setViewNames(new ArrayList<>());
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
-            context.setGenerateFrontendApp(false);
-
+            context.setGenerateFrontendApp(true);
 
             projectGenerator.generateProject(context);
 

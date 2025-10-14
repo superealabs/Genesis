@@ -1989,7 +1989,7 @@
       destinationPath: "${destinationFolder}/src/services"
   additionalFiles:
     - fileType: "Global Store"
-      filename: "useGlobalStore"
+      fileName: "useGlobalStore"
       extension: "ts"
       content: |
         import { defineStore } from 'pinia'
@@ -2014,6 +2014,8 @@
           }){{/if}}
           return {}
         })
+      destinationPath: "${destinationFolder}/src/stores"
+
     - fileType: "Main Layout"
       fileName: "MainLayout"
       extension: "vue"

@@ -68,11 +68,12 @@ public class ProjectGenerator {
             frontendLanguage = Arrays.stream(FileUtils.fromJson(FrontendLanguage[].class, Constantes.FRONTEND_LANGUAGE_JSON))
                     .collect(Collectors.toMap(FrontendLanguage::getId, frontLang -> frontLang));
 
+            langs = Arrays.stream(FileUtils.fromYaml(InterfaceLang[].class, Constantes.LANGS_YAML))
+                    .collect(Collectors.toMap(InterfaceLang::getId, lang -> lang));
+
             frontendFrameworks = Arrays.stream(FileUtils.fromYaml(FrontendFramework[].class, Constantes.FRONTEND_FRAMEWORK_YAML))
                     .collect(Collectors.toMap(FrontendFramework::getId, frontFr -> frontFr));
 
-            langs = Arrays.stream(FileUtils.fromYaml(InterfaceLang[].class, Constantes.LANGS_YAML))
-                    .collect(Collectors.toMap(InterfaceLang::getId, lang -> lang));
 
         } catch (IOException e) {
             throw new RuntimeException(e);

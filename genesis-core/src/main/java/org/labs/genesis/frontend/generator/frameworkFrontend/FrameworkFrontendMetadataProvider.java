@@ -95,6 +95,9 @@ public class FrameworkFrontendMetadataProvider {
 
     public static HashMap<String, Object> getLayoutHashMap(FrontendFramework frontendFramework){
         FrontendLayout layout = frontendFramework.getFrontendLayout();
+        if (layout == null){
+            layout = new FrontendLayout();
+        }
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("additionalCss",layout.additionalCss);
         metadata.put("primaryColor",layout.primaryColor);
@@ -106,6 +109,9 @@ public class FrameworkFrontendMetadataProvider {
 
     public static HashMap<String, Object> getBrandingHashMap(FrontendFramework frontendFramework){
         ProjectBranding branding = frontendFramework.getProjectBranding();
+        if (branding == null){
+            branding = new ProjectBranding();
+        }
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("faviconUrl", branding.getFaviconUrl());
         metadata.put("useFaviconLink", branding.useFaviconLink());
