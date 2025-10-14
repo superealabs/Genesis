@@ -30,7 +30,7 @@ function goToSelectedPage() {
       @keydown.enter="goToSelectedPage"
     />
     <GenesisButton class="btn btn-outline border-0 shadow h-8 px-3" @click="goToSelectedPage">
-      {{ $t('common.go') }}
+      {{ $t('button.go') }}
     </GenesisButton>
   </div>
 </template>

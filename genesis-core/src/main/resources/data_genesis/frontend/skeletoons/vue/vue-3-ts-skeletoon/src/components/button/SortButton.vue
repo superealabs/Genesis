@@ -11,7 +11,7 @@ const emit = defineEmits<{
   (e: 'sort', sortData: SortFieldParameter): void
 }>()
 
-const currentSort = ref(false)
+const currentSort = ref(true)
 function sort() {
   emit('sort', new SortFieldParameter(props.fieldKey, undefined, !currentSort.value))
   currentSort.value = !currentSort.value

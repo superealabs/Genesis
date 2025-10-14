@@ -15,6 +15,7 @@
         class="btn btn-ghost rounded shadow mr-2"
         :class="{ 'btn-disabled': page <= 1 }"
         :aria-label="$t('pagination.previous')"
+        :title="$t('pagination.previous')"
         @click.prevent="goToPreviousPage"
       >
         <CheveronLeftIcon />
@@ -39,6 +40,7 @@
         class="btn btn-ghost rounded shadow ml-2"
         :class="{ 'btn-disabled': page >= end }"
         :aria-label="$t('pagination.next')"
+        :title="$t('pagination.next')"
         @click.prevent="goToNextPage"
       >
         <CheveronRightIcon />

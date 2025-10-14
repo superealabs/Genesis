@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useThemeStore = defineStore('theme', () => {
-  const themes = [
+  const themes: string[] = [
     'genesis-light',
     'genesis-dark',
     'cupcake',
@@ -39,10 +39,10 @@ export const useThemeStore = defineStore('theme', () => {
     'abyss',
     'silk',
   ]
-  const defaultTheme = themes[0]
-  const storedTheme = localStorage.getItem('theme')
+  const defaultTheme:string = themes[0]
+  const storedTheme:string = localStorage.getItem('theme')
 
-  const theme = ref<string>(storedTheme || defaultTheme) // genesis-light | genesis-dark | valentine | retro
+  const theme:ref<string> = ref<string>(storedTheme || defaultTheme) // genesis-light | genesis-dark | valentine | retro
 
   const applyTheme = (newTheme: string) => {
     if (themes.includes(newTheme)) {

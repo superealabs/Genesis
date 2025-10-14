@@ -1,15 +1,17 @@
 <template>
   <div class="flex items-center gap-2" :class="{ 'flex-col items-start': !rowInput }">
-    <!-- Label -->
-    <label
-      v-if="label"
-      :for="inputId"
-      class="label font-medium"
-      :class="{ 'whitespace-nowrap': rowInput }"
-    >
-      {{ label }}
-    </label>
-
+    <div class="flex gap-2 bg-transparent">
+      <!-- Label -->
+      <label
+        v-if="label"
+        :for="inputId"
+        class="label font-medium"
+        :class="{ 'whitespace-nowrap': rowInput }"
+      >
+        {{ label }}
+      </label>
+      <ErrorMessage v-if="violation" :message="violation" />
+    </div>
     <!-- Dropdown Container -->
     <div class="relative w-full min-w-50">
       <input
@@ -57,7 +59,11 @@
         </div>
 
         <!-- Options List -->
-        <div ref="listRef" @scroll="onScroll" class="card-body border-t p-0 max-h-72 overflow-y-auto">
+        <div
+          ref="listRef"
+          @scroll="onScroll"
+          class="card-body border-t p-0 max-h-72 overflow-y-auto"
+        >
           <div v-if="options.length === 0" class="px-3 py-6 text-center">No result</div>
 
           <div
@@ -87,6 +93,7 @@ import GenesisSearch from '@/components/search/GenesisSearch.vue'
 import type { EntitySearchField } from '@/models/EntityModel'
 import XIcon from '@/components/icons/XIcon.vue'
 import GenesisButton from '@/components/button/GenesisButton.vue'
+import ErrorMessage from '@/components/common/ErrorMessage.vue'
 
 /* Props */
 const props = defineProps<{
@@ -102,6 +109,7 @@ const props = defineProps<{
   loading?: boolean
   rowInput?: boolean
   pageSize?: number
+  violation?: string
 }>()
 
 /* Emits */

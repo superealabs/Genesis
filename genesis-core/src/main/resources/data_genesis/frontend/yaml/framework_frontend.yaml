@@ -1484,17 +1484,6 @@
         <template>
           <form class="space-y-4" @submit.prevent="handleRegister">
             <div>
-              <ErrorMessage :message="usernameError" />
-              <GenesisInput
-                v-model="username"
-                required
-                :label="$t('authentication.username')"
-                :placeholder="$t('authentication.username')"
-                type="text"
-              />
-            </div>
-
-            <div>
               <ErrorMessage :message="emailError" />
               <GenesisInput
                 v-model="email"
@@ -1502,6 +1491,17 @@
                 type="email"
                 :label="$t('authentication.email')"
                 :placeholder="$t('authentication.email')"
+              />
+            </div>
+            
+            <div>
+              <ErrorMessage :message="usernameError" />
+              <GenesisInput
+                v-model="username"
+                required
+                :label="$t('authentication.username')"
+                :placeholder="$t('authentication.username')"
+                type="text"
               />
             </div>
 
@@ -1761,6 +1761,11 @@
           const goToLoginView = () => {
             router.push({ path: '/auth/login' })
           }
+          
+          const goToProfileView = () => {
+              router.push({ path: '/profile' })
+          }
+  
           const loginUser = async (token: string) => {
             useAuthenticationStore().setToken(token)
             const responseData = await authService.currentUser()
@@ -1803,6 +1808,7 @@
 
           return {
             goToLoginView,
+            goToProfileView,
             loginUser,
             getAuthorizationHeader,
             getCurrentUser,
@@ -1937,26 +1943,32 @@
         }
       destinationPath: "${destinationFolder}/src/services"
   additionalFiles:
-    - fileType: "Sidebar Layout"
-      fileName: "SidebarLayout"
-      extension: "vue"
+    - fileType: "Global Store"
+      filename: "useGlobalStore"
+      extension: "ts"
       content: |
-        <template>
-          <div class="w-full h-screen flex">
-            <GenesisSideNavbar />
+        import { defineStore } from 'pinia'
+        import { useLanguageStore } from '@/stores/useLanguageStore.ts'
+        import { useThemeStore } from '@/stores/useThemeStore.ts'{{#if useJWT}}
+        import { onMounted } from 'vue'
+        import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
+        import { useAuth } from '@/composables/useAuth.ts'{{/if}}
 
-            <!-- Main content -->
-            <main class="flex-1 h-full overflow-y-auto p-6 bg-base-100">
-              <router-view />
-            </main>
-          </div>
-        </template>
-
-        <script setup lang="ts">
-        import GenesisSideNavbar from '@/components/navbar/GenesisSideNavbar.vue'
-        </script>
-      destinationPath: "${destinationFolder}/src/layouts"
-
+        export const useGlobalStore = defineStore('global', () => {
+          useLanguageStore()
+          useThemeStore(){{#if useJWT}}
+          const authStore = useAuthenticationStore()
+          onMounted(async () => {
+            const token = authStore.getToken()
+            const auth = useAuth()
+            try {
+              await auth.loginUser(token)
+            } catch (e: unknown) {
+              await auth.logout()
+            }
+          }){{/if}}
+          return {}
+        })
     - fileType: "Main Layout"
       fileName: "MainLayout"
       extension: "vue"
@@ -2005,27 +2017,6 @@
           opacity: 0;
         }
         </style>
-      destinationPath: "${destinationFolder}/src/layouts"
-
-    - fileType: "Topbar Layout Layout"
-      fileName: "TopbarLayout"
-      extension: "vue"
-      content: |
-        <template>
-          <div class="flex flex-col w-full h-screen">
-            <!-- Top Navigation -->
-            <GenesisTopNavbar />
-
-            <!-- Main content -->
-            <main class="flex-1 overflow-y-auto bg-base-100 p-6">
-              <router-view />
-            </main>
-          </div>
-        </template>
-
-        <script setup lang="ts">
-        import GenesisTopNavbar from '@/components/navbar/GenesisTopNavbar.vue'
-        </script>
       destinationPath: "${destinationFolder}/src/layouts"
 
     - fileType: "Package File"
@@ -10211,6 +10202,8 @@
 
         <script setup lang="ts">
         import FreezeScreen from '@/components/loading/FreezeScreen.vue'
+        import { useGlobalStore } from '@/stores/useGlobalStore.ts'
+        useGlobalStore()
         </script>
 
         <style scoped></style>
@@ -11692,7 +11685,7 @@
 #            </td>
 #          </tr>
 #        </template>
-#      style: "{{removeLine}}"
+#      style: "<style scoped></style>"
 #      export: |
 #        const props = defineProps({
 #          ${minStart(EntityName)}: {
@@ -11762,7 +11755,7 @@
             </td>
           </tr>
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       export: |
         const props = defineProps({
           ${minStart(EntityName)}: {
@@ -11848,7 +11841,7 @@
 #            />{{/if}}
 #          </div>
 #        </template>
-#      style: "{{removeLine}}"
+#      style: "<style scoped></style>"
 #      export: |
 #        defineProps({
 #          data: {
@@ -11964,7 +11957,7 @@
             @cancel="closePopup"
           />{{/if}}
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       export: |
         defineProps({
           data: {
@@ -11977,14 +11970,18 @@
             default: false,
           },
         })
+        const emit = defineEmits<{
+          (e: 'request:refresh'): void
+          (e: 'sortby', sortData: SortFieldParameter): void
+        }>()
+        
+        function sortBy(sortData: SortFieldParameter): void {
+          emit('sortby', sortData)
+        }
 
         {{#if isView}}
         const { view${majStart(EntityName)} } = use${majStart(EntityName)}s()
         {{else}}
-        const emit = defineEmits<{
-          (e: 'request:refresh'): void
-        }>()
-
         const selectedEntity = ref()
 
         const { visible: deletePopup, closePopup } = usePopup(false)
@@ -12054,7 +12051,7 @@
             />
           </div>
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
       export: |
         // Composable for managing entities
@@ -12365,16 +12362,16 @@
                 </div>
                 {{removeLine}}{{#if !isView}}
                 <div class="flex justify-end gap-3 mt-6">
+                  <GenesisButton @click="goToUpdateFormView(${minStart(EntityName)})" class="btn btn-outline btn-neutral">
+                    <EditIcon class="mr-2" />
+                    <span>{{ $t('button.update') }}</span>
+                  </GenesisButton>
                   <GenesisButton 
                     @click="openDeletePopup(${minStart(EntityName)})" 
                     class="btn-outline btn-error hover:text-white"
                   >
                     <TrashIcon class="mr-2" />
-                    <span>{{ $t('common.delete') }}</span>
-                  </GenesisButton>
-                  <GenesisButton @click="goToUpdateFormView(${minStart(EntityName)})" class="btn btn-outline btn-neutral">
-                    <EditIcon class="mr-2" />
-                    <span>{{ $t('common.update') }}</span>
+                    <span>{{ $t('button.delete') }}</span>
                   </GenesisButton>
                 </div>{{/if}}
               </div>
@@ -12418,7 +12415,7 @@
           closePopup()
           goToListView()
         }{{/if}}
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
 
@@ -12463,7 +12460,7 @@
             <${majStart(EntityName)}Details v-if="entity" :${minStart(EntityName)}="entity" />
           </div>
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       export: |
         const route = useRoute()
         const pathId = Number(route.params.id)
@@ -12516,7 +12513,7 @@
                   <!-- ${formatReadable(this.name)} -->
                   <GenesisInput
                     label="${formatReadable(this.name)}"
-                    :violation="violations ? violations['${minStart(this.name)}'] : null"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     placeholder="Enter ${formatReadable(this.name)}"
                     type="${this.uiType}"
                     v-model="formModel.${minStart(this.name)}"
@@ -12528,18 +12525,18 @@
 
                 <!-- Action buttons -->
                 <div class="flex justify-end gap-3 mt-6">
-                  <GenesisButton type="submit" class="btn btn-primary text-white" :label="submitLabel" />
-                  <GenesisButton @click="cancelForm" class="btn btn-secondary" label="Cancel" />
+                  <GenesisButton type="submit" class="btn btn-primary text-primary-content" :label="submitLabel" />
+                  <GenesisButton @click="cancelForm" class="btn btn-outline btn-error" :label="$t('button.cancel')" />
                 </div>
               </form>
             </div>
           </div>
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       export: |
         const props = defineProps<{
           ${minStart(EntityName)}?: ${majStart(EntityName)}
-          violations: Record<string, string> | null
+          violations?: Record<string, string> | null
           submitLabel?: string
         }>()
 
@@ -12605,6 +12602,7 @@
             <!-- Form -->
             <div v-if="entity">
               <${minStart(EntityName)}-form
+                :${minStart(EntityName)}="entity"
                 :submit-label="$t('entity.update.submitLabel', { entity: '${majStart(EntityName)}' })"
                 @submit="updateHandler"
                 @cancel="cancelHandler"
@@ -12620,7 +12618,7 @@
             />
           </div>
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       export: |
         const route = useRoute()
         const pathId = Number(route.params.id)
@@ -12712,7 +12710,7 @@
             />
           </div>
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       export: |
         const { create${majStart(EntityName)}, goToListView, message, view${majStart(EntityName)} } = use${majPluralize(EntityName)}()
         const { openPopup, closePopup, visible: alertPopup } = usePopup()

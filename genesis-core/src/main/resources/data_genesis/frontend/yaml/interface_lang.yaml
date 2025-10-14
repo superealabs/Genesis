@@ -6,35 +6,63 @@
       messages: {
         projectName: '${projectName}',
         common: {
-          update: 'Update',
-          delete: 'Delete',
-          create: 'Create',
-          details: 'Details',
-          list: 'List',
-          new: 'New',
-          actions: 'Actions',
-          back: 'Back',
-          go: 'Go',
+          update: 'update',
+          delete: 'delete',
+          create: 'create',
+          apply: 'apply',
+          go: 'go',
+          views: 'views',
+          view: 'view',
+          details: 'details',
+          list: 'list',
+          new: 'new',
+          actions: 'actions',
+          back: 'back',
+          layout: 'layout',
+          theme: 'theme',
+          general: 'general',
+          settings: 'settings',
+          entities: 'entities',
+          entity: 'entity',
+          filter: 'filter',
+          rows: 'rows',
+          showing: 'showing',
+          previous: 'previous',
+          next: 'next',
+          page: 'page',
+          add: 'add',
+          description: 'description',
+          return: 'return',
+          home: 'home',
+          login: 'login',
+          logout: 'logout',
+          register: 'register',
+          profile: 'profile',
+          username: 'username',
+          email: 'email',
+          password: 'password',
+          language: 'language',
+          confirm: 'confirm',
+          cancel: 'cancel',
+          no: 'no',
         },
-
+    
         navbar: {
-          core: 'Core',
-          entities: 'Entities',
-          views: 'Views',
-          settings: 'Settings',
-          home: 'Home',
-          entityName: '@.capitalize:{entity}',
+          entities: '@.capitalize:common.entities', // Utilise common
+          views: '@.capitalize:common.views', // Utilise common
+          settings: '@.capitalize:common.settings',
+          home: '@.capitalize:common.home',
         },
-
+    
         authentication: {
-          login: 'Login',
-          logout: 'Logout',
-          register: 'Register',
-          profile: 'Profile',
-          username: 'Username',
-          email: 'Email',
-          password: 'Password',
-          confirmPassword: 'Confirm your password',
+          login: '@.capitalize:common.login',
+          logout: '@.capitalize:common.logout',
+          register: '@.capitalize:common.register',
+          profile: '@.capitalize:common.profile',
+          username: '@.capitalize:common.username',
+          email: '@.capitalize:common.email',
+          password: '@.capitalize:common.password',
+          confirmPassword: '@.capitalize:common.confirm your @:common.password',
         },
 
         home: {
@@ -42,47 +70,60 @@
           greetDeveloper: '@.capitalize:home.greet Developer',
           welcome: 'Welcome on @.capitalize:projectName frontend app',
           titles: {
-            entities: 'List of entities',
-            views: 'List of views',
+            // Reconstruction des titres
+            entities: '@.capitalize:common.list of @:common.entities',
+            views: '@.capitalize:common.list of @:common.views',
           },
         },
 
         pagination: {
-          sizeLabel: 'Showing :',
-          previous: 'Previous',
-          next: 'Next',
-          goToLabel: 'Going to page:',
-          pageOf: 'Page {page} of {total}',
+          sizeLabel: '@.capitalize:common.showing :',
+          previous: '@.capitalize:common.previous @:common.page',
+          next: '@.capitalize:common.next @:common.page',
+          goToLabel: '@.capitalize:common.go to @:common.page :',
+          totalRows: ' of {total} @:common.rows',
         },
 
         search: {
-          filters: 'No filter | Filters | Filters ({count})',
+          filters: ' No @:common.filter | @.capitalize:common.filter | @.capitalize:common.filter ({count})',
         },
 
         entity: {
           nav: '{entity} / ',
           list: {
-            nav: '@:common.list',
+            nav: '@.capitalize:common.list',
           },
           create: {
-            nav: '@:common.new',
-            submitLabel: '@:common.create {entity}',
+            nav: '@.capitalize:common.new',
+            submitLabel: '@.capitalize:common.create {entity}',
           },
           update: {
-            nav: '@:common.update',
-            submitLabel: '@:common.update {entity}',
+            nav: '@.capitalize:common.update',
+            submitLabel: '@.capitalize:common.update {entity}',
           },
           details: {
-            nav: '@:common.details',
+            nav: '@.capitalize:common.details',
           },
         },
 
-        // Generic button labels
         button: {
-          addEntity: 'Add new {entity}',
-          applySearch: 'Apply',
-          backToList: 'Back to list',
-          backToListDescription: 'Return to the list view',
+          addEntity: '@.capitalize:common.add @:common.new {entity}',
+          applySearch: '@.capitalize:common.apply',
+          backToList: '@.capitalize:common.back to @:common.list',
+          backToListDescription: '@.capitalize:common.return to the @:common.list @:common.view',
+          go: '@.capitalize:common.go',
+          delete: '@.capitalize:common.delete',
+          update: '@.capitalize:common.update',
+          create: '@.capitalize:common.create',
+          cancel: '@.capitalize:common.cancel',
+        },
+    
+        settings: {
+          layout: '@.capitalize:common.layout',
+          theme: '@.capitalize:common.theme',
+          general: '@.capitalize:common.general',
+          language: '@.capitalize:common.language',
+          pageTitle: '@.capitalize:common.settings',
         },
 
         // Entity definitions (scalable for many entities)
@@ -163,84 +204,134 @@
       messages: {
         projectName: '${projectName}',
         common: {
-          update: 'Modifier',
-          delete: 'Supprimer',
-          create: 'Créer',
-          details: 'Détails',
-          list: 'Liste',
-          new: 'Nouveau',
-          actions: 'Actions',
-          back: 'Retour',
-          go: 'Aller',
+          update: 'modifier',
+          delete: 'supprimer',
+          create: 'créer',
+          apply: 'appliquer',
+          go: 'aller',
+    
+          views: 'vues',
+          view: 'vue',
+          details: 'détails',
+          list: 'liste',
+          new: 'nouveau',
+          actions: 'actions',
+          back: 'retour',
+          layout: 'mise en page',
+          theme: 'thème',
+          general: 'général',
+          settings: 'paramètres',
+          entities: 'entités',
+          entity: 'entité',
+          filter: 'filtre',
+          rows: 'lignes',
+          showing: 'affichage',
+          previous: 'précédent',
+          next: 'suivant',
+          page: 'page',
+          add: 'ajouter',
+          description: 'description',
+          return: 'retourner',
+          home: 'accueil',
+          login: 'connexion',
+          logout: 'déconnexion',
+          register: 'inscription',
+          profile: 'profil',
+          username: "nom d'utilisateur",
+          email: 'email',
+          password: 'mot de passe',
+          language: 'langue',
+          confirm: 'confirmer',
+          cancel: 'annuler',
+    
+          // Mots de liaison
+          of: 'des',
+          no: 'aucun',
         },
-
+    
         navbar: {
-          core: 'Core',
-          entities: 'Entités',
-          views: 'Vues',
-          settings: 'Paramètres',
-          home: 'Accueil',
-          entityName: '@.capitalize:{entity}',
+          entities: '@.capitalize:common.entities',
+          views: '@.capitalize:common.views',
+          settings: '@.capitalize:common.settings',
+          home: '@.capitalize:common.home',
         },
-
+    
         authentication: {
-          login: 'Connexion',
-          logout: 'Déconnexion',
-          register: 'Inscription',
-          profile: 'Profil',
-          username: `Nom d'utilisateur`,
-          email: 'Addresse Mail',
-          password: 'Mot de passe',
-          confirmPassword: 'Confirmer votre mot de passe',
+          login: '@.capitalize:common.login',
+          logout: '@.capitalize:common.logout',
+          register: '@.capitalize:common.register',
+          profile: '@.capitalize:common.profile',
+          username: '@.capitalize:common.username',
+          email: '@.capitalize:common.email',
+          password: '@.capitalize:common.password',
+          confirmPassword: '@.capitalize:common.confirm votre @:common.password',
         },
-
+    
         home: {
           greet: 'Bonjour',
-          greetDeveloper: '@.capitalize:home.greet Développeur',
+          greetDeveloper: '@.capitalize:home.greet développeur',
           welcome: 'Bienvenue sur l’application frontend @.capitalize:projectName',
           titles: {
-            entities: 'Liste des entités',
-            views: 'Liste des vues',
+            entities: '@.capitalize:common.list des @:common.entities',
+            views: '@.capitalize:common.list des @:common.views',
           },
         },
-
+    
         pagination: {
-          sizeLabel: 'Affichage :',
-          previous: 'Précédent',
-          next: 'Suivant',
-          goToLabel: 'Aller à la page :',
-          pageOf: 'Page {page} sur {total}',
+          // 'Showing :' -> 'Affichage :'
+          sizeLabel: '@.capitalize:common.showing :',
+          // 'previous page' -> 'Page précédente' (inversion de l'ordre pour la fluidité)
+          previous: '@.capitalize:common.page @:common.previous',
+          // 'next page' -> 'Page suivante' (inversion de l'ordre pour la fluidité)
+          next: '@.capitalize:common.page @:common.next',
+          // 'go to page :' -> 'Aller à la page :'
+          goToLabel: '@.capitalize:common.go  @:common.la @:common.page :',
+          // '{total} rows' -> '{total} lignes' (le total est placé en premier)
+          totalRows: ' sur {total} @:common.rows',
         },
-
+    
         search: {
-          filters: 'Aucun filtre | Filtres | Filtres ({count})',
+          filters: '@.capitalize:common.no @:common.filter | @.capitalize:common.filter | @.capitalize:common.filter ({count})',
         },
-
+    
         entity: {
           nav: '{entity} / ',
           list: {
-            nav: '@:common.list',
+            nav: '@.capitalize:common.list',
           },
           create: {
-            nav: '@:common.new',
-            submitLabel: '@:common.create {entity}',
+            nav: '@.capitalize:common.new',
+            submitLabel: '@.capitalize:common.create {entity}',
           },
           update: {
-            nav: '@:common.update',
-            submitLabel: '@:common.update {entity}',
+            nav: '@.capitalize:common.update',
+            submitLabel: '@.capitalize:common.update {entity}',
           },
           details: {
-            nav: '@:common.details',
+            nav: '@.capitalize:common.details',
           },
         },
-
-        // Libellés des boutons
+    
         button: {
-          addEntity: 'Ajouter un nouveau {entity}',
-          applySearch: 'Appliquer',
-          go: 'Aller',
-          backToList: 'Retour à la liste',
-          backToListDescription: 'Revenir à la vue liste',
+          // 'Add new {entity}' -> 'Ajouter une nouvelle {entity}'
+          addEntity: '@.capitalize:common.add @:common.new @:common.entity',
+          applySearch: '@.capitalize:common.apply',
+          // 'Back to list' -> 'Retour à la liste'
+          backToList: '@.capitalize:common.back à la @:common.list',
+          backToListDescription: '@.capitalize:common.return à la @:common.view @:common.list',
+          go: '@.capitalize:common.go',
+          delete: '@.capitalize:common.delete',
+          update: '@.capitalize:common.update',
+          create: '@.capitalize:common.create',
+          cancel: '@.capitalize:common.cancel',
+        },
+    
+        settings: {
+          layout: '@.capitalize:common.layout',
+          theme: '@.capitalize:common.theme',
+          general: '@.capitalize:common.general',
+          language: '@.capitalize:common.language',
+          pageTitle: '@.capitalize:common.settings',
         },
 
         // Définitions d’entités (scalable)
@@ -251,7 +342,7 @@
             name: '${minStart(this.className)} | ${minStart(this.className)}s',
             nav: {
               title: '@.capitalize:entities.${minStart(this.className)}.name',
-              create: '@:common.create @.capitalize:entities.${minStart(this.className)}.name',
+              create: '@.capitalize:common.create @.capitalize:entities.${minStart(this.className)}.name',
               list: '@.capitalize:entities.${minStart(this.className)}.name @:common.list',
             },
           },{{/if}}

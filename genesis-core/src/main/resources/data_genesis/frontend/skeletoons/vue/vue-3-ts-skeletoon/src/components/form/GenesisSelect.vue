@@ -1,16 +1,19 @@
 <template>
   <div class="flex items-center gap-2" :class="{ 'flex-col items-start': !rowInput }">
     <!-- Label -->
-    <slot name="label">
-      <label
-        v-if="label"
-        :for="inputId"
-        class="label font-medium text-neutral"
-        :class="{ 'whitespace-nowrap': rowInput }"
-      >
-        {{ label }}
-      </label>
-    </slot>
+    <div class="flex gap-2 bg-transparent">
+      <slot name="label">
+        <label
+          v-if="label"
+          :for="inputId"
+          class="label font-medium text-neutral"
+          :class="{ 'whitespace-nowrap': rowInput }"
+        >
+          {{ label }}
+        </label>
+      </slot>
+      <ErrorMessage v-if="violation" :message="violation" />
+    </div>
     <!-- Select -->
     <select
       v-bind="$attrs"
@@ -34,6 +37,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { SelectOption } from '@/models/SelectOption'
+import ErrorMessage from '@/components/common/ErrorMessage.vue'
 
 const props = defineProps<{
   label?: string
@@ -42,6 +46,7 @@ const props = defineProps<{
   options: SelectOption[]
   loading?: boolean
   rowInput?: boolean
+  violation?: string
 }>()
 
 const emit = defineEmits<{

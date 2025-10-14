@@ -1,15 +1,17 @@
 <template>
   <div class="flex items-center gap-2" :class="{ 'flex-col items-start': !rowInput }">
-    <!-- Label -->
-    <label
-      v-if="label"
-      :for="inputId"
-      class="label font-medium"
-      :class="{ 'whitespace-nowrap': rowInput }"
-    >
-      {{ label }}
-    </label>
-
+    <div class="flex gap-2 bg-transparent">
+      <!-- Label -->
+      <label
+        v-if="label"
+        :for="inputId"
+        class="label font-medium"
+        :class="{ 'whitespace-nowrap': rowInput }"
+      >
+        {{ label }}
+      </label>
+      <ErrorMessage v-if="violation" :message="violation" />
+    </div>
     <!-- Dropdown wrapper -->
     <div class="relative w-full min-w-50">
       <!-- Trigger Button -->
@@ -77,6 +79,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { PaginationData } from '@/models/api/PageResponseModel'
 import type { PaginationRequestParameter } from '@/models/api/RequestModel'
 import type { SelectOption } from '@/models/SelectOption'
+import ErrorMessage from '@/components/common/ErrorMessage.vue'
 
 const props = defineProps<{
   label?: string
@@ -89,6 +92,7 @@ const props = defineProps<{
   loading?: boolean
   rowInput?: boolean
   pageSize?: number
+  violation?:string
 }>()
 
 const emit = defineEmits<{

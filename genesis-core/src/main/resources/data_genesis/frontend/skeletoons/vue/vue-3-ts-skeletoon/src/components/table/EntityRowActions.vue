@@ -4,7 +4,6 @@
   </GenesisButton>
 
   <GenesisButton
-    icon="bi bi-pen"
     class="btn-outline btn-square border-0"
     title="Modifier"
     @click="editRow"
@@ -13,7 +12,6 @@
   </GenesisButton>
 
   <GenesisButton
-    icon="bi bi-trash"
     class="btn-outline btn-square border-0 text-error"
     title="Supprimer"
     @click="deleteRow"

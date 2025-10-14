@@ -47,21 +47,6 @@
           </div>
         </div>
       </div>
-
-      <!-- About / Info Card -->
-      <div class="card bg-base-200/50 shadow-sm border border-base-content/10">
-        <div class="card-body">
-          <h3 class="text-lg font-semibold mb-2 flex items-center gap-2">
-            <font-awesome-icon icon="circle-info" class="text-primary" />
-            {{ $t('settings.about') || 'About' }}
-          </h3>
-          <div class="divider my-2"></div>
-          <p class="text-sm opacity-80 leading-relaxed">
-            {{ $t('settings.description') ||
-          'Customize your theme and language preferences. Your settings are saved locally and applied instantly.' }}
-          </p>
-        </div>
-      </div>
     </div>
   </section>
 </template>

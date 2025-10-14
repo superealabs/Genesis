@@ -12,6 +12,6 @@ defineProps<{
     <span v-if="Number(endElement) > Number(startElement)">
       – <span class="font-medium">{{ endElement }}</span>
     </span>
-    of <span class="font-medium">{{ totalElements }}</span> rows
+    <span class="font-medium"> {{ $t('pagination.totalRows', { 'total':totalElements }) }}</span>
   </div>
 </template>
