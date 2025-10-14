@@ -996,7 +996,8 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config.security.controllers;
-  
+
+        import java.util.List;
         import jakarta.validation.Valid;
         import ${groupLink}.${lowerCase(projectName)}.config.security.models.AuthRequest;
         import ${groupLink}.${lowerCase(projectName)}.config.security.models.PasswordChangeRequest;
@@ -1006,7 +1007,9 @@
         import ${groupLink}.${lowerCase(projectName)}.config.security.services.TokenBlacklistService;
         import ${groupLink}.${lowerCase(projectName)}.config.security.services.UserInfoService;
         import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+        import ${groupLink}.${lowerCase(projectName)}.models.RoleEntity;
         import ${groupLink}.${lowerCase(projectName)}.models.UserEntity;
+        import ${groupLink}.${lowerCase(projectName)}.repositories.RoleEntityRepository;
         import org.springframework.beans.factory.annotation.Autowired;
         import org.springframework.http.HttpStatus;
         import org.springframework.http.ResponseEntity;
@@ -1014,6 +1017,7 @@
         import org.springframework.web.bind.annotation.*;
         
         import io.swagger.v3.oas.annotations.Operation;
+        import io.swagger.v3.oas.annotations.media.ArraySchema;
         import io.swagger.v3.oas.annotations.media.Content;
         import io.swagger.v3.oas.annotations.media.Schema;
         import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -1028,6 +1032,8 @@
           private final JwtService jwtService;
           private final UserInfoService userInfoService;
           private final TokenBlacklistService tokenBlacklistService;
+          @Autowired
+          private RoleEntityRepository roleEntityRepository;
           
           @Autowired
           public UserAuthController(JwtService jwtService, UserInfoService userInfoService, TokenBlacklistService tokenBlacklistService) {
@@ -1036,7 +1042,26 @@
             this.tokenBlacklistService = tokenBlacklistService;
           }
           
-           @Operation(
+          @Operation(
+                summary = "Get all available roles",
+                description = "Retrieve the complete list of roles available in the system. This endpoint is public and does not require authentication."
+          )
+          @ApiResponses({
+                @ApiResponse(responseCode = "200", description = "Successfully retrieved roles list",
+                        content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class), array = @ArraySchema(schema = @Schema(implementation = RoleEntity.class))
+                        )
+                ),
+                @ApiResponse(responseCode = "500", description = "Internal server error",
+                        content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+                )
+          })
+          @GetMapping("/roles")
+          public ResponseEntity<RestResponse<List<RoleEntity>>> listRoles() {
+            var roles = roleEntityRepository.findAll();
+            return ResponseEntity.ok(RestResponse.buildSuccessResponse(HttpStatus.OK, "Roles", roles));
+          }
+          
+          @Operation(
             security = { @SecurityRequirement(name = "bearerAuth") },
             summary = "Logout user",
             description = "Invalidate the user's JWT token"
@@ -1144,22 +1169,15 @@
           @PostMapping("/register")
           public ResponseEntity<RestResponse<String>> addNewUser(@RequestBody UserEntity user) {
             try {
+              if (user.getRoleidRoleEntity() == null) {
+                var role = roleEntityRepository.findAllByName("ROLE_ADMIN")
+                .orElseThrow(() -> new IllegalArgumentException("Default role ROLE_ADMIN not found"));
+                user.setRoleidRoleEntity(role);
+              }
               String result = userInfoService.addUser(user);
-              return ResponseEntity.ok(
-                RestResponse.buildSuccessResponse(
-                  HttpStatus.OK,
-                  "User registered successfully",
-                  result
-                )
-              );
+              return ResponseEntity.ok(RestResponse.buildSuccessResponse(HttpStatus.OK, "User registered successfully", result));
             } catch (Exception e) {
-              return ResponseEntity.badRequest().body(
-                RestResponse.buildErrorResponse(
-                  HttpStatus.BAD_REQUEST,
-                  "Registration failed: " + e.getMessage(),
-                  null
-                )
-              );
+              return ResponseEntity.badRequest().body(RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST, "Registration failed: " + e.getMessage(), null));
             }
           }
 

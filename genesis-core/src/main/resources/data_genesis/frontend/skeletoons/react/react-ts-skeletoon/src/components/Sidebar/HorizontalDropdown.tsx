@@ -5,6 +5,7 @@ import { NavLink } from 'react-router-dom';
 import { NavItem } from '@/types/navigation';
 import { useClickOutside } from '@/hooks/useClickOutside';
 import ChevronRight from '@mui/icons-material/ChevronRight';
+import {useTranslation} from "react-i18next";
 
 interface Props {
     item: NavItem;
@@ -16,6 +17,7 @@ export default function HorizontalDropdown({ item, level = 0 }: Props) {
     const anchorRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     useClickOutside(containerRef, () => setOpen(false));
+    const { t } = useTranslation();
 
     const handleEnter = () => setOpen(true);
     const handleLeave = () => setOpen(false);
@@ -26,7 +28,7 @@ export default function HorizontalDropdown({ item, level = 0 }: Props) {
             <NavLink to={item.path!} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <ListItemButton sx={{ gap: 1, py: 0.75, display: 'flex', alignItems: 'center' }}>
                     {item.icon && <Box sx={{ display: 'flex', mr: 1 }}>{item.icon}</Box>}
-                    <ListItemText primary={item.label} />
+                    <ListItemText primary={t(item.label)} />
                 </ListItemButton>
             </NavLink>
         );

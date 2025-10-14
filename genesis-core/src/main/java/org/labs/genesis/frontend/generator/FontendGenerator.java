@@ -120,14 +120,11 @@ public class FontendGenerator implements IFrontendGenerator{
 
         String fileSavePath;
         if (generateComponentOnly) {
-            // simplified path : destinationFolder/projectName/models
-            fileSavePath = destinationFolder + "/" + projectName + "/models";
+            fileSavePath = destinationFolder + "/" + projectName + "/src/services";
         } else {
-            //using the configured path in the frontendframework
             fileSavePath = serviceComponent.getDestinationPath();
             fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
         }
-
 
         String serviceName=serviceComponent.getName();
         serviceName=engine.render(serviceName, metadataForFinalRender);

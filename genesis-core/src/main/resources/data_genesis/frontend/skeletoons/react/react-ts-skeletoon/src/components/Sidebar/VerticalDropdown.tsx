@@ -4,6 +4,7 @@ import { ExpandMore, ExpandLess } from '@mui/icons-material';
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { NavItem } from '@/types/navigation';
+import {useTranslation} from "react-i18next";
 
 interface Props {
     item: NavItem;
@@ -14,6 +15,7 @@ interface Props {
 export default function VerticalDropdown({ item, level = 0, compact = false }: Props) {
     const { pathname } = useLocation();
     const [open, setOpen] = useState(false);
+    const { t } = useTranslation();
 
     const isActive = pathname === item.path;
 
@@ -59,7 +61,7 @@ export default function VerticalDropdown({ item, level = 0, compact = false }: P
                         {!compact && (
                             <>
                                 <ListItemText
-                                    primary={item.label}
+                                    primary={t(item.label)}
                                     sx={{ ml: 1, whiteSpace: 'nowrap' }}
                                 />
                                 {item.children && (open ? <ExpandLess /> : <ExpandMore />)}

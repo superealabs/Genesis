@@ -15,6 +15,7 @@
       extension: "html"
       content: |
         {{#if useJWT}}
+        <app-banner *ngIf="isLoggedIn" title="${projectName}"></app-banner>
         <div class="app-layout">
           <app-sidebar *ngIf="isLoggedIn" [entities]="entities" [views]="views"></app-sidebar>
             <div class="main-content">
@@ -32,6 +33,8 @@
         import { RouterOutlet,RouterModule } from '@angular/router';
         import {HttpClientModule } from '@angular/common/http';
         
+        import { BannerComponent } from './shared/banner/banner.component';
+        
         import { SidebarComponent } from './shared/sidebar/sidebar.component';
         import { CommonModule } from '@angular/common';
         import { AuthService } from './features/authentication/services/authentication.service';
@@ -43,13 +46,13 @@
         @Component({
           selector: 'app-root',
           standalone: true,
-          imports: [RouterOutlet,RouterModule,SidebarComponent,CommonModule,HttpClientModule],
+          imports: [RouterOutlet,RouterModule,SidebarComponent,CommonModule,HttpClientModule,BannerComponent],
           templateUrl: './app.component.html',
           styleUrls: ['./app.component.css']
         })
 
         export class AppComponent {
-          title = 'first-angular-project';
+          title = '${projectName}';
           isLoggedIn: boolean = false;
           
           constructor(private authService: AuthService, private router: Router ) {
@@ -417,15 +420,44 @@
             {{else}}no css{{/if}}
       destinationPath: "${destinationFolder}/src/app/features/authentication/login"
   additionalFiles:
+    - fileType: "Language file"
+      fileName: "language.service"
+      extension: "ts"
+      content: |
+        import { Injectable } from '@angular/core';
+        import { BehaviorSubject } from 'rxjs';
+
+        export enum Language 
+        { {{#each langList}}
+          ${upperCase(this.locale)} = '${this.locale}',
+          {{/each}}{{removeLine}}
+        }
+
+        @Injectable({
+          providedIn: 'root'
+        })
+        export class LanguageService {
+          private languageSubject = new BehaviorSubject<Language>(Language.EN);
+          language$ = this.languageSubject.asObservable();
+
+          setLanguage(lang: Language) {
+            this.languageSubject.next(lang);
+          }
+
+          get currentLanguage(): Language {
+            return this.languageSubject.value;
+          }
+        }
+      destinationPath: "${destinationFolder}/src/app/shared/services/language"
     - fileType: "Index page"
       fileName: "index"
-      extension: ".html"
+      extension: "html"
       content: |
         <!doctype html>
         <html lang="en">
         <head>
           <meta charset="utf-8">
-          <title>FirstAngularProject</title>
+          <title>${projectName}</title>
           <base href="/">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <link rel="icon" type="image/x-icon" href="{{#if useFaviconLink}}${faviconUrl}{{else}}favicon.ico{{/if}}">
@@ -445,6 +477,17 @@
       fileName: "styles"
       extension: "css"
       content: |
+        html, body {
+          height: 100%;
+          margin: 0;
+          padding: 0;
+        }
+          app-root {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+          }
         :root {
 
           --primary: ${primaryColor};
@@ -463,19 +506,20 @@
       content: |
         import { Component } from '@angular/core';
         import { RouterOutlet,RouterModule } from '@angular/router';
+        import { BannerComponent } from './shared/banner/banner.component';
         
         import { SidebarComponent } from './shared/sidebar/sidebar.component';
         
         @Component({
           selector: 'app-root',
           standalone: true,
-          imports: [RouterOutlet,RouterModule,SidebarComponent],  
+          imports: [RouterOutlet,RouterModule,SidebarComponent,BannerComponent],  
           templateUrl: './app.component.html',
           styleUrls: ['./app.component.css']      
         })
         
         export class AppComponent {
-          title = 'first-angular-project';
+          title = '${projectName}';
 
           entities={
           {{tab}}{{#each entities}}{{removeLine}}
@@ -514,6 +558,7 @@
       fileName: "app.component"
       extension: "html"
       content: |
+        <app-banner title="${projectName}"></app-banner>
         <div class="app-layout">
           <app-sidebar [entities]="entities" [views]="views"></app-sidebar>
             <div class="main-content">
@@ -737,7 +782,7 @@
         {{/each}}
       selector: "app-${toKebabCase(className)}-list"
       standalone: true
-      importComponent: "[CommonModule, HttpClientModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent,PageHeaderComponent,LoadingIconComponent]"
+      importComponent: "[CommonModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent,PageHeaderComponent,LoadingIconComponent]"
       template: "./${toKebabCase(className)}-list.component.html"
       style: "./${toKebabCase(className)}-list.component.css"
       export: |
@@ -962,7 +1007,7 @@
       selector: "app-${toKebabCase(className)}-form"
       generateForView: false
       standalone: true
-      importComponent: "[CommonModule, HttpClientModule, ReactiveFormsModule, DynamicFieldComponent, LoadingIconComponent, PageHeaderComponent, LinkButtonComponent, DynamicFormComponent]"
+      importComponent: "[CommonModule, ReactiveFormsModule, DynamicFieldComponent, LoadingIconComponent, PageHeaderComponent, LinkButtonComponent, DynamicFormComponent]"
       template: "./${toKebabCase(className)}-form.component.html"
       style: "./${toKebabCase(className)}-form.component.css"
       export: |
@@ -1153,7 +1198,7 @@
       selector: "app-${toKebabCase(className)}-details"
       generateForView: false
       standalone: true
-      importComponent: "[CommonModule, HttpClientModule, PageHeaderComponent, LoadingIconComponent, DetailViewComponent]"
+      importComponent: "[CommonModule, PageHeaderComponent, LoadingIconComponent, DetailViewComponent]"
       template: "./${toKebabCase(className)}-details.component.html"
       style: "./${toKebabCase(className)}-details.component.css"
       export: |
@@ -12952,7 +12997,7 @@
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/src"
-    langsPath: "{{removeLine}}"
+    langsPath: "${destinationFolder}/src/locales"
   authenticationFiles:
     - fileType: "Service Auth"
       fileName: "auth"
@@ -12962,29 +13007,39 @@
         import axios from 'axios';
         import { ApiResponse } from './api';
 
-        const API_BASE = import.meta.env.VITE_API_BASE; // déjà présent
+        const API_BASE = import.meta.env.VITE_API_BASE as string;
 
-        interface AuthRequest {
-            username: string;
+        interface AuthRequest { username: string; password: string; }
+        interface RegisterPayload {
+            name: string;
+            email: string;
             password: string;
+            roleidRoleEntity?: { id: number };
         }
+        interface UpdateRequest { name?: string; email?: string; }
+        interface ChangePasswordRequest { oldPassword: string; newPassword: string; confirmPassword: string; }
 
         export const authService = {
             login: (payload: AuthRequest) =>
                 axios.post<ApiResponse<string>>(`$[API_BASE]/auth/login`, payload)
-                    .then(res => res.data),
+                      .then(r => r.data),
 
-            logout: (token: string) =>
-                axios.post<ApiResponse<void>>(`$[API_BASE]/auth/logout`, {}, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }).then(res => res.data),
+            // S’appuie sur l’intercepteur axios pour Authorization
+            me: () =>
+                axios.get<ApiResponse<any>>(`$[API_BASE]/auth/current`).then(r => r.data),
 
-            me: (token: string) =>
-                axios.get<ApiResponse<any>>(`$[API_BASE]/auth/current`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }).then(res => res.data),
+            register: (payload: RegisterPayload) =>
+                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/register`, payload).then(r => r.data),
 
-            /* ------------ nouvelle méthode ------------ */
+            updateProfile: (payload: UpdateRequest) =>
+                axios.patch<ApiResponse<string>>(`$[API_BASE]/auth/update`, payload).then(r => r.data),
+
+            changePassword: (payload: ChangePasswordRequest) =>
+                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/change-password`, payload).then(r => r.data),
+
+            logout: () =>
+                axios.post<ApiResponse<void>>(`$[API_BASE]/auth/logout`, {}).then(r => r.data),
+
             refresh: (token: string) =>
                 axios.post<ApiResponse<string>>(`$[API_BASE]/auth/refresh`, { refreshToken: token })
                     .then(res => res.data),
@@ -12995,26 +13050,30 @@
       extension: "tsx"
       content: |
         // src/contexts/AuthContext.tsx
+        // src/contexts/AuthContext.tsx
         import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
         import { authService } from '@/services/auth';
+        import { useSnackbar } from 'notistack';
 
         type User = { username: string; email?: string };
-
-        interface AuthCtx {
+        type AuthCtx = {
             user: User | null;
             token: string | null;
             login: (u: string, p: string) => Promise<void>;
             logout: () => void;
             loading: boolean;
-        }
+            // nouvelles
+            register: (payload: { name: string; email: string; password: string }) => Promise<{ message?: string } | void>;
+            fetchCurrent: () => Promise<void>;
+            updateProfile: (payload: { name?: string; email?: string }) => Promise<void>;
+            changePassword: (payload: { oldPassword: string; newPassword: string; confirmPassword: string }) => Promise<void>;
+        };
 
         const AuthContext = createContext<AuthCtx>(null!);
-
-        const REFRESH_INTERVAL_MS = Number(
-            import.meta.env.VITE_REFRESH_INTERVAL_MS ?? 60000
-        );
+        const REFRESH_INTERVAL_MS = Number(import.meta.env.VITE_REFRESH_INTERVAL_MS ?? 60000);
 
         export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+            const { enqueueSnackbar } = useSnackbar();
             const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
             const [user, setUser] = useState<User | null>(null);
             const [loading, setLoading] = useState(true);
@@ -13029,11 +13088,10 @@
 
             const logout = () => {
                 clearTimer();
-                if (token) authService.logout(token).catch(() => {});
+                if (token) authService.logout().catch(() => {});
                 localStorage.removeItem('token');
                 setToken(null);
                 setUser(null);
-                // ❌ on ne fait plus window.location.href ici
             };
 
             const startRefreshTimer = (tk: string) => {
@@ -13044,11 +13102,15 @@
                         const newToken = res.data;
                         localStorage.setItem('token', newToken);
                         setToken(newToken);
-                        console.log('Token refreshed silently');
                     } catch {
-                        logout(); // échec → on déconnecte
+                        logout();
                     }
                 }, REFRESH_INTERVAL_MS);
+            };
+
+            const fetchCurrent = async () => {
+                const res = await authService.me();
+                setUser({ username: res.data.username, email: (res.data as any).email });
             };
 
             useEffect(() => {
@@ -13057,14 +13119,13 @@
                     return;
                 }
                 authService
-                    .me(token)
+                    .me()
                     .then(res => {
-                        setUser({ username: res.data.username, email: res.data.email });
+                        setUser({ username: res.data.username, email: (res.data as any).email });
                         startRefreshTimer(token);
                     })
                     .catch(() => logout())
                     .finally(() => setLoading(false));
-                return clearTimer;
             }, [token]);
 
             const login = async (username: string, password: string) => {
@@ -13073,10 +13134,38 @@
                 localStorage.setItem('token', jwt);
                 setToken(jwt);
                 startRefreshTimer(jwt);
+                await fetchCurrent();
+            };
+
+            const register = async (payload: { name: string; email: string; password: string }) => {
+                // laisser la page gérer les toasts/navigation
+                const res = await authService.register(payload);
+                return res; // retourner pour permettre l’affichage du message
+            };
+
+            const updateProfile = async (payload: { name?: string; email?: string }) => {
+                const oldUsername = user?.username;
+                await authService.updateProfile(payload);
+
+                if (payload.name && payload.name !== oldUsername) {
+                    enqueueSnackbar('Username changed successfully', { variant: 'success' });
+                } else {
+                    // Seulement l'email a changé, on peut rafraîchir
+                    await fetchCurrent();
+                    enqueueSnackbar('Profile updated successfully', { variant: 'success' });
+                }
+            };
+
+            const changePassword = async (payload: {oldPassword: string; newPassword: string; confirmPassword: string;}) => {
+                await authService.changePassword(payload);
+                enqueueSnackbar('Password changed, please sign in again', { variant: 'success' });
+                logout(); // ProtectedRoute enverra vers /login quand user=null
             };
 
             return (
-                <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+                <AuthContext.Provider
+                    value={{ user, token, loading, login, logout, register, fetchCurrent, updateProfile, changePassword }}
+                >
                     {children}
                 </AuthContext.Provider>
             );
@@ -13121,6 +13210,8 @@
         import { useNavigate, useLocation } from 'react-router-dom';
         import { TextField, Button, Paper, Typography, Box } from '@mui/material';
         import { useSnackbar } from 'notistack';
+        import { useTranslation } from 'react-i18next';
+        import LanguageSwitcher from '@/components/LanguageSwitcher';
 
         export default function Login() {
             const [username, setUsername] = useState('');
@@ -13128,6 +13219,7 @@
             const { login, token, user } = useAuth(); // ← user ajouté
             const navigate = useNavigate();
             const { enqueueSnackbar } = useSnackbar();
+            const { t } = useTranslation();
             const location = useLocation();
             const from = location.state?.from?.pathname || '/';
 
@@ -13145,21 +13237,306 @@
                 try {
                     await login(username, password);
                 } catch {
-                    enqueueSnackbar('Identifiants invalides', { variant: 'error' });
+                    enqueueSnackbar(t('messages.authentication.invalid'), { variant: 'error' });
                 }
             };
 
             return (
-                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                    <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+                        <LanguageSwitcher />
+                    </Box>
                     <Paper sx={{ p: 4, width: 360 }}>
-                        <Typography variant="h5" mb={3} textAlign="center">Connexion</Typography>
+                        <Typography variant="h5" mb={3} textAlign="center">{t('messages.authentication.title')}  </Typography>
                         <form onSubmit={handleSubmit}>
-                            <TextField fullWidth label="Nom d’utilisateur" value={username} onChange={e => setUsername(e.target.value)} required />
-                            <TextField fullWidth label="Mot de passe" type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
-                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>Se connecter</Button>
+                            <TextField fullWidth label={t('messages.authentication.username')} value={username} onChange={e => setUsername(e.target.value)} required />
+                            <TextField fullWidth label={t('messages.authentication.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
+                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>{t('messages.authentication.submit')} </Button>
+                            <Button fullWidth variant="text" sx={{ mt: 1 }} onClick={() => navigate('/register')}>
+                                {t('messages.authentication.createAccount')}
+                            </Button>
                         </form>
                     </Paper>
                 </Box>
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/auth"
+    - fileType: "Register page"
+      fileName: "Register"
+      extension: "tsx"
+      content: |
+        // src/pages/auth/Register.tsx
+        import { useState } from 'react';
+        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+        import { useAuth } from '@/contexts/AuthContext';
+        import { useSnackbar } from 'notistack';
+        import { useNavigate } from 'react-router-dom';
+        import {useTranslation} from "react-i18next";
+        import LanguageSwitcher from '@/components/LanguageSwitcher';
+
+        export default function Register() {
+            const { register } = useAuth();
+            const { enqueueSnackbar } = useSnackbar();
+            const navigate = useNavigate();
+            const { t } = useTranslation();
+
+            const [name, setName] = useState('');
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [submitting, setSubmitting] = useState(false);
+
+            const handleSubmit = async (e: React.FormEvent) => {
+                e.preventDefault();
+                if (submitting) return;
+                setSubmitting(true);
+                try {
+                    // Aucun rôle envoyé: le backend affecte le rôle par défaut
+                    const res = await register({ name, email, password });
+                    enqueueSnackbar(res?.message || t('messages.register.success'), { variant: 'success' });
+                    // Laisser le toast s’afficher puis rediriger vers le login
+                    setTimeout(() => navigate('/login', { replace: true }), 1500);
+                } catch (err: any) {
+                    const body = err?.response?.data;
+                    enqueueSnackbar(t('messages.register.error'), { variant: 'error' });
+                } finally {
+                    setSubmitting(false);
+                }
+
+            };
+
+            return (
+                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                    <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+                        <LanguageSwitcher />
+                    </Box>
+                    <Paper sx={{ p: 4, width: 380 }}>
+                        <Typography variant="h5" mb={3} textAlign="center">{t('messages.register.title')}</Typography>
+                        <form onSubmit={handleSubmit}>
+                            <TextField fullWidth label={t('messages.register.name')} value={name} onChange={e => setName(e.target.value)} required />
+                            <TextField fullWidth sx={{ mt: 2 }} label={t('messages.register.email')} type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                            <TextField fullWidth sx={{ mt: 2 }} label={t('messages.register.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+                            <Button fullWidth sx={{ mt: 3 }} variant="contained" type="submit" disabled={submitting}>
+                                {t('messages.register.submit')}
+                            </Button>
+                            <Button fullWidth sx={{ mt: 1 }} variant="text" onClick={() => navigate('/login')}>
+                                {t('messages.register.backToSignIn')}
+                            </Button>
+                        </form>
+                    </Paper>
+                </Box>
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/auth"
+    - fileType: "Profile update page"
+      fileName: "Profile"
+      extension: "tsx"
+      content: |
+        // src/pages/auth/Profile.tsx
+        import { useState, useEffect } from 'react';
+        import { TextField, Button, Paper, Typography, Box, Alert } from '@mui/material';
+        import { useAuth } from '@/contexts/AuthContext';
+        import { useSnackbar } from 'notistack';
+        import { useTranslation } from 'react-i18next';
+        import { useNavigate } from 'react-router-dom';
+        import { pageContainerSx } from '@/styles/mui-patterns';
+        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
+
+        export default function Profile() {
+            const { user, updateProfile, logout } = useAuth();
+            const { enqueueSnackbar } = useSnackbar();
+            const { t } = useTranslation();
+            const navigate = useNavigate();
+
+            const [name, setName] = useState('');
+            const [email, setEmail] = useState('');
+            const [submitting, setSubmitting] = useState(false);
+
+            useEffect(() => {
+                if (user) {
+                    setName(user.username || '');
+                    setEmail(user.email || '');
+                }
+            }, [user]);
+
+            const handleSubmit = async (e: React.FormEvent) => {
+                e.preventDefault();
+                if (submitting) return;
+
+                // ✅ Vérifier si le username change
+                const usernameChanged = name !== user?.username;
+
+                setSubmitting(true);
+                try {
+                    await updateProfile({ name, email });
+
+                    // ✅ Si le username a changé, déconnecter l'utilisateur
+                    if (usernameChanged) {
+                        enqueueSnackbar(
+                            t('messages.profile.usernameChangedLogout'),
+                            { variant: 'warning', autoHideDuration: 3000 }
+                        );
+
+                        // Déconnexion après 2 secondes
+                        setTimeout(() => {
+                            logout();
+                            navigate('/login', { replace: true });
+                        }, 2000);
+                    } else {
+                        enqueueSnackbar(t('messages.profile.updateSuccess'), { variant: 'success' });
+                    }
+                } catch (err: any) {
+                    const body = err?.response?.data;
+                    enqueueSnackbar(body?.message || t('messages.profile.updateError'), { variant: 'error' });
+                } finally {
+                    setSubmitting(false);
+                }
+            };
+
+            return (
+                <>
+                    <BackdropBlocker open={submitting} />
+                    <Box sx={pageContainerSx}>
+                        <Paper sx={{ p: 4, maxWidth: 480, mx: 'auto', mt: 4 }}>
+                            <Typography variant="h5" mb={3} textAlign="center">
+                                {t('messages.profile.edit')}
+                            </Typography>
+
+                            {/* ✅ Avertissement si le username va changer */}
+                            {name !== user?.username && (
+                                <Alert severity="warning" sx={{ mb: 2 }}>
+                                    {t('messages.profile.usernameChangeWarning')}
+                                </Alert>
+                            )}
+
+                            <form onSubmit={handleSubmit}>
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.register.name')}
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    required
+                                    sx={{ mb: 2 }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.register.email')}
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    sx={{ mb: 3 }}
+                                />
+
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    type="submit"
+                                    disabled={submitting}
+                                >
+                                    {t('messages.common.save')}
+                                </Button>
+                            </form>
+                        </Paper>
+                    </Box>
+                </>
+            );
+        }
+      destinationPath: "${destinationFolder}/src/pages/auth"
+    - fileType: "ChangePassword page"
+      fileName: "ChangePassword"
+      extension: "tsx"
+      content: |
+        // src/pages/auth/ChangePassword.tsx
+        import { useState } from 'react';
+        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+        import { useAuth } from '@/contexts/AuthContext';
+        import { useSnackbar } from 'notistack';
+        import { useTranslation } from 'react-i18next';
+        import { pageContainerSx } from '@/styles/mui-patterns';
+        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
+
+        export default function ChangePassword() {
+            const { changePassword } = useAuth();
+            const { enqueueSnackbar } = useSnackbar();
+            const { t } = useTranslation();
+
+            const [oldPassword, setOldPassword] = useState('');
+            const [newPassword, setNewPassword] = useState('');
+            const [confirmPassword, setConfirmPassword] = useState('');
+            const [submitting, setSubmitting] = useState(false);
+
+            const handleSubmit = async (e: React.FormEvent) => {
+                e.preventDefault();
+                if (submitting) return;
+
+                if (newPassword !== confirmPassword) {
+                    enqueueSnackbar(t('messages.profile.passwordMismatch'), { variant: 'error' });
+                    return;
+                }
+
+                setSubmitting(true);
+                try {
+                    await changePassword({ oldPassword, newPassword, confirmPassword });
+                    enqueueSnackbar(t('messages.profile.passwordChangeSuccess'), { variant: 'success' });
+                    // Redirection automatique vers login par le contexte
+                } catch (err: any) {
+                    const body = err?.response?.data;
+                    enqueueSnackbar(body?.message || t('messages.profile.passwordChangeError'), { variant: 'error' });
+                } finally {
+                    setSubmitting(false);
+                }
+            };
+
+            return (
+                <>
+                    <BackdropBlocker open={submitting} />
+                    <Box sx={pageContainerSx}>
+                        <Paper sx={{ p: 4, maxWidth: 480, mx: 'auto', mt: 4 }}>
+                            <Typography variant="h5" mb={3} textAlign="center">
+                                {t('messages.profile.changePassword')}
+                            </Typography>
+
+                            <form onSubmit={handleSubmit}>
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.profile.oldPassword')}
+                                    type="password"
+                                    value={oldPassword}
+                                    onChange={(e) => setOldPassword(e.target.value)}
+                                    required
+                                    sx={{ mb: 2 }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.profile.newPassword')}
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    required
+                                    sx={{ mb: 2 }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label={t('messages.profile.confirmPassword')}
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    sx={{ mb: 3 }}
+                                />
+
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    type="submit"
+                                    disabled={submitting}
+                                >
+                                    {t('messages.common.save')}
+                                </Button>
+                            </form>
+                        </Paper>
+                    </Box>
+                </>
             );
         }
       destinationPath: "${destinationFolder}/src/pages/auth"
@@ -13172,6 +13549,9 @@
         import { createBrowserRouter, Navigate } from 'react-router-dom';
         import ProtectedRoute from '@/router/ProtectedRoute';
         import Login from '@/pages/auth/Login';
+        import Register from '@/pages/auth/Register';
+        import Profile from '@/pages/auth/Profile';
+        import ChangePassword from '@/pages/auth/ChangePassword';
         {{#each routes}}
         import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
         {{/each}}
@@ -13181,6 +13561,7 @@
                 path: '/login',
                 element: <Login />,
             },
+            { path: 'register', element: <Register /> },
             {
                 path: '/',
                 element: (
@@ -13193,8 +13574,16 @@
                     },
                     {
                         path: '/',
-                        element: <RootLayout layout="vertical" />,
+                        element: <RootLayout/>,
                         children: [
+                            {
+                                path: '/profile',
+                                element: <Profile />,
+                            },
+                            {
+                                path: '/change-password',
+                                element: <ChangePassword />,
+                            },
                             {{#each routes}}
                             {
                               path: '${this.routerLink}',
@@ -13217,6 +13606,7 @@
         import { RouterProvider } from 'react-router-dom';
         import { router } from './router';
         import './index.css';
+        import './i18n'; 
         import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
         import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
         import { SnackbarProvider } from 'notistack';
@@ -13231,13 +13621,13 @@
             <React.StrictMode>
                 <ThemeProvider>
                     <CssBaseline />
-                        <AuthProvider>
-                            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
-                                <SnackbarProvider maxSnack={3} autoHideDuration={1500}>
-                                    <RouterProvider router={router} />
-                                </SnackbarProvider>
-                            </LocalizationProvider>
-                        </AuthProvider>
+                    <AuthProvider>
+                        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+                            <SnackbarProvider maxSnack={3} autoHideDuration={1500}>
+                                <RouterProvider router={router} />
+                            </SnackbarProvider>
+                        </LocalizationProvider>
+                    </AuthProvider>
                 </ThemeProvider>
             </React.StrictMode>
         );
@@ -13307,154 +13697,262 @@
             return data;
         }
       destinationPath: "${destinationFolder}/src/services"
-    - fileType: "Sidebar"
-      fileName: "Sidebar"
+    - fileType: "SettingsMenu"
+      fileName: "index"
       extension: "tsx"
       content: |
-        // src/components/Sidebar/Sidebar.tsx
+        // src/components/SettingsMenu/index.tsx
         import { useState } from 'react';
-        import {AppBar, Drawer, Toolbar, IconButton, Box, FormControlLabel, Switch} from '@mui/material';
-        import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-        import { navItems } from '../../config/navItems';   // new file
-        import { drawerWidth, closedWidth } from '@/styles/sidebar';
-        import HorizontalDropdown from './HorizontalDropdown';
-        import VerticalDropdown from './VerticalDropdown';
-        import { useThemeMode } from '@/contexts/ThemeContext';   // 👈 nouveau
-        import { Brightness4, Brightness7 } from '@mui/icons-material';
-        import { SidebarTitle } from './SidebarTitle';
-        import { Logout } from '@mui/icons-material';
-        import {useAuth} from "@/contexts/AuthContext";
-        import {useNavigate} from "react-router-dom";
+        import {
+            IconButton,
+            Menu,
+            MenuItem,
+            ListItemIcon,
+            ListItemText,
+            Divider,
+            FormControl,
+            InputLabel,
+            Select,
+            SelectChangeEvent,
+            Box,
+            Card,
+            CardContent,
+            Typography,
+            Avatar,
+        } from '@mui/material';
+        import {
+            Settings,
+            Brightness4,
+            Brightness7,
+            ViewSidebar,
+            ViewAgenda,
+            Logout,
+            Person,
+            Edit,
+            Lock
+        } from '@mui/icons-material';
+        import { useThemeMode } from '@/contexts/ThemeContext';
+        import { useAuth } from '@/contexts/AuthContext';
+        import { useTranslation } from 'react-i18next';
+        import { useNavigate } from 'react-router-dom';
 
-        interface Props {
-            layout?: 'vertical' | 'horizontal';
+        interface SettingsMenuProps {
+            layout: 'vertical' | 'horizontal';
+            onLayoutChange: (layout: 'vertical' | 'horizontal') => void;
+            compact?: boolean;
         }
 
-        export default function Sidebar({ layout = 'vertical' }: Props) {
-            const [open, setOpen] = useState(true);
+        export default function SettingsMenu({ layout, onLayoutChange, compact = false }: SettingsMenuProps) {
+            const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
             const { mode, toggleTheme } = useThemeMode();
-            const toggle = () => setOpen((prev) => !prev);
-            const { logout } = useAuth();
-            const navigate = useNavigate(); // ← ajout
+            const { logout, user } = useAuth(); 
+            const { i18n, t } = useTranslation();
+            const navigate = useNavigate();
 
-            const handleLogout = () => {
-                logout();       // vide le state + localStorage
-                navigate('/login', { replace: true }); // ← navigation sans reload
+            const open = Boolean(anchorEl);
+
+            const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+                setAnchorEl(event.currentTarget);
             };
 
-            if (layout === 'horizontal') {
-                return (
-                    <AppBar position="sticky">
-                        <Toolbar sx={{ gap: 2, justifyContent: 'space-between' }}>
-                            <Box display="flex" gap={2} alignItems="center">
-                                <SidebarTitle />
-                                {navItems.map((item) => (
-                                    <HorizontalDropdown key={item.label} item={item} />
-                                ))}
-                            </Box>
+            const handleClose = () => {
+                setAnchorEl(null);
+            };
 
-                            {/* Switch stylisé */}
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={mode === 'dark'}
-                                        onChange={toggleTheme}
-                                        icon={<Brightness4 sx={{ fontSize: 20 }} />}
-                                        checkedIcon={<Brightness7 sx={{ fontSize: 20 }} />}
-                                        color="default"
-                                    />
-                                }
-                                label=""
-                                sx={{ mr: 2 }}
-                            />
-                        </Toolbar>
-                    </AppBar>
-                );
-            }
+            const handleLayoutChange = (newLayout: 'vertical' | 'horizontal') => {
+                onLayoutChange(newLayout);
+                handleClose();
+            };
 
-            /* ---------- Vertical (default) ---------- */
+            const handleLanguageChange = (event: SelectChangeEvent<string>) => {
+                i18n.changeLanguage(event.target.value);
+            };
+
+            const handleLogout = () => {
+                logout();
+                navigate('/login', { replace: true });
+                handleClose();
+            };
+
+            const handleNavigateProfile = () => {
+                navigate('/profile');
+                handleClose();
+            };
+
+            const handleNavigatePassword = () => {
+                navigate('/change-password');
+                handleClose();
+            };
+
+            const getSupportedLanguages = (): string[] => {
+                if (Array.isArray(i18n.options.supportedLngs)) {
+                    return i18n.options.supportedLngs.filter((l) => l !== 'cimode');
+                }
+                if (i18n.services.resourceStore.data) {
+                    return Object.keys(i18n.services.resourceStore.data).filter((l) => l !== 'cimode');
+                }
+                return [i18n.language || 'en'];
+            };
+
+            const supportedLanguages = getSupportedLanguages();
+
             return (
                 <>
-                    <Drawer
-                        variant="permanent"
-                        sx={{
-                            width: open ? drawerWidth : closedWidth,
-                            flexShrink: 0,
-                            '& .MuiDrawer-paper': {
-                                width: open ? drawerWidth : closedWidth,
-                                transition: (t) => t.transitions.create('width'),
-                                overflowX: 'hidden',
-                                display: 'flex',               // ← permet de pousser le switch en bas
-                                flexDirection: 'column',
+                    <IconButton onClick={handleClick} color="inherit" size={compact ? 'small' : 'medium'}>
+                        <Settings />
+                    </IconButton>
+
+                    <Menu
+                        anchorEl={anchorEl}
+                        open={open}
+                        onClose={handleClose}
+                        onClick={handleClose}
+                        PaperProps={{
+                            elevation: 0,
+                            sx: {
+                                overflow: 'visible',
+                                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                                mt: 1.5,
+                                minWidth: 280,
                             },
                         }}
+                        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                     >
-                        {/* Header */}
-                        <Toolbar
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                px: 1,
-                                justifyContent: 'space-between', // ← pousse le chevron à droite
-                            }}
-                        >
-                            <SidebarTitle compact={!open} />
-                            <IconButton onClick={toggle} color="inherit">
-                                {open ? <ChevronLeft /> : <ChevronRight />}
-                            </IconButton>
-                        </Toolbar>
+                        {/* ✅ CARD PROFIL UTILISATEUR */}
+                        {user && (
+                            <>
+                                <Box sx={{ p: 2 }}>
+                                    <Card
+                                        elevation={0}
+                                        sx={{
+                                            bgcolor: 'action.hover',
+                                            borderRadius: 2
+                                        }}
+                                    >
+                                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                                            <Box display="flex" alignItems="center" gap={1.5}>
+                                                <Avatar sx={{ bgcolor: 'primary.main' }}>
+                                                    <Person />
+                                                </Avatar>
+                                                <Box>
+                                                    <Typography variant="subtitle2" fontWeight={600}>
+                                                        {user.username}
+                                                    </Typography>
+                                                    {user.email && (
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {user.email}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </Box>
+                                        </CardContent>
+                                    </Card>
+                                </Box>
+                                <Divider />
+                            </>
+                        )}
 
-                        {/* Contenu du menu */}
-                        {navItems.map((i, idx) => (
-                            <Box key={i.label} sx={{ mb: idx < navItems.length - 1 ? 0.75 : 0 }}>
-                                <VerticalDropdown item={i} compact={!open} />
-                            </Box>
-                        ))}
+                        {/* ✅ MODIFIER MON PROFIL */}
+                        <MenuItem onClick={handleNavigateProfile}>
+                            <ListItemIcon>
+                                <Edit fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>{t('messages.profile.edit')}</ListItemText>
+                        </MenuItem>
 
-                        {/* Switch en bas */}
-                        <Box
-                            sx={{
-                                mt: 'auto',
-                                p: 1,
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                            }}
-                        >
-                            <FormControlLabel
-                                control={
-                                    <Switch
-                                        checked={mode === 'dark'}
-                                        onChange={toggleTheme}
-                                        icon={<Brightness4 sx={{ fontSize: 18 }} />}
-                                        checkedIcon={<Brightness7 sx={{ fontSize: 18 }} />}
-                                        color="default"
-                                    />
+                        {/* ✅ CHANGER MOT DE PASSE */}
+                        <MenuItem onClick={handleNavigatePassword}>
+                            <ListItemIcon>
+                                <Lock fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>{t('messages.profile.changePassword')}</ListItemText>
+                        </MenuItem>
+
+                        <Divider />
+
+                        {/* Mode disposition */}
+                        <MenuItem onClick={() => handleLayoutChange(layout === 'vertical' ? 'horizontal' : 'vertical')}>
+                            <ListItemIcon>
+                                {layout === 'vertical' ? <ViewAgenda fontSize="small" /> : <ViewSidebar fontSize="small" />}
+                            </ListItemIcon>
+                            <ListItemText>
+                                {layout === 'vertical'
+                                    ? t('messages.layout.switchToHorizontal')
+                                    : t('messages.layout.switchToVertical')
                                 }
-                                label={open ? (mode === 'dark' ? 'Sombre' : 'Clair') : ''}
-                                labelPlacement="bottom"
-                                sx={{
-                                    color: 'inherit',
-                                    m: 0,
-                                    // si le drawer est fermé, on cache le label et on centre l’icône
-                                    ...(open
-                                        ? {}
-                                        : {
-                                            '& .MuiFormControlLabel-label': { display: 'none' },
-                                            '& .MuiSwitch-root': { m: 0 },
-                                        }),
-                                }}
-                            />
+                            </ListItemText>
+                        </MenuItem>
 
-                            <IconButton onClick={handleLogout} title="Déconnexion">
-                                <Logout />
-                            </IconButton>
-                        </Box>
-                    </Drawer>
+                        <Divider />
+
+                        {/* Mode clair/sombre */}
+                        <MenuItem onClick={toggleTheme}>
+                            <ListItemIcon>
+                                {mode === 'dark' ? <Brightness7 fontSize="small" /> : <Brightness4 fontSize="small" />}
+                            </ListItemIcon>
+                            <ListItemText>
+                                {mode === 'dark'
+                                    ? t('messages.theme.switchToLight')
+                                    : t('messages.theme.switchToDark')
+                                }
+                            </ListItemText>
+                        </MenuItem>
+
+                        <Divider />
+
+                        {/* Choix de langue */}
+                        <MenuItem>
+                            <FormControl fullWidth size="small" sx={{ minWidth: 120 }}>
+                                <InputLabel>{t('messages.language.choose')}</InputLabel>
+                                <Select
+                                    value={i18n.language}
+                                    label={t('messages.language.choose')}
+                                    onChange={handleLanguageChange}
+                                >
+                                    {supportedLanguages.map((lang) => (
+                                        <MenuItem key={lang} value={lang}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <span>{getFlagEmoji(lang)}</span>
+                                                <span>{t(`messages.language.$[lang]`)}</span>
+                                            </Box>
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </MenuItem>
+
+                        <Divider />
+
+                        {/* Déconnexion */}
+                        <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                            <ListItemIcon sx={{ color: 'error.main' }}>
+                                <Logout fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>
+                                {t('messages.authentication.logout')}
+                            </ListItemText>
+                        </MenuItem>
+                    </Menu>
                 </>
             );
         }
-      destinationPath: "${destinationFolder}/src/components/Sidebar"
+
+        function getFlagEmoji(langCode: string): string {
+            const languageFlags: Record<string, string> = {
+                en: '🇬🇧',
+                fr: '🇫🇷',
+                es: '🇪🇸',
+                de: '🇩🇪',
+                it: '🇮🇹',
+                pt: '🇵🇹',
+                'pt-BR': '🇧🇷',
+                zh: '🇨🇳',
+                ja: '🇯🇵',
+            };
+            return languageFlags[langCode] || languageFlags[langCode.split('-')[0]] || '🏳️';
+        }
+      destinationPath: "${destinationFolder}/src/components/SettingsMenu"
   additionalFiles:
     - fileType: "App name config"
       fileName: "app"
@@ -13479,13 +13977,13 @@
                 icon: <List />,
                 children: [
                     {
-                        label: 'List',
+                        label: 'messages.navigation.list',
                         path: '/${toKebabCase(this.className)}s',
                         icon: <List />,
                     },
                     {{#if !this.isView}}{{removeLine}}
                     {
-                        label: 'Add',
+                        label: 'messages.navigation.add',
                         path: '/${toKebabCase(this.className)}s/create',
                         icon: <Add />
                     },
@@ -13509,7 +14007,7 @@
         export const router = createBrowserRouter([
             {
                 path: '/',
-                element: <RootLayout layout="vertical" />, // 'vertical' or 'horizontal' 
+                element: <RootLayout/>,  
                 children: [
                     {{#each routes}}
                     {
@@ -13545,6 +14043,34 @@
       content: |
         VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
       destinationPath: "${destinationFolder}/"
+    - fileType: "i18n file"
+      fileName: "i18n"
+      extension: "js"
+      content: |
+        // src/i18n.js
+        import i18n from 'i18next';
+        import { initReactI18next } from 'react-i18next';
+        import LanguageDetector from 'i18next-browser-languagedetector';
+        
+        {{#each langList}}
+        import ${lowerCase(this.name)} from './locales/${lowerCase(this.name)}'
+        {{/each}}{{removeLine}}
+
+        i18n
+            .use(LanguageDetector)
+            .use(initReactI18next)
+            .init({
+                resources: {
+                    {{#each langList}}
+                    ${this.locale}: { translation: ${lowerCase(this.name)} },
+                    {{/each}}{{removeLine}}
+                },
+                fallbackLng: {{#each langList}}{{#if @first}}'${this.locale}'{{/if}}{{/each}},
+                interpolation: { escapeValue: false },
+            });
+
+        export default i18n;
+      destinationPath: "${destinationFolder}/src"
   components:
     - componentType: "List"
       generateForView: true
@@ -13561,6 +14087,7 @@
         import GenericListPage from '@/components/GenericListPage/GenericListPage';
         import ActionButtons from '@/components/ActionButtons';
         import {useDelete} from "@/hooks/useDelete";
+        import {useTranslation} from "react-i18next";
       selector: "${majStart(className)}List"
       export: |
         const columns = [
@@ -13575,27 +14102,29 @@
         {{removeLine}}
         {{#if !isView}}
         function RowActions({ row }: { row: ${majStart(className)} }) {
+            const { t } = useTranslation();
             const navigate = useNavigate();
             const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => window.location.reload());
 
             return (
                 <ActionButtons
                     actions={[
-                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`) },
-                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}) },
+                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`), title:`$[t('messages.common.edit')]` },
+                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}), title:`$[t('messages.common.delete')]` },
                     ]}
                 />
             );
         }
         {{/if}}
         export default function ${majStart(className)}List() {
+            const { t } = useTranslation();
             return GenericListPage<${majStart(className)}>({
                 entityName: ${toCamelCase(className)}Meta.entityName,
                 columns,
                 availableFilters: ${toCamelCase(className)}Filters,
                 defaultSort: ${toCamelCase(className)}Meta.defaultSort,
                 searchFn: ${toCamelCase(className)}Service.search,
-                pageTitle: '${majStart(className)} List'
+                pageTitle: `${majStart(className)} $[t('messages.entity.list.nav')]`
             })();
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
@@ -13616,10 +14145,12 @@
         import GenericDetailPage from '@/components/GenericDetailPage/GenericDetailPage';
         import {useDelete} from "@/hooks/useDelete";
         import { Typography } from '@mui/material';
+        import {useTranslation} from "react-i18next";
       selector: "${majStart(className)}Detail"
       export: |
         export default function ${majStart(className)}Detail() {
             const navigate = useNavigate();
+            const { t } = useTranslation();
             {{#if !isView}}
             const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => {
                   navigate('/${toKebabCase(className)}s'); 
@@ -13634,14 +14165,14 @@
                 actions: [
                     {{#if !isView}}{{removeLine}}
                     {
-                        label: 'Edit',
+                        label: `$[t('messages.common.edit')]`,
                         icon: <Edit />,
                         variant: 'outlined',
                         color: 'primary',
                         onClick: (row, navigate) => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`),
                     },
                     {
-                        label: 'Delete',
+                        label: `$[t('messages.common.delete')]`,
                         icon: <Delete />,
                         variant: 'outlined',
                         color: 'error',
@@ -13675,8 +14206,10 @@
       importComponent: |
         import GenericFormBuilder from '@/components/GenericForm/GenericFormBuilder';
         import {ApiResponse} from "@/services/api";
+        import {useTranslation} from "react-i18next";
       export: |
         export default function Create${majStart(className)}() {
+            const { t } = useTranslation();
 
             const handleSubmit = async (data: any): Promise<ApiResponse<${majStart(className)}>> => {
                 return await ${toCamelCase(className)}Service.create(data);
@@ -13688,7 +14221,7 @@
                     fields={formFields as any}
                     onSubmit={handleSubmit}
                     redirectTo="/${toKebabCase(className)}s"
-                    title="Add ${toKebabCase(className)}"
+                    title={`$[t('messages.common.add')] ${toKebabCase(className)}`}
                     mode="create"
                     idKey="{{#each fieldsPK}}${this.name}{{/each}}"
                     detailRedirect="/${toKebabCase(className)}s/:id"
@@ -13709,15 +14242,17 @@
       generateForView: false
       importComponent: |
         import GenericUpdateFormBuilder from '@/components/GenericForm/GenericUpdateFormBuilder';
+        import {useTranslation} from "react-i18next";
       export: |
         export default function Update${majStart(className)}() {
+            const { t } = useTranslation();
             return (
                 <GenericUpdateFormBuilder<${majStart(className)}>
                     entityName={${toCamelCase(className)}Meta.entityName}
                     fields={updateFormFields}
                     getById={${toCamelCase(className)}Service.getById}
                     update={${toCamelCase(className)}Service.update}
-                    title="Update ${toKebabCase(className)}"
+                    title={`$[t('messages.common.edit')] ${toKebabCase(className)}`}
                     detailRedirect="/${toKebabCase(className)}s/:id"
                 />
             );

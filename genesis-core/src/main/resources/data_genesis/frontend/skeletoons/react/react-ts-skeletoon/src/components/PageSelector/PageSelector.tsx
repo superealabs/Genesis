@@ -1,6 +1,7 @@
 // src/components/PageSelector/PageSelector.tsx
 import { Select as MuiSelect, MenuItem, FormControl, Box } from '@mui/material';
 import { smallSelectSx,smallFormControlSx, smallMenuItemSx, inlineLabelSx} from '@/styles/mui-patterns';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
     totalPages: number;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function PageSelector({ totalPages, currentPage, onChangePage }: Props) {
+    const { t } = useTranslation();
     const options = Array.from({ length: totalPages }, (_, i) => ({
         value: i,
         label: (i + 1).toString(),
@@ -16,7 +18,7 @@ export default function PageSelector({ totalPages, currentPage, onChangePage }: 
 
     return (
         <Box display="flex" alignItems="center" gap={2}>
-            <label style={inlineLabelSx}>Go to page :</label>
+            <label style={inlineLabelSx}>{t('messages.pagination.goToLabel')}</label>
             <FormControl sx={smallFormControlSx}>
                 <MuiSelect
                     value={currentPage}

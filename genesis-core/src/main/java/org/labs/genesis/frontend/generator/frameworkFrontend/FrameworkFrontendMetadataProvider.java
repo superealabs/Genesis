@@ -124,6 +124,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("destinationFolder", webappFolder);
         metadata.put("projectName", context.getProjectName());
         metadata.put("projectPort", context.getProjectPort());
+        metadata.put("title",context.getProjectDescription());
 
         return metadata;
     }

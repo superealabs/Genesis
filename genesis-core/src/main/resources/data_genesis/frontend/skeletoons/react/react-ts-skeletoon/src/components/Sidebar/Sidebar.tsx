@@ -1,24 +1,28 @@
 // src/components/Sidebar/Sidebar.tsx
 import { useState } from 'react';
-import {AppBar, Drawer, Toolbar, IconButton, Box, FormControlLabel, Switch} from '@mui/material';
+import { AppBar, Drawer, Toolbar, IconButton, Box } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-import { navItems } from '../../config/navItems';   // new file
+import { navItems } from '../../config/navItems';
 import { drawerWidth, closedWidth } from '@/styles/sidebar';
 import HorizontalDropdown from './HorizontalDropdown';
 import VerticalDropdown from './VerticalDropdown';
-import { useThemeMode } from '@/contexts/ThemeContext';   // 👈 nouveau
-import { Brightness4, Brightness7 } from '@mui/icons-material';
 import { SidebarTitle } from './SidebarTitle';
-
+import SettingsMenu from '@/components/SettingsMenu';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
     layout?: 'vertical' | 'horizontal';
+    onLayoutChange?: (layout: 'vertical' | 'horizontal') => void;
 }
 
-export default function Sidebar({ layout = 'vertical' }: Props) {
+export default function Sidebar({ layout = 'vertical', onLayoutChange }: Props) {
     const [open, setOpen] = useState(true);
-    const { mode, toggleTheme } = useThemeMode();
     const toggle = () => setOpen((prev) => !prev);
+    const { t } = useTranslation();
+
+    const handleLayoutChange = (newLayout: 'vertical' | 'horizontal') => {
+        onLayoutChange?.(newLayout);
+    };
 
     if (layout === 'horizontal') {
         return (
@@ -31,19 +35,10 @@ export default function Sidebar({ layout = 'vertical' }: Props) {
                         ))}
                     </Box>
 
-                    {/* Switch stylisé */}
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={mode === 'dark'}
-                                onChange={toggleTheme}
-                                icon={<Brightness4 sx={{ fontSize: 20 }} />}
-                                checkedIcon={<Brightness7 sx={{ fontSize: 20 }} />}
-                                color="default"
-                            />
-                        }
-                        label=""
-                        sx={{ mr: 2 }}
+                    {/* Menu des paramètres */}
+                    <SettingsMenu
+                        layout={layout}
+                        onLayoutChange={handleLayoutChange}
                     />
                 </Toolbar>
             </AppBar>
@@ -62,7 +57,7 @@ export default function Sidebar({ layout = 'vertical' }: Props) {
                         width: open ? drawerWidth : closedWidth,
                         transition: (t) => t.transitions.create('width'),
                         overflowX: 'hidden',
-                        display: 'flex',               // ← permet de pousser le switch en bas
+                        display: 'flex',
                         flexDirection: 'column',
                     },
                 }}
@@ -73,7 +68,7 @@ export default function Sidebar({ layout = 'vertical' }: Props) {
                         display: 'flex',
                         alignItems: 'center',
                         px: 1,
-                        justifyContent: 'space-between', // ← pousse le chevron à droite
+                        justifyContent: 'space-between',
                     }}
                 >
                     <SidebarTitle compact={!open} />
@@ -89,7 +84,7 @@ export default function Sidebar({ layout = 'vertical' }: Props) {
                     </Box>
                 ))}
 
-                {/* Switch en bas */}
+                {/* Menu des paramètres en bas */}
                 <Box
                     sx={{
                         mt: 'auto',
@@ -99,29 +94,10 @@ export default function Sidebar({ layout = 'vertical' }: Props) {
                         alignItems: 'center',
                     }}
                 >
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={mode === 'dark'}
-                                onChange={toggleTheme}
-                                icon={<Brightness4 sx={{ fontSize: 18 }} />}
-                                checkedIcon={<Brightness7 sx={{ fontSize: 18 }} />}
-                                color="default"
-                            />
-                        }
-                        label={open ? (mode === 'dark' ? 'Sombre' : 'Clair') : ''}
-                        labelPlacement="bottom"
-                        sx={{
-                            color: 'inherit',
-                            m: 0,
-                            // si le drawer est fermé, on cache le label et on centre l’icône
-                            ...(open
-                                ? {}
-                                : {
-                                    '& .MuiFormControlLabel-label': { display: 'none' },
-                                    '& .MuiSwitch-root': { m: 0 },
-                                }),
-                        }}
+                    <SettingsMenu
+                        layout={layout}
+                        onLayoutChange={handleLayoutChange}
+                        compact={!open}
                     />
                 </Box>
             </Drawer>

@@ -83,7 +83,7 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
         if (projectGenerationContext.getConnection() != null) {
             projectGenerationContext.getConnection().close();
         }
-
+        /// TODO: Add an else block here to avoid the connection error at second startup
         // Establish a new connection and update the context
         projectGenerationContext.setConnection(selectedDatabase.getConnection(credentials));
     }
