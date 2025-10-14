@@ -1,80 +1,105 @@
 ${modelType}
-<!-- Header -->
-<header class="header">
-    <h3>${className} / <span class="page-action" data-i18n="create"></span></h3>
-    <button class="btn-primary" type="button" onclick="window.location.href='${backLink}'">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
-            <title data-i18n="previous_page"></title>
-            <g id="Layer_2" data-name="Layer 2">
-                <g id="Layer_1-2" data-name="Layer 1">
-                    <g id="arrow_back-1" data-name="arrow back-1">
-                        <path d="M56.5,26.13H2.5a2.5,2.5,0,0,1,0-5h54a2.5,2.5,0,0,1,0,5Z" />
-                        <path
-                            d="M23.63,47.26a2.49,2.49,0,0,1-1.77-.73L.73,25.4a2.51,2.51,0,0,1,0-3.54L21.86.73A2.5,2.5,0,0,1,25.4,4.27L6,23.63,25.4,43a2.5,2.5,0,0,1-1.77,4.27Z" />
-                    </g>
-                </g>
-            </g>
+<div class="header">
+    <h1 class="page-title">${className} / <span class="page-type"><span class="page-action"
+                data-i18n="create"></span></span></h1>
+    <a href="${backLink}" class="btn btn-primary btn-md">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
         <p data-i18n="back_list"></p>
-    </button>
-</header>
+    </a>
+</div>
 
-<!-- Content -->
-<main class="content">
-    ${validationSection}
-    <!-- Form -->
-    <form ${createLink} method="post" class="form" id="${className}Form">
-        {{#each inputs}}
-        <div class="form-input">
-            <label for="${this.name}">
-                ${this.name}
-                {{#if this.isRequired}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
+${validationSection}
+
+<!-- Include Select2 utils scripts -->
+<script src="${assetsImportLink}/js/jquery-3.7.1.min.js"></script>
+<link rel="stylesheet" href="${assetsImportLink}/css/select2.min.css">
+<script src="${assetsImportLink}/js/select2.min.js"></script>
+
+<form class="form" method="post" ${createLink}>
+    {{#each inputs}}
+    <div class="form-group">
+        <label for="${this.name}">${this.name}
+            {{#if this.isRequired}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
+        </label>
+        {{#if this.type = radio}}{{removeLine}}
+        <div class="boolean-radio-group">
+            <label class="radio-option">
+                <input type="radio" ${inputTagHelper} ${checkedRadioTagHelper} value="true">
+                <span class="radio-label">True</span>
             </label>
-            {{#if this.type = radio}}{{removeLine}}
-            <div class="input-boolean-options">
-                <input type="${this.type}" ${inputTagHelper} ${checkedRadioTagHelper} value="true"><p>True</p>
-                <input type="${this.type}" ${inputTagHelper} ${checkedRadioTagHelper} value="false"><p>False</p>
-            </div>
-            {{else}}{{removeLine}}
-            <input type="${this.type}" ${inputTagHelper} placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>
-            {{/if}}{{removeLine}}
-            <span ${validationTagHelper} class="field-validation-error"></span>
-        </div>
-        {{/each}}{{removeLine}}
-
-        {{#each textAreas}}
-        <div class="form-input">
-            <label for="${this.name}">
-                ${this.name}
-                {{#if this.isRequired}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
+            <label class="radio-option">
+                <input type="radio" ${inputTagHelper} ${checkedRadioTagHelper} value="false">
+                <span class="radio-label">False</span>
             </label>
-            <textarea ${textAreaTagHelper} placeholder='${this.placeholder}'
-                    rows="5" class="${this.class}"></textarea>
-            <span ${textAreaValidationTagHelper} class="field-validation-error"></span>
-            <small class="form-text">Valid format: ${this.validFormat}</small>
         </div>
-        {{/each}}{{removeLine}}
+        {{else}}{{removeLine}}
+        <input type="${this.type}" ${inputTagHelper} placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>
+        {{/if}}{{removeLine}}
+        <span ${validationTagHelper} class="field-validation-error"></span>
+    </div>
+    {{/each}}{{removeLine}}
 
-        {{#each fieldsFK}}
-        <div class="form-input">
-            <label for="${this.columnNameField}">
-                ${this.columnNameField}
-                {{#if !this.isNullable}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
-            </label>
-            <select ${selectTagHelper}>
-                <option value="">-- <span data-i18n="select"></span> ${this.type} --</option>
-            </select>
-            <span ${selectValidationTagHelper} class="field-validation-error"></span>
-        </div>
-        {{/each}}{{removeLine}}
+    {{#each fieldsFK}}
+    <div class="form-group">
+        <label for="${this.columnNameField}">${this.columnNameField}
+            {{#if this.isRequired}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
+        </label>
+        <select id="${this.columnNameField}" ${selectTagHelper}>
+            <option></option>
+        </select>
+        <span ${selectValidationTagHelper} class="field-validation-error"></span>
 
-        <div class="form-actions">
-            <button type="reset" class="reset-button"><span data-i18n="reset"></span></button>
-            <div class="action-options">
-                <button onclick="window.location.href='${backLink}'" type="button" class="action-cancel"><span data-i18n="cancel"></span></button>
-                <button type="submit" class="action-save"><span data-i18n="save"></span></button>
-            </div>
+        <script>
+            function initializeSelect2() {
+                $('#${this.columnNameField}').select2({
+                    placeholder: "${this.columnNameField}",
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+            $(document).ready(initializeSelect2);
+            setTimeout(initializeSelect2, 100);
+        </script>
+    </div>
+    {{/each}}{{removeLine}}
+
+    {{#each textAreas}}
+    <div class="form-group full-width">
+        <label for="${this.name}" >${this.name}
+            {{#if this.isRequired}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
+        </label>
+        <textarea ${textAreaTagHelper} rows="4"
+            placeholder=${this.placeholder} class="${this.class}">
+        </textarea>
+    </div>
+    <span ${textAreaValidationTagHelper} class="field-validation-error"></span>
+    {{/each}}{{removeLine}}
+
+    <div class="form-actions">
+        <div class="form-actions-left">
+            <button type="reset" class="btn btn-tertiary btn-md">
+                <span data-i18n="reset"></span>
+            </button>
         </div>
-  </form>
-</main>
+
+        <div class="form-actions-right">
+            <button type="button" class="btn btn-secondary btn-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+                <span data-i18n="cancel"></span>
+            </button>
+
+            <button type="submit" class="btn btn-secondary btn-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                    <path d="M17 21v-8H7v8M7 3v5h8" />
+                </svg>
+                <span data-i18n="save"></span>
+            </button>
+        </div>
+    </div>
+</form>
 ${scriptSection}

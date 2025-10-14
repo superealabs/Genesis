@@ -4,99 +4,128 @@ ${currentViewContext}
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${pageName} ${projectName}</title>
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="${rootPath}" />
-
+    <link rel="stylesheet" href="${rootPath}">
+    {{#if useFaviconLink or hasFavicon}}<link rel="shortcut icon"
+        href="${faviconUrl}"
+        type="image/x-icon">{{else}}{{removeLine}}{{/if}}
 </head>
 
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h3>${projectName}<span class="app-name">App</span></h3>
+    <!-- Menu burger pour mobile -->
+    <button class="menu-toggle" id="menuToggle">☰</button>
+
+    <!-- Sidebar -->
+    <div class="{{#if navbarPreference = Topbar}}topbar{{else}}sidebar{{/if}}" id="{{#if navbarPreference = Topbar}}topbar{{else}}sidebar{{/if}}">
+        <div class="project-info">
+            {{#if useLogoLink or hasLogo}}
+            <div class="project-logo">
+                <img src="${logoUrl}"
+                    alt="">
             </div>
-            <nav class="sidebar-nav">
-                <p class="menu-title" data-i18n="entities"></p>
-                <ul>
-                    {{#each entities}}
-                    <li><a ${navLink}>${this.entityName}</a></li>
-                    {{/each}}{{removeLine}}
-                    {{removeLine}}
-                </ul>
-            </nav>
-
-            <hr class="separator">
-
-            <div class="settings-container">
-                <!-- Settings button -->
-                <button class="settings-btn" id="settingsBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 57.76 59">
-                        <title data-i18n="settings"></title>
-                        <g id="Layer_2" data-name="Layer 2">
-                            <g id="Layer_1-2" data-name="Layer 1">
-                                <g id="settings">
-                                    <path
-                                        d="M34.87,59h-12a2.5,2.5,0,0,1-2.5-2.5V51.2a4,4,0,0,0-6.06-3.5L9.74,50.35a2.5,2.5,0,0,1-3.41-.91l-6-10.38a2.41,2.41,0,0,1-.25-1.89,2.5,2.5,0,0,1,1.16-1.52L5.84,33a4,4,0,0,0,0-7L1.25,23.35A2.5,2.5,0,0,1,.09,21.83a2.41,2.41,0,0,1,.25-1.89l6-10.38a2.5,2.5,0,0,1,3.41-.91l4.59,2.65a4,4,0,0,0,6.06-3.5V2.5A2.5,2.5,0,0,1,22.89,0h12a2.5,2.5,0,0,1,2.5,2.5V7.8a4,4,0,0,0,2,3.5,4.1,4.1,0,0,0,4,0L48,8.65a2.5,2.5,0,0,1,3.41.91l6,10.38a2.5,2.5,0,0,1-.91,3.41L51.92,26a4,4,0,0,0,0,7l4.59,2.65a2.5,2.5,0,0,1,.91,3.41l-6,10.38a2.5,2.5,0,0,1-3.41.91L43.43,47.7a4.1,4.1,0,0,0-4,0,4,4,0,0,0-2,3.5v5.3A2.5,2.5,0,0,1,34.87,59Zm-9.48-5h7V51.2a9,9,0,0,1,13.56-7.83l2.42,1.4,3.49-6-2.42-1.4a9,9,0,0,1,0-15.66l2.42-1.4-3.49-6-2.42,1.4A9,9,0,0,1,32.37,7.8V5h-7V7.8a9,9,0,0,1-13.56,7.83l-2.42-1.4-3.49,6,2.42,1.4a9,9,0,0,1,0,15.66l-2.42,1.4,3.49,6,2.42-1.4A9,9,0,0,1,25.39,51.2Z" />
-                                    <path
-                                        d="M28.88,39a9.5,9.5,0,1,1,9.5-9.5A9.51,9.51,0,0,1,28.88,39Zm0-14a4.5,4.5,0,1,0,4.5,4.5A4.51,4.51,0,0,0,28.88,25Z" />
-                                </g>
-                            </g>
-                        </g>
-                    </svg>
-                    <span data-i18n="settings"></span>
-                </button>
-                <!-- Popup Menu -->
-                <div class="settings-menu" id="settingsMenu">
-                    <ul>
-                        <li>
-                            <label for="langSelect" data-i18n="language"></label>
-                            <select id="langSelect">
-                                <option value="en">EN</option>
-                                <option value="fr">FR</option>
-                            </select>
-                        </li>
-
-                        <li>
-                            <label for="themeSelect" data-i18n="theme"></label>
-                            <select id="themeSelect">
-                                <option value="light" data-i18n="light"></option>
-                                <option value="dark" data-i18n="dark"></option>
-                            </select>
-                        </li>
-
-                        {{#if useAuthCookie}}<hr class="separator">
-
-                        <!-- Log out -->
-                        <li class="log-out">
-                            <form ${logoutTagHelper} method="post" id="logoutForm">
-                                <button type="submit" class="logout-button">
-                                    <span data-i18n="log_out"></span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="logout-icon" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
-                                    </svg>
-                                </button>
-                            </form>
-                        </li>{{/if}}
-                    </ul>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Section -->
-        <div class="main-section">
-            <script src="${assetsImportLink}/js/theme.js"></script>
-            <script src="${assetsImportLink}/js/lang.js"></script>
-            ${callContent}
+            {{else}}
+            <div class="project-name">${projectName}</div>
+            {{/if}}
         </div>
 
+        <div class="navigation">
+            {{#if navbarPreference = Topbar}}
+            <button class="scroll-btn left hidden" id="scrollLeft">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="2" fill="none" />
+                </svg>
+            </button>
+            {{else}}
+            <button class="scroll-btn top hidden" id="scrollUp">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 4L4 8l1.5 1.5L8 7l2.5 2.5L12 8 8 4z" />
+                </svg>
+            </button>
+            {{/if}}
+
+            <div class="nav-content" id="navContent">
+                <div class="project-description"><span data-i18n="entities"></span></div>
+                {{#each entities}}{{#if !this.isView}}
+                <a ${navLink}>
+                    ${this.entityName}
+                </a>{{/if}}
+                {{/each}}{{removeLine}}
+                <div class="project-description"><span data-i18n="views"></span></div>
+                {{#each entities}}{{#if this.isView}}
+                <a ${navLink}>
+                    ${this.entityName}
+                </a>{{/if}}
+                {{/each}}{{removeLine}}
+            </div>
+
+            {{#if navbarPreference = Topbar}}
+            <button class="scroll-btn right" id="scrollRight">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="2" fill="none" />
+                </svg>
+            </button>
+            {{else}}
+            <button class="scroll-btn bottom" id="scrollDown">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 12l4-4-1.5-1.5L8 9 5.5 6.5 4 8l4 4z" />
+                </svg>
+            </button>
+            {{/if}}
+        </div>
+
+        <div class="settings">
+            <div class="settings-btn" id="settingsBtn">
+                <span class="nav-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.75l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.75v.51a2 2 0 01-1 1.75l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.75V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.75l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.75v-.5a2 2 0 011-1.75l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.75V4a2 2 0 00-2-2z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                </span>
+                <span data-i18n="settings"></span>
+            </div>
+
+            <!-- Box flottante des paramètres -->
+            <div class="settings-floating" id="settingsFloating">
+                <div class="setting-group">
+                    <label for="langSelect" data-i18n="language"></label>
+                    <select id="langSelect" name="langSelect" class="setting-select">
+                        <option value="fr">Français</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label for="themeSelect" data-i18n="theme"></label>
+                    <select id="theme" name="theme" class="setting-select">
+                        <option value="light" data-i18n="light"></option>
+                        <option value="dark" data-i18n="dark"></option>
+                    </select>
+                </div>
+
+                {{#if useAuthCookie}}<div class="setting-separator"></div>
+
+                <form ${logoutTagHelper} method="post" class="settings-form" id="settingsForm">
+                    <button type="submit" class="logout-btn" id="logoutBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+                        </svg>
+                        <span data-i18n="log_out"></span>
+                    </button>
+                </form>{{else}}{{removeLine}}{{/if}}
+            </div>
+        </div>
     </div>
+
+    <!-- Contenu principal -->
+    <div class="main-content">
+        ${callContent}
+    </div>
+
+    <script src="${assetsImportLink}/js/index.js"></script>
+    <script src="${assetsImportLink}/js/lang.js"></script>
 </body>
+
 </html>

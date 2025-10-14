@@ -1,62 +1,44 @@
 ${modelType}
-<!-- Header -->
-<header class="header">
-    <h3>${className} / <span class="page-action" data-i18n="details"></span></h3>
-    <button class="btn-primary" type="button" onclick="window.location.href='${backLink}'">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
-            <title data-i18n="previous_page"></title>
-            <g id="Layer_2" data-name="Layer 2">
-                <g id="Layer_1-2" data-name="Layer 1">
-                    <g id="arrow_back-1" data-name="arrow back-1">
-                        <path d="M56.5,26.13H2.5a2.5,2.5,0,0,1,0-5h54a2.5,2.5,0,0,1,0,5Z" />
-                        <path
-                            d="M23.63,47.26a2.49,2.49,0,0,1-1.77-.73L.73,25.4a2.51,2.51,0,0,1,0-3.54L21.86.73A2.5,2.5,0,0,1,25.4,4.27L6,23.63,25.4,43a2.5,2.5,0,0,1-1.77,4.27Z" />
-                    </g>
-                </g>
-            </g>
+<div class="header">
+    <h1 class="page-title">${className} / <span class="page-type"><span class="page-action"
+                data-i18n="details"></span></span></h1>
+    <a href="${backLink}" class="btn btn-primary btn-md">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
         <p data-i18n="back_list"></p>
-    </button>
-</header>
+    </a>
+</div>
 
-<!-- Content -->
-<main class="content">
-    <!-- Form -->
-    <form class="form">
+<form class="form">
+    {{#each fields}}
+    <div class="form-group">
+        <label for="${this.name}">${this.name}</label>
+        <input type="text" value="{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}" readonly>
+    </div>
+    {{/each}}{{removeLine}}
 
-        {{#each fields}}
-        <div class="form-input">
-            <label for="">${this.name}</label>
-            <input type="text" name="${this.name}" id="${this.name}" placeholder="${this.name}" value="{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}" readonly>
+    {{#if !isView}}<div class="form-actions">
+        <div class="form-actions-left">
+            <button class="btn btn-danger btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <path
+                        d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />
+                </svg>
+                <span data-i18n="delete"></span>
+            </button>
         </div>
-        {{/each}}{{removeLine}}
 
-        {{#if !isView}}<div class="form-actions">
-            <div class="action-options">
-                <button onclick="window.location.href='${updateLink}'" type="button" class="action-cancel"><span data-i18n="update"></span></button>
-                <button ${deleteLink} type="button" class="btn-delete action-save"><span data-i18n="delete"></span></button>
-            </div>
+        <div class="form-actions-right">
+            <a href="${updateLink}" class="btn btn-secondary btn-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                    <path d="M17 21v-8H7v8M7 3v5h8" />
+                </svg>
+                <span data-i18n="update"></span>
+            </a>
         </div>
-
-        <!-- Modal -->
-        <div id="customModal" class="modal-overlay"
-           data-trigger=".btn-delete"
-           data-input="${className}Id"
-           data-text="${className}IdText">
-            <div class="modal-box">
-                <button type="button" id="cancelBtn" class="btn-cancel">&times;</button>
-                <div class="warning-icon">⚠️</div>
-                <h3><span data-i18n="delete_confirmation"></span> "<span id="${className}IdText"></span>"?</h3>
-                <p data-i18n="delete_warning"></p>
-                <form id="deleteForm" method="post" ${deleteLink}>
-                    @Html.AntiForgeryToken()
-                    {{#each fields}}{{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}
-                    <input type="hidden" name="${this.name}" id="${className}Id" />{{/if}}{{else}}{{removeLine}}{{/if}}
-                    {{/each}}{{removeLine}}
-                    <button type="submit" class="btn-confirm"><span data-i18n="delete"></span></button>
-                </form>
-            </div>
-        </div>{{/if}}
-    </form>
-</main>
+    </div>{{/if}}
+</form>
 {{#if !isView}}${scriptSection}{{/if}}
