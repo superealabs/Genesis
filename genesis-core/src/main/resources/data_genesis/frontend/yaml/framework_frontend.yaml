@@ -1407,24 +1407,190 @@
       extension: "vue"
       content: |
         <template>
-          <form class="space-y-4">
+          <form class="space-y-4" @submit.prevent="handleLogin">
             <div>
-              <GenesisInput v-model="login" label="Login" placeholder="username or email" type="text" />
+              <ErrorMessage :message="usernameError" />
+              <GenesisInput
+                v-model="login"
+                required
+                :label="$t('authentication.login')"
+                :placeholder="$t('authentication.login')"
+                type="text"
+              />
             </div>
             <div>
-              <GenesisInput v-model="password" placeholder="*****" type="password" label="Password" />
+              <ErrorMessage :message="passwordError" />
+              <GenesisInput
+                v-model="password"
+                required
+                type="password"
+                :label="$t('authentication.password')"
+                :placeholder="$t('authentication.password')"
+              />
             </div>
-            <button type="submit" class="btn btn-primary w-full">Login</button>
+            <button type="submit" class="mt-3 btn btn-primary w-full">
+              {{ $t('authentication.login') }}
+            </button>
           </form>
         </template>
-        <script setup lang="ts">
-        import GenesisInput from '@/core/form/GenesisInput.vue'
-        import { ref } from 'vue'
 
+        <script setup lang="ts">
+        import GenesisInput from '@/components/form/GenesisInput.vue'
+        import { ref } from 'vue'
+        import * as authService from '@/services/AuthService.ts'
+        import { LoginValidator } from '@/models/validators/LoginValidator.ts'
+        import { validators } from '@/utils/validators.ts'
+        import ErrorMessage from '@/components/common/ErrorMessage.vue'
+        import type { DataResponse } from '@/models/api/DataResponseModel.ts'
+        import { useRouter } from 'vue-router'
+        import { useAuth } from '@/composables/useAuth.ts'
+
+        const authentication = useAuth()
+        const router = useRouter()
         const login = ref('')
         const password = ref('')
+        const usernameError = ref<string | null>('')
+        const passwordError = ref<string | null>('')
+
+        const handleLogin = async () => {
+          let valid = true
+          usernameError.value = validators.checkRules(login.value, LoginValidator.usernameRules)
+          if (usernameError.value) valid = false
+
+          passwordError.value = validators.checkRules(password.value, LoginValidator.passwordRules)
+          if (passwordError.value) valid = false
+
+          if (!valid) return
+
+          try {
+            const loginData: DataResponse<string> = await authService.login(login.value, password.value)
+            if (loginData.success) {
+              await authentication.loginUser(loginData.data as string)
+              router.push({ name: 'home' })
+            } else {
+              throw new Error(loginData.error)
+            }
+          } catch (e: unknown) {
+            usernameError.value = String((e as Error).message)
+          }
+        }
         </script>
-      destinationPath: "${destinationFolder}/src/auth"
+      destinationPath: "${destinationFolder}/src/components/auth"
+
+    - fileType: "Register Form"
+      fileName: "RegisterForm"
+      extension: "vue"
+      content: |
+        <template>
+          <form class="space-y-4" @submit.prevent="handleRegister">
+            <div>
+              <ErrorMessage :message="emailError" />
+              <GenesisInput
+                v-model="email"
+                required
+                type="email"
+                :label="$t('authentication.email')"
+                :placeholder="$t('authentication.email')"
+              />
+            </div>
+            
+            <div>
+              <ErrorMessage :message="usernameError" />
+              <GenesisInput
+                v-model="username"
+                required
+                :label="$t('authentication.username')"
+                :placeholder="$t('authentication.username')"
+                type="text"
+              />
+            </div>
+
+            <div>
+              <ErrorMessage :message="passwordError" />
+              <GenesisInput
+                v-model="password"
+                required
+                type="password"
+                :label="$t('authentication.password')"
+                :placeholder="$t('authentication.password')"
+              />
+            </div>
+
+            <div>
+              <ErrorMessage :message="confirmPasswordError" />
+              <GenesisInput
+                v-model="confirmPassword"
+                required
+                type="password"
+                :label="$t('authentication.confirmPassword')"
+                :placeholder="$t('authentication.confirmPassword')"
+              />
+            </div>
+
+            <button type="submit" class="mt-3 btn btn-primary w-full">
+              {{ $t('authentication.register') }}
+            </button>
+          </form>
+        </template>
+
+        <script setup lang="ts">
+        import GenesisInput from '@/components/form/GenesisInput.vue'
+        import ErrorMessage from '@/components/common/ErrorMessage.vue'
+        import { ref } from 'vue'
+        import { useRouter } from 'vue-router'
+        import * as authService from '@/services/AuthService.ts'
+        import { validators } from '@/utils/validators.ts'
+        import { RegisterValidator } from '@/models/validators/RegisterValidator.ts'
+        import type { DataResponse } from '@/models/api/DataResponseModel.ts'
+        import { RegisterDTO } from '@/models/auth/RegisterDTO.ts'
+
+        const router = useRouter()
+
+        const username = ref('')
+        const email = ref('')
+        const password = ref('')
+        const confirmPassword = ref('')
+
+        const usernameError = ref<string | null>(null)
+        const emailError = ref<string | null>(null)
+        const passwordError = ref<string | null>(null)
+        const confirmPasswordError = ref<string | null>(null)
+
+        const handleRegister = async () => {
+          let valid = true
+          usernameError.value = validators.checkRules(username.value, RegisterValidator.usernameRules)
+          if (usernameError.value) valid = false
+
+          emailError.value = validators.checkRules(email.value, RegisterValidator.emailRules)
+          if (emailError.value) valid = false
+
+          passwordError.value = validators.checkRules(password.value, RegisterValidator.passwordRules)
+          if (passwordError.value) valid = false
+
+          if (password.value !== confirmPassword.value) {
+            confirmPasswordError.value = 'Passwords do not match'
+            valid = false
+          } else {
+            confirmPasswordError.value = null
+          }
+
+          if (!valid) return
+          try {
+            const registerData: DataResponse<string> = await authService.register(
+              new RegisterDTO(username.value, email.value, password.value, 1),
+            )
+            if (registerData.success) {
+              router.push({ name: 'login' })
+            } else {
+              throw new Error(registerData.error)
+            }
+          } catch (e: unknown) {
+            usernameError.value = String((e as Error).message)
+          }
+        }
+        </script>
+      destinationPath: "${destinationFolder}/src/components/auth"
+
     - fileType: "Auth Layout"
       fileName: "AuthLayout"
       extension: "vue"
@@ -1437,58 +1603,221 @@
     
         <script setup lang="ts"></script>
       destinationPath: "${destinationFolder}/src/layouts"
+
     - fileType: "Auth Routes"
       fileName: "authRoutes"
       extension: "ts"
       content: |
         import type { RouteRecordRaw } from 'vue-router'
 
-        const authRouts: Array<RouteRecordRaw> = [
+        const authRoutes: Array<RouteRecordRaw> = [
           {
             path: 'login',
             name: 'login',
             component: () => import('@/views/auth/LoginView.vue'),
           },
+          {
+            path: 'register',
+            name: 'register',
+            component: () => import('@/views/auth/RegisterView.vue'),
+          },
         ]
 
         export default authRoutes
-      destinationPath: "${destinationFolder}/src/layouts"
+      destinationPath: "${destinationFolder}/src/router"
+
+    - fileType: "Register View"
+      fileName: "RegisterView"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="h-screen flex items-center justify-center bg-base-100">
+            <div class="w-full max-w-md p-8 bg-base-200 rounded-2xl shadow-xl">
+              <div class="text-center mb-6">
+                <AppLogo size="150" />
+              </div>
+
+              <RegisterForm />
+
+              <div class="mt-6 text-center">
+                <hr class="my-4 border-gray-200" />
+                <p class="text-sm text-gray-600">
+                  Already have an account?
+                  <RouterLink to="/auth/login" class="text-primary font-medium hover:underline ml-1">
+                    Login
+                  </RouterLink>
+                </p>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <script setup lang="ts">
+        import RegisterForm from '@/components/auth/RegisterForm.vue'
+        import AppLogo from '@/components/AppLogo.vue'
+        </script>
+      destinationPath: "${destinationFolder}/src/views/auth"
+
+    - fileType: "Profile View"
+      fileName: "ProfileView"
+      extension: "vue"
+      content: |
+        <script setup lang="ts">
+        import { useAuth } from '@/composables/useAuth.ts'
+
+        const auth = useAuth()
+        const user = auth.getCurrentUser()
+        console.log(user)
+        </script>
+
+        <template>
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-semibold text-base-content">Profile View</h2>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="">
+              <label for="userName" class="block text-sm font-medium mb-1">Username</label>
+              <div id="userName" class="input w-full bg-base-100 cursor-default">
+                <span>{{ user.username ?? '' }}</span>
+              </div>
+            </div>
+
+            <div class="">
+              <label for="userName" class="block text-sm font-medium mb-1">Email</label>
+              <div id="userName" class="input w-full bg-base-100 cursor-default">
+                <span>{{ user.email ?? '' }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4">
+            <div>
+              <h3 class="font-semibold">Roles</h3>
+            </div>
+            <table class="table">
+              <thead class="table-header">
+                <tr>
+                  <th>Authority</th>
+                  <th>Authorizations</th>
+                  <th>Restrictions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="a in user.authorities" :key="`role-${a.authority}`">
+                  <td>{{ a.authority }}</td>
+                  <td>*</td>
+                  <td>None</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
+
+        <style scoped></style>
+      destinationPath: "${destinationFolder}/src/views/auth"
+
     - fileType: "Login View"
       fileName: "LoginView"
       extension: "vue"
       content: |
         <template>
-          <div class="h-screen flex items-center justify-center">
-            <div class="w-full max-w-md p-6 bg-base-100 rounded-2xl shadow-lg">
-              <h1 class="text-2xl font-bold text-center mb-6">
+          <div class="h-screen flex items-center justify-center bg-base-100">
+            <div class="w-full max-w-md p-8 bg-base-200 rounded-2xl shadow-xl">
+              <div class="text-center mb-6">
                 <AppLogo size="150" />
-              </h1>
+              </div>
+
               <LoginForm />
+
+              <div class="mt-6 text-center">
+                <hr class="my-4 border-gray-200" />
+                <p class="text-sm text-gray-600">
+                  Don't have an account?
+                  <RouterLink to="/auth/register" class="text-primary font-medium hover:underline ml-1">
+                    Register
+                  </RouterLink>
+                </p>
+              </div>
             </div>
           </div>
         </template>
 
-        <script lang="ts" setup>
-        import LoginForm from '@/auth/LoginForm.vue'
-        import AppLogo from '@/core/AppLogo.vue'
+        <script setup lang="ts">
+        import LoginForm from '@/components/auth/LoginForm.vue'
+        import AppLogo from '@/components/AppLogo.vue'
         </script>
-      destinationPath: "${destinationFolder}/src/views"
+      destinationPath: "${destinationFolder}/src/views/auth"
+
     - fileType: "Auth Composable"
       fileName: "useAuth"
       extension: "ts"
       content: |
         import { useRouter } from 'vue-router'
+        import * as authService from '@/services/AuthService.ts'
+        import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
+        import { computed } from 'vue'
 
         export function useAuth() {
           const router = useRouter()
           const goToLoginView = () => {
             router.push({ path: '/auth/login' })
           }
+          
+          const goToProfileView = () => {
+              router.push({ path: '/profile' })
+          }
+  
+          const loginUser = async (token: string) => {
+            useAuthenticationStore().setToken(token)
+            const responseData = await authService.currentUser()
+            if (responseData.success && responseData.data) {
+              useAuthenticationStore().setCurrentUser(responseData.data)
+            } else {
+              throw new Error('Authentcation succed but the token is invalid')
+            }
+          }
+
+          const isLoggedIn = computed(() => {
+            const token = useAuthenticationStore().getToken()
+            return token != null && token.length > 0
+          })
+
+          const getAuthorizationHeader = () => {
+            if (
+              useAuthenticationStore().getToken() == null ||
+              useAuthenticationStore().getToken().length == 0
+            )
+              return {}
+            return {
+              Authorization: 'Bearer ' + useAuthenticationStore().getToken(),
+            }
+          }
+
+          const getCurrentUser = () => {
+            const user = useAuthenticationStore().getCurrentUser()
+            return user
+          }
+
+          const logout = async () => {
+            const responseData = await authService.logout()
+            if (!responseData.success) {
+              console.error('Logout failed:', responseData.error)
+            }
+            useAuthenticationStore().clear()
+            goToLoginView()
+          }
+
           return {
             goToLoginView,
+            goToProfileView,
+            loginUser,
+            getAuthorizationHeader,
+            getCurrentUser,
+            logout,
+            isLoggedIn,
           }
         }
       destinationPath: "${destinationFolder}/src/composables"
+
     - fileType: "Logout Button"
       fileName: "LogoutButton"
       extension: "vue"
@@ -1499,60 +1828,197 @@
           </GenesisButton>
         </template>
         <script setup lang="ts">
-        import LogoutIcon from '@/core/icons/LogoutIcon.vue'
-        import GenesisButton from '@/core/button/GenesisButton.vue'
+        import LogoutIcon from '@/components/icons/LogoutIcon.vue'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
         import { useAuth } from '@/composables/useAuth.ts'
 
         const auth = useAuth()
         const logout = () => {
-          auth.goToLoginView()
+          auth.logout()
         }
         </script>
-      destinationPath: "${destinationFolder}/src/core/button"
-    - fileType: "User Nav Profile"
-      fileName: "UserNavProfile"
+      destinationPath: "${destinationFolder}/src/components/button"
+
+    - fileType: "Login Validator"
+      fileName: "LoginValidator"
+      extension: "ts"
+      content: |
+        import type { ValidationRule } from '@/models/validators/ValidationRule.ts'
+        import { validators } from '@/utils/validators.ts'
+
+        export class LoginValidator {
+          static usernameRules: ValidationRule[] = [
+            {
+              message: 'Username is required',
+              validate: (value: string) => {
+                return validators.required(value)
+              },
+            },
+            {
+              message: 'Username must be at least 3 characters',
+              validate: (value: string) => {
+                return validators.minLength(value, 3)
+              },
+            },
+            {
+              message: 'Username must be at most 20 characters',
+              validate: (value: string) => {
+                return validators.maxLength(value, 20)
+              },
+            },
+            {
+              message: 'Username can only contain letters, numbers, and underscores',
+              validate: (value: string) => {
+                return validators.pattern(value, /^[a-zA-Z0-9_]+$/)
+              },
+            },
+          ]
+
+          static passwordRules: ValidationRule[] = [
+            {
+              message: 'Password is required',
+              validate: (value: string) => {
+                return validators.required(value)
+              },
+            },
+            {
+              message: 'Password must be at least 4 characters',
+              validate: (value: string) => {
+                return validators.minLength(value, 4)
+              },
+            },
+            {
+              message: 'Password must be at most 100 characters',
+              validate: (value: string) => {
+                return validators.maxLength(value, 100)
+              },
+            },
+          ]
+        }
+      destinationPath: "${destinationFolder}/src/models/validators"
+
+    - fileType: "Auth Service"
+      fileName: "AuthService"
+      extension: "ts"
+      content: |
+        import api from '@/services/api.ts'
+        import type { IUser } from '@/models/auth/UserModel.ts'
+        import { RequestModel } from '@/models/api/RequestModel.ts'
+        import type { DataResponse } from '@/models/api/DataResponseModel.ts'
+        import { User } from '@/models/auth/UserModel.ts'
+        import RestResponse from '@/models/api/RestResponseModel.ts'
+        import type { RegisterDTO } from '@/models/auth/RegisterDTO.ts'
+
+        const BASE_URL = '/auth'
+        const userApi = api<IUser>()
+        const stringApi = api<string>()
+
+        function wrapUser(response: DataResponse<User>) {
+          response.data = new User(response.data)
+          return response
+        }
+
+        export async function currentUser() {
+          const request = new RequestModel(BASE_URL + '/current')
+          const response = await userApi.GET(request.buildRequestUrl([], false))
+          return wrapUser(RestResponse.handleDataResponse(response))
+        }
+
+        export async function login(username: string, password: string) {
+          const request = new RequestModel(BASE_URL + '/login')
+          const response = await stringApi.POST(request.buildRequestUrl([], false), { username, password })
+          return RestResponse.handleDataResponse(response)
+        }
+
+        export async function logout() {
+          const request = new RequestModel(BASE_URL + '/logout')
+          const response = await stringApi.POST(request.buildRequestUrl([], false))
+          return RestResponse.handleDataResponse(response)
+        }
+
+        export async function register(data:RegisterDTO){
+          const request = new RequestModel(BASE_URL + '/register')
+          const response = await stringApi.POST(request.buildRequestUrl([],false),data)
+          return RestResponse.handleDataResponse(response)
+        }
+      destinationPath: "${destinationFolder}/src/services"
+  additionalFiles:
+    - fileType: "Global Store"
+      filename: "useGlobalStore"
+      extension: "ts"
+      content: |
+        import { defineStore } from 'pinia'
+        import { useLanguageStore } from '@/stores/useLanguageStore.ts'
+        import { useThemeStore } from '@/stores/useThemeStore.ts'{{#if useJWT}}
+        import { onMounted } from 'vue'
+        import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
+        import { useAuth } from '@/composables/useAuth.ts'{{/if}}
+
+        export const useGlobalStore = defineStore('global', () => {
+          useLanguageStore()
+          useThemeStore(){{#if useJWT}}
+          const authStore = useAuthenticationStore()
+          onMounted(async () => {
+            const token = authStore.getToken()
+            const auth = useAuth()
+            try {
+              await auth.loginUser(token)
+            } catch (e: unknown) {
+              await auth.logout()
+            }
+          }){{/if}}
+          return {}
+        })
+    - fileType: "Main Layout"
+      fileName: "MainLayout"
       extension: "vue"
       content: |
         <template>
-          <div class="flex items-center justify-between gap-2">
-            <!-- Avatar + Nom -->
-            <div class="flex items-center gap-2">
-              <div
-                class="flex items-center justify-center w-10 h-10 rounded-full bg-base-100 text-base-content font-bold"
-              >
-                {{ initials }}
-              </div>
-              <p class="m-0 font-medium">{{ name }}</p>
-            </div>
-
-            <!-- Bouton Déconnexion -->
-            <div>
-              <LogoutButton />
-            </div>
-          </div>
+          <transition name="fade" mode="out-in">
+            <component :is="currentLayout" :key="layoutState" />
+          </transition>
         </template>
 
         <script setup lang="ts">
         import { computed } from 'vue'
-        import LogoutButton from '@/core/button/LogoutButton.vue'
+        import { useLayoutStore } from '@/stores/useLayoutStore.ts'
 
-        // Props
-        const props = defineProps<{
-          name: string
-        }>()
+        // Import the available layouts
+        import SidebarLayout from '@/layouts/SidebarLayout.vue'
+        import TopbarLayout from '@/layouts/TopbarLayout.vue'
 
-        // Computed: initials
-        const initials = computed(() => {
-          if (!props.name) return ''
-          return props.name
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
+        // Access layout store
+        const layoutStore = useLayoutStore()
+
+        // Reactive state for layout
+        const layoutState = computed(() => layoutStore.currentLayout)
+
+        // Dynamically choose layout component
+        const currentLayout = computed(() => {
+          switch (layoutState.value) {
+            case 'sidebar':
+              return SidebarLayout
+            case 'topbar':
+              return TopbarLayout
+            default:
+              return SidebarLayout
+          }
         })
         </script>
-      destinationPath: "${destinationFolder}/src/core/user"
-  additionalFiles:
+
+        <style scoped>
+        /* Smooth layout switch animation */
+        .fade-enter-active,
+        .fade-leave-active {
+          transition: opacity 0.3s ease;
+        }
+        .fade-enter-from,
+        .fade-leave-to {
+          opacity: 0;
+        }
+        </style>
+      destinationPath: "${destinationFolder}/src/layouts"
+
     - fileType: "Package File"
       fileName: "package"
       extension: "json"
@@ -4885,25 +5351,6 @@
               "integrity": "sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==",
               "dev": true,
               "license": "ISC"
-            },
-            "node_modules/bootstrap": {
-              "version": "5.3.7",
-              "resolved": "https://registry.npmjs.org/bootstrap/-/bootstrap-5.3.7.tgz",
-              "integrity": "sha512-7KgiD8UHjfcPBHEpDNg+zGz8L3LqR3GVwqZiBRFX04a1BCArZOz1r2kjly2HQ0WokqTO0v1nF+QAt8dsW4lKlw==",
-              "funding": [
-                {
-                  "type": "github",
-                  "url": "https://github.com/sponsors/twbs"
-                },
-                {
-                  "type": "opencollective",
-                  "url": "https://opencollective.com/bootstrap"
-                }
-              ],
-              "license": "MIT",
-              "peerDependencies": {
-                "@popperjs/core": "^2.11.8"
-              }
             },
             "node_modules/bootstrap-icons": {
               "version": "1.13.1",
@@ -9477,7 +9924,7 @@
       fileName: "{{removeLine}}"
       extension: "env"
       content: |
-        VITE_APP_API_URL=http://${apiUrl}:${port}/${toKebabCase(projectName)}
+        VITE_APP_API_URL=http://${apiUrl}:${projectPort}/${toKebabCase(projectName)}
         VITE_APP_PORT=${frontendPort}
       destinationPath: "${destinationFolder}"
 
@@ -9490,27 +9937,22 @@
         import router from './router'
         import { createPinia } from 'pinia'
         import '@/assets/styles/main.css'
-        
-        /* import the fontawesome core */
         import { library } from '@fortawesome/fontawesome-svg-core'
-        /* import font awesome icon component */
         import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-        /* import all the icons in Free Solid, Duotone Solid, and Duotone Thin styles */
         import { fas } from '@fortawesome/free-solid-svg-icons'
         import { far } from '@fortawesome/free-regular-svg-icons'
         import { fab } from '@fortawesome/free-brands-svg-icons'
         import i18n from '@/config/i18n.ts'
-        
+
         library.add(fas, far, fab)
         const pinia = createPinia()
         const app = createApp(App)
-        
+
         app.component('font-awesome-icon', FontAwesomeIcon)
-        app.use(i18n)
         app.use(router)
+        app.use(i18n)
         app.use(pinia)
         app.mount('#app')
-
       destinationPath: "${destinationFolder}/src"
 
     - fileType: "Index File"
@@ -9597,7 +10039,7 @@
         </template>
 
         <script setup lang="ts">
-        import LinkIcon from '@/core/icons/LinkIcon.vue'
+        import LinkIcon from '@/components/icons/LinkIcon.vue'
         {{#each entities}}
         import { use${majStart(this.className)}s } from '@/composables/use${majStart(this.className)}s'
         {{/each}}{{removeLine}}
@@ -9618,9 +10060,9 @@
         </template>
 
         <script setup lang="ts">
-        import LogoIcon from '@/core/icons/LogoIcon.vue'
+        import LogoIcon from '@/components/icons/LogoIcon.vue'
         {{#if useLogoLink}}{{removeLine}}
-        {{elseIf hasLogo}}import logo from '@/assets/images${logoUrl}'
+        {{elseIf hasLogo}}import logo from '@/assets/images/${logoUrl}'
         {{else}}import logo from '@/assets/images/logo.png'{{/if}}
 
         defineProps({
@@ -9630,46 +10072,123 @@
           },
         })
         </script>
-      destinationPath: "${destinationFolder}/src/core"
+      destinationPath: "${destinationFolder}/src/components"
 
-    - fileType: "Navbar"
-      fileName: "GenesisNavbar"
-      extension: "vue"
-      content: |
-        <template>
-          <nav class="flex-1 flex flex-col">
-            <ul class="menu flex-1 flex flex-col gap-2 overflow-hidden">
-              <li v-for="section in navigations" :key="section.sectionName">
-                <!-- Section title -->
-                <span
-                  class="menu-title font-semibold text-neutral uppercase opacity-30 flex items-center gap-2"
-                >
-                  <font-awesome-icon v-if="section.icon" :icon="section.icon" />
-                  {{ $t(section.sectionName) }}
-                </span>
-                <!-- Items -->
-                <GenesisNavList :items="section.navChilds" class="" />
-              </li>
-            </ul>
-          </nav>
-        </template>
-
-        <script setup lang="ts">
-        import GenesisNavList from './GenesisNavList.vue'
-        import navigations from '@/config/navigations.ts'
-        </script>
-
-        <style scoped>
-        .menu {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          overflow-y: auto;
-        }
-        </style>
-
-      destinationPath: "${destinationFolder}/src/core/navbar"
-
+#    - fileType: "SideBar"
+#      fileName: "GenesisSideNavbar"
+#      extension: "vue"
+#      content: |
+#        <template>
+#          <aside
+#            class="bg-base-200/40 border-r border-base-content/10 flex flex-col justify-between shadow-sm"
+#          >
+#            <!-- Brand -->
+#            <router-link to="/" class="flex items-center px-6 border-b border-base-content/10">
+#              <AppLogo size="80" />
+#              <h1 class="text-lg font-semibold tracking-wide uppercase truncate">
+#                {{ $t('projectName') }}
+#              </h1>
+#            </router-link>
+#
+#            <div class="flex flex-col flex-1 overflow-y-auto">
+#              <nav class="flex-1 flex flex-col">
+#                <ul class="menu flex-1 flex flex-col w-auto gap-2 overflow-hidden">
+#                  <li>
+#                    <div class="nav-item py-0 flex router-link-container">
+#                      <router-link
+#                        to="/home"
+#                        title="Home"
+#                        class="menu-title opacity-70 flex-1 flex items-center gap-2"
+#                      >
+#                        <HomeIcon /> {{ $t('navbar.home') }}
+#                      </router-link>
+#                    </div>
+#                  </li>
+#                  <li>
+#                    <div class="nav-item py-0 flex router-link-container">
+#                      <router-link
+#                        to="/settings"
+#                        title="Home"
+#                        class="menu-title flex flex-1 opacity-70 items-center gap-2"
+#                      >
+#                        <GearIcon /> {{ $t('navbar.settings') }}
+#                      </router-link>
+#                    </div>
+#                  </li>
+#                  <li v-for="section in navigations" :key="section.sectionName">
+#                    <details>
+#                      <summary class="nav-item py-0">
+#                        <!-- Section title -->
+#                        <span class="menu-title flex opacity-70 items-center gap-2">
+#                      <font-awesome-icon v-if="section.icon" :icon="section.icon" />
+#                      {{ $t(section.sectionName) }}
+#                    </span>
+#                      </summary>
+#                      <!-- Items -->
+#                      <GenesisNavList :items="section.navChilds" class="" />
+#                    </details>
+#                  </li>
+#                </ul>
+#              </nav>
+#            </div>
+#
+#            <!-- Bottom section -->
+#            <div class="border-t border-base-content/10 flex flex-col gap-3">
+#              <!-- User Profile -->
+#              <div class="">
+#                <UserNavProfile
+#                  :name="authStore.getCurrentUsername"
+#                  :dropdown-direction="{ top: true, center: true }"
+#                />
+#              </div>
+#            </div>
+#          </aside>
+#        </template>
+#        <script setup lang="ts">
+#        import GenesisNavList from './GenesisNavList.vue'
+#        import navigations from '@/config/navigations.ts'
+#        import HomeIcon from '@/components/icons/HomeIcon.vue'
+#        import GearIcon from '@/components/icons/GearIcon.vue'
+#        import UserNavProfile from '@/components/user/UserNavProfile.vue'
+#        import AppLogo from '@/components/AppLogo.vue'
+#        import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
+#
+#        const authStore = useAuthenticationStore()
+#        </script>
+#
+#        <style scoped>
+#        .menu {
+#          flex: 1;
+#          display: flex;
+#          flex-direction: column;
+#          overflow-y: auto;
+#        }
+#
+#        .router-link-active {
+#          font-weight: bold;
+#          color: var(--color-primary);
+#          position: relative;
+#          opacity: 1;
+#        }
+#
+#        .router-link-active::before {
+#          content: '';
+#          position: absolute;
+#          top: 0;
+#          left: -7px;
+#          width: 5px;
+#          height: 100%;
+#          background-color: var(--color-primary);
+#          border-radius: 10px;
+#        }
+#
+#        .router-link-container:has(.router-link-active) {
+#          opacity: 1;
+#          transition: background-color 0.25s ease;
+#        }
+#        </style>
+#      destinationPath: "${destinationFolder}/src/components/navbar"
+#
     - fileType: "App-Vue"
       fileName: "App"
       extension: "vue"
@@ -9682,7 +10201,9 @@
         </template>
 
         <script setup lang="ts">
-        import FreezeScreen from '@/core/loading/FreezeScreen.vue'
+        import FreezeScreen from '@/components/loading/FreezeScreen.vue'
+        import { useGlobalStore } from '@/stores/useGlobalStore.ts'
+        useGlobalStore()
         </script>
 
         <style scoped></style>
@@ -9694,7 +10215,8 @@
       content: |
         import { createRouter, createWebHistory } from 'vue-router'
         import routes from './routes'
-        import { useFreezeScreen } from '@/stores/useFreezeScreen'
+        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
+        {{#if useJWT}}import { useAuth } from '@/composables/useAuth.ts'{{/if}}
 
         const router = createRouter({
           history: createWebHistory(import.meta.env.BASE_URL),
@@ -9702,13 +10224,20 @@
         })
 
         router.beforeEach((to, from, next) => {
-          const loading = useFreezeScreen()
+          const loading = useFreezeScreenStore()
           loading.freeze('Loading')
-          next()
+          {{#if useJWT}}
+          const auth = useAuth()
+          const isAuthenticated = auth.isLoggedIn.value // or check auth.user/token
+          if (to.meta.requiresAuth && !isAuthenticated) {
+            next({ name: 'login' })
+          } else {
+            next()
+          }{{else}}next(){{/if}}
         })
 
         router.afterEach(() => {
-          const loading = useFreezeScreen()
+          const loading = useFreezeScreenStore()
           setTimeout(() => loading.unfreeze(), 150) // small delay to prevent flicker
         })
 
@@ -9721,16 +10250,14 @@
       content: |
         import type { RouteRecordRaw } from 'vue-router'
         import HomeView from '@/views/HomeView.vue'
-        import CustomisationView from '@/views/settings/CustomisationView.vue'
-        import SideBarLayout from '@/layouts/SideBarLayout.vue'
-        {{#if useJWT}}
+        import SettingsView from '@/views/settings/SettingsView.vue'
+        import MainLayout from '@/layouts/MainLayout.vue'{{#if useJWT}}
         import AuthLayout from '@/layouts/AuthLayout.vue'
-        {{/if}}
+        import authRoutes from './authRoutes'{{/if}}
         {{#each entities}}
         import ${minStart(this.className)}Routes from './entities/${minStart(this.className)}Routes'
         {{/each}}{{removeLine}}
         
-
         const routes: Array<RouteRecordRaw> = [
           {
             path: '/',
@@ -9738,31 +10265,28 @@
           },
           {
             path: '/',
-            component: SideBarLayout,
+            component: MainLayout,
             children: [
-              { path: 'home', name: 'home', component: HomeView },
-              { path: 'customisation', name: 'customisation', component: CustomisationView },
+              { path: 'home', name: 'home', component: HomeView {{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },
+              { path: 'settings', name: 'settings', component: SettingsView {{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },{{#if useJWT}}
+              {
+                path: 'profile',
+                name: 'profile',
+                component: () => import('@/views/auth/ProfileView.vue'),
+              }, {{/if}}
               {{#each entities}}
               ...${minStart(this.className)}Routes,
               {{/each}}{{removeLine}}
             ],
-          },
-          {{#if useJWT}}
+          },{{#if useJWT}}
           {
             path: '/auth',
             component: AuthLayout,
-            children: [
-              {
-                path: 'login',
-                name: 'login',
-                component: () => import('@/views/auth/LoginView.vue'),
-              },
-            ],
+            children: [...authRoutes]
           },
           {{/if}}
         ]
         export default routes
-
       destinationPath: "${destinationFolder}/src/router"
 
     - fileType: "Navigation Config"
@@ -9770,21 +10294,6 @@
       extension: "ts"
       content: |
         const navigations = [
-          // CORE NAVIGATION
-          {
-            icon: 'fas fa-microchip',
-            sectionName: 'navbar.core',
-            navChilds: [
-              {
-                navLink: "/home",
-                navTitle: "navbar.home",
-              },
-              {
-                navTitle: 'navbar.settings',
-                navLink: '/customisation',
-              },
-            ],
-          },
           // ENTITIES NAVIGATION
           {
             icon: 'fas fa-layer-group',
@@ -9793,15 +10302,15 @@
               {{#each entities}}
               {{#if this.isView = false}}
               {
-                navTitle:"${majStart(this.className)}",
+                navTitle:'entities.${minStart(this.className)}.nav.title',
                 navChilds:[
                   {
-                    navTitle: "${majStart(this.className)} List",
-                    navLink: "/${minStart(this.className)}s",
+                    navTitle: 'entities.${minStart(this.className)}.nav.list',
+                    navLink: '/${minStart(this.className)}s',
                   },
                   {
-                    navTitle: "Create ${majStart(this.className)}",
-                    navLink: "/${minStart(this.className)}s/create",
+                    navTitle: 'entities.${minStart(this.className)}.nav.create',
+                    navLink: '/${minStart(this.className)}s/create',
                   },
                 ]
               },
@@ -9818,8 +10327,8 @@
               {{#each entities}}
               {{#if this.isView}}
               {
-                navTitle:"${majStart(this.className)}",
-                navLink: "/${minStart(this.className)}s",
+                navTitle:'views.${minStart(this.className)}.nav.title',
+                navLink: '/${minStart(this.className)}s',
               },
               {{removeLine}}
               {{/if}}
@@ -9830,6 +10339,29 @@
         export default navigations
       destinationPath: "${destinationFolder}/src/config"
 
+    - fileType: "Layout Store"
+      fileName: "useLayoutStore"
+      extension: "ts"
+      content: |
+        import { defineStore } from 'pinia'
+        import { ref, watch } from 'vue'
+
+        export const useLayoutStore = defineStore('layout', () => {
+          const currentLayout = ref(localStorage.getItem('layoutMode') || 'sidebar')
+
+          function setLayout(mode: 'sidebar' | 'topbar') {
+            currentLayout.value = mode
+            localStorage.setItem('layoutMode', mode)
+          }
+
+          watch(currentLayout, (newVal) => {
+            document.body.dataset.layout = newVal
+          }, { immediate: true })
+
+          return { currentLayout, setLayout }
+        })
+      destinationPath: "${destinationFolder}/src/stores"
+
     - fileType: "i18n Config"
       fileName: "i18n"
       extension: "ts"
@@ -9839,6 +10371,7 @@
         import french from '@/lang/french.ts'
         import { createI18n } from 'vue-i18n'
         const i18n = createI18n({
+          legacy: false,
           {{#each langList}}
           {{#if @first}}
           locale: '${this.locale}',
@@ -9851,7 +10384,7 @@
           },
           datetimeFormats: {
             {{#each langList}}
-            ${this.locale}: ${lowerCase(this.name)}.datetimeFormats,
+            ${this.locale}: ${lowerCase(this.name)}.dateTimeFormats,
             {{/each}}{{removeLine}}
           },
           numberFormats: {
@@ -9868,12 +10401,15 @@
       extension: "css"
       content: |
         @import 'tailwindcss';
-        .menu {
-          width: auto;
+        .menu-title {
+          color: var(--color-base-content);
+        }
+        .nav-item:hover {
+          background-color: var(--color-base-300);
         }
         @plugin "daisyui";
 
-        /* Thème custom Genesis */
+        /* Thème Genesis Light */
         @plugin "daisyui/theme" {
           name: 'genesis-light';
           default: true;
@@ -9885,13 +10421,11 @@
           --color-base-300: oklch(95% 0 0);
           --color-base-content: oklch(21% 0.006 285.885);
 
-          --color-primary: ${primaryColor};
+          --color-primary: #537cc2ff;
           --color-primary-content: oklch(93% 0.034 272.788);
 
           --color-secondary: color-mix(in oklch, var(--color-primary) 15%, white);
-          /* --color-secondary: ${secondaryColor}; */
           --color-secondary-content: var(--color-base-content);
-
           --color-accent: oklch(87% 0.15 154.449);
           --color-accent-content: oklch(38% 0.063 188.416);
 
@@ -9922,7 +10456,7 @@
           --depth: 1;
           --noise: 0;
         }
-
+        /* Thème Genesis Dark */
         @plugin "daisyui/theme" {
           name: 'genesis-dark';
           default: false;
@@ -9931,11 +10465,13 @@
           --color-base-100: #1c1c1c;
           --color-base-200: #2a2a2a;
           --color-base-300: #333;
-          --color-base-content: #f0f0f0;
+          --color-base-content: #fcfcfc;
           --color-primary: #537cc2;
-          --color-primary-content: #f5f7ff;
-          --color-secondary: rgba(107, 142, 214, 0.2);
-          --color-secondary-content: oklch(21% 0.006 285.885);
+          --color-primary-content: oklch(93% 0.034 272.788);
+          /*--color-secondary: rgba(107, 142, 214, 0.2);*/
+          /*--color-secondary: rgba(83, 124, 194, 0.61);*/
+          --color-secondary: color-mix(in oklch, var(--color-primary) 75%, white);
+          --color-secondary-content: oklch(93% 0.034 272.788);
           --color-accent: #57d9a3;
           --color-accent-content: #163229;
           --color-neutral: #d6d6d6;
@@ -9957,89 +10493,1279 @@
           --depth: 1;
           --noise: 0;
         }
-        ${additionalCss}
+        /* Thème Cupcake */
+        @plugin "daisyui/theme" {
+          name: "cupcake";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(97.788% 0.004 56.375);
+          --color-base-200: oklch(93.982% 0.007 61.449);
+          --color-base-300: oklch(91.586% 0.006 53.44);
+          --color-base-content: oklch(23.574% 0.066 313.189);
+          --color-primary: oklch(85% 0.138 181.071);
+          --color-primary-content: oklch(43% 0.078 188.216);
+          --color-secondary: oklch(89% 0.061 343.231);
+          --color-secondary-content: oklch(45% 0.187 3.815);
+          --color-accent: oklch(90% 0.076 70.697);
+          --color-accent-content: oklch(47% 0.157 37.304);
+          --color-neutral: oklch(27% 0.006 286.033);
+          --color-neutral-content: oklch(92% 0.004 286.32);
+          --color-info: oklch(68% 0.169 237.323);
+          --color-info-content: oklch(29% 0.066 243.157);
+          --color-success: oklch(69% 0.17 162.48);
+          --color-success-content: oklch(26% 0.051 172.552);
+          --color-warning: oklch(79% 0.184 86.047);
+          --color-warning-content: oklch(28% 0.066 53.813);
+          --color-error: oklch(64% 0.246 16.439);
+          --color-error-content: oklch(27% 0.105 12.094);
+          --radius-selector: 1rem;
+          --radius-field: 2rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 2px;
+          --depth: 1;
+          --noise: 0;
+        }
+        /* Thème Bumblebee */
+        @plugin "daisyui/theme" {
+          name: "bumblebee";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(100% 0 0);
+          --color-base-200: oklch(97% 0 0);
+          --color-base-300: oklch(92% 0 0);
+          --color-base-content: oklch(20% 0 0);
+          --color-primary: oklch(85% 0.199 91.936);
+          --color-primary-content: oklch(42% 0.095 57.708);
+          --color-secondary: oklch(75% 0.183 55.934);
+          --color-secondary-content: oklch(40% 0.123 38.172);
+          --color-accent: oklch(0% 0 0);
+          --color-accent-content: oklch(100% 0 0);
+          --color-neutral: oklch(37% 0.01 67.558);
+          --color-neutral-content: oklch(92% 0.003 48.717);
+          --color-info: oklch(74% 0.16 232.661);
+          --color-info-content: oklch(39% 0.09 240.876);
+          --color-success: oklch(76% 0.177 163.223);
+          --color-success-content: oklch(37% 0.077 168.94);
+          --color-warning: oklch(82% 0.189 84.429);
+          --color-warning-content: oklch(41% 0.112 45.904);
+          --color-error: oklch(70% 0.191 22.216);
+          --color-error-content: oklch(39% 0.141 25.723);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 1;
+          --noise: 0;
+        }
+        /* Thème Emarld */
+        @plugin "daisyui/theme" {
+          name: "emerald";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(100% 0 0);
+          --color-base-200: oklch(93% 0 0);
+          --color-base-300: oklch(86% 0 0);
+          --color-base-content: oklch(35.519% 0.032 262.988);
+          --color-primary: oklch(76.662% 0.135 153.45);
+          --color-primary-content: oklch(33.387% 0.04 162.24);
+          --color-secondary: oklch(61.302% 0.202 261.294);
+          --color-secondary-content: oklch(100% 0 0);
+          --color-accent: oklch(72.772% 0.149 33.2);
+          --color-accent-content: oklch(0% 0 0);
+          --color-neutral: oklch(35.519% 0.032 262.988);
+          --color-neutral-content: oklch(98.462% 0.001 247.838);
+          --color-info: oklch(72.06% 0.191 231.6);
+          --color-info-content: oklch(0% 0 0);
+          --color-success: oklch(64.8% 0.15 160);
+          --color-success-content: oklch(0% 0 0);
+          --color-warning: oklch(84.71% 0.199 83.87);
+          --color-warning-content: oklch(0% 0 0);
+          --color-error: oklch(71.76% 0.221 22.18);
+          --color-error-content: oklch(0% 0 0);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "corporate";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(100% 0 0);
+          --color-base-200: oklch(93% 0 0);
+          --color-base-300: oklch(86% 0 0);
+          --color-base-content: oklch(22.389% 0.031 278.072);
+          --color-primary: oklch(58% 0.158 241.966);
+          --color-primary-content: oklch(100% 0 0);
+          --color-secondary: oklch(55% 0.046 257.417);
+          --color-secondary-content: oklch(100% 0 0);
+          --color-accent: oklch(60% 0.118 184.704);
+          --color-accent-content: oklch(100% 0 0);
+          --color-neutral: oklch(0% 0 0);
+          --color-neutral-content: oklch(100% 0 0);
+          --color-info: oklch(60% 0.126 221.723);
+          --color-info-content: oklch(100% 0 0);
+          --color-success: oklch(62% 0.194 149.214);
+          --color-success-content: oklch(100% 0 0);
+          --color-warning: oklch(85% 0.199 91.936);
+          --color-warning-content: oklch(0% 0 0);
+          --color-error: oklch(70% 0.191 22.216);
+          --color-error-content: oklch(0% 0 0);
+          --radius-selector: 0.25rem;
+          --radius-field: 0.25rem;
+          --radius-box: 0.25rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "synthwave";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(15% 0.09 281.288);
+          --color-base-200: oklch(20% 0.09 281.288);
+          --color-base-300: oklch(25% 0.09 281.288);
+          --color-base-content: oklch(78% 0.115 274.713);
+          --color-primary: oklch(71% 0.202 349.761);
+          --color-primary-content: oklch(28% 0.109 3.907);
+          --color-secondary: oklch(82% 0.111 230.318);
+          --color-secondary-content: oklch(29% 0.066 243.157);
+          --color-accent: oklch(75% 0.183 55.934);
+          --color-accent-content: oklch(26% 0.079 36.259);
+          --color-neutral: oklch(45% 0.24 277.023);
+          --color-neutral-content: oklch(87% 0.065 274.039);
+          --color-info: oklch(74% 0.16 232.661);
+          --color-info-content: oklch(29% 0.066 243.157);
+          --color-success: oklch(77% 0.152 181.912);
+          --color-success-content: oklch(27% 0.046 192.524);
+          --color-warning: oklch(90% 0.182 98.111);
+          --color-warning-content: oklch(42% 0.095 57.708);
+          --color-error: oklch(73.7% 0.121 32.639);
+          --color-error-content: oklch(23.501% 0.096 290.329);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "retro";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(91.637% 0.034 90.515);
+          --color-base-200: oklch(88.272% 0.049 91.774);
+          --color-base-300: oklch(84.133% 0.065 90.856);
+          --color-base-content: oklch(41% 0.112 45.904);
+          --color-primary: oklch(80% 0.114 19.571);
+          --color-primary-content: oklch(39% 0.141 25.723);
+          --color-secondary: oklch(92% 0.084 155.995);
+          --color-secondary-content: oklch(44% 0.119 151.328);
+          --color-accent: oklch(68% 0.162 75.834);
+          --color-accent-content: oklch(41% 0.112 45.904);
+          --color-neutral: oklch(44% 0.011 73.639);
+          --color-neutral-content: oklch(86% 0.005 56.366);
+          --color-info: oklch(58% 0.158 241.966);
+          --color-info-content: oklch(96% 0.059 95.617);
+          --color-success: oklch(51% 0.096 186.391);
+          --color-success-content: oklch(96% 0.059 95.617);
+          --color-warning: oklch(64% 0.222 41.116);
+          --color-warning-content: oklch(96% 0.059 95.617);
+          --color-error: oklch(70% 0.191 22.216);
+          --color-error-content: oklch(40% 0.123 38.172);
+          --radius-selector: 0.25rem;
+          --radius-field: 0.25rem;
+          --radius-box: 0.5rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "cyberpunk";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(94.51% 0.179 104.32);
+          --color-base-200: oklch(91.51% 0.179 104.32);
+          --color-base-300: oklch(85.51% 0.179 104.32);
+          --color-base-content: oklch(0% 0 0);
+          --color-primary: oklch(74.22% 0.209 6.35);
+          --color-primary-content: oklch(14.844% 0.041 6.35);
+          --color-secondary: oklch(83.33% 0.184 204.72);
+          --color-secondary-content: oklch(16.666% 0.036 204.72);
+          --color-accent: oklch(71.86% 0.217 310.43);
+          --color-accent-content: oklch(14.372% 0.043 310.43);
+          --color-neutral: oklch(23.04% 0.065 269.31);
+          --color-neutral-content: oklch(94.51% 0.179 104.32);
+          --color-info: oklch(72.06% 0.191 231.6);
+          --color-info-content: oklch(0% 0 0);
+          --color-success: oklch(64.8% 0.15 160);
+          --color-success-content: oklch(0% 0 0);
+          --color-warning: oklch(84.71% 0.199 83.87);
+          --color-warning-content: oklch(0% 0 0);
+          --color-error: oklch(71.76% 0.221 22.18);
+          --color-error-content: oklch(0% 0 0);
+          --radius-selector: 0rem;
+          --radius-field: 0rem;
+          --radius-box: 0rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "valentine";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(97% 0.014 343.198);
+          --color-base-200: oklch(94% 0.028 342.258);
+          --color-base-300: oklch(89% 0.061 343.231);
+          --color-base-content: oklch(52% 0.223 3.958);
+          --color-primary: oklch(65% 0.241 354.308);
+          --color-primary-content: oklch(100% 0 0);
+          --color-secondary: oklch(62% 0.265 303.9);
+          --color-secondary-content: oklch(97% 0.014 308.299);
+          --color-accent: oklch(82% 0.111 230.318);
+          --color-accent-content: oklch(39% 0.09 240.876);
+          --color-neutral: oklch(40% 0.153 2.432);
+          --color-neutral-content: oklch(89% 0.061 343.231);
+          --color-info: oklch(86% 0.127 207.078);
+          --color-info-content: oklch(44% 0.11 240.79);
+          --color-success: oklch(84% 0.143 164.978);
+          --color-success-content: oklch(43% 0.095 166.913);
+          --color-warning: oklch(75% 0.183 55.934);
+          --color-warning-content: oklch(26% 0.079 36.259);
+          --color-error: oklch(63% 0.237 25.331);
+          --color-error-content: oklch(97% 0.013 17.38);
+          --radius-selector: 1rem;
+          --radius-field: 2rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "halloween";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(21% 0.006 56.043);
+          --color-base-200: oklch(14% 0.004 49.25);
+          --color-base-300: oklch(0% 0 0);
+          --color-base-content: oklch(84.955% 0 0);
+          --color-primary: oklch(77.48% 0.204 60.62);
+          --color-primary-content: oklch(19.693% 0.004 196.779);
+          --color-secondary: oklch(45.98% 0.248 305.03);
+          --color-secondary-content: oklch(89.196% 0.049 305.03);
+          --color-accent: oklch(64.8% 0.223 136.073);
+          --color-accent-content: oklch(0% 0 0);
+          --color-neutral: oklch(24.371% 0.046 65.681);
+          --color-neutral-content: oklch(84.874% 0.009 65.681);
+          --color-info: oklch(54.615% 0.215 262.88);
+          --color-info-content: oklch(90.923% 0.043 262.88);
+          --color-success: oklch(62.705% 0.169 149.213);
+          --color-success-content: oklch(12.541% 0.033 149.213);
+          --color-warning: oklch(66.584% 0.157 58.318);
+          --color-warning-content: oklch(13.316% 0.031 58.318);
+          --color-error: oklch(65.72% 0.199 27.33);
+          --color-error-content: oklch(13.144% 0.039 27.33);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 1;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "garden";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(92.951% 0.002 17.197);
+          --color-base-200: oklch(86.445% 0.002 17.197);
+          --color-base-300: oklch(79.938% 0.001 17.197);
+          --color-base-content: oklch(16.961% 0.001 17.32);
+          --color-primary: oklch(62.45% 0.278 3.836);
+          --color-primary-content: oklch(100% 0 0);
+          --color-secondary: oklch(48.495% 0.11 355.095);
+          --color-secondary-content: oklch(89.699% 0.022 355.095);
+          --color-accent: oklch(56.273% 0.054 154.39);
+          --color-accent-content: oklch(100% 0 0);
+          --color-neutral: oklch(24.155% 0.049 89.07);
+          --color-neutral-content: oklch(92.951% 0.002 17.197);
+          --color-info: oklch(72.06% 0.191 231.6);
+          --color-info-content: oklch(0% 0 0);
+          --color-success: oklch(64.8% 0.15 160);
+          --color-success-content: oklch(0% 0 0);
+          --color-warning: oklch(84.71% 0.199 83.87);
+          --color-warning-content: oklch(0% 0 0);
+          --color-error: oklch(71.76% 0.221 22.18);
+          --color-error-content: oklch(0% 0 0);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "forest";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(20.84% 0.008 17.911);
+          --color-base-200: oklch(18.522% 0.007 17.911);
+          --color-base-300: oklch(16.203% 0.007 17.911);
+          --color-base-content: oklch(83.768% 0.001 17.911);
+          --color-primary: oklch(68.628% 0.185 148.958);
+          --color-primary-content: oklch(0% 0 0);
+          --color-secondary: oklch(69.776% 0.135 168.327);
+          --color-secondary-content: oklch(13.955% 0.027 168.327);
+          --color-accent: oklch(70.628% 0.119 185.713);
+          --color-accent-content: oklch(14.125% 0.023 185.713);
+          --color-neutral: oklch(30.698% 0.039 171.364);
+          --color-neutral-content: oklch(86.139% 0.007 171.364);
+          --color-info: oklch(72.06% 0.191 231.6);
+          --color-info-content: oklch(0% 0 0);
+          --color-success: oklch(64.8% 0.15 160);
+          --color-success-content: oklch(0% 0 0);
+          --color-warning: oklch(84.71% 0.199 83.87);
+          --color-warning-content: oklch(0% 0 0);
+          --color-error: oklch(71.76% 0.221 22.18);
+          --color-error-content: oklch(0% 0 0);
+          --radius-selector: 1rem;
+          --radius-field: 2rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "aqua";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(37% 0.146 265.522);
+          --color-base-200: oklch(28% 0.091 267.935);
+          --color-base-300: oklch(22% 0.091 267.935);
+          --color-base-content: oklch(90% 0.058 230.902);
+          --color-primary: oklch(85.661% 0.144 198.645);
+          --color-primary-content: oklch(40.124% 0.068 197.603);
+          --color-secondary: oklch(60.682% 0.108 309.782);
+          --color-secondary-content: oklch(96% 0.016 293.756);
+          --color-accent: oklch(93.426% 0.102 94.555);
+          --color-accent-content: oklch(18.685% 0.02 94.555);
+          --color-neutral: oklch(27% 0.146 265.522);
+          --color-neutral-content: oklch(80% 0.146 265.522);
+          --color-info: oklch(54.615% 0.215 262.88);
+          --color-info-content: oklch(90.923% 0.043 262.88);
+          --color-success: oklch(62.705% 0.169 149.213);
+          --color-success-content: oklch(12.541% 0.033 149.213);
+          --color-warning: oklch(66.584% 0.157 58.318);
+          --color-warning-content: oklch(27% 0.077 45.635);
+          --color-error: oklch(73.95% 0.19 27.33);
+          --color-error-content: oklch(14.79% 0.038 27.33);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 1;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "lofi";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(100% 0 0);
+          --color-base-200: oklch(97% 0 0);
+          --color-base-300: oklch(94% 0 0);
+          --color-base-content: oklch(0% 0 0);
+          --color-primary: oklch(15.906% 0 0);
+          --color-primary-content: oklch(100% 0 0);
+          --color-secondary: oklch(21.455% 0.001 17.278);
+          --color-secondary-content: oklch(100% 0 0);
+          --color-accent: oklch(26.861% 0 0);
+          --color-accent-content: oklch(100% 0 0);
+          --color-neutral: oklch(0% 0 0);
+          --color-neutral-content: oklch(100% 0 0);
+          --color-info: oklch(79.54% 0.103 205.9);
+          --color-info-content: oklch(15.908% 0.02 205.9);
+          --color-success: oklch(90.13% 0.153 164.14);
+          --color-success-content: oklch(18.026% 0.03 164.14);
+          --color-warning: oklch(88.37% 0.135 79.94);
+          --color-warning-content: oklch(17.674% 0.027 79.94);
+          --color-error: oklch(78.66% 0.15 28.47);
+          --color-error-content: oklch(15.732% 0.03 28.47);
+          --radius-selector: 2rem;
+          --radius-field: 0.25rem;
+          --radius-box: 0.5rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "pastel";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(100% 0 0);
+          --color-base-200: oklch(98.462% 0.001 247.838);
+          --color-base-300: oklch(92.462% 0.001 247.838);
+          --color-base-content: oklch(20% 0 0);
+          --color-primary: oklch(90% 0.063 306.703);
+          --color-primary-content: oklch(49% 0.265 301.924);
+          --color-secondary: oklch(89% 0.058 10.001);
+          --color-secondary-content: oklch(51% 0.222 16.935);
+          --color-accent: oklch(90% 0.093 164.15);
+          --color-accent-content: oklch(50% 0.118 165.612);
+          --color-neutral: oklch(55% 0.046 257.417);
+          --color-neutral-content: oklch(92% 0.013 255.508);
+          --color-info: oklch(86% 0.127 207.078);
+          --color-info-content: oklch(52% 0.105 223.128);
+          --color-success: oklch(87% 0.15 154.449);
+          --color-success-content: oklch(52% 0.154 150.069);
+          --color-warning: oklch(83% 0.128 66.29);
+          --color-warning-content: oklch(55% 0.195 38.402);
+          --color-error: oklch(80% 0.114 19.571);
+          --color-error-content: oklch(50% 0.213 27.518);
+          --radius-selector: 1rem;
+          --radius-field: 2rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 2px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "fantasy";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(100% 0 0);
+          --color-base-200: oklch(93% 0 0);
+          --color-base-300: oklch(86% 0 0);
+          --color-base-content: oklch(27.807% 0.029 256.847);
+          --color-primary: oklch(37.45% 0.189 325.02);
+          --color-primary-content: oklch(87.49% 0.037 325.02);
+          --color-secondary: oklch(53.92% 0.162 241.36);
+          --color-secondary-content: oklch(90.784% 0.032 241.36);
+          --color-accent: oklch(75.98% 0.204 56.72);
+          --color-accent-content: oklch(15.196% 0.04 56.72);
+          --color-neutral: oklch(27.807% 0.029 256.847);
+          --color-neutral-content: oklch(85.561% 0.005 256.847);
+          --color-info: oklch(72.06% 0.191 231.6);
+          --color-info-content: oklch(0% 0 0);
+          --color-success: oklch(64.8% 0.15 160);
+          --color-success-content: oklch(0% 0 0);
+          --color-warning: oklch(84.71% 0.199 83.87);
+          --color-warning-content: oklch(0% 0 0);
+          --color-error: oklch(71.76% 0.221 22.18);
+          --color-error-content: oklch(0% 0 0);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 1;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "wireframe";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(100% 0 0);
+          --color-base-200: oklch(97% 0 0);
+          --color-base-300: oklch(94% 0 0);
+          --color-base-content: oklch(20% 0 0);
+          --color-primary: oklch(87% 0 0);
+          --color-primary-content: oklch(26% 0 0);
+          --color-secondary: oklch(87% 0 0);
+          --color-secondary-content: oklch(26% 0 0);
+          --color-accent: oklch(87% 0 0);
+          --color-accent-content: oklch(26% 0 0);
+          --color-neutral: oklch(87% 0 0);
+          --color-neutral-content: oklch(26% 0 0);
+          --color-info: oklch(44% 0.11 240.79);
+          --color-info-content: oklch(90% 0.058 230.902);
+          --color-success: oklch(43% 0.095 166.913);
+          --color-success-content: oklch(90% 0.093 164.15);
+          --color-warning: oklch(47% 0.137 46.201);
+          --color-warning-content: oklch(92% 0.12 95.746);
+          --color-error: oklch(44% 0.177 26.899);
+          --color-error-content: oklch(88% 0.062 18.334);
+          --radius-selector: 0rem;
+          --radius-field: 0.25rem;
+          --radius-box: 0.25rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "black";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(0% 0 0);
+          --color-base-200: oklch(19% 0 0);
+          --color-base-300: oklch(22% 0 0);
+          --color-base-content: oklch(87.609% 0 0);
+          --color-primary: oklch(35% 0 0);
+          --color-primary-content: oklch(100% 0 0);
+          --color-secondary: oklch(35% 0 0);
+          --color-secondary-content: oklch(100% 0 0);
+          --color-accent: oklch(35% 0 0);
+          --color-accent-content: oklch(100% 0 0);
+          --color-neutral: oklch(35% 0 0);
+          --color-neutral-content: oklch(100% 0 0);
+          --color-info: oklch(45.201% 0.313 264.052);
+          --color-info-content: oklch(89.04% 0.062 264.052);
+          --color-success: oklch(51.975% 0.176 142.495);
+          --color-success-content: oklch(90.395% 0.035 142.495);
+          --color-warning: oklch(96.798% 0.211 109.769);
+          --color-warning-content: oklch(19.359% 0.042 109.769);
+          --color-error: oklch(62.795% 0.257 29.233);
+          --color-error-content: oklch(12.559% 0.051 29.233);
+          --radius-selector: 0rem;
+          --radius-field: 0rem;
+          --radius-box: 0rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "luxury";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(14.076% 0.004 285.822);
+          --color-base-200: oklch(20.219% 0.004 308.229);
+          --color-base-300: oklch(23.219% 0.004 308.229);
+          --color-base-content: oklch(75.687% 0.123 76.89);
+          --color-primary: oklch(100% 0 0);
+          --color-primary-content: oklch(20% 0 0);
+          --color-secondary: oklch(27.581% 0.064 261.069);
+          --color-secondary-content: oklch(85.516% 0.012 261.069);
+          --color-accent: oklch(36.674% 0.051 338.825);
+          --color-accent-content: oklch(87.334% 0.01 338.825);
+          --color-neutral: oklch(24.27% 0.057 59.825);
+          --color-neutral-content: oklch(93.203% 0.089 90.861);
+          --color-info: oklch(79.061% 0.121 237.133);
+          --color-info-content: oklch(15.812% 0.024 237.133);
+          --color-success: oklch(78.119% 0.192 132.154);
+          --color-success-content: oklch(15.623% 0.038 132.154);
+          --color-warning: oklch(86.127% 0.136 102.891);
+          --color-warning-content: oklch(17.225% 0.027 102.891);
+          --color-error: oklch(71.753% 0.176 22.568);
+          --color-error-content: oklch(14.35% 0.035 22.568);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 1;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "dracula";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(28.822% 0.022 277.508);
+          --color-base-200: oklch(26.805% 0.02 277.508);
+          --color-base-300: oklch(24.787% 0.019 277.508);
+          --color-base-content: oklch(97.747% 0.007 106.545);
+          --color-primary: oklch(75.461% 0.183 346.812);
+          --color-primary-content: oklch(15.092% 0.036 346.812);
+          --color-secondary: oklch(74.202% 0.148 301.883);
+          --color-secondary-content: oklch(14.84% 0.029 301.883);
+          --color-accent: oklch(83.392% 0.124 66.558);
+          --color-accent-content: oklch(16.678% 0.024 66.558);
+          --color-neutral: oklch(39.445% 0.032 275.524);
+          --color-neutral-content: oklch(87.889% 0.006 275.524);
+          --color-info: oklch(88.263% 0.093 212.846);
+          --color-info-content: oklch(17.652% 0.018 212.846);
+          --color-success: oklch(87.099% 0.219 148.024);
+          --color-success-content: oklch(17.419% 0.043 148.024);
+          --color-warning: oklch(95.533% 0.134 112.757);
+          --color-warning-content: oklch(19.106% 0.026 112.757);
+          --color-error: oklch(68.22% 0.206 24.43);
+          --color-error-content: oklch(13.644% 0.041 24.43);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "cmyk";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(100% 0 0);
+          --color-base-200: oklch(95% 0 0);
+          --color-base-300: oklch(90% 0 0);
+          --color-base-content: oklch(20% 0 0);
+          --color-primary: oklch(71.772% 0.133 239.443);
+          --color-primary-content: oklch(14.354% 0.026 239.443);
+          --color-secondary: oklch(64.476% 0.202 359.339);
+          --color-secondary-content: oklch(12.895% 0.04 359.339);
+          --color-accent: oklch(94.228% 0.189 105.306);
+          --color-accent-content: oklch(18.845% 0.037 105.306);
+          --color-neutral: oklch(21.778% 0 0);
+          --color-neutral-content: oklch(84.355% 0 0);
+          --color-info: oklch(68.475% 0.094 217.284);
+          --color-info-content: oklch(13.695% 0.018 217.284);
+          --color-success: oklch(46.949% 0.162 321.406);
+          --color-success-content: oklch(89.389% 0.032 321.406);
+          --color-warning: oklch(71.236% 0.159 52.023);
+          --color-warning-content: oklch(14.247% 0.031 52.023);
+          --color-error: oklch(62.013% 0.208 28.717);
+          --color-error-content: oklch(12.402% 0.041 28.717);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "autumn";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(95.814% 0 0);
+          --color-base-200: oklch(89.107% 0 0);
+          --color-base-300: oklch(82.4% 0 0);
+          --color-base-content: oklch(19.162% 0 0);
+          --color-primary: oklch(40.723% 0.161 17.53);
+          --color-primary-content: oklch(88.144% 0.032 17.53);
+          --color-secondary: oklch(61.676% 0.169 23.865);
+          --color-secondary-content: oklch(12.335% 0.033 23.865);
+          --color-accent: oklch(73.425% 0.094 60.729);
+          --color-accent-content: oklch(14.685% 0.018 60.729);
+          --color-neutral: oklch(54.367% 0.037 51.902);
+          --color-neutral-content: oklch(90.873% 0.007 51.902);
+          --color-info: oklch(69.224% 0.097 207.284);
+          --color-info-content: oklch(13.844% 0.019 207.284);
+          --color-success: oklch(60.995% 0.08 174.616);
+          --color-success-content: oklch(12.199% 0.016 174.616);
+          --color-warning: oklch(70.081% 0.164 56.844);
+          --color-warning-content: oklch(14.016% 0.032 56.844);
+          --color-error: oklch(53.07% 0.241 24.16);
+          --color-error-content: oklch(90.614% 0.048 24.16);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 1;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "business";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(24.353% 0 0);
+          --color-base-200: oklch(22.648% 0 0);
+          --color-base-300: oklch(20.944% 0 0);
+          --color-base-content: oklch(84.87% 0 0);
+          --color-primary: oklch(41.703% 0.099 251.473);
+          --color-primary-content: oklch(88.34% 0.019 251.473);
+          --color-secondary: oklch(64.092% 0.027 229.389);
+          --color-secondary-content: oklch(12.818% 0.005 229.389);
+          --color-accent: oklch(67.271% 0.167 35.791);
+          --color-accent-content: oklch(13.454% 0.033 35.791);
+          --color-neutral: oklch(27.441% 0.013 253.041);
+          --color-neutral-content: oklch(85.488% 0.002 253.041);
+          --color-info: oklch(62.616% 0.143 240.033);
+          --color-info-content: oklch(12.523% 0.028 240.033);
+          --color-success: oklch(70.226% 0.094 156.596);
+          --color-success-content: oklch(14.045% 0.018 156.596);
+          --color-warning: oklch(77.482% 0.115 81.519);
+          --color-warning-content: oklch(15.496% 0.023 81.519);
+          --color-error: oklch(51.61% 0.146 29.674);
+          --color-error-content: oklch(90.322% 0.029 29.674);
+          --radius-selector: 0rem;
+          --radius-field: 0.25rem;
+          --radius-box: 0.25rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "acid";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(98% 0 0);
+          --color-base-200: oklch(95% 0 0);
+          --color-base-300: oklch(91% 0 0);
+          --color-base-content: oklch(0% 0 0);
+          --color-primary: oklch(71.9% 0.357 330.759);
+          --color-primary-content: oklch(14.38% 0.071 330.759);
+          --color-secondary: oklch(73.37% 0.224 48.25);
+          --color-secondary-content: oklch(14.674% 0.044 48.25);
+          --color-accent: oklch(92.78% 0.264 122.962);
+          --color-accent-content: oklch(18.556% 0.052 122.962);
+          --color-neutral: oklch(21.31% 0.128 278.68);
+          --color-neutral-content: oklch(84.262% 0.025 278.68);
+          --color-info: oklch(60.72% 0.227 252.05);
+          --color-info-content: oklch(12.144% 0.045 252.05);
+          --color-success: oklch(85.72% 0.266 158.53);
+          --color-success-content: oklch(17.144% 0.053 158.53);
+          --color-warning: oklch(91.01% 0.212 100.5);
+          --color-warning-content: oklch(18.202% 0.042 100.5);
+          --color-error: oklch(64.84% 0.293 29.349);
+          --color-error-content: oklch(12.968% 0.058 29.349);
+          --radius-selector: 1rem;
+          --radius-field: 1rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 1;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "lemonade";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(98.71% 0.02 123.72);
+          --color-base-200: oklch(91.8% 0.018 123.72);
+          --color-base-300: oklch(84.89% 0.017 123.72);
+          --color-base-content: oklch(19.742% 0.004 123.72);
+          --color-primary: oklch(58.92% 0.199 134.6);
+          --color-primary-content: oklch(11.784% 0.039 134.6);
+          --color-secondary: oklch(77.75% 0.196 111.09);
+          --color-secondary-content: oklch(15.55% 0.039 111.09);
+          --color-accent: oklch(85.39% 0.201 100.73);
+          --color-accent-content: oklch(17.078% 0.04 100.73);
+          --color-neutral: oklch(30.98% 0.075 108.6);
+          --color-neutral-content: oklch(86.196% 0.015 108.6);
+          --color-info: oklch(86.19% 0.047 224.14);
+          --color-info-content: oklch(17.238% 0.009 224.14);
+          --color-success: oklch(86.19% 0.047 157.85);
+          --color-success-content: oklch(17.238% 0.009 157.85);
+          --color-warning: oklch(86.19% 0.047 102.15);
+          --color-warning-content: oklch(17.238% 0.009 102.15);
+          --color-error: oklch(86.19% 0.047 25.85);
+          --color-error-content: oklch(17.238% 0.009 25.85);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "night";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(20.768% 0.039 265.754);
+          --color-base-200: oklch(19.314% 0.037 265.754);
+          --color-base-300: oklch(17.86% 0.034 265.754);
+          --color-base-content: oklch(84.153% 0.007 265.754);
+          --color-primary: oklch(75.351% 0.138 232.661);
+          --color-primary-content: oklch(15.07% 0.027 232.661);
+          --color-secondary: oklch(68.011% 0.158 276.934);
+          --color-secondary-content: oklch(13.602% 0.031 276.934);
+          --color-accent: oklch(72.36% 0.176 350.048);
+          --color-accent-content: oklch(14.472% 0.035 350.048);
+          --color-neutral: oklch(27.949% 0.036 260.03);
+          --color-neutral-content: oklch(85.589% 0.007 260.03);
+          --color-info: oklch(68.455% 0.148 237.251);
+          --color-info-content: oklch(0% 0 0);
+          --color-success: oklch(78.452% 0.132 181.911);
+          --color-success-content: oklch(15.69% 0.026 181.911);
+          --color-warning: oklch(83.242% 0.139 82.95);
+          --color-warning-content: oklch(16.648% 0.027 82.95);
+          --color-error: oklch(71.785% 0.17 13.118);
+          --color-error-content: oklch(14.357% 0.034 13.118);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "coffee";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(24% 0.023 329.708);
+          --color-base-200: oklch(21% 0.021 329.708);
+          --color-base-300: oklch(16% 0.019 329.708);
+          --color-base-content: oklch(72.354% 0.092 79.129);
+          --color-primary: oklch(71.996% 0.123 62.756);
+          --color-primary-content: oklch(14.399% 0.024 62.756);
+          --color-secondary: oklch(34.465% 0.029 199.194);
+          --color-secondary-content: oklch(86.893% 0.005 199.194);
+          --color-accent: oklch(42.621% 0.074 224.389);
+          --color-accent-content: oklch(88.524% 0.014 224.389);
+          --color-neutral: oklch(16.51% 0.015 326.261);
+          --color-neutral-content: oklch(83.302% 0.003 326.261);
+          --color-info: oklch(79.49% 0.063 184.558);
+          --color-info-content: oklch(15.898% 0.012 184.558);
+          --color-success: oklch(74.722% 0.072 131.116);
+          --color-success-content: oklch(14.944% 0.014 131.116);
+          --color-warning: oklch(88.15% 0.14 87.722);
+          --color-warning-content: oklch(17.63% 0.028 87.722);
+          --color-error: oklch(77.318% 0.128 31.871);
+          --color-error-content: oklch(15.463% 0.025 31.871);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "winter";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(100% 0 0);
+          --color-base-200: oklch(97.466% 0.011 259.822);
+          --color-base-300: oklch(93.268% 0.016 262.751);
+          --color-base-content: oklch(41.886% 0.053 255.824);
+          --color-primary: oklch(56.86% 0.255 257.57);
+          --color-primary-content: oklch(91.372% 0.051 257.57);
+          --color-secondary: oklch(42.551% 0.161 282.339);
+          --color-secondary-content: oklch(88.51% 0.032 282.339);
+          --color-accent: oklch(59.939% 0.191 335.171);
+          --color-accent-content: oklch(11.988% 0.038 335.171);
+          --color-neutral: oklch(19.616% 0.063 257.651);
+          --color-neutral-content: oklch(83.923% 0.012 257.651);
+          --color-info: oklch(88.127% 0.085 214.515);
+          --color-info-content: oklch(17.625% 0.017 214.515);
+          --color-success: oklch(80.494% 0.077 197.823);
+          --color-success-content: oklch(16.098% 0.015 197.823);
+          --color-warning: oklch(89.172% 0.045 71.47);
+          --color-warning-content: oklch(17.834% 0.009 71.47);
+          --color-error: oklch(73.092% 0.11 20.076);
+          --color-error-content: oklch(14.618% 0.022 20.076);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "dim";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(30.857% 0.023 264.149);
+          --color-base-200: oklch(28.036% 0.019 264.182);
+          --color-base-300: oklch(26.346% 0.018 262.177);
+          --color-base-content: oklch(82.901% 0.031 222.959);
+          --color-primary: oklch(86.133% 0.141 139.549);
+          --color-primary-content: oklch(17.226% 0.028 139.549);
+          --color-secondary: oklch(73.375% 0.165 35.353);
+          --color-secondary-content: oklch(14.675% 0.033 35.353);
+          --color-accent: oklch(74.229% 0.133 311.379);
+          --color-accent-content: oklch(14.845% 0.026 311.379);
+          --color-neutral: oklch(24.731% 0.02 264.094);
+          --color-neutral-content: oklch(82.901% 0.031 222.959);
+          --color-info: oklch(86.078% 0.142 206.182);
+          --color-info-content: oklch(17.215% 0.028 206.182);
+          --color-success: oklch(86.171% 0.142 166.534);
+          --color-success-content: oklch(17.234% 0.028 166.534);
+          --color-warning: oklch(86.163% 0.142 94.818);
+          --color-warning-content: oklch(17.232% 0.028 94.818);
+          --color-error: oklch(82.418% 0.099 33.756);
+          --color-error-content: oklch(16.483% 0.019 33.756);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "nord";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(95.127% 0.007 260.731);
+          --color-base-200: oklch(93.299% 0.01 261.788);
+          --color-base-300: oklch(89.925% 0.016 262.749);
+          --color-base-content: oklch(32.437% 0.022 264.182);
+          --color-primary: oklch(59.435% 0.077 254.027);
+          --color-primary-content: oklch(11.887% 0.015 254.027);
+          --color-secondary: oklch(69.651% 0.059 248.687);
+          --color-secondary-content: oklch(13.93% 0.011 248.687);
+          --color-accent: oklch(77.464% 0.062 217.469);
+          --color-accent-content: oklch(15.492% 0.012 217.469);
+          --color-neutral: oklch(45.229% 0.035 264.131);
+          --color-neutral-content: oklch(89.925% 0.016 262.749);
+          --color-info: oklch(69.207% 0.062 332.664);
+          --color-info-content: oklch(13.841% 0.012 332.664);
+          --color-success: oklch(76.827% 0.074 131.063);
+          --color-success-content: oklch(15.365% 0.014 131.063);
+          --color-warning: oklch(85.486% 0.089 84.093);
+          --color-warning-content: oklch(17.097% 0.017 84.093);
+          --color-error: oklch(60.61% 0.12 15.341);
+          --color-error-content: oklch(12.122% 0.024 15.341);
+          --radius-selector: 1rem;
+          --radius-field: 0.25rem;
+          --radius-box: 0.5rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "sunset";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(22% 0.019 237.69);
+          --color-base-200: oklch(20% 0.019 237.69);
+          --color-base-300: oklch(18% 0.019 237.69);
+          --color-base-content: oklch(77.383% 0.043 245.096);
+          --color-primary: oklch(74.703% 0.158 39.947);
+          --color-primary-content: oklch(14.94% 0.031 39.947);
+          --color-secondary: oklch(72.537% 0.177 2.72);
+          --color-secondary-content: oklch(14.507% 0.035 2.72);
+          --color-accent: oklch(71.294% 0.166 299.844);
+          --color-accent-content: oklch(14.258% 0.033 299.844);
+          --color-neutral: oklch(26% 0.019 237.69);
+          --color-neutral-content: oklch(70% 0.019 237.69);
+          --color-info: oklch(85.559% 0.085 206.015);
+          --color-info-content: oklch(17.111% 0.017 206.015);
+          --color-success: oklch(85.56% 0.085 144.778);
+          --color-success-content: oklch(17.112% 0.017 144.778);
+          --color-warning: oklch(85.569% 0.084 74.427);
+          --color-warning-content: oklch(17.113% 0.016 74.427);
+          --color-error: oklch(85.511% 0.078 16.886);
+          --color-error-content: oklch(17.102% 0.015 16.886);
+          --radius-selector: 1rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 0;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "caramellatte";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(98% 0.016 73.684);
+          --color-base-200: oklch(95% 0.038 75.164);
+          --color-base-300: oklch(90% 0.076 70.697);
+          --color-base-content: oklch(40% 0.123 38.172);
+          --color-primary: oklch(0% 0 0);
+          --color-primary-content: oklch(100% 0 0);
+          --color-secondary: oklch(22.45% 0.075 37.85);
+          --color-secondary-content: oklch(90% 0.076 70.697);
+          --color-accent: oklch(46.44% 0.111 37.85);
+          --color-accent-content: oklch(90% 0.076 70.697);
+          --color-neutral: oklch(55% 0.195 38.402);
+          --color-neutral-content: oklch(98% 0.016 73.684);
+          --color-info: oklch(42% 0.199 265.638);
+          --color-info-content: oklch(90% 0.076 70.697);
+          --color-success: oklch(43% 0.095 166.913);
+          --color-success-content: oklch(90% 0.076 70.697);
+          --color-warning: oklch(82% 0.189 84.429);
+          --color-warning-content: oklch(41% 0.112 45.904);
+          --color-error: oklch(70% 0.191 22.216);
+          --color-error-content: oklch(39% 0.141 25.723);
+          --radius-selector: 2rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 2px;
+          --depth: 1;
+          --noise: 1;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "abyss";
+          default: false;
+          prefersdark: false;
+          color-scheme: "dark";
+          --color-base-100: oklch(20% 0.08 209);
+          --color-base-200: oklch(15% 0.08 209);
+          --color-base-300: oklch(10% 0.08 209);
+          --color-base-content: oklch(90% 0.076 70.697);
+          --color-primary: oklch(92% 0.2653 125);
+          --color-primary-content: oklch(50% 0.2653 125);
+          --color-secondary: oklch(83.27% 0.0764 298.3);
+          --color-secondary-content: oklch(43.27% 0.0764 298.3);
+          --color-accent: oklch(43% 0 0);
+          --color-accent-content: oklch(98% 0 0);
+          --color-neutral: oklch(30% 0.08 209);
+          --color-neutral-content: oklch(90% 0.076 70.697);
+          --color-info: oklch(74% 0.16 232.661);
+          --color-info-content: oklch(29% 0.066 243.157);
+          --color-success: oklch(79% 0.209 151.711);
+          --color-success-content: oklch(26% 0.065 152.934);
+          --color-warning: oklch(84.8% 0.1962 84.62);
+          --color-warning-content: oklch(44.8% 0.1962 84.62);
+          --color-error: oklch(65% 0.1985 24.22);
+          --color-error-content: oklch(27% 0.1985 24.22);
+          --radius-selector: 2rem;
+          --radius-field: 0.25rem;
+          --radius-box: 0.5rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 1px;
+          --depth: 1;
+          --noise: 0;
+        }
+
+        @plugin "daisyui/theme" {
+          name: "silk";
+          default: false;
+          prefersdark: false;
+          color-scheme: "light";
+          --color-base-100: oklch(97% 0.0035 67.78);
+          --color-base-200: oklch(95% 0.0081 61.42);
+          --color-base-300: oklch(90% 0.0081 61.42);
+          --color-base-content: oklch(40% 0.0081 61.42);
+          --color-primary: oklch(23.27% 0.0249 284.3);
+          --color-primary-content: oklch(94.22% 0.2505 117.44);
+          --color-secondary: oklch(23.27% 0.0249 284.3);
+          --color-secondary-content: oklch(73.92% 0.2135 50.94);
+          --color-accent: oklch(23.27% 0.0249 284.3);
+          --color-accent-content: oklch(88.92% 0.2061 189.9);
+          --color-neutral: oklch(20% 0 0);
+          --color-neutral-content: oklch(80% 0.0081 61.42);
+          --color-info: oklch(80.39% 0.1148 241.68);
+          --color-info-content: oklch(30.39% 0.1148 241.68);
+          --color-success: oklch(83.92% 0.0901 136.87);
+          --color-success-content: oklch(23.92% 0.0901 136.87);
+          --color-warning: oklch(83.92% 0.1085 80);
+          --color-warning-content: oklch(43.92% 0.1085 80);
+          --color-error: oklch(75.1% 0.1814 22.37);
+          --color-error-content: oklch(35.1% 0.1814 22.37);
+          --radius-selector: 2rem;
+          --radius-field: 0.5rem;
+          --radius-box: 1rem;
+          --size-selector: 0.25rem;
+          --size-field: 0.25rem;
+          --border: 2px;
+          --depth: 1;
+          --noise: 0;
+        }
       destinationPath: "${destinationFolder}/src/assets/styles"
-    - fileType: "App Banner"
-      fileName: "GenesisBanner"
-      extension: "vue"
-      content: |
-        <template>
-          <header
-            class="w-full fixed top-0 left-0 shadow-sm z-30"
-            :style="{ height }"
-            aria-region="topbar"
-          >
-            <div class="h-full flex items-center justify-between px-4">
-              <!-- Brand -->
-              <div class="flex items-center gap-2 uppercase">
-                <AppLogo />
-                <h1 class="text-xl md:text-2xl font-semibold">{{ $t('projectName') }}</h1>
-              </div>
-
-              <!-- Right side -->
-              <div class="flex items-center gap-4">
-                <LanguageSwitcher />
-                {{#if useJWT}}
-                <UserNavProfile name="John Doe" /> {{/if}}
-              </div>
-            </div>
-          </header>
-        </template>
-
-        <script setup lang="ts">
-        import LanguageSwitcher from '@/core/language/LanguageSwitcher.vue'
-        import AppLogo from '@/core/AppLogo.vue'
-        {{#if useJWT}}
-        import UserNavProfile from '@/core/user/UserNavProfile.vue'
-        {{/if}}
-        defineProps<{
-          height?: string
-        }>()
-        </script>
-      destinationPath: "${destinationFolder}/src/core/navbar"
   components:
+#    - componentType: "Entity Row"
+#      generateForView: true
+#      router:
+#        label: "{{removeLine}}"
+#        link: ""
+#      importFile: |
+#        import type { PropType } from 'vue'
+#        import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'
+#        import EntityRowActions from '@/components/table/EntityRowActions.vue'
+#      selector: "${majStart(EntityName)}Row"
+#      standalone: true
+#      importComponent: "{{removeLine}}"
+#      template: |
+#        <template>
+#          <tr class="hover:bg-gray-50">
+#            {{#each fields}}
+#            {{#if @first}}
+#            <td class="px-3 py-2 sticky bg-base-200 shadow-sm left-0">{{ ${minStart(EntityName)}.${this.name} }}</td>
+#            {{elseIf this.isForeignKey}}
+#            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name}?.getReferenceValue() }}</td>
+#            {{elseIf this.isDate}}
+#            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $d(${minStart(EntityName)}.${this.name}, 'long') : '--/--/--' }}</td>
+#            {{elseIf this.isNumeric}}
+#            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $n(${minStart(EntityName)}.${this.name}, 'decimal') : '--' }}</td>
+#            {{else}}
+#            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} }}</td>{{/if}}
+#            {{/each}}{{removeLine}}
+#
+#            <td class="px-3 py-2 bg-base-200 shadow-sm sticky text-end right-0">
+#              <div class="rounded-md inline-flex">
+#                <EntityRowActions @delete-row="deleteRow" @view-row="viewRow" @edit-row="updateRow" />
+#              </div>
+#            </td>
+#          </tr>
+#        </template>
+#      style: "<style scoped></style>"
+#      export: |
+#        const props = defineProps({
+#          ${minStart(EntityName)}: {
+#            type: Object as PropType<${majStart(EntityName)}>,
+#            required: true,
+#          },
+#        })
+#
+#        const emit = defineEmits<{
+#          (e: 'request-delete', ${minStart(EntityName)}: ${majStart(EntityName)}): void
+#          (e: 'request-view', ${minStart(EntityName)}: ${majStart(EntityName)}): void
+#          (e: 'request-update', ${minStart(EntityName)}: ${majStart(EntityName)}): void
+#        }>()
+#
+#        const deleteRow = () => emit('request-delete', props.${minStart(EntityName)})
+#        const viewRow = () => emit('request-view', props.${minStart(EntityName)})
+#        const updateRow = () => emit('request-update', props.${minStart(EntityName)})
+#      componentName: "${majStart(EntityName)}Row"
+#      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
+#      componentAdditionalFiles: [ ]
     - componentType: "Entity Row"
       generateForView: true
       router:
         label: "{{removeLine}}"
         link: ""
       importFile: |
-        import type { PropType } from 'vue'
+        import { computed, type PropType } from 'vue'
         import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'
-        import EntityRowActions from '@/core/table/EntityRowActions.vue'
+        import EntityRowActions from '@/components/table/EntityRowActions.vue'
       selector: "${majStart(EntityName)}Row"
       standalone: true
       importComponent: "{{removeLine}}"
-      template: |
+      template: |    
         <template>
-          <tr class="hover:bg-gray-50">
-            {{#each fields}}
-            {{#if @first}}
-            <td class="px-3 py-2 sticky bg-base-200 shadow-sm left-0">{{ ${minStart(EntityName)}.${this.name} }}</td>
-            {{elseIf this.isForeignKey}}
-            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name}?.getReferenceValue() }}</td>
-            {{elseIf this.isDate}}
-            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $d(${minStart(EntityName)}.${this.name}, 'long') : '--/--/--' }}</td>
-            {{elseIf this.isNumeric}}
-            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $n(${minStart(EntityName)}.${this.name}, 'decimal') : '--' }}</td>
-            {{else}}
-            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} }}</td>{{/if}}
-            {{/each}}{{removeLine}}
-  
-            <td class="px-3 py-2 bg-base-200 shadow-sm sticky text-end right-0">
-              <div class="rounded-md">
+          <tr class="hover:bg-base-200/40">
+            <template v-for="field in ${majStart(EntityName)}.getAllSearchFieldsMetadata()" :key="field.key">
+              <td
+                v-show="field.showInTable"
+                class="px-3 py-2"
+                :class="{
+                  'sticky left-0 bg-base-200/40 font-semibold': field.identifier,
+                }"
+              >
+                <template v-if="field.type === 'date'">
+                  {{ ${minStart(EntityName)}Data[field.key] ? $d(${minStart(EntityName)}Data[field.key], 'long') : '--/--/--' }}
+                </template>
+    
+                <template v-else-if="field.type === 'number'">
+                  {{ ${minStart(EntityName)}Data[field.key] != null ? $n(${minStart(EntityName)}Data[field.key], 'decimal') : '--' }}
+                </template>
+        
+                <template v-else-if="field.type === 'select'">
+                  {{ ${minStart(EntityName)}Data[field.key] != null ? ${minStart(EntityName)}Data[field.key].getReferenceValue() : '--' }}
+                </template>
+    
+                <template v-else>
+                  {{ ${minStart(EntityName)}Data[field.key] ?? '--' }}
+                </template>
+              </td>
+            </template>
+
+            <!-- Actions -->
+            <td class="px-3 py-2 bg-base-200/40 sticky right-0 text-end">
+              <div class="rounded-md inline-flex">
                 <EntityRowActions @delete-row="deleteRow" @view-row="viewRow" @edit-row="updateRow" />
               </div>
             </td>
           </tr>
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       export: |
         const props = defineProps({
           ${minStart(EntityName)}: {
             type: Object as PropType<${majStart(EntityName)}>,
             required: true,
           },
+        })
+        
+        const ${minStart(EntityName)}Data = computed(() => {
+          return props.${minStart(EntityName)} as Record<string, any>
         })
 
         const emit = defineEmits<{
@@ -10054,7 +11780,111 @@
       componentName: "${majStart(EntityName)}Row"
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
-
+#    - componentType: "List Component"
+#      generateForView: true
+#      router:
+#        label: "{{removeLine}}"
+#        link: ""
+#      componentName: "${majStart(EntityName)}List"
+#      importFile: |
+#        import ${majStart(EntityName)}Row from './${majStart(EntityName)}Row.vue'
+#        import { usePopup } from '@/composables/usePopup'
+#        import { use${majStart(EntityName)}s } from '@/composables/use${majStart(EntityName)}s'
+#        import type { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'{{#if !isView}}
+#        import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
+#        import { ref } from 'vue'
+#        import type { PropType } from 'vue'{{/if}}
+#      selector: "${majStart(EntityName)}List"
+#      standalone: true
+#      importComponent: "{{removeLine}}"
+#      template: |
+#        <template>
+#          <div class="rounded-box border border-base-content/5 bg-base-100">
+#            <table class="table table-auto w-full border-gray-200 rounded-md relative">
+#              <thead>
+#                <tr>
+#                  {{#each fields}}
+#                  {{#if @first}}
+#                  <th class="sticky top-0 left-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2">${formatReadable(this.name)}</th>
+#                  {{else}}
+#                  <th class="sticky top-0 bg-secondary px-3 py-2 font-bold min-w-35 z-1">${formatReadable(this.name)}</th>{{/if}}
+#                  {{/each}}
+#                  <th class="sticky top-0 right-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2"></th>
+#                </tr>
+#              </thead>
+#              <tbody>
+#                <!-- Empty message -->
+#                <tr v-if="!loading && message">
+#                  <td colspan="100" class="text-center py-4 text-gray-500">
+#                    {{ message }}
+#                  </td>
+#                </tr>
+#
+#                <!-- Entity rows -->
+#                <${majStart(EntityName)}Row
+#                  v-else
+#                  v-for="${minStart(EntityName)} in data"
+#                  :key="${minStart(EntityName)}.getKeyValue()"
+#                  :${minStart(EntityName)}="${minStart(EntityName)}"
+#                  @request-view="view${majStart(EntityName)}"{{#if !isView}}
+#                  @request-delete="openDeletePopup"
+#                  @request-update="goToUpdateFormView"{{/if}}
+#                />
+#              </tbody>
+#            </table>{{#if !isView}}
+#            <!-- Delete confirmation popup -->
+#            <DeleteConfirmationPopup
+#              :visible="deletePopup"
+#              :message="`Are you sure you want to delete ${majStart(EntityName)} ${selectedEntity?.id}?`"
+#              @confirm="confirmDelete"
+#              @cancel="closePopup"
+#            />{{/if}}
+#          </div>
+#        </template>
+#      style: "<style scoped></style>"
+#      export: |
+#        defineProps({
+#          data: {
+#            type: Array as PropType<${majStart(EntityName)}[]>,
+#            required: true,
+#          },
+#          message: String,
+#          loading: {
+#            type: Boolean,
+#            default: false,
+#          },
+#        })
+#
+#        {{#if isView}}
+#        const { view${majStart(EntityName)} } = use${majStart(EntityName)}s()
+#        {{else}}
+#        const emit = defineEmits<{
+#          (e: 'request:refresh'): void
+#        }>()
+#
+#        const selectedEntity = ref()
+#
+#        const { visible: deletePopup, closePopup } = usePopup(false)
+#        const { delete${majStart(EntityName)}, view${majStart(EntityName)}, goToUpdateFormView } = use${majStart(EntityName)}s()
+#
+#        function openDeletePopup(entity: ${majStart(EntityName)}) {
+#          if (!entity) return
+#          selectedEntity.value = entity
+#          deletePopup.value = true
+#        }
+#
+#        async function confirmDelete() {
+#          const { success, error } = await delete${majStart(EntityName)}(selectedEntity.value)
+#          if (success) {
+#            deletePopup.value = false
+#            emit('request:refresh')
+#          } else {
+#            console.error(error)
+#          }
+#        }
+#        {{/if}}
+#      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
+#      componentAdditionalFiles: [ ]
     - componentType: "List Component"
       generateForView: true
       router:
@@ -10065,58 +11895,69 @@
         import ${majStart(EntityName)}Row from './${majStart(EntityName)}Row.vue'
         import { usePopup } from '@/composables/usePopup'
         import { use${majStart(EntityName)}s } from '@/composables/use${majStart(EntityName)}s'
-        import type { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'{{#if !isView}}
-        import DeleteConfirmationPopup from '@/core/popup/DeleteConfirmationPopup.vue'
+        import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'{{#if !isView}}
+        import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
         import { ref } from 'vue'
         import type { PropType } from 'vue'{{/if}}
+        import { SortFieldParameter } from '@/models/api/RequestModel.ts'
+        import SortButton from '@/components/button/SortButton.vue'
       selector: "${majStart(EntityName)}List"
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
         <template>
-          <div class="rounded-box border border-base-content/5 bg-base-100">
-            <table class="table table-auto w-full border-gray-200 rounded-md relative">
-              <thead>
-                <tr>
-                  {{#each fields}}
-                  {{#if @first}}
-                  <th class="sticky top-0 left-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2">${formatReadable(this.name)}</th>
-                  {{else}}
-                  <th class="sticky top-0 bg-secondary px-3 py-2 font-bold min-w-35 z-1">${formatReadable(this.name)}</th>{{/if}}
-                  {{/each}}
-                  <th class="sticky top-0 right-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Empty message -->
-                <tr v-if="!loading && message">
-                  <td colspan="100" class="text-center py-4 text-gray-500">
-                    {{ message }}
-                  </td>
-                </tr>
-  
-                <!-- Entity rows -->
-                <${majStart(EntityName)}Row
-                  v-else
-                  v-for="${minStart(EntityName)} in data"
-                  :key="${minStart(EntityName)}.getKeyValue()"
-                  :${minStart(EntityName)}="${minStart(EntityName)}"
-                  @request-view="view${majStart(EntityName)}"{{#if !isView}}
-                  @request-delete="openDeletePopup"
-                  @request-update="goToUpdateFormView"{{/if}}
-                />
-              </tbody>
-            </table>{{#if !isView}}
-            <!-- Delete confirmation popup -->
-            <DeleteConfirmationPopup
-              :visible="deletePopup"
-              :message="`Are you sure you want to delete ${majStart(EntityName)} ${selectedEntity?.id}?`"
-              @confirm="confirmDelete"
-              @cancel="closePopup"
-            />{{/if}}
-          </div>
+          <table class="table table-auto relative">
+            <thead>
+              <tr>
+                <template v-for="field in ${majStart(EntityName)}.getAllSearchFieldsMetadata()" :key="field">
+                  <th
+                    v-show="field.showInTable"
+                    class="sticky top-0 bg-primary text-primary-content px-3 py-2 font-bold min-w-35 z-1"
+                    :class="{ 'left-0 z-2': field.identifier }"
+                  >
+                    <div class="flex items-center justify-between gap-1">
+                      <span>{{ field.label }}</span>
+        
+                      <!-- Sort Buttons -->
+                      <SortButton v-show="field.sortable" :field-key="field.key" @sort="sortBy" />
+                    </div>
+                  </th>
+                </template>
+                <!-- Right sticky column -->
+                <th
+                  class="sticky top-0 right-0 bg-primary text-primary-content px-3 py-2 font-bold min-w-35 z-2"
+                ></th>
+              </tr>
+            </thead>
+            <tbody class="bg-base-100">
+              <!-- Empty message -->
+              <tr v-if="!loading && message">
+                <td colspan="100" class="text-center py-4 text-gray-500">
+                  {{ message }}
+                </td>
+              </tr>
+
+              <!-- Entity rows -->
+              <${majStart(EntityName)}Row
+                v-else
+                v-for="${minStart(EntityName)} in data"
+                :key="${minStart(EntityName)}.getKeyValue()"
+                :${minStart(EntityName)}="${minStart(EntityName)}"
+                @request-view="view${majStart(EntityName)}"{{#if !isView}}
+                @request-delete="openDeletePopup"
+                @request-update="goToUpdateFormView"{{/if}}
+              />
+            </tbody>
+          </table>{{#if !isView}}
+          <!-- Delete confirmation popup -->
+          <DeleteConfirmationPopup
+            :visible="deletePopup"
+            :message="`Are you sure you want to delete ${majStart(EntityName)} ${selectedEntity?.id}?`"
+            @confirm="confirmDelete"
+            @cancel="closePopup"
+          />{{/if}}
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       export: |
         defineProps({
           data: {
@@ -10129,14 +11970,18 @@
             default: false,
           },
         })
+        const emit = defineEmits<{
+          (e: 'request:refresh'): void
+          (e: 'sortby', sortData: SortFieldParameter): void
+        }>()
         
+        function sortBy(sortData: SortFieldParameter): void {
+          emit('sortby', sortData)
+        }
+
         {{#if isView}}
         const { view${majStart(EntityName)} } = use${majStart(EntityName)}s()
         {{else}}
-        const emit = defineEmits<{
-          (e: 'request:refresh'): void
-        }>()
-
         const selectedEntity = ref()
 
         const { visible: deletePopup, closePopup } = usePopup(false)
@@ -10172,10 +12017,10 @@
         import type { EntitySearchField } from '@/models/EntityModel'
         import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'
         import ${majStart(EntityName)}List from '@/entities/${minStart(EntityName)}/${majStart(EntityName)}List.vue'
-        import EntityTable from '@/core/table/EntityTable.vue'
+        import EntityTable from '@/components/table/EntityTable.vue'
         import { use${majPluralize(EntityName)} } from '@/composables/use${majPluralize(EntityName)}'{{#if !isView}}
-        import GenesisButton from '@/core/button/GenesisButton.vue'
-        import PlusIcon from '@/core/icons/PlusIcon.vue'{{/if}}
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+        import PlusIcon from '@/components/icons/PlusIcon.vue'{{/if}}
       selector: "${majStart(EntityName)}ListView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -10184,11 +12029,11 @@
           <div class="w-full">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-semibold">
+              <h3 class="text-xl font-semibold text-base-content">
                 {{ $t('entity.nav', { entity: '${majStart(EntityName)}' }) }}
-                <span class="text-gray-500 font-normal"> {{ $t('entity.list.nav') }}</span>
+                <span class="text-base-content/50 font-normal"> {{ $t('entity.list.nav') }}</span>
               </h3>{{#if !isView}}
-              <GenesisButton title="Create new ${minStart(EntityName)}" @click="goToCreateFormView" class="btn-primary">
+              <GenesisButton title="Create new ${minStart(EntityName)}" @click="goToCreateFormView" class="btn-secondary">
                 <PlusIcon />
                 {{ $t('button.addEntity', { entity: '${majStart(EntityName)}' }) }}
               </GenesisButton>{{/if}}
@@ -10206,7 +12051,7 @@
             />
           </div>
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
       export: |
         // Composable for managing entities
@@ -10312,11 +12157,11 @@
               const create${majStart(EntityName)} = async (${minStart(EntityName)}FormDTO: Partial<${majStart(EntityName)}FormDTO>) => {
                 const dto = new ${majStart(EntityName)}FormDTO(${minStart(EntityName)}FormDTO)
                 const ${minStart(EntityName)}: Partial<${majStart(EntityName)}> = await dto.toEntity()
-                const { data, error } = await ${minStart(EntityName)}Service.create(${minStart(EntityName)})
+                const { data, error, errors } = await ${minStart(EntityName)}Service.create(${minStart(EntityName)})
                 if (error) {
                   message.value = error
                 }
-                return data
+                return { data, errors }
               }
 
               /**
@@ -10445,12 +12290,27 @@
                 path: '${minStart(EntityName)}s',
                 name: '${minStart(EntityName)}listview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}ListView.vue'),
+                {{#if useJWT}}meta: { requiresAuth: true },{{/if}}
               },
               {
                 path: '${minStart(EntityName)}s/:id',
                 name: '${minStart(EntityName)}detailsview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}DetailsView.vue'),
-              },{{#if !isView}}
+                {{#if useJWT}}meta: { requiresAuth: true },{{/if}}
+              },
+              {{#if !isView and useJWT}}
+              {
+                path: '${minStart(EntityName)}s/update/:id',
+                name: '${minStart(EntityName)}updateview',
+                component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}UpdateView.vue'),
+                meta: { requiresAuth: true },
+              },
+              {
+                path: '${minStart(EntityName)}s/create',
+                name: '${minStart(EntityName)}createview',
+                component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}CreateView.vue'),
+                meta: { requiresAuth: true },
+              },{{elseIf !isView}}
               {
                 path: '${minStart(EntityName)}s/update/:id',
                 name: '${minStart(EntityName)}updateview',
@@ -10476,12 +12336,12 @@
       importFile: |
         import type { PropType } from 'vue'
         import type { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'{{#if !isView}}
-        import GenesisButton from '@/core/button/GenesisButton.vue'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
         import { usePopup } from '@/composables/usePopup'
         import { use${majPluralize(EntityName)} } from '@/composables/use${majPluralize(EntityName)}'
-        import DeleteConfirmationPopup from '@/core/popup/DeleteConfirmationPopup.vue'
-        import TrashIcon from '@/core/icons/TrashIcon.vue'
-        import EditIcon from '@/core/icons/EditIcon.vue'{{/if}}
+        import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
+        import TrashIcon from '@/components/icons/TrashIcon.vue'
+        import EditIcon from '@/components/icons/EditIcon.vue'{{/if}}
       selector: "${majStart(EntityName)}Details"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -10502,16 +12362,16 @@
                 </div>
                 {{removeLine}}{{#if !isView}}
                 <div class="flex justify-end gap-3 mt-6">
+                  <GenesisButton @click="goToUpdateFormView(${minStart(EntityName)})" class="btn btn-outline btn-neutral">
+                    <EditIcon class="mr-2" />
+                    <span>{{ $t('button.update') }}</span>
+                  </GenesisButton>
                   <GenesisButton 
                     @click="openDeletePopup(${minStart(EntityName)})" 
                     class="btn-outline btn-error hover:text-white"
                   >
                     <TrashIcon class="mr-2" />
-                    <span>{{ $t('common.delete') }}</span>
-                  </GenesisButton>
-                  <GenesisButton @click="goToUpdateFormView(${minStart(EntityName)})" class="btn btn-outline btn-neutral">
-                    <EditIcon class="mr-2" />
-                    <span>{{ $t('common.update') }}</span>
+                    <span>{{ $t('button.delete') }}</span>
                   </GenesisButton>
                 </div>{{/if}}
               </div>
@@ -10555,7 +12415,7 @@
           closePopup()
           goToListView()
         }{{/if}}
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
 
@@ -10571,8 +12431,8 @@
         import ${majStart(EntityName)}Details from '@/entities/${minStart(EntityName)}/${majStart(EntityName)}Details.vue'
         import { use${majPluralize(EntityName)} } from '@/composables/use${majPluralize(EntityName)}'
         import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'
-        import GenesisButton from '@/core/button/GenesisButton.vue'
-        import LeftArrowIcon from '@/core/icons/LeftArrowIcon.vue'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+        import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'
       selector: "${majStart(EntityName)}DetailsView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -10581,9 +12441,9 @@
           <div class="w-full">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-semibold text-gray-800">
+              <h3 class="text-xl font-semibold text-base-content">
                 {{ $t('entity.nav', { entity: '${majStart(EntityName)}' }) }}
-                <span class="text-gray-500 font-normal">{{ $t('entity.details.nav') }}</span>
+                <span class="text-base-content/50 font-normal">{{ $t('entity.details.nav') }}</span>
               </h3>
   
               <!-- Back button -->
@@ -10600,7 +12460,7 @@
             <${majStart(EntityName)}Details v-if="entity" :${minStart(EntityName)}="entity" />
           </div>
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       export: |
         const route = useRoute()
         const pathId = Number(route.params.id)
@@ -10623,9 +12483,9 @@
       importFile: |
         import { ref } from 'vue'
         import { ${majStart(EntityName)}, ${majStart(EntityName)}FormDTO } from '@/models/${majStart(EntityName)}Model'
-        import GenesisButton from '@/core/button/GenesisButton.vue'
-        import GenesisInput from '@/core/form/GenesisInput.vue'
-        {{#if containsForeignKey}}import GenesisSelectSearchCriteria from '@/core/form/GenesisSelectSearchCriteria.vue'{{/if}}
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+        import GenesisInput from '@/components/form/GenesisInput.vue'
+        {{#if containsForeignKey}}import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'{{/if}}
       selector: "${majStart(EntityName)}Form"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -10653,6 +12513,7 @@
                   <!-- ${formatReadable(this.name)} -->
                   <GenesisInput
                     label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     placeholder="Enter ${formatReadable(this.name)}"
                     type="${this.uiType}"
                     v-model="formModel.${minStart(this.name)}"
@@ -10664,17 +12525,18 @@
 
                 <!-- Action buttons -->
                 <div class="flex justify-end gap-3 mt-6">
-                  <GenesisButton type="submit" class="btn btn-primary text-white" :label="submitLabel" />
-                  <GenesisButton @click="cancelForm" class="btn btn-secondary" label="Cancel" />
+                  <GenesisButton type="submit" class="btn btn-primary text-primary-content" :label="submitLabel" />
+                  <GenesisButton @click="cancelForm" class="btn btn-outline btn-error" :label="$t('button.cancel')" />
                 </div>
               </form>
             </div>
           </div>
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       export: |
         const props = defineProps<{
           ${minStart(EntityName)}?: ${majStart(EntityName)}
+          violations?: Record<string, string> | null
           submitLabel?: string
         }>()
 
@@ -10709,16 +12571,16 @@
         label: "{{removeLine}}"
       componentName: "${majStart(EntityName)}UpdateView"
       importFile: |
-        import { ref, onMounted } from "vue";
-        import { useRoute } from "vue-router";
-        import ${majStart(EntityName)}Form from "@/entities/${minStart(EntityName)}/${majStart(EntityName)}Form.vue";
-        import AlertPopup from "@/core/popup/AlertPopup.vue";
-        import { use${majPluralize(EntityName)} } from "@/composables/use${majPluralize(EntityName)}";
-        import { ${majStart(EntityName)}, ${majStart(EntityName)}FormDTO } from "@/models/${majStart(EntityName)}Model";
-        import { usePopup } from "@/composables/usePopup";
-        import GenesisButton from "@/core/button/GenesisButton.vue";
-        import LeftArrowIcon from "@/core/icons/LeftArrowIcon.vue";
-        import { useFreezeScreen } from '@/stores/useFreezeScreen.ts'
+        import { ref, onMounted } from 'vue';
+        import { useRoute } from 'vue-router';
+        import ${majStart(EntityName)}Form from '@/entities/${minStart(EntityName)}/${majStart(EntityName)}Form.vue';
+        import AlertPopup from '@/components/popup/AlertPopup.vue';
+        import { use${majPluralize(EntityName)} } from '@/composables/use${majPluralize(EntityName)}';
+        import { ${majStart(EntityName)}, ${majStart(EntityName)}FormDTO } from '@/models/${majStart(EntityName)}Model';
+        import { usePopup } from '@/composables/usePopup';
+        import GenesisButton from '@/components/button/GenesisButton.vue';
+        import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue';
+        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
       selector: "${majStart(EntityName)}UpdateView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -10727,9 +12589,9 @@
           <div class="w-full">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-semibold">
+              <h3 class="text-xl font-semibold text-base-content">
                 ${majStart(EntityName)} /
-                <span class="text-gray-500 font-normal">Update</span>
+                <span class="text-base-content/50 font-normal">Update</span>
               </h3>
               <GenesisButton title="Back to list" @click="goToListView" class="btn-primary">
                 <LeftArrowIcon />
@@ -10741,7 +12603,7 @@
             <div v-if="entity">
               <${minStart(EntityName)}-form
                 :${minStart(EntityName)}="entity"
-                submit-label="Update ${majStart(EntityName)}"
+                :submit-label="$t('entity.update.submitLabel', { entity: '${majStart(EntityName)}' })"
                 @submit="updateHandler"
                 @cancel="cancelHandler"
               />
@@ -10756,23 +12618,15 @@
             />
           </div>
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       export: |
-        /** Route params */
         const route = useRoute()
         const pathId = Number(route.params.id)
-
-        /** Alert popup */
         const { closePopup, openPopup, visible: alertPopup } = usePopup()
-
-        /** Composable */
         const { get${majStart(EntityName)}ById, goToListView, update${majStart(EntityName)}, view${majStart(EntityName)}, message } = use${majPluralize(EntityName)}()
-
-        /** Entity reference */
         const entity = ref<${majStart(EntityName)} | null>(null)
+        const freezeStore = useFreezeScreenStore()
 
-        const freezeStore = useFreezeScreen()
-        /** Update handler */
         const updateHandler = async (formDTO: Partial<${majStart(EntityName)}FormDTO>) => {        
           freezeStore.freeze('Updating ${minStart(EntityName)} '+pathId+' ...')
           try {
@@ -10781,20 +12635,17 @@
             else throw new Error(String(message.value))
           } catch (error:unknown) {
             console.error(error)
-            openPopup()
           } finally {
             freezeStore.unfreeze()
           }
         }
         
-        /** On cancel Handler */
         const cancelHandler = () => {
           if (entity.value){
             view${majStart(EntityName)}(entity.value)
           }
         }
 
-        /** Fetch entity on mount */
         onMounted(async () => {
           const result = await get${majStart(EntityName)}ById(pathId)
           if (result.data){
@@ -10803,7 +12654,6 @@
           else {
             openPopup()
           }
-        
         })
       destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
@@ -10816,13 +12666,14 @@
       componentName: "${majStart(EntityName)}CreateView"
       importFile: |
         import ${majStart(EntityName)}Form from '@/entities/${minStart(EntityName)}/${majStart(EntityName)}Form.vue'
-        import AlertPopup from '@/core/popup/AlertPopup.vue'
-        import GenesisButton from '@/core/button/GenesisButton.vue'
-        import LeftArrowIcon from '@/core/icons/LeftArrowIcon.vue'
+        import AlertPopup from '@/components/popup/AlertPopup.vue'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+        import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'
         import { ${majStart(EntityName)}FormDTO } from '@/models/${majStart(EntityName)}Model'
         import { use${majPluralize(EntityName)} } from '@/composables/use${majPluralize(EntityName)}'
         import { usePopup } from '@/composables/usePopup'
-        import { useFreezeScreen } from '@/stores/useFreezeScreen'
+        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
+        import { ref } from 'vue'
       selector: "${majStart(EntityName)}CreateView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -10830,9 +12681,9 @@
         <template>
           <div class="w-full">
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-semibold">
+              <h3 class="text-xl font-semibold text-base-content">
                 {{ $t('entity.nav', { entity: '${majStart(EntityName)}' }) }}
-                <span class="text-gray-500 font-normal">{{ $t('entity.create.nav') }}</span>
+                <span class="text-base-content/50 font-normal">{{ $t('entity.create.nav') }}</span>
               </h3>
               <GenesisButton
                 :title="$t('button.backToListDescription')"
@@ -10846,6 +12697,7 @@
   
             <${minStart(EntityName)}-form
               :submit-label="$t('entity.create.submitLabel', { entity: '${majStart(EntityName)}' })"
+              :violations="violations"
               @submit="createHandler"
               @cancel="goToListView"
             />
@@ -10858,21 +12710,24 @@
             />
           </div>
         </template>
-      style: "{{removeLine}}"
+      style: "<style scoped></style>"
       export: |
         const { create${majStart(EntityName)}, goToListView, message, view${majStart(EntityName)} } = use${majPluralize(EntityName)}()
         const { openPopup, closePopup, visible: alertPopup } = usePopup()
-        const freezeStore = useFreezeScreen()
+        const violations = ref<Record<string, string> | null>(null)
+        const freezeStore = useFreezeScreenStore()
 
         const createHandler = async (formDTO: Partial<${majStart(EntityName)}FormDTO>) => {
           freezeStore.freeze('Creating a new ${majStart(EntityName)} ...')
           try {
-            const data = await create${majStart(EntityName)}(formDTO)
+            const { data, errors } = await create${majStart(EntityName)}(formDTO)
             if (data && !message.value) view${majStart(EntityName)}(data)
-            else throw new Error(String(message.value))
+            else {
+              violations.value = errors
+              throw new Error(String(message.value))
+            }
           } catch (error: unknown) {
             console.error(error)
-            openPopup()
           } finally {
             freezeStore.unfreeze()
           }
@@ -10883,7 +12738,7 @@
     name: "${majStart(EntityName)}Service"
     destinationPath: "${destinationFolder}/src/services"
     imports: |
-      import useRestApi from '@/composables/useRestApi'
+      import api from '@/services/api'
       import RestResponse from '@/models/api/RestResponseModel'
       import { type IPageResponse } from '@/models/api/PageResponseModel'
       import {
@@ -10894,8 +12749,8 @@
       import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'
       import type { DataResponse, PagedDataResponse } from '@/models/api/DataResponseModel'
     methods: |
-      const restApiWithPage = useRestApi<IPageResponse<${majStart(EntityName)}>>()
-      const restApi = useRestApi<${majStart(EntityName)}>()
+      const restApiWithPage = api<IPageResponse<${majStart(EntityName)}>>()
+      const restApi = api<${majStart(EntityName)}>()
       const BASE_URL = '/${lowerCase(classNameLink)}'
 
       /** Helper to wrap response data in ${majStart(EntityName)} instances */
@@ -10966,9 +12821,8 @@
       {{#each fieldsFK}}
       import { ${majStart(this.type)} } from './${majStart(this.type)}Model'
       import * as ${minStart(this.type)}Service from '@/services/${majStart(this.type)}Service'
-      {{/each}}
-      {{#if containsForeignKey}}
-      import { createSelectSearchFunction, createMulticriteriatSearchFunction } from './SelectOption'{{/if}}
+      {{/each}}{{removeLine}}
+      {{#if containsForeignKey}}import { createSelectSearchFunction, createMulticriteriatSearchFunction } from './SelectOption'{{/if}}
     exports: |
       export interface I${majStart(EntityName)} {
         {{#each fields}}
@@ -11031,12 +12885,14 @@
               filters: ${majStart(this.type)}.getAllSearchFieldsMetadata(),
               searchFunction: createMulticriteriatSearchFunction(${minStart(this.type)}Service),
             },
+            showInTable: true,
+            showInFilter: true,
           },
-          {{elseIf this.isPrimaryKey}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true },
-          {{elseIf this.isNumeric or this.isDate}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true },
-          { key: '${this.name}Min', label: '${formatReadable(this.name)} Min', type: '${this.uiType}', sortable: true },
-          { key: '${this.name}Max', label: '${formatReadable(this.name)} Max', type: '${this.uiType}', sortable: true },
-          {{else}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true },{{/if}}
+          {{elseIf this.isPrimaryKey}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true, showInTable: true, showInFilter: true, identifier: true },
+          {{elseIf this.isNumeric or this.isDate}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true, showInTable: true, showInFilter: true },
+          { key: '${this.name}Min', label: '${formatReadable(this.name)} Min', type: '${this.uiType}', sortable: false, showInTable: false, showInFilter: true },
+          { key: '${this.name}Max', label: '${formatReadable(this.name)} Max', type: '${this.uiType}', sortable: false, showInTable: false, showInFilter: true },
+          {{else}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true, showInTable: true, showInFilter: true },{{/if}}
           {{/each}}{{removeLine}}
         ]
       }

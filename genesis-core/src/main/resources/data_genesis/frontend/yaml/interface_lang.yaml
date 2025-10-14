@@ -6,209 +6,166 @@
       messages: {
         projectName: '${projectName}',
         common: {
-          update: 'Update',
-          delete: 'Delete',
-          create: 'Create',
+          update: 'update',
+          delete: 'delete',
+          create: 'create',
+          apply: 'apply',
+          go: 'go',
+          views: 'views',
+          view: 'view',
+          details: 'details',
+          list: 'list',
+          new: 'new',
+          actions: 'actions',
+          back: 'back',
+          layout: 'layout',
+          theme: 'theme',
+          general: 'general',
+          settings: 'settings',
+          entities: 'entities',
+          entity: 'entity',
+          filter: 'filter',
+          rows: 'rows',
+          showing: 'showing',
+          previous: 'previous',
+          next: 'next',
+          page: 'page',
+          add: 'add',
+          description: 'description',
+          return: 'return',
+          home: 'home',
+          login: 'login',
+          logout: 'logout',
+          register: 'register',
+          profile: 'profile',
+          username: 'username',
+          email: 'email',
+          password: 'password',
+          language: 'language',
+          confirm: 'confirm',
+          cancel: 'cancel',
+          no: 'no',
         },
+    
         navbar: {
-          core: 'Core',
-          entities: 'Entities',
-          views: 'Views',
-          settings: 'Settings',
-          home: 'Home',
+          entities: '@.capitalize:common.entities', // Utilise common
+          views: '@.capitalize:common.views', // Utilise common
+          settings: '@.capitalize:common.settings',
+          home: '@.capitalize:common.home',
         },
-        authentication: {},
+    
+        authentication: {
+          login: '@.capitalize:common.login',
+          logout: '@.capitalize:common.logout',
+          register: '@.capitalize:common.register',
+          profile: '@.capitalize:common.profile',
+          username: '@.capitalize:common.username',
+          email: '@.capitalize:common.email',
+          password: '@.capitalize:common.password',
+          confirmPassword: '@.capitalize:common.confirm your @:common.password',
+        },
+
         home: {
           greet: 'Hello',
           greetDeveloper: '@.capitalize:home.greet Developer',
           welcome: 'Welcome on @.capitalize:projectName frontend app',
           titles: {
-            entities: 'List of entities',
-            views: 'List of views',
+            // Reconstruction des titres
+            entities: '@.capitalize:common.list of @:common.entities',
+            views: '@.capitalize:common.list of @:common.views',
           },
         },
-        table: {
-          actions: 'Actions',
-        },
+
         pagination: {
-          sizeLabel: 'Showing :',
-          previous: 'Previous',
-          next: 'Next',
-          goToLabel: 'Going to page:',
-          pageOf: 'Page {page} of {total}',
+          sizeLabel: '@.capitalize:common.showing :',
+          previous: '@.capitalize:common.previous @:common.page',
+          next: '@.capitalize:common.next @:common.page',
+          goToLabel: '@.capitalize:common.go to @:common.page :',
+          totalRows: ' of {total} @:common.rows',
         },
+
         search: {
-          filters: 'No filter | Filters | Filters ({count})',
+          filters: ' No @:common.filter | @.capitalize:common.filter | @.capitalize:common.filter ({count})',
         },
+
         entity: {
           nav: '{entity} / ',
           list: {
-            nav: 'List',
+            nav: '@.capitalize:common.list',
           },
           create: {
-            nav: 'New',
-            submitLabel: '@:common.create {entity}',
+            nav: '@.capitalize:common.new',
+            submitLabel: '@.capitalize:common.create {entity}',
           },
           update: {
-            nav: '@:common.update',
-            submitLabel: '@:common.update {entity}',
+            nav: '@.capitalize:common.update',
+            submitLabel: '@.capitalize:common.update {entity}',
           },
           details: {
-            nav: 'Details',
+            nav: '@.capitalize:common.details',
           },
         },
+
         button: {
-          addEntity: 'Add new {entity}',
-          applySearch: 'Apply',
-          go: 'GO',
-          backToList: 'Back to list',
-          backToListDescription: 'Return to the list view',
+          addEntity: '@.capitalize:common.add @:common.new {entity}',
+          applySearch: '@.capitalize:common.apply',
+          backToList: '@.capitalize:common.back to @:common.list',
+          backToListDescription: '@.capitalize:common.return to the @:common.list @:common.view',
+          go: '@.capitalize:common.go',
+          delete: '@.capitalize:common.delete',
+          update: '@.capitalize:common.update',
+          create: '@.capitalize:common.create',
+          cancel: '@.capitalize:common.cancel',
         },
+    
+        settings: {
+          layout: '@.capitalize:common.layout',
+          theme: '@.capitalize:common.theme',
+          general: '@.capitalize:common.general',
+          language: '@.capitalize:common.language',
+          pageTitle: '@.capitalize:common.settings',
+        },
+
+        // Entity definitions (scalable for many entities)
+        entities: {
+          {{#each entities}}
+          {{#if !this.isView}}
+          ${minStart(this.className)}: {
+            name: '${minStart(this.className)} | ${minStart(this.className)}s',
+            nav: {
+              title: '@.capitalize:entities.${minStart(this.className)}.name',
+              create: '@:common.create @.capitalize:entities.${minStart(this.className)}.name',
+              list: '@.capitalize:entities.${minStart(this.className)}.name @:common.list',
+            },
+          },{{/if}}
+          {{/each}}
+        },
+        views: {
+          {{#each entities}}
+          {{#if this.isView}}
+          ${minStart(this.className)}: {
+            name: '${minStart(this.className)} | ${minStart(this.className)}s',
+            nav: {
+              title: '@.capitalize:views.${minStart(this.className)}.name',
+              list: '@.capitalize:views.${minStart(this.className)}.name @:common.list',
+            },
+          },{{/if}}
+          {{/each}}
+        },
+
         error: {
-              400: '',
-              403: '',
-              404: '',
-              500: 'Error 500',
-            },
-          },
-
-          // DateTime formatting
-          dateTimeFormats: {
-            short: {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            },
-            long: {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              weekday: 'long',
-            },
-            time: {
-              hour: '2-digit',
-              minute: '2-digit',
-            },
-            full: {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              weekday: 'long',
-              hour: '2-digit',
-              minute: '2-digit',
-            },
-          },
-
-          // Number formatting
-          numberFormats: {
-            currency: {
-              style: 'currency',
-              currency: 'USD',
-              currencyDisplay: 'symbol', // $1,234.56
-            },
-            decimal: {
-              style: 'decimal',
-              minimumFractionDigits: 2, // 1,234.50
-              maximumFractionDigits: 2,
-            },
-            percent: {
-              style: 'percent',
-              useGrouping: true,
-            },
-          },
-        }
-
-        export default english
-- id: 2
-  name: "French"
-  locale: "fr"
-  content: |
-    const french = {
-      messages: {
-        projectName: '${projectName}',
-        common: {
-          update: 'Modifier',
-          delete: 'Supprimer',
-          create: 'Creer',
-        },
-        navbar: {
-          core: 'Core',
-          entities: 'Entites',
-          views: 'Vues',
-          settings: 'Parametres',
-          home: 'Accueil',
-        },
-        home: {
-          greet: 'Bonjour',
-          greetDeveloper: '@.capitalize:home.greet Developpeur',
-          welcome: 'Bienvenue sur l application frontend @.capitalize:projectName',
-          titles: {
-            entities: 'Liste des entites',
-            views: 'Liste des vues',
-          },
-        },
-        table: {
-          actions: 'Actions',
-        },
-        pagination: {
-          sizeLabel: 'Affichage :',
-          previous: 'Precedent',
-          next: 'Suivant',
-          goToLabel: 'Aller a la page :',
-          pageOf: 'Page {page} sur {total}',
-        },
-        search: {
-          filters: 'Aucun filtre | Filtres | Filtres ({count})',
-        },
-        entity: {
-          nav: '{entity} / ',
-          list: {
-            nav: 'Liste',
-          },
-          create: {
-            nav: 'Nouveau',
-            submitLabel: '@:common.create {entity}',
-          },
-          update: {
-            nav: '@:common.update',
-            submitLabel: '@:common.update {entity}',
-          },
-          details: {
-            nav: 'Details',
-          },
-        },
-        button: {
-          addEntity: 'Ajouter un nouveau {entity}',
-          applySearch: 'Appliquer',
-          go: 'Aller',
-          backToList: 'Retour a la liste',
-          backToListDescription: 'Revenir a la page de liste',
-        },
-        error: {
-          400: 'Requete invalide',
-          403: 'Interdit',
-          404: 'Introuvable',
-          500: 'Erreur 500',
+          400: 'Bad request',
+          403: 'Forbidden',
+          404: 'Not found',
+          500: 'Error 500',
         },
       },
-    
-      // Formatage des dates
+
+      // DateTime formatting
       dateTimeFormats: {
-        short: {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        },
-        long: {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          weekday: 'long',
-        },
-        time: {
-          hour: '2-digit',
-          minute: '2-digit',
-        },
+        short: { year: 'numeric', month: 'short', day: 'numeric' },
+        long: { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' },
+        time: { hour: '2-digit', minute: '2-digit' },
         full: {
           year: 'numeric',
           month: 'long',
@@ -218,7 +175,215 @@
           minute: '2-digit',
         },
       },
+
+      // Number formatting
+      numberFormats: {
+        currency: {
+          style: 'currency',
+          currency: 'USD',
+          currencyDisplay: 'symbol', // $1,234.56
+        },
+        decimal: {
+          style: 'decimal',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        },
+        percent: {
+          style: 'percent',
+          useGrouping: true,
+        },
+      },
+    }
+
+    export default english
+- id: 2
+  name: "French"
+  locale: "fr"
+  content: |
+    const french = {
+      messages: {
+        projectName: '${projectName}',
+        common: {
+          update: 'modifier',
+          delete: 'supprimer',
+          create: 'créer',
+          apply: 'appliquer',
+          go: 'aller',
     
+          views: 'vues',
+          view: 'vue',
+          details: 'détails',
+          list: 'liste',
+          new: 'nouveau',
+          actions: 'actions',
+          back: 'retour',
+          layout: 'mise en page',
+          theme: 'thème',
+          general: 'général',
+          settings: 'paramètres',
+          entities: 'entités',
+          entity: 'entité',
+          filter: 'filtre',
+          rows: 'lignes',
+          showing: 'affichage',
+          previous: 'précédent',
+          next: 'suivant',
+          page: 'page',
+          add: 'ajouter',
+          description: 'description',
+          return: 'retourner',
+          home: 'accueil',
+          login: 'connexion',
+          logout: 'déconnexion',
+          register: 'inscription',
+          profile: 'profil',
+          username: "nom d'utilisateur",
+          email: 'email',
+          password: 'mot de passe',
+          language: 'langue',
+          confirm: 'confirmer',
+          cancel: 'annuler',
+    
+          // Mots de liaison
+          of: 'des',
+          no: 'aucun',
+        },
+    
+        navbar: {
+          entities: '@.capitalize:common.entities',
+          views: '@.capitalize:common.views',
+          settings: '@.capitalize:common.settings',
+          home: '@.capitalize:common.home',
+        },
+    
+        authentication: {
+          login: '@.capitalize:common.login',
+          logout: '@.capitalize:common.logout',
+          register: '@.capitalize:common.register',
+          profile: '@.capitalize:common.profile',
+          username: '@.capitalize:common.username',
+          email: '@.capitalize:common.email',
+          password: '@.capitalize:common.password',
+          confirmPassword: '@.capitalize:common.confirm votre @:common.password',
+        },
+    
+        home: {
+          greet: 'Bonjour',
+          greetDeveloper: '@.capitalize:home.greet développeur',
+          welcome: 'Bienvenue sur l’application frontend @.capitalize:projectName',
+          titles: {
+            entities: '@.capitalize:common.list des @:common.entities',
+            views: '@.capitalize:common.list des @:common.views',
+          },
+        },
+    
+        pagination: {
+          // 'Showing :' -> 'Affichage :'
+          sizeLabel: '@.capitalize:common.showing :',
+          // 'previous page' -> 'Page précédente' (inversion de l'ordre pour la fluidité)
+          previous: '@.capitalize:common.page @:common.previous',
+          // 'next page' -> 'Page suivante' (inversion de l'ordre pour la fluidité)
+          next: '@.capitalize:common.page @:common.next',
+          // 'go to page :' -> 'Aller à la page :'
+          goToLabel: '@.capitalize:common.go  @:common.la @:common.page :',
+          // '{total} rows' -> '{total} lignes' (le total est placé en premier)
+          totalRows: ' sur {total} @:common.rows',
+        },
+    
+        search: {
+          filters: '@.capitalize:common.no @:common.filter | @.capitalize:common.filter | @.capitalize:common.filter ({count})',
+        },
+    
+        entity: {
+          nav: '{entity} / ',
+          list: {
+            nav: '@.capitalize:common.list',
+          },
+          create: {
+            nav: '@.capitalize:common.new',
+            submitLabel: '@.capitalize:common.create {entity}',
+          },
+          update: {
+            nav: '@.capitalize:common.update',
+            submitLabel: '@.capitalize:common.update {entity}',
+          },
+          details: {
+            nav: '@.capitalize:common.details',
+          },
+        },
+    
+        button: {
+          // 'Add new {entity}' -> 'Ajouter une nouvelle {entity}'
+          addEntity: '@.capitalize:common.add @:common.new @:common.entity',
+          applySearch: '@.capitalize:common.apply',
+          // 'Back to list' -> 'Retour à la liste'
+          backToList: '@.capitalize:common.back à la @:common.list',
+          backToListDescription: '@.capitalize:common.return à la @:common.view @:common.list',
+          go: '@.capitalize:common.go',
+          delete: '@.capitalize:common.delete',
+          update: '@.capitalize:common.update',
+          create: '@.capitalize:common.create',
+          cancel: '@.capitalize:common.cancel',
+        },
+    
+        settings: {
+          layout: '@.capitalize:common.layout',
+          theme: '@.capitalize:common.theme',
+          general: '@.capitalize:common.general',
+          language: '@.capitalize:common.language',
+          pageTitle: '@.capitalize:common.settings',
+        },
+
+        // Définitions d’entités (scalable)
+        entities: {
+          {{#each entities}}
+          {{#if !this.isView}}
+          ${minStart(this.className)}: {
+            name: '${minStart(this.className)} | ${minStart(this.className)}s',
+            nav: {
+              title: '@.capitalize:entities.${minStart(this.className)}.name',
+              create: '@.capitalize:common.create @.capitalize:entities.${minStart(this.className)}.name',
+              list: '@.capitalize:entities.${minStart(this.className)}.name @:common.list',
+            },
+          },{{/if}}
+          {{/each}}
+        },
+        views: {
+          {{#each entities}}
+          {{#if this.isView}}
+          ${minStart(this.className)}: {
+            name: '${minStart(this.className)} | ${minStart(this.className)}s',
+            nav: {
+              title: '@.capitalize:views.${minStart(this.className)}.name',
+              list: '@.capitalize:views.${minStart(this.className)}.name @:common.list',
+            },
+          },{{/if}}
+          {{/each}}
+        },
+
+        error: {
+          400: 'Requête invalide',
+          403: 'Interdit',
+          404: 'Introuvable',
+          500: 'Erreur 500',
+        },
+      },
+
+      // Formatage des dates
+      dateTimeFormats: {
+        short: { year: 'numeric', month: 'short', day: 'numeric' },
+        long: { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' },
+        time: { hour: '2-digit', minute: '2-digit' },
+        full: {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long',
+          hour: '2-digit',
+          minute: '2-digit',
+        },
+      },
+
       // Formatage des nombres
       numberFormats: {
         currency: {
@@ -228,7 +393,7 @@
         },
         decimal: {
           style: 'decimal',
-          minimumFractionDigits: 2, // 1 234,50
+          minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         },
         percent: {
@@ -237,4 +402,5 @@
         },
       },
     }
+
     export default french
