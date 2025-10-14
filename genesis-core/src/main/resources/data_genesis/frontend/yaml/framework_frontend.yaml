@@ -12215,6 +12215,37 @@
 
         export default i18n;
       destinationPath: "${destinationFolder}/src"
+    - fileType: "RootLayout file"
+      fileName: "RootLayout"
+      extension: "tsx"
+      content: |
+        // src/layouts/RootLayout.tsx
+        import Sidebar from '@/components/Sidebar/Sidebar';
+        import { Outlet } from 'react-router-dom';
+        import { useState } from 'react';
+
+        export default function RootLayout() {
+            const [layout, setLayout] = useState<'vertical' | 'horizontal'>('{{#if navbarPreference = Sidebar}}vertical{{else}}horizontal{{/if}}');
+          
+            return (
+                <>
+                    {layout === 'horizontal' ? (
+                        <>
+                            <Sidebar layout="horizontal" onLayoutChange={setLayout} />
+                            <Outlet />
+                        </>
+                    ) : (
+                        <div style={{ display: 'flex', minHeight: '100vh' }}>
+                            <Sidebar layout="vertical" onLayoutChange={setLayout} />
+                            <main style={{ flex: 1, padding: '1rem' }}>
+                                <Outlet />
+                            </main>
+                        </div>
+                    )}
+                </>
+            );
+        }
+      destinationPath: "${destinationFolder}/src/layouts"
   components:
     - componentType: "List"
       generateForView: true
