@@ -24,13 +24,6 @@ public class ProjectBranding {
         return logoFile != null || (useLogoLink());
     }
 
-    public String getLogoType(){
-        if (logoExtension.equals("svg")){
-            return "vector";
-        }
-        return "image";
-    }
-
     public boolean useLogoLink(){
         return logoLink != null && !logoLink.isEmpty();
     }
@@ -65,6 +58,9 @@ public class ProjectBranding {
 
     public void setLogoFile(File logoFile) {
         this.logoFile = logoFile;
+        if (logoFile == null){
+            return;
+        }
 
         String fileName = logoFile.getName();
         String extension = "";
@@ -74,6 +70,5 @@ public class ProjectBranding {
             extension = fileName.substring(i + 1); // e.g. "png", "svg"
             setLogoExtension(extension);
         }
-
     }
 }
