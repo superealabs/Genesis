@@ -5,7 +5,7 @@
   layout:
     name: "_Layout"
     destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
-    navLink: "class=\"@(currentController == \"${majStart(this.entityName)}\" ? \"active\" : \"\")\" asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
+    navLink: "class=\"nav-item @(currentController == \"${majStart(this.entityName)}\" ? \"active\" : \"\")\" asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
     pageName: "@ViewData[\"Title\"] -"
     rootPath: " ~/css/style.css\" asp-append-version=\"true "
     assetsImportLink: "~"
@@ -23,12 +23,14 @@
     modelType : |
       @model ${majStart(className)}ViewModel
       @{
-         string currentSort = Context.Request.Query["sortOrder"];
-         ViewData["Title"] = "${majStart(className)}s";
+          string currentSort = Context.Request.Query["sortOrder"];
+          ViewData["Title"] = "${majStart(className)}s";
+          var searchCriteria = Model?.Search${majStart(className)}Criteria;
       }
     filterLink: "asp-action=\"Search\" asp-controller=\"${majStart(className)}\""
-    inputTagHelper: "name=\"${majStart(this.name)}\""
-    selectTagHelper: "name=\"${majStart(this.columnNameField)}\" asp-items=\"@(Model?.${majStart(this.type)}s ?? new List<SelectListItem>())\""
+    inputTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}\""
+    inputDateTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}?.ToString(\"yyyy-MM-ddTHH:mm\")\""
+    selectTagHelper: "name=\"${majStart(this.columnNameField)}\" asp-items=\"@(Model?.${majStart(this.type)}s ?? new List<SelectListItem>())\" asp-for=\"Search${majStart(className)}Criteria.${majStart(this.columnNameField)}\""
     dataValue: "@${minStart(className)}.${majStart(this.name)}"
     dataForeignValue: "@${minStart(className)}.${majStart(this.name)}?.GetType().GetProperty((string)Model.${majStart(this.type)}DisplayColumn)?.GetValue(@${minStart(className)}.${majStart(this.name)})"
     inlineLoopStatement: |
@@ -59,18 +61,21 @@
     nextClassCondition: " @(Model.Page.Number == Model.Page.TotalPages - 1 ? \"disabled\" : \"\")"
     onGoingPageLink: "@Url.Action(\"Index\")"
     onGoingPageSizeTagHelper: "value=\"@Model.Page.Size\""
+    totalElementsTagHelper: "@Model.Page.TotalElements"
     onGoingSortOrderTagHelper: "value=\"@currentSort\""
+    activeSortAscCondition: "@(currentSort?.Contains(\"${this.name},asc\") == true ? \"active\" : \"\")"
+    activeSortDescCondition: "@(currentSort?.Contains(\"${this.name},desc\") == true ? \"active\" : \"\")"
     onGoingPagesLoop: |
       @for (int i = 0; i < Model.Page.TotalPages; i++)
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}<option value="@i" selected="@(i == Model.Page.Number)">
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}@i
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}</option>
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}}
+      {{tab}}{{tab}}{{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}<option value="@i" selected="@(i == Model.Page.Number)">
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}@i
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}</option>
+      {{tab}}{{tab}}{{tab}}{{tab}}}
     scriptSection: |
       @section Scripts {
-          <script src="~/js/utils.js"></script>
-          <script src="~/js/events.js"></script>
+          <script src="~/js/filter-utils.js"></script>
+          <script src="~/js/export-utils.js"></script>
       }
   detail:
     modelType: |
@@ -97,11 +102,11 @@
       }
     validationSection: |
       @if (!ViewData.ModelState.IsValid)
-      {{tab}}{
-      {{tab}}{{tab}}<!-- Validation Summary -->
-      {{tab}}{{tab}}<div asp-validation-summary="All" class="error-message"></div>
-      {{tab}}}
+      {
+      {{tab}}<div asp-validation-summary="All" class="error-message"></div>
+      }
     backLink: "@Url.Action(\"Index\")"
+    assetsImportLink: "~"
     validationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.name)}\""
     selectValidationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.columnNameField)}\""
     inputTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.name)}\""

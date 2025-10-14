@@ -151,7 +151,7 @@
               Terminal → Run Task → build
               Press F5
         
-        -Access the Application:
+        - Access the Application:
           Open your browser and navigate to: https://localhost:7273 or http://localhost:${projectPort}
         
         {{#if useAuthCookie}}- Authentication:

@@ -8,6 +8,7 @@ import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.generator.model.FrontendLayout;
+import org.labs.genesis.frontend.generator.model.ProjectBranding;
 import org.labs.utils.StringUtils;
 
 import java.util.*;
@@ -582,6 +583,19 @@ public class FrameworkMetadataProvider {
         return  metadata;
     }
 
+    public static HashMap<String, Object> getBrandingHashMap(ProjectBranding projectBranding){
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("faviconUrl", projectBranding.getFaviconUrl());
+        metadata.put("useFaviconLink", projectBranding.useFaviconLink());
+        metadata.put("hasFavicon", projectBranding.hasFavicon());
+
+        metadata.put("logoUrl",projectBranding.getLogoUrl());
+        metadata.put("useLogoLink", projectBranding.useLogoLink());
+        metadata.put("hasLogo", projectBranding.hasLogo());
+
+        return  metadata;
+    }
+
     public static HashMap<String, Object> getAltViewMainLayoutHashMap (ViewsTemplateEngine viewsTemplateEngine) {
         HashMap<String, Object> altMap = new HashMap<>();
         altMap.put("navLink", viewsTemplateEngine.getLayout().getNavLink());
@@ -613,6 +627,7 @@ public class FrameworkMetadataProvider {
         altMap.put("detailsLink", viewsTemplateEngine.getList().getDetailsLink());
         altMap.put("filterLink", viewsTemplateEngine.getList().getFilterLink());
         altMap.put("inputTagHelper", viewsTemplateEngine.getList().getInputTagHelper());
+        altMap.put("inputDateTagHelper", viewsTemplateEngine.getList().getInputDateTagHelper());
         altMap.put("selectTagHelper", viewsTemplateEngine.getList().getSelectTagHelper());
         altMap.put("deleteTagHelper", viewsTemplateEngine.getList().getDeleteTagHelper());
         altMap.put("deleteLink", viewsTemplateEngine.getList().getDeleteLink());
@@ -626,9 +641,12 @@ public class FrameworkMetadataProvider {
         altMap.put("previousClassCondition", viewsTemplateEngine.getList().getPreviousClassCondition());
         altMap.put("pagesListLoop", viewsTemplateEngine.getList().getPagesListLoop());
         altMap.put("nextPageLink", viewsTemplateEngine.getList().getNextPageLink());
+        altMap.put("activeSortAscCondition", viewsTemplateEngine.getList().getActiveSortAscCondition());
+        altMap.put("activeSortDescCondition", viewsTemplateEngine.getList().getActiveSortDescCondition());
         altMap.put("nextClassCondition", viewsTemplateEngine.getList().getNextClassCondition());
         altMap.put("onGoingPageLink", viewsTemplateEngine.getList().getOnGoingPageLink());
         altMap.put("onGoingPageSizeTagHelper", viewsTemplateEngine.getList().getOnGoingPageSizeTagHelper());
+        altMap.put("totalElementsTagHelper", viewsTemplateEngine.getList().getTotalElementsTagHelper());
         altMap.put("onGoingSortOrderTagHelper", viewsTemplateEngine.getList().getOnGoingSortOrderTagHelper());
         altMap.put("onGoingPagesLoop", viewsTemplateEngine.getList().getOnGoingPagesLoop());
         altMap.put("scriptSection", viewsTemplateEngine.getList().getScriptSection());
@@ -651,6 +669,7 @@ public class FrameworkMetadataProvider {
         altMap.put("modelType", viewsTemplateEngine.getCreate().getModelType());
         altMap.put("validationSection", viewsTemplateEngine.getCreate().getValidationSection());
         altMap.put("backLink", viewsTemplateEngine.getCreate().getBackLink());
+        altMap.put("assetsImportLink", viewsTemplateEngine.getCreate().getAssetsImportLink());
         altMap.put("validationTagHelper", viewsTemplateEngine.getCreate().getValidationTagHelper());
         altMap.put("selectValidationTagHelper", viewsTemplateEngine.getCreate().getSelectValidationTagHelper());
         altMap.put("inputTagHelper", viewsTemplateEngine.getCreate().getInputTagHelper());

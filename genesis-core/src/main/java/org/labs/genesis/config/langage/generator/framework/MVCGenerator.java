@@ -425,8 +425,10 @@ public class MVCGenerator implements GenesisGenerator {
         String firstResult = engine.simpleRender(templateContent, altMap);
 
         HashMap<String, Object> layoutAltMap = getCssLayoutHashMap(framework.getFrontendLayout());
+        HashMap<String, Object> brandingAltMap = getBrandingHashMap(framework.getProjectBranding());
         HashMap<String, Object> metadataFinally = getViewMainLayoutHashMap(framework, frameworkOptions, Arrays.stream(tableMetadata).toList(), projectName, destinationFolder, groupLink);
         metadataFinally.putAll(layoutAltMap);
+        metadataFinally.putAll(brandingAltMap);
 
         // Ajustement du chemin de sauvegarde
         String fileSavePath;

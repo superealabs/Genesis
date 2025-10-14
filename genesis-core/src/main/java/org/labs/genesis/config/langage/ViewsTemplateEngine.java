@@ -48,6 +48,7 @@ public class ViewsTemplateEngine {
         private String modelType;
         private String filterLink;
         private String inputTagHelper;
+        private String inputDateTagHelper;
         private String selectTagHelper;
         private String dataValue;
         private String dataForeignValue;
@@ -69,7 +70,10 @@ public class ViewsTemplateEngine {
         private String nextPageLink;
         private String nextClassCondition;
         private String onGoingPageLink;
+        private String activeSortAscCondition;
+        private String activeSortDescCondition;
         private String onGoingPageSizeTagHelper;
+        private String totalElementsTagHelper;
         private String onGoingSortOrderTagHelper;
         private String onGoingPagesLoop;
         private String scriptSection;
@@ -94,6 +98,7 @@ public class ViewsTemplateEngine {
         private String modelType;
         private String validationSection;
         private String backLink;
+        private String assetsImportLink;
         private String validationTagHelper;
         private String selectValidationTagHelper;
         private String inputTagHelper;
