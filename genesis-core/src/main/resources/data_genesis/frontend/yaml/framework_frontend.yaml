@@ -11140,7 +11140,7 @@
   componentExtension: "tsx"
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
-    logoPath: "${destinationFolder}/src"
+    logoPath: "${destinationFolder}/public"
     langsPath: "${destinationFolder}/src/locales"
   authenticationFiles:
     - fileType: "Service Auth"
@@ -12104,7 +12104,7 @@
       content: |
         export const appConfig = {
             title: '${projectName}',           // ou mettre undefined pour une image
-            logoUrl: undefined as string | undefined,
+            logoUrl: {{#if useLogoLink}}'${logoUrl}'{{elseIf hasLogo}}'${logoUrl}'{{else}}undefined as string | undefined{{/if}},
         };
       destinationPath: "${destinationFolder}/src/config/"
     - fileType: "Navigation items config file"
@@ -12171,7 +12171,7 @@
         <html lang="fr">
         <head>
           <meta charset="UTF-8" />
-          <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+          <link rel="icon" href="{{#if useFaviconLink}}${faviconUrl}{{else}}/favicon.ico{{/if}}" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <title>${projectName}</title>
         </head>
