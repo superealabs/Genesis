@@ -90,7 +90,8 @@
       }
     dataValue: "@Model.${majStart(className)}.${majStart(this.name)}"
     dataForeignValue: "@Model.${majStart(className)}.${majStart(this.name)}?.GetType().GetProperty((string)Model.${majStart(this.type)}DisplayColumn)?.GetValue(@Model.${majStart(className)}.${majStart(this.name)})"
-    deleteLink: "data-id=\"@Model.${majStart(className)}.${majStart(pkColumn)}\""
+    deleteTagHelper: "data-id=\"@Model.${majStart(className)}.${majStart(pkColumn)}\""
+    deleteLink: "asp-action=\"Delete\""
     updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @Model.${majStart(className)}.${majStart(pkColumn)} })"
     backLink: "@previousUrl"
 

@@ -87,6 +87,7 @@ public class ViewsTemplateEngine {
         private String dataValue;
         private String dataForeignValue;
         private String deleteLink;
+        private String deleteTagHelper;
         private String updateLink;
         private String backLink;
     }

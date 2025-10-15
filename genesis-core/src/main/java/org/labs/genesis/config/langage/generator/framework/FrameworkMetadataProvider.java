@@ -658,6 +658,7 @@ public class FrameworkMetadataProvider {
         altMap.put("modelType", viewsTemplateEngine.getDetail().getModelType());
         altMap.put("dataValue", viewsTemplateEngine.getDetail().getDataValue());
         altMap.put("deleteLink", viewsTemplateEngine.getDetail().getDeleteLink());
+        altMap.put("deleteTagHelper", viewsTemplateEngine.getDetail().getDeleteTagHelper());
         altMap.put("updateLink", viewsTemplateEngine.getDetail().getUpdateLink());
         altMap.put("backLink", viewsTemplateEngine.getDetail().getBackLink());
         altMap.put("dataForeignValue", viewsTemplateEngine.getDetail().getDataForeignValue());
