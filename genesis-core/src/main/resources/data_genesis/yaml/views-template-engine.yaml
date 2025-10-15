@@ -28,6 +28,7 @@
       }
     filterLink: "asp-action=\"Search\" asp-controller=\"${majStart(className)}\""
     inputTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}\""
+    inputRadioTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}\" asp-for=\"Search${majStart(className)}Criteria.${majStart(this.name)}\""
     inputDateTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}?.ToString(\"yyyy-MM-ddTHH:mm\")\""
     selectTagHelper: "name=\"${majStart(this.columnNameField)}\" asp-items=\"@(Model?.${majStart(this.type)}s ?? new List<SelectListItem>())\" asp-for=\"Search${majStart(className)}Criteria.${majStart(this.columnNameField)}\""
     dataValue: "@${minStart(className)}.${majStart(this.name)}"

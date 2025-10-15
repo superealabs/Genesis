@@ -628,6 +628,7 @@ public class FrameworkMetadataProvider {
         altMap.put("filterLink", viewsTemplateEngine.getList().getFilterLink());
         altMap.put("inputTagHelper", viewsTemplateEngine.getList().getInputTagHelper());
         altMap.put("inputDateTagHelper", viewsTemplateEngine.getList().getInputDateTagHelper());
+        altMap.put("inputRadioTagHelper", viewsTemplateEngine.getList().getInputRadioTagHelper());
         altMap.put("selectTagHelper", viewsTemplateEngine.getList().getSelectTagHelper());
         altMap.put("deleteTagHelper", viewsTemplateEngine.getList().getDeleteTagHelper());
         altMap.put("deleteLink", viewsTemplateEngine.getList().getDeleteLink());

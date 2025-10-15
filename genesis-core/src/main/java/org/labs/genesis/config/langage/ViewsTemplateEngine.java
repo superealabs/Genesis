@@ -49,6 +49,7 @@ public class ViewsTemplateEngine {
         private String filterLink;
         private String inputTagHelper;
         private String inputDateTagHelper;
+        private String inputRadioTagHelper;
         private String selectTagHelper;
         private String dataValue;
         private String dataForeignValue;
