@@ -128,6 +128,10 @@ ${modelType}
                 <th>
                     <div class="th-content">
                         <span>{{#if this.isForeignKey}} ${this.type} {{else}} ${majStart(this.name)} {{/if}}</span>
+                        {{#if this.columnType = json}}{{removeLine}}
+                        {{elseIf this.columnType = jsonb}}{{removeLine}}
+                        {{elseIf this.columnType = xml}}{{removeLine}}
+                        {{else}}
                         <a ${sortLink} class="sort-link">
                             <div class="sort-icons">
                                 <svg class="sort-asc ${activeSortAscCondition}" width="10" height="10" viewBox="0 0 24 24" fill="none"
@@ -139,7 +143,7 @@ ${modelType}
                                     <path d="M7 10l5 5 5-5" />
                                 </svg>
                             </div>
-                        </a>
+                        </a>{{/if}}
                     </div>
                 </th>
                 {{/each}}{{removeLine}}

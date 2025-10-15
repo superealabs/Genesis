@@ -23,7 +23,6 @@
     modelType : |
       @model ${majStart(className)}ViewModel
       @{
-          string currentSort = Context.Request.Query["sortOrder"];
           ViewData["Title"] = "${majStart(className)}s";
           var searchCriteria = Model?.Search${majStart(className)}Criteria;
       }
@@ -39,7 +38,7 @@
     blockLoopStatementEnd: |
       }
     backLink: "@Url.Action(\"Index\")"
-    sortLink: "asp-action=\"Index\" asp-route-page=\"@Model.Page.Number\" asp-route-pageSize=\"@Model.Page.Size\" asp-route-sortOrder=\"@WebUtils.AddSort(currentSort, \"${this.name},asc\")\""
+    sortLink: "asp-action=\"Index\" asp-route-page=\"@Model.Page.Number\" asp-route-pageSize=\"@Model.Page.Size\" asp-route-sortOrder=\"@Model.CurrentSort\" asp-route-sortBy=\"${this.name},asc\""
     detailsLink: "@Url.Action(\"Details\", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"
     createLink: "@Url.Action(\"Create\")"
     updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"
@@ -47,24 +46,24 @@
     deleteTagHelper: "data-id=\"@${minStart(className)}.${majStart(pkColumn)}\""
     pageSizeChangeLink: "'@Url.Action(\"Index\")?page=0&pageSize='+this.value"
     pageSizeTagHelper: "selected=\"@(Model.Page.Size == ${this})\""
-    previousPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size, sortOrder=currentSort })"
+    previousPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"
     previousClassCondition: " @(Model.Page.Number == 0 ? \"disabled\" : \"\")"
     pagesListLoop: |
       @for (int i = 0; i < Model.Page.TotalPages; i++)
       {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}<a href="@Url.Action("Index", new { page = i, pageSize = Model.Page.Size, sortOrder=currentSort })"
+      {{tab}}{{tab}}{{tab}}{{tab}}<a href="@Url.Action("Index", new { page = i, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"
       {{tab}}{{tab}}{{tab}}{{tab}}class="@(i == Model.Page.Number ? "active" : "")">
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}@i
       {{tab}}{{tab}}{{tab}}{{tab}}</a>
       {{tab}}{{tab}}{{tab}}}
-    nextPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number + 1, pageSize = Model.Page.Size, sortOrder=currentSort })"
+    nextPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number + 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"
     nextClassCondition: " @(Model.Page.Number == Model.Page.TotalPages - 1 ? \"disabled\" : \"\")"
     onGoingPageLink: "@Url.Action(\"Index\")"
     onGoingPageSizeTagHelper: "value=\"@Model.Page.Size\""
     totalElementsTagHelper: "@Model.Page.TotalElements"
-    onGoingSortOrderTagHelper: "value=\"@currentSort\""
-    activeSortAscCondition: "@(currentSort?.Contains(\"${this.name},asc\") == true ? \"active\" : \"\")"
-    activeSortDescCondition: "@(currentSort?.Contains(\"${this.name},desc\") == true ? \"active\" : \"\")"
+    onGoingSortOrderTagHelper: "value=\"@Model.CurrentSort\""
+    activeSortAscCondition: "@(Model.CurrentSort?.Contains(\"${this.name},asc\") == true ? \"active\" : \"\")"
+    activeSortDescCondition: "@(Model.CurrentSort?.Contains(\"${this.name},desc\") == true ? \"active\" : \"\")"
     onGoingPagesLoop: |
       @for (int i = 0; i < Model.Page.TotalPages; i++)
       {{tab}}{{tab}}{{tab}}{{tab}}{
