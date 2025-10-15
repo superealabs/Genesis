@@ -2239,6 +2239,8 @@
               public PageInfo Page { get; set; } = new PageInfo();
 
               {{#each fieldsFK}}public IEnumerable<SelectListItem> ${majStart(this.type)}s { get; set; } = new List<SelectListItem>();{{/each}}
+          
+              public string CurrentSort { get; set; } = string.Empty;
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/ViewModels/"
     validationAnnotations:
@@ -2472,9 +2474,13 @@
     controllerMethodContent: |
       {{tab}}{{#if useAuthCookie}}[Authorize]{{else}}{{removeLine}}{{/if}}
       {{tab}}// GET: /${majStart(className)}
-      {{tab}}public async Task<IActionResult> Index(int page = 0, int pageSize = 10, string? sortOrder = null)
+      {{tab}}public async Task<IActionResult> Index(int page = 0, int pageSize = 10, string? sortOrder = null, string? sortBy = null)
       {{tab}}{
-      {{tab}}    var results = await _service.GetAllAsync(page, pageSize, sortOrder{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
+      {{tab}}    string finalSortOrder = !string.IsNullOrEmpty(sortBy)
+      {{tab}}        ? WebUtils.AddSort(sortOrder, sortBy)
+      {{tab}}        : sortOrder;
+        
+      {{tab}}    var results = await _service.GetAllAsync(page, pageSize, finalSortOrder{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
       
       {{tab}}    {{#each fieldsFK}}
       {{tab}}    string ${minStart(this.type)}DisplayColumn = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
@@ -2490,6 +2496,7 @@
       {{tab}}        ${majStart(this.type)}PkColumn = ${minStart(this.type)}PkColumn,
       {{tab}}        ${majStart(this.type)}s = new SelectList(${minStart(this.type)}s?.Content ?? new List<${this.type}>(), ${minStart(this.type)}PkColumn, ${minStart(this.type)}DisplayColumn),
       {{tab}}        {{/each}}{{removeLine}}
+      {{tab}}        CurrentSort = finalSortOrder
       {{tab}}    };
       
       {{tab}}    return View(vm);
