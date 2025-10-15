@@ -464,6 +464,7 @@ function setupModal(modalId, triggerSelector, inputId, textId) {
     const cancelBtn = modal.querySelector('.btn-tertiary');
     const input = document.getElementById(inputId);
     const textSpan = document.getElementById(textId);
+    const bodyTextSpan = document.getElementById('body'+textId);
 
     // Boutons qui déclenchent le modal
     document.querySelectorAll(triggerSelector).forEach(btn => {
@@ -472,6 +473,9 @@ function setupModal(modalId, triggerSelector, inputId, textId) {
 
             if (textSpan) {
                 textSpan.textContent = value;
+            }
+            if (bodyTextSpan) {
+                bodyTextSpan.textContent = value;
             }
             if (input) {
                 input.value = value;

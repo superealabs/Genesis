@@ -288,7 +288,7 @@ body:has(.sidebar) .main-content {
 .topbar .nav-item.active::before {
     bottom: 0;
     left: 50%;
-    bottom: -18px;
+    bottom: -22px;
     transform: translateX(-50%);
     width: 100%;
     height: 5px;
@@ -556,65 +556,65 @@ body:has(.sidebar) .main-content {
     .menu-toggle {
         display: block;
     }
-    
+
     /* Masquer les navigations par défaut sur mobile */
     .topbar,
     .sidebar {
         transform: translateY(-100%);
     }
-    
+
     .sidebar {
         transform: translateX(-100%);
     }
-    
+
     /* États actifs sur mobile */
     .topbar.active {
         transform: translateY(0);
         height: auto;
         min-height: var(--sidebar-height);
     }
-    
+
     .sidebar.open {
         transform: translateX(0);
     }
-    
+
     /* Adaptation du contenu principal */
     .main-content {
         margin: 0 !important;
         /* padding-top: 80px; Espace pour le menu toggle */
     }
-    
+
     /* Adaptation du layout */
     .topbar-content {
         flex-direction: column;
         padding: 20px;
         height: auto;
     }
-    
+
     .topbar .project-info {
         margin-right: 0;
         margin-bottom: 20px;
     }
-    
+
     .topbar .navigation {
         width: 100%;
         margin-bottom: 20px;
     }
-    
+
     .topbar .nav-content {
         flex-direction: column;
         gap: 15px;
         align-items: flex-start;
     }
-    
+
     .nav-items-row {
         flex-wrap: wrap;
     }
-    
+
     .topbar .settings {
         margin-left: 0;
     }
-    
+
     /* Adaptation des indicateurs actifs */
     .topbar .nav-item.active::before {
         display: none;
@@ -712,24 +712,24 @@ body:has(.sidebar) .main-content {
 /* Variantes de style */
 .btn-primary {
     background: linear-gradient(135deg,
-            var(--primary-color) 0%,
-            color-mix(in srgb, var(--primary-color) 60%, transparent) 100%);
+    var(--primary-color) 0%,
+    color-mix(in srgb, var(--primary-color) 60%, transparent) 100%);
     color: white;
     position: relative;
     overflow: hidden;
     box-shadow:
-        0 4px 12px color-mix(in srgb, var(--primary-color) 30%, transparent),
-        inset 0 1px 0 rgba(130, 130, 130, 0.2);
+            0 4px 12px color-mix(in srgb, var(--primary-color) 30%, transparent),
+            inset 0 1px 0 rgba(130, 130, 130, 0.2);
 }
 
 .btn-primary:hover {
     background: linear-gradient(105deg,
-            color-mix(in srgb, var(--primary-color) 50%, white) 0%,
-            var(--primary-color) 100%);
+    color-mix(in srgb, var(--primary-color) 50%, white) 0%,
+    var(--primary-color) 100%);
     transform: translateY(-1px);
     box-shadow:
-        0 4px 12px color-mix(in srgb, var(--primary-color) 30%, transparent),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            0 4px 12px color-mix(in srgb, var(--primary-color) 30%, transparent),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .btn-secondary {
@@ -1650,16 +1650,16 @@ tbody tr:hover {
     background: var(--error-color);
     color: white;
     box-shadow:
-        0 4px 12px color-mix(in srgb, var(--error-color) 30%, transparent),
-        inset 0 1px 0 rgba(130, 130, 130, 0.2);
+            0 4px 12px color-mix(in srgb, var(--error-color) 30%, transparent),
+            inset 0 1px 0 rgba(130, 130, 130, 0.2);
 }
 
 #deleteForm .btn-primary:hover {
     background: var(--error-color);
     color: white;
     box-shadow:
-        0 4px 12px color-mix(in srgb, var(--error-color) 30%, transparent),
-        inset 0 1px 0 rgba(130, 130, 130, 0.2);
+            0 4px 12px color-mix(in srgb, var(--error-color) 30%, transparent),
+            inset 0 1px 0 rgba(130, 130, 130, 0.2);
 }
 
 @keyframes slideUp {
