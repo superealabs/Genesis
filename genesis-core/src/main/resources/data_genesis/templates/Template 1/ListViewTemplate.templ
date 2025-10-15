@@ -72,7 +72,8 @@ ${modelType}
         <div class="filter-input-group" data-filter="${this.name}">
             <label for="">${this.name} :</label>
             {{#if this.type = radio}}{{removeLine}}
-            <select class="filter-select" name="${this.name}" id="${this.name}" ${inputTagHelper}>
+            <select class="filter-select" name="${this.name}" id="${this.name}" ${inputRadioTagHelper}>
+                <option value=""><span data-i18n="choose_option"></span></option>
                 <option value="true">True</option>
                 <option value="false">False</option>
             </select>
