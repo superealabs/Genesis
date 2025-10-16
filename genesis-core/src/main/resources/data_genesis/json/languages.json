@@ -241,7 +241,7 @@
       "SMALLINT": "0",
       "DECIMAL": "0.0"
     },
-    "criteriaBuildSnippet": {}
+    "criteriaBuildSnippet": {
       "boolean": "Boolean"
     }
   },
@@ -271,18 +271,33 @@
     },
     "types": {
       "int": "IntegerField",
-      "long": "IntegerField",
+      "long": "BigIntegerField",
       "double": "FloatField",
       "string": "CharField",
-      "text": "CharField",
-      "decimal": "decimal.Decimal",
-      "numeric": "decimal.Decimal",
+      "text": "TextField",
+      "decimal": "DecimalField",
+      "numeric": "DecimalField",
       "date": "DateField",
       "timestamp": "DateTimeField",
       "datetime": "DateTimeField",
       "time": "TimeField",
       "boolean": "BooleanField"
-
-    }
+    },
+    "attributeTypeAnnotations": {},
+    "mockData": {
+      "int": "0",
+      "long": "0",
+      "double": "0.0",
+      "string": "\"mock\"",
+      "text": "\"mock\"",
+      "decimal": "0.0",
+      "numeric": "0.0",
+      "date": "\"2024-01-01\"",
+      "timestamp": "\"2024-01-01T00:00:00\"",
+      "datetime": "\"2024-01-01T00:00:00\"",
+      "time": "\"00:00:00\"",
+      "boolean": "True"
+    },
+    "criteriaBuildSnippet": {}
   }
 ]
