@@ -43,7 +43,7 @@ public class GenesisCoreTest {
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var project = ProjectGenerator.projects.get(projectId);
 
-            String projectName = "Popol";
+            String projectName = "JavaTest";
             String groupLink = "org.labs";
             String projectPort = "8000";
             String logLevel = "INFO";

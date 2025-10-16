@@ -802,6 +802,67 @@
             }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/exception"
+    - fileType: "Export util"
+      fileName: "ExportUtils"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.utils;
+        
+        import java.io.PrintWriter;
+        import java.io.StringWriter;
+        import java.lang.reflect.Field;
+        import java.util.List;
+        import java.util.stream.Collectors;
+
+        public class ExportUtils {
+
+            // Generate CSV from a list of objects using reflection
+            public static <T> String generateCsv(List<T> data) {
+                if (data == null || data.isEmpty()) {
+                    return "";
+                }
+
+                StringWriter stringWriter = new StringWriter();
+                PrintWriter writer = new PrintWriter(stringWriter);
+
+                Class<?> clazz = data.get(0).getClass();
+                Field[] fields = clazz.getDeclaredFields();
+
+                // header
+                String header = String.join(",",
+                        List.of(fields).stream()
+                                .map(Field::getName)
+                                .collect(Collectors.toList())
+                );
+                writer.println(header);
+
+                for (T item : data) {
+                    String line = List.of(fields).stream()
+                            .map(field -> {
+                                field.setAccessible(true);
+                                try {
+                                    Object value = field.get(item);
+                                    return value != null ? escapeCsv(value.toString()) : "";
+                                } catch (IllegalAccessException e) {
+                                    return "";
+                                }
+                            })
+                            .collect(Collectors.joining(","));
+                    writer.println(line);
+                }
+
+                writer.flush();
+                return stringWriter.toString();
+            }
+            private static String escapeCsv(String value) {
+                String escaped = value.replace("\"", "\"\"");
+                if (escaped.contains(",") || escaped.contains("\"") || escaped.contains("\n")) {
+                    return "\"" + escaped + "\"";
+                }
+                return escaped;
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
 
     - fileType: "Exception Handler"
       fileName: "GlobalExceptionHandler"
@@ -853,7 +914,6 @@
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/exception/handler"
-
 
     - fileType: "ApplicationYml"
       fileName: "application"
@@ -1292,7 +1352,8 @@
       import ${groupLink}.${lowerCase(projectName)}.specification.${majStart(className)}Specification;
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
       import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
-
+      import ${groupLink}.${lowerCase(projectName)}.utils.ExportUtils;
+      import java.util.List;
     serviceAnnotations: |
       @Service
     serviceClassKeyword: "public class"
@@ -1305,6 +1366,11 @@
       {{tab}}   this.${minStart(className)}Repository = ${minStart(className)}Repository;
       {{tab}}}
     serviceMethodContent: |
+      {{tab}}@Override
+      {{tab}}public String export${majStart(className)}ToCSV(List<${className}> ${minStart(className)}) {
+      {{tab}}   return ExportUtils.generateCsv(${minStart(className)});
+      {{tab}}}  
+
       {{tab}}@Override
       {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable) {
       {{tab}}    try {
@@ -1382,6 +1448,8 @@
           import ${groupLink}.${lowerCase(projectName)}.models.${className};
           import org.springframework.data.domain.Page;
           import org.springframework.data.domain.Pageable;    
+          import java.util.List;
+          
           
           public interface ${majStart(className)}Service {
               Page<${className}> getAll${className}(Pageable pageable);
@@ -1389,6 +1457,8 @@
               Page<${className}> getAll${className}(Pageable pageable, ${majStart(className)} object);
           
               ${className} get${className}ById(${pkColumnType} ${pkColumn});
+          
+              public String export${className}ToCSV(List<${className}> ${minStart(className)});
           
               {{#if !isView}}
           
@@ -1425,6 +1495,7 @@
       import org.springframework.data.domain.Sort;
       import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
+      import java.util.List;
 
     controllerAnnotations: |
       @RestController
@@ -1566,7 +1637,31 @@
       {{tab}}            "${formatReadableLowerCase(className)} retrieved successfully", ${lowerCase(className)});
       {{tab}}    return ResponseEntity.ok(response);
       {{tab}}}
-      
+      {{tab}}@Operation(
+      {{tab}}     summary = "Export ${formatReadable(className)} to CSV",
+      {{tab}}     description = "Generate a CSV file from a provided list of ${formatReadable(className)} objects."
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}   @ApiResponse(
+      {{tab}}   responseCode = "200",
+      {{tab}}   description = "CSV file successfully generated",
+      {{tab}}   content = @Content(mediaType = "text/csv")
+      {{tab}}   ),
+      {{tab}}   @ApiResponse(
+      {{tab}}   responseCode = "400",
+      {{tab}}   description = "Invalid or empty list provided"
+      {{tab}}   )
+      {{tab}}})
+      {{tab}}@PostMapping(value = "/export/csv", consumes = "application/json", produces = "text/csv")
+      {{tab}}public ResponseEntity<byte[]> export${majStart(className)}ToCsv(@RequestBody List<${majStart(className)}> ${lowerCase(className)}) {
+      {{tab}}  
+      {{tab}}  String csvContent = ${lowerCase(className)}Service.export${majStart(className)}ToCSV(${lowerCase(className)});
+      {{tab}}  
+      {{tab}}  return ResponseEntity.ok()
+      {{tab}}   .header("Content-Disposition", "attachment; filename=data.csv")
+      {{tab}}   .contentType(org.springframework.http.MediaType.TEXT_PLAIN)
+      {{tab}}   .body(csvContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      {{tab}}}
       {{#if !isView}} 
       
       {{tab}}@Operation(
