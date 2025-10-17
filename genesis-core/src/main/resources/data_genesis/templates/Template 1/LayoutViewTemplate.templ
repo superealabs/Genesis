@@ -5,10 +5,10 @@ ${currentViewContext}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${pageName} ${projectName}</title>
+    <title>${projectName} | ${pageName}</title>
     <link rel="stylesheet" href="${rootPath}">
     {{#if useFaviconLink or hasFavicon}}<link rel="shortcut icon"
-        href="${faviconUrl}"
+        href="${assetsImportLink}/${faviconUrl}"
         type="image/x-icon">{{else}}{{removeLine}}{{/if}}
 </head>
 
@@ -21,7 +21,7 @@ ${currentViewContext}
         <div class="project-info">
             {{#if useLogoLink or hasLogo}}
             <div class="project-logo">
-                <img src="${logoUrl}"
+                <img src="${assetsImportLink}/images${logoUrl}"
                     alt="">
             </div>
             {{else}}
