@@ -10,6 +10,8 @@ import org.labs.genesis.config.langage.ViewsTemplate;
 import org.labs.genesis.config.langage.ViewsTemplateEngine;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.forms.FrontendConfigurationForm;
+import org.labs.genesis.frontend.FrontendLanguage;
+import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.genesis.frontend.generator.model.FrontendLayout;
 import org.labs.genesis.frontend.generator.model.InterfaceLang;
 import org.labs.genesis.frontend.generator.model.ProjectBranding;
@@ -40,6 +42,10 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public void updateDataModel() {
+        projectGenerationContext.setFrontendLanguage((FrontendLanguage)frontendConfigurationForm.getFrontendLanguageOptions().getSelectedItem());
+        projectGenerationContext.setFrontendFramework((FrontendFramework) frontendConfigurationForm.getFrontendFrameworkOptions().getSelectedItem());
+        projectGenerationContext.getFrontendFramework().setFrontendLayout(this.frontendLayout);
+        projectGenerationContext.getFrontendFramework().setProjectBranding(this.branding);
         if (projectGenerationContext.getFramework() instanceof FrameworkMVC) {
             ((FrameworkMVC) projectGenerationContext.getFramework()).setFrontendLayout(this.frontendLayout);
             ((FrameworkMVC) projectGenerationContext.getFramework()).setProjectBranding(this.branding);
@@ -51,12 +57,27 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
     @Override
     public boolean validate() throws ConfigurationException {
         try {
+
+            if(frontendConfigurationForm.getFrontendLanguageOptions().getSelectedItem() == null){
+                throw new ConfigurationException("Please select an appropriate frontend language");
+            }
+            else if(frontendConfigurationForm.getFrontendFrameworkOptions().getSelectedItem() == null){
+                throw new ConfigurationException("Please select a frontend framework to use for generation");
+            }
+
             // Update Layout
             this.frontendLayout.setNavbar((String)frontendConfigurationForm.getNavbarSelect().getSelectedItem());
             this.frontendLayout.setPrimaryColor(frontendConfigurationForm.getPrimaryColorField().getText());
             this.frontendLayout.setSecondaryColor(frontendConfigurationForm.getSecondaryColorField().getText());
             this.frontendLayout.setAdditionalCss(frontendConfigurationForm.getCssTextArea().getText());
-            List<InterfaceLang> langs = new ArrayList<>();
+            List<InterfaceLang> langs = frontendConfigurationForm.getInterfaceLangOptions().getSelectedValuesList();
+            if (langs.size() < 0) {
+                InterfaceLang defaultLang = ProjectGenerator.langs.get(1);
+                frontendLayout.setLangs( new ArrayList<>());
+                frontendLayout.getLangs().add(defaultLang);
+            } else  {
+                this.frontendLayout.setLangs(frontendConfigurationForm.getInterfaceLangOptions().getSelectedValuesList());
+            }
             frontendLayout.isValid();
             // Update branding
             if (!frontendConfigurationForm.getLogoLinkField().getText().isEmpty()){

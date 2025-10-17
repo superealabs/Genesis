@@ -7,6 +7,7 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
+import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.model.FrontendLayout;
 import org.labs.genesis.frontend.generator.model.ProjectBranding;
 import org.labs.utils.StringUtils;
@@ -329,6 +330,7 @@ public class FrameworkMetadataProvider {
         }
         return fieldsFK;
     }
+
     public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field) {
         Map<String, Object> fieldMap = new HashMap<>();
 
@@ -573,6 +575,11 @@ public class FrameworkMetadataProvider {
             }
         });
         return frameworkSecurityBooleanMetadata;
+    }
+
+    private static HashMap<String, Object> getFrontendLanguageMetadata(FrontendLanguage frontendLanguage, Map<String, Object> frontendConfiguration) {
+        HashMap<String, Object> frontendLanguageMetadata = new HashMap<>();
+        return  frontendLanguageMetadata;
     }
 
     public static HashMap<String, Object> getCssLayoutHashMap(FrontendLayout layout){

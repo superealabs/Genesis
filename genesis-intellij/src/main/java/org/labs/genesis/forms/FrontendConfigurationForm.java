@@ -3,7 +3,13 @@ package org.labs.genesis.forms;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.components.JBList;
 import lombok.Getter;
+import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
+import org.labs.genesis.frontend.FrontendLanguage;
+import org.labs.genesis.frontend.generator.FrontendFramework;
+import org.labs.genesis.frontend.generator.model.InterfaceLang;
+import org.labs.genesis.frontend.generator.model.ProjectBranding;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkMVC;
 import org.labs.genesis.config.langage.ViewsTemplateEngine;
@@ -14,10 +20,18 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.List;
 
 @Getter
 public class FrontendConfigurationForm {
     private JPanel mainPanel;
+    private JComboBox<FrontendLanguage> frontendLanguageOptions;
+    private JComboBox<FrontendFramework> frontendFrameworkOptions;
+    private JLabel languageLabel;
+    private JLabel frameworkLabel;
     private JLabel templateEngine;
     private JComboBox<ViewsTemplateEngine> viewsTemplateEngineOptions;
     private JComboBox<String> navbarSelect;
@@ -32,6 +46,7 @@ public class FrontendConfigurationForm {
     private TextFieldWithBrowseButton faviconFileField;
     private JTextField logoLinkField;
     private JTextField faviconLinkField;
+    private JBList<InterfaceLang> interfaceLangOptions;
 
     private File logoFile;
     private File faviconFile;
@@ -158,8 +173,36 @@ public class FrontendConfigurationForm {
     }
 
     private  void initializeOptions(){
+        populateLanguageOptions();
+        populateFrameworkOptions((FrontendLanguage) frontendLanguageOptions.getSelectedItem());
+        interfaceLangOptions.setListData(ProjectGenerator.langs.values().toArray(new InterfaceLang[0]));
+
         templateEngine.setVisible(false);
         viewsTemplateEngineOptions.setVisible(false);
+    }
+
+    private void populateLanguageOptions() {
+        List<FrontendLanguage> frontendLanguages = ProjectGenerator.frontendLanguage.values().stream().toList();
+        for (FrontendLanguage frontendLanguage : frontendLanguages) {
+            frontendLanguageOptions.addItem(frontendLanguage);
+        }
+        frontendLanguageOptions.setSelectedIndex(0);
+    }
+
+    private void populateFrameworkOptions(FrontendLanguage frontendLanguage) {
+        frontendFrameworkOptions.removeAllItems();
+        List<FrontendFramework> frameworks = ProjectGenerator.frontendFrameworks.values().stream()
+                .filter(f -> f.getLanguageId() == frontendLanguage.getId())
+                .distinct()
+                .toList();
+
+        for (FrontendFramework framework : frameworks) {
+            frontendFrameworkOptions.addItem(framework);
+        }
+
+        if (frontendFrameworkOptions.getItemCount() > 0) {
+            frontendFrameworkOptions.setSelectedIndex(0);
+        }
     }
 
     private void configureMVCOptions(FrameworkMVC frameworkMVC) {

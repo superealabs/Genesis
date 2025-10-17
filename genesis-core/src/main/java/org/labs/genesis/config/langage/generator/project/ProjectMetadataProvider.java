@@ -5,6 +5,7 @@ import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.engine.GenesisTemplateEngine;
+import org.labs.utils.StringUtils;
 
 import java.util.*;
 

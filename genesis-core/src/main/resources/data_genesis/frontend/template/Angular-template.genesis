@@ -1,0 +1,10 @@
+${importFile}
+
+@Component({
+  selector: '${selector}',
+  standalone: ${standalone},
+  imports: ${importComponent},
+  templateUrl: '${template}',
+  styleUrls: ['${style}']
+})
+${export}

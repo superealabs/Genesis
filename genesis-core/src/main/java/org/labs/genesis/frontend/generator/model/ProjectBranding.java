@@ -65,6 +65,9 @@ public class ProjectBranding {
 
     public void setLogoFile(File logoFile) {
         this.logoFile = logoFile;
+        if (logoFile == null){
+            return;
+        }
 
         String fileName = logoFile.getName();
         String extension = "";
@@ -74,6 +77,5 @@ public class ProjectBranding {
             extension = fileName.substring(i + 1); // e.g. "png", "svg"
             setLogoExtension(extension);
         }
-
     }
 }

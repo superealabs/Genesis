@@ -1,0 +1,26 @@
+<header class="app-banner">
+  <!-- Logo / titre -->
+  <div class="banner-header">
+    <div class="app-title">
+      <img [src]="logoPath" alt="App Logo" (error)="onLogoError()" />
+    </div>
+    <div class="app-title" >
+      <span>{{ title }}</span>
+    </div>
+  </div>
+
+
+  <!-- Actions -->
+  <div class="banner-actions">
+    <label for="language">{{this.content.banner.lang}} :</label>
+    <select id="language" [(ngModel)]="selectedLanguage" (change)="changeLanguage(selectedLanguage)">
+      <option *ngFor="let lang of Language | keyvalue" [value]="lang.value">
+        {{ lang.value }}
+      </option>
+    </select>
+
+    <button class="banner-btn outline">
+      <i class="bi bi-box-arrow-in-right"></i> {{this.content.banner.disconnect}}
+    </button>
+  </div>
+</header>

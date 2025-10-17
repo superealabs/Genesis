@@ -1,0 +1,68 @@
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  background-color: white;
+  padding: 2%;
+  gap: 7.5px 10px; /* réduit de 50% : vertical 7.5px, horizontal 10px */
+  border-radius: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0; /* on garde 0, le gap du grid gère l'espacement */
+}
+
+label {
+  font-weight: 600;
+  margin-bottom: 2.5px; /* réduit de 50% */
+}
+
+.form-control {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0,123,255,0.4);
+}
+
+.delete-container {
+  grid-column: span 2;
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px; /* réduit de 50% */
+  margin-left: auto;
+}
+
+.delete-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background-color: #0056b3;
+}
+
+/* Champs invalides */
+.form-control.ng-invalid.ng-touched,
+.form-control.ng-invalid.ng-dirty {
+  border-color: #dc3545;
+  box-shadow: 0 0 5px rgba(220,53,69,0.5);
+}
+
+/* Responsive : une colonne sur petits écrans */
+@media (max-width: 768px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 7.5px 10px;
+  }
+}

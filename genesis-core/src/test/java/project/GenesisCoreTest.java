@@ -31,7 +31,7 @@ public class GenesisCoreTest {
 
     @Test
     void generateProjectSpring() {
-        var credentials = new Credentials().setSchemaName("").setHost("localhost").setPort("1521").setUser("C##ECOM").setPwd("ecom").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCLBDD").setDriverType("thin");
+        var credentials = new Credentials().setSchemaName("").setHost("localhost").setPort("1521").setUser("C##SUPER").setPwd("super").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCLBDD").setDriverType("thin");
 
         try {
 
@@ -39,13 +39,17 @@ public class GenesisCoreTest {
             int languageId = Constantes.Java_ID;
             int frameworkId = Constantes.Spring_REST_API_ID;
             int projectId = Constantes.Maven_ID;
+            int frontendLangageId=Constantes.TYPESCRIPT_ID;
+            int frontendFrameworkId=Constantes.ANGULAR_ID;
 
             var database = ProjectGenerator.databases.get(databaseId);
             var language = ProjectGenerator.languages.get(languageId);
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var project = ProjectGenerator.projects.get(projectId);
+            var frontendLangage=ProjectGenerator.frontendLanguage.get(frontendLangageId);
+            var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
 
-            String projectName = "Popol";
+            String projectName = "oraTest";
             String groupLink = "org.labs";
             String projectPort = "8000";
             String logLevel = "INFO";
@@ -53,7 +57,7 @@ public class GenesisCoreTest {
             String projectDescription = "test";
             String frameworkVersion = "3.3.6";
             String languageVersion = "21";
-            String destinationFolder = "../generated/spring";
+            String destinationFolder = "D:\\tahiana\\test\\";
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
 
@@ -78,6 +82,8 @@ public class GenesisCoreTest {
             ProjectGenerationContext context = new ProjectGenerationContext();
             context.setLanguage(language);
             context.setFramework(framework);
+            context.setFrontendFramework(frontendFramework);
+            context.setFrontendLanguage(frontendLangage);
             context.setProject(project);
             context.setCredentials(credentials);
             context.setDatabase(database);
@@ -89,9 +95,10 @@ public class GenesisCoreTest {
             context.setLanguageConfiguration(languageConfiguration);
             context.setFrameworkConfiguration(frameworkConfiguration);
             context.setEntityNames(entityNames);
+            context.setViewNames(new ArrayList<>());
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
-
+            context.setGenerateFrontendApp(false);
 
 
             projectGenerator.generateProject(context);
@@ -123,11 +130,15 @@ public class GenesisCoreTest {
             int languageId = Constantes.CSharp_ID;
             int frameworkId = Constantes.NET_ID;
             int projectId = Constantes.ASP_ID;
+            int frontendLangageId=Constantes.TYPESCRIPT_ID;
+            int frontendFrameworkId=Constantes.REACT_ID;
 
             var database = ProjectGenerator.databases.get(databaseId);
             var language = ProjectGenerator.languages.get(languageId);
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var project = ProjectGenerator.projects.get(projectId);
+            var frontendLangage=ProjectGenerator.frontendLanguage.get(frontendLangageId);
+            var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
 
             List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
             String projectName = "kw";
@@ -159,6 +170,8 @@ public class GenesisCoreTest {
             context.setDatabase(database);
             context.setLanguage(language);
             context.setFramework(framework);
+            context.setFrontendFramework(frontendFramework);
+            context.setFrontendLanguage(frontendLangage);
             context.setProject(project);
             context.setCredentials(credentials);
             context.setDestinationFolder(destinationFolder);
@@ -171,6 +184,8 @@ public class GenesisCoreTest {
             context.setEntityNames(entityNames);
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
+            context.setViewNames(new ArrayList<>());
+            context.setGenerateFrontendApp(false);
 
             projectGenerator.generateProject(context);
 
@@ -226,6 +241,7 @@ public class GenesisCoreTest {
             context.setProjectDescription(projectDescription);
             context.setLanguageConfiguration(languageConfiguration);
             context.setFrameworkConfiguration(frameworkConfiguration);
+            context.setGenerateFrontendApp(false);
 
             projectGenerator.generateProject(context);
 
@@ -303,6 +319,7 @@ public class GenesisCoreTest {
             context.setProjectDescription(projectDescription);
             context.setLanguageConfiguration(languageConfiguration);
             context.setFrameworkConfiguration(frameworkConfiguration);
+            context.setGenerateFrontendApp(false);
 
             projectGenerator.generateProject(context);
 
