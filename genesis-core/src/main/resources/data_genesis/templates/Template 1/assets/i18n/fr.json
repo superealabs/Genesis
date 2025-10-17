@@ -1,5 +1,8 @@
 {
     "language": "Langue",
+    "login": "Se connecter",
+    "password": "Mot de passe",
+    "username": "Nom d'utilisateur",
     "theme": "Thème",
     "light": "Clair",
     "dark": "Sombre",

@@ -90,13 +90,12 @@ body:has(.sidebar) .main-content {
 }
 
 .sidebar .project-logo {
-    width: 100px;
+    width: 100%;
     height: 50px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: left;
     overflow: hidden;
-    border-radius: 8px;
     padding: 5px;
     box-sizing: border-box;
 }
@@ -134,6 +133,7 @@ body:has(.sidebar) .main-content {
 .project-name {
     font-size: 1.5rem;
     font-weight: 600;
+    text-transform: capitalize;
     color: var(--text-primary);
 }
 
@@ -943,6 +943,7 @@ body:has(.sidebar) .main-content {
 
 /* Contenu du filtre actif */
 .filter-item-content {
+    text-transform: capitalize;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -999,6 +1000,8 @@ body:has(.sidebar) .main-content {
 }
 
 .filter-add-wrapper.active .filters-dropdown {
+    min-width: 110px;
+    text-transform: capitalize;
     display: block;
 }
 
@@ -1480,6 +1483,7 @@ thead {
 
 th,
 td {
+    text-transform: capitalize;
     padding: 12px 15px;
     text-align: left;
     border-bottom: 1px solid var(--bg-color);
@@ -1908,7 +1912,7 @@ th:hover .sort-icons {
     }
 
     .pagination {
-        flex-direction: column;
+        flex-direction: row;
         gap: 15px;
     }
 }
@@ -1920,6 +1924,7 @@ th:hover .sort-icons {
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-sm);
     margin-top: 20px;
+    text-transform: capitalize;
 
     /* Grid pour organiser automatiquement les champs */
     display: grid;
@@ -1967,6 +1972,41 @@ th:hover .sort-icons {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+
+.form-group input[type="file"] {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
+    background: transparent;
+    font-size: 0.95rem;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.form-group input[type="file"]:hover {
+    border-color: var(--primary-color);
+}
+
+.form-group input[type="file"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+
+.form-group input[type="file"]::file-selector-button {
+    background-color: var(--primary-color);
+    color: var(--text-primary);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.form-group input[type="file"]::file-selector-button:hover {
+    background-color: color-mix(in srgb, var(--primary-color) 80%, black);
 }
 
 .form-group  .boolean-radio-group {
@@ -2097,7 +2137,7 @@ th:hover .sort-icons {
 .error-message {
     background: color-mix(in srgb, var(--error-color) 20%, transparent) 100%;
     color: var(--error-color);
-    padding: 15px;
+    padding: 15px 25px;
     border-radius: var(--border-radius-lg);
     border: 1px solid var(--error-color);
 }
