@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.labs.genesis.config.Constantes;
+import org.labs.genesis.frontend.generator.model.FrontendDestinationPaths;
 import org.labs.genesis.frontend.generator.model.FrontendLayout;
 import org.labs.genesis.frontend.generator.model.ProjectBranding;
 import org.labs.utils.FileUtils;
@@ -21,6 +22,7 @@ public class FrameworkMVC extends Framework {
     private List<String> excludeProjectFilesEdits;
     private FrontendLayout frontendLayout;
     private ProjectBranding projectBranding;
+    private FrontendDestinationPaths frontendPaths;
 
     public void setViewsTemplateEngine() throws IOException {
         this.viewsTemplateEngine = Arrays.stream(FileUtils.fromYaml(ViewsTemplateEngine[].class, Constantes.VIEWS_TEMPLATE_ENGINE_YAML))

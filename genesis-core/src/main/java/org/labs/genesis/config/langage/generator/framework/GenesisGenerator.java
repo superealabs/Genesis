@@ -1,5 +1,6 @@
 package org.labs.genesis.config.langage.generator.framework;
 
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.model.TableMetadata;
 
@@ -47,6 +48,17 @@ public interface GenesisGenerator {
                                            String destinationFolder,
                                            String projectName,
                                            String groupLink) throws Exception {
+        return null;
+    }
+
+    default  String generateRessources(FrameworkMVC framework,
+                                       Map<String, Object> frameworkOptions,
+                                       Language language,
+                                       ViewsTemplate viewsTemplate,
+                                       ViewsTemplateEngine viewsTemplateEngine,
+                                       TableMetadata[] tableMetadata, String destinationFolder,
+                                       String projectName,
+                                       String groupLink) throws Exception {
         return null;
     }
 }

@@ -1,12 +1,19 @@
 package org.labs.genesis.config.langage.generator.framework;
 
 import org.labs.genesis.config.Constantes;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
+import org.labs.genesis.frontend.generator.model.FrontendDestinationPaths;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -483,6 +490,48 @@ public class MVCGenerator implements GenesisGenerator {
         String result = engine.render(firstResult, metadataFinally);
         FileUtils.createFile(fileSavePath, fileName, viewsTemplateEngine.getViewExtension(), result);
 
+        return "";
+    }
+
+    @Override
+    public  String generateRessources(FrameworkMVC framework,
+                                      Map<String, Object> frameworkOptions,
+                                      Language language,
+                                      ViewsTemplate viewsTemplate,
+                                      ViewsTemplateEngine viewsTemplateEngine,
+                                      TableMetadata[] tableMetadata, String destinationFolder,
+                                      String projectName,
+                                      String groupLink) throws  Exception{
+        HashMap<String, Object> metadata = getHashMapIntermediaire(language, tableMetadata[0], framework, frameworkOptions, destinationFolder, projectName, groupLink);
+
+        // Generate logo
+        String logoPath = framework.getFrontendPaths().getLogoPath();
+        logoPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(logoPath, metadata));
+        if (!framework.getProjectBranding().useLogoLink() && framework.getProjectBranding().hasLogo()){
+            File logoFile = framework.getProjectBranding().getLogoFile();
+            try{
+                Path targetPath = Paths.get(logoPath, framework.getProjectBranding().getLogoUrl());
+                Files.createDirectories(targetPath.getParent());
+                Files.copy(logoFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+            catch (IOException e){
+                throw new Exception("Unable to upload the logo file at "+logoPath+" : "+e.getMessage(),e);
+            }
+        }
+
+        // Generate favicon
+        String faviconPath = framework.getFrontendPaths().getFaviconPath();
+        faviconPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(faviconPath, metadata));
+        if (!framework.getProjectBranding().useFaviconLink() && framework.getProjectBranding().hasFavicon()){
+            File faviconFile = framework.getProjectBranding().getFaviconFile();
+            try{
+                Path targetPath = Paths.get(faviconPath,framework.getProjectBranding().getFaviconUrl());
+                Files.copy(faviconFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+            catch (IOException e){
+                throw new Exception("Unable to updload the favicon at "+faviconPath+" : "+e.getMessage(),e);
+            }
+        }
         return "";
     }
 

@@ -18,8 +18,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.labs.genesis.config.ProjectGenerationContext.*;
-import static org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider.getCssLayoutHashMap;
-import static org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider.getHashMapDaoGlobal;
+import static org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider.*;
 import static org.labs.genesis.config.langage.generator.project.ProjectMetadataProvider.getInitialHashMap;
 import static org.labs.genesis.config.langage.generator.project.ProjectMetadataProvider.getProjectFilesEditsHashMap;
 
@@ -170,6 +169,12 @@ public class ProjectGenerator {
             projectFilesEdits = context.getProject().getProjectFilesEdits().stream()
                     .filter(file -> !excludeFilesEdits.contains(file.getFileType()))
                     .toList();
+            if (mvcFramework.getProjectBranding().hasFavicon() ||
+                    mvcFramework.getProjectBranding().useFaviconLink() ||
+                    mvcFramework.getProjectBranding().hasLogo() ||
+                    mvcFramework.getProjectBranding().useLogoLink()) {
+                projectFilesEditsHashMap.putAll(getBrandingHashMap(mvcFramework.getProjectBranding()));
+            }
         } else {
             projectFilesEdits = new ArrayList<>(context.getProject().getProjectFilesEdits());
         }
@@ -384,6 +389,7 @@ public class ProjectGenerator {
 
                 genesisGenerator.generateViewMainLayout(framework, frameworkOptions, language, viewsTemplate, viewsTemplateEngine, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
                 genesisGenerator.generateViewErrorPage(framework, frameworkOptions, language, viewsTemplate, viewsTemplateEngine, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
+                genesisGenerator.generateRessources(framework, frameworkOptions, language, viewsTemplate, viewsTemplateEngine, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
                 generateViewsFiles(context, viewsTemplateEngine, viewsTemplate);
 
                 for (TableMetadata tableMetadata : entities) {
