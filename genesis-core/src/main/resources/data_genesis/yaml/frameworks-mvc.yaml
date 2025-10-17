@@ -12,6 +12,10 @@
     - "SolutionFile"
     - "TestProjectFile"
     - "HttpFile"
+  frontendPaths:
+    faviconPath: "${destinationFolder}/${majStart(projectName)}/wwwroot"
+    logoPath: "${destinationFolder}/${majStart(projectName)}/wwwroot/images"
+    langsPath: "{{removeLine}}"
   additionalFiles:
     - fileType: "ProgramFile"
       fileName: "Program"
@@ -1757,40 +1761,66 @@
         {{tab}}{{tab}}if (entityType == null)
         {{tab}}{{tab}}{{tab}}throw new InvalidOperationException($"Entity type {typeof(T).Name} not found in the model.");
 
-        {{tab}}{{tab}}var properties = entityType.GetProperties()
-        {{tab}}{{tab}}{{tab}}.Where(p => !p.IsPrimaryKey()) 
+        {{tab}}{{tab}}var nonNullableProperties = entityType.GetProperties()
+        {{tab}}{{tab}}{{tab}}.Where(p => !p.IsPrimaryKey() && !p.IsNullable)
+        {{tab}}{{tab}}{{tab}}.ToList();
+        
+        {{tab}}{{tab}}if (nonNullableProperties.Any())
+        {{tab}}{{tab}}{
+        {{tab}}{{tab}}{{tab}}var priorities = new List<Func<IProperty, bool>>
+        {{tab}}{{tab}}{{tab}}{
+        {{tab}}{{tab}}{{tab}}{{tab}}p => p.ClrType == typeof(string) &&
+        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}(p.GetColumnType()?.Contains("json") == true ||
+        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}p.GetColumnType()?.Contains("xml") == true ||
+        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}p.GetColumnType()?.Contains("inet") == true),
+        
+        {{tab}}{{tab}}{{tab}}{{tab}}p => p.ClrType == typeof(string),
+        
+        {{tab}}{{tab}}{{tab}}{{tab}}p => p.ClrType == typeof(DateTime) || p.ClrType == typeof(DateTime?),
+        
+        {{tab}}{{tab}}{{tab}}{{tab}}p => p.ClrType == typeof(int) || p.ClrType == typeof(int?) ||
+        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}p.ClrType == typeof(long) || p.ClrType == typeof(long?) ||
+        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?) ||
+        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}p.ClrType == typeof(double) || p.ClrType == typeof(double?)
+        {{tab}}{{tab}}{{tab}}};
+        
+        {{tab}}{{tab}}{{tab}}foreach (var match in priorities)
+        {{tab}}{{tab}}{{tab}}{
+        {{tab}}{{tab}}{{tab}}{{tab}}var prop = nonNullableProperties.FirstOrDefault(match);
+        {{tab}}{{tab}}{{tab}}{{tab}}if (prop != null)
+        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}return prop.Name;
+        {{tab}}{{tab}}{{tab}}}
+        
+        {{tab}}{{tab}}{{tab}}return nonNullableProperties.First().Name;
+        {{tab}}{{tab}}}
+        
+        {{tab}}{{tab}}var nullableProperties = entityType.GetProperties()
+        {{tab}}{{tab}}{{tab}}.Where(p => !p.IsPrimaryKey())
         {{tab}}{{tab}}{{tab}}.ToList();
 
-        {{tab}}{{tab}}if (!properties.Any())
-        {{tab}}{{tab}}{{tab}}return entityType.GetProperties().First().Name; 
+        {{tab}}{{tab}}if (!nullableProperties.Any())
+        {{tab}}{{tab}}{{tab}}return entityType.GetProperties().First().Name;
 
-        {{tab}}{{tab}}var priorities = new List<Func<IProperty, bool>>
+        {{tab}}{{tab}}var fallbackPriorities = new List<Func<IProperty, bool>>
         {{tab}}{{tab}}{
-        {{tab}}{{tab}}{{tab}}p => p.ClrType == typeof(string) && 
-        {{tab}}{{tab}}{{tab}}{{tab}}(p.GetColumnType()?.Contains("json") == true ||
-        {{tab}}{{tab}}{{tab}}{{tab}}p.GetColumnType()?.Contains("xml") == true ||
-        {{tab}}{{tab}}{{tab}}{{tab}}p.GetColumnType()?.Contains("inet") == true),
-
         {{tab}}{{tab}}{{tab}}p => p.ClrType == typeof(string),
-
         {{tab}}{{tab}}{{tab}}p => p.ClrType == typeof(DateTime) || p.ClrType == typeof(DateTime?),
-
         {{tab}}{{tab}}{{tab}}p => p.ClrType == typeof(int) || p.ClrType == typeof(int?) ||
         {{tab}}{{tab}}{{tab}}{{tab}}p.ClrType == typeof(long) || p.ClrType == typeof(long?) ||
         {{tab}}{{tab}}{{tab}}{{tab}}p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?) ||
         {{tab}}{{tab}}{{tab}}{{tab}}p.ClrType == typeof(double) || p.ClrType == typeof(double?)
-        {{tab}}{{tab}}{{tab}}};
-
-        {{tab}}{{tab}}foreach (var match in priorities)
+        {{tab}}{{tab}}};
+        
+        {{tab}}{{tab}}foreach (var match in fallbackPriorities)
         {{tab}}{{tab}}{
-        {{tab}}{{tab}}{{tab}}var prop = properties.FirstOrDefault(match);
+        {{tab}}{{tab}}{{tab}}var prop = nullableProperties.FirstOrDefault(match);
         {{tab}}{{tab}}{{tab}}if (prop != null)
         {{tab}}{{tab}}{{tab}}{{tab}}return prop.Name;
         {{tab}}{{tab}}}
-
-        {{tab}}{{tab}}return properties.First().Name;
+        
+        {{tab}}{{tab}}return nullableProperties.First().Name;
         {{tab}}}
-
+        
         {{tab}}/// <summary>
         {{tab}}/// Detect the primary column for an entity
         {{tab}}/// </summary>
@@ -1798,10 +1828,10 @@
         {{tab}}{
         {{tab}}{{tab}}var entityType = _context.Model.FindEntityType(typeof(TEntity));
         {{tab}}{{tab}}var primaryKey = entityType.FindPrimaryKey();
-
+        
         {{tab}}{{tab}}if (primaryKey == null)
         {{tab}}{{tab}}{{tab}}throw new InvalidOperationException($"Entity {typeof(TEntity).Name} has no primary key defined.");
-
+        
         {{tab}}{{tab}}// Return the first column of the primary key
         {{tab}}{{tab}}return primaryKey.Properties.First().Name;
         {{tab}}}
@@ -2631,7 +2661,7 @@
       {{tab}}}{{else}}{{removeLine}}{{/if}}
       
       {{tab}}{{#if isView = false and useAuthCookie = true}}[Authorize]{{else}}{{removeLine}}{{/if}}
-      {{tab}}{{#if !isView}}// POST: /${majStart(className)}/Edit/${majStart(className)}ViewModel
+      {{tab}}{{#if !isView}}// POST: /${majStart(className)}/Edit/${pkColumn}
       {{tab}}[HttpPost]
       {{tab}}[ValidateAntiForgeryToken]
       {{tab}}public async Task<IActionResult> Edit(${majStart(className)}ViewModel vm)

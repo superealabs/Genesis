@@ -6,7 +6,7 @@
     name: "_Layout"
     destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
     navLink: "class=\"nav-item @(currentController == \"${majStart(this.entityName)}\" ? \"active\" : \"\")\" asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
-    pageName: "@ViewData[\"Title\"] -"
+    pageName: "@ViewData[\"Title\"]"
     rootPath: " ~/css/style.css\" asp-append-version=\"true "
     assetsImportLink: "~"
     logoutTagHelper: "asp-controller=\"Auth\" asp-action=\"Logout\""
@@ -81,7 +81,7 @@
     modelType: |
       @model ${majStart(className)}ViewModel
       @{
-          ViewData["Title"] = "${majStart(className)} details";
+          ViewData["Title"] = "${majStart(className)} Details";
           var previousUrl = Context.Request.Headers["Referer"].ToString();
           if (string.IsNullOrEmpty(previousUrl))
           {
@@ -99,14 +99,19 @@
     modelType: |
       @model ${majStart(className)}ViewModel      
       @{
-         ViewData["Title"] = "Create ${majStart(className)}";
+          ViewData["Title"] = "Create ${majStart(className)}";
+          var previousUrl = Context.Request.Headers["Referer"].ToString();
+          if (string.IsNullOrEmpty(previousUrl))
+          {
+              previousUrl = "/";
+          }
       }
     validationSection: |
       @if (!ViewData.ModelState.IsValid)
       {
       {{tab}}<div asp-validation-summary="All" class="error-message"></div>
       }
-    backLink: "@Url.Action(\"Index\")"
+    backLink: "@previousUrl"
     assetsImportLink: "~"
     validationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.name)}\""
     selectValidationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.columnNameField)}\""
@@ -124,7 +129,12 @@
     modelType: |
       @model ${majStart(className)}ViewModel
       @{
-         ViewData["Title"] = "Edit ${majStart(className)}";
+          ViewData["Title"] = "Edit ${majStart(className)}";
+          var previousUrl = Context.Request.Headers["Referer"].ToString();
+          if (string.IsNullOrEmpty(previousUrl))
+          {
+              previousUrl = "/";
+          }
       }
     validationSection: |
       @if (!ViewData.ModelState.IsValid)
@@ -132,7 +142,7 @@
       {{tab}}{{tab}}<!-- Validation Summary -->
       {{tab}}{{tab}}<div asp-validation-summary="All" class="error-message"></div>
       {{tab}}}
-    backLink: "@Url.Action(\"Index\")"
+    backLink: "@previousUrl"
     validationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.name)}\""
     selectValidationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.columnNameField)}\""
     inputTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.name)}\""
@@ -227,8 +237,4 @@
       destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
 
   templateEngineFiles: []
-  templateEngineFolders:
-    - folderType: "wwwroot"
-      folderName: "wwwroot"
-      sourcePath: "data_genesis/template_engine_folders/wwwroot"
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+  templateEngineFolders: []
