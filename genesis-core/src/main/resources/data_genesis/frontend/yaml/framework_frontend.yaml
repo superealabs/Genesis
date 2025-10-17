@@ -875,11 +875,11 @@
         import { expandDotNotation,recursiveObjectsTo2DArray,warnMeUp } from '../../../../utilities/utilities';
         
         import { DynamicSearchFormComponent, SearchField } from '../../../shared/dynamic-search-form/dynamic-search-form.component';
-        import { TableauComponent } from '../../../shared/tableau/tableau.component';
+        import { ListComponent } from '../../../shared/list/list.component';
         import { PaginationComponent } from '../../../shared/pagination/pagination.component';
         import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
         import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
-        import { Colonne } from '../../../shared/tableau/tableau.component';
+        import { Column } from '../../../shared/list/list.component';
         
         import { ${className} } from '../models/${toKebabCase(className)}.model'
         import { ${className}Service } from '../services/${toKebabCase(className)}.service'
@@ -890,7 +890,7 @@
         {{/each}}
       selector: "app-${toKebabCase(className)}-list"
       standalone: true
-      importComponent: "[CommonModule, DynamicSearchFormComponent, PaginationComponent,TableauComponent,PageHeaderComponent,LoadingIconComponent]"
+      importComponent: "[CommonModule, DynamicSearchFormComponent, PaginationComponent,ListComponent,PageHeaderComponent,LoadingIconComponent]"
       template: "./${toKebabCase(className)}-list.component.html"
       style: "./${toKebabCase(className)}-list.component.css"
       export: |
@@ -903,7 +903,7 @@
             sortOrientation: boolean=true;
             sortColumn=0;
         
-            columns: Colonne[] =[{{#each fields}}{{#if this.isNotForeignKey}}{ fieldName: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.typeBase}' }{{elseIf this.isForeignKey}}{ fieldName: '${this.type}', label: '${formatReadable(this.type)}', type: 'string' }{{/if}}{{#if !@last}},{{/if}}{{/each}}];
+            columns: Column[] =[{{#each fields}}{{#if this.isNotForeignKey}}{ fieldName: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.typeBase}' }{{elseIf this.isForeignKey}}{ fieldName: '${this.type}', label: '${formatReadable(this.type)}', type: 'string' }{{/if}}{{#if !@last}},{{/if}}{{/each}}];
         
             ${minStart(className)}s: ${majStart(className)}[] = [];
             
@@ -1049,7 +1049,7 @@
             <app-page-header name="${formatReadable(classNameLink)}" [isView]=${isView}></app-page-header>
             <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)" [onRowsChange]="onNumberRowChange.bind(this)"></app-dynamic-search-form>
             <br>
-            <app-tableau [sortFn]="sort.bind(this)" [colonnes]="columns" [donnees]="data" {{#if !isView}}[deleteFn]="delete${majStart(className)}"{{/if}} [isView]=${isView} {{#if !isView}}routeToDetail="${toKebabCase(className)}s/details" routeToModify="${toKebabCase(className)}s/modify"{{/if}}></app-tableau>
+            <app-list [sortFn]="sort.bind(this)" [columns]="columns" [datas]="data" {{#if !isView}}[deleteFn]="delete${majStart(className)}"{{/if}} [isView]=${isView} {{#if !isView}}routeToDetail="${toKebabCase(className)}s/details" routeToModify="${toKebabCase(className)}s/modify"{{/if}}></app-list>
             <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
             <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="itemNumber" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
