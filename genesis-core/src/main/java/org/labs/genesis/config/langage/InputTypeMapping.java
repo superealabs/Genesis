@@ -107,13 +107,15 @@ public class InputTypeMapping {
         Optional<InputTypeMapping> inputTypeMapping = getInputTypeMapping(language.getId());
 
         input.setType(inputTypeMapping.map(mapping -> getInputType(field, mapping)).orElse(null));
-        input.setValidations(inputTypeMapping.map(mapping -> {
-            try {
-                return getInputValidations(field, mapping, engine);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }).orElse(List.of()));
+//        input.setValidations(inputTypeMapping.map(mapping -> {
+//            try {
+//                return getInputValidations(field, mapping, engine);
+//            } catch (Exception e) {
+//                throw new RuntimeException(e);
+//            }
+//        }).orElse(List.of()));
+
+        input.setValidations(List.of());
 
         String fieldName = field.getName();
         input.setName(fieldName);
