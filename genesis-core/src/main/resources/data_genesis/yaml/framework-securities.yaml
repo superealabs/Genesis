@@ -2287,9 +2287,9 @@
       fileName: "identity_schema"
       extension: "sql"
       content: |
-        --Default login
-        --Username: admin
-        --Password: Pwd@123
+        -- Default login
+        -- Username: admin
+        -- Password: Pwd@123
         {{#if databaseType = PostgreSQL}}
           CREATE TABLE IF NOT EXISTS "AspNetRoles" (
             "Id" TEXT NOT NULL,
