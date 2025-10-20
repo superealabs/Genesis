@@ -4,6 +4,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBTextField;
 import lombok.Getter;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.frontend.FrontendLanguage;
@@ -39,8 +40,8 @@ public class FrontendConfigurationForm {
     private TextFieldWithBrowseButton logoFileField;
     private JTextArea cssTextArea;
     private TextFieldWithBrowseButton faviconFileField;
-    private JTextField logoLinkField;
-    private JTextField faviconLinkField;
+    private JBTextField logoLinkField;
+    private JBTextField faviconLinkField;
     private JBList<InterfaceLang> interfaceLangOptions;
 
     private File logoFile;
@@ -138,6 +139,8 @@ public class FrontendConfigurationForm {
                 onFaviconLinkChange();
             }
         });
+        logoLinkField.getEmptyText().setText("URL du Logo (ex: https://...)");
+        faviconLinkField.getEmptyText().setText("URL du Favicon (ex: https://...)");
     }
     private void onLogoFileChange() {
         String filePath = logoFileField.getText();
