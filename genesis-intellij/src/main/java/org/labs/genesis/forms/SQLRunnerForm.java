@@ -30,7 +30,7 @@ public class SQLRunnerForm {
     private JPanel mainPanel;
     private TextFieldWithBrowseButton locationField;
     private LinkLabel<String> executeLinkLabel;
-    private JTextField tokenApiField;
+    private JPasswordField tokenApiField;
     private JLabel nameLabel;
     private JCheckBox usePersonalAccessTokenCheckBox;
     private JCheckBox useLLMCheckBox;
