@@ -523,7 +523,7 @@ public class FrameworkMetadataProvider {
     public static HashMap<String, Object>  getViewMainLayoutHashMap (FrameworkMVC framework, Map<String, Object> frameworkConfiguration, List<TableMetadata> tableMetadata, String projectName, String destinationFolder, String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
 
-        addGeneralMetadata(metadata, tableMetadata.get(1), framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
+        addGeneralMetadata(metadata, tableMetadata.get(0), framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
         metadata.put("entities", getTableMetadataList(tableMetadata));
 
         return metadata;
