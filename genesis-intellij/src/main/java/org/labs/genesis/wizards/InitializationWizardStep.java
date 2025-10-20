@@ -83,6 +83,8 @@ public class InitializationWizardStep extends ModuleWizardStep {
         specificConfigurationWizardStep.onFrameworkSelected(framework);
         if (framework instanceof FrameworkMVC) {
             frontendConfigurationWizardStep.onFrameworkMVCSelected((FrameworkMVC) framework);
+        } else {
+            frontendConfigurationWizardStep.onFrameworkSelected();
         }
     }
 

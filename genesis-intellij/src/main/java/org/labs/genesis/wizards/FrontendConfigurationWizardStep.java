@@ -131,4 +131,8 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
         }
         frontendConfigurationForm.updateFormWithFrameworkMVCOptions(frameworkMVC);
     }
+
+    public void onFrameworkSelected() {
+        frontendConfigurationForm.updateFormWithFrontendFrameworkOptions();
+    }
 }

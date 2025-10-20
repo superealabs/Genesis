@@ -177,6 +177,11 @@ public class FrontendConfigurationForm {
         populateFrameworkOptions((FrontendLanguage) frontendLanguageOptions.getSelectedItem());
         interfaceLangOptions.setListData(ProjectGenerator.langs.values().toArray(new InterfaceLang[0]));
 
+        languageLabel.setVisible(true);
+        frameworkLabel.setVisible(true);
+        frontendLanguageOptions.setVisible(true);
+        frontendFrameworkOptions.setVisible(true);
+
         templateEngine.setVisible(false);
         viewsTemplateEngineOptions.setVisible(false);
     }
@@ -209,6 +214,11 @@ public class FrontendConfigurationForm {
         templateEngine.setVisible(true);
         viewsTemplateEngineOptions.setVisible(true);
 
+        languageLabel.setVisible(false);
+        frameworkLabel.setVisible(false);
+        frontendLanguageOptions.setVisible(false);
+        frontendFrameworkOptions.setVisible(false);
+
         viewsTemplateEngineOptions.removeAllItems();
         frameworkMVC.getViewsTemplateEngine()
                 .forEach(te -> viewsTemplateEngineOptions.addItem(te));
@@ -216,5 +226,9 @@ public class FrontendConfigurationForm {
 
     public void updateFormWithFrameworkMVCOptions(FrameworkMVC frameworkMVC) {
         configureMVCOptions(frameworkMVC);
+    }
+
+    public void updateFormWithFrontendFrameworkOptions() {
+        initializeOptions();
     }
 }
