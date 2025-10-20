@@ -451,27 +451,27 @@ function generateSmartPages(currentPage, totalPages, maxVisible = 5) {
     const pages = [];
 
     if (totalPages <= maxVisible) {
-        for (let i = 1; i <= totalPages; i++) {
+        for (let i = 0; i <= totalPages; i++) {
             pages.push(i);
         }
         return pages;
     }
 
     const half = Math.floor(maxVisible / 2);
-    let startPage = Math.max(1, currentPage - half);
+    let startPage = Math.max(0, currentPage - half);
     let endPage = Math.min(totalPages, currentPage + half);
 
-    if (currentPage <= half + 1) {
-        endPage = maxVisible;
+    if (currentPage <= half) {
+        endPage = Math.min(totalPages, maxVisible - 1);
     }
 
-    if (currentPage > totalPages - half) {
-        startPage = totalPages - maxVisible + 1;
+    if (currentPage >= totalPages - half) {
+        startPage = Math.max(0, totalPages - maxVisible + 1);
     }
 
-    if (startPage > 1) {
-        pages.push(1);
-        if (startPage > 2) {
+    if (startPage > 0) {
+        pages.push(0);
+        if (startPage > 1) {
             pages.push('...');
         }
     }
@@ -495,12 +495,16 @@ function optimizeExistingPagination() {
 
     paginationContainers.forEach(container => {
         const pageLinks = Array.from(container.querySelectorAll('a:not(.prev):not(.next)'));
-        let currentPage = 1;
-        const totalPages = pageLinks.length;
+        let currentPage = 0;
+        const totalPages = pageLinks.length - 1;
 
+        const pageUrls = {};
         pageLinks.forEach(link => {
+            const pageNum = parseInt(link.textContent) || 0;
+            pageUrls[pageNum] = link.getAttribute('href');
+
             if (link.classList.contains('active')) {
-                currentPage = parseInt(link.textContent) || 1;
+                currentPage = pageNum;
             }
         });
 
@@ -521,6 +525,12 @@ function optimizeExistingPagination() {
                 } else {
                     const pageLink = document.createElement('a');
                     pageLink.textContent = page;
+                    pageLink.href = pageUrls[page] || '#';
+
+                    if (page === currentPage) {
+                        pageLink.classList.add('active');
+                    }
+
                     container.insertBefore(pageLink, nextBtn);
                 }
             });

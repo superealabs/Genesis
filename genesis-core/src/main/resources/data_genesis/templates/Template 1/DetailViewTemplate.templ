@@ -84,7 +84,9 @@ ${modelType}
             <form id="deleteForm" style="margin: 0;" method="post" ${deleteLink}>
                 @Html.AntiForgeryToken()
                 {{#each fields}}{{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}
-                <input type="hidden" name="${this.name}" value="${dataValue}"/>{{/if}}{{else}}{{removeLine}}{{/if}}
+                <div class="info">
+                    <p>${dataValue}</p>
+                </div>{{/if}}{{else}}{{removeLine}}{{/if}}
                 {{/each}}{{removeLine}}
                 <button type="submit" class="btn btn-danger btn-sm">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"

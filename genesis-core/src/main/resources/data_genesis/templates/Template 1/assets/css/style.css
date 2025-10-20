@@ -1974,6 +1974,17 @@ th:hover .sort-icons {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 20%, transparent);
 }
 
+.form-group .info {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
+    background: transparent;
+    font-size: 0.95rem;
+    transition: all var(--transition-fast);
+    height: fit-content;
+}
+
 .form-group input[type="file"] {
     padding: 8px 12px;
     border: 1px solid var(--border-color);
