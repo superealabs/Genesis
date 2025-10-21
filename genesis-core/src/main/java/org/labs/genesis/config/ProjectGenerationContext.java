@@ -44,7 +44,6 @@ public class ProjectGenerationContext {
     private FrontendLanguage frontendLanguage;
     private String webappFolder = "webapp";
     // FrameworkMVC specific configurations
-    private ViewsTemplateEngine viewsTemplateEngine;
     private ViewsTemplate viewsTemplate;
 
     public ProjectGenerationContext setDatabase(Database database) {

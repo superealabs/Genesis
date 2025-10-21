@@ -10,7 +10,6 @@ public class Constantes {
     public static final String PROJECT_YAML = "data_genesis/yaml/projects.yaml";
     public static final String CONSTRAINT_QUERIES_YAML = "data_genesis/yaml/constraint-queries.yaml";
     public static final String FRAMEWORK_SECURITY_YAML = "data_genesis/yaml/framework-securities.yaml";
-    public static final String VIEWS_TEMPLATE_ENGINE_YAML = "data_genesis/yaml/views-template-engine.yaml";
     public static final String VIEWS_TEMPLATES_YAML = "data_genesis/yaml/views-template.yaml";
     public static final String DATA_PATH = "data_genesis";
     public static final String TEMPLATES_PATH = "data_genesis/templates";
@@ -49,9 +48,6 @@ public class Constantes {
     public  static  final   String FRONTEND_SKELLETTON_DIRECTORY = "data_genesis/frontend/skeletoons/";
     public  static  final   String WEBAPP_DIR_TEMPLATE = "${destinationFolder}/${majStart(projectName)}_${majStart(webappFolder)}";
     public  static  final   String FRONTEND_TEMPLATE_DIRECTORY = DATA_PATH+"/frontend/template";
-
-    // VIEWS TEMPLATE ENGINE
-    public static final int Razor_ID = 1;
 
     // VIEWS TEMPLATE
     public static final int Template_1_ID = 1;
