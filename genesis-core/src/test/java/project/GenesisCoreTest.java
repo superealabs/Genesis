@@ -109,9 +109,9 @@ public class GenesisCoreTest {
                 .setHost("localhost")
                 .setPort("5432")
                 .setSchemaName("public")
-                .setDatabaseName("test_keywords")
+                .setDatabaseName("restaurant")
                 .setUser("postgres")
-                .setPwd("olafienby7")
+                .setPwd("Etu002610")
                 .setTrustCertificate(true)
                 .setUseSSL(true)
                 .setAllowPublicKeyRetrieval(true);

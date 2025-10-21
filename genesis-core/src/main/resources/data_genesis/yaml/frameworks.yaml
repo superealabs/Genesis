@@ -1932,7 +1932,6 @@
             NameClaimType = ClaimTypes.NameIdentifier
           };
         });
-        {{/if}}
         
         builder.Services.AddAuthorization(options =>
         {
@@ -1940,6 +1939,7 @@
           .RequireAuthenticatedUser()
           .Build();
         });
+        {{/if}}
 
         var app = builder.Build();
         
@@ -2110,6 +2110,66 @@
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Filters/"
+
+    - fileType: "ExportUtil"
+      fileName: "ExportUtil"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+
+        using System.Reflection;
+        using System.Text;
+        using System.Reflection;
+        using System.Text;
+
+        public static class ExportUtil
+        {
+            // Generate CSV from a list of objects using reflection
+            public static string GenerateCsv<T>(List<T> data)
+            {
+                if (data == null || !data.Any())
+                {
+                    return string.Empty;
+                }
+
+                var stringBuilder = new StringBuilder();
+                var type = typeof(T);
+                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+                // Header
+                var header = string.Join(",", properties.Select(p => p.Name));
+                stringBuilder.AppendLine(header);
+
+                // Data rows
+                foreach (var item in data)
+                {
+                    var line = properties.Select(property =>
+                    {
+                        var value = property.GetValue(item);
+                        return value != null ? EscapeCsv(value.ToString()) : string.Empty;
+                    });
+                    stringBuilder.AppendLine(string.Join(",", line));
+                }
+
+                return stringBuilder.ToString();
+            }
+
+            private static string EscapeCsv(string value)
+            {
+                if (string.IsNullOrEmpty(value))
+                    return string.Empty;
+
+                var escaped = value.Replace("\"", "\"\"");
+
+                if (escaped.Contains(",") || escaped.Contains("\"") || escaped.Contains("\n") || escaped.Contains("\r"))
+                {
+                    return $"\"{escaped}\"";
+                }
+
+                return escaped;
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
     - fileType: "WebUtils"
       fileName: "WebUtils"
@@ -3848,7 +3908,8 @@
     serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}>"
     serviceName: "I${majStart(className)}Service"
     serviceFieldContent: "{{removeLine}}"
-    serviceMethodContent: "{{removeLine}}"
+    serviceMethodContent: |
+      Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)});
     serviceConstructors: "{{removeLine}}"
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
     servicePackage: "${majStart(projectName)}.Services.Interface"
@@ -3863,7 +3924,8 @@
           using ${majStart(projectName)}.Repositories.Interface;
           using ${majStart(projectName)}.Repositories.Implementation;
           using ${majStart(projectName)}.Services.Interface;
-          
+          using ${majStart(projectName)}.Utils;
+        
           namespace ${majStart(projectName)}.Services.Implementation;
           
           public class ${majStart(className)}Service : I${majStart(className)}Service
@@ -3875,6 +3937,12 @@
                   _repository = repository;
               }
           
+              public Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)})
+              {
+                var csv = ExportUtil.GenerateCsv(${minStart(className)});
+                return Task.FromResult(csv);
+              }
+    
               public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
                   try
@@ -3989,6 +4057,8 @@
       using ${majStart(projectName)}.Utils;
       using ${majStart(projectName)}.Exceptions;
       using ${majStart(projectName)}.Repositories.Interface;
+      using System.Net.Mime;
+      using System.Text;
       {{#if useJWT}}using Microsoft.AspNetCore.Authorization;{{/if}}
 
     controllerAnnotations: |
@@ -4010,6 +4080,26 @@
       {{tab}}{{tab}}_repository = repository;
       {{tab}}}
     controllerMethodContent: |
+      
+      {{tab}}[SwaggerOperation(
+      {{tab}} Summary = "Export to CSV",
+      {{tab}}Description = "Get a CSV file containing a list of ${formatReadableLowerCase(className)}."
+      {{tab}})]
+      {{tab}}[HttpPost("export/csv")]
+      {{tab}}[Consumes("application/json")]
+      {{tab}}[Produces("text/csv")]
+      {{tab}}public async Task<IActionResult> ExportToCsvAsync([FromBody] List<${majStart(className)}> ${minStart(className)})
+      {{tab}}{
+      {{tab}} if (${minStart(className)} == null || !${minStart(className)}.Any())
+      {{tab}} {
+      {{tab}}   return BadRequest("Invalid or empty list provided");
+      {{tab}} }
+      {{tab}} 
+      {{tab}} var csvContent = await _service.ExportToCsvAsync(${minStart(className)});
+      {{tab}} var bytes = Encoding.UTF8.GetBytes(csvContent);
+      {{tab}} 
+      {{tab}} return File(bytes, "text/csv", "${minStart(className)}.csv");
+      {{tab}}}
       {{tab}}[HttpGet]
       {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
