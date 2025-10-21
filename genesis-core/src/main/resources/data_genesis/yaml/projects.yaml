@@ -353,9 +353,9 @@
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
   projectFolders: [ ]
 - id: 3
-  name: "Node js"
+  name: "NodeJS"
   coreFrameworks:
-    - "Nest JS"
+    - "NestJS"
   projectFilesEdits:
     - fileType: "docker"
       fileName: ".dockerignore"

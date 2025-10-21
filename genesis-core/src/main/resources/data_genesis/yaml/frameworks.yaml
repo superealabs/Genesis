@@ -4766,8 +4766,8 @@
 
 - id: 5
   languageId: 4
-  coreFramework: "ExpressJs"
-  name: "Express JS"
+  coreFramework: "NestJS"
+  name: "NestJS"
   template: "Template"
   useDB: true
   withGroupId: false
