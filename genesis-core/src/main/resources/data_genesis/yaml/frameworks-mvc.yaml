@@ -2753,8 +2753,240 @@
 
   view:
     toGenerate: true
-    viewSavePath: "${destinationFolder}/${majStart(projectName)}/Views"
-    listViewName: "Index"
-    createViewName: "Create"
-    editViewName: "Edit"
-    detailViewName: "Details"
+    viewTemplateEngine: "Razor"
+    viewExtension: "cshtml"
+    viewSavePath: "${destinationFolder}/${majStart(projectName)}/Views/${majStart(className)}"
+    rootPath: "~"
+    backLink: "@Url.Action(\"Index\")"
+    previousLink: "@previousUrl"
+    layout:
+      name: "_Layout"
+      assetsImportLink: "~/css/style.css\" asp-append-version=\"true"
+      viewAnnotations: |
+        @{
+            var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+        }
+      pageName: "@ViewData[\"Title\"]"
+      navLink: "class=\"nav-item @(currentController == \"${majStart(this.entityName)}\" ? \"active\" : \"\")\" asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
+      callContent: |
+        @RenderBody()
+        @RenderSection("Scripts", required: false)
+        @await Html.PartialAsync("_PopupError")
+      logoutLink: "asp-controller=\"Auth\" asp-action=\"Logout\""
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
+    list:
+      name: "Index"
+      viewAnnotations: |
+        @model ${majStart(className)}ViewModel
+        @{
+            ViewData["Title"] = "${majStart(className)}s";
+            var searchCriteria = Model?.Search${majStart(className)}Criteria;
+        }
+      inputTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}\""
+      inputRadioTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}\" asp-for=\"Search${majStart(className)}Criteria.${majStart(this.name)}\""
+      inputDateTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}?.ToString(\"yyyy-MM-ddTHH:mm\")\""
+      selectTagHelper: "name=\"${majStart(this.columnNameField)}\" asp-items=\"@(Model?.${majStart(this.type)}s ?? new List<SelectListItem>())\" asp-for=\"Search${majStart(className)}Criteria.${majStart(this.columnNameField)}\""
+      deleteDataTagHelper: "data-id=\"@${minStart(className)}.${majStart(pkColumn)}\""
+      pageSizeTagHelper: "selected=\"@(Model.Page.Size == ${this})\""
+      dataValue: "@${minStart(className)}.${majStart(this.name)}"
+      dataForeignValue: "@${minStart(className)}.${majStart(this.name)}?.GetType().GetProperty((string)Model.${majStart(this.type)}DisplayColumn)?.GetValue(@${minStart(className)}.${majStart(this.name)})"
+      inlineLoopStatement:
+      blockLoopStatementStart: |
+        @foreach (var ${minStart(className)} in Model.${majStart(className)}s) {
+      blockLoopStatementEnd: |
+        }
+      filterLink: "asp-action=\"Search\" asp-controller=\"${majStart(className)}\""
+      sortLink: "asp-action=\"Index\" asp-route-page=\"@Model.Page.Number\" asp-route-pageSize=\"@Model.Page.Size\" asp-route-sortOrder=\"@Model.CurrentSort\" asp-route-sortBy=\"${this.name},asc\""
+      detailsLink: "@Url.Action(\"Details\", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"
+      createLink: "@Url.Action(\"Create\")"
+      updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"
+      deleteLink: "asp-action=\"Delete\""
+      pageSizeChangeLink: "'@Url.Action(\"Index\")?page=0&pageSize='+this.value"
+      previousPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"
+      previousClassCondition: " @(Model.Page.Number == 0 ? \"disabled\" : \"\")"
+      pagesListLoop: |
+        @for (int i = 0; i < Model.Page.TotalPages; i++)
+        {{tab}}{{tab}}{{tab}}{
+        {{tab}}{{tab}}{{tab}}{{tab}}<a href="@Url.Action("Index", new { page = i, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"
+        {{tab}}{{tab}}{{tab}}{{tab}}class="@(i == Model.Page.Number ? "active" : "")">
+        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}@i
+        {{tab}}{{tab}}{{tab}}{{tab}}</a>
+        {{tab}}{{tab}}{{tab}}}
+      nextPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number + 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"
+      nextClassCondition: " @(Model.Page.Number == Model.Page.TotalPages - 1 ? \"disabled\" : \"\")"
+      onGoingPageLink: "@Url.Action(\"Index\")"
+      onGoingPageSizeTagHelper: "value=\"@Model.Page.Size\""
+      totalElementsTagHelper: "@Model.Page.TotalElements"
+      onGoingSortOrderTagHelper: "value=\"@Model.CurrentSort\""
+      activeSortAscCondition: "@(Model.CurrentSort?.Contains(\"${this.name},asc\") == true ? \"active\" : \"\")"
+      activeSortDescCondition: "@(Model.CurrentSort?.Contains(\"${this.name},desc\") == true ? \"active\" : \"\")"
+      onGoingPagesLoop: |
+        @for (int i = 0; i < Model.Page.TotalPages; i++)
+        {{tab}}{{tab}}{{tab}}{{tab}}{
+        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}<option value="@i" selected="@(i == Model.Page.Number)">
+        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}@i
+        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}</option>
+        {{tab}}{{tab}}{{tab}}{{tab}}}
+      scriptSection: |
+        @section Scripts {
+            <script src="~/js/filter-utils.js"></script>
+            <script src="~/js/export-utils.js"></script>
+        }
+    detail:
+      name: "Details"
+      viewAnnotations: |
+        @model ${majStart(className)}ViewModel
+        @{
+            ViewData["Title"] = "${majStart(className)} Details";
+            var previousUrl = Context.Request.Headers["Referer"].ToString();
+            if (string.IsNullOrEmpty(previousUrl))
+            {
+                previousUrl = "/";
+            }
+        }
+      dataValue: "@Model.${majStart(className)}.${majStart(this.name)}"
+      dataForeignValue: "@Model.${majStart(className)}.${majStart(this.name)}?.GetType().GetProperty((string)Model.${majStart(this.type)}DisplayColumn)?.GetValue(@Model.${majStart(className)}.${majStart(this.name)})"
+      deleteDataTagHelper: "data-id=\"@Model.${majStart(className)}.${majStart(pkColumn)}\""
+      deleteLink: "asp-action=\"Delete\""
+      updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @Model.${majStart(className)}.${majStart(pkColumn)} })"
+    create:
+      name: "Create"
+      viewAnnotations: |
+        @model ${majStart(className)}ViewModel      
+        @{
+            ViewData["Title"] = "Create ${majStart(className)}";
+            var previousUrl = Context.Request.Headers["Referer"].ToString();
+            if (string.IsNullOrEmpty(previousUrl))
+            {
+                previousUrl = "/";
+            }
+        }
+      validationSection: |
+        @if (!ViewData.ModelState.IsValid)
+        {
+        {{tab}}<div asp-validation-summary="All" class="error-message"></div>
+        }
+      validationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.name)}\""
+      selectValidationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.columnNameField)}\""
+      inputTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.name)}\""
+      textAreaTagHelper: "asp-for=\"${majStart(this.name)}\""
+      textAreaValidationTagHelper: " asp-validation-for=\"${majStart(this.name)}\""
+      checkedRadioTagHelper: "checked=\"@(Model?.${majStart(className)}.${majStart(this.name)} != false ? \"checked\" : null)\""
+      selectTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.columnNameField)}\" asp-items=\"@(Model?.${majStart(this.type)}s)\""
+      createLink: "asp-action=\"Create\" asp-controller=\"${className}\""
+      scriptSection: |
+        @section Scripts {
+            @await Html.PartialAsync("_ValidationScriptsPartial")
+        }
+    edit:
+      name: "Edit"
+      viewAnnotations: |
+        @model ${majStart(className)}ViewModel
+        @{
+            ViewData["Title"] = "Edit ${majStart(className)}";
+            var previousUrl = Context.Request.Headers["Referer"].ToString();
+            if (string.IsNullOrEmpty(previousUrl))
+            {
+                previousUrl = "/";
+            }
+        }
+      validationSection: |
+        @if (!ViewData.ModelState.IsValid)
+        {{tab}}{
+        {{tab}}{{tab}}<!-- Validation Summary -->
+        {{tab}}{{tab}}<div asp-validation-summary="All" class="error-message"></div>
+        {{tab}}}
+      validationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.name)}\""
+      selectValidationTagHelper: "asp-validation-for=\"${majStart(className)}.${majStart(this.columnNameField)}\""
+      inputTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.name)}\""
+      textAreaTagHelper: "asp-for=\"${majStart(this.name)}\""
+      textAreaValidationTagHelper: " asp-validation-for=\"${majStart(this.name)}\""
+      selectTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.columnNameField)}\" asp-items=\"Model.${majStart(this.type)}s\""
+      updateLink: "asp-action=\"Edit\" asp-controller=\"${className}\""
+      scriptSection: |
+        @section Scripts {
+            @await Html.PartialAsync("_ValidationScriptsPartial")
+        }
+    error:
+      name: "Error"
+      viewAnnotations: |
+        @{
+            ViewData["Title"] = "Error";
+            var previousUrl = Context.Request.Headers["Referer"].ToString();
+            if (string.IsNullOrEmpty(previousUrl))
+            {
+                previousUrl = "/";
+            }
+        }
+      errorMessage: "@ViewData[\"ErrorMessage\"]"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
+
+    templateEngineFilesEdits:
+      - fileType : "ViewImports"
+        fileName: "_ViewImports"
+        extension: "cshtml"
+        content: |
+          @using ${majStart(projectName)}
+          @using ${majStart(projectName)}.Models
+          @using ${majStart(projectName)}.Utils
+          @using ${majStart(projectName)}.ViewModels
+          @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/"
+      - fileType : "ViewStart"
+        fileName: "_ViewStart"
+        extension: "cshtml"
+        content: |
+          @{
+              Layout = "_Layout";
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/"
+      - fileType : "Validation Scripts Partial"
+        fileName: "_ValidationScriptsPartial"
+        extension: "cshtml"
+        content: |
+          <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+          <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
+      - fileType : "Popup Error"
+        fileName: "_PopupError"
+        extension: "cshtml"
+        content: |
+          @if (TempData["PopupError"] != null)
+          {
+              <script>
+                  window.onload = function () {
+                      alert("@TempData["PopupError"]");
+                  };  
+              </script>
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
+      - fileType : "Form Validation"
+        fileName: "_ValidationScriptsPartial"
+        extension: "cshtml"
+        content: |
+          <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                  const jsonTextarea = document.querySelector('.json-textarea');
+                      if (jsonTextarea) {
+                      jsonTextarea.addEventListener('blur', function() {
+                          try {
+                              if (this.value.trim() !== '') {
+                                  JSON.parse(this.value);
+                                  this.style.borderColor = '#28a745';
+                              }
+                          } catch (e) {
+                              this.style.borderColor = '#dc3545';
+                          }
+                      });
+                  }
+              });
+          </script>
+          
+          <!-- Include client-side validation scripts -->
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
+
+    templateEngineFiles: []
+    templateEngineFolders: []

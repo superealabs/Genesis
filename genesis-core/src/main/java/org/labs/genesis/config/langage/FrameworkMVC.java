@@ -17,18 +17,11 @@ import java.util.stream.Collectors;
 @Setter
 public class FrameworkMVC extends Framework {
     private View view;
-    private List<ViewsTemplateEngine> viewsTemplateEngine;
-    private List<ViewsTemplate> viewsTemplate;
-    private List<String> excludeProjectFilesEdits;
+    private java.util.List<ViewsTemplate> viewsTemplate;
+    private java.util.List<String> excludeProjectFilesEdits;
     private FrontendLayout frontendLayout;
     private ProjectBranding projectBranding;
     private FrontendDestinationPaths frontendPaths;
-
-    public void setViewsTemplateEngine() throws IOException {
-        this.viewsTemplateEngine = Arrays.stream(FileUtils.fromYaml(ViewsTemplateEngine[].class, Constantes.VIEWS_TEMPLATE_ENGINE_YAML))
-                .filter(vte -> vte.getFrameworkMvcId() == this.getId())
-                .collect(Collectors.toList());
-    }
 
     public void setViewsTemplate() throws IOException {
         this.viewsTemplate = Arrays.stream(FileUtils.fromYaml(ViewsTemplate[].class, Constantes.VIEWS_TEMPLATES_YAML))
@@ -47,10 +40,132 @@ public class FrameworkMVC extends Framework {
     @ToString
     public static class View {
         private Boolean toGenerate;
+        private String viewTemplateEngine;
+        private String viewExtension;
         private String viewSavePath;
-        private String listViewName;
-        private String createViewName;
-        private String editViewName;
-        private String detailViewName;
+        private String rootPath;
+        private String backLink;
+        private String previousLink;
+        private Layout layout;
+        private List list;
+        private Create create;
+        private Edit edit;
+        private Detail detail;
+        private Error error;
+        private java.util.List<FilesEdit> templateEngineFilesEdits;
+        private java.util.List<Project.ProjectFiles> templateEngineFiles;
+        private java.util.List<Project.ProjectFolders> templateEngineFolders;
+    }
+
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Layout {
+        private String name;
+        private String assetsImportLink;
+        private String viewAnnotations;
+        private String pageName;
+        private String navLink;
+        private String callContent;
+        private String logoutLink;
+        private String destinationPath;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class List {
+        private String name;
+        private String viewAnnotations;
+        private String inputTagHelper;
+        private String inputRadioTagHelper;
+        private String inputDateTagHelper;
+        private String selectTagHelper;
+        private String deleteDataTagHelper;
+        private String pageSizeTagHelper;
+        private String dataValue;
+        private String dataForeignValue;
+        private String inlineLoopStatement;
+        private String blockLoopStatementStart;
+        private String blockLoopStatementEnd;
+        private String filterLink;
+        private String sortLink;
+        private String detailsLink;
+        private String createLink;
+        private String updateLink;
+        private String deleteLink;
+        private String pageSizeChangeLink;
+        private String previousPageLink;
+        private String previousClassCondition;
+        private String pagesListLoop;
+        private String nextPageLink;
+        private String nextClassCondition;
+        private String onGoingPageLink;
+        private String onGoingPageSizeTagHelper;
+        private String totalElementsTagHelper;
+        private String onGoingSortOrderTagHelper;
+        private String activeSortAscCondition;
+        private String activeSortDescCondition;
+        private String onGoingPagesLoop;
+        private String scriptSection;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Detail {
+        private String name;
+        private String viewAnnotations;
+        private String dataValue;
+        private String dataForeignValue;
+        private String deleteDataTagHelper;
+        private String updateLink;
+        private String deleteLink;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Create {
+        private String name;
+        private String viewAnnotations;
+        private String validationSection;
+        private String validationTagHelper;
+        private String selectValidationTagHelper;
+        private String inputTagHelper;
+        private String textAreaTagHelper;
+        private String textAreaValidationTagHelper;
+        private String checkedRadioTagHelper;
+        private String selectTagHelper;
+        private String createLink;
+        private String scriptSection;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Edit {
+        private String name;
+        private String viewAnnotations;
+        private String validationSection;
+        private String validationTagHelper;
+        private String selectValidationTagHelper;
+        private String inputTagHelper;
+        private String textAreaTagHelper;
+        private String textAreaValidationTagHelper;
+        private String selectTagHelper;
+        private String updateLink;
+        private String scriptSection;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Error {
+        private String name;
+        private String viewAnnotations;
+        private String errorMessage;
+        private String destinationPath;
     }
 }
