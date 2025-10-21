@@ -1755,7 +1755,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="a in user.authorities" :key="'role-'+a.authority">
+                <tr v-for="a in user.authorities" :key="'role-' + a.authority">
                   <td>{{ a.authority }}</td>
                   <td>*</td>
                   <td>None</td>

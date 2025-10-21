@@ -12,7 +12,7 @@ export function useSearch(
   // Holds the actual field metadata (mutated with options if loaded)
   // const fields = ref<EntitySearchField[]>([...availableFilters])
   const fields = computed(() => {
-    return availableFilters.filter(f => f.showInFilter)
+    return availableFilters.filter((f) => f.showInFilter)
   })
 
   const availableFields = computed(() =>

@@ -99,6 +99,7 @@
           invalid: 'Invalid credentials',
           createAccount: "Create account",
           backToSignIn: "Back to sign in",
+          dontHaveAccount: "You don't have an account?",
         },
 
         register: {
@@ -109,7 +110,8 @@
           submit: "Register",
           backToSignIn: "Back to sign in",
           success: "Account created successfully",
-          error: "Registration failed"
+          error: "Registration failed",
+          haveAccount: 'You already have an account?',
         },
         home: {
           greet: 'Hello',
@@ -391,7 +393,7 @@
           invalid: 'Identifiants invalides',
           createAccount: "Créer un compte",
           backToSignIn: "Retour à la connexion",
-          dontHaveAccount: "Vous n'avez pas de compte?"
+          dontHaveAccount: "Vous n'avez pas de compte?",
         },
         
         register: {
@@ -403,7 +405,7 @@
           backToSignIn: "Retour à la connexion",
           success: "Compte créé avec succès",
           error: "Échec de l'inscription"
-          haveAccount: "Vous avez déjà un compte?",
+          haveAccount: 'Vous avez déjà un compte?',
         },
     
         home: {
