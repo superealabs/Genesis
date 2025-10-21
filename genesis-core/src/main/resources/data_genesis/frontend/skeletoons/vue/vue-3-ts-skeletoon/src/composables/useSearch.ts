@@ -10,7 +10,10 @@ export function useSearch(
   const selectedFieldToAdd = ref<string>('')
 
   // Holds the actual field metadata (mutated with options if loaded)
-  const fields = ref<EntitySearchField[]>([...availableFilters])
+  // const fields = ref<EntitySearchField[]>([...availableFilters])
+  const fields = computed(() => {
+    return availableFilters.filter(f => f.showInFilter)
+  })
 
   const availableFields = computed(() =>
     fields.value.filter((f) => !activeFieldKeys.value.includes(f.key)),
@@ -67,6 +70,6 @@ export function useSearch(
     desactivateField,
     resetFilters,
     getFiltersValues,
-    fields, // expose fields with loaded options
+    fields,
   }
 }
