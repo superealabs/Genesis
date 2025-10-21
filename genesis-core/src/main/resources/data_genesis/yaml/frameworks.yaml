@@ -5507,13 +5507,13 @@
         import { Module } from "@nestjs/common";
         import { ConfigModule } from "@nestjs/config";
         import { DatabaseModule } from './database/database.module';
-        import { ExportModule } from "./export/export.module";
+        import { ExportModule } from "./modules/export/export.module";
         import * as Models from "./models.index";
-        {{#if useJWT}}import { AuthModule } from "./auth/auth.module";
-        import { UserEntityModule } from "./user-entity/user-entity.module";
-        import { RoleEntityModule } from "./role-entity/role-entity.module";{{/if}}
+        {{#if useJWT}}import { AuthModule } from "./modules/auth/auth.module";
+        import { UserEntityModule } from "./modules/user-entity/user-entity.module";
+        import { RoleEntityModule } from "./modules/role-entity/role-entity.module";{{/if}}
         {{#each entities}}
-        import { ${this}Module } from "./${minStart(this)}/${minStart(this)}.module";
+        import { ${this}Module } from "./modules/${minStart(this)}/${minStart(this)}.module";
         {{/each}}
         @Module({
           imports: [
@@ -5622,7 +5622,7 @@
       extension: "ts"
       content: |
         {{#each entities}}
-        export { ${majStart(this)}Service } from "./${minStart(this)}/${ minStart(this) }.service";
+        export { ${majStart(this)}Service } from "./modules/${minStart(this)}/${ minStart(this) }.service";
         {{/each}}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src"
     - fileType: "Model Index"
@@ -5630,7 +5630,7 @@
       extension: "ts"
       content: |
         {{#each entities}}
-        export { ${ majStart(this) } } from "./${minStart(this)}/${ minStart(this) }.entity";
+        export { ${ majStart(this) } } from "./modules/${minStart(this)}/${ minStart(this) }.entity";
         {{/each}}
       destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src"
     - fileType: "Main"
@@ -5707,7 +5707,7 @@
         import { DataSource } from 'typeorm';
         import { Parser } from 'json2csv';
         import * as puppeteer from 'puppeteer';
-        import { ResourceNotFoundException } from '../common/exceptions/ResourceNotFoundException';
+        import { ResourceNotFoundException } from '../../common/exceptions/ResourceNotFoundException';
           
         @Injectable()
         export class ExportService {
@@ -5746,7 +5746,7 @@
           }
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/export"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/export"
     - fileType: "Export"
       fileName: "export.controller"
       extension: "ts"
@@ -5805,7 +5805,7 @@
                 return res.status(HttpStatus.OK).send(pdfBuffer);
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/export"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/export"
     - fileType: "Export"
       fileName: "export.module"
       extension: "ts"
@@ -5819,14 +5819,14 @@
           exports: [ExportService], 
         })
         export class ExportModule {}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/export"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/export"
   model:
     toGenerate: true
     modelImports: |
       import { Entity, Column, PrimaryGeneratedColumn, PrimaryColumn, OneToMany, ManyToOne, JoinColumn } from "typeorm";
       import { ApiProperty } from "@nestjs/swagger";
       import { IsNotEmpty, MaxLength, Min, Max, Length, Matches, IsDate } from "class-validator";
-      import * as Models from "../models.index";
+      import * as Models from "../../models.index";
     modelExtends: ""
     modelAnnotations: |
       @Entity('${tableName}')
@@ -5859,7 +5859,7 @@
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
-    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/${minStart(className)}"
+    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/modules/${minStart(className)}"
     modelPackage: "{{removeLine}}"
     modelAdditionalFiles:
       - fileType: "Module"
@@ -5879,7 +5879,7 @@
             exports: [${className}Service],
           })
           export class ${className}Module {}
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/${minStart(className)}"
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/${minStart(className)}"
       - fileType: "Unit Test File"
         fileName: "${minStart(className)}.spec"
         extension: "ts"
@@ -5889,7 +5889,7 @@
           import request from 'supertest';
           import { AppModule } from '../src/app.module';
           import { DataSource } from 'typeorm';
-          import { ${majStart(className)} } from '../src/${minStart(className)}/${minStart(className)}.entity';
+          import { ${majStart(className)} } from '../src/modules/${minStart(className)}/${minStart(className)}.entity';
           import { Page } from '../src/common/dto/Page';
           import { RestResponse } from '../src/common/dto/RestResponse';
           import { ConstraintDisablerService } from '../src/common/utils/constraint-disabler.service';
@@ -6086,7 +6086,7 @@
       past: '@IsDate()'
       pastOrPresent: '@IsDate()'
       future: '@IsDate()'
-      futureOrPresent: '@IsDate() // custom check: >= now'
+      futureOrPresent: '@IsDate()'
       notBlank: '@IsNotEmpty()'
       minAndMaxSize: '@Length(${minLength}, ${columnSize})'
       regexPattern: '@Matches(${value})'
@@ -6100,7 +6100,7 @@
     modelDaoFieldContent: "{{removeLine}}"
     modelDaoMethodContent: "{{removeLine}}"
     modelDaoConstructors: "{{removeLine}}"
-    modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/src/models"
+    modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/src/modules"
     modelDaoPackage: "{{removeLine}}"
     modelDaoAdditionalFiles: [ ]
   service:
@@ -6109,8 +6109,8 @@
       import { Injectable } from "@nestjs/common";
       import { InjectRepository } from "@nestjs/typeorm";
       import { Repository, DeepPartial } from "typeorm";
-      import * as Models from "../models.index";
-      import { ResourceNotFoundException } from "../common/exceptions/ResourceNotFoundException";
+      import * as Models from "../../models.index";
+      import { ResourceNotFoundException } from "../../common/exceptions/ResourceNotFoundException";
     serviceAnnotations: |
       @Injectable()
     serviceClassKeyword: "export class"
@@ -6182,7 +6182,7 @@
       {{tab}}  await this.${minStart(className)}Repository.delete(id);
       {{tab}}}
       {{/if}}
-    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/${minStart(className)}"
+    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/modules/${minStart(className)}"
     servicePackage: ""
     serviceAdditionalFiles: []
   controller:
@@ -6191,14 +6191,14 @@
       import { Controller, Get, Post, Put, Delete, Param, Body, Query, HttpException, HttpStatus } from "@nestjs/common";
       import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiExtraModels, getSchemaPath, ApiBody } from "@nestjs/swagger";
       import { ${className}Service } from "./${minStart(className)}.service";
-      import { RestResponse } from "../common/dto/RestResponse";
-      import { WebUtils } from "../common/utils/WebUtil";
-      import { ResourceNotFoundException } from "../common/exceptions/ResourceNotFoundException";
-      import * as Models from "../models.index";
-      import { Page } from "../common/dto/Page";
+      import { RestResponse } from "../../common/dto/RestResponse";
+      import { WebUtils } from "../../common/utils/WebUtil";
+      import { ResourceNotFoundException } from "../../common/exceptions/ResourceNotFoundException";
+      import * as Models from "../../models.index";
+      import { Page } from "../../common/dto/Page";
       {{#if useJWT}}import { ApiBearerAuth } from "@nestjs/swagger";
       import { UseGuards } from "@nestjs/common";
-      import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";{{/if}}
+      import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";{{/if}}
     controllerAnnotations: |
       @ApiTags("${minStart(className)}")
       @Controller("${minStart(className)}")
@@ -6481,7 +6481,7 @@
       {{tab}}}
       {{/if}}{{removeLine}}
 
-    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/${minStart(className)}"
+    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/modules/${minStart(className)}"
     controllerPackage: "{{removeLine}}"
     controllerAdditionalFiles: [ ]
   configurations:
