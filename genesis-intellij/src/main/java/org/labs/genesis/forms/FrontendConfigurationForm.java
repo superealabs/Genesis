@@ -9,10 +9,7 @@ import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.genesis.frontend.generator.model.InterfaceLang;
-import org.labs.genesis.frontend.generator.model.ProjectBranding;
-import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkMVC;
-import org.labs.genesis.config.langage.ViewsTemplateEngine;
 import org.labs.genesis.listener.ColorPicker;
 
 import javax.swing.*;
@@ -20,9 +17,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.List;
 
 @Getter
@@ -33,7 +27,7 @@ public class FrontendConfigurationForm {
     private JLabel languageLabel;
     private JLabel frameworkLabel;
     private JLabel templateEngine;
-    private JComboBox<ViewsTemplateEngine> viewsTemplateEngineOptions;
+    private JComboBox<String> viewsTemplateEngineOptions;
     private JComboBox<String> navbarSelect;
     private JTextField primaryColorField;
     private JButton primaryColorPickerButton;
@@ -220,8 +214,7 @@ public class FrontendConfigurationForm {
         frontendFrameworkOptions.setVisible(false);
 
         viewsTemplateEngineOptions.removeAllItems();
-        frameworkMVC.getViewsTemplateEngine()
-                .forEach(te -> viewsTemplateEngineOptions.addItem(te));
+        viewsTemplateEngineOptions.addItem(frameworkMVC.getView().getViewTemplateEngine());
     }
 
     public void updateFormWithFrameworkMVCOptions(FrameworkMVC frameworkMVC) {

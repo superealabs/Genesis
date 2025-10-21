@@ -7,7 +7,6 @@ import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkMVC;
 import org.labs.genesis.config.langage.ViewsTemplate;
-import org.labs.genesis.config.langage.ViewsTemplateEngine;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.forms.FrontendConfigurationForm;
 import org.labs.genesis.frontend.FrontendLanguage;
@@ -49,7 +48,6 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
         if (projectGenerationContext.getFramework() instanceof FrameworkMVC) {
             ((FrameworkMVC) projectGenerationContext.getFramework()).setFrontendLayout(this.frontendLayout);
             ((FrameworkMVC) projectGenerationContext.getFramework()).setProjectBranding(this.branding);
-            projectGenerationContext.setViewsTemplateEngine((ViewsTemplateEngine) frontendConfigurationForm.getViewsTemplateEngineOptions().getSelectedItem());
             projectGenerationContext.setViewsTemplate(((FrameworkMVC) projectGenerationContext.getFramework()).findViewsTemplateById(1));
         }
     }
@@ -116,12 +114,8 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
     }
 
     private void validateFrameworkMVCConfiguration(FrameworkMVC frameworkMVC) throws ConfigurationException {
-        ViewsTemplateEngine viewsTemplateEngine = (ViewsTemplateEngine) frontendConfigurationForm.getViewsTemplateEngineOptions().getSelectedItem();
-        if (viewsTemplateEngine == null) {
-            throw new ConfigurationException("Template Engine must not be null");
-        }
-        if (viewsTemplateEngine.getFrameworkMvcId() != frameworkMVC.getId()) {
-            throw new ConfigurationException("Template Engine not compatible for " + frameworkMVC.getName());
+        if (frameworkMVC == null) {
+            throw new ConfigurationException("Framework must not be null");
         }
     }
 
