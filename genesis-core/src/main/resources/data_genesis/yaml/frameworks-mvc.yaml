@@ -2755,6 +2755,7 @@
     toGenerate: true
     viewTemplateEngine: "Razor"
     viewExtension: "cshtml"
+    staticFilesPath: "/wwwroot"
     viewSavePath: "${destinationFolder}/${majStart(projectName)}/Views/${majStart(className)}"
     rootPath: "~"
     backLink: "@Url.Action(\"Index\")"

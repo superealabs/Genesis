@@ -503,11 +503,12 @@ public class FrameworkMetadataProvider {
     }
 
 
-    private static HashMap<String, Object> getGeneralViewHashMap(FrameworkMVC framework) {
+    public static HashMap<String, Object> getGeneralViewHashMap(FrameworkMVC framework) {
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("rootPath", framework.getView().getRootPath());
         metadata.put("backLink", framework.getView().getBackLink());
         metadata.put("previousLink", framework.getView().getPreviousLink());
+        metadata.put("staticFilesPath", framework.getView().getStaticFilesPath());
         return metadata;
     }
 

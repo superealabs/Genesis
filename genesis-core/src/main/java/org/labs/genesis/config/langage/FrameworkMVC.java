@@ -42,6 +42,7 @@ public class FrameworkMVC extends Framework {
         private Boolean toGenerate;
         private String viewTemplateEngine;
         private String viewExtension;
+        private String staticFilesPath;
         private String viewSavePath;
         private String rootPath;
         private String backLink;

@@ -4,6 +4,7 @@ import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.framework.APIGenerator;
+import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.config.langage.generator.framework.GenesisGenerator;
 import org.labs.genesis.frontend.generator.ViewsGenerator;
 import org.labs.genesis.connexion.Credentials;
@@ -196,29 +197,16 @@ public class ProjectGenerator {
                 context.getGroupLink()
         );
 
-        HashMap<String, Object> projectFilesEditsHashMap = getProjectFilesEditsHashMap(
-                context.getDestinationFolder(),
-                context.getProjectName(),
-                context.getGroupLink(),
-                context.getProjectPort(),
-                context.getDatabase(),
-                context.getCredentials(),
-                context.getLanguage(),
-                context.getProjectDescription(),
-                context.getLanguageConfiguration(),
-                context.getFramework(),
-                context.getFrameworkConfiguration()
-        );
-
         FrameworkMVC frameworkMVC = (FrameworkMVC) context.getFramework();
         HashMap<String, Object> frontendHashMap = FrameworkFrontendMetadataProvider.getLayoutHashMap(frameworkMVC.getFrontendLayout());
+        frontendHashMap.putAll(FrameworkMetadataProvider.getGeneralViewHashMap(frameworkMVC));
 
         frontendHashMap.putAll(initializeHashMap);
 
-        renderAndCopyFolders(frameworkMVC.getView().getTemplateEngineFolders(), initializeHashMap);
-        renderAndCopyFiles(viewsTemplate.getTemplateFiles(), initializeHashMap);
+        renderAndCopyFolders(frameworkMVC.getView().getTemplateEngineFolders(), frontendHashMap);
+        renderAndCopyFiles(viewsTemplate.getTemplateFiles(), frontendHashMap);
         renderFilesEdits(viewsTemplate.getTemplateFilesEdits(), frontendHashMap);
-        renderFilesEdits(frameworkMVC.getView().getTemplateEngineFilesEdits(), projectFilesEditsHashMap);
+        renderFilesEdits(frameworkMVC.getView().getTemplateEngineFilesEdits(), frontendHashMap);
     }
 
     private void generateProjectFiles(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {
