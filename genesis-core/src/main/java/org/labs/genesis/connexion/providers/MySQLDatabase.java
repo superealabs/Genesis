@@ -30,16 +30,19 @@ public class MySQLDatabase extends Database {
                 credentials.isAllowPublicKeyRetrieval());
     }
 
-
     @Override
     public List<String> getAllTableNames(Connection connection) throws SQLException {
         List<String> tableNames = new ArrayList<>();
 
+        String query = "SELECT TABLE_NAME " +
+                "FROM information_schema.tables " +
+                "WHERE TABLE_TYPE = 'BASE TABLE' " +
+                "AND TABLE_SCHEMA = DATABASE()"; // base actuellement utilisée
+
         try (Statement statement = connection.createStatement();
-             ResultSet tables = statement.executeQuery("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")) {
-            while (tables.next()) {
-                String tableName = tables.getString(1);
-                tableNames.add(tableName);
+             ResultSet rs = statement.executeQuery(query)) {
+            while (rs.next()) {
+                tableNames.add(rs.getString("TABLE_NAME"));
             }
         }
 
@@ -49,13 +52,68 @@ public class MySQLDatabase extends Database {
     @Override
     public List<String> getAllViewNames(Connection connection) throws SQLException {
         List<String> viewNames = new ArrayList<>();
-        DatabaseMetaData metaData = connection.getMetaData();
+
+        String query = "SELECT TABLE_NAME " +
+                "FROM information_schema.tables " +
+                "WHERE TABLE_TYPE = 'VIEW' " +
+                "AND TABLE_SCHEMA = DATABASE()"; // base actuellement utilisée
 
         try (Statement statement = connection.createStatement();
-             ResultSet views = statement.executeQuery("SHOW FULL TABLES WHERE Table_type = 'VIEW'")) {
-            while (views.next()) {
-                String viewName = views.getString(1);
-                viewNames.add(viewName);
+             ResultSet rs = statement.executeQuery(query)) {
+            while (rs.next()) {
+                viewNames.add(rs.getString("TABLE_NAME"));
+            }
+        }
+
+        return viewNames;
+    }
+
+    @Override
+    public List<String> getPaginatedTableNames(Connection connection, int index, int size) throws SQLException {
+        List<String> tableNames = new ArrayList<>();
+
+        // index = numéro de page (0-based)
+        int offset = index * size;
+
+        String query = "SELECT TABLE_NAME " +
+                "FROM information_schema.tables " +
+                "WHERE TABLE_TYPE = 'BASE TABLE' " +
+                "AND TABLE_SCHEMA = DATABASE() " +
+                "ORDER BY TABLE_NAME " +
+                "LIMIT ? OFFSET ?";
+
+        try (PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setInt(1, size);
+            ps.setInt(2, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    tableNames.add(rs.getString("TABLE_NAME"));
+                }
+            }
+        }
+
+        return tableNames;
+    }
+
+    @Override
+    public List<String> getPaginatedViewNames(Connection connection, int index, int size) throws SQLException {
+        List<String> viewNames = new ArrayList<>();
+        int offset = index * size;
+
+        String query = "SELECT TABLE_NAME " +
+                "FROM information_schema.tables " +
+                "WHERE TABLE_TYPE = 'VIEW' " +
+                "AND TABLE_SCHEMA = DATABASE() " +
+                "ORDER BY TABLE_NAME " +
+                "LIMIT ? OFFSET ?";
+
+        try (PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setInt(1, size);
+            ps.setInt(2, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    viewNames.add(rs.getString("TABLE_NAME"));
+                }
             }
         }
 
