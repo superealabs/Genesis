@@ -1,4 +1,4 @@
-${modelType}
+${viewAnnotations}
 <div class="header">
     <h1 class="page-title">${className} / <span class="page-type"><span class="page-action"
                 data-i18n="list"></span></span>
@@ -107,6 +107,39 @@ ${modelType}
             </button>
         </div>
 
+        <div class="modal-body">
+            <div class="export-options">
+                <div class="form-group">
+                    <label for="exportFormat" data-i18n="export_format"></label>
+                    <select id="exportFormat" class="form-control">
+                        <option value="table" data-i18n="format_table"></option>
+                        <option value="detailed" data-i18n="format_detailed"></option>
+                        <option value="summary" data-i18n="format_summary"></option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="exportColumns" data-i18n="columns_to_include"></label>
+                    <div class="columns-selector">
+                        {{#each fields}}
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="exportColumns" value="{{#if this.isForeignKey}}${this.type}{{else}}${majStart(this.name)}{{/if}}">
+                            <span>{{#if this.isForeignKey}}${this.type}{{else}}${majStart(this.name)}{{/if}}</span>
+                        </label>
+                        {{/each}}{{removeLine}}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="exportOrientation" data-i18n="page_orientation"></label>
+                    <select id="exportOrientation" class="form-control">
+                        <option value="Portrait" data-i18n="orientation_portrait"></option>
+                        <option value="Landscape" data-i18n="orientation_landscape"></option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
         <div class="modal-footer">
             <button class="btn btn-tertiary btn-sm" id="exportCancelBtn">
                 <span data-i18n="cancel"></span>
@@ -199,7 +232,7 @@ ${modelType}
                                 </g>
                             </svg>
                         </a>
-                        <button class="btn-delete action-button" ${deleteTagHelper}>
+                        <button class="btn-delete action-button" ${deleteDataTagHelper}>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55.78 59">
                                 <title data-i18n="delete"></title>
                                 <g id="Layer_2" data-name="Layer 2">

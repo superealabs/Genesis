@@ -1,4 +1,4 @@
-${modelType}
+${viewAnnotations}
 <div class="header">
     <h1 class="page-title">${className} / <span class="page-type"><span class="page-action"
                 data-i18n="create"></span></span></h1>
@@ -13,9 +13,9 @@ ${modelType}
 ${validationSection}
 
 <!-- Include Select2 utils scripts -->
-<script src="${assetsImportLink}/js/jquery-3.7.1.min.js"></script>
-<link rel="stylesheet" href="${assetsImportLink}/css/select2.min.css">
-<script src="${assetsImportLink}/js/select2.min.js"></script>
+<script src="${rootPath}/js/jquery-3.7.1.min.js"></script>
+<link rel="stylesheet" href="${rootPath}/css/select2.min.css">
+<script src="${rootPath}/js/select2.min.js"></script>
 
 <form class="form" method="post" ${createLink}>
     {{#each inputs}}
@@ -85,7 +85,7 @@ ${validationSection}
         </div>
 
         <div class="form-actions-right">
-            <a href="${backLink}" type="button" class="btn btn-secondary btn-sm">
+            <a href="${previousLink}" type="button" class="btn btn-secondary btn-sm">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 6L6 18M6 6l12 12" />
                 </svg>

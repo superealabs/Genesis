@@ -1,8 +1,8 @@
-${modelType}
+${viewAnnotations}
 <div class="header">
     <h1 class="page-title">${className} / <span class="page-type"><span class="page-action"
                 data-i18n="details"></span></span></h1>
-    <a href="${backLink}" class="btn btn-primary btn-md">
+    <a href="${previousLink}" class="btn btn-primary btn-md">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
@@ -14,13 +14,15 @@ ${modelType}
     {{#each fields}}
     <div class="form-group">
         <label for="${this.name}">${this.name}</label>
-        <input type="text" value="{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}" readonly>
+        <div class="info">
+            <p>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</p>
+        </div>
     </div>
     {{/each}}{{removeLine}}
 
     {{#if !isView}}<div class="form-actions">
         <div class="form-actions-left">
-            <button class="btn btn-danger btn-sm" type="button" ${deleteTagHelper}>
+            <button class="btn btn-danger btn-sm" type="button" ${deleteDataTagHelper}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2">
                     <path
@@ -84,9 +86,7 @@ ${modelType}
             <form id="deleteForm" style="margin: 0;" method="post" ${deleteLink}>
                 @Html.AntiForgeryToken()
                 {{#each fields}}{{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}
-                <div class="info">
-                    <p>${dataValue}</p>
-                </div>{{/if}}{{else}}{{removeLine}}{{/if}}
+                <input type="hidden" name="${this.name}" value="${dataValue}"/>{{/if}}{{else}}{{removeLine}}{{/if}}
                 {{/each}}{{removeLine}}
                 <button type="submit" class="btn btn-danger btn-sm">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -100,4 +100,3 @@ ${modelType}
         </div>
     </div>
 </div>{{else}}{{removeLine}}{{/if}}
-{{#if !isView}}${scriptSection}{{/if}}

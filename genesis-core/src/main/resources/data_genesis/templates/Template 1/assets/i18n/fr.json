@@ -35,5 +35,13 @@
     "reset": "Réinitialiser",
     "cancel": "Annuler",
     "save": "Enregistrer",
-    "update": "Mettre à jour"
+    "update": "Mettre à jour",
+    "export_format": "Format d'exportation",
+    "format_table": "Format Tableau",
+    "format_detailed": "Format Détaillé",
+    "format_summary": "Format Résumé",
+    "page_orientation": "Orientation de la page",
+    "columns_to_include": "Colonne à inclure",
+    "orientation_portrait": "Portrait",
+    "orientation_landscape": "Paysage"
 }

@@ -1,4 +1,4 @@
-${currentViewContext}
+${viewAnnotations}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,9 +6,9 @@ ${currentViewContext}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${projectName} | ${pageName}</title>
-    <link rel="stylesheet" href="${rootPath}">
+    <link rel="stylesheet" href="${assetsImportLink}">
     {{#if useFaviconLink or hasFavicon}}<link rel="shortcut icon"
-        href="${assetsImportLink}/${faviconUrl}"
+        href="${rootPath}/${faviconUrl}"
         type="image/x-icon">{{else}}{{removeLine}}{{/if}}
 </head>
 
@@ -21,8 +21,8 @@ ${currentViewContext}
         <div class="project-info">
             {{#if useLogoLink or hasLogo}}
             <div class="project-logo">
-                <img src="${assetsImportLink}/images${logoUrl}"
-                    alt="">
+                <img src="${rootPath}/images${logoUrl}"
+                    alt="logo-${projectName}">
             </div>
             {{else}}
             <div class="project-name">${projectName}</div>
@@ -106,7 +106,7 @@ ${currentViewContext}
 
                 {{#if useAuthCookie}}<div class="setting-separator"></div>
 
-                <form ${logoutTagHelper} method="post" class="settings-form" id="settingsForm">
+                <form ${logoutLink} method="post" class="settings-form" id="settingsForm">
                     <button type="submit" class="logout-btn" id="logoutBtn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -124,8 +124,8 @@ ${currentViewContext}
         ${callContent}
     </div>
 
-    <script src="${assetsImportLink}/js/index.js"></script>
-    <script src="${assetsImportLink}/js/lang.js"></script>
+    <script src="${rootPath}/js/index.js"></script>
+    <script src="${rootPath}/js/lang.js"></script>
 </body>
 
 </html>
