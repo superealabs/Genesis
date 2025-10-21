@@ -89,8 +89,8 @@ public class FrameworkFrontendMetadataProvider {
         return langList;
     }
 
-    public static HashMap<String, Object> getLayoutHashMap(FrontendFramework frontendFramework){
-        FrontendLayout layout = frontendFramework.getFrontendLayout();
+    public static HashMap<String, Object> getLayoutHashMap(FrontendLayout layout){
+//        FrontendLayout layout = frontendFramework.getFrontendLayout();
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("additionalCss",layout.additionalCss);
         metadata.put("primaryColor",layout.primaryColor);
@@ -100,8 +100,8 @@ public class FrameworkFrontendMetadataProvider {
         return  metadata;
     }
 
-    public static HashMap<String, Object> getBrandingHashMap(FrontendFramework frontendFramework){
-        ProjectBranding branding = frontendFramework.getProjectBranding();
+    public static HashMap<String, Object> getBrandingHashMap(ProjectBranding branding){
+//        ProjectBranding branding = frontendFramework.getProjectBranding();
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("faviconUrl", branding.getFaviconUrl());
         metadata.put("useFaviconLink", branding.useFaviconLink());
@@ -258,8 +258,8 @@ public class FrameworkFrontendMetadataProvider {
 
     public static HashMap<String, Object> getRessourceHashMap(FrontendFramework frontendFramework) {
         HashMap<String, Object> metadata = new HashMap<>();
-        metadata.putAll(getBrandingHashMap(frontendFramework));
-        metadata.putAll(getLayoutHashMap(frontendFramework));
+        metadata.putAll(getBrandingHashMap(frontendFramework.getProjectBranding()));
+        metadata.putAll(getLayoutHashMap(frontendFramework.getFrontendLayout()));
         return  metadata;
     }
 
