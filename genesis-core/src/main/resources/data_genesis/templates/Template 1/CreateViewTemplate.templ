@@ -52,15 +52,11 @@ ${validationSection}
         <span ${selectValidationTagHelper} class="field-validation-error"></span>
 
         <script>
-            function initializeSelect2() {
-                $('#${this.columnNameField}').select2({
-                    placeholder: "${this.columnNameField}",
-                    allowClear: true,
-                    width: '100%'
-                });
-            }
-            $(document).ready(initializeSelect2);
-            setTimeout(initializeSelect2, 100);
+            $('#${this.columnNameField}').select2({
+                placeholder: "${this.columnNameField}",
+                allowClear: true,
+                width: '100%'
+            });
         </script>
     </div>
     {{/each}}{{removeLine}}

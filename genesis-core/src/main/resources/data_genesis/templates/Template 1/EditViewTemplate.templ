@@ -12,6 +12,11 @@ ${viewAnnotations}
 
 ${validationSection}
 
+<!-- Include Select2 utils scripts -->
+<script src="${rootPath}/js/jquery-3.7.1.min.js"></script>
+<link rel="stylesheet" href="${rootPath}/css/select2.min.css">
+<script src="${rootPath}/js/select2.min.js"></script>
+
 <form class="form" method="post" ${updateLink}>
     {{#each fields}}
     {{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}<!-- Hidden field for ${this.name} -->
@@ -52,12 +57,10 @@ ${validationSection}
         <span ${selectValidationTagHelper} class="field-validation-error"></span>
 
         <script>
-            $(document).ready(function () {
-                $('#${this.columnNameField}').select2({
-                    placeholder: "<span data-i18n=\"select\"></span> ${this.columnNameField}",
-                    allowClear: true,
-                    width: '100%'
-                });
+            $('#${this.columnNameField}').select2({
+                placeholder: "${this.columnNameField}",
+                allowClear: true,
+                width: '100%'
             });
         </script>
     </div>
