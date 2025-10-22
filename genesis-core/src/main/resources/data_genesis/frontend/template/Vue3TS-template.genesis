@@ -1,0 +1,9 @@
+${template}
+<script setup lang="ts">
+${importFile}
+${export}
+</script>
+
+<style scoped>
+${style}
+</style>

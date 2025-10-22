@@ -1,0 +1,42 @@
+.form-group {
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.form-control {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0,123,255,0.4);
+}
+
+/* Style pour les messages d'erreur */
+.error {
+  background-color: #f8d7da; /* rouge clair */
+  color: #842029; /* texte rouge foncé */
+  border: 1px solid #f5c2c7; /* bordure rose */
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* Pour mettre le champ en rouge quand invalide */
+.form-control.ng-invalid.ng-touched,
+.form-control.ng-invalid.ng-dirty {
+  border-color: #dc3545;
+  box-shadow: 0 0 5px rgba(220,53,69,0.5);
+}

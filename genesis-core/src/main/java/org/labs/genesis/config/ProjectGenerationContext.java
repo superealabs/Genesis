@@ -2,11 +2,11 @@ package org.labs.genesis.config;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.Language;
-import org.labs.genesis.config.langage.Project;
+import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.frontend.FrontendLanguage;
+import org.labs.genesis.frontend.generator.FrontendFramework;
 
 import java.sql.Connection;
 import java.util.List;
@@ -38,6 +38,13 @@ public class ProjectGenerationContext {
     private Connection connection;
     private List<String> generationOptions;
     private boolean generateProjectStructure = true;
+    // Frontend Generation
+    private  boolean generateFrontendApp = true;
+    private FrontendFramework frontendFramework;
+    private FrontendLanguage frontendLanguage;
+    private String webappFolder = "webapp";
+    // FrameworkMVC specific configurations
+    private ViewsTemplate viewsTemplate;
 
     public ProjectGenerationContext setDatabase(Database database) {
         this.database = database;
@@ -83,5 +90,4 @@ public class ProjectGenerationContext {
         this.connection = connection;
         return this;
     }
-
 }

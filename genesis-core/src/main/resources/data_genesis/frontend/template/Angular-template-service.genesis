@@ -1,0 +1,5 @@
+${importFile}
+@Injectable({
+  providedIn: 'root'
+})
+${export}

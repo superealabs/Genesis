@@ -79,6 +79,7 @@
             private String message;
             private int returnCode;
             private T data;
+            private T errors;
             private Instant timestamp;
 
             private RestResponse(int status, String message, int returnCode, T data) {
@@ -94,9 +95,11 @@
                 return new RestResponse<>(status.value(), message, OK, data);
             }
 
-            public static <T> RestResponse<T> buildErrorResponse(HttpStatus status, String message, T data) {
+            public static <T> RestResponse<T> buildErrorResponse(HttpStatus status, String message, T errors) {
                 int KO = 0;
-                return new RestResponse<>(status.value(), message, KO, data);
+                RestResponse ans= new RestResponse<>(status.value(), message, KO, null);
+                ans.setErrors(errors);
+                return ans;
             }
         }
 
@@ -572,6 +575,215 @@
               jdbc.execute("ALTER TABLE " + tableName + " ALTER COLUMN " + colName + " " + def + " NULL");
             });
           }
+          }
+            private void disableSqlServer(String tableName) {
+                Logger logger = LoggerFactory.getLogger(ConstraintDisabler.class);
+                String schema = "dbo";
+        
+                String qualifiedTableName = String.format("[%s].[%s]", schema, tableName);
+        
+                try {
+                    // Begin transaction
+                    jdbc.execute("BEGIN TRANSACTION");
+        
+                    // 1. UNIQUE Constraints
+                    jdbc.queryForList(
+                        "SELECT i.name AS constraint_name, " +
+                        "STRING_AGG(QUOTENAME(COL_NAME(ic.object_id, ic.column_id)), ',') AS columns " +
+                        "FROM sys.indexes i " +
+                        "JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id " +
+                        "JOIN sys.tables t ON i.object_id = t.object_id " +
+                        "JOIN sys.schemas s ON t.schema_id = s.schema_id " +
+                        "WHERE i.is_unique = 1 AND i.is_primary_key = 0 " +
+                        "AND t.name = ? AND s.name = ? " +
+                        "GROUP BY i.name",
+                        tableName,
+                        schema
+                    ).forEach(unique -> {
+                        String name = safeGetString(unique, "constraint_name");
+                        String columns = safeGetString(unique, "columns");
+                        if (name == null || columns == null) {
+                            logger.warn(
+                                "Skipping invalid UNIQUE constraint for table {}.{}: name={}, columns={}",
+                                schema, tableName, name, columns
+                            );
+                            return;
+                        }
+        
+                        String restoreSQL = String.format(
+                            "ALTER TABLE %s ADD CONSTRAINT [%s] UNIQUE ([%s])",
+                            qualifiedTableName, name, columns.replace(",", "],[")
+                        );
+                        restoreDdls.push(restoreSQL);
+                        try {
+                            jdbc.execute(
+                                String.format("ALTER TABLE %s DROP CONSTRAINT [%s]", qualifiedTableName, name)
+                            );
+                            logger.debug("Dropped UNIQUE constraint [{}] on table {}.{}", name, schema, tableName);
+                        } catch (DataAccessException e) {
+                            logger.error(
+                                "Failed to drop UNIQUE constraint [{}] on table {}.{}: {}",
+                                name, schema, tableName, e.getCause().getMessage()
+                            );
+                            throw e;
+                        }
+                    });
+        
+                    // 2. CHECK Constraints
+                    jdbc.queryForList(
+                        "SELECT cc.name AS name, cc.definition AS def " +
+                        "FROM sys.check_constraints cc " +
+                        "JOIN sys.objects t ON cc.parent_object_id = t.object_id " +
+                        "JOIN sys.schemas s ON t.schema_id = s.schema_id " +
+                        "WHERE t.name = ? AND s.name = ?",
+                        tableName,
+                        schema
+                    ).forEach(ch -> {
+                        String name = safeGetString(ch, "name");
+                        String def = safeGetString(ch, "def");
+                        if (name == null || def == null) {
+                            logger.warn(
+                                "Skipping invalid CHECK constraint for table {}.{}: name={}, def={}",
+                                schema, tableName, name, def
+                            );
+                            return;
+                        }
+        
+                        String restoreSQL = String.format(
+                            "ALTER TABLE %s ADD CONSTRAINT [%s] CHECK (%s)",
+                            qualifiedTableName, name, def
+                        );
+                        restoreDdls.push(restoreSQL);
+                        try {
+                            jdbc.execute(
+                                String.format("ALTER TABLE %s DROP CONSTRAINT [%s]", qualifiedTableName, name)
+                            );
+                            logger.debug("Dropped CHECK constraint [{}] on table {}.{}", name, schema, tableName);
+                        } catch (DataAccessException e) {
+                            logger.error(
+                                "Failed to drop CHECK constraint [{}] on table {}.{}: {}",
+                                name, schema, tableName, e.getCause().getMessage()
+                            );
+                            throw e;
+                        }
+                    });
+        
+                    // 3. FOREIGN KEY Constraints
+                    jdbc.queryForList(
+                        "SELECT fk.name AS name, " +
+                        "COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS col, " +
+                        "OBJECT_NAME(fk.referenced_object_id) AS refTable, " +
+                        "COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id) AS refCol " +
+                        "FROM sys.foreign_keys fk " +
+                        "JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id " +
+                        "JOIN sys.tables t ON fk.parent_object_id = t.object_id " +
+                        "JOIN sys.schemas s ON t.schema_id = s.schema_id " +
+                        "WHERE t.name = ? AND s.name = ?",
+                        tableName,
+                        schema
+                    ).forEach(fk -> {
+                        String name = safeGetString(fk, "name");
+                        String col = safeGetString(fk, "col");
+                        String refTable = safeGetString(fk, "refTable");
+                        String refCol = safeGetString(fk, "refCol");
+                        if (name == null || col == null || refTable == null || refCol == null) {
+                            logger.warn(
+                                "Skipping invalid FOREIGN KEY constraint for table {}.{}: name={}, col={}, refTable={}, refCol={}",
+                                schema, tableName, name, col, refTable, refCol
+                            );
+                            return;
+                        }
+        
+                        String restoreSQL = String.format(
+                            "ALTER TABLE %s ADD CONSTRAINT [%s] FOREIGN KEY ([%s]) REFERENCES [%s]([%s])",
+                            qualifiedTableName, name, col, refTable, refCol
+                        );
+                        restoreDdls.push(restoreSQL);
+                        try {
+                            jdbc.execute(
+                                String.format("ALTER TABLE %s DROP CONSTRAINT [%s]", qualifiedTableName, name)
+                            );
+                            logger.debug("Dropped FOREIGN KEY constraint [{}] on table {}.{}", name, schema, tableName);
+                        } catch (DataAccessException e) {
+                            logger.error(
+                                "Failed to drop FOREIGN KEY constraint [{}] on table {}.{}: {}",
+                                name, schema, tableName, e.getCause().getMessage()
+                            );
+                            throw e;
+                        }
+                    });
+        
+                    // 4. NOT NULL Constraints (excluding IDENTITY columns)
+                    jdbc.queryForList(
+                        "SELECT " +
+                        "    c.name, " +
+                        "    t.name AS type_name, " +
+                        "    CASE " +
+                        "        WHEN t.name IN ('decimal', 'numeric') " +
+                        "            THEN t.name + '(' + CAST(c.precision AS VARCHAR) + ',' + CAST(c.scale AS VARCHAR) + ')' " +
+                        "        WHEN t.name IN ('varchar', 'char', 'varbinary', 'binary') " +
+                        "            THEN t.name + '(' + CAST(c.max_length AS VARCHAR) + ')' " +
+                        "        WHEN t.name IN ('nvarchar', 'nchar') " +
+                        "            THEN t.name + '(' + CAST(c.max_length / 2 AS VARCHAR) + ')' " +
+                        "        ELSE t.name " +
+                        "    END AS def " +
+                        "FROM sys.columns c " +
+                        "JOIN sys.types t ON c.user_type_id = t.user_type_id " +
+                        "WHERE c.object_id = OBJECT_ID(?) " +
+                        "  AND c.is_nullable = 0 " +
+                        "  AND c.is_identity = 0",
+                        qualifiedTableName
+                    ).forEach(col -> {
+                        String colName = safeGetString(col, "name");
+                        String def = safeGetString(col, "def");
+                        if (colName == null || def == null) {
+                            logger.warn(
+                                "Skipping invalid NOT NULL column for table {}.{}: name={}, def={}",
+                                schema, tableName, colName, def
+                            );
+                            return;
+                        }
+        
+                        String restoreSQL = String.format(
+                            "ALTER TABLE %s ALTER COLUMN [%s] %s NOT NULL",
+                            qualifiedTableName, colName, def
+                        );
+                        restoreDdls.push(restoreSQL);
+                        try {
+                            jdbc.execute(
+                                String.format(
+                                    "ALTER TABLE %s ALTER COLUMN [%s] %s NULL",
+                                    qualifiedTableName, colName, def
+                                )
+                            );
+                            logger.debug(
+                                "Dropped NOT NULL constraint on column [{}] in table {}.{}",
+                                colName, schema, tableName
+                            );
+                        } catch (DataAccessException e) {
+                            logger.error(
+                                "Failed to drop NOT NULL constraint on column [{}] in table {}.{}: {}",
+                                colName, schema, tableName, e.getCause().getMessage()
+                            );
+                            throw e;
+                        }
+                    });
+        
+                    // Commit transaction
+                    jdbc.execute("COMMIT TRANSACTION");
+                } catch (DataAccessException e) {
+                    // Rollback transaction on error
+                    try {
+                        jdbc.execute("ROLLBACK TRANSACTION");
+                    } catch (DataAccessException rollbackEx) {
+                        logger.error(
+                            "Failed to rollback transaction for table {}.{}: {}",
+                            schema, tableName, rollbackEx.getCause().getMessage()
+                        );
+                    }
+                    throw e;
+                }
+            }
 
           private void disableOracle(String tableName) {
             String schema = jdbc.queryForObject("SELECT USER FROM DUAL", String.class).toUpperCase();
@@ -826,6 +1038,7 @@
       fileName: "application-test"
       extension: "properties"
       content: |   
+        spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.${skipEscape(databaseType)}Dialect
         spring.jpa.properties.jakarta.persistence.validation.mode=none
         spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration
         spring.jpa.properties.hibernate.validator.apply_to_ddl=false
@@ -934,15 +1147,20 @@
       {{tab}}@Id
       {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
+      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isPrimaryKey}}
+      {{tab}}@Id
+      {{tab}}@org.hibernate.annotations.Generated(org.hibernate.annotations.GenerationTime.INSERT)
+      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
       {{tab}}@ManyToOne
       {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{/if}}
+      {{#if !this.isForeignKey}}{{removeLine}}
       {{tab}}{{#each this.attributeTypeAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}{{/each}}{{removeLine}}{{/if}}
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
       {{tab}}{{#if cacheableWithEhcache}}@Override
@@ -989,6 +1207,34 @@
                               )
                           );
                       }
+                      {{elseIf this.isForeignKey}}
+                      if(object.get${majStart(this.name)}()!=null){
+                          predicates.add(
+                              criteriaBuilder.equal(
+                                  ${this.criteriaBuildSnippet}
+                              )
+                          );
+                      }
+                      {{elseIf this.isText}}
+                      WebUtils.addLikeIfPresent(criteriaBuilder, ${this.criteriaBuildSnippet}, predicates);
+                      {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+                      if(object.get${majStart(this.name)}()!=null){
+                          predicates.add(
+                              criteriaBuilder.equal(
+                                  ${this.criteriaBuildSnippet}
+                              )
+                          );
+                      }
+                      WebUtils.addInterval(criteriaBuilder, root.get("${this.name}"), object.get${majStart(this.name)}Min(), object.get${majStart(this.name)}Max(), predicates);
+                      {{else}}
+                      if(object.get${majStart(this.name)}()!=null){
+                          predicates.add(
+                              criteriaBuilder.equal(
+                                  ${this.criteriaBuildSnippet}
+                              )
+                          );
+                      }
+                      {{/if}}
                       {{/each}}
                       return criteriaBuilder.and(predicates.toArray(new Predicate[predicates.size()]));
                   };
@@ -1132,6 +1378,37 @@
             {{else}}{{removeLine}}{{/if}}
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
+      - fileType: "DTO Search Model class"
+        fileName: "${className}Search"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.models.dto;
+
+          import lombok.Getter;
+          import lombok.Setter;
+          {{#each fields}}
+          {{#if this.isForeignKey}}
+          import ${groupLink}.${lowerCase(projectName)}.models.${this.type};
+          {{else}}{{removeLine}}{{/if}}
+          {{/each}}
+
+          @Getter @Setter
+          public class ${className}Search {
+
+          {{tab}}{{#each fields}}
+          {{#if this.isPrimaryKey}}
+          {{tab}}private ${this.type} ${this.name};
+          {{elseIf this.isForeignKey}}{{removeLine}}
+          {{tab}}private ${this.type} ${this.name};
+          {{tab}}{{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+          {{tab}}private ${this.type} ${this.name};
+          {{tab}}private ${this.type} ${this.name}Min;
+          {{tab}}private ${this.type} ${this.name}Max;
+          {{else}}
+          {{tab}}private ${this.type} ${this.name};{{/if}}
+          {{tab}}{{/each}}
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models/dto"
     validationAnnotations:
       notNull: '@NotNull(message = "${majStart(name)} cannot be null")'
       maxSize: "@Size(max = ${columnSize})"
@@ -1305,6 +1582,8 @@
       import io.swagger.v3.oas.annotations.responses.ApiResponse;
       import io.swagger.v3.oas.annotations.responses.ApiResponses;
       import io.swagger.v3.oas.annotations.tags.Tag;
+      import jakarta.validation.Valid;
+      
       import org.springframework.http.HttpStatus;
       import org.springframework.http.ResponseEntity;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
@@ -1312,9 +1591,13 @@
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
       import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
       import org.springframework.data.domain.Page;
+      import org.springframework.validation.BindingResult;
       import org.springframework.data.domain.PageRequest;
       import org.springframework.data.domain.Pageable;
       import org.springframework.data.domain.Sort;
+      
+      import java.util.HashMap;
+      
       import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
 
@@ -1474,10 +1757,22 @@
       {{tab}}    )
       {{tab}}})
       {{tab}}@PostMapping
-      {{tab}}public ResponseEntity<RestResponse<${majStart(className)}>> create${majStart(className)}(
+      {{tab}}public ResponseEntity<?> create${majStart(className)}(
       {{tab}}    @Parameter(description = "${formatReadable(className)} object to be created", required = true)
-      {{tab}}    @RequestBody ${majStart(className)} ${lowerCase(className)}
+      {{tab}}    @RequestBody @Valid ${majStart(className)} ${lowerCase(className)}
+      {{tab}}    ,BindingResult bindingResult
       {{tab}}) {
+      {{tab}}    if (bindingResult.hasErrors()) {
+      {{tab}}       HashMap<String, String> errors = new HashMap<>();
+      {{tab}}       bindingResult.getFieldErrors().forEach(error -> {
+      {{tab}}           errors.put(error.getField(), error.getDefaultMessage());
+      {{tab}}       });
+      {{tab}}       RestResponse<HashMap<String, String>> errorResponse =
+      {{tab}}       RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST,
+      {{tab}}       "Validation failed", errors);
+      {{tab}}
+      {{tab}}       return ResponseEntity.badRequest().body(errorResponse);
+      {{tab}}    }
       {{tab}}    ${majStart(className)} new${majStart(className)} = ${lowerCase(className)}Service.create${majStart(className)}(${lowerCase(className)});
       {{tab}}    RestResponse<${majStart(className)}> response = RestResponse.buildSuccessResponse(HttpStatus.CREATED,
       {{tab}}            "${formatReadableLowerCase(className)} created successfully", new${majStart(className)});
@@ -1504,12 +1799,24 @@
       {{tab}}    )
       {{tab}}})
       {{tab}}@PutMapping("/{${pkColumn}}")
-      {{tab}}public ResponseEntity<RestResponse<${majStart(className)}>> update${majStart(className)}(
+      {{tab}}public ResponseEntity<?> update${majStart(className)}(
       {{tab}}    @Parameter(description = "ID of the ${formatReadableLowerCase(className)} to update", required = true)
       {{tab}}    @PathVariable ${pkColumnType} ${pkColumn},
       {{tab}}    @Parameter(description = "Updated ${formatReadableLowerCase(className)} object", required = true)
-      {{tab}}    @RequestBody ${majStart(className)} ${lowerCase(className)}
+      {{tab}}    @RequestBody @Valid ${majStart(className)} ${lowerCase(className)}
+      {{tab}}    ,BindingResult bindingResult
       {{tab}}) {
+      {{tab}}    if (bindingResult.hasErrors()) {
+      {{tab}}       HashMap<String, String> errors = new HashMap<>();
+      {{tab}}       bindingResult.getFieldErrors().forEach(error -> {
+      {{tab}}           errors.put(error.getField(), error.getDefaultMessage());
+      {{tab}}       });
+      {{tab}}       RestResponse<HashMap<String, String>> errorResponse =
+      {{tab}}       RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST,
+      {{tab}}       "Validation failed", errors);
+      {{tab}}
+      {{tab}}       return ResponseEntity.badRequest().body(errorResponse);
+      {{tab}}    }
       {{tab}}    ${majStart(className)} update${majStart(className)} = ${lowerCase(className)}Service.update${majStart(className)}(${pkColumn}, ${lowerCase(className)});
       {{tab}}    RestResponse<${majStart(className)}> response = RestResponse.buildSuccessResponse(HttpStatus.OK,
       {{tab}}            "${formatReadableLowerCase(className)} updated successfully", update${majStart(className)});
@@ -1665,6 +1972,48 @@
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         
+        {{#if useJWT}}    
+        builder.Services.AddAuthentication(options =>
+        {
+          options.DefaultAuthenticateScheme = "Bearer";
+          options.DefaultChallengeScheme = "Bearer";
+        })
+        .AddJwtBearer("Bearer", options =>
+        {
+          options.TokenValidationParameters = new TokenValidationParameters
+          {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(
+              builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT key missing"))
+            ),
+            NameClaimType = ClaimTypes.NameIdentifier
+          };
+        });
+        {{/if}}
+        
+        {{#if useJWT}}
+        builder.Services.AddAuthorization(options =>
+        {
+          options.DefaultPolicy = new AuthorizationPolicyBuilder("Bearer")
+          .RequireAuthenticatedUser()
+          .Build();
+        });
+        {{/if}}
+        
+        builder.Services.AddCors(options =>
+        {
+          options.AddPolicy("AllowFrontend", policy =>
+          {
+            policy.WithOrigins("http://localhost:3000") 
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // retire cette ligne si tu n’utilises pas de cookies / auth
+          });
+        });
+
         var app = builder.Build();
         
         if (!string.IsNullOrEmpty(pathBase))
@@ -1683,6 +2032,13 @@
         {{#if useEurekaServer}}
         // Map all actuators and controllers directly
         app.MapAllActuators(_ => { });{{/if}}
+        
+        app.UseCors("AllowFrontend");
+        
+        {{#if useJWT}}
+        app.UseAuthentication();
+        app.UseAuthorization();{{/if}}
+        
         app.MapControllers();
         
         app.UseAuthorization();
@@ -1925,11 +2281,17 @@
         namespace ${majStart(projectName)}.Repositories.Generic;
         
         using System.Linq.Expressions;
+        using ${majStart(projectName)}.Utils;
         
         public interface IRepository<T, in TKey> where T : class
         {
             Task<IEnumerable<T>> GetAllWithIncludes(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
-            Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting);
+            Task<PagedResponse<T>> SearchAsync(
+                Expression<Func<T, bool>> predicate,
+                int page,
+                int pageSize,
+                string? sorting,
+                params Expression<Func<T, object?>>[]? includes);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -2045,50 +2407,24 @@
                 return keyProperty.Name;
             }
         
-            public async Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting)
+            public async Task<PagedResponse<T>> SearchAsync(
+                Expression<Func<T, bool>> predicate,
+                int page, int pageSize, string? sorting,
+                params Expression<Func<T, object?>>[]? includes)
             {
-              IQueryable<T> query = _dbSet;
-              
-              // Récupère la propriété marquée [Key]
-              var keyProperty = typeof(T).GetProperties()
-              .FirstOrDefault(p => Attribute.IsDefined(p, typeof(KeyAttribute)));
-              
-              // Crée un filtre dynamique basé sur les propriétés non nulles (en ignorant la clé si elle vaut 0)
-              var properties = typeof(T).GetProperties()
-              .Where(p =>
-              {
-                if (!p.CanRead || !p.CanWrite)
-                return false;
-                
-                var value = p.GetValue(example);
-                
-                // Ignore les propriétés nulles
-                if (value == null)
-                return false;
-                
-                // Ignore la clé si elle vaut 0
-                if (p == keyProperty && value.Equals(Activator.CreateInstance(p.PropertyType)))
-                return false;
-                
-                return true;
-              });
-              
-              foreach (var prop in properties)
-              {
-                var value = prop.GetValue(example);
-                var parameter = Expression.Parameter(typeof(T), "x");
-                var propertyAccess = Expression.Property(parameter, prop);
-                var constant = Expression.Constant(value);
-                var equal = Expression.Equal(propertyAccess, constant);
-                var lambda = Expression.Lambda<Func<T, bool>>(equal, parameter);
-                query = query.Where(lambda);
-              }
-              
+              var query = GetQuery(_dbSet, includes).Where(predicate);
+          
               string sortOrder = sorting ?? $"{GetKeyPropertyName()},asc";
               query = WebUtils.ApplySort(query, WebUtils.ParseSortingString(sortOrder));
-              query = query.Skip(page * pageSize).Take(pageSize);
-              
-              return await query.ToListAsync();
+          
+              var total = await query.LongCountAsync();
+              var items = await query
+              .Skip(page * pageSize)
+              .Take(pageSize)
+              .ToListAsync();
+          
+              return await PaginationHelper.CreatePagedResponse(
+              items, page, pageSize, () => Task.FromResult(total));
             }
         
             public async Task<long> GetTotalCountAsync()
@@ -2106,11 +2442,15 @@
         namespace ${majStart(projectName)}.Services.Generic;
         
         using System.Linq.Expressions;
+        using ${majStart(projectName)}.Utils;
         
-        public interface IService<T, in TKey> where T : class
+        public interface IService<T, in TKey, in TSearch> where T : class
         {
-            Task<IEnumerable<T>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
-            Task<IEnumerable<T>> SearchAsync(T example, int page, int pageSize, string? sorting);
+            Task<PagedResponse<T>> GetAllAsync(
+                int page, int pageSize, string? sorting,
+                params Expression<Func<T, object?>>[]? includeProperties);
+            Task<PagedResponse<T>> SearchAsync(
+                TSearch searchDto, int page, int pageSize, string? sorting);
             Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
@@ -2972,6 +3312,7 @@
           public string Message { get; set; }
           public int ReturnCode { get; set; }
           public T? Data { get; set; }
+          public object Errors { get; set; }
           public DateTime Timestamp { get; set; } = DateTime.UtcNow;
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
@@ -3033,6 +3374,302 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
+    - fileType: "Filter Builder Util"
+      fileName: "FilterBuilder"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+        
+        using System.Linq.Expressions;
+        using System.Reflection;
+        
+        public abstract class FilterBuilder<TEntity, TSearch>
+        {
+          protected readonly List<Expression<Func<TEntity, bool>>> Predicates = new();
+      
+          public abstract FilterBuilder<TEntity, TSearch> Build(TSearch dto);
+      
+          public Expression<Func<TEntity, bool>> Combine()
+          => Predicates.Aggregate(PredicateBuilder.True<TEntity>(),
+          (acc, pred) => acc.And(pred));
+      
+          protected void AddEquals<TProperty>(Expression<Func<TEntity, TProperty>> selector,
+          TProperty? value)
+          {
+            if (value is null) return;
+            var parameter = selector.Parameters.Single();
+            var body = Expression.Equal(selector.Body,
+            Expression.Constant(value, typeof(TProperty)));
+            Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(body, parameter));
+          }
+      
+          protected void AddRange<TProperty>(Expression<Func<TEntity, TProperty?>> selector,
+            TProperty? min, TProperty? max)
+            where TProperty : struct, IComparable<TProperty>
+          {
+            if (min.HasValue || max.HasValue)
+            {
+              var parameter = selector.Parameters.Single();
+              Expression propertyAccess = selector.Body;
+              
+              // Si la propriété est Nullable<T>, on accède à .Value
+              if (propertyAccess.Type.IsGenericType &&
+              propertyAccess.Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+              {
+                propertyAccess = Expression.Property(propertyAccess, "Value");
+              }
+              
+              Expression? body = null;
+              
+              if (min.HasValue)
+              {
+                var minCondition = Expression.GreaterThanOrEqual(
+                propertyAccess,
+                Expression.Constant(min.Value)
+                );
+                body = minCondition;
+              }
+              
+              if (max.HasValue)
+              {
+                var maxCondition = Expression.LessThanOrEqual(
+                propertyAccess,
+                Expression.Constant(max.Value)
+                );
+                body = body == null ? maxCondition : Expression.AndAlso(body, maxCondition);
+              }
+              
+              if (body != null)
+              {
+                Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(body, parameter));
+              }
+            }
+          }
+                              
+          protected void AddLike(Expression<Func<TEntity, string>> selector,string? value)
+          {
+            if (string.IsNullOrWhiteSpace(value)) return;
+            
+            var method = typeof(string).GetMethod("Contains",
+            BindingFlags.Public | BindingFlags.Instance,
+            new[] { typeof(string) })!;
+            
+            var parameter = selector.Parameters.Single();
+            var toLower = Expression.Call(selector.Body, "ToLower", null);
+            var contains = Expression.Call(toLower, method,
+            Expression.Constant(value.ToLower()));
+            Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(contains, parameter));
+          }
+          
+          protected void AddEqualsTimeOfDay<TProperty>(
+              Expression<Func<TEntity, TProperty?>> selector,
+              TProperty? value)
+              where TProperty : struct
+          {
+            if (value is null) return;
+            
+            var parameter = selector.Parameters.Single();
+            var propertyAccess = selector.Body;
+            
+            // Si c'est un Nullable<T>, on accède à .Value
+            if (propertyAccess.Type.IsGenericType &&
+            propertyAccess.Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+              propertyAccess = Expression.Property(propertyAccess, "Value");
+            }
+            
+            // On vérifie que c'est bien un DateTimeOffset
+            if (propertyAccess.Type != typeof(DateTimeOffset)) return;
+            
+            var timeOfDay = Expression.Property(propertyAccess, "TimeOfDay");
+            var targetTime = Expression.Constant(((DateTimeOffset)(object)value).TimeOfDay);
+            
+            var body = Expression.Equal(timeOfDay, targetTime);
+            Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(body, parameter));
+          }
+          
+          protected void AddRangeTimeOfDay<TProperty>(
+              Expression<Func<TEntity, TProperty?>> selector,
+              TProperty? min,
+              TProperty? max)
+              where TProperty : struct
+          {
+            if (!min.HasValue && !max.HasValue) return;
+            
+            var parameter = selector.Parameters.Single();
+            var propertyAccess = selector.Body;
+            
+            if (propertyAccess.Type.IsGenericType &&
+            propertyAccess.Type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+              propertyAccess = Expression.Property(propertyAccess, "Value");
+            }
+            
+            if (propertyAccess.Type != typeof(DateTimeOffset)) return;
+            
+            var timeOfDay = Expression.Property(propertyAccess, "TimeOfDay");
+            
+            Expression? body = null;
+            
+            if (min.HasValue)
+            {
+              var minTime = ((DateTimeOffset)(object)min.Value).TimeOfDay;
+              var minCondition = Expression.GreaterThanOrEqual(timeOfDay, Expression.Constant(minTime));
+              body = minCondition;
+            }
+            
+            if (max.HasValue)
+            {
+              var maxTime = ((DateTimeOffset)(object)max.Value).TimeOfDay;
+              var maxCondition = Expression.LessThanOrEqual(timeOfDay, Expression.Constant(maxTime));
+              body = body == null ? maxCondition : Expression.AndAlso(body, maxCondition);
+            }
+            
+            if (body != null)
+            {
+              Predicates.Add(Expression.Lambda<Func<TEntity, bool>>(body, parameter));
+            }
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
+    - fileType: "Predicate Builder Util"
+      fileName: "PredicateBuilder"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+
+        using System.Linq.Expressions;
+
+        public static class PredicateBuilder
+        {
+            public static Expression<Func<T, bool>> True<T>()  => _ => true;
+            public static Expression<Func<T, bool>> False<T>() => _ => false;
+
+            public static Expression<Func<T, bool>> And<T>(
+                this Expression<Func<T, bool>> left,
+                Expression<Func<T, bool>> right)
+            {
+                var p = left.Parameters[0];
+                var body = Expression.AndAlso(left.Body,
+                             Expression.Invoke(right, p));
+                return Expression.Lambda<Func<T, bool>>(body, p);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
+    - fileType: "TimeTzUtcConverter"
+      fileName: "TimeTzUtcConverter"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Serialization;
+
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using System.Globalization;
+
+        public class TimeTzUtcConverter : JsonConverter<DateTimeOffset>
+        {
+          public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+          {
+              // 1. Parse la chaîne (UTC ou déjà avec offset)
+              var dto = DateTimeOffset.Parse(reader.GetString()!, CultureInfo.InvariantCulture,
+                                             DateTimeStyles.AssumeUniversal);
+
+              // 2. Offset local à l’instant T (arrondi à l’heure)
+              var offset = TimeSpan.FromHours(
+                  Math.Round(TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow).TotalHours));
+
+              // 3. On applique le décalage (ici on SOUSTRAIT pour retrancher 3 h)
+              return dto.Add(offset.Negate());
+          }
+
+            public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options)
+            {
+                // Fuseau actuel de l’OS → on ne prend QUE son *offset* à l’instant T
+                var offset = TimeZoneInfo.Local.GetUtcOffset(DateTime.UtcNow);
+
+                // … mais on arrondit au quart-heure le plus proche pour éviter
+                // les écarts de 10 min dus aux règles spécifiques Windows
+                var roundedOffset = TimeSpan.FromHours(Math.Round(offset.TotalHours));
+
+                var local = value.ToOffset(roundedOffset);
+                writer.WriteStringValue(local.ToString("HH:mm:ss") + "Z");
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
+    - fileType: "UtcZJsonConverter"
+      fileName: "UtcZJsonConverter"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Serialization;
+
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using System.Globalization;
+
+        public class UtcZJsonConverter : JsonConverter<DateTimeOffset>
+        {
+            public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                return DateTimeOffset.Parse(reader.GetString()!, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+            }
+
+            public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options)
+            {
+                var utc = value.ToUniversalTime();
+                writer.WriteStringValue(utc.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture));
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
+    - fileType: "IsoDurationJsonConverter"
+      fileName: "IsoDurationJsonConverter"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Serialization;
+        
+        using System;
+        using System.Globalization;
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using System.Xml;
+
+        public class IsoDurationJsonConverter : JsonConverter<TimeSpan>
+        {
+            public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                var str = reader.GetString();
+                // XmlConvert gère ISO-8601 "PT..."
+                return XmlConvert.ToTimeSpan(str);
+            }
+
+            public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(XmlConvert.ToString(value)); // PT27H45M7.8S
+            }
+        }
+
+        public class NullableIsoDurationJsonConverter : JsonConverter<TimeSpan?>
+        {
+            public override TimeSpan? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                var str = reader.GetString();
+                if (string.IsNullOrWhiteSpace(str)) return null;
+                return XmlConvert.ToTimeSpan(str);
+            }
+
+            public override void Write(Utf8JsonWriter writer, TimeSpan? value, JsonSerializerOptions options)
+            {
+                if (value == null)
+                    writer.WriteNullValue();
+                else
+                    writer.WriteStringValue(XmlConvert.ToString(value.Value));
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
@@ -3079,6 +3716,8 @@
       using System.ComponentModel.DataAnnotations;
       using System.ComponentModel.DataAnnotations.Schema;
       using System.ComponentModel;
+      using System.Text.Json.Serialization;
+      using ${majStart(projectName)}.Serialization;
       {{#if cacheableWithMicrosoftextensionscachingmemory}}using System.Text.Json;{{else}}{{removeLine}}{{/if}}
     modelExtends: ""
     modelAnnotations: |
@@ -3088,13 +3727,28 @@
       {{tab}}[Key]
       {{tab}}[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
       {{tab}}[Column("${this.columnName}")]
-      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{elseIf this.isForeignKey}}
+      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }
+      {{elseIf this.isForeignKey}}
       {{tab}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
       {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
       {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
-      {{tab}}{{else}}
+      {{elseIf this.isTimeTz}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+      {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
+      {{elseIf this.isDateTimeTz}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}[JsonConverter(typeof(UtcZJsonConverter))]
+      {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
+      {{elseIf this.isInterval}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
@@ -3108,6 +3762,14 @@
       {
       {{tab}}{{#each fields}}
       {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+      {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+      {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
+      {{tab}}{{else}}
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
@@ -3130,6 +3792,7 @@
           using Microsoft.Extensions.DependencyInjection;
           using Microsoft.EntityFrameworkCore;
           using ${majStart(projectName)}.Models;
+          using ${majStart(projectName)}.Models.Dto;
           using ${majStart(projectName)}.Services.Implementation;
           using ${majStart(projectName)}.Repositories.Implementation;
           using ${majStart(projectName)}.Data;
@@ -3286,7 +3949,7 @@
                 
                 Assert.NotNull(result);
                 {{#if !isView}}
-                Assert.True(result.Any(), "Aucun enregistrement trouvé dans GetAllAsync. Vérifiez si la base contient des données.");
+                Assert.True(result.Content.Any(), "Aucun enregistrement trouvé dans GetAllAsync. Vérifiez si la base contient des données.");
                 {{else}}{{removeLine}}{{/if}}
               }
             }
@@ -3299,24 +3962,16 @@
                 var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
                 var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
                 
-                var search = new ${majStart(className)}SearchModel
-                {
-                  {{#each fields}}
-                  {{#if this.isPrimaryKey}}{{removeLine}}
-                  {{elseIf this.isForeignKey}}{{removeLine}}
-                  {{else}}${majStart(this.name)} = ${this.mockdata},
-                  {{/if}} 
-                  {{/each}}
-                };
-                var objectSearch = new GenericMapper().Map<${majStart(className)}SearchModel, ${majStart(className)}>(search);
+                var search = new ${majStart(className)}Dto();
+                var objectSearch = new GenericMapper().Map<${majStart(className)}Dto, ${majStart(className)}>(search);
                 
                 // Act
-                var result = await service.SearchAsync(objectSearch, page: 0, pageSize: 10, sorting: null);
+                var result = await service.SearchAsync(search, page: 0, pageSize: 10, sorting: null);
                 
                 // Assert
                 Assert.NotNull(result);
                 {{#if !isView}} 
-                Assert.True(result.Any(), "Aucun ${className} trouvé avec le critère de recherche.");
+                Assert.True(result.Content.Any(), "Aucun ${className} trouvé avec le critère de recherche.");
                 {{else}}{{removeLine}}{{/if}}
               }
             }
@@ -3336,6 +3991,7 @@
                 Assert.NotNull(result);
                 {{#each fields}}
                 {{#if this.isForeignKey}}{{removeLine}}
+                {{tab}}{{elseIf this.isTime or this.isDateTime}}{{removeLine}}
                 {{else}}Assert.Equal(mockData.${majStart(this.name)}, result?.${majStart(this.name)});{{/if}}
                 {{/each}}
                 {{else}}{{removeLine}}{{/if}}
@@ -3343,6 +3999,102 @@
             }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
+      - fileType: "DTO search model class"
+        fileName: "${majStart(className)}Dto"
+        extension: "cs"
+        content: |
+          namespace ${majStart(projectName)}.Models.Dto;
+          
+          using ${majStart(projectName)}.Serialization;
+          using System.Text.Json.Serialization;
+
+          public class ${majStart(className)}Dto
+          {
+          {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{elseIf this.isForeignKey}}
+          {{tab}}
+          {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
+          {{tab}}public ${this.type}Dto? ${majStart(this.name)} { get; set; }
+          {{elseIf this.isTimeTz}}
+          {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
+          {{tab}}[JsonConverter(typeof(TimeTzUtcConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
+          {{elseIf this.isInterval}}
+          {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
+          {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
+          {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
+          {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+          {{tab}}public ${this.type}? ${majStart(this.name)}Min { get; set; }
+          {{tab}}public ${this.type}? ${majStart(this.name)}Max { get; set; }
+          {{tab}}{{else}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
+          {{tab}}{{/each}}
+          
+            public ${majStart(className)} ToEntity() => new()
+            {
+              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}{{removeLine}}
+              {{elseIf this.isForeignKey}}
+              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
+              {{tab}}{{else}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}{{#if this.isPrimaryKey}}{{removeLine}}{{/if}}
+              {{tab}}{{/each}}
+            };
+          
+            public ${majStart(className)} ToEntity(${pkColumnType} id) => new()
+            {
+              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+              {{tab}}${majStart(this.name)} = id
+              {{elseIf this.isForeignKey}}
+              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
+              {{tab}}{{else}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}
+              {{tab}}{{/each}}
+            };
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto/"
+      - fileType: "Specification File"
+        fileName: "${majStart(className)}FilterBuilder"
+        extension: "cs"
+        content: |
+          namespace ${majStart(projectName)}.Specification;
+
+          using System.Linq.Expressions;
+          using ${majStart(projectName)}.Models;
+          using ${majStart(projectName)}.Models.Dto;
+          using ${majStart(projectName)}.Utils;
+
+          public sealed class ${majStart(className)}FilterBuilder : FilterBuilder<${majStart(className)}, ${majStart(className)}Dto>
+          {
+              public override ${majStart(className)}FilterBuilder Build(${majStart(className)}Dto dto)
+              {
+              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+              {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});{{elseIf this.isForeignKey}}
+              {{tab}}
+              {{tab}}AddEquals(e => e.${majStart(this.columnNameField)}, dto.${majStart(this.columnNameField)});  
+              {{tab}}if (dto.${majStart(this.name)} is { } ${this.name})
+                      {{tab}}AddEquals(e => e.${majStart(this.columnNameField)}, ${this.name}.${toPascalCase(this.referencedPrimaryKeyColumn)});
+              {{elseIf this.isTimeTz}}
+              {{tab}}AddEqualsTimeOfDay(e => e.${majStart(this.name)}, dto.${majStart(this.name)});
+              {{tab}}AddRangeTimeOfDay(e => e.${majStart(this.name)}, dto.${majStart(this.name)}Min, dto.${majStart(this.name)}Max);
+              {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+              {{tab}}AddRange(e => e.${majStart(this.name)},  dto.${majStart(this.name)}Min,  dto.${majStart(this.name)}Max);
+              {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});
+              {{elseIf this.isText}}
+              {{tab}}AddLike(e => e.${majStart(this.name)}, dto.${majStart(this.name)});
+              {{tab}}{{else}}
+              {{tab}}AddEquals(e => e.${majStart(this.name)}, dto.${majStart(this.name)});{{/if}}{{#if !@last}}{{newline}}{{/if}}
+              {{tab}}{{/each}}
+                  return this;
+              }
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Specification/"
     validationAnnotations:
       notNull: '[Required(ErrorMessage = "${majStart(name)} cannot be null")]'
       maxSize: "[StringLength(${columnSize})]"
@@ -3394,11 +4146,13 @@
     toGenerate: true
     serviceImports: |
       using Models;
+      using Models.Dto;
       using Generic;
+      using Services.Generic;
 
     serviceAnnotations: ""
     serviceClassKeyword: "public interface"
-    serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}>"
+    serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}, ${majStart(className)}Dto>"
     serviceName: "I${majStart(className)}Service"
     serviceFieldContent: "{{removeLine}}"
     serviceMethodContent: "{{removeLine}}"
@@ -3416,6 +4170,9 @@
           using ${majStart(projectName)}.Repositories.Interface;
           using ${majStart(projectName)}.Repositories.Implementation;
           using ${majStart(projectName)}.Services.Interface;
+          using ${majStart(projectName)}.Specification;
+          using ${majStart(projectName)}.Models.Dto;
+          using ${majStart(projectName)}.Utils;
           
           namespace ${majStart(projectName)}.Services.Implementation;
           
@@ -3439,6 +4196,10 @@
               {{/if}}
               {{#if cacheableWithMicrosoftextensionscachingmemory}}
               public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
+          
+              public async Task<PagedResponse<${majStart(className)}>> GetAllAsync(
+                  int page, int pageSize, string? sorting,
+                  params Expression<Func<${majStart(className)}, object?>>[]? includes)
               {
                 try
                 {
@@ -3446,6 +4207,12 @@
                   var ${minStart(className)}s = _cacheService.Get<IEnumerable<${majStart(className)}>>(cacheKey);
                   if (${minStart(className)}s == null)
                   {
+                      return await _repository.SearchAsync(
+                          _ => true, page, pageSize, sorting, includes);
+                  }
+                  catch (Exception ex)
+                  {
+                      throw new InternalServerErrorException("Error while retrieving all ${formatReadableLowerCase(className)}", ex);
                     ${minStart(className)}s = await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
                     _cacheService.Set(cacheKey, ${minStart(className)}s, CacheDuration);
                   }
@@ -3488,6 +4255,10 @@
                   throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
                 }
               }
+          
+              public async Task<PagedResponse<${majStart(className)}>> SearchAsync(
+                  ${majStart(className)}Dto searchDto,
+                  int page, int pageSize, string? sorting)
               {{else}}
               public async Task<IEnumerable<${majStart(className)}>> SearchAsync(${majStart(className)} search, int page, int pageSize, string? sorting)
               {
@@ -3522,6 +4293,17 @@
                 }
               }
               {{else}}
+                  try
+                  {
+                      var predicate = new ${majStart(className)}FilterBuilder().Build(searchDto).Combine();
+                      return await _repository.SearchAsync(predicate, page, pageSize, sorting{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}} );
+                  }
+                  catch (Exception ex)
+                  {
+                      throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
+                  }
+              }  
+          
               public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
                 try
@@ -3611,7 +4393,9 @@
     toGenerate: true
     controllerImports: |
       using Microsoft.AspNetCore.Mvc;
+      using System.ComponentModel.DataAnnotations;
       using Models;
+      using Models.Dto;
       using Services;
       using Services.Interface;
       using Swashbuckle.AspNetCore.Annotations;
@@ -3649,25 +4433,19 @@
       {{tab}}public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(className)}>>>> Get${majStart(className)}s(
       {{tab}}   [FromQuery, SwaggerParameter("Page number (0-indexed)", Required = false)] int page = 0,
       {{tab}}   [FromQuery, SwaggerParameter("Size of the page", Required = false)] int pageSize = 10,
-      {{tab}}   [FromQuery, SwaggerParameter("Sort order", Required = false)] string? sortOrder = null
+      {{tab}}   [FromQuery, SwaggerParameter("Sort order", Required = false)] string? sortParam = null
       {{tab}})
       {{tab}}{
       {{tab}}{{tab}}try {
-      {{tab}}{{tab}}{{tab}}var ${minStart(className)}s = await _service.GetAllAsync(page, pageSize, sortOrder{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}});
-      {{tab}}{{tab}}{{tab}}var pagedResponse = await PaginationHelper.CreatePagedResponse(
-      {{tab}}{{tab}}{{tab}}{{tab}}items: ${minStart(className)}s,
-      {{tab}}{{tab}}{{tab}}{{tab}}page: page,
-      {{tab}}{{tab}}{{tab}}{{tab}}pageSize: pageSize,
-      {{tab}}{{tab}}{{tab}}{{tab}}totalCountFunc: () => _repository.GetTotalCountAsync()
-      {{tab}}{{tab}}{{tab}});
+      {{tab}}{{tab}}{{tab}}var data = await _service.GetAllAsync(page, pageSize, sortParam{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}});
       {{tab}}{{tab}}{{tab}}return Ok(new ApiResponse<PagedResponse<${majStart(className)}>>
       {{tab}}{{tab}}{{tab}}{
       {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status200OK,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = ${minStart(className)}s.Any()
+      {{tab}}{{tab}}{{tab}}{{tab}}Message = data.Content.Any()
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}? "${majStart(className)}s retrieved successfully"
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}: "No ${minStart(className)}s found",
       {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = pagedResponse
+      {{tab}}{{tab}}{{tab}}{{tab}}Data = data
       {{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}}
       {{tab}}{{tab}}catch (Exception ex)
@@ -3741,34 +4519,22 @@
       {{tab}}[ProducesResponseType(typeof(ApiResponse<PagedResponse<${majStart(className)}>>), 200)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
       {{tab}}public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(className)}>>>> Search${majStart(className)}s(
-      {{tab}}   [FromBody] ${majStart(className)}SearchModel search,
+      {{tab}}   [FromBody] ${majStart(className)}Dto dto,
       {{tab}}   [FromQuery] int page = 0,
       {{tab}}   [FromQuery] int pageSize = 10,
-      {{tab}}   [FromQuery] string? sortOrder = null
+      {{tab}}   [FromQuery] string? sortParam = null
       {{tab}})
       {{tab}}{
       {{tab}}{{tab}}try {
-      {{tab}}{{tab}}{{tab}}var filter = new GenericMapper().Map<${majStart(className)}SearchModel, ${majStart(className)}>(search);
-      {{tab}}{{tab}}{{tab}}var results = await _service.SearchAsync(filter, page, pageSize, sortOrder);
-      {{tab}}{{tab}}{{tab}}var pagedResponse = new PagedResponse<${majStart(className)}>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Content = results.ToList(),
-      {{tab}}{{tab}}{{tab}}{{tab}}Page = new PageInfo
-      {{tab}}{{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Size = pageSize,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Number = page,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}TotalElements = results.Count(),
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}TotalPages = (int)Math.Ceiling((double) results.Count() / pageSize)
-      {{tab}}{{tab}}{{tab}}{{tab}}}
-      {{tab}}{{tab}}{{tab}}};
+      {{tab}}{{tab}}{{tab}}var data = await _service.SearchAsync(dto, page, pageSize, sortParam);
       {{tab}}{{tab}}{{tab}}return Ok(new ApiResponse<PagedResponse<${majStart(className)}>>
       {{tab}}{{tab}}{{tab}}{
       {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status200OK,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = results.Any()
+      {{tab}}{{tab}}{{tab}}{{tab}}Message = data.Content.Any()
       {{tab}}{{tab}}{{tab}}{{tab}}? "${majStart(className)}s retrieved successfully"
       {{tab}}{{tab}}{{tab}}{{tab}}: "No ${formatReadableLowerCase(className)}s found for the given criteria",
       {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = pagedResponse
+      {{tab}}{{tab}}{{tab}}{{tab}}Data = data
       {{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}}
       {{tab}}{{tab}}catch (Exception ex)
@@ -3785,15 +4551,37 @@
       
       {{#if !isView}} 
       {{tab}}[HttpPost]
+      {{/if}}
+      {{tab}}{{#if useJWT and !isView}}[Authorize]{{/if}}
+      {{#if !isView}} 
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), 201)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
-      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Create([SwaggerParameter(Description = "${formatReadable(className)} object to be created", Required = true)] ${majStart(className)} ${minStart(className)})
+      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Create([SwaggerParameter(Description = "${formatReadable(className)} object to be created", Required = true)] ${majStart(className)}Dto dto)
       {{tab}}{
       {{tab}}{{tab}}try {
+      {{tab}}{{tab}}{{tab}}var ${minStart(className)} = dto.ToEntity();
+      {{tab}}{{tab}}{{tab}}var validationResults = new List<ValidationResult>();
+      {{tab}}{{tab}}{{tab}}var context = new ValidationContext(${minStart(className)}, serviceProvider: null, items: null);
+      {{tab}}{{tab}}{{tab}}bool isValid = Validator.TryValidateObject(${minStart(className)}, context, validationResults, validateAllProperties: true);
+      {{tab}}{{tab}}{{tab}}if (!isValid)
+      {{tab}}{{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}  var errors = validationResults
+      {{tab}}{{tab}}{{tab}}  .SelectMany(vr => vr.MemberNames.Select(name => new { name = char.ToLower(name[0]) + name.Substring(1), vr.ErrorMessage }))
+      {{tab}}{{tab}}{{tab}}  .ToDictionary(x => x.name, x => x.ErrorMessage);
+      {{tab}}{{tab}}{{tab}}  return BadRequest(new ApiResponse<object>
+      {{tab}}{{tab}}{{tab}}  {
+      {{tab}}{{tab}}{{tab}}    Status = StatusCodes.Status500InternalServerError,
+      {{tab}}{{tab}}{{tab}}    Message = "Validation failed",
+      {{tab}}{{tab}}{{tab}}    ReturnCode = 0,
+      {{tab}}{{tab}}{{tab}}    Data = null,
+      {{tab}}{{tab}}{{tab}}    Errors = errors,
+      {{tab}}{{tab}}{{tab}}    Timestamp = DateTime.UtcNow
+      {{tab}}{{tab}}{{tab}}  });
+      {{tab}}{{tab}}{{tab}}}
       {{tab}}{{tab}}{{tab}}await _service.AddAsync(${minStart(className)});
       {{tab}}{{tab}}{{tab}}var created = await _service.GetByIdAsync(${minStart(className)}.${majStart(pkColumn)});
       {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status201Created, new ApiResponse<${majStart(className)}>
@@ -3815,8 +4603,13 @@
       {{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}}
       {{tab}}}
+      {{/if}}
       
+      {{#if !isView}} 
       {{tab}}[HttpPut("{id}")]
+      {{/if}}
+      {{tab}}{{#if useJWT and !isView}}[Authorize]{{/if}}
+      {{#if !isView}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
@@ -3825,20 +4618,10 @@
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 400)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 404)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
-      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Put${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to update", Required = true)] ${pkColumnType} id, [SwaggerParameter(Description = "Updated ${formatReadable(className)} object", Required = true)] ${majStart(className)} ${minStart(className)})
+      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Put${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to update", Required = true)] ${pkColumnType} id, [SwaggerParameter(Description = "Updated ${formatReadable(className)} object", Required = true)] ${majStart(className)}Dto dto)
       {{tab}}{
       {{tab}}{{tab}}try{
-      {{tab}}{{tab}}{{tab}}if (id != ${minStart(className)}.${majStart(pkColumn)})
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}return BadRequest(new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status400BadRequest,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Message = "${majStart(className)} ID in URL does not match ${majStart(className)} ID in body",
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 0,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Data = null
-      {{tab}}{{tab}}{{tab}}{{tab}}});
-      {{tab}}{{tab}}{{tab}}}
-      
+
       {{tab}}{{tab}}{{tab}}var exists = await _service.ExistsAsync(id);
       {{tab}}{{tab}}{{tab}}if (!exists)
       {{tab}}{{tab}}{{tab}}{
@@ -3851,6 +4634,25 @@
       {{tab}}{{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}{{tab}}}
       
+      {{tab}}{{tab}}{{tab}}var ${minStart(className)} = dto.ToEntity(id);
+      {{tab}}{{tab}}{{tab}}var validationResults = new List<ValidationResult>();
+      {{tab}}{{tab}}{{tab}}var context = new ValidationContext(${minStart(className)}, serviceProvider: null, items: null);
+      {{tab}}{{tab}}{{tab}}bool isValid = Validator.TryValidateObject(${minStart(className)}, context, validationResults, validateAllProperties: true);
+      {{tab}}{{tab}}{{tab}}if (!isValid)
+      {{tab}}{{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}  var errors = validationResults
+      {{tab}}{{tab}}{{tab}}  .SelectMany(vr => vr.MemberNames.Select(name => new { name = char.ToLower(name[0]) + name.Substring(1), vr.ErrorMessage }))
+      {{tab}}{{tab}}{{tab}}  .ToDictionary(x => x.name, x => x.ErrorMessage);
+      {{tab}}{{tab}}{{tab}}  return BadRequest(new ApiResponse<object>
+      {{tab}}{{tab}}{{tab}}  {
+      {{tab}}{{tab}}{{tab}}    Status = StatusCodes.Status500InternalServerError,
+      {{tab}}{{tab}}{{tab}}    Message = "Validation failed",
+      {{tab}}{{tab}}{{tab}}    ReturnCode = 0,
+      {{tab}}{{tab}}{{tab}}    Data = null,
+      {{tab}}{{tab}}{{tab}}    Errors = errors,
+      {{tab}}{{tab}}{{tab}}    Timestamp = DateTime.UtcNow
+      {{tab}}{{tab}}{{tab}}  });
+      {{tab}}{{tab}}{{tab}}}
       {{tab}}{{tab}}{{tab}}await _service.UpdateAsync(${minStart(className)});
       {{tab}}{{tab}}{{tab}}var updatedObject = await _service.GetByIdAsync(id);
       
@@ -3874,8 +4676,13 @@
       {{tab}}{{tab}}{{tab}}});
       {{tab}}{{tab}}}    
       {{tab}}}
+      {{/if}}
       
+      {{#if !isView}} 
       {{tab}}[HttpDelete("{id}")]
+      {{/if}}
+      {{tab}}{{#if useJWT and !isView}}[Authorize]{{/if}}
+      {{#if !isView}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Delete ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Delete a ${formatReadableLowerCase(className)} item by its ID"

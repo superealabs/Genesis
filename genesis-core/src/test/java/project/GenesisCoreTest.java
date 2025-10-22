@@ -3,6 +3,8 @@ package project;
 import org.junit.jupiter.api.Test;
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.langage.FrameworkMVC;
+import org.labs.genesis.config.langage.InputTypeMapping;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Credentials;
 
@@ -31,19 +33,25 @@ public class GenesisCoreTest {
     void generateProjectSpring() {
         var credentials = new Credentials().setHost("localhost").setPort("1522").setSchemaName("GENESIS").setDatabaseName("orcl").setUser("genesis").setPwd("root").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCL").setDriverType("Oracle");
 //
+        var credentials = new Credentials().setSchemaName("").setHost("localhost").setPort("1521").setUser("C##SUPER").setPwd("super").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true).setSID("ORCLBDD").setDriverType("thin");
+
         try {
 
             int databaseId = Constantes.Oracle_ID;//
             int languageId = Constantes.Java_ID;
             int frameworkId = Constantes.Spring_REST_API_ID;
             int projectId = Constantes.Maven_ID;
+            int frontendLangageId=Constantes.TYPESCRIPT_ID;
+            int frontendFrameworkId=Constantes.ANGULAR_ID;
 
             var database = ProjectGenerator.databases.get(databaseId);
             var language = ProjectGenerator.languages.get(languageId);
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var project = ProjectGenerator.projects.get(projectId);
+            var frontendLangage=ProjectGenerator.frontendLanguage.get(frontendLangageId);
+            var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
 
-            String projectName = "Popol";
+            String projectName = "oraTest";
             String groupLink = "org.labs";
             String projectPort = "8000";
             String logLevel = "INFO";
@@ -51,7 +59,7 @@ public class GenesisCoreTest {
             String projectDescription = "test";
             String frameworkVersion = "3.3.6";
             String languageVersion = "21";
-            String destinationFolder = "../generated/spring";
+            String destinationFolder = "D:\\tahiana\\test\\";
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
 
@@ -78,6 +86,8 @@ public class GenesisCoreTest {
             context.setDatabase(database);
             context.setLanguage(language);
             context.setFramework(framework);
+            context.setFrontendFramework(frontendFramework);
+            context.setFrontendLanguage(frontendLangage);
             context.setProject(project);
             context.setCredentials(credentials);
             context.setDestinationFolder(destinationFolder);
@@ -88,8 +98,12 @@ public class GenesisCoreTest {
             context.setLanguageConfiguration(languageConfiguration);
             context.setFrameworkConfiguration(frameworkConfiguration);
             context.setEntityNames(entityNames);
+            context.setViewNames(new ArrayList<>());
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
+
+            context.setGenerateFrontendApp(false);
+
 
             projectGenerator.generateProject(context);
 
@@ -120,11 +134,15 @@ public class GenesisCoreTest {
             int languageId = Constantes.CSharp_ID;
             int frameworkId = Constantes.NET_ID;
             int projectId = Constantes.ASP_ID;
+            int frontendLangageId=Constantes.TYPESCRIPT_ID;
+            int frontendFrameworkId=Constantes.REACT_ID;
 
             var database = ProjectGenerator.databases.get(databaseId);
             var language = ProjectGenerator.languages.get(languageId);
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var project = ProjectGenerator.projects.get(projectId);
+            var frontendLangage=ProjectGenerator.frontendLanguage.get(frontendLangageId);
+            var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
 
             List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
             String projectName = "kw";
@@ -156,6 +174,8 @@ public class GenesisCoreTest {
             context.setDatabase(database);
             context.setLanguage(language);
             context.setFramework(framework);
+            context.setFrontendFramework(frontendFramework);
+            context.setFrontendLanguage(frontendLangage);
             context.setProject(project);
             context.setCredentials(credentials);
             context.setDestinationFolder(destinationFolder);
@@ -168,6 +188,8 @@ public class GenesisCoreTest {
             context.setEntityNames(entityNames);
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
+            context.setViewNames(new ArrayList<>());
+            context.setGenerateFrontendApp(false);
 
             projectGenerator.generateProject(context);
 
@@ -223,6 +245,7 @@ public class GenesisCoreTest {
             context.setProjectDescription(projectDescription);
             context.setLanguageConfiguration(languageConfiguration);
             context.setFrameworkConfiguration(frameworkConfiguration);
+            context.setGenerateFrontendApp(false);
 
             projectGenerator.generateProject(context);
 
@@ -300,6 +323,104 @@ public class GenesisCoreTest {
             context.setProjectDescription(projectDescription);
             context.setLanguageConfiguration(languageConfiguration);
             context.setFrameworkConfiguration(frameworkConfiguration);
+            context.setGenerateFrontendApp(false);
+
+            projectGenerator.generateProject(context);
+
+            // Assertion pour vérifier si le dossier existe
+            Path path = Path.of(destinationFolder);
+            assertTrue(Files.exists(path) && Files.isDirectory(path), "Le dossier de destination n'existe pas.");
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    @Test
+    void generateProjectDotnetMvc() {
+        var credentials = new Credentials()
+                .setHost("localhost")
+                .setPort("5432")
+                .setSchemaName("")
+                .setDatabaseName("genesis")
+                .setUser("postgres")
+                .setPwd("root")
+                .setTrustCertificate(true)
+                .setUseSSL(true)
+                .setAllowPublicKeyRetrieval(true)
+                .setSID("")
+                .setDriverType("");
+
+        try {
+            int databaseId = Constantes.PostgreSQL_ID;
+            int languageId = Constantes.CSharp_ID;
+            int frameworkId = Constantes.DOTNET_MVC_ID;
+            int projectId = Constantes.ASP_ID;
+
+            var database = ProjectGenerator.databases.get(databaseId);
+            var language = ProjectGenerator.languages.get(languageId);
+            var framework = ProjectGenerator.frameworks.get(frameworkId);
+            var project = ProjectGenerator.projects.get(projectId);
+
+            if (framework instanceof FrameworkMVC) {
+                FrameworkMVC frameworkMvc = (FrameworkMVC) framework;
+
+                frameworkMvc.setViewsTemplateEngine();
+                frameworkMvc.setViewsTemplate();
+            }
+
+            framework.setFrameworkSecurities();
+
+            List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
+            String projectName = "new";
+            String groupLink = "";
+            String projectPort = "8080";
+            String logLevel = "Information";
+            String projectDescription = "An ASP.NET BEGIN Project";
+            String frameworkVersion = "8.0";
+            String languageVersion = "";
+            String destinationFolder = "E:/stage/dotnet mvc/hotfix";
+
+            int viewsTemplateEngineId = Constantes.Razor_ID;
+            int viewsTemplateId = Constantes.Template_1_ID;
+
+            ProjectGenerator projectGenerator = new ProjectGenerator();
+
+            HashMap<String, Object> frameworkConfiguration = new HashMap<>();
+            frameworkConfiguration.put("loggingLevel", logLevel);
+            frameworkConfiguration.put("frameworkVersion", frameworkVersion);
+            frameworkConfiguration.put("templateEngineId", viewsTemplateEngineId);
+            frameworkConfiguration.put("templateId", viewsTemplateId);
+
+            //===== USE EUREKA SERVER =======//
+            framework.setUseCloud(false);
+            framework.setUseEurekaServer(false);
+            frameworkConfiguration.put("eurekaServerURL", "http://localhost:8761/eureka");
+            frameworkConfiguration.put("projectNonSecurePort", projectPort);
+            //==============================//
+
+            HashMap<String, Object> languageConfiguration = new HashMap<>();
+            frameworkConfiguration.put("languageVersion", languageVersion);
+            List<String> entityNames = new ArrayList<>();
+            List<String> viewNames = new ArrayList<>();
+            ProjectGenerationContext context = new ProjectGenerationContext();
+            context.setDatabase(database);
+            context.setLanguage(language);
+            context.setFramework(framework);
+            context.setProject(project);
+            context.setCredentials(credentials);
+            context.setDestinationFolder(destinationFolder);
+            context.setProjectName(projectName);
+            context.setGroupLink(groupLink);
+            context.setProjectPort(projectPort);
+            context.setProjectDescription(projectDescription);
+            context.setLanguageConfiguration(languageConfiguration);
+            context.setFrameworkConfiguration(frameworkConfiguration);
+            context.setEntityNames(entityNames);
+            context.setViewNames(viewNames);
+            context.setGenerationOptions(generationOptions);
+            context.setGenerateProjectStructure(true);
 
             projectGenerator.generateProject(context);
 

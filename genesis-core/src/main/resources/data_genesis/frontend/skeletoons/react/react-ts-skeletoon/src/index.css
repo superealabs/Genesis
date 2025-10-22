@@ -1,0 +1,13 @@
+/* src/index.css – on garde un reset minimal */
+* {
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+    font-family: 'Inter', 'Roboto', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+#root {
+    height: 100vh;
+}

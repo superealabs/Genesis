@@ -32,10 +32,10 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
     public void updateDataModel() {
         try {
             // Obtenir toutes les tables disponibles
-            List<String> allTableNames = generationOptionForm.getTableNameStrategy().getTableNames();
+            List<String> allTableNames = generationOptionForm.getAllTableNames();
 
             // Obtenir toutes les vues disponibles
-            List<String> allViewNames = generationOptionForm.getTableNameStrategy().getViewNames();
+            List<String> allViewNames = generationOptionForm.getAllViewsNames();
 
             // Obtenir les valeurs sélectionnées depuis l'interface utilisateur
             List<String> selectedValues = generationOptionForm.getTableNamesList().getSelectedValuesList();

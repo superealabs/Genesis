@@ -55,6 +55,11 @@ public class GenesisTemplateEngine {
         FUNCTIONS_MAP.put("toKebabCase", StringUtils::toKebabCase);
         FUNCTIONS_MAP.put("formatReadable", StringUtils::formatReadable);
         FUNCTIONS_MAP.put("formatReadableLowerCase", StringUtils::formatReadableLowerCase);
+        FUNCTIONS_MAP.put("skipEscape", StringUtils::skipEscape);
+        FUNCTIONS_MAP.put("pluralize", StringUtils::pluralize);
+        FUNCTIONS_MAP.put("minPluralize", StringUtils::minPluralize);
+        FUNCTIONS_MAP.put("majPluralize", StringUtils::majPluralize);
+        FUNCTIONS_MAP.put("toPascalCase", StringUtils::toPascalCase);
     }
 
     private final Map<String, String> commentMap = new HashMap<>();

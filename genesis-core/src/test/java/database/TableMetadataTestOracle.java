@@ -19,7 +19,11 @@ public class TableMetadataTestOracle {
                 .setPort("1521")
                 .setUser("C##TAHIANA")
                 .setPwd("tahiana")
-                .setSID("orclbdd");
+                .setSID("orclbdd")
+                .setUser("C##RH")
+                .setPwd("rh")
+                .setSID("orclbdd")
+                .setSchemaName("");
     }
 
     @Test

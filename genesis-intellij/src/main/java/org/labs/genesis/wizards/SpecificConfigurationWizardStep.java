@@ -2,6 +2,7 @@ package org.labs.genesis.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
+import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
@@ -9,6 +10,7 @@ import org.labs.genesis.forms.SpecificConfigurationForm;
 import org.labs.utils.StringUtils;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;

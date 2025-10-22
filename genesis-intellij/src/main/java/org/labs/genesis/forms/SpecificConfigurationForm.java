@@ -6,6 +6,7 @@ import com.intellij.ui.components.JBList;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.FrameworkMVC;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -89,6 +90,12 @@ public class SpecificConfigurationForm {
             if (frameworkUsesDatabase(framework)) {
                 configureDatabaseComponents(framework);
             }
+        }
+
+        if (framework instanceof FrameworkMVC) {
+            useAnEurekaServerCheckBox.setVisible(false);
+            eurekaServerHostLabel.setVisible(false);
+            eurekaServerHostField.setVisible(false);
         }
     }
 

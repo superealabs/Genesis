@@ -183,10 +183,17 @@
                 }
               }
             }
+          }{{/if}}{{#if isMvcProject}},
+          "Kestrel": {
+            "Endpoints": {
+              "Http": {
+                "Url": "http://localhost:${projectPort}"
+              }
+            }
           }{{/if}}
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/{{/if}}"
 
     - fileType: "ProjectFile"
       fileName: "${majStart(projectName)}"
@@ -216,10 +223,15 @@
                 <PackageReference Include="Steeltoe.Management.Endpoint.Health" Version="1.1.0" />
                 <PackageReference Include="Steeltoe.Management.EndpointCore" Version="3.2.0" />
                 <PackageReference Include="Steeltoe.Management.TracingCore" Version="3.2.0" />
+                {{#if useJWT or useAuthCookie}}
+                <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.18" />
+                <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />
+                <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.18" />
+                {{/if}}
             </ItemGroup>
         </Project>
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/{{/if}}"
 
     - fileType: "SolutionFile"
       fileName: "${majStart(projectName)}"
@@ -248,7 +260,15 @@
       extension: "json"
       content: |
         {
-          "$schema": "http://json.schemastore.org/launchsettings.json",
+          {{#if isMvcProject}}"$schema": "http://json.schemastore.org/launchsettings.json",
+          "iisSettings": {
+            "windowsAuthentication": false,
+            "anonymousAuthentication": true,
+            "iisExpress": {
+              "applicationUrl": "http://localhost:53034",
+              "sslPort": 44349
+            }
+          }{{else}}"$schema": "http://json.schemastore.org/launchsettings.json",
           "iisSettings": {
             "windowsAuthentication": false,
             "anonymousAuthentication": true,
@@ -256,9 +276,18 @@
               "applicationUrl": "http://localhost:53034/${toKebabCase(projectName)}",
               "sslPort": 44349
             }
-          },
+          }{{/if}},
           "profiles": {
-            "http": {
+            {{#if isMvcProject}}"http": {
+              "commandName": "Project",
+              "dotnetRunMessages": true,
+              "launchBrowser": true,
+              "launchUrl": "",
+              "applicationUrl": "http://localhost:${projectPort}",
+              "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+              }
+            }{{else}}"http": {
               "commandName": "Project",
               "dotnetRunMessages": true,
               "launchBrowser": true,
@@ -267,8 +296,17 @@
               "environmentVariables": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
               }
-            },
-            "https": {
+            }{{/if}},
+            {{#if isMvcProject}}"https": {
+                "commandName": "Project",
+                "dotnetRunMessages": true,
+                "launchBrowser": true,
+                "launchUrl": "",
+                "applicationUrl": "https://localhost:7273;http://localhost:${projectPort}",
+                "environmentVariables": {
+                  "ASPNETCORE_ENVIRONMENT": "Development"
+                }
+              }{{else}}"https": {
               "commandName": "Project",
               "dotnetRunMessages": true,
               "launchBrowser": true,
@@ -277,15 +315,22 @@
               "environmentVariables": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
               }
-            },
-            "IIS Express": {
+            }{{/if}},
+            {{#if isMvcProject}}"IIS Express": {
+              "commandName": "IISExpress",
+              "launchBrowser": true,
+              "launchUrl": "",
+              "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+              }
+            }{{else}}"IIS Express": {
               "commandName": "IISExpress",
               "launchBrowser": true,
               "launchUrl": "swagger",
               "environmentVariables": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
               }
-            }{{#if useEurekaServer}},
+            }{{/if}}{{#if useEurekaServer}},
             "${projectName}": {
               "commandName": "Project",
               "launchBrowser": true,
@@ -298,7 +343,7 @@
             {{/if}}
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Properties/"
+      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}/Properties/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Properties/{{/if}}"
 
     - fileType: "TestProjectFile"
       fileName: "${majStart(projectName)}.Tests"
@@ -340,7 +385,7 @@
     - fileType: "appSettingsDeveloppement"
       fileName: "appsettings.Development.json"
       sourcePath: "data_genesis/csharp/"
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
 
   projectFolders: [ ]
 

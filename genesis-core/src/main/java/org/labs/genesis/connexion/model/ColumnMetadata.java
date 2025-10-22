@@ -4,7 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
+import org.labs.genesis.connexion.Database;
 import org.labs.genesis.engine.GenesisTemplateEngine;
+import org.labs.genesis.frontend.FrontendLanguage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,22 +19,50 @@ import java.util.Map;
 public class ColumnMetadata {
     private String name;
     private String type;
+    private String frontEndType;
+    private String uiType;
+    private String frontEndReferencedColumnType;
+    private String databaseColumnType;
     private boolean primary;
     private boolean foreign;
     private String referencedTable;
     private String columnType;
     private String referencedColumn;
     private String referencedColumnType;
+    private String referencedPrimaryKeyColumn;
     private boolean unique;
     private boolean nullable;
     private boolean isNumeric;
     private boolean isNumericWithPrecision;
     private boolean isText;
     private boolean isDate;
+    private boolean isTime;
+    private boolean isTimeTz;
+    private boolean isDateTime;
+    private boolean isDateTimeTz;
+    private boolean useTimeZone;
+    private boolean isInterval;
     private String defaultValue;
     private int decimalDigits;
     private int columnSize;
     private Map<String, Object> validationAnnotations = new HashMap<>();
+    private Map<String, Object> validationRules = new HashMap<>();
+
+    public void setFrontEndType(FrontendLanguage frontendLanguage, Database database)
+    {
+        this.frontEndType = frontendLanguage.getTypes().get(database.getTypes().get(columnType));
+        setUiType(frontendLanguage);
+    }
+
+    public void setFrontEndReferencedColumnType(FrontendLanguage frontendLanguage, Database database)
+    {
+        this.frontEndReferencedColumnType = frontendLanguage.getTypes().get(database.getTypes().get(databaseColumnType));
+    }
+
+    public void setUiType(FrontendLanguage frontendLanguage)
+    {
+        this.uiType = frontendLanguage.getInputTypes().get(this.getFrontEndType());
+    }
 
     public void setNullable(String nullable, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
         if(nullable.equalsIgnoreCase("YES")){
@@ -48,7 +78,13 @@ public class ColumnMetadata {
 
     public void setDefaultValue(String defaultValue, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
         this.defaultValue = defaultValue;
-        if (defaultValue!=null && !this.isDate){
+        if (defaultValue!=null &&
+                (!this.isDate
+                || !this.isTime
+                || !this.isDateTime
+                || !this.isInterval)
+            )
+        {
             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(this);
             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("defaultValue","{{removeLine}}");
             String annotationResult = engine.render(annotationTemplate, fieldHashMap);
