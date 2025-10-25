@@ -97,9 +97,7 @@
       fileName: "users"
       extension: "sql"
       content: |
-        --Default login
-        --Username: admin
-        --Password: admin
+      
         {{#if databaseType = PostgreSQL}}
         CREATE TABLE IF NOT EXISTS roles
         (
