@@ -38,7 +38,7 @@
             <span class="font-semibold">Select an option</span>
             <GenesisButton
               @click="hideDropdown"
-              class="btn btn-ghost btn-sm text-error"
+              class="btn btn-ghost btn-md text-error"
               type="button"
               title="Cancel"
             >

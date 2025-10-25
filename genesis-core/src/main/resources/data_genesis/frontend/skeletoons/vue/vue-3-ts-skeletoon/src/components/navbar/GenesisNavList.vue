@@ -3,9 +3,7 @@
     <li v-for="item in items" :key="item.navTitle">
       <!-- Item with link -->
       <router-link
-        v-if="item.navLink"
-        :to="item.navLink"
-        class="menu-title rounded-md nav-item"
+        v-if="item.navLink" :to="item.navLink" class="menu-title rounded-md nav-item"
       >
         {{ $t(item.navTitle) }}
       </router-link>

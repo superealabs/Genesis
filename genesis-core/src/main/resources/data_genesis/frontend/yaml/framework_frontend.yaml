@@ -1447,6 +1447,333 @@
     logoPath: "${destinationFolder}/src/assets/images"
     langsPath: "${destinationFolder}/src/lang"
   authenticationFiles:
+    - fileType: "User profile"
+      fileName: "UserNavProfile"
+      extension: "vue"
+      content: |
+        <template>
+          <div :class="dropDirections">
+            <!-- Trigger -->
+            <div
+              tabindex="0"
+              role="button"
+              class="flex items-center gap-3 px-3 py-2 rounded-md nav-item transition-colors cursor-pointer"
+            >
+              <ProfileAvatar :username="name" />
+              <div class="flex flex-col items-start">
+                <p class="font-medium leading-tight">{{ name }}</p>
+              </div>
+            </div>
+
+            <!-- Dropdown Menu -->
+            <ul
+              tabindex="0"
+              class="menu dropdown-content mt-2 z-[1] p-2 shadow-md border border-base-100 bg-base-100 rounded-box w-60"
+            >
+              <li>
+                <button @click="goToProfile" class="flex items-center justify-start gap-2">
+                  <ProfileIcon /> <span>My Profile</span>
+                </button>
+              </li>
+              <li>
+                <button @click="logout" class="flex items-center justify-start gap-2 text-red-500">
+                  <LogoutIcon /> <span>Logout</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </template>
+
+        <script setup lang="ts">
+        import { computed } from 'vue'
+        import { useAuth } from '@/composables/useAuth.ts'
+        import LogoutIcon from '@/components/icons/LogoutIcon.vue'
+        import ProfileIcon from '@/components/icons/ProfileIcon.vue'
+        import ProfileAvatar from '@/components/user/ProfileAvatar.vue'
+
+        /* Props */
+        const props = defineProps<{
+          name: string
+          dropdownDirection?: {
+            top?: boolean
+            center?: boolean
+            left?: boolean
+            right?: boolean
+            bottom?: boolean
+          }
+        }>()
+
+        /* Composables */
+        const auth = useAuth()
+
+        /* Methods */
+        const logout = () => {
+          auth.logout()
+        }
+        const goToProfile = () => {
+          auth.goToProfileView()
+        }
+
+        const dropDirections = computed(() => {
+          let directions = 'dropdown w-full'
+          if (props.dropdownDirection?.center) {
+            directions += ' dropdown-center'
+          }
+
+          if (props.dropdownDirection?.left) {
+            directions += ' dropdown-left'
+          }
+
+          if (props.dropdownDirection?.right) {
+            directions += ' dropdown-right'
+          }
+
+          if (props.dropdownDirection?.top) {
+            directions += ' dropdown-top'
+          }
+
+          if (props.dropdownDirection?.bottom) {
+            directions += ' dropdown-bottom'
+          }
+          return directions
+        })
+        </script>
+
+        <style scoped>
+        .dropdown [role='button']:focus {
+          outline: none;
+        }
+        </style>
+      destinationPath: "${destinationFolder}/src/components/user"
+
+    - fileType: "Avatar"
+      fileName: "ProfileAvatar"
+      extension: "vue"
+      content: |
+        <template>
+          <div :class="dropDirections">
+            <!-- Trigger -->
+            <div
+              tabindex="0"
+              role="button"
+              class="flex items-center gap-3 px-3 py-2 rounded-md nav-item transition-colors cursor-pointer"
+            >
+              <ProfileAvatar :username="name" />
+              <div class="flex flex-col items-start">
+                <p class="font-medium leading-tight">{{ name }}</p>
+              </div>
+            </div>
+
+            <!-- Dropdown Menu -->
+            <ul
+              tabindex="0"
+              class="menu dropdown-content mt-2 z-[1] p-2 shadow-md border border-base-100 bg-base-100 rounded-box w-60"
+            >
+              <li>
+                <button @click="goToProfile" class="flex items-center justify-start gap-2">
+                  <ProfileIcon /> <span>My Profile</span>
+                </button>
+              </li>
+              <li>
+                <button @click="logout" class="flex items-center justify-start gap-2 text-red-500">
+                  <LogoutIcon /> <span>Logout</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </template>
+
+        <script setup lang="ts">
+        import { computed } from 'vue'
+        import { useAuth } from '@/composables/useAuth.ts'
+        import LogoutIcon from '@/components/icons/LogoutIcon.vue'
+        import ProfileIcon from '@/components/icons/ProfileIcon.vue'
+        import ProfileAvatar from '@/components/user/ProfileAvatar.vue'
+
+        /* Props */
+        const props = defineProps<{
+          name: string
+          dropdownDirection?: {
+            top?: boolean
+            center?: boolean
+            left?: boolean
+            right?: boolean
+            bottom?: boolean
+          }
+        }>()
+
+        /* Composables */
+        const auth = useAuth()
+
+        /* Methods */
+        const logout = () => {
+          auth.logout()
+        }
+        const goToProfile = () => {
+          auth.goToProfileView()
+        }
+
+        const dropDirections = computed(() => {
+          let directions = 'dropdown w-full'
+          if (props.dropdownDirection?.center) {
+            directions += ' dropdown-center'
+          }
+
+          if (props.dropdownDirection?.left) {
+            directions += ' dropdown-left'
+          }
+
+          if (props.dropdownDirection?.right) {
+            directions += ' dropdown-right'
+          }
+
+          if (props.dropdownDirection?.top) {
+            directions += ' dropdown-top'
+          }
+
+          if (props.dropdownDirection?.bottom) {
+            directions += ' dropdown-bottom'
+          }
+          return directions
+        })
+        </script>
+
+        <style scoped>
+        .dropdown [role='button']:focus {
+          outline: none;
+        }
+        </style>
+      destinationPath: "${destinationFolder}/src/components/user"
+
+    - fileType: "Auth composable"
+      fileName: "useAuth"
+      extension: "ts"
+      content: |
+        import { useRouter } from 'vue-router'
+        import * as authService from '@/services/AuthService.ts'
+        import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
+        import { computed } from 'vue'
+
+        export function useAuth() {
+          const router = useRouter()
+          const goToLoginView = () => {
+            router.push({ path: '/auth/login' })
+          }
+          const goToProfileView = () => {
+            router.push({ path: '/profile' })
+          }
+
+          const loginUser = async (token: string) => {
+            useAuthenticationStore().setToken(token)
+            const responseData = await authService.currentUser()
+            if (responseData.success && responseData.data) {
+              useAuthenticationStore().setCurrentUser(responseData.data)
+            } else {
+              throw new Error('Authentcation succed but the token is invalid')
+            }
+          }
+
+          const isLoggedIn = computed(() => {
+            const token = useAuthenticationStore().getToken()
+            return token != null && token.length > 0
+          })
+
+          const getAuthorizationHeader = () => {
+            if (
+              useAuthenticationStore().getToken() == null ||
+              useAuthenticationStore().getToken().length == 0
+            )
+              return {}
+            return {
+              Authorization: 'Bearer ' + useAuthenticationStore().getToken(),
+            }
+          }
+
+          const getCurrentUser = () => {
+            const user = useAuthenticationStore().getCurrentUser()
+            return user
+          }
+
+          const logout = async () => {
+            const responseData = await authService.logout()
+            if (!responseData.success) {
+              console.error('Logout failed:', responseData.error)
+            }
+            useAuthenticationStore().clear()
+            goToLoginView()
+          }
+
+          return {
+            goToLoginView,
+            goToProfileView,
+            loginUser,
+            getAuthorizationHeader,
+            getCurrentUser,
+            logout,
+            isLoggedIn,
+          }
+        }
+      destinationPath: "${destinationFolder}/src/composables "
+
+    - fileType: "Auth store"
+      fileName: "useAuthenticationStore"
+      extension: "ts"
+      content: |
+        import { defineStore } from 'pinia'
+        import { computed, ref } from 'vue'
+        import { User } from '@/models/auth/UserModel.ts'
+
+        export const useAuthenticationStore = defineStore('authenticationStore', () => {
+          // Try to load from localStorage
+          const storedUser = localStorage.getItem('currentUser')
+          const storedToken = localStorage.getItem('userToken')
+
+          const currentUser = ref<User>(storedUser ? JSON.parse(storedUser) : User.voidUser())
+          const userToken = ref<string>(storedToken ?? '')
+
+          const setToken = (token: string) => {
+            userToken.value = token
+            localStorage.setItem('userToken', token)
+          }
+
+          const getToken = () => {
+            return userToken.value
+          }
+
+          const setCurrentUser = (user: User) => {
+            currentUser.value = user
+            localStorage.setItem('currentUser', JSON.stringify(user))
+          }
+
+          const getCurrentUser = () => {
+            return currentUser.value
+          }
+
+          const getCurrentUsername = computed((): string => {
+            const user = getCurrentUser()
+            return user?.username || 'John Doe'
+          })
+
+          // Optional: a clear function (logout)
+          const clear = () => {
+            currentUser.value = User.voidUser()
+            userToken.value = ''
+            localStorage.removeItem('currentUser')
+            localStorage.removeItem('userToken')
+          }
+
+          return {
+            setToken,
+            getToken,
+            getCurrentUser,
+            setCurrentUser,
+            getCurrentUsername,
+            clear,
+          }
+        })
+      destinationPath: "${destinationFolder}/src/stores"
+
+
     - fileType: "Login Form"
       fileName: "LoginForm"
       extension: "vue"
@@ -1996,6 +2323,236 @@
         }
       destinationPath: "${destinationFolder}/src/services"
   additionalFiles:
+    - fileType: "Topbar"
+      fileName: "GenesisTopNavbar"
+      extension: "vue"
+      content: |
+        <template>
+          <nav class="navbar bg-base-200/40 border-b border-base-content/10 shadow-sm">
+            <div class="flex items-center justify-between w-full px-4">
+
+              <div class="flex items-center gap-4 flex-1">
+
+                <router-link to="/" class="flex items-center gap-2" @click="closeDropdown">
+                  <AppLogo size="60" />
+                  <h1 class="font-semibold uppercase tracking-wide text-base hidden md:block">
+                    {{ $t('projectName') }}
+                  </h1>
+                </router-link>
+
+              </div>
+
+              <div class="flex items-center justify-end gap-2">
+                <ul class="menu menu-horizontal flex-nowrap p-0 flex items-center gap-2">
+                  <li v-for="(section, index) in navigations" :key="section.sectionName" class="relative">
+
+                    <details
+                      class="dropdown dropdown-bottom dropdown-end lg:dropdown-start"
+                      :open="openSectionIndex === index"
+                      @toggle="handleDropdownToggle(index, $event)"
+                    >
+                      <summary class="btn btn-ghost opacity-80 flex items-center gap-2">
+                        <font-awesome-icon v-if="section.icon" :icon="section.icon" />
+                        <span class="hidden lg:inline">{{ $t(section.sectionName) }}</span>
+                      </summary>
+
+                      <ul class="p-2 menu dropdown-content bg-base-200 rounded-box shadow-md w-52 z-[1]">
+                        <GenesisTopNavList :items="section.navChilds" @close="closeDropdown" />
+                      </ul>
+                    </details>
+                  </li>
+                </ul>
+                <div class="h-6 border-l border-base-content/10 mx-2"></div>
+
+                <router-link
+                  to="/home"
+                  class="btn btn-ghost tooltip tooltip-bottom"
+                  :data-tip="$t('navbar.home')"
+                  @click="closeDropdown"
+                >
+                  <HomeIcon class="w-5 h-5" />
+                </router-link>
+
+                <router-link
+                  to="/settings"
+                  class="btn btn-ghost tooltip tooltip-bottom"
+                  :data-tip="$t('navbar.settings')"
+                  @click="closeDropdown"
+                >
+                  <GearIcon class="w-5 h-5" />
+                </router-link>{{#if useJWT}}
+
+                <UserNavProfile
+                  @click="closeDropdown"
+                  :name="authStore.getCurrentUsername"
+                  :dropdown-direction="{ bottom: true, center: true }"
+                />{{/if}}
+              </div>
+            </div>
+          </nav>
+        </template>
+
+        <script setup lang="ts">
+        import { ref } from 'vue'; // Nécessaire pour gérer l'état d'ouverture
+        import GenesisTopNavList from './GenesisTopNavList.vue'
+        import navigations from '@/config/navigations.ts'
+        import HomeIcon from '@/components/icons/HomeIcon.vue'
+        import GearIcon from '@/components/icons/GearIcon.vue'
+        import AppLogo from '@/components/AppLogo.vue'{{#if useJWT}}
+        import UserNavProfile from '@/components/user/UserNavProfile.vue'
+        import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
+
+        const authStore = useAuthenticationStore(){{/if}}
+
+        const openSectionIndex = ref<number | null>(null);
+
+        // Gère l'ouverture d'un seul dropdown à la fois
+        const handleDropdownToggle = (index: number, event: Event) => {
+          const detailsElement = event.currentTarget as HTMLDetailsElement;
+
+          if (detailsElement.open) {
+            openSectionIndex.value = index;
+          } else if (openSectionIndex.value === index) {
+            openSectionIndex.value = null;
+          }
+        };
+
+        const closeDropdown = () => {
+          openSectionIndex.value = null;
+        };
+        </script>
+
+        <style scoped>
+        /* Le style reste inchangé */
+        .router-link-active {
+          font-weight: bold;
+          color: var(--color-primary);
+          position: relative;
+        }
+
+        .router-link-active:not(.btn)::after { /* :not(.btn) pour exclure les boutons (icônes) */
+          content: '';
+          position: absolute;
+          bottom: -4px;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background-color: var(--color-primary);
+          border-radius: 4px;
+        }
+        </style>
+      destinationPath: "${destinationFolder}/src/components/navbar"
+    - fileType: "Sidebar"
+      fileName: "GenesisSideNavbar"
+      extension: "vue"
+      content: |
+        <template>
+          <aside
+            class="bg-base-200/40 border-r border-base-content/10 flex flex-col justify-between shadow-sm"
+            style="min-width: 280px;"
+          >
+            <!-- Brand -->
+            <router-link to="/" class="flex justify-content-center items-center px-6">      <AppLogo size="80" />
+              <h1 class="text-lg font-semibold tracking-wide uppercase truncate">
+                {{ $t('projectName') }}
+              </h1>
+            </router-link>
+
+            <div class="flex flex-col flex-1 overflow-y-auto">
+              <nav class="flex-1 flex flex-col">
+                <ul class="menu flex-1 flex flex-col w-auto gap-2 overflow-hidden">
+                  <li>
+                    <div class="nav-item py-0 flex router-link-container">
+                      <router-link
+                        to="/home"
+                        title="Home"
+                        class="menu-title opacity-70 flex-1 flex items-center gap-2"
+                      >
+                        <HomeIcon /> {{ $t('navbar.home') }}
+                      </router-link>
+                    </div>
+                  </li>
+                  <li>
+                    <div class="nav-item py-0 flex router-link-container">
+                      <router-link
+                        to="/settings"
+                        title="Home"
+                        class="menu-title flex flex-1 opacity-70 items-center gap-2"
+                      >
+                        <GearIcon /> {{ $t('navbar.settings') }}
+                      </router-link>
+                    </div>
+                  </li>
+                  <li v-for="section in navigations" :key="section.sectionName">
+                    <!-- Section title -->
+                    <span class="menu-title flex opacity-70 items-center gap-2">
+                      <font-awesome-icon v-if="section.icon" :icon="section.icon" />
+                      {{ $t(section.sectionName) }}
+                    </span>
+                    <!-- Items -->
+                    <GenesisNavList :items="section.navChilds" class="" />
+                  </li>
+                </ul>
+              </nav>
+            </div>
+
+            <!-- Bottom section -->
+            <div class="border-t border-base-content/10 flex flex-col gap-3">
+              {{#if useJWT}}<!-- User Profile -->
+              <div class="">
+                <UserNavProfile
+                  :name="authStore.getCurrentUsername"
+                  :dropdown-direction="{ top: true, center: true }"
+                />
+              </div>{{/if}}
+            </div>
+          </aside>
+        </template>
+
+        <script setup lang="ts">
+        import GenesisNavList from './GenesisNavList.vue'
+        import navigations from '@/config/navigations.ts'
+        import HomeIcon from '@/components/icons/HomeIcon.vue'
+        import GearIcon from '@/components/icons/GearIcon.vue'
+        import AppLogo from '@/components/AppLogo.vue'{{#if useJWT}}
+        import UserNavProfile from '@/components/user/UserNavProfile.vue'
+        import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
+
+        const authStore = useAuthenticationStore(){{/if}}
+        </script>
+
+        <style scoped>
+        .menu {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+        }
+
+        .router-link-active {
+          font-weight: bold;
+          color: var(--color-primary);
+          position: relative;
+          opacity: 1;
+        }
+
+        .router-link-active::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -7px;
+          width: 5px;
+          height: 100%;
+          background-color: var(--color-primary);
+          border-radius: 10px;
+        }
+
+        .router-link-container:has(.router-link-active) {
+          opacity: 1;
+          transition: background-color 0.25s ease;
+        }
+        </style>
+      destinationPath: "${destinationFolder}/src/components/navbar"
     - fileType: "Global Store"
       fileName: "useGlobalStore"
       extension: "ts"
@@ -2025,6 +2582,61 @@
           return {}
         })
       destinationPath: "${destinationFolder}/src/stores"
+
+    - fileType: "Api Service"
+      fileName: "api"
+      extension: "ts"
+      content: |
+        import type { AxiosRequestConfig } from 'axios'
+        import axios, { AxiosError } from 'axios'
+        import RestResponse from '@/models/api/RestResponseModel.ts'{{#if useJWT}}
+        import { useAuth } from '@/composables/useAuth.ts'{{/if}}
+        const instance = axios.create({
+          baseURL: import.meta.env.VITE_APP_API_URL || 'http://localhost:8080',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }){{#if useJWT}}
+        const authentication = useAuth(){{/if}}
+        export default function api<T>() {
+          async function request(config: AxiosRequestConfig): Promise<RestResponse<T>> {
+            try {{{#if useJWT}}
+              const authHeader = authentication.getAuthorizationHeader()
+              config.headers = { ...config.headers, ...authHeader }{{/if}}
+              const response = await instance.request(config)
+              return RestResponse.fromJson<T>(response.data)
+            } catch (error: unknown) {
+              if ((error as AxiosError).response) {
+                return RestResponse.fromJson<T>((error as AxiosError).response?.data)
+              }
+              throw error
+            }
+          }
+
+          const GET = (url: string, config?: AxiosRequestConfig) => {
+            return request({ ...config, method: 'get', url })
+          }
+
+          const POST = (url: string, data?: unknown, config?: AxiosRequestConfig) => {
+            return request({ ...config, method: 'post', url, data })
+          }
+
+          const PUT = (url: string, data?: unknown, config?: AxiosRequestConfig) => {
+            return request({ ...config, method: 'put', url, data })
+          }
+
+          const DELETE = (url: string, config?: AxiosRequestConfig) => {
+            return request({ ...config, method: 'delete', url })
+          }
+
+          return {
+            GET,
+            POST,
+            PUT,
+            DELETE,
+          }
+        }
+      destinationPath: "${destinationFolder}/src/services"
 
     - fileType: "Main Layout"
       fileName: "MainLayout"
@@ -9184,9 +9796,9 @@
               }
             },
             "node_modules/vite": {
-              "version": "7.1.6",
-              "resolved": "https://registry.npmjs.org/vite/-/vite-7.1.6.tgz",
-              "integrity": "sha512-SRYIB8t/isTwNn8vMB3MR6E+EQZM/WG1aKmmIUCfDXfVvKfc20ZpamngWHKzAmmu9ppsgxsg4b2I7c90JZudIQ==",
+              "version": "7.1.12",
+              "resolved": "https://registry.npmjs.org/vite/-/vite-7.1.12.tgz",
+              "integrity": "sha512-ZWyE8YXEXqJrrSLvYgrRP7p62OziLW7xI5HYGWFzOvupfAlrLvURSzv/FyGyy0eidogEM3ujU+kUG1zuHgb6Ug==",
               "license": "MIT",
               "dependencies": {
                 "esbuild": "^0.25.0",
@@ -10131,121 +10743,6 @@
         </script>
       destinationPath: "${destinationFolder}/src/components"
 
-#    - fileType: "SideBar"
-#      fileName: "GenesisSideNavbar"
-#      extension: "vue"
-#      content: |
-#        <template>
-#          <aside
-#            class="bg-base-200/40 border-r border-base-content/10 flex flex-col justify-between shadow-sm"
-#          >
-#            <!-- Brand -->
-#            <router-link to="/" class="flex items-center px-6 border-b border-base-content/10">
-#              <AppLogo size="80" />
-#              <h1 class="text-lg font-semibold tracking-wide uppercase truncate">
-#                {{ $t('projectName') }}
-#              </h1>
-#            </router-link>
-#
-#            <div class="flex flex-col flex-1 overflow-y-auto">
-#              <nav class="flex-1 flex flex-col">
-#                <ul class="menu flex-1 flex flex-col w-auto gap-2 overflow-hidden">
-#                  <li>
-#                    <div class="nav-item py-0 flex router-link-container">
-#                      <router-link
-#                        to="/home"
-#                        title="Home"
-#                        class="menu-title opacity-70 flex-1 flex items-center gap-2"
-#                      >
-#                        <HomeIcon /> {{ $t('navbar.home') }}
-#                      </router-link>
-#                    </div>
-#                  </li>
-#                  <li>
-#                    <div class="nav-item py-0 flex router-link-container">
-#                      <router-link
-#                        to="/settings"
-#                        title="Home"
-#                        class="menu-title flex flex-1 opacity-70 items-center gap-2"
-#                      >
-#                        <GearIcon /> {{ $t('navbar.settings') }}
-#                      </router-link>
-#                    </div>
-#                  </li>
-#                  <li v-for="section in navigations" :key="section.sectionName">
-#                    <details>
-#                      <summary class="nav-item py-0">
-#                        <!-- Section title -->
-#                        <span class="menu-title flex opacity-70 items-center gap-2">
-#                      <font-awesome-icon v-if="section.icon" :icon="section.icon" />
-#                      {{ $t(section.sectionName) }}
-#                    </span>
-#                      </summary>
-#                      <!-- Items -->
-#                      <GenesisNavList :items="section.navChilds" class="" />
-#                    </details>
-#                  </li>
-#                </ul>
-#              </nav>
-#            </div>
-#
-#            <!-- Bottom section -->
-#            <div class="border-t border-base-content/10 flex flex-col gap-3">
-#              <!-- User Profile -->
-#              <div class="">
-#                <UserNavProfile
-#                  :name="authStore.getCurrentUsername"
-#                  :dropdown-direction="{ top: true, center: true }"
-#                />
-#              </div>
-#            </div>
-#          </aside>
-#        </template>
-#        <script setup lang="ts">
-#        import GenesisNavList from './GenesisNavList.vue'
-#        import navigations from '@/config/navigations.ts'
-#        import HomeIcon from '@/components/icons/HomeIcon.vue'
-#        import GearIcon from '@/components/icons/GearIcon.vue'
-#        import UserNavProfile from '@/components/user/UserNavProfile.vue'
-#        import AppLogo from '@/components/AppLogo.vue'
-#        import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
-#
-#        const authStore = useAuthenticationStore()
-#        </script>
-#
-#        <style scoped>
-#        .menu {
-#          flex: 1;
-#          display: flex;
-#          flex-direction: column;
-#          overflow-y: auto;
-#        }
-#
-#        .router-link-active {
-#          font-weight: bold;
-#          color: var(--color-primary);
-#          position: relative;
-#          opacity: 1;
-#        }
-#
-#        .router-link-active::before {
-#          content: '';
-#          position: absolute;
-#          top: 0;
-#          left: -7px;
-#          width: 5px;
-#          height: 100%;
-#          background-color: var(--color-primary);
-#          border-radius: 10px;
-#        }
-#
-#        .router-link-container:has(.router-link-active) {
-#          opacity: 1;
-#          transition: background-color 0.25s ease;
-#        }
-#        </style>
-#      destinationPath: "${destinationFolder}/src/components/navbar"
-#
     - fileType: "App-Vue"
       fileName: "App"
       extension: "vue"
@@ -10282,8 +10779,7 @@
 
         router.beforeEach((to, from, next) => {
           const loading = useFreezeScreenStore()
-          loading.freeze('Loading')
-          {{#if useJWT}}
+          loading.freeze('Loading'){{#if useJWT}}
           const auth = useAuth()
           const isAuthenticated = auth.isLoggedIn.value // or check auth.user/token
           if (to.meta.requiresAuth && !isAuthenticated) {
@@ -10324,13 +10820,13 @@
             path: '/',
             component: MainLayout,
             children: [
-              { path: 'home', name: 'home', component: HomeView {{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },
-              { path: 'settings', name: 'settings', component: SettingsView {{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },{{#if useJWT}}
+              { path: 'home', name: 'home', component: HomeView{{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },
+              { path: 'settings', name: 'settings', component: SettingsView{{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },{{#if useJWT}}
               {
                 path: 'profile',
                 name: 'profile',
                 component: () => import('@/views/auth/ProfileView.vue'),
-              }, {{/if}}
+              },{{/if}}
               {{#each entities}}
               ...${minStart(this.className)}Routes,
               {{/each}}{{removeLine}}
@@ -10339,9 +10835,8 @@
           {
             path: '/auth',
             component: AuthLayout,
-            children: [...authRoutes]
-          },
-          {{/if}}
+            children: [...authRoutes],
+          },{{/if}}
         ]
         export default routes
       destinationPath: "${destinationFolder}/src/router"
@@ -10404,16 +10899,20 @@
         import { ref, watch } from 'vue'
 
         export const useLayoutStore = defineStore('layout', () => {
-          const currentLayout = ref(localStorage.getItem('layoutMode') || '${minStart(navbarPreference)})
+          const currentLayout = ref(localStorage.getItem('layoutMode') || '${minStart(navbarPreference)}')
 
           function setLayout(mode: 'sidebar' | 'topbar') {
             currentLayout.value = mode
             localStorage.setItem('layoutMode', mode)
           }
 
-          watch(currentLayout, (newVal) => {
+          watch(
+            currentLayout,
+            (newVal) => {
             document.body.dataset.layout = newVal
-          }, { immediate: true })
+          },
+            { immediate: true },
+          )
 
           return { currentLayout, setLayout }
         })
@@ -11707,62 +12206,6 @@
         }
       destinationPath: "${destinationFolder}/src/assets/styles"
   components:
-#    - componentType: "Entity Row"
-#      generateForView: true
-#      router:
-#        label: "{{removeLine}}"
-#        link: ""
-#      importFile: |
-#        import type { PropType } from 'vue'
-#        import { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'
-#        import EntityRowActions from '@/components/table/EntityRowActions.vue'
-#      selector: "${majStart(EntityName)}Row"
-#      standalone: true
-#      importComponent: "{{removeLine}}"
-#      template: |
-#        <template>
-#          <tr class="hover:bg-gray-50">
-#            {{#each fields}}
-#            {{#if @first}}
-#            <td class="px-3 py-2 sticky bg-base-200 shadow-sm left-0">{{ ${minStart(EntityName)}.${this.name} }}</td>
-#            {{elseIf this.isForeignKey}}
-#            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name}?.getReferenceValue() }}</td>
-#            {{elseIf this.isDate}}
-#            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $d(${minStart(EntityName)}.${this.name}, 'long') : '--/--/--' }}</td>
-#            {{elseIf this.isNumeric}}
-#            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} ? $n(${minStart(EntityName)}.${this.name}, 'decimal') : '--' }}</td>
-#            {{else}}
-#            <td class="px-3 py-2">{{ ${minStart(EntityName)}.${this.name} }}</td>{{/if}}
-#            {{/each}}{{removeLine}}
-#
-#            <td class="px-3 py-2 bg-base-200 shadow-sm sticky text-end right-0">
-#              <div class="rounded-md inline-flex">
-#                <EntityRowActions @delete-row="deleteRow" @view-row="viewRow" @edit-row="updateRow" />
-#              </div>
-#            </td>
-#          </tr>
-#        </template>
-#      style: "<style scoped></style>"
-#      export: |
-#        const props = defineProps({
-#          ${minStart(EntityName)}: {
-#            type: Object as PropType<${majStart(EntityName)}>,
-#            required: true,
-#          },
-#        })
-#
-#        const emit = defineEmits<{
-#          (e: 'request-delete', ${minStart(EntityName)}: ${majStart(EntityName)}): void
-#          (e: 'request-view', ${minStart(EntityName)}: ${majStart(EntityName)}): void
-#          (e: 'request-update', ${minStart(EntityName)}: ${majStart(EntityName)}): void
-#        }>()
-#
-#        const deleteRow = () => emit('request-delete', props.${minStart(EntityName)})
-#        const viewRow = () => emit('request-view', props.${minStart(EntityName)})
-#        const updateRow = () => emit('request-update', props.${minStart(EntityName)})
-#      componentName: "${majStart(EntityName)}Row"
-#      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
-#      componentAdditionalFiles: [ ]
     - componentType: "Entity Row"
       generateForView: true
       router:
@@ -11837,111 +12280,7 @@
       componentName: "${majStart(EntityName)}Row"
       destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
       componentAdditionalFiles: [ ]
-#    - componentType: "List Component"
-#      generateForView: true
-#      router:
-#        label: "{{removeLine}}"
-#        link: ""
-#      componentName: "${majStart(EntityName)}List"
-#      importFile: |
-#        import ${majStart(EntityName)}Row from './${majStart(EntityName)}Row.vue'
-#        import { usePopup } from '@/composables/usePopup'
-#        import { use${majStart(EntityName)}s } from '@/composables/use${majStart(EntityName)}s'
-#        import type { ${majStart(EntityName)} } from '@/models/${majStart(EntityName)}Model'{{#if !isView}}
-#        import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
-#        import { ref } from 'vue'
-#        import type { PropType } from 'vue'{{/if}}
-#      selector: "${majStart(EntityName)}List"
-#      standalone: true
-#      importComponent: "{{removeLine}}"
-#      template: |
-#        <template>
-#          <div class="rounded-box border border-base-content/5 bg-base-100">
-#            <table class="table table-auto w-full border-gray-200 rounded-md relative">
-#              <thead>
-#                <tr>
-#                  {{#each fields}}
-#                  {{#if @first}}
-#                  <th class="sticky top-0 left-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2">${formatReadable(this.name)}</th>
-#                  {{else}}
-#                  <th class="sticky top-0 bg-secondary px-3 py-2 font-bold min-w-35 z-1">${formatReadable(this.name)}</th>{{/if}}
-#                  {{/each}}
-#                  <th class="sticky top-0 right-0 bg-secondary px-3 py-2 font-bold min-w-35 z-2"></th>
-#                </tr>
-#              </thead>
-#              <tbody>
-#                <!-- Empty message -->
-#                <tr v-if="!loading && message">
-#                  <td colspan="100" class="text-center py-4 text-gray-500">
-#                    {{ message }}
-#                  </td>
-#                </tr>
-#
-#                <!-- Entity rows -->
-#                <${majStart(EntityName)}Row
-#                  v-else
-#                  v-for="${minStart(EntityName)} in data"
-#                  :key="${minStart(EntityName)}.getKeyValue()"
-#                  :${minStart(EntityName)}="${minStart(EntityName)}"
-#                  @request-view="view${majStart(EntityName)}"{{#if !isView}}
-#                  @request-delete="openDeletePopup"
-#                  @request-update="goToUpdateFormView"{{/if}}
-#                />
-#              </tbody>
-#            </table>{{#if !isView}}
-#            <!-- Delete confirmation popup -->
-#            <DeleteConfirmationPopup
-#              :visible="deletePopup"
-#              :message="`Are you sure you want to delete ${majStart(EntityName)} ${selectedEntity?.id}?`"
-#              @confirm="confirmDelete"
-#              @cancel="closePopup"
-#            />{{/if}}
-#          </div>
-#        </template>
-#      style: "<style scoped></style>"
-#      export: |
-#        defineProps({
-#          data: {
-#            type: Array as PropType<${majStart(EntityName)}[]>,
-#            required: true,
-#          },
-#          message: String,
-#          loading: {
-#            type: Boolean,
-#            default: false,
-#          },
-#        })
-#
-#        {{#if isView}}
-#        const { view${majStart(EntityName)} } = use${majStart(EntityName)}s()
-#        {{else}}
-#        const emit = defineEmits<{
-#          (e: 'request:refresh'): void
-#        }>()
-#
-#        const selectedEntity = ref()
-#
-#        const { visible: deletePopup, closePopup } = usePopup(false)
-#        const { delete${majStart(EntityName)}, view${majStart(EntityName)}, goToUpdateFormView } = use${majStart(EntityName)}s()
-#
-#        function openDeletePopup(entity: ${majStart(EntityName)}) {
-#          if (!entity) return
-#          selectedEntity.value = entity
-#          deletePopup.value = true
-#        }
-#
-#        async function confirmDelete() {
-#          const { success, error } = await delete${majStart(EntityName)}(selectedEntity.value)
-#          if (success) {
-#            deletePopup.value = false
-#            emit('request:refresh')
-#          } else {
-#            console.error(error)
-#          }
-#        }
-#        {{/if}}
-#      destinationPath: "${destinationFolder}/src/entities/${minStart(EntityName)}"
-#      componentAdditionalFiles: [ ]
+
     - componentType: "List Component"
       generateForView: true
       router:
@@ -12112,7 +12451,7 @@
       destinationPath: "${destinationFolder}/src/views/${minStart(EntityName)}"
       export: |
         // Composable for managing entities
-        const {${minPluralize(EntityName)},search${majPluralize(EntityName)},message,getPaginationData,{{#if !isView}}goToCreateFormView,{{/if}}} = use${majPluralize(EntityName)}()
+        const {${minPluralize(EntityName)}, search${majPluralize(EntityName)}, message, getPaginationData{{#if !isView}}, goToCreateFormView{{/if}} } = use${majPluralize(EntityName)}()
 
         // Reactive search fields
         const searchFields = ref<EntitySearchField[]>(${majStart(EntityName)}.getAllSearchFieldsMetadata());
@@ -12354,8 +12693,7 @@
                 name: '${minStart(EntityName)}detailsview',
                 component: () => import('@/views/${minStart(EntityName)}/${majStart(EntityName)}DetailsView.vue'),
                 {{#if useJWT}}meta: { requiresAuth: true },{{/if}}
-              },
-              {{#if !isView and useJWT}}
+              },{{#if !isView and useJWT}}
               {
                 path: '${minStart(EntityName)}s/update/:id',
                 name: '${minStart(EntityName)}updateview',
@@ -12507,7 +12845,7 @@
               <GenesisButton
                 :title="$t('button.backToListDescription')"
                 @click="goToListView"
-                class="btn-primary"
+                class="btn-secondary"
               >
                 <LeftArrowIcon />
                 {{ $t('button.backToList') }}
@@ -12650,7 +12988,7 @@
                 ${majStart(EntityName)} /
                 <span class="text-base-content/50 font-normal">Update</span>
               </h3>
-              <GenesisButton title="Back to list" @click="goToListView" class="btn-primary">
+              <GenesisButton title="Back to list" @click="goToListView" class="btn-secondary">
                 <LeftArrowIcon />
                 Back to list
               </GenesisButton>
@@ -12745,7 +13083,7 @@
               <GenesisButton
                 :title="$t('button.backToListDescription')"
                 @click="goToListView"
-                class="btn-primary"
+                class="btn-secondary"
               >
                 <LeftArrowIcon />
                 {{ $t('button.backToList') }}
@@ -12874,24 +13212,24 @@
   modelComponent:
     imports: |
       import { BaseModel } from './BaseModel'
-      import { type EntitySearchField } from './EntityModel'
+      import { type EntitySearchField } from './EntityModel'{{#if containsForeignKey}}
+      import { createSelectSearchFunction, createMulticriteriatSearchFunction } from './SelectOption'{{/if}}
       {{#each fieldsFK}}
       import { ${majStart(this.type)} } from './${majStart(this.type)}Model'
       import * as ${minStart(this.type)}Service from '@/services/${majStart(this.type)}Service'
       {{/each}}{{removeLine}}
-      {{#if containsForeignKey}}import { createSelectSearchFunction, createMulticriteriatSearchFunction } from './SelectOption'{{/if}}
     exports: |
       export interface I${majStart(EntityName)} {
-        {{#each fields}}
-        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}
+        {{#each fields}}{{#if this.isForeignKey}}
+        ${minStart(this.name)}?: ${majStart(this.type)}
         {{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}
         {{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
       }
 
       export class ${majStart(EntityName)} extends BaseModel implements I${majStart(EntityName)} {
-        {{#each fields}}
-        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}
+        {{#each fields}}{{#if this.isForeignKey}}
+        ${minStart(this.name)}?: ${majStart(this.type)}
         {{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}
         {{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
@@ -12930,8 +13268,8 @@
         }
 
         protected static override searchDaoMetadata: EntitySearchField[] = [
-          {{#each fields}}
-          {{#if this.isForeignKey}}{
+          {{#each fields}}{{#if this.isForeignKey}}
+          {
             key: '${this.name}',
             label: '${formatReadable(this.name)}',
             type: 'select',
@@ -12945,11 +13283,47 @@
             showInTable: true,
             showInFilter: true,
           },
-          {{elseIf this.isPrimaryKey}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true, showInTable: true, showInFilter: true, identifier: true },
-          {{elseIf this.isNumeric or this.isDate}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true, showInTable: true, showInFilter: true },
-          { key: '${this.name}Min', label: '${formatReadable(this.name)} Min', type: '${this.uiType}', sortable: false, showInTable: false, showInFilter: true },
-          { key: '${this.name}Max', label: '${formatReadable(this.name)} Max', type: '${this.uiType}', sortable: false, showInTable: false, showInFilter: true },
-          {{else}}{ key: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.uiType}', sortable: true, showInTable: true, showInFilter: true },{{/if}}
+          {{elseIf this.isPrimaryKey}}{
+            key: '${this.name}',
+            label: '${formatReadable(this.name)}',
+            type: '${this.uiType}',
+            sortable: true,
+            showInTable: true,
+            showInFilter: true,
+            identifier: true 
+          },
+          {{elseIf this.isNumeric or this.isDate}}{ 
+            key: '${this.name}',
+            label: '${formatReadable(this.name)}',
+            type: '${this.uiType}',
+            sortable: true,
+            showInTable: true,
+            showInFilter: true 
+          },
+          { 
+            key: '${this.name}Min',
+            label: '${formatReadable(this.name)} Min',
+            type: '${this.uiType}',
+            sortable: false,
+            showInTable: false,
+            showInFilter: true 
+          },
+          { 
+            key: '${this.name}Max',
+            label: '${formatReadable(this.name)} Max',
+            type: '${this.uiType}',
+            sortable: false,
+            showInTable: false,
+            showInFilter: true 
+          },
+          {{else}}{ 
+            key: '${this.name}',
+            label: '${formatReadable(this.name)}',
+            type: '${this.uiType}',
+            sortable: true,
+            showInTable: true,
+            showInFilter: true 
+          },{{/if}}
           {{/each}}{{removeLine}}
         ]
       }
@@ -12991,7 +13365,6 @@
             entity.${minStart(this.name)} = related.data as ${majStart(this.type)};
           }
           {{/each}}{{removeLine}}
-
           return entity
         }
       }{{/if}}

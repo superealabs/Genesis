@@ -17,7 +17,7 @@
       <div class="flex items-center gap-2 md:gap-3">
         <router-link
           to="/home"
-          class="btn btn-sm btn-ghost bg-transparent hover:bg-base-200"
+          class="btn btn-md btn-ghost bg-transparent hover:bg-base-200"
           title="Home"
         >
           <HomeIcon />
@@ -25,7 +25,7 @@
 
         <router-link
           to="/customisation"
-          class="btn btn-sm btn-ghost bg-transparent hover:bg-base-200"
+          class="btn btn-md btn-ghost bg-transparent hover:bg-base-200"
           title="Settings"
         >
           <GearIcon />
@@ -38,7 +38,7 @@
         <div class="dropdown dropdown-end">
           <label
             tabindex="0"
-            class="btn btn-sm btn-ghost bg-transparent flex items-center gap-2 hover:bg-base-200"
+            class="btn btn-md btn-ghost bg-transparent flex items-center gap-2 hover:bg-base-200"
           >
             <div class="avatar">
               <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-1">

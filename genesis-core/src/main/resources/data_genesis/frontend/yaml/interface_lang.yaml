@@ -189,7 +189,7 @@
             name: '${minStart(this.className)} | ${minStart(this.className)}s',
             nav: {
               title: '@.capitalize:entities.${minStart(this.className)}.name',
-              create: '@:common.create @.capitalize:entities.${minStart(this.className)}.name',
+              create: '@.capitalize:common.create @.capitalize:entities.${minStart(this.className)}.name',
               list: '@.capitalize:entities.${minStart(this.className)}.name @:common.list',
             },
           },{{/if}}
@@ -348,15 +348,15 @@
           edit: 'Éditer',
         },
         box_confirm: {
-          H1Se: "Voulez-vous effacer cet élément définitivement?",
-          H2Se: "Pas de retour en arrière possible"
+          H1Se: 'Voulez-vous effacer cet élément définitivement?',
+          H2Se: 'Pas de retour en arrière possible'
         },
         header: {
-          backList: "Revenir à la liste",
-          list: "Liste",
-          details: "Détails",
+          backList: 'Revenir à la liste',
+          list: 'Liste',
+          details: 'Détails',
           add: "Formulaire d'ajout de",
-          form: "Formulaire"
+          form: 'Formulaire'
         },
         banner: {
           lang: 'Langue',
@@ -367,7 +367,7 @@
           details: "les détails",
           information: "les informations",
           and: "et",
-          needs: "ce dont vous n'avez pas besoin"
+          needs: "ce dont vous n'avez pas besoin",
         },
     
         navbar: {
@@ -376,11 +376,11 @@
           views: '@.capitalize:common.views',
           settings: '@.capitalize:common.settings',
           home: '@.capitalize:common.home',
-          customisation: 'Personnalisation de layout'
+          customisation: 'Personnalisation de layout',
         },
     
         authentication: {
-          title: "Se connecter",
+          title: 'Se connecter',
           login: '@.capitalize:common.login',
           logout: '@.capitalize:common.logout',
           register: '@.capitalize:common.register',
@@ -391,20 +391,20 @@
           confirmPassword: '@.capitalize:common.confirm votre @:common.password',
           submit: 'Se connecter',
           invalid: 'Identifiants invalides',
-          createAccount: "Créer un compte",
-          backToSignIn: "Retour à la connexion",
+          createAccount: 'Créer un compte',
+          backToSignIn: 'Retour à la connexion',
           dontHaveAccount: "Vous n'avez pas de compte?",
         },
         
         register: {
-          title: "Créer un compte",
-          name: "Nom",
-          email: "Email",
-          password: "Mot de passe",
+          title: 'Créer un compte',
+          name: 'Nom',
+          email: 'Email',
+          password: 'Mot de passe',
           submit: "S'inscrire",
-          backToSignIn: "Retour à la connexion",
-          success: "Compte créé avec succès",
-          error: "Échec de l'inscription"
+          backToSignIn: 'Retour à la connexion',
+          success: 'Compte créé avec succès',
+          error: "Échec de l'inscription",
           haveAccount: 'Vous avez déjà un compte?',
         },
     
@@ -434,8 +434,8 @@
     
         search: {
           filters: '@.capitalize:common.no @:common.filter | @.capitalize:common.filter | @.capitalize:common.filter ({count})',
-          simple_filter: "Filtres",
-          selection: "choisir un champ",
+          simple_filter: 'Filtres',
+          selection: 'choisir un champ',
         },
     
         entity: {
@@ -515,12 +515,12 @@
           500: 'Erreur interne (500)',
         },
         layout: {
-          switchToHorizontal: 'Passer à l\'horizontal',
+          switchToHorizontal: "Passer à l'horizontal",
           switchToVertical: 'Passer à la vertical',
         },
         theme: {
           switchToLight: 'Mode clair',
-          switchToDark: 'Mode sombre'
+          switchToDark: 'Mode sombre',
         },
         language: {
           choose: 'Langue',
@@ -556,8 +556,8 @@
           confirmPassword: 'Confirmer mot de passe',
           updateSuccess: 'Profil mis à jour avec succès',
           updateError: 'Échec de la mise à jour',
-          usernameChangedLogout: 'Nom d\'utilisateur modifié. Vous allez être déconnecté pour vous reconnecter avec vos nouveaux identifiants.',
-          usernameChangeWarning: '⚠️ Attention : Changer votre nom d\'utilisateur vous déconnectera. Vous devrez vous reconnecter avec vos nouveaux identifiants.',
+          usernameChangedLogout: "Nom d'utilisateur modifié. Vous allez être déconnecté pour vous reconnecter avec vos nouveaux identifiants.",
+          usernameChangeWarning: "⚠️ Attention : Changer votre nom d'utilisateur vous déconnectera. Vous devrez vous reconnecter avec vos nouveaux identifiants.",
           passwordChangeSuccess: 'Mot de passe modifié avec succès',
           passwordChangeError: 'Échec du changement de mot de passe',
           passwordMismatch: 'Les mots de passe ne correspondent pas',
@@ -595,4 +595,4 @@
         },
       },
     }
-    export default french;
+    export default french

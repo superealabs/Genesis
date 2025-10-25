@@ -10,7 +10,6 @@ import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.genesis.frontend.generator.model.InterfaceLang;
-import org.labs.genesis.frontend.generator.model.ProjectBranding;
 import org.labs.genesis.listener.ColorPicker;
 
 import javax.swing.*;
@@ -18,9 +17,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.List;
 
 @Getter
@@ -40,8 +36,8 @@ public class FrontendConfigurationForm {
     private TextFieldWithBrowseButton logoFileField;
     private JTextArea cssTextArea;
     private TextFieldWithBrowseButton faviconFileField;
-    private JBTextField logoLinkField;
-    private JBTextField faviconLinkField;
+    private JTextField logoLinkField;
+    private JTextField faviconLinkField;
     private JBList<InterfaceLang> interfaceLangOptions;
 
     private File logoFile;
@@ -57,7 +53,7 @@ public class FrontendConfigurationForm {
         secondaryColorPickerButton.addActionListener(new ColorPicker(secondaryColorField ,new Color(0x53,0x7c,0xc2,0x26)));
 
         FileChooserDescriptor faviconChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
-                .withTitle("Select favicon File")
+                .withTitle("Select favicon file")
                 .withDescription("Choose a .ico file to load into the editor")
                 .withFileFilter(file -> {
                     String extension = file.getExtension();
@@ -65,7 +61,7 @@ public class FrontendConfigurationForm {
                 });
 
         FileChooserDescriptor logoChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
-                .withTitle("Select logo File")
+                .withTitle("Select logo file")
                 .withDescription("Choose image or icon file to load into the editor")
                 .withFileFilter(file -> {
                     String extension = file.getExtension();
@@ -139,8 +135,6 @@ public class FrontendConfigurationForm {
                 onFaviconLinkChange();
             }
         });
-        logoLinkField.getEmptyText().setText("URL du Logo (ex: https://...)");
-        faviconLinkField.getEmptyText().setText("URL du Favicon (ex: https://...)");
     }
     private void onLogoFileChange() {
         String filePath = logoFileField.getText();

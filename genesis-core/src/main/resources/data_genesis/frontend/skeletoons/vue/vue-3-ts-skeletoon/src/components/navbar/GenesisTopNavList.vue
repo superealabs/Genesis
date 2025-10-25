@@ -1,17 +1,15 @@
 <template>
-  <ul class="menu w-full">
+  <ul class="menu menu-vertical w-full">
     <li v-for="item in items" :key="item.navTitle">
-      <!-- Direct link -->
       <router-link
         v-if="item.navLink"
         :to="item.navLink"
         class="menu-title opacity-80 hover:opacity-100 transition"
-        @click.stop
+        @click="closeAllDropdowns"
       >
         {{ $t(item.navTitle) }}
       </router-link>
 
-      <!-- Nested dropdown -->
       <details
         v-if="item.navChilds"
         :open="item.navChilds?.some((child) => child.navLink === $route.path)"
@@ -19,7 +17,7 @@
         <summary class="opacity-80 hover:opacity-100">
           {{ $t(item.navTitle) }}
         </summary>
-        <GenesisTopNavList :items="item.navChilds" />
+        <GenesisTopNavList :items="item.navChilds" @close="closeAllDropdowns" />
       </details>
     </li>
   </ul>
@@ -38,7 +36,15 @@ defineProps<{
   items: NavItem[]
 }>()
 
+// 1. Définir l'événement "close"
+const emit = defineEmits(['close'])
+
 const $route = useRoute()
+
+// 2. Fonction pour émettre l'événement de fermeture
+const closeAllDropdowns = () => {
+  emit('close')
+}
 </script>
 
 <style scoped>

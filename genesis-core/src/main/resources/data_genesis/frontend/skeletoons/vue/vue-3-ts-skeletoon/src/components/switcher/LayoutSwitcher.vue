@@ -1,5 +1,5 @@
 <template>
-  <button class="btn btn-outline btn-sm" @click="toggleLayout">
+  <button class="btn btn-outline btn-md" @click="toggleLayout">
     Switch to {{ layoutStore.currentLayout === 'sidebar' ? 'Topbar' : 'Sidebar' }} Layout
   </button>
 </template>
