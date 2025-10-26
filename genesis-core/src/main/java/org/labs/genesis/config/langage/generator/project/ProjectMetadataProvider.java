@@ -31,6 +31,10 @@ public class ProjectMetadataProvider {
             String databaseUrl = database.getConnectionString().get(language.getId());
 
             Map<String, Object> databaseMetadata = database.getDatabaseMetadataHashMap(credentials);
+            if(databaseMetadata.get("database").equals(""))
+            {
+                databaseMetadata.put("database",credentials.getSID().toLowerCase());
+            }
             databaseUrl = engine.render(databaseUrl, databaseMetadata);
 
             configFile.put("databaseUrl", databaseUrl);

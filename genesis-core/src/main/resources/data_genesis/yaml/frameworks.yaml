@@ -949,11 +949,11 @@
               hibernate.format_sql: true
         {{/if}}
         {{#if useSpringSecurityJWT}}
-          sql:
-            init:
-              mode: always
-              schema-locations: classpath:sql-init/users.sql 
-              encoding: UTF-8
+          flyway:
+            enabled: true
+            locations: classpath:sql-init
+            baseline-on-migrate: true
+            baseline-version: 0
         {{/if}}
         
         server:
@@ -1106,6 +1106,18 @@
       artifactId: "commons-text"
       version: "1.11.0"
       scope: "{{removeLine}}"
+
+    - groupId: "org.flywaydb"
+      artifactId: "flyway-core"
+      version: "10.19.0"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.flywaydb"
+      artifactId: "flyway-database-oracle"
+      version: "10.19.0"
+      scope: "{{removeLine}}"
+
+
   model:
     toGenerate: true
     modelImports: |
@@ -1146,6 +1158,144 @@
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
     modelPackage: "${groupLink}.${lowerCase(projectName)}.models;"
+    modelTestUnitFiles:
+      - fileType: "Unit Test File"
+        fileName: "${majStart(className)}ApplicationTests"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)};
+
+          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+
+          import java.nio.charset.StandardCharsets;
+          import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+          import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
+          import org.junit.jupiter.api.AfterEach;
+          import org.junit.jupiter.api.BeforeEach;
+          import org.junit.jupiter.api.Tag;
+          import org.junit.jupiter.api.Test;
+          import org.junit.jupiter.api.TestInfo;
+          import org.junit.jupiter.api.TestInstance;
+          import org.junit.jupiter.api.TestInstance.Lifecycle;
+          import org.springframework.beans.factory.annotation.Autowired;
+          import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+          import org.springframework.boot.test.context.SpringBootTest;
+          import org.springframework.http.MediaType;
+          import org.springframework.mock.web.MockHttpServletResponse;
+          import org.springframework.test.web.servlet.MockMvc;
+          import org.springframework.test.context.ActiveProfiles;
+          import org.springframework.jdbc.core.JdbcTemplate;
+          import ${groupLink}.${lowerCase(projectName)}.utils.ConstraintDisabler;
+
+          import com.fasterxml.jackson.databind.ObjectMapper;
+          import com.fasterxml.jackson.databind.ObjectWriter;
+          import com.fasterxml.jackson.databind.SerializationFeature;
+
+          @SpringBootTest
+          @AutoConfigureMockMvc
+          @TestInstance(Lifecycle.PER_CLASS)
+          @ActiveProfiles("test")
+          class ${majStart(className)}ApplicationTests {
+
+            private MockMvc mockMvc;
+            private ${majStart(className)}Service service;
+            private ${majStart(className)} mockData=new ${majStart(className)}();
+            private final JdbcTemplate jdbcTemplate;
+            private ConstraintDisabler constraintDisabler;
+
+            @Autowired
+            public ${majStart(className)}ApplicationTests(MockMvc mockMvc, ${majStart(className)}Service service, JdbcTemplate jdbcTemplate) throws Exception {
+              this.mockMvc=mockMvc;
+              this.service=service;
+              this.jdbcTemplate = jdbcTemplate;
+              constraintDisabler = new ConstraintDisabler(jdbcTemplate);
+            }
+
+            private final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(),
+            MediaType.APPLICATION_JSON.getSubtype(),
+            StandardCharsets.UTF_8);
+
+            {{#if !isView}} 
+            @BeforeEach
+            void seedingTheDatabase(){
+              constraintDisabler.disableConstraintsForTable("${tableName}");
+              mockData = new ${majStart(className)}();
+              {{#each fields}}
+              {{#if this.isPrimaryKey}}{{removeLine}}
+              {{elseIf this.isForeignKey}}{{removeLine}}
+              {{else}}mockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
+              {{/each}}
+              service.create${majStart(className)}(mockData);
+            }
+            @AfterEach
+            void removingMockdatas(TestInfo testInfo){
+              if(testInfo.getTags().contains("skipAfter")){
+                return;
+              }
+              service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
+              constraintDisabler.restoreConstraints();
+            }
+            {{else}}{{removeLine}}{{/if}}
+
+            @Test
+            void testSearch${majStart(className)}() throws Exception{
+              ObjectMapper mapper=new ObjectMapper();
+              mapper.findAndRegisterModules();
+              mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
+              ObjectWriter writer=mapper.writer().withDefaultPrettyPrinter();
+              String requestJson=writer.writeValueAsString(mockData);
+              MockHttpServletResponse resp=mockMvc.perform(post("/${lowerCase(classNameLink)}/search").contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
+              System.out.println(resp.getContentAsString());
+            }
+
+            @Test
+            void testGetAll${majStart(className)}() throws Exception{
+              MockHttpServletResponse resp=mockMvc.perform(get("/${lowerCase(classNameLink)}")).andReturn().getResponse();
+              System.out.println(resp.getContentAsString());
+            }
+
+            {{#if !isView}} 
+            @Test
+            void testCreate${majStart(className)}() throws Exception{
+              ${majStart(className)} otherMockData=new ${majStart(className)}();
+              {{#each fields}}
+              {{#if this.isPrimaryKey}}{{removeLine}}
+              {{elseIf this.isForeignKey}}{{removeLine}}
+              {{else}}otherMockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
+              {{/each}}
+              service.create${majStart(className)}(otherMockData);
+              MockHttpServletResponse resp=mockMvc.perform(get("/${lowerCase(classNameLink)}")).andReturn().getResponse();
+              System.out.println(resp.getContentAsString());
+              service.delete${majStart(className)}(otherMockData.get${majStart(pkColumn)}());
+            }
+            {{else}}{{removeLine}}{{/if}}
+
+            {{#if !isView}} 
+            @Test
+            void testModify${majStart(className)}() throws Exception{
+              ObjectMapper mapper=new ObjectMapper();
+              mapper.findAndRegisterModules();
+              mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
+              ObjectWriter writer=mapper.writer().withDefaultPrettyPrinter();
+              String requestJson=writer.writeValueAsString(mockData);
+              String requestUrl="/${lowerCase(classNameLink)}/%s";
+              requestUrl=String.format(requestUrl, mockData.get${majStart(pkColumn)}());
+              MockHttpServletResponse resp=mockMvc.perform(put(requestUrl).contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
+              System.out.println(resp.getContentAsString());
+            }
+
+            @Test
+            @Tag("skipAfter")
+            void testDelete${majStart(className)}() throws Exception{
+              service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
+              constraintDisabler.restoreConstraints();
+            }
+            {{else}}{{removeLine}}{{/if}}
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
     modelAdditionalFiles:
       - fileType: "Specification File"
         fileName: "${majStart(className)}Specification"
@@ -1210,143 +1360,6 @@
               }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/specification"
-      - fileType: "Unit Test File"
-        fileName: "${majStart(className)}ApplicationTests"
-        extension: "java"
-        content: |
-          package ${groupLink}.${lowerCase(projectName)};
-          
-          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-          
-          import java.nio.charset.StandardCharsets;
-          import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
-          import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
-          import org.junit.jupiter.api.AfterEach;
-          import org.junit.jupiter.api.BeforeEach;
-          import org.junit.jupiter.api.Tag;
-          import org.junit.jupiter.api.Test;
-          import org.junit.jupiter.api.TestInfo;
-          import org.junit.jupiter.api.TestInstance;
-          import org.junit.jupiter.api.TestInstance.Lifecycle;
-          import org.springframework.beans.factory.annotation.Autowired;
-          import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-          import org.springframework.boot.test.context.SpringBootTest;
-          import org.springframework.http.MediaType;
-          import org.springframework.mock.web.MockHttpServletResponse;
-          import org.springframework.test.web.servlet.MockMvc;
-          import org.springframework.test.context.ActiveProfiles;
-          import org.springframework.jdbc.core.JdbcTemplate;
-          import ${groupLink}.${lowerCase(projectName)}.utils.ConstraintDisabler;
-          
-          import com.fasterxml.jackson.databind.ObjectMapper;
-          import com.fasterxml.jackson.databind.ObjectWriter;
-          import com.fasterxml.jackson.databind.SerializationFeature;
-          
-          @SpringBootTest
-          @AutoConfigureMockMvc
-          @TestInstance(Lifecycle.PER_CLASS)
-          @ActiveProfiles("test")
-          class ${majStart(className)}ApplicationTests {
-          
-            private MockMvc mockMvc;
-            private ${majStart(className)}Service service;
-            private ${majStart(className)} mockData=new ${majStart(className)}();
-            private final JdbcTemplate jdbcTemplate;
-            private ConstraintDisabler constraintDisabler;
-          
-            @Autowired
-            public ${majStart(className)}ApplicationTests(MockMvc mockMvc, ${majStart(className)}Service service, JdbcTemplate jdbcTemplate) throws Exception {
-              this.mockMvc=mockMvc;
-              this.service=service;
-              this.jdbcTemplate = jdbcTemplate;
-              constraintDisabler = new ConstraintDisabler(jdbcTemplate);
-            }
-          
-            private final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(),
-            MediaType.APPLICATION_JSON.getSubtype(),
-            StandardCharsets.UTF_8);
-          
-            {{#if !isView}} 
-            @BeforeEach
-            void seedingTheDatabase(){
-              constraintDisabler.disableConstraintsForTable("${tableName}");
-              mockData = new ${majStart(className)}();
-              {{#each fields}}
-              {{#if this.isPrimaryKey}}{{removeLine}}
-              {{elseIf this.isForeignKey}}{{removeLine}}
-              {{else}}mockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
-              {{/each}}
-              service.create${majStart(className)}(mockData);
-            }
-            @AfterEach
-            void removingMockdatas(TestInfo testInfo){
-              if(testInfo.getTags().contains("skipAfter")){
-                return;
-              }
-              service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
-              constraintDisabler.restoreConstraints();
-            }
-            {{else}}{{removeLine}}{{/if}}
-          
-            @Test
-            void testSearch${majStart(className)}() throws Exception{
-              ObjectMapper mapper=new ObjectMapper();
-              mapper.findAndRegisterModules();
-              mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
-              ObjectWriter writer=mapper.writer().withDefaultPrettyPrinter();
-              String requestJson=writer.writeValueAsString(mockData);
-              MockHttpServletResponse resp=mockMvc.perform(post("/${lowerCase(classNameLink)}/search").contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
-            }
-          
-            @Test
-            void testGetAll${majStart(className)}() throws Exception{
-              MockHttpServletResponse resp=mockMvc.perform(get("/${lowerCase(classNameLink)}")).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
-            }
-          
-            {{#if !isView}} 
-            @Test
-            void testCreate${majStart(className)}() throws Exception{
-              ${majStart(className)} otherMockData=new ${majStart(className)}();
-              {{#each fields}}
-              {{#if this.isPrimaryKey}}{{removeLine}}
-              {{elseIf this.isForeignKey}}{{removeLine}}
-              {{else}}otherMockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
-              {{/each}}
-              service.create${majStart(className)}(otherMockData);
-              MockHttpServletResponse resp=mockMvc.perform(get("/${lowerCase(classNameLink)}")).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
-              service.delete${majStart(className)}(otherMockData.get${majStart(pkColumn)}());
-            }
-            {{else}}{{removeLine}}{{/if}}
-          
-            {{#if !isView}} 
-            @Test
-            void testModify${majStart(className)}() throws Exception{
-              ObjectMapper mapper=new ObjectMapper();
-              mapper.findAndRegisterModules();
-              mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
-              ObjectWriter writer=mapper.writer().withDefaultPrettyPrinter();
-              String requestJson=writer.writeValueAsString(mockData);
-              String requestUrl="/${lowerCase(classNameLink)}/%s";
-              requestUrl=String.format(requestUrl, mockData.get${majStart(pkColumn)}());
-              MockHttpServletResponse resp=mockMvc.perform(put(requestUrl).contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
-            }
-          
-            @Test
-            @Tag("skipAfter")
-            void testDelete${majStart(className)}() throws Exception{
-              service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
-              constraintDisabler.restoreConstraints();
-            }
-            {{else}}{{removeLine}}{{/if}}
-          }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
       - fileType: "DTO Search Model class"
         fileName: "${className}Search"
         extension: "java"
@@ -3957,13 +3970,13 @@
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/"
     modelPackage: "${majStart(projectName)}.Models"
-    modelAdditionalFiles:
+    modelTestUnitFiles:
       - fileType: "Unit Test File"
         fileName: "${majStart(className)}ApplicationTests"
         extension: "cs"
         content: |
           namespace ${majStart(projectName)}.Tests;
-  
+
           using System.Net.Http;
           using System.Linq.Expressions;
           using System.Data.Common;
@@ -3988,11 +4001,11 @@
             private IServiceScope _scope;
             private DbConnection _dbConnection;
             private ConstraintDisabler _constraintDisabler;
-            
+
             public ${majStart(className)}ApplicationTests(WebApplicationFactory<Program> factory)
             {
               _factory = factory.WithWebHostBuilder(builder =>{});
-              
+
               mockData = new ${majStart(className)}
               {
                 {{#each fields}}
@@ -4002,7 +4015,7 @@
                 {{/each}}
               };
             }
-    
+
             public async Task InitializeAsync()
             {
               CurrentTestName = "";
@@ -4010,28 +4023,28 @@
               // Créer un scope qui durera toute la vie du test
               _scope = _factory.Services.CreateScope();
               var context = _scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
-              
+
               _dbConnection = context.Database.GetDbConnection();
-            
+
               // Ouvrir la connexion si nécessaire
               if (_dbConnection.State != ConnectionState.Open)
               {
                 await _dbConnection.OpenAsync();
               }
-            
+
               // Initialiser le désactivateur de contraintes
               _constraintDisabler = new ConstraintDisabler(_dbConnection);
-              
+
               // Démarrer la transaction et désactiver les contraintes
               _constraintDisabler.StartTransaction();
               _constraintDisabler.DisableConstraintsForTable("${tableName}");
-              
+
               // Insérer les données de test
               var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
               await service.AddAsync(mockData);
               {{else}}{{removeLine}}{{/if}}
             }
-    
+
             public async Task DisposeAsync()
             {
               {{#if !isView}} 
@@ -4039,13 +4052,13 @@
               {
                 if (CurrentTestName == nameof(TestDelete))
                 return;
-                
+
                 var context = _scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
                 var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
-                
+
                 // Supprimer les données de test
                 await service.DeleteAsync(mockData.${majStart(pkColumn)});
-                
+
                 // Restaurer les contraintes
                 _constraintDisabler.RestoreConstraints();
               }
@@ -4056,12 +4069,12 @@
                 {
                   await _dbConnection.CloseAsync();
                 }
-                
+
                 _scope?.Dispose();
               }
               {{else}}{{removeLine}}{{/if}}
             }
-    
+
             {{#if !isView}} 
             [Fact]
             public async Task TestCreate()
@@ -4071,7 +4084,7 @@
                 // Résoudre le DbContext et les autres services dans ce scope
                 var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
                 var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
-                
+
                 var otherMockData = new ${majStart(className)}
                 {
                   {{#each fields}}
@@ -4084,7 +4097,7 @@
                 await service.DeleteAsync(otherMockData.${majStart(pkColumn)});
               }
             }
-    
+
             [Fact]
             public async Task TestDelete()
             {
@@ -4099,7 +4112,7 @@
                 await _dbConnection.CloseAsync();
               }
             }
-    
+
             [Fact]
             public async Task TestModify()
             {
@@ -4108,7 +4121,7 @@
                 // Résoudre le DbContext et les autres services dans ce scope
                 var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
                 var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
-                
+
                 {{#each fields}}
                 {{#if this.isPrimaryKey}}{{removeLine}}
                 {{elseIf this.isForeignKey}}{{removeLine}}
@@ -4118,7 +4131,7 @@
               }
             }
             {{else}}{{removeLine}}{{/if}}
-    
+
             [Fact]
             public async Task TestGetAll()
             {
@@ -4126,16 +4139,16 @@
               {
                 var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
                 var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
-                
+
                 var result = await service.GetAllAsync(page: 0, pageSize: 10, sorting: null);
-                
+
                 Assert.NotNull(result);
                 {{#if !isView}}
                 Assert.True(result.Content.Any(), "Aucun enregistrement trouvé dans GetAllAsync. Vérifiez si la base contient des données.");
                 {{else}}{{removeLine}}{{/if}}
               }
             }
-    
+
             [Fact]
             public async Task TestSearch()
             {
@@ -4143,13 +4156,13 @@
               {
                 var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
                 var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
-                
+
                 var search = new ${majStart(className)}Dto();
                 var objectSearch = new GenericMapper().Map<${majStart(className)}Dto, ${majStart(className)}>(search);
-                
+
                 // Act
                 var result = await service.SearchAsync(search, page: 0, pageSize: 10, sorting: null);
-                
+
                 // Assert
                 Assert.NotNull(result);
                 {{#if !isView}} 
@@ -4157,7 +4170,7 @@
                 {{else}}{{removeLine}}{{/if}}
               }
             }
-    
+
             [Fact]
             public async Task TestGetById()
             {
@@ -4165,9 +4178,9 @@
               {
                 var context = scope.ServiceProvider.GetRequiredService<${majStart(projectName)}Context>();
                 var service = new ${majStart(className)}Service(new ${majStart(className)}Repository(context));
-                
+
                 var result = await service.GetByIdAsync(mockData.${majStart(pkColumn)}, Array.Empty<Expression<Func<${majStart(className)}, object>>>());
-                
+
                 {{#if !isView}} 
                 // Assert
                 Assert.NotNull(result);
@@ -4181,6 +4194,7 @@
             }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
+    modelAdditionalFiles:
       - fileType: "DTO search model class"
         fileName: "${majStart(className)}Dto"
         extension: "cs"

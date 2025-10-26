@@ -65,7 +65,7 @@ public class APIGenerator implements GenesisGenerator {
         FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
 
         ProjectGenerator.renderFilesEdits(framework.getModel().getModelAdditionalFiles(), metadataFinally);
-
+        //ProjectGenerator.renderFilesEdits(framework.getModel().getModelTestUnitFiles(), metadataFinally);
         return result;
     }
 
