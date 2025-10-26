@@ -2,6 +2,15 @@ package org.labs.genesis.connexion.providers;
 
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.model.ColumnMetadata;
+import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.List;
+import java.util.Map;
 
 public class SQLServerDatabase extends Database {
     @Override

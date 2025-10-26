@@ -266,7 +266,7 @@ public abstract class Database {
         return listeCols;
     }
 
-    private String getDatabaseType(ResultSet columns) throws Exception {
+    public String getDatabaseType(ResultSet columns) throws Exception {
         String columnType = columns.getString("TYPE_NAME");
 
         if (columns.getInt("DATA_TYPE") == Types.NUMERIC && this.getId() == Constantes.Oracle_ID) {
@@ -410,7 +410,6 @@ public abstract class Database {
     }
 
     protected boolean useTimeZone(ResultSet column) throws SQLException {
-    private boolean isColumnDate(ResultSet column) throws SQLException {
         int dataType = column.getInt("DATA_TYPE");
 
         // Types JDBC avec fuseau horaire

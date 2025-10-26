@@ -139,7 +139,7 @@
       "enum": "\"mock\"",
       "BIT": "true",
       "TIME": "java.time.LocalTime.now()",
-      "BIGINT UNSIGNED": "0L"
+      "BIGINT UNSIGNED": "0L",
       "DECIMAL": "0."
     },
     "criteriaBuildSnippet": {
@@ -189,7 +189,7 @@
       "BIGINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "DECIMAL": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TEXT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
-      "SMALLINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
+      "SMALLINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TIMESTAMP": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TIMESTAMP(*)": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TIME": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
