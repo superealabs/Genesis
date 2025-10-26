@@ -1,44 +1,49 @@
 <template>
   <div class="flex items-center gap-2" :class="{ 'flex-col items-start': !rowInput }">
     <div class="flex gap-2 bg-transparent">
-      <!-- Label -->
       <label
-        v-if="label"
+        v-if="label || $slots.label"
         :for="inputId"
         class="label font-medium"
         :class="{ 'whitespace-nowrap': rowInput }"
       >
-        {{ label }}
+        <slot name="label">{{ label }}</slot>
       </label>
-      <ErrorMessage v-if="violation" :message="violation" />
     </div>
-    <!-- Dropdown Container -->
-    <div class="relative w-full min-w-50">
-      <input
-        ref="inputRef"
-        @click="toggleDropdown"
-        class="w-full select cursor-default"
-        :aria-expanded="showDropdownState"
-        v-model="selectedValue"
-        readonly
-        :aria-controls="'dropdown-' + inputId"
-        :placeholder="placeholder ?? '-- Select an option'"
-      />
+    <div class="relative w-full min-w-50 flex-grow">
+      <slot
+        name="selected-value"
+        :value="selectedValue"
+        :toggle="toggleDropdownAndLoad"
+        :placeholder="placeholder"
+      >
+        <input
+          ref="inputRef"
+          @click="toggleDropdownAndLoad"
+          class="w-full select cursor-default"
+          :class="{ 'border-error': violation }"
+          :aria-expanded="showDropdownState"
+          v-model="selectedValue"
+          readonly
+          :aria-controls="'dropdown-' + inputId"
+          :placeholder="placeholder ?? '-- Select an option'"
+        />
+      </slot>
 
-      <!-- Dropdown Content -->
       <div
         ref="dropdownRef"
         :id="'dropdown-' + inputId"
         v-show="showDropdownState"
         class="absolute mt-1 w-full z-10 top-full card border border-base-300 bg-base-200 shadow-lg"
       >
-        <!-- Header -->
         <div class="card-header p-3 flex flex-col gap-2 bg-base-200">
           <div class="flex justify-between w-full items-center border-b">
-            <span class="font-semibold">Select an option</span>
+            <slot name="header-title">
+              <span class="font-semibold">Select an option</span>
+            </slot>
             <GenesisButton
               @click="hideDropdown"
-              class="btn btn-ghost btn-md text-error"
+              class="btn btn-ghost btn-sm text-error"
               type="button"
               title="Cancel"
             >
@@ -46,46 +51,57 @@
             </GenesisButton>
           </div>
 
-          <!-- Search -->
-          <div @mousedown.stop @click.stop>
-            <GenesisSearch
-              :initial-model="defaultFilterValue"
-              :default-active="defaultFilter"
-              :search-fields="filters"
-              @search="onSearchInput"
-              :auto="true"
-            />
-          </div>
+          <slot name="search-criteria" :filters="filters" :on-search="onSearchInput">
+            <div @mousedown.stop @click.stop>
+              <GenesisSearch
+                :initial-model="defaultFilterValue"
+                :default-active="defaultFilter"
+                :search-fields="filters"
+                @search="onSearchInput"
+                :auto="true"
+              />
+            </div>
+          </slot>
         </div>
 
-        <!-- Options List -->
         <div
           ref="listRef"
           @scroll="onScroll"
           class="card-body border-t p-0 max-h-72 overflow-y-auto"
         >
-          <div v-if="options.length === 0" class="px-3 py-6 text-center">No result</div>
-
-          <div
-            v-for="option in options"
-            :key="option.value"
-            @mousedown.prevent="selectOption(option)"
-            class="cursor-pointer px-3 py-2 hover:bg-primary hover:text-primary-content"
+          <slot
+            name="options-list"
+            :options="options"
+            :loading-page="loadingPage"
+            :select-option="selectOption"
           >
-            {{ option.label }}
-          </div>
+            <div v-if="options.length === 0" class="px-3 py-6 text-center">No result</div>
 
-          <div v-if="loadingPage" class="flex justify-center py-2">
-            <span class="loading loading-spinner"></span>
-          </div>
+            <div
+              v-for="option in options"
+              :key="option.value"
+              @mousedown.prevent="selectOption(option)"
+              class="cursor-pointer px-3 py-2 hover:bg-primary hover:text-primary-content"
+            >
+              {{ option.label }}
+            </div>
+
+            <div v-if="loadingPage" class="flex justify-center py-2">
+              <span class="loading loading-spinner"></span>
+            </div>
+          </slot>
         </div>
       </div>
+
+      <ErrorMessage v-if="violation" :message="violation" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+// 1. Import useDropdown
+import { useDropdown } from '@/composables/useDropdown'
 import { PaginationData } from '@/models/api/PageResponseModel'
 import type { PaginationRequestParameter } from '@/models/api/RequestModel'
 import type { SelectOption } from '@/models/SelectOption'
@@ -95,7 +111,12 @@ import XIcon from '@/components/icons/XIcon.vue'
 import GenesisButton from '@/components/button/GenesisButton.vue'
 import ErrorMessage from '@/components/common/ErrorMessage.vue'
 
-/* Props */
+defineOptions({
+  name: 'GenesisSelectSearchCriteria',
+  inheritAttrs: false,
+})
+
+/* Props & Emits (Unchanged) */
 const props = defineProps<{
   label?: string
   placeholder?: string
@@ -112,15 +133,23 @@ const props = defineProps<{
   violation?: string
 }>()
 
-/* Emits */
 const emit = defineEmits<{
   (e: 'option-selected', value: string | number): void
 }>()
 
 /* State */
-const showDropdownState = ref(false)
+// 2. Use refs for trigger and content, but no longer need manual setup/teardown in onMounted/onBeforeUnmount
+const inputRef = ref<HTMLElement | null>(null)
 const dropdownRef = ref<HTMLDivElement | null>(null)
 const listRef = ref<HTMLDivElement | null>(null)
+
+// 3. Destructure properties from the composable, replacing manual state and logic
+const {
+  showDropdown: showDropdownState, // Use an alias to match the original state variable name
+  openDropdown,
+  hideDropdown,
+} = useDropdown(inputRef, dropdownRef) // `as any` might be needed if types are strict
+
 const selectedValue = ref(props.defaultValue ?? '')
 const loadingPage = ref(false)
 const hasMore = ref(true)
@@ -132,9 +161,8 @@ const pagination = ref(
   }),
 )
 const options = ref<SelectOption[]>([])
-const inputRef = ref<HTMLInputElement | null>(null)
 
-/* Computed */
+/* Computed (Unchanged) */
 const defaultFilter = computed(() => [props.defaultKey ?? ''])
 const defaultFilterValue = computed(() =>
   props.defaultKey && props.defaultKey.length > 0 ? { [props.defaultKey]: props.defaultValue } : {},
@@ -146,35 +174,25 @@ const inputId = computed(() =>
     : 'select-search-' + Math.random().toString(36).substring(2, 8),
 )
 
-/* Dropdown control */
-const toggleDropdown = () => {
-  if (showDropdownState.value == true) {
-    hideDropdown()
-  } else {
-    showDropdown()
-  }
-}
-
-const showDropdown = async () => {
-  showDropdownState.value = true
+/* Dropdown control (Modified to incorporate data loading) */
+// This custom function is needed because we must load data *before* opening the dropdown.
+const openDropdownAndLoad = async () => {
+  // Use the openDropdown from the composable to set state
+  openDropdown()
   await loadOptions(true)
 }
 
-const hideDropdown = () => {
-  showDropdownState.value = false
+const toggleDropdownAndLoad = () => {
+  if (showDropdownState.value == true) {
+    hideDropdown()
+  } else {
+    openDropdownAndLoad()
+  }
 }
 
-/* Click outside */
-const handleClickOutside = (event: MouseEvent) => {
-  const target = event.target as Node
-  if (dropdownRef.value?.contains(target) || inputRef.value?.contains(target)) return
-  hideDropdown()
-}
-
+/* Lifecycle Hook (Modified to remove manual click outside logic) */
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-
-  // Initialize default label
+  // Keep the default value initialization logic
   if (props.defaultValue && props.defaultKey) {
     props
       .searchFunction(
@@ -190,10 +208,10 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', handleClickOutside)
+  // Nothing needed here, useDropdown cleans up its event listener
 })
 
-/* Search + infinite scroll */
+/* Search + infinite scroll (Unchanged) */
 const loadOptions = async (reset = false) => {
   if (loadingPage.value || !hasMore.value) return
 
@@ -229,7 +247,7 @@ const onScroll = async () => {
   }
 }
 
-/* Option select */
+/* Option select (Uses hideDropdown from composable) */
 const selectOption = (option: SelectOption) => {
   selectedValue.value = option.label
   emit('option-selected', option.value)

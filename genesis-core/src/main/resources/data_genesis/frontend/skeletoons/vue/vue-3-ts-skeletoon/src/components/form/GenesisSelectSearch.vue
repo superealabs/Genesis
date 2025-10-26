@@ -92,7 +92,7 @@ const props = defineProps<{
   loading?: boolean
   rowInput?: boolean
   pageSize?: number
-  violation?:string
+  violation?: string
 }>()
 
 const emit = defineEmits<{

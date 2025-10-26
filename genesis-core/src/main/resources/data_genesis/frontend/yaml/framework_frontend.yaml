@@ -1550,99 +1550,37 @@
       fileName: "ProfileAvatar"
       extension: "vue"
       content: |
-        <template>
-          <div :class="dropDirections">
-            <!-- Trigger -->
-            <div
-              tabindex="0"
-              role="button"
-              class="flex items-center gap-3 px-3 py-2 rounded-md nav-item transition-colors cursor-pointer"
-            >
-              <ProfileAvatar :username="name" />
-              <div class="flex flex-col items-start">
-                <p class="font-medium leading-tight">{{ name }}</p>
-              </div>
-            </div>
-
-            <!-- Dropdown Menu -->
-            <ul
-              tabindex="0"
-              class="menu dropdown-content mt-2 z-[1] p-2 shadow-md border border-base-100 bg-base-100 rounded-box w-60"
-            >
-              <li>
-                <button @click="goToProfile" class="flex items-center justify-start gap-2">
-                  <ProfileIcon /> <span>My Profile</span>
-                </button>
-              </li>
-              <li>
-                <button @click="logout" class="flex items-center justify-start gap-2 text-red-500">
-                  <LogoutIcon /> <span>Logout</span>
-                </button>
-              </li>
-            </ul>
-          </div>
-        </template>
-
         <script setup lang="ts">
         import { computed } from 'vue'
-        import { useAuth } from '@/composables/useAuth.ts'
-        import LogoutIcon from '@/components/icons/LogoutIcon.vue'
-        import ProfileIcon from '@/components/icons/ProfileIcon.vue'
-        import ProfileAvatar from '@/components/user/ProfileAvatar.vue'
 
-        /* Props */
-        const props = defineProps<{
-          name: string
-          dropdownDirection?: {
-            top?: boolean
-            center?: boolean
-            left?: boolean
-            right?: boolean
-            bottom?: boolean
-          }
-        }>()
+        const props = defineProps({
+          username: String,
+          size: {
+            type: Number,
+            default: 10,
+          },
+        })
 
-        /* Composables */
-        const auth = useAuth()
-
-        /* Methods */
-        const logout = () => {
-          auth.logout()
-        }
-        const goToProfile = () => {
-          auth.goToProfileView()
-        }
-
-        const dropDirections = computed(() => {
-          let directions = 'dropdown w-full'
-          if (props.dropdownDirection?.center) {
-            directions += ' dropdown-center'
-          }
-
-          if (props.dropdownDirection?.left) {
-            directions += ' dropdown-left'
-          }
-
-          if (props.dropdownDirection?.right) {
-            directions += ' dropdown-right'
-          }
-
-          if (props.dropdownDirection?.top) {
-            directions += ' dropdown-top'
-          }
-
-          if (props.dropdownDirection?.bottom) {
-            directions += ' dropdown-bottom'
-          }
-          return directions
+        /* Computed initials */
+        const initials = computed(() => {
+          if (!props.username) return ''
+          return props.username
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()
         })
         </script>
 
-        <style scoped>
-        .dropdown [role='button']:focus {
-          outline: none;
-        }
-        </style>
+        <template>
+          <div
+            class="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-content font-bold"
+          >
+            {{ initials }}
+          </div>
+        </template>
+
+        <style scoped></style>
       destinationPath: "${destinationFolder}/src/components/user"
 
     - fileType: "Auth composable"
@@ -1713,7 +1651,7 @@
             isLoggedIn,
           }
         }
-      destinationPath: "${destinationFolder}/src/composables "
+      destinationPath: "${destinationFolder}/src/composables"
 
     - fileType: "Auth store"
       fileName: "useAuthenticationStore"
@@ -1975,6 +1913,276 @@
     
         <script setup lang="ts"></script>
       destinationPath: "${destinationFolder}/src/layouts"
+
+    - fileType: "Change Password DTO"
+      fileName: "ChangePasswordDTO"
+      extension: "ts"
+      content: |
+        export interface ChangePasswordDTO {
+          oldPassword: string
+          newPassword: string
+          confirmPassword: string
+        }
+      destinationPath: "${destinationFolder}/src/models/auth"
+
+    - fileType: "Update Profile DTO"
+      fileName: "UpdateProfileDTO"
+      extension: "ts"
+      content: |
+        export interface UpdateProfileDTO {
+          name: string
+          email: string
+        }
+      destinationPath: "${destinationFolder}/src/models/auth"
+
+    - fileType: "UpdateProfile Form"
+      fileName: "UpdateProfileForm"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="card bg-base-100">
+            <div class="card-body">
+              <form @submit.prevent="handleSubmit" class="grid grid-cols-1 w-5/12 gap-4 mx-auto">
+                <div class="text-center">
+                  <ErrorMessage :message="error" />
+                </div>
+
+                <div>
+                  <GenesisInput
+                    v-model="form.name"
+                    :value="form.name"
+                    :violation="nameError"
+                    :label="$t('authentication.username')"
+                    :mandatory="true"
+                    :placeholder="$t('authentication.username')"
+                  />
+                </div>
+
+                <div>
+                  <GenesisInput
+                    v-model="form.email"
+                    :value="form.email"
+                    :violation="emailError"
+                    type="email"
+                    :label="$t('authentication.email')"
+                    :mandatory="true"
+                    :placeholder="$t('authentication.email')"
+                  />
+                </div>
+
+                <!-- Action buttons -->
+                <div class="flex justify-end gap-3 mt-6">
+                  <GenesisButton
+                    type="submit"
+                    class="btn btn-primary text-primary-content"
+                    :label="$t('profile.edit')"
+                    :is-loading="isLoading"
+                  />
+                  <GenesisButton
+                    type="button"
+                    @click="auth.goToProfileView()"
+                    class="btn btn-outline btn-error"
+                    :label="$t('button.cancel')"
+                  />
+                </div>
+              </form>
+            </div>
+          </div>
+        </template>
+
+        <script setup lang="ts">
+        import { ref } from 'vue'
+        import GenesisInput from '@/components/form/GenesisInput.vue'
+        import ErrorMessage from '@/components/common/ErrorMessage.vue'
+        import type { UpdateProfileDTO } from '@/models/auth/UpdateProfileDTO'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+        import { useAuth } from '@/composables/useAuth'
+
+        const props = defineProps<{
+          initialData?: UpdateProfileDTO
+        }>()
+
+        console.log('Initial Data:', props.initialData)
+
+        const form = ref<UpdateProfileDTO>({
+          name: props.initialData?.name ?? '',
+          email: props.initialData?.email ?? '',
+        })
+
+        const nameError = ref<string | undefined>(undefined)
+        const emailError = ref<string | undefined>(undefined)
+        const error = ref<string | undefined>(undefined)
+        const isLoading = ref(false)
+
+        const auth = useAuth()
+
+        const handleSubmit = async () => {
+          // Clear previous errors
+          error.value = undefined
+          nameError.value = undefined
+          emailError.value = undefined
+          isLoading.value = true
+
+          try {
+            const response = await auth.updateProfile(form.value)
+            if (!response.success) {
+              error.value = response.error
+              return
+            }
+            auth.logout()
+          } catch (e: unknown) {
+            error.value = 'Une erreur inattendue est survenue.'
+          } finally {
+            isLoading.value = false
+          }
+        }
+        </script>
+
+        <style scoped></style>
+      destinationPath: "${destinationFolder}/src/components/auth"
+
+    - fileType: "ChangePassword Form"
+      fileName: "ChangePasswordForm"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="card bg-base-100">
+            <div class="card-body">
+              <form @submit.prevent="handleSubmit" class="grid grid-cols-1 w-5/12 gap-4 mx-auto">
+                <div class="text-center">
+                  <ErrorMessage :message="error" />
+                </div>
+
+                <div>
+                  <PasswordInput
+                    v-model="form.oldPassword"
+                    :violation="oldPasswordError"
+                    :label="$t('profile.oldPassword')"
+                    :mandatory="true"
+                  />
+                </div>
+
+                <div>
+                  <PasswordInput
+                    v-model="form.newPassword"
+                    :violation="newPasswordError"
+                    :label="$t('profile.newPassword')"
+                    :mandatory="true"
+                  />
+                </div>
+
+                <div>
+                  <PasswordInput
+                    v-model="form.confirmPassword"
+                    :violation="confirmPasswordError"
+                    :label="$t('profile.confirmPassword')"
+                    :mandatory="true"
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                <!-- Action buttons -->
+                <div class="flex justify-end gap-3 mt-6">
+                  <GenesisButton
+                    type="submit"
+                    class="btn btn-primary text-primary-content"
+                    :label="$t('profile.changePassword')"
+                    :is-loading="isLoading"
+                  />
+                  <GenesisButton
+                    @click="auth.goToProfileView()"
+                    class="btn btn-outline btn-error"
+                    :label="$t('button.cancel')"
+                  />
+                </div>
+              </form>
+            </div>
+          </div>
+        </template>
+
+        <script lang="ts" setup>
+        import { ref } from 'vue'
+        import type { ChangePasswordDTO } from '@/models/auth/ChangePasswordDTO'
+        import { useAuth } from '@/composables/useAuth.ts'
+        import { validators } from '@/utils/validators.ts'
+        import { ChangePasswordValidator } from '@/models/validators/ChangePasswordValidator.ts'
+        import ErrorMessage from '@/components/common/ErrorMessage.vue'
+        import PasswordInput from '@/components/form/PasswordInput.vue'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+
+        defineEmits<{
+          (e: 'cancel'): void
+        }>()
+        const form = ref<ChangePasswordDTO>({
+          oldPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        })
+
+        const oldPasswordError = ref<string | undefined>(undefined)
+        const newPasswordError = ref<string | undefined>(undefined)
+        const confirmPasswordError = ref<string | undefined>(undefined)
+        const error = ref<string | undefined>(undefined)
+        const isLoading = ref(false)
+
+        const auth = useAuth()
+
+        async function handleSubmit() {
+          // Clear previous errors
+          error.value = undefined
+          oldPasswordError.value = undefined
+          newPasswordError.value = undefined
+          confirmPasswordError.value = undefined
+
+          let isValid = true
+
+          // 1. Check validation rules
+          oldPasswordError.value = validators.checkRules(
+            form.value.oldPassword,
+            ChangePasswordValidator.oldPasswordRule,
+          )
+          if (oldPasswordError.value) isValid = false
+
+          newPasswordError.value = validators.checkRules(
+            form.value.newPassword,
+            ChangePasswordValidator.newPasswordRule,
+          )
+          if (newPasswordError.value) isValid = false
+
+          // 2. Check confirmation
+          if (form.value.newPassword !== form.value.confirmPassword) {
+            confirmPasswordError.value =
+              'Le mot de passe saisi ne correspondent pas au nouveau mot de passe'
+            isValid = false
+          } else {
+            // Check confirmation rules if they pass the match
+            confirmPasswordError.value = validators.checkRules(
+              form.value.confirmPassword,
+              ChangePasswordValidator.confirmPasswordRules,
+            )
+            if (confirmPasswordError.value) isValid = false
+          }
+
+          if (!isValid) return
+
+          isLoading.value = true
+
+          try {
+            const response = await auth.changePassword(form.value)
+            if (!response.success) {
+              error.value = response.error
+              return
+            }
+          } catch (e: unknown) {
+            error.value = 'Une erreur inattendue est survenue.'
+          } finally {
+            isLoading.value = false
+          }
+        }
+        </script>
+
+        <style scoped></style>
+      destinationPath: "${destinationFolder}/src/components/auth"
 
     - fileType: "Auth Routes"
       fileName: "authRoutes"
@@ -2277,6 +2485,107 @@
         }
       destinationPath: "${destinationFolder}/src/models/validators"
 
+    - fileType: "Change Password Validator"
+      fileName: "ChangePasswordValidator"
+      extension: "ts"
+      content: |
+        import type { ValidationRule } from '@/models/validators/ValidationRule.ts'
+        import { validators } from '@/utils/validators.ts'
+
+        export class ChangePasswordValidator {
+          static oldPasswordRule: ValidationRule[] = [
+            {
+              message: 'The current password is required',
+              validate: (value: string) => validators.required(value),
+            },
+          ]
+
+          static newPasswordRule: ValidationRule[] = [
+            {
+              message: 'The new password is required',
+              validate: (value: string) => validators.required(value),
+            },
+          ]
+
+          static confirmPasswordRules: ValidationRule[] = [
+            {
+              message: 'The new password confirmation is required',
+              validate: (value: string) => validators.required(value),
+            },
+          ]
+        }
+      destinationPath: "${destinationFolder}/src/models/validators"
+
+    - fileType: "Register Validator"
+      fileName: "RegisterValidator"
+      extension: "ts"
+      content: |
+        import type { ValidationRule } from '@/models/validators/ValidationRule.ts'
+        import { validators } from '@/utils/validators.ts'
+
+        export class RegisterValidator {
+          static usernameRules: ValidationRule[] = [
+            {
+              message: 'Username is required',
+              validate: (value: string) => validators.required(value),
+            },
+            {
+              message: 'Username must be at least 3 characters',
+              validate: (value: string) => validators.minLength(value, 3),
+            },
+            {
+              message: 'Username must be at most 20 characters',
+              validate: (value: string) => validators.maxLength(value, 20),
+            },
+            {
+              message: 'Username can only contain letters, numbers, and underscores',
+              validate: (value: string) => validators.pattern(value, /^[a-zA-Z0-9_]+$/),
+            },
+          ]
+
+          static emailRules: ValidationRule[] = [
+            {
+              message: 'Email is required',
+              validate: (value: string) => validators.required(value),
+            },
+            {
+              message: 'Invalid email address',
+              validate: (value: string) => validators.pattern(value, /^[^\s@]+@[^\s@]+\.[^\s@]+$/),
+            },
+          ]
+
+          static passwordRules: ValidationRule[] = [
+            {
+              message: 'Password is required',
+              validate: (value: string) => validators.required(value),
+            },
+            {
+              message: 'Password must be at least 6 characters',
+              validate: (value: string) => validators.minLength(value, 6),
+            },
+            {
+              message: 'Password must be at most 100 characters',
+              validate: (value: string) => validators.maxLength(value, 100),
+            },
+            {
+              message: 'Password must contain at least one number',
+              validate: (value: string) => validators.pattern(value, /\d/),
+            },
+            {
+              message: 'Password must contain at least one letter',
+              validate: (value: string) => validators.pattern(value, /[a-zA-Z]/),
+            },
+          ]
+
+          static confirmPasswordRules: ValidationRule[] = [
+            {
+              message: 'Password confirmation is required',
+              validate: (value: string) => validators.required(value),
+            },
+          ]
+        }
+      destinationPath: "${destinationFolder}/src/models/validators"
+
     - fileType: "Auth Service"
       fileName: "AuthService"
       extension: "ts"
@@ -2322,6 +2631,82 @@
           return RestResponse.handleDataResponse(response)
         }
       destinationPath: "${destinationFolder}/src/services"
+
+    - fileType: "Change Password View"
+      fileName: "ChangePasswordView"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="w-full">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-xl font-semibold text-base-content">
+                {{ $t('entity.nav', { entity: 'Profile' }) }}
+                <span class="text-base-content/50 font-normal">{{ $t('profile.changePassword') }}</span>
+              </h3>
+              <GenesisButton
+                :title="$t('button.backTo', { name: 'Profile' })"
+                @click="() => auth.goToProfileView()"
+                class="btn-primary"
+              >
+                <LeftArrowIcon />
+                {{ $t('button.backTo', { name: 'Profile' }) }}
+              </GenesisButton>
+            </div>
+            <ChangePasswordForm @cancel="auth.goToProfileView()" />
+          </div>
+        </template>
+
+        <script lang="ts" setup>
+        import ChangePasswordForm from '@/components/auth/ChangePasswordForm.vue'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+        import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'
+        import { useAuth } from '@/composables/useAuth.ts'
+
+        const auth = useAuth()
+        </script>
+      destinationPath: "${destinationFolder}/src/views/auth"
+
+    - fileType: "Update Profile View"
+      fileName: "UpdateProfileView"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="w-full">
+            <div class="flex items-center justify-between mb-6">
+              <h3 class="text-xl font-semibold text-base-content">
+                {{ $t('entity.nav', { entity: 'Profile' }) }}
+                <span class="text-base-content/50 font-normal">{{ $t('profile.edit') }}</span>
+              </h3>
+              <GenesisButton
+                :title="$t('button.backTo', { name: 'Profile' })"
+                @click="() => auth.goToProfileView()"
+                class="btn-primary"
+              >
+                <LeftArrowIcon />
+                {{ $t('button.backTo', { name: 'Profile' }) }}
+              </GenesisButton>
+            </div>
+            <UpdateProfileForm :initial-data="initialFormData" />
+          </div>
+        </template>
+
+        <script setup lang="ts">
+        import { useAuth } from '@/composables/useAuth'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+        import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'
+        import UpdateProfileForm from '@/components/auth/UpdateProfileForm.vue'
+        import type { UpdateProfileDTO } from '@/models/auth/UpdateProfileDTO'
+
+        const auth = useAuth()
+        const currentUser = auth.getCurrentUser()
+        console.log('Current User:', currentUser)
+
+        const initialFormData: UpdateProfileDTO = {
+          name: currentUser.username ?? '',
+          email: currentUser.email ?? '',
+        }
+        </script>
+      destinationPath: "${destinationFolder}/src/views/auth"
   additionalFiles:
     - fileType: "Topbar"
       fileName: "GenesisTopNavbar"
