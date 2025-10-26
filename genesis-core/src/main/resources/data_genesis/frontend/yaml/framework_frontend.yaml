@@ -1472,12 +1472,12 @@
             >
               <li>
                 <button @click="goToProfile" class="flex items-center justify-start gap-2">
-                  <ProfileIcon /> <span>My Profile</span>
+                  <ProfileIcon /> <span>{{ $t('profile.myProfile') }}</span>
                 </button>
               </li>
               <li>
                 <button @click="logout" class="flex items-center justify-start gap-2 text-red-500">
-                  <LogoutIcon /> <span>Logout</span>
+                  <LogoutIcon /> <span>{{ $t('authentication.logout') }}</span>
                 </button>
               </li>
             </ul>
@@ -1718,28 +1718,34 @@
       content: |
         <template>
           <form class="space-y-4 text-base-content" @submit.prevent="handleLogin">
+            <div v-if="isBadCredentials" class="text-center">
+              <ErrorMessage :message="$t('authentication.invalid')" />
+            </div>
             <div>
-              <ErrorMessage :message="usernameError" />
               <GenesisInput
                 v-model="login"
                 required
-                :label="$t('authentication.login')"
-                :placeholder="$t('authentication.login')"
+                :mandatory="true"
+                :violation="usernameError"
+                :label="$t('authentication.username')"
+                placeholder="ex: JohnDoe"
                 type="text"
               />
             </div>
             <div>
-              <ErrorMessage :message="passwordError" />
-              <GenesisInput
+              <PasswordInput
                 v-model="password"
-                required
-                type="password"
+                :violation="passwordError"
                 :label="$t('authentication.password')"
-                :placeholder="$t('authentication.password')"
               />
             </div>
-            <button type="submit" class="mt-3 btn btn-primary text-primary-content w-full">
-              {{ $t('authentication.submit') }}
+            <button
+              type="submit"
+              class="mt-3 btn btn-primary text-primary-content w-full"
+              :disabled="isLoading"
+            >
+              <span v-if="isLoading" class="loading loading-spinner"></span>
+              <span v-else>{{ $t('authentication.submit') }}</span>
             </button>
           </form>
         </template>
@@ -1754,15 +1760,20 @@
         import type { DataResponse } from '@/models/api/DataResponseModel.ts'
         import { useRouter } from 'vue-router'
         import { useAuth } from '@/composables/useAuth.ts'
+        import PasswordInput from '@/components/form/PasswordInput.vue'
 
         const authentication = useAuth()
         const router = useRouter()
         const login = ref('')
         const password = ref('')
-        const usernameError = ref<string | null>('')
-        const passwordError = ref<string | null>('')
+        const usernameError = ref<string | undefined>('')
+        const passwordError = ref<string | undefined>('')
+        const isLoading = ref(false)
+        const isBadCredentials = ref(false)
 
         const handleLogin = async () => {
+          usernameError.value = undefined
+          passwordError.value = undefined
           let valid = true
           usernameError.value = validators.checkRules(login.value, LoginValidator.usernameRules)
           if (usernameError.value) valid = false
@@ -1771,6 +1782,8 @@
           if (passwordError.value) valid = false
 
           if (!valid) return
+
+          isLoading.value = true
 
           try {
             const loginData: DataResponse<string> = await authService.login(login.value, password.value)
@@ -1781,7 +1794,9 @@
               throw new Error(loginData.error)
             }
           } catch (e: unknown) {
-            usernameError.value = String((e as Error).message)
+            isBadCredentials.value = true
+          } finally {
+            isLoading.value = false
           }
         }
         </script>
@@ -1798,17 +1813,19 @@
               <GenesisInput
                 v-model="email"
                 required
+                :mandatory="true"
                 type="email"
                 :label="$t('authentication.email')"
                 :placeholder="$t('authentication.email')"
               />
             </div>
-            
+
             <div>
               <ErrorMessage :message="usernameError" />
               <GenesisInput
                 v-model="username"
                 required
+                :mandatory="true"
                 :label="$t('authentication.username')"
                 :placeholder="$t('authentication.username')"
                 type="text"
@@ -1817,28 +1834,16 @@
 
             <div>
               <ErrorMessage :message="passwordError" />
-              <GenesisInput
-                v-model="password"
-                required
-                type="password"
-                :label="$t('authentication.password')"
-                :placeholder="$t('authentication.password')"
-              />
+              <PasswordInput v-model="password" :label="$t('authentication.password')" />
             </div>
 
             <div>
               <ErrorMessage :message="confirmPasswordError" />
-              <GenesisInput
-                v-model="confirmPassword"
-                required
-                type="password"
-                :label="$t('authentication.confirmPassword')"
-                :placeholder="$t('authentication.confirmPassword')"
-              />
+              <PasswordInput v-model="confirmPassword" :label="$t('authentication.confirmPassword')" />
             </div>
 
             <button type="submit" class="mt-3 btn btn-primary w-full">
-              {{ $t('authentication.submit') }}
+              {{ $t('register.submit') }}
             </button>
           </form>
         </template>
@@ -1853,6 +1858,7 @@
         import { RegisterValidator } from '@/models/validators/RegisterValidator.ts'
         import type { DataResponse } from '@/models/api/DataResponseModel.ts'
         import { RegisterDTO } from '@/models/auth/RegisterDTO.ts'
+        import PasswordInput from '@/components/form/PasswordInput.vue'
 
         const router = useRouter()
 
@@ -2247,10 +2253,15 @@
         <script setup lang="ts">
         import { useAuth } from '@/composables/useAuth.ts'
         import GenesisButton from '@/components/button/GenesisButton.vue'
+        import { useRouter } from 'vue-router'
 
+        const router = useRouter()
         const auth = useAuth()
         const user = auth.getCurrentUser()
-        console.log(user)
+
+        const goToUpdateProfile = () => {
+          router.push('/auth/update-profile')
+        }
         </script>
 
         <template>
@@ -2266,17 +2277,20 @@
             </div>
 
             <div class="">
-              <label for="userName" class="block text-sm font-medium mb-1">Email</label>
-              <div id="userName" class="input w-full bg-base-100 cursor-default">
+              <label for="userEmail" class="block text-sm font-medium mb-1">Email</label>
+              <div id="userEmail" class="input w-full bg-base-100 cursor-default">
                 <span>{{ user.email ?? '' }}</span>
               </div>
             </div>
           </div>
 
-          <div>
-            <GenesisButton label="Change Password" />
-            <GenesisButton label="Update Information" />
+          <div class="flex gap-4 mt-4">
+            <router-link to="/auth/change-password">
+              <GenesisButton label="Modifier le mot de passe" />
+            </router-link>
+            <GenesisButton label="Update Profile" @click="goToUpdateProfile" />
           </div>
+
           <div class="mt-4">
             <div>
               <h3 class="font-semibold">Roles</h3>
@@ -2343,6 +2357,8 @@
         import * as authService from '@/services/AuthService.ts'
         import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
         import { computed } from 'vue'
+        import type { ChangePasswordDTO } from '@/models/auth/ChangePasswordDTO.ts'
+        import type { UpdateProfileDTO } from '@/models/auth/UpdateProfileDTO.ts'
 
         export function useAuth() {
           const router = useRouter()
@@ -2394,6 +2410,19 @@
             goToLoginView()
           }
 
+          const changePassword = async (data: ChangePasswordDTO) => {
+            const responseData = await authService.changePassword(data)
+            return responseData
+          }
+          
+          const updateProfile = async (data: UpdateProfileDTO) => {
+            const responseData = await authService.updateProfile(data)
+            if (responseData.success && responseData.data) {
+            useAuthenticationStore().setCurrentUser(responseData.data)
+            }
+            return responseData
+          }
+          
           return {
             goToLoginView,
             goToProfileView,
@@ -2402,6 +2431,8 @@
             getCurrentUser,
             logout,
             isLoggedIn,
+            changePassword,
+            updateProfile,
           }
         }
       destinationPath: "${destinationFolder}/src/composables"
@@ -2597,6 +2628,8 @@
         import { User } from '@/models/auth/UserModel.ts'
         import RestResponse from '@/models/api/RestResponseModel.ts'
         import type { RegisterDTO } from '@/models/auth/RegisterDTO.ts'
+        import type { ChangePasswordDTO } from '@/models/auth/ChangePasswordDTO.ts'
+        import type { UpdateProfileDTO } from '@/models/auth/UpdateProfileDTO.ts'
 
         const BASE_URL = '/auth'
         const userApi = api<IUser>()
@@ -2625,9 +2658,21 @@
           return RestResponse.handleDataResponse(response)
         }
 
-        export async function register(data:RegisterDTO){
+        export async function register(data: RegisterDTO) {
           const request = new RequestModel(BASE_URL + '/register')
-          const response = await stringApi.POST(request.buildRequestUrl([],false),data)
+          const response = await stringApi.POST(request.buildRequestUrl([], false), data)
+          return RestResponse.handleDataResponse(response)
+        }
+
+        export async function changePassword(data: ChangePasswordDTO) {
+          const request = new RequestModel(BASE_URL + '/change-password')
+          const response = await stringApi.POST(request.buildRequestUrl([], false), data)
+          return RestResponse.handleDataResponse(response)
+        }
+
+        export async function updateProfile(data: UpdateProfileDTO): Promise<DataResponse<IUser>> {
+          const request = new RequestModel(BASE_URL + '/update')
+          const response = await userApi.PATCH(request.buildRequestUrl([], false), data)
           return RestResponse.handleDataResponse(response)
         }
       destinationPath: "${destinationFolder}/src/services"
@@ -2827,6 +2872,7 @@
         }
         </style>
       destinationPath: "${destinationFolder}/src/components/navbar"
+
     - fileType: "Sidebar"
       fileName: "GenesisSideNavbar"
       extension: "vue"
@@ -2938,6 +2984,7 @@
         }
         </style>
       destinationPath: "${destinationFolder}/src/components/navbar"
+
     - fileType: "Global Store"
       fileName: "useGlobalStore"
       extension: "ts"
@@ -2956,10 +3003,12 @@
           useLayoutStore(){{#if useJWT}}
           const authStore = useAuthenticationStore()
           onMounted(async () => {
-            const token = authStore.getToken()
             const auth = useAuth()
             try {
-              await auth.loginUser(token)
+              if (auth.isLoggedIn.value) {
+                const token = authStore.getToken()
+                await auth.loginUser(token)
+              }
             } catch (e: unknown) {
               await auth.logout()
             }
@@ -3014,11 +3063,16 @@
             return request({ ...config, method: 'delete', url })
           }
 
+          const PATCH = (url: string, data?: unknown, config?: AxiosRequestConfig) => {
+             return request({ ...config, method: 'patch', url, data })
+          }
+
           return {
             GET,
             POST,
             PUT,
             DELETE,
+            PATCH,
           }
         }
       destinationPath: "${destinationFolder}/src/services"
@@ -11211,6 +11265,18 @@
                 path: 'profile',
                 name: 'profile',
                 component: () => import('@/views/auth/ProfileView.vue'),
+              },
+              {
+                path: '/auth/update-profile',
+                name: 'update-profile',
+                component: () => import('@/views/auth/UpdateProfileView.vue'),
+                meta: { requiresAuth: true },
+              },
+              {
+                path: '/auth/change-password',
+                name: 'change-password',
+                component: () => import('@/views/auth/ChangePasswordView.vue'),
+                meta: { requiresAuth: true },
               },{{/if}}
               {{#each entities}}
               ...${minStart(this.className)}Routes,

@@ -30,7 +30,7 @@ function checkRules(value: string, rules: ValidationRule[]) {
       return rule.message
     }
   }
-  return null
+  return undefined
 }
 
 export const validators = {

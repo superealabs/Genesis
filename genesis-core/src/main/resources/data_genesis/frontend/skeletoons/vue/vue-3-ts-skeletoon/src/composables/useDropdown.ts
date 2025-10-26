@@ -1,5 +1,3 @@
-// src/composables/useDropdown.ts
-
 import { ref, onMounted, onBeforeUnmount, type Ref } from 'vue'
 
 /**

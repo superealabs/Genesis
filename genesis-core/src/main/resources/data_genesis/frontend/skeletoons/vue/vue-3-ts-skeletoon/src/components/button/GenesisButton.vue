@@ -1,16 +1,20 @@
 <template>
-  <button v-bind="$attrs" class="btn" @click="onClick">
-    <i v-if="icon" :class="icon" />
-    <slot>
-      <span v-if="label">{{ label }}</span>
-    </slot>
+  <button v-bind="$attrs" class="btn" @click="onClick" :disabled="isLoading">
+    <span v-if="isLoading" class="loading loading-spinner"></span>
+    <span v-else>
+      <i v-if="icon" :class="icon" />
+      <slot>
+        <span v-if="label">{{ label }}</span>
+      </slot>
+    </span>
   </button>
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
+defineProps<{
   icon?: string
   label?: string
+  isLoading?: boolean
 }>()
 
 const emit = defineEmits<{

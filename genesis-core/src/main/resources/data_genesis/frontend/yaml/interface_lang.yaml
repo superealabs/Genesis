@@ -163,6 +163,7 @@
         button: {
           addEntity: '@.capitalize:common.add @:common.new {entity}',
           applySearch: '@.capitalize:common.apply',
+          backTo: '@.capitalize:common.back to {name}',
           backToList: '@.capitalize:common.back to @:common.list',
           backToListDescription: '@.capitalize:common.return to the @:common.list @:common.view',
           go: '@.capitalize:common.go',
@@ -250,6 +251,7 @@
           add: 'Add',
         },
         profile: {
+          myProfile: 'My Profile',
           edit: 'Edit Profile',
           changePassword: 'Change Password',
           oldPassword: 'Current Password',
@@ -468,6 +470,7 @@
           update: '@.capitalize:common.update',
           create: '@.capitalize:common.create',
           cancel: '@.capitalize:common.cancel',
+          backTo: '@.capitalize:common.back vers {name}',
           backToList: '@.capitalize:common.back à la @:common.list',
           backToListDescription: '@.capitalize:common.return à la @:common.view @:common.list',
         },
@@ -549,6 +552,7 @@
           add: 'Ajouter',
         },
         profile: {
+          myProfile: 'Mon profil',
           edit: 'Modifier mon profil',
           changePassword: 'Changer mot de passe',
           oldPassword: 'Mot de passe actuel',
