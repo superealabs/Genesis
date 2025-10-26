@@ -1872,6 +1872,21 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
 
+    - fileType: "Refresh Request DTO"
+      fileName: "RefreshRequest"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.DTOs;
+        
+        using System.ComponentModel.DataAnnotations;
+
+        public record RefreshRequest(
+            [Required]
+            [MaxLength(500)]
+            string RefreshToken
+        );
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+
     - fileType: "Password Change Request DTO"
       fileName: "PasswordChangeRequest"
       extension: "cs"
@@ -1897,11 +1912,37 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
 
+    - fileType: "User Response DTO"
+      fileName: "UserResponseDto"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.DTOs;
+
+        public class UserResponseDto
+        {
+          public string Id { get; set; }
+          public string Username { get; set; }
+          public string Email { get; set; }
+          public bool Enabled { get; set; }
+          public bool AccountNonExpired { get; set; } = true;
+          public bool AccountNonLocked { get; set; }
+          public bool CredentialsNonExpired { get; set; } = true;
+          
+          public IEnumerable<AuthorityDto> Authorities { get; set; } = new List<AuthorityDto>();
+        }
+        
+        public class AuthorityDto
+        {
+          public string Authority { get; set; }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+
     - fileType: "JWT Service"
       fileName: "JwtService"
       extension: "cs"
       content: |
         namespace ${majStart(projectName)}.Services.Implementation;
+        
         using System.IdentityModel.Tokens.Jwt;
         using System.Security.Claims;
         using System.Text;
@@ -1910,41 +1951,81 @@
         
         public class JwtService
         {
-          private readonly IConfiguration _config;
-          public JwtService(IConfiguration config) => _config = config;
-      
-          public string GenerateToken(string username)
-          {
-            var claims = new[]
+            private readonly IConfiguration _config;
+            private readonly SymmetricSecurityKey _signingKey;
+            private readonly TokenValidationParameters _validationParameters;
+
+            public JwtService(IConfiguration config)
             {
-              new Claim(JwtRegisteredClaimNames.Sub, username),
-              new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-            
-            var key = new SymmetricSecurityKey(Convert.FromBase64String(_config["Jwt:SecretKey"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            
-            var token = new JwtSecurityToken(
-              claims: claims,
-              expires: DateTime.UtcNow.AddMinutes(30),
-              signingCredentials: creds
-            );
-            return new JwtSecurityTokenHandler().WriteToken(token);
-          }
-      
-          public string ExtractUsername(string token)
-          {
-            var principal = new JwtSecurityTokenHandler()
-            .ValidateToken(token, new TokenValidationParameters
+                _config = config;
+                var keyBytes = Convert.FromBase64String(_config["Jwt:SecretKey"]!);
+                _signingKey = new SymmetricSecurityKey(keyBytes);
+
+                _validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = _signingKey,
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ClockSkew = TimeSpan.Zero // Pour une expiration stricte
+                };
+            }
+
+            public string GenerateToken(string username)
             {
-              ValidateIssuerSigningKey = true,
-              IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(_config["Jwt:SecretKey"])),
-              ValidateIssuer = false,
-              ValidateAudience = false,
-              ClockSkew = TimeSpan.Zero
-            }, out _);
-            return principal.Identity.Name;
-          }
+                var claims = new[]
+                {
+                    new Claim(JwtRegisteredClaimNames.Sub, username),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                };
+
+                var creds = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256);
+
+                var token = new JwtSecurityToken(
+                    claims: claims,
+                    expires: DateTime.UtcNow.AddMinutes(30),
+                    signingCredentials: creds
+                );
+                return new JwtSecurityTokenHandler().WriteToken(token);
+            }
+
+            public ClaimsPrincipal ValidateToken(string token)
+            {
+                // Tente de valider le token et retourne le principal
+                try
+                {
+                    return new JwtSecurityTokenHandler().ValidateToken(token, _validationParameters, out _);
+                }
+                catch (SecurityTokenException)
+                {
+                    throw new UnauthorizedAccessException("Invalid or expired token.");
+                }
+            }
+
+            public string ExtractUsername(string token)
+            {
+                var principal = ValidateToken(token);
+                return principal.Identity?.Name ?? throw new UnauthorizedAccessException("Username not found in token.");
+            }
+
+            public DateTime? ExtractExpirationDate(string token)
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                if (!tokenHandler.CanReadToken(token)) return null;
+
+                var jwtToken = tokenHandler.ReadJwtToken(token);
+                // Le temps d'expiration est en format Unix Time Stamp
+                var exp = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Exp)?.Value;
+
+                if (exp != null && long.TryParse(exp, out long expTime))
+                {
+                    // Convertir le timestamp UNIX en DateTime UTC
+                    DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+                    dtDateTime = dtDateTime.AddSeconds(expTime);
+                    return dtDateTime;
+                }
+                return null;
+            }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
 
@@ -1953,26 +2034,47 @@
       extension: "cs"
       content: |
         namespace ${majStart(projectName)}.Services.Implementation;
+        
         public class TokenBlacklistService
         {
-            private readonly Dictionary<string, DateTime> _invalidatedTokens = new();
+            private static readonly Dictionary<string, DateTime> InvalidatedTokens = new Dictionary<string, DateTime>();
+            private readonly JwtService _jwtService;
 
-            public void InvalidateToken(string token, DateTime expiration)
+            public TokenBlacklistService(JwtService jwtService)
             {
-                _invalidatedTokens[token] = expiration;
+                _jwtService = jwtService;
+            }
+
+            public void InvalidateToken(string token)
+            {
+                var expiration = _jwtService.ExtractExpirationDate(token);
+                if (expiration.HasValue)
+                {
+                    InvalidatedTokens[token] = expiration.Value;
+                }
+                else
+                {
+                    InvalidatedTokens[token] = DateTime.UtcNow.AddMinutes(1);
+                }
             }
 
             public bool IsTokenInvalidated(string token)
             {
-                return _invalidatedTokens.TryGetValue(token, out var exp) && exp > DateTime.UtcNow;
+                if (InvalidatedTokens.TryGetValue(token, out DateTime expirationTime))
+                {
+                    return expirationTime > DateTime.UtcNow;
+                }
+                return false;
             }
 
             public void CleanExpiredTokens()
             {
                 var now = DateTime.UtcNow;
-                foreach (var key in _invalidatedTokens.Where(x => x.Value < now).Select(x => x.Key).ToList())
+                var tokensToRemove = InvalidatedTokens.Where(kvp => kvp.Value <= now).Select(kvp => kvp.Key).ToList();
+
+                foreach (var token in tokensToRemove)
                 {
-                    _invalidatedTokens.Remove(key);
+                    InvalidatedTokens.Remove(token);
                 }
             }
         }
@@ -1990,13 +2092,21 @@
 
         public class UserService
         {
+            private readonly RoleManager<IdentityRole> _roleManager;
+            private readonly TokenBlacklistService _blacklistService;
             private readonly UserManager<ApplicationUser> _userManager;
             private readonly JwtService _jwtService;
 
-            public UserService(UserManager<ApplicationUser> userManager, JwtService jwtService)
+            public UserService(
+                UserManager<ApplicationUser> userManager, 
+                RoleManager<IdentityRole> roleManager, 
+                JwtService jwtService,
+                TokenBlacklistService blacklistService)
             {
                 _userManager = userManager;
+                _roleManager = roleManager;
                 _jwtService = jwtService;
+                _blacklistService = blacklistService;
             }
 
             public async Task<string> Authenticate(AuthRequest request)
@@ -2044,6 +2154,51 @@
                 user.UserName = update.Name;
                 await _userManager.UpdateAsync(user);
             }
+
+            public async Task<string> RefreshAccessToken(string oldToken)
+            {
+                var username = _jwtService.ExtractUsername(oldToken); // Vérifie la signature et l'expiration
+
+                // Optionnel : Vous pouvez valider si l'utilisateur existe toujours
+                var user = await _userManager.FindByNameAsync(username);
+                if (user == null)
+                    throw new UnauthorizedAccessException("User not found.");
+
+                // Invalide l'ancien token immédiatement (comme fait dans Spring Boot)
+                _blacklistService.InvalidateToken(oldToken); 
+
+                // Génère et retourne un nouveau token
+                return _jwtService.GenerateToken(username);
+            }
+
+            public void Logout(string token)
+            {
+                _blacklistService.InvalidateToken(token);
+            }
+
+            public async Task<UserResponseDto> GetCurrentUser(string username)
+            {
+                var user = await _userManager.FindByNameAsync(username);
+                if (user == null)
+                throw new Exception("User not found.");
+                
+                var userRoles = await _userManager.GetRolesAsync(user);
+                
+                return new UserResponseDto
+                {
+                    Id = user.Id,
+                    Username = user.UserName,
+                    Email = user.Email,
+                    Enabled = user.EmailConfirmed,
+                    AccountNonLocked = !user.LockoutEnabled,
+                    Authorities = userRoles.Select(role => new AuthorityDto { Authority = role })
+                };
+            }
+
+            public IEnumerable<IdentityRole> GetAllRoles()
+            {
+                return _roleManager.Roles.ToList();
+            }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
 
@@ -2059,7 +2214,10 @@
         using ${majStart(projectName)}.DTOs;
         using ${majStart(projectName)}.Utils;
         using ${majStart(projectName)}.Services.Implementation;
+        using ${majStart(projectName)}.Models;
         using Swashbuckle.AspNetCore.Annotations;
+        using System.Security.Claims;
+        using Microsoft.AspNetCore.Identity;
 
         [ApiController]
         [Route("auth")]
@@ -2070,39 +2228,34 @@
         public class AuthController : ControllerBase
         {
             private readonly UserService _userService;
+            private readonly JwtService _jwtService;
 
-            public AuthController(UserService userService)
+            public AuthController(UserService userService, JwtService jwtService)
             {
                 _userService = userService;
+                _jwtService = jwtService;
             }
 
             [HttpPost("login")]
             [AllowAnonymous]
             [SwaggerOperation(Summary = "Login", Description = "Authenticate user and return a JWT token")]
             [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
-            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status401Unauthorized)]
             public async Task<IActionResult> Login([FromBody] AuthRequest request)
             {
                 try
                 {
                     var token = await _userService.Authenticate(request);
-                    return Ok(new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status200OK,
-                        Message = "You are logged in",
-                        ReturnCode = 1,
-                        Data = token
-                    });
+                    return Ok(ApiResponse<string>.Success(StatusCodes.Status200OK, "Authentication successful", token));
+                }
+                catch (UnauthorizedAccessException e) // Attrapez l'exception spécifique de UserService
+                {
+                    return Unauthorized(ApiResponse<string>.Error(StatusCodes.Status401Unauthorized, e.Message));
                 }
                 catch (Exception e)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status500InternalServerError,
-                        Message = e.Message,
-                        ReturnCode = 0,
-                        Data = null
-                    });
+                    // Erreur de serveur ou autre erreur non attendue
+                    return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse<string>.Error(StatusCodes.Status500InternalServerError, $"Internal Server Error: {e.Message}"));
                 }
             }
 
@@ -2110,29 +2263,18 @@
             [AllowAnonymous]
             [SwaggerOperation(Summary = "Register", Description = "Register a new user")]
             [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status201Created)]
-            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)] // 400 pour erreur de validation ou user déjà existant
             public async Task<IActionResult> Register([FromBody] RegisterRequest request)
             {
                 try
                 {
                     var id = await _userService.Register(request);
-                    return StatusCode(StatusCodes.Status201Created, new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status201Created,
-                        Message = "User created successfully",
-                        ReturnCode = 1,
-                        Data = id
-                    });
+                    return StatusCode(StatusCodes.Status201Created, ApiResponse<string>.Success(StatusCodes.Status201Created, "User registered successfully", id));
                 }
                 catch (Exception e)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status500InternalServerError,
-                        Message = e.Message,
-                        ReturnCode = 0,
-                        Data = null
-                    });
+                    // L'exception contient les erreurs d'Identity (ex: mot de passe faible, username déjà pris)
+                    return BadRequest(ApiResponse<string>.Error(StatusCodes.Status400BadRequest, $"Registration failed: {e.Message}"));
                 }
             }
 
@@ -2140,28 +2282,19 @@
             [Authorize]
             [SwaggerOperation(Summary = "Change Password", Description = "Change the password of the logged-in user")]
             [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
-            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)] // Utilisation de 400
             public async Task<IActionResult> ChangePassword([FromBody] PasswordChangeRequest model)
             {
                 try
                 {
-                    var username = User.Identity?.Name;
+                    var username = User.Identity?.Name ?? throw new UnauthorizedAccessException("User not authenticated.");
                     await _userService.ChangePassword(username, model);
-                    return Ok(new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status200OK,
-                        Message = "Password changed successfully",
-                        ReturnCode = 1
-                    });
+                    return Ok(ApiResponse<string>.Success(StatusCodes.Status200OK, "Password changed successfully"));
                 }
                 catch (Exception e)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status500InternalServerError,
-                        Message = e.Message,
-                        ReturnCode = 0
-                    });
+                    // Peut être une mauvaise validation ou un ancien mot de passe invalide
+                    return BadRequest(ApiResponse<string>.Error(StatusCodes.Status400BadRequest, $"Password change failed: {e.Message}"));
                 }
             }
 
@@ -2169,32 +2302,105 @@
             [Authorize]
             [SwaggerOperation(Summary = "Update User", Description = "Update user information of the logged-in user")]
             [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
-            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)] // Utilisation de 400
             public async Task<IActionResult> Update([FromBody] UserUpdateRequest model)
             {
                 try
                 {
-                    var username = User.Identity?.Name;
+                    var username = User.Identity?.Name ?? throw new UnauthorizedAccessException("User not authenticated.");
                     await _userService.UpdateUser(username, model);
-                    return Ok(new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status200OK,
-                        Message = "User updated successfully",
-                        ReturnCode = 1
-                    });
+                    return Ok(ApiResponse<string>.Success(StatusCodes.Status200OK, "User updated successfully"));
                 }
                 catch (Exception e)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status500InternalServerError,
-                        Message = e.Message,
-                        ReturnCode = 0
-                    });
+                    // Peut être un utilisateur non trouvé ou un problème de mise à jour des données
+                    return BadRequest(ApiResponse<string>.Error(StatusCodes.Status400BadRequest, $"Update failed: {e.Message}"));
+                }
+            }
+
+            // --- NOUVEAUX ENDPOINTS (Maintenant supportés) ---
+
+            [HttpGet("roles")]
+            [AllowAnonymous]
+            [SwaggerOperation(Summary = "Get all available roles", Description = "Retrieve the complete list of roles available in the system.")]
+            [ProducesResponseType(typeof(ApiResponse<IEnumerable<IdentityRole>>), StatusCodes.Status200OK)]
+            public IActionResult ListRoles()
+            {
+                var roles = _userService.GetAllRoles();
+                return Ok(ApiResponse<IEnumerable<IdentityRole>>.Success(StatusCodes.Status200OK, "Roles retrieved", roles));
+            }
+
+            [HttpPost("logout")]
+            [Authorize]
+            [SwaggerOperation(Summary = "Logout user", Description = "Invalidate the user's JWT token")]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+            public IActionResult Logout([FromHeader(Name = "Authorization")] string authHeader)
+            {
+                string token = authHeader?.StartsWith("Bearer ") == true ? authHeader.Substring("Bearer ".Length) : null;
+
+                if (string.IsNullOrEmpty(token))
+                {
+                    return BadRequest(ApiResponse<string>.Error(StatusCodes.Status400BadRequest, "Invalid Authorization Header"));
+                }
+
+                try
+                {
+                    _userService.Logout(token);
+                    return Ok(ApiResponse<string>.Success(StatusCodes.Status200OK, "Logged out successfully", null));
+                }
+                catch (Exception e)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse<string>.Error(StatusCodes.Status500InternalServerError, e.Message));
+                }
+            }
+
+            [HttpGet("current")]
+            [Authorize]
+            [SwaggerOperation(Summary = "Get current user", Description = "Retrieve details of the currently authenticated user")]
+            [ProducesResponseType(typeof(ApiResponse<UserResponseDto>), StatusCodes.Status200OK)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+            public async Task<IActionResult> CurrentUser()
+            {
+                var username = User.Identity?.Name;
+                if (string.IsNullOrEmpty(username))
+                {
+                    return BadRequest(ApiResponse<string>.Error(StatusCodes.Status400BadRequest, "No valid user session"));
+                }
+                try
+                {
+                    var userDto = await _userService.GetCurrentUser(username);
+                    return Ok(ApiResponse<UserResponseDto>.Success(StatusCodes.Status200OK, "User details retrieved", userDto));
+                }
+                catch (Exception e)
+                {
+                    return BadRequest(ApiResponse<string>.Error(StatusCodes.Status400BadRequest, $"Error retrieving user: {e.Message}"));
+                }
+            }
+
+            [HttpPost("refresh")]
+            [AllowAnonymous]
+            [SwaggerOperation(Summary = "Refresh access token", Description = "Provide the current access-token to obtain a new one; the old one is invalidated.")]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status401Unauthorized)]
+            public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
+            {
+                try
+                {
+                    string newToken = await _userService.RefreshAccessToken(request.RefreshToken); 
+
+                    return Ok(ApiResponse<string>.Success(StatusCodes.Status200OK, "Token refreshed", newToken));
+                }
+                catch (UnauthorizedAccessException e)
+                {
+                    return Unauthorized(ApiResponse<string>.Error(StatusCodes.Status401Unauthorized, e.Message));
+                }
+                catch (Exception e)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse<string>.Error(StatusCodes.Status500InternalServerError, $"Refresh failed: {e.Message}"));
                 }
             }
         }
-
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
 
     - fileType: "SQL Schema Bootstrapper Service"
@@ -2207,12 +2413,13 @@
         using Microsoft.Extensions.DependencyInjection;
         using Microsoft.EntityFrameworkCore;
         using System.Data.Common;
+        using System.Text.RegularExpressions;
         using ${majStart(projectName)}.Data;
     
         public class SqlSchemaBootstrapper : IHostedService
         {
             private readonly IServiceProvider _provider;
-            private const string SchemaFilePath = "Data/identity_schema.sql"; // chemin du script SQL
+            private const string SchemaFilePath = "Data/identity_schema.sql";
 
             public SqlSchemaBootstrapper(IServiceProvider provider)
             {
@@ -2232,12 +2439,24 @@
 
                     if (!await TableExistsAsync(conn, "AspNetUsers"))
                     {
-                        var sql = await File.ReadAllTextAsync(SchemaFilePath, cancellationToken);
-                        using var command = conn.CreateCommand();
-                        command.CommandText = sql;
-                        await command.ExecuteNonQueryAsync(cancellationToken);
+                        var sqlContent = await File.ReadAllTextAsync(SchemaFilePath, cancellationToken);
+                        var commands = Regex.Split(sqlContent, @"^\s*;\s*$", RegexOptions.Multiline)
+                                            .Where(s => !string.IsNullOrWhiteSpace(s))
+                                            .ToList();
 
-                        Console.WriteLine("[Identity Schema] Tables créées automatiquement.");
+                        using var transaction = await conn.BeginTransactionAsync(cancellationToken);
+
+                        foreach (var sql in commands)
+                        {
+                            using var command = conn.CreateCommand();
+                            command.CommandText = sql.Trim();
+                            command.Transaction = transaction;
+                            await command.ExecuteNonQueryAsync(cancellationToken);
+                        }
+
+                        await transaction.CommitAsync(cancellationToken);
+
+                        Console.WriteLine("[Identity Schema] Tables créées et données 'seedées' automatiquement.");
                     }
                     else
                     {
@@ -2246,7 +2465,7 @@
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[Identity Schema] ERREUR : {ex.Message}");
+                    Console.WriteLine($"[Identity Schema] ERREUR : Échec de l'exécution du script SQL. {ex.Message}");
                 }
                 finally
                 {
@@ -2272,7 +2491,6 @@
                 var result = await cmd.ExecuteScalarAsync();
                 return Convert.ToInt32(result) > 0;
             }
-        
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Startup"
 
