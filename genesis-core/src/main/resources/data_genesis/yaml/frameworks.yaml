@@ -949,11 +949,11 @@
               hibernate.format_sql: true
         {{/if}}
         {{#if useSpringSecurityJWT}}
-          sql:
-            init:
-              mode: always
-              schema-locations: classpath:sql-init/users.sql 
-              encoding: UTF-8
+          flyway:
+            enabled: true
+            locations: classpath:sql-init
+            baseline-on-migrate: true
+            baseline-version: 0
         {{/if}}
         
         server:
@@ -1106,6 +1106,18 @@
       artifactId: "commons-text"
       version: "1.11.0"
       scope: "{{removeLine}}"
+
+    - groupId: "org.flywaydb"
+      artifactId: "flyway-core"
+      version: "10.19.0"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.flywaydb"
+      artifactId: "flyway-database-oracle"
+      version: "10.19.0"
+      scope: "{{removeLine}}"
+
+
   model:
     toGenerate: true
     modelImports: |

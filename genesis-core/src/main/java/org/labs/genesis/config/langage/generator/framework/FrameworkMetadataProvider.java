@@ -366,6 +366,10 @@ public class FrameworkMetadataProvider {
         Database database = tableMetadata.getFirst().getDatabase();
         String connectionString = database.getConnectionString().get(framework.getLanguageId());
         Map<String, Object> connectionStringMetadata = getCredentialsHashMap(database);
+        if(connectionStringMetadata.get("database").equals("genesis"))
+        {
+            connectionStringMetadata.put("database",database.getSid().toLowerCase());
+        }
         connectionString = engine.render(connectionString, connectionStringMetadata);
 
         Map<String, Object> metadata = new HashMap<>(Map.of(
