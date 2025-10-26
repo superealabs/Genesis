@@ -2039,10 +2039,9 @@
         {
           options.AddPolicy("AllowFrontend", policy =>
           {
-            policy.WithOrigins("http://localhost:3000") 
+            policy.AllowAnyOrigin() 
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials(); // retire cette ligne si tu n’utilises pas de cookies / auth
+            .AllowAnyMethod();
           });
         });
 
