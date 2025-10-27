@@ -49,14 +49,14 @@ public class LlmApiClientRule {
                 .build();
     }
 
-    public String generateFunction(String yaml , String prompt , String under_prompt , String aiModel) throws Exception {
-            String jsonPayload = buildRequestPayload( yaml , prompt , under_prompt , aiModel);
+    public String generateFunction(String yaml , String prompt , String under_prompt , String aiModel, String[] additionalConf) throws Exception {
+            String jsonPayload = buildRequestPayload( yaml , prompt , under_prompt , aiModel , additionalConf);
             HttpRequest request = buildHttpRequest(jsonPayload);
             HttpResponse<String> response = sendHttpRequest(request);
             return parseResponse(response);
     }
 
-    public String buildRequestPayload(String yaml , String prompt , String under_prompt , String aiModel) throws Exception {
+    public String buildRequestPayload(String yaml , String prompt , String under_prompt , String aiModel, String[] additionalConf) throws Exception {
 
         HashMap<String, Object> payload = new HashMap<>();
         HashMap<String, String> message = new HashMap<>();
@@ -66,10 +66,14 @@ public class LlmApiClientRule {
             Description : 
             %s   
             %s
-
+            
+            *Use if only framework is spring-boot :
+            additional configuration :: 
+            path model : %s , project name : %s  
+            
             This is YAML content : 
             %s
-            """ , prompt , under_prompt , yaml ));
+            """ , prompt , under_prompt , additionalConf[0] , additionalConf[1] , yaml ));
 
         payload.put("messages", new HashMap[]{message});
         payload.put("model", aiModel);

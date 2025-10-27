@@ -4445,6 +4445,7 @@
       version: "{{removeLine}}"
       scope: "test"
 
+
 - id: 4
   languageId: 1
   coreFramework: "Spring Boot"
@@ -4540,14 +4541,22 @@
             public PasswordEncoder passwordEncoder() {
                 return new BCryptPasswordEncoder();
             }
-        
+            @Bean
+            public ReactiveJwtDecoder jwtDecoder() {
+              return ReactiveJwtDecoders.fromIssuerLocation("https://accounts.google.com");
+            }
             @Bean
             public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-                http.authorizeExchange(exchanges -> exchanges
-                    .anyExchange().authenticated()
-                ).httpBasic(Customizer.withDefaults());
+                http
+                .authorizeExchange(exchanges -> exchanges
+                .anyExchange().authenticated()
+                )
+                .oauth2Login(Customizer.withDefaults())
         
-              return http.build();
+                .oauth2ResourceServer(ServerHttpSecurity.OAuth2ResourceServerSpec::jwt);    
+        
+                http.csrf(ServerHttpSecurity.CsrfSpec::disable);
+                return http.build();
             }
         }
 
@@ -4571,7 +4580,21 @@
             web-application-type: reactive
           application:
             name: ${toKebabCase(projectName)}
-        
+
+          security:
+            oauth2:
+              client:
+                registration:
+                  google:
+                    client-id: ""
+                    client-secret: ""
+                provider:
+                  google:
+                    authorization-uri: "https://accounts.google.com/o/oauth2/v2/auth"
+                    token-uri: "https://oauth2.googleapis.com/token"
+                    user-info-uri: "https://www.googleapis.com/oauth2/v3/userinfo"
+                    jwk-set-uri: "https://www.googleapis.com/oauth2/v3/certs"
+                    user-name-attribute: "sub"
           cloud:
             gateway:
               routes:
@@ -4674,3 +4697,12 @@
       artifactId: "spring-boot-starter-security"
       version: "{{removeLine}}"
       scope: "{{removeLine}}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-oauth2-client"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-oauth2-resource-server"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+

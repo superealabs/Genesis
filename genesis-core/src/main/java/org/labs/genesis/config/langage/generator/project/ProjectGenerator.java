@@ -263,6 +263,9 @@ public class ProjectGenerator {
 
     private void useRealSidAndDriverType(Database database,Credentials credentials)
     {
+        if (credentials == null) {
+            return;
+        }
         if(credentials.getSID()!=null)
         {
             database.setSid(credentials.getSID());

@@ -8,10 +8,7 @@ import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.generator.project.LlmApiConfig;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
-import org.labs.genesis.config.langage.generator.ruleToCode.CodeBlock;
-import org.labs.genesis.config.langage.generator.ruleToCode.CodeInjector;
-import org.labs.genesis.config.langage.generator.ruleToCode.LlmApiClientRule;
-import org.labs.genesis.config.langage.generator.ruleToCode.PromptManagement;
+import org.labs.genesis.config.langage.generator.ruleToCode.*;
 
 import javax.swing.*;
 import java.nio.file.Path;
@@ -66,6 +63,8 @@ public class RuleToCodeAIForm {
         getGenerateCodeButton().addActionListener(e -> {
         try {
             Framework framework = context.getFramework();
+            String[] meta = new String[0];
+            YamlData yamlData = new YamlData();
 
             PromptManagement promptManagement = new PromptManagement();
             promptManagement.managementPrompt(framework.getId());
@@ -74,6 +73,9 @@ public class RuleToCodeAIForm {
 
             String yamlContent = context.getProjectDescription();
             String selectedAI = (String) aiOptionsComboBox.getSelectedItem();
+            String pathProject = context.getDestinationFolder();
+            Path path = Paths.get(pathProject) ;
+            meta = yamlData.extractGroupAndArtifact( path );
 
             LlmApiConfig llmApiConfig = (LlmApiConfig) this.listLlmApiConfigsComboBox.getSelectedItem();
             this.llmApiClientRule.setDefaultModel(llmApiConfig.getModel());
@@ -84,7 +86,7 @@ public class RuleToCodeAIForm {
                 this.llmApiClientRule.setApiKeyFromFile();
             }
 
-            String codeGenerated = llmApiClientRule.generateFunction( yamlContent , prompt , under_prompt , selectedAI ) ;
+            String codeGenerated = llmApiClientRule.generateFunction( yamlContent , prompt , under_prompt , selectedAI , meta ) ;
             codeContent.setText(codeGenerated);
 
             Messages.showInfoMessage(
