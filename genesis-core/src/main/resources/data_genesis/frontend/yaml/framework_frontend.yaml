@@ -910,10 +910,6 @@
             {{#each fieldsFK}}{{removeLine}}
             ${minStart(this.type)}s: ${majStart(this.type)}[] = []; 
             {{/each}}{{removeLine}}
-            
-            totalItems: number = 1000;
-            currentPage: number=1;
-            itemNumber: number=12;
         
             formValueAttribute: Record<string, any> = {};
             isLoading: boolean = false;
@@ -945,22 +941,6 @@
                 const sortParam=(this.columns[this.sortColumn]).fieldName+','+(this.sortOrientation?'asc':'desc');
                 this.load${majStart(className)}s(mappedValue,sortParam);
             }
-        
-            onNumberRowChange(lineNumber:number):void
-            {
-              this.itemNumber=Number(lineNumber);
-              this.onSearch(this.formValueAttribute);
-            }
-            onPageRangeChange(page:number): void {
-                  this.currentPage =page;
-                  this.onSearch(this.formValueAttribute);
-            }
-        
-            onSearch(formValue: any): void {
-              this.formValueAttribute=formValue
-              const mappedValue = expandDotNotation(formValue);
-              this.load${majStart(className)}s(mappedValue);
-            }
              
              constructor(
                 {{#each fieldsFK}}{{removeLine}}
@@ -984,6 +964,26 @@
                   this.isLoading = false;
               }
               });
+            }
+        
+            totalItems: number = 1000;
+            currentPage: number=1;
+            itemNumber: number=12;
+        
+            onNumberRowChange(lineNumber:number):void
+            {
+              this.itemNumber=Number(lineNumber);
+              this.onSearch(this.formValueAttribute);
+            }
+            onPageRangeChange(page:number): void {
+                  this.currentPage =page;
+                  this.onSearch(this.formValueAttribute);
+            }
+        
+            onSearch(formValue: any): void {
+              this.formValueAttribute=formValue
+              const mappedValue = expandDotNotation(formValue);
+              this.load${majStart(className)}s(mappedValue);
             }
             {{#if !isView}}{{removeLine}}
             delete${majStart(className)} = (line: any[]) => {
