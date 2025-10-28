@@ -2,7 +2,7 @@ const defaultLang = localStorage.getItem("lang") || "en";
 
 async function loadLang(lang) {
     try {
-        const response = await fetch(`/i18n/${lang}.json`);
+        const response = await fetch(`/static/i18n/${lang}.json`);
         const translations = await response.json();
 
         document.querySelectorAll("[data-i18n]").forEach(el => {
