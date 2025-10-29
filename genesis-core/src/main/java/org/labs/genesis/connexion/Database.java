@@ -34,7 +34,7 @@ public abstract class Database {
     private String port;
     private Map<String, String> types;
     private List<String> excludeSchemas;
-    private Credentials credentials;
+    protected Credentials credentials;
     private Map<String, Object> databaseMetadata;
     private Map<String, Framework.Dependency> dependencies;
     private ConstraintQueries constraintQueries;
@@ -82,6 +82,7 @@ public abstract class Database {
 
         List<TableMetadata> tableMetadataList = new ArrayList<>();
         for (String entityName : entityNames) {
+            System.out.println("entityYYName: " + entityName);
             tableMetadataList.add(getEntity(connection, credentials, entityName, language, framework));
         }
         return tableMetadataList;
@@ -204,9 +205,10 @@ public abstract class Database {
                 String columnType = columns.getString("TYPE_NAME");
 
                 String isNullable = columns.getString("IS_NULLABLE");
-                String defaultValue = columns.getString("COLUMN_DEF");
+
                 int decimalDigits = columns.getInt("DECIMAL_DIGITS");
                 int columnSize = columns.getInt("COLUMN_SIZE");
+                String defaultValue = columns.getString("COLUMN_DEF");
                 boolean isColumnNumeric = isColumnNumeric(columns);
                 boolean isColumnNumericWithPrecision = isColumnNumericWithPrecision(columns);
                 boolean isColumnText = isColumnText(columns);
@@ -256,7 +258,7 @@ public abstract class Database {
         return listeCols;
     }
 
-    private String getDatabaseType(ResultSet columns) throws Exception {
+    protected String getDatabaseType(ResultSet columns) throws Exception {
         String columnType = columns.getString("TYPE_NAME");
 
         if (columns.getInt("DATA_TYPE") == Types.NUMERIC && this.getId() == Constantes.Oracle_ID) {
@@ -319,7 +321,7 @@ public abstract class Database {
                 dataType == Types.LONGNVARCHAR;
     }
 
-    private boolean isColumnDate(ResultSet column) throws SQLException {
+    protected boolean isColumnDate(ResultSet column) throws SQLException {
         int dataType = column.getInt("DATA_TYPE");
 
         return dataType == Types.DATE ||

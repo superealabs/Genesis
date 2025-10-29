@@ -65,6 +65,7 @@ public class ProjectGenerator {
     }
 
     public static void renderAndCopyFiles(List<Project.ProjectFiles> projectFiles, HashMap<String, Object> initializeHashMap) throws IOException {
+        System.out.println("Generating PROJECT FILESSS RenderCopyFiles");
         for (Project.ProjectFiles projectFile : projectFiles) {
             String sourceFilePath = projectFile.getSourcePath() + projectFile.getFileName();
             String destinationFilePathSimple = projectFile.getDestinationPath() + projectFile.getFileName();
@@ -127,6 +128,7 @@ public class ProjectGenerator {
                 context.getProjectName(),
                 context.getGroupLink()
         );
+        System.out.println("Generating PROJECT FILESSS 1");
 
         HashMap<String, Object> projectFilesEditsHashMap = getProjectFilesEditsHashMap(
                 context.getDestinationFolder(),
@@ -141,6 +143,7 @@ public class ProjectGenerator {
                 context.getFramework(),
                 context.getFrameworkConfiguration()
         );
+        System.out.println("Generating PROJECT FILESSS 2");
 
         if (context.getFramework().getUseDB()) {
             var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
@@ -153,6 +156,8 @@ public class ProjectGenerator {
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
 
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
+        System.out.println(securityType+ " SECURITYYY");
+        Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
 
         if (securityType != null && !securityType.isBlank()) {
             Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework()
@@ -176,6 +181,10 @@ public class ProjectGenerator {
         selectedCacheProviderOption.ifPresent(frameworkCaching -> {
             try {
                 renderFilesEdits(frameworkCaching.getConfigFiles(), projectFilesEditsHashMap);
+        selectedSecurityOption.ifPresent(security -> {
+
+            try {
+                renderFilesEdits(security.getSecurityFiles(), projectFilesEditsHashMap);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -238,9 +247,9 @@ public class ProjectGenerator {
         Database database = context.getDatabase();
         Framework framework = context.getFramework();
         Credentials credentials = context.getCredentials();
+        useRealSidAndDriverType(database,credentials);
         Connection connection = context.getConnection();
         Language language = context.getLanguage();
-
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
                 List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language, framework);
@@ -248,6 +257,7 @@ public class ProjectGenerator {
                 GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
 
                 for (TableMetadata tableMetadata : entities) {
+
                     generateBackendComponents(
                             context,
                             genesisGenerator,
@@ -255,6 +265,7 @@ public class ProjectGenerator {
                             false
                     );
                 }
+                System.out.println(" GENERATED ENTITIES FOR PROJECT");
 
                 for (TableMetadata tableMetadata : views) {
                     generateBackendComponents(
@@ -264,6 +275,8 @@ public class ProjectGenerator {
                             false
                     );
                 }
+                System.out.println(" GENERATED VIEWS FOR PROJECT");
+
 
                 List<TableMetadata> allEntities = new ArrayList<>();
                 allEntities.addAll(entities);
@@ -272,10 +285,23 @@ public class ProjectGenerator {
                 generateProjectFiles(context, allEntities);
 
             } catch (Exception e) {
+                e.printStackTrace();
                 throw new RuntimeException("\nError in generateFullProject : \n" + e);
             }
         } else {
             generateProjectFiles(context, null);
+        }
+    }
+
+    private void useRealSidAndDriverType(Database database,Credentials credentials)
+    {
+        if(credentials.getSID()!=null)
+        {
+            database.setSid(credentials.getSID());
+        }
+        if(credentials.getDriverType()!=null)
+        {
+            database.setDriverType(credentials.getDriverType());
         }
     }
 

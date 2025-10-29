@@ -43,7 +43,7 @@ public class GenesisCoreTest {
             var framework = ProjectGenerator.frameworks.get(frameworkId);
             var project = ProjectGenerator.projects.get(projectId);
 
-            String projectName = "Popol";
+            String projectName = "JavaTest";
             String groupLink = "org.labs";
             String projectPort = "8000";
             String logLevel = "INFO";
@@ -75,11 +75,11 @@ public class GenesisCoreTest {
             List<String> entityNames = new ArrayList<>();
 
             ProjectGenerationContext context = new ProjectGenerationContext();
-            context.setDatabase(database);
             context.setLanguage(language);
             context.setFramework(framework);
             context.setProject(project);
             context.setCredentials(credentials);
+            context.setDatabase(database);
             context.setDestinationFolder(destinationFolder);
             context.setProjectName(projectName);
             context.setGroupLink(groupLink);
@@ -90,6 +90,8 @@ public class GenesisCoreTest {
             context.setEntityNames(entityNames);
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
+
+
 
             projectGenerator.generateProject(context);
 
@@ -108,9 +110,9 @@ public class GenesisCoreTest {
                 .setHost("localhost")
                 .setPort("5432")
                 .setSchemaName("public")
-                .setDatabaseName("test_keywords")
+                .setDatabaseName("restaurant")
                 .setUser("postgres")
-                .setPwd("olafienby7")
+                .setPwd("Etu002610")
                 .setTrustCertificate(true)
                 .setUseSSL(true)
                 .setAllowPublicKeyRetrieval(true);
@@ -302,6 +304,94 @@ public class GenesisCoreTest {
             context.setFrameworkConfiguration(frameworkConfiguration);
 
             projectGenerator.generateProject(context);
+
+            // Assertion pour vérifier si le dossier existe
+            Path path = Path.of(destinationFolder);
+            assertTrue(Files.exists(path) && Files.isDirectory(path), "Le dossier de destination n'existe pas.");
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void generateProjectExpress() {
+        var credentials = new Credentials()
+                .setHost("localhost")
+                .setPort("5432")
+                .setSchemaName("public")
+                .setDatabaseName("restaurant")
+                .setUser("postgres")
+                .setPwd("Etu002610")
+                .setTrustCertificate(true)
+                .setUseSSL(true)
+                .setAllowPublicKeyRetrieval(true);
+//        var credentials = new Credentials()
+//                .setHost("localhost")
+//                .setPort("1433")
+//                .setSchemaName("public")
+//                .setDatabaseName("Bibliotheque")
+//                .setUser("SA")
+//                .setPwd("Etu002610")
+//                .setTrustCertificate(true)
+//                .setUseSSL(true)
+//                .setAllowPublicKeyRetrieval(true);
+
+        try {
+            int databaseId = Constantes.PostgreSQL_ID;
+            int languageId = Constantes.TypeScript_ID;
+            int frameworkId = Constantes.ExpressJs_ID;
+            int projectId = Constantes.Node_ID;
+
+            var database = ProjectGenerator.databases.get(databaseId);
+            var language = ProjectGenerator.languages.get(languageId);
+            System.out.println(language+" language "+languageId);
+            var framework = ProjectGenerator.frameworks.get(frameworkId);
+            var project = ProjectGenerator.projects.get(projectId);
+
+            List<String> generationOptions = List.of("Model", "Service", "Controller");
+            String projectName = "AppNode";
+            String groupLink = "";
+            String projectPort = "3000";
+            String logLevel = "Information";
+            String projectDescription = "Node project";
+            String frameworkVersion = "";
+            String languageVersion = "";
+            String destinationFolder = "../generated";
+
+            ProjectGenerator projectGenerator = new ProjectGenerator();
+
+            //===== USE EUREKA SERVER =======//
+            framework.setUseCloud(false);
+            framework.setUseEurekaServer(false);
+            //==============================//
+//
+            HashMap<String, Object> languageConfiguration = new HashMap<>();
+            HashMap<String, Object> frameworkConfiguration = new HashMap<>();
+            // frameworkConfiguration.put("securityType", "Nest Security - JWT");
+
+            List<String> entityNames = new ArrayList<>();
+            List<String> viewNames = new ArrayList<>();
+            ProjectGenerationContext context = new ProjectGenerationContext();
+            context.setDatabase(database);
+            context.setLanguage(language);
+            context.setFramework(framework);
+            context.setProject(project);
+            context.setCredentials(credentials);
+            context.setDestinationFolder(destinationFolder);
+            context.setProjectName(projectName);
+            context.setGroupLink(groupLink);
+            context.setProjectPort(projectPort);
+            context.setProjectDescription(projectDescription);
+            context.setLanguageConfiguration(new HashMap<>());
+            context.setFrameworkConfiguration(frameworkConfiguration);
+            context.setEntityNames(entityNames);
+            context.setGenerationOptions(generationOptions);
+            context.setGenerateProjectStructure(true);
+            context.setViewNames(viewNames);
+
+            projectGenerator.generateProject(context);
+
 
             // Assertion pour vérifier si le dossier existe
             Path path = Path.of(destinationFolder);

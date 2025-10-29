@@ -227,6 +227,8 @@
         {{#if databaseType = PostgreSQL}}
         import org.postgresql.util.PGobject;
         {{else}}{{removeLine}}{{/if}}
+        import org.slf4j.Logger;
+        import org.slf4j.LoggerFactory;
         import org.springframework.dao.DataAccessException;
         import org.springframework.jdbc.core.JdbcTemplate;
         import org.springframework.jdbc.datasource.DataSourceUtils;
@@ -235,6 +237,7 @@
         import java.sql.SQLException;
         import java.util.*;
         import java.util.stream.Collectors;
+        import org.apache.commons.text.StringEscapeUtils;
 
         public class ConstraintDisabler {
         
@@ -435,6 +438,31 @@
 
               // Contraintes CHECK
               disableMySqlCheckConstraints(tableName, schema);
+        
+              // Récupère les colonnes avec valeur par défaut explicite (sauf auto_increment)
+              jdbc.queryForList(
+                "SELECT column_name, column_type, data_type, column_default, extra " +
+                "FROM information_schema.columns " +
+                "WHERE table_schema = ? AND table_name = ? " +
+                "AND column_default IS NOT NULL", // Colonnes avec DEFAULT explicite
+                schema, tableName
+              ).forEach(col -> {
+                String colName = safeGetString(col, "column_name");
+                String typeDef = safeGetString(col, "column_type");
+                String dataType = safeGetString(col, "data_type");
+                String defaultValue = safeGetString(col, "column_default");
+                String extra = safeGetString(col, "extra");
+                
+                // Exclure les colonnes auto_increment
+                if (extra == null || !extra.contains("auto_increment")) {
+                  // Gestion spéciale de CURDATE() et autres fonctions
+                  String defaultValueExpr = formatDefaultValueMySql(defaultValue);
+                  
+                  // Enregistre la commande de restauration
+                  String restoreSQL = "ALTER TABLE " + tableName + " ALTER COLUMN `" + colName + "` SET DEFAULT " + defaultValueExpr;
+                  restoreDdls.push(restoreSQL);
+                }
+              });
 
               // NOT NULL (sauf colonnes AUTO_INCREMENT)
               jdbc.queryForList(
@@ -454,9 +482,33 @@
                 }
             });
           }
+        
+          private String formatDefaultValueMySql(String defaultValue) {
+            if (defaultValue == null) return "";
+        
+            // Convertir CURDATE() en CURRENT_DATE
+            if ("CURDATE()".equalsIgnoreCase(defaultValue)) {
+              return "(CURRENT_DATE)";
+            }
+            // Convertir les autres fonctions courantes si nécessaire
+            else if ("CURTIME()".equalsIgnoreCase(defaultValue)) {
+              return "(CURRENT_TIME)";
+            }
+            else if ("NOW()".equalsIgnoreCase(defaultValue) || "CURRENT_TIMESTAMP()".equalsIgnoreCase(defaultValue)) {
+              return "(CURRENT_TIMESTAMP)";
+            }
+            // Conserver les expressions spéciales entre parenthèses
+            else if (defaultValue.startsWith("(") && defaultValue.endsWith(")")) {
+              return defaultValue; // e.g. (UUID()), (RAND() * 100)
+            }
+            // Chaînes de caractères (déjà correctement échappées par MySQL)
+            else {
+              return defaultValue;
+            }
+          }
 
           private void disableMySqlCheckConstraints(String tableName, String schema) {
-            // 1. Contraintes CHECK au niveau TABLE
+            // 1. Contraintes CHECK au niveau TABLE et niveau COLONNE
             jdbc.queryForList(
               "SELECT cc.constraint_name, cc.check_clause " +
               "FROM information_schema.table_constraints tc " +
@@ -465,195 +517,256 @@
               " AND tc.constraint_name = cc.constraint_name " +
               "WHERE tc.table_schema = ? " +
               "  AND tc.table_name = ? " +
-              "  AND tc.constraint_type = 'CHECK' " +
-              "  AND cc.level = 'Table'",
+              "  AND tc.constraint_type = 'CHECK' ",
               schema, tableName
             ).forEach(ch -> {
               String name = safeGetString(ch, "constraint_name");
               String clause = safeGetString(ch, "check_clause");
+              clause = StringEscapeUtils.unescapeJava(clause);
+              clause = clause.replaceAll("_utf8mb4'", "'"); // remplace \' par '
+        
+              if (clause.toLowerCase().contains("regexp_like")) {
+                  clause = "(" + clause + ")";
+              }
     
               try {
                 jdbc.execute("ALTER TABLE " + tableName + " DROP CONSTRAINT `" + name + "`");
-                restoreDdls.push("ALTER TABLE " + tableName + " ADD CONSTRAINT `" + name + "` CHECK (" + clause + ")");
+                restoreDdls.push("ALTER TABLE " + tableName + " ADD CONSTRAINT `" + name + "` CHECK " + clause);
               } catch (DataAccessException e) {
                 System.err.println("Failed to drop table-level CHECK constraint: " + name);
-              }
-            });
-
-            // 2. Contraintes CHECK au niveau COLONNE
-            jdbc.queryForList(
-              """
-                  SELECT cc.constraint_name, cc.check_clause
-                  FROM information_schema.check_constraints cc
-                  JOIN information_schema.table_constraints tc
-                  ON tc.constraint_schema = cc.constraint_schema
-                  AND tc.constraint_name = cc.constraint_name
-                  WHERE tc.table_schema = ?
-                  AND tc.table_name = ?
-                  AND tc.constraint_type = 'CHECK'
-                  AND cc.level = 'Column'
-              """,
-              schema, tableName
-            ).forEach(ch -> {
-              String colName = safeGetString(ch, "constraint_name");
-              String clause = safeGetString(ch, "check_clause");
-  
-              try {
-                // Désactiver via modification de colonne
-                String columnType = jdbc.queryForObject(
-                "SELECT column_type FROM information_schema.columns " +
-                "WHERE table_schema = ? AND table_name = ? AND column_name = ?",
-                String.class, schema, tableName, colName
-                );
-      
-                // Supprimer la contrainte CHECK
-                String modifySQL = "ALTER TABLE " + tableName + " MODIFY `" + colName + "` " + columnType;
-                jdbc.execute(modifySQL);
-      
-                // Stocker pour restauration
-                restoreDdls.push("ALTER TABLE " + tableName + " MODIFY `" + colName + "` " + columnType + " CHECK (" + clause + ")");
-              } catch (DataAccessException e) {
-                System.err.println("Failed to drop column-level CHECK constraint: " + colName);
               }
             });
           }
 
           private void disableSqlServer(String tableName) {
-            // CHECK
-            jdbc.queryForList(
-            "SELECT cc.name AS name, cc.definition AS def " +
-            "FROM sys.check_constraints cc " +
-            "JOIN sys.objects t ON cc.parent_object_id = t.object_id " +
-            "WHERE t.name = ?",
-            tableName
-            ).forEach(ch -> {
+                Logger logger = LoggerFactory.getLogger(ConstraintDisabler.class);
+                String schema = "dbo";
+            
+                String qualifiedTableName = String.format("[%s].[%s]", schema, tableName);
+            
+                try {
+                // Begin transaction
+                jdbc.execute("BEGIN TRANSACTION");
+                
+                // 1. UNIQUE Constraints
+                jdbc.queryForList(
+                "SELECT i.name AS constraint_name, " +
+                "STRING_AGG(COL_NAME(ic.object_id, ic.column_id), ',') AS columns " +
+                "FROM sys.indexes i " +
+                "JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id " +
+                "JOIN sys.tables t ON i.object_id = t.object_id " +
+                "JOIN sys.schemas s ON t.schema_id = s.schema_id " +
+                "WHERE i.is_unique = 1 AND i.is_primary_key = 0 " +
+                "AND t.name = ? AND s.name = ? " +
+                "GROUP BY i.name",
+                tableName, schema
+                ).forEach(unique -> {
+                String name = safeGetString(unique, "constraint_name");
+                String columns = safeGetString(unique, "columns");
+                if (name == null || columns == null) {
+                logger.warn("Skipping invalid UNIQUE constraint for table {}.{}: name={}, columns={}",
+                  schema, tableName, name, columns);
+                return;
+              }
+                
+                String restoreSQL = String.format("ALTER TABLE %s ADD CONSTRAINT [%s] UNIQUE ([%s])",
+                qualifiedTableName, name, columns.replace(",", "],["));
+              restoreDdls.push(restoreSQL);
+              try {
+              jdbc.execute(String.format("ALTER TABLE %s DROP CONSTRAINT [%s]", qualifiedTableName, name));
+              logger.debug("Dropped UNIQUE constraint [{}] on table {}.{}", name, schema, tableName);
+            } catch (DataAccessException e) {
+              logger.error("Failed to drop UNIQUE constraint [{}] on table {}.{}: {}", 
+                                  name, schema, tableName, e.getCause().getMessage());
+                          throw e;
+                      }
+                  });
+          
+                  // 2. CHECK Constraints
+                  jdbc.queryForList(
+                      "SELECT cc.name AS name, cc.definition AS def " +
+              "FROM sys.check_constraints cc " +
+              "JOIN sys.objects t ON cc.parent_object_id = t.object_id " +
+              "JOIN sys.schemas s ON t.schema_id = s.schema_id " +
+              "WHERE t.name = ? AND s.name = ?",
+              tableName, schema
+              ).forEach(ch -> {
               String name = safeGetString(ch, "name");
               String def = safeGetString(ch, "def");
+              if (name == null || def == null) {
+              logger.warn("Skipping invalid CHECK constraint for table {}.{}: name={}, def={}",
+                schema, tableName, name, def);
+              return;
+            }
               
-              restoreDdls.push("ALTER TABLE " + tableName + " ADD CONSTRAINT " + name + " CHECK (" + def + ")");
-              jdbc.execute("ALTER TABLE " + tableName + " DROP CONSTRAINT " + name);
-            });
+              String restoreSQL = String.format("ALTER TABLE %s ADD CONSTRAINT [%s] CHECK (%s)",
+              qualifiedTableName, name, def);
+              restoreDdls.push(restoreSQL);
+              try {
+              jdbc.execute(String.format("ALTER TABLE %s DROP CONSTRAINT [%s]", qualifiedTableName, name));
+              logger.debug("Dropped CHECK constraint [{}] on table {}.{}", name, schema, tableName);
+            } catch (DataAccessException e) {
+              logger.error("Failed to drop CHECK constraint [{}] on table {}.{}: {}", 
+                                  name, schema, tableName, e.getCause().getMessage());
+                          throw e;
+                      }
+                  });
           
-            // FOREIGN KEY
-            jdbc.queryForList(
-            "SELECT fk.name AS name, COL_NAME(fkc.parent_object_id,fkc.parent_column_id) AS col, " +
-            "OBJECT_NAME(fk.referenced_object_id) AS refTable, " +
-            "COL_NAME(fkc.referenced_object_id,fkc.referenced_column_id) AS refCol " +
-            "FROM sys.foreign_keys fk " +
-            "JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id " +
-            "WHERE OBJECT_NAME(fk.parent_object_id)=?",
-            tableName
-            ).forEach(fk -> {
+                  // 3. FOREIGN KEY Constraints
+                  jdbc.queryForList(
+                      "SELECT fk.name AS name, " +
+              "COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS col, " +
+              "OBJECT_NAME(fk.referenced_object_id) AS refTable, " +
+              "COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id) AS refCol " +
+              "FROM sys.foreign_keys fk " +
+              "JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id " +
+              "JOIN sys.tables t ON fk.parent_object_id = t.object_id " +
+              "JOIN sys.schemas s ON t.schema_id = s.schema_id " +
+              "WHERE t.name = ? AND s.name = ?",
+              tableName, schema
+              ).forEach(fk -> {
               String name = safeGetString(fk, "name");
               String col = safeGetString(fk, "col");
               String refTable = safeGetString(fk, "refTable");
               String refCol = safeGetString(fk, "refCol");
+              if (name == null || col == null || refTable == null || refCol == null) {
+              logger.warn("Skipping invalid FOREIGN KEY constraint for table {}.{}: name={}, col={}, refTable={}, refCol={}",
+                schema, tableName, name, col, refTable, refCol);
+              return;
+            }
               
-              String restoreSQL = "ALTER TABLE " + tableName +
-              " ADD CONSTRAINT " + name +
-              " FOREIGN KEY(" + col + ") REFERENCES " +
-              refTable + "(" + refCol + ")";
-              
+              String restoreSQL = String.format(
+              "ALTER TABLE %s ADD CONSTRAINT [%s] FOREIGN KEY ([%s]) REFERENCES [%s]([%s])",
+              qualifiedTableName, name, col, refTable, refCol);
               restoreDdls.push(restoreSQL);
-              jdbc.execute("ALTER TABLE " + tableName + " DROP CONSTRAINT " + name);
-            });
+              try {
+              jdbc.execute(String.format("ALTER TABLE %s DROP CONSTRAINT [%s]", qualifiedTableName, name));
+              logger.debug("Dropped FOREIGN KEY constraint [{}] on table {}.{}", name, schema, tableName);
+            } catch (DataAccessException e) {
+              logger.error("Failed to drop FOREIGN KEY constraint [{}] on table {}.{}: {}", 
+                                  name, schema, tableName, e.getCause().getMessage());
+                          throw e;
+                      }
+                  });
           
-            // NOT NULL (sauf colonnes IDENTITY)
-            jdbc.queryForList(
-            "SELECT name, system_type_name AS def " +
-            "FROM sys.columns " +
-            "WHERE object_id = OBJECT_ID(?) AND is_nullable = 0 AND is_identity = 0",
-            tableName
-            ).forEach(col -> {
+                  // 4. NOT NULL Constraints (excluding IDENTITY columns)
+                  jdbc.queryForList(
+                      "SELECT c.name, t.name AS type_name, " +
+              "CASE " +
+              "  WHEN t.name IN ('decimal', 'numeric') THEN t.name + '(' + CAST(c.precision AS VARCHAR) + ',' + CAST(c.scale AS VARCHAR) + ')' " +
+              "  WHEN t.name IN ('varchar', 'nvarchar', 'char', 'nchar') THEN t.name + '(' + CASE WHEN c.max_length = -1 THEN 'MAX' ELSE CAST(c.max_length AS VARCHAR) END + ')' " +
+              "  ELSE t.name " +
+              "END AS def " +
+              "FROM sys.columns c " +
+              "JOIN sys.types t ON c.system_type_id = t.system_type_id " +
+              "WHERE c.object_id = OBJECT_ID(?) AND c.is_nullable = 0 AND c.is_identity = 0",
+              qualifiedTableName
+              ).forEach(col -> {
               String colName = safeGetString(col, "name");
               String def = safeGetString(col, "def");
+              if (colName == null || def == null) {
+              logger.warn("Skipping invalid NOT NULL column for table {}.{}: name={}, def={}",
+                schema, tableName, colName, def);
+              return;
+            }
               
-              restoreDdls.push("ALTER TABLE " + tableName + " ALTER COLUMN " + colName + " " + def + " NOT NULL");
-              jdbc.execute("ALTER TABLE " + tableName + " ALTER COLUMN " + colName + " " + def + " NULL");
-            });
+              String restoreSQL = String.format("ALTER TABLE %s ALTER COLUMN [%s] %s NOT NULL",
+              qualifiedTableName, colName, def);
+              restoreDdls.push(restoreSQL);
+              try {
+              jdbc.execute(String.format("ALTER TABLE %s ALTER COLUMN [%s] %s NULL",
+              qualifiedTableName, colName, def));
+              logger.debug("Dropped NOT NULL constraint on column [{}] in table {}.{}",
+              colName, schema, tableName);
+            } catch (DataAccessException e) {
+              logger.error("Failed to drop NOT NULL constraint on column [{}] in table {}.{}: {}", 
+                                  colName, schema, tableName, e.getCause().getMessage());
+                          throw e;
+                      }
+                  });
+          
+                  // Commit transaction
+                  jdbc.execute("COMMIT TRANSACTION");
+              } catch (DataAccessException e) {
+              // Rollback transaction on error
+              try {
+              jdbc.execute("ROLLBACK TRANSACTION");
+              } catch (DataAccessException rollbackEx) {
+              logger.error("Failed to rollback transaction for table {}.{}: {}", 
+                              schema, tableName, rollbackEx.getCause().getMessage());
+                  }
+                  throw e;
+              }
           }
 
-          private void disableOracle(String tableName) {
-            String schema = jdbc.queryForObject("SELECT USER FROM DUAL", String.class).toUpperCase();
-            String tableUpper = tableName.toUpperCase();
+                private void disableOracle(String tableName) {
+                String schema = jdbc.queryForObject("SELECT USER FROM DUAL", String.class).toUpperCase();
+                String tableUpper = tableName.toUpperCase();
           
-            // Contraintes R, C, U, P
-            jdbc.queryForList(
-            "SELECT constraint_name, constraint_type, search_condition, r_constraint_name " +
-            "FROM all_constraints " +
-            "WHERE owner = ? AND table_name = ? AND constraint_type IN ('R','C','U','P')",
-            schema, tableUpper
-            ).forEach(row -> {
-              String name = safeGetString(row, "CONSTRAINT_NAME");
-              String type = safeGetString(row, "CONSTRAINT_TYPE");
-              String ddl;
-              
-              switch (type) {
-              case "C": // CHECK
-                String cond = safeGetString(row, "SEARCH_CONDITION");
-                ddl = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name + " CHECK (" + cond + ")";
-                break;
-              case "R": // FK
-                String pk = safeGetString(row, "R_CONSTRAINT_NAME");
-                List<String> fkCols = jdbc.queryForList(
-                "SELECT column_name FROM all_cons_columns " +
-                "WHERE owner = ? AND constraint_name = ?",
-                String.class, schema, name
+                List<Map<String, Object>> constraints = jdbc.queryForList(
+                "SELECT constraint_name, constraint_type, search_condition, r_constraint_name " +
+                "FROM all_constraints ac " +
+                "WHERE owner = ? " +
+                "  AND table_name = ? " +
+                "  AND constraint_type IN ('R', 'C', 'U', 'P') " +
+                "  AND ( " +
+                "       constraint_name NOT LIKE 'SYS_%' " +
+                "       OR ( " +
+                "          constraint_name LIKE 'SYS_%' " +
+                "          AND EXISTS ( " +
+                "              SELECT 1 FROM all_cons_columns acc " +
+                "              WHERE acc.owner = ac.owner " +
+                "                AND acc.constraint_name = ac.constraint_name " +
+                "          ) " +
+                "       ) " +
+                "  ) " +
+                "ORDER BY constraint_name",
+                schema, tableUpper
                 );
-                List<String> pkCols = jdbc.queryForList(
-                "SELECT column_name FROM all_cons_columns " +
-                "WHERE owner = ? AND constraint_name = ?",
-                String.class, schema, pk
-                );
-                String refTable = jdbc.queryForObject(
-                "SELECT table_name FROM all_constraints " +
-                "WHERE owner = ? AND constraint_name = ?",
-                String.class, schema, pk
-                );
-                
-                ddl = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name +
-                " FOREIGN KEY (" + String.join(",", fkCols) + ") REFERENCES " +
-                refTable + "(" + String.join(",", pkCols) + ")";
-                break;
-              case "U": // UNIQUE
-                List<String> uniqueCols = jdbc.queryForList(
-                "SELECT column_name FROM all_cons_columns " +
-                "WHERE owner = ? AND constraint_name = ?",
-                String.class, schema, name
-                );
-                ddl = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name +
-                " UNIQUE (" + String.join(",", uniqueCols) + ")";
-                break;
-              default: // P = PRIMARY KEY
-                List<String> pkCols2 = jdbc.queryForList(
-                "SELECT column_name FROM all_cons_columns " +
-                "WHERE owner = ? AND constraint_name = ?",
-                String.class, schema, name
-                );
-                ddl = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name +
-                " PRIMARY KEY (" + String.join(",", pkCols2) + ")";
-            }
-        
-              restoreDdls.push(ddl);
-              jdbc.execute("ALTER TABLE " + tableName + " DISABLE CONSTRAINT " + name);
-            });
           
-            // NOT NULL
-            jdbc.queryForList(
-            "SELECT column_name, data_type, data_length " +
-            "FROM all_tab_columns " +
-            "WHERE owner = ? AND table_name = ? AND nullable = 'N'",
-            schema, tableUpper
-            ).forEach(col -> {
-              String colName = safeGetString(col, "COLUMN_NAME");
-              String dt = safeGetString(col, "DATA_TYPE");
-              Object lenObj = col.get("DATA_LENGTH");
-              int len = lenObj instanceof Number ? ((Number) lenObj).intValue(): 0;
-              String def = (len > 0) ? dt + "(" + len + ")": dt;
-        
-              restoreDdls.push("ALTER TABLE " + tableName + " MODIFY (" + colName + " " + def + " NOT NULL)");
-              jdbc.execute("ALTER TABLE " + tableName + " MODIFY (" + colName + " NULL)");
-            });
+                for (Map<String, Object> row : constraints) {
+                  String name = safeGetString(row, "CONSTRAINT_NAME");
+                  String type = safeGetString(row, "CONSTRAINT_TYPE");
+                  String searchCond = safeGetString(row, "SEARCH_CONDITION");
+                  
+                  if ("P".equals(type)) {
+                  System.out.println("Constraint " + name + " ignored (PRIMARY KEY)");
+                  continue;
+                  }
+                  if ("C".equals(type) && searchCond != null && searchCond.toUpperCase().contains("IS NOT NULL")) {
+                  System.out.println("Constraint " + name + " ignored (NOT NULL implicit)");
+                  continue;
+                  }
+                  
+                  restoreDdls.push("ALTER TABLE " + tableUpper + " ENABLE CONSTRAINT " + name);
+                  
+                  if ("R".equals(type)) {
+                  List<String> fkCols = jdbc.queryForList(
+                  "SELECT column_name FROM all_cons_columns WHERE owner = ? AND constraint_name = ? ORDER BY position",
+                  String.class, schema, name
+                  );
+                  
+                  for (String col : fkCols) {
+                    String alterToNull = "ALTER TABLE " + tableUpper + " MODIFY (" + col + " NULL)";
+                    try {
+                    jdbc.execute(alterToNull);
+                    System.out.println("Column " + tableUpper + "." + col + " made nullable");
+                    restoreDdls.push("ALTER TABLE " + tableUpper + " MODIFY (" + col + " NOT NULL)");
+                    } catch (DataAccessException e) {
+                    System.err.println("Error modifying NULL for column " + col + ": " + e.getMessage());
+                            }
+                        }
+                    }
+          
+                    try {
+                        jdbc.execute("ALTER TABLE " + tableUpper + " DISABLE CONSTRAINT " + name);
+                  System.out.println("Constraint " + name + " disabled");
+                } catch (DataAccessException e) {
+                  System.err.println("Error disabling constraint " + name + ": " + e.getMessage());
+                    }
+                }
+          
+                System.out.println("Processing finished for table " + tableUpper);
           }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
@@ -691,6 +804,67 @@
             }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/exception"
+    - fileType: "Export util"
+      fileName: "ExportUtils"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.utils;
+        
+        import java.io.PrintWriter;
+        import java.io.StringWriter;
+        import java.lang.reflect.Field;
+        import java.util.List;
+        import java.util.stream.Collectors;
+
+        public class ExportUtils {
+
+            // Generate CSV from a list of objects using reflection
+            public static <T> String generateCsv(List<T> data) {
+                if (data == null || data.isEmpty()) {
+                    return "";
+                }
+
+                StringWriter stringWriter = new StringWriter();
+                PrintWriter writer = new PrintWriter(stringWriter);
+
+                Class<?> clazz = data.get(0).getClass();
+                Field[] fields = clazz.getDeclaredFields();
+
+                // header
+                String header = String.join(",",
+                        List.of(fields).stream()
+                                .map(Field::getName)
+                                .collect(Collectors.toList())
+                );
+                writer.println(header);
+
+                for (T item : data) {
+                    String line = List.of(fields).stream()
+                            .map(field -> {
+                                field.setAccessible(true);
+                                try {
+                                    Object value = field.get(item);
+                                    return value != null ? escapeCsv(value.toString()) : "";
+                                } catch (IllegalAccessException e) {
+                                    return "";
+                                }
+                            })
+                            .collect(Collectors.joining(","));
+                    writer.println(line);
+                }
+
+                writer.flush();
+                return stringWriter.toString();
+            }
+            private static String escapeCsv(String value) {
+                String escaped = value.replace("\"", "\"\"");
+                if (escaped.contains(",") || escaped.contains("\"") || escaped.contains("\n")) {
+                    return "\"" + escaped + "\"";
+                }
+                return escaped;
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
 
     - fileType: "Exception Handler"
       fileName: "GlobalExceptionHandler"
@@ -743,7 +917,6 @@
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/exception/handler"
 
-
     - fileType: "ApplicationYml"
       fileName: "application"
       extension: "yml"
@@ -757,7 +930,7 @@
             username: ${databaseUsername}
             password: ${databasePassword}
           jpa:
-            database-platform : org.hibernate.dialect.${databaseType}Dialect
+            database-platform : org.hibernate.dialect.${skipEscape(databaseType)}Dialect
             hibernate:
               ddl-auto: ${hibernateDdlAuto}
             properties:
@@ -767,6 +940,12 @@
           cache:
             jcache:
               config: classpath:ehcache.xml
+        {{#if useSpringSecurityJWT}}
+          sql:
+            init:
+              mode: always
+              schema-locations: classpath:sql-init/users.sql 
+              encoding: UTF-8
         {{/if}}
         
         server:
@@ -819,13 +998,20 @@
                 url: $[spring.datasource.url]
                 type: "${databaseType}"
         {{/if}}
+        
+        {{#if useSpringSecurityJWT}}
+        jwt:
+          secret: $[JWT_SECRET:Bel0Y8TSTrZyicQgAJdcabCbaMQo3s3BkBmP925Wb3g=]
+          expiration: 36000
+        {{/if}}
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
 
     - fileType: "Configuration file for test classes"
       fileName: "application-test"
       extension: "properties"
-      content: |   
+      content: |
+        spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.${databaseType}Dialect
         spring.jpa.properties.jakarta.persistence.validation.mode=none
         spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration
         spring.jpa.properties.hibernate.validator.apply_to_ddl=false
@@ -862,6 +1048,7 @@
       variableName: "securityType"
       options:
         - "NONE"
+        - "Spring Security - JWT"
       defaultOption: "NONE"
     - name: "Cache Provider"
       variableName: "cacheProvider"
@@ -913,6 +1100,10 @@
       version: "3.9.2"
       scope: "{{removeLine}}"
 
+    - groupId: "org.apache.commons"
+      artifactId: "commons-text"
+      version: "1.11.0"
+      scope: "{{removeLine}}"
   model:
     toGenerate: true
     modelImports: |
@@ -930,17 +1121,23 @@
       @Table(name="${tableName}")
     modelFieldContent: |
       {{tab}}{{#each fields}}
-      {{tab}}{{#if this.isPrimaryKey}}
+      {{tab}}{{#if this.isIntAndPrimaryKey}}
       {{tab}}@Id
       {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
-      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
+      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable})
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}{{elseIf this.isPrimaryKey}}
+      {{tab}}@Id
+      {{tab}}@org.hibernate.annotations.Generated(org.hibernate.annotations.GenerationTime.INSERT)
+      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable})
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}{{elseIf this.isForeignKey}}
       {{tab}}@ManyToOne
       {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{/if}}
       {{tab}}{{#each this.attributeTypeAnnotations}}
-      {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}
-      {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
@@ -1183,6 +1380,8 @@
       {{#if cacheableWithEhcache}}import org.springframework.cache.annotation.Cacheable;{{else}}{{removeLine}}{{/if}}
       {{#if cacheableWithEhcache and isView = false}}import org.springframework.cache.annotation.CacheEvict;{{else}}{{removeLine}}{{/if}}
 
+      import ${groupLink}.${lowerCase(projectName)}.utils.ExportUtils;
+      import java.util.List;
     serviceAnnotations: |
       @Service
     serviceClassKeyword: "public class"
@@ -1197,6 +1396,11 @@
     serviceMethodContent: |
       {{tab}}@Override
       {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort", unless = "#result.isEmpty()"){{else}}{{removeLine}}{{/if}}
+      {{tab}}public String export${majStart(className)}ToCSV(List<${className}> ${minStart(className)}) {
+      {{tab}}   return ExportUtils.generateCsv(${minStart(className)});
+      {{tab}}}  
+
+      {{tab}}@Override
       {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.findAll(pageable);
@@ -1275,6 +1479,8 @@
           import ${groupLink}.${lowerCase(projectName)}.models.${className};
           import org.springframework.data.domain.Page;
           import org.springframework.data.domain.Pageable;    
+          import java.util.List;
+          
           
           public interface ${majStart(className)}Service {
               Page<${className}> getAll${className}(Pageable pageable);
@@ -1282,6 +1488,8 @@
               Page<${className}> getAll${className}(Pageable pageable, ${majStart(className)} object);
           
               ${className} get${className}ById(${pkColumnType} ${pkColumn});
+          
+              public String export${className}ToCSV(List<${className}> ${minStart(className)});
           
               {{#if !isView}}
           
@@ -1304,6 +1512,7 @@
       import io.swagger.v3.oas.annotations.media.Schema;
       import io.swagger.v3.oas.annotations.responses.ApiResponse;
       import io.swagger.v3.oas.annotations.responses.ApiResponses;
+      import io.swagger.v3.oas.annotations.security.SecurityRequirement;
       import io.swagger.v3.oas.annotations.tags.Tag;
       import org.springframework.http.HttpStatus;
       import org.springframework.http.ResponseEntity;
@@ -1317,6 +1526,7 @@
       import org.springframework.data.domain.Sort;
       import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
+      import java.util.List;
 
     controllerAnnotations: |
       @RestController
@@ -1333,6 +1543,7 @@
     controllerMethodContent: |
       {{tab}}@Operation(
       {{tab}}    summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
       {{tab}}    description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1382,6 +1593,7 @@
       {{tab}}}
       {{tab}}@Operation(
       {{tab}}    summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
       {{tab}}    description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1432,6 +1644,7 @@
       {{tab}}}
       {{tab}}@Operation(
       {{tab}}    summary = "Get ${formatReadableLowerCase(className)} by ID",
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}      
       {{tab}}    description = "Retrieve a specific ${formatReadableLowerCase(className)} item by its ID"
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1455,11 +1668,36 @@
       {{tab}}            "${formatReadableLowerCase(className)} retrieved successfully", ${lowerCase(className)});
       {{tab}}    return ResponseEntity.ok(response);
       {{tab}}}
-      
+      {{tab}}@Operation(
+      {{tab}}     summary = "Export ${formatReadable(className)} to CSV",
+      {{tab}}     description = "Generate a CSV file from a provided list of ${formatReadable(className)} objects."
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}   @ApiResponse(
+      {{tab}}   responseCode = "200",
+      {{tab}}   description = "CSV file successfully generated",
+      {{tab}}   content = @Content(mediaType = "text/csv")
+      {{tab}}   ),
+      {{tab}}   @ApiResponse(
+      {{tab}}   responseCode = "400",
+      {{tab}}   description = "Invalid or empty list provided"
+      {{tab}}   )
+      {{tab}}})
+      {{tab}}@PostMapping(value = "/export/csv", consumes = "application/json", produces = "text/csv")
+      {{tab}}public ResponseEntity<byte[]> export${majStart(className)}ToCsv(@RequestBody List<${majStart(className)}> ${lowerCase(className)}) {
+      {{tab}}  
+      {{tab}}  String csvContent = ${lowerCase(className)}Service.export${majStart(className)}ToCSV(${lowerCase(className)});
+      {{tab}}  
+      {{tab}}  return ResponseEntity.ok()
+      {{tab}}   .header("Content-Disposition", "attachment; filename=data.csv")
+      {{tab}}   .contentType(org.springframework.http.MediaType.TEXT_PLAIN)
+      {{tab}}   .body(csvContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      {{tab}}}
       {{#if !isView}} 
       
       {{tab}}@Operation(
       {{tab}}    summary = "Create new ${formatReadableLowerCase(className)}",
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
       {{tab}}    description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1486,6 +1724,7 @@
       
       {{tab}}@Operation(
       {{tab}}    summary = "Update existing ${formatReadableLowerCase(className)}",
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}      
       {{tab}}    description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1518,6 +1757,7 @@
       
       {{tab}}@Operation(
       {{tab}}    summary = "Delete ${formatReadableLowerCase(className)}",
+      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}      
       {{tab}}    description = "Delete a ${formatReadableLowerCase(className)} item by its ID. Returns success even if ${formatReadableLowerCase(className)} was already deleted."
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1579,11 +1819,20 @@
         using Steeltoe.Management.Endpoint;
         using System.Net.NetworkInformation;
         using System.Net.Sockets;{{/if}}
+        {{#if useJWT}}
+        using Microsoft.AspNetCore.Identity;
+        using System.Security.Claims;
+        using Microsoft.AspNetCore.Authorization;
+        using ${majStart(projectName)}.Services.Startup;
+        using Microsoft.IdentityModel.Tokens;
+        using System.Text;
+        {{/if}}
         using System.Net;
         using Microsoft.OpenApi.Models;
         using Microsoft.EntityFrameworkCore;
         using ${majStart(projectName)}.Data;
         using ${majStart(projectName)}.Filters;
+        using ${majStart(projectName)}.Models;
         using ${majStart(projectName)}.Repositories.Implementation;
         using ${majStart(projectName)}.Repositories.Interface;
         using ${majStart(projectName)}.Services.Implementation;
@@ -1606,6 +1855,31 @@
             {
               c.AddServer(new OpenApiServer { Url = pathBase });
             }
+            {{#if useJWT}}
+            c.AddSecurityDefinition("Bearer" , new OpenApiSecurityScheme
+            {
+                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                Description = "Please enter a token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "bearer"
+            });
+            
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    []
+                }
+            });{{/if}}
         });
         
         // Configure Kestrel to listen on both the machine's IP address and localhost
@@ -1645,12 +1919,20 @@
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         builder.Services.AddDbContext<${majStart(projectName)}Context>(options =>
             options.Use${daoName}(connectionString${addOptions}));
+        {{#if useJWT}}
+        builder.Services.AddHostedService<SqlSchemaBootstrapper>();
+        builder.Services
+          .AddIdentity<ApplicationUser, IdentityRole>()
+          .AddEntityFrameworkStores<${majStart(projectName)}Context>()
+          .AddDefaultTokenProviders();
         
+        builder.Services.AddScoped<UserService>();
+        builder.Services.AddScoped<JwtService>();
+        {{/if}}
         // Adding repositories ...
         {{#each entities}}
         builder.Services.AddScoped<I${this}Repository, ${this}Repository>();
-        {{/each}}
-        // Adding services ...
+        {{/each}}        // Adding services ...
         {{#each entities}}
         builder.Services.AddScoped<I${this}Service, ${this}Service>();
         {{/each}}
@@ -1665,6 +1947,35 @@
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         
+        {{#if useJWT}}    
+        builder.Services.AddAuthentication(options =>
+        {
+          options.DefaultAuthenticateScheme = "Bearer";
+          options.DefaultChallengeScheme = "Bearer";
+        })
+        .AddJwtBearer("Bearer", options =>
+        {
+          options.TokenValidationParameters = new TokenValidationParameters
+          {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(
+              builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT key missing"))
+            ),
+            NameClaimType = ClaimTypes.NameIdentifier
+          };
+        });
+        
+        builder.Services.AddAuthorization(options =>
+        {
+          options.DefaultPolicy = new AuthorizationPolicyBuilder("Bearer")
+          .RequireAuthenticatedUser()
+          .Build();
+        });
+        {{/if}}
+
         var app = builder.Build();
         
         if (!string.IsNullOrEmpty(pathBase))
@@ -1683,9 +1994,13 @@
         {{#if useEurekaServer}}
         // Map all actuators and controllers directly
         app.MapAllActuators(_ => { });{{/if}}
+        
+        {{#if useJWT}}
+        app.UseAuthentication();
+        app.UseAuthorization();{{/if}}
+        
         app.MapControllers();
         
-        app.UseAuthorization();
         app.Run();
         public partial class Program {}
       
@@ -1696,11 +2011,16 @@
       extension: "cs"
       content: |
         namespace ${majStart(projectName)}.Data;
-        
+        {{#if useJWT}}
+        using Microsoft.AspNetCore.Identity;
+        using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+        {{/if}}
         using Microsoft.EntityFrameworkCore;
         using Models;
-        
-        public class ${majStart(projectName)}Context : DbContext
+        {{#if useJWT}}
+        public class ${majStart(projectName)}Context : IdentityDbContext<ApplicationUser>
+        {{else}}
+        public class ${majStart(projectName)}Context : DbContext{{/if}}
         {
             {{#each entities}}
             public DbSet<${this}> ${this}s { get; set; }
@@ -1825,6 +2145,66 @@
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Filters/"
+
+    - fileType: "ExportUtil"
+      fileName: "ExportUtil"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+
+        using System.Reflection;
+        using System.Text;
+        using System.Reflection;
+        using System.Text;
+
+        public static class ExportUtil
+        {
+            // Generate CSV from a list of objects using reflection
+            public static string GenerateCsv<T>(List<T> data)
+            {
+                if (data == null || !data.Any())
+                {
+                    return string.Empty;
+                }
+
+                var stringBuilder = new StringBuilder();
+                var type = typeof(T);
+                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+                // Header
+                var header = string.Join(",", properties.Select(p => p.Name));
+                stringBuilder.AppendLine(header);
+
+                // Data rows
+                foreach (var item in data)
+                {
+                    var line = properties.Select(property =>
+                    {
+                        var value = property.GetValue(item);
+                        return value != null ? EscapeCsv(value.ToString()) : string.Empty;
+                    });
+                    stringBuilder.AppendLine(string.Join(",", line));
+                }
+
+                return stringBuilder.ToString();
+            }
+
+            private static string EscapeCsv(string value)
+            {
+                if (string.IsNullOrEmpty(value))
+                    return string.Empty;
+
+                var escaped = value.Replace("\"", "\"\"");
+
+                if (escaped.Contains(",") || escaped.Contains("\"") || escaped.Contains("\n") || escaped.Contains("\r"))
+                {
+                    return $"\"{escaped}\"";
+                }
+
+                return escaped;
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
     - fileType: "WebUtils"
       fileName: "WebUtils"
@@ -2178,6 +2558,7 @@
         using System.Data;
         using System.Data.Common;
         using System.Linq;
+        using System.Text.RegularExpressions;
         {{#if databaseType = SQL Server}}
         using Microsoft.Data.SqlClient;
         {{else}}{{removeLine}}{{/if}}
@@ -2274,33 +2655,67 @@
           public void RestoreConstraints()
           {
             Console.WriteLine($"Restoring {_restoreDdls.Count} constraints");
-            
-            while (_restoreDdls.Count > 0)
+        
+            // Separate NOT NULL and other constraints to restore NOT NULL first
+            var notNullDdls = new List<string>();
+            var otherDdls = new List<string>();
+            foreach (var ddl in _restoreDdls)
             {
-              string ddl = _restoreDdls.Pop();
-              Console.WriteLine($"Restoring: {ddl}");
-      
-                  try
-                  {
-                      // Créer la commande spécifique au SGBD
-                      using (var cmd = CreateDbCommand(ddl))
-                      {
-                          cmd.ExecuteNonQuery();
-                          Console.WriteLine($"Successfully restored: {ddl}");
-                      }
-                  }
-                  catch (DbException ex)
-                  {
-                      Console.Error.WriteLine($"Error restoring constraint: {ddl}");
-                      Console.Error.WriteLine($"Reason: {ex.Message}");
-                  }
-                  catch (InvalidOperationException ex)
-                  {
-                      Console.Error.WriteLine($"Connection issue: {ex.Message}");
-                  }
-              }
-              _processedTables.Clear();
-          }
+              if (ddl.Contains("NOT NULL"))
+              notNullDdls.Add(ddl);
+              else
+              otherDdls.Add(ddl);
+            }
+        
+            // Restore NOT NULL constraints first
+            foreach (var ddl in notNullDdls)
+            {
+              try
+              {
+                Console.WriteLine($"Restoring: {ddl}");
+                    using (var cmd = CreateDbCommand(ddl))
+                    {
+                        cmd.ExecuteNonQuery();
+                        Console.WriteLine($"Successfully restored: {ddl}");
+                    }
+                }
+                catch (DbException ex)
+                {
+                    Console.Error.WriteLine($"Error restoring constraint: {ddl}");
+                    Console.Error.WriteLine($"Reason: {ex.Message}");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Console.Error.WriteLine($"Connection issue: {ex.Message}");
+                }
+            }
+        
+            // Restore other constraints (CHECK, FOREIGN KEY, UNIQUE)
+            foreach (var ddl in otherDdls)
+            {
+                try
+                {
+                    Console.WriteLine($"Restoring: {ddl}");
+                    using (var cmd = CreateDbCommand(ddl))
+                    {
+                        cmd.ExecuteNonQuery();
+                        Console.WriteLine($"Successfully restored: {ddl}");
+                    }
+                }
+                catch (DbException ex)
+                {
+                    Console.Error.WriteLine($"Error restoring constraint: {ddl}");
+                    Console.Error.WriteLine($"Reason: {ex.Message}");
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Console.Error.WriteLine($"Connection issue: {ex.Message}");
+                }
+            }
+        
+            _restoreDdls.Clear();
+            _processedTables.Clear();
+        }
 
           private DbCommand CreateDbCommand(string commandText)
           {
@@ -2435,11 +2850,10 @@
                   // 1. Collecter toutes les informations d'abord
                   var foreignKeys = new List<Tuple<string, string, string, string>>();
                   var uniqueConstraints = new List<Tuple<string, List<string>>>();
-                  var tableChecks = new List<Tuple<string, string>>();
-                  var columnChecks = new List<Tuple<string, string, string>>();
+                  var allChecks = new List<Tuple<string, string>>(); // constraint_name, check_clause
                   var notNullColumns = new List<Tuple<string, string, string>>();
-      
-                  // FOREIGN KEYS
+                  var defaultConstraints = new List<Tuple<string, string, string, string>>(); // colName, typeDef, defaultValue, extra
+        
                   // FOREIGN KEYS
                   Console.WriteLine("[MySQL] Collecting FOREIGN KEYS...");
                      using (var cmd = new MySqlCommand(
@@ -2514,60 +2928,59 @@
                     uniqueConstraints.Add(Tuple.Create(name, columns));
                   }
 
-                  // CHECK Constraints - Table Level
+                  Console.WriteLine("[MySQL] Collecting all CHECK constraints...");
                   using (var cmd = new MySqlCommand(
-                  "SELECT tc.constraint_name, cc.check_clause " +
-                  "FROM information_schema.table_constraints tc " +
-                  "JOIN information_schema.check_constraints cc " +
-                  "  ON tc.constraint_schema = cc.constraint_schema " +
-                  " AND tc.constraint_name = cc.constraint_name " +
-                  "WHERE tc.table_schema = @schema " +
-                  "  AND tc.table_name = @table " +
-                  "  AND tc.constraint_type = 'CHECK' " +
-                  "  AND cc.level = 'Table'",
-                  (MySqlConnection)_connection))
+                      "SELECT cc.constraint_name, cc.check_clause " +
+                      "FROM information_schema.table_constraints tc " +
+                      "JOIN information_schema.check_constraints cc " +
+                      "  ON tc.constraint_schema = cc.constraint_schema " +
+                      " AND tc.constraint_name = cc.constraint_name " +
+                      "WHERE tc.table_schema = @schema " +
+                      "  AND tc.table_name = @table " +
+                      "  AND tc.constraint_type = 'CHECK'",
+                      (MySqlConnection)_connection))
                   {
-                    cmd.Parameters.AddWithValue("@schema", schema);
-                    cmd.Parameters.AddWithValue("@table", tableName);
-                    
-                    using var reader = cmd.ExecuteReader();
-                    while (reader.Read())
-                    {
-                      tableChecks.Add(Tuple.Create(
-                      reader.GetString(0),
-                      reader.GetString(1)
-                      ));
-                    }
+                      cmd.Parameters.AddWithValue("@schema", schema);
+                      cmd.Parameters.AddWithValue("@table", tableName);
+                  
+                      using var reader = cmd.ExecuteReader();
+                      while (reader.Read())
+                      {
+                          string constraintName = reader.GetString(0);
+                          string clause = reader.GetString(1);
+                  
+                          allChecks.Add(Tuple.Create(constraintName, clause));
+                      }
                   }
-
-                  // CHECK Constraints - Column Level
+                  
+                  // DEFAULT Constraints (colonnes avec valeur par défaut explicite)
+                  Console.WriteLine("[MySQL] Collecting DEFAULT constraints...");
+                  
                   using (var cmd = new MySqlCommand(
-                  "SELECT cc.constraint_name, cc.check_clause, kcu.column_name " +
-                  "FROM information_schema.check_constraints cc " +
-                  "JOIN information_schema.key_column_usage kcu " +
-                  "  ON cc.constraint_name = kcu.constraint_name " +
-                  " AND cc.constraint_schema = kcu.constraint_schema " +
-                  "JOIN information_schema.table_constraints tc " +
-                  "  ON cc.constraint_name = tc.constraint_name " +
-                  " AND cc.constraint_schema = tc.constraint_schema " +
-                  "WHERE tc.table_schema = @schema " +
-                  "  AND tc.table_name = @table " +
-                  "  AND tc.constraint_type = 'CHECK' " +
-                  "  AND cc.level = 'Column'",
-                  (MySqlConnection)_connection))
+                      "SELECT column_name, column_type, column_default, extra " +
+                      "FROM information_schema.columns " +
+                      "WHERE table_schema = @schema " +
+                      "  AND table_name = @table " +
+                      "  AND column_default IS NOT NULL", // Colonnes avec DEFAULT explicite
+                      (MySqlConnection)_connection))
                   {
-                    cmd.Parameters.AddWithValue("@schema", schema);
-                    cmd.Parameters.AddWithValue("@table", tableName);
-                    
-                    using var reader = cmd.ExecuteReader();
-                    while (reader.Read())
-                    {
-                      columnChecks.Add(Tuple.Create(
-                      reader.GetString(0),
-                      reader.GetString(1),
-                      reader.GetString(2)
-                      ));
-                    }
+                      cmd.Parameters.AddWithValue("@schema", schema);
+                      cmd.Parameters.AddWithValue("@table", tableName);
+                  
+                      using var reader = cmd.ExecuteReader();
+                      while (reader.Read())
+                      {
+                          string colName = reader.GetString(0);
+                          string typeDef = reader.GetString(1);
+                          string defaultValue = reader.IsDBNull(2) ? "" : reader.GetString(2);
+                          string extra = reader.IsDBNull(3) ? "" : reader.GetString(3);
+                  
+                          // Exclure les colonnes auto_increment
+                          if (!extra.Contains("auto_increment"))
+                          {
+                              defaultConstraints.Add(Tuple.Create(colName, typeDef, defaultValue, extra));
+                          }
+                      }
                   }
       
                   // NOT NULL Constraints
@@ -2595,8 +3008,7 @@
 
                   // 2. Désactiver les contraintes après avoir tout collecté
                   Console.WriteLine($"[MySQL] Found: {foreignKeys.Count} FKs, {uniqueConstraints.Count} UNIQUES, " +
-                                          $"{tableChecks.Count} TABLE-CHECKS, {columnChecks.Count} COLUMN-CHECKS, " +
-                                          $"{notNullColumns.Count} NOT NULLS");
+                                          $"{notNullColumns.Count} NOT NULLS, {defaultConstraints.Count} DEFAULTS");
 
                   // FOREIGN KEYS
                   Console.WriteLine("[MySQL] Disabling FOREIGN KEYS...");
@@ -2635,99 +3047,84 @@
                     using var dropCmd = new MySqlCommand(
                     $"ALTER TABLE {tableName} DROP INDEX `{name}`",
                               (MySqlConnection)_connection);
-                          dropCmd.ExecuteNonQuery();
+                    dropCmd.ExecuteNonQuery();
           
-                          Console.WriteLine($"[MySQL] Disabled UNIQUE: {name}");
-                      }
-
-                    // CHECK Constraints - Table Level
-                    Console.WriteLine("[MySQL] Disabling TABLE-level CHECK constraints...");
-                                                                                                                      foreach (var check in tableChecks)
-                    {
-                      var (name, clause) = check;
-                      Console.WriteLine($"[MySQL] Disabling TABLE-CHECK: {name}");
-
-                      using var dropCmd = new MySqlCommand(
-                          $"ALTER TABLE {tableName} DROP CONSTRAINT `{name}`",
-                          (MySqlConnection)_connection);
-                      dropCmd.ExecuteNonQuery();
-
-                      _restoreDdls.Push($"ALTER TABLE {tableName} ADD CONSTRAINT `{name}` CHECK ({clause})");
-                     Console.WriteLine($"[MySQL] Disabled TABLE-CHECK: {name}");
-                    }
-        
-                    // CHECK Constraints - Column Level
-                    Console.WriteLine("[MySQL] Disabling COLUMN-level CHECK constraints...");
-                   foreach (var check in columnChecks)
+                    Console.WriteLine($"[MySQL] Disabled UNIQUE: {name}");
+                  }
+                  // Traitement unifié des contraintes CHECK
+                  Console.WriteLine("[MySQL] Disabling all CHECK constraints...");
+                  foreach (var check in allChecks)
                   {
-                    var (constraintName, clause, columnName) = check;
-                    Console.WriteLine($"[MySQL] Disabling COLUMN-CHECK: {constraintName} on {columnName}");
+                    var (constraintName, clause) = check;
+                    Console.WriteLine($"[ MySQL ] Processing CHECK: { constraintName }");
+              
+                    clause = Regex.Unescape(clause);
 
-                    // Get column definition
-                    string columnType = null;
-                    string nullable = "YES";
-                    using (var colCmd = new MySqlCommand(
-                    "SELECT column_type, is_nullable " +
-                    "FROM information_schema.columns " +
-                    "WHERE table_schema = @schema " +
-                    "  AND table_name = @table " +
-                    "  AND column_name = @column",
-                    (MySqlConnection)_connection))
+                    // Nettoyage de la clause (identique au code Java)
+                    clause = clause
+                      .Replace("_utf8mb4'", "'");            // remplace \' par '
+
+                    // Ajout de parenthèses pour regexp_like
+                    if (clause.Contains("regexp_like", StringComparison.OrdinalIgnoreCase))
                     {
-                      colCmd.Parameters.AddWithValue("@schema", schema);
-                      colCmd.Parameters.AddWithValue("@table", tableName);
-                      colCmd.Parameters.AddWithValue("@column", columnName);
-                      
-                      using var colReader = colCmd.ExecuteReader();
-                      if (colReader.Read())
-                      {
-                        columnType = colReader.GetString(0);
-                        nullable = colReader.GetString(1);
-                      }
-                      else
-                      {
-                        Console.WriteLine($"[WARNING] Column {columnName} not found, skipping");
-                        continue;
-                      }
+                      clause = $"({ clause })";
                     }
-              
-                    // Remove check constraint
-                    var modifySQL = $"ALTER TABLE {tableName} MODIFY `{columnName}` {columnType}";
-                    if (nullable == "NO") modifySQL += " NOT NULL";
-              
-                    using var alterCmd = new MySqlCommand(modifySQL, (MySqlConnection)_connection);
-                    alterCmd.ExecuteNonQuery();
-                    
-                    // Store for restoration
-                    var restoreSQL = $"ALTER TABLE {tableName} MODIFY `{columnName}` {columnType}";
-                      if (nullable == "NO") restoreSQL += " NOT NULL";
-                    restoreSQL += $" CHECK ({clause})";
-                    
+    
+                    try
+                    {
+                      // DROP CONSTRAINT
+                      using var dropCmd = new MySqlCommand(
+                          $"ALTER TABLE { tableName } DROP CONSTRAINT `{ constraintName }`",
+                      (MySqlConnection)_connection);
+                      dropCmd.ExecuteNonQuery();
+                  
+                      // Commande de restauration
+                      _restoreDdls.Push($"ALTER TABLE { tableName } ADD CONSTRAINT `{ constraintName }` CHECK { clause }");
+
+                      Console.WriteLine($"[ MySQL ] Disabled CHECK: { constraintName }");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[ WARNING ] Failed to disable CHECK constraint { constraintName }: { ex.Message }");
+                    }
+                  }
+        
+                  // ===== NOUVEAU: DÉSACTIVATION DES DEFAULTS =====
+                  Console.WriteLine("[MySQL] Disabling DEFAULT constraints...");
+                  foreach (var dc in defaultConstraints)
+                  {
+                    var (colName, typeDef, defaultValue, extra) = dc;
+
+                    // Formater la valeur par défaut
+                    string defaultValueExpr = FormatDefaultValueMySql(defaultValue);
+
+                    // Stocker la commande de restauration (sans supprimer physiquement la contrainte)
+                    string restoreSQL = $"ALTER TABLE { tableName } ALTER COLUMN `{ colName }` SET DEFAULT { defaultValueExpr }";
                     _restoreDdls.Push(restoreSQL);
-                    Console.WriteLine($"[MySQL] Disabled COLUMN-CHECK: {constraintName}");
+
+                    Console.WriteLine($"[ MySQL ] Stored DEFAULT restore for: { colName }");
                   }
       
                   // NOT NULL Constraints
                   Console.WriteLine("[MySQL] Disabling NOT NULL constraints...");
-                 foreach (var col in notNullColumns)
-                {
-                  var (colName, typeDef, extra) = col;
-  
-                  if (extra.Contains("auto_increment"))
+                  foreach (var col in notNullColumns)
                   {
-                    Console.WriteLine($"[MySQL] Skipping AUTO_INCREMENT column: {colName}");
-                      continue;
+                    var (colName, typeDef, extra) = col;
+    
+                    if (extra.Contains("auto_increment"))
+                    {
+                      Console.WriteLine($"[MySQL] Skipping AUTO_INCREMENT column: {colName}");
+                        continue;
+                    }
+    
+                    Console.WriteLine($"[MySQL] Disabling NOT NULL: {colName}");
+    
+                    var modifySQL = $"ALTER TABLE {tableName} MODIFY `{colName}` {typeDef}";
+                    using var alterCmd = new MySqlCommand(modifySQL, (MySqlConnection)_connection);
+                    alterCmd.ExecuteNonQuery();
+    
+                    _restoreDdls.Push($"{modifySQL} NOT NULL");
                   }
-  
-                  Console.WriteLine($"[MySQL] Disabling NOT NULL: {colName}");
-  
-                  var modifySQL = $"ALTER TABLE {tableName} MODIFY `{colName}` {typeDef}";
-                  using var alterCmd = new MySqlCommand(modifySQL, (MySqlConnection)_connection);
-                  alterCmd.ExecuteNonQuery();
-  
-                  _restoreDdls.Push($"{modifySQL} NOT NULL");
-                                                                                                                                                           Console.WriteLine($"[MySQL] Disabled NOT NULL: {colName}");
-              }
 
               Console.WriteLine($"[MySQL] Finished constraint disable for table: {tableName}");
             }
@@ -2737,183 +3134,336 @@
                 throw;
             }
           }
+        
+          // Fonction pour formater les valeurs par défaut MySQL
+          private string FormatDefaultValueMySql(string defaultValue)
+          {
+            if (defaultValue == null)
+            return "NULL";
+        
+            // Convertir les fonctions courantes avec parenthèses
+            if ("CURDATE()".Equals(defaultValue, StringComparison.OrdinalIgnoreCase))
+            {
+              return "(CURRENT_DATE)";
+            }
+            else if ("CURTIME()".Equals(defaultValue, StringComparison.OrdinalIgnoreCase))
+            {
+              return "(CURRENT_TIME)";
+            }
+            else if ("NOW()".Equals(defaultValue, StringComparison.OrdinalIgnoreCase) ||
+            "CURRENT_TIMESTAMP()".Equals(defaultValue, StringComparison.OrdinalIgnoreCase))
+            {
+              return "(CURRENT_TIMESTAMP)";
+            }
+            // Expressions complexes (UUID, fonctions mathématiques, etc.)
+            else if (Regex.IsMatch(defaultValue, @"[\(\)]|[\+\-\*/]|(?i)\b(?:UUID|RAND|CONCAT|CAST)\b"))
+            {
+              return $"({defaultValue})";
+            }
+            // Valeurs littérales (chaînes, nombres, booléens)
+            else
+            {
+              return defaultValue;
+            }
+          }
           {{else}}{{removeLine}}{{/if}}
           {{#if databaseType = SQL Server}}
           private void DisableSqlServer(string tableName)
           {
-            // CHECK Constraints
-            using (var cmd = new SqlCommand(
-              "SELECT cc.name AS name, cc.definition AS def " +
-              "FROM sys.check_constraints cc " +
-              "JOIN sys.objects t ON cc.parent_object_id = t.object_id " +
-              "WHERE t.name = @table",
-              (SqlConnection)_connection))
+            if (string.IsNullOrWhiteSpace(tableName))
             {
-              cmd.Parameters.AddWithValue("@table", tableName);
-              using var reader = cmd.ExecuteReader();
-              while (reader.Read())
-              {
-                var name = reader.GetString(0);
-                var def = reader.GetString(1);
-                        
-                _restoreDdls.Push($"ALTER TABLE {tableName} ADD CONSTRAINT {name} CHECK ({def})");
-                        
-                using var dropCmd = new SqlCommand(
-                  $"ALTER TABLE {tableName} DROP CONSTRAINT {name}",
-                  (SqlConnection)_connection);
-                dropCmd.ExecuteNonQuery();
-              }
+              Console.Error.WriteLine("Table name cannot be null or empty");
+              throw new ArgumentException("Table name cannot be null or empty");
             }
-
-            // FOREIGN KEYS
-            using (var cmd = new SqlCommand(
-                "SELECT fk.name AS name, COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS col, " +
+        
+            // Sanitize table name
+            if (!tableName.All(c => char.IsLetterOrDigit(c) || c == '_'))
+            {
+              Console.Error.WriteLine($"Invalid table name: {tableName}");
+              throw new ArgumentException("Invalid table name");
+            }
+        
+            // Get schema (default to dbo)
+            string schema = "dbo";
+        
+            string qualifiedTableName = $"[{schema}].[{tableName}]";
+        
+            try
+            {
+              // Begin transaction
+              using (var cmd = new SqlCommand("BEGIN TRANSACTION"))
+              {
+                cmd.ExecuteNonQuery();
+              }
+            
+              // 1. UNIQUE Constraints
+              using (var cmd = new SqlCommand(
+                "SELECT i.name AS constraint_name, " +
+                "STRING_AGG(COL_NAME(ic.object_id, ic.column_id), ',') AS columns " +
+                "FROM sys.indexes i " +
+                "JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id " +
+                "JOIN sys.tables t ON i.object_id = t.object_id " +
+                "JOIN sys.schemas s ON t.schema_id = s.schema_id " +
+                "WHERE i.is_unique = 1 AND i.is_primary_key = 0 " +
+                "AND t.name = @tableName AND s.name = @schema " +
+                "GROUP BY i.name"))
+              {
+                cmd.Parameters.AddWithValue("@tableName", tableName);
+                cmd.Parameters.AddWithValue("@schema", schema);
+                using (var reader = cmd.ExecuteReader())
+                {
+                  while (reader.Read())
+                  {
+                    string name = reader["constraint_name"]?.ToString();
+                    string columns = reader["columns"]?.ToString();
+                    if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(columns))
+                    {
+                      Console.WriteLine($"Skipping invalid UNIQUE constraint for table {schema}.{tableName}: name={name}, columns={columns}");
+                      continue;
+                    }
+          
+                    string restoreSQL = $"ALTER TABLE {qualifiedTableName} ADD CONSTRAINT [{name}] UNIQUE ([{columns.Replace(",", "],[")}])";
+                    _restoreDdls.Push(restoreSQL);
+                    using (var dropCmd = CreateDbCommand($"ALTER TABLE {qualifiedTableName} DROP CONSTRAINT [{name}]"))
+                    {
+                      dropCmd.ExecuteNonQuery();
+                      Console.WriteLine($"Dropped UNIQUE constraint [{name}] on table {schema}.{tableName}");
+                    }
+                  }
+                }
+              }
+          
+              // 2. CHECK Constraints
+              using (var cmd = new SqlCommand(
+                "SELECT cc.name AS name, cc.definition AS def " +
+                "FROM sys.check_constraints cc " +
+                "JOIN sys.objects t ON cc.parent_object_id = t.object_id " +
+                "JOIN sys.schemas s ON t.schema_id = s.schema_id " +
+                "WHERE t.name = @tableName AND s.name = @schema"))
+              {
+                cmd.Parameters.AddWithValue("@tableName", tableName);
+                cmd.Parameters.AddWithValue("@schema", schema);
+                using (var reader = cmd.ExecuteReader())
+                {
+                  while (reader.Read())
+                  {
+                    string name = reader["name"]?.ToString();
+                    string def = reader["def"]?.ToString();
+                    if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(def))
+                    {
+                      Console.WriteLine($"Skipping invalid CHECK constraint for table {schema}.{tableName}: name={name}, def={def}");
+                          continue;
+                      }
+  
+                      string restoreSQL = $"ALTER TABLE {qualifiedTableName} ADD CONSTRAINT [{name}] CHECK ({def})";
+                      _restoreDdls.Push(restoreSQL);
+                      using (var dropCmd = CreateDbCommand($"ALTER TABLE {qualifiedTableName} DROP CONSTRAINT [{name}]"))
+                      {
+                          dropCmd.ExecuteNonQuery();
+                          Console.WriteLine($"Dropped CHECK constraint [{name}] on table {schema}.{tableName}");
+                      }
+                  }
+                }
+              }
+          
+              // 3. FOREIGN KEY Constraints
+              using (var cmd = new SqlCommand(
+                "SELECT fk.name AS name, " +
+                "COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS col, " +
                 "OBJECT_NAME(fk.referenced_object_id) AS refTable, " +
                 "COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id) AS refCol " +
-                            "FROM sys.foreign_keys fk " +
-                            "JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id " +
-                            "WHERE OBJECT_NAME(fk.parent_object_id) = @table",
-                            (SqlConnection)_connection))
-            {
-              cmd.Parameters.AddWithValue("@table", tableName);
-              using var reader = cmd.ExecuteReader();
-              while (reader.Read())
+                "FROM sys.foreign_keys fk " +
+                "JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id " +
+                "JOIN sys.tables t ON fk.parent_object_id = t.object_id " +
+                "JOIN sys.schemas s ON t.schema_id = s.schema_id " +
+                "WHERE t.name = @tableName AND s.name = @schema"))
               {
-                var name = reader.GetString(0);
-                var col = reader.GetString(1);
-                var refTable = reader.GetString(2);
-                var refCol = reader.GetString(3);
-                
-                var restoreSQL = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
-                   $"FOREIGN KEY({col}) REFERENCES {refTable}({refCol})";
-                
-                _restoreDdls.Push(restoreSQL);
-                            
-                using var dropCmd = new SqlCommand(
-                  $"ALTER TABLE {tableName} DROP CONSTRAINT {name}",
-                  (SqlConnection)_connection);
-                dropCmd.ExecuteNonQuery();
+                cmd.Parameters.AddWithValue("@tableName", tableName);
+                cmd.Parameters.AddWithValue("@schema", schema);
+                using (var reader = cmd.ExecuteReader())
+                {
+                  while (reader.Read())
+                  {
+                    string name = reader["name"]?.ToString();
+                    string col = reader["col"]?.ToString();
+                    string refTable = reader["refTable"]?.ToString();
+                    string refCol = reader["refCol"]?.ToString();
+                    if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(col) || string.IsNullOrEmpty(refTable) || string.IsNullOrEmpty(refCol))
+                    {
+                      Console.WriteLine($"Skipping invalid FOREIGN KEY constraint for table {schema}.{tableName}: name={name}, col={col}, refTable={refTable}, refCol={refCol}");
+                      continue;
+                    }
+      
+                    string restoreSQL = $"ALTER TABLE {qualifiedTableName} ADD CONSTRAINT [{name}] FOREIGN KEY ([{col}]) REFERENCES [{refTable}]([{refCol}])";
+                    _restoreDdls.Push(restoreSQL);
+                    using (var dropCmd = CreateDbCommand($"ALTER TABLE {qualifiedTableName} DROP CONSTRAINT [{name}]"))
+                    {
+                        dropCmd.ExecuteNonQuery();
+                        Console.WriteLine($"Dropped FOREIGN KEY constraint [{name}] on table {schema}.{tableName}");
+                    }
+                  }
+                }
+              }
+          
+              // 4. NOT NULL Constraints (excluding IDENTITY columns)
+              using (var cmd = new SqlCommand(
+                "SELECT c.name, t.name AS type_name, " +
+                "CASE " +
+                "  WHEN t.name IN ('decimal', 'numeric') THEN t.name + '(' + CAST(c.precision AS VARCHAR) + ',' + CAST(c.scale AS VARCHAR) + ')' " +
+                "  WHEN t.name IN ('varchar', 'nvarchar', 'char', 'nchar') THEN t.name + '(' + CASE WHEN c.max_length = -1 THEN 'MAX' ELSE CAST(c.max_length AS VARCHAR) END + ')' " +
+                "  ELSE t.name " +
+                "END AS def " +
+                "FROM sys.columns c " +
+                "JOIN sys.types t ON c.system_type_id = t.system_type_id " +
+                "WHERE c.object_id = OBJECT_ID(@qualifiedTableName) AND c.is_nullable = 0 AND c.is_identity = 0"))
+              {
+                cmd.Parameters.AddWithValue("@qualifiedTableName", $"{schema}.{tableName}");
+                using (var reader = cmd.ExecuteReader())
+                {
+                  while (reader.Read())
+                  {
+                    string colName = reader["name"]?.ToString();
+                    string def = reader["def"]?.ToString();
+                    if (string.IsNullOrEmpty(colName) || string.IsNullOrEmpty(def))
+                    {
+                      Console.WriteLine($"Skipping invalid NOT NULL column for table {schema}.{tableName}: name={colName}, def={def}");
+                    continue;
+                    }
+  
+                    string restoreSQL = $"ALTER TABLE {qualifiedTableName} ALTER COLUMN [{colName}] {def} NOT NULL";
+                    _restoreDdls.Push(restoreSQL);
+                    using (var dropCmd = CreateDbCommand($"ALTER TABLE {qualifiedTableName} ALTER COLUMN [{colName}] {def} NULL"))
+                    {
+                      dropCmd.ExecuteNonQuery();
+                      Console.WriteLine($"Dropped NOT NULL constraint on column [{colName}] in table {schema}.{tableName}");
+                    }
+                  }
+                }
+              }
+        
+              // Commit transaction
+              using (var cmd = new SqlCommand("COMMIT TRANSACTION"))
+              {
+                cmd.ExecuteNonQuery();
               }
             }
-
-            // NOT NULL Constraints
-            using (var cmd = new SqlCommand(
-                "SELECT name, system_type_name AS def " +
-                            "FROM sys.columns " +
-                            "WHERE object_id = OBJECT_ID(@table) " +
-                            "AND is_nullable = 0 AND is_identity = 0",
-                            (SqlConnection)_connection))
+            catch (DbException ex)
             {
-              cmd.Parameters.AddWithValue("@table", tableName);
-              using var reader = cmd.ExecuteReader();
-              while (reader.Read())
+              // Rollback transaction on error
+              try
               {
-                var colName = reader.GetString(0);
-                var def = reader.GetString(1);
-                
-                _restoreDdls.Push($"ALTER TABLE {tableName} ALTER COLUMN {colName} {def} NOT NULL");
-                
-                using var alterCmd = new SqlCommand(
-                $"ALTER TABLE {tableName} ALTER COLUMN {colName} {def} NULL",
-                (SqlConnection)_connection);
-                alterCmd.ExecuteNonQuery();
+                using (var cmd = new SqlCommand("ROLLBACK TRANSACTION"))
+                {
+                  cmd.ExecuteNonQuery();
+                }
               }
+              catch (DbException rollbackEx)
+              {
+                Console.Error.WriteLine($"Failed to rollback transaction for table {schema}.{tableName}: {rollbackEx.Message}");
+              }
+              throw;
             }
           }
           {{else}}{{removeLine}}{{/if}}
           {{#if databaseType = Oracle}}
-          private void DisableOracle(string tableName)
+          public void DisableOracle(string tableName)
           {
-            var schema = _connection is OracleConnection oracleConn
-            ? oracleConn.UserID?.ToUpper()
-              : "CURRENT_USER";
-                  
-                  // Contraintes R, C, U, P
-            using (var cmd = new OracleCommand(
-            "SELECT constraint_name, constraint_type, " +
-            "search_condition, r_constraint_name " +
-            "FROM all_constraints " +
-            "WHERE owner = :owner AND table_name = :table " +
-            "AND constraint_type IN ('R','C','U','P')",
-            (OracleConnection)_connection))
-            {
-              cmd.Parameters.Add(new OracleParameter("owner", schema));
-              cmd.Parameters.Add(new OracleParameter("table", tableName.ToUpper()));
-              using var reader = cmd.ExecuteReader();
-              while (reader.Read())
-              {
-                var name = reader.GetString(0);
-                var type = reader.GetString(1);
-                string ddl;
-                                
-                switch (type)
-                {
-                  case "C": // CHECK
-                    var cond = reader.IsDBNull(2) ? "" : reader.GetString(2);
-                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} CHECK ({cond})";
-                    break;
-
-                  case "R": // FOREIGN KEY
-                    var pk = reader.GetString(3);
-                    var fkCols = GetConstraintColumns(schema, name);
-                    var pkCols = GetConstraintColumns(schema, pk);
-                    var refTable = GetTableNameForConstraint(schema, pk);
-                                  
-                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
-                         $"FOREIGN KEY ({string.Join(",", fkCols)}) " +
-                          $"REFERENCES {refTable}({string.Join(",", pkCols)})";
-                    break;
-
-                  case "U": // UNIQUE
-                    var uniqueCols = GetConstraintColumns(schema, name);
-                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
-                         $"UNIQUE ({string.Join(",", uniqueCols)})";
-                    break;
-
-                  default: // PRIMARY KEY
-                    var pkCols2 = GetConstraintColumns(schema, name);
-                    ddl = $"ALTER TABLE {tableName} ADD CONSTRAINT {name} " +
-                         $"PRIMARY KEY ({string.Join(",", pkCols2)})";
-                    break;
-                }
+            using var getSchemaCmd = _connection.CreateCommand();
+            getSchemaCmd.CommandText = "SELECT USER FROM DUAL";
+            var schema = getSchemaCmd.ExecuteScalar()?.ToString()?.ToUpper();
+            if (string.IsNullOrEmpty(schema)) throw new Exception("Schema not found.");
+        
+            var tableUpper = tableName.ToUpper();
+        
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = @"
+            SELECT constraint_name, constraint_type, search_condition, r_constraint_name
+            FROM all_constraints ac
+            WHERE owner = :schema
+            AND table_name = :t_table_name
+            AND constraint_type IN ('R', 'C', 'U', 'P')
+            AND (
+            constraint_name NOT LIKE 'SYS_%'
+            OR (
+            constraint_name LIKE 'SYS_%'
+            AND EXISTS (
+            SELECT 1 FROM all_cons_columns acc
+            WHERE acc.owner = ac.owner
+            AND acc.constraint_name = ac.constraint_name
+            )
+            )
+            )
+            ORDER BY constraint_name";
             
-                _restoreDdls.Push(ddl);
-                
-                using var disableCmd = new OracleCommand(
-                $"ALTER TABLE {tableName} DISABLE CONSTRAINT {name}",
-                    (OracleConnection)_connection);
-                disableCmd.ExecuteNonQuery();
-              }
-            }
-
-            // NOT NULL Constraints
-            using (var cmd = new OracleCommand(
-                "SELECT column_name, data_type, data_length " +
-                "FROM all_tab_columns " +
-                "WHERE owner = :owner " +
-                "AND table_name = :table " +
-                "AND nullable = 'N'",
-                (OracleConnection)_connection))
+            var param1 = cmd.CreateParameter();
+            param1.ParameterName = "schema";
+            param1.Value = schema;
+            cmd.Parameters.Add(param1);
+        
+            var param2 = cmd.CreateParameter();
+            param2.ParameterName = "t_table_name";
+            param2.Value = tableUpper;
+            cmd.Parameters.Add(param2);
+        
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
             {
-              cmd.Parameters.Add(new OracleParameter("owner", schema));
-              cmd.Parameters.Add(new OracleParameter("table", tableName.ToUpper()));
-              using var reader = cmd.ExecuteReader();
-              while (reader.Read())
+              var name = reader["CONSTRAINT_NAME"].ToString();
+              var type = reader["CONSTRAINT_TYPE"].ToString();
+              var searchCond = reader["SEARCH_CONDITION"]?.ToString();
+              
+              if (type == "P")
               {
-                var colName = reader.GetString(0);
-                var dt = reader.GetString(1);
-                var len = reader.IsDBNull(2) ? 0 : reader.GetDecimal(2);
-                var def = len > 0 ? $"{dt}({len})" : dt;
-
-                _restoreDdls.Push($"ALTER TABLE {tableName} MODIFY ({colName} {def} NOT NULL)");
-                 
-                using var alterCmd = new OracleCommand(
-                  $"ALTER TABLE {tableName} MODIFY ({colName} NULL)",
-                  (OracleConnection)_connection);
-                alterCmd.ExecuteNonQuery();
+                Console.WriteLine($"Constraint {name} ignored (PRIMARY KEY)");
+                continue;
               }
+              
+              if (type == "C" && searchCond != null && searchCond.ToUpper().Contains("IS NOT NULL"))
+              {
+                Console.WriteLine($"Constraint {name} ignored (NOT NULL implicit)");
+                continue;
+              }
+              
+              _restoreDdls.Push($"ALTER TABLE {tableUpper} ENABLE CONSTRAINT {name}");
+        
+                if (type == "R")
+              {
+                var fkCols = GetConstraintColumns(schema, name);
+                
+                foreach (var col in fkCols)
+                {
+                  try
+                  {
+                    using var alterCmd = _connection.CreateCommand();
+                    alterCmd.CommandText = $"ALTER TABLE {tableUpper} MODIFY ({col} NULL)";
+                    alterCmd.ExecuteNonQuery();
+                    Console.WriteLine($"Column {tableUpper}.{col} made nullable");
+                    
+                    _restoreDdls.Push($"ALTER TABLE {tableUpper} MODIFY ({col} NOT NULL)");
+                  }
+                  catch (Exception ex)
+                  {
+                    Console.Error.WriteLine($"Error making column {col} nullable: {ex.Message}");
+                        }
+                    }
+                }
+        
+                try
+                {
+                    using var disableCmd = _connection.CreateCommand();
+                    disableCmd.CommandText = $"ALTER TABLE {tableUpper} DISABLE CONSTRAINT {name}";
+                    disableCmd.ExecuteNonQuery();
+                    Console.WriteLine($"Constraint {name} disabled");
+                  }
+                  catch (Exception ex)
+                  {
+                    Console.Error.WriteLine($"Error disabling constraint {name}: {ex.Message}");
+                }
             }
+        
+            Console.WriteLine($"Processing finished for table {tableUpper}");
           }
+
                                   
           private List<string> GetConstraintColumns(string schema, string constraintName)
           {
@@ -3056,6 +3606,7 @@
       variableName: "securityType"
       options:
         - "NONE"
+        - ".NET Security - JWT"
       defaultOption: "NONE"
     - name: "Cache Provider"
       variableName: "cacheProvider"
@@ -3401,7 +3952,8 @@
     serviceExtends: ": IService<${majStart(className)}, ${pkColumnType}>"
     serviceName: "I${majStart(className)}Service"
     serviceFieldContent: "{{removeLine}}"
-    serviceMethodContent: "{{removeLine}}"
+    serviceMethodContent: |
+      Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)});
     serviceConstructors: "{{removeLine}}"
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
     servicePackage: "${majStart(projectName)}.Services.Interface"
@@ -3416,7 +3968,8 @@
           using ${majStart(projectName)}.Repositories.Interface;
           using ${majStart(projectName)}.Repositories.Implementation;
           using ${majStart(projectName)}.Services.Interface;
-          
+          using ${majStart(projectName)}.Utils;
+        
           namespace ${majStart(projectName)}.Services.Implementation;
           
           public class ${majStart(className)}Service : I${majStart(className)}Service
@@ -3438,6 +3991,13 @@
               }
               {{/if}}
               {{#if cacheableWithMicrosoftextensionscachingmemory}}
+          
+              public Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)})
+              {
+                var csv = ExportUtil.GenerateCsv(${minStart(className)});
+                return Task.FromResult(csv);
+              }
+    
               public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
                 try
@@ -3618,6 +4178,9 @@
       using ${majStart(projectName)}.Utils;
       using ${majStart(projectName)}.Exceptions;
       using ${majStart(projectName)}.Repositories.Interface;
+      using System.Net.Mime;
+      using System.Text;
+      {{#if useJWT}}using Microsoft.AspNetCore.Authorization;{{/if}}
 
     controllerAnnotations: |
       [ApiController]
@@ -3638,7 +4201,28 @@
       {{tab}}{{tab}}_repository = repository;
       {{tab}}}
     controllerMethodContent: |
+      
+      {{tab}}[SwaggerOperation(
+      {{tab}} Summary = "Export to CSV",
+      {{tab}}Description = "Get a CSV file containing a list of ${formatReadableLowerCase(className)}."
+      {{tab}})]
+      {{tab}}[HttpPost("export/csv")]
+      {{tab}}[Consumes("application/json")]
+      {{tab}}[Produces("text/csv")]
+      {{tab}}public async Task<IActionResult> ExportToCsvAsync([FromBody] List<${majStart(className)}> ${minStart(className)})
+      {{tab}}{
+      {{tab}} if (${minStart(className)} == null || !${minStart(className)}.Any())
+      {{tab}} {
+      {{tab}}   return BadRequest("Invalid or empty list provided");
+      {{tab}} }
+      {{tab}} 
+      {{tab}} var csvContent = await _service.ExportToCsvAsync(${minStart(className)});
+      {{tab}} var bytes = Encoding.UTF8.GetBytes(csvContent);
+      {{tab}} 
+      {{tab}} return File(bytes, "text/csv", "${minStart(className)}.csv");
+      {{tab}}}
       {{tab}}[HttpGet]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. "
@@ -3683,6 +4267,7 @@
       {{tab}}}
       
       {{tab}}[HttpGet("{id}")]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Get ${formatReadableLowerCase(className)} by ID",
       {{tab}}{{tab}}Description = "Retrieve a specific ${formatReadableLowerCase(className)} item by its ID"
@@ -3734,6 +4319,7 @@
       {{tab}}}
       
       {{tab}}[HttpPost("search")]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items."
@@ -3785,6 +4371,7 @@
       
       {{#if !isView}} 
       {{tab}}[HttpPost]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
@@ -3817,6 +4404,7 @@
       {{tab}}}
       
       {{tab}}[HttpPut("{id}")]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
@@ -3876,6 +4464,7 @@
       {{tab}}}
       
       {{tab}}[HttpDelete("{id}")]
+      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Delete ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Delete a ${formatReadableLowerCase(className)} item by its ID"
@@ -4295,3 +4884,1695 @@
       artifactId: "spring-boot-starter-security"
       version: "{{removeLine}}"
       scope: "{{removeLine}}"
+
+- id: 5
+  languageId: 4
+  coreFramework: "NestJS"
+  name: "NestJS"
+  template: "Template"
+  useDB: true
+  withGroupId: false
+  useCloud: false
+  useEurekaServer: false
+  isGateway: false
+  additionalFiles:
+    - fileType: "Exception"
+      fileName: "ResourceNotFoundException"
+      extension: "ts"
+      content: |
+        import { HttpException, HttpStatus } from "@nestjs/common";
+        export class ResourceNotFoundException extends HttpException {
+          constructor(message: string, cause?: Error) {
+             super(message, HttpStatus.NOT_FOUND);
+             if (cause) {
+               (this as any).cause = cause;
+             }
+          }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/exceptions"
+    - fileType: "Util"
+      fileName: "WebUtil"
+      extension: "ts"
+      content: |
+        export class WebUtils{ 
+          public static readonly DEFAULT_PAGE = 0;
+          public static readonly DEFAULT_SIZE = 10;
+          public static readonly DEFAULT_SORT_PARAM = "id, asc";
+          public static readonly SORT_CRITERIA_DELIMITER = ";";
+          public static readonly SORT_PART_DELIMITER = ",";
+      
+          static parsePaginationAndSort(query: Record<string, any>){
+            const page = parseInt(query.page as string) || this.DEFAULT_PAGE;
+            const size = parseInt(query.size as string) || this.DEFAULT_SIZE;
+            const sortParam = (query.sort as string) || this.DEFAULT_SORT_PARAM;
+            
+            // example: "id,asc;nom,desc"
+            const order: any = {};
+            const sortFields = sortParam.split(this.SORT_CRITERIA_DELIMITER);
+            for (const field of sortFields) {
+              const [key, dir] = field.split(this.SORT_PART_DELIMITER);
+              order[key] = dir?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+            }
+              
+            return {page, size, order};
+          }
+          static buildPageData(data: any, total: number, size: number, page: number){
+              return {
+              content: data,
+              totalElements: total,
+              totalPages: Math.ceil(total / size),
+              pageNumber: page,
+              pageSize: size,
+            };
+          
+          }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/utils"
+    - fileType: "Util"
+      fileName: "constraint-disabler.service"
+      extension: "ts"
+      content: |
+        import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+        import { InjectConnection } from '@nestjs/typeorm';
+        import { Connection, QueryRunner } from 'typeorm';
+
+        export enum DbType {
+          POSTGRESQL = 'POSTGRESQL',
+          MYSQL = 'MYSQL',
+          SQLSERVER = 'SQLSERVER',
+          ORACLE = 'ORACLE'
+        }
+
+        interface ConstraintInfo {
+          name: string;
+          table: string;
+          definition: string;
+          type: 'FOREIGN_KEY' | 'UNIQUE' | 'CHECK' | 'NOT_NULL';
+        }
+
+        @Injectable()
+        export class ConstraintDisablerService implements OnModuleInit {
+          private readonly logger = new Logger(ConstraintDisablerService.name);
+          private dbType: DbType | undefined;
+          private restoreQueries: string[] = [];
+          private processedTables = new Set<string>();
+
+          constructor(
+            @InjectConnection() private readonly connection: Connection,
+          ) { }
+
+          async onModuleInit() {
+            this.dbType = await this.detectDatabaseType();
+          }
+
+          private async detectDatabaseType(): Promise<DbType> {
+            const queryRunner = this.connection.createQueryRunner();
+            try {
+              const result = await queryRunner.query('SELECT version() as version');
+              const version = result[0]?.version?.toLowerCase() || '';
+
+              if (version.includes('postgresql')) return DbType.POSTGRESQL;
+              if (version.includes('mysql')) return DbType.MYSQL;
+              if (version.includes('microsoft sql server')) return DbType.SQLSERVER;
+              if (version.includes('oracle')) return DbType.ORACLE;
+
+              throw new Error("SGBD non pris en charge");
+            } finally {
+              await queryRunner.release();
+            }
+          }
+
+          async startTransaction(): Promise<void> {
+            const queryRunner = this.connection.createQueryRunner();
+            await queryRunner.startTransaction();
+
+            if (this.dbType === DbType.POSTGRESQL) {
+              await queryRunner.query('SET CONSTRAINTS ALL DEFERRED');
+            }
+          }
+
+          async disableConstraintsForTable(tableName: string): Promise<void> {
+            if (this.processedTables.has(tableName)) return;
+
+            this.processedTables.add(tableName);
+            this.logger.log("Désactivation des contraintes pour la table: " + tableName);
+
+            switch (this.dbType) {
+              case DbType.POSTGRESQL:
+                await this.disablePostgresConstraints(tableName);
+                break;
+              case DbType.MYSQL:
+                await this.disableMySQLConstraints(tableName);
+                break;
+              case DbType.SQLSERVER:
+                await this.disableSQLServerConstraints(tableName);
+                break;
+              case DbType.ORACLE:
+                await this.disableOracleConstraints(tableName);
+                break;
+              default:
+                throw new Error("SGBD non supporté: " + this.dbType);
+            }
+          }
+
+          async restoreConstraints(): Promise<void> {
+            this.logger.log("Restauration de " + this.restoreQueries.length + " contraintes");
+
+            const queryRunner = this.connection.createQueryRunner();
+
+            try {
+              for (const query of this.restoreQueries.reverse()) {
+                try {
+                  this.logger.debug("Exécution: " + query);
+                  await queryRunner.query(query);
+                } catch (error) {
+                  this.logger.error("Erreur lors de la restauration:" + query, error);
+                }
+              }
+              this.restoreQueries = [];
+              this.processedTables.clear();
+            } finally {
+              await queryRunner.release();
+            }
+          }
+
+          private async disablePostgresConstraints(tableName: string): Promise<void> {
+            const queryRunner = this.connection.createQueryRunner();
+
+            try {
+              // 1. Désactiver les contraintes FOREIGN KEY référencées
+              const referencedConstraints = await queryRunner.query(`
+                SELECT conname, conrelid::regclass::text AS source_table, 
+                       pg_get_constraintdef(oid) AS definition 
+                FROM pg_constraint 
+                WHERE confrelid = to_regclass($1)
+              `, [tableName]);
+
+              for (const constraint of referencedConstraints) {
+                const restoreSQL = "ALTER TABLE " + constraint.source_table + " ADD CONSTRAINT " + constraint.conname + " " + constraint.definition;
+                this.restoreQueries.push(restoreSQL);
+
+                await queryRunner.query(
+                  "ALTER TABLE " + constraint.source_table + " DROP CONSTRAINT " + constraint.conname + " CASCADE"
+                );
+              }
+
+              // 2. Désactiver les contraintes locales
+              const localConstraints = await queryRunner.query(`
+                SELECT conname, pg_get_constraintdef(oid) AS definition 
+                FROM pg_constraint 
+                WHERE conrelid = to_regclass($1)
+              `, [tableName]);
+
+              for (const constraint of localConstraints) {
+                const restoreSQL = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + constraint.conname + " " + constraint.definition;
+                this.restoreQueries.push(restoreSQL);
+
+                await queryRunner.query(
+                  "ALTER TABLE " + tableName + " DROP CONSTRAINT " + constraint.conname + " CASCADE"
+                );
+              }
+
+              // 3. Désactiver les contraintes NOT NULL
+              const notNullColumns = await queryRunner.query(`
+                SELECT a.attname AS column_name 
+                FROM pg_attribute a 
+                JOIN pg_class c ON c.oid = a.attrelid 
+                WHERE c.relname = $1 
+                  AND a.attnotnull 
+                  AND a.attidentity = '' 
+                  AND a.attnum > 0 
+                  AND NOT a.attisdropped
+              `, [tableName]);
+
+              for (const column of notNullColumns) {
+                const restoreSQL = "ALTER TABLE " + tableName + " ALTER COLUMN " + column.column_name + " SET NOT NULL";
+                this.restoreQueries.push(restoreSQL);
+
+                await queryRunner.query(
+                  "ALTER TABLE " + tableName + " ALTER COLUMN " + column.column_name + " DROP NOT NULL"
+                );
+              }
+            } finally {
+              await queryRunner.release();
+            }
+          }
+
+          private async disableMySQLConstraints(tableName: string): Promise<void> {
+            const queryRunner = this.connection.createQueryRunner();
+
+            try {
+              const schema = await queryRunner.query('SELECT DATABASE() as db');
+              const dbName = schema[0].db;
+
+              // FOREIGN KEYS
+              const foreignKeys = await queryRunner.query(`
+                        SELECT constraint_name, column_name, referenced_table_name, referenced_column_name 
+                        FROM information_schema.key_column_usage 
+                        WHERE table_schema = ? AND table_name = ? AND referenced_table_name IS NOT NULL
+                    `, [dbName, tableName]);
+
+              for (const fk of foreignKeys) {
+                const restoreSQL = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + fk.constraint_name + " FOREIGN KEY " + fk.column_name + " REFERENCES " + fk.referenced_table_name + " (" + fk.referenced_column_name + ")";
+                this.restoreQueries.push(restoreSQL);
+
+                await queryRunner.query(
+                  "ALTER TABLE " + tableName + " DROP FOREIGN KEY " + fk.constraint_name
+                );
+              }
+
+              // Contraintes UNIQUE
+              const uniqueConstraints = await queryRunner.query(`
+                        SELECT DISTINCT tc.constraint_name 
+                        FROM information_schema.table_constraints tc 
+                        WHERE tc.table_schema = ? 
+                        AND tc.table_name = ? 
+                        AND tc.constraint_type = 'UNIQUE' 
+                        AND tc.constraint_name != 'PRIMARY'
+                    `, [dbName, tableName]);
+
+              for (const unique of uniqueConstraints) {
+                const name = unique.constraint_name;
+
+                try {
+                  // Récupérer toutes les colonnes de la contrainte UNIQUE
+                  const columns = await queryRunner.query(`
+                                SELECT column_name 
+                                FROM information_schema.key_column_usage 
+                                WHERE constraint_schema = ? 
+                                AND table_name = ? 
+                                AND constraint_name = ? 
+                                ORDER BY ordinal_position
+                            `, [dbName, tableName, name]);
+
+                  const columnsStr = columns.map((col: any) => '`' + col.column_name + '`').join(',');
+                  // Créer la commande de restauration
+                  const restoreSQL = "ALTER TABLE " + tableName + " ADD CONSTRAINT " + name + " UNIQUE (" + columnsStr + ")";
+                  this.restoreQueries.push(restoreSQL);
+
+                  // Supprimer la contrainte UNIQUE
+                  await queryRunner.query("ALTER TABLE DROP INDEX " + name);
+                  console.log("Dropped UNIQUE constraint:" + name);
+
+                } catch (error) {
+                  console.error("Failed to drop UNIQUE constraint:" + name);
+                  console.error("Reason: " + error);
+                }
+              }
+
+              // Contraintes CHECK
+              await this.disableMySQLCheckConstraints(tableName, dbName, queryRunner);
+
+              // Colonnes avec valeur par défaut explicite (sauf auto_increment)
+              const columnsWithDefault = await queryRunner.query(
+                'SELECT column_name, column_type, data_type, column_default, extra ' +
+                'FROM information_schema.columns ' +
+                'WHERE table_schema = ? AND table_name = ? ' +
+                'AND column_default IS NOT NULL',
+                [dbName, tableName]
+              );
+
+              for (const col of columnsWithDefault) {
+                const colName = col.column_name;
+                const typeDef = col.column_type;
+                const dataType = col.data_type;
+                const defaultValue = col.column_default;
+                const extra = col.extra;
+
+                // Exclure les colonnes auto_increment
+                if (!extra || !extra.includes('auto_increment')) {
+                  // Gestion spéciale de CURDATE() et autres fonctions
+                  const defaultValueExpr = this.formatDefaultValueMySQL(defaultValue);
+
+                  // Enregistre la commande de restauration
+                  const restoreSQL = 'ALTER TABLE ' + tableName + ' ALTER COLUMN `' + colName + '` SET DEFAULT ' + defaultValueExpr;
+                  this.restoreQueries.push(restoreSQL);
+                }
+              }
+
+              // NOT NULL (sauf colonnes AUTO_INCREMENT)
+              const notNullColumns = await queryRunner.query(
+                'SELECT column_name, column_type, extra ' +
+                'FROM information_schema.columns ' +
+                'WHERE table_schema = ? AND table_name = ? AND is_nullable = \'NO\'',
+                [dbName, tableName]
+              );
+
+              for (const col of notNullColumns) {
+                const colName = col.column_name;
+                const typeDef = col.column_type;
+                const extra = col.extra;
+
+                if (!extra || !extra.includes('auto_increment')) {
+                  const modifySQL = 'ALTER TABLE ' + tableName + ' MODIFY `' + colName + '` ' + typeDef;
+                  await queryRunner.query(modifySQL);
+                  this.restoreQueries.push(modifySQL + ' NOT NULL');
+                }
+              }
+
+            } finally {
+              await queryRunner.release();
+            }
+          }
+
+          private formatDefaultValueMySQL(defaultValue: string): string {
+            if (!defaultValue) return '';
+
+            // Convertir CURDATE() en CURRENT_DATE
+            if (defaultValue.toUpperCase() === 'CURDATE()') {
+              return '(CURRENT_DATE)';
+            }
+            // Convertir les autres fonctions courantes si nécessaire
+            else if (defaultValue.toUpperCase() === 'CURTIME()') {
+              return '(CURRENT_TIME)';
+            }
+            else if (defaultValue.toUpperCase() === 'NOW()' || defaultValue.toUpperCase() === 'CURRENT_TIMESTAMP()') {
+              return '(CURRENT_TIMESTAMP)';
+            }
+            // Conserver les expressions spéciales entre parenthèses
+            else if (defaultValue.startsWith('(') && defaultValue.endsWith(')')) {
+              return defaultValue; // e.g. (UUID()), (RAND() * 100)
+            }
+            // Chaînes de caractères (déjà correctement échappées par MySQL)
+            else {
+              return defaultValue;
+            }
+          }
+
+          private async disableMySQLCheckConstraints(tableName: string, schema: string, queryRunner: any): Promise<void> {
+            // 1. Contraintes CHECK au niveau TABLE et niveau COLONNE
+            const checkConstraints = await queryRunner.query(`
+                    SELECT cc.constraint_name, cc.check_clause 
+                    FROM information_schema.table_constraints tc 
+                    JOIN information_schema.check_constraints cc 
+                    ON tc.constraint_schema = cc.constraint_schema 
+                    AND tc.constraint_name = cc.constraint_name 
+                    WHERE tc.table_schema = ? 
+                    AND tc.table_name = ? 
+                    AND tc.constraint_type = 'CHECK'
+                `, [schema, tableName]);
+
+            for (const ch of checkConstraints) {
+              const name = ch.constraint_name;
+              let clause = ch.check_clause;
+
+              // Déséscape les caractères Java (similaire à StringEscapeUtils.unescapeJava)
+              clause = clause.replace(/\\'/g, "'");
+              clause = clause.replace(/_utf8mb4'/g, "'"); // remplace _utf8mb4' par '
+
+              if (clause.toLowerCase().includes('regexp_like')) {
+                clause = "(" + clause + ")"; // MySQL nécessite des parenthèses autour de l'expression
+              }
+
+              try {
+                await queryRunner.query('ALTER TABLE ' + tableName + ' DROP CONSTRAINT `' + name + '`');
+                this.restoreQueries.push('ALTER TABLE ' + tableName + ' ADD CONSTRAINT `' + name + '` CHECK ' + clause);
+              } catch (error) {
+                console.error('Failed to drop table-level CHECK constraint: ' + name);
+              }
+            }
+          }
+
+          private async disableSQLServerConstraints(tableName: string): Promise<void> {
+            const queryRunner = this.connection.createQueryRunner();
+            const schema = 'dbo';
+            const qualifiedTableName = '[' + schema + '].[' + tableName + ']';
+
+            await queryRunner.connect();
+
+            try {
+              // Begin transaction
+              await queryRunner.query('BEGIN TRANSACTION');
+
+              // 1. UNIQUE Constraints
+              const uniqueConstraints = await queryRunner.query(
+                'SELECT i.name AS constraint_name, ' +
+                'STRING_AGG(COL_NAME(ic.object_id, ic.column_id), \',\') AS columns ' +
+                'FROM sys.indexes i ' +
+                'JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id ' +
+                'JOIN sys.tables t ON i.object_id = t.object_id ' +
+                'JOIN sys.schemas s ON t.schema_id = s.schema_id ' +
+                'WHERE i.is_unique = 1 AND i.is_primary_key = 0 ' +
+                'AND t.name = ? AND s.name = ? ' +
+                'GROUP BY i.name',
+                [tableName, schema]
+              );
+
+              for (const unique of uniqueConstraints) {
+                const name = unique.constraint_name;
+                const columns = unique.columns;
+
+                if (!name || !columns) {
+                  console.warn('Skipping invalid UNIQUE constraint for table ' + schema + '.' + tableName + ': name=' + name + ', columns=' + columns);
+                  continue;
+                }
+
+                const restoreSQL = 'ALTER TABLE ' + qualifiedTableName + ' ADD CONSTRAINT [' + name + '] UNIQUE ([' + columns.replace(/,/g, '],[') + '])';
+                this.restoreQueries.push(restoreSQL);
+
+                try {
+                  await queryRunner.query('ALTER TABLE ' + qualifiedTableName + ' DROP CONSTRAINT [' + name + ']');
+                  console.debug('Dropped UNIQUE constraint [' + name + '] on table ' + schema + '.' + tableName);
+                } catch (error) {
+                  console.error('Failed to drop UNIQUE constraint [' + name + '] on table ' + schema + '.' + tableName + ': ' + error);
+                  throw error;
+                }
+              }
+
+              // 2. CHECK Constraints
+              const checkConstraints = await queryRunner.query(
+                'SELECT cc.name AS name, cc.definition AS def ' +
+                'FROM sys.check_constraints cc ' +
+                'JOIN sys.objects t ON cc.parent_object_id = t.object_id ' +
+                'JOIN sys.schemas s ON t.schema_id = s.schema_id ' +
+                'WHERE t.name = ? AND s.name = ?',
+                [tableName, schema]
+              );
+
+              for (const ch of checkConstraints) {
+                const name = ch.name;
+                const def = ch.def;
+
+                if (!name || !def) {
+                  console.warn('Skipping invalid CHECK constraint for table ' + schema + '.' + tableName + ': name=' + name + ', def=' + def);
+                  continue;
+                }
+
+                const restoreSQL = 'ALTER TABLE ' + qualifiedTableName + ' ADD CONSTRAINT [' + name + '] CHECK (' + def + ')';
+                this.restoreQueries.push(restoreSQL);
+
+                try {
+                  await queryRunner.query('ALTER TABLE ' + qualifiedTableName + ' DROP CONSTRAINT [' + name + ']');
+                  console.debug('Dropped CHECK constraint [' + name + '] on table ' + schema + '.' + tableName);
+                } catch (error) {
+                  console.error('Failed to drop CHECK constraint [' + name + '] on table ' + schema + '.' + tableName + ': ' + error);
+                  throw error;
+                }
+              }
+
+              // 3. FOREIGN KEY Constraints
+              const foreignKeys = await queryRunner.query(
+                'SELECT fk.name AS name, ' +
+                'COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS col, ' +
+                'OBJECT_NAME(fk.referenced_object_id) AS refTable, ' +
+                'COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id) AS refCol ' +
+                'FROM sys.foreign_keys fk ' +
+                'JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id ' +
+                'JOIN sys.tables t ON fk.parent_object_id = t.object_id ' +
+                'JOIN sys.schemas s ON t.schema_id = s.schema_id ' +
+                'WHERE t.name = ? AND s.name = ?',
+                [tableName, schema]
+              );
+
+              for (const fk of foreignKeys) {
+                const name = fk.name;
+                const col = fk.col;
+                const refTable = fk.refTable;
+                const refCol = fk.refCol;
+
+                if (!name || !col || !refTable || !refCol) {
+                  console.warn('Skipping invalid FOREIGN KEY constraint for table ' + schema + '.' + tableName + ': name=' + name + ', col=' + col + ', refTable=' + refTable + ', refCol=' + refCol);
+                  continue;
+                }
+
+                const restoreSQL = 'ALTER TABLE ' + qualifiedTableName + ' ADD CONSTRAINT [' + name + '] FOREIGN KEY ([' + col + ']) REFERENCES [' + refTable + ']([' + refCol + '])';
+                this.restoreQueries.push(restoreSQL);
+
+                try {
+                  await queryRunner.query('ALTER TABLE ' + qualifiedTableName + ' DROP CONSTRAINT [' + name + ']');
+                  console.debug('Dropped FOREIGN KEY constraint [' + name + '] on table ' + schema + '.' + tableName);
+                } catch (error) {
+                  console.error('Failed to drop FOREIGN KEY constraint [' + name + '] on table ' + schema + '.' + tableName + ': ' + error);
+                  throw error;
+                }
+              }
+
+              // 4. NOT NULL Constraints (excluding IDENTITY columns)
+              const notNullColumns = await queryRunner.query(
+                'SELECT c.name, t.name AS type_name, ' +
+                'CASE ' +
+                'WHEN t.name IN (\'decimal\', \'numeric\') THEN t.name + \'(\' + CAST(c.precision AS VARCHAR) + \',\' + CAST(c.scale AS VARCHAR) + \')\' ' +
+                'WHEN t.name IN (\'varchar\', \'nvarchar\', \'char\', \'nchar\') THEN t.name + \'(\' + CASE WHEN c.max_length = -1 THEN \'MAX\' ELSE CAST(c.max_length AS VARCHAR) END + \')\' ' +
+                'ELSE t.name ' +
+                'END AS def ' +
+                'FROM sys.columns c ' +
+                'JOIN sys.types t ON c.system_type_id = t.system_type_id ' +
+                'WHERE c.object_id = OBJECT_ID(?) AND c.is_nullable = 0 AND c.is_identity = 0',
+                [qualifiedTableName]
+              );
+
+              for (const col of notNullColumns) {
+                const colName = col.name;
+                const def = col.def;
+
+                if (!colName || !def) {
+                  console.warn('Skipping invalid NOT NULL column for table ' + schema + '.' + tableName + ': name=' + colName + ', def=' + def);
+                  continue;
+                }
+
+                const restoreSQL = 'ALTER TABLE ' + qualifiedTableName + ' ALTER COLUMN [' + colName + '] ' + def + ' NOT NULL';
+                this.restoreQueries.push(restoreSQL);
+
+                try {
+                  await queryRunner.query('ALTER TABLE ' + qualifiedTableName + ' ALTER COLUMN [' + colName + '] ' + def + ' NULL');
+                  console.debug('Dropped NOT NULL constraint on column [' + colName + '] in table ' + schema + '.' + tableName);
+                } catch (error) {
+                  console.error('Failed to drop NOT NULL constraint on column [' + colName + '] in table ' + schema + '.' + tableName + ': ' + error);
+                  throw error;
+                }
+              }
+
+              // Commit transaction
+              await queryRunner.query('COMMIT TRANSACTION');
+
+            } catch (error) {
+              // Rollback transaction on error
+              try {
+                await queryRunner.query('ROLLBACK TRANSACTION');
+              } catch (rollbackError) {
+                console.error('Failed to rollback transaction for table ' + schema + '.' + tableName + ': ' + rollbackError);
+              }
+              throw error;
+            } finally {
+              await queryRunner.release();
+            }
+            // Close method disableSQLServerConstraints
+          }
+          private async disableOracleConstraints(tableName: string): Promise<void> {
+            const queryRunner = this.connection.createQueryRunner();
+
+            try {
+              await queryRunner.connect();
+
+              // Récupération du schema (utilisateur courant)
+              const schemaResult = await queryRunner.query('SELECT USER FROM DUAL');
+              const schema = schemaResult[0].USER.toUpperCase();
+              const tableUpper = tableName.toUpperCase();
+
+              // Récupération des contraintes
+              const constraints = await queryRunner.query(
+                'SELECT constraint_name, constraint_type, search_condition, r_constraint_name ' +
+                'FROM all_constraints ac ' +
+                'WHERE owner = ? ' +
+                'AND table_name = ? ' +
+                'AND constraint_type IN (\'R\', \'C\', \'U\', \'P\') ' +
+                'AND ( ' +
+                'constraint_name NOT LIKE \'SYS_%\' ' +
+                'OR ( ' +
+                'constraint_name LIKE \'SYS_%\' ' +
+                'AND EXISTS ( ' +
+                'SELECT 1 FROM all_cons_columns acc ' +
+                'WHERE acc.owner = ac.owner ' +
+                'AND acc.constraint_name = ac.constraint_name ' +
+                ') ' +
+                ') ' +
+                ') ' +
+                'ORDER BY constraint_name',
+                [schema, tableUpper]
+              );
+
+              for (const row of constraints) {
+                const name = row.CONSTRAINT_NAME;
+                const type = row.CONSTRAINT_TYPE;
+                const searchCond = row.SEARCH_CONDITION;
+
+                // Ignorer les PRIMARY KEYS
+                if (type === 'P') {
+                  console.log('Constraint ' + name + ' ignored (PRIMARY KEY)');
+                  continue;
+                }
+
+                // Ignorer les contraintes NOT NULL implicites
+                if (type === 'C' && searchCond && searchCond.toUpperCase().includes('IS NOT NULL')) {
+                  console.log('Constraint ' + name + ' ignored (NOT NULL implicit)');
+                  continue;
+                }
+
+                // Ajouter la commande de restauration
+                this.restoreQueries.push('ALTER TABLE ' + tableUpper + ' ENABLE CONSTRAINT ' + name);
+
+                // Traitement spécial pour les FOREIGN KEYS (R)
+                if (type === 'R') {
+                  // Récupérer les colonnes de la clé étrangère
+                  const fkCols = await queryRunner.query(
+                    'SELECT column_name FROM all_cons_columns ' +
+                    'WHERE owner = ? AND constraint_name = ? ' +
+                    'ORDER BY position',
+                    [schema, name]
+                  );
+
+                  for (const colRow of fkCols) {
+                    const col = colRow.COLUMN_NAME;
+                    const alterToNull = 'ALTER TABLE ' + tableUpper + ' MODIFY (' + col + ' NULL)';
+
+                    try {
+                      await queryRunner.query(alterToNull);
+                      console.log('Column ' + tableUpper + '.' + col + ' made nullable');
+
+                      // Ajouter la commande de restauration pour NOT NULL
+                      this.restoreQueries.push('ALTER TABLE ' + tableUpper + ' MODIFY (' + col + ' NOT NULL)');
+                    } catch (error) {
+                      console.error('Error modifying NULL for column ' + col + ': ' + error);
+                    }
+                  }
+                }
+
+                // Désactiver la contrainte
+                try {
+                  await queryRunner.query('ALTER TABLE ' + tableUpper + ' DISABLE CONSTRAINT ' + name);
+                  console.log('Constraint ' + name + ' disabled');
+                } catch (error) {
+                  console.error('Error disabling constraint ' + name + ': ' + error);
+                }
+              }
+
+              console.log('Processing finished for table ' + tableUpper);
+
+            } finally {
+              await queryRunner.release();
+            }
+          }
+        }
+
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/utils"
+    - fileType: "DTO"
+      fileName: "RestResponse"
+      extension: "ts"
+      content: |
+        import { ApiProperty } from "@nestjs/swagger";
+        export class RestResponse<T> {
+          @ApiProperty({example: 200})
+          status: number;
+          @ApiProperty()
+          message: string;
+          @ApiProperty({example: 0})
+          returnCode: number;
+          @ApiProperty()
+          data: T | null;
+          @ApiProperty()
+          timestamp: string;
+        
+          private constructor(status: number, message: string, returnCode: number, data: T | null) {
+            this.status = status;
+            this.message = message;
+            this.returnCode = returnCode;
+            this.data = data;
+            this.timestamp = new Date().toISOString();
+          }
+        
+          static buildSuccessResponse<T>(status: number, message: string, data: T): RestResponse<T> {
+             const OK = 1;
+             return new RestResponse<T>(status, message, OK, data);
+          }
+        
+          static buildErrorResponse<T>(status: number, message: string, data?: T): RestResponse<T> {
+             const KO = 0;
+             return new RestResponse<T>(status, message, KO, data ?? null);
+          }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/dto"
+    - fileType: "DTO"
+      fileName: "Page"
+      extension: "ts"
+      content: |
+        import { ApiProperty } from '@nestjs/swagger';
+        export class Page<T> {
+          @ApiProperty({ description: "Page content", isArray: true })
+          content: T[];
+
+          @ApiProperty({ description: "Total number of elements", example: 50 })
+          totalElements: number;
+
+          @ApiProperty({ description: "Total number of pages", example: 5 })
+          totalPages: number;
+
+          @ApiProperty({ description: "Page num (0-indexed)", example: 0 })
+          pageNumber: number;
+
+          @ApiProperty({ description: "Page size", example: 10 })
+          pageSize: number;
+        
+           constructor(content: T[], totalElements: number, pageSize: number, pageNumber: number) {
+              this.content = content;
+              this.totalElements = totalElements;
+              this.totalPages = Math.ceil(totalElements / pageSize);
+              this.pageNumber = pageNumber;
+              this.pageSize = pageSize;
+            }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/dto"
+    - fileType: "Main"
+      fileName: "app.module"
+      extension: "ts"
+      content: |
+        import { Module } from "@nestjs/common";
+        import { ConfigModule } from "@nestjs/config";
+        import { DatabaseModule } from './database/database.module';
+        import * as Models from "./models.index";
+        {{#if useJWT}}import { AuthModule } from "./modules/auth/auth.module";
+        import { UserEntityModule } from "./modules/user-entity/user-entity.module";
+        import { RoleEntityModule } from "./modules/role-entity/role-entity.module";{{/if}}
+        {{#each entities}}
+        import { ${this}Module } from "./modules/${minStart(this)}/${minStart(this)}.module";
+        {{/each}}
+        @Module({
+          imports: [
+              ConfigModule.forRoot({ isGlobal: true }),
+              DatabaseModule,
+              {{#if useJWT}}AuthModule,
+              UserEntityModule,
+              RoleEntityModule,{{/if}}
+              {{#each entities}}
+              ${this}Module,
+              {{/each}}
+          ],
+        })
+        export class AppModule {}
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src"
+    - fileType: "Database module"
+      fileName: "database.module"
+      extension: "ts"
+      content: |
+        import { Module } from '@nestjs/common';
+        import { ConfigService, ConfigModule } from '@nestjs/config';
+        import { TypeOrmModule } from '@nestjs/typeorm';
+        import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+        import * as Models from '../models.index';
+        {{#if useJWT}}import { SqlInitService } from './sql-init.service';{{/if}}
+        {{#if useJWT}}import { UserEntity } from '../user-entity/user-entity.entity';
+        import { RoleEntity } from '../role-entity/role-entity.entity';{{/if}}
+
+        @Module({
+          imports: [
+            ConfigModule,
+            TypeOrmModule.forRootAsync({
+                inject: [ConfigService],
+                useFactory: (config: ConfigService) => ({
+                  {{#if databaseType = PostgreSQL}}type: "postgres",{{/if}}{{#if databaseType = Oracle}}type: "oracle",{{/if}}{{#if databaseType = SQL Server}}type: "mssql",{{/if}}{{#if databaseType = MySQL}}type: "mysql",{{/if}}
+                  url: '${connectionString}',
+                  synchronize: false,
+                  logging: false,
+                  namingStrategy: new SnakeNamingStrategy(),
+                  entities: [
+                    {{#if useJWT}}UserEntity,
+                    RoleEntity,{{/if}}
+                    {{#each entities}}Models.${this},
+                    {{/each}}{{removeLine}}
+                  ],
+              }),
+            }),
+          ],
+          providers: [{{#if useJWT}}SqlInitService{{/if}}], 
+        })
+        export class DatabaseModule {}
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/database"
+    - fileType: "ExceptionFilter"
+      fileName: "AllExceptionsFilter"
+      extension: "ts"
+      content: |
+        import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus,Logger, } from "@nestjs/common";
+        import { Request, Response } from "express";
+        import { ResourceNotFoundException } from "../exceptions/ResourceNotFoundException";
+        import { RestResponse } from "../dto/RestResponse";
+        @Catch()
+        export class AllExceptionsFilter implements ExceptionFilter {
+          private readonly logger = new Logger(AllExceptionsFilter.name);
+          catch(exception: unknown, host: ArgumentsHost) {
+            const ctx = host.switchToHttp();
+            const response = ctx.getResponse<Response>();
+            const request = ctx.getRequest<Request>();
+            this.logger.error(
+              `Error processing request ${request.method} ${request.url}`,
+              (exception as any).stack || exception,
+            );
+            if (exception instanceof ResourceNotFoundException) {
+              const status = exception.getStatus();
+              const message = exception.getResponse();
+              const responseBody = RestResponse.buildErrorResponse(
+              status,
+              typeof message === "string" ? message : (message as any)?.message ?? exception.message,
+              null
+              );
+              return response.status(status).json(responseBody);
+            }
+            if (exception instanceof HttpException) {
+              const status = exception.getStatus();
+              const message = exception.getResponse();
+              const responseBody = RestResponse.buildErrorResponse(
+              status,
+              typeof message === "string" ? message : (message as any)?.message ?? exception.message,
+              null
+              );
+              return response.status(status).json(responseBody);
+            }
+            // handle generic error 
+            const responseBody = RestResponse.buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred",
+                null
+            );
+            return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(responseBody);
+          }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/common/filters"
+
+    - fileType: "Service Index"
+      fileName: "services.index"
+      extension: "ts"
+      content: |
+        {{#each entities}}
+        export { ${majStart(this)}Service } from "./modules/${minStart(this)}/${ minStart(this) }.service";
+        {{/each}}
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src"
+    - fileType: "Model Index"
+      fileName: "models.index"
+      extension: "ts"
+      content: |
+        {{#each entities}}
+        export { ${ majStart(this) } } from "./modules/${minStart(this)}/${ minStart(this) }.entity";
+        {{/each}}
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src"
+    - fileType: "Main"
+      fileName: "main"
+      extension: "ts"
+      content: |
+        import "reflect-metadata";
+        import { NestFactory } from "@nestjs/core";
+        import { AppModule } from "./app.module";
+        import { ValidationPipe, VersioningType } from "@nestjs/common";
+        import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+        import { AllExceptionsFilter } from "./common/filters/AllExceptionsFilter";
+      
+        async function bootstrap() {
+          const app = await NestFactory.create(AppModule);
+      
+          // Enable CORS
+          app.enableCors();
+      
+          // Global API prefix
+          app.setGlobalPrefix("api");
+      
+          // Versioning
+          app.enableVersioning({
+            type: VersioningType.URI,
+            defaultVersion: "1",
+          });
+      
+          // Global validation pipe
+          app.useGlobalPipes(
+            new ValidationPipe({
+              whitelist: true,
+              transform: true,
+              forbidNonWhitelisted: false,
+            })
+          );
+      
+          // Global exception filter
+          app.useGlobalFilters(new AllExceptionsFilter());
+      
+          // Swagger setup
+          const config = new DocumentBuilder()
+            .setTitle(process.env.SWAGGER_TITLE || "API")
+            .setDescription(process.env.SWAGGER_DESCRIPTION || "Auto-generated CRUD API")
+            .setVersion(process.env.SWAGGER_VERSION || "1.0.0")
+            {{#if useJWT}}.addBearerAuth(
+              {
+                type: 'http',
+                scheme: 'bearer',
+                bearerFormat: 'JWT',
+              },
+              'jwt',
+            ){{/if}}
+            .build();
+      
+          const document = SwaggerModule.createDocument(app, config);
+          SwaggerModule.setup("docs", app, document, {
+            swaggerOptions: { persistAuthorization: true },
+          });
+      
+          const port = process.env.APP_PORT || 3000;
+          await app.listen(port);
+          console.log(`Application is running on: http://localhost:${port}/api`);
+          console.log(`Swagger docs available at: http://localhost:${port}/docs`);
+        }
+      
+        bootstrap();
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src"
+    - fileType: "Export"
+      fileName: "export.util"
+      extension: "ts"
+      content: |
+        import { Parser } from "json2csv";
+        import puppeteer from "puppeteer";
+        
+        export class ExportUtil{
+          static async exportCSV<T extends object>(data: T[], fields?: (keyof T)[]): Promise<string> {
+             if (!data || data.length === 0) {
+              return '';
+             }
+                                                                                     
+             const csvFields = fields ?? (Object.keys(data[0]) as (keyof T)[]);
+             const parser = new Parser({ fields: csvFields as string[] });
+             
+            return parser.parse(data);
+          }
+          static async generatePDF(url: string, fileName: string): Promise<Buffer> {
+            const browser = await puppeteer.launch({ headless: true });
+            const page = await browser.newPage();
+            
+            await page.goto(url, { waitUntil: 'networkidle0' });
+            await page.emulateMediaType('screen');
+              
+            const pdfBuffer = Buffer.from(
+              await page.pdf({
+                path: `${fileName}.pdf`,
+                format: 'A4',
+                printBackground: true,
+              })
+            );
+            
+            await browser.close();
+            return pdfBuffer;
+          }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/common/utils"
+  model:
+    toGenerate: true
+    modelImports: |
+      import { Entity, Column, PrimaryGeneratedColumn, PrimaryColumn, OneToMany, ManyToOne, JoinColumn } from "typeorm";
+      import { ApiProperty } from "@nestjs/swagger";
+      import { IsNotEmpty, MaxLength, Min, Max, Length, Matches, IsDate } from "class-validator";
+      import * as Models from "../../models.index";
+    modelExtends: ""
+    modelAnnotations: |
+      @Entity('${tableName}')
+    modelFieldContent: |
+      {{tab}}{{#each fields}}
+      {{tab}}{{#if this.isIntAndPrimaryKey}}
+      {{tab}}@ApiProperty()
+      {{tab}}@PrimaryGeneratedColumn()
+      {{tab}}{{#each this.validationAnnotations}}{{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}${this.name}!: ${this.type};
+      {{elseIf this.isPrimaryKey}}
+      {{tab}}@ApiProperty()
+      {{tab}}@PrimaryColumn()
+      {{tab}}{{#each this.validationAnnotations}}{{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}${this.name}!: ${this.type};
+      {{elseIf this.isForeignKey}}
+      {{tab}}@ApiProperty({ type: () => Models.${this.type} })
+      {{tab}}@ManyToOne(() => Models.${this.type}, { eager: true })
+      {{tab}}@JoinColumn({ name: "${this.columnName}" })
+      {{tab}}${this.name}!: Models.${this.type};
+      {{else}}
+      {{tab}}@ApiProperty()
+      {{tab}}@Column({ name: "${this.columnName}", unique: ${this.isUnique}, nullable: ${this.isNullable} })
+      {{tab}}{{#each this.attributeTypeAnnotations}}{{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}${this.name}!: ${this.type};
+      {{/if}}{{#if !@last}}{{newline}}{{/if}}
+      {{tab}}{{/each}}
+    modelGetterSetter: "{{removeLine}}"
+    modelConstructors: "{{removeLine}}"
+    modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/modules/${minStart(className)}"
+    modelPackage: "{{removeLine}}"
+    modelAdditionalFiles:
+      - fileType: "Module"
+        fileName: "${minStart(className)}.module"
+        extension: "ts"
+        content: |
+          import { Module } from "@nestjs/common";
+          import { TypeOrmModule } from "@nestjs/typeorm";
+          import { ${className} } from "./${minStart(className)}.entity";
+          import { ${className}Service } from "./${minStart(className)}.service";
+          import { ${className}Controller } from "./${minStart(className)}.controller";
+
+          @Module({
+            imports: [TypeOrmModule.forFeature([${className}])],
+            providers: [${className}Service],
+            controllers: [${className}Controller],
+            exports: [${className}Service],
+          })
+          export class ${className}Module {}
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/${minStart(className)}"
+      - fileType: "Unit Test File"
+        fileName: "${minStart(className)}.spec"
+        extension: "ts"
+        content: |
+          import { Test, TestingModule } from '@nestjs/testing';
+          import { INestApplication } from '@nestjs/common';
+          import request from 'supertest';
+          import { AppModule } from '../src/app.module';
+          import { DataSource } from 'typeorm';
+          import { ${majStart(className)} } from '../src/modules/${minStart(className)}/${minStart(className)}.entity';
+          import { Page } from '../src/common/dto/Page';
+          import { RestResponse } from '../src/common/dto/RestResponse';
+          import { ConstraintDisablerService } from '../src/common/utils/constraint-disabler.service';
+
+          jest.setTimeout(30000);
+
+          describe('${majStart(className)}Controller', () => {
+            let app: INestApplication;
+            let dataSource: DataSource;
+            let mockData: ${majStart(className)};
+            let constraintDisablerService: ConstraintDisablerService;
+
+            beforeAll(async () => {
+              const moduleFixture: TestingModule = await Test.createTestingModule({
+                imports: [AppModule],
+                providers: [ConstraintDisablerService],
+              }).compile();
+
+              app = moduleFixture.createNestApplication();
+              await app.init();
+              dataSource = moduleFixture.get<DataSource>(DataSource);
+              constraintDisablerService = moduleFixture.get<ConstraintDisablerService>(ConstraintDisablerService);
+              await constraintDisablerService.disableConstraintsForTable("${tableName}");
+              if (!dataSource.isInitialized) {
+                await dataSource.initialize();
+              }
+            });
+
+            beforeEach(async () => {
+              const ${minStart(className)}Repository = dataSource.getRepository(${majStart(className)});
+              mockData = ${minStart(className)}Repository.create({
+                {{#each fields}}
+                {{#if this.isPrimaryKey}}{{removeLine}}
+                {{elseIf this.isForeignKey}}{{removeLine}}
+                {{else}}${minStart(this.name)}:(${this.mockdata}), {{/if}}
+                {{/each}}
+              });
+              mockData = await ${minStart(className)}Repository.save(mockData);
+            });
+
+            afterEach(async () => {
+              const ${minStart(className)}Repository = dataSource.getRepository(${majStart(className)});
+              await ${minStart(className)}Repository.clear(); 
+            });
+
+            afterAll(async () => {
+              await constraintDisablerService.restoreConstraints();
+              await app.close();
+            });
+
+            describe('GET /${minStart(className)}', () => {
+              it('should retrieve all ${minStart(className)}s with pagination', async () => {
+                const response = await request(app.getHttpServer())
+                  .get('/${minStart(className)}')
+                  .query({ page: 0, size: 10, sortParam: 'id,asc' })
+                  .expect(200);
+
+                const restResponse = response.body as RestResponse<Page<${majStart(className)}>>;
+
+                expect(restResponse.status).toBe(200);
+                expect(restResponse.message).toBe('${majStart(className)} retrieved successfully');
+                expect(restResponse.data!).toBeDefined();
+
+                expect(restResponse.data!).toHaveProperty('content');
+                expect(restResponse.data!).toHaveProperty('pageNumber');
+                expect(restResponse.data!).toHaveProperty('pageSize');
+                expect(restResponse.data!).toHaveProperty('totalElements');
+                expect(restResponse.data!).toHaveProperty('totalPages');
+
+                expect(Array.isArray(restResponse.data!.content)).toBe(true);
+              });
+
+
+            });
+
+            describe('GET /${minStart(className)}/:id', () => {
+              it('should get ${minStart(className)} by ID', async () => {
+                const response = await request(app.getHttpServer())
+                  .get("/${minStart(className)}/"+mockData.id)
+                  .expect(200);
+
+                const restResponse = response.body as RestResponse<${majStart(className)}>;
+
+                expect(restResponse.status).toBe(200);
+                expect(restResponse.message).toBe('${majStart(className)} retrieved successfully');
+                expect(restResponse.data!!.id).toBe(mockData.id);
+              });
+
+
+            });
+
+            describe('POST /${minStart(className)}/search', () => {
+              it('should search ${minStart(className)}s with criteria', async () => {
+                const searchCriteria = {
+                  {{#each fields}}
+                  {{#if this.isPrimaryKey}}{{removeLine}}
+                  {{elseIf this.isForeignKey}}{{removeLine}}
+                  {{else}}${minStart(this.name)}:(${this.mockdata}), {{/if}}
+                  {{/each}}
+                };
+
+                const response = await request(app.getHttpServer())
+                  .post('/${minStart(className)}/search')
+                  .query({ page: 0, size: 10, sortParam: 'id,asc' })
+                  .send(searchCriteria)
+                  .expect(201);
+
+                const restResponse = response.body as RestResponse<Page<${majStart(className)}>>;
+
+                expect(restResponse.status).toBe(200);
+                expect(restResponse.message).toBe('${majStart(className)}s retrieved successfully');
+                expect(restResponse.data!).toBeDefined();
+                expect(Array.isArray(restResponse.data!.content)).toBe(true);
+              });
+
+
+            });
+
+            describe('POST /${minStart(className)}', () => {
+              it('should create new ${minStart(className)}', async () => {
+                const new${majStart(className)} = {
+                  {{#each fields}}
+                  {{#if this.isPrimaryKey}}{{removeLine}}
+                  {{elseIf this.isForeignKey}}{{removeLine}}
+                  {{else}}${minStart(this.name)}:(${this.mockdata}),{{/if}}
+                  {{/each}}
+                };
+
+                const response = await request(app.getHttpServer())
+                  .post('/${minStart(className)}')
+                  .send(new${majStart(className)})
+                  .expect(201);
+
+                const restResponse = response.body as RestResponse<${majStart(className)}>;
+
+                expect(restResponse.status).toBe(201);
+                expect(restResponse.message).toBe('${majStart(className)} saved successfully');
+
+                if (restResponse.data! && restResponse.data!.id) {
+                  const ${minStart(className)}Repository = dataSource.getRepository(${majStart(className)});
+                  await ${minStart(className)}Repository.delete(restResponse.data!.id);
+                }
+              });
+
+
+            });
+
+            describe('PUT /${minStart(className)}/:id', () => {
+              it('should update existing ${minStart(className)}', async () => {
+                const updateData = {
+                  {{#each fields}}
+                  {{#if this.isPrimaryKey}}{{removeLine}}
+                  {{elseIf this.isForeignKey}}{{removeLine}}
+                  {{else}}${minStart(this.name)}:(${this.mockdata}),{{/if}}
+                  {{/each}}
+                };
+
+                const response = await request(app.getHttpServer())
+                  .put("/${minStart(className)}/"+mockData.id)
+                  .send(updateData)
+                  .expect(200);
+
+                const restResponse = response.body as RestResponse<${majStart(className)}>;
+
+                expect(restResponse.status).toBe(200);
+                expect(restResponse.message).toBe('${majStart(className)} updated successfully');
+              });
+
+
+            });
+
+            describe('DELETE /${minStart(className)}/:id', () => {
+              it('should delete ${minStart(className)} successfully', async () => {
+                const response = await request(app.getHttpServer())
+                  .delete("/${minStart(className)}/"+mockData.id)
+                  .expect(200);
+
+                const restResponse = response.body as RestResponse<null>;
+
+                expect(restResponse.status).toBe(200);
+                expect(restResponse.message).toBe('${majStart(className)} deleted successfully');
+                expect(restResponse.data!).toBeNull();
+              });
+            });
+          });
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/test"
+    validationAnnotations:
+      notNull: '@IsNotEmpty({ message: "${majStart(name)} cannot be null" })'
+      maxSize: '@MaxLength(${columnSize})'
+      numericMinimumValue: '@Min(${value})'
+      numericMinimumInclusiveValue: '@Min(${value})'
+      numericMaximumValue: '@Max(${value})'
+      numericMaximumInclusiveValue: '@Max(${value})'
+      past: '@IsDate()'
+      pastOrPresent: '@IsDate()'
+      future: '@IsDate()'
+      futureOrPresent: '@IsDate()'
+      notBlank: '@IsNotEmpty()'
+      minAndMaxSize: '@Length(${minLength}, ${columnSize})'
+      regexPattern: '@Matches(${value})'
+  modelDao:
+    toGenerate: false
+    modelDaoImports: ""
+    modelDaoAnnotations: ""
+    modelDaoClassKeyword: ""
+    modelDaoExtends: ""
+    modelDaoName: ""
+    modelDaoFieldContent: "{{removeLine}}"
+    modelDaoMethodContent: "{{removeLine}}"
+    modelDaoConstructors: "{{removeLine}}"
+    modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/src/modules"
+    modelDaoPackage: "{{removeLine}}"
+    modelDaoAdditionalFiles: [ ]
+  service:
+    toGenerate: true
+    serviceImports: |
+      import { Injectable } from "@nestjs/common";
+      import { InjectRepository } from "@nestjs/typeorm";
+      import { Repository, DeepPartial } from "typeorm";
+      import * as Models from "../../models.index";
+      import { ResourceNotFoundException } from "../../common/exceptions/ResourceNotFoundException";
+      import { ExportUtil } from "../../common/utils/export.util";
+    serviceAnnotations: |
+      @Injectable()
+    serviceClassKeyword: "export class"
+    serviceExtends: ""
+    serviceName: "${className}Service"
+    serviceFieldContent: |
+      {{tab}}constructor(
+      {{tab}}  @InjectRepository(Models.${className})
+      {{tab}}  private readonly ${minStart(className)}Repository: Repository<Models.${className}>,
+      {{tab}}) {}
+    serviceConstructors: "{{removeLine}}"
+    serviceMethodContent: |
+      {{tab}}async exportToCSV(additions: Models.Addition[]): Promise<string>  {
+      {{tab}}  return ExportUtil.exportCSV(additions);
+      {{tab}}}
+      
+      {{tab}}async findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number]> {
+      {{tab}}  const [data, total] = await this.${minStart(className)}Repository.findAndCount({
+      {{tab}}    skip: page * size,
+      {{tab}}    take: size,
+      {{tab}}    order,
+      {{tab}}  });
+      {{tab}}  if (data.length === 0) {
+      {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found");
+      {{tab}}  }
+      {{tab}}  return [data, total];
+      {{tab}}}
+
+      {{tab}}async search(body: any, page: number, size: number, order: any): Promise<[Models.${className}[], number]> {
+      {{tab}}  const [data, total] = await this.${minStart(className)}Repository.findAndCount({
+      {{tab}}    where: body,
+      {{tab}}    skip: page * size,
+      {{tab}}    take: size,
+      {{tab}}    order,
+      {{tab}}  });
+      {{tab}}  if (data.length === 0) {
+      {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found");
+      {{tab}}  }
+      {{tab}}  return [data, total];
+      {{tab}}}
+
+      {{tab}}async findById(id: number): Promise<Models.${className}> {
+      {{tab}}  const ${minStart(className)} = await this.${minStart(className)}Repository.findOne({ where: { id } });
+      {{tab}}  if (!${minStart(className)}) {
+      {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found with id:"+id);
+      {{tab}}  }
+      {{tab}}  return ${minStart(className)};
+      {{tab}}}
+      {{#if !isView}}
+      {{tab}}async save(body: DeepPartial<Models.${className}>): Promise<Models.${className}> {
+      {{tab}}  if (Array.isArray(body)) {
+      {{tab}}     throw new Error("Expected a single object, but received an array.");
+      {{tab}}  }
+      {{tab}}  const ${minStart(className)} = this.${minStart(className)}Repository.create(body);
+      {{tab}}  const saved = await this.${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}  return saved;
+      {{tab}}}
+
+      {{tab}}async update(id: number, body: any): Promise<Models.${className}> {
+      {{tab}}  const existing = await this.${minStart(className)}Repository.findOneBy({ id });
+      {{tab}}  if (!existing) {
+      {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found");
+      {{tab}}  }
+      {{tab}}  Object.assign(existing, body);
+      {{tab}}  return await this.${minStart(className)}Repository.save(existing);
+      {{tab}}}
+
+      {{tab}}async delete(id: number): Promise<void> {
+      {{tab}}  const existing = await this.${minStart(className)}Repository.findOneBy({ id });
+      {{tab}}  if (!existing) {
+      {{tab}}    throw new ResourceNotFoundException("${className} not found");
+      {{tab}}  }
+      {{tab}}  await this.${minStart(className)}Repository.delete(id);
+      {{tab}}}
+      {{/if}}
+    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/modules/${minStart(className)}"
+    servicePackage: "{{removeLine}}"
+    serviceAdditionalFiles: []
+  controller:
+    toGenerate: true
+    controllerImports: |
+      import { Controller, Get, Post, Put, Delete, Param, Body, Query, HttpException, HttpStatus, Res } from "@nestjs/common";
+      import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiExtraModels, getSchemaPath, ApiBody } from "@nestjs/swagger";
+      import { Response } from "express";
+      
+      import { ${className}Service } from "./${minStart(className)}.service";
+      import { RestResponse } from "../../common/dto/RestResponse";
+      import { WebUtils } from "../../common/utils/WebUtil";
+      import { ResourceNotFoundException } from "../../common/exceptions/ResourceNotFoundException";
+      import * as Models from "../../models.index";
+      import { Page } from "../../common/dto/Page";
+      {{#if useJWT}}import { ApiBearerAuth } from "@nestjs/swagger";
+      import { UseGuards } from "@nestjs/common";
+      import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";{{/if}}
+    controllerAnnotations: |
+      @ApiTags("${minStart(className)}")
+      @Controller("${minStart(className)}")
+      {{#if useJWT}}@ApiBearerAuth('jwt')
+      @UseGuards(JwtAuthGuard){{/if}}
+    controllerExtends: ""
+    controllerName: "${majStart(className)}Controller"
+    controllerFieldContent: "{{removeLine}}"
+    controllerConstructors: |
+      {{tab}}constructor(private readonly ${minStart(className)}Service: ${majStart(className)}Service) {}
+    controllerMethodContent: |
+      {{tab}}@ApiExtraModels(Models.Addition)
+      {{tab}}@ApiOperation({
+      {{tab}}  summary: 'Export a list of ${minStart(className)} to CSV',
+      {{tab}}  description:
+      {{tab}}      'Receives a list of ${minStart(className)} objects in the request body and returns a downloadable CSV file.',
+      {{tab}}})
+      {{tab}}@ApiBody({
+      {{tab}}  description: 'Array of ${minStart(className)} to export',
+      {{tab}}  schema: {
+      {{tab}}    type: 'array',
+      {{tab}}    items: { $ref: getSchemaPath(Models.${className}) },
+      {{tab}}  },
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 200,
+      {{tab}}  description: 'CSV file successfully generated and returned',
+      {{tab}}  content: {
+      {{tab}}    'text/csv': {
+      {{tab}}      schema: { type: 'string', format: 'binary' },
+      {{tab}}    },
+      {{tab}}  },
+      {{tab}}})
+      {{tab}}@Post('export/csv')
+      {{tab}}async exportToCSV(@Body() ${minStart(className)}s: any[],@Res() res: Response,): Promise<void> {
+      {{tab}}  const csv = await this.${minStart(className)}Service.exportToCSV(${minStart(className)}s);
+      {{tab}}  
+      {{tab}}  res.setHeader('Content-Type', 'text/csv');
+      {{tab}}  res.setHeader('Content-Disposition', 'attachment; filename="${minStart(className)}.csv"');
+      {{tab}}  res.status(200).send(csv);
+      {{tab}}}
+      {{tab}}@ApiExtraModels(RestResponse, Page, Models.${majStart(className)})
+      {{tab}}@ApiOperation({
+      {{tab}}   summary: "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}   description: "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 200,
+      {{tab}}  description: "Successfully retrieved the paginated list of ${formatReadableLowerCase(className)}",
+      {{tab}}  content: {
+      {{tab}}    'application/json': {
+      {{tab}}      schema: {
+      {{tab}}        allOf: [
+      {{tab}}          { $ref: getSchemaPath(RestResponse) },
+      {{tab}}          {
+      {{tab}}            properties: {
+      {{tab}}              data: {
+      {{tab}}                allOf: [
+      {{tab}}                  { $ref: getSchemaPath(Page) },
+      {{tab}}                  {
+      {{tab}}                    properties: {
+      {{tab}}                       content: {
+      {{tab}}                         type: "array",
+      {{tab}}                         items: { $ref: getSchemaPath(Models.${majStart(className)}) }
+      {{tab}}                       }
+      {{tab}}                     }
+      {{tab}}                   }
+      {{tab}}                 ]
+      {{tab}}              }
+      {{tab}}            }
+      {{tab}}          }
+      {{tab}}        ]
+      {{tab}}      }
+      {{tab}}    }
+      {{tab}}  }
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}} status: 204,
+      {{tab}} description: "No auteur found"
+      {{tab}}})
+      {{tab}}@ApiQuery({
+      {{tab}} name: "page",
+      {{tab}} required: false,
+      {{tab}} description: "Page number (0-indexed)",
+      {{tab}} example: 0
+      {{tab}}})
+      {{tab}}@ApiQuery({
+      {{tab}} name: "size",
+      {{tab}} required: false,
+      {{tab}} description: "Size of the page",
+      {{tab}} example: 10
+      {{tab}}})
+      {{tab}}@ApiQuery({
+      {{tab}} name: "sortParam",
+      {{tab}} required: false,
+      {{tab}} description: "Sorting criteria in the format: property,(asc|desc). Multiple sort criteria can be passed using semicolon separator. Example: id,asc;name,desc",
+      {{tab}} example: "id,asc"
+      {{tab}}})
+      {{tab}}@ApiResponse({ status: 200, description: "Retrieve all ${minStart(className)}s" })
+      {{tab}}@Get()
+      {{tab}}async findAll(@Query() query: any) {
+      {{tab}}{{tab}}const { page, size, order } = WebUtils.parsePaginationAndSort(query);
+      {{tab}}{{tab}}const [data, total] = await this.${minStart(className)}Service.findAll(page, size, order);
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} retrieved successfully", new Page(data, total, size, page));
+      {{tab}}}
+      
+      {{tab}}@ApiExtraModels(RestResponse, Models.${majStart(className)})
+      {{tab}}@ApiOperation({
+      {{tab}}  summary: "Get ${formatReadableLowerCase(className)} by ID",
+      {{tab}}  description: "Retrieve a specific ${formatReadableLowerCase(className)} item by its ID"
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 200,
+      {{tab}}  description: "Successfully retrieved the ${formatReadableLowerCase(className)}",
+      {{tab}}  content: {
+      {{tab}}    'application/json': {
+      {{tab}}      schema: {
+      {{tab}}        allOf: [
+      {{tab}}          { $ref: getSchemaPath(RestResponse) },
+      {{tab}}          {
+      {{tab}}            properties: {
+      {{tab}}              data: { $ref: getSchemaPath(Models.${majStart(className)}) }
+      {{tab}}            }
+      {{tab}}          }
+      {{tab}}        ]
+      {{tab}}      }
+      {{tab}}    }
+      {{tab}}  }
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 404,
+      {{tab}}  description: "${formatReadable(className)} not found with the provided ID"
+      {{tab}}})
+      {{tab}}@Get(":id")
+      {{tab}}async findById(@Param("id") id: number) {
+      {{tab}}{{tab}}const ${minStart(className)} = await this.${minStart(className)}Service.findById(id);
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} retrieved successfully", ${minStart(className)});
+      {{tab}}}
+
+      {{tab}}@ApiExtraModels(RestResponse, Page, Models.${majStart(className)})
+      {{tab}}@ApiOperation({
+      {{tab}}  summary: "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}  description: "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. Returns an empty list if no data is found."
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 200,
+      {{tab}}  description: "Successfully retrieved the paginated list of ${formatReadableLowerCase(className)}",
+      {{tab}}  content: {
+      {{tab}}    'application/json': {
+      {{tab}}      schema: {
+      {{tab}}        allOf: [
+      {{tab}}          { $ref: getSchemaPath(RestResponse) },
+      {{tab}}          {
+      {{tab}}            properties: {
+      {{tab}}              data: {
+      {{tab}}                allOf: [
+      {{tab}}                  { $ref: getSchemaPath(Page) },
+      {{tab}}                  {
+      {{tab}}                    properties: {
+      {{tab}}                      content: {
+      {{tab}}                        type: "array",
+      {{tab}}                        items: { $ref: getSchemaPath(Models.${majStart(className)}) }
+      {{tab}}                      }
+      {{tab}}                    }
+      {{tab}}                  }
+      {{tab}}                ]
+      {{tab}}              }
+      {{tab}}            }
+      {{tab}}          }
+      {{tab}}        ]
+      {{tab}}      }
+      {{tab}}    }
+      {{tab}}  }
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 204,
+      {{tab}}  description: "No ${formatReadableLowerCase(className)} found"
+      {{tab}}})
+      {{tab}}@ApiQuery({
+      {{tab}}  name: "page",
+      {{tab}}  required: false,
+      {{tab}}  description: "Page number (0-indexed)",
+      {{tab}}  example: 0
+      {{tab}}})
+      {{tab}}@ApiQuery({
+      {{tab}}  name: "size",
+      {{tab}}  required: false,
+      {{tab}}  description: "Size of the page",
+      {{tab}}  example: 10
+      {{tab}}})
+      {{tab}}@ApiQuery({
+      {{tab}}  name: "sortParam",
+      {{tab}}  required: false,
+      {{tab}}  description: "Sorting criteria in the format: property,(asc|desc). Multiple sort criteria can be passed using semicolon separator. Example: id,asc;name,desc",
+      {{tab}}  example: "id,asc"
+      {{tab}}})
+      {{tab}}@Post("search")
+      {{tab}}async search(@Body() body: any, @Query() query: any) {
+      {{tab}}{{tab}}const { page, size, order } = WebUtils.parsePaginationAndSort(query);
+      {{tab}}{{tab}}const [data, total] = await this.${minStart(className)}Service.search(body, page, size, order);
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className}s retrieved successfully", new Page(data, total, size, page));
+      {{tab}}}
+      
+      {{#if !isView}}{{removeLine}}
+      {{tab}}@ApiExtraModels(RestResponse, Models.${majStart(className)})
+      {{tab}}@ApiOperation({
+      {{tab}}  summary: "Create new ${formatReadableLowerCase(className)}",
+      {{tab}}  description: "Create a new ${formatReadableLowerCase(className)} item with the provided information"
+      {{tab}}})
+      {{tab}}@ApiBody({
+      {{tab}}  description: "${formatReadable(className)} object to be created",
+      {{tab}}  type: Models.${majStart(className)}
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 201,
+      {{tab}}  description: "${formatReadable(className)} created successfully",
+      {{tab}}  content: {
+      {{tab}}    'application/json': {
+      {{tab}}      schema: {
+      {{tab}}        allOf: [
+      {{tab}}          { $ref: getSchemaPath(RestResponse) },
+      {{tab}}          {
+      {{tab}}            properties: {
+      {{tab}}              data: { $ref: getSchemaPath(Models.${majStart(className)}) }
+      {{tab}}            }
+      {{tab}}          }
+      {{tab}}        ]
+      {{tab}}      }
+      {{tab}}    }
+      {{tab}}  }
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 400,
+      {{tab}}  description: "Invalid ${formatReadableLowerCase(className)} supplied"
+      {{tab}}})
+      {{tab}}@Post()
+      {{tab}}async save(@Body() body: any) {
+      {{tab}}{{tab}}const ${minStart(className)} = await this.${minStart(className)}Service.save(body);
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(201, "${className} saved successfully", ${minStart(className)});
+      {{tab}}}
+      
+      {{tab}}@ApiExtraModels(RestResponse)
+      {{tab}}@ApiOperation({
+      {{tab}}  summary: "Delete ${formatReadableLowerCase(className)}",
+      {{tab}}  description: "Delete a ${formatReadableLowerCase(className)} item by its ID. Returns success even if ${formatReadableLowerCase(className)} was already deleted."
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 200,
+      {{tab}}  description: "${formatReadable(className)} deleted successfully or already deleted",
+      {{tab}}  content: {
+      {{tab}}    'application/json': {
+      {{tab}}      schema: {
+      {{tab}}        allOf: [
+      {{tab}}          { $ref: getSchemaPath(RestResponse) },
+      {{tab}}          {
+      {{tab}}            properties: {
+      {{tab}}              data: { type: "null", example: null }
+      {{tab}}            }
+      {{tab}}          }
+      {{tab}}        ]
+      {{tab}}      }
+      {{tab}}    }
+      {{tab}}  }
+      {{tab}}})
+      {{tab}}@Delete(":id")
+      {{tab}}async delete(@Param("id") id: number) {
+      {{tab}}{{tab}}await this.${minStart(className)}Service.delete(id);
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse<null>(200, "${className} deleted successfully", null);
+      {{tab}}}
+
+      {{tab}}@ApiExtraModels(RestResponse, Models.${majStart(className)})
+      {{tab}}@ApiOperation({
+      {{tab}}  summary: "Update existing ${formatReadableLowerCase(className)}",
+      {{tab}}  description: "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
+      {{tab}}})
+      {{tab}}@ApiBody({
+      {{tab}}  description: "Updated ${formatReadableLowerCase(className)} object",
+      {{tab}}  type: Models.${majStart(className)}
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 200,
+      {{tab}}  description: "${formatReadable(className)} updated successfully",
+      {{tab}}  content: {
+      {{tab}}    'application/json': {
+      {{tab}}      schema: {
+      {{tab}}        allOf: [
+      {{tab}}          { $ref: getSchemaPath(RestResponse) },
+      {{tab}}          {
+      {{tab}}            properties: {
+      {{tab}}              data: { $ref: getSchemaPath(Models.${majStart(className)}) }
+      {{tab}}            }
+      {{tab}}          }
+      {{tab}}        ]
+      {{tab}}      }
+      {{tab}}    }
+      {{tab}}  }
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 404,
+      {{tab}}  description: "${formatReadable(className)} not found with the provided ID"
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 400,
+      {{tab}}  description: "Invalid ${formatReadableLowerCase(className)} supplied"
+      {{tab}}})
+      {{tab}}@Put(":id")
+      {{tab}}async update(@Param("id") id: number, @Body() body: any) {
+      {{tab}}{{tab}}const updated${className} = await this.${minStart(className)}Service.update(id, body);
+      {{tab}}{{tab}}return RestResponse.buildSuccessResponse(200, "${className} updated successfully", updated${className});
+      {{tab}}}
+      {{/if}}{{removeLine}}
+
+    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/modules/${minStart(className)}"
+    controllerPackage: "{{removeLine}}"
+    controllerAdditionalFiles: [ ]
+  configurations:
+    - name: "Security Type"
+      variableName: "securityType"
+      options:
+        - "NONE"
+        - "Nest Security - JWT"
+      defaultOption: "Nest Security - JWT"
+  dependencies: []
+
+
+
+
+
+
+
+
+
+

@@ -11,13 +11,19 @@
       "2": {
         "groupId": "",
         "artifactId": "Pomelo.EntityFrameworkCore.MySql"
+      },
+      "4": {
+        "groupId": "npm",
+        "artifactId": "mysql2",
+        "version": "3.11.0"
       }
     },
     "driverType": "",
     "sid": "",
     "connectionString": {
       "1": "jdbc:mysql://${host}:${port}/${database}",
-      "2": "Server=${host};Port=${port};Database=${database};User Id=${username};Password=${password};"
+      "2": "Server=${host};Port=${port};Database=${database};User Id=${username};Password=${password};",
+      "4": "mysql://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "MySql"
@@ -86,13 +92,24 @@
       "2": {
         "groupId": "",
         "artifactId": "Npgsql.EntityFrameworkCore.PostgreSQL"
+      },
+      "3": {
+        "groupId": "io.hypersistence",
+        "artifactId": "hypersistence-utils-hibernate-63",
+        "version": "3.8.4"
+      },
+      "4": {
+        "groupId": "npm",
+        "artifactId": "pg",
+        "version": "8.13.0"
       }
     },
     "driverType": "",
     "sid": "",
     "connectionString": {
       "1": "jdbc:postgresql://${host}:${port}/${database}",
-      "2": "Host=${host};Port=${port};Database=${database};Username=${username};Password=${password};"
+      "2": "Host=${host};Port=${port};Database=${database};Username=${username};Password=${password};",
+      "4": "postgres://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "Npgsql"
@@ -124,7 +141,9 @@
       "numeric": "double",
       "date": "date",
       "timestamp without time zone": "timestamp",
+      "timestamp with time zone": "timestamptz",
       "timestamp": "timestamp",
+      "timestamptz": "timestamptz",
       "bool": "boolean",
       "time": "time",
       "tsrange": "timestamp[]",
@@ -159,13 +178,19 @@
       "2": {
         "groupId": "",
         "artifactId": "Microsoft.EntityFrameworkCore.SqlServer"
+      },
+      "4": {
+        "groupId": "npm",
+        "artifactId": "mssql",
+        "version": "11.0.1"
       }
     },
     "driverType": "",
     "sid": "",
     "connectionString": {
-      "1": "jdbc:sqlserver://${host}:${port};databaseName=${database}",
-      "2": "Server=${host};Database=${database};User Id=${username};Password=${password};"
+      "1": "jdbc:sqlserver://${host}:${port};databaseName=${database};encrypt=false;trustServerCertificate=true",
+      "2": "Server=${host};Database=${database};User Id=${username};Password=${password};Encrypt=false;TrustServerCertificate=true",
+      "4": "mssql://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "SqlServer"
@@ -180,18 +205,55 @@
       "int identity": "int",
       "bigint": "long",
       "smallint": "int",
+      "tinyint": "int",
+      "bit": "boolean",
       "float": "float",
+      "real": "float",
       "double": "double",
-      "varchar": "string",
       "decimal": "double",
+      "numeric": "double",
+      "money": "double",
+      "smallmoney": "double",
+      "varchar": "string",
       "nvarchar": "string",
+      "char": "string",
+      "nchar": "string",
+      "text": "string",
+      "ntext": "string",
+      "xml": "string",
       "date": "date",
       "time": "time",
-      "datetime": "datetime"
+      "datetime": "datetime",
+      "datetime2": "timestamp",
+      "smalldatetime": "datetime",
+      "datetimeoffset": "timestamp",
+      "timestamp": "bytea",
+      "binary": "bytea",
+      "varbinary": "bytea",
+      "image": "bytea",
+      "uniqueidentifier": "uuid",
+      "sql_variant": "string",
+      "cursor": "string",
+      "table": "string",
+      "hierarchyid": "string",
+      "geometry": "string",
+      "geography": "string"
     },
     "excludeSchemas": [
       "sys",
-      "information_schema"
+      "information_schema",
+      "INFORMATION_SCHEMA",
+      "SYS",
+      "db_owner",
+      "db_accessadmin",
+      "db_securityadmin",
+      "db_ddladmin",
+      "db_backupoperator",
+      "db_datareader",
+      "db_datawriter",
+      "db_denydatareader",
+      "db_denydatawriter",
+      "guest"
     ]
   },
   {
@@ -201,18 +263,24 @@
       "1": {
         "groupId": "com.oracle.database.jdbc",
         "artifactId": "ojdbc8",
-        "version": "23.5.0.24.07"
+        "version": "19.8.0.0"
       },
       "2": {
         "groupId": "",
         "artifactId": "Oracle.EntityFrameworkCore"
+      },
+      "4": {
+        "groupId": "npm",
+        "artifactId": "oracledb",
+        "version": "6.6.0"
       }
     },
     "driverType": "thin",
     "sid": "ORCLCDB",
     "connectionString": {
       "1": "jdbc:oracle:${driverType}:@//${host}:${port}/${sid}",
-      "2": "User Id=${username};Password=${password};Data Source=${host}:${port}/${database}"
+      "2": "User Id=${username};Password=${password};Data Source=${host}:${port}/${database}",
+      "4": "oracle://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "Oracle"
@@ -227,7 +295,7 @@
       "NUMBER(*,*)": "double",
       "VARCHAR2": "string",
       "DATE": "date",
-      "TIMESTAMP(*)": "timestamp",
+      "TIMESTAMP(6)": "timestamp",
       "TIMESTAMP": "timestamp",
       "TIME": "time",
       "BLOB": "bytea",

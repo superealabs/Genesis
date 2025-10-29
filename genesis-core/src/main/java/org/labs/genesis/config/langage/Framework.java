@@ -51,6 +51,11 @@ public class Framework {
                 .getFrameworkCaching()
                 .stream()
                 .filter(fs -> fs.getName().equalsIgnoreCase(cacheProvider))
+    public Optional<FrameworkSecurity> getSelectedSecurityByName(String securityType){
+        return this
+                .getFrameworkSecurities()
+                .stream()
+                .filter(fs -> fs.getName().equalsIgnoreCase(securityType))
                 .findFirst();
     }
 

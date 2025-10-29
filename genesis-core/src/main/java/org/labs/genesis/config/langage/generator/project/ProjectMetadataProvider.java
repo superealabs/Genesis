@@ -3,6 +3,7 @@ package org.labs.genesis.config.langage.generator.project;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkCaching;
+import org.labs.genesis.config.langage.FrameworkSecurity;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -27,8 +28,9 @@ public class ProjectMetadataProvider {
         configFile.put("projectPort", projectPort);
 
         if (framework.getUseDB()) {
+            System.out.println(" id language = "+language.getId()+ " database "+database.getName());
             String databaseUrl = database.getConnectionString().get(language.getId());
-
+            System.out.println("Database URL: " + databaseUrl);
             Map<String, Object> databaseMetadata = database.getDatabaseMetadataHashMap(credentials);
             databaseUrl = engine.render(databaseUrl, databaseMetadata);
 
@@ -56,6 +58,10 @@ public class ProjectMetadataProvider {
         List<HashMap<String, String>> allDependencies = new ArrayList<>();
         allDependencies.addAll(dependencies);
         allDependencies.addAll(additionalCacheProviderDependencies);
+        List<HashMap<String, String>> additionalSecurityDependencies = getFrameworkSecurityDependenciesHashMaps(framework, frameworkConfiguration);
+        List<HashMap<String, String>> allDependencies = new ArrayList<>();
+        allDependencies.addAll(dependencies);
+        allDependencies.addAll(additionalSecurityDependencies);
         dependencyFileMap.put("dependencies", allDependencies);
 
         if (database != null && framework.getUseDB()) {
@@ -101,6 +107,14 @@ public class ProjectMetadataProvider {
         selectedCacheProviderOption.ifPresent(frameworkCaching -> {
             try {
                 List<Framework.Dependency> dependenciesList = frameworkCaching.getAdditionalDependencies();
+    private static List<HashMap<String, String>> getFrameworkSecurityDependenciesHashMaps(Framework framework, Map<String, Object> frameworkConfiguration) {
+        List<HashMap<String, String>> dependencies = new ArrayList<>();
+        String securityType = (String) frameworkConfiguration.get("securityType");
+        Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
+
+        selectedSecurityOption.ifPresent(security -> {
+            try {
+                List<Framework.Dependency> dependenciesList = security.getAdditionalDependencies();
 
                 for (Framework.Dependency dependency : dependenciesList) {
                     HashMap<String, String> dependencyMap = new HashMap<>();
@@ -128,15 +142,26 @@ public class ProjectMetadataProvider {
             }
         });
         return frameworkFrameworkCachingBooleanMetadata;
+    private static HashMap<String, Object> getFrameworkSecurityTrueBooleansHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
+        HashMap<String, Object> frameworkSecurityBooleanMetadata = new HashMap<>();
+        String securityType = (String) frameworkConfiguration.get("securityType");
+        Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
+        selectedSecurityOption.ifPresent(security -> {
+            for(String key : security.getMetadataBooleanTrueKeys()){
+                frameworkSecurityBooleanMetadata.put(key, true);
+            }
+        });
+        return frameworkSecurityBooleanMetadata;
     }
 
     static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName, String groupLink, String projectPort, Database database, Credentials credentials, @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
         HashMap<String, Object> combinedMap = new HashMap<>();
-
+        System.out.println("Project files edits hashmap");
         combinedMap.putAll(getConfigFileHashMap(projectPort, database, credentials, language, framework, frameworkOptions));
         combinedMap.putAll(getDependencyFileHashMap(projectDescription, database, language, framework, langageConfiguration, frameworkOptions));
         combinedMap.putAll(getInitialHashMap(destinationFolder, projectName, groupLink));
         combinedMap.putAll(getFrameworkCachingTrueBooleansHashMap(framework,frameworkOptions));
+        combinedMap.putAll(getFrameworkSecurityTrueBooleansHashMap(framework,frameworkOptions));
 
         return combinedMap;
     }
