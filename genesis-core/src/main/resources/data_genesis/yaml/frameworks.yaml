@@ -6158,6 +6158,8 @@
       {{tab}}constructor(
       {{tab}}  @InjectRepository(Models.${className})
       {{tab}}  private readonly ${minStart(className)}Repository: Repository<Models.${className}>,
+      {{tab}}  {{#if useNestRedisCaching}}@Inject() 
+      {{tab}}  private readonly cacheService: CacheService,{{/if}}
       {{tab}}) {}
     serviceConstructors: "{{removeLine}}"
     serviceMethodContent: |
@@ -6166,6 +6168,7 @@
       {{tab}}}
       
       {{tab}}async findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number]> {
+      {{tab}}  
       {{tab}}  const [data, total] = await this.${minStart(className)}Repository.findAndCount({
       {{tab}}    skip: page * size,
       {{tab}}    take: size,
@@ -6565,6 +6568,11 @@
         - "NONE"
         - "Nest Security - JWT"
       defaultOption: "Nest Security - JWT"
+    - name: "Cache Provider"
+      variableName: "cacheProvider"
+      options:
+        - "NONE"
+      defaultOption: "NONE"
   dependencies: []
 
 
