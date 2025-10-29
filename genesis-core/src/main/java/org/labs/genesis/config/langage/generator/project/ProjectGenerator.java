@@ -72,6 +72,7 @@ public class ProjectGenerator {
                     .peek(framework -> {
                         try {
                             framework.setFrameworkSecurities();
+                            framework.setFrameworkCaching();
                             framework.setViewsTemplate();
                         }
                         catch (IOException e) { throw new RuntimeException("Error initializing frameworkMvc components for ID: " + framework.getId(), e); }
@@ -128,15 +129,17 @@ public class ProjectGenerator {
     }
 
     public static void renderAndCopyFolders(List<Project.ProjectFolders> projectFolders, HashMap<String, Object> initializeHashMap) throws Exception {
-        for (Project.ProjectFolders projectFolder : projectFolders) {
-            String sourceFolderPath = projectFolder.getSourcePath();
-            String destinationFolderPath = engine.render(projectFolder.getDestinationPath() + projectFolder.getFolderName(), initializeHashMap);
+        if (projectFolders != null){
+            for (Project.ProjectFolders projectFolder : projectFolders) {
+                String sourceFolderPath = projectFolder.getSourcePath();
+                String destinationFolderPath = engine.render(projectFolder.getDestinationPath() + projectFolder.getFolderName(), initializeHashMap);
 
-            System.out.println("Rendering and copying folder:");
-            System.out.println("Source folder: " + sourceFolderPath);
-            System.out.println("Rendered destination folder: " + destinationFolderPath);
+                System.out.println("Rendering and copying folder:");
+                System.out.println("Source folder: " + sourceFolderPath);
+                System.out.println("Rendered destination folder: " + destinationFolderPath);
 
-            FileUtils.copyDirectory(sourceFolderPath, destinationFolderPath);
+                FileUtils.copyDirectory(sourceFolderPath, destinationFolderPath);
+            }
         }
     }
 
@@ -177,19 +180,26 @@ public class ProjectGenerator {
         HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(context.getFrontendFramework(),context.getProjectName(),context.getWebappFolder(),context.getProjectPort(),entities);
         HashMap<String,Object> folder=FrameworkFrontendMetadataProvider.getWebappHashMap(context);
         finalRenderData.putAll(folder);
-        renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
+        
+        // Vérification de sécurité avant d'accéder aux fichiers additionnels
+        if (context.getFrontendFramework() != null) {
+            renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
+        }
 
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
-        Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
-        selectedSecurityOption.ifPresent(security -> {
+//        Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
+//        selectedSecurityOption.ifPresent(security -> {
             try {
                 HashMap<String, Object> securityMap=FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType,context);
                 securityMap.putAll(finalRenderData);
-                renderFilesEdits(context.getFrontendFramework().getAuthenticationFiles(),securityMap);
+                // Vérification de sécurité avant d'accéder aux fichiers d'authentification
+                if (context.getFrontendFramework() != null) {
+                    renderFilesEdits(context.getFrontendFramework().getAuthenticationFiles(),securityMap);
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        });
+//        });
     }
 
     private static void generateViewsFiles (ProjectGenerationContext context, ViewsTemplate viewsTemplate) throws Exception {
@@ -291,15 +301,15 @@ public class ProjectGenerator {
         });
 
         // Post-setup for Django: create venv and install requirements
-//        try {
-//            if (context.getFramework().getCoreFramework().equalsIgnoreCase("Django")) {
-//                String projectPath = engine.simpleRender(context.getDestinationFolder() + "/" + context.getProjectName(),
-//                        Map.of("projectName", context.getProjectName()));
-//                setupDjangoEnvironment(projectPath);
-//            }
-//        } catch (Exception e) {
-//            System.err.println("   ⚠️  Post-setup Django échoué: " + e.getMessage());
-//        }
+        try {
+            if (context.getFramework().getCoreFramework().equalsIgnoreCase("Django")) {
+                String projectPath = engine.simpleRender(context.getDestinationFolder() + "/" + context.getProjectName(),
+                        Map.of("projectName", context.getProjectName()));
+                setupDjangoEnvironment(projectPath);
+            }
+        } catch (Exception e) {
+            System.err.println("   ⚠️  Post-setup Django échoué: " + e.getMessage());
+        }
     }
 
     /**
@@ -414,6 +424,22 @@ public class ProjectGenerator {
                                           TableMetadata tableMetadata,
                                           boolean generateComponentOnly) throws Exception {
 
+        // Liste des tables Django par défaut à exclure
+        Set<String> djangoDefaultTables = Set.of(
+            "auth_group", "auth_group_permissions", "auth_permission", 
+            "auth_user", "auth_user_groups", "auth_user_user_permissions",
+            "django_admin_log", "django_content_type", "django_migrations", 
+            "django_session", "authgroup", "authgrouppermission", "authpermission",
+            "authuser", "authusergroup", "authuseruserpermission", 
+            "djangoadminlog", "djangocontenttype", "djangomigration", "djangosession"
+        );
+        
+        // Exclure les tables Django par défaut
+        if (djangoDefaultTables.contains(tableMetadata.getTableName().toLowerCase())) {
+            System.out.println("Skipping Django default table: " + tableMetadata.getTableName());
+            return;
+        }
+
         String renderedDestinationFolder = engine.simpleRender(context.getDestinationFolder(), Map.of("projectName", context.getProjectName()));
         System.out.println("Generating backend components for project: " + context.getProjectName() + " at rendered destination: " + renderedDestinationFolder);
         System.out.println("The entity: " + tableMetadata.getTableName() + "\n");
@@ -470,28 +496,6 @@ public class ProjectGenerator {
                     false
             );
         }
-
-    private void generateFullProject(ProjectGenerationContext context) throws Exception {
-        Database database = context.getDatabase();
-        Framework framework = context.getFramework();
-        Credentials credentials = context.getCredentials();
-        Connection connection = context.getConnection();
-        Language language = context.getLanguage();
-
-        if (framework.getUseDB()) {
-            try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
-                List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language, framework);
-                List<TableMetadata> views = database.getViewsByNames(context.getViewNames(), connex, credentials, language, framework);
-                GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
-
-                for (TableMetadata tableMetadata : entities) {
-                    generateBackendComponents(
-                            context,
-                            genesisGenerator,
-                            tableMetadata,
-                            false
-                    );
-                }
 
         for (TableMetadata tableMetadata : views) {
             generateBackendComponents(
@@ -561,7 +565,6 @@ public class ProjectGenerator {
         Database database = context.getDatabase();
         Framework framework = context.getFramework();
         Credentials credentials = context.getCredentials();
-        useRealSidAndDriverType(database,credentials);
         Connection connection = context.getConnection();
         Language language = context.getLanguage();
 

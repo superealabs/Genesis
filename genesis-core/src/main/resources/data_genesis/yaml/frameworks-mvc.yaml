@@ -2487,7 +2487,7 @@
       using System.Text.Json;
       {{#if useAuthCookie}}using Microsoft.AspNetCore.Authorization;{{/if}}
 
-    controllerAnnotations: ""
+    controllerAnnotations: "{{removeLine}}"
     controllerExtends: " : Controller"
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
@@ -3002,6 +3002,11 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  excludeProjectFilesEdits: []
+  frontendPaths:
+    faviconPath: "${destinationFolder}/${majStart(projectName)}/wwwroot"
+    logoPath: "${destinationFolder}/${majStart(projectName)}/wwwroot/images"
+    langsPath: "{{removeLine}}"
   additionalFiles:
     - fileType: "settings"
       fileName: "settings"
@@ -3075,6 +3080,11 @@
 
         STATIC_URL = '/static/'
         STATICFILES_DIRS = [BASE_DIR / 'static']
+        
+        # Configuration de l'authentification
+        LOGIN_URL = '/login/'
+        LOGIN_REDIRECT_URL = '/'
+        LOGOUT_REDIRECT_URL = '/login/'
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
@@ -3096,91 +3106,32 @@
       extension: "py"
       content: |
         from django.urls import path
+        from django.contrib.auth import views as auth_views
+        from .views.home_views import HomeViews
+        from .views.auth_views import AuthViews
         {{#each entities}}
-        from .views.${lowerCase(this)}_views import ${majStart(this)}Views
+        from .views.${lowerCase(this)}_views import ${majStart(this)}Views, ${lowerCase(this)}_search
         {{/each}}
 
         urlpatterns = [
+            # Page d'accueil
+            path('', HomeViews.HomeView.as_view(), name='home'),
+            
+            # URLs d'authentification
+            path('login/', AuthViews.LoginView.as_view(), name='login'),
+            path('logout/', AuthViews.LogoutView.as_view(), name='logout'),
+            path('register/', AuthViews.RegisterView.as_view(), name='register'),
         {{#each entities}}
-            {{#if @first}}
-            # Home page
-            path('', ${majStart(this)}Views.HomeView.as_view(), name='home'),
-            {{/if}}
             # ${majStart(this)} URLs
             path('${lowerCase(this)}/', ${majStart(this)}Views.${majStart(this)}ListView.as_view(), name='${lowerCase(this)}_list'),
             path('${lowerCase(this)}/<int:pk>/', ${majStart(this)}Views.${majStart(this)}DetailView.as_view(), name='${lowerCase(this)}_detail'),
             path('${lowerCase(this)}/create/', ${majStart(this)}Views.${majStart(this)}CreateView.as_view(), name='${lowerCase(this)}_create'),
             path('${lowerCase(this)}/<int:pk>/update/', ${majStart(this)}Views.${majStart(this)}UpdateView.as_view(), name='${lowerCase(this)}_update'),
             path('${lowerCase(this)}/<int:pk>/delete/', ${majStart(this)}Views.${majStart(this)}DeleteView.as_view(), name='${lowerCase(this)}_delete'),
+            path('${lowerCase(this)}/search/', ${lowerCase(this)}_search, name='${lowerCase(this)}_search'),
         {{/each}}
         ]
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
-
-    - fileType: "template"
-      fileName: "base"
-      extension: "html"
-      content: |
-        <!DOCTYPE html>
-        <html lang="fr">
-        <head>
-        {{tab}}<meta charset="UTF-8" />
-        {{tab}}<meta name="viewport" content="width=device-width, initial-scale=1" />
-        {{tab}}<title>${majStart(projectName)}</title>
-        {{tab}}<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-        </head>
-        <body>
-        {{tab}}<nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
-        {{tab}}{{tab}}<div class="container">
-        {{tab}}{{tab}}{{tab}}<a class="navbar-brand" href="/">${majStart(projectName)}</a>
-        {{tab}}{{tab}} </div>
-        {{tab}} </nav>
-        {{tab}}<div class="container">
-        {{tab}}{{tab}}{% block content %}{% endblock %}
-        {{tab}} </div>
-        {{tab}}<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-        </body>
-        </html>
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}"
-
-    - fileType: "template"
-      fileName: "home"
-      extension: "html"
-      content: |
-        {% extends '${projectName}/base.html' %}
-        {% block content %}
-        <div class="row">
-        {{tab}}<div class="col-md-12">
-        {{tab}}{{tab}}<h1 class="mb-4">Bienvenue sur ${majStart(projectName)}</h1>
-        {{tab}}{{tab}}<p class="lead">Gérez vos données facilement avec cette application Django.</p>
-        {{tab}}{{tab}}
-        {{tab}}{{tab}}<div class="row">
-        {{#each entities}}
-        {{tab}}{{tab}}{{tab}}<div class="col-md-6 mb-4">
-        {{tab}}{{tab}}{{tab}}{{tab}}<div class="card">
-        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}<div class="card-header">
-        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}<h5 class="card-title mb-0">${majStart(this)}</h5>
-        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}</div>
-        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}<div class="card-body">
-        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}<p class="card-text">Gérez les ${lowerCase(this)}s de votre application.</p>
-        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}<div class="btn-group" role="group">
-        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}<a href="{% url '${lowerCase(this)}_list' %}" class="btn btn-primary">Voir la liste</a>
-        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}<a href="{% url '${lowerCase(this)}_create' %}" class="btn btn-success">Ajouter</a>
-        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}</div>
-        {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}</div>
-        {{tab}}{{tab}}{{tab}}{{tab}}</div>
-        {{tab}}{{tab}}{{tab}}</div>
-        {{/each}}
-        {{tab}}{{tab}}</div>
-        {{tab}}{{tab}}
-        {{tab}}{{tab}}<div class="mt-4">
-        {{tab}}{{tab}}{{tab}}<h3>Administration</h3>
-        {{tab}}{{tab}}{{tab}}<p>Accédez à l'interface d'administration Django pour une gestion avancée.</p>
-        {{tab}}{{tab}}{{tab}}<a href="/admin/" class="btn btn-outline-secondary">Interface d'administration</a>
-        {{tab}}{{tab}}</div>
-        {{tab}}</div>
-        </div>
-        {% endblock %}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}"
 
     - fileType: "static"
       fileName: "app"
@@ -3230,7 +3181,58 @@
         application = get_wsgi_application()
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
+    - fileType: "mainProject"
+      fileName: "home_views"
+      extension: "py"
+      content: |
+        from django.shortcuts import render
+        from django.views.generic import TemplateView
+        from django.contrib.auth.decorators import login_required
+        from django.utils.decorators import method_decorator
+      
+      
+        class HomeViews:
+            """
+            Vues pour la page d'accueil
+            """
+              
+            @method_decorator(login_required, name='dispatch')
+            class HomeView(TemplateView):
+                """
+                Vue pour afficher la page d'accueil
+                """
+                template_name = '${projectName}/home.html'
+                    
+                def get_context_data(self, **kwargs):
+                    context = super().get_context_data(**kwargs)
+                    context['title'] = 'Accueil'
+                    context['welcome_message'] = 'Bienvenue dans ${projectName}'
+                    context['description'] = 'Gérez vos données avec facilité'
+                  
+                    # Statistiques des entités
+                    {{#each entities}}{{#if !this.isView}}
+                    try:
+                        from ..models.${majStart(this)} import ${majStart(this)}
+                        context['${lowerCase(this)}_count'] = ${majStart(this)}.objects.count()
+                    except Exception as e:
+                        context['${lowerCase(this)}_count'] = 0
+                    {{/if}}{{/each}}
+                
+                    return context
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/views"
+
   configurations:
+    - name: "Logging Level"
+      variableName: "loggingLevel"
+      options:
+        - "Trace"
+        - "Debug"
+        - "Information"
+        - "Warning"
+        - "Error"
+        - "Critical"
+        - "None"
+      defaultOption: "Information"
     - name: "Framework Version"
       variableName: "frameworkVersion"
       options:
@@ -3238,6 +3240,16 @@
         - "4.2.7"
         - "4.1.13"
       defaultOption: "5.2.6"
+    - name: "Security Type"
+      variableName: "securityType"
+      options:
+        - "NONE"
+      defaultOption: "NONE"
+    - name: "Cache Provider"
+      variableName: "cacheProvider"
+      options:
+        - "NONE"
+      defaultOption: "NONE"
   dependencies:
     - groupId: "django"
       artifactId: "Django"
@@ -3257,6 +3269,11 @@
       from django.shortcuts import render, redirect, get_object_or_404
       from django.contrib import messages
       from django.http import JsonResponse
+      from django.contrib.auth.views import LoginView as DjangoLoginView, LogoutView as DjangoLogoutView
+      from django.contrib.auth.forms import UserCreationForm
+      from django.contrib.auth import login
+      from django.contrib.auth.decorators import login_required
+      from django.utils.decorators import method_decorator
       from ${projectName}.models import ${majStart(className)}
       from ${projectName}.services.${lowerCase(className)}_service import ${majStart(className)}Service
     controllerAnnotations: "{{removeLine}}"
@@ -3265,6 +3282,7 @@
     controllerName: "${lowerCase(className)}_views"
     controllerFieldContent: |
       class ${majStart(className)}Views:
+      {{tab}}@method_decorator(login_required, name='dispatch')
       {{tab}}class ${majStart(className)}ListView(ListView):
       {{tab}}{{tab}}template_name = '${projectName}/${majStart(className)}/list.html'
       {{tab}}{{tab}}context_object_name = '${lowerCase(className)}s'
@@ -3274,6 +3292,7 @@
       {{tab}}{{tab}}{{tab}}service = ${majStart(className)}Service()
       {{tab}}{{tab}}{{tab}}return service.get_all()
 
+      {{tab}}@method_decorator(login_required, name='dispatch')
       {{tab}}class ${majStart(className)}DetailView(DetailView):
       {{tab}}{{tab}}template_name = '${projectName}/${majStart(className)}/detail.html'
       {{tab}}{{tab}}context_object_name = '${lowerCase(className)}'
@@ -3282,42 +3301,65 @@
       {{tab}}{{tab}}{{tab}}service = ${majStart(className)}Service()
       {{tab}}{{tab}}{{tab}}return service.get_by_id(self.kwargs['pk'])
 
+      {{tab}}@method_decorator(login_required, name='dispatch')
       {{tab}}class ${majStart(className)}CreateView(CreateView):
       {{tab}}{{tab}}model = ${majStart(className)}
-      {{tab}}{{tab}}template_name = '${projectName}/${majStart(className)}/form.html'
+      {{tab}}{{tab}}template_name = '${projectName}/${majStart(className)}/create.html'
       {{tab}}{{tab}}success_url = reverse_lazy('${lowerCase(className)}_list')
-      {{tab}}{{tab}}fields = ['nom', 'prenom', 'age', 'dateDeNaissance', 'sexe']
+      {{tab}}{{tab}}fields = [f.name for f in ${majStart(className)}._meta.fields if not f.primary_key]
+      {{tab}}
+      {{tab}}{{tab}}def get_form(self, form_class=None):
+      {{tab}}{{tab}}{{tab}}form = super().get_form(form_class)
+      {{tab}}{{tab}}{{tab}}# Add CSS classes to all form fields
+      {{tab}}{{tab}}{{tab}}for field_name, field in form.fields.items():
+      {{tab}}{{tab}}{{tab}}{{tab}}if field.widget.__class__.__name__ == 'Select':
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}field.widget.attrs['class'] = 'form-control'
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}field.widget.attrs['id'] = field_name
+      {{tab}}{{tab}}{{tab}}{{tab}}else:
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}field.widget.attrs['class'] = 'form-control'
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}field.widget.attrs['placeholder'] = field_name
+      {{tab}}{{tab}}{{tab}}return form
       {{tab}}
       {{tab}}{{tab}}def form_valid(self, form):
-      {{tab}}{{tab}}{{tab}}service = ${majStart(className)}Service()
-      {{tab}}{{tab}}{{tab}}try:
-      {{tab}}{{tab}}{{tab}}{{tab}}service.create(form.cleaned_data)
-      {{tab}}{{tab}}{{tab}}{{tab}}messages.success(self.request, '${majStart(className)} créé avec succès.')
-      {{tab}}{{tab}}{{tab}}{{tab}}return super().form_valid(form)
-      {{tab}}{{tab}}{{tab}}except Exception as e:
-      {{tab}}{{tab}}{{tab}}{{tab}}messages.error(self.request, f'Erreur lors de la création: {str(e)}')
-      {{tab}}{{tab}}{{tab}}{{tab}}return super().form_invalid(form)
+      {{tab}}{{tab}}{{tab}}messages.success(self.request, '${majStart(className)} créé avec succès.')
+      {{tab}}{{tab}}{{tab}}return super().form_valid(form)
+      {{tab}}
+      {{tab}}{{tab}}def form_invalid(self, form):
+      {{tab}}{{tab}}{{tab}}messages.error(self.request, 'Erreur lors de la création. Veuillez vérifier les champs.')
+      {{tab}}{{tab}}{{tab}}return super().form_invalid(form)
 
+      {{tab}}@method_decorator(login_required, name='dispatch')
       {{tab}}class ${majStart(className)}UpdateView(UpdateView):
       {{tab}}{{tab}}model = ${majStart(className)}
-      {{tab}}{{tab}}template_name = '${projectName}/${majStart(className)}/form.html'
+      {{tab}}{{tab}}template_name = '${projectName}/${majStart(className)}/edit.html'
       {{tab}}{{tab}}success_url = reverse_lazy('${lowerCase(className)}_list')
-      {{tab}}{{tab}}fields = ['nom', 'prenom', 'age', 'dateDeNaissance', 'sexe']
+      {{tab}}{{tab}}fields = [f.name for f in ${majStart(className)}._meta.fields if not f.primary_key]
       {{tab}}
       {{tab}}{{tab}}def get_object(self):
       {{tab}}{{tab}}{{tab}}service = ${majStart(className)}Service()
       {{tab}}{{tab}}{{tab}}return service.get_by_id(self.kwargs['pk'])
       {{tab}}
+      {{tab}}{{tab}}def get_form(self, form_class=None):
+      {{tab}}{{tab}}{{tab}}form = super().get_form(form_class)
+      {{tab}}{{tab}}{{tab}}# Add CSS classes to all form fields
+      {{tab}}{{tab}}{{tab}}for field_name, field in form.fields.items():
+      {{tab}}{{tab}}{{tab}}{{tab}}if field.widget.__class__.__name__ == 'Select':
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}field.widget.attrs['class'] = 'form-control'
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}field.widget.attrs['id'] = field_name
+      {{tab}}{{tab}}{{tab}}{{tab}}else:
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}field.widget.attrs['class'] = 'form-control'
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}field.widget.attrs['placeholder'] = field_name
+      {{tab}}{{tab}}{{tab}}return form
+      {{tab}}
       {{tab}}{{tab}}def form_valid(self, form):
-      {{tab}}{{tab}}{{tab}}service = ${majStart(className)}Service()
-      {{tab}}{{tab}}{{tab}}try:
-      {{tab}}{{tab}}{{tab}}{{tab}}service.update(self.get_object().pk, form.cleaned_data)
-      {{tab}}{{tab}}{{tab}}{{tab}}messages.success(self.request, '${majStart(className)} modifié avec succès.')
-      {{tab}}{{tab}}{{tab}}{{tab}}return super().form_valid(form)
-      {{tab}}{{tab}}{{tab}}except Exception as e:
-      {{tab}}{{tab}}{{tab}}{{tab}}messages.error(self.request, f'Erreur lors de la modification: {str(e)}')
-      {{tab}}{{tab}}{{tab}}{{tab}}return super().form_invalid(form)
+      {{tab}}{{tab}}{{tab}}messages.success(self.request, '${majStart(className)} modifié avec succès.')
+      {{tab}}{{tab}}{{tab}}return super().form_valid(form)
+      {{tab}}
+      {{tab}}{{tab}}def form_invalid(self, form):
+      {{tab}}{{tab}}{{tab}}messages.error(self.request, 'Erreur lors de la modification. Veuillez vérifier les champs.')
+      {{tab}}{{tab}}{{tab}}return super().form_invalid(form)
 
+      {{tab}}@method_decorator(login_required, name='dispatch')
       {{tab}}class ${majStart(className)}DeleteView(DeleteView):
       {{tab}}{{tab}}model = ${majStart(className)}
       {{tab}}{{tab}}template_name = '${projectName}/${majStart(className)}/detail.html'
@@ -3339,69 +3381,92 @@
 
       {{tab}}class HomeView(TemplateView):
       {{tab}}{{tab}}template_name = '${projectName}/home.html'
+
+      # AJAX search endpoint for Select2
+      @login_required
+      def ${lowerCase(className)}_search(request):
+          from django.http import JsonResponse
+          from django.db.models import Q
+          
+          query = (request.GET.get('q') or '').strip()
+          qs = ${majStart(className)}.objects.all()
+          if query:
+              filters = Q()
+              # Recherche par ID si numérique
+              if query.isdigit():
+                  filters = filters | Q(id=int(query))
+              # Recherche dans tous les champs texte de l'entité
+              # Cette approche recherche dans tous les champs CharField et TextField
+              for field in ${majStart(className)}._meta.fields:
+                  if hasattr(field, 'max_length') or field.__class__.__name__ in ['CharField', 'TextField']:
+                      filters = filters | Q(**{f"{field.name}__icontains": query})
+              qs = qs.filter(filters)
+
+          results = []
+          for obj in qs[:20]:
+              # Utiliser la méthode __str__ du modèle pour l'affichage
+              label = f"{obj.id} - {str(obj)}"
+              results.append({
+                  'id': obj.id,
+                  'text': label
+              })
+
+          return JsonResponse(results, safe=False)
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/views"
     controllerPackage: "{{removeLine}}"
-    controllerAdditionalFiles:
-      - fileType: "template"
-        fileName: "list"
-        extension: "html"
+    controllerAdditionalFiles: 
+      - fileName: "auth_views"
+        extension: "py"
         content: |
-          {% extends '${projectName}/base.html' %}
-          {% block content %}
-          <h1 class="h3 mb-3">${majStart(className)} - Liste</h1>
-          <table class="table table-striped">
-          {{tab}}<thead>
-          {{tab}}{{tab}}<tr>
-          {{tab}}{{tab}}{{tab}}<th>ID</th>
-          {{tab}}{{tab}}{{tab}}<th>Données</th>
-          {{tab}}{{tab}}{{tab}}<th></th>
-          {{tab}}{{tab}}</tr>
-          {{tab}}</thead>
-          <tbody>
-          {{tab}}{% for obj in object_list %}
-          {{tab}}{{tab}}<tr>
-          {{tab}}{{tab}}{{tab}}<td>{{ obj.pk }}</td>
-          {{tab}}{{tab}}{{tab}}<td>{{ obj }}</td>
-          {{tab}}{{tab}}{{tab}}<td><a class="btn btn-sm btn-primary" href="{{ obj.get_absolute_url }}">Détails</a></td>
-          {{tab}}{{tab}}</tr>
-          {{tab}}{% empty %}
-          {{tab}}{{tab}}<tr><td colspan="3">Aucun élément</td></tr>
-          {{tab}}{% endfor %}
-          </tbody>
-          </table>
-          <a class="btn btn-success" href="create/">Créer</a>
-          {% endblock %}
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/${majStart(className)}"
+          from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
+          from django.urls import reverse_lazy
+          from django.shortcuts import render, redirect, get_object_or_404
+          from django.contrib import messages
+          from django.http import JsonResponse
+          from django.contrib.auth.views import LoginView as DjangoLoginView, LogoutView as DjangoLogoutView
+          from django.contrib.auth.forms import UserCreationForm
+          from django.contrib.auth import login
+          from django.contrib.auth.decorators import login_required
+          from django.utils.decorators import method_decorator
 
-      - fileType: "template"
-        fileName: "detail"
-        extension: "html"
-        content: |
-          {% extends '${projectName}/base.html' %}
-          {% block content %}
-          <h1 class="h3 mb-3">${majStart(className)} - Détail</h1>
-          <pre>{{ object|safe }}</pre>
-          <a class="btn btn-secondary" href="../">Retour</a>
-          <a class="btn btn-primary" href="update/">Modifier</a>
-          {% endblock %}
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/${majStart(className)}"
+          # Vues d'authentification
+          class AuthViews:
+              class LoginView(DjangoLoginView):
+                  template_name = '${projectName}/auth/login.html'
+                  redirect_authenticated_user = True
+                  
+                  def get_success_url(self):
+                      return reverse_lazy('home')
+                  
+                  def form_valid(self, form):
+                      messages.success(self.request, 'Connexion réussie !')
+                      return super().form_valid(form)
+                  
+                  def form_invalid(self, form):
+                      messages.error(self.request, 'Nom d\'utilisateur ou mot de passe incorrect.')
+                      return super().form_invalid(form)
 
-      - fileType: "template"
-        fileName: "form"
-        extension: "html"
-        content: |
-          {% extends '${projectName}/base.html' %}
-          {% block content %}
-          <h1 class="h3 mb-3">${majStart(className)} - Formulaire</h1>
-          <form method="post">
-          {{tab}}{% csrf_token %}
-          {{tab}}{{ form.as_p }}
-          {{tab}}<button class="btn btn-success" type="submit">Enregistrer</button>
-          {{tab}}<a class="btn btn-secondary" href="../">Annuler</a>
-          </form>
-          {% endblock %}
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/${majStart(className)}"
+              class LogoutView(DjangoLogoutView):
+                  next_page = reverse_lazy('login')
+                  
+                  def dispatch(self, request, *args, **kwargs):
+                      messages.success(request, 'Vous avez été déconnecté avec succès.')
+                      return super().dispatch(request, *args, **kwargs)
 
+              class RegisterView(CreateView):
+                  form_class = UserCreationForm
+                  template_name = '${projectName}/auth/register.html'
+                  success_url = reverse_lazy('login')
+                  
+                  def form_valid(self, form):
+                      response = super().form_valid(form)
+                      messages.success(self.request, 'Compte créé avec succès ! Vous pouvez maintenant vous connecter.')
+                      return response
+                  
+                  def form_invalid(self, form):
+                      messages.error(self.request, 'Erreur lors de la création du compte. Veuillez vérifier les informations.')
+                      return super().form_invalid(form)
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/views"
   service:
     toGenerate: true
     serviceName: "${lowerCase(className)}_service"
@@ -3546,7 +3611,17 @@
       {{tab}}{{/each}}
     modelGetterSetter: |
       {{tab}}def __str__(self):
-      {{tab}}{{tab}}return f"{self.${pkColumn}} - ${majStart(className)}"
+      {{tab}}{{tab}}# Construire une représentation avec les champs les plus importants
+      {{tab}}{{tab}}parts = []
+      {{tab}}{{tab}}{{#each fields}}
+      {{tab}}{{tab}}{{#if this.isPrimaryKey}}{{else}}
+      {{tab}}{{tab}}if hasattr(self, '${this.name}') and self.${this.name}:
+      {{tab}}{{tab}}    parts.append(str(self.${this.name}))
+      {{tab}}{{tab}}{{/if}}
+      {{tab}}{{tab}}{{/each}}
+      {{tab}}{{tab}}if not parts:
+      {{tab}}{{tab}}    return f"${majStart(className)} {self.${pkColumn}}"
+      {{tab}}{{tab}}return " - ".join(parts)
       {{tab}}
       {{tab}}def get_absolute_url(self):
       {{tab}}{{tab}}return f"/${lowerCase(className)}/{self.pk}/"
@@ -3565,17 +3640,17 @@
     viewTemplateEngine: "Django"
     viewExtension: "html"
     staticFilesPath: "/static"
-    viewSavePath: "${destinationFolder}/${majStart(projectName)}/templates/${majStart(className)}"
-    rootPath: "{% url"
-    backLink: "'${lowerCase(className)}_list' %}"
-    previousLink: "{{ request.META.HTTP_REFERER }}"
+    viewSavePath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/${majStart(className)}"
+    rootPath: "static"
+    backLink: "{% url '${lowerCase(className)}_list' %}"
+    previousLink: "{% url '${lowerCase(className)}_list' %}"
     layout:
       name: "base"
-      assetsImportLink: "/static/css/app.css"
+      assetsImportLink: "/static/css/style.css"
       viewAnnotations: |
-        {% load static %}
-      pageName: "${majStart(className)}"
-      navLink: "class=\"nav-item\""
+        ${DjangoBaseTemplate}
+      pageName:
+      navLink: "class=\"nav-item \" href=\"{% url '${lowerCase(this.entityName)}_list' %}\""
       callContent: |
         {% block content %}{% endblock %}
       logoutLink: "{% url 'logout' %}"
@@ -3583,161 +3658,205 @@
     list:
       name: "list"
       viewAnnotations: |
-        {% extends '${projectName}/base.html' %}
-        {% block content %}
-      pageName: "${majStart(className)} - Liste"
-      tableHeader: |
-        <thead>
-        {{tab}}<tr>
-        {{tab}}{{tab}}<th>ID</th>
-        {{tab}}{{tab}}<th>Données</th>
-        {{tab}}{{tab}}<th>Actions</th>
-        {{tab}}</tr>
-        </thead>
-      tableBody: |
-        <tbody>
-        {{tab}}{% for obj in object_list %}
-        {{tab}}{{tab}}<tr>
-        {{tab}}{{tab}}{{tab}}<td>{{ obj.pk }}</td>
-        {{tab}}{{tab}}{{tab}}<td>{{ obj }}</td>
-        {{tab}}{{tab}}{{tab}}<td>
-        {{tab}}{{tab}}{{tab}}{{tab}}<a class="btn btn-sm btn-primary" href="{% url '${lowerCase(className)}_detail' obj.pk %}">Détails</a>
-        {{tab}}{{tab}}{{tab}}{{tab}}<a class="btn btn-sm btn-warning" href="{% url '${lowerCase(className)}_update' obj.pk %}">Modifier</a>
-        {{tab}}{{tab}}{{tab}}{{tab}}<a class="btn btn-sm btn-danger" href="{% url '${lowerCase(className)}_delete' obj.pk %}">Supprimer</a>
-        {{tab}}{{tab}}{{tab}}</td>
-        {{tab}}{{tab}}</tr>
-        {{tab}}{% empty %}
-        {{tab}}{{tab}}<tr><td colspan="3">Aucun élément</td></tr>
-        {{tab}}{% endfor %}
-        </tbody>
-      tableFooter: |
-        <tfoot>
-        {{tab}}<tr>
-        {{tab}}{{tab}}<td colspan="3">
-        {{tab}}{{tab}}{{tab}}<a class="btn btn-success" href="{% url '${lowerCase(className)}_create' %}">Créer un nouvel élément</a>
-        {{tab}}{{tab}}</td>
-        {{tab}}</tr>
-        </tfoot>
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/${majStart(className)}/"
+        ${DjangoListViewTemplate}
+      inputTagHelper: "class=\"form-control\""
+      inputRadioTagHelper: "class=\"form-check-input\""
+      inputDateTagHelper: "class=\"form-control\""
+      selectTagHelper: "class=\"form-control\""
+      deleteDataTagHelper: "onclick=\"return confirm('Êtes-vous sûr ?')\""
+      pageSizeTagHelper: "selected"
+      dataValue: "{{ ${lowerCase(className)}.${this.name} }}"
+      dataForeignValue: "{{ ${lowerCase(className)}.${this.name} }}"
+      inlineLoopStatement: "{% for ${lowerCase(className)} in ${lowerCase(className)}s %}"
+      blockLoopStatementStart: "{% for ${lowerCase(className)} in ${lowerCase(className)}s %}"
+      blockLoopStatementEnd: "{% endfor %}"
+      filterLink: "action=\"{% url '${lowerCase(className)}_list' %}\""
+      sortLink: "{% url '${lowerCase(className)}_list' %}?sort=${this.name}"
+      detailsLink: "{% url '${lowerCase(className)}_detail' ${lowerCase(className)}.pk %}"
+      createLink: "{% url '${lowerCase(className)}_create' %}"
+      updateLink: "{% url '${lowerCase(className)}_update' ${lowerCase(className)}.pk %}"
+      deleteLink: "{% url '${lowerCase(className)}_delete' ${lowerCase(className)}.pk %}"
+      pageSizeChangeLink: "window.location.href='{% url '${lowerCase(className)}_list' %}?pageSize='+this.value"
+      previousPageLink: "{% url '${lowerCase(className)}_list' %}?page={{ page_obj.previous_page_number }}"
+      previousClassCondition: "{% if page_obj.has_previous %}enabled{% else %}disabled{% endif %}"
+      pagesListLoop: "{% for num in page_obj.paginator.page_range %}<a href=\"{% url '${lowerCase(className)}_list' %}?page={{ num }}\" class=\"page-link {% if num == page_obj.number %}active{% endif %}\">{{ num }}</a>{% endfor %}"
+      nextPageLink: "{% url '${lowerCase(className)}_list' %}?page={{ page_obj.next_page_number }}"
+      nextClassCondition: "{% if page_obj.has_next %}enabled{% else %}disabled{% endif %}"
+      onGoingPageLink: "{% url '${lowerCase(className)}_list' %}"
+      onGoingPageSizeTagHelper: "value=\"{{ request.GET.pageSize|default:20 }}\""
+      totalElementsTagHelper: "{{ page_obj.paginator.count }}"
+      onGoingSortOrderTagHelper: "value=\"{{ request.GET.sort|default:'' }}\""
+      activeSortAscCondition: "{% if request.GET.sort == '${this.name}' and request.GET.order == 'asc' %}active{% endif %}"
+      activeSortDescCondition: "{% if request.GET.sort == '${this.name}' and request.GET.order == 'desc' %}active{% endif %}"
+      onGoingPagesLoop: "{% for num in page_obj.paginator.page_range %}<option value=\"{{ num }}\" {% if num == page_obj.number %}selected{% endif %}>{{ num }}</option>{% endfor %}"
+      scriptSection: |
+        <script>
+            // Suppression
+            document.addEventListener('DOMContentLoaded', function() {
+              // Open modal and populate action/id when clicking a delete button
+              document.querySelectorAll('.btn-delete').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                  var id = (this.dataset.id || '').toString().trim();
+                  var action = this.dataset.action || '';
+              
+                  // Populate modal fields
+                  var idField = document.getElementById('${lowerCase(className)}Id');
+                  var idText = document.getElementById('${lowerCase(className)}IdText');
+                  var bodyIdText = document.getElementById('body${lowerCase(className)}IdText');
+                  var deleteForm = document.getElementById('deleteForm');
+                  
+                  if (idField) idField.value = id;
+                  if (idText) idText.textContent = id;
+                  if (bodyIdText) bodyIdText.textContent = id;
+                  if (deleteForm && action) deleteForm.action = action;
+                  
+                  var modal = document.getElementById('customModal');
+                  if (modal) modal.style.display = 'block';
+                });
+              });
+          
+              // Close modal buttons
+              ['deleteCloseBtn', 'deleteCancelBtn'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.addEventListener('click', function() {
+                  var modal = document.getElementById('customModal');
+                  if (modal) modal.style.display = 'none';
+                });
+              });
+          
+              // Validate before submit
+              var deleteForm = document.getElementById('deleteForm');
+              if (deleteForm) {
+                deleteForm.addEventListener('submit', function(e) {
+                  var idField = document.getElementById('${lowerCase(className)}Id');
+                  if (!idField || !idField.value.trim()) {
+                    e.preventDefault();
+                    alert('Erreur: ID non trouvé');
+                  }
+                });
+              }
+          });
+        </script>
     detail:
       name: "detail"
       viewAnnotations: |
-        {% extends '${projectName}/base.html' %}
-        {% block content %}
-      pageName: "${majStart(className)} - Détails"
-      content: |
-        <div class="card">
-        {{tab}}<div class="card-body">
-        {{tab}}{{tab}}<h5 class="card-title">{{ object }}</h5>
-        {{tab}}{{tab}}<p class="card-text">ID: {{ object.pk }}</p>
-        {{tab}}{{tab}}<div class="btn-group">
-        {{tab}}{{tab}}{{tab}}<a href="{% url '${lowerCase(className)}_list' %}" class="btn btn-secondary">Retour à la liste</a>
-        {{tab}}{{tab}}{{tab}}<a href="{% url '${lowerCase(className)}_update' object.pk %}" class="btn btn-primary">Modifier</a>
-        {{tab}}{{tab}}{{tab}}<a href="{% url '${lowerCase(className)}_delete' object.pk %}" class="btn btn-danger">Supprimer</a>
-        {{tab}}{{tab}}</div>
-        {{tab}}</div>
-        </div>
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/${majStart(className)}/"
+        ${DjangoDetailViewTemplate}
+      dataValue: "{{ ${lowerCase(className)}.${this.name} }}"
+      dataForeignValue: "{{ ${lowerCase(className)}.${this.name} }}"
+      deleteDataTagHelper: "onclick=\"return confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')\""
+      deleteLink: "{% url '${lowerCase(className)}_delete' ${lowerCase(className)}.pk %}"
+      updateLink: "{% url '${lowerCase(className)}_update' ${lowerCase(className)}.pk %}"
     create:
       name: "create"
       viewAnnotations: |
-        {% extends '${projectName}/base.html' %}
-        {% block content %}
-      pageName: "${majStart(className)} - Créer"
-      content: |
-        <form method="post">
-        {{tab}}{% csrf_token %}
-        {{tab}}<div class="card">
-        {{tab}}{{tab}}<div class="card-body">
-        {{tab}}{{tab}}{{tab}}{{ form.as_p }}
-        {{tab}}{{tab}}{{tab}}<div class="btn-group">
-        {{tab}}{{tab}}{{tab}}{{tab}}<button type="submit" class="btn btn-success">Créer</button>
-        {{tab}}{{tab}}{{tab}}{{tab}}<a href="{% url '${lowerCase(className)}_list' %}" class="btn btn-secondary">Annuler</a>
-        {{tab}}{{tab}}{{tab}}</div>
-        {{tab}}{{tab}}</div>
-        {{tab}}</div>
-        </form>
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/${majStart(className)}/"
+        ${DjangoCreateViewTemplate}
+      validationSection: |
+        {% if form.errors %}
+        <div class="alert alert-danger" style="background: #f8d7da; color: #721c24; padding: 15px; margin: 20px 0; border-radius: 5px;">
+            <h3>Erreurs de validation:</h3>
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <p><strong>{{ field }}</strong>: {{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+      validationTagHelper: "{{form.${this.name}.errors}}"
+      selectValidationTagHelper: "{{form.${this.name}.errors}}"
+      inputTagHelper: "name=\"${this.name}\""
+      textAreaTagHelper: "class=\"form-control\""
+      textAreaValidationTagHelper: "class=\"form-control\""
+      checkedRadioTagHelper: "class=\"form-check-input\""
+      selectTagHelper: "name = \"${this.name}\" class=\"form-control\""
+      createLink: "action=\"{% url '${lowerCase(className)}_create' %}\""
+      scriptSection: |
+        <script>
+        $(document).ready(function() {
+            // Initialiser Select2 pour les champs de sélection (sauf ceux avec AJAX)
+            $('select:not([data-select2-ajax])').select2({
+                placeholder: 'Sélectionner une option',
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Validation des formulaires
+            $('form').submit(function(e) {
+                var isValid = true;
+                $('.form-control[required]').each(function() {
+                    if ($(this).val() === '') {
+                        $(this).addClass('is-invalid');
+                        isValid = false;
+                    } else {
+                        $(this).removeClass('is-invalid');
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Veuillez remplir tous les champs obligatoires.');
+                }
+            });
+        });
+        </script>
     edit:
       name: "edit"
       viewAnnotations: |
-        {% extends '${projectName}/base.html' %}
-        {% block content %}
-      pageName: "${majStart(className)} - Modifier"
-      content: |
-        <form method="post">
-        {{tab}}{% csrf_token %}
-        {{tab}}<div class="card">
-        {{tab}}{{tab}}<div class="card-body">
-        {{tab}}{{tab}}{{tab}}{{ form.as_p }}
-        {{tab}}{{tab}}{{tab}}<div class="btn-group">
-        {{tab}}{{tab}}{{tab}}{{tab}}<button type="submit" class="btn btn-primary">Modifier</button>
-        {{tab}}{{tab}}{{tab}}{{tab}}<a href="{% url '${lowerCase(className)}_list' %}" class="btn btn-secondary">Annuler</a>
-        {{tab}}{{tab}}{{tab}}</div>
-        {{tab}}{{tab}}</div>
-        {{tab}}</div>
-        </form>
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/${majStart(className)}/"
+        ${DjangoEditViewTemplate}
       validationSection: |
         {% if form.errors %}
-        {{tab}}<div class="alert alert-danger">
-        {{tab}}{{tab}}{% for field, errors in form.errors.items %}
-        {{tab}}{{tab}}{{tab}}{% for error in errors %}
-        {{tab}}{{tab}}{{tab}}{{tab}}<p>{{ field }}: {{ error }}</p>
-        {{tab}}{{tab}}{{tab}}{% endfor %}
-        {{tab}}{{tab}}{% endfor %}
-        {{tab}}</div>
+        <div class="alert alert-danger" style="background: #f8d7da; color: #721c24; padding: 15px; margin: 20px 0; border-radius: 5px;">
+            <h3>Erreurs de validation:</h3>
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <p><strong>{{ field }}</strong>: {{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+        </div>
         {% endif %}
-      validationTagHelper: "class=\"form-control\""
+      validationTagHelper: "{{form.this.name.errors}}"
       selectValidationTagHelper: "class=\"form-control\""
-      inputTagHelper: "class=\"form-control\""
+      inputTagHelper: "name=\"${this.name}\" value=\"{{ ${lowerCase(className)}.${this.name} }}\""
       textAreaTagHelper: "class=\"form-control\""
       textAreaValidationTagHelper: "class=\"form-control\""
-      selectTagHelper: "class=\"form-control\""
-      updateLink: "{% url '${lowerCase(className)}_update' object.pk %}"
+      selectTagHelper: "name = \"${this.name}\" class=\"form-control\""
+      updateLink: "action=\"{% url '${lowerCase(className)}_update' ${lowerCase(className)}.pk %}\""
       scriptSection: |
-        <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    update:
-      name: "update"
+        <script>
+        $(document).ready(function() {
+            // Initialiser Select2 pour les champs de sélection (sauf ceux avec AJAX)
+            $('select:not([data-select2-ajax])').select2({
+                placeholder: 'Sélectionner une option',
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Validation des formulaires
+            $('form').submit(function(e) {
+                var isValid = true;
+                $('.form-control[required]').each(function() {
+                    if ($(this).val() === '') {
+                        $(this).addClass('is-invalid');
+                        isValid = false;
+                    } else {
+                        $(this).removeClass('is-invalid');
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Veuillez remplir tous les champs obligatoires.');
+                }
+            });
+        });
+        </script>
+    error:
+      name: "Error"
       viewAnnotations: |
         {% extends '${projectName}/base.html' %}
         {% block content %}
-      pageName: "${majStart(className)} - Modifier"
-      content: |
-        <form method="post">
-        {{tab}}{% csrf_token %}
-        {{tab}}<div class="card">
-        {{tab}}{{tab}}<div class="card-body">
-        {{tab}}{{tab}}{{tab}}{{ form.as_p }}
-        {{tab}}{{tab}}{{tab}}<div class="btn-group">
-        {{tab}}{{tab}}{{tab}}{{tab}}<button type="submit" class="btn btn-primary">Modifier</button>
-        {{tab}}{{tab}}{{tab}}{{tab}}<a href="{% url '${lowerCase(className)}_list' %}" class="btn btn-secondary">Annuler</a>
-        {{tab}}{{tab}}{{tab}}</div>
-        {{tab}}{{tab}}</div>
-        {{tab}}</div>
-        </form>
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/${majStart(className)}/"
-    delete:
-      name: "delete"
-      viewAnnotations: |
-        {% extends '${projectName}/base.html' %}
-        {% block content %}
-      pageName: "${majStart(className)} - Supprimer"
-      content: |
-        <div class="alert alert-warning">
-        {{tab}}<h4>Confirmation de suppression</h4>
-        {{tab}}<p>Êtes-vous sûr de vouloir supprimer cet élément ?</p>
-        {{tab}}<p><strong>{{ object }}</strong></p>
-        </div>
-        <form method="post">
-        {{tab}}{% csrf_token %}
-        {{tab}}<div class="btn-group">
-        {{tab}}{{tab}}<button type="submit" class="btn btn-danger">Confirmer la suppression</button>
-        {{tab}}{{tab}}<a href="{% url '${lowerCase(className)}_list' %}" class="btn btn-secondary">Annuler</a>
-        {{tab}}</div>
-        </form>
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/${majStart(className)}/"
+      errorMessage: "Une erreur s'est produite"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/"
+
     templateEngineFilesEdits:
       - fileType: "ViewImports"
         fileName: "_ViewImports"
@@ -3771,14 +3890,32 @@
           {{tab}}{% endfor %}
           {% endif %}
         destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/"
+      - fileType: "Form Validation"
+        fileName: "_ValidationScriptsPartial"
+        extension: "html"
+        content: |
+          <script>
+          $(document).ready(function() {
+              // Validation des formulaires
+              $('form').submit(function(e) {
+                  var isValid = true;
+                  $('.form-control[required]').each(function() {
+                      if ($(this).val() === '') {
+                          $(this).addClass('is-invalid');
+                          isValid = false;
+                      } else {
+                          $(this).removeClass('is-invalid');
+                      }
+                  });
 
-    error:
-      name: "Error"
-      viewAnnotations: |
-        {% extends '${projectName}/base.html' %}
-        {% block content %}
-      errorMessage: "Une erreur s'est produite"
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/"
+                  if (!isValid) {
+                      e.preventDefault();
+                      alert('Veuillez remplir tous les champs obligatoires.');
+                  }
+              });
+          });
+          </script>
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/templates/${projectName}/"
 
   templateEngineFiles: []
   templateEngineFolders: []
