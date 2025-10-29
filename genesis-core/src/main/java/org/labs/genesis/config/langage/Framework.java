@@ -130,6 +130,7 @@ public class Framework {
         private Boolean toGenerate;
         private String controllerImports;
         private String controllerAnnotations;
+        private String controllerClassKeyword;
         private String controllerExtends;
         private String controllerName;
         private String controllerFieldContent;
