@@ -5507,7 +5507,6 @@
         import { Module } from "@nestjs/common";
         import { ConfigModule } from "@nestjs/config";
         import { DatabaseModule } from './database/database.module';
-        import { ExportModule } from "./modules/export/export.module";
         import * as Models from "./models.index";
         {{#if useJWT}}import { AuthModule } from "./modules/auth/auth.module";
         import { UserEntityModule } from "./modules/user-entity/user-entity.module";
@@ -5519,7 +5518,6 @@
           imports: [
               ConfigModule.forRoot({ isGlobal: true }),
               DatabaseModule,
-              ExportModule,
               {{#if useJWT}}AuthModule,
               UserEntityModule,
               RoleEntityModule,{{/if}}
@@ -5700,126 +5698,44 @@
         bootstrap();
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src"
     - fileType: "Export"
-      fileName: "export.service"
+      fileName: "export.util"
       extension: "ts"
       content: |
-        import { Injectable } from '@nestjs/common';
-        import { DataSource } from 'typeorm';
-        import { Parser } from 'json2csv';
-        import * as puppeteer from 'puppeteer';
-        import { ResourceNotFoundException } from '../../common/exceptions/ResourceNotFoundException';
-          
-        @Injectable()
-        export class ExportService {
-          constructor(private readonly dataSource: DataSource) {}
-          
-          // Generate a csv file from a given list of object
-           async exportCSV<T extends object>(data: T[],fields?: (keyof T)[]): Promise<string> {
-              if (!data || data.length === 0) {
-                return '';
-              }
-          
-              const csvFields = fields ?? (Object.keys(data[0]) as (keyof T)[]);
-              const parser = new Parser({ fields: csvFields as string[] });
-          
-              return parser.parse(data);
-           }
-  
-          // Generate a PDF file from an html 
-          async generatePDF(url: string, fileName: string): Promise<Buffer> {
-           // create a browser instance
-            const browser = await puppeteer.launch({
-              headless: true,
-            });
-            // create a new page
+        import { Parser } from "json2csv";
+        import puppeteer from "puppeteer";
+        
+        export class ExportUtil{
+          static async exportCSV<T extends object>(data: T[], fields?: (keyof T)[]): Promise<string> {
+             if (!data || data.length === 0) {
+              return '';
+             }
+                                                                                     
+             const csvFields = fields ?? (Object.keys(data[0]) as (keyof T)[]);
+             const parser = new Parser({ fields: csvFields as string[] });
+             
+            return parser.parse(data);
+          }
+          static async generatePDF(url: string, fileName: string): Promise<Buffer> {
+            const browser = await puppeteer.launch({ headless: true });
             const page = await browser.newPage();
+            
             await page.goto(url, { waitUntil: 'networkidle0' });
             await page.emulateMediaType('screen');
-            const pdfBuffer = Buffer.from(await page.pdf({
-              path: fileName+".pdf",
-              format: 'A4',
-              printBackground: true,
-            }));
+              
+            const pdfBuffer = Buffer.from(
+              await page.pdf({
+                path: `${fileName}.pdf`,
+                format: 'A4',
+                printBackground: true,
+              })
+            );
             
             await browser.close();
             return pdfBuffer;
           }
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/export"
-    - fileType: "Export"
-      fileName: "export.controller"
-      extension: "ts"
-      content: |
-        import { Controller, Get, Post, Res, HttpStatus, Req, Query, Body } from '@nestjs/common';
-        import { Response, Request } from 'express';
-        import { ExportService } from './export.service';
-        import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
-        
-        @ApiTags('Export')
-        @Controller('export')
-        export class ExportController {
-          constructor(private readonly exportService: ExportService) {}
-        
-          @Post('csv')
-          @ApiOperation({
-            summary: 'Export CSV',
-            description: 'Exports a sample CSV of users (predefined data)',
-          })
-          @ApiBody({
-            description: "Data to be exported to CSV",
-          })
-          @ApiResponse({
-            status: 200,
-            description: 'CSV file downloaded successfully',
-            content: {
-              'text/csv': { example: 'id,name,email\n1,Alice,alice@mail.com\n2,Bob,bob@mail.com' },
-            },
-          })
-          async exportCsv(@Body() body:
-            Record<string, any>[], @Res() res: Response) {
-              console.log(body);
-              const csv = await this.exportService.exportCSV(body);
-              
-              res.setHeader('Content-Type', 'text/csv');
-              res.setHeader('Content-Disposition', 'attachment; filename=users.csv');
-              return res.status(HttpStatus.OK).send(csv);
-          }
-        
-          @Get('pdf')
-          @ApiOperation({
-            summary: 'Export PDF',
-            description: 'Exports a sample PDF from predefined HTML content',
-          })
-          @ApiResponse({
-            status: 200,
-            description: 'PDF file downloaded successfully',
-            content: {
-              'application/pdf': { example: 'binary content' },
-            },
-          })
-          async exportPdf(@Query('url')url:string, @Query('fileName')fileName:string, @Res() res: Response) {
-                const pdfBuffer = await this.exportService.generatePDF(url, fileName);
-                res.setHeader('Content-Type', 'application/pdf');
-                res.setHeader('Content-Disposition', 'attachment; filename=sample.pdf');
-                return res.status(HttpStatus.OK).send(pdfBuffer);
-          }
-        }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/export"
-    - fileType: "Export"
-      fileName: "export.module"
-      extension: "ts"
-      content: |
-        import { Module } from '@nestjs/common';
-        import { ExportController } from './export.controller';
-        import { ExportService } from './export.service';
-        @Module({
-          controllers: [ExportController],
-          providers: [ExportService],
-          exports: [ExportService], 
-        })
-        export class ExportModule {}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/export"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/common/utils"
   model:
     toGenerate: true
     modelImports: |
@@ -6111,6 +6027,7 @@
       import { Repository, DeepPartial } from "typeorm";
       import * as Models from "../../models.index";
       import { ResourceNotFoundException } from "../../common/exceptions/ResourceNotFoundException";
+      import { ExportUtil } from "../../common/utils/export.util";
     serviceAnnotations: |
       @Injectable()
     serviceClassKeyword: "export class"
@@ -6123,6 +6040,10 @@
       {{tab}}) {}
     serviceConstructors: "{{removeLine}}"
     serviceMethodContent: |
+      {{tab}}async exportToCSV(additions: Models.Addition[]): Promise<string>  {
+      {{tab}}  return ExportUtil.exportCSV(additions);
+      {{tab}}}
+      
       {{tab}}async findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number]> {
       {{tab}}  const [data, total] = await this.${minStart(className)}Repository.findAndCount({
       {{tab}}    skip: page * size,
@@ -6183,13 +6104,15 @@
       {{tab}}}
       {{/if}}
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/modules/${minStart(className)}"
-    servicePackage: ""
+    servicePackage: "{{removeLine}}"
     serviceAdditionalFiles: []
   controller:
     toGenerate: true
     controllerImports: |
-      import { Controller, Get, Post, Put, Delete, Param, Body, Query, HttpException, HttpStatus } from "@nestjs/common";
+      import { Controller, Get, Post, Put, Delete, Param, Body, Query, HttpException, HttpStatus, Res } from "@nestjs/common";
       import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiExtraModels, getSchemaPath, ApiBody } from "@nestjs/swagger";
+      import { Response } from "express";
+      
       import { ${className}Service } from "./${minStart(className)}.service";
       import { RestResponse } from "../../common/dto/RestResponse";
       import { WebUtils } from "../../common/utils/WebUtil";
@@ -6210,6 +6133,36 @@
     controllerConstructors: |
       {{tab}}constructor(private readonly ${minStart(className)}Service: ${majStart(className)}Service) {}
     controllerMethodContent: |
+      {{tab}}@ApiExtraModels(Models.Addition)
+      {{tab}}@ApiOperation({
+      {{tab}}  summary: 'Export a list of ${minStart(className)} to CSV',
+      {{tab}}  description:
+      {{tab}}      'Receives a list of ${minStart(className)} objects in the request body and returns a downloadable CSV file.',
+      {{tab}}})
+      {{tab}}@ApiBody({
+      {{tab}}  description: 'Array of ${minStart(className)} to export',
+      {{tab}}  schema: {
+      {{tab}}    type: 'array',
+      {{tab}}    items: { $ref: getSchemaPath(Models.${className}) },
+      {{tab}}  },
+      {{tab}}})
+      {{tab}}@ApiResponse({
+      {{tab}}  status: 200,
+      {{tab}}  description: 'CSV file successfully generated and returned',
+      {{tab}}  content: {
+      {{tab}}    'text/csv': {
+      {{tab}}      schema: { type: 'string', format: 'binary' },
+      {{tab}}    },
+      {{tab}}  },
+      {{tab}}})
+      {{tab}}@Post('export/csv')
+      {{tab}}async exportToCSV(@Body() ${minStart(className)}s: any[],@Res() res: Response,): Promise<void> {
+      {{tab}}  const csv = await this.${minStart(className)}Service.exportToCSV(${minStart(className)}s);
+      {{tab}}  
+      {{tab}}  res.setHeader('Content-Type', 'text/csv');
+      {{tab}}  res.setHeader('Content-Disposition', 'attachment; filename="${minStart(className)}.csv"');
+      {{tab}}  res.status(200).send(csv);
+      {{tab}}}
       {{tab}}@ApiExtraModels(RestResponse, Page, Models.${majStart(className)})
       {{tab}}@ApiOperation({
       {{tab}}   summary: "Retrieve all ${formatReadableLowerCase(className)}",
