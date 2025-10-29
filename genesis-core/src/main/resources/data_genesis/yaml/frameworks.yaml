@@ -4635,7 +4635,7 @@
       {{#if !isView}} 
       {{tab}}[HttpPost]
       {{/if}}
-      {{tab}}{{#if useJWT and !isView}}[Authorize]{{/if}}
+      {{tab}}{{#if !isView and useJWT}}[Authorize]{{/if}}
       {{#if !isView}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
@@ -4763,6 +4763,7 @@
   useEurekaServer: false
   isGateway: false
   withGroupId: true
+  useFrontendApp: false
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -4906,6 +4907,7 @@
   useEurekaServer: false
   isGateway: true
   withGroupId: true
+  useFrontendApp: false
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"

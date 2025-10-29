@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="1e9e6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="1e9e6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="7" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="30" left="30" bottom="30" right="30"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -66,7 +66,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="556ba" class="javax.swing.JLabel">
+              <component id="556ba" class="javax.swing.JLabel" binding="navbarLabel">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -121,7 +121,7 @@
                   <text value=""/>
                 </properties>
               </component>
-              <component id="2c807" class="javax.swing.JLabel">
+              <component id="2c807" class="javax.swing.JLabel" binding="cssLabel">
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -149,7 +149,7 @@
                   </component>
                 </children>
               </scrollpane>
-              <component id="33ef" class="javax.swing.JLabel">
+              <component id="33ef" class="javax.swing.JLabel" binding="languagesLabel">
                 <constraints>
                   <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -224,7 +224,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="3cc20" class="javax.swing.JLabel">
+              <component id="3cc20" class="javax.swing.JLabel" binding="brandingLabel">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -248,7 +248,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <grid id="56f52" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="56f52" binding="favicon" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -256,7 +256,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="903d9" class="javax.swing.JLabel">
+                  <component id="903d9" class="javax.swing.JLabel" binding="faviconFileLabel">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
@@ -288,7 +288,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="46c87" class="javax.swing.JLabel">
+                  <component id="46c87" class="javax.swing.JLabel" binding="faviconLinkLabel">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
@@ -327,7 +327,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="4c353" class="javax.swing.JLabel">
+                  <component id="4c353" class="javax.swing.JLabel" binding="logoFileLabel">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
@@ -371,7 +371,7 @@
                       <toolTipText value="Logo link"/>
                     </properties>
                   </component>
-                  <component id="c5cd3" class="javax.swing.JLabel">
+                  <component id="c5cd3" class="javax.swing.JLabel" binding="logoLinkLabel">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
@@ -381,6 +381,24 @@
                   </component>
                 </children>
               </grid>
+            </children>
+          </grid>
+          <grid id="dcf45" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="c2af0" class="javax.swing.JCheckBox" binding="frontendGeneration">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Don't generate frontend app"/>
+                </properties>
+              </component>
             </children>
           </grid>
         </children>

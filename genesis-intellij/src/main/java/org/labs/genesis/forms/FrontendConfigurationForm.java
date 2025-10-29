@@ -4,7 +4,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBTextField;
 import lombok.Getter;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.frontend.FrontendLanguage;
@@ -16,6 +15,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
 
@@ -39,11 +40,22 @@ public class FrontendConfigurationForm {
     private JTextField logoLinkField;
     private JTextField faviconLinkField;
     private JBList<InterfaceLang> interfaceLangOptions;
+    private JCheckBox frontendGeneration;
+    private JLabel logoFileLabel;
+    private JLabel logoLinkLabel;
+    private JPanel favicon;
+    private JLabel faviconFileLabel;
+    private JLabel faviconLinkLabel;
+    private JLabel navbarLabel;
+    private JLabel cssLabel;
+    private JLabel languagesLabel;
+    private JLabel brandingLabel;
 
     private File logoFile;
     private File faviconFile;
 
     public FrontendConfigurationForm() {
+        frontendGeneration.setSelected(false);
         initializeListners();
         initializeOptions();
     }
@@ -51,6 +63,16 @@ public class FrontendConfigurationForm {
     private void initializeListners(){
         primaryColorPickerButton.addActionListener(new ColorPicker(primaryColorField ,Color.decode("#537cc2")));
         secondaryColorPickerButton.addActionListener(new ColorPicker(secondaryColorField ,new Color(0x53,0x7c,0xc2,0x26)));
+        frontendGeneration.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (frontendGeneration.isSelected()) {
+                    disableForm();
+                } else {
+                    enableForm();
+                }
+            }
+        });
 
         FileChooserDescriptor faviconChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
                 .withTitle("Select favicon file")
@@ -148,6 +170,7 @@ public class FrontendConfigurationForm {
         boolean hasText = text != null && !text.trim().isEmpty();
         // disable the file chooser if link is typed
         logoFileField.setEnabled(!hasText);
+        logoFileLabel.setEnabled(!hasText);
     }
 
     private void onFaviconFileChange() {
@@ -162,6 +185,7 @@ public class FrontendConfigurationForm {
         boolean hasText = text != null && !text.trim().isEmpty();
         // disable the file chooser if link is typed
         faviconFileField.setEnabled(!hasText);
+        faviconFileLabel.setEnabled(!hasText);
     }
 
     private  void initializeOptions(){
@@ -192,6 +216,28 @@ public class FrontendConfigurationForm {
 
         if (frontendFrameworkOptions.getItemCount() > 0) {
             frontendFrameworkOptions.setSelectedIndex(0);
+        }
+    }
+
+    private void disableForm(){
+        setAccessiblePanel(mainPanel, false);
+        getFrontendGeneration().setEnabled(true);
+        getInterfaceLangOptions().setEnabled(false);
+    }
+
+    private void enableForm(){
+        setAccessiblePanel(mainPanel, true);
+        getFrontendGeneration().setEnabled(true);
+        getInterfaceLangOptions().setEnabled(true);
+    }
+
+    private void setAccessiblePanel(JPanel panel, boolean accessible){
+        panel.setEnabled(accessible);
+        for (Component component : panel.getComponents()) {
+            if (component instanceof JPanel){
+                setAccessiblePanel((JPanel) component, accessible);
+            }
+            component.setEnabled(accessible);
         }
     }
 }

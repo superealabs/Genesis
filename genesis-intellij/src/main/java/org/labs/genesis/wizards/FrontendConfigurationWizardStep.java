@@ -38,57 +38,66 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
     public void updateDataModel() {
         projectGenerationContext.setFrontendLanguage((FrontendLanguage)frontendConfigurationForm.getFrontendLanguageOptions().getSelectedItem());
         projectGenerationContext.setFrontendFramework((FrontendFramework) frontendConfigurationForm.getFrontendFrameworkOptions().getSelectedItem());
+        updateLayout();
+        updateBranding();
         projectGenerationContext.getFrontendFramework().setFrontendLayout(this.frontendLayout);
         projectGenerationContext.getFrontendFramework().setProjectBranding(this.branding);
     }
 
+    public  void updateLayout(){
+        this.frontendLayout.setNavbar((String)frontendConfigurationForm.getNavbarSelect().getSelectedItem());
+        this.frontendLayout.setPrimaryColor(frontendConfigurationForm.getPrimaryColorField().getText());
+        this.frontendLayout.setSecondaryColor(frontendConfigurationForm.getSecondaryColorField().getText());
+        this.frontendLayout.setAdditionalCss(frontendConfigurationForm.getCssTextArea().getText());
+        List<InterfaceLang> langs = frontendConfigurationForm.getInterfaceLangOptions().getSelectedValuesList();
+        if (langs.size() < 0) {
+            InterfaceLang defaultLang = ProjectGenerator.langs.get(1);
+            frontendLayout.setLangs( new ArrayList<>());
+            frontendLayout.getLangs().add(defaultLang);
+        } else  {
+            this.frontendLayout.setLangs(frontendConfigurationForm.getInterfaceLangOptions().getSelectedValuesList());
+        }
+    }
+
+    public void updateBranding(){
+        if (!frontendConfigurationForm.getLogoLinkField().getText().isEmpty()){
+            this.branding.setLogoLink(frontendConfigurationForm.getLogoLinkField().getText());
+            this.branding.setLogoFile(null);
+            frontendConfigurationForm.getLogoFileField().setEnabled(false);
+        }
+        else if (frontendConfigurationForm.getLogoFile() != null){
+            this.branding.setLogoLink(null);
+            this.branding.setLogoFile(frontendConfigurationForm.getLogoFile());
+            frontendConfigurationForm.getLogoFileField().setEnabled(true);
+        }
+
+        if (!frontendConfigurationForm.getFaviconLinkField().getText().isEmpty()){
+            this.branding.setFaviconLink(frontendConfigurationForm.getFaviconLinkField().getText());
+            this.branding.setFaviconFile(null);
+            frontendConfigurationForm.getFaviconFileField().setEnabled(false);
+        }
+        else if (frontendConfigurationForm.getFaviconFile() != null){
+            this.branding.setFaviconLink(null);
+            this.branding.setFaviconFile(frontendConfigurationForm.getFaviconFile());
+            frontendConfigurationForm.getFaviconFileField().setEnabled(true);
+        }
+    }
+
+
     @Override
     public boolean validate() throws ConfigurationException {
         try {
-
+            projectGenerationContext.setGenerateFrontendApp(frontendConfigurationForm.getFrontendGeneration().isSelected());
+            if (!projectGenerationContext.isGenerateFrontendApp()) {
+                return  true;
+            }
             if(frontendConfigurationForm.getFrontendLanguageOptions().getSelectedItem() == null){
                 throw new ConfigurationException("Please select an appropriate frontend language");
             }
             else if(frontendConfigurationForm.getFrontendFrameworkOptions().getSelectedItem() == null){
                 throw new ConfigurationException("Please select a frontend framework to use for generation");
             }
-
-            // Update Layout
-            this.frontendLayout.setNavbar((String)frontendConfigurationForm.getNavbarSelect().getSelectedItem());
-            this.frontendLayout.setPrimaryColor(frontendConfigurationForm.getPrimaryColorField().getText());
-            this.frontendLayout.setSecondaryColor(frontendConfigurationForm.getSecondaryColorField().getText());
-            this.frontendLayout.setAdditionalCss(frontendConfigurationForm.getCssTextArea().getText());
-            List<InterfaceLang> langs = frontendConfigurationForm.getInterfaceLangOptions().getSelectedValuesList();
-            if (langs.size() < 0) {
-                InterfaceLang defaultLang = ProjectGenerator.langs.get(1);
-                frontendLayout.setLangs( new ArrayList<>());
-                frontendLayout.getLangs().add(defaultLang);
-            } else  {
-                this.frontendLayout.setLangs(frontendConfigurationForm.getInterfaceLangOptions().getSelectedValuesList());
-            }
             frontendLayout.isValid();
-            // Update branding
-            if (!frontendConfigurationForm.getLogoLinkField().getText().isEmpty()){
-                this.branding.setLogoLink(frontendConfigurationForm.getLogoLinkField().getText());
-                this.branding.setLogoFile(null);
-                frontendConfigurationForm.getLogoFileField().setEnabled(false);
-            }
-            else if (frontendConfigurationForm.getLogoFile() != null){
-                this.branding.setLogoLink(null);
-                this.branding.setLogoFile(frontendConfigurationForm.getLogoFile());
-                frontendConfigurationForm.getLogoFileField().setEnabled(true);
-            }
-
-            if (!frontendConfigurationForm.getFaviconLinkField().getText().isEmpty()){
-                this.branding.setFaviconLink(frontendConfigurationForm.getFaviconLinkField().getText());
-                this.branding.setFaviconFile(null);
-                frontendConfigurationForm.getFaviconFileField().setEnabled(false);
-            }
-            else if (frontendConfigurationForm.getFaviconFile() != null){
-                this.branding.setFaviconLink(null);
-                this.branding.setFaviconFile(frontendConfigurationForm.getFaviconFile());
-                frontendConfigurationForm.getFaviconFileField().setEnabled(true);
-            }
             return true;
         }
         catch (Exception e) {

@@ -38,7 +38,7 @@ public class FrontendLayout {
             throw new Exception("Please select a secondary color");
         }
         if (navbar == null || navbar.length() == 0) {
-            throw new Exception("Please select your prefered navbar");
+            throw new Exception("Please select your default navbar preference");
         }
     }
 }

@@ -78,6 +78,7 @@ public class InitializationWizardStep extends ModuleWizardStep {
                 .setGroupLink(groupId);
 
         specificConfigurationWizardStep.onFrameworkSelected(framework);
+        projectGenerationContext.setGenerateFrontendApp(framework.getUseFrontendApp());
     }
 
     @Override
