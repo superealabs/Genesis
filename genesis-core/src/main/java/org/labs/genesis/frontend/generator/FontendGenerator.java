@@ -183,6 +183,13 @@ public class FontendGenerator implements IFrontendGenerator{
     @Override
     public  String generateRessources(ProjectGenerationContext context) throws  Exception{
         FrontendFramework frontendFramework = context.getFrontendFramework();
+        
+        // Vérification de sécurité : si pas de frontend framework configuré, on sort
+        if (frontendFramework == null) {
+            System.out.println("⚠️  Aucun frontend framework configuré, génération des ressources ignorée");
+            return "";
+        }
+        
         HashMap<String, Object> metadata = FrameworkFrontendMetadataProvider.getWebappHashMap(context);
         // Generate logo
         String logoPath = frontendFramework.getFrontendPaths().getLogoPath();

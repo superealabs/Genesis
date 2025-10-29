@@ -57,7 +57,7 @@
       "DATETIME": "timestamp",
       "TIME": "time",
       "BIT": "boolean",
-      "CHAR": "uuid",
+      "CHAR": "string",
       "UUID": "uuid",
       "TINYTEXT": "string",
       "LONGTEXT": "string",
