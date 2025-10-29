@@ -21,8 +21,10 @@
         import org.springframework.boot.SpringApplication;
         import org.springframework.boot.autoconfigure.SpringBootApplication;
         {{#if useEurekaServer}}import org.springframework.cloud.client.discovery.EnableDiscoveryClient;{{/if}}
+        {{#if useEhcache}}import org.springframework.cache.annotation.EnableCaching;{{/if}}
 
         {{#if useEurekaServer}}@EnableDiscoveryClient{{/if}}
+        {{#if useEhcache}}@EnableCaching{{/if}}
         @SpringBootApplication
         public class ${majStart(projectName)}Application {
             public static void main(String[] args) {
@@ -940,6 +942,10 @@
               mode: always
               schema-locations: classpath:sql-init/users.sql 
               encoding: UTF-8
+        {{#if useEhcache}}
+          cache:
+            jcache:
+              config: classpath:ehcache.xml
         {{/if}}
         
         server:
@@ -1044,6 +1050,12 @@
         - "NONE"
         - "Spring Security - JWT"
       defaultOption: "NONE"
+    - name: "Cache Provider"
+      variableName: "cacheProvider"
+      options:
+        - "NONE"
+        - "EhCache"
+      defaultOption: "NONE"
 
   eurekaClientConfigurations:
     - name: "Eureka Server URL"
@@ -1130,6 +1142,19 @@
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
+      {{tab}}{{#if cacheableWithEhcache}}@Override
+      {{tab}}public String toString() {
+      {{tab}}{{tab}}StringBuilder filterCriteria = new StringBuilder("${majStart(className)}SearchCriteria{");
+      {{tab}}{{tab}}{{#each fields}}
+      {{tab}}{{tab}}if (${this.name} != null) filterCriteria.append("${this.name}=").append(${this.name}).append(", ");
+      {{tab}}{{tab}}{{/each}}{{removeLine}}
+      {{tab}}{{tab}}if (filterCriteria.lastIndexOf(", ") == filterCriteria.length() - 2) {
+      {{tab}}{{tab}}{{tab}}filterCriteria.delete(filterCriteria.length() - 2, filterCriteria.length());
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}filterCriteria.append("}");
+      {{tab}}{{tab}}return filterCriteria.toString();
+      {{tab}}}
+      {{tab}}{{else}}{{removeLine}}{{/if}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
@@ -1354,6 +1379,9 @@
       import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
       import ${groupLink}.${lowerCase(projectName)}.utils.ExportUtils;
       import java.util.List;
+      {{#if cacheableWithEhcache}}import org.springframework.cache.annotation.Cacheable;{{else}}{{removeLine}}{{/if}}
+      {{#if cacheableWithEhcache and isView = false}}import org.springframework.cache.annotation.CacheEvict;{{else}}{{removeLine}}{{/if}}
+
     serviceAnnotations: |
       @Service
     serviceClassKeyword: "public class"
@@ -1372,6 +1400,7 @@
       {{tab}}}  
 
       {{tab}}@Override
+      {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort", unless = "#result.isEmpty()"){{else}}{{removeLine}}{{/if}}
       {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.findAll(pageable);
@@ -1381,6 +1410,7 @@
       {{tab}}}
       
       {{tab}}@Override
+      {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "'filtered-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort + '-' + #object.toString()", unless = "#result.isEmpty()"){{else}}{{removeLine}}{{/if}}
       {{tab}}public Page<${majStart(className)}> getAll${majStart(className)}(Pageable pageable, ${majStart(className)} object) {
       {{tab}}    try {
       {{tab}}        Specification<${majStart(className)}> spec=${majStart(className)}Specification.filter(object);
@@ -1391,6 +1421,7 @@
       {{tab}}}
       
       {{tab}}@Override
+      {{#if cacheableWithEhcache}}{{tab}}@Cacheable(value = "${minStart(className)}sCache", key = "'${pkColumn}-' + #${pkColumn}"){{else}}{{removeLine}}{{/if}}
       {{tab}}public ${majStart(className)} get${majStart(className)}ById(${pkColumnType} ${pkColumn}) {
       {{tab}}    Optional<${majStart(className)}> ${minStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
       {{tab}}    if (${minStart(className)}.isPresent()) {
@@ -1400,18 +1431,18 @@
       {{tab}}    }
       {{tab}}}
       
-      {{#if !isView}} 
-      
-      {{tab}}@Override
+      {{#if cacheableWithEhcache and isView = false}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}{{tab}}@Override
       {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.save(${minStart(className)});
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
-      {{tab}}}
+      {{tab}}}{{else}}{{removeLine}}{{/if}}
       
-      {{tab}}@Override
+      {{#if cacheableWithEhcache and isView = false}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}{{tab}}@Override
       {{tab}}public ${majStart(className)} update${majStart(className)}(${pkColumnType} ${pkColumn}, ${majStart(className)} ${minStart(className)}) {
       {{tab}}    Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
       {{tab}}    if (existing${majStart(className)}.isPresent()) {
@@ -1424,17 +1455,17 @@
       {{tab}}    } else {
       {{tab}}        throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
       {{tab}}    }
-      {{tab}}}
-      
-      {{tab}}@Override
+      {{tab}}}{{else}}{{removeLine}}{{/if}}
+
+      {{#if cacheableWithEhcache and isView = false}}{{tab}}@CacheEvict(value = "${minStart(className)}sCache", allEntries = true){{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}{{tab}}@Override
       {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
       {{tab}}    try {
       {{tab}}        ${minStart(className)}Repository.deleteById(${pkColumn});
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
-      {{tab}}}
-      {{else}}{{removeLine}}{{/if}}
+      {{tab}}}{{else}}{{removeLine}}{{/if}}
 
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
     servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
@@ -1879,7 +1910,11 @@
         
         // Add Eureka Discovery Client for service registration with Eureka server
         builder.Services.AddDiscoveryClient(builder.Configuration);{{/if}}
-        
+        {{#if useMicrosoftExtensionsCachingMemory}}
+        // Add cache second level configurations
+        builder.Services.AddMemoryCache();
+        builder.Services.AddScoped<ICacheService, MemoryCacheService>();
+        {{else}}{{removeLine}}{{/if}}
         // Add services to the container.
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         builder.Services.AddDbContext<${majStart(projectName)}Context>(options =>
@@ -3573,6 +3608,12 @@
         - "NONE"
         - ".NET Security - JWT"
       defaultOption: "NONE"
+    - name: "Cache Provider"
+      variableName: "cacheProvider"
+      options:
+        - "NONE"
+        - "MicrosoftExtensionsCachingMemory"
+      defaultOption: "NONE"
 
   eurekaClientConfigurations:
     - name: "Eureka Server URL"
@@ -3589,6 +3630,7 @@
       using System.ComponentModel.DataAnnotations;
       using System.ComponentModel.DataAnnotations.Schema;
       using System.ComponentModel;
+      {{#if cacheableWithMicrosoftextensionscachingmemory}}using System.Text.Json;{{else}}{{removeLine}}{{/if}}
     modelExtends: ""
     modelAnnotations: |
       [Table("${tableName}")]
@@ -3610,6 +3652,8 @@
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }{{/if}}{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
+      {{tab}}{{#if cacheableWithMicrosoftextensionscachingmemory}}public override string ToString() =>
+      {{tab}}{{tab}}JsonSerializer.Serialize(this);{{else}}{{removeLine}}{{/if}}
       }
       public class ${majStart(className)}SearchModel
       {
@@ -3931,10 +3975,19 @@
           public class ${majStart(className)}Service : I${majStart(className)}Service
           {
               private readonly I${majStart(className)}Repository _repository;
+              {{#if cacheableWithMicrosoftextensionscachingmemory}}private readonly ICacheService _cacheService;
+              private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);{{else}}{{removeLine}}{{/if}}
           
+              {{#if cacheableWithMicrosoftextensionscachingmemory}}
+              public ${majStart(className)}Service(ICacheService cacheService, I${majStart(className)}Repository repository)
+              {
+                _cacheService = cacheService;
+                _repository = repository;
+              }
+              {{else}}
               public ${majStart(className)}Service(I${majStart(className)}Repository repository)
               {
-                  _repository = repository;
+                _repository = repository;
               }
           
               public Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)})
@@ -3943,18 +3996,59 @@
                 return Task.FromResult(csv);
               }
     
+              {{/if}}
+              {{#if cacheableWithMicrosoftextensionscachingmemory}}
               public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
-                  try
+                try
+                {
+                  var cacheKey = $"${minStart(className)}s_all_{page}_{pageSize}_{sorting}";
+                  var ${minStart(className)}s = _cacheService.Get<IEnumerable<${majStart(className)}>>(cacheKey);
+                  if (${minStart(className)}s == null)
                   {
-                    return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                    ${minStart(className)}s = await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                    _cacheService.Set(cacheKey, ${minStart(className)}s, CacheDuration);
                   }
-                  catch (Exception ex)
-                  {
-                    throw new InternalServerErrorException("Error while retrieving all ${formatReadableLowerCase(className)}", ex);
-                  }
+                  return ${minStart(className)}s;
+                }
+                catch (Exception ex)
+                {
+                  throw new InternalServerErrorException("Error while retrieving all ${formatReadableLowerCase(className)}", ex);
+                }
               }
-          
+              {{else}}
+              public async Task<IEnumerable<${majStart(className)}>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
+              {
+                try
+                {
+                  return await _repository.GetAllWithIncludes(page, pageSize, sorting, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                  throw new InternalServerErrorException("Error while retrieving all ${formatReadableLowerCase(className)}", ex);
+                }
+              }
+              {{/if}}
+              {{#if cacheableWithMicrosoftextensionscachingmemory}}
+              public async Task<IEnumerable<${majStart(className)}>> SearchAsync(${majStart(className)} search, int page, int pageSize, string? sorting)
+              {
+                try
+                {
+                  var cacheKey = $"${minStart(className)}s_search_{search.ToString()}_{page}_{pageSize}_{sorting}";
+                  var ${minStart(className)}s = _cacheService.Get<IEnumerable<${majStart(className)}>>(cacheKey);
+                  if (${minStart(className)}s == null)
+                  {
+                    ${minStart(className)}s = await _repository.SearchAsync(search, page, pageSize, sorting);
+                    _cacheService.Set(cacheKey, ${minStart(className)}s, CacheDuration);
+                  }
+                  return ${minStart(className)}s;
+                }
+                catch (Exception ex)
+                {
+                  throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
+                }
+              }
+              {{else}}
               public async Task<IEnumerable<${majStart(className)}>> SearchAsync(${majStart(className)} search, int page, int pageSize, string? sorting)
               {
                 try
@@ -3966,71 +4060,98 @@
                   throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
                 }
               }
-          
+              {{/if}}
+              {{#if cacheableWithMicrosoftextensionscachingmemory}}
               public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
-                  try
+                try
+                {
+                  var cacheKey = $"${minStart(className)}_{id}";
+                  var ${minStart(className)} = _cacheService.Get<${majStart(className)}>(cacheKey);
+                  if (${minStart(className)} == null)
                   {
-                    return await _repository.GetByIdAsync(id, includeProperties);
+                    ${minStart(className)} = await _repository.GetByIdAsync(id, includeProperties);
+                    if (${minStart(className)} != null)
+                      _cacheService.Set(cacheKey, ${minStart(className)}, CacheDuration);
                   }
-                  catch (Exception ex)
-                  {
-                    throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + id);
-                  }
+                  return ${minStart(className)};
+                }
+                catch (Exception ex)
+                {
+                  throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + id);
+                }
               }
-              {{#if !isView}}  
-              public async Task AddAsync(${majStart(className)} ${minStart(className)})
+              {{else}}
+              public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
-                  try
-                  {
-                    await _repository.AddAsync(${minStart(className)});
-                  }
-                  catch (Exception ex)
-                  {
-                    throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
-                  }
-              }{{else}}
-              public async Task AddAsync(${majStart(className)} ${minStart(className)})
-              {
-                  throw new NotSupportedException("Operation not supported for view-based entity.");
-              }
-              {{/if}}
-          
-              {{#if !isView}} 
-              public async Task UpdateAsync(${majStart(className)} ${minStart(className)})
-              {
-                  try
-                  {
-                    await _repository.UpdateAsync(${minStart(className)});
-                  }
-                  catch (Exception ex)
-                  {
-                    throw new InternalServerErrorException("Error while updating ${formatReadableLowerCase(className)}", ex);
-                  }
-              }{{else}}
-              public async Task UpdateAsync(${majStart(className)} ${minStart(className)})
-              {
-                  throw new NotSupportedException("Operation not supported for view-based entity.");
+                try
+                {
+                  return await _repository.GetByIdAsync(id, includeProperties);
+                }
+                catch (Exception ex)
+                {
+                  throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + id);
+                }
               }
               {{/if}}
+              {{#if isView}}  
+              public async Task AddAsync(${majStart(className)} ${minStart(className)})
+              {
+                throw new NotSupportedException("Operation not supported for view-based entity.");
+              }
+              {{else}}public async Task AddAsync(${majStart(className)} ${minStart(className)})
+              {
+                try
+                {
+                  await _repository.AddAsync(${minStart(className)});{{/if}}
+                  {{#if cacheableWithMicrosoftextensionscachingmemory and isView = false}}_cacheService.RemoveByKeyPrefix("${minStart(className)}s_");{{else}}{{removeLine}}{{/if}}
+                {{#if !isView}}}
+                catch (Exception ex)
+                {
+                  throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
+                }
+              }
+              {{else}}{{removeLine}}{{/if}}
           
-              {{#if !isView}} 
+              {{#if isView}} 
+              public async Task UpdateAsync(${majStart(className)} ${minStart(className)})
+              {
+                throw new NotSupportedException("Operation not supported for view-based entity.");
+              }
+              {{else}}public async Task UpdateAsync(${majStart(className)} ${minStart(className)})
+              {
+                try
+                {
+                  await _repository.UpdateAsync(${minStart(className)});{{/if}}
+                  {{#if cacheableWithMicrosoftextensionscachingmemory and isView = false}}_cacheService.RemoveByKeyPrefix("${minStart(className)}s_");
+                  _cacheService.RemoveByKey($"${minStart(className)}_{${minStart(className)}.${majStart(pkColumn)}}");{{else}}{{removeLine}}{{/if}}
+                {{#if !isView}}}
+                catch (Exception ex)
+                {
+                  throw new InternalServerErrorException("Error while updating ${formatReadableLowerCase(className)}", ex);
+                }
+              }
+              {{else}}{{removeLine}}{{/if}}
+          
+              {{#if isView}} 
               public async Task DeleteAsync(${pkColumnType} id)
+              {
+                throw new NotSupportedException("Operation not supported for view-based entity.");
+              }
+              {{else}}public async Task DeleteAsync(${pkColumnType} id)
               {
                 try 
                 {
-                  await _repository.DeleteAsync(id);
-                }
+                  await _repository.DeleteAsync(id);{{/if}}
+                  {{#if cacheableWithMicrosoftextensionscachingmemory and isView = false}}_cacheService.RemoveByKeyPrefix("${minStart(className)}s_");
+                  _cacheService.RemoveByKey($"${minStart(className)}_{id}");{{else}}{{removeLine}}{{/if}}
+                {{#if !isView}}}
                 catch (Exception ex)
                 {
                   throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
                 }
-              }{{else}}
-              public async Task DeleteAsync(${pkColumnType} id)
-              {
-                  throw new NotSupportedException("Operation not supported for view-based entity.");
               }
-              {{/if}}
+              {{else}}{{removeLine}}{{/if}}
           
               public async Task<bool> ExistsAsync(${pkColumnType} id)
               {

@@ -47,6 +47,7 @@ public class ProjectGenerator {
                     .peek(framework -> {
                         try {
                             framework.setFrameworkSecurities();
+                            framework.setFrameworkCaching();
                         } catch (IOException e) {
                             throw new RuntimeException("Error while initializing frameworkSecurities for Framework ID: " + framework.getId(), e);
                         }
@@ -156,13 +157,23 @@ public class ProjectGenerator {
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
 
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
-        System.out.println(securityType+ " SECURITYYY");
+        System.out.println(securityType + " SECURITYYY");
         Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
 
         selectedSecurityOption.ifPresent(security -> {
-
             try {
                 renderFilesEdits(security.getSecurityFiles(), projectFilesEditsHashMap);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        String cacheProvider = (String) context.getFrameworkConfiguration().get("cacheProvider");
+        Optional<FrameworkCaching> selectedCacheProviderOption = context.getFramework().getSelectedCacheProviderByName(cacheProvider);
+
+        selectedCacheProviderOption.ifPresent(frameworkCaching -> {
+            try {
+                renderFilesEdits(frameworkCaching.getConfigFiles(), projectFilesEditsHashMap);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

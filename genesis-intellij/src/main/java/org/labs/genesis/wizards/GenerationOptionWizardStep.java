@@ -15,10 +15,12 @@ import static org.labs.genesis.forms.GenerationOptionForm.SELECT_ALL;
 public class GenerationOptionWizardStep extends ModuleWizardStep {
     private final GenerationOptionForm generationOptionForm;
     private final ProjectGenerationContext projectGenerationContext;
+    public final SpecificConfigurationWizardStep specificConfigurationWizardStep;
 
-    public GenerationOptionWizardStep(ProjectGenerationContext projectGenerationContext) {
+    public GenerationOptionWizardStep(ProjectGenerationContext projectGenerationContext, SpecificConfigurationWizardStep specificConfigurationWizardStep) {
         this.projectGenerationContext = projectGenerationContext;
         this.generationOptionForm = new GenerationOptionForm(projectGenerationContext);
+        this.specificConfigurationWizardStep = specificConfigurationWizardStep;
     }
 
     @Override
@@ -54,6 +56,8 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
             if (selectedComponent != null) {
                 projectGenerationContext.setGenerationOptions(selectedComponent);
             }
+
+            specificConfigurationWizardStep.onTablesAndViewsSelected(handleSelectAll(selectedValues, generationOptionForm.getAllTableNames()), handleSelectAll(selectedViewValues, generationOptionForm.getAllViewsNames()));
         } catch (Exception e) {
             Messages.showErrorDialog(
                     generationOptionForm.getMainPanel(),
@@ -62,6 +66,15 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
             );
             throw new RuntimeException(e);
         }
+    }
+
+    private List<String> handleSelectAll(List<String> selectedValues, List<String> allValues) {
+        if (selectedValues.contains(SELECT_ALL)) {
+            List<String> result = new ArrayList<>(allValues);
+            result.remove(SELECT_ALL);
+            return result;
+        }
+        return selectedValues;
     }
 
     private List<String> handleEntitySelection(List<String> allTableNames, List<String> selectedValues) throws Exception {

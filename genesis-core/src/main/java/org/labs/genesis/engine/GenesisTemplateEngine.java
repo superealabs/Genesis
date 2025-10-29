@@ -50,6 +50,7 @@ public class GenesisTemplateEngine {
         FUNCTIONS_MAP.put("lowerCase", str -> str == null ? "" : str.toLowerCase());
         FUNCTIONS_MAP.put("majStart", StringUtils::majStart);
         FUNCTIONS_MAP.put("minStart", StringUtils::minStart);
+        FUNCTIONS_MAP.put("removeLastS", StringUtils::removeLastS);
         FUNCTIONS_MAP.put("toCamelCase", StringUtils::toCamelCase);
         FUNCTIONS_MAP.put("toKebabCase", StringUtils::toKebabCase);
         FUNCTIONS_MAP.put("formatReadable", StringUtils::formatReadable);
