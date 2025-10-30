@@ -384,7 +384,6 @@ public class GenesisCoreTest {
             if (framework instanceof FrameworkMVC) {
                 FrameworkMVC frameworkMvc = (FrameworkMVC) framework;
 
-                frameworkMvc.setViewsTemplateEngine();
                 frameworkMvc.setViewsTemplate();
             }
 
@@ -400,7 +399,6 @@ public class GenesisCoreTest {
             String languageVersion = "";
             String destinationFolder = "E:/stage/dotnet mvc/hotfix";
 
-            int viewsTemplateEngineId = Constantes.Razor_ID;
             int viewsTemplateId = Constantes.Template_1_ID;
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
@@ -408,7 +406,6 @@ public class GenesisCoreTest {
             HashMap<String, Object> frameworkConfiguration = new HashMap<>();
             frameworkConfiguration.put("loggingLevel", logLevel);
             frameworkConfiguration.put("frameworkVersion", frameworkVersion);
-            frameworkConfiguration.put("templateEngineId", viewsTemplateEngineId);
             frameworkConfiguration.put("templateId", viewsTemplateId);
 
             //===== USE EUREKA SERVER =======//
