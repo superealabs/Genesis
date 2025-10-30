@@ -233,6 +233,7 @@
                 <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />
                 <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.18" />
                 {{/if}}
+                {{#if isMvcProject}}<Content Update="wwwroot\**" CopyToOutputDirectory="Always" />{{/if}}
             </ItemGroup>
         </Project>
 
