@@ -75,7 +75,7 @@ public class RuleToCodeAIForm {
             String selectedAI = (String) aiOptionsComboBox.getSelectedItem();
             String pathProject = context.getDestinationFolder();
             Path path = Paths.get(pathProject) ;
-            meta = yamlData.extractGroupAndArtifact( path );
+            meta = yamlData.extractGroupAndArtifact( path , framework.getId());
 
             LlmApiConfig llmApiConfig = (LlmApiConfig) this.listLlmApiConfigsComboBox.getSelectedItem();
             this.llmApiClientRule.setDefaultModel(llmApiConfig.getModel());

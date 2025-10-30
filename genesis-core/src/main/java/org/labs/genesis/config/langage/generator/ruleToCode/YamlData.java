@@ -24,52 +24,54 @@ import javax.xml.parsers.DocumentBuilderFactory;
 public class YamlData {
 
     //Method extract group id and project name in the framework
-    public String[] extractGroupAndArtifact(Path projectDir) throws Exception {
-        Path pom = projectDir.resolve("pom.xml");
-        Path gradle = projectDir.resolve("build.gradle");
-        Path gradleKts = projectDir.resolve("build.gradle.kts");
+    public String[] extractGroupAndArtifact(Path projectDir , int frameworkId) throws Exception {
+        //Spring boot option
+        if ( frameworkId == 1 ) {
+            Path pom = projectDir.resolve("pom.xml");
+            Path gradle = projectDir.resolve("build.gradle");
+            Path gradleKts = projectDir.resolve("build.gradle.kts");
 
-        if (Files.exists(pom)) {
-            // ----- Maven -----
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(true);
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(pom.toFile());
-            doc.getDocumentElement().normalize();
+            if (Files.exists(pom)) {
+                // ----- Maven -----
+                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                factory.setNamespaceAware(true);
+                DocumentBuilder builder = factory.newDocumentBuilder();
+                Document doc = builder.parse(pom.toFile());
+                doc.getDocumentElement().normalize();
 
-            NodeList children = doc.getDocumentElement().getChildNodes();
-            String groupId = null;
-            String artifactId = null;
+                NodeList children = doc.getDocumentElement().getChildNodes();
+                String groupId = null;
+                String artifactId = null;
 
-            for (int i = 0; i < children.getLength(); i++) {
-                Node node = children.item(i);
-                if (node.getNodeType() == Node.ELEMENT_NODE) {
-                    String name = node.getLocalName();
-                    if ("groupId".equals(name) && groupId == null) {
-                        groupId = node.getTextContent();
-                    } else if ("artifactId".equals(name) && artifactId == null) {
-                        artifactId = node.getTextContent();
+                for (int i = 0; i < children.getLength(); i++) {
+                    Node node = children.item(i);
+                    if (node.getNodeType() == Node.ELEMENT_NODE) {
+                        String name = node.getLocalName();
+                        if ("groupId".equals(name) && groupId == null) {
+                            groupId = node.getTextContent();
+                        } else if ("artifactId".equals(name) && artifactId == null) {
+                            artifactId = node.getTextContent();
+                        }
                     }
                 }
-            }
-            return new String[]{groupId, artifactId};
-        }
-        else if (Files.exists(gradle) || Files.exists(gradleKts)) {
-            // ----- Gradle -----
-            Path gradleFile = Files.exists(gradle) ? gradle : gradleKts;
-            List<String> lines = Files.readAllLines(gradleFile);
-            String groupId = lines.stream()
-                    .filter(line -> line.trim().startsWith("group"))
-                    .map(line -> line.split("=")[1].trim().replace("\"", "").replace("'", ""))
-                    .findFirst()
-                    .orElse("unknown");
+                return new String[]{groupId, artifactId};
+            } else if (Files.exists(gradle) || Files.exists(gradleKts)) {
+                // ----- Gradle -----
+                Path gradleFile = Files.exists(gradle) ? gradle : gradleKts;
+                List<String> lines = Files.readAllLines(gradleFile);
+                String groupId = lines.stream()
+                        .filter(line -> line.trim().startsWith("group"))
+                        .map(line -> line.split("=")[1].trim().replace("\"", "").replace("'", ""))
+                        .findFirst()
+                        .orElse("unknown");
 
-            String artifactId = projectDir.getFileName().toString();
-            return new String[]{groupId, artifactId};
+                String artifactId = projectDir.getFileName().toString();
+                return new String[]{groupId, artifactId};
+            } else {
+                throw new Exception("Error no pom.xml and build.gradle in the project" + projectDir);
+            }
         }
-        else {
-            throw new Exception("Error no pom.xml and build.gradle in the project" + projectDir);
-        }
+        return null ;
     }
 
     public String getProjectName(Path projectDir) {
