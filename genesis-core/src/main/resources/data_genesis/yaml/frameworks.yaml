@@ -5629,7 +5629,7 @@
         import { ConfigModule } from "@nestjs/config";
         import { DatabaseModule } from './database/database.module';
         import * as Models from "./models.index";
-        {{#if useBuiltInNestCacheManager or useRedisCaching}}import { CacheModule } from "./modules/cache/cache.module";{{/if}}
+        {{#if useBuiltInNestCacheManager or useNestRedisCaching}}import { CacheModule } from "./modules/cache/cache.module";{{/if}}
         {{#if useJWT}}import { AuthModule } from "./modules/auth/auth.module";
         import { UserEntityModule } from "./modules/user-entity/user-entity.module";
         import { RoleEntityModule } from "./modules/role-entity/role-entity.module";{{/if}}
@@ -5640,7 +5640,7 @@
           imports: [
               ConfigModule.forRoot({ isGlobal: true }),
               DatabaseModule,
-              {{#if useBuiltInNestCacheManager or useRedisCaching}}CacheModule,{{/if}}
+              {{#if useBuiltInNestCacheManager or useNestRedisCaching}}CacheModule,{{/if}}
               {{#if useJWT}}AuthModule,
               UserEntityModule,
               RoleEntityModule,{{/if}}
@@ -6145,13 +6145,13 @@
   service:
     toGenerate: true
     serviceImports: |
-      import { Injectable {{#if useBuiltInNestCacheManager}}, Inject {{/if}} } from "@nestjs/common";
+      import { Injectable {{#if useBuiltInNestCacheManager or useNestRedisCaching}}, Inject {{/if}} } from "@nestjs/common";
       import { InjectRepository } from "@nestjs/typeorm";
       import { Repository, DeepPartial } from "typeorm";
       import * as Models from "../../models.index";
       import { ResourceNotFoundException } from "../../common/exceptions/ResourceNotFoundException";
       import { ExportUtil } from "../../common/utils/export.util";
-      {{#if useBuiltInNestCacheManager}}import { CacheService } from "../cache/cache.service";{{/if}}
+      {{#if useBuiltInNestCacheManager or useNestRedisCaching}}import { CacheService } from "../cache/cache.service";{{/if}}
     serviceAnnotations: |
       @Injectable()
     serviceClassKeyword: "export class"
@@ -6161,7 +6161,7 @@
       {{tab}}constructor(
       {{tab}}  @InjectRepository(Models.${className})
       {{tab}}  private readonly ${minStart(className)}Repository: Repository<Models.${className}>,
-      {{tab}}  {{#if useBuiltInNestCacheManager}}@Inject() 
+      {{tab}}  {{#if useBuiltInNestCacheManager or useNestRedisCaching}}@Inject() 
       {{tab}}  private readonly cacheService: CacheService,{{/if}}
       {{tab}}) {}
     serviceConstructors: "{{removeLine}}"
@@ -6171,7 +6171,7 @@
       {{tab}}}
       
       {{tab}}async findAll(page: number, size: number, order: any): Promise<[Models.${className}[], number]> {
-      {{tab}}{{#if cacheableWithBuiltinnestcachemanager}} 
+      {{tab}}{{#if cacheableWithBuiltinnestcachemanager or cacheableWithRedis}} 
       {{tab}}const cacheKey = "${minStart(className)}_"+page+"_"+size+"_"+JSON.stringify(order);
       {{tab}}const cached = await this.cacheService.get(cacheKey);
       {{tab}}if(cached) return cached;
@@ -6184,7 +6184,7 @@
       {{tab}}  if (data.length === 0) {
       {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found");
       {{tab}}  }
-      {{#if cacheableWithBuiltinnestcachemanager}} 
+      {{#if cacheableWithBuiltinnestcachemanager or cacheableWithRedis}} 
       {{tab}}  await this.cacheService.set(cacheKey, [data, total]);
       {{tab}}{{/if}}
       {{tab}}  return [data, total];
@@ -6204,7 +6204,7 @@
       {{tab}}}
 
       {{tab}}async findById(id: number): Promise<Models.${className}> {
-      {{tab}}{{#if cacheableWithBuiltinnestcachemanager}} 
+      {{tab}}{{#if cacheableWithBuiltinnestcachemanager or cacheableWithRedis}} 
       {{tab}}const cacheKey = "${minStart(className)}_"+id;
       {{tab}}const cached = await this.cacheService.get(cacheKey);
       {{tab}}if(cached) return cached;
@@ -6213,7 +6213,7 @@
       {{tab}}  if (!${minStart(className)}) {
       {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found with id:"+id);
       {{tab}}  }
-      {{#if cacheableWithBuiltinnestcachemanager}} 
+      {{#if cacheableWithBuiltinnestcachemanager or cacheableWithRedis}} 
       {{tab}}  await this.cacheService.set(cacheKey, ${minStart(className)});
       {{tab}}{{/if}}
       {{tab}}  return ${minStart(className)};
@@ -6225,7 +6225,7 @@
       {{tab}}  }
       {{tab}}  const ${minStart(className)} = this.${minStart(className)}Repository.create(body);
       {{tab}}  const saved = await this.${minStart(className)}Repository.save(${minStart(className)});
-      {{#if cacheableWithBuiltinnestcachemanager}} 
+      {{#if cacheableWithBuiltinnestcachemanager or cacheableWithRedis}} 
       {{tab}}  await this.cacheService.reset();
       {{/if}}
       {{tab}}  return saved;
@@ -6237,7 +6237,7 @@
       {{tab}}    throw new ResourceNotFoundException("No ${minStart(className)} found");
       {{tab}}  }
       {{tab}}  Object.assign(existing, body);
-      {{tab}}{{#if cacheableWithBuiltinnestcachemanager}} 
+      {{tab}}{{#if cacheableWithBuiltinnestcachemanager or cacheableWithRedis}} 
       {{tab}}  await this.cacheService.delete("${minStart(className)}_"+id);
       {{tab}}{{/if}}
       {{tab}}  return await this.${minStart(className)}Repository.save(existing);
@@ -6249,7 +6249,7 @@
       {{tab}}    throw new ResourceNotFoundException("${className} not found");
       {{tab}}  }
       {{tab}}  await this.${minStart(className)}Repository.delete(id);
-      {{tab}}{{#if cacheableWithBuiltinnestcachemanager}} 
+      {{tab}}{{#if cacheableWithBuiltinnestcachemanager or cacheableWithRedis}} 
       {{tab}}  await this.cacheService.reset();
       {{tab}}{{/if}}
       {{/if}}
@@ -6601,6 +6601,7 @@
       options:
         - "NONE"
         - "BuiltInNestCacheManager"
+        - "Redis"
       defaultOption: "NONE"
   dependencies: []
 

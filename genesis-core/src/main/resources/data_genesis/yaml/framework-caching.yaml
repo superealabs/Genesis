@@ -156,27 +156,30 @@
       extension: "ts"
       content: |
         import { Global, Module } from '@nestjs/common';
-        import { Cacheable } from 'cacheable';
-        import { createKeyv } from '@keyv/redis';
         import { CacheService } from './cache.service';
-
+        import Keyv from 'keyv';
+        import KeyvRedis from '@keyv/redis';
+          
         @Global()
         @Module({
-            providers: [
-              {
-                provide: 'CACHE_INSTANCE',
-                useFactory: () => {
-                  // If no namespace is set, the default is 'keyv', and keys are prefixed with 'keyv:'.
-                  const secondary = createKeyv('redis://localhost:6379', { 
-                      namespace: 'keyv' 
-                  });
-                  return new Cacheable({ secondary, ttl: '4h' });
-                },
+          providers: [
+            {
+              provide: 'KEYV_INSTANCE',
+              useFactory: () => {
+                const keyv = new Keyv({
+                  store: new KeyvRedis('redis://localhost:6379'),
+                  ttl: 60000, 
+                });
+                                  
+                keyv.on('error', err => console.error('KeyV Connection Error:', err));
+                console.log('KeyV Redis store initialized OK');
+                return keyv;
               },
-              CacheService
-            ],
-            exports: ['CACHE_INSTANCE', CacheService],
-          })
+            },
+            CacheService,
+          ],
+          exports: [CacheService],
+        })
         export class CacheModule {}
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/cache"
@@ -185,22 +188,32 @@
       extension: "ts"
       content: |
         import { Inject, Injectable } from '@nestjs/common';
-        import { Cacheable } from 'cacheable';
-        
+        import Keyv from 'keyv';
+
         @Injectable()
         export class CacheService {
-          constructor(@Inject('CACHE_INSTANCE') private readonly cache: Cacheable) {}
-          
+          constructor(
+            @Inject('KEYV_INSTANCE')
+            private readonly keyv: Keyv,
+          ) {}
+
+          async set(key: string, value: any, ttl?: number): Promise<void> {
+            await this.keyv.set(key, value, ttl);
+            console.log('[CacheService] SET', key);
+          }
+
           async get(key: string): Promise<any> {
-            return await this.cache.get(key);
+            const val = await this.keyv.get(key);
+            console.log('[CacheService] GET', key, '=>', val ? 'FOUND' : 'NOT FOUND');
+            return val;
           }
-          
-          async set(key: string, value: any, ttl?: number | string): Promise<void> {
-            await this.cache.set(key, value, ttl);
-          }
-          
+
           async delete(key: string): Promise<void> {
-            await this.cache.delete(key);
+            await this.keyv.delete(key);
+          }
+
+          async reset(): Promise<void> {
+            await this.keyv.clear();
           }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/cache"
