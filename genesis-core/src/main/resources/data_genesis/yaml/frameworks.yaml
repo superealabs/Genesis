@@ -5661,8 +5661,8 @@
         import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
         import * as Models from '../models.index';
         {{#if useJWT}}import { SqlInitService } from './sql-init.service';{{/if}}
-        {{#if useJWT}}import { UserEntity } from '../user-entity/user-entity.entity';
-        import { RoleEntity } from '../role-entity/role-entity.entity';{{/if}}
+        {{#if useJWT}}import { UserEntity } from '../modules/user-entity/user-entity.entity';
+        import { RoleEntity } from '../modules/role-entity/role-entity.entity';{{/if}}
 
         @Module({
           imports: [
@@ -6273,7 +6273,7 @@
       import { Page } from "../../common/dto/Page";
       {{#if useJWT}}import { ApiBearerAuth } from "@nestjs/swagger";
       import { UseGuards } from "@nestjs/common";
-      import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";{{/if}}
+      import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";{{/if}}
     controllerAnnotations: |
       @ApiTags("${minStart(className)}")
       @Controller("${minStart(className)}")

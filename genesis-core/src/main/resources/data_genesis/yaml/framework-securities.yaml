@@ -2231,7 +2231,7 @@
           @Column({ name: 'name', type: 'varchar', length: 100, nullable: false })
           name!: string;
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/role-entity"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/role-entity"
     - fileType: "Role Module"
       fileName: "role-entity.module"
       extension: "ts"
@@ -2247,7 +2247,7 @@
           exports: [],
         })
         export class RoleEntityModule {}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/role-entity"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/role-entity"
     - fileType: "User Entity"
       fileName: "user-entity.entity"
       extension: "ts"
@@ -2284,7 +2284,7 @@
             return bcrypt.compare(plain, this.password);
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/user-entity"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/user-entity"
     - fileType: "User Module"
       fileName: "user-entity.module"
       extension: "ts"
@@ -2301,7 +2301,7 @@
           exports: [UserEntityService],
           })
         export class UserEntityModule {}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/user-entity"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/user-entity"
     - fileType: "User Service"
       fileName: "user-entity.service"
       extension: "ts"
@@ -2347,7 +2347,7 @@
           }
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/user-entity"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/user-entity"
     - fileType: "Database service"
       fileName: "sql-init.service"
       extension: "ts"
@@ -2518,7 +2518,7 @@
           @MinLength(6)
           password!: string;
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth/dto"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/dto"
     - fileType: "DTO"
       fileName: "register.dto"
       extension: "ts"
@@ -2544,7 +2544,7 @@
           @IsOptional()
           roleId?: number;
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth/dto"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/dto"
     - fileType: "Guard"
       fileName: "jwt-auth.guard"
       extension: "ts"
@@ -2580,7 +2580,7 @@
           }
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth/guards"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/guards"
     - fileType: "Interface"
       fileName: "jwt-payload.interface"
       extension: "ts"
@@ -2590,7 +2590,7 @@
           name: string;
           role?: string;
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth/interfaces"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/interfaces"
     - fileType: "Strategy"
       fileName: "jwt.strategy"
       extension: "ts"
@@ -2619,7 +2619,7 @@
             };
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth/strategies"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/strategies"
     - fileType: "Controller"
       fileName: "auth.controller"
       extension: "ts"
@@ -2629,7 +2629,7 @@
         import { LoginDto } from './dto/login.dto';
         import { RegisterDto } from './dto/register.dto';
         import { ApiOperation, ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-        import { RestResponse } from '../common/dto/RestResponse';
+        import { RestResponse } from '../../common/dto/RestResponse';
         import { AuthGuard } from '@nestjs/passport';
         import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
@@ -2739,7 +2739,7 @@
           }
 
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth"
     - fileType: "Service"
       fileName: "auth.service"
       extension: "ts"
@@ -2825,13 +2825,13 @@
             return result;
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth"
     - fileType: "Module"
       fileName: "auth.module"
       extension: "ts"
       content: |
         import { Module } from '@nestjs/common';
-        import { JwtModule } from '@nestjs/jwt';
+        import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
         import { PassportModule } from '@nestjs/passport';
         import { TypeOrmModule } from '@nestjs/typeorm';
         import { AuthService } from './auth.service';
@@ -2850,10 +2850,15 @@
             JwtModule.registerAsync({
               imports: [ConfigModule],
               inject: [ConfigService],
-              useFactory: (cfg: ConfigService) => ({
-                secret: cfg.getOrThrow<string>('JWT_SECRET'),
-                signOptions: { expiresIn: cfg.get<string>('JWT_EXPIRES_IN', '1h') },
-              }),
+              useFactory: (cfg: ConfigService) => {
+                const secret = cfg.getOrThrow<string>('JWT_SECRET');
+                const exp = cfg.get<string>('JWT_EXPIRES_IN') ?? '1h';
+                const expiresIn = exp as unknown as JwtSignOptions['expiresIn'];
+                return {
+                  secret,
+                  signOptions: { expiresIn },
+                };
+              },
             }),
           ],
           providers: [AuthService, JwtStrategy, BlacklistService],
@@ -2861,7 +2866,8 @@
           exports: [AuthService, BlacklistService],
           })
           export class AuthModule {}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth"
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth"
 
     - fileType: "Service"
       fileName: "blacklist.service"
@@ -2881,7 +2887,7 @@
             return this.blacklistedTokens.has(token);
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/auth"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth"
   additionalDependencies: [ ]
   metadataBooleanTrueKeys:
     - "useJWT"
