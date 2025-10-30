@@ -193,7 +193,7 @@
       "float": "float",
       "real": "float",
       "double": "double",
-      "decimal": "double",
+      "decimal": "decimal",
       "numeric": "double",
       "money": "double",
       "smallmoney": "double",

@@ -11428,7 +11428,7 @@
           --color-base-300: oklch(95% 0 0);
           --color-base-content: oklch(21% 0.006 285.885);
 
-          --color-primary: #537cc2ff;
+          --color-primary: ${primaryColor};
           --color-primary-content: oklch(93% 0.034 272.788);
 
           --color-secondary: color-mix(in oklch, var(--color-primary) 15%, white);
@@ -12655,6 +12655,7 @@
           --depth: 1;
           --noise: 0;
         }
+        ${additionalCss}
       destinationPath: "${destinationFolder}/src/assets/styles"
   components:
     - componentType: "Entity Row"

@@ -287,6 +287,14 @@ public class DatabaseConfigurationForm {
         sidField.setEnabled(isOracle);
         databaseField.setEnabled(!isOracle);
 
+        boolean isSqlServer = "SQL Server".equalsIgnoreCase(database.getName());
+        if (isSqlServer && usernameField.getText().trim().isEmpty()) {
+            usernameField.setText("sa");
+        }
+        if (isSqlServer && schemaField.getText().trim().isEmpty()) {
+            schemaField.setText("dbo");
+        }
+
         // Specific default values
         portField.setText(database.getPort());
         if (isOracle) {
