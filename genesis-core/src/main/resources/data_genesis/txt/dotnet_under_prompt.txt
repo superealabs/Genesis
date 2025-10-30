@@ -1,0 +1,46 @@
+Framework ciblé : .NET
+
+Contraintes spécifiques :
+ - Utiliser **Entity Framework Core** et **Ardalis.Specification** pour toutes les requêtes complexes (filtres, tri, relations).
+ - Par défaut, n’utiliser que les méthodes CRUD natives exposées par les repositories (`AddAsync`, `UpdateAsync`, `DeleteAsync`, `GetByIdAsync`, `ExistsAsync` , ... ) et les **Specifications** pour les requêtes nécessitant des conditions.
+ - Pagination : utiliser systématiquement `Task<PagedResult<T>>` et un objet `PageRequest` (ou équivalent existant dans le projet). Les méthodes exposées par les repositories doivent accepter `PageRequest` et `CancellationToken`.
+ - Relations : toujours configurer `Include`, `ThenInclude`, `AsNoTracking`, `AsSplitQuery`, ou `IIncludeExpression` **uniquement dans les Specifications**. Ne jamais les placer directement dans les services.
+ - Interdiction d’écrire des requêtes SQL ou LINQ complexes hors Specifications, sauf **dérogation contrôlée** (voir plus bas).
+
+Cas extrême – Dérogations contrôlées (SQL brut / requêtes directes) :
+ - Autorisé **uniquement** si la règle métier est impossible ou inefficace avec Specifications.
+ - Dans ce cas, ajouter une méthode dédiée dans le repository, par exemple :
+   `Task<PagedResult<T>> CustomQueryAsync(..., CancellationToken ct);`
+ - Implémentation EF Core/SQL directe autorisée mais doit être justifiée dans le code.
+ - Pour très grands volumes de données : utiliser obligatoirement pagination (`PageRequest`), éventuellement `IAsyncEnumerable<T>` via `AsAsyncEnumerable()`, batch processing, ou `ExecuteSqlRaw` en ultime recours.
+
+Format de sortie attendu (obligatoire) :
+ - **Générer uniquement** une ou plusieurs méthodes (signatures + corps) à placer dans la classe service correspondante.
+ - **Si** la règle nécessite des signatures de repository dérivées, fournir **également** leurs signatures dans l’interface repository correspondante.
+ - Écrire les en-têtes EXACTS (une par bloc) :
+   - @Repository: CustomerRepository
+     puis les `using` nécessaires (si besoin) et **seulement** les signatures des méthodes ajoutées.
+   - @Service: CustomerService`
+     puis les `using` nécessaires (si besoin) et **la ou les méthodes métier complètes** (méthode async C# avec corps).
+ - **Ne pas** générer d’autres fichiers, classes complètes, annotations, injection de dépendances, ou commentaires explicatifs.
+ - Respecter les règles du YAML (appliquer toutes les règles métier définies dans le YAML — valider et lancer des exceptions métier si violation).
+
+Example de sortie attendu :
+  (Pas de commentaires de reponnse ni autre chose juste du code !!!)
+  @Repository: CustomerRepository ( necessaire si utiliser dans le service, sinon n'ajoute pas ! )
+   using xxx.xxx.xxx; ( si  necessaire )
+   type de retour regleMetier ( param ) { ... code ... } ; ( si la fonction a un type de retour en liste de donnee, il faut utiliser un type de retour paginé )
+
+  @Service: CustomerService
+  using xxx.xxx.xxx; ( si  necessaire )
+  type de retour regleMetier ( param ) { ... code ... }
+
+  @Repository: CustomerRepository ( necessaire si utiliser dans le service, sinon n'ajoute pas ! )
+   using xxx.xxx.xxx; ( si  necessaire )
+   type de retour regleMetier ( param ) { ... code ... } ; ( si la fonction a un type de retour en liste de donnee, il faut utiliser un type de retour paginé )
+
+  @Service: CustomerService
+  using xxx.xxx.xxx; ( si  necessaire )
+  type de retour regleMetier ( param ) { ... code ... }
+
+Il faut appliquer tous les regles de gestion present dans le fichier YAML!!!
