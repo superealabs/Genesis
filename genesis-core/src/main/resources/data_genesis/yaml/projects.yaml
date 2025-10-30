@@ -442,6 +442,8 @@
             "passport": "^0.7.0",
             "passport-jwt": "^4.0.1",
             "passport-local": "^1.0.0"{{/if}}
+            {{#if useBuiltInNestCacheManager}}, "@nestjs/cache-manager": "^3.0.1",
+            "cache-manager": "^7.2.4"{{/if}}
           },
           "devDependencies": {
             "@nestjs/cli": "^10.0.0",

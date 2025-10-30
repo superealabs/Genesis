@@ -244,6 +244,7 @@ public class FrameworkMetadataProvider {
             String className = tableMetadata.getClassName();
             boolean isCacheable = cacheableEntities.contains(className);
 
+
             metadata.put("cacheableWith" + StringUtils.majStart(handleSpace), isCacheable);
         }
 

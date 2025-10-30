@@ -207,3 +207,60 @@
   additionalDependencies: [ ]
   metadataBooleanTrueKeys:
     - "useNestRedisCaching"
+- id: 4
+  frameworkId: 5
+  name: "BuiltInNestCacheManager"
+  configFiles:
+    - fileType: "Cache module"
+      fileName: "cache.module"
+      extension: "ts"
+      content: |
+        import { Global, Module } from '@nestjs/common';
+        import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
+        import { CacheService } from './cache.service';
+        
+        @Global()
+        @Module({
+          imports: [
+            NestCacheModule.register({
+              ttl: 60_000, // TTL par défaut (ms)
+              max: 1000,
+            }),
+          ],
+          providers: [CacheService],
+          exports: [CacheService, NestCacheModule],
+        })
+        export class CacheModule {}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/cache"
+    - fileType: "Cache service"
+      fileName: "cache.service"
+      extension: "ts"
+      content: |
+        import { Inject, Injectable } from '@nestjs/common';
+        import { CACHE_MANAGER } from '@nestjs/cache-manager';
+        import { Cache } from 'cache-manager';
+
+        @Injectable()
+        export class CacheService {
+            constructor(@Inject(CACHE_MANAGER) private cache: Cache) {}
+
+            async get(key: string): Promise<any> {
+            return await this.cache.get(key);
+            }
+
+            async set(key: string, value: any): Promise<void> {
+            await this.cache.set(key, value);
+            }
+
+            async delete(key: string): Promise<void> {
+            await this.cache.del(key);
+            }
+
+            async reset(): Promise<void>{
+                await this.cache.clear();
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/cache"
+  additionalDependencies: [ ]
+  metadataBooleanTrueKeys:
+    - "useBuiltInNestCacheManager"
