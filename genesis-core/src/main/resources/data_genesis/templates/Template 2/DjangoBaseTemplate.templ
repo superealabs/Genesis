@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${projectName} | ${pageName}</title>
+    <link rel="stylesheet" href="${assetsImportLink}">
+    {{#if useFaviconLink or hasFavicon}}<link rel="shortcut icon"
+        href="${rootPath}/${faviconUrl}"
+        type="image/x-icon">{{else}}{{removeLine}}{{/if}}
+</head>
+
+<body>
+    <!-- Menu burger pour mobile -->
+    <button class="menu-toggle" id="menuToggle">☰</button>
+
+    <!-- Sidebar -->
+    <div class="{{#if navbarPreference = Topbar}}topbar{{else}}sidebar{{/if}}" id="{{#if navbarPreference = Topbar}}topbar{{else}}sidebar{{/if}}">
+        <div class="project-info">
+            {{#if useLogoLink or hasLogo}}
+            <div class="project-logo">
+                <img src="${rootPath}/images${logoUrl}"
+                    alt="logo-${projectName}">
+            </div>
+            {{else}}
+            <div class="project-name">${projectName}</div>
+            {{/if}}
+        </div>
+
+        <div class="navigation">
+            {{#if navbarPreference = Topbar}}
+            <button class="scroll-btn left hidden" id="scrollLeft">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="2" fill="none" />
+                </svg>
+            </button>
+            {{else}}
+            <button class="scroll-btn top hidden" id="scrollUp">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 4L4 8l1.5 1.5L8 7l2.5 2.5L12 8 8 4z" />
+                </svg>
+            </button>
+            {{/if}}
+
+            <div class="nav-content" id="navContent">
+                <a class="nav-item home-link" href="{% url 'home' %}">
+                    🏠 Accueil
+                </a>
+                <div class="project-description"><span data-i18n="entities"></span></div>
+                {{#each entities}}{{#if !this.isView}}
+                <a ${navLink}>
+                    ${this.entityName}
+                </a>{{/if}}
+                {{/each}}{{removeLine}}
+                <div class="project-description"><span data-i18n="views"></span></div>
+                {{#each entities}}{{#if this.isView}}
+                <a ${navLink}>
+                    ${this.entityName}
+                </a>{{/if}}
+                {{/each}}{{removeLine}}
+            </div>
+
+            {{#if navbarPreference = Topbar}}
+            <button class="scroll-btn right" id="scrollRight">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="2" fill="none" />
+                </svg>
+            </button>
+            {{else}}
+            <button class="scroll-btn bottom" id="scrollDown">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 12l4-4-1.5-1.5L8 9 5.5 6.5 4 8l4 4z" />
+                </svg>
+            </button>
+            {{/if}}
+        </div>
+
+        <div class="settings">
+            <div class="settings-btn" id="settingsBtn">
+                <span class="nav-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.75l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.75v.51a2 2 0 01-1 1.75l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.75V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.75l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.75v-.5a2 2 0 011-1.75l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.75V4a2 2 0 00-2-2z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                </span>
+                <span data-i18n="settings"></span>
+            </div>
+
+            <!-- Box flottante des paramètres -->
+            <div class="settings-floating" id="settingsFloating">
+                <div class="setting-group">
+                    <label for="langSelect" data-i18n="language"></label>
+                    <select id="langSelect" name="langSelect" class="setting-select">
+                        <option value="fr">Français</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label for="themeSelect" data-i18n="theme"></label>
+                    <select id="theme" name="theme" class="setting-select">
+                        <option value="light" data-i18n="light"></option>
+                        <option value="dark" data-i18n="dark"></option>
+                    </select>
+                </div>
+
+                <div class="setting-separator"></div>
+
+                <!-- Section d'authentification -->
+                <div class="auth-section">
+                    {% if user.is_authenticated %}
+                        <div class="user-info">
+                            <span class="user-name">👤 {{ user.username }}</span>
+                        </div>
+                        <form action="{% url 'logout' %}" method="post" class="settings-form">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+                                </svg>
+                                <span>Déconnexion</span>
+                            </button>
+                        </form>
+                    {% else %}
+                        <div class="auth-links">
+                            <a href="{% url 'login' %}" class="auth-link">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M21 12H9"/>
+                                </svg>
+                                <span>Connexion</span>
+                            </a>
+                            <a href="{% url 'register' %}" class="auth-link">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 8 0 4 4 0 0 0-8 0M19 13v6M16 16h6"/>
+                                </svg>
+                                <span>Inscription</span>
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="main-content">
+        ${callContent}
+    </div>
+
+    {% load static %}
+    <script src="{% static 'js/index.js' %}"></script>
+    <script src="{% static 'js/lang.js' %}"></script>
+    
+    <style>
+        .home-link {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+        }
+        
+        .home-link:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-1px);
+        }
+
+        /* Styles pour l'authentification */
+        .auth-section {
+            margin-top: 1rem;
+        }
+
+        .user-info {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .user-name {
+            font-weight: 500;
+            color: #667eea;
+        }
+
+        .auth-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .auth-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .auth-link:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-1px);
+            text-decoration: none;
+            color: #667eea;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(220, 53, 69, 0.2);
+            transform: translateY(-1px);
+        }
+    </style>
+</body>
+
+</html>

@@ -29,5 +29,38 @@
       "regexPattern": " ",
       "defaultValue":  "value=\"${value}\""
     }
+  },
+  {
+    "id": 2,
+    "languageId": 5,
+    "types": {
+      "IntegerField": "number",
+      "BigIntegerField": "number",
+      "FloatField": "number",
+      "DecimalField": "number",
+      "CharField": "text",
+      "TextField": "text",
+      "EmailField": "email",
+      "URLField": "url",
+      "DateField": "date",
+      "DateTimeField": "datetime-local",
+      "TimeField": "time",
+      "BooleanField": "radio",
+      "ForeignKey": "select",
+      "OneToOneField": "select",
+      "ManyToManyField": "select"
+    },
+    "validations": {
+      "notNull": "required",
+      "notBlank": "required",
+      "maxSize": "maxlength=\"${maxLength}\"",
+      "numericMinimumValue": "min=\"${min}\"",
+      "numericMinimumInclusiveValue": "min=\"${min}\"",
+      "numericMaximumValue": "max=\"${max}\"",
+      "numericMaximumInclusiveValue": "max=\"${max}\"",
+      "minAndMaxSize": "minlength=\"${minLength}\" maxlength=\"${maxLength}\"",
+      "regexPattern": " ",
+      "defaultValue":  "value=\"${value}\""
+    }
   }
 ]

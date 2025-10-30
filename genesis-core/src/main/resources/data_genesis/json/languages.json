@@ -33,7 +33,6 @@
       "datetime": "java.time.LocalDateTime",
       "DATETIME": "java.time.LocalDateTime",
       "timestamp": "java.time.LocalDateTime",
-      "timestamptz": "java.time.OffsetDateTime",
       "timestamp[]": "java.time.LocalDateTime[]",
       "time": "java.time.LocalTime",
       "timetz": "java.time.OffsetTime",
@@ -55,7 +54,9 @@
       "Integer": [],
       "Long": [],
       "Double": [],
-      "String": [],
+      "String": [
+        "@org.hibernate.annotations.ColumnTransformer(read = \"CAST(${this.columnName} as varchar)\", write = \"CAST(? as ${this.columnType})\")"
+      ],
       "java.time.LocalDate": [],
       "java.time.LocalDateTime": [],
       "java.time.OffsetDateTime": [],
@@ -86,7 +87,6 @@
       "xml": "\"<mock>mock</mock>\"",
       "date": "java.time.LocalDate.now()",
       "timestamp": "java.time.LocalDateTime.now()",
-      "timestamptz": "java.time.OffsetDateTime.now()",
       "time": "java.time.LocalTime.now()",
       "timetz": "java.time.OffsetTime.now()",
       "interval": "java.time.Duration.ofSeconds(0)",
@@ -113,7 +113,6 @@
       "decimal": "0.",
       "numeric": "0.",
       "timestamp without time zone": "java.time.LocalDateTime.now()",
-      "timestamp with time zone": "java.time.OffsetDateTime.now()",
       "bool": "true",
       "tsrange": "new java.time.LocalDateTime[]{java.time.LocalDateTime.now(), java.time.LocalDateTime.now().plusHours(1L)}",
       "jsonb": "\"{}\"",
@@ -144,20 +143,19 @@
       "enum": "\"mock\"",
       "BIT": "true",
       "TIME": "java.time.LocalTime.now()",
-      "BIGINT UNSIGNED": "0L"
+      "BIGINT UNSIGNED": "0L",
+      "DECIMAL": "0."
     },
     "criteriaBuildSnippet": {
       "datetime": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "DATETIME": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "int": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
-      "int identity": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "double": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "json": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "uuid": "criteriaBuilder.function(\"${this.columnType}\", String.class, root.get(\"${this.name}\")),\n\t\t\t\t\t\tcriteriaBuilder.function(\"${this.columnType}\", String.class, criteriaBuilder.literal(object.get${majStart(this.name)}()))",
       "xml": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "date": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "timestamp": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
-      "timestamptz": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "time": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "timetz": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "interval": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
@@ -183,7 +181,6 @@
       "decimal": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "numeric": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "timestamp without time zone": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
-      "timestamp with time zone": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "bool": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "tsrange": "criteriaBuilder.function(\"${this.columnType}\", String.class, root.get(\"${this.name}\")),\n\t\t\t\t\t\tcriteriaBuilder.function(\"${this.columnType}\", String.class, criteriaBuilder.literal(\"[\"+object.get${majStart(this.name)}()[0]+\",\"+object.get${majStart(this.name)}()[1]+\"]\"))",
       "jsonb": "criteriaBuilder.function(\"${this.columnType}\", String.class, root.get(\"${this.name}\")),\n\t\t\t\t\t\tcriteriaBuilder.function(\"${this.columnType}\", String.class, criteriaBuilder.literal(object.get${majStart(this.name)}()))",
@@ -192,11 +189,12 @@
       "cidr": "criteriaBuilder.function(\"${this.columnType}\", String.class, root.get(\"${this.name}\")),\n\t\t\t\t\t\tcriteriaBuilder.function(\"${this.columnType}\", String.class, criteriaBuilder.literal(object.get${majStart(this.name)}()))",
       "macaddr": "criteriaBuilder.function(\"${this.columnType}\", String.class, root.get(\"${this.name}\")),\n\t\t\t\t\t\tcriteriaBuilder.function(\"${this.columnType}\", String.class, criteriaBuilder.literal(object.get${majStart(this.name)}()))",
       "INT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
-      "IDENTITY": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "VARCHAR": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "DATE": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "BIGINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "DECIMAL": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TEXT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "SMALLINT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TIMESTAMP": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TIMESTAMP(*)": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "TIME": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
@@ -240,8 +238,8 @@
       "string": "string",
       "date": "DateTime",
       "datetime": "DateTime",
+      "date": "DateOnly",
       "timestamp": "DateTime",
-      "timestamptz": "DateTimeOffset",
       "time": "TimeSpan",
       "timetz": "DateTimeOffset",
       "boolean": "Boolean",
@@ -268,6 +266,8 @@
       "date": "DateOnly.FromDateTime(DateTime.Now)",
       "timestamp": "DateTime.UtcNow",
       "timestamptz": "DateTimeOffset.UtcNow",
+      "date": "DateOnly.FromDateTime(DateTime.Today)",
+      "timestamp": "DateTime.Now",
       "time": "DateTime.Now.TimeOfDay",
       "timetz": "DateTimeOffset.UtcNow",
       "interval": "TimeSpan.Zero",
@@ -294,7 +294,6 @@
       "decimal": "0.0",
       "numeric": "0.0",
       "timestamp without time zone": "DateOnly.FromDateTime(DateTime.Now)",
-      "timestamp with time zone": "DateOnly.FromDateTime(DateTimeOffset.Now)",
       "bool": "true",
       "tsrange": "new[] { DateTime.Now, DateTime.Now.AddHours(1) }",
       "jsonb": "\"{}\"",
@@ -306,6 +305,7 @@
       "VARCHAR": "\"mock\"",
       "NVARCHAR": "\"mock\"",
       "DATE": "DateOnly.FromDateTime(DateTime.Now)",
+      "DATE": "DateOnly.FromDateTime(DateTime.Today)",
       "BIGINT": "0L",
       "TEXT": "\"mock\"",
       "SMALLINT": "0",
@@ -320,6 +320,63 @@
       "VARCHAR2": "\"mock\"",
       "NVARCHAR2": "\"mock\"",
       "DECIMAL": "0.0"
+    },
+    "criteriaBuildSnippet": {
+      "boolean": "Boolean"
+    }
+  },
+  {
+    "id": 5,
+    "name": "Python",
+    "extension": "py",
+    "configurations": [
+      {
+        "name": "Language version",
+        "variableName": "languageVersion",
+        "options": [
+          "3.8",
+          "3.10",
+          "3.12"
+        ],
+        "defaultOption": "3.10"
+      }
+    ],
+    "syntax": {
+      "classKeyword": "class",
+      "namespace": "",
+      "namespaceStart": "",
+      "namespaceEnd": "{{removeLine}}",
+      "bracketStart": ":",
+      "bracketEnd": "{{removeLine}}"
+    },
+    "types": {
+      "int": "IntegerField",
+      "long": "BigIntegerField",
+      "double": "FloatField",
+      "string": "CharField",
+      "text": "TextField",
+      "decimal": "DecimalField",
+      "numeric": "DecimalField",
+      "date": "DateField",
+      "timestamp": "DateTimeField",
+      "datetime": "DateTimeField",
+      "time": "TimeField",
+      "boolean": "BooleanField"
+    },
+    "attributeTypeAnnotations": {},
+    "mockData": {
+      "int": "0",
+      "long": "0",
+      "double": "0.0",
+      "string": "\"mock\"",
+      "text": "\"mock\"",
+      "decimal": "0.0",
+      "numeric": "0.0",
+      "date": "\"2024-01-01\"",
+      "timestamp": "\"2024-01-01T00:00:00\"",
+      "datetime": "\"2024-01-01T00:00:00\"",
+      "time": "\"00:00:00\"",
+      "boolean": "True"
     },
     "criteriaBuildSnippet": {}
   },

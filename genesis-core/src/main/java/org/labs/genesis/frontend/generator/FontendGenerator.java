@@ -182,6 +182,12 @@ public class FontendGenerator implements IFrontendGenerator{
     public  String generateRessources(ProjectGenerationContext context, List<TableMetadata> allEntities) throws  Exception{
         FrontendFramework frontendFramework = context.getFrontendFramework();
         HashMap<String, Object> metadata = FrameworkFrontendMetadataProvider.getLangsHashMap(context, allEntities);
+
+        // Vérification de sécurité : si pas de frontend framework configuré, on sort
+        if (frontendFramework == null) {
+            System.out.println("⚠️  Aucun frontend framework configuré, génération des ressources ignorée");
+            return "";
+        }
         // Generate logo
         String logoPath = frontendFramework.getFrontendPaths().getLogoPath();
         logoPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(logoPath, metadata));

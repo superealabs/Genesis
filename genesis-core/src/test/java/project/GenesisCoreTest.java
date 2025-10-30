@@ -103,13 +103,13 @@ public class GenesisCoreTest {
             List<String> entityNames = new ArrayList<>();
 
             ProjectGenerationContext context = new ProjectGenerationContext();
+            context.setDatabase(database);
             context.setLanguage(language);
             context.setFramework(framework);
             context.setFrontendFramework(frontendFramework);
             context.setFrontendLanguage(frontendLangage);
             context.setProject(project);
             context.setCredentials(credentials);
-            context.setDatabase(database);
             context.setDestinationFolder(destinationFolder);
             context.setProjectName(projectName);
             context.setGroupLink(groupLink);
@@ -532,6 +532,73 @@ public class GenesisCoreTest {
             // Assertion pour vérifier si le dossier existe
             Path path = Path.of(destinationFolder);
             assertTrue(Files.exists(path) && Files.isDirectory(path), "Le dossier de destination n'existe pas.");
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void generateProjectDjango() {
+        var credentials = new Credentials().setHost("localhost").setPort("3306").setSchemaName("public").setDatabaseName("genesis").setUser("root").setPwd("root").setTrustCertificate(true).setUseSSL(true).setAllowPublicKeyRetrieval(true);
+
+        try {
+            int databaseId = Constantes.MySQL_ID;
+            int languageId = Constantes.Python_ID;
+            int frameworkId = Constantes.Django_ID;
+            int projectId = Constantes.Django_Project_ID;
+
+            var database = ProjectGenerator.databases.get(databaseId);
+            var language = ProjectGenerator.languages.get(languageId);
+            var framework = ProjectGenerator.frameworks.get(frameworkId);
+            var project = ProjectGenerator.projects.get(projectId);
+
+            String projectName = "TestDjangoProject";
+            String groupLink = "labs.test";
+            String projectPort = "8000";
+            String logLevel = "INFO";
+            String projectDescription = "Django Project For Testing Genesis API Generator";
+            String frameworkVersion = "4.2.1";
+            String languageVersion = "3.10";
+
+            String destinationFolder = "../generated/django";
+
+            ProjectGenerator projectGenerator = new ProjectGenerator();
+
+            HashMap<String, Object> frameworkConfiguration = new HashMap<>();
+            frameworkConfiguration.put("loggingLevel", logLevel);
+            frameworkConfiguration.put("frameworkVersion", frameworkVersion);
+
+            HashMap<String, Object> languageConfiguration = new HashMap<>();
+            languageConfiguration.put("languageVersion", languageVersion);
+
+            List<String> generationOptions = List.of("Model");
+            List<String> entityNames = new ArrayList<>();
+
+            ProjectGenerationContext context = new ProjectGenerationContext();
+            context.setDatabase(database);
+            context.setLanguage(language);
+            context.setFramework(framework);
+            context.setProject(project);
+            context.setCredentials(credentials);
+            context.setDestinationFolder(destinationFolder);
+            context.setProjectName(projectName);
+            context.setGroupLink(groupLink);
+            context.setProjectPort(projectPort);
+            context.setProjectDescription(projectDescription);
+            context.setLanguageConfiguration(languageConfiguration);
+            context.setFrameworkConfiguration(frameworkConfiguration);
+            context.setEntityNames(entityNames);
+            context.setGenerationOptions(generationOptions);
+            context.setGenerateProjectStructure(true);
+
+            projectGenerator.generateProject(context);
+
+            // Assertion pour vérifier si le dossier existe
+            Path path = Path.of(destinationFolder);
+            assertTrue(Files.exists(path) && Files.isDirectory(path), "Le dossier de destination n'existe pas.");
+
+            System.out.println("Credentials All good");
 
         } catch (Exception e) {
             throw new RuntimeException(e);

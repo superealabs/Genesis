@@ -20,6 +20,7 @@ import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMe
 import org.labs.genesis.frontend.generator.model.InterfaceLang;
 import org.labs.utils.FileUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.*;
@@ -71,6 +72,7 @@ public class ProjectGenerator {
                     .peek(framework -> {
                         try {
                             framework.setFrameworkSecurities();
+                            framework.setFrameworkCaching();
                             framework.setViewsTemplate();
                         }
                         catch (IOException e) { throw new RuntimeException("Error initializing frameworkMvc components for ID: " + framework.getId(), e); }
@@ -128,15 +130,17 @@ public class ProjectGenerator {
     }
 
     public static void renderAndCopyFolders(List<Project.ProjectFolders> projectFolders, HashMap<String, Object> initializeHashMap) throws Exception {
-        for (Project.ProjectFolders projectFolder : projectFolders) {
-            String sourceFolderPath = projectFolder.getSourcePath();
-            String destinationFolderPath = engine.render(projectFolder.getDestinationPath() + projectFolder.getFolderName(), initializeHashMap);
+        if (projectFolders != null){
+            for (Project.ProjectFolders projectFolder : projectFolders) {
+                String sourceFolderPath = projectFolder.getSourcePath();
+                String destinationFolderPath = engine.render(projectFolder.getDestinationPath() + projectFolder.getFolderName(), initializeHashMap);
 
-            System.out.println("Rendering and copying folder:");
-            System.out.println("Source folder: " + sourceFolderPath);
-            System.out.println("Rendered destination folder: " + destinationFolderPath);
+                System.out.println("Rendering and copying folder:");
+                System.out.println("Source folder: " + sourceFolderPath);
+                System.out.println("Rendered destination folder: " + destinationFolderPath);
 
-            FileUtils.copyDirectory(sourceFolderPath, destinationFolderPath);
+                FileUtils.copyDirectory(sourceFolderPath, destinationFolderPath);
+            }
         }
     }
 
@@ -176,8 +180,8 @@ public class ProjectGenerator {
         }
         HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(entities, context);
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
-        Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
-        selectedSecurityOption.ifPresent(security -> {
+//        Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
+//        selectedSecurityOption.ifPresent(security -> {
             try {
                 HashMap<String, Object> securityMap=FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType,context);
                 finalRenderData.putAll(securityMap);
@@ -257,6 +261,8 @@ public class ProjectGenerator {
         }
 
         renderAndCopyFiles(context.getProject().getProjectFiles(), projectFilesEditsHashMap);
+
+        renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         renderFilesEdits(projectFilesEdits, projectFilesEditsHashMap);
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
@@ -265,9 +271,21 @@ public class ProjectGenerator {
         System.out.println(securityType + " SECURITYYY");
         Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
 
-        selectedSecurityOption.ifPresent(security -> {
+            selectedSecurityOption.ifPresent(security -> {
+                try {
+                    renderFilesEdits(security.getSecurityFiles(), projectFilesEditsHashMap);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+
+        String cacheProvider = (String) context.getFrameworkConfiguration().get("cacheProvider");
+        Optional<FrameworkCaching> selectedCacheProviderOption = context.getFramework().getSelectedCacheProviderByName(cacheProvider);
+
+        selectedCacheProviderOption.ifPresent(frameworkCaching -> {
             try {
-                renderFilesEdits(security.getSecurityFiles(), projectFilesEditsHashMap);
+                renderFilesEdits(frameworkCaching.getConfigFiles(), projectFilesEditsHashMap);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -283,6 +301,72 @@ public class ProjectGenerator {
                 throw new RuntimeException(e);
             }
         });
+
+        // Post-setup for Django: create venv and install requirements
+        try {
+            if (context.getFramework().getCoreFramework().equalsIgnoreCase("Django")) {
+                String projectPath = engine.simpleRender(context.getDestinationFolder() + "/" + context.getProjectName(),
+                        Map.of("projectName", context.getProjectName()));
+                setupDjangoEnvironment(projectPath);
+            }
+        } catch (Exception e) {
+            System.err.println("   ⚠️  Post-setup Django échoué: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Configure a Python virtual environment and installs requirements for Django projects
+     */
+    private void setupDjangoEnvironment(String projectPath) throws Exception {
+        System.out.println("🐍 Configuration de l'environnement Django...");
+        File projectDir = new File(projectPath);
+        if (!projectDir.exists()) {
+            System.out.println("   ⚠️  Dossier projet introuvable: " + projectPath);
+            return;
+        }
+
+        // 1) Create venv
+        if (!createVirtualEnvironment(projectPath)) {
+            System.out.println("   ⚠️  Impossible de créer le venv. Étape ignorée.");
+            return;
+        }
+
+        // 2) Ensure manage.py is executable
+        File manage = new File(projectPath + "/manage.py");
+        if (manage.exists()) {
+            try { manage.setExecutable(true); } catch (Exception ignored) {}
+        }
+
+        // 3) Install requirements using venv pip
+        File pipFile = new File(projectPath + "/venv/bin/pip");
+        if (!pipFile.exists()) {
+            System.out.println("   ⚠️  pip introuvable dans le venv, installation des deps ignorée.");
+            return;
+        }
+
+        File requirements = new File(projectPath + "/requirements.txt");
+        if (!requirements.exists()) {
+            System.out.println("   ℹ️  Aucun requirements.txt trouvé, rien à installer.");
+            return;
+        }
+
+        System.out.println("   📦 Installation des dépendances à partir de requirements.txt...");
+        ProcessBuilder pipInstall = new ProcessBuilder(pipFile.getAbsolutePath(), "install", "-r", "requirements.txt");
+        pipInstall.directory(projectDir);
+        pipInstall.redirectErrorStream(true);
+        Process p = pipInstall.start();
+        try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream()))) {
+            String line;
+            while ((line = r.readLine()) != null) {
+                System.out.println("   " + line);
+            }
+        }
+        int code = p.waitFor();
+        if (code == 0) {
+            System.out.println("   ✅ Dépendances installées avec succès");
+        } else {
+            System.out.println("   ⚠️  pip install a retourné le code: " + code);
+        }
     }
 
     public void generateFrontendComponents(ProjectGenerationContext context,
@@ -342,6 +426,22 @@ public class ProjectGenerator {
                                           GenesisGenerator genesisGenerator,
                                           TableMetadata tableMetadata,
                                           boolean generateComponentOnly) throws Exception {
+
+        // Liste des tables Django par défaut à exclure
+        Set<String> djangoDefaultTables = Set.of(
+            "auth_group", "auth_group_permissions", "auth_permission",
+            "auth_user", "auth_user_groups", "auth_user_user_permissions",
+            "django_admin_log", "django_content_type", "django_migrations",
+            "django_session", "authgroup", "authgrouppermission", "authpermission",
+            "authuser", "authusergroup", "authuseruserpermission",
+            "djangoadminlog", "djangocontenttype", "djangomigration", "djangosession"
+        );
+
+        // Exclure les tables Django par défaut
+        if (djangoDefaultTables.contains(tableMetadata.getTableName().toLowerCase())) {
+            System.out.println("Skipping Django default table: " + tableMetadata.getTableName());
+            return;
+        }
 
         String renderedDestinationFolder = engine.simpleRender(context.getDestinationFolder(), Map.of("projectName", context.getProjectName()));
         System.out.println("Generating backend components for project: " + context.getProjectName() + " at rendered destination: " + renderedDestinationFolder);
@@ -467,7 +567,6 @@ public class ProjectGenerator {
         Database database = context.getDatabase();
         Framework framework = context.getFramework();
         Credentials credentials = context.getCredentials();
-        useRealSidAndDriverType(database,credentials);
         Connection connection = context.getConnection();
         Language language = context.getLanguage();
 
@@ -505,15 +604,78 @@ public class ProjectGenerator {
         }
     }
 
-    private void useRealSidAndDriverType(Database database,Credentials credentials)
-    {
-        if(credentials.getSID()!=null)
-        {
-            database.setSid(credentials.getSID());
+    private boolean createVirtualEnvironment(String projectPath) {
+        try {
+            System.out.println("🐍 Création d'un nouvel environnement virtuel Python...");
+
+            // Supprimer l'ancien venv s'il existe
+            File oldVenv = new File(projectPath + "/venv");
+            if (oldVenv.exists()) {
+                System.out.println("   🗑️  Suppression de l'ancien environnement virtuel...");
+                deleteDirectory(oldVenv);
+            }
+
+            // Créer un nouvel environnement virtuel
+            ProcessBuilder venvBuilder = new ProcessBuilder("python3", "-m", "venv", "venv");
+            venvBuilder.directory(new File(projectPath));
+            venvBuilder.redirectErrorStream(true);
+
+            Process venvProcess = venvBuilder.start();
+
+            // Lire la sortie
+            java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(venvProcess.getInputStream())
+            );
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println("   " + line);
+            }
+
+            int exitCode = venvProcess.waitFor();
+
+            if (exitCode == 0) {
+                System.out.println("   ✅ Environnement virtuel créé avec succès");
+
+                // Donner les permissions d'exécution
+                File venvPython = new File(projectPath + "/venv/bin/python");
+                if (venvPython.exists()) {
+                    venvPython.setExecutable(true);
+                    File venvDir = new File(projectPath + "/venv/bin");
+                    File[] pythonFiles = venvDir.listFiles((dir, name) -> name.startsWith("python"));
+                    if (pythonFiles != null) {
+                        for (File pythonFile : pythonFiles) {
+                            pythonFile.setExecutable(true);
+                        }
+                    }
+                    System.out.println("   ✅ Permissions d'exécution accordées");
+                }
+
+                return true;
+            } else {
+                System.err.println("   ❌ Erreur lors de la création de l'environnement virtuel (code: " + exitCode + ")");
+                return false;
+            }
+
+        } catch (Exception e) {
+            System.err.println("   ❌ Erreur lors de la création de l'environnement virtuel: " + e.getMessage());
+            return false;
         }
-        if(credentials.getDriverType()!=null)
-        {
-            database.setDriverType(credentials.getDriverType());
+    }
+
+    private void deleteDirectory(File directory) {
+        if (directory.exists()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectory(file);
+                    } else {
+                        file.delete();
+                    }
+                }
+            }
+            directory.delete();
         }
     }
 

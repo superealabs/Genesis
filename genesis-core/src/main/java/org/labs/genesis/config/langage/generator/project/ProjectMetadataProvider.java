@@ -41,10 +41,26 @@ public class ProjectMetadataProvider {
             configFile.put("databasePassword", database.getCredentials().getPwd());
             configFile.put("databaseType", database.getName());
             configFile.put("databaseVersion", database.getDriverVersion());
+
+            // Django-specific database configuration
+            configFile.put("databaseEngine", getDjangoDatabaseEngine(database.getName()));
+            configFile.put("databaseName", database.getCredentials().getDatabaseName());
+            // configFile.put("databaseUser", database.getCredentials().getUser());
+            configFile.put("databaseHost", database.getCredentials().getHost());
+            configFile.put("databasePort", database.getCredentials().getPort());
         }
         configFile.putAll(frameworkOptions);
 
         return configFile;
+    }
+    private static String getDjangoDatabaseEngine(String databaseType) {
+        return switch (databaseType) {
+            case "MySQL" -> "django.db.backends.mysql";
+            case "PostgreSQL" -> "django.db.backends.postgresql";
+            case "SQL Server" -> "django.db.backends.sqlite3"; // Fallback to SQLite for SQL Server
+            case "Oracle" -> "django.db.backends.sqlite3"; // Fallback to SQLite for Oracle
+            default -> "django.db.backends.sqlite3";
+        };
     }
 
     static HashMap<String, Object> getDependencyFileHashMap(String projectDescription, Database database, Language language, Framework framework, Map<String, Object> langageConfiguration, Map<String, Object> frameworkConfiguration) {

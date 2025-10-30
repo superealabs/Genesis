@@ -1,11 +1,12 @@
 package org.labs.genesis.connexion.providers;
 
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.Language;
-import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
+import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
+import org.labs.utils.StringUtils;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -13,8 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.labs.utils.StringUtils.toCamelCase;
 
 public class OracleDatabase extends Database {
 
@@ -26,7 +25,7 @@ public class OracleDatabase extends Database {
         DatabaseMetaData metaData = connection.getMetaData();
 
         int tempIndex = 0;
-        try (ResultSet tables = metaData.getTables(null, credentials.getUser(), "%", new String[]{"TABLE"})) {
+        try (ResultSet tables = metaData.getTables(null, getCredentials().getUser(), "%", new String[]{"TABLE"})) {
             while (tables.next() && size > tableNames.size()) {
                 if (tempIndex < (index * size)) {
                     tempIndex++;
@@ -46,7 +45,7 @@ public class OracleDatabase extends Database {
         DatabaseMetaData metaData = connection.getMetaData();
 
         int tempIndex = 0;
-        try (ResultSet views = metaData.getTables(null, credentials.getUser(), "%", new String[]{"VIEW"})) {
+        try (ResultSet views = metaData.getTables(null, getCredentials().getUser(), "%", new String[]{"VIEW"})) {
             while (views.next() && size > viewNames.size()) {
                 if (tempIndex < (index * size)) {
                     tempIndex++;
@@ -469,7 +468,7 @@ public class OracleDatabase extends Database {
     public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language,Connection connex,Framework framework) throws SQLException {
         List<ColumnMetadata> listeCols = new ArrayList<>();
 
-        try (ResultSet columns = metaData.getColumns(null, this.credentials.getUser(), tableName, null)) {
+        try (ResultSet columns = metaData.getColumns(null, this.getCredentials().getUser(), tableName, null)) {
             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
             while (columns.next()) {
                 ColumnMetadata column = new ColumnMetadata();
@@ -491,7 +490,7 @@ public class OracleDatabase extends Database {
                 boolean useTimeZone = useTimeZone(columns);
                 boolean isColumnInterval = isColumnInterval(columns);
 
-                column.setName(toCamelCase(columnName.toLowerCase()));
+                column.setName(StringUtils.toCamelCase(columnName.toLowerCase()));
                 column.setReferencedColumn(columnName);
                 column.setNumeric(isColumnNumeric);
                 column.setNumericWithPrecision(isColumnNumericWithPrecision);
