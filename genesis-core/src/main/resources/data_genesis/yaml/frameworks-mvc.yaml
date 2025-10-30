@@ -657,6 +657,7 @@
         
         public interface IService<T, in TKey, in TSearch> where T : class
         {
+            Task<string> ExportToCsvAsync(List<T> entity);
             Task<PagedResponse<T>> GetAllAsync(
                 int page, int pageSize, string? sorting,
                 params Expression<Func<T, object?>>[]? includeProperties);
@@ -1838,6 +1839,67 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
 
+    - fileType: "Export Util"
+      fileName: "ExportUtil"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+
+        using System.Reflection;
+        using System.Text;
+        using System.Reflection;
+        using System.Text;
+
+        public static class ExportUtil
+        {
+            // Generate CSV from a list of objects using reflection
+            public static string GenerateCsv<T>(List<T> data)
+            {
+                if (data == null || !data.Any())
+                {
+                    return string.Empty;
+                }
+
+                var stringBuilder = new StringBuilder();
+                var type = typeof(T);
+                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+                // Header
+                var header = string.Join(",", properties.Select(p => p.Name));
+                stringBuilder.AppendLine(header);
+
+                // Data rows
+                foreach (var item in data)
+                {
+                    var line = properties.Select(property =>
+                    {
+                        var value = property.GetValue(item);
+                        return value != null ? EscapeCsv(value.ToString()) : string.Empty;
+                    });
+                    stringBuilder.AppendLine(string.Join(",", line));
+                }
+
+                return stringBuilder.ToString();
+            }
+
+            private static string EscapeCsv(string value)
+            {
+                if (string.IsNullOrEmpty(value))
+                    return string.Empty;
+
+                var escaped = value.Replace("\"", "\"\"");
+
+                if (escaped.Contains(",") || escaped.Contains("\"") || escaped.Contains("\n") || escaped.Contains("\r"))
+                {
+                    return $"\"{escaped}\"";
+                }
+
+                return escaped;
+            }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
+
     - fileType: "Filter Builder Util"
       fileName: "FilterBuilder"
       extension: "cs"
@@ -2268,7 +2330,7 @@
               public List<${majStart(className)}> ${majStart(className)}s { get; set; } = new List<${majStart(className)}>();
               public PageInfo Page { get; set; } = new PageInfo();
 
-              {{#each fieldsFK}}public IEnumerable<SelectListItem> ${majStart(this.type)}s { get; set; } = new List<SelectListItem>();{{/each}}
+              {{#each fieldsFK}}public IEnumerable<SelectListItem> ${majStart(this.type)}sSelectList { get; set; } = new List<SelectListItem>();{{#if !@last}}{{newline}}{{/if}}{{/each}}
           
               public string CurrentSort { get; set; } = string.Empty;
           }
@@ -2362,6 +2424,12 @@
               public ${majStart(className)}Service(I${majStart(className)}Repository repository)
               {
                   _repository = repository;
+              }
+
+              public Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)})
+              {
+                  var csv = ExportUtil.GenerateCsv(${minStart(className)});
+                  return Task.FromResult(csv);
               }
           
               public async Task<PagedResponse<${majStart(className)}>> GetAllAsync(
@@ -2485,6 +2553,7 @@
       using ${majStart(projectName)}.Filters;
       using ${majStart(projectName)}.ViewModels;
       using System.Text.Json;
+      using System.Text;
       {{#if useAuthCookie}}using Microsoft.AspNetCore.Authorization;{{/if}}
 
     controllerAnnotations: ""
@@ -2502,6 +2571,20 @@
       {{tab}}   {{#if @last}}_detector = detector;{{newline}}{{/if}}{{/each}}
       {{tab}}}
     controllerMethodContent: |
+      {{tab}}{{#if useAuthCookie}}[Authorize]{{else}}{{removeLine}}{{/if}}
+      {{tab}}// POST: /${majStart(className)}/ExportToCsv
+      {{tab}}public async Task<IActionResult> ExportToCsvAsync(int page = 0, int pageSize = 10, string? sortOrder = null)
+      {{tab}}{
+      {{tab}}    var results = await _service.GetAllAsync(page, pageSize, sortOrder);
+
+      {{tab}}	var csvContent = await _service.ExportToCsvAsync(results.Content);
+      {{tab}}	var bytes = Encoding.UTF8.GetBytes(csvContent);
+      
+      {{tab}}	Response.Headers.Add("Content-Disposition", "attachment; filename=${majStart(className)}.csv");
+      
+      {{tab}}	return File(bytes, "text/csv; charset=utf-8");
+      {{tab}}}
+      
       {{tab}}{{#if useAuthCookie}}[Authorize]{{else}}{{removeLine}}{{/if}}
       {{tab}}// GET: /${majStart(className)}
       {{tab}}public async Task<IActionResult> Index(int page = 0, int pageSize = 10, string? sortOrder = null, string? sortBy = null)
@@ -2524,7 +2607,7 @@
       {{tab}}        Page = results.Page ?? new PageInfo { Number = page, Size = pageSize },
       {{tab}}        {{#each fieldsFK}}${majStart(this.type)}DisplayColumn = ${minStart(this.type)}DisplayColumn,
       {{tab}}        ${majStart(this.type)}PkColumn = ${minStart(this.type)}PkColumn,
-      {{tab}}        ${majStart(this.type)}s = new SelectList(${minStart(this.type)}s?.Content ?? new List<${this.type}>(), ${minStart(this.type)}PkColumn, ${minStart(this.type)}DisplayColumn),
+      {{tab}}        ${majStart(this.type)}sSelectList = new SelectList(${minStart(this.type)}s?.Content ?? new List<${this.type}>(), ${minStart(this.type)}PkColumn, ${minStart(this.type)}DisplayColumn),
       {{tab}}        {{/each}}{{removeLine}}
       {{tab}}        CurrentSort = finalSortOrder
       {{tab}}    };
@@ -2551,7 +2634,7 @@
       {{tab}}        Page = results.Page ?? new PageInfo { Number = page, Size = pageSize },
       {{tab}}        {{#each fieldsFK}}${majStart(this.type)}DisplayColumn = ${minStart(this.type)}DisplayColumn,
       {{tab}}        ${majStart(this.type)}PkColumn = ${minStart(this.type)}PkColumn,
-      {{tab}}        ${majStart(this.type)}s = new SelectList(${minStart(this.type)}s?.Content ?? new List<${this.type}>(), ${minStart(this.type)}PkColumn, ${minStart(this.type)}DisplayColumn),
+      {{tab}}        ${majStart(this.type)}sSelectList = new SelectList(${minStart(this.type)}s?.Content ?? new List<${this.type}>(), ${minStart(this.type)}PkColumn, ${minStart(this.type)}DisplayColumn),
       {{tab}}        {{/each}}{{removeLine}}
       {{tab}}        Search${majStart(className)}Criteria = dto
       {{tab}}    };
@@ -2726,7 +2809,7 @@
       {{tab}}    return RedirectToAction(nameof(Index));
       {{tab}}}{{else}}{{removeLine}}{{/if}}
       
-      {{tab}}private async Task<${majStart(className)}ViewModel> BuildFormViewModel(${majStart(className)} ${minStart(className)})
+      {{#if !isView}}{{tab}}private async Task<${majStart(className)}ViewModel> BuildFormViewModel(${majStart(className)} ${minStart(className)})
       {{tab}}{
       {{tab}}    {{#each fieldsFK}}
       {{tab}}    string ${minStart(this.type)}DisplayColumn = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
@@ -2738,7 +2821,7 @@
       {{tab}}        ${majStart(className)} = ${minStart(className)},
       {{tab}}        {{#each fieldsFK}}${majStart(this.type)}DisplayColumn = ${minStart(this.type)}DisplayColumn,
       {{tab}}        ${majStart(this.type)}PkColumn = ${minStart(this.type)}PkColumn,
-      {{tab}}        ${majStart(this.type)}s = new SelectList(${minStart(this.type)}s?.Content ?? new List<${this.type}>(), ${minStart(this.type)}PkColumn, ${minStart(this.type)}DisplayColumn),
+      {{tab}}        ${majStart(this.type)}sSelectList = new SelectList(${minStart(this.type)}s?.Content ?? new List<${this.type}>(), ${minStart(this.type)}PkColumn, ${minStart(this.type)}DisplayColumn),
       {{tab}}        {{/each}}{{removeLine}}
       {{tab}}        {{#each fields}}
       {{tab}}        {{#if this.columnType = json}}${majStart(this.name)}Json = ${minStart(className)}?.${majStart(this.name)},
@@ -2746,7 +2829,7 @@
       {{tab}}        {{else}}{{removeLine}}{{/if}}
       {{tab}}        {{/each}}{{removeLine}}
       {{tab}}    };
-      {{tab}}}
+      {{tab}}}{{else}}{{removeLine}}{{/if}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"
     controllerAdditionalFiles: [ ]
@@ -2760,6 +2843,7 @@
     rootPath: "~"
     backLink: "@Url.Action(\"Index\")"
     previousLink: "@previousUrl"
+    antiForgeryTokenTagHelper: "@Html.AntiForgeryToken()"
     layout:
       name: "_Layout"
       assetsImportLink: "~/css/style.css\" asp-append-version=\"true"
@@ -2786,7 +2870,7 @@
       inputTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}\""
       inputRadioTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}\" asp-for=\"Search${majStart(className)}Criteria.${majStart(this.name)}\""
       inputDateTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}?.ToString(\"yyyy-MM-ddTHH:mm\")\""
-      selectTagHelper: "name=\"${majStart(this.columnNameField)}\" asp-items=\"@(Model?.${majStart(this.type)}s ?? new List<SelectListItem>())\" asp-for=\"Search${majStart(className)}Criteria.${majStart(this.columnNameField)}\""
+      selectTagHelper: "name=\"${majStart(this.columnNameField)}\" asp-items=\"@(Model?.${majStart(this.type)}sSelectList ?? new List<SelectListItem>())\" asp-for=\"Search${majStart(className)}Criteria.${majStart(this.columnNameField)}\""
       deleteDataTagHelper: "data-id=\"@${minStart(className)}.${majStart(pkColumn)}\""
       pageSizeTagHelper: "selected=\"@(Model.Page.Size == ${this})\""
       dataValue: "@${minStart(className)}.${majStart(this.name)}"
@@ -2802,6 +2886,7 @@
       createLink: "@Url.Action(\"Create\")"
       updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"
       deleteLink: "asp-action=\"Delete\""
+      exportLink: "asp-action=\"ExportToCsv\""
       pageSizeChangeLink: "'@Url.Action(\"Index\")?page=0&pageSize='+this.value"
       previousPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"
       previousClassCondition: " @(Model.Page.Number == 0 ? \"disabled\" : \"\")"
@@ -2816,9 +2901,10 @@
       nextPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number + 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"
       nextClassCondition: " @(Model.Page.Number == Model.Page.TotalPages - 1 ? \"disabled\" : \"\")"
       onGoingPageLink: "@Url.Action(\"Index\")"
-      onGoingPageSizeTagHelper: "value=\"@Model.Page.Size\""
+      pageNumberValue: "@Model.Page.Number"
+      pageSizeValue: "@Model.Page.Size"
+      currentSortValue: "@Model.CurrentSort"
       totalElementsTagHelper: "@Model.Page.TotalElements"
-      onGoingSortOrderTagHelper: "value=\"@Model.CurrentSort\""
       activeSortAscCondition: "@(Model.CurrentSort?.Contains(\"${this.name},asc\") == true ? \"active\" : \"\")"
       activeSortDescCondition: "@(Model.CurrentSort?.Contains(\"${this.name},desc\") == true ? \"active\" : \"\")"
       onGoingPagesLoop: |
@@ -2873,7 +2959,7 @@
       textAreaTagHelper: "asp-for=\"${majStart(this.name)}\""
       textAreaValidationTagHelper: " asp-validation-for=\"${majStart(this.name)}\""
       checkedRadioTagHelper: "checked=\"@(Model?.${majStart(className)}.${majStart(this.name)} != false ? \"checked\" : null)\""
-      selectTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.columnNameField)}\" asp-items=\"@(Model?.${majStart(this.type)}s)\""
+      selectTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.columnNameField)}\" asp-items=\"@(Model?.${majStart(this.type)}sSelectList)\""
       createLink: "asp-action=\"Create\" asp-controller=\"${className}\""
       scriptSection: |
         @section Scripts {
@@ -2902,7 +2988,7 @@
       inputTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.name)}\""
       textAreaTagHelper: "asp-for=\"${majStart(this.name)}\""
       textAreaValidationTagHelper: " asp-validation-for=\"${majStart(this.name)}\""
-      selectTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.columnNameField)}\" asp-items=\"Model.${majStart(this.type)}s\""
+      selectTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.columnNameField)}\" asp-items=\"Model.${majStart(this.type)}sSelectList\""
       updateLink: "asp-action=\"Edit\" asp-controller=\"${className}\""
       scriptSection: |
         @section Scripts {
