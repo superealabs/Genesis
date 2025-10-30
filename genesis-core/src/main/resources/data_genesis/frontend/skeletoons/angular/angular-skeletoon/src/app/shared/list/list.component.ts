@@ -5,21 +5,21 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
 import { Language,LanguageService } from '../services/language/language.service';
 
 
-export interface Colonne {
+export interface Column {
   type: 'string' | 'number' | 'Date';
   label: string;
   fieldName: string;
 }
 
 @Component({
-  selector: 'app-tableau',
+  selector: 'app-list',
   standalone: true,
   imports: [CommonModule, ConfirmationBoxComponent],
   template: `
     <table class="styled-table">
       <thead>
         <tr>
-          <th *ngFor="let col of colonnes; let i = index" (click)="setActiveColumn(i)">
+          <th *ngFor="let col of columns; let i = index" (click)="setActiveColumn(i)">
             {{ col.label }}
             <span *ngIf="activeColumn === i">
               <i class="bi" [ngClass]="sortAsc ? 'bi-caret-down-fill' : 'bi-caret-up-fill'"></i>
@@ -29,8 +29,8 @@ export interface Colonne {
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let ligne of donnees">
-          <td *ngFor="let col of colonnes; let i = index">
+        <tr *ngFor="let ligne of datas">
+          <td *ngFor="let col of columns; let i = index">
             {{ formatValue(ligne[i], col.type) }}
           </td>
           <td class="actions" *ngIf="!isView">
@@ -117,9 +117,9 @@ export interface Colonne {
     }
   `]
 })
-export class TableauComponent implements OnInit{
-  @Input() colonnes: Colonne[] = [];
-  @Input() donnees: any[] = [];
+export class ListComponent implements OnInit{
+  @Input() columns: Column[] = [];
+  @Input() datas: any[] = [];
   @Input() routeToDetail: string = 'entity';
   @Input() routeToModify: string = 'entity';
   @Input() editFn?: (ligne: any) => void;
@@ -211,7 +211,7 @@ export class TableauComponent implements OnInit{
 
   openConfirmation(ligne: any) {
     this.selectedItem = ligne;
-    this.selectedItemName = ligne[this.colonnes[1]?.fieldName] || 'Item';
+    this.selectedItemName = ligne[this.columns[1]?.fieldName] || 'Item';
     this.showConfirmation = true;
   }
 
@@ -227,5 +227,5 @@ export class TableauComponent implements OnInit{
   redirect(route: string, id: any) {
     this.router.navigate([route, id]);
   }
-  
+
 }

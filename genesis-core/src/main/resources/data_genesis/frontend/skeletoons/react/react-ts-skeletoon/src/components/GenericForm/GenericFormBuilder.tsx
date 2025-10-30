@@ -14,22 +14,21 @@ import {
     Button,
     FormHelperText
 } from '@mui/material';
-import {Add, Save} from '@mui/icons-material';
+import { Add, Save, ArrowBack } from '@mui/icons-material'; // 👈 NOUVEAU
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom'; // 👈 AJOUT useNavigate
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useNavigate } from 'react-router-dom';
-import {ApiResponse} from "@/services/api";
+import { ApiResponse } from "@/services/api";
 import BackdropBlocker from "@/components/Backdrop/BackdropBlocker";
-import {pageContainerSx, breadcrumbSx} from "@/styles/mui-patterns";
+import { pageContainerSx, breadcrumbSx } from "@/styles/mui-patterns";
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import {TimePicker} from "@mui/x-date-pickers";
+import { TimePicker } from "@mui/x-date-pickers";
 import { parseTimeString } from '@/utils/timeParser';
-import {formatTimeTz, parseTimeTz} from "@/utils/timeTzParser";
-import {DurationInput} from "@/components/Input/DurationInput";
+import { formatTimeTz, parseTimeTz } from "@/utils/timeTzParser";
+import { DurationInput } from "@/components/Input/DurationInput";
 import { useTranslation } from 'react-i18next';
 
 interface FormFieldConfig {
@@ -58,6 +57,7 @@ interface Props<T> {
     mode?: 'create' | 'update';
     detailRedirect?: string | ((id: string | number) => string);
     idKey?: string;
+    listRoute?: string;
 }
 
 export default function GenericFormBuilder<T extends Record<string, any>>({
@@ -70,6 +70,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                                               mode,
                                                                               detailRedirect,
                                                                               idKey = 'id',
+                                                                              listRoute,
                                                                           }: Props<T>) {
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
@@ -144,7 +145,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
             enqueueSnackbar(res.message, { variant: 'success' });
 
             if (mode === 'create') {
-                const recordId = res.data?.[idKey]; // 👈 clé dynamique
+                const recordId = res.data?.[idKey];
                 if (recordId != null) {
                     const target =
                         typeof detailRedirect === 'function'
@@ -177,8 +178,15 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
         <>
             <BackdropBlocker open={loading} />
             <Box sx={pageContainerSx}>
+                {/* 👇 NOUVEAU : Conteneur flex pour Breadcrumbs + Bouton */}
                 <Box
-                    sx={{ width: 1, py: 3 }}
+                    sx={{
+                        width: 1,
+                        py: 3,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                    }}
                 >
                     <Breadcrumbs sx={breadcrumbSx}>
                         <Link underline="hover" color="inherit" component={RouterLink} to="/">
@@ -194,13 +202,24 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                         </Link>
                         <Typography color="text.primary">{title}</Typography>
                     </Breadcrumbs>
+
+                    {/* 👇 NOUVEAU : Bouton conditionnel retour à la liste */}
+                    <Button
+                        variant="text"
+                        color="primary"
+                        startIcon={<ArrowBack />}
+                        onClick={() => (window.location.href = redirectTo || '/')}
+                        sx={{ flexShrink: 0 }}
+                    >
+                        {t('messages.button.backToList')}
+                    </Button>
                 </Box>
 
                 <Paper
                     elevation={3}
                     sx={{
                         maxWidth: 720,
-                        mx: 'auto', // centré
+                        mx: 'auto',
                         p: { xs: 3, md: 5 },
                         borderRadius: 4,
                         bgcolor: 'background.paper',
@@ -220,7 +239,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                 display: 'grid',
                                 gridTemplateColumns: {
                                     base: '1fr',
-                                    md: fieldCount > 10 ? 'repeat(2, 1fr)' : 'minmax(480px, 1fr)', // <-- élargi
+                                    md: fieldCount > 10 ? 'repeat(2, 1fr)' : 'minmax(480px, 1fr)',
                                 },
                                 gap: 4,
                                 mb: 4,

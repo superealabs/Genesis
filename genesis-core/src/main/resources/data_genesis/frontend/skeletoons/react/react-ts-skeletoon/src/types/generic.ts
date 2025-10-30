@@ -14,4 +14,5 @@ export interface ListConfig<T> {
     defaultSort: `${string},${'asc' | 'desc'}`;
     entityName: string;
     pageTitle?: string;
+    createRoute?: string;
 }

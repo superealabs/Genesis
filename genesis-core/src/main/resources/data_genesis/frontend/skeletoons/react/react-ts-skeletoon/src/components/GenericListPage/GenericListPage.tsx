@@ -2,7 +2,9 @@
 import { ListConfig } from "@/types/generic";
 import { usePaginatedResource } from "@/hooks/usePaginatedResource";
 import { useState } from "react";
-import { Box, Breadcrumbs as MuiBreadcrumbs, Link, Typography } from '@mui/material';
+import { Box, Breadcrumbs as MuiBreadcrumbs, Link, Typography, Button } from '@mui/material';
+import { Add } from '@mui/icons-material'; // 👈 NOUVEAU
+import { useNavigate } from 'react-router-dom'; // 👈 NOUVEAU
 import PaginationSize from "../PaginationSize/PaginationSize";
 import PageNavigator from "../PageNavigator/PageNavigator";
 import PageSelector from "../PageSelector/PageSelector";
@@ -10,7 +12,7 @@ import ListFilterBuilder from "../GenericListPage/ListFilterBuilder";
 import ListDataTable from "../GenericListPage/ListDataTable";
 import { FilterState } from "@/types/filter";
 import BackdropBlocker from "@/components/Backdrop/BackdropBlocker";
-import {pageContainerSx, breadcrumbSx} from "@/styles/mui-patterns";
+import { pageContainerSx, breadcrumbSx } from "@/styles/mui-patterns";
 import { useTranslation } from 'react-i18next';
 
 export default function GenericListPage<T extends Record<string, unknown>>(
@@ -31,6 +33,7 @@ export default function GenericListPage<T extends Record<string, unknown>>(
         } = usePaginatedResource<T>(config.searchFn, config.defaultSort);
 
         const { t } = useTranslation();
+        const navigate = useNavigate();
 
         const [pendingFilters, setPendingFilters] = useState<FilterState>({});
 
@@ -59,22 +62,38 @@ export default function GenericListPage<T extends Record<string, unknown>>(
                 {loading && <BackdropBlocker open={loading} />}
 
                 <Box sx={pageContainerSx}>
-                    <MuiBreadcrumbs sx={breadcrumbSx} separator="/">
-                        <Link underline="hover" color="inherit" href="/" sx={{ fontWeight: 'normal' }}>
-                            {t('messages.projectName')}
-                        </Link>
-                        <Link
-                            underline="hover"
-                            color="inherit"
-                            href={`/${config.entityName.toLowerCase()}s`}
-                            sx={{ fontWeight: 'normal' }}
-                        >
-                            {config.entityName}s
-                        </Link>
-                        <Typography color="text.primary" fontWeight="bold">
-                            {t('messages.entity.list.nav')}
-                        </Typography>
-                    </MuiBreadcrumbs>
+                    {/* 👇 NOUVEAU : Conteneur flex pour Breadcrumbs + Bouton */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <MuiBreadcrumbs sx={breadcrumbSx} separator="/">
+                            <Link underline="hover" color="inherit" href="/" sx={{ fontWeight: 'normal' }}>
+                                {t('messages.projectName')}
+                            </Link>
+                            <Link
+                                underline="hover"
+                                color="inherit"
+                                href={`/${config.entityName.toLowerCase()}s`}
+                                sx={{ fontWeight: 'normal' }}
+                            >
+                                {config.entityName}s
+                            </Link>
+                            <Typography color="text.primary" fontWeight="bold">
+                                {t('messages.entity.list.nav')}
+                            </Typography>
+                        </MuiBreadcrumbs>
+
+                        {/* 👇 NOUVEAU : Bouton conditionnel de création */}
+                        {config.createRoute && (
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                startIcon={<Add />}
+                                onClick={() => navigate(config.createRoute!)}
+                                sx={{ flexShrink: 0 }}
+                            >
+                                {t('messages.button.addEntity').replace('{entity}', config.entityName)}
+                            </Button>
+                        )}
+                    </Box>
 
                     <Typography
                         variant="h4"

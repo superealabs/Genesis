@@ -78,6 +78,7 @@ public class Framework {
         private String modelForeignContextAttribute;
         private String modelPackage;
         private List<FilesEdit> modelAdditionalFiles;
+        private List<FilesEdit>  modelTestUnitFiles;
         private Map<String, Object> validationAnnotations;
     }
 
