@@ -30,6 +30,7 @@ import { parseTimeString } from '@/utils/timeParser';
 import { formatTimeTz, parseTimeTz } from "@/utils/timeTzParser";
 import { DurationInput } from "@/components/Input/DurationInput";
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 
 interface FormFieldConfig {
     label: string;
@@ -87,25 +88,29 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
             for (const [key, config] of Object.entries(fields)) {
                 if (config.foreignKey) {
                     try {
-                        const url = `${import.meta.env.VITE_API_BASE}${config.foreignKey.endpoint}`;
-                        const response = await fetch(url);
-                        const data = await response.json();
-                        const content = data.content || data.data?.content || data;
+                        // ✅ Utiliser axios au lieu de fetch
+                        const response = await axios.get(
+                            `${import.meta.env.VITE_API_BASE}${config.foreignKey.endpoint}`
+                        )
+                        const data = response.data
+                        const content = data.content || data.data?.content || data
+
                         const options = Array.isArray(content)
                             ? content.map((item: any) => ({
                                 value: item[config.foreignKey!.valueKey],
                                 label: item[config.foreignKey!.labelKey],
                             }))
-                            : [];
-                        setForeignOptions((prev) => ({ ...prev, [key]: options }));
+                            : []
+
+                        setForeignOptions((prev) => ({ ...prev, [key]: options }))
                     } catch (error) {
-                        console.error(`Erreur chargement ${key}:`, error);
+                        console.error('Erreur chargement ' + key, error)
                     }
                 }
             }
-        };
-        loadForeignKeys();
-    }, [fields]);
+        }
+        loadForeignKeys()
+    }, [fields])
 
     useEffect(() => {
         if (initialData) {
