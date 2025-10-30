@@ -9,6 +9,7 @@ import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.genesis.frontend.generator.model.InterfaceLang;
+import org.labs.genesis.config.langage.FrameworkMVC;
 import org.labs.genesis.listener.ColorPicker;
 
 import javax.swing.*;
@@ -27,6 +28,8 @@ public class FrontendConfigurationForm {
     private JComboBox<FrontendFramework> frontendFrameworkOptions;
     private JLabel languageLabel;
     private JLabel frameworkLabel;
+    private JLabel templateEngine;
+    private JComboBox<String> viewsTemplateEngineOptions;
     private JComboBox<String> navbarSelect;
     private JTextField primaryColorField;
     private JButton primaryColorPickerButton;
@@ -193,6 +196,14 @@ public class FrontendConfigurationForm {
         populateFrameworkOptions((FrontendLanguage) frontendLanguageOptions.getSelectedItem());
         interfaceLangOptions.setListData(ProjectGenerator.langs.values().toArray(new InterfaceLang[0]));
         navbarSelect.setModel(new DefaultComboBoxModel<>(new String[]{"Sidebar","Topbar"}));
+
+        languageLabel.setVisible(true);
+        frameworkLabel.setVisible(true);
+        frontendLanguageOptions.setVisible(true);
+        frontendFrameworkOptions.setVisible(true);
+
+        templateEngine.setVisible(false);
+        viewsTemplateEngineOptions.setVisible(false);
     }
 
     private void populateLanguageOptions() {
@@ -239,5 +250,26 @@ public class FrontendConfigurationForm {
             }
             component.setEnabled(accessible);
         }
+    }
+
+    private void configureMVCOptions(FrameworkMVC frameworkMVC) {
+        templateEngine.setVisible(true);
+        viewsTemplateEngineOptions.setVisible(true);
+
+        languageLabel.setVisible(false);
+        frameworkLabel.setVisible(false);
+        frontendLanguageOptions.setVisible(false);
+        frontendFrameworkOptions.setVisible(false);
+
+        viewsTemplateEngineOptions.removeAllItems();
+        viewsTemplateEngineOptions.addItem(frameworkMVC.getView().getViewTemplateEngine());
+    }
+
+    public void updateFormWithFrameworkMVCOptions(FrameworkMVC frameworkMVC) {
+        configureMVCOptions(frameworkMVC);
+    }
+
+    public void updateFormWithFrontendFrameworkOptions() {
+        initializeOptions();
     }
 }

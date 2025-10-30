@@ -57,7 +57,7 @@
       "DATETIME": "timestamp",
       "TIME": "time",
       "BIT": "boolean",
-      "CHAR": "uuid",
+      "CHAR": "string",
       "UUID": "uuid",
       "TINYTEXT": "string",
       "LONGTEXT": "string",
@@ -156,7 +156,7 @@
       "_int4": "integer[]",
       "_text": "text[]",
       "bytea": "bytea",
-      "inet": "string",
+      "inet": "inet",
       "cidr": "string",
       "macaddr": "string",
       "xml": "string"

@@ -10,6 +10,7 @@ import org.labs.genesis.forms.SpecificConfigurationForm;
 import org.labs.utils.StringUtils;
 
 import javax.swing.*;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;

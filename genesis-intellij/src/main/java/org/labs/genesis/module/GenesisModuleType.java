@@ -36,7 +36,7 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
         FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(projectGenerationContext );
         FrontendConditionalWizardStep frontendConditionalWizardStep = new FrontendConditionalWizardStep(projectGenerationContext, frontendConfigurationWizardStep);
         return new ModuleWizardStep[]{
-                new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep),
+                new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep, frontendConfigurationWizardStep),
                 initConditionalWizardStep,
                 sqlRunnerWizardStep,
                 genConfigConditionalWizardStep,
