@@ -22,6 +22,7 @@ public class Framework {
     private Boolean useCloud;
     private Boolean useEurekaServer;
     private Boolean isGateway;
+    private Boolean useFrontendApp = true;
     private Boolean withGroupId;
     private List<FilesEdit> additionalFiles;
     private List<ConfigurationMetadata> configurations;

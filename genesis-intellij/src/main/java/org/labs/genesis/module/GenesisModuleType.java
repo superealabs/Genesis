@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.icon.SdkIcons;
 import org.labs.genesis.wizards.*;
+import org.labs.genesis.wizards.conditionals.FrontendConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.GenConfigConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.InitConditionalWizardStep;
 
@@ -33,12 +34,13 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
         GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext);
         GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(projectGenerationContext, generationOptionWizardStep);
         FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(projectGenerationContext );
+        FrontendConditionalWizardStep frontendConditionalWizardStep = new FrontendConditionalWizardStep(projectGenerationContext, frontendConfigurationWizardStep);
         return new ModuleWizardStep[]{
                 new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep),
                 initConditionalWizardStep,
                 sqlRunnerWizardStep,
                 genConfigConditionalWizardStep,
-                frontendConfigurationWizardStep,
+                frontendConditionalWizardStep,
                 specificConfigurationWizardStep,
         };
     }

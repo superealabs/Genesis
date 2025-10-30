@@ -68,11 +68,12 @@ public class ProjectGenerator {
             frontendLanguage = Arrays.stream(FileUtils.fromJson(FrontendLanguage[].class, Constantes.FRONTEND_LANGUAGE_JSON))
                     .collect(Collectors.toMap(FrontendLanguage::getId, frontLang -> frontLang));
 
+            langs = Arrays.stream(FileUtils.fromYaml(InterfaceLang[].class, Constantes.LANGS_YAML))
+                    .collect(Collectors.toMap(InterfaceLang::getId, lang -> lang));
+
             frontendFrameworks = Arrays.stream(FileUtils.fromYaml(FrontendFramework[].class, Constantes.FRONTEND_FRAMEWORK_YAML))
                     .collect(Collectors.toMap(FrontendFramework::getId, frontFr -> frontFr));
 
-            langs = Arrays.stream(FileUtils.fromYaml(InterfaceLang[].class, Constantes.LANGS_YAML))
-                    .collect(Collectors.toMap(InterfaceLang::getId, lang -> lang));
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -155,22 +156,21 @@ public class ProjectGenerator {
         if (!context.isGenerateFrontendApp()){
             return;
         }
-        HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(context.getFrontendFramework(),context.getProjectName(),context.getWebappFolder(),context.getProjectPort(),entities);
-        HashMap<String,Object> folder=FrameworkFrontendMetadataProvider.getWebappHashMap(context);
-        finalRenderData.putAll(folder);
-        renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
-
+        HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(entities, context);
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
         selectedSecurityOption.ifPresent(security -> {
             try {
                 HashMap<String, Object> securityMap=FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType,context);
-                securityMap.putAll(finalRenderData);
-                renderFilesEdits(context.getFrontendFramework().getAuthenticationFiles(),securityMap);
+                finalRenderData.putAll(securityMap);
+                renderFilesEdits(context.getFrontendFramework().getAuthenticationFiles(),finalRenderData);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
+        renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
+        IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
+        frontendGenerator.generateRessources(context, entities);
     }
 
     private void generateProjectFiles(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {
@@ -229,9 +229,10 @@ public class ProjectGenerator {
         FrontendLanguage frontendLanguage=context.getFrontendLanguage();
         FrontendFramework frontendFramework=context.getFrontendFramework();
         String projectName=context.getProjectName();
+        String securityType = (String) context.getFrameworkConfiguration().get("securityType");
 
         tableMetadata.setColumnsFrontendTypes(frontendLanguage, database);
-        frontendGenerator.generateComponent(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName,  generateComponentOnly);
+        frontendGenerator.generateComponent(securityType,database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName,  generateComponentOnly);
         frontendGenerator.generateService(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, generateComponentOnly);
         frontendGenerator.generateModel(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, generateComponentOnly);
         return;
@@ -312,7 +313,6 @@ public class ProjectGenerator {
         if (!context.isGenerateFrontendApp()) { return; }
         IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
         initFrontendProjectFiles(context);
-        frontendGenerator.generateRessources(context);
         for (TableMetadata tableMetadata : entities) {
             generateFrontendComponents(
                     context,
@@ -352,8 +352,6 @@ public class ProjectGenerator {
 
                 generateFrontentProjectFiles(context, allEntities);
                 generateProjectFiles(context, allEntities);
-
-
             } catch (Exception e) {
                 throw new RuntimeException("\nError in generateFullProject : \n" + e);
             }

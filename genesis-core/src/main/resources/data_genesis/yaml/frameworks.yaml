@@ -1982,12 +1982,21 @@
         {{#if useJWT}}
         builder.Services.AddHostedService<SqlSchemaBootstrapper>();
         builder.Services
-          .AddIdentity<ApplicationUser, IdentityRole>()
+          .AddIdentity<ApplicationUser, IdentityRole>(options =>
+          {
+            options.Password.RequireDigit = true;
+            options.Password.RequireLowercase = true;
+            options.Password.RequireUppercase = true;
+            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequiredLength = 6;
+          })
           .AddEntityFrameworkStores<${majStart(projectName)}Context>()
           .AddDefaultTokenProviders();
         
-        builder.Services.AddScoped<UserService>();
         builder.Services.AddScoped<JwtService>();
+        builder.Services.AddScoped<TokenBlacklistService>();
+        builder.Services.AddScoped<UserService>();
+        
         {{/if}}
         // Adding repositories ...
         {{#each entities}}
@@ -2043,10 +2052,9 @@
         {
           options.AddPolicy("AllowFrontend", policy =>
           {
-            policy.WithOrigins("http://localhost:3000") 
+            policy.AllowAnyOrigin() 
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials(); // retire cette ligne si tu n’utilises pas de cookies / auth
+            .AllowAnyMethod();
           });
         });
 
@@ -3518,12 +3526,38 @@
 
         public class ApiResponse<T>
         {
-          public int Status { get; set; }
-          public string Message { get; set; }
-          public int ReturnCode { get; set; }
-          public T? Data { get; set; }
-          public object Errors { get; set; }
-          public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+            public int Status { get; set; }
+            public string Message { get; set; }
+            public int ReturnCode { get; set; }
+            public T? Data { get; set; }
+            public object? Errors { get; set; }
+            public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+            private ApiResponse(int status, string message, int returnCode, T? data)
+            {
+                Status = status;
+                Message = message;
+                ReturnCode = returnCode;
+                Data = data;
+            }
+
+            /// <summary>
+            /// Crée un objet ApiResponse pour une réponse réussie.
+            /// </summary>
+            public static ApiResponse<T> Success(int status, string message, T? data = default)
+            {
+                return new ApiResponse<T>(status, message, returnCode: 1, data: data);
+            }
+
+            /// <summary>
+            /// Crée un objet ApiResponse pour une réponse d'erreur.
+            /// </summary>
+            public static ApiResponse<T> Error(int status, string message, object? errors = null)
+            {
+                var response = new ApiResponse<T>(status, message, returnCode: 0, data: default);
+                response.Errors = errors; 
+                return response;
+            }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
@@ -4503,6 +4537,7 @@
       using ${majStart(projectName)}.Utils;
       using ${majStart(projectName)}.Exceptions;
       using ${majStart(projectName)}.Repositories.Interface;
+      using Microsoft.AspNetCore.Http;
       {{#if useJWT}}using Microsoft.AspNetCore.Authorization;{{/if}}
 
     controllerAnnotations: |
@@ -4527,39 +4562,29 @@
       {{tab}}[HttpGet]
       {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
-      {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}s",
       {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. "
       {{tab}})]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<PagedResponse<${majStart(className)}>>), 200)]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 400)]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<PagedResponse<${majStart(className)}>>), StatusCodes.Status200OK)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
       {{tab}}public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(className)}>>>> Get${majStart(className)}s(
       {{tab}}   [FromQuery, SwaggerParameter("Page number (0-indexed)", Required = false)] int page = 0,
-      {{tab}}   [FromQuery, SwaggerParameter("Size of the page", Required = false)] int pageSize = 10,
+      {{tab}}   [FromQuery, SwaggerParameter("Size of the page", Required = false)] int size = 10,
       {{tab}}   [FromQuery, SwaggerParameter("Sort order", Required = false)] string? sortParam = null
       {{tab}})
       {{tab}}{
       {{tab}}{{tab}}try {
-      {{tab}}{{tab}}{{tab}}var data = await _service.GetAllAsync(page, pageSize, sortParam{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}});
-      {{tab}}{{tab}}{{tab}}return Ok(new ApiResponse<PagedResponse<${majStart(className)}>>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status200OK,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = data.Content.Any()
+      {{tab}}{{tab}}{{tab}}var data = await _service.GetAllAsync(page, size, sortParam{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}});
+      {{tab}}{{tab}}{{tab}}string message = data.Content.Any()
       {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}? "${majStart(className)}s retrieved successfully"
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}: "No ${minStart(className)}s found",
-      {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = data
-      {{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}: "No ${minStart(className)}s found";
+      {{tab}}{{tab}}{{tab}}return Ok(ApiResponse<PagedResponse<${majStart(className)}>>.Success(StatusCodes.Status200OK, message, data));
       {{tab}}{{tab}}}
       {{tab}}{{tab}}catch (Exception ex)
       {{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status500InternalServerError,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = $"Error while retrieving ${minStart(className)}s: {ex.Message}",
-      {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 0,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = null
-      {{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status500InternalServerError,
+      {{tab}}{{tab}}{{tab}}{{tab}}ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"Error while retrieving ${minStart(className)}s: {ex.Message}"));
       {{tab}}{{tab}}}
       {{tab}}}
       
@@ -4569,102 +4594,70 @@
       {{tab}}{{tab}}Summary = "Get ${formatReadableLowerCase(className)} by ID",
       {{tab}}{{tab}}Description = "Retrieve a specific ${formatReadableLowerCase(className)} item by its ID"
       {{tab}})]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), 200)]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 404)]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), StatusCodes.Status200OK)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
       {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Get${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to retrieve", Required = true)] ${pkColumnType} id)
       {{tab}}{
       {{tab}}{{tab}}try {
       {{tab}}{{tab}}{{tab}}var ${minStart(className)} = await _service.GetByIdAsync(id{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
       {{tab}}{{tab}}{{tab}}if (${minStart(className)} == null){
-      {{tab}}{{tab}}{{tab}}{{tab}}return NotFound(new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status404NotFound,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Message = $"${majStart(className)} not found with ${pkColumn} : {id}",
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 0,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Data = null
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}});
-      {{tab}}{{tab}}{{tab}}{{tab}}}
-      {{tab}}{{tab}}{{tab}}{{tab}}return Ok(new ApiResponse<${majStart(className)}>
-      {{tab}}{{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status200OK,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Message = "${majStart(className)} retrieved successfully",
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Data = ${minStart(className)}
-      {{tab}}{{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}{{tab}}return NotFound(ApiResponse<object>.Error(StatusCodes.Status404NotFound, $"${majStart(className)} not found with ${pkColumn} : {id}"));
       {{tab}}{{tab}}{{tab}}}
-      {{tab}}{{tab}}{{tab}}catch (ResourceNotFoundException ex)
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}return NotFound(new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status404NotFound,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Message = ex.Message,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 0,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Data = null
-      {{tab}}{{tab}}{{tab}}{{tab}}});
-      {{tab}}{{tab}}{{tab}}}
-      {{tab}}{{tab}}{{tab}}catch (Exception ex)
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status500InternalServerError,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Message = $"Error while retrieving ${formatReadableLowerCase(className)}: {ex.Message}",
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 0,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Data = null
-      {{tab}}{{tab}}{{tab}}{{tab}}});
-      {{tab}}{{tab}}{{tab}}}
+      {{tab}}{{tab}}{{tab}}return Ok(ApiResponse<${majStart(className)}>.Success(StatusCodes.Status200OK, "${majStart(className)} retrieved successfully", ${minStart(className)}));
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}catch (ResourceNotFoundException ex)
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}return NotFound(ApiResponse<object>.Error(StatusCodes.Status404NotFound, ex.Message));
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}catch (Exception ex)
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status500InternalServerError, 
+      {{tab}}{{tab}}{{tab}}{{tab}}ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"Error while retrieving ${formatReadableLowerCase(className)}: {ex.Message}"));
+      {{tab}}{{tab}}}
       {{tab}}}
       
       {{tab}}[HttpPost("search")]
       {{tab}}{{#if useJWT}}[Authorize]{{/if}}
       {{tab}}[SwaggerOperation(
-      {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}",
+      {{tab}}{{tab}}Summary = "Search ${formatReadableLowerCase(className)}s",
       {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items."
       {{tab}})]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<PagedResponse<${majStart(className)}>>), 200)]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<PagedResponse<${majStart(className)}>>), StatusCodes.Status200OK)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
       {{tab}}public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(className)}>>>> Search${majStart(className)}s(
       {{tab}}   [FromBody] ${majStart(className)}Dto dto,
       {{tab}}   [FromQuery] int page = 0,
-      {{tab}}   [FromQuery] int pageSize = 10,
+      {{tab}}   [FromQuery] int size = 10,
       {{tab}}   [FromQuery] string? sortParam = null
       {{tab}})
       {{tab}}{
       {{tab}}{{tab}}try {
-      {{tab}}{{tab}}{{tab}}var data = await _service.SearchAsync(dto, page, pageSize, sortParam);
-      {{tab}}{{tab}}{{tab}}return Ok(new ApiResponse<PagedResponse<${majStart(className)}>>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status200OK,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = data.Content.Any()
+      {{tab}}{{tab}}{{tab}}var data = await _service.SearchAsync(dto, page, size, sortParam);
+      {{tab}}{{tab}}{{tab}}string message = data.Content.Any()
       {{tab}}{{tab}}{{tab}}{{tab}}? "${majStart(className)}s retrieved successfully"
-      {{tab}}{{tab}}{{tab}}{{tab}}: "No ${formatReadableLowerCase(className)}s found for the given criteria",
-      {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = data
-      {{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}{{tab}}: "No ${formatReadableLowerCase(className)}s found for the given criteria";
+      {{tab}}{{tab}}{{tab}}return Ok(ApiResponse<PagedResponse<${majStart(className)}>>.Success(StatusCodes.Status200OK, message, data));
       {{tab}}{{tab}}}
       {{tab}}{{tab}}catch (Exception ex)
       {{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status500InternalServerError,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = $"Error while searching ${formatReadableLowerCase(className)}s: {ex.Message}",
-      {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 0,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = null
-      {{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status500InternalServerError, 
+      {{tab}}{{tab}}{{tab}}{{tab}}ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"Error while searching ${formatReadableLowerCase(className)}s: {ex.Message}"));
       {{tab}}{{tab}}}
       {{tab}}}
       
       {{#if !isView}} 
       {{tab}}[HttpPost]
       {{/if}}
-      {{tab}}{{#if useJWT and !isView}}[Authorize]{{/if}}
-      {{#if !isView}} 
+      {{tab}}{{#if !isView and useJWT}}[Authorize]{{/if}}
+      {{#if !isView}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), 201)]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), StatusCodes.Status201Created)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
       {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Create([SwaggerParameter(Description = "${formatReadable(className)} object to be created", Required = true)] ${majStart(className)}Dto dto)
       {{tab}}{
       {{tab}}{{tab}}try {
@@ -4677,35 +4670,17 @@
       {{tab}}{{tab}}{{tab}}  var errors = validationResults
       {{tab}}{{tab}}{{tab}}  .SelectMany(vr => vr.MemberNames.Select(name => new { name = char.ToLower(name[0]) + name.Substring(1), vr.ErrorMessage }))
       {{tab}}{{tab}}{{tab}}  .ToDictionary(x => x.name, x => x.ErrorMessage);
-      {{tab}}{{tab}}{{tab}}  return BadRequest(new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}  {
-      {{tab}}{{tab}}{{tab}}    Status = StatusCodes.Status500InternalServerError,
-      {{tab}}{{tab}}{{tab}}    Message = "Validation failed",
-      {{tab}}{{tab}}{{tab}}    ReturnCode = 0,
-      {{tab}}{{tab}}{{tab}}    Data = null,
-      {{tab}}{{tab}}{{tab}}    Errors = errors,
-      {{tab}}{{tab}}{{tab}}    Timestamp = DateTime.UtcNow
-      {{tab}}{{tab}}{{tab}}  });
+      {{tab}}{{tab}}{{tab}}  return BadRequest(ApiResponse<object>.Error(StatusCodes.Status400BadRequest, "Validation failed", errors));
       {{tab}}{{tab}}{{tab}}}
       {{tab}}{{tab}}{{tab}}await _service.AddAsync(${minStart(className)});
       {{tab}}{{tab}}{{tab}}var created = await _service.GetByIdAsync(${minStart(className)}.${majStart(pkColumn)});
-      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status201Created, new ApiResponse<${majStart(className)}>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status201Created,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = "${majStart(className)} created successfully",
-      {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = created
-      {{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status201Created, 
+      {{tab}}{{tab}}{{tab}}{{tab}}ApiResponse<${majStart(className)}>.Success(StatusCodes.Status201Created, "${majStart(className)} created successfully", created));
       {{tab}}{{tab}}}
       {{tab}}{{tab}}catch (Exception ex)
       {{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status500InternalServerError,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = $"Error while creating ${formatReadableLowerCase(className)}: {ex.Message}",
-      {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 0,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = null
-      {{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status500InternalServerError, 
+      {{tab}}{{tab}}{{tab}}{{tab}}ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"Error while creating ${formatReadableLowerCase(className)}: {ex.Message}"));
       {{tab}}{{tab}}}
       {{tab}}}
       {{/if}}
@@ -4719,10 +4694,9 @@
       {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), 200)]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 400)]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 404)]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), StatusCodes.Status200OK)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
       {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Put${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to update", Required = true)] ${pkColumnType} id, [SwaggerParameter(Description = "Updated ${formatReadable(className)} object", Required = true)] ${majStart(className)}Dto dto)
       {{tab}}{
       {{tab}}{{tab}}try{
@@ -4730,13 +4704,7 @@
       {{tab}}{{tab}}{{tab}}var exists = await _service.ExistsAsync(id);
       {{tab}}{{tab}}{{tab}}if (!exists)
       {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}return NotFound(new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status404NotFound,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Message = $"${majStart(className)} not found with ${pkColumn} : {id}",
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 0,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Data = null
-      {{tab}}{{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}{{tab}}return NotFound(ApiResponse<object>.Error(StatusCodes.Status404NotFound, $"${majStart(className)} not found with ${pkColumn} : {id}"));
       {{tab}}{{tab}}{{tab}}}
       
       {{tab}}{{tab}}{{tab}}var ${minStart(className)} = dto.ToEntity(id);
@@ -4748,37 +4716,18 @@
       {{tab}}{{tab}}{{tab}}  var errors = validationResults
       {{tab}}{{tab}}{{tab}}  .SelectMany(vr => vr.MemberNames.Select(name => new { name = char.ToLower(name[0]) + name.Substring(1), vr.ErrorMessage }))
       {{tab}}{{tab}}{{tab}}  .ToDictionary(x => x.name, x => x.ErrorMessage);
-      {{tab}}{{tab}}{{tab}}  return BadRequest(new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}  {
-      {{tab}}{{tab}}{{tab}}    Status = StatusCodes.Status500InternalServerError,
-      {{tab}}{{tab}}{{tab}}    Message = "Validation failed",
-      {{tab}}{{tab}}{{tab}}    ReturnCode = 0,
-      {{tab}}{{tab}}{{tab}}    Data = null,
-      {{tab}}{{tab}}{{tab}}    Errors = errors,
-      {{tab}}{{tab}}{{tab}}    Timestamp = DateTime.UtcNow
-      {{tab}}{{tab}}{{tab}}  });
+      {{tab}}{{tab}}{{tab}}  return BadRequest(ApiResponse<object>.Error(StatusCodes.Status400BadRequest, "Validation failed", errors));
       {{tab}}{{tab}}{{tab}}}
       {{tab}}{{tab}}{{tab}}await _service.UpdateAsync(${minStart(className)});
       {{tab}}{{tab}}{{tab}}var updatedObject = await _service.GetByIdAsync(id);
       
-      {{tab}}{{tab}}{{tab}}return Ok(new ApiResponse<${majStart(className)}>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status200OK,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = "${majStart(className)} updated successfully",
-      {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = updatedObject
-      {{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}return Ok(ApiResponse<${majStart(className)}>.Success(StatusCodes.Status200OK, "${majStart(className)} updated successfully", updatedObject));
       {{tab}}{{tab}}}
       
       {{tab}}{{tab}}catch (Exception ex)
       {{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status500InternalServerError,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = $"Error while updating ${formatReadableLowerCase(className)}: {ex.Message}",
-      {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 0,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = null
-      {{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status500InternalServerError, 
+      {{tab}}{{tab}}{{tab}}{{tab}}ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"Error while updating ${formatReadableLowerCase(className)}: {ex.Message}"));
       {{tab}}{{tab}}}    
       {{tab}}}
       {{/if}}
@@ -4792,41 +4741,24 @@
       {{tab}}{{tab}}Summary = "Delete ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Delete a ${formatReadableLowerCase(className)} item by its ID"
       {{tab}})]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 200)]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), 500)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
       {{tab}}public async Task<ActionResult<ApiResponse<object>>> Delete${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to delete", Required = true)] ${pkColumnType} id)
       {{tab}}{
       {{tab}}{{tab}}try {
       {{tab}}{{tab}}{{tab}}var exists = await _service.ExistsAsync(id);
       {{tab}}{{tab}}{{tab}}if (!exists) 
       {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}return Ok(new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status200OK,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Message = "${majStart(className)} already deleted or does not exist",
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}Data = null
-      {{tab}}{{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}{{tab}}return Ok(ApiResponse<object>.Success(StatusCodes.Status200OK, "${majStart(className)} already deleted or does not exist", null));
       {{tab}}{{tab}}{{tab}}}
       
       {{tab}}{{tab}}{{tab}}await _service.DeleteAsync(id);
-      {{tab}}{{tab}}{{tab}}return Ok(new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status200OK,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = "${majStart(className)} deleted successfully",
-      {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 1,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = null
-      {{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}return Ok(ApiResponse<object>.Success(StatusCodes.Status200OK, "${majStart(className)} deleted successfully", null));
       {{tab}}{{tab}}}
       {{tab}}{{tab}}catch (Exception ex)
       {{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<object>
-      {{tab}}{{tab}}{{tab}}{
-      {{tab}}{{tab}}{{tab}}{{tab}}Status = StatusCodes.Status500InternalServerError,
-      {{tab}}{{tab}}{{tab}}{{tab}}Message = $"Error while deleting ${formatReadableLowerCase(className)}: {ex.Message}",
-      {{tab}}{{tab}}{{tab}}{{tab}}ReturnCode = 0,
-      {{tab}}{{tab}}{{tab}}{{tab}}Data = null
-      {{tab}}{{tab}}{{tab}}});
+      {{tab}}{{tab}}{{tab}}return StatusCode(StatusCodes.Status500InternalServerError, 
+      {{tab}}{{tab}}{{tab}}{{tab}}ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"Error while deleting ${formatReadableLowerCase(className)}: {ex.Message}"));
       {{tab}}{{tab}}}
       {{tab}}}
       {{else}}{{removeLine}}{{/if}}
@@ -4845,6 +4777,7 @@
   useEurekaServer: false
   isGateway: false
   withGroupId: true
+  useFrontendApp: false
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -4988,6 +4921,7 @@
   useEurekaServer: false
   isGateway: true
   withGroupId: true
+  useFrontendApp: false
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"

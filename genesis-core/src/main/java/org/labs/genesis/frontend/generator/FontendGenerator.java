@@ -29,7 +29,7 @@ public class FontendGenerator implements IFrontendGenerator{
     }
 
     @Override
-    public String generateComponent(Database database, FrontendLanguage language, FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception {
+    public String generateComponent(String securityType, Database database, FrontendLanguage language, FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception {
         if(language.getId()!=frontendFramework.getLanguageId()){
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the frontend framework '" +
@@ -37,6 +37,7 @@ public class FontendGenerator implements IFrontendGenerator{
         }
         String templateArchitecture = loadTemplate(frontendFramework);
         HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
+        metadataForFinalRender.putAll(FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType));
 
         for(Component component:frontendFramework.getComponents()) {
             if(tableMetadata.getIsView() && !component.getGenerateForView())
@@ -119,14 +120,11 @@ public class FontendGenerator implements IFrontendGenerator{
 
         String fileSavePath;
         if (generateComponentOnly) {
-            // simplified path : destinationFolder/projectName/models
-            fileSavePath = destinationFolder + "/" + projectName + "/models";
+            fileSavePath = destinationFolder + "/" + projectName + "/src/services";
         } else {
-            //using the configured path in the frontendframework
             fileSavePath = serviceComponent.getDestinationPath();
             fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
         }
-
 
         String serviceName=serviceComponent.getName();
         serviceName=engine.render(serviceName, metadataForFinalRender);
@@ -181,9 +179,9 @@ public class FontendGenerator implements IFrontendGenerator{
     }
 
     @Override
-    public  String generateRessources(ProjectGenerationContext context) throws  Exception{
+    public  String generateRessources(ProjectGenerationContext context, List<TableMetadata> allEntities) throws  Exception{
         FrontendFramework frontendFramework = context.getFrontendFramework();
-        HashMap<String, Object> metadata = FrameworkFrontendMetadataProvider.getWebappHashMap(context);
+        HashMap<String, Object> metadata = FrameworkFrontendMetadataProvider.getLangsHashMap(context, allEntities);
         // Generate logo
         String logoPath = frontendFramework.getFrontendPaths().getLogoPath();
         logoPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(logoPath, metadata));
@@ -216,8 +214,7 @@ public class FontendGenerator implements IFrontendGenerator{
         List<InterfaceLang> langs = frontendFramework.getFrontendLayout().getLangs();
         String langPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(frontendFramework.getFrontendPaths().langsPath, metadata));
         for (InterfaceLang lang : langs) {
-            String content = engine.simpleRender(lang.getContent(),metadata);
-
+            String content = engine.render(lang.getContent(),metadata);
             FileUtils.createFile(langPath,lang.getName().toLowerCase(), context.getFrontendLanguage().getExtension(), content);
         }
         return "";

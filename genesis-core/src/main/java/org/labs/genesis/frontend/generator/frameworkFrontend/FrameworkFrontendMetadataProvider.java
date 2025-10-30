@@ -21,19 +21,23 @@ public class FrameworkFrontendMetadataProvider {
 
 
     public static HashMap<String, Object> getHashMapForSecurity(String securityType,ProjectGenerationContext context) {
-        HashMap<String, Object> metadata = new HashMap<>();
+        HashMap<String, Object> metadata = getHashMapForSecurity(securityType);
+        metadata.putAll(getWebappHashMap(context));
+        return metadata;
+    }
 
+    public static HashMap<String, Object> getHashMapForSecurity(String securityType) {
+        HashMap<String, Object> metadata = new HashMap<>();
         if(securityType.contains("JWT")) {
             metadata.put("useJWT",true);
         }else
         {
             metadata.put("useJWT",false);
         }
-        metadata.putAll(getWebappHashMap(context));
         return metadata;
     }
 
-    public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata,String destinationFolder,String projectName) {
+    public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata, String destinationFolder, String projectName) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
@@ -91,6 +95,9 @@ public class FrameworkFrontendMetadataProvider {
 
     public static HashMap<String, Object> getLayoutHashMap(FrontendFramework frontendFramework){
         FrontendLayout layout = frontendFramework.getFrontendLayout();
+        if (layout == null){
+            layout = new FrontendLayout();
+        }
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("additionalCss",layout.additionalCss);
         metadata.put("primaryColor",layout.primaryColor);
@@ -102,6 +109,9 @@ public class FrameworkFrontendMetadataProvider {
 
     public static HashMap<String, Object> getBrandingHashMap(FrontendFramework frontendFramework){
         ProjectBranding branding = frontendFramework.getProjectBranding();
+        if (branding == null){
+            branding = new ProjectBranding();
+        }
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("faviconUrl", branding.getFaviconUrl());
         metadata.put("useFaviconLink", branding.useFaviconLink());
@@ -119,8 +129,6 @@ public class FrameworkFrontendMetadataProvider {
         String webappFolder = getWebappFolder(context);
         metadata.put("destinationFolder", webappFolder);
         metadata.put("projectName", context.getProjectName());
-        metadata.put("webappFolder", context.getWebappFolder());
-        metadata.put("webapp", webappFolder);
         metadata.put("projectPort", context.getProjectPort());
         metadata.put("title",context.getProjectDescription());
 
@@ -243,16 +251,19 @@ public class FrameworkFrontendMetadataProvider {
         }
         return tableMetadatasAns;
     }
-    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework,String projectName,String destinationFolder,String port,List<TableMetadata> tableMetadatas){
+    public  static HashMap<String, Object> getGlobalComponentsHashMap(List<TableMetadata> tableMetadatas, ProjectGenerationContext context){
+        FrontendFramework frontendFramework = context.getFrontendFramework();
+        String projectPort = context.getProjectPort() ;
+
         HashMap<String, Object> data = new HashMap<>();
         data.put("routes",getRoutesHashMap(frontendFramework));
-        data.put("projectName",projectName);
-        data.put("destinationFolder",destinationFolder);
         data.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
-        data.put("port",port);
+        data.put("port",projectPort);
         data.put("frontendPort",9000);
         data.put("apiUrl", "localhost");
         data.putAll(getRessourceHashMap(frontendFramework));
+        HashMap<String,Object> folder=FrameworkFrontendMetadataProvider.getWebappHashMap(context);
+        data.putAll(folder);
         return  data;
     }
 
@@ -260,6 +271,13 @@ public class FrameworkFrontendMetadataProvider {
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.putAll(getBrandingHashMap(frontendFramework));
         metadata.putAll(getLayoutHashMap(frontendFramework));
+        return  metadata;
+    }
+
+    public static HashMap<String, Object> getLangsHashMap(ProjectGenerationContext context, List<TableMetadata> tableMetadatas) {
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.putAll(getWebappHashMap(context));
+        metadata.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
         return  metadata;
     }
 

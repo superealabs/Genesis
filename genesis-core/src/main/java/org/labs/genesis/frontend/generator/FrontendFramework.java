@@ -31,6 +31,12 @@ public class FrontendFramework
     private ProjectBranding projectBranding;
     private FrontendDestinationPaths frontendPaths;
 
+
+    public  FrontendFramework(){
+        setProjectBranding(new ProjectBranding());
+        setFrontendLayout(new FrontendLayout());
+    }
+
     public void addRoute(ComponentRoute route){
         if (route.getLabel() == null || route.getLabel().isEmpty()){
             route.setLabel( route.getComponentName());

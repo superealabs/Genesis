@@ -4,7 +4,7 @@ import { usePagination } from '@/composables/usePagination'
 import { useSortData } from '@/composables/useSortData'
 import { PaginationData } from '@/models/api/PageResponseModel'
 import type { PaginationRequestParameter, SortFieldParameter } from '@/models/api/RequestModel'
-import { useFreezeScreen } from '@/stores/useFreezeScreen'
+import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
 
 export function useEntityTable(
   searchFn: (
@@ -15,7 +15,7 @@ export function useEntityTable(
   ) => Promise<void>,
   getPaginationDataRef: () => PaginationData,
 ) {
-  const freezeScreenStore = useFreezeScreen()
+  const freezeScreenStore = useFreezeScreenStore()
 
   // State
   const {
@@ -28,18 +28,21 @@ export function useEntityTable(
     jsonPaginationData,
   } = usePagination()
 
-  const { sortFieldsParameters } = useSortData()
+  const { sortFieldsParameters, sortBy } = useSortData()
 
   const currentFilters = ref<Record<string, unknown>>({})
 
   // Actions
   const doSearch = async () => {
     freezeScreenStore.freeze('Fetching data ...')
+    console.log(
+      `Searching with filters: ${JSON.stringify(currentFilters.value)}, pagination: ${jsonPaginationData()}, sorts: ${JSON.stringify(sortFieldsParameters.value)}`,
+    )
     await searchFn(
       false,
       currentFilters.value,
       getPaginationRequestParameter(),
-      sortFieldsParameters,
+      sortFieldsParameters.value,
     )
     setPagination(getPaginationDataRef())
     freezeScreenStore.unfreeze()
@@ -49,9 +52,14 @@ export function useEntityTable(
     currentFilters.value = filters
   }
 
-  const changePage = (newPage: number) => {
+  const changePage = async (newPage: number) => {
     goToPage(newPage)
-    doSearch()
+    await doSearch()
+  }
+
+  const sortByAndSearch = async (sortData: SortFieldParameter) => {
+    sortBy(sortData)
+    await doSearch()
   }
 
   return {
@@ -66,5 +74,6 @@ export function useEntityTable(
     doSearch,
     updateFilters,
     changePage,
+    sortByAndSearch,
   }
 }
