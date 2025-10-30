@@ -120,6 +120,7 @@
       "character varying": "string",
       "text": "string",
       "varchar": "string",
+      "bpchar": "string",
       "real": "double",
       "double": "double",
       "float4": "double",

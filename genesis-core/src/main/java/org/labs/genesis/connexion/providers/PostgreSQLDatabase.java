@@ -196,7 +196,7 @@ public class PostgreSQLDatabase extends Database {
 
     @Override
     protected void checkStrictPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
-        // Strict past: col > CURRENT_DATE ou CURRENT_DATE < col
+        // Strict past: CURRENT_DATE > col ou col < CURRENT_DATE
         String sql = this.getConstraintQueries().getCheckStrictPastDateConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -223,7 +223,7 @@ public class PostgreSQLDatabase extends Database {
 
     @Override
     protected void checkPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
-        // Past with inclusion: col >= CURRENT_DATE ou CURRENT_DATE <= col
+        // Past with inclusion: CURRENT_DATE >= col ou col <= CURRENT_DATE
         String sql = this.getConstraintQueries().getCheckPastDateConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -250,7 +250,7 @@ public class PostgreSQLDatabase extends Database {
 
     @Override
     protected void checkStrictFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
-        // Strict future: col < CURRENT_DATE ou CURRENT_DATE > col
+        // Strict future: CURRENT_DATE < col ou col > CURRENT_DATE
         String sql = this.getConstraintQueries().getCheckStrictFutureDateConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);
@@ -277,7 +277,7 @@ public class PostgreSQLDatabase extends Database {
 
     @Override
     protected void checkFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
-        // Future with inclusion: col <= CURRENT_DATE ou CURRENT_DATE >= col
+        // Future with inclusion: CURRENT_DATE <= col ou col >= CURRENT_DATE
         String sql = this.getConstraintQueries().getCheckFutureDateConstraintQuery();
         try (PreparedStatement stmt = connex.prepareStatement(sql)) {
             stmt.setString(1, tableName);

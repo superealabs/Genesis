@@ -441,7 +441,7 @@
             FROM matches
             WHERE table_name = ?
               AND (match IS NOT NULL OR inverse_match IS NOT NULL);
-  checkPastDateConstraintQuery: |
+  checkFutureDateConstraintQuery: |
     WITH check_constraints AS (
                 SELECT
                     c.conname AS constraint_name,
@@ -483,7 +483,7 @@
             ORDER BY
                 table_name,
                 column_name;
-  checkFutureDateConstraintQuery: |
+  checkPastDateConstraintQuery : |
     WITH check_constraints AS (
                 SELECT
                     c.conname AS constraint_name,
@@ -525,7 +525,7 @@
             ORDER BY
                 table_name,
                 column_name;
-  checkStrictPastDateConstraintQuery: |
+  checkStrictFutureDateConstraintQuery: |
     WITH check_constraints AS (
                 SELECT
                     c.conname AS constraint_name,
@@ -567,7 +567,7 @@
             ORDER BY
                 table_name,
                 column_name;
-  checkStrictFutureDateConstraintQuery: |
+  checkStrictPastDateConstraintQuery: |
     WITH check_constraints AS (
                 SELECT
                     c.conname AS constraint_name,
