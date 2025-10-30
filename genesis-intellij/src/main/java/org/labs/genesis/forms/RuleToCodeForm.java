@@ -70,7 +70,7 @@ public class RuleToCodeForm {
                 Integer frameworkId = frameworkIds.get( (String) selectFramework.getSelectedItem() );
 
                 if ( frameworkId == 1 ) {
-                    meta = yamlData.extractGroupAndArtifact( folderBaseProject);
+                    meta = yamlData.extractGroupAndArtifact(folderBaseProject , frameworkId );
                     yamlMeta = yamlData.extractMetaData( folderBaseProject, meta[0], meta[1], frameworkId );
                 }
                 if ( frameworkId == 2 ) {

@@ -61,6 +61,11 @@ public class LlmApiClientRule {
         HashMap<String, Object> payload = new HashMap<>();
         HashMap<String, String> message = new HashMap<>();
         message.put("role", "user");
+        if(additionalConf == null) {
+            additionalConf=new String[2];
+            additionalConf[0] = "none" ;
+            additionalConf[1] = "none" ;
+        }
 
         message.put("content", String.format( """
             Description : 
