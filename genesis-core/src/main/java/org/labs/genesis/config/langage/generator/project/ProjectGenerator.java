@@ -56,6 +56,7 @@ public class ProjectGenerator {
                     .peek(framework -> {
                         try {
                             framework.setFrameworkSecurities();
+                            framework.setFrameworkCaching();
                         } catch (IOException e) {
                             throw new RuntimeException("Error while initializing frameworkSecurities for Framework ID: " + framework.getId(), e);
                         }
@@ -84,6 +85,7 @@ public class ProjectGenerator {
     }
 
     public static void renderAndCopyFiles(List<Project.ProjectFiles> projectFiles, HashMap<String, Object> initializeHashMap) throws IOException {
+        System.out.println("Generating PROJECT FILESSS RenderCopyFiles");
         for (Project.ProjectFiles projectFile : projectFiles) {
             String sourceFilePath = projectFile.getSourcePath() + projectFile.getFileName();
             String destinationFilePathSimple = projectFile.getDestinationPath() + projectFile.getFileName();
@@ -179,6 +181,7 @@ public class ProjectGenerator {
                 context.getProjectName(),
                 context.getGroupLink()
         );
+        System.out.println("Generating PROJECT FILESSS 1");
 
         HashMap<String, Object> projectFilesEditsHashMap = getProjectFilesEditsHashMap(
                 context.getDestinationFolder(),
@@ -193,11 +196,13 @@ public class ProjectGenerator {
                 context.getFramework(),
                 context.getFrameworkConfiguration()
         );
+        System.out.println("Generating PROJECT FILESSS 2");
 
         if (context.getFramework().getUseDB()) {
             var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
             projectFilesEditsHashMap.putAll(mapDaoGlobal);
         }
+        System.out.println("Generating PROJECT FILESSS 3");
 
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
@@ -205,12 +210,23 @@ public class ProjectGenerator {
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
 
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
-
+        System.out.println(securityType + " SECURITYYY");
         Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
 
         selectedSecurityOption.ifPresent(security -> {
             try {
                 renderFilesEdits(security.getSecurityFiles(), projectFilesEditsHashMap);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        String cacheProvider = (String) context.getFrameworkConfiguration().get("cacheProvider");
+        Optional<FrameworkCaching> selectedCacheProviderOption = context.getFramework().getSelectedCacheProviderByName(cacheProvider);
+
+        selectedCacheProviderOption.ifPresent(frameworkCaching -> {
+            try {
+                renderFilesEdits(frameworkCaching.getConfigFiles(), projectFilesEditsHashMap);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -353,6 +369,7 @@ public class ProjectGenerator {
                 generateFrontentProjectFiles(context, allEntities);
                 generateProjectFiles(context, allEntities);
             } catch (Exception e) {
+                e.printStackTrace();
                 throw new RuntimeException("\nError in generateFullProject : \n" + e);
             }
         } else {

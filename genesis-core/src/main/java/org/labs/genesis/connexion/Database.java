@@ -80,6 +80,7 @@ public abstract class Database {
 
         List<TableMetadata> tableMetadataList = new ArrayList<>();
         for (String entityName : entityNames) {
+            System.out.println("entityYYName: " + entityName);
             tableMetadataList.add(getEntity(connection, credentials, entityName, language, framework));
         }
         return tableMetadataList;

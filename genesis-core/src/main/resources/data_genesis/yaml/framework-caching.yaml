@@ -1,0 +1,279 @@
+- id: 1
+  frameworkId: 1
+  name: "EhCache"
+  configFiles:
+    - fileType: "ConfigFile"
+      fileName: "ehcache"
+      extension: "xml"
+      content: |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <config xmlns='http://www.ehcache.org/v3'
+            xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+            xmlns:jsr107='http://www.ehcache.org/v3/jsr107'
+            xsi:schemaLocation="http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core.xsd">
+        
+          <service>
+            <jsr107:defaults />
+          </service>
+        
+          {{#each entitiesCacheable}}
+          <cache alias="${minStart(this)}sCache">
+            <key-type>java.lang.String</key-type>
+            <value-type>java.lang.Object</value-type>
+            <expiry>
+              <ttl unit="minutes">5</ttl>
+            </expiry>
+            <resources>
+              <heap unit="entries">100</heap>
+            </resources>
+          </cache>
+          {{/each}}
+        </config>
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
+  additionalDependencies:
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-cache"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+    - groupId: "org.ehcache"
+      artifactId: "ehcache"
+      version: "3.10.0"
+      scope: "{{removeLine}}"
+    - groupId: "javax.xml.bind"
+      artifactId: "jaxb-api"
+      version: "2.3.1"
+      scope: "{{removeLine}}"
+    - groupId: "org.glassfish.jaxb"
+      artifactId: "jaxb-runtime"
+      version: "2.3.1"
+      scope: "{{removeLine}}"
+  metadataBooleanTrueKeys:
+    - "useEhcache"
+- id: 2
+  frameworkId: 2
+  name: "MicrosoftExtensionsCachingMemory"
+  configFiles:
+    - fileType: "ICacheService"
+      fileName: "ICacheService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Interface;
+
+        public interface ICacheService
+        {
+            T? Get<T>(string key);
+            void Set<T>(string key, T value, TimeSpan expiration);
+            void Remove(string key);
+
+            void RemoveByKey(string key);
+            void RemoveByKeyPrefix(string prefix);
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
+    - fileType: "MemoryCacheService"
+      fileName: "MemoryCacheService"
+      extension: "cs"
+      content: |
+        using Microsoft.Extensions.Caching.Memory;
+        using System.Collections.Concurrent;
+        using ${majStart(projectName)}.Services.Interface;
+
+        namespace ${majStart(projectName)}.Services.Implementation;
+
+        public class MemoryCacheService : ICacheService
+        {
+            private readonly IMemoryCache _memoryCache;
+            private static readonly ConcurrentDictionary<string, byte> _keys = new();
+
+            public MemoryCacheService(IMemoryCache memoryCache)
+            {
+                _memoryCache = memoryCache;
+            }
+
+            public T? Get<T>(string key)
+            {
+                if (_memoryCache.TryGetValue(key, out T value))
+                {
+                    Console.WriteLine($"Cache hit for key: {key}");
+                    return value;
+                }
+                else
+                {
+                    Console.WriteLine($"Cache miss for key: {key}");
+                    return default;
+                }
+            }
+
+            public void Set<T>(string key, T value, TimeSpan expiration)
+            {
+                Console.WriteLine($"Setting cache for key: {key} (expires in {expiration.TotalMinutes} min)");
+                _memoryCache.Set(key, value, new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = expiration,
+                    PostEvictionCallbacks =
+                    {
+                        new PostEvictionCallbackRegistration
+                        {
+                            EvictionCallback = (k, _, _, _) => _keys.TryRemove(k.ToString(), out _)
+                        }
+                    }
+                });
+
+                _keys.TryAdd(key, 0);
+            }
+
+            public void Remove(string key)
+            {
+                Console.WriteLine($"Cache remove for key: {key}");
+                _memoryCache.Remove(key);
+            }
+
+            public void RemoveByKey(string key)
+            {
+                Remove(key);
+                _keys.TryRemove(key, out _);
+            }
+
+            public void RemoveByKeyPrefix(string prefix)
+            {
+                var keysToRemove = _keys.Keys.Where(k => k.StartsWith(prefix)).ToList();
+                foreach (var key in keysToRemove)
+                {
+                    Remove(key);
+                    _keys.TryRemove(key, out _);
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
+  additionalDependencies: [ ]
+  metadataBooleanTrueKeys:
+    - "useMicrosoftExtensionsCachingMemory"
+- id: 3
+  frameworkId: 5
+  name: "Redis"
+  configFiles:
+    - fileType: "Cache module"
+      fileName: "cache.module"
+      extension: "ts"
+      content: |
+        import { Global, Module } from '@nestjs/common';
+        import { CacheService } from './cache.service';
+        import Keyv from 'keyv';
+        import KeyvRedis from '@keyv/redis';
+          
+        @Global()
+        @Module({
+          providers: [
+            {
+              provide: 'KEYV_INSTANCE',
+              useFactory: () => {
+                const keyv = new Keyv({
+                  store: new KeyvRedis('redis://localhost:6379'),
+                  ttl: 60000, 
+                });
+                                  
+                keyv.on('error', err => console.error('KeyV Connection Error:', err));
+                console.log('KeyV Redis store initialized OK');
+                return keyv;
+              },
+            },
+            CacheService,
+          ],
+          exports: [CacheService],
+        })
+        export class CacheModule {}
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/cache"
+    - fileType: "Cache service"
+      fileName: "cache.service"
+      extension: "ts"
+      content: |
+        import { Inject, Injectable } from '@nestjs/common';
+        import Keyv from 'keyv';
+
+        @Injectable()
+        export class CacheService {
+          constructor(
+            @Inject('KEYV_INSTANCE')
+            private readonly keyv: Keyv,
+          ) {}
+
+          async set(key: string, value: any, ttl?: number): Promise<void> {
+            await this.keyv.set(key, value, ttl);
+            console.log('[CacheService] SET', key);
+          }
+
+          async get(key: string): Promise<any> {
+            const val = await this.keyv.get(key);
+            console.log('[CacheService] GET', key, '=>', val ? 'FOUND' : 'NOT FOUND');
+            return val;
+          }
+
+          async delete(key: string): Promise<void> {
+            await this.keyv.delete(key);
+          }
+
+          async reset(): Promise<void> {
+            await this.keyv.clear();
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/cache"
+  additionalDependencies: [ ]
+  metadataBooleanTrueKeys:
+    - "useNestRedisCaching"
+- id: 4
+  frameworkId: 5
+  name: "BuiltInNestCacheManager"
+  configFiles:
+    - fileType: "Cache module"
+      fileName: "cache.module"
+      extension: "ts"
+      content: |
+        import { Global, Module } from '@nestjs/common';
+        import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
+        import { CacheService } from './cache.service';
+        
+        @Global()
+        @Module({
+          imports: [
+            NestCacheModule.register({
+              ttl: 60_000, // TTL par défaut (ms)
+              max: 1000,
+            }),
+          ],
+          providers: [CacheService],
+          exports: [CacheService, NestCacheModule],
+        })
+        export class CacheModule {}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/cache"
+    - fileType: "Cache service"
+      fileName: "cache.service"
+      extension: "ts"
+      content: |
+        import { Inject, Injectable } from '@nestjs/common';
+        import { CACHE_MANAGER } from '@nestjs/cache-manager';
+        import { Cache } from 'cache-manager';
+
+        @Injectable()
+        export class CacheService {
+            constructor(@Inject(CACHE_MANAGER) private cache: Cache) {}
+
+            async get(key: string): Promise<any> {
+            return await this.cache.get(key);
+            }
+
+            async set(key: string, value: any): Promise<void> {
+            await this.cache.set(key, value);
+            }
+
+            async delete(key: string): Promise<void> {
+            await this.cache.del(key);
+            }
+
+            async reset(): Promise<void>{
+                await this.cache.clear();
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/cache"
+  additionalDependencies: [ ]
+  metadataBooleanTrueKeys:
+    - "useBuiltInNestCacheManager"

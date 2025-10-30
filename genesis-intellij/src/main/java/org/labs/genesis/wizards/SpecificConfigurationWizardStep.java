@@ -7,6 +7,7 @@ import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.forms.SpecificConfigurationForm;
+import org.labs.utils.StringUtils;
 
 import javax.swing.*;
 import java.sql.SQLException;
@@ -15,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.sql.Connection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SpecificConfigurationWizardStep extends ModuleWizardStep {
     private final SpecificConfigurationForm specificConfigurationForm;
@@ -61,6 +64,29 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
                 specificConfigurationForm.getSecurityTypeOptions().getSelectedItem(), () -> "").toString()
         );
 
+        // Gestion du cache
+        frameworkConfiguration.put("cacheProvider", Objects.requireNonNullElseGet(
+                specificConfigurationForm.getCacheProviderOptions().getSelectedItem(), () -> "").toString()
+        );
+        if (!specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList().isEmpty()) {
+            List<String> selectedEntities = specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList();
+
+            // Formate every entity name to match with class naming convention
+            List<String> entitiesCacheable = selectedEntities.stream()
+                    .filter(tableName -> tableName != null && !tableName.isBlank())
+                    .map(tableName -> Stream.of(tableName)
+                            .map(String::toLowerCase)
+                            .map(StringUtils::toCamelCase)
+                            .map(StringUtils::majStart)
+                            .map(StringUtils::removeLastS)
+                            .findFirst()
+                            .orElse(""))
+                    .filter(formatted -> !formatted.isEmpty())
+                    .collect(Collectors.toList());
+
+            frameworkConfiguration.put("entitiesCacheable", entitiesCacheable);
+        }
+
         // Gestion de hibernate ddl option
         frameworkConfiguration.put("hibernateDdlAuto", Objects.requireNonNullElseGet(
                 specificConfigurationForm.getDdlAutoOptions().getSelectedItem(), () -> "").toString()
@@ -102,6 +128,9 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         // Valider les champs spécifiques au projet
         validateProjectPort();
         validateProjectDescription();
+
+        // Valider la configuration du cache
+        validateCache();
 
         // Valider les champs pour les API Gateway
         if (framework != null && framework.getIsGateway()) {
@@ -158,6 +187,13 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         if (specificConfigurationForm.getUseAnEurekaServerCheckBox().isSelected() &&
                 specificConfigurationForm.getEurekaServerHostField().getText().trim().isEmpty()) {
             throw new ConfigurationException("Eureka Server Host cannot be empty if Eureka is enabled.");
+        }
+    }
+
+    private void validateCache() throws ConfigurationException {
+        if (!specificConfigurationForm.getCacheProviderOptions().getSelectedItem().equals("NONE") &&
+                specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList().isEmpty()) {
+            throw new ConfigurationException("Please select at least one table or view to cache.");
         }
     }
 
@@ -221,5 +257,12 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             throw new IllegalArgumentException("Framework must not be null");
         }
         specificConfigurationForm.updateFormWithFramework(framework);
+    }
+
+    public void onTablesAndViewsSelected(List<String> selectedValues, List<String> selectedViewValues) {
+        if (selectedValues.isEmpty() && selectedViewValues.isEmpty()) {
+            throw new IllegalArgumentException("At least one table or view must be selected");
+        }
+        specificConfigurationForm.updateFormWithTablesAndViews(selectedValues, selectedViewValues);
     }
 }
