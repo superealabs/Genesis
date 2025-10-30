@@ -1,10 +1,7 @@
 package org.labs.genesis.config.langage.generator.project;
 
 import org.jetbrains.annotations.NotNull;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.FrameworkSecurity;
-import org.labs.genesis.config.langage.FrameworkCaching;
-import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.engine.GenesisTemplateEngine;
@@ -81,6 +78,10 @@ public class ProjectMetadataProvider {
             dependencyFileMap.put("DBgroupId", "{{removeLine}}");
             dependencyFileMap.put("DBartifactId", "{{removeLine}}");
             dependencyFileMap.put("DBversion", "{{removeLine}}");
+        }
+
+        if (framework instanceof FrameworkMVC) {
+            dependencyFileMap.put("isMvcProject", true);
         }
 
         return dependencyFileMap;
@@ -184,4 +185,5 @@ public class ProjectMetadataProvider {
 
         return combinedMap;
     }
+
 }

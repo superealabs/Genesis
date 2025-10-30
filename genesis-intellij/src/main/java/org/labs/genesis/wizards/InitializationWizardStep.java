@@ -4,6 +4,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.FrameworkMVC;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.config.langage.Project;
 import org.labs.genesis.forms.InitializationForm;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 public class InitializationWizardStep extends ModuleWizardStep {
     public final SpecificConfigurationWizardStep specificConfigurationWizardStep;
+    public final FrontendConfigurationWizardStep frontendConfigurationWizardStep;
     private final InitializationForm newProjectPanel;
     private final ProjectGenerationContext projectGenerationContext;
     // added as attributes to avoid repetition
@@ -27,10 +29,11 @@ public class InitializationWizardStep extends ModuleWizardStep {
     private Project buildTool;
     private Framework projectType;
 
-    public InitializationWizardStep(ProjectGenerationContext projectGenerationContext, SpecificConfigurationWizardStep specificConfigurationWizardStep) {
+    public InitializationWizardStep(ProjectGenerationContext projectGenerationContext, SpecificConfigurationWizardStep specificConfigurationWizardStep, FrontendConfigurationWizardStep frontendConfigurationWizardStep) {
         newProjectPanel = new InitializationForm();
         this.projectGenerationContext = projectGenerationContext;
         this.specificConfigurationWizardStep = specificConfigurationWizardStep;
+        this.frontendConfigurationWizardStep = frontendConfigurationWizardStep;
     }
 
     @Override
@@ -79,6 +82,11 @@ public class InitializationWizardStep extends ModuleWizardStep {
 
         specificConfigurationWizardStep.onFrameworkSelected(framework);
         projectGenerationContext.setGenerateFrontendApp(framework.getUseFrontendApp());
+        if (framework instanceof FrameworkMVC) {
+            frontendConfigurationWizardStep.onFrameworkMVCSelected((FrameworkMVC) framework);
+        } else {
+            frontendConfigurationWizardStep.onFrameworkSelected();
+        }
     }
 
     @Override

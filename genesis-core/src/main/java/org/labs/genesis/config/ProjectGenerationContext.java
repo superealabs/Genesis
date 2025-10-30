@@ -2,9 +2,7 @@ package org.labs.genesis.config;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.Language;
-import org.labs.genesis.config.langage.Project;
+import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.frontend.FrontendLanguage;
@@ -45,6 +43,8 @@ public class ProjectGenerationContext {
     private FrontendFramework frontendFramework;
     private FrontendLanguage frontendLanguage;
     private String webappFolder = "webapp";
+    // FrameworkMVC specific configurations
+    private ViewsTemplate viewsTemplate;
 
     public ProjectGenerationContext setDatabase(Database database) {
         this.database = database;

@@ -1,10 +1,7 @@
 package org.labs.genesis.config.langage.generator.framework;
 
 import org.jetbrains.annotations.NotNull;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.FrameworkSecurity;
-import org.labs.genesis.config.langage.FrameworkCaching;
-import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
@@ -278,7 +275,15 @@ public class FrameworkMetadataProvider {
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field);
-                fieldsFK.add(fieldMap);
+
+                String fieldType = field.getType();
+
+                boolean exists = fieldsFK.stream()
+                        .anyMatch(existing -> fieldType.equals(existing.get("type")));
+
+                if (!exists) {
+                    fieldsFK.add(fieldMap);
+                }
             }
         }
         return fieldsFK;
@@ -309,7 +314,15 @@ public class FrameworkMetadataProvider {
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field, language);
-                fieldsFK.add(fieldMap);
+
+                String fieldType = field.getType();
+
+                boolean exists = fieldsFK.stream()
+                        .anyMatch(existing -> fieldType.equals(existing.get("type")));
+
+                if (!exists) {
+                    fieldsFK.add(fieldMap);
+                }
             }
         }
         return fieldsFK;
@@ -421,6 +434,130 @@ public class FrameworkMetadataProvider {
         return metadata;
     }
 
+    public static HashMap<String, Object> getMvcHashMapIntermediaire(Language language, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) throws Exception {
+        HashMap<String, Object> metadata = getHashMapIntermediaire(language, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
+        metadata.put("inputs", getInputsList(tableMetadata, language));
+        metadata.put("textAreas", getTextAreasList(tableMetadata, language));
+        metadata.put("inputsFilter", getFilterInputsList(tableMetadata, language));
+
+        List<Integer> pageSizesList = Arrays.asList(5, 10, 50, 100, 200, 300, 500, 1000);
+        metadata.put("pageSizesList", pageSizesList);
+
+        return metadata;
+    }
+
+    private static List<Map<String, Object>> getInputsList(TableMetadata tableMetadata, Language language) throws Exception {
+        List<Map<String, Object>> inputs = new ArrayList<>();
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            if (!field.isForeign()) {
+                if (!field.getColumnType().equals("json")
+                        && !field.getColumnType().equals("jsonb")
+                        && !field.getColumnType().equals("xml")
+                ) {
+                    InputTypeMapping.Input input = InputTypeMapping.getInput(field, language, engine);
+                    Map<String, Object> inputMap = getInputHashMap(input);
+                    if (Boolean.TRUE.equals(inputMap.get("isShowed"))) {
+                        inputs.add(inputMap);
+                    }
+                }
+            }
+        }
+        return inputs;
+    }
+
+    private static List<Map<String, Object>> getTextAreasList(TableMetadata tableMetadata, Language language) throws Exception {
+        List<Map<String, Object>> textAreas = new ArrayList<>();
+
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            if (!field.isForeign()) {
+                if (field.getColumnType().equals("json")
+                        || field.getColumnType().equals("jsonb")
+                        || field.getColumnType().equals("xml")
+                ) {
+                    textAreas.add(getTextAreaHashMap(field, language));
+                }
+            }
+        }
+
+        return textAreas;
+    }
+
+    private static List<Map<String, Object>> getFilterInputsList(TableMetadata tableMetadata, Language language) throws Exception {
+        List<Map<String, Object>> inputs = new ArrayList<>();
+
+        for (ColumnMetadata field : tableMetadata.getColumns()) {
+            boolean isRangeType = field.isNumeric() || field.isDate() || field.isTime()
+                    || field.isTimeTz() || field.isDateTime() || field.isDateTimeTz() || field.isInterval();
+
+            boolean excluded = field.isForeign() || field.isPrimary();
+
+            InputTypeMapping.Input input = InputTypeMapping.getInput(field, language, engine);
+
+            if (isRangeType && !excluded) {
+                inputs.add(getInputHashMap(input, field.getName() + "Min"));
+                inputs.add(getInputHashMap(input, field.getName() + "Max"));
+            }
+            if (!isRangeType && !excluded) {
+                inputs.add(getInputHashMap(input));
+            }
+        }
+
+        return inputs;
+    }
+
+
+    public static @NotNull Map<String, Object> getInputHashMap(InputTypeMapping.Input input) {
+        return getInputHashMap(input, input.getName());
+    }
+
+    public static @NotNull Map<String, Object> getInputHashMap(InputTypeMapping.Input input, String inputName) {
+        Map<String, Object> inputMap = new HashMap<>();
+
+        inputMap.put("name", inputName);
+        inputMap.put("id", input.getId());
+        inputMap.put("placeholder", input.getPlaceholder());
+        inputMap.put("validations", input.getValidations());
+        inputMap.put("type", input.getType());
+        inputMap.put("isShowed", input.getIsShowed());
+        inputMap.put("isRequired", input.getIsRequired());
+
+        return inputMap;
+    }
+
+
+    public static @NotNull Map<String, Object> getTextAreaHashMap(ColumnMetadata columnMetadata, Language language) {
+        Map<String, Object> inputMap = new HashMap<>();
+
+        inputMap.put("name", StringUtils.majStart(columnMetadata.getName()) + StringUtils.majStart(columnMetadata.getColumnType().toLowerCase()));
+        inputMap.put("class", columnMetadata.getColumnType().toLowerCase() + "-textarea");
+        inputMap.put("placeholder", language.getMockData().get(columnMetadata.getColumnType()));
+        inputMap.put("validFormat", language.getMockData().get(columnMetadata.getColumnType()));
+
+        return inputMap;
+    }
+
+
+    public static HashMap<String, Object> getGeneralViewHashMap(FrameworkMVC framework) {
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("rootPath", framework.getView().getRootPath());
+        metadata.put("backLink", framework.getView().getBackLink());
+        metadata.put("previousLink", framework.getView().getPreviousLink());
+        metadata.put("staticFilesPath", framework.getView().getStaticFilesPath());
+        metadata.put("antiForgeryTokenTagHelper", framework.getView().getAntiForgeryTokenTagHelper());
+        return metadata;
+    }
+
+    public static HashMap<String, Object>  getViewMainLayoutHashMap (FrameworkMVC framework, Map<String, Object> frameworkConfiguration, List<TableMetadata> tableMetadata, String projectName, String destinationFolder, String groupLink) {
+        HashMap<String, Object> metadata = new HashMap<>();
+
+        metadata.putAll(getGeneralViewHashMap(framework));
+
+        addGeneralMetadata(metadata, tableMetadata.get(0), framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
+        metadata.put("entities", getTableMetadataList(tableMetadata));
+
+        return metadata;
+    }
+
     private static List<Map<String, Object>> getTableMetadataList(List<TableMetadata> tableMetadata) {
         List<Map<String, Object>> tms = new ArrayList<>();
         for (TableMetadata field : tableMetadata) {
@@ -483,5 +620,105 @@ public class FrameworkMetadataProvider {
             }
         });
         return frameworkSelectedCacheProviderBooleanMetadata;
+    }
+
+    public static HashMap<String, Object> getAltViewMainLayoutHashMap (FrameworkMVC frameworkMVC) {
+        HashMap<String, Object> altMap = new HashMap<>();
+        altMap.putAll(getGeneralViewHashMap(frameworkMVC));
+        altMap.put("assetsImportLink", frameworkMVC.getView().getLayout().getAssetsImportLink());
+        altMap.put("viewAnnotations", frameworkMVC.getView().getLayout().getViewAnnotations());
+        altMap.put("pageName", frameworkMVC.getView().getLayout().getPageName());
+        altMap.put("navLink", frameworkMVC.getView().getLayout().getNavLink());
+        altMap.put("callContent", frameworkMVC.getView().getLayout().getCallContent());
+        altMap.put("logoutLink", frameworkMVC.getView().getLayout().getLogoutLink());
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewErrorHashMap (FrameworkMVC frameworkMVC) {
+        HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
+        altMap.put("viewAnnotations", frameworkMVC.getView().getError().getViewAnnotations());
+        altMap.put("errorMessage", frameworkMVC.getView().getError().getErrorMessage());
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewListHashMap (FrameworkMVC frameworkMVC) {
+        HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
+        altMap.put("viewAnnotations", frameworkMVC.getView().getList().getViewAnnotations());
+        altMap.put("inputTagHelper", frameworkMVC.getView().getList().getInputTagHelper());
+        altMap.put("inputRadioTagHelper", frameworkMVC.getView().getList().getInputRadioTagHelper());
+        altMap.put("inputDateTagHelper", frameworkMVC.getView().getList().getInputDateTagHelper());
+        altMap.put("selectTagHelper", frameworkMVC.getView().getList().getSelectTagHelper());
+        altMap.put("deleteDataTagHelper", frameworkMVC.getView().getList().getDeleteDataTagHelper());
+        altMap.put("pageSizeTagHelper", frameworkMVC.getView().getList().getPageSizeTagHelper());
+        altMap.put("dataValue", frameworkMVC.getView().getList().getDataValue());
+        altMap.put("dataForeignValue", frameworkMVC.getView().getList().getDataForeignValue());
+        altMap.put("inlineLoopStatement", frameworkMVC.getView().getList().getInlineLoopStatement());
+        altMap.put("blockLoopStatementStart", frameworkMVC.getView().getList().getBlockLoopStatementStart());
+        altMap.put("blockLoopStatementEnd", frameworkMVC.getView().getList().getBlockLoopStatementEnd());
+        altMap.put("filterLink", frameworkMVC.getView().getList().getFilterLink());
+        altMap.put("sortLink", frameworkMVC.getView().getList().getSortLink());
+        altMap.put("detailsLink", frameworkMVC.getView().getList().getDetailsLink());
+        altMap.put("createLink", frameworkMVC.getView().getList().getCreateLink());
+        altMap.put("updateLink", frameworkMVC.getView().getList().getUpdateLink());
+        altMap.put("deleteLink", frameworkMVC.getView().getList().getDeleteLink());
+        altMap.put("exportLink", frameworkMVC.getView().getList().getExportLink());
+        altMap.put("pageSizeChangeLink", frameworkMVC.getView().getList().getPageSizeChangeLink());
+        altMap.put("previousPageLink", frameworkMVC.getView().getList().getPreviousPageLink());
+        altMap.put("previousClassCondition", frameworkMVC.getView().getList().getPreviousClassCondition());
+        altMap.put("pagesListLoop", frameworkMVC.getView().getList().getPagesListLoop());
+        altMap.put("nextPageLink", frameworkMVC.getView().getList().getNextPageLink());
+        altMap.put("nextClassCondition", frameworkMVC.getView().getList().getNextClassCondition());
+        altMap.put("onGoingPageLink", frameworkMVC.getView().getList().getOnGoingPageLink());
+        altMap.put("pageNumberValue", frameworkMVC.getView().getList().getPageNumberValue());
+        altMap.put("pageSizeValue", frameworkMVC.getView().getList().getPageSizeValue());
+        altMap.put("currentSortValue", frameworkMVC.getView().getList().getCurrentSortValue());
+        altMap.put("totalElementsTagHelper", frameworkMVC.getView().getList().getTotalElementsTagHelper());
+        altMap.put("activeSortAscCondition", frameworkMVC.getView().getList().getActiveSortAscCondition());
+        altMap.put("activeSortDescCondition", frameworkMVC.getView().getList().getActiveSortDescCondition());
+        altMap.put("onGoingPagesLoop", frameworkMVC.getView().getList().getOnGoingPagesLoop());
+        altMap.put("scriptSection", frameworkMVC.getView().getList().getScriptSection());
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewDetailHashMap (FrameworkMVC frameworkMVC) {
+        HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
+        altMap.put("viewAnnotations", frameworkMVC.getView().getDetail().getViewAnnotations());
+        altMap.put("dataValue", frameworkMVC.getView().getDetail().getDataValue());
+        altMap.put("dataForeignValue", frameworkMVC.getView().getDetail().getDataForeignValue());
+        altMap.put("deleteDataTagHelper", frameworkMVC.getView().getDetail().getDeleteDataTagHelper());
+        altMap.put("updateLink", frameworkMVC.getView().getDetail().getUpdateLink());
+        altMap.put("deleteLink", frameworkMVC.getView().getDetail().getDeleteLink());
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewCreateHashMap (FrameworkMVC frameworkMVC) {
+        HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
+        altMap.put("viewAnnotations", frameworkMVC.getView().getCreate().getViewAnnotations());
+        altMap.put("validationSection", frameworkMVC.getView().getCreate().getValidationSection());
+        altMap.put("validationTagHelper", frameworkMVC.getView().getCreate().getValidationTagHelper());
+        altMap.put("selectValidationTagHelper", frameworkMVC.getView().getCreate().getSelectValidationTagHelper());
+        altMap.put("inputTagHelper", frameworkMVC.getView().getCreate().getInputTagHelper());
+        altMap.put("textAreaTagHelper", frameworkMVC.getView().getCreate().getTextAreaTagHelper());
+        altMap.put("textAreaValidationTagHelper", frameworkMVC.getView().getCreate().getTextAreaValidationTagHelper());
+        altMap.put("checkedRadioTagHelper", frameworkMVC.getView().getCreate().getCheckedRadioTagHelper());
+        altMap.put("selectTagHelper", frameworkMVC.getView().getCreate().getSelectTagHelper());
+        altMap.put("createLink", frameworkMVC.getView().getCreate().getCreateLink());
+        altMap.put("scriptSection", frameworkMVC.getView().getCreate().getScriptSection());
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewEditHashMap (FrameworkMVC frameworkMVC) {
+        HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
+        altMap.put("viewAnnotations", frameworkMVC.getView().getEdit().getViewAnnotations());
+        altMap.put("validationSection", frameworkMVC.getView().getEdit().getValidationSection());
+        altMap.put("validationTagHelper", frameworkMVC.getView().getCreate().getValidationTagHelper());
+        altMap.put("selectValidationTagHelper", frameworkMVC.getView().getCreate().getSelectValidationTagHelper());
+        altMap.put("inputTagHelper", frameworkMVC.getView().getEdit().getInputTagHelper());
+        altMap.put("textAreaTagHelper", frameworkMVC.getView().getEdit().getTextAreaTagHelper());
+        altMap.put("textAreaValidationTagHelper", frameworkMVC.getView().getEdit().getTextAreaValidationTagHelper());
+        altMap.put("selectTagHelper", frameworkMVC.getView().getEdit().getSelectTagHelper());
+        altMap.put("updateLink", frameworkMVC.getView().getEdit().getUpdateLink());
+        altMap.put("scriptSection", frameworkMVC.getView().getEdit().getScriptSection());
+        return altMap;
     }
 }

@@ -33,11 +33,10 @@ public class ColorPicker implements ActionListener {
 
     public String getSelcetedColorCode(){
         String rgbaHex = String.format(
-                "#%02x%02x%02x%02x",
+                "#%02x%02x%02x",
                 this.selectedColor.getRed(),
                 this.selectedColor.getGreen(),
-                this.selectedColor.getBlue(),
-                this.selectedColor.getAlpha()
+                this.selectedColor.getBlue()
         );
         return  rgbaHex;
     }
