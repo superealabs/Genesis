@@ -3,6 +3,7 @@ package org.labs.genesis.config.langage.generator.framework;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkSecurity;
+import org.labs.genesis.config.langage.FrameworkCaching;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -20,7 +21,16 @@ public class FrameworkMetadataProvider {
 
     public static @NotNull Map<String, Object> getCredentialsHashMap(Database database) {
         Credentials credentials = database.getCredentials();
-
+        System.out.println("=== DEBUG getCredentialsHashMap ===");
+        System.out.println("host=" + credentials.getHost());
+        System.out.println("port=" + credentials.getPort());
+        System.out.println("database=" + credentials.getDatabaseName());
+        System.out.println("schema=" + credentials.getSchemaName());
+        System.out.println("useSSL=" + credentials.isUseSSL());
+        System.out.println("username=" + credentials.getUser());
+        System.out.println("password=" + credentials.getPwd());
+        System.out.println("driverType=" + credentials.getDriverType());
+        System.out.println("sid=" + database.getSid());
         return new HashMap<>(
                 Map.of("host", credentials.getHost(),
                         "port", credentials.getPort(),
@@ -29,8 +39,8 @@ public class FrameworkMetadataProvider {
                         "useSSL", credentials.isUseSSL(),
                         "username", credentials.getUser(),
                         "password", credentials.getPwd(),
-                        "driverType", credentials.getDriverType(),
-                        "sid", database.getSid()
+                        "driverType", Objects.toString(credentials.getDriverType(), ""),
+                        "sid",Objects.toString(database.getSid(), "")
                 )
         );
     }
@@ -223,6 +233,23 @@ public class FrameworkMetadataProvider {
         metadata.put("isView", tableMetadata.getIsView());
 
         metadata.putAll(getFrameworkSecurityTrueBooleanHashMap(framework,frameworkOptions));
+        String cacheProvider = (String) frameworkOptions.get("cacheProvider");
+        Optional<FrameworkCaching> selectedCacheProviderOption = framework.getSelectedCacheProviderByName(cacheProvider);
+
+        String handleSpace = StringUtils.toCamelCase(cacheProvider);
+        Object cacheableOption = frameworkOptions.get("entitiesCacheable");
+
+        if (selectedCacheProviderOption.isPresent() && cacheableOption instanceof List<?>) {
+            List<String> cacheableEntities = (List<String>) cacheableOption;
+
+            String className = tableMetadata.getClassName();
+            boolean isCacheable = cacheableEntities.contains(className);
+
+
+            metadata.put("cacheableWith" + StringUtils.majStart(handleSpace), isCacheable);
+        }
+
+        metadata.putAll(getFrameworkCachingTrueBooleanHashMap(framework,frameworkOptions));
     }
 
 
@@ -362,8 +389,11 @@ public class FrameworkMetadataProvider {
     public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName) throws Exception {
         String packageDefault = "";
         packageDefault = framework.getModelDao().getModelDaoSavePath();
-
+        System.out.println("Get hashmapDAO global " + packageDefault);
+        System.out.println(tableMetadata.size()+ " SIZEEEEE");
         Database database = tableMetadata.getFirst().getDatabase();
+        System.out.println("Get databaseee global ");
+
         String connectionString = database.getConnectionString().get(framework.getLanguageId());
         Map<String, Object> connectionStringMetadata = getCredentialsHashMap(database);
         if(connectionStringMetadata.get("database").equals("genesis"))
@@ -371,6 +401,7 @@ public class FrameworkMetadataProvider {
             connectionStringMetadata.put("database",database.getSid().toLowerCase());
         }
         connectionString = engine.render(connectionString, connectionStringMetadata);
+        System.out.println("Renderedeee");
 
         Map<String, Object> metadata = new HashMap<>(Map.of(
                 "projectName", projectName,
@@ -441,5 +472,16 @@ public class FrameworkMetadataProvider {
     private static HashMap<String, Object> getFrontendLanguageMetadata(FrontendLanguage frontendLanguage, Map<String, Object> frontendConfiguration) {
         HashMap<String, Object> frontendLanguageMetadata = new HashMap<>();
         return  frontendLanguageMetadata;
+    }
+    private static HashMap<String, Object> getFrameworkCachingTrueBooleanHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
+        HashMap<String, Object> frameworkSelectedCacheProviderBooleanMetadata = new HashMap<>();
+        String cacheProvider = (String) frameworkConfiguration.get("cacheProvider");
+        Optional<FrameworkCaching> selectedSelectedCacheProviderOption = framework.getSelectedCacheProviderByName(cacheProvider);
+        selectedSelectedCacheProviderOption.ifPresent(frameworkCaching -> {
+            for(String key : frameworkCaching.getMetadataBooleanTrueKeys()){
+                frameworkSelectedCacheProviderBooleanMetadata.put(key, true);
+            }
+        });
+        return frameworkSelectedCacheProviderBooleanMetadata;
     }
 }

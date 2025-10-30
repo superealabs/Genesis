@@ -2509,3 +2509,683 @@
   additionalDependencies: [ ]
   metadataBooleanTrueKeys:
     - "useJWT"
+- id: 3
+  frameworkId: 5
+  name: "Nest Security - JWT"
+  securityFiles:
+    - fileType: "Roles Entity"
+      fileName: "role-entity.entity"
+      extension: "ts"
+      content: |
+        import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+  
+        @Entity({ name: 'roles' })
+        export class RoleEntity {
+          @PrimaryGeneratedColumn({ type: 'bigint', name: 'id' })
+          id!: number;
+  
+          @Column({ name: 'name', type: 'varchar', length: 100, nullable: false })
+          name!: string;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/role-entity"
+    - fileType: "Role Module"
+      fileName: "role-entity.module"
+      extension: "ts"
+      content: |
+        import { Module } from "@nestjs/common";
+        import { TypeOrmModule } from "@nestjs/typeorm";
+        import { RoleEntity } from "./role-entity.entity";
+        
+        @Module({
+          imports: [TypeOrmModule.forFeature([RoleEntity])],
+          providers: [],
+          controllers: [],
+          exports: [],
+        })
+        export class RoleEntityModule {}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/role-entity"
+    - fileType: "User Entity"
+      fileName: "user-entity.entity"
+      extension: "ts"
+      content: |
+        import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, BeforeInsert } from 'typeorm';
+        import { RoleEntity } from '../role-entity/role-entity.entity';
+        import * as bcrypt from 'bcryptjs';
+        @Entity({ name: 'users' })
+        export class UserEntity {
+          @PrimaryGeneratedColumn({ type: 'bigint', name: 'id' })
+          id!: number;
+  
+          @Column({ name: 'name', type: 'varchar', length: 100, nullable: true })
+          name!: string;
+  
+          @Column({ name: 'email', type: 'varchar', length: 100, nullable: true })
+          email!: string;
+  
+          @Column({ name: 'password', type: 'varchar', length: 255, nullable: true })
+          password!: string;
+  
+          @ManyToOne(() => RoleEntity, { nullable: true, eager: true })
+          @JoinColumn({ name: 'role_id' })
+          roleidRoleEntity!: RoleEntity;
+        
+          @BeforeInsert()
+            async hashPassword() {
+            if (this.password) {
+              this.password = await bcrypt.hash(this.password, 10);
+            }
+          }
+          
+          async comparePassword(plain: string) {
+            return bcrypt.compare(plain, this.password);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/user-entity"
+    - fileType: "User Module"
+      fileName: "user-entity.module"
+      extension: "ts"
+      content: |
+        import { Module } from '@nestjs/common';
+        import { TypeOrmModule } from '@nestjs/typeorm';
+        import { UserEntity } from './user-entity.entity';
+        import { UserEntityService } from './user-entity.service';
+        
+        @Module({
+          imports: [TypeOrmModule.forFeature([UserEntity])],
+          providers: [UserEntityService],
+          controllers: [],
+          exports: [UserEntityService],
+          })
+        export class UserEntityModule {}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/user-entity"
+    - fileType: "User Service"
+      fileName: "user-entity.service"
+      extension: "ts"
+      content: |
+        import { Injectable, NotFoundException } from '@nestjs/common';
+        import { InjectRepository } from '@nestjs/typeorm';
+        import { Repository } from 'typeorm';
+        import { UserEntity } from './user-entity.entity';
+        
+        @Injectable()
+        export class UserEntityService {
+          constructor(
+          @InjectRepository(UserEntity)
+            private readonly userRepo: Repository<UserEntity>,
+          ) {}
+      
+          async findByEmail(email: string): Promise<UserEntity | null> {
+            return this.userRepo.findOne({ where: { email } });
+          }
+      
+          async findById(id: number): Promise<UserEntity | null> {
+            return this.userRepo.findOne({ where: { id } });
+          }
+      
+          async create(data: Partial<UserEntity>): Promise<UserEntity> {
+           const user = this.userRepo.create(data);
+           return this.userRepo.save(user);
+          }
+      
+          async findAll(): Promise<UserEntity[]> {
+            return this.userRepo.find();
+          }
+      
+          async update(id: number, data: Partial<UserEntity>): Promise<UserEntity> {
+           const user = await this.findById(id);
+           if (!user) throw new NotFoundException('User not found');
+           Object.assign(user, data);
+           return this.userRepo.save(user);
+          }
+      
+          async delete(id: number): Promise<void> {
+            await this.userRepo.delete(id);
+          }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/user-entity"
+    - fileType: "Database service"
+      fileName: "sql-init.service"
+      extension: "ts"
+      content: |
+        import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+        import { DataSource } from 'typeorm';
+        import * as fs from 'fs';
+        import * as path from 'path';
+  
+        @Injectable()
+        export class SqlInitService implements OnApplicationBootstrap {
+          constructor(private readonly dataSource: DataSource) {}
+  
+          async onApplicationBootstrap() {
+            const sqlPath = path.join(__dirname, '../../db/init.sql');
+            if (!fs.existsSync(sqlPath)) {
+              console.log('No sql file found for database initialization');
+              return;
+            }
+            const sql = fs.readFileSync(sqlPath, 'utf8');
+            await this.dataSource.query(sql);
+            console.log('init.sql executed');
+          }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/database"
+    - fileType: "User table and data init script"
+      fileName: "init"
+      extension: "sql"
+      content: |
+        --Default login
+        --Username: admin
+        --Password: admin123
+        {{#if databaseType = PostgreSQL}}
+        CREATE TABLE IF NOT EXISTS roles
+        (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE
+        );
+
+        CREATE TABLE IF NOT EXISTS users
+        (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) UNIQUE NOT NULL,
+          email VARCHAR(100) UNIQUE NOT NULL CHECK (email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+          password VARCHAR(100) NOT NULL,
+          role_id INTEGER NOT NULL REFERENCES roles(id)
+        );
+
+        INSERT INTO roles (name) VALUES ('ROLE_ADMIN')
+        ON CONFLICT (name) DO NOTHING;
+
+        INSERT INTO users (name, email, password, role_id)
+        VALUES ('admin', 'admin@user.com', '$2b$10$7qRz1zFQG2F7dL57V97dRuG5I8YFqCnnAHLW7q9m0PpSbsroGQ5aG', 1)
+        ON CONFLICT (email) DO NOTHING;
+        {{else}}{{removeLine}}{{/if}}
+
+        {{#if databaseType = MySQL}}
+        CREATE TABLE IF NOT EXISTS roles (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE
+        );
+
+        CREATE TABLE IF NOT EXISTS users (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE,
+          email VARCHAR(100) NOT NULL UNIQUE,
+          password VARCHAR(100) NOT NULL,
+          role_id INT NOT NULL,
+          CONSTRAINT fk_type_user FOREIGN KEY (role_id) REFERENCES roles(id),
+          CONSTRAINT chk_email CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
+        );
+
+        INSERT INTO roles (name) VALUES ('ROLE_ADMIN')
+        ON DUPLICATE KEY UPDATE id=id;
+
+        INSERT INTO users (name, email, password, role_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1)
+        ON DUPLICATE KEY UPDATE id=id;
+        {{else}}{{removeLine}}{{/if}}
+
+        {{#if databaseType = SQL Server}}
+        CREATE TABLE IF NOT EXISTS roles (
+          id INT IDENTITY(1,1) PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE
+        );
+
+        CREATE TABLE IF NOT EXISTS [users] (
+          id INT IDENTITY(1,1) PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE,
+          email VARCHAR(100) NOT NULL UNIQUE,
+          password VARCHAR(100) NOT NULL,
+          role_id INT NOT NULL,
+          CONSTRAINT FK_user_type_user FOREIGN KEY (role_id) REFERENCES roles(id),
+          CONSTRAINT CHK_email CHECK (email LIKE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}')
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_ADMIN')
+        INSERT INTO roles (name) VALUES ('ROLE_ADMIN');
+
+        IF NOT EXISTS (SELECT 1 FROM [users] WHERE name = 'admin' OR email = 'admin@user.com')
+        INSERT INTO [users] (name, email, password, role_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1);
+        {{else}}{{removeLine}}{{/if}}
+
+        {{#if databaseType = Oracle}}
+        CREATE TABLE roles (
+          id NUMBER PRIMARY KEY,
+          name VARCHAR2(100) NOT NULL UNIQUE
+        ) TABLESPACE users;
+
+        CREATE SEQUENCE type_user_seq START WITH 1 INCREMENT BY 1;
+
+        CREATE OR REPLACE TRIGGER type_user_trigger
+        BEFORE INSERT ON roles
+        FOR EACH ROW
+        BEGIN
+        SELECT type_user_seq.NEXTVAL INTO :new.id FROM dual;
+        END;
+
+        CREATE TABLE users (
+          id NUMBER PRIMARY KEY,
+          name VARCHAR2(100) NOT NULL UNIQUE,
+          email VARCHAR2(100) NOT NULL UNIQUE,
+          password VARCHAR2(100) NOT NULL,
+          role_id NUMBER NOT NULL,
+          CONSTRAINT fk_user_type_user FOREIGN KEY (role_id) REFERENCES roles(id),
+          CONSTRAINT chk_email CHECK (REGEXP_LIKE(email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'))
+        ) TABLESPACE users;
+
+        CREATE SEQUENCE user_seq START WITH 1 INCREMENT BY 1;
+
+        CREATE OR REPLACE TRIGGER user_trigger
+        BEFORE INSERT ON users
+        FOR EACH ROW
+        BEGIN
+        SELECT user_seq.NEXTVAL INTO :new.id FROM dual;
+        END;
+
+        MERGE INTO roles tu
+        USING (SELECT 1 FROM dual) d
+        ON (tu.name = 'ROLE_ADMIN')
+        WHEN NOT MATCHED THEN
+        INSERT (name) VALUES ('ROLE_ADMIN');
+
+        MERGE INTO users u
+        USING (SELECT 1 FROM dual) d
+        ON (u.name = 'admin' OR u.email = 'admin@user.com')
+        WHEN NOT MATCHED THEN
+        INSERT (name, email, password, role_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1);
+        {{else}}{{removeLine}}{{/if}}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/db"
+    - fileType: "DTO"
+      fileName: "login.dto"
+      extension: "ts"
+      content: |
+        import { ApiProperty } from '@nestjs/swagger';
+        import { IsString, MinLength } from 'class-validator';
+        
+        export class LoginDto {
+          @ApiProperty({ example: 'john_doe', description: 'Username' })
+          @IsString()
+          @MinLength(2)
+          name!: string;
+        
+          @ApiProperty({ example: 'password123', description: 'Password' })
+          @IsString()
+          @MinLength(6)
+          password!: string;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/dto"
+    - fileType: "DTO"
+      fileName: "register.dto"
+      extension: "ts"
+      content: |
+        import { ApiProperty } from '@nestjs/swagger';
+        import { IsString, MinLength, IsOptional, IsEmail } from 'class-validator';
+          
+        export class RegisterDto {
+          @ApiProperty({ example: 'John_Doe', description: 'Nom utilisateur' })
+          @IsString()
+          @MinLength(2)
+          name!: string;
+        
+          @ApiProperty({ example: 'john@mail.com', description: 'Email' })
+          @IsEmail()
+          email?: string;
+        
+          @ApiProperty({ example: 'password123', description: 'Mot de passe' })
+          @IsString()
+          @MinLength(6)
+          password!: string;
+        
+          @IsOptional()
+          roleId?: number;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/dto"
+    - fileType: "Guard"
+      fileName: "jwt-auth.guard"
+      extension: "ts"
+      content: |
+        import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+        import { AuthGuard } from '@nestjs/passport';
+        import { BlacklistService } from '../blacklist.service';
+          
+        @Injectable()
+        export class JwtAuthGuard extends AuthGuard('jwt') {
+          constructor(private blacklistService: BlacklistService) {
+            super();
+          }
+          
+          handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+             const request = context.switchToHttp().getRequest();
+             const token = this.extractToken(request);
+             
+             if (token && this.blacklistService?.isBlacklisted(token)) {
+               throw new UnauthorizedException('Token invalidated');
+             }
+               
+             if (err || !user) {
+               throw err || new UnauthorizedException((info as any)?.message || 'Unauthorized');
+             }
+             
+             return user;
+          }
+          
+          private extractToken(request: any): string | null {
+              const authHeader = request.headers.authorization;
+              return authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+          }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/guards"
+    - fileType: "Interface"
+      fileName: "jwt-payload.interface"
+      extension: "ts"
+      content: |
+        export interface JwtPayload {
+          sub: number;
+          name: string;
+          role?: string;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/interfaces"
+    - fileType: "Strategy"
+      fileName: "jwt.strategy"
+      extension: "ts"
+      content: |
+        import { ExtractJwt, Strategy } from 'passport-jwt';
+        import { PassportStrategy } from '@nestjs/passport';
+        import { Injectable } from '@nestjs/common';
+        import { JwtPayload } from '../interfaces/jwt-payload.interface';
+        import { ConfigService } from '@nestjs/config';
+        
+        @Injectable()
+        export class JwtStrategy extends PassportStrategy(Strategy) {
+          constructor(private readonly config: ConfigService) {
+            super({
+              jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+              ignoreExpiration: false,
+              secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
+            });
+          }
+          
+          async validate(payload: JwtPayload) {
+            return {
+              userId: payload.sub,
+              name: payload.name,
+              role: payload.role,
+            };
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/strategies"
+    - fileType: "Controller"
+      fileName: "auth.controller"
+      extension: "ts"
+      content: |
+        import { Controller, Post, Body, UseGuards, HttpStatus, Get, Headers, Request } from '@nestjs/common';
+        import { AuthService } from './auth.service';
+        import { LoginDto } from './dto/login.dto';
+        import { RegisterDto } from './dto/register.dto';
+        import { ApiOperation, ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+        import { RestResponse } from '../../common/dto/RestResponse';
+        import { AuthGuard } from '@nestjs/passport';
+        import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
+        @ApiTags('auth')
+        @Controller('auth')
+        export class AuthController {
+          constructor(private readonly authService: AuthService) {}
+
+          @ApiOperation({ summary: 'User login', description: "Authenticate user and generate JWT token" })
+          @ApiResponse({ status: 201, description: 'Authentication successful' })
+          @ApiResponse({ status: 401, description: 'Invalid credentials' })
+          @Post('login')
+          async login(@Body() loginDto: LoginDto) {
+            try {
+              return RestResponse.buildSuccessResponse(
+                201,
+                "Authentication successful",
+                await this.authService.login(loginDto)
+              );
+
+            } catch (error) {
+              return RestResponse.buildErrorResponse(
+                400,
+                "Registration failed: "+ error,
+                null
+              );
+            }
+          }
+
+         @ApiOperation({ summary: 'Register new user', description: "Create a new user account"}) 
+         @ApiResponse({ status: 201, description: 'User created successfully' })
+         @ApiResponse({ status: 400, description: 'Invalid user data' })
+         @Post('register')
+          async register(@Body() registerDto: RegisterDto) {
+             try {
+              return RestResponse.buildSuccessResponse(
+                201,
+                "User registered successfully",
+                await this.authService.register(registerDto)
+              );
+
+            } catch (error) {
+              return RestResponse.buildErrorResponse(
+                400,
+                "Registration failed: "+ error,
+                null
+              );
+            }
+          }
+          @ApiBearerAuth('jwt')
+          @UseGuards(JwtAuthGuard)
+          @ApiOperation({
+            summary: 'Get current user',
+            description: 'Retrieve details of the currently authenticated user',
+          })
+          @ApiResponse({ status: 200, description: 'Successfully retrieved user details', })
+          @ApiResponse({ status: 400, description: 'No valid user session' })
+          @Get('current')
+          async currentUser(@Request() req: any) {
+            try {
+              const userConnected = (req as any).user;
+              if (userConnected) {
+                return RestResponse.buildSuccessResponse(
+                  HttpStatus.OK,
+                  "User details retrieved",
+                  userConnected
+                );
+              }
+            } catch (e) {
+              return RestResponse.buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Error retrieving user: " + (e),
+                null
+              );
+            }
+            return RestResponse.buildErrorResponse(
+              HttpStatus.BAD_REQUEST,
+              "No user connected",
+              null
+            );
+          }
+          @ApiBearerAuth('jwt')
+          @UseGuards(JwtAuthGuard)
+          @ApiOperation({
+            summary: 'Logout',
+            description: 'Invalidate the provided JWT token (if supported)',
+          })
+          @ApiResponse({ status: 200, description: 'Logged out successfully' })
+          @ApiResponse({ status: 400, description: 'Invalid Authorization Header' })
+          @Post('logout')
+          async logout(@Headers('authorization') authHeader: string) {
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+              const token = authHeader.substring(7);
+              await this.authService.invalidateToken(token);
+
+              return RestResponse.buildSuccessResponse(
+                HttpStatus.OK,
+                "Logged out successfully",
+                null
+              );
+            }
+            return RestResponse.buildErrorResponse(
+              HttpStatus.BAD_REQUEST,
+              "Invalid Authorization Header",
+              null
+            );
+          }
+
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth"
+    - fileType: "Service"
+      fileName: "auth.service"
+      extension: "ts"
+      content: |
+        import { Injectable, UnauthorizedException } from '@nestjs/common';
+        import { JwtService } from '@nestjs/jwt';
+        import { InjectRepository } from '@nestjs/typeorm';
+        import { Repository } from 'typeorm';
+        import { UserEntity } from '../user-entity/user-entity.entity';
+        import { JwtPayload } from './interfaces/jwt-payload.interface';
+        import { LoginDto } from './dto/login.dto';
+        import { RegisterDto } from './dto/register.dto';
+        import { RoleEntity } from '../role-entity/role-entity.entity';
+        import { BlacklistService } from './blacklist.service';
+        @Injectable()
+        export class AuthService {
+          constructor(
+            @InjectRepository(UserEntity)
+            private usersRepository: Repository<UserEntity>,
+              @InjectRepository(RoleEntity)
+            private roleRepository: Repository<RoleEntity>,
+            private jwtService: JwtService,
+            private blacklistService: BlacklistService,
+          ) {}
+        
+          async validateUser(loginDto: LoginDto): Promise<UserEntity | null> {
+             const user = await this.usersRepository.findOne({
+             // Authenticate using username (UserEntity.name)
+               where: { name: loginDto.name },
+               relations: ['roleidRoleEntity'],
+             });
+             
+             if (user && await user.comparePassword(loginDto.password)) {
+              return user;
+             }
+             return null;
+          }
+          async invalidateToken(token: string): Promise<{ message: string }> {
+              this.blacklistService.addToBlacklist(token);
+              return { message: 'User logged out successfully' };
+          }
+          async login(loginDto: LoginDto) {
+            const user = await this.validateUser(loginDto);
+            if (!user) {
+            throw new UnauthorizedException('Invalid credentials');
+            }
+            
+            const payload: JwtPayload = {
+              sub: user.id,
+              name: user.name,
+              role: user.roleidRoleEntity?.name,
+            };
+            
+            return {
+            access_token: this.jwtService.sign(payload),
+            user: {
+                id: user.id,
+                name: user.name,
+                role: user.roleidRoleEntity?.name,
+              },
+            };
+          }
+          
+          async register(registerDto: RegisterDto) {
+            const existingUser = await this.usersRepository.findOne({
+              where: { name: registerDto.name },
+            });
+            
+            if (existingUser) {
+              throw new UnauthorizedException('Username already used');
+            }
+            const user = this.usersRepository.create(registerDto);
+            const role = await this.roleRepository.findOne({ where: { id: registerDto.roleId } });
+            if (!role) {
+              throw new UnauthorizedException('The specified role does not exist');
+            }
+            user.roleidRoleEntity = role
+            console.log(JSON.stringify(user)+" USEEEER")
+            
+            const savedUser = await this.usersRepository.save(user);
+            
+            const { password, ...result } = savedUser;
+            return result;
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth"
+    - fileType: "Module"
+      fileName: "auth.module"
+      extension: "ts"
+      content: |
+        import { Module } from '@nestjs/common';
+        import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
+        import { PassportModule } from '@nestjs/passport';
+        import { TypeOrmModule } from '@nestjs/typeorm';
+        import { AuthService } from './auth.service';
+        import { AuthController } from './auth.controller';
+        import { JwtStrategy } from './strategies/jwt.strategy';
+        import { UserEntity } from '../user-entity/user-entity.entity';
+        import { RoleEntity } from '../role-entity/role-entity.entity';
+        import { ConfigModule, ConfigService } from '@nestjs/config';
+        import { BlacklistService } from './blacklist.service';
+        @Module({
+          imports: [
+            TypeOrmModule.forFeature([UserEntity, RoleEntity]),
+            PassportModule,
+            PassportModule,
+            ConfigModule,
+            JwtModule.registerAsync({
+              imports: [ConfigModule],
+              inject: [ConfigService],
+              useFactory: (cfg: ConfigService) => {
+                const secret = cfg.getOrThrow<string>('JWT_SECRET');
+                const exp = cfg.get<string>('JWT_EXPIRES_IN') ?? '1h';
+                const expiresIn = exp as unknown as JwtSignOptions['expiresIn'];
+                return {
+                  secret,
+                  signOptions: { expiresIn },
+                };
+              },
+            }),
+          ],
+          providers: [AuthService, JwtStrategy, BlacklistService],
+          controllers: [AuthController],
+          exports: [AuthService, BlacklistService],
+          })
+          export class AuthModule {}
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth"
+
+    - fileType: "Service"
+      fileName: "blacklist.service"
+      extension: "ts"
+      content: |
+        import { Injectable } from '@nestjs/common';
+
+        @Injectable()
+        export class BlacklistService {
+          private blacklistedTokens = new Set<string>();
+
+          addToBlacklist(token: string): void {
+            this.blacklistedTokens.add(token);
+          }
+
+          isBlacklisted(token: string): boolean {
+            return this.blacklistedTokens.has(token);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth"
+  additionalDependencies: [ ]
+  metadataBooleanTrueKeys:
+    - "useJWT"
+
+
