@@ -509,6 +509,7 @@ public class FrameworkMetadataProvider {
         metadata.put("backLink", framework.getView().getBackLink());
         metadata.put("previousLink", framework.getView().getPreviousLink());
         metadata.put("staticFilesPath", framework.getView().getStaticFilesPath());
+        metadata.put("antiForgeryTokenTagHelper", framework.getView().getAntiForgeryTokenTagHelper());
         return metadata;
     }
 
@@ -615,6 +616,7 @@ public class FrameworkMetadataProvider {
         altMap.put("createLink", frameworkMVC.getView().getList().getCreateLink());
         altMap.put("updateLink", frameworkMVC.getView().getList().getUpdateLink());
         altMap.put("deleteLink", frameworkMVC.getView().getList().getDeleteLink());
+        altMap.put("exportLink", frameworkMVC.getView().getList().getExportLink());
         altMap.put("pageSizeChangeLink", frameworkMVC.getView().getList().getPageSizeChangeLink());
         altMap.put("previousPageLink", frameworkMVC.getView().getList().getPreviousPageLink());
         altMap.put("previousClassCondition", frameworkMVC.getView().getList().getPreviousClassCondition());
@@ -622,9 +624,10 @@ public class FrameworkMetadataProvider {
         altMap.put("nextPageLink", frameworkMVC.getView().getList().getNextPageLink());
         altMap.put("nextClassCondition", frameworkMVC.getView().getList().getNextClassCondition());
         altMap.put("onGoingPageLink", frameworkMVC.getView().getList().getOnGoingPageLink());
-        altMap.put("onGoingPageSizeTagHelper", frameworkMVC.getView().getList().getOnGoingPageSizeTagHelper());
+        altMap.put("pageNumberValue", frameworkMVC.getView().getList().getPageNumberValue());
+        altMap.put("pageSizeValue", frameworkMVC.getView().getList().getPageSizeValue());
+        altMap.put("currentSortValue", frameworkMVC.getView().getList().getCurrentSortValue());
         altMap.put("totalElementsTagHelper", frameworkMVC.getView().getList().getTotalElementsTagHelper());
-        altMap.put("onGoingSortOrderTagHelper", frameworkMVC.getView().getList().getOnGoingSortOrderTagHelper());
         altMap.put("activeSortAscCondition", frameworkMVC.getView().getList().getActiveSortAscCondition());
         altMap.put("activeSortDescCondition", frameworkMVC.getView().getList().getActiveSortDescCondition());
         altMap.put("onGoingPagesLoop", frameworkMVC.getView().getList().getOnGoingPagesLoop());

@@ -47,6 +47,7 @@ public class FrameworkMVC extends Framework {
         private String rootPath;
         private String backLink;
         private String previousLink;
+        private String antiForgeryTokenTagHelper;
         private Layout layout;
         private List list;
         private Create create;
@@ -96,6 +97,7 @@ public class FrameworkMVC extends Framework {
         private String createLink;
         private String updateLink;
         private String deleteLink;
+        private String exportLink;
         private String pageSizeChangeLink;
         private String previousPageLink;
         private String previousClassCondition;
@@ -103,9 +105,10 @@ public class FrameworkMVC extends Framework {
         private String nextPageLink;
         private String nextClassCondition;
         private String onGoingPageLink;
-        private String onGoingPageSizeTagHelper;
+        private String pageNumberValue;
+        private String pageSizeValue;
+        private String currentSortValue;
         private String totalElementsTagHelper;
-        private String onGoingSortOrderTagHelper;
         private String activeSortAscCondition;
         private String activeSortDescCondition;
         private String onGoingPagesLoop;
