@@ -1231,6 +1231,48 @@ body:has(.sidebar) .main-content {
     animation: slideUp 0.3s ease;
 }
 
+#exportModal .modal-content {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 90%;
+    max-width: 900px;
+    min-width: 600px;
+    max-height: 100vh;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+#csvPreview {
+    background: #fff;
+    padding: 50px;
+    min-width: 600px;
+}
+
+#csvPreviewTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    color: #101010;
+}
+
+table#csvPreviewTable thead {
+    background-color: transparent;
+}
+
+table#csvPreviewTable th,
+table#csvPreviewTable td {
+    border: 1px solid #ddd; padding: 6px;
+    text-transform: capitalize;
+    padding: 12px 15px;
+    text-align: left;
+    color: #101010;
+}
+
+#csvPreviewTable tbody tr:hover {
+    background-color: transparent;
+}
+
 @keyframes slideUp {
     from {
         opacity: 0;
@@ -1387,6 +1429,22 @@ body:has(.sidebar) .main-content {
         width: 100%;
         justify-content: center;
     }
+}
+
+.loading-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 1s linear infinite;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* Styles spécifiques pour le modal de suppression */

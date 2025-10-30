@@ -9,6 +9,8 @@
     "log_out": "Log out",
     "settings": "Settings",
     "entities": "ENTITIES",
+    "views": "VIEWS",
+    "data_preview": "Data Preview :",
     "list": "List",
     "create": "Create",
     "filter": "Filter:",
@@ -36,12 +38,6 @@
     "cancel": "Cancel",
     "save": "Save",
     "update": "Update",
-    "export_format": "Export Format",
-    "format_table": "Table Format",
-    "format_detailed": "Detailed Format",
-    "format_summary": "Summary Format",
-    "page_orientation": "Page Orientation",
-    "columns_to_include": "Columns to include",
-    "orientation_portrait": "Portrait",
-    "orientation_landscape": "Landscape"
+    "export_format": "Export format :",
+    "generate": "Generate"
 }

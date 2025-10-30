@@ -9,6 +9,8 @@
     "log_out": "Se déconnecter",
     "settings": "Paramètres",
     "entities": "ENTITÉS",
+    "views": "VIEWS",
+    "data_preview": "Aperçu des données :",
     "list": "Liste",
     "create": "Créer",
     "filter": "Filtrer:",
@@ -36,12 +38,6 @@
     "cancel": "Annuler",
     "save": "Enregistrer",
     "update": "Mettre à jour",
-    "export_format": "Format d'exportation",
-    "format_table": "Format Tableau",
-    "format_detailed": "Format Détaillé",
-    "format_summary": "Format Résumé",
-    "page_orientation": "Orientation de la page",
-    "columns_to_include": "Colonne à inclure",
-    "orientation_portrait": "Portrait",
-    "orientation_landscape": "Paysage"
+    "export_format": "Format d’exportation :",
+    "generate": "Générer"
 }

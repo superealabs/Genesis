@@ -84,7 +84,7 @@ ${viewAnnotations}
                 <span data-i18n="cancel"></span>
             </button>
             <form id="deleteForm" style="margin: 0;" method="post" ${deleteLink}>
-                @Html.AntiForgeryToken()
+                ${antiForgeryTokenTagHelper}
                 {{#each fields}}{{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}
                 <input type="hidden" name="${this.name}" value="${dataValue}"/>{{/if}}{{else}}{{removeLine}}{{/if}}
                 {{/each}}{{removeLine}}
