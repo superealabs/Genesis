@@ -263,10 +263,8 @@ public class ViewsGenerator implements IViewsGenerator {
 
         // Générer le contenu des cartes de statistiques et d'actions
         String statsCards = generateStatsCards(entities);
-        String actionCards = generateActionCards(entities);
-        
+
         metadataFinally.put("statsCards", statsCards);
-        metadataFinally.put("actionCards", actionCards);
 
         String fileSavePath = framework.getView().getViewSavePath();
         fileSavePath = engine.simpleRender(fileSavePath, metadataFinally);
@@ -285,13 +283,11 @@ public class ViewsGenerator implements IViewsGenerator {
         StringBuilder cards = new StringBuilder();
         for (TableMetadata entity : entities) {
             if (!entity.getIsView()) {
-                String icon = getEntityIcon(entity.getClassName());
                 cards.append(
                     "<div class=\"stat-card\">\n" +
-                    "    <div class=\"stat-icon\">" + icon + "</div>\n" +
                     "    <div class=\"stat-content\">\n" +
                     "        <h3>" + entity.getClassName() + "s</h3>\n" +
-                    "        <div class=\"stat-number\">0</div>\n" +
+                    "        <div class=\"stat-number\"> {{"+StringUtils.minStart(entity.getClassName()) + "_count }} </div>\n" +
                     "    </div>\n" +
                     "    <a href=\"{% url '" + StringUtils.minStart(entity.getClassName()) + "_list' %}\" class=\"stat-link\">Voir toutes</a>\n" +
                     "</div>\n"
@@ -299,38 +295,6 @@ public class ViewsGenerator implements IViewsGenerator {
             }
         }
         return cards.toString();
-    }
-
-    /**
-     * Génère les cartes d'actions pour les entités
-     */
-    private String generateActionCards(java.util.List<TableMetadata> entities) {
-        StringBuilder cards = new StringBuilder();
-        for (TableMetadata entity : entities) {
-            if (!entity.getIsView()) {
-                String icon = getEntityIcon(entity.getClassName());
-                cards.append(
-                    "<a href=\"{% url '" + StringUtils.minStart(entity.getClassName()) + "_create' %}\" class=\"action-card\">\n" +
-                    "    <div class=\"action-icon\">" + icon + "</div>\n" +
-                    "    <h3>Nouvelle " + entity.getClassName() + "</h3>\n" +
-                    "    <p>Ajouter une nouvelle " + StringUtils.minStart(entity.getClassName()) + "</p>\n" +
-                    "</a>\n"
-                );
-            }
-        }
-        return cards.toString();
-    }
-
-    /**
-     * Retourne l'icône appropriée pour une entité
-     */
-    private String getEntityIcon(String entityName) {
-        switch (entityName) {
-            case "Adresse": return "📍";
-            case "Personne": return "👤";
-            case "Voiture": return "🚗";
-            default: return "📋";
-        }
     }
 
     /**
