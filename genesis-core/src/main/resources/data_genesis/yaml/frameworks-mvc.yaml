@@ -3185,41 +3185,60 @@
       fileName: "home_views"
       extension: "py"
       content: |
-        from django.shortcuts import render
         from django.views.generic import TemplateView
         from django.contrib.auth.decorators import login_required
         from django.utils.decorators import method_decorator
-      
-      
+        from django.apps import apps
+        
         class HomeViews:
             """
             Vues pour la page d'accueil
             """
-              
+            
             @method_decorator(login_required, name='dispatch')
             class HomeView(TemplateView):
                 """
                 Vue pour afficher la page d'accueil
                 """
                 template_name = '${projectName}/home.html'
-                    
+                
                 def get_context_data(self, **kwargs):
                     context = super().get_context_data(**kwargs)
                     context['title'] = 'Accueil'
                     context['welcome_message'] = 'Bienvenue dans ${projectName}'
                     context['description'] = 'Gérez vos données avec facilité'
-                  
-                    # Statistiques des entités
+                    
+                    # Statistiques des entités via apps.get_model pour éviter les imports brisés
                     {{#each entities}}{{#if !this.isView}}
                     try:
-                        from ..models.${majStart(this)} import ${majStart(this)}
-                        context['${lowerCase(this)}_count'] = ${majStart(this)}.objects.count()
-                    except Exception as e:
+                        ModelClass = apps.get_model('${projectName}', '${majStart(this)}')
+                        context['${lowerCase(this)}_count'] = ModelClass.objects.count()
+                    except Exception:
                         context['${lowerCase(this)}_count'] = 0
                     {{/if}}{{/each}}
-                
+                    
                     return context
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/views"
+
+    - fileType: "mainProject"
+      fileName: "admin"
+      extension: "py"
+      content: |
+        from django.contrib import admin
+        from django.apps import apps
+        
+        # Enregistrer automatiquement tous les modèles de l'application
+        try:
+            app_config = apps.get_app_config('${projectName}')
+            for model in app_config.get_models():
+                try:
+                    admin.site.register(model)
+                except admin.sites.AlreadyRegistered:
+                    pass
+        except Exception as e:
+            # Fallback silencieux si l'app n'est pas encore prête
+            pass
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
   configurations:
     - name: "Logging Level"
@@ -3236,9 +3255,9 @@
     - name: "Framework Version"
       variableName: "frameworkVersion"
       options:
-        - "5.2.6"
-        - "4.2.7"
-        - "4.1.13"
+        - "4.2.23"
+        - "4.2.24"
+        - "4.2.25"
       defaultOption: "5.2.6"
     - name: "Security Type"
       variableName: "securityType"
