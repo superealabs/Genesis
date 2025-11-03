@@ -5483,7 +5483,7 @@
       version: "{{removeLine}}"
       scope: "{{removeLine}}"
 
-- id: 6
+- id: 8
   languageId: 4
   coreFramework: "NestJS"
   name: "NestJS-WEB API"

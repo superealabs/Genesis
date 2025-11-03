@@ -35,8 +35,9 @@ public class Constantes {
     public static final int Spring_Eureka_Server_ID = 3;
     public static final int Spring_Api_Gateway_ID = 4;
     public static final int Django_ID = 7;
+    public static final int Django_mvt = 6;
     public static final int DOTNET_MVC_ID = 5;
-    public static final int ExpressJs_ID = 6;
+    public static final int ExpressJs_ID = 8;
 
     // PROJECTS
     public static final int Maven_ID = 1;
