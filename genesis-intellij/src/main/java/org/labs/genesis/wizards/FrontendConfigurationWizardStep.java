@@ -97,7 +97,7 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
     @Override
     public boolean validate() throws ConfigurationException {
         try {
-            projectGenerationContext.setGenerateFrontendApp(frontendConfigurationForm.getFrontendGeneration().isSelected());
+            projectGenerationContext.setGenerateFrontendApp(!frontendConfigurationForm.getFrontendGeneration().isSelected());
             if (!projectGenerationContext.isGenerateFrontendApp()) {
                 return  true;
             }
