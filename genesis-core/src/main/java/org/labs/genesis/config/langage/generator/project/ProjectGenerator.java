@@ -303,9 +303,25 @@ public class ProjectGenerator {
         // Post-setup for Django: create venv and install requirements
         try {
             if (context.getFramework().getCoreFramework().equalsIgnoreCase("Django")) {
-                String projectPath = engine.simpleRender(context.getDestinationFolder() + "/" + context.getProjectName(),
-                        Map.of("projectName", context.getProjectName()));
-                setupDjangoEnvironment(projectPath);
+                // Vérifier si l'utilisateur a choisi de créer le venv
+                Map<String, Object> frameworkConfig = context.getFrameworkConfiguration();
+                boolean createVenv = true; // Par défaut, créer le venv si l'option n'est pas spécifiée
+                if (frameworkConfig != null && frameworkConfig.containsKey("createVenv")) {
+                    Object createVenvValue = frameworkConfig.get("createVenv");
+                    if (createVenvValue instanceof Boolean) {
+                        createVenv = (Boolean) createVenvValue;
+                    } else if (createVenvValue instanceof String) {
+                        createVenv = Boolean.parseBoolean((String) createVenvValue);
+                    }
+                }
+                
+                if (createVenv) {
+                    String projectPath = engine.simpleRender(context.getDestinationFolder() + "/" + context.getProjectName(),
+                            Map.of("projectName", context.getProjectName()));
+                    setupDjangoEnvironment(projectPath);
+                } else {
+                    System.out.println("ℹ️  Création du venv ignorée (option désactivée par l'utilisateur)");
+                }
             }
         } catch (Exception e) {
             System.err.println("   ⚠️  Post-setup Django échoué: " + e.getMessage());
@@ -401,6 +417,21 @@ public class ProjectGenerator {
 
         FrameworkMVC framework = (FrameworkMVC) context.getFramework();
         Language language = context.getLanguage();
+
+        // Ensure a default ViewsTemplate for Django (Template 2) when none provided (works for plugin too)
+        if (framework instanceof FrameworkMVC && context.getViewsTemplate() == null) {
+            FrameworkMVC mvc = (FrameworkMVC) framework;
+            try {
+                // Prefer a robust ID check
+                if (framework.getId() == org.labs.genesis.config.Constantes.Django_ID) {
+                    mvc.setViewsTemplate();
+                    ViewsTemplate vt = mvc.findViewsTemplateById(2);
+                    if (vt != null) {
+                        context.setViewsTemplate(vt);
+                    }
+                }
+            } catch (Exception ignored) { }
+        }
         String projectName = context.getProjectName();
         Map<String, Object> frameworkOptions = context.getFrameworkConfiguration();
         ViewsTemplate viewsTemplate = context.getViewsTemplate();
