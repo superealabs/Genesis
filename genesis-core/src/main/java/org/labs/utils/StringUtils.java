@@ -43,18 +43,17 @@ public class StringUtils {
 
 
     public static String toCamelCase(String string) {
-        return string.transform(s -> {
-            String[] words = s.split("_");
-            StringBuilder camelCase = new StringBuilder(words[0].toLowerCase());
+        if (string == null || string.isEmpty()) return string;
 
-            for (int i = 1; i < words.length; i++) {
-                camelCase.append(majStart(words[i]));
-            }
+        String[] words = string.split("_");
+        StringBuilder camelCase = new StringBuilder(words[0].toLowerCase());
 
-            return camelCase.toString();
-        });
+        for (int i = 1; i < words.length; i++) {
+            camelCase.append(majStart(words[i]));
+        }
+
+        return camelCase.toString();
     }
-
     public static String toPascalCase(String string) {
         return string.transform(s -> {
             // step 1 : normalizing by inserting separators where there is case change
