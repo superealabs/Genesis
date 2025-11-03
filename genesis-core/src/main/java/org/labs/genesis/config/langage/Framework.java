@@ -46,9 +46,9 @@ public class Framework {
                 .getFrameworkSecurities()
                 .stream()
                 .filter(fs -> fs.getName().equalsIgnoreCase(securityType))
-                    .findFirst();
+                .findFirst();
     }
-                
+
     public void setFrameworkCaching() throws IOException {
         this.frameworkCaching = Arrays.stream(FileUtils.fromYaml(FrameworkCaching[].class, Constantes.FRAMEWORK_CACHING_YAML))
                 .filter(fs -> fs.getFrameworkId() == this.id)
@@ -140,6 +140,7 @@ public class Framework {
         private Boolean toGenerate;
         private String controllerImports;
         private String controllerAnnotations;
+        private String controllerClassKeyword;
         private String controllerExtends;
         private String controllerName;
         private String controllerFieldContent;

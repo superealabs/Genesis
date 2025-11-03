@@ -1,20 +1,24 @@
 package org.labs.genesis.connexion.providers;
 
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
+import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 
-import java.sql.*;
-import java.util.ArrayList;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
 
 public class SQLServerDatabase extends Database {
     @Override
     public String getJdbcUrl(Credentials credentials) {
-        String port = (credentials.getPort() != null) ? credentials.getPort() : getPort();
+        String port;
+        if (credentials.getPort() != null)
+            port = credentials.getPort();
+        else port = getPort();
         return String.format("jdbc:sqlserver://%s:%s;databaseName=%s;user=%s;password=%s;encrypt=%s;trustServerCertificate=%s;",
                 credentials.getHost(),
                 port,

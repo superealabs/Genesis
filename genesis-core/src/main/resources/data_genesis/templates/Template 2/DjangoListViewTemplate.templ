@@ -1,0 +1,561 @@
+{% extends "${projectName}/base.html" %}
+{% load static %}
+
+{% block content %}
+
+${viewAnnotations}
+<div class="header">
+    <h1 class="page-title">${className} / <span class="page-type"><span class="page-action"
+                data-i18n="list">List</span></span>
+    </h1>
+    {{#if !isView}}<a href="${createLink}" class="btn btn-primary btn-md">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" />
+        </svg>
+        <p data-i18n="create"></p>
+    </a>{{/if}}
+</div>
+
+<div class="filters" id="filters-container">
+    <div class="filters-header">
+        <form method="get" ${filterLink} id="filtersForm">
+            <div class="active-filters">
+                <p data-i18n="filter"></p>
+
+                <div class="filter-controls">
+                    <div class="filter-add-wrapper">
+                        <button class="btn btn-tertiary btn-sm filter-add-btn" id="addFilterBtn" type="button">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 5v14M5 12h14" />
+                            </svg>
+                        </button>
+
+                        <div class="filters-dropdown">
+                            <div class="filters-list">
+                                {{#each inputsFilter}}
+                                <div class="filter-option" data-filter="${this.name}">${this.name}</div>
+                                {{/each}}{{removeLine}}
+                                {{#each fieldsFK}}
+                                <div class="filter-option" data-filter="${this.name}">${this.name}</div>
+                                {{/each}}{{removeLine}}
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary btn-sm" type="submit" id="applyFiltersBtn">
+                        <span data-i18n="apply"></span>
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="header-controls">
+            <!-- Dropdown Showing content -->
+            <div class="showing-dropdown">
+                <label for="showingSelect" data-i18n="showing"></label>
+                <select id="showingSelect" class="dropdown-select btn-sm"
+                    onchange="window.location.href=${pageSizeChangeLink}">
+                    {{#each pageSizesList}}
+                    <option value="${this}" ${pageSizeTagHelper}>${this}</option>
+                    {{/each}}
+                </select>
+            </div>
+
+            <!-- Bouton Exporter -->
+            <button class="btn btn-tertiary btn-sm" id="exportBtn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
+                <span data-i18n="export"></span>
+            </button>
+        </div>
+    </div>
+
+    <div class="filter-inputs-container" style="display: none !important; visibility: hidden !important; position: absolute !important; left: -9999px !important;" aria-hidden="true">
+        {{#each inputsFilter}}
+        <div class="filter-input-group" data-filter="${this.name}">
+            <label for="filter_${this.name}">${this.name} :</label>
+            {{#if this.type = radio}}{{removeLine}}
+            <select class="filter-select" name="${this.name}" id="filter_${this.name}" ${inputRadioTagHelper}>
+                <option value=""><span data-i18n="choose_option"></span></option>
+                <option value="true">True</option>
+                <option value="false">False</option>
+            </select>
+            {{elseIf this.type = datetime-local}}{{removeLine}}
+            <input class="filter-input" type="${this.type}" id="filter_${this.name}" name="${this.name}" ${inputDateTagHelper}>
+            {{else}}{{removeLine}}
+            <input class="filter-input" type="${this.type}" id="filter_${this.name}" name="${this.name}">
+            {{/if}}{{removeLine}}
+        </div>
+        {{/each}}{{removeLine}}
+
+        {{#each fieldsFK}}
+        <div class="filter-input-group" data-filter="${this.name}">
+            <label for="filter_${this.name}">${this.name} :</label>
+            <select class="filter-select form-control" id="filter_${this.name}" name="${this.name}" ${selectTagHelper}>
+                <option value="">-- <span data-i18n="select"></span> ${this.type} --</option>
+            </select>
+        </div>
+        {{/each}}{{removeLine}}
+    </div>
+</div>
+
+<div class="modal" id="exportModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><span data-i18n="export"></span> PDF</h3>
+            <button class="export-close-btn" id="exportCloseBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="export-options">
+                <div class="form-group">
+                    <label for="exportFormat" data-i18n="export_format"></label>
+                    <select id="exportFormat" class="form-control">
+                        <option value="table" data-i18n="format_table"></option>
+                        <option value="detailed" data-i18n="format_detailed"></option>
+                        <option value="summary" data-i18n="format_summary"></option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="exportColumns" data-i18n="columns_to_include"></label>
+                    <div class="columns-selector">
+                        {{#each fields}}
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="exportColumns" value="{{#if this.isForeignKey}}${this.type}{{else}}${majStart(this.name)}{{/if}}">
+                            <span>{{#if this.isForeignKey}}${this.type}{{else}}${majStart(this.name)}{{/if}}</span>
+                        </label>
+                        {{/each}}{{removeLine}}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="exportOrientation" data-i18n="page_orientation"></label>
+                    <select id="exportOrientation" class="form-control">
+                        <option value="Portrait" data-i18n="orientation_portrait"></option>
+                        <option value="Landscape" data-i18n="orientation_landscape"></option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-tertiary btn-sm" id="exportCancelBtn">
+                <span data-i18n="cancel"></span>
+            </button>
+            <button class="btn btn-primary btn-sm" id="exportConfirmBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
+                <span data-i18n="generate"></span> PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                {{#each fields}}
+                <th>
+                    <div class="th-content">
+                        <span>{{#if this.isForeignKey}} ${this.type} {{else}} ${majStart(this.name)} {{/if}}</span>
+                        {{#if this.columnType = json}}{{removeLine}}
+                        {{elseIf this.columnType = jsonb}}{{removeLine}}
+                        {{elseIf this.columnType = xml}}{{removeLine}}
+                        {{else}}
+                        <a href="${sortLink}" class="sort-link">
+                            <div class="sort-icons">
+                                <svg class="sort-asc ${activeSortAscCondition}" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M7 15l5-5 5 5" />
+                                </svg>
+                                <svg class="sort-desc ${activeSortDescCondition}" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path d="M7 10l5 5 5-5" />
+                                </svg>
+                            </div>
+                        </a>{{/if}}
+                    </div>
+                </th>
+                {{/each}}{{removeLine}}
+                <th>
+                    <div class="th-content">
+                        <span>Actions</span>
+                    </div>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            ${blockLoopStatementStart}
+            <tr>
+                {{#each fields}}
+                <td>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</td>
+                {{/each}}{{removeLine}}
+                <td>
+                    <div class="actions-group">
+                        <a href="${detailsLink}" class="action-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 59">
+                                <title data-i18n="details"></title>
+                                <g id="Layer_2" data-name="Layer 2">
+                                    <g id="Layer_1-2" data-name="Layer 1">
+                                        <g id="assignment">
+                                            <path
+                                                d="M34.5,59h-24A10.51,10.51,0,0,1,0,48.5v-31A10.51,10.51,0,0,1,10.5,7h24A10.51,10.51,0,0,1,45,17.5v31A10.51,10.51,0,0,1,34.5,59Zm-24-47A5.51,5.51,0,0,0,5,17.5v31A5.51,5.51,0,0,0,10.5,54h24A5.51,5.51,0,0,0,40,48.5v-31A5.51,5.51,0,0,0,34.5,12Z" />
+                                            <path d="M30.5,47h-16a2.5,2.5,0,0,1,0-5h16a2.5,2.5,0,0,1,0,5Z" />
+                                            <path d="M31.5,35.5h-18a2.5,2.5,0,0,1,0-5h18a2.5,2.5,0,0,1,0,5Z" />
+                                            <path d="M31.5,24h-18a2.5,2.5,0,0,1,0-5h18a2.5,2.5,0,0,1,0,5Z" />
+                                            <path d="M29.5,9.5a7,7,0,0,0-14,0Z" />
+                                            <path
+                                                d="M29.5,12h-14A2.5,2.5,0,0,1,13,9.5a9.5,9.5,0,0,1,19,0A2.5,2.5,0,0,1,29.5,12ZM18.76,7h7.48a4.5,4.5,0,0,0-7.48,0Z" />
+                                            <circle class="cls-1" cx="22.5" cy="7" r="2.5" />
+                                        </g>
+                                    </g>
+                                </g>
+                            </svg>
+                        </a>
+                        {{#if !isView}}<a href="${updateLink}" class="action-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 59">
+                                <title data-i18n="edit"></title>
+                                <g id="Layer_2" data-name="Layer 2">
+                                    <g id="Layer_1-2" data-name="Layer 1">
+                                        <g id="edit">
+                                            <path
+                                                d="M2.5,59a2.54,2.54,0,0,1-1.77-.73,2.51,2.51,0,0,1-.65-2.39l3.1-12.12a2.54,2.54,0,0,1,.65-1.15L45.71.73a2.52,2.52,0,0,1,3.54,0l9,9a2.51,2.51,0,0,1,0,3.54L16.39,55.17a2.54,2.54,0,0,1-1.15.65L3.12,58.92A2.64,2.64,0,0,1,2.5,59Zm12.12-5.6h0ZM7.85,45.66,6,53l7.37-1.88L53,11.52,47.48,6Z" />
+                                            <path
+                                                d="M48.76,21.76A2.53,2.53,0,0,1,47,21l-9-9a2.5,2.5,0,1,1,3.54-3.54l9,9a2.5,2.5,0,0,1-1.77,4.27Z" />
+                                            <path d="M46.89,59H26.62a2.5,2.5,0,0,1,0-5H46.89a2.5,2.5,0,0,1,0,5Z" />
+                                        </g>
+                                    </g>
+                                </g>
+                            </svg>
+                        </a>
+                        <button class="btn-delete action-button"
+                                data-id="${className}Id"
+                                data-text="${className}IdText"
+                                data-action="{% url '${className}_delete' ${className}.pk %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55.78 59">
+                                <title data-i18n="delete"></title>
+                                <g id="Layer_2" data-name="Layer 2">
+                                    <g id="Layer_1-2" data-name="Layer 1">
+                                        <g id="delete">
+                                            <path
+                                                d="M35.56,59H20.21a10.08,10.08,0,0,1-10-9.18L7.18,13.52l5-.42,3.05,36.3a5,5,0,0,0,5,4.6H35.56a5.06,5.06,0,0,0,5-4.6l3-36.3,5,.42-3.05,36.3A10.08,10.08,0,0,1,35.56,59Z" />
+                                            <path d="M53.28,15.81H2.5a2.5,2.5,0,0,1,0-5H53.28a2.5,2.5,0,0,1,0,5Z" />
+                                            <path
+                                                d="M41.2,15.81h-5v-2.5A8.32,8.32,0,0,0,27.89,5a8.42,8.42,0,0,0-8.31,8.31v2.5h-5v-2.5a13.31,13.31,0,0,1,26.62,0Z" />
+                                            <path
+                                                d="M32.56,45.39h-.17a2.5,2.5,0,0,1-2.33-2.66l1-14.41a2.5,2.5,0,1,1,5,.33l-1,14.41A2.51,2.51,0,0,1,32.56,45.39Z" />
+                                            <path
+                                                d="M23.22,45.39a2.5,2.5,0,0,1-2.49-2.34l-1-14.41a2.5,2.5,0,1,1,5-.33l1,14.41a2.5,2.5,0,0,1-2.33,2.66Z" />
+                                        </g>
+                                    </g>
+                                </g>
+                            </svg>
+                        </button>
+                    </div>{{else}}{{removeLine}}{{/if}}
+                </td>
+            </tr>
+            ${blockLoopStatementEnd}
+        </tbody>
+    </table>
+</div>
+
+{{#if !isView}}<div id="customModal" class="modal" data-trigger=".btn-delete" data-input="${className}Id"
+    data-text="${className}IdText">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>
+                <span data-i18n="delete"></span> :
+                <span id="${className}IdText" style="color: var(--error-color);"></span>
+            </h3>
+            <button class="export-close-btn" id="deleteCloseBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="warning-icon" style="text-align: center; margin: 20px 0;">
+                <svg width="64" height="64" viewBox="0 0 122.88 111.54" style="color: var(--error-color);">
+                    <path fill="currentColor"
+                        d="M2.35,84.42,45.28,10.2l.17-.27h0A23,23,0,0,1,52.5,2.69,17,17,0,0,1,61.57,0a16.7,16.7,0,0,1,9.11,2.69,22.79,22.79,0,0,1,7,7.26q.19.32.36.63l42.23,73.34.24.44h0a22.48,22.48,0,0,1,2.37,10.19,17.63,17.63,0,0,1-2.17,8.35,15.94,15.94,0,0,1-6.93,6.6c-.19.1-.39.18-.58.26a21.19,21.19,0,0,1-9.11,1.75v0H17.61c-.22,0-.44,0-.65,0a18.07,18.07,0,0,1-6.2-1.15A16.42,16.42,0,0,1,3,104.24a17.53,17.53,0,0,1-3-9.57,23,23,0,0,1,1.57-8.74,7.66,7.66,0,0,1,.77-1.51Z" />
+                    <path fill="var(--bg-secondary)"
+                        d="M9,88.75,52.12,14.16c5.24-8.25,13.54-8.46,18.87,0l42.43,73.69c3.39,6.81,1.71,16-9.33,15.77H17.61C10.35,103.8,5.67,97.43,9,88.75Z" />
+                    <path fill="currentColor"
+                        d="M57.57,83.78A5.53,5.53,0,0,1,61,82.2a5.6,5.6,0,0,1,2.4.36,5.7,5.7,0,0,1,2,1.3,5.56,5.56,0,0,1,1.54,5,6.23,6.23,0,0,1-.42,1.35,5.57,5.57,0,0,1-5.22,3.26,5.72,5.72,0,0,1-2.27-.53A5.51,5.51,0,0,1,56.28,90a5.18,5.18,0,0,1-.36-1.27,5.83,5.83,0,0,1-.06-1.31h0a6.53,6.53,0,0,1,.57-2,4.7,4.7,0,0,1,1.14-1.56Zm8.15-10.24c-.19,4.79-8.31,4.8-8.49,0-.82-8.21-2.92-29.34-2.86-37.05.07-2.38,2-3.79,4.56-4.33a12.83,12.83,0,0,1,5,0c2.61.56,4.65,2,4.65,4.44v.24L65.72,73.54Z" />
+                </svg>
+            </div>
+
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h4 style="margin: 0 0 10px 0; color: var(--text-primary); font-weight: 600;">
+                    <span data-i18n="delete_confirmation"></span> "<span id="body${className}IdText" style="color: var(--error-color);"></span>" ?
+                </h4>
+                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">
+                    <span data-i18n="delete_warning"></span>
+                </p>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-tertiary btn-sm" id="deleteCancelBtn">
+                <span data-i18n="cancel"></span>
+            </button>
+            <form id="deleteForm" style="margin: 0;" method="post" action="">
+                {% csrf_token %}
+                {{#each fields}}{{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}
+                <input type="hidden" name="${this.name}" id="${className}Id" />{{/if}}{{else}}{{removeLine}}{{/if}}
+                {{/each}}{{removeLine}}
+                <button type="submit" class="btn btn-danger btn-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path
+                            d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />
+                    </svg>
+                    <span data-i18n="delete"></span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>{{else}}{{removeLine}}{{/if}}
+
+<div class="content-footer">
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="${previousPageLink}" class="prev ${previousClassCondition}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
+                    <title data-i18n="previous_page"></title>
+                    <g id="Layer_2" data-name="Layer 2">
+                        <g id="Layer_1-2" data-name="Layer 1">
+                            <g id="arrow_back-1" data-name="arrow back-1">
+                                <path d="M56.5,26.13H2.5a2.5,2.5,0,0,1,0-5h54a2.5,2.5,0,0,1,0,5Z" />
+                                <path
+                                    d="M23.63,47.26a2.49,2.49,0,0,1-1.77-.73L.73,25.4a2.51,2.51,0,0,1,0-3.54L21.86.73A2.5,2.5,0,0,1,25.4,4.27L6,23.63,25.4,43a2.5,2.5,0,0,1-1.77,4.27Z" />
+                            </g>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+        {% else %}
+            <span class="prev disabled">
+                <!-- icône précédente -->
+            </span>
+        {% endif %}
+
+        ${pagesListLoop}
+
+        {% if page_obj.has_next %}
+            <a href="${nextPageLink}" class="next ${nextClassCondition}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
+                    <title data-i18n="next_page"></title>
+                    <g id="Layer_2" data-name="Layer 2">
+                        <g id="Layer_1-2" data-name="Layer 1">
+                            <g id="arrow_back-2" data-name="arrow back-2">
+                                <path d="M56.5,26.13H2.5a2.5,2.5,0,0,1,0-5h54a2.5,2.5,0,0,1,0,5Z" />
+                                <path
+                                    d="M35.37,47.26a2.49,2.49,0,0,1-1.77-.73,2.52,2.52,0,0,1,0-3.54L53,23.63,33.6,4.27A2.5,2.5,0,0,1,37.14.73L58.27,21.86a2.52,2.52,0,0,1,0,3.54L37.14,46.53A2.49,2.49,0,0,1,35.37,47.26Z" />
+                            </g>
+                        </g>
+                    </g>
+                </svg>
+            </a>
+        {% else %}
+            <span class="next disabled">
+                <!-- icône suivante -->
+            </span>
+        {% endif %}
+    </div>
+
+    <div class="ongoing-page">
+        <div class="total-elements">
+            <label for="total_items" data-i18n="total_items"></label>
+            <p>${totalElementsTagHelper}</p>
+        </div>
+        <form method="get" class="ongoing-page" action="${onGoingPageLink}">
+            <p data-i18n="ongoing_page"></p>
+            <select class="dropdown-select btn-sm" name="page" id="page">
+                ${onGoingPagesLoop}
+            </select>
+            <input type="hidden" name="pageSize" ${onGoingPageSizeTagHelper} />
+            <input type="hidden" name="sortOrder" ${onGoingSortOrderTagHelper} />
+            <button type="submit" class="btn btn-tertiary btn-sm"><span data-i18n="go"></span></button>
+        </form>
+    </div>
+</div>
+<script>
+    // Suppression
+    document.addEventListener('DOMContentLoaded', function() {
+      // Open modal and populate action/id when clicking a delete button
+      document.querySelectorAll('.btn-delete').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = (this.dataset.id || '').toString().trim();
+          var action = this.dataset.action || '';
+      
+          // Populate modal fields
+          var idField = document.getElementById('${className}Id');
+          var idText = document.getElementById('${className}IdText');
+          var bodyIdText = document.getElementById('body${className}IdText');
+          var deleteForm = document.getElementById('deleteForm');
+          
+          if (idField) idField.value = id;
+          if (idText) idText.textContent = id;
+          if (bodyIdText) bodyIdText.textContent = id;
+          if (deleteForm && action) deleteForm.action = action;
+          
+          var modal = document.getElementById('customModal');
+          if (modal) modal.style.display = 'block';
+        });
+      });
+  
+      // Close modal buttons
+      ['deleteCloseBtn', 'deleteCancelBtn'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('click', function() {
+          var modal = document.getElementById('customModal');
+          if (modal) modal.style.display = 'none';
+        });
+      });
+  
+      // Validate before submit
+      var deleteForm = document.getElementById('deleteForm');
+      if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+          var idField = document.getElementById('${className}Id');
+          if (!idField || !idField.value.trim()) {
+            e.preventDefault();
+            alert('Erreur: ID non trouvé');
+          }
+        });
+      }
+  });
+  
+  // Charger les scripts nécessaires pour les filtres
+  const filterScripts = [
+      '{% static "js/jquery-3.7.1.min.js" %}',
+      '{% static "js/select2.min.js" %}',
+      '{% static "js/filter-utils.js" %}'
+  ];
+  
+  const filterStyles = [
+      '{% static "css/select2.min.css" %}'
+  ];
+  
+  // Charger les styles
+  filterStyles.forEach(function(href) {
+      if (!document.querySelector('link[href="' + href + '"]')) {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = href;
+          document.head.appendChild(link);
+      }
+  });
+  
+  // Charger les scripts dans l'ordre
+  function loadScript(src, callback) {
+      if (document.querySelector('script[src="' + src + '"]')) {
+          if (callback) callback();
+          return;
+      }
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = callback;
+      document.head.appendChild(script);
+  }
+  
+  loadScript(filterScripts[0], function() {
+      loadScript(filterScripts[1], function() {
+          loadScript(filterScripts[2], function() {
+              // Initialiser les filtres après chargement
+              initFilters();
+          });
+      });
+  });
+  
+  function initFilters() {
+      // Rendre le manager accessible globalement
+      if (typeof filtersManager !== 'undefined') {
+          window.filtersManager = filtersManager;
+      }
+      
+      // Initialiser Select2 pour les champs de type select dans les filtres
+      function initSelect2ForFilters() {
+          document.querySelectorAll('.active-filters .filter-item select.filter-select').forEach(function(select) {
+              if (typeof $ !== 'undefined' && !$(select).hasClass('select2-hidden-accessible')) {
+                  const filterId = select.closest('.filter-input-group').dataset.filter;
+                  
+                  // Pour les ForeignKey, charger les options via AJAX
+                  if (filterId && (filterId.includes('id') && filterId !== 'id')) {
+                      // Déterminer l'URL de recherche selon le filtre
+                      // Pattern: nomEntiteidEntite -> /nomentite/search/
+                      let searchUrl = '';
+                      
+                      // Extraire le nom de l'entité depuis le filterId
+                      // Exemples: villeidVille -> ville, personneidPersonne -> personne
+                      const match = filterId.match(/(\w+?)id(\w+)/i);
+                      if (match && match[2]) {
+                          // Prendre la première partie (avant "id") qui est souvent le nom de l'entité en minuscules
+                          const entityName = match[1].toLowerCase();
+                          searchUrl = '/' + entityName + '/search/';
+                      } else {
+                          // Fallback: utiliser le filterId directement (en minuscules)
+                          searchUrl = '/' + filterId.toLowerCase().replace(/id/g, '').replace(/([A-Z])/g, function(match) {
+                              return match.toLowerCase();
+                          }) + '/search/';
+                      }
+                      
+                      $(select).select2({
+                          ajax: {
+                              url: searchUrl,
+                              dataType: 'json',
+                              delay: 250,
+                              data: function(params) {
+                                  return {
+                                      q: params.term || ''
+                                  };
+                              },
+                              processResults: function(data) {
+                                  return {
+                                      results: data.map(function(item) {
+                                          return {
+                                              id: item.id,
+                                              text: item.text
+                                          };
+                                      })
+                                  };
+                              },
+                              cache: true
+                          },
+                          minimumInputLength: 0,
+                          placeholder: '-- Sélectionner --',
+                          allowClear: true
+                      });
+                  } else {
+                      $(select).select2({
+                          placeholder: '-- Sélectionner --',
+                          allowClear: true
+                      });
+                  }
+              }
+          });
+      }
+      
+      // Initialiser Select2 pour les filtres visibles
+      setTimeout(initSelect2ForFilters, 200);
+      
+      // Soumission simple en GET (les inputs clonés se trouvent dans le formulaire)
+      const filtersForm = document.getElementById('filtersForm');
+      if (filtersForm) {
+          filtersForm.method = 'get';
+          // Aucun JS spécial: laisser le submit natif fonctionner (les inputs clonés ont des name)
+      }
+  }
+</script>
+{% endblock %}

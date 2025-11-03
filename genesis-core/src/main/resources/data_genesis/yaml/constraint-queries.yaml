@@ -1,152 +1,152 @@
 - databaseId: 1
   databaseName: "MySQL"
   checkMinimumConstraintQuery: |
-      WITH parsed_constraints AS (
+    WITH parsed_constraints AS (
+    SELECT
+        c.CONSTRAINT_SCHEMA AS database_name,
+        c.TABLE_NAME,
+        c.CONSTRAINT_NAME,
+        ch.CHECK_CLAUSE,
+        REGEXP_REPLACE(ch.CHECK_CLAUSE, '[()]', '') AS cleaned_clause
+    FROM information_schema.TABLE_CONSTRAINTS c
+    JOIN information_schema.CHECK_CONSTRAINTS ch 
+        ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
+        AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
+    WHERE
+        c.CONSTRAINT_TYPE = 'CHECK'
+        AND (ch.CHECK_CLAUSE LIKE '%>=%' OR ch.CHECK_CLAUSE LIKE '%between%')
+        AND ch.CHECK_CLAUSE NOT REGEXP '^[[:space:]]*[0-9]+[[:space:]]*>='
+    ),
+    matches AS (
       SELECT
-          c.CONSTRAINT_SCHEMA AS database_name,
-          c.TABLE_NAME,
-          c.CONSTRAINT_NAME,
-          ch.CHECK_CLAUSE,
-          REGEXP_REPLACE(ch.CHECK_CLAUSE, '[()]', '') AS cleaned_clause
-      FROM information_schema.TABLE_CONSTRAINTS c
-      JOIN information_schema.CHECK_CONSTRAINTS ch 
-          ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
-          AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
-      WHERE
-          c.CONSTRAINT_TYPE = 'CHECK'
-          AND (ch.CHECK_CLAUSE LIKE '%>=%' OR ch.CHECK_CLAUSE LIKE '%between%')
-          AND ch.CHECK_CLAUSE NOT REGEXP '^[[:space:]]*[0-9]+[[:space:]]*>='
-      ),
-      matches AS (
+        database_name,
+        TABLE_NAME,
+        CONSTRAINT_NAME,
+        CHECK_CLAUSE,
+        cleaned_clause,
+        -- Extraction pour >=
+        REGEXP_SUBSTR(cleaned_clause, '`([[:alnum:]_]+)`[[:space:]]*>=[[:space:]]*([0-9]+(\\.[0-9]+)?)') AS match_gte,
+        -- Extraction pour BETWEEN
+        REGEXP_SUBSTR(cleaned_clause, '`([[:alnum:]_]+)`[[:space:]]+BETWEEN[[:space:]]+[0-9]+(\\.[0-9]+)?[[:space:]]+AND[[:space:]]+[0-9]+(\\.[0-9]+)?') AS match_between,
+        -- Colonne pour >= (sans les backticks)
+        TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`')) AS col_gte,
+        -- Valeur pour >=
+        REGEXP_SUBSTR(cleaned_clause, '[0-9]+(\\.[0-9]+)?') AS val_gte,
+        -- Colonne pour BETWEEN (sans les backticks)
+        TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`')) AS col_between,
+        -- Valeur min pour BETWEEN
+        REGEXP_SUBSTR(REGEXP_SUBSTR(cleaned_clause, 'BETWEEN[[:space:]]+[0-9.]+'), '[0-9.]+') AS val_between_min
+      FROM parsed_constraints
+    )
+    SELECT
+      database_name,
+      TABLE_NAME,
+      COALESCE(NULLIF(col_between, ''), NULLIF(col_gte, '')) AS column_name,
+      COALESCE(
+        NULLIF(val_between_min, ''),
+        NULLIF(val_gte, '')
+      ) + 0 AS min_value
+    FROM matches
+        WHERE table_name = ? and database_name = ? 
+        and (match_gte IS NOT NULL OR match_between IS NOT NULL);
+  checkMaximumConstraintQuery: |
+    WITH parsed_constraints AS (
+        SELECT
+            c.CONSTRAINT_SCHEMA AS database_name,
+            c.TABLE_NAME,
+            c.CONSTRAINT_NAME,
+            ch.CHECK_CLAUSE,
+            REGEXP_REPLACE(ch.CHECK_CLAUSE, '[()]', '') AS cleaned_clause
+        FROM information_schema.TABLE_CONSTRAINTS c
+        JOIN information_schema.CHECK_CONSTRAINTS ch 
+            ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
+            AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
+        WHERE
+            c.CONSTRAINT_TYPE = 'CHECK'
+            AND (ch.CHECK_CLAUSE LIKE '%<=%' OR ch.CHECK_CLAUSE LIKE '%between%')
+            AND ch.CHECK_CLAUSE NOT REGEXP '`[[:alnum:]_]+`[[:space:]]*<[[:space:]]*[0-9]'
+    ),
+    matches AS (
         SELECT
           database_name,
           TABLE_NAME,
           CONSTRAINT_NAME,
           CHECK_CLAUSE,
           cleaned_clause,
-          -- Extraction pour >=
-          REGEXP_SUBSTR(cleaned_clause, '`([[:alnum:]_]+)`[[:space:]]*>=[[:space:]]*([0-9]+(\\.[0-9]+)?)') AS match_gte,
-          -- Extraction pour BETWEEN
+          -- <= (forme directe)
+          REGEXP_SUBSTR(cleaned_clause, '`([[:alnum:]_]+)`[[:space:]]*<=[[:space:]]*([0-9]+(\\.[0-9]+)?)') AS match_lte,
+          -- BETWEEN
           REGEXP_SUBSTR(cleaned_clause, '`([[:alnum:]_]+)`[[:space:]]+BETWEEN[[:space:]]+[0-9]+(\\.[0-9]+)?[[:space:]]+AND[[:space:]]+[0-9]+(\\.[0-9]+)?') AS match_between,
-          -- Colonne pour >= (sans les backticks)
-          TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`')) AS col_gte,
-          -- Valeur pour >=
-          REGEXP_SUBSTR(cleaned_clause, '[0-9]+(\\.[0-9]+)?') AS val_gte,
-          -- Colonne pour BETWEEN (sans les backticks)
+          -- colonne pour <=
+          TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`')) AS col_lte,
+          -- valeur pour <=
+          REGEXP_SUBSTR(cleaned_clause, '[0-9]+(\\.[0-9]+)?', 1, 2) AS val_lte,
+          -- colonne pour BETWEEN
           TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`')) AS col_between,
-          -- Valeur min pour BETWEEN
-          REGEXP_SUBSTR(REGEXP_SUBSTR(cleaned_clause, 'BETWEEN[[:space:]]+[0-9.]+'), '[0-9.]+') AS val_between_min
+          -- valeur max pour BETWEEN
+          REGEXP_SUBSTR(REGEXP_SUBSTR(cleaned_clause, 'AND[[:space:]]+[0-9.]+'), '[0-9.]+') AS val_between_max
         FROM parsed_constraints
-      )
-      SELECT
+    )
+    SELECT
         database_name,
         TABLE_NAME,
-        COALESCE(NULLIF(col_between, ''), NULLIF(col_gte, '')) AS column_name,
+        COALESCE(NULLIF(col_between, ''), NULLIF(col_lte, '')) AS column_name,
         COALESCE(
-          NULLIF(val_between_min, ''),
-          NULLIF(val_gte, '')
-        ) + 0 AS min_value
-      FROM matches
-          WHERE table_name = ? and database_name = ? 
-          and (match_gte IS NOT NULL OR match_between IS NOT NULL);
-  checkMaximumConstraintQuery: |
-      WITH parsed_constraints AS (
-          SELECT
-              c.CONSTRAINT_SCHEMA AS database_name,
-              c.TABLE_NAME,
-              c.CONSTRAINT_NAME,
-              ch.CHECK_CLAUSE,
-              REGEXP_REPLACE(ch.CHECK_CLAUSE, '[()]', '') AS cleaned_clause
-          FROM information_schema.TABLE_CONSTRAINTS c
-          JOIN information_schema.CHECK_CONSTRAINTS ch 
-              ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
-              AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
-          WHERE
-              c.CONSTRAINT_TYPE = 'CHECK'
-              AND (ch.CHECK_CLAUSE LIKE '%<=%' OR ch.CHECK_CLAUSE LIKE '%between%')
-              AND ch.CHECK_CLAUSE NOT REGEXP '`[[:alnum:]_]+`[[:space:]]*<[[:space:]]*[0-9]'
-      ),
-      matches AS (
-          SELECT
-            database_name,
-            TABLE_NAME,
-            CONSTRAINT_NAME,
-            CHECK_CLAUSE,
-            cleaned_clause,
-            -- <= (forme directe)
-            REGEXP_SUBSTR(cleaned_clause, '`([[:alnum:]_]+)`[[:space:]]*<=[[:space:]]*([0-9]+(\\.[0-9]+)?)') AS match_lte,
-            -- BETWEEN
-            REGEXP_SUBSTR(cleaned_clause, '`([[:alnum:]_]+)`[[:space:]]+BETWEEN[[:space:]]+[0-9]+(\\.[0-9]+)?[[:space:]]+AND[[:space:]]+[0-9]+(\\.[0-9]+)?') AS match_between,
-            -- colonne pour <=
-            TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`')) AS col_lte,
-            -- valeur pour <=
-            REGEXP_SUBSTR(cleaned_clause, '[0-9]+(\\.[0-9]+)?', 1, 2) AS val_lte,
-            -- colonne pour BETWEEN
-            TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`')) AS col_between,
-            -- valeur max pour BETWEEN
-            REGEXP_SUBSTR(REGEXP_SUBSTR(cleaned_clause, 'AND[[:space:]]+[0-9.]+'), '[0-9.]+') AS val_between_max
-          FROM parsed_constraints
-      )
-      SELECT
-          database_name,
-          TABLE_NAME,
-          COALESCE(NULLIF(col_between, ''), NULLIF(col_lte, '')) AS column_name,
-          COALESCE(
-            NULLIF(val_between_max, ''),
-            NULLIF(val_lte, '')
-          ) + 0 AS max_value
-      FROM matches
-      WHERE table_name = ? and database_name = ? 
-      and (match_lte IS NOT NULL OR match_between IS NOT NULL);
+          NULLIF(val_between_max, ''),
+          NULLIF(val_lte, '')
+        ) + 0 AS max_value
+    FROM matches
+    WHERE table_name = ? and database_name = ? 
+    and (match_lte IS NOT NULL OR match_between IS NOT NULL);
   checkStrictMinimumConstraintQuery: |
-      WITH parsed_constraints AS (
-          SELECT
-          c.CONSTRAINT_SCHEMA AS database_name,
-          c.TABLE_NAME,
-          c.CONSTRAINT_NAME,
-          ch.CHECK_CLAUSE,
-          REGEXP_REPLACE(ch.CHECK_CLAUSE, '[()]', '') AS cleaned_clause
-          FROM information_schema.TABLE_CONSTRAINTS c
-          JOIN information_schema.CHECK_CONSTRAINTS ch 
-          ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
-          AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
-          WHERE
-          c.CONSTRAINT_TYPE = 'CHECK'
-          AND (ch.CHECK_CLAUSE LIKE '%>%' AND ch.CHECK_CLAUSE NOT LIKE '%>=%')
-      ),
-      matches AS (
-          SELECT
-            database_name,
-            TABLE_NAME,
-            CONSTRAINT_NAME,
-            CHECK_CLAUSE,
-            cleaned_clause,
-            -- Extraction directe: colonne > valeur
-            REGEXP_SUBSTR(cleaned_clause, '`([[:alnum:]_]+)`[[:space:]]*>[[:space:]]*([0-9]+(\\.[0-9]+)?)') AS match_direct,
-            -- Colonne dans le cas direct
-            TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`')) AS col_direct,
-            -- Valeur dans le cas direct
-            REGEXP_SUBSTR(cleaned_clause, '[0-9]+(\\.[0-9]+)?') AS val_direct,
-            -- Colonne dans le cas inverse (valeur > colonne)
-            TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`$')) AS col_inverse,
-            -- Valeur dans le cas inverse (valeur > colonne)
-            REGEXP_SUBSTR(cleaned_clause, '^[[:space:]]*([0-9]+(\\.[0-9]+)?)') AS val_inverse
-          FROM parsed_constraints
-      )
-      SELECT
+    WITH parsed_constraints AS (
+        SELECT
+        c.CONSTRAINT_SCHEMA AS database_name,
+        c.TABLE_NAME,
+        c.CONSTRAINT_NAME,
+        ch.CHECK_CLAUSE,
+        REGEXP_REPLACE(ch.CHECK_CLAUSE, '[()]', '') AS cleaned_clause
+        FROM information_schema.TABLE_CONSTRAINTS c
+        JOIN information_schema.CHECK_CONSTRAINTS ch 
+        ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
+        AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
+        WHERE
+        c.CONSTRAINT_TYPE = 'CHECK'
+        AND (ch.CHECK_CLAUSE LIKE '%>%' AND ch.CHECK_CLAUSE NOT LIKE '%>=%')
+    ),
+    matches AS (
+        SELECT
           database_name,
           TABLE_NAME,
-          COALESCE(
-            NULLIF(col_direct, ''),
-            NULLIF(col_inverse, '')
-          ) AS column_name,
-          COALESCE(
-            NULLIF(val_direct, ''),
-            NULLIF(val_inverse, '')
-          ) + 0 AS min_value
-      FROM matches
-        WHERE table_name = ? and database_name = ?
-        and (match_direct IS NOT NULL)
+          CONSTRAINT_NAME,
+          CHECK_CLAUSE,
+          cleaned_clause,
+          -- Extraction directe: colonne > valeur
+          REGEXP_SUBSTR(cleaned_clause, '`([[:alnum:]_]+)`[[:space:]]*>[[:space:]]*([0-9]+(\\.[0-9]+)?)') AS match_direct,
+          -- Colonne dans le cas direct
+          TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`')) AS col_direct,
+          -- Valeur dans le cas direct
+          REGEXP_SUBSTR(cleaned_clause, '[0-9]+(\\.[0-9]+)?') AS val_direct,
+          -- Colonne dans le cas inverse (valeur > colonne)
+          TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`[[:alnum:]_]+`$')) AS col_inverse,
+          -- Valeur dans le cas inverse (valeur > colonne)
+          REGEXP_SUBSTR(cleaned_clause, '^[[:space:]]*([0-9]+(\\.[0-9]+)?)') AS val_inverse
+        FROM parsed_constraints
+    )
+    SELECT
+        database_name,
+        TABLE_NAME,
+        COALESCE(
+          NULLIF(col_direct, ''),
+          NULLIF(col_inverse, '')
+        ) AS column_name,
+        COALESCE(
+          NULLIF(val_direct, ''),
+          NULLIF(val_inverse, '')
+        ) + 0 AS min_value
+    FROM matches
+      WHERE table_name = ? and database_name = ?
+      and (match_direct IS NOT NULL)
   checkStrictMaximumConstraintQuery: |
     WITH parsed_constraints AS (
        SELECT
@@ -204,62 +204,62 @@
   checkStrictPastDateConstraintQuery: |
   checkStrictFutureDateConstraintQuery: |
   checkNotBlankConstraintQuery: |
-      WITH not_empty_constraints AS (
-      SELECT
-          c.CONSTRAINT_NAME,
-          c.CONSTRAINT_SCHEMA,
-          c.TABLE_NAME,
-          ch.CHECK_CLAUSE,
-          CASE
-              -- Cas 1: trim(colonne) <> ''
-              WHEN ch.CHECK_CLAUSE LIKE '%trim(%' THEN
-                  TRIM(BOTH '`' FROM 
-                      SUBSTRING_INDEX(
-                          SUBSTRING_INDEX(
-                              SUBSTRING_INDEX(ch.CHECK_CLAUSE, 'trim(', -1),
-                              ')', 1
-                          ),
-                          ',', 1
-                      )
-                  )
-              -- Cas 2: '' <> colonne (ou équivalent)
-              WHEN ch.CHECK_CLAUSE LIKE '%''% <> %' OR ch.CHECK_CLAUSE LIKE '%_utf8mb4\\\\''% <> %' THEN
-                  TRIM(BOTH '`' FROM 
-                      SUBSTRING_INDEX(
-                          TRIM(SUBSTRING_INDEX(ch.CHECK_CLAUSE, '<>', -1)),
-                          ' ', 1
-                      )
-                  )
-              
-              -- Cas 3: colonne <> '' (ou équivalent)
-              ELSE
-                  TRIM(BOTH '`' FROM 
-                      SUBSTRING_INDEX(
-                          TRIM(SUBSTRING_INDEX(ch.CHECK_CLAUSE, '<>', 1)),
-                          ' ', -1
-                      )
-                  )
-              END AS column_name
-          FROM information_schema.TABLE_CONSTRAINTS c
-          JOIN information_schema.CHECK_CONSTRAINTS ch 
-              ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
-              AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
-          WHERE c.CONSTRAINT_TYPE = 'CHECK'
-              AND (
-                  ch.CHECK_CLAUSE LIKE '%<> _utf8mb4\\\\''%' 
-                  OR ch.CHECK_CLAUSE LIKE '%<> \\\\''%'
-                  OR ch.CHECK_CLAUSE LIKE '%<> ''''%'
-                  OR ch.CHECK_CLAUSE LIKE '%_utf8mb4\\\\'' <>%'
-                  OR ch.CHECK_CLAUSE LIKE '%\\\\'' <>%'
-                  OR ch.CHECK_CLAUSE LIKE '%'''' <>%'
-                  OR ch.CHECK_CLAUSE LIKE '% <> _utf8mb4\\\\''%'
-                  OR ch.CHECK_CLAUSE LIKE '% <> \\\\''%'
-                  OR ch.CHECK_CLAUSE LIKE '% <> ''''%'
-              )
-      )
-      SELECT * FROM not_empty_constraints
-      WHERE
-        table_name = ? and CONSTRAINT_SCHEMA = ? ;
+    WITH not_empty_constraints AS (
+    SELECT
+        c.CONSTRAINT_NAME,
+        c.CONSTRAINT_SCHEMA,
+        c.TABLE_NAME,
+        ch.CHECK_CLAUSE,
+        CASE
+            -- Cas 1: trim(colonne) <> ''
+            WHEN ch.CHECK_CLAUSE LIKE '%trim(%' THEN
+                TRIM(BOTH '`' FROM 
+                    SUBSTRING_INDEX(
+                        SUBSTRING_INDEX(
+                            SUBSTRING_INDEX(ch.CHECK_CLAUSE, 'trim(', -1),
+                            ')', 1
+                        ),
+                        ',', 1
+                    )
+                )
+            -- Cas 2: '' <> colonne (ou équivalent)
+            WHEN ch.CHECK_CLAUSE LIKE '%''% <> %' OR ch.CHECK_CLAUSE LIKE '%_utf8mb4\\\\''% <> %' THEN
+                TRIM(BOTH '`' FROM 
+                    SUBSTRING_INDEX(
+                        TRIM(SUBSTRING_INDEX(ch.CHECK_CLAUSE, '<>', -1)),
+                        ' ', 1
+                    )
+                )
+    
+            -- Cas 3: colonne <> '' (ou équivalent)
+            ELSE
+                TRIM(BOTH '`' FROM 
+                    SUBSTRING_INDEX(
+                        TRIM(SUBSTRING_INDEX(ch.CHECK_CLAUSE, '<>', 1)),
+                        ' ', -1
+                    )
+                )
+            END AS column_name
+        FROM information_schema.TABLE_CONSTRAINTS c
+        JOIN information_schema.CHECK_CONSTRAINTS ch 
+            ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
+            AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
+        WHERE c.CONSTRAINT_TYPE = 'CHECK'
+            AND (
+                ch.CHECK_CLAUSE LIKE '%<> _utf8mb4\\\\''%' 
+                OR ch.CHECK_CLAUSE LIKE '%<> \\\\''%'
+                OR ch.CHECK_CLAUSE LIKE '%<> ''''%'
+                OR ch.CHECK_CLAUSE LIKE '%_utf8mb4\\\\'' <>%'
+                OR ch.CHECK_CLAUSE LIKE '%\\\\'' <>%'
+                OR ch.CHECK_CLAUSE LIKE '%'''' <>%'
+                OR ch.CHECK_CLAUSE LIKE '% <> _utf8mb4\\\\''%'
+                OR ch.CHECK_CLAUSE LIKE '% <> \\\\''%'
+                OR ch.CHECK_CLAUSE LIKE '% <> ''''%'
+            )
+    )
+    SELECT * FROM not_empty_constraints
+    WHERE
+      table_name = ? and CONSTRAINT_SCHEMA = ? ;
   checkMinimumLengthConstraintQuery: |
     SELECT
         c.TABLE_NAME,
@@ -296,44 +296,44 @@
         AND (ch.CHECK_CLAUSE LIKE '%char_length(%>=%' 
              OR ch.CHECK_CLAUSE LIKE '%char_length(%>%');
   checkRegexConstraintQuery: |
-          WITH regex_constraints AS (
-            SELECT
-            c.TABLE_NAME,
-            c.CONSTRAINT_NAME,
-            ch.CHECK_CLAUSE,
-            c.CONSTRAINT_SCHEMA,
-            TRIM(BOTH '`' FROM 
-                SUBSTRING_INDEX(
-                    SUBSTRING_INDEX(
-                        SUBSTRING_INDEX(ch.CHECK_CLAUSE, '(', -1),
-                        ',', 1
-                    ),
-                    ')', 1
-                )
-            ) AS column_name,
-            'REGEXP' AS operator,
-            -- Modification ici : Ajout du REGEXP_REPLACE pour supprimer le \ final
-            REGEXP_REPLACE(
-                TRIM(BOTH '\'' FROM 
-                    SUBSTRING_INDEX(
-                        SUBSTRING_INDEX(ch.CHECK_CLAUSE, '\'', -2),
-                        '\'', 1
-                    )
-                ), 
-                '\\\\$', 
-                ''
-            ) AS regex_pattern
-            FROM information_schema.TABLE_CONSTRAINTS c
-            JOIN information_schema.CHECK_CONSTRAINTS ch 
-            ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
-            AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
-            WHERE c.CONSTRAINT_TYPE = 'CHECK'
-            AND (ch.CHECK_CLAUSE LIKE '%regexp%' OR ch.CHECK_CLAUSE LIKE '%REGEXP%')
+    WITH regex_constraints AS (
+      SELECT
+      c.TABLE_NAME,
+      c.CONSTRAINT_NAME,
+      ch.CHECK_CLAUSE,
+      c.CONSTRAINT_SCHEMA,
+      TRIM(BOTH '`' FROM 
+          SUBSTRING_INDEX(
+              SUBSTRING_INDEX(
+                  SUBSTRING_INDEX(ch.CHECK_CLAUSE, '(', -1),
+                  ',', 1
+              ),
+              ')', 1
           )
-          SELECT * FROM regex_constraints
-          WHERE 
-              TABLE_NAME = ? 
-              AND CONSTRAINT_SCHEMA = ?;
+      ) AS column_name,
+      'REGEXP' AS operator,
+      -- Modification ici : Ajout du REGEXP_REPLACE pour supprimer le \ final
+      REGEXP_REPLACE(
+          TRIM(BOTH '\'' FROM 
+              SUBSTRING_INDEX(
+                  SUBSTRING_INDEX(ch.CHECK_CLAUSE, '\'', -2),
+                  '\'', 1
+              )
+          ), 
+          '\\\\$', 
+          ''
+      ) AS regex_pattern
+      FROM information_schema.TABLE_CONSTRAINTS c
+      JOIN information_schema.CHECK_CONSTRAINTS ch 
+      ON c.CONSTRAINT_SCHEMA = ch.CONSTRAINT_SCHEMA 
+      AND c.CONSTRAINT_NAME = ch.CONSTRAINT_NAME
+      WHERE c.CONSTRAINT_TYPE = 'CHECK'
+      AND (ch.CHECK_CLAUSE LIKE '%regexp%' OR ch.CHECK_CLAUSE LIKE '%REGEXP%')
+    )
+    SELECT * FROM regex_constraints
+    WHERE 
+        TABLE_NAME = ? 
+        AND CONSTRAINT_SCHEMA = ?;
 
 - databaseId: 2
   databaseName: "PostgreSQL"
@@ -1029,101 +1029,13 @@
 - databaseId: 4
   databaseName: "Oracle"
   checkMinimumConstraintQuery: |
-    SELECT acc.table_name,
-           acc.column_name,
-           ac.search_condition
-    FROM all_constraints ac
-    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
-    WHERE ac.constraint_type = 'C'
-      AND acc.table_name = UPPER(?)
-
   checkMaximumConstraintQuery: |
-    SELECT acc.table_name,
-           acc.column_name,
-           ac.search_condition
-    FROM all_constraints ac
-    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
-    WHERE ac.constraint_type = 'C'
-      AND acc.table_name = UPPER(?)
-
   checkStrictMinimumConstraintQuery: |
-    SELECT acc.table_name,
-           acc.column_name,
-           ac.search_condition
-    FROM all_constraints ac
-    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
-    WHERE ac.constraint_type = 'C'
-      AND acc.table_name = UPPER(?)
-
   checkStrictMaximumConstraintQuery: |
-    SELECT acc.table_name,
-           acc.column_name,
-           ac.search_condition
-    FROM all_constraints ac
-    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
-    WHERE ac.constraint_type = 'C'
-      AND acc.table_name = UPPER(?)
-
   checkPastDateConstraintQuery: |
-    SELECT acc.table_name,
-           acc.column_name,
-           ac.search_condition
-    FROM all_constraints ac
-    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
-    WHERE ac.constraint_type = 'C'
-      AND acc.table_name = UPPER(?)
-
   checkFutureDateConstraintQuery: |
-    SELECT acc.table_name,
-           acc.column_name,
-           ac.search_condition
-    FROM all_constraints ac
-    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
-    WHERE ac.constraint_type = 'C'
-      AND acc.table_name = UPPER(?)
-
   checkStrictPastDateConstraintQuery: |
-    SELECT acc.table_name,
-           acc.column_name,
-           ac.search_condition
-    FROM all_constraints ac
-    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
-    WHERE ac.constraint_type = 'C'
-      AND acc.table_name = UPPER(?)
-
   checkStrictFutureDateConstraintQuery: |
-    SELECT acc.table_name,
-           acc.column_name,
-           ac.search_condition
-    FROM all_constraints ac
-    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
-    WHERE ac.constraint_type = 'C'
-      AND acc.table_name = UPPER(?)
-
   checkNotBlankConstraintQuery: |
-    SELECT acc.table_name,
-           acc.column_name,
-           ac.search_condition
-    FROM all_constraints ac
-    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
-    WHERE ac.constraint_type = 'C'
-      AND acc.table_name = UPPER(?)
-
   checkMinimumLengthConstraintQuery: |
-    SELECT acc.table_name,
-           acc.column_name,
-           ac.search_condition
-    FROM all_constraints ac
-    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
-    WHERE ac.constraint_type = 'C'
-      AND acc.table_name = UPPER(?)
-
   checkRegexConstraintQuery: |
-    SELECT acc.table_name,
-           acc.column_name,
-           ac.search_condition
-    FROM all_constraints ac
-    JOIN all_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.owner = acc.owner
-    WHERE ac.constraint_type = 'C'
-      AND acc.table_name = UPPER(?)
-

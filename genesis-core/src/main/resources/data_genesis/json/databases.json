@@ -16,6 +16,11 @@
         "groupId": "npm",
         "artifactId": "mysql2",
         "version": "3.11.0"
+      },
+      "5": {
+        "groupId": "",
+        "artifactId": "mysqlclient",
+        "version": "2.2.4"
       }
     },
     "driverType": "",
@@ -23,7 +28,8 @@
     "connectionString": {
       "1": "jdbc:mysql://${host}:${port}/${database}",
       "2": "Server=${host};Port=${port};Database=${database};User Id=${username};Password=${password};",
-      "4": "mysql://${username}:${password}@${host}:${port}/${database}"
+      "4": "mysql://${username}:${password}@${host}:${port}/${database}",
+      "5": "mysql://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "MySql"
@@ -133,6 +139,7 @@
       "text": "string",
       "varchar": "string",
       "bpchar": "string",
+      "char": "string",
       "real": "double",
       "double": "double",
       "float4": "double",
@@ -146,6 +153,8 @@
       "timestamp": "timestamp",
       "timestamptz": "timestamptz",
       "bool": "boolean",
+      "boolean": "boolean",
+      "bit": "boolean",
       "time": "time",
       "timetz": "timetz",
       "tsrange": "timestamp[]",
@@ -311,6 +320,7 @@
       "TEXT": "string",
       "NTEXT": "string",
       "TIMESTAMP(6)": "timestamp",
+      "TIMESTAMP(*)": "timestamp",
       "TIMESTAMP": "timestamp",
       "TIME": "time",
       "BLOB": "bytea",

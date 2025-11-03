@@ -43,6 +43,9 @@ public class StringUtils {
 
 
     public static String toCamelCase(String string) {
+        if (string == null || string.isEmpty()) {
+            return string;
+        }
         return string.transform(s -> {
             String[] words = s.split("_");
             StringBuilder camelCase = new StringBuilder(words[0].toLowerCase());
