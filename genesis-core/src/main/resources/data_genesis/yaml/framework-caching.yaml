@@ -148,7 +148,7 @@
   metadataBooleanTrueKeys:
     - "useMicrosoftExtensionsCachingMemory"
 - id: 3
-  frameworkId: 5
+  frameworkId: 6
   name: "Redis"
   configFiles:
     - fileType: "Cache module"
@@ -221,7 +221,7 @@
   metadataBooleanTrueKeys:
     - "useNestRedisCaching"
 - id: 4
-  frameworkId: 5
+  frameworkId: 6
   name: "BuiltInNestCacheManager"
   configFiles:
     - fileType: "Cache module"

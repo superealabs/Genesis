@@ -2510,7 +2510,7 @@
   metadataBooleanTrueKeys:
     - "useJWT"
 - id: 3
-  frameworkId: 5
+  frameworkId: 6
   name: "Nest Security - JWT"
   securityFiles:
     - fileType: "Roles Entity"

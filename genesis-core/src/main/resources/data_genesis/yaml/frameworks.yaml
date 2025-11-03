@@ -5483,10 +5483,10 @@
       version: "{{removeLine}}"
       scope: "{{removeLine}}"
 
-- id: 5
+- id: 6
   languageId: 4
   coreFramework: "NestJS"
-  name: "NestJS"
+  name: "NestJS-WEB API"
   template: "Template"
   useDB: true
   withGroupId: false
