@@ -49,7 +49,7 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
                 firstWizardStep,
                 ruleToCodeWizardStep,
                 ruleToCodeWizardAIStep ,
-                new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep) ,
+                new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep,frontendConfigurationWizardStep) ,
                 initConditionalWizardStep,
                 sqlRunnerWizardStep,
                 genConfigConditionalWizardStep,

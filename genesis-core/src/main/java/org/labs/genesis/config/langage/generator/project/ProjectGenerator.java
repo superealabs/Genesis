@@ -177,6 +177,7 @@ public class ProjectGenerator {
         HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(entities, context);
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
+        renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
         selectedSecurityOption.ifPresent(security -> {
             try {
                 HashMap<String, Object> securityMap=FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType,context);
@@ -186,7 +187,6 @@ public class ProjectGenerator {
                 throw new RuntimeException(e);
             }
         });
-        renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
         IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
         frontendGenerator.generateRessources(context, entities);
     }
