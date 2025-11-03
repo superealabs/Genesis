@@ -917,7 +917,7 @@
             searchFields: SearchField[] = [
             {{tab}}{{tab}}{{#each fieldsFK}}
                 {
-                  key: '${this.name}.${this.referencedColumn}',
+                  key: '${this.name}.${this.referencedPrimaryKeyColumn}',
                   label: '${this.type}',
                   type: 'select',
                   options: []
@@ -1014,9 +1014,9 @@
                       next: ([{{#each fieldsFK}}${minStart(this.type)}s,{{/each}}]) => {
                           {{#each fieldsFK}}
                           this.${minStart(this.type)}s = ${minStart(this.type)}s;
-                          const ${minStart(this.type)}Field = this.searchFields.find(f => f.key === '${this.name}.${this.referencedColumn}');
+                          const ${minStart(this.type)}Field = this.searchFields.find(f => f.key === '${this.name}.${this.referencedPrimaryKeyColumn}');
                           if (${minStart(this.type)}Field) {
-                            ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: d.${this.referencedColumn},label: entries[1][1]};}); 
+                            ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: d.${this.referencedPrimaryKeyColumn},label: entries[1][1]};}); 
                           }
                           {{/each}}
                           this.isLoading = false;

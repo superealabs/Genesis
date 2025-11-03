@@ -182,7 +182,7 @@ public class TableMetadata {
 
                         field.setReferencedColumn(field.getReferencedColumn());
                         field.setReferencedColumnType(field.getReferencedColumnType());
-                        field.setReferencedPrimaryKeyColumn(pkColumnName.transform(StringUtils::toCamelCase));
+                        field.setReferencedPrimaryKeyColumn((pkColumnName.toLowerCase()).transform(StringUtils::toCamelCase));
                         field.setName(
                                 field.getName()
                                         .transform(StringUtils::toCamelCase)
