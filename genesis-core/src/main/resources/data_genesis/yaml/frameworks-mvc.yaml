@@ -3080,11 +3080,12 @@
 
         STATIC_URL = '/static/'
         STATICFILES_DIRS = [BASE_DIR / 'static']
-        
+        {{#if enableAuth}}
         # Configuration de l'authentification
         LOGIN_URL = '/login/'
         LOGIN_REDIRECT_URL = '/'
         LOGOUT_REDIRECT_URL = '/login/'
+        {{/if}}
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
@@ -3106,9 +3107,11 @@
       extension: "py"
       content: |
         from django.urls import path
+        {{#if enableAuth}}
         from django.contrib.auth import views as auth_views
-        from .views.home_views import HomeViews
         from .views.auth_views import AuthViews
+        {{/if}}
+        from .views.home_views import HomeViews
         {{#each entities}}
         from .views.${lowerCase(this)}_views import ${majStart(this)}Views, ${lowerCase(this)}_search
         {{/each}}
@@ -3116,11 +3119,12 @@
         urlpatterns = [
             # Page d'accueil
             path('', HomeViews.HomeView.as_view(), name='home'),
-            
+            {{#if enableAuth}}
             # URLs d'authentification
             path('login/', AuthViews.LoginView.as_view(), name='login'),
             path('logout/', AuthViews.LogoutView.as_view(), name='logout'),
             path('register/', AuthViews.RegisterView.as_view(), name='register'),
+            {{/if}}
         {{#each entities}}
             # ${majStart(this)} URLs
             path('${lowerCase(this)}/', ${majStart(this)}Views.${majStart(this)}ListView.as_view(), name='${lowerCase(this)}_list'),
@@ -3186,16 +3190,19 @@
       extension: "py"
       content: |
         from django.views.generic import TemplateView
+        {{#if enableAuth}}
         from django.contrib.auth.decorators import login_required
         from django.utils.decorators import method_decorator
+        {{/if}}
         from django.apps import apps
         
         class HomeViews:
             """
             Vues pour la page d'accueil
             """
-            
+            {{#if enableAuth}}
             @method_decorator(login_required, name='dispatch')
+            {{/if}}
             class HomeView(TemplateView):
                 """
                 Vue pour afficher la page d'accueil
@@ -3288,11 +3295,13 @@
       from django.shortcuts import render, redirect, get_object_or_404
       from django.contrib import messages
       from django.http import JsonResponse
+      {{#if enableAuth}}
       from django.contrib.auth.views import LoginView as DjangoLoginView, LogoutView as DjangoLogoutView
       from django.contrib.auth.forms import UserCreationForm
       from django.contrib.auth import login
       from django.contrib.auth.decorators import login_required
       from django.utils.decorators import method_decorator
+      {{/if}}
       from ${projectName}.models import ${majStart(className)}
       from ${projectName}.services.${lowerCase(className)}_service import ${majStart(className)}Service
     controllerAnnotations: "{{removeLine}}"
@@ -3301,7 +3310,9 @@
     controllerName: "${lowerCase(className)}_views"
     controllerFieldContent: |
       class ${majStart(className)}Views:
+      {{#if enableAuth}}
       {{tab}}@method_decorator(login_required, name='dispatch')
+      {{/if}}
       {{tab}}class ${majStart(className)}ListView(ListView):
       {{tab}}{{tab}}template_name = '${projectName}/${majStart(className)}/list.html'
       {{tab}}{{tab}}context_object_name = '${lowerCase(className)}s'
@@ -3311,7 +3322,9 @@
       {{tab}}{{tab}}{{tab}}service = ${majStart(className)}Service()
       {{tab}}{{tab}}{{tab}}return service.get_all()
 
+      {{#if enableAuth}}
       {{tab}}@method_decorator(login_required, name='dispatch')
+      {{/if}}
       {{tab}}class ${majStart(className)}DetailView(DetailView):
       {{tab}}{{tab}}template_name = '${projectName}/${majStart(className)}/detail.html'
       {{tab}}{{tab}}context_object_name = '${lowerCase(className)}'
@@ -3320,7 +3333,9 @@
       {{tab}}{{tab}}{{tab}}service = ${majStart(className)}Service()
       {{tab}}{{tab}}{{tab}}return service.get_by_id(self.kwargs['pk'])
 
+      {{#if enableAuth}}
       {{tab}}@method_decorator(login_required, name='dispatch')
+      {{/if}}
       {{tab}}class ${majStart(className)}CreateView(CreateView):
       {{tab}}{{tab}}model = ${majStart(className)}
       {{tab}}{{tab}}template_name = '${projectName}/${majStart(className)}/create.html'
@@ -3347,7 +3362,9 @@
       {{tab}}{{tab}}{{tab}}messages.error(self.request, 'Erreur lors de la création. Veuillez vérifier les champs.')
       {{tab}}{{tab}}{{tab}}return super().form_invalid(form)
 
+      {{#if enableAuth}}
       {{tab}}@method_decorator(login_required, name='dispatch')
+      {{/if}}
       {{tab}}class ${majStart(className)}UpdateView(UpdateView):
       {{tab}}{{tab}}model = ${majStart(className)}
       {{tab}}{{tab}}template_name = '${projectName}/${majStart(className)}/edit.html'
@@ -3378,7 +3395,9 @@
       {{tab}}{{tab}}{{tab}}messages.error(self.request, 'Erreur lors de la modification. Veuillez vérifier les champs.')
       {{tab}}{{tab}}{{tab}}return super().form_invalid(form)
 
+      {{#if enableAuth}}
       {{tab}}@method_decorator(login_required, name='dispatch')
+      {{/if}}
       {{tab}}class ${majStart(className)}DeleteView(DeleteView):
       {{tab}}{{tab}}model = ${majStart(className)}
       {{tab}}{{tab}}template_name = '${projectName}/${majStart(className)}/detail.html'
@@ -3402,7 +3421,9 @@
       {{tab}}{{tab}}template_name = '${projectName}/home.html'
 
       # AJAX search endpoint for Select2
+      {{#if enableAuth}}
       @login_required
+      {{/if}}
       def ${lowerCase(className)}_search(request):
           from django.http import JsonResponse
           from django.db.models import Q

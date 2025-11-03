@@ -30,6 +30,32 @@ public class ViewsGenerator implements IViewsGenerator {
         this.engine = engine;
     }
 
+    /**
+     * Vérifie si l'authentification est activée pour le projet Django
+     * @param frameworkOptions Les options du framework
+     * @return true si l'authentification est activée, false sinon. Par défaut, retourne true si l'option n'est pas spécifiée.
+     */
+    public static boolean isAuthenticationEnabled(Map<String, Object> frameworkOptions) {
+        if (frameworkOptions == null) {
+            return true; // Par défaut, l'authentification est activée
+        }
+        
+        Object enableAuthValue = frameworkOptions.get("enableAuth");
+        if (enableAuthValue == null) {
+            return true; // Par défaut, l'authentification est activée
+        }
+        
+        if (enableAuthValue instanceof Boolean) {
+            return (Boolean) enableAuthValue;
+        }
+        
+        if (enableAuthValue instanceof String) {
+            return Boolean.parseBoolean((String) enableAuthValue);
+        }
+        
+        return true; // Par défaut, l'authentification est activée
+    }
+
     @Override
     public String generateViews(FrameworkMVC framework,
                                 Map<String, Object> frameworkOptions,
@@ -241,8 +267,10 @@ public class ViewsGenerator implements IViewsGenerator {
         // Générer le template HTML de la page d'accueil
         generateHomeTemplate(framework, frameworkOptions, language, viewsTemplate, entities, destinationFolder, projectName, groupLink);
         
-        // Générer les templates d'authentification
-        generateAuthTemplates(framework, frameworkOptions, language, viewsTemplate, destinationFolder, projectName, groupLink);
+        // Générer les templates d'authentification uniquement si l'authentification est activée
+        if (isAuthenticationEnabled(frameworkOptions)) {
+            generateAuthTemplates(framework, frameworkOptions, language, viewsTemplate, destinationFolder, projectName, groupLink);
+        }
     }
 
     /**
@@ -329,6 +357,18 @@ public class ViewsGenerator implements IViewsGenerator {
         metadata.put("entityName", "");
         metadata.put("classNameLink", "");
         metadata.put("isView", false);
+        
+        // Ajouter enableAuth dans les métadonnées (par défaut true si non spécifié)
+        boolean enableAuth = true;
+        if (frameworkOptions != null && frameworkOptions.containsKey("enableAuth")) {
+            Object enableAuthValue = frameworkOptions.get("enableAuth");
+            if (enableAuthValue instanceof Boolean) {
+                enableAuth = (Boolean) enableAuthValue;
+            } else if (enableAuthValue instanceof String) {
+                enableAuth = Boolean.parseBoolean((String) enableAuthValue);
+            }
+        }
+        metadata.put("enableAuth", enableAuth);
         
         return metadata;
     }

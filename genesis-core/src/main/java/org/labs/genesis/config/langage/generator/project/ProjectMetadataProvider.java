@@ -159,6 +159,18 @@ public class ProjectMetadataProvider {
         combinedMap.putAll(getInitialHashMap(destinationFolder, projectName, groupLink));
         combinedMap.putAll(getFrameworkCachingTrueBooleansHashMap(framework,frameworkOptions));
 
+        // Ajouter enableAuth dans les métadonnées (par défaut true si non spécifié)
+        boolean enableAuth = true;
+        if (frameworkOptions != null && frameworkOptions.containsKey("enableAuth")) {
+            Object enableAuthValue = frameworkOptions.get("enableAuth");
+            if (enableAuthValue instanceof Boolean) {
+                enableAuth = (Boolean) enableAuthValue;
+            } else if (enableAuthValue instanceof String) {
+                enableAuth = Boolean.parseBoolean((String) enableAuthValue);
+            }
+        }
+        combinedMap.put("enableAuth", enableAuth);
+
         return combinedMap;
     }
 
