@@ -1,8 +1,12 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { objectToRecord } from '../../../utilities/utilities';
 import { ConfirmationBoxComponent } from '../confirmation-box.component/confirmation-box.component';
+import { Language,LanguageService } from '../services/language/language.service';
+import { MotherComponent } from '../mother-component/mother.component';
+import { Router } from '@angular/router';
+import { TranslateService } from '../services/language/translate.service';
+
 
 @Component({
   selector: 'app-detail-view',
@@ -11,26 +15,22 @@ import { ConfirmationBoxComponent } from '../confirmation-box.component/confirma
   templateUrl: './detail-view.component.html',
   styleUrls: ['./detail-view.component.css']
 })
-export class DetailViewComponent implements OnChanges {
+export class DetailViewComponent extends MotherComponent implements OnChanges,OnInit {
   @Input() object: any = {};
   @Input() id?: string = "";
   @Input() deletfn?: (id: string) => void;
   @Input() LinkContext:string="";
-
   data: Record<string, any> = {};
-
   showConfirmation = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router,protected override langService: LanguageService,public override translateService: TranslateService) {
+    super(langService,translateService)
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['object'] && this.object) {
       this.data = objectToRecord(this.object);
     }
-  }
-
-  get entries() {
-    return Object.entries(this.data);
   }
 
   onDeleteClick() {
@@ -54,8 +54,11 @@ export class DetailViewComponent implements OnChanges {
     this.showConfirmation = false;
   };
 
-  // Annuler la suppression
   cancelDelete = () => {
     this.showConfirmation = false;
   };
+
+  get entries() {
+    return Object.entries(this.data);
+  }
 }

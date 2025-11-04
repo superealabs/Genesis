@@ -1,16 +1,16 @@
 <div class="detail-grid">
   <div class="detail-item" *ngFor="let item of entries">
-    <label>{{ item[0] }}</label>
-    <input type="text" [value]="item[1]" readonly>
+    <label>{{ this.langService.makeItReadable(item[0])}}</label>
+    <input type="text" [value]="this.langService.formatValue(item[1])" readonly>
   </div>
 
   <div class="action-buttons">
     <button class="update-btn" (click)="onUpdateClick()" >
-      <i class="bi bi-pencil-fill"></i> Update
+      <i class="bi bi-pencil-fill"></i> {{ this.content.common.update}}
     </button>
 
     <button class="delete-btn" *ngIf="deletfn" (click)="onDeleteClick()">
-      <i class="bi bi-trash-fill"></i> Delete
+      <i class="bi bi-trash-fill"></i> {{ this.content.common.delete}}
     </button>
   </div>
 
