@@ -31,7 +31,7 @@ export interface Column {
       <tbody>
         <tr *ngFor="let ligne of datas">
           <td *ngFor="let col of columns; let i = index">
-            {{ formatValue(ligne[i], col.type) }}
+            {{ this.langService.formatValue(ligne[i]) }}
           </td>
           <td class="actions" *ngIf="!isView">
             <button (click)="redirect(routeToDetail, ligne[0])" title="View" aria-label="View">
@@ -141,61 +141,7 @@ export class ListComponent implements OnInit{
     });
   }
 
-  constructor(private router: Router,private langService: LanguageService) {}
-
-  formatNumber(value: number): string {
-    if (value == null) return '';
-    return new Intl.NumberFormat(this.language).format(value);
-  }
-
-  formatDate(value: Date | string | number): string {
-    if (!value) return '';
-    const date = new Date(value);
-    const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0;
-    if (hasTime) {
-      return new Intl.DateTimeFormat(this.language, {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      }).format(date);
-    } else {
-      return new Intl.DateTimeFormat(this.language, {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).format(date);
-    }
-  }
-
-
-  formatDateTime(value: Date | string | number): string {
-    if (!value) return '';
-    const date = new Date(value);
-    return new Intl.DateTimeFormat(this.language, {
-      year:'numeric', month:'2-digit', day:'2-digit',
-      hour:'2-digit', minute:'2-digit', second:'2-digit'
-    }).format(date);
-  }
-
-  formatTime(value: Date | string | number): string {
-    if (!value) return '';
-    const date = new Date(value);
-    return new Intl.DateTimeFormat(this.language, { hour:'2-digit', minute:'2-digit', second:'2-digit' }).format(date);
-  }
-
-  formatValue(value: any, type: 'string' | 'number' | 'Date'): string {
-    if (value == null) return '';
-    switch(type) {
-      case 'number': return this.formatNumber(value);
-      case 'Date': return this.formatDate(value);
-      case 'string': return value;
-        console.log(value)
-      default: return value;
-    }
-  }
+  constructor(private router: Router,public langService: LanguageService) {}
 
   setActiveColumn(index: number) {
     if (this.activeColumn === index) {
