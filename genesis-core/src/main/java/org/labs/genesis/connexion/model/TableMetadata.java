@@ -29,6 +29,13 @@ public class TableMetadata {
     private ColumnMetadata primaryColumn;
     private String className;
     private Boolean isView;
+    private Boolean hasFk = false;
+
+    // relation mere fille
+    private Boolean isParent;
+    private Boolean isChild;
+    private ChildTableMetadata[] childTables;
+    private TableMetadata parentTable;
 
     public void setColumnsFrontendTypes(FrontendLanguage frontendLanguage,Database database)
     {
@@ -178,6 +185,7 @@ public class TableMetadata {
                 String pkColumnName = foreignKeys.getString("PKCOLUMN_NAME");
                 for (ColumnMetadata field : listeCols) {
                     if (field.getReferencedColumn().equalsIgnoreCase(fkColumnName)) {
+                        setHasFk(true);
                         field.setForeign(true);
 
                         field.setReferencedColumn(field.getReferencedColumn());
@@ -213,4 +221,13 @@ public class TableMetadata {
         }
     }
 
+    private List<ColumnMetadata> getForeignKeysColumns() {
+        List<ColumnMetadata> foreignKeys = new ArrayList<>();
+        for (ColumnMetadata column : columns) {
+            if (column.isForeign()) {
+                foreignKeys.add(column);
+            }
+        }
+        return foreignKeys;
+    }
 }
