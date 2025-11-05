@@ -1,6 +1,7 @@
 package org.labs.genesis.connexion.providers;
 
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -11,6 +12,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static org.labs.utils.StringUtils.toCamelCase;
 
 public class MySQLDatabase extends Database {
 
@@ -30,16 +33,19 @@ public class MySQLDatabase extends Database {
                 credentials.isAllowPublicKeyRetrieval());
     }
 
-
     @Override
     public List<String> getAllTableNames(Connection connection) throws SQLException {
         List<String> tableNames = new ArrayList<>();
 
+        String query = "SELECT TABLE_NAME " +
+                "FROM information_schema.tables " +
+                "WHERE TABLE_TYPE = 'BASE TABLE' " +
+                "AND TABLE_SCHEMA = DATABASE()"; // base actuellement utilisée
+
         try (Statement statement = connection.createStatement();
-             ResultSet tables = statement.executeQuery("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")) {
-            while (tables.next()) {
-                String tableName = tables.getString(1);
-                tableNames.add(tableName);
+             ResultSet rs = statement.executeQuery(query)) {
+            while (rs.next()) {
+                tableNames.add(rs.getString("TABLE_NAME"));
             }
         }
 
@@ -49,17 +55,161 @@ public class MySQLDatabase extends Database {
     @Override
     public List<String> getAllViewNames(Connection connection) throws SQLException {
         List<String> viewNames = new ArrayList<>();
-        DatabaseMetaData metaData = connection.getMetaData();
+
+        String query = "SELECT TABLE_NAME " +
+                "FROM information_schema.tables " +
+                "WHERE TABLE_TYPE = 'VIEW' " +
+                "AND TABLE_SCHEMA = DATABASE()"; // base actuellement utilisée
 
         try (Statement statement = connection.createStatement();
-             ResultSet views = statement.executeQuery("SHOW FULL TABLES WHERE Table_type = 'VIEW'")) {
-            while (views.next()) {
-                String viewName = views.getString(1);
-                viewNames.add(viewName);
+             ResultSet rs = statement.executeQuery(query)) {
+            while (rs.next()) {
+                viewNames.add(rs.getString("TABLE_NAME"));
             }
         }
 
         return viewNames;
+    }
+
+    @Override
+    public List<String> getPaginatedTableNames(Connection connection, int index, int size) throws SQLException {
+        List<String> tableNames = new ArrayList<>();
+
+        // index = numéro de page (0-based)
+        int offset = index * size;
+
+        String query = "SELECT TABLE_NAME " +
+                "FROM information_schema.tables " +
+                "WHERE TABLE_TYPE = 'BASE TABLE' " +
+                "AND TABLE_SCHEMA = DATABASE() " +
+                "ORDER BY TABLE_NAME " +
+                "LIMIT ? OFFSET ?";
+
+        try (PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setInt(1, size);
+            ps.setInt(2, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    tableNames.add(rs.getString("TABLE_NAME"));
+                }
+            }
+        }
+
+        return tableNames;
+    }
+
+    @Override
+    public List<String> getPaginatedViewNames(Connection connection, int index, int size) throws SQLException {
+        List<String> viewNames = new ArrayList<>();
+        int offset = index * size;
+
+        String query = "SELECT TABLE_NAME " +
+                "FROM information_schema.tables " +
+                "WHERE TABLE_TYPE = 'VIEW' " +
+                "AND TABLE_SCHEMA = DATABASE() " +
+                "ORDER BY TABLE_NAME " +
+                "LIMIT ? OFFSET ?";
+
+        try (PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setInt(1, size);
+            ps.setInt(2, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    viewNames.add(rs.getString("TABLE_NAME"));
+                }
+            }
+        }
+
+        return viewNames;
+    }
+
+    @Override
+    public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language, Connection connex, Framework framework) throws SQLException {
+        List<ColumnMetadata> listeCols = new ArrayList<>();
+
+        // Récupérer le nom de la base de données active depuis la connexion
+        String databaseName = connex.getCatalog();
+
+        try (ResultSet columns = metaData.getColumns(databaseName, null, tableName, null)) {
+            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+            while (columns.next()) {
+                // Vérification CRITIQUE : s'assurer que la colonne vient de la bonne table
+                String actualTableName = columns.getString("TABLE_NAME");
+                String actualDatabaseName = columns.getString("TABLE_CAT");
+
+                // Filtrer pour n'avoir que les colonnes de la table exacte dans la bonne base
+                if (!actualTableName.equalsIgnoreCase(tableName) ||
+                        !actualDatabaseName.equalsIgnoreCase(databaseName)) {
+                    continue;
+                }
+
+                ColumnMetadata column = new ColumnMetadata();
+                String columnName = columns.getString("COLUMN_NAME");
+                String columnType = columns.getString("TYPE_NAME");
+
+                String isNullable = columns.getString("IS_NULLABLE");
+                int decimalDigits = columns.getInt("DECIMAL_DIGITS");
+                int columnSize = columns.getInt("COLUMN_SIZE");
+                String defaultValue = columns.getString("COLUMN_DEF");
+                boolean isColumnNumeric = isColumnNumeric(columns);
+                boolean isColumnNumericWithPrecision = isColumnNumericWithPrecision(columns);
+                boolean isColumnText = isColumnText(columns);
+                boolean isColumnDate = isColumnDate(columns);
+                boolean isColumnTime = isColumnTime(columns);
+                boolean isColumnTimeTz = isColumnTimeTz(columns);
+                boolean isColumnDateTime = isColumnDateTime(columns);
+                boolean isColumnDateTimeTz = isColumnDateTimeTz(columns);
+                boolean isColumnInterval = isColumnInterval(columns);
+                boolean useTimeZone = useTimeZone(columns);
+
+                column.setName(toCamelCase(columnName.toLowerCase()));
+                column.setReferencedColumn(columnName);
+                column.setNumeric(isColumnNumeric);
+                column.setNumericWithPrecision(isColumnNumericWithPrecision);
+                column.setText(isColumnText);
+                column.setDate(isColumnDate);
+                column.setTime(isColumnTime);
+                column.setTimeTz(isColumnTimeTz);
+                column.setDateTime(isColumnDateTime);
+                column.setDateTimeTz(isColumnDateTimeTz);
+                column.setUseTimeZone(useTimeZone);
+                column.setInterval(isColumnInterval);
+
+                column.setNullable(isNullable,frameworkValidationAnnotations,engine);
+                column.setDefaultValue(defaultValue,frameworkValidationAnnotations,engine);
+                column.setColumnSize(columnSize,frameworkValidationAnnotations,engine);
+                column.setDecimalDigits(decimalDigits,frameworkValidationAnnotations,engine);
+
+                if (language.getTypes().get(getDatabaseType(columns)) == null)
+                    throw new RuntimeException("Database type not supported yet : " + columnType +" ["+tableName+"("+columnName+")]");
+                else
+                    column.setType(language.getTypes().get(getDatabaseType(columns)));
+
+                column.setColumnType(columnType);
+                listeCols.add(column);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            checkUnique(metaData, tableName, listeCols,framework);
+            checkStrictMinConstraint(connex, tableName, listeCols,framework);
+            checkMinConstraint(connex, tableName, listeCols,framework);
+            checkStrictMaxConstraint(connex, tableName, listeCols,framework);
+            checkMaxConstraint(connex, tableName, listeCols,framework);
+            checkStrictPastDateConstraint(connex, tableName, listeCols,framework);
+            checkPastDateConstraint(connex, tableName, listeCols,framework);
+            checkStrictFutureDateConstraint(connex, tableName, listeCols,framework);
+            checkFutureDateConstraint(connex, tableName, listeCols,framework);
+            checkNotBlankConstraint(connex, tableName, listeCols,framework);
+            checkMinLengthConstraint(connex, tableName, listeCols,framework);
+            checkRegexConstraint(connex, tableName, listeCols,framework);
+            removeUnusedData(listeCols);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return listeCols;
     }
 
     @Override

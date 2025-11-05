@@ -1,0 +1,139 @@
+- id: 1
+  name: "Template 1"
+  template: "Template 1"
+  preview: ""
+  layoutTemplate: "LayoutViewTemplate"
+  listTemplate: "ListViewTemplate"
+  createTemplate: "CreateViewTemplate"
+  editTemplate: "EditViewTemplate"
+  detailTemplate: "DetailViewTemplate"
+  errorTemplate: "ErrorViewTemplate"
+
+  templateFilesEdits:
+    - fileType: "Variable"
+      fileName: "variables"
+      extension: "css"
+      content: |
+        :root {
+            --primary-color: ${primaryColor};
+        
+            --bg-color: #f9f9f9;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f5f5f5;
+              
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+        
+            --active-color: ${primaryColor}40;
+            --hover-color: ${primaryColor}10;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --error-color: #dc3545;
+            --info-color: #17a2b8;
+              
+            --border-color: #e0e0e0;
+            --border-light: #f0f0f0;
+            --border-dark: #cccccc;
+              
+            --section-color: #1a2530;
+            --section-bg: #f8f9fa;
+              
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+              
+            --sidebar-width: 250px;
+            --sidebar-height: 80px;
+            --border-radius: 10px;
+            --border-radius-sm: 4px;
+            --border-radius-lg: 12px;
+              
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
+        }
+        
+        [data-theme="dark"] {
+            --primary-color: ${primaryColor};
+            
+            --bg-color: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --text-muted: #999999;
+            
+            --active-color: ${primaryColor}40;
+            --hover-color: ${primaryColor}20;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+            --info-color: #2196f3;
+            
+            --border-color: #404040;
+            --border-light: #4a4a4a;
+            --border-dark: #333333;
+            
+            --section-color: #e0e0e0;
+            --section-bg: #2d2d2d;
+            
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+        }
+          
+        @font-face {
+            font-family: 'Inter';
+            src: url('../fonts/InterTight-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}${staticFilesPath}/css/"
+  templateFiles:
+    - fileType: "Select2Css"
+      fileName: "select2.min.css"
+      sourcePath: "data_genesis/templates/Template 1/assets/css/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}${staticFilesPath}/css/"
+    - fileType: "StyleCss"
+      fileName: "style.css"
+      sourcePath: "data_genesis/templates/Template 1/assets/css/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}${staticFilesPath}/css/"
+    - fileType: "Font"
+      fileName: "InterTight-Regular.ttf"
+      sourcePath: "data_genesis/templates/Template 1/assets/fonts/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}${staticFilesPath}/fonts/"
+    - fileType: "ExportUtilsJs"
+      fileName: "export-utils.js"
+      sourcePath: "data_genesis/templates/Template 1/assets/js/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}${staticFilesPath}/js/"
+    - fileType: "FilterUtilsJs"
+      fileName: "filter-utils.js"
+      sourcePath: "data_genesis/templates/Template 1/assets/js/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}${staticFilesPath}/js/"
+    - fileType: "IndexJs"
+      fileName: "index.js"
+      sourcePath: "data_genesis/templates/Template 1/assets/js/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}${staticFilesPath}/js/"
+    - fileType: "JqueryJs"
+      fileName: "jquery-3.7.1.min.js"
+      sourcePath: "data_genesis/templates/Template 1/assets/js/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}${staticFilesPath}/js/"
+    - fileType: "Select2Js"
+      fileName: "select2.min.js"
+      sourcePath: "data_genesis/templates/Template 1/assets/js/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}${staticFilesPath}/js/"
+    - fileType: "LangJs"
+      fileName: "lang.js"
+      sourcePath: "data_genesis/templates/Template 1/assets/js/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}${staticFilesPath}/js/"
+    - fileType: "FrResource"
+      fileName: "fr.json"
+      sourcePath: "data_genesis/templates/Template 1/assets/i18n/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}${staticFilesPath}/i18n/"
+    - fileType: "EnResource"
+      fileName: "en.json"
+      sourcePath: "data_genesis/templates/Template 1/assets/i18n/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}${staticFilesPath}/i18n/"
+  templateFolders: []

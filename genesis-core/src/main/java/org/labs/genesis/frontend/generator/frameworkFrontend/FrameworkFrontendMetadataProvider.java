@@ -107,6 +107,17 @@ public class FrameworkFrontendMetadataProvider {
         return  metadata;
     }
 
+    public static HashMap<String, Object> getLayoutHashMap(FrontendLayout layout){
+//        FrontendLayout layout = frontendFramework.getFrontendLayout();
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("additionalCss",layout.additionalCss);
+        metadata.put("primaryColor",layout.primaryColor);
+        metadata.put("secondaryColor",layout.secondaryColor);
+        metadata.put("navbarPreference",layout.navbar);
+        metadata.put("langList",getInerfaceLangList(layout.langs));
+        return  metadata;
+    }
+
     public static HashMap<String, Object> getBrandingHashMap(FrontendFramework frontendFramework){
         ProjectBranding branding = frontendFramework.getProjectBranding();
         if (branding == null){
@@ -124,6 +135,19 @@ public class FrameworkFrontendMetadataProvider {
         return  metadata;
     }
 
+    public static HashMap<String, Object> getBrandingHashMap(ProjectBranding branding){
+//        ProjectBranding branding = frontendFramework.getProjectBranding();
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("faviconUrl", branding.getFaviconUrl());
+        metadata.put("useFaviconLink", branding.useFaviconLink());
+        metadata.put("hasFavicon", branding.hasFavicon());
+
+        metadata.put("logoUrl",branding.getLogoUrl());
+        metadata.put("useLogoLink", branding.useLogoLink());
+        metadata.put("hasLogo", branding.hasLogo());
+
+        return  metadata;
+    }
     public static HashMap<String, Object> getWebappHashMap(ProjectGenerationContext context){
         HashMap<String, Object> metadata = new HashMap<>();
         String webappFolder = getWebappFolder(context);
@@ -269,8 +293,8 @@ public class FrameworkFrontendMetadataProvider {
 
     public static HashMap<String, Object> getRessourceHashMap(FrontendFramework frontendFramework) {
         HashMap<String, Object> metadata = new HashMap<>();
-        metadata.putAll(getBrandingHashMap(frontendFramework));
-        metadata.putAll(getLayoutHashMap(frontendFramework));
+        metadata.putAll(getBrandingHashMap(frontendFramework.getProjectBranding()));
+        metadata.putAll(getLayoutHashMap(frontendFramework.getFrontendLayout()));
         return  metadata;
     }
 

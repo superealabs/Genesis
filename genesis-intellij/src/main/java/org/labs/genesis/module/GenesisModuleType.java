@@ -10,6 +10,9 @@ import org.labs.genesis.wizards.*;
 import org.labs.genesis.wizards.conditionals.FrontendConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.GenConfigConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.InitConditionalWizardStep;
+import org.labs.genesis.wizards.FirstWizardStep ;
+import org.labs.genesis.wizards.RuleToCodeWizardAIStep ;
+import org.labs.genesis.wizards.RuleToCodeWizardStep ;
 
 import javax.swing.*;
 
@@ -31,12 +34,22 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
         DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(projectGenerationContext);
         InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(projectGenerationContext, databaseConfigurationWizardStep);
         SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(projectGenerationContext);
-        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext);
+        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext, specificConfigurationWizardStep);
         GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(projectGenerationContext, generationOptionWizardStep);
+
+        //Rule to code
+        FirstWizardStep firstWizardStep = new FirstWizardStep(projectGenerationContext);
+        RuleToCodeWizardStep ruleToCodeWizardStep = new RuleToCodeWizardStep(projectGenerationContext , firstWizardStep );
+        RuleToCodeWizardAIStep ruleToCodeWizardAIStep =  new RuleToCodeWizardAIStep(projectGenerationContext , firstWizardStep );
+
+
         FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(projectGenerationContext );
         FrontendConditionalWizardStep frontendConditionalWizardStep = new FrontendConditionalWizardStep(projectGenerationContext, frontendConfigurationWizardStep);
         return new ModuleWizardStep[]{
-                new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep),
+                firstWizardStep,
+                ruleToCodeWizardStep,
+                ruleToCodeWizardAIStep ,
+                new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep,frontendConfigurationWizardStep) ,
                 initConditionalWizardStep,
                 sqlRunnerWizardStep,
                 genConfigConditionalWizardStep,

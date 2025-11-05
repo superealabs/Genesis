@@ -11,13 +11,19 @@
       "2": {
         "groupId": "",
         "artifactId": "Pomelo.EntityFrameworkCore.MySql"
+      },
+      "4": {
+        "groupId": "npm",
+        "artifactId": "mysql2",
+        "version": "3.11.0"
       }
     },
     "driverType": "",
     "sid": "",
     "connectionString": {
       "1": "jdbc:mysql://${host}:${port}/${database}",
-      "2": "Server=${host};Port=${port};Database=${database};User Id=${username};Password=${password};"
+      "2": "Server=${host};Port=${port};Database=${database};User Id=${username};Password=${password};",
+      "4": "mysql://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "MySql"
@@ -51,7 +57,7 @@
       "DATETIME": "timestamp",
       "TIME": "time",
       "BIT": "boolean",
-      "CHAR": "uuid",
+      "CHAR": "string",
       "UUID": "uuid",
       "TINYTEXT": "string",
       "LONGTEXT": "string",
@@ -91,13 +97,19 @@
         "groupId": "io.hypersistence",
         "artifactId": "hypersistence-utils-hibernate-63",
         "version": "3.8.4"
+      },
+      "4": {
+        "groupId": "npm",
+        "artifactId": "pg",
+        "version": "8.13.0"
       }
     },
     "driverType": "",
     "sid": "",
     "connectionString": {
       "1": "jdbc:postgresql://${host}:${port}/${database}",
-      "2": "Host=${host};Port=${port};Database=${database};Username=${username};Password=${password};"
+      "2": "Host=${host};Port=${port};Database=${database};Username=${username};Password=${password};",
+      "4": "postgres://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "Npgsql"
@@ -144,7 +156,7 @@
       "_int4": "integer[]",
       "_text": "text[]",
       "bytea": "bytea",
-      "inet": "string",
+      "inet": "inet",
       "cidr": "string",
       "macaddr": "string",
       "xml": "string"
@@ -168,13 +180,19 @@
       "2": {
         "groupId": "",
         "artifactId": "Microsoft.EntityFrameworkCore.SqlServer"
+      },
+      "4": {
+        "groupId": "npm",
+        "artifactId": "mssql",
+        "version": "11.0.1"
       }
     },
     "driverType": "",
     "sid": "",
     "connectionString": {
       "1": "jdbc:sqlserver://${host}:${port};databaseName=${database};encrypt=false;trustServerCertificate=true",
-      "2": "Server=${host};Database=${database};User Id=${username};Password=${password};Encrypt=false;TrustServerCertificate=true"
+      "2": "Server=${host};Database=${database};User Id=${username};Password=${password};Encrypt=false;TrustServerCertificate=true",
+      "4": "mssql://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "SqlServer"
@@ -253,13 +271,19 @@
       "2": {
         "groupId": "",
         "artifactId": "Oracle.EntityFrameworkCore"
+      },
+      "4": {
+        "groupId": "npm",
+        "artifactId": "oracledb",
+        "version": "6.6.0"
       }
     },
     "driverType": "thin",
     "sid": "ORCLCDB",
     "connectionString": {
       "1": "jdbc:oracle:${driverType}:@//${host}:${port}/${sid}",
-      "2": "User Id=${username};Password=${password};Data Source=${host}:${port}/${database}"
+      "2": "User Id=${username};Password=${password};Data Source=${host}:${port}/${database}",
+      "4": "oracle://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "Oracle"

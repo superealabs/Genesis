@@ -4,6 +4,9 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.FrameworkMVC;
+import org.labs.genesis.config.langage.ViewsTemplate;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.forms.FrontendConfigurationForm;
 import org.labs.genesis.frontend.FrontendLanguage;
@@ -14,7 +17,9 @@ import org.labs.genesis.frontend.generator.model.ProjectBranding;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FrontendConfigurationWizardStep extends ModuleWizardStep {
     private final FrontendConfigurationForm frontendConfigurationForm;
@@ -42,6 +47,11 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
         updateBranding();
         projectGenerationContext.getFrontendFramework().setFrontendLayout(this.frontendLayout);
         projectGenerationContext.getFrontendFramework().setProjectBranding(this.branding);
+        if (projectGenerationContext.getFramework() instanceof FrameworkMVC) {
+            ((FrameworkMVC) projectGenerationContext.getFramework()).setFrontendLayout(this.frontendLayout);
+            ((FrameworkMVC) projectGenerationContext.getFramework()).setProjectBranding(this.branding);
+            projectGenerationContext.setViewsTemplate(((FrameworkMVC) projectGenerationContext.getFramework()).findViewsTemplateById(1));
+        }
     }
 
     public  void updateLayout(){
@@ -99,10 +109,34 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
                 throw new ConfigurationException("Please select a frontend framework to use for generation");
             }
             frontendLayout.isValid();
+
+            // Validations for FrameworkMVC
+            Framework framework = projectGenerationContext.getFramework();
+            if (framework instanceof FrameworkMVC) {
+                validateFrameworkMVCConfiguration((FrameworkMVC) framework);
+            }
+
             return true;
         }
         catch (Exception e) {
             throw new ConfigurationException(e.getMessage());
         }
-    };
+    }
+
+    private void validateFrameworkMVCConfiguration(FrameworkMVC frameworkMVC) throws ConfigurationException {
+        if (frameworkMVC == null) {
+            throw new ConfigurationException("Framework must not be null");
+        }
+    }
+
+    public void onFrameworkMVCSelected(FrameworkMVC frameworkMVC) {
+        if (frameworkMVC == null) {
+            throw new IllegalArgumentException("Framework must not be null");
+        }
+        frontendConfigurationForm.updateFormWithFrameworkMVCOptions(frameworkMVC);
+    }
+
+    public void onFrameworkSelected() {
+        frontendConfigurationForm.updateFormWithFrontendFrameworkOptions();
+    }
 }

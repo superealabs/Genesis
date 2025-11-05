@@ -1,0 +1,33 @@
+[
+  {
+    "id": 1,
+    "languageId": 2,
+    "types": {
+      "int": "number",
+      "long": "number",
+      "double": "number",
+      "float": "number",
+      "string": "text",
+      "DateTime": "datetime-local",
+      "DateTimeOffset": "datetime-local",
+      "TimeSpan": "time",
+      "Boolean": "radio",
+      "int[]": "multiple-int",
+      "string[]": "multiple-string",
+      "byte[]": "file",
+      "System.Net.IPAddress": "text"
+    },
+    "validations": {
+      "notNull": "required",
+      "notBlank": "required",
+      "maxSize": "maxlength=\"${maxLength}\"",
+      "numericMinimumValue": "min=\"${min}\"",
+      "numericMinimumInclusiveValue": "min=\"${min}\"",
+      "numericMaximumValue": "max=\"${max}\"",
+      "numericMaximumInclusiveValue": "max=\"${max}\"",
+      "minAndMaxSize": "minlength=\"${minLength}\" maxlength=\"${maxLength}\"",
+      "regexPattern": " ",
+      "defaultValue":  "value=\"${value}\""
+    }
+  }
+]

@@ -188,11 +188,18 @@
                 }
               }
             }
+          }{{/if}}{{#if isMvcProject}},
+          "Kestrel": {
+            "Endpoints": {
+              "Http": {
+                "Url": "http://localhost:${projectPort}"
+              }
+            }
           }{{/if}}
         
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/{{/if}}"
 
     - fileType: "ProjectFile"
       fileName: "${majStart(projectName)}"
@@ -214,6 +221,7 @@
                     <PrivateAssets>all</PrivateAssets>
                 </PackageReference>
                 <PackageReference Include="${DBartifactId}" Version="${frameworkVersion}.0"/>{{/if}}
+                {{#if useMicrosoftExtensionsCachingMemory}}<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.7" />{{else}}{{removeLine}}{{/if}}
                 <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0"/>
                 <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.9.0"/>
                 {{#if useEurekaServer}}<PackageReference Include="Steeltoe.Discovery.Eureka" Version="3.2.0"/>{{/if}}
@@ -221,15 +229,16 @@
                 <PackageReference Include="Steeltoe.Management.Endpoint.Health" Version="1.1.0" />
                 <PackageReference Include="Steeltoe.Management.EndpointCore" Version="3.2.0" />
                 <PackageReference Include="Steeltoe.Management.TracingCore" Version="3.2.0" />
-                {{#if useJWT}}
+                {{#if useJWT or useAuthCookie}}
                 <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.18" />
                 <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />
                 <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.18" />
                 {{/if}}
+                {{#if isMvcProject}}<Content Update="wwwroot\**" CopyToOutputDirectory="Always" />{{/if}}
             </ItemGroup>
         </Project>
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/{{/if}}"
 
     - fileType: "SolutionFile"
       fileName: "${majStart(projectName)}"
@@ -258,7 +267,15 @@
       extension: "json"
       content: |
         {
-          "$schema": "http://json.schemastore.org/launchsettings.json",
+          {{#if isMvcProject}}"$schema": "http://json.schemastore.org/launchsettings.json",
+          "iisSettings": {
+            "windowsAuthentication": false,
+            "anonymousAuthentication": true,
+            "iisExpress": {
+              "applicationUrl": "http://localhost:53034",
+              "sslPort": 44349
+            }
+          }{{else}}"$schema": "http://json.schemastore.org/launchsettings.json",
           "iisSettings": {
             "windowsAuthentication": false,
             "anonymousAuthentication": true,
@@ -266,9 +283,18 @@
               "applicationUrl": "http://localhost:53034/${toKebabCase(projectName)}",
               "sslPort": 44349
             }
-          },
+          }{{/if}},
           "profiles": {
-            "http": {
+            {{#if isMvcProject}}"http": {
+              "commandName": "Project",
+              "dotnetRunMessages": true,
+              "launchBrowser": true,
+              "launchUrl": "",
+              "applicationUrl": "http://localhost:${projectPort}",
+              "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+              }
+            }{{else}}"http": {
               "commandName": "Project",
               "dotnetRunMessages": true,
               "launchBrowser": true,
@@ -277,8 +303,17 @@
               "environmentVariables": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
               }
-            },
-            "https": {
+            }{{/if}},
+            {{#if isMvcProject}}"https": {
+                "commandName": "Project",
+                "dotnetRunMessages": true,
+                "launchBrowser": true,
+                "launchUrl": "",
+                "applicationUrl": "https://localhost:7273;http://localhost:${projectPort}",
+                "environmentVariables": {
+                  "ASPNETCORE_ENVIRONMENT": "Development"
+                }
+              }{{else}}"https": {
               "commandName": "Project",
               "dotnetRunMessages": true,
               "launchBrowser": true,
@@ -287,15 +322,22 @@
               "environmentVariables": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
               }
-            },
-            "IIS Express": {
+            }{{/if}},
+            {{#if isMvcProject}}"IIS Express": {
+              "commandName": "IISExpress",
+              "launchBrowser": true,
+              "launchUrl": "",
+              "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+              }
+            }{{else}}"IIS Express": {
               "commandName": "IISExpress",
               "launchBrowser": true,
               "launchUrl": "swagger",
               "environmentVariables": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
               }
-            }{{#if useEurekaServer}},
+            }{{/if}}{{#if useEurekaServer}},
             "${projectName}": {
               "commandName": "Project",
               "launchBrowser": true,
@@ -308,7 +350,7 @@
             {{/if}}
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Properties/"
+      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}/Properties/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Properties/{{/if}}"
 
     - fileType: "TestProjectFile"
       fileName: "${majStart(projectName)}.Tests"
@@ -351,5 +393,172 @@
       fileName: "appsettings.Development.json"
       sourcePath: "data_genesis/csharp/"
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+  projectFolders: [ ]
+- id: 3
+  name: "NodeJS"
+  coreFrameworks:
+    - "NestJS"
+  projectFilesEdits:
+    - fileType: "docker"
+      fileName: ".dockerignore"
+      extension: ""
+      content: |
+        node_modules
+        npm-debug.log
+        dist
+        .git
+        *.md
+        .gitignore
+      destinationPath: "${destinationFolder}/${majStart(projectName)}"
+    - fileType: "docker"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM node:20.4
+        WORKDIR /usr/src/app
+        
+        # Copy package.json and package-lock.json
+        COPY package*.json ./
+        
+        # Install dependencies
+        RUN npm install
+        
+        # Copy the rest of the application code
+        COPY . .
+        
+        # Build the application
+        RUN npm run build
+        
+        # Run the application
+        CMD ["node", "dist/main.js"]
+      destinationPath: "${destinationFolder}/${majStart(projectName)}"
+    - fileType: "env"
+      fileName: ".env"
+      extension: ""
+      content: |
+        APP_PORT=${projectPort}
+        {{#if useJWT}}JWT_SECRET=ecadf03942ea050f90abc4ce66eadda7b4183e98ac36a518820f78b0b020d02d
+        JWT_EXPIRES_IN=48h
+        BCRYPT_SALT_ROUNDS=12{{/if}}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}"
 
+    - fileType: "Json"
+      fileName: "package"
+      extension: "json"
+      content: |
+        {
+          "name": "${projectName}",
+          "version": "0.0.1",
+          "description": "${projectDescription}",
+          "scripts": {
+            "start": "nest start",
+            "start:dev": "nest start --watch",
+            "build": "nest build",
+            "test": "jest",
+            "lint": "eslint '{src,tests}/**/*.ts' --fix"
+          },
+          "dependencies": {
+            "@nestjs/common": "^10.0.0",
+            "@nestjs/core": "^10.0.0",
+            "@nestjs/config": "^4.0.2",
+            "@nestjs/platform-express": "^10.0.0",
+            "@nestjs/swagger": "^7.2.0",
+            "@nestjs/typeorm": "^11.0.0",
+            {{#if useDB}}"${DBartifactId}": "^${DBversion}",{{/if}}
+            "reflect-metadata": "^0.2.2",
+            "typeorm": "0.3.25",
+            "typeorm-naming-strategies": "^4.1.0",
+            "class-validator": "^0.14.0",
+            "class-transformer": "^0.5.1",
+            "dotenv": "^16.3.0",
+            "body-parser": "^2.2.0",
+            "json2csv": "^6.0.0-alpha.2",
+            "jspdf": "^3.0.1",
+            "jspdf-autotable": "^5.0.2",
+            "puppeteer": "^24.19.0",
+            "node-cache": "^5.1.2"
+            {{#if useJWT}},"@nestjs/jwt": "^11.0.0",
+            "@nestjs/passport": "^11.0.5",
+            "bcryptjs": "^3.0.2",
+            "passport": "^0.7.0",
+            "passport-jwt": "^4.0.1",
+            "passport-local": "^1.0.0"{{/if}}
+            {{#if useBuiltInNestCacheManager}}, "@nestjs/cache-manager": "^3.0.1",
+            "cache-manager": "^7.2.4"{{/if}}
+            {{#if useNestRedisCaching}}, "@keyv/redis": "^5.1.3"{{/if}}
+          },
+          "devDependencies": {
+  
+            "@nestjs/cli": "^10.0.0",
+            "@nestjs/schematics": "^10.0.0",
+            "@nestjs/testing": "^10.4.20",
+            "typescript": "^5.8.2",
+            "ts-node": "^10.9.2",
+            "ts-node-dev": "^2.0.0",
+            "nodemon": "^3.1.10",
+            "@types/node": "^22.13.10",
+            "@types/jest": "^30.0.0",
+            "@types/json2csv": "^5.0.7",
+            "@types/supertest": "^6.0.3",
+            "@types/express": "^5.0.3",
+            "jest": "^30.0.5",
+            "supertest": "^7.1.4",
+            "ts-jest": "^29.4.1",
+            "eslint": "^8.50.0",
+            "@typescript-eslint/eslint-plugin": "^6.0.0",
+            "@typescript-eslint/parser": "^6.0.0"
+            {{#if useJWT}}, "@types/bcryptjs": "^2.4.6",
+            "@types/passport-jwt": "^4.0.1",
+            "@types/passport-local": "^1.0.38"{{/if}}
+          }
+        }
+      destinationPath: "${destinationFolder}/${projectName}/"
+
+    - fileType: "Json"
+      fileName: "tsconfig"
+      extension: "json"
+      content: |
+        {
+          "compilerOptions": {
+            "lib": ["es2021", "dom"],
+            "target": "es2021",
+            "moduleResolution": "node",
+            "emitDecoratorMetadata": true,
+            "experimentalDecorators": true,
+            "sourceMap": true,
+            "module": "commonjs",
+            "strict": true,
+            "esModuleInterop": true,
+            "outDir": "./dist",
+            "rootDir": ".",
+            "types": ["node", "jest"]
+          },
+          "include": ["src/**/*.ts", "tests/**/*.test.ts", "test/**/*.spec.ts",]
+        }
+      destinationPath: "${destinationFolder}/${projectName}/"
+    - fileType: "Test config file"
+      fileName: "jest.config"
+      extension: "js"
+      content: |
+        const { createDefaultPreset } = require("ts-jest");
+
+        const tsJestTransformCfg = createDefaultPreset().transform;
+
+        /** @type {import("jest").Config} **/
+        module.exports = {
+          preset: "ts-jest",
+          testEnvironment: "node",
+          rootDir: ".",
+          moduleFileExtensions: ["js", "json", "ts"],
+          testRegex: ".*\\.(spec|e2e-spec)\\.ts$", 
+          transform: {
+            ...tsJestTransformCfg,
+          },
+          collectCoverageFrom: [
+            "src/**/*.(t|j)s", 
+          ],
+          coverageDirectory: "./coverage",
+        };
+      destinationPath: "${destinationFolder}/${projectName}/"
+  projectFiles: [ ]
   projectFolders: [ ]

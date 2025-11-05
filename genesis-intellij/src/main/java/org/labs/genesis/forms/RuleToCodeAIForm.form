@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.labs.genesis.forms.RuleToCodeAIForm">
+  <grid id="rootGrid" binding="mainPanel" layout-manager="GridLayoutManager" row-count="5" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="5" vgap="5">
+    <margin top="10" left="10" bottom="10" right="10"/>
+    <constraints>
+      <xy x="0" y="0" width="735" height="645"/>
+    </constraints>
+    <properties/>
+    <border type="empty"/>
+    <children>
+      <component id="iaOptionsComboBox" class="javax.swing.JComboBox" binding="aiOptionsComboBox">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="202" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="iaLabel" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Select AI Option:"/>
+        </properties>
+      </component>
+      <component id="integrateButton" class="javax.swing.JButton" binding="integrateButton">
+        <constraints>
+          <grid row="4" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="0" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="202" height="34"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="Integrate"/>
+        </properties>
+      </component>
+      <component id="646e4" class="javax.swing.JTextField" binding="tokenField">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="202" height="34"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="d4aed" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Token:"/>
+        </properties>
+      </component>
+      <component id="d051a" class="javax.swing.JCheckBox" binding="checkPersonalToken">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="202" height="24"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value=""/>
+        </properties>
+      </component>
+      <component id="a0c15" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Use personal token"/>
+        </properties>
+      </component>
+      <scrollpane id="fb72e" binding="scrollPane">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="202" height="18"/>
+          </grid>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="46536" class="javax.swing.JTextArea" binding="codeContent">
+            <constraints/>
+            <properties>
+              <background color="-1"/>
+              <font name="Alef" style="0"/>
+              <foreground color="-16777216"/>
+              <lineWrap value="false"/>
+              <text value=""/>
+            </properties>
+          </component>
+        </children>
+      </scrollpane>
+      <component id="codeAILabel" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Code AI Content:"/>
+        </properties>
+      </component>
+      <component id="generateCodeButton" class="javax.swing.JButton" binding="generateCodeButton">
+        <constraints>
+          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Generate Code"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

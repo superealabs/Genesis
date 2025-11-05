@@ -1,9 +1,7 @@
 package org.labs.genesis.config.langage.generator.project;
 
 import org.jetbrains.annotations.NotNull;
-import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.FrameworkSecurity;
-import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.engine.GenesisTemplateEngine;
@@ -28,8 +26,9 @@ public class ProjectMetadataProvider {
         configFile.put("projectPort", projectPort);
 
         if (framework.getUseDB()) {
+            System.out.println(" id language = "+language.getId()+ " database "+database.getName());
             String databaseUrl = database.getConnectionString().get(language.getId());
-
+            System.out.println("Database URL: " + databaseUrl);
             Map<String, Object> databaseMetadata = database.getDatabaseMetadataHashMap(credentials);
             if(databaseMetadata.get("database").equals(""))
             {
@@ -61,6 +60,8 @@ public class ProjectMetadataProvider {
         List<HashMap<String, String>> allDependencies = new ArrayList<>();
         allDependencies.addAll(dependencies);
         allDependencies.addAll(additionalSecurityDependencies);
+        List<HashMap<String, String>> additionalCacheProviderDependencies = getFrameworkCachingDependenciesHashMaps(framework, frameworkConfiguration);
+        allDependencies.addAll(additionalCacheProviderDependencies);
         dependencyFileMap.put("dependencies", allDependencies);
 
         if (database != null && framework.getUseDB()) {
@@ -77,6 +78,10 @@ public class ProjectMetadataProvider {
             dependencyFileMap.put("DBgroupId", "{{removeLine}}");
             dependencyFileMap.put("DBartifactId", "{{removeLine}}");
             dependencyFileMap.put("DBversion", "{{removeLine}}");
+        }
+
+        if (framework instanceof FrameworkMVC) {
+            dependencyFileMap.put("isMvcProject", true);
         }
 
         return dependencyFileMap;
@@ -106,6 +111,29 @@ public class ProjectMetadataProvider {
         selectedSecurityOption.ifPresent(security -> {
             try {
                 List<Framework.Dependency> dependenciesList = security.getAdditionalDependencies();
+                for (Framework.Dependency dependency : dependenciesList) {
+                    HashMap<String, String> dependencyMap = new HashMap<>();
+                    dependencyMap.put("groupId", dependency.getGroupId());
+                    dependencyMap.put("artifactId", dependency.getArtifactId());
+                    dependencyMap.put("version", dependency.getVersion());
+                    dependencyMap.put("scope", dependency.getScope());
+                    dependencies.add(dependencyMap);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        return dependencies;
+    }
+    private static List<HashMap<String, String>> getFrameworkCachingDependenciesHashMaps(Framework framework, Map<String, Object> frameworkConfiguration) {
+        List<HashMap<String, String>> dependencies = new ArrayList<>();
+        String cacheProvider = (String) frameworkConfiguration.get("cacheProvider");
+        Optional<FrameworkCaching> selectedCacheProviderOption = framework.getSelectedCacheProviderByName(cacheProvider);
+
+        selectedCacheProviderOption.ifPresent(frameworkCaching -> {
+            try {
+                List<Framework.Dependency> dependenciesList = frameworkCaching.getAdditionalDependencies();
 
                 for (Framework.Dependency dependency : dependenciesList) {
                     HashMap<String, String> dependencyMap = new HashMap<>();
@@ -134,15 +162,28 @@ public class ProjectMetadataProvider {
         });
         return frameworkSecurityBooleanMetadata;
     }
+    private static HashMap<String, Object> getFrameworkCachingTrueBooleansHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
+        HashMap<String, Object> frameworkFrameworkCachingBooleanMetadata = new HashMap<>();
+        String cacheProvider = (String) frameworkConfiguration.get("cacheProvider");
+        Optional<FrameworkCaching> selectedFrameworkCachingOption = framework.getSelectedCacheProviderByName(cacheProvider);
+        selectedFrameworkCachingOption.ifPresent(frameworkCaching -> {
+            for(String key : frameworkCaching.getMetadataBooleanTrueKeys()){
+                frameworkFrameworkCachingBooleanMetadata.put(key, true);
+            }
+        });
+        return frameworkFrameworkCachingBooleanMetadata;
+    }
 
     static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName, String groupLink, String projectPort, Database database, Credentials credentials, @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
         HashMap<String, Object> combinedMap = new HashMap<>();
-
+        System.out.println("Project files edits hashmap");
         combinedMap.putAll(getConfigFileHashMap(projectPort, database, credentials, language, framework, frameworkOptions));
         combinedMap.putAll(getDependencyFileHashMap(projectDescription, database, language, framework, langageConfiguration, frameworkOptions));
         combinedMap.putAll(getInitialHashMap(destinationFolder, projectName, groupLink));
         combinedMap.putAll(getFrameworkSecurityTrueBooleansHashMap(framework,frameworkOptions));
+        combinedMap.putAll(getFrameworkCachingTrueBooleansHashMap(framework,frameworkOptions));
 
         return combinedMap;
     }
+
 }
