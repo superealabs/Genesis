@@ -172,8 +172,6 @@ public class SpecificConfigurationForm {
                 return true; // Autoriser l'édition de toutes les cellules
             }
         };
-
-        // Ajouter une ligne initiale
         model.addRow(new Object[]{"", "", "", ""});
         routeConfigurationOption.setModel(model);
 

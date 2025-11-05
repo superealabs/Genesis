@@ -87,10 +87,11 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
     @Override
     public boolean validate() throws ConfigurationException {
         try {
-            projectGenerationContext.setGenerateFrontendApp(frontendConfigurationForm.getFrontendGeneration().isSelected());
-            if (!projectGenerationContext.isGenerateFrontendApp()) {
+            if (frontendConfigurationForm.getFrontendGeneration().isSelected()) {
+                projectGenerationContext.setGenerateFrontendApp(false);
                 return  true;
             }
+            projectGenerationContext.setGenerateFrontendApp(true);
             if(frontendConfigurationForm.getFrontendLanguageOptions().getSelectedItem() == null){
                 throw new ConfigurationException("Please select an appropriate frontend language");
             }
