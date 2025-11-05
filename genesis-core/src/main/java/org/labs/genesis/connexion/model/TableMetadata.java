@@ -221,7 +221,7 @@ public class TableMetadata {
         }
     }
 
-    private List<ColumnMetadata> getForeignKeysColumns() {
+    public List<ColumnMetadata> getForeignKeysColumns() {
         List<ColumnMetadata> foreignKeys = new ArrayList<>();
         for (ColumnMetadata column : columns) {
             if (column.isForeign()) {
@@ -229,5 +229,14 @@ public class TableMetadata {
             }
         }
         return foreignKeys;
+    }
+
+    public ColumnMetadata findForeingKeyColumnByTableName(String tableName) {
+        for (ColumnMetadata column : columns) {
+            if (column.isForeign() && column.getType().equalsIgnoreCase(tableName)) {
+                return column;
+            }
+        }
+        return null;
     }
 }

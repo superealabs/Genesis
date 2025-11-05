@@ -1,12 +1,17 @@
 package org.labs.genesis.forms;
 
 import lombok.Getter;
-import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.RelationParameter;
+import org.labs.genesis.connexion.model.TableMetadata;
+import org.labs.genesis.renderer.TableMetadataListCellRenderer;
+import org.labs.genesis.renderer.TableMetadataTableCellRenderer;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.util.ArrayList;
+import java.util.Dictionary;
 import java.util.List;
 
 @Getter
@@ -15,13 +20,15 @@ public class RelationshipConfigurationForm {
     private JLabel titleLabel;
     private JPanel titlePanel;
     private JPanel configPanel;
-    private JComboBox<String> childSelect;
-    private JComboBox<String> parentSelect;
+    private JComboBox<TableMetadata> childSelect;
+    private JComboBox<TableMetadata> parentSelect;
     private JButton addRelationButton;
     private JTable relationTable;
     private JCheckBox skipCheckBox;
+    private JScrollPane tableScrollPane;
+    private JButton removeLineButton;
 
-    private List<RelationParameter> relationParameters;
+    private final List<RelationParameter> relationParameters;
 
     public RelationshipConfigurationForm(){
         relationParameters = new ArrayList<>();
@@ -29,42 +36,83 @@ public class RelationshipConfigurationForm {
     }
 
     private void initForm(){
+        assert childSelect != null;
+        childSelect.setRenderer(new TableMetadataListCellRenderer());
+        assert parentSelect != null;
+        parentSelect.setRenderer(new TableMetadataListCellRenderer());
         initializeListners();
         initializeTable();
     }
 
-    private void initializeTable(){
-        String[] columnNames = {"Child Entity", "Parent Entity", "Is Mandatory"};
+    private void initializeTable() {
+        String[] columnNames = {"Parent Entity", "Child Entity", "Is Mandatory"};
+
         DefaultTableModel model = new DefaultTableModel(null, columnNames) {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Autoriser l'édition de toutes les cellules
-            }
+            public boolean isCellEditable(int row, int column) {return false;}
         };
         relationTable.setModel(model);
+
+        TableCellRenderer tableMetadataRenderer = new TableMetadataTableCellRenderer();
+        relationTable.getColumnModel().getColumn(0).setCellRenderer(tableMetadataRenderer);
+        relationTable.getColumnModel().getColumn(1).setCellRenderer(tableMetadataRenderer);
     }
 
-    private void populateSelect(ProjectGenerationContext context) {
-        String[] data = context.getEntityNames().toArray(new String[0]);
-        childSelect.setModel(new DefaultComboBoxModel(data));
-        parentSelect.setModel(new DefaultComboBoxModel(data));
+    public void populateSelect(Dictionary<String,List<TableMetadata>> relations) {
+        List<TableMetadata> parents = relations.get("PARENTS");
+        List<TableMetadata> children = relations.get("CHILDS");
+        if (parents.isEmpty() || children.isEmpty()) {
+            skipCheckBox.setSelected(true);
+        }
+        childSelect.setModel(new DefaultComboBoxModel(children.toArray()));
+        parentSelect.setModel(new DefaultComboBoxModel(parents.toArray()));
     }
 
     private void initializeListners(){
         addRelationButton.addActionListener(e -> addRelation());
+
+        // NOUVEAU LISTENER POUR LE BOUTON DE SUPPRESSION
+        removeLineButton.addActionListener(e -> removeRelation());
     }
 
     private void addRelation(){
-        String childSelected = (String) childSelect.getSelectedItem();
-        String parentSelected = (String) parentSelect.getSelectedItem();
-        Boolean isMandatory = true;
-        if (childSelected != null && !childSelected.isEmpty()){
+        TableMetadata childSelected = (TableMetadata) childSelect.getSelectedItem();
+        TableMetadata parentSelected = (TableMetadata) parentSelect.getSelectedItem();
+        if (childSelected == null || parentSelected == null){
             return;
         }
-        else if (parentSelected != null && !parentSelected.isEmpty()){
+        ColumnMetadata fkColumn = childSelected.findForeingKeyColumnByTableName(parentSelected.getClassName());
+        if (childSelected.equals(parentSelected)){
+            JOptionPane.showMessageDialog(mainPanel, "Cannot set a relation from a table to itself", "", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        this.relationParameters.add(new RelationParameter(childSelected, parentSelected, isMandatory));
+        else if (fkColumn == null){
+            JOptionPane.showMessageDialog(mainPanel, "The table "+parentSelected.getTableName()+" has no relation to "+childSelected.getTableName(), "Relation invalid", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        RelationParameter currentRelation = new RelationParameter(childSelected, parentSelected, fkColumn.isNullable());
+        if (relationParameters.contains(currentRelation)){
+            JOptionPane.showMessageDialog(mainPanel, "This relation already exists.", "Duplicate Relation", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        this.relationParameters.add(currentRelation);
+        DefaultTableModel model = (DefaultTableModel) relationTable.getModel();
+        model.addRow(currentRelation.toRow());
     }
 
+    private void removeRelation() {
+        int selectedRow = relationTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(mainPanel,
+                    "Veuillez sélectionner la ligne à retirer.",
+                    "Aucune ligne sélectionnée",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        DefaultTableModel model = (DefaultTableModel) relationTable.getModel();
+        if (selectedRow < relationParameters.size()) {
+            relationParameters.remove(selectedRow);
+        }
+        model.removeRow(selectedRow);
+    }
 }

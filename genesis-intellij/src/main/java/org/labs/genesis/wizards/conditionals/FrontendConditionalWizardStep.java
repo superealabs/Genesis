@@ -6,6 +6,7 @@
 package org.labs.genesis.wizards.conditionals;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.openapi.options.ConfigurationException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 
@@ -34,6 +35,14 @@ public class FrontendConditionalWizardStep extends ModuleWizardStep {
         if (isStepVisible()) {
             actualStep.updateDataModel();
         }
+    }
+
+    @Override
+    public boolean validate() throws ConfigurationException {
+        if (isStepVisible()){
+            actualStep.validate();
+        }
+        return super.validate();
     }
 
     @Override

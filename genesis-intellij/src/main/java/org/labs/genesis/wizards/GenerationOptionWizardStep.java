@@ -4,10 +4,12 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.forms.GenerationOptionForm;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Dictionary;
 import java.util.List;
 
 import static org.labs.genesis.forms.GenerationOptionForm.SELECT_ALL;
@@ -16,11 +18,13 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
     private final GenerationOptionForm generationOptionForm;
     private final ProjectGenerationContext projectGenerationContext;
     public final SpecificConfigurationWizardStep specificConfigurationWizardStep;
+    private final  RelationshipConfigurationWizardStep relationshipConfigurationWizardStep;
 
-    public GenerationOptionWizardStep(ProjectGenerationContext projectGenerationContext, SpecificConfigurationWizardStep specificConfigurationWizardStep) {
+    public GenerationOptionWizardStep(ProjectGenerationContext projectGenerationContext, SpecificConfigurationWizardStep specificConfigurationWizardStep, RelationshipConfigurationWizardStep relationshipConfigurationWizardStep) {
         this.projectGenerationContext = projectGenerationContext;
         this.generationOptionForm = new GenerationOptionForm(projectGenerationContext);
         this.specificConfigurationWizardStep = specificConfigurationWizardStep;
+        this.relationshipConfigurationWizardStep = relationshipConfigurationWizardStep;
     }
 
     @Override
@@ -56,7 +60,8 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
             if (selectedComponent != null) {
                 projectGenerationContext.setGenerationOptions(selectedComponent);
             }
-
+            projectGenerationContext.setTables();
+            updateRelationsOptionsOnEntityChange(projectGenerationContext.splitTableByRelations());
             specificConfigurationWizardStep.onTablesAndViewsSelected(handleSelectAll(selectedValues, generationOptionForm.getAllTableNames()), handleSelectAll(selectedViewValues, generationOptionForm.getAllViewsNames()));
         } catch (Exception e) {
             Messages.showErrorDialog(
@@ -130,5 +135,9 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
             throw e;
         }
         return true;
+    }
+
+    private void updateRelationsOptionsOnEntityChange(Dictionary<String,List<TableMetadata>> relations) {
+        this.relationshipConfigurationWizardStep.updateTableSelects(relations);
     }
 }

@@ -473,8 +473,9 @@ public class ProjectGenerator {
 
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
-                List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language, framework);
-                List<TableMetadata> views = database.getViewsByNames(context.getViewNames(), connex, credentials, language, framework);
+
+                List<TableMetadata> entities = context.getEntityTables();
+                List<TableMetadata> views = context.getViewTables();
 
                 generateFullBackendProject(context, entities, views);
                 if (framework instanceof FrameworkMVC) {

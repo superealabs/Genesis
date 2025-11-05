@@ -34,7 +34,8 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
         DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(projectGenerationContext);
         InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(projectGenerationContext, databaseConfigurationWizardStep);
         SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(projectGenerationContext);
-        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext, specificConfigurationWizardStep);
+        RelationshipConfigurationWizardStep relationshipConfigurationWizardStep = new RelationshipConfigurationWizardStep(projectGenerationContext);
+        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext, specificConfigurationWizardStep, relationshipConfigurationWizardStep);
         GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(projectGenerationContext, generationOptionWizardStep);
 
         //Rule to code
@@ -53,6 +54,7 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
                 initConditionalWizardStep,
                 sqlRunnerWizardStep,
                 genConfigConditionalWizardStep,
+                relationshipConfigurationWizardStep,
                 frontendConditionalWizardStep,
                 specificConfigurationWizardStep,
         };

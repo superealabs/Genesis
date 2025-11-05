@@ -5,12 +5,13 @@ import lombok.Setter;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 
 import java.sql.Connection;
-import java.util.List;
-import java.util.Map;
+import java.sql.SQLException;
+import java.util.*;
 
 @Getter
 @Setter
@@ -35,6 +36,8 @@ public class ProjectGenerationContext {
     private Map<String, Object> frameworkConfiguration;
     private List<String> entityNames;
     private List<String> viewNames;
+    private List<TableMetadata> entityTables;
+    private List<TableMetadata> viewTables;
     private Connection connection;
     private List<String> generationOptions;
     private boolean generateProjectStructure = true;
@@ -89,5 +92,49 @@ public class ProjectGenerationContext {
     public ProjectGenerationContext setConnection(Connection connection) {
         this.connection = connection;
         return this;
+    }
+
+    public void setEntityTables(Connection connection) throws SQLException, ClassNotFoundException {
+
+        this.entityTables = database.getEntitiesByNames(this.getEntityNames(), connection, credentials, language, framework);
+    }
+    public void setViewTables(Connection connection) throws SQLException, ClassNotFoundException {
+        this.viewTables = database.getEntitiesByNames(this.getViewNames(), connection, credentials, language, framework);
+    }
+    public  void setTables(){
+        try {
+            setEntityTables(connection);
+            setViewTables(connection);
+        } catch (SQLException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public Dictionary<String, List<TableMetadata>> splitTableByRelations() {
+        Dictionary<String, List<TableMetadata>> splitTables = new java.util.Hashtable<>();
+        List<TableMetadata> childTables = new java.util.ArrayList<>();
+        Set<TableMetadata> parentTablesSet = new HashSet<>();
+
+        for (TableMetadata table : this.entityTables) {
+            if (table.getHasFk()) {
+                childTables.add(table);
+            }
+        }
+
+        // 4. Mettre les résultats dans le dictionnaire
+        // Les "PARENTS" sont toutes les tables référencées.
+        splitTables.put("PARENTS", this.entityTables);
+        // Les "CHILDS" sont toutes les tables qui ont au moins une FK.
+        splitTables.put("CHILDS", childTables);
+
+        return splitTables;
+    }
+
+    private TableMetadata findTableByName(String tableName, List<TableMetadata> tables) {
+        for (TableMetadata table : tables) {
+            if (table.getTableName().equalsIgnoreCase(tableName)) {
+                return table;
+            }
+        }
+        return null;
     }
 }

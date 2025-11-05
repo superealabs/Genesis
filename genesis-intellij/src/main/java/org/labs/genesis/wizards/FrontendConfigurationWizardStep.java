@@ -110,7 +110,6 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
             }
             frontendLayout.isValid();
 
-            // Validations for FrameworkMVC
             Framework framework = projectGenerationContext.getFramework();
             if (framework instanceof FrameworkMVC) {
                 validateFrameworkMVCConfiguration((FrameworkMVC) framework);
