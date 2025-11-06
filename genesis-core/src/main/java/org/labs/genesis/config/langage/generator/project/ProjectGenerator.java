@@ -248,9 +248,15 @@ public class ProjectGenerator {
         );
         System.out.println("Generating PROJECT FILESSS 2");
 
-        if (context.getFramework().getUseDB() && context.getFramework().getModelDao() != null) {
-            var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
-            projectFilesEditsHashMap.putAll(mapDaoGlobal);
+        if (context.getFramework().getUseDB()) {
+            if (context.getFramework().getModelDao() != null) {
+                var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
+                projectFilesEditsHashMap.putAll(mapDaoGlobal);
+            } else {
+                // For frameworks without ModelDao (like Django), still generate entitiesImports and entitiesAll
+                var entitiesMetadata = FrameworkMetadataProvider.generateEntitiesImportsAndAll(entities);
+                projectFilesEditsHashMap.putAll(entitiesMetadata);
+            }
         }
         System.out.println("Generating PROJECT FILESSS 3");
 

@@ -7483,13 +7483,13 @@
     modelImports: |
       from django.db import models
       from django.core.validators import MinValueValidator, MaxValueValidator
-    modelExtends: " (models.Model)"
+    modelExtends: "(models.Model)"
     modelAnnotations: ""
     modelFieldContent: |
       {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
       {{tab}}${this.name} = models.AutoField(primary_key=True){{elseIf this.isForeignKey}}
       {{tab}}${this.name} = models.ForeignKey('${this.type}', on_delete=models.CASCADE){{else}}
-      {{tab}}${this.name} = models.${this.type}{{/if}}
+      {{tab}}${this.name} = models.${this.djangoArgs}{{/if}}
       {{tab}}{{/each}}
     modelGetterSetter: |
       {{tab}}def __str__(self):
