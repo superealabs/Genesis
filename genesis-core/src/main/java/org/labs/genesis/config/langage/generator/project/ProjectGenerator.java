@@ -119,6 +119,9 @@ public class ProjectGenerator {
 
     public static void initFrontendProjectFiles(ProjectGenerationContext context){
         FrontendFramework frontendFramework = context.getFrontendFramework();
+        if (frontendFramework == null) {
+            return; // Skip frontend initialization if framework is not configured
+        }
         String destinationFilePath = FrameworkFrontendMetadataProvider.getWebappFolder(context);
         String sourcePath = Constantes.FRONTEND_SKELLETTON_DIRECTORY + frontendFramework.getInitPath();
         try {
@@ -178,15 +181,23 @@ public class ProjectGenerator {
         if (!context.isGenerateFrontendApp()){
             return;
         }
+        FrontendFramework frontendFramework = context.getFrontendFramework();
+        if (frontendFramework == null) {
+            return; // Skip frontend generation if framework is not configured
+        }
         HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(entities, context);
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
-        renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
+        if (frontendFramework.getAdditionalFiles() != null) {
+            renderFilesEdits(frontendFramework.getAdditionalFiles(),finalRenderData);
+        }
         selectedSecurityOption.ifPresent(security -> {
             try {
                 HashMap<String, Object> securityMap=FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType,context);
                 finalRenderData.putAll(securityMap);
-                renderFilesEdits(context.getFrontendFramework().getAuthenticationFiles(),finalRenderData);
+                if (frontendFramework.getAuthenticationFiles() != null) {
+                    renderFilesEdits(frontendFramework.getAuthenticationFiles(),finalRenderData);
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -237,7 +248,7 @@ public class ProjectGenerator {
         );
         System.out.println("Generating PROJECT FILESSS 2");
 
-        if (context.getFramework().getUseDB()) {
+        if (context.getFramework().getUseDB() && context.getFramework().getModelDao() != null) {
             var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
             projectFilesEditsHashMap.putAll(mapDaoGlobal);
         }
@@ -390,6 +401,9 @@ public class ProjectGenerator {
         Database database=context.getDatabase();
         FrontendLanguage frontendLanguage=context.getFrontendLanguage();
         FrontendFramework frontendFramework=context.getFrontendFramework();
+        if (frontendLanguage == null || frontendFramework == null) {
+            return; // Skip frontend generation if language or framework is not configured
+        }
         String projectName=context.getProjectName();
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
 
@@ -487,17 +501,17 @@ public class ProjectGenerator {
             genesisGenerator.generateModel(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
-        if (generationOptions.contains(COMPONENT_DAO) && framework.getModelDao().getToGenerate()) {
+        if (generationOptions.contains(COMPONENT_DAO) && framework.getModelDao() != null && framework.getModelDao().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_DAO + " component..." + tableMetadata.getClassName());
             genesisGenerator.generateDao(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
-        if (generationOptions.contains(COMPONENT_SERVICE) && framework.getService().getToGenerate()) {
+        if (generationOptions.contains(COMPONENT_SERVICE) && framework.getService() != null && framework.getService().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_SERVICE + " component...");
             genesisGenerator.generateService(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
-        if (generationOptions.contains(COMPONENT_CONTROLLER) && framework.getController().getToGenerate()) {
+        if (generationOptions.contains(COMPONENT_CONTROLLER) && framework.getController() != null && framework.getController().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_CONTROLLER + " component...");
             genesisGenerator.generateController(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }

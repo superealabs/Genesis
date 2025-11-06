@@ -527,6 +527,9 @@ public class FrameworkMetadataProvider {
 
     public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName) throws Exception {
         String packageDefault = "";
+        if (framework.getModelDao() == null) {
+            throw new RuntimeException("ModelDao is not configured for framework: " + framework.getName());
+        }
         packageDefault = framework.getModelDao().getModelDaoSavePath();
         System.out.println("Get hashmapDAO global " + packageDefault);
         System.out.println(tableMetadata.size()+ " SIZEEEEE");

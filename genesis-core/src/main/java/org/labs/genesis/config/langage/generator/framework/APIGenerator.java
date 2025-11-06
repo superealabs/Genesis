@@ -101,6 +101,9 @@ public class APIGenerator implements GenesisGenerator {
         if (generateComponentOnly) {
             fileSavePath = destinationFolder + "/" + projectName + "/repositories";
         } else {
+            if (framework.getModelDao() == null) {
+                throw new RuntimeException("ModelDao is not configured for framework: " + framework.getName());
+            }
             fileSavePath = framework.getModelDao().getModelDaoSavePath();
             fileSavePath = engine.simpleRender(fileSavePath, metadataFinally);
         }
@@ -113,6 +116,9 @@ public class APIGenerator implements GenesisGenerator {
         if (generateComponentOnly) {
             fileName = tableMetadata.getClassName() + "Repository";
         } else {
+            if (framework.getModelDao() == null) {
+                throw new RuntimeException("ModelDao is not configured for framework: " + framework.getName());
+            }
             fileName = framework.getModelDao().getModelDaoName();
             fileName = engine.simpleRender(fileName, metadataFinally);
         }
