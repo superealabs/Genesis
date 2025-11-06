@@ -90,7 +90,7 @@ public class RelationshipConfigurationForm {
             JOptionPane.showMessageDialog(mainPanel, "The table "+parentSelected.getTableName()+" has no relation to "+childSelected.getTableName(), "Relation invalid", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        RelationParameter currentRelation = new RelationParameter(childSelected, parentSelected, fkColumn.isNullable());
+        RelationParameter currentRelation = new RelationParameter(parentSelected, childSelected, fkColumn.isNullable());
         if (relationParameters.contains(currentRelation)){
             JOptionPane.showMessageDialog(mainPanel, "This relation already exists.", "Duplicate Relation", JOptionPane.WARNING_MESSAGE);
             return;

@@ -1986,6 +1986,8 @@
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
     controllerAdditionalFiles: [ ]
+  mereFiles: [ ]
+  filleFiles: [ ]
 
 - id: 2
   languageId: 2
@@ -2423,7 +2425,8 @@
       extension: "cs"
       content: |
         namespace ${majStart(projectName)}.Utils;
-          
+        
+        using System.ComponentModel.DataAnnotations;
         using System;
         using System.Linq;
         using System.Reflection;
@@ -2507,6 +2510,27 @@
               
                 return result;
             }
+            public static Dictionary<string, string?> ParseErrorValidations(List<ValidationResult> validationResults)
+            {
+                var errors = validationResults
+                    .SelectMany(vr => vr.MemberNames.Select(name => new { name = char.ToLower(name[0]) + name.Substring(1), vr.ErrorMessage }))
+                    .ToDictionary(x => x.name, x => x.ErrorMessage);
+                return errors;
+            }
+            public static void ParseErrorValidations(ValidationCheck validationCheck, Dictionary<string,object> errors , string key)
+            {
+                var data = ParseErrorValidations(validationCheck.ValidationResults);
+                errors.Add(key, data);
+            }
+            public static void ParseErrorValidations(ValidationCheckManager validationCheckManager, Dictionary<string,object> errors , string key)
+            {
+                var errorGroup = new List<Dictionary<string, string>>();
+                foreach (var validationCheck in validationCheckManager.ValidationChecks)
+                {
+                    errorGroup.Add(ParseErrorValidations(validationCheck.ValidationResults)!);
+                }
+                errors.Add(key, errorGroup);
+            }            
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
@@ -4102,6 +4126,48 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
 
+    - fileType: ""
+      fileName: ""
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+        
+        using System.ComponentModel.DataAnnotations;
+
+        public class EntityValidator
+        {
+            public static ValidationCheck ValidateEntity(object entity)
+            {
+                var validationResults = new List<ValidationResult>();
+                var context = new ValidationContext(entity, serviceProvider: null, items: null);
+                var isValid = Validator.TryValidateObject(entity, context, validationResults, validateAllProperties: true);
+                return new ValidationCheck(isValid, validationResults);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
+    - fileType: "ValidationCheckManager"
+      fileName: "ValidationCheckManager"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+        
+        public class ValidationCheckManager
+        {
+            public List<ValidationCheck> ValidationChecks { get; set; } = new List<ValidationCheck>();
+            public bool IsValid { get; set; } = true;
+
+            public void AddValidationCheck(ValidationCheck validationCheck)
+            {
+                ValidationChecks.Add(validationCheck);
+                if (!validationCheck.IsValid)
+                {
+                    IsValid = false;
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
@@ -4484,6 +4550,21 @@
               {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}
               {{tab}}{{/each}}
             };
+          
+            public static List<OrderItem> ToEntity(${majStart(className)}Dto[]? dtos)
+            {
+              return dtos == null ? [] : dtos.Select(t => t.ToEntity()).ToList();
+            }
+          
+            {{#if isParentTable}}public class ${majStart(className)}FullDto
+            {
+              public required ${majStart(className)}Dto ${majStart(className)} { get; set; }
+              {{#each children}}
+              public{{#if isRequired}} required{{/if}} ${majStart(this.className)}Dto[]{{#if isRequired}}?{{/if}} ${majStart(this.this.className)}s { get; set; }
+              {{/each}}
+            }{{else}}{{removeLine}}
+            {{/if}}
+            
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto/"
       - fileType: "Specification File"
@@ -4568,7 +4649,6 @@
               }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Repositories/Implementation/"
-
   service:
     toGenerate: true
     serviceImports: |
@@ -4600,7 +4680,8 @@
           using ${majStart(projectName)}.Services.Interface;
           using ${majStart(projectName)}.Specification;
           using ${majStart(projectName)}.Models.Dto;
-          using ${majStart(projectName)}.Utils;
+          using ${majStart(projectName)}.Utils;{{#if isParentTable}}
+          using ${majStart(projectName)}.Data;{{/if}}
           
           namespace ${majStart(projectName)}.Services.Implementation;
           
@@ -4609,19 +4690,16 @@
               private readonly I${majStart(className)}Repository _repository;
               {{#if cacheableWithMicrosoftextensionscachingmemory}}private readonly ICacheService _cacheService;
               private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);{{else}}{{removeLine}}{{/if}}
+              {{#if isParentTable}}private readonly ${majStart(className)}Context _dbContext;{{else}}{{removeLine}}{{/if}}
           
-              {{#if cacheableWithMicrosoftextensionscachingmemory}}
-              public ${majStart(className)}Service(ICacheService cacheService, I${majStart(className)}Repository repository)
+              
+              public ${majStart(className)}Service({{#if cacheableWithMicrosoftextensionscachingmemory}}ICacheService cacheService, {{/if}}{{#if isParentTable}}${majStart(className)}Context dbContext, {{/if}}I${majStart(className)}Repository repository)
               {
-                _cacheService = cacheService;
+                {{#if cacheableWithMicrosoftextensionscachingmemory}}_cacheService = cacheService;{{/if}}
+                {{#if isParentTable}}_dbContext = dbContext;{{/if}}
                 _repository = repository;
               }
-              {{else}}
-              public ${majStart(className)}Service(I${majStart(className)}Repository repository)
-              {
-                _repository = repository;
-              }
-              {{/if}}
+              
               public Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)})
               {
                 var csv = ExportUtil.GenerateCsv(${minStart(className)});
@@ -4696,7 +4774,7 @@
                   try
                   {
                       var predicate = new ${majStart(className)}FilterBuilder().Build(searchDto).Combine();
-                      return await _repository.SearchAsync(predicate, page, pageSize, sorting{{#each fieldsFK}},e => e.${majStart(this.name)}{{/each}} );
+                      return await _repository.SearchAsync(predicate, page, pageSize, sorting{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}} );
                   }
                   catch (Exception ex)
                   {
@@ -4733,7 +4811,7 @@
                 }
                 catch (Exception ex)
                 {
-                  throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + id);
+                  throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + id, ex);
                 }
               }
               {{/if}}
@@ -4807,6 +4885,32 @@
                   throw new InternalServerErrorException("Error while checking the existence of ${formatReadableLowerCase(className)}", ex);
                 }
               }
+              {{#if isParentTable}}public async Task<${majStart(className)}> CreateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}}, IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}}) {
+                using var transaction = await _dbContext.Database.BeginTransactionAsync();
+          
+                try
+                {
+                  _dbContext.Set<${majStart(className)}>().Add(${minStart(className)});
+                  await _dbContext.SaveChangesAsync();
+                  {{#each children}}// ${majStart(this.className)} details
+                  var ${minStart(this.className)}sList = ${minStart(this.className)}s.ToList();
+                  foreach (var item in ${minStart(this.className)}sList)
+                  {
+                      item.${majStart(this.parentFk)} = order.${majStart(this.parentPk)};
+                  }
+                  _dbContext.Set<${majStart(this.className)}>().AddRange(${minStart(this.className)}sList);
+                  await _dbContext.SaveChangesAsync();
+                  {{/each}}
+      
+                  await transaction.CommitAsync();
+                  return ${minStart(className)};
+                }
+                catch (Exception ex)
+                {
+                  await transaction.RollbackAsync();
+                  throw new InternalServerErrorException("Error during atomic creation of ${majStart(className)} and its details.", ex);
+                }
+              }{{/if}}
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation/"
 
@@ -5074,6 +5178,8 @@
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"
     controllerAdditionalFiles: [ ]
+  mereFiles: []
+  filleFiles: []
 
 - id: 3
   languageId: 1
@@ -5218,6 +5324,8 @@
       artifactId: "spring-boot-starter-test"
       version: "{{removeLine}}"
       scope: "test"
+  mereFiles: [ ]
+  filleFiles: [ ]
 
 
 - id: 4
@@ -5482,6 +5590,8 @@
       artifactId: "spring-boot-starter-oauth2-resource-server"
       version: "{{removeLine}}"
       scope: "{{removeLine}}"
+  mereFiles: [ ]
+  filleFiles: [ ]
 
 - id: 6
   languageId: 4
@@ -7202,6 +7312,8 @@
         - "Redis"
       defaultOption: "NONE"
   dependencies: []
+  mereFiles: [ ]
+  filleFiles: [ ]
 
 
 

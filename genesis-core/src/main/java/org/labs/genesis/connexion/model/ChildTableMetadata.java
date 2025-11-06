@@ -12,4 +12,14 @@ public class ChildTableMetadata {
     private TableMetadata table;
     private boolean mandatory;
     private ColumnMetadata column;
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ChildTableMetadata other) {
+            if(this.table.getTableName().equalsIgnoreCase(other.getTable().getTableName())){
+                return true;
+            }
+        }
+        return super.equals(obj);
+    }
 }

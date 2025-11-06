@@ -99,7 +99,7 @@ public class ProjectGenerationContext {
         this.entityTables = database.getEntitiesByNames(this.getEntityNames(), connection, credentials, language, framework);
     }
     public void setViewTables(Connection connection) throws SQLException, ClassNotFoundException {
-        this.viewTables = database.getEntitiesByNames(this.getViewNames(), connection, credentials, language, framework);
+        this.viewTables = database.getViewsByNames(this.getViewNames(), connection, credentials, language, framework);
     }
     public  void setTables(){
         try {

@@ -377,6 +377,14 @@ public class ProjectGenerator {
             genesisGenerator.generateController(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
+        HashMap<String, Object> tableHashMapData = FrameworkMetadataProvider.getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, renderedDestinationFolder, projectName, groupLink);
+        if (tableMetadata.getIsParent()){
+            renderFilesEdits(framework.getMereFiles(),tableHashMapData);
+        }
+        if (tableMetadata.getIsChild()){
+            renderFilesEdits(framework.getFilleFiles(),tableHashMapData);
+        }
+
         System.out.println("Backend component generation completed for project: " + projectName);
     }
 

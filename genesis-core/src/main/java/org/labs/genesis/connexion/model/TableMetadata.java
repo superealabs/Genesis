@@ -32,10 +32,10 @@ public class TableMetadata {
     private Boolean hasFk = false;
 
     // relation mere fille
-    private Boolean isParent;
-    private Boolean isChild;
-    private List<ChildTableMetadata> childTables;
-    private List<TableMetadata> parentTables;
+    private Boolean isParent = false;
+    private Boolean isChild = false;
+    private List<ChildTableMetadata> childTables = new ArrayList<>();
+    private List<TableMetadata> parentTables = new ArrayList<>();
 
     public void setColumnsFrontendTypes(FrontendLanguage frontendLanguage,Database database)
     {
@@ -242,6 +242,10 @@ public class TableMetadata {
 
     public void addChild(TableMetadata child, Boolean mandatory){
         if (childTables == null) { setChildTables(new ArrayList<>());}
+        if (child == null)  return;
+        if (childTables.contains(child)) {
+            return;
+        }
         this.childTables.add(new ChildTableMetadata(child, mandatory, child.findForeingKeyColumnByClassName(this.getClassName())));
         this.setIsParent(true);
     }

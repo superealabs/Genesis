@@ -23,7 +23,7 @@ public class MereFilleMetadataProvider {
     public static HashMap<String, Object> getChildHashMap(ChildTableMetadata tableMetadata){
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("className", tableMetadata.getTable().getClassName());
-        metadata.put("mandatory", tableMetadata.isMandatory());
+        metadata.put("isRequired", tableMetadata.isMandatory());
         metadata.put("parentFk", tableMetadata.getColumn().getName());
         return metadata;
     }
