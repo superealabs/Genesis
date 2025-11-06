@@ -3,6 +3,7 @@ package org.labs.genesis.frontend.generator.frameworkFrontend;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.langage.generator.framework.MereFilleMetadataProvider;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
@@ -53,6 +54,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("classNameLink",tableMetadata.getClassName()+"s");
 
         metadata.putAll(getHashMapComponentSavePath(destinationFolder, projectName, tableMetadata));
+        metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
 
         return metadata;
     }

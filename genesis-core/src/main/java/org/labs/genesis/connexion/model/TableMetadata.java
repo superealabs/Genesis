@@ -34,8 +34,8 @@ public class TableMetadata {
     // relation mere fille
     private Boolean isParent;
     private Boolean isChild;
-    private ChildTableMetadata[] childTables;
-    private TableMetadata parentTable;
+    private List<ChildTableMetadata> childTables;
+    private List<TableMetadata> parentTables;
 
     public void setColumnsFrontendTypes(FrontendLanguage frontendLanguage,Database database)
     {
@@ -231,12 +231,24 @@ public class TableMetadata {
         return foreignKeys;
     }
 
-    public ColumnMetadata findForeingKeyColumnByTableName(String tableName) {
+    public ColumnMetadata findForeingKeyColumnByClassName(String className) {
         for (ColumnMetadata column : columns) {
-            if (column.isForeign() && column.getType().equalsIgnoreCase(tableName)) {
+            if (column.isForeign() && column.getType().equalsIgnoreCase(className)) {
                 return column;
             }
         }
         return null;
+    }
+
+    public void addChild(TableMetadata child, Boolean mandatory){
+        if (childTables == null) { setChildTables(new ArrayList<>());}
+        this.childTables.add(new ChildTableMetadata(child, mandatory, child.findForeingKeyColumnByClassName(this.getClassName())));
+        this.setIsParent(true);
+    }
+
+    public void setParentTable(TableMetadata parentTable) {
+        if (parentTables == null) { setParentTables(new ArrayList<>());}
+        this.parentTables.add(parentTable);
+        this.setIsChild(true);
     }
 }

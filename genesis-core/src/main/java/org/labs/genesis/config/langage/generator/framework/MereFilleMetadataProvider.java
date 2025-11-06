@@ -1,0 +1,30 @@
+package org.labs.genesis.config.langage.generator.framework;
+
+import org.labs.genesis.connexion.model.ChildTableMetadata;
+import org.labs.genesis.connexion.model.TableMetadata;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+public class MereFilleMetadataProvider {
+    public static HashMap<String, Object> getRelationsHashMap(TableMetadata tableMetadata){
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("isParentTable", tableMetadata.getIsParent());
+        metadata.put("isChildTable", tableMetadata.getIsChild());
+        metadata.put("parentPk", tableMetadata.getPrimaryColumn().getName());
+        List<HashMap<String, Object>> children = new ArrayList<>();
+        for (ChildTableMetadata child : tableMetadata.getChildTables()) {
+            children.add(getChildHashMap(child));
+        }
+        metadata.put("children", children);
+        return metadata;
+    }
+    public static HashMap<String, Object> getChildHashMap(ChildTableMetadata tableMetadata){
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("className", tableMetadata.getTable().getClassName());
+        metadata.put("mandatory", tableMetadata.isMandatory());
+        metadata.put("parentFk", tableMetadata.getColumn().getName());
+        return metadata;
+    }
+}

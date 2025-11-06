@@ -93,7 +93,6 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
         }
     }
 
-
     @Override
     public boolean validate() throws ConfigurationException {
         try {
@@ -109,7 +108,6 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
                 throw new ConfigurationException("Please select a frontend framework to use for generation");
             }
             frontendLayout.isValid();
-
             Framework framework = projectGenerationContext.getFramework();
             if (framework instanceof FrameworkMVC) {
                 validateFrameworkMVCConfiguration((FrameworkMVC) framework);

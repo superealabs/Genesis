@@ -23,4 +23,9 @@ public class RelationParameter {
         }
         return  false;
     }
+
+    public void setParameter(){
+        parentTable.addChild(childTable, mandatory);
+        childTable.setParentTable(parentTable);
+    }
 }

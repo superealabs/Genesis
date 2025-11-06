@@ -1863,32 +1863,32 @@
       fileName: "AuthRequest"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}.DTOs;
+        namespace ${majStart(projectName)}.Models.Dto;
         public class AuthRequest
         {
             public string Username { get; set; }
             public string Password { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
 
     - fileType: "Register Request DTO"
       fileName: "RegisterRequest"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}.DTOs;
+        namespace ${majStart(projectName)}.Models.Dto;
         public class RegisterRequest
         {
             public string Username { get; set; }
             public string Email { get; set; }
             public string Password { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
 
     - fileType: "Refresh Request DTO"
       fileName: "RefreshRequest"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}.DTOs;
+        namespace ${majStart(projectName)}.Models.Dto;
         
         using System.ComponentModel.DataAnnotations;
 
@@ -1897,38 +1897,38 @@
             [MaxLength(500)]
             string RefreshToken
         );
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
 
     - fileType: "Password Change Request DTO"
       fileName: "PasswordChangeRequest"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}.DTOs;
+        namespace ${majStart(projectName)}.Models.Dto;
         public class PasswordChangeRequest
         {
             public string OldPassword { get; set; }
             public string NewPassword { get; set; }
             public string ConfirmPassword { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
 
     - fileType: "User Update Request DTO"
       fileName: "UserUpdateRequest"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}.DTOs;
+        namespace ${majStart(projectName)}.Models.Dto;
         public class UserUpdateRequest
         {
             public string Name { get; set; }
             public string Email { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
 
     - fileType: "User Response DTO"
       fileName: "UserResponseDto"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}.DTOs;
+        namespace ${majStart(projectName)}.Models.Dto;
 
         public class UserResponseDto
         {
@@ -1947,7 +1947,7 @@
         {
           public string Authority { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
 
     - fileType: "JWT Service"
       fileName: "JwtService"
@@ -2098,7 +2098,7 @@
       content: |
         namespace ${majStart(projectName)}.Services.Implementation;
 
-        using ${majStart(projectName)}.DTOs;
+        using ${majStart(projectName)}.Models.Dto;
         using Microsoft.AspNetCore.Identity;      
         using ${majStart(projectName)}.Models;
 
@@ -2223,7 +2223,7 @@
         using Microsoft.AspNetCore.Authorization;
         using Microsoft.AspNetCore.Mvc;
         using Microsoft.AspNetCore.Http;
-        using ${majStart(projectName)}.DTOs;
+        using ${majStart(projectName)}.Models.Dto;
         using ${majStart(projectName)}.Utils;
         using ${majStart(projectName)}.Services.Implementation;
         using ${majStart(projectName)}.Models;

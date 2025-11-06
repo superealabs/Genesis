@@ -81,7 +81,7 @@ public class RelationshipConfigurationForm {
         if (childSelected == null || parentSelected == null){
             return;
         }
-        ColumnMetadata fkColumn = childSelected.findForeingKeyColumnByTableName(parentSelected.getClassName());
+        ColumnMetadata fkColumn = childSelected.findForeingKeyColumnByClassName(parentSelected.getClassName());
         if (childSelected.equals(parentSelected)){
             JOptionPane.showMessageDialog(mainPanel, "Cannot set a relation from a table to itself", "", JOptionPane.WARNING_MESSAGE);
             return;

@@ -3,6 +3,7 @@ package org.labs.genesis.wizards;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.forms.RelationshipConfigurationForm;
 
@@ -26,7 +27,15 @@ public class RelationshipConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public void updateDataModel() {
-
+        try {
+            List<RelationParameter> relations = relationshipConfigurationForm.getRelationParameters();
+            for (RelationParameter relationParameter : relations) {
+                relationParameter.setParameter();
+            }
+        }
+        catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
 
     public void updateTableSelects(Dictionary<String,List<TableMetadata>> relations) {
