@@ -256,6 +256,12 @@ public class ProjectGenerator {
                 // For frameworks without ModelDao (like Django), still generate entitiesImports and entitiesAll
                 var entitiesMetadata = FrameworkMetadataProvider.generateEntitiesImportsAndAll(entities);
                 projectFilesEditsHashMap.putAll(entitiesMetadata);
+                // Add entities list for template loops (e.g., {{#each entities}})
+                List<String> entityNames = new ArrayList<>();
+                for (TableMetadata entity : entities) {
+                    entityNames.add(entity.getClassName());
+                }
+                projectFilesEditsHashMap.put("entities", entityNames);
             }
         }
         System.out.println("Generating PROJECT FILESSS 3");

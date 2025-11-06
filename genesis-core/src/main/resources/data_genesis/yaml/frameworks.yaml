@@ -7358,33 +7358,31 @@
       content: |
         from django.contrib import admin
         from django.urls import path, include
-        from rest_framework import routers
         from drf_yasg.views import get_schema_view
         from drf_yasg import openapi
         from rest_framework.permissions import AllowAny
 
-        import inspect
-        from rest_framework import viewsets as drf_viewsets
-        from ${projectName}.api import viewsets as api_viewsets
-
-        router = routers.DefaultRouter()
-        for name, obj in inspect.getmembers(api_viewsets, inspect.isclass):
-            if inspect.isclass(obj) and issubclass(obj, drf_viewsets.ViewSetMixin) and obj.__module__.startswith("${projectName}.api.viewsets"):
-                basename = name.replace("ViewSet", "").lower()
-                router.register(rf'{basename}', obj, basename=basename)
+        from ${projectName}.api import viewsets
 
         schema_view = get_schema_view(
             openapi.Info(
                 title="${projectName} API",
                 default_version='v1',
+                description="REST API for ${projectName} with function-based views",
+                contact=openapi.Contact(email="admin@${projectName}.com"),
+                license=openapi.License(name="MIT License"),
             ),
             public=True,
             permission_classes=(AllowAny,),
         )
 
         urlpatterns = [
+            path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
             path('admin/', admin.site.urls),
-            path('api/', include(router.urls)),
+            {{#each entities}}
+            path('api/${lowerCase(this)}/', viewsets.${lowerCase(this)}_list_create, name='${lowerCase(this)}-list-create'),
+            path('api/${lowerCase(this)}/<int:pk>/', viewsets.${lowerCase(this)}_detail, name='${lowerCase(this)}-detail'),
+            {{/each}}
             path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
             path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
         ]
@@ -7394,18 +7392,18 @@
       fileName: "__init__"
       extension: "py"
       content: |
-        # Auto-discover and export all DRF ViewSets in this package
+        # Auto-discover and export all function-based views in this package
         import pkgutil
         import importlib
         import inspect
-        from rest_framework import viewsets as drf_viewsets
+        from types import FunctionType
 
         __all__ = []
 
         for _, module_name, _ in pkgutil.iter_modules(__path__):
             module = importlib.import_module(f"{__name__}.{module_name}")
-            for name, obj in inspect.getmembers(module, inspect.isclass):
-                if inspect.isclass(obj) and obj.__module__ == module.__name__ and issubclass(obj, drf_viewsets.ViewSetMixin):
+            for name, obj in inspect.getmembers(module):
+                if isinstance(obj, FunctionType) and obj.__module__ == module.__name__:
                     globals()[name] = obj
                     __all__.append(name)
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/api/viewsets"
@@ -7505,16 +7503,139 @@
     modelPackage: "{{removeLine}}"
     modelAdditionalFiles:
       - fileType: "python"
-        fileName: "${majStart(className)}ViewSet"
+        fileName: "${lowerCase(className)}_views"
         extension: "py"
         content: |
-          from rest_framework import viewsets
+          from rest_framework.decorators import api_view
+          from rest_framework.response import Response
+          from rest_framework import status
+          from django.shortcuts import get_object_or_404
+          from drf_yasg.utils import swagger_auto_schema
+          from drf_yasg import openapi
           from ${projectName}.models import ${majStart(className)}
           from ${projectName}.serializers import ${majStart(className)}Serializer
 
-          class ${majStart(className)}ViewSet(viewsets.ModelViewSet):
-              queryset = ${majStart(className)}.objects.all()
-              serializer_class = ${majStart(className)}Serializer
+          @swagger_auto_schema(
+              method='get',
+              operation_summary='List all ${majStart(className)}s',
+              operation_description='Retrieve a list of all ${lowerCase(className)}s',
+              responses={
+                  200: ${majStart(className)}Serializer(many=True),
+              },
+              tags=['${majStart(className)}']
+          )
+          @swagger_auto_schema(
+              method='post',
+              operation_summary='Create a new ${majStart(className)}',
+              operation_description='Create a new ${lowerCase(className)} instance',
+              request_body=${majStart(className)}Serializer,
+              responses={
+                  201: ${majStart(className)}Serializer,
+                  400: 'Bad request - validation errors',
+              },
+              tags=['${majStart(className)}']
+          )
+          @api_view(['GET', 'POST'])
+          def ${lowerCase(className)}_list_create(request):
+              """
+              List all ${lowerCase(className)}s or create a new ${lowerCase(className)}.
+              """
+              if request.method == 'GET':
+                  ${lowerCase(className)}s = ${majStart(className)}.objects.all()
+                  serializer = ${majStart(className)}Serializer(${lowerCase(className)}s, many=True)
+                  return Response(serializer.data)
+              
+              elif request.method == 'POST':
+                  serializer = ${majStart(className)}Serializer(data=request.data)
+                  if serializer.is_valid():
+                      serializer.save()
+                      return Response(serializer.data, status=status.HTTP_201_CREATED)
+                  return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+          @swagger_auto_schema(
+              method='get',
+              operation_summary='Retrieve a ${majStart(className)}',
+              operation_description='Get details of a specific ${lowerCase(className)} by ID',
+              manual_parameters=[
+                  openapi.Parameter('pk', openapi.IN_PATH, description='${majStart(className)} ID', type=openapi.TYPE_INTEGER),
+              ],
+              responses={
+                  200: ${majStart(className)}Serializer,
+                  404: '${majStart(className)} not found',
+              },
+              tags=['${majStart(className)}']
+          )
+          @swagger_auto_schema(
+              method='put',
+              operation_summary='Update a ${majStart(className)} (full)',
+              operation_description='Update all fields of a ${lowerCase(className)} instance',
+              manual_parameters=[
+                  openapi.Parameter('pk', openapi.IN_PATH, description='${majStart(className)} ID', type=openapi.TYPE_INTEGER),
+              ],
+              request_body=${majStart(className)}Serializer,
+              responses={
+                  200: ${majStart(className)}Serializer,
+                  400: 'Bad request - validation errors',
+                  404: '${majStart(className)} not found',
+              },
+              tags=['${majStart(className)}']
+          )
+          @swagger_auto_schema(
+              method='patch',
+              operation_summary='Update a ${majStart(className)} (partial)',
+              operation_description='Update specific fields of a ${lowerCase(className)} instance',
+              manual_parameters=[
+                  openapi.Parameter('pk', openapi.IN_PATH, description='${majStart(className)} ID', type=openapi.TYPE_INTEGER),
+              ],
+              request_body=${majStart(className)}Serializer,
+              responses={
+                  200: ${majStart(className)}Serializer,
+                  400: 'Bad request - validation errors',
+                  404: '${majStart(className)} not found',
+              },
+              tags=['${majStart(className)}']
+          )
+          @swagger_auto_schema(
+              method='delete',
+              operation_summary='Delete a ${majStart(className)}',
+              operation_description='Delete a ${lowerCase(className)} instance',
+              manual_parameters=[
+                  openapi.Parameter('pk', openapi.IN_PATH, description='${majStart(className)} ID', type=openapi.TYPE_INTEGER),
+              ],
+              responses={
+                  204: '${majStart(className)} deleted successfully',
+                  404: '${majStart(className)} not found',
+              },
+              tags=['${majStart(className)}']
+          )
+          @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+          def ${lowerCase(className)}_detail(request, pk):
+              """
+              Retrieve, update or delete a ${lowerCase(className)} instance.
+              """
+              ${lowerCase(className)} = get_object_or_404(${majStart(className)}, pk=pk)
+              
+              if request.method == 'GET':
+                  serializer = ${majStart(className)}Serializer(${lowerCase(className)})
+                  return Response(serializer.data)
+              
+              elif request.method == 'PUT':
+                  serializer = ${majStart(className)}Serializer(${lowerCase(className)}, data=request.data)
+                  if serializer.is_valid():
+                      serializer.save()
+                      return Response(serializer.data)
+                  return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+              
+              elif request.method == 'PATCH':
+                  serializer = ${majStart(className)}Serializer(${lowerCase(className)}, data=request.data, partial=True)
+                  if serializer.is_valid():
+                      serializer.save()
+                      return Response(serializer.data)
+                  return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+              
+              elif request.method == 'DELETE':
+                  ${lowerCase(className)}.delete()
+                  return Response(status=status.HTTP_204_NO_CONTENT)
         destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/api/viewsets"
   controller:
     toGenerate: true
