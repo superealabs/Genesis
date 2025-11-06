@@ -27,6 +27,7 @@ public class GenesisTemplateEngine {
     private static final String VARIABLE_PLACEHOLDER_SUFFIX_ALT = "]";
     private static final String NEWLINE_TAG = "{{newline}}";
     private static final String TAB_TAG = "{{tab}}";
+    private static final String SPACE_TAG = "{{space}}";
     private static final String REMOVE_LINE_TAG = "{{removeLine}}";
     private static final String BLOCK_END = "}}";
     private static final String FUNCTION_OPEN_PARENTHESIS = "(";
@@ -700,6 +701,7 @@ public class GenesisTemplateEngine {
     private void processSpecialTags(StringBuilder template) {
         replaceAllOccurrences(template, NEWLINE_TAG, "\n");
         replaceAllOccurrences(template, TAB_TAG, "\t");
+        replaceAllOccurrences(template, SPACE_TAG, "    "); // 4 spaces for PEP 8
 
         // Supprimer les lignes contenant le tag {{removeLine}}
         int start;
