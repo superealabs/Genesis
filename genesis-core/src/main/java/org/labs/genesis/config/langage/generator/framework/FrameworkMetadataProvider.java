@@ -398,6 +398,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isDateTimeTz",field.isDateTimeTz());
         fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
+        fieldMap.put("isParentForeignKey",field.getIsParentForeignKey());
 
         return fieldMap;
     }

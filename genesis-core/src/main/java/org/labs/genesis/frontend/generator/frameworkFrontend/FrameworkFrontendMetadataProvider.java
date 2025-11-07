@@ -221,6 +221,7 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("isText", field.isText());
         fieldMap.put("isNotForeignKey",!field.isForeign());
         fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
+        fieldMap.put("isParentForeignKey",field.getIsParentForeignKey());
 
         return fieldMap;
     }

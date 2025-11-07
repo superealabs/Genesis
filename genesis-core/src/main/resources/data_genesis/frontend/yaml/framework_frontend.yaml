@@ -1622,7 +1622,7 @@
       }
     destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/models"
     name: "${toKebabCase(className)}.model"
-  meredFiles: [ ]
+  mereFiles: [ ]
   filleFiles: [ ]
 
 - id: 2
@@ -3351,6 +3351,7 @@
             "bootstrap": "^5.3.7",
             "bootstrap-icons": "^1.13.1",
             "daisyui": "^5.0.50",
+            "patch-package": "^8.0.1",
             "pinia": "^3.0.3",
             "vee-validate": "^4.15.1",
             "vue": "^3.5.18",
@@ -3566,7 +3567,7 @@
       content: |
         import { createRouter, createWebHistory } from 'vue-router'
         import routes from './routes'
-        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
+        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore'
         {{#if useJWT}}import { useAuth } from '@/composables/useAuth.ts'{{/if}}
 
         const router = createRouter({
@@ -3576,8 +3577,8 @@
 
         router.beforeEach((to, from, next) => {
           const loading = useFreezeScreenStore()
-          loading.freeze('Loading'){{#if useJWT}}
-          const auth = useAuth()
+          loading.freeze('Loading')
+          {{#if useJWT}}const auth = useAuth()
           const isAuthenticated = auth.isLoggedIn.value // or check auth.user/token
           if (to.meta.requiresAuth && !isAuthenticated) {
             next({ name: 'login' })
@@ -3731,9 +3732,8 @@
       fileName: "i18n"
       extension: "ts"
       content: |
-        /* Import lang Files */
-        import english from '@/lang/english.ts'
-        import french from '@/lang/french.ts'
+        /* Import lang Files */{{#each langList}}
+        import ${lowerCase(this.name)} from '@/lang/${lowerCase(this.name)}.ts'{{/each}}
         import { createI18n } from 'vue-i18n'
         const i18n = createI18n({
           legacy: false,
@@ -5278,7 +5278,7 @@
             import { PaginationData } from '@/models/api/PageResponseModel'
             import { useRouter } from 'vue-router'{{#if isParentTable}}
             {{#each children}}
-            import { {majStart(this.className)}, {majStart(this.className)}DTO } from './use${majPluralize(className)}'
+            import { ${majStart(this.className)}, ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'
             {{/each}}
             {{/if}}
 
@@ -5364,15 +5364,24 @@
                * Create a new ${minStart(className)}
                * @param ${minStart(className)}FormDTO ${majStart(className)} object to create
                */{{/if}}
-              {{#if notViewAndParent}}const create${majStart(className)} = async (fullData: { ${minStart(className)}: Partial<${majStart(className)}FormDTO>{{#each children}}; ${minStart(this.className)}s: Partial<${majStart(this.className)}FormDTO>[]{{/each}} }){{else}}const create${majStart(className)} = async (${minStart(className)}FormDTO: Partial<${majStart(className)}FormDTO>){{/if}}{{#if !view}} => {{{#if !isView}}
-                const dto = new ${majStart(className)}FormDTO({{#if notViewAndParent}}fullData.${minStart(className)}{{else}}${minStart(className)}FormDTO{{/if}})
+              {{#if notViewAndParent}}const create${majStart(className)} = async (fullData: { ${minStart(className)}: Partial<${majStart(className)}FormDTO>{{#each children}}; ${minStart(this.className)}s: ${majStart(this.className)}FormDTO[]{{/each}} })=> {
+                const dto = new ${majStart(className)}FormDTO(fullData.${minStart(className)})
                 const ${minStart(className)}: Partial<${majStart(className)}> = await dto.toEntity()
                 {{#each children}}
                 const ${minStart(this.className)}s: Partial<${majStart(this.className)}>[] = await ${majStart(this.className)}FormDTO.toEntities(fullData.${minStart(this.className)}s)
-                {{/each}}{{/if}}
-                {{#if notViewAndParent}} const { data, error, errors } = await ${minStart(className)}Service.create({ ${minStart(className)}{{#each children}}, ${minStart(this.className)}s{{/each}} })
-                {{else}}const { data, error, errors } = await ${minStart(className)}Service.create(${minStart(className)}){{/if}}
-                {{#if !isView}}if (error) {
+                {{/each}}
+                const { data, error, errors } = await ${minStart(className)}Service.create({ ${minStart(className)}{{#each children}}, ${minStart(this.className)}s{{/each}} })
+                if (error) {
+                  message.value = error
+                }
+                return { data, errors }
+              }
+              {{elseIf !isView}}
+              const create${majStart(className)} = async (${minStart(className)}FormDTO: Partial<${majStart(className)}FormDTO>) => {
+                const dto = new ${majStart(className)}FormDTO(${minStart(className)}FormDTO)
+                const ${minStart(className)}: Partial<${majStart(className)}> = await dto.toEntity()
+                const { data, error, errors } = await ${minStart(className)}Service.create(${minStart(className)})
+                if (error) {
                   message.value = error
                 }
                 return { data, errors }
@@ -5694,13 +5703,13 @@
         label: "{{removeLine}}"
       componentName: "${majStart(className)}Form"
       importFile: |
-        import { ref } from 'vue'
+        import { ref, computed } from 'vue'
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
         import GenesisButton from '@/components/button/GenesisButton.vue'
         import GenesisInput from '@/components/form/GenesisInput.vue'{{#if containsForeignKey}}
         import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'{{/if}}{{#if isParentTable}}
         {{#each children}}import type { ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'
-        import ${majStart(this.className)}TableForm from '@/entities/${minStart(this.className)}/${majStart(this.className)}TableForm'{{/each}}{{/if}}
+        import ${majStart(this.className)}TableForm from '@/entities/${minStart(this.className)}/${majStart(this.className)}TableForm.vue'{{/each}}{{/if}}
       selector: "${majStart(className)}Form"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5713,6 +5722,18 @@
                 <div class="grid grid-cols-1 gap-4">
                   {{#each fields}}
                   {{#if this.isPrimaryKey}}{{removeLine}}
+                  {{elseIf this.isForeignKey and isParentTable}}
+                  <!-- ${formatReadable(this.name)} FK -->
+                  <GenesisSelectSearchCriteria
+                    v-if="${minStart(this.type)}SearchField?.multicriteriaSelect"
+                    label="${formatReadable(this.name)}"
+                    key="${minStart(className)}${majStart(this.name)}"
+                    :search-function="${minStart(this.type)}SearchField?.multicriteriaSelect.searchFunction"
+                    :filters="${minStart(this.type)}SearchField?.multicriteriaSelect.filters"
+                    :default-value="${minStart(this.type)}DefaultValue"
+                    :violation="${minStart(className)}Violations ? ${minStart(className)}Violations['${minStart(this.name)}'] : undefined"
+                    @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = String(selectedValue))"
+                  />
                   {{elseIf this.isForeignKey}}
                   <!-- ${formatReadable(this.name)} FK -->
                   <GenesisSelectSearchCriteria
@@ -5724,6 +5745,16 @@
                     :default-value="${minStart(this.type)}DefaultValue"
                     :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = String(selectedValue))"
+                  />
+                  {{elseIf isParentTable}}
+                  <!-- ${formatReadable(this.name)} -->
+                  <GenesisInput
+                    label="${formatReadable(this.name)}"
+                    :violation="${minStart(className)}Violations ? ${minStart(className)}Violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    type="${this.uiType}"
+                    v-model="formModel.${minStart(this.name)}"
+                    :value="formModel.${minStart(this.name)}"
                   />
                   {{else}}
                   <!-- ${formatReadable(this.name)} -->
@@ -5738,7 +5769,13 @@
                   {{/if}}
                   {{/each}}{{removeLine}}
                 </div>
-
+                {{#if isParentTable}}{{#each children}}
+                <${majStart(this.className)}TableForm
+                  :get-table-data-callback="set${majStart(this.className)}s"
+                  :violations="${minStart(this.className)}Violations"
+                  class="w-full"
+                />
+                {{/each}}{{/if}}
                 <!-- Action buttons -->
                 <div class="flex justify-end gap-3 mt-6">
                   <GenesisButton type="submit" class="btn btn-primary text-primary-content" :label="submitLabel" />
@@ -5752,15 +5789,23 @@
       export: |
         const props = defineProps<{
           ${minStart(className)}?: ${majStart(className)}
-          violations?: Record<string, string> | null
+          {{#if isParentTable}}violations?:{
+            ${minStart(className)}: Record<string, string>
+            {{#each children}}${minStart(this.className)}s: Record<string, string>{{/each}}
+          }
+          {{else}}violations?: Record<string, string> | null{{/if}}
           submitLabel?: string
         }>()
 
         const emit = defineEmits<{
-          (e: 'submit', payload: Partial<${majStart(className)}FormDTO>): void
+          (e: 'submit', payload: {{#if isParentTable}}{ ${minStart(className)}: Partial<${majStart(className)}FormDTO>{{#each children}}; ${minStart(this.className)}s: ${majStart(this.className)}FormDTO[]{{/each}} }{{else}}Partial<${majStart(className)}FormDTO>{{/if}}): void
           (e: 'cancel', payload: Partial<${majStart(className)}FormDTO>): void
         }>()
-
+        {{#if isParentTable}}
+        const ${minStart(className)}Violations = computed(() => props.violations ? props.violations.${minStart(className)} : {})
+        {{#each children}}const ${minStart(this.className)}Violations = computed(() => props.violations ? props.violations.${minStart(this.className)}s : [])
+        {{/each}}
+        {{/if}}
         const formModel = ref<Partial<${majStart(className)}FormDTO>>({ ...${majStart(className)}FormDTO.parse(props.${minStart(className)}) })
         {{#each fieldsFK}}
         const ${minStart(this.type)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
@@ -5768,9 +5813,16 @@
         ? (props.${minStart(className)}?.${this.name}?.getReferenceValue?.() ?? undefined)
         : undefined
         {{/each}}
-
+        {{#if isParentTable}}
+        {{#each children}}
+        const ${minStart(this.className)}s =ref<${majStart(this.className)}FormDTO[]>([])
+        const set${majStart(this.className)}s = (data: ${majStart(this.className)}FormDTO[]) => {
+          ${minStart(this.className)}s.value = data
+        }
+        {{/each}}{{/if}}
         function handleSubmit() {
-          emit('submit', formModel.value)
+          {{#if isParentTable}}emit('submit', { ${minStart(className)}: formModel.value{{#each children}}, ${minStart(this.className)}s: ${minStart(this.className)}s.value{{/each}} }){{else}}
+          emit('submit', formModel.value){{/if}}
         }
 
         function cancelForm() {
@@ -5887,8 +5939,10 @@
         import { ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
         import { use${majPluralize(className)} } from '@/composables/use${majPluralize(className)}'
         import { usePopup } from '@/composables/usePopup'
-        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
-        import { ref } from 'vue'
+        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore'
+        import { ref } from 'vue'{{#if isParentTable}}
+        {{#each children}}import type { ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'{{/each}}
+        {{/if}}
       selector: "${majStart(className)}CreateView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5929,10 +5983,10 @@
       export: |
         const { create${majStart(className)}, goToListView, message, view${majStart(className)} } = use${majPluralize(className)}()
         const { openPopup, closePopup, visible: alertPopup } = usePopup()
-        const violations = ref<Record<string, string> | null>(null)
+        const violations = ref<Record<string, object> | null>(null)
         const freezeStore = useFreezeScreenStore()
 
-        const createHandler = async (formDTO: Partial<${majStart(className)}FormDTO>) => {
+        const createHandler = async (formDTO: {{#if isParentTable}}{ ${minStart(className)}: Partial<${majStart(className)}FormDTO>{{#each children}}; ${minStart(this.className)}s: ${majStart(this.className)}FormDTO[]{{/each}} }{{else}}Partial<${majStart(className)}FormDTO>{{/if}}) => {
           freezeStore.freeze('Creating a new ${majStart(className)} ...')
           try {
             const { data, errors } = await create${majStart(className)}(formDTO)
@@ -5963,7 +6017,7 @@
       } from '@/models/api/RequestModel'
       import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
       import type { DataResponse, PagedDataResponse } from '@/models/api/DataResponseModel'{{#if isParentTable}}
-      {{#each}}import type { ${majStart(this.className)} } from @/models/${majStart(this.className)}Model{{/each}}
+      {{#each children}}import type { ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model'{{/each}}
       {{/if}}
     methods: |
       const restApiWithPage = api<IPageResponse<${majStart(className)}>>()
@@ -6062,7 +6116,7 @@
           {{#if this.isForeignKey}}
           this.${minStart(this.name)} = data?.${minStart(this.name)}
             ? new ${majStart(this.type)}(data?.${minStart(this.name)})
-            : undefine{{else}}
+            : undefined{{else}}
           this.${minStart(this.name)} = data?.${minStart(this.name)}{{/if}}
           {{/each}}{{removeLine}}
         }
@@ -6151,8 +6205,8 @@
         ]
       }
       
-      {{#if notViewAndParent}}
-      {{else}}export class ${majStart(className)}FormDTO {
+      {{#if !isView}}
+      export class ${majStart(className)}FormDTO {
         {{#each fields}}
         {{#if this.isForeignKey}}
         ${minStart(this.name)}?: string{{else}}
@@ -6189,20 +6243,20 @@
           }
           {{/each}}{{removeLine}}
           return entity
-          
-          static async toEntities(data?: ${majStart(className)}FormDTO[] | null){
-            const entities: Promise<Partial<${majStart(className)}>[]> = []
+        }
+      
+        static async toEntities(data?: ${majStart(className)}FormDTO[] | null){
+            const entities: Promise<Partial<${majStart(className)}>>[] = []
             data?.forEach(async (item) => {
               entities.push(item.toEntity())
             })
             return Promise.all(entities)
           }
-        }
       }{{/if}}
     exportsComponents: |
     destinationPath: "${destinationFolder}/src/models"
     name: "${majStart(className)}Model"
-  meredFiles: [ ]
+  mereFiles: [ ]
   filleFiles:
     - fileType: "Row Form"
       fileName: "${majStart(className)}RowForm"
@@ -6217,7 +6271,7 @@
 
         const props = defineProps<{
           internalId: number
-          ${majStart(className)}: ${majStart(className)}FormDTO
+          ${minStart(className)}: ${majStart(className)}FormDTO
           violations?: Record<string, string> | null
         }>()
 
@@ -6226,7 +6280,7 @@
           (e: 'udpate:model-value', value: ${majStart(className)}FormDTO): void
         }>()
 
-        const formModel = ref<${majStart(className)}FormDTO>(props.${majStart(className)})
+        const formModel = ref<${majStart(className)}FormDTO>(props.${minStart(className)})
         {{#each fieldsFK}}
         const ${minStart(this.type)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
         {{/each}}
@@ -6247,11 +6301,13 @@
             </td>
             {{#each fields}}
             {{#if this.isPrimaryKey}}{{removeLine}}
+            {{elseIf this.isParentForeignKey}}{{removeLine}}
             {{elseIf this.isForeignKey}}
             <td>
               <GenesisSelectSearchCriteria
                 v-if="${minStart(this.type)}SearchField?.multicriteriaSelect"
-                :violation="violations ? violations.['${minStart(this.name)}'] : undefined"
+                :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                placeholder="Select ${formatReadable(this.name)}"
                 key="${majStart(className)}${majStart(this.name)}"
                 :search-function="${minStart(this.type)}SearchField?.multicriteriaSelect.searchFunction"
                 :filters="${minStart(this.type)}SearchField?.multicriteriaSelect.filters"
@@ -6313,7 +6369,7 @@
                   <template v-for="(row, index) in rows" :key="row._internalId + '-' + index">
                     <${majStart(className)}RowForm
                       :internalId="index + 1"
-                      :orderItem="row.data"
+                      :${minStart(className)}="row.data"
                       :violations="violations ? violations[index] : undefined"
                       @request:remove="removeRowHandler(row._internalId)"
                       @udpate:model-value="(rowData) => (row.data = rowData)"
@@ -6338,13 +6394,15 @@
         import { onMounted, ref } from 'vue'
         import { useTableForm } from '@/composables/useTableForm'
         import { ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
-        import GenesisAddButton from '@/components/button/GenesisAddButton'
-        import ${majStart(className)}RowForm from '@/entities/orderItem/${majStart(className)}RowForm'
-        import GenesisInput from '@/components/form/GenesisInput'
-        import PlusIcon from '@/components/icons/PlusIcon'
+        import GenesisAddButton from '@/components/button/GenesisAddButton.vue'
+        import ${majStart(className)}RowForm from '@/entities/${minStart(className)}/${majStart(className)}RowForm.vue'
+        import GenesisInput from '@/components/form/GenesisInput.vue'
+        import PlusIcon from '@/components/icons/PlusIcon.vue'
 
         const rowTemplate = (init: Partial<${majStart(className)}FormDTO> = {}): ${majStart(className)}FormDTO =>
-          new ${majStart(className)}FormDTO({})
+          new ${majStart(className)}FormDTO({
+            ...init,
+          })
         const rowToAdd = ref(10)
         const props = defineProps<{
           getTableDataCallback: (data: ${majStart(className)}FormDTO[]) => void
@@ -8070,5 +8128,5 @@
       };
     destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
     name: "${toKebabCase(className)}.model"
-  meredFiles: [ ]
+  mereFiles: [ ]
   filleFiles: [ ]

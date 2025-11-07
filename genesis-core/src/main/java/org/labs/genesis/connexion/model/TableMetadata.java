@@ -246,7 +246,9 @@ public class TableMetadata {
         if (childTables.contains(child)) {
             return;
         }
-        this.childTables.add(new ChildTableMetadata(child, mandatory, child.findForeingKeyColumnByClassName(this.getClassName())));
+        ColumnMetadata fkColumn = child.findForeingKeyColumnByClassName(this.getClassName());
+        fkColumn.setIsParentForeignKey(true);
+        this.childTables.add(new ChildTableMetadata(child, mandatory, fkColumn));
         this.setIsParent(true);
     }
 
