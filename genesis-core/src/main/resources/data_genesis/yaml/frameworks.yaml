@@ -4126,8 +4126,8 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
 
-    - fileType: ""
-      fileName: ""
+    - fileType: "EntityValidator"
+      fileName: "EntityValidator"
       extension: "cs"
       content: |
         namespace ${majStart(projectName)}.Utils;
@@ -4144,7 +4144,7 @@
                 return new ValidationCheck(isValid, validationResults);
             }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
     - fileType: "ValidationCheckManager"
       fileName: "ValidationCheckManager"
@@ -4166,7 +4166,22 @@
                 }
             }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
+
+    - fileType: "ValidationCheck"
+      fileName: "ValidationCheck"
+      extension: "cs"
+      content: |
+        using System.ComponentModel.DataAnnotations;
+
+        namespace ${majStart(projectName)}.Utils;
+
+        public class ValidationCheck(bool isValid , List<ValidationResult> validationResults)
+        {
+            public bool IsValid { get; set; } = isValid;
+            public List<ValidationResult> ValidationResults  { get; set; } = validationResults;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Utils"
 
   configurations:
     - name: "Logging Level"
@@ -4551,7 +4566,7 @@
               {{tab}}{{/each}}
             };
           
-            public static List<OrderItem> ToEntity(${majStart(className)}Dto[]? dtos)
+            public static List<${majStart(className)}> ToEntity(${majStart(className)}Dto[]? dtos)
             {
               return dtos == null ? [] : dtos.Select(t => t.ToEntity()).ToList();
             }
@@ -4560,7 +4575,7 @@
             {
               public required ${majStart(className)}Dto ${majStart(className)} { get; set; }
               {{#each children}}
-              public{{#if isRequired}} required{{/if}} ${majStart(this.className)}Dto[]{{#if isRequired}}?{{/if}} ${majStart(this.this.className)}s { get; set; }
+              public{{#if isRequired}} required{{/if}} ${majStart(this.className)}Dto[]{{#if isRequired}}?{{/if}} ${majStart(this.className)}s { get; set; }
               {{/each}}
             }{{else}}{{removeLine}}
             {{/if}}
@@ -4664,6 +4679,7 @@
     serviceFieldContent: "{{removeLine}}"
     serviceMethodContent: |
       Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)});
+      {{#if isParentTable}}Task<${majStart(className)}> CreateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}}, IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});{{else}}{{removeLine}}{{/if}}
     serviceConstructors: "{{removeLine}}"
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
     servicePackage: "${majStart(projectName)}.Services.Interface"
@@ -4690,10 +4706,10 @@
               private readonly I${majStart(className)}Repository _repository;
               {{#if cacheableWithMicrosoftextensionscachingmemory}}private readonly ICacheService _cacheService;
               private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);{{else}}{{removeLine}}{{/if}}
-              {{#if isParentTable}}private readonly ${majStart(className)}Context _dbContext;{{else}}{{removeLine}}{{/if}}
+              {{#if isParentTable}}private readonly ${majStart(projectName)}Context _dbContext;{{else}}{{removeLine}}{{/if}}
           
               
-              public ${majStart(className)}Service({{#if cacheableWithMicrosoftextensionscachingmemory}}ICacheService cacheService, {{/if}}{{#if isParentTable}}${majStart(className)}Context dbContext, {{/if}}I${majStart(className)}Repository repository)
+              public ${majStart(className)}Service({{#if cacheableWithMicrosoftextensionscachingmemory}}ICacheService cacheService, {{/if}}{{#if isParentTable}}${majStart(projectName)}Context dbContext, {{/if}}I${majStart(className)}Repository repository)
               {
                 {{#if cacheableWithMicrosoftextensionscachingmemory}}_cacheService = cacheService;{{/if}}
                 {{#if isParentTable}}_dbContext = dbContext;{{/if}}
@@ -4739,12 +4755,6 @@
                   {
                       throw new InternalServerErrorException("Error while retrieving all ${formatReadableLowerCase(className)}", ex);
                   }
-                  return ${minStart(className)}s;
-                }
-                catch (Exception ex)
-                {
-                  throw new InternalServerErrorException("Error while searching ${formatReadableLowerCase(className)}", ex);
-                }
               }
             {{/if}}
             {{#if cacheableWithMicrosoftextensionscachingmemory}}
@@ -4896,7 +4906,7 @@
                   var ${minStart(this.className)}sList = ${minStart(this.className)}s.ToList();
                   foreach (var item in ${minStart(this.className)}sList)
                   {
-                      item.${majStart(this.parentFk)} = order.${majStart(this.parentPk)};
+                      item.${majStart(this.parentFk)} = ${minStart(className)}.${majStart(parentPk)};
                   }
                   _dbContext.Set<${majStart(this.className)}>().AddRange(${minStart(this.className)}sList);
                   await _dbContext.SaveChangesAsync();
@@ -4924,12 +4934,13 @@
       using Services;
       using Services.Interface;
       using Swashbuckle.AspNetCore.Annotations;
-      using ${majStart(projectName)}.Utils;
-      using ${majStart(projectName)}.Exceptions;
-      using ${majStart(projectName)}.Repositories.Interface;
+      using Utils;
+      using Exceptions;
+      using Repositories.Interface;
       using System.Net.Mime;
       using System.Text;
       using Microsoft.AspNetCore.Http;
+      using Microsoft.EntityFrameworkCore;
       {{#if useJWT}}using Microsoft.AspNetCore.Authorization;{{/if}}
 
     controllerAnnotations: |
@@ -4972,7 +4983,7 @@
       {{tab}} return File(bytes, "text/csv", "${minStart(className)}.csv");
       {{tab}}}
       {{tab}}[HttpGet]
-      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
+      {{tab}}{{#if useJWT}}[Authorize]{{else}}{{removeLine}}{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Retrieve all ${formatReadableLowerCase(className)}s",
       {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items. "
@@ -5001,7 +5012,7 @@
       {{tab}}}
       
       {{tab}}[HttpGet("{id}")]
-      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
+      {{tab}}{{#if useJWT}}[Authorize]{{else}}{{removeLine}}{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Get ${formatReadableLowerCase(className)} by ID",
       {{tab}}{{tab}}Description = "Retrieve a specific ${formatReadableLowerCase(className)} item by its ID"
@@ -5030,7 +5041,7 @@
       {{tab}}}
       
       {{tab}}[HttpPost("search")]
-      {{tab}}{{#if useJWT}}[Authorize]{{/if}}
+      {{tab}}{{#if useJWT}}[Authorize]{{else}}{{removeLine}}{{/if}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Search ${formatReadableLowerCase(className)}s",
       {{tab}}{{tab}}Description = "Get a paginated and sorted list of ${formatReadableLowerCase(className)} items."
@@ -5058,11 +5069,59 @@
       {{tab}}{{tab}}}
       {{tab}}}
       
-      {{#if !isView}} 
-      {{tab}}[HttpPost]
-      {{/if}}
-      {{tab}}{{#if !isView and useJWT}}[Authorize]{{/if}}
-      {{#if !isView}}
+      {{tab}}{{#if !isView}}[HttpPost]{{/if}}
+      {{tab}}{{#if isView=false and useJWT=true}}[Authorize]{{else}}{{removeLine}}{{/if}}
+      {{tab}}{{#if notViewAndParent }}[SwaggerOperation(
+      {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)} with full details (Transactional)",
+      {{tab}}{{tab}}Description = "Create a new ${formatReadableLowerCase(className)} and its details. The operation is atomic: all or nothing."
+      {{tab}})]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), StatusCodes.Status201Created)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Create([SwaggerParameter(Description = "${formatReadable(className)} object to be created", Required = true)] ${majStart(className)}Dto.${majStart(className)}FullDto dto)
+      {{tab}}{
+      {{tab}}{{tab}}var ${minStart(className)} = dto.${majStart(className)}.ToEntity();
+      {{tab}}{{tab}}{{#each children}}
+      {{tab}}{{tab}}var ${minStart(this.className)}s = ${majStart(this.className)}Dto.ToEntity(dto.${majStart(this.className)}s);
+      {{tab}}{{tab}}{{/each}}
+      {{tab}}{{tab}}
+      {{tab}}{{tab}}var ${minStart(className)}Validations = EntityValidator.ValidateEntity(${minStart(className)});
+      {{tab}}{{tab}}{{#each  children}}// Validate ${formatReadableLowerCase(this.className)}s
+      {{tab}}{{tab}}var ${minStart(this.className)}sValidations = new ValidationCheckManager();
+      {{tab}}{{tab}}foreach (var ${minStart(this.className)}Validation in ${minStart(this.className)}s.Select(EntityValidator.ValidateEntity))
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}    ${minStart(this.className)}sValidations.AddValidationCheck(${minStart(this.className)}Validation);
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}{{/each}}
+      
+      {{tab}}{{tab}}if (!${minStart(className)}Validations.IsValid{{#each children}} || !${minStart(this.className)}sValidations.IsValid{{/each}})
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}    var errors = new Dictionary<string, object>();
+      {{tab}}{{tab}}    WebUtils.ParseErrorValidations(${minStart(className)}Validations, errors, "${minStart(className)}");
+      {{tab}}{{tab}}    {{#each children}}
+      {{tab}}{{tab}}    WebUtils.ParseErrorValidations(${minStart(this.className)}sValidations, errors, "${minStart(this.className)}s");
+      {{tab}}{{tab}}    {{/each}}
+      {{tab}}{{tab}}    return BadRequest(ApiResponse<object>.Error(StatusCodes.Status400BadRequest, "Validation failed for one or more entities.", errors));
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}} try
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}    var created${majStart(className)} = await _service.CreateFull${majStart(className)}Async(${minStart(className)}{{#each children}}, ${minStart(this.className)}s{{/each}});
+      {{tab}}{{tab}}    return StatusCode(StatusCodes.Status201Created,
+      {{tab}}{{tab}}        ApiResponse<${majStart(className)}>.Success(StatusCodes.Status201Created, "${majStart(className)} and its details created successfully (Atomic operation).", created${majStart(className)}));
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}catch (DbUpdateException dbEx)
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}    var message = $"A database error occurred during the transaction (e.g., constraint violation): {dbEx.InnerException?.Message ?? dbEx.Message}";
+      {{tab}}{{tab}}    return StatusCode(StatusCodes.Status400BadRequest,
+      {{tab}}{{tab}}        ApiResponse<object>.Error(StatusCodes.Status400BadRequest, message));
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}catch (Exception ex)
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}    return StatusCode(StatusCodes.Status500InternalServerError,
+      {{tab}}{{tab}}        ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"An unexpected error occurred while creating the order: {ex.Message}"));
+      {{tab}}{{tab}}}
+      {{tab}}}
+      {{else}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
@@ -5097,12 +5156,9 @@
       {{tab}}}
       {{/if}}
       
-      {{#if !isView}} 
-      {{tab}}[HttpPut("{id}")]
-      {{/if}}
-      {{tab}}{{#if useJWT and !isView}}[Authorize]{{/if}}
-      {{#if !isView}}
-      {{tab}}[SwaggerOperation(
+      {{#if !isView}}{{tab}}[HttpPut("{id}")]{{/if}}
+      {{tab}}{{#if isView=false and useJWT=true}}[Authorize]{{else}}{{removeLine}}{{/if}}
+      {{tab}}{{#if !isView}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})]
@@ -5144,12 +5200,9 @@
       {{tab}}}
       {{/if}}
       
-      {{#if !isView}} 
-      {{tab}}[HttpDelete("{id}")]
-      {{/if}}
-      {{tab}}{{#if useJWT and !isView}}[Authorize]{{/if}}
-      {{#if !isView}}
-      {{tab}}[SwaggerOperation(
+      {{#if !isView}}{{tab}}[HttpDelete("{id}")]{{/if}}
+      {{tab}}{{#if isView=false and useJWT=true}}[Authorize]{{else}}{{removeLine}}{{/if}}
+      {{tab}}{{#if !isView}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Delete ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Delete a ${formatReadableLowerCase(className)} item by its ID"
       {{tab}})]

@@ -2,6 +2,7 @@ package org.labs.genesis.config.langage.generator.framework;
 
 import org.labs.genesis.connexion.model.ChildTableMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
+import org.labs.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,7 +25,7 @@ public class MereFilleMetadataProvider {
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("className", tableMetadata.getTable().getClassName());
         metadata.put("isRequired", tableMetadata.isMandatory());
-        metadata.put("parentFk", tableMetadata.getColumn().getName());
+        metadata.put("parentFk",  StringUtils.toCamelCase(tableMetadata.getColumn().getReferencedColumn()));
         return metadata;
     }
 }

@@ -195,6 +195,7 @@ public class FrameworkMetadataProvider {
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
         metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
+        metadata.put("notViewAndParent", !tableMetadata.getIsView() && tableMetadata.getIsParent());
 
         return metadata;
     }
@@ -206,6 +207,7 @@ public class FrameworkMetadataProvider {
         metadata.put("fields", getFieldsList(tableMetadata, language));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
+        metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
 
         return metadata;
     }
@@ -598,6 +600,9 @@ public class FrameworkMetadataProvider {
 
     private static HashMap<String, Object> getFrameworkSecurityTrueBooleanHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
         HashMap<String, Object> frameworkSecurityBooleanMetadata = new HashMap<>();
+        // Defaults values:
+        frameworkSecurityBooleanMetadata.put("useJWT", false);
+
         String securityType = (String) frameworkConfiguration.get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
         selectedSecurityOption.ifPresent(security -> {
