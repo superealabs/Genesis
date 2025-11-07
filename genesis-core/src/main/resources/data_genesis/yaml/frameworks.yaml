@@ -7202,6 +7202,17 @@
         - "Redis"
       defaultOption: "NONE"
   dependencies: []
+- id: 9
+  languageId: 5
+  coreFramework: "Grail"
+  name: "Grail WEB-API"
+  template: "Template"
+  useDB: true
+  withGroupId: false
+  useCloud: false
+  useEurekaServer: false
+  isGateway: false
+  additionalFiles:
 
 
 
