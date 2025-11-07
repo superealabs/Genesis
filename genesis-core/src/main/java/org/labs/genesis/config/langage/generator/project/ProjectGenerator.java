@@ -180,7 +180,7 @@ public class ProjectGenerator {
         renderFilesEdits(context.getFrontendFramework().getAdditionalFiles(),finalRenderData);
         selectedSecurityOption.ifPresent(security -> {
             try {
-                HashMap<String, Object> securityMap=FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType,context);
+                HashMap<String, Object> securityMap=FrameworkFrontendMetadataProvider. getHashMapForSecurity(securityType,context);
                 finalRenderData.putAll(securityMap);
                 renderFilesEdits(context.getFrontendFramework().getAuthenticationFiles(),finalRenderData);
             } catch (Exception e) {
@@ -303,6 +303,13 @@ public class ProjectGenerator {
         frontendGenerator.generateComponent(securityType,database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName,  generateComponentOnly);
         frontendGenerator.generateService(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, generateComponentOnly);
         frontendGenerator.generateModel(database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, generateComponentOnly);
+        HashMap<String, Object> tableHashMapData = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, webappFolder, projectName);
+        if (tableMetadata.getIsParent()){
+            renderFilesEdits(frontendFramework.getMereFiles(),tableHashMapData);
+        }
+        if (tableMetadata.getIsChild()){
+            renderFilesEdits(frontendFramework.getFilleFiles(),tableHashMapData);
+        }
         return;
     }
 
@@ -375,14 +382,6 @@ public class ProjectGenerator {
         if (generationOptions.contains(COMPONENT_CONTROLLER) && framework.getController().getToGenerate()) {
             System.out.println("Generating " + COMPONENT_CONTROLLER + " component...");
             genesisGenerator.generateController(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
-        }
-
-        HashMap<String, Object> tableHashMapData = FrameworkMetadataProvider.getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, renderedDestinationFolder, projectName, groupLink);
-        if (tableMetadata.getIsParent()){
-            renderFilesEdits(framework.getMereFiles(),tableHashMapData);
-        }
-        if (tableMetadata.getIsChild()){
-            renderFilesEdits(framework.getFilleFiles(),tableHashMapData);
         }
 
         System.out.println("Backend component generation completed for project: " + projectName);

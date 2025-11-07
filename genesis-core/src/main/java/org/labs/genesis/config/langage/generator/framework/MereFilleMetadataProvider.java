@@ -19,6 +19,8 @@ public class MereFilleMetadataProvider {
             children.add(getChildHashMap(child));
         }
         metadata.put("children", children);
+        metadata.put("notViewAndParent", !tableMetadata.getIsView() && tableMetadata.getIsParent());
+        metadata.put("notViewAndChild", !tableMetadata.getIsView() && tableMetadata.getIsChild());
         return metadata;
     }
     public static HashMap<String, Object> getChildHashMap(ChildTableMetadata tableMetadata){

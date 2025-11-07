@@ -195,7 +195,6 @@ public class FrameworkMetadataProvider {
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
         metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
-        metadata.put("notViewAndParent", !tableMetadata.getIsView() && tableMetadata.getIsParent());
 
         return metadata;
     }

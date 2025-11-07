@@ -30,6 +30,8 @@ public class FrontendFramework
     private FrontendLayout frontendLayout;
     private ProjectBranding projectBranding;
     private FrontendDestinationPaths frontendPaths;
+    private List<FilesEdit> mereFiles = new ArrayList<>();
+    private List<FilesEdit> filleFiles = new ArrayList<>();
 
 
     public  FrontendFramework(){

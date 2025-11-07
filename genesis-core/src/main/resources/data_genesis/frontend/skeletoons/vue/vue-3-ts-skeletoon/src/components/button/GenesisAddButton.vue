@@ -8,6 +8,6 @@
 <script setup lang="ts">
 import GenesisButton from './GenesisButton.vue'
 defineProps<{
-  label: string
+  label?: string
 }>()
 </script>
