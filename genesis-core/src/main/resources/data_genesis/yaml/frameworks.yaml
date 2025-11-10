@@ -4680,6 +4680,8 @@
     serviceMethodContent: |
       Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)});
       {{#if isParentTable}}Task<${majStart(className)}> CreateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}}, IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});{{else}}{{removeLine}}{{/if}}
+      {{#if isParentTable}}Task<${majStart(className)}?> UpdateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}},IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});{{else}}{{removeLine}}{{/if}}
+      {{#if isParentTable}}Task DeleteFull${majStart(className)}Async(${pkColumnType} id);{{else}}{{removeLine}}{{/if}}
     serviceConstructors: "{{removeLine}}"
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
     servicePackage: "${majStart(projectName)}.Services.Interface"
@@ -4697,7 +4699,8 @@
           using ${majStart(projectName)}.Specification;
           using ${majStart(projectName)}.Models.Dto;
           using ${majStart(projectName)}.Utils;{{#if isParentTable}}
-          using ${majStart(projectName)}.Data;{{/if}}
+          using ${majStart(projectName)}.Data;
+          using Microsoft.EntityFrameworkCore;{{/if}}
           
           namespace ${majStart(projectName)}.Services.Implementation;
           
@@ -4919,6 +4922,99 @@
                 {
                   await transaction.RollbackAsync();
                   throw new InternalServerErrorException("Error during atomic creation of ${majStart(className)} and its details.", ex);
+                }
+              }
+
+              public async Task<${majStart(className)}?> UpdateFull${majStart(className)}Async(
+                ${majStart(className)} ${minStart(className)}{{#each children}},
+                IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}}
+              )
+              {
+                using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                try
+                {
+                  _dbContext.Set<${majStart(className)}>().Update(${minStart(className)});
+                  await _dbContext.SaveChangesAsync();
+                  
+                  {{#each children}}
+                  var existing${majStart(this.className)}s = await _dbContext.Set<${majStart(this.className)}>()
+                      .Where(d => d.${majStart(this.parentFk)} == ${minStart(className)}.${majStart(parentPk)})
+                      .AsNoTracking() // Important pour éviter le tracking par défaut avant la manipulation
+                      .ToListAsync();
+                  
+                  var current${majStart(this.className)}s = ${minStart(this.className)}s.ToList();
+                  
+                  // a. Éléments à supprimer (ceux qui étaient en DB mais ne sont plus dans la liste reçue)
+                  var detailsToDelete = existing${majStart(this.className)}s
+                      .Where(e => !current${majStart(this.className)}s.Any(c => c.${majStart(this.childPk)} == e.${majStart(this.childPk)} && e.${majStart(this.childPk)} != default))
+                      .ToList();
+
+                  _dbContext.Set<${majStart(this.className)}>().RemoveRange(detailsToDelete);
+                  
+                  // b. Éléments à ajouter/mettre à jour
+                  foreach (var item in current${majStart(this.className)}s)
+                  {
+                      item.${majStart(this.parentFk)} = ${minStart(className)}.${majStart(parentPk)};
+                  
+                      if (existing${majStart(this.className)}s.Any(e => e.${majStart(this.childPk)} == item.${majStart(this.childPk)} && item.${majStart(this.childPk} != default)) 
+                      {
+                          _dbContext.Entry(item).State = EntityState.Modified;
+                      }
+                      else 
+                      {
+                          _dbContext.Set<${majStart(this.className)}>().Add(item);
+                      }
+                  }
+                  
+                  await _dbContext.SaveChangesAsync();
+                  
+                  {{/each}}
+                  await transaction.CommitAsync();
+                  return ${minStart(className)};
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    throw new InternalServerErrorException("Error during atomic update of ${majStart(className)} and its details.", ex);
+                }
+              }
+             
+              public async Task DeleteFull${majStart(className)}Async(${pkColumnType} id)
+              {
+                using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            
+                try
+                {
+                  var ${minStart(className)} = await _dbContext.Set<${majStart(className)}>()
+                  .FindAsync(id);
+                  
+                  if (${minStart(className)} == null)
+                  {
+                    throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + id);
+                  }
+                  {{#each children}}
+                  var ${minStart(this.className)}sToDelete = await _dbContext.Set<${majStart(this.className)}>()
+                  .Where(d => d.${majStart(this.parentFk)} == ${minStart(className)}.${majStart(parentPk)})
+                  .ToListAsync();
+                  
+                  _dbContext.Set<${majStart(this.className)}>().RemoveRange(${minStart(this.className)}sToDelete);
+                  await _dbContext.SaveChangesAsync();
+                  {{/each}}
+
+                  _dbContext.Set<${majStart(className)}>().Remove(${minStart(className)});
+                  await _dbContext.SaveChangesAsync();
+                  
+                  await transaction.CommitAsync();
+                }
+                catch (ResourceNotFoundException)
+                {
+                  await transaction.RollbackAsync();
+                  throw;
+                }
+                catch (Exception ex)
+                {
+                  await transaction.RollbackAsync();
+                  throw new InternalServerErrorException("Error during atomic deletion of ${majStart(className)} and its details.", ex);
                 }
               }{{/if}}
           }
@@ -5155,10 +5251,76 @@
       {{tab}}{{tab}}}
       {{tab}}}
       {{/if}}
-      
+
       {{#if !isView}}{{tab}}[HttpPut("{id}")]{{/if}}
       {{tab}}{{#if isView=false and useJWT=true}}[Authorize]{{else}}{{removeLine}}{{/if}}
-      {{tab}}{{#if !isView}}[SwaggerOperation(
+      {{tab}}{{#if notViewAndParent }}
+      {{tab}}[SwaggerOperation(
+      {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)} with full details (Transactional)",
+      {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} and its details. The operation is atomic: all or nothing."
+      {{tab}})]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), StatusCodes.Status200OK)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+      {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> PutFull${majStart(className)}(
+      {{tab}}{{tab}}[SwaggerParameter(Description = "ID of the ${majStart(className)} to update", Required = true)] ${pkColumnType} id,
+      {{tab}}{{tab}}[SwaggerParameter(Description = "Updated ${formatReadable(className)} object and its details", Required = true)] ${majStart(className)}Dto.${majStart(className)}FullDto dto)
+      {{tab}}{
+      {{tab}}{{tab}}try
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}    var exists = await _service.ExistsAsync(id);
+      {{tab}}{{tab}}    if (!exists)
+      {{tab}}{{tab}}    {
+      {{tab}}{{tab}}       return NotFound(ApiResponse<object>.Error(StatusCodes.Status404NotFound, $"${majStart(className)} not found with ${pkColumn} : {id}"));
+      {{tab}}{{tab}}    }
+      
+      {{tab}}{{tab}}    // Mapping et association de l'ID
+      {{tab}}{{tab}}    var ${minStart(className)} = dto.${majStart(className)}.ToEntity(id);
+      {{tab}}{{tab}}    {{#each children}}
+      {{tab}}{{tab}}    var ${minStart(this.className)}s = ${majStart(this.className)}Dto.ToEntity(dto.${majStart(this.className)}s);
+      {{tab}}{{tab}}    {{/each}}
+      {{tab}}{{tab}}
+      {{tab}}{{tab}}    // Validation
+      {{tab}}{{tab}}    var ${minStart(className)}Validations = EntityValidator.ValidateEntity(${minStart(className)});
+      {{tab}}{{tab}}    {{#each children}}// Validate ${formatReadableLowerCase(this.className)}s
+      {{tab}}{{tab}}    var ${minStart(this.className)}sValidations = new ValidationCheckManager();
+      {{tab}}{{tab}}    foreach (var ${minStart(this.className)}Validation in ${minStart(this.className)}s.Select(EntityValidator.ValidateEntity))
+      {{tab}}{{tab}}    {
+      {{tab}}{{tab}}        ${minStart(this.className)}sValidations.AddValidationCheck(${minStart(this.className)}Validation);
+      {{tab}}{{tab}}    }
+      {{tab}}{{tab}}    {{/each}}
+      
+      {{tab}}{{tab}}    if (!${minStart(className)}Validations.IsValid{{#each children}} || !${minStart(this.className)}sValidations.IsValid{{/each}})
+      {{tab}}{{tab}}    {
+      {{tab}}{{tab}}        var errors = new Dictionary<string, object>();
+      {{tab}}{{tab}}        WebUtils.ParseErrorValidations(${minStart(className)}Validations, errors, "${minStart(className)}");
+      {{tab}}{{tab}}        {{#each children}}
+      {{tab}}{{tab}}        WebUtils.ParseErrorValidations(${minStart(this.className)}sValidations, errors, "${minStart(this.className)}s");
+      {{tab}}{{tab}}        {{/each}}
+      {{tab}}{{tab}}        return BadRequest(ApiResponse<object>.Error(StatusCodes.Status400BadRequest, "Validation failed for one or more entities.", errors));
+      {{tab}}{{tab}}    }
+      
+      {{tab}}{{tab}}    // Appel au service de mise à jour Full (atomique)
+      {{tab}}{{tab}}    var updated${majStart(className)} = await _service.UpdateFull${majStart(className)}Async(${minStart(className)}{{#each children}}, ${minStart(this.className)}s{{/each}});
+      {{tab}}{{tab}}
+      {{tab}}{{tab}}    return Ok(
+      {{tab}}{{tab}}        ApiResponse<${majStart(className)}>.Success(StatusCodes.Status200OK, "${majStart(className)} and its details updated successfully (Atomic operation).", updated${majStart(className)}));
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}catch (DbUpdateException dbEx)
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}    var message = $"A database error occurred during the transaction (e.g., constraint violation): {dbEx.InnerException?.Message ?? dbEx.Message}";
+      {{tab}}{{tab}}    return StatusCode(StatusCodes.Status400BadRequest,
+      {{tab}}{{tab}}        ApiResponse<object>.Error(StatusCodes.Status400BadRequest, message));
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}catch (Exception ex)
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}    return StatusCode(StatusCodes.Status500InternalServerError,
+      {{tab}}{{tab}}        ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"An unexpected error occurred while updating the order: {ex.Message}"));
+      {{tab}}{{tab}}}
+      {{tab}}}
+      {{else}}
+      {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})]
@@ -5202,7 +5364,33 @@
       
       {{#if !isView}}{{tab}}[HttpDelete("{id}")]{{/if}}
       {{tab}}{{#if isView=false and useJWT=true}}[Authorize]{{else}}{{removeLine}}{{/if}}
-      {{tab}}{{#if !isView}}[SwaggerOperation(
+      {{tab}}{{#if notViewAndParent }}
+      {{tab}}[SwaggerOperation(
+      {{tab}}{{tab}}Summary = "Delete existing ${formatReadableLowerCase(className)} with full details (Transactional)",
+      {{tab}}{{tab}}Description = "Delete an existing ${formatReadableLowerCase(className)} and all its associated details. The operation is atomic: all or nothing."
+      {{tab}})]
+      {{tab}}[ProducesResponseType(StatusCodes.Status204NoContent)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+      {{tab}}public async Task<ActionResult<ApiResponse<object>>> DeleteFull${majStart(className)}(
+      {{tab}}{{tab}}[SwaggerParameter(Description = "ID of the ${majStart(className)} to delete", Required = true)] ${pkColumnType} id)
+      {{tab}}{
+      {{tab}}{{tab}}try
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}    await _service.DeleteFull${majStart(className)}Async(id);
+      {{tab}}{{tab}}    return Ok(ApiResponse<object>.Success(StatusCodes.Status200OK, "${majStart(className)} deleted successfully", null));
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}catch (ResourceNotFoundException ex)
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}    return NotFound(ApiResponse<object>.Error(StatusCodes.Status404NotFound, $"${majStart(className)} not found with ${pkColumn} : {id}", ex.Message));
+      {{tab}}{{tab}}}
+      {{tab}}{{tab}}catch (Exception ex)
+      {{tab}}{{tab}}{
+      {{tab}}{{tab}}    return StatusCode(StatusCodes.Status500InternalServerError,
+      {{tab}}{{tab}}        ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"Error while performing atomic deletion of ${minStart(className)}: {ex.Message}"));
+      {{tab}}{{tab}}}
+      {{tab}}}
+      {{tab}}{{else}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Delete ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Delete a ${formatReadableLowerCase(className)} item by its ID"
       {{tab}})]
