@@ -72,7 +72,6 @@ export class RequestModel {
     }
 
     if (this.sortFields && paged) {
-      console.log(this.sortFields)
       this.sortFields.forEach((f) => {
         fields.push(`${f.fieldName},${f.direction}`)
       })

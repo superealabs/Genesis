@@ -5093,7 +5093,13 @@
             <!-- Actions -->
             <td class="px-3 py-2 bg-base-200 sticky right-0 text-end">
               <div class="rounded-md inline-flex">
-                <EntityRowActions @delete-row="deleteRow" @view-row="viewRow" @edit-row="updateRow" />
+                <EntityRowActions
+                  :view="viewAction"
+                  :remove="removeAction"
+                  :edit="editAction"
+                  @delete-row="deleteRow" 
+                  @view-row="viewRow" 
+                  @edit-row="updateRow" />
               </div>
             </td>
           </tr>
@@ -5104,6 +5110,18 @@
           ${minStart(className)}: {
             type: Object as PropType<${majStart(className)}>,
             required: true,
+          },
+          viewAction: {
+            type: Boolean,
+            default: true,
+          },
+          editAction: {
+            type: Boolean,
+            default: true,
+          },
+          removeAction: {
+            type: Boolean,
+            default: true,
           },
         })
         
@@ -5182,6 +5200,9 @@
                 v-for="${minStart(className)} in data"
                 :key="${minStart(className)}.getKeyValue()"
                 :${minStart(className)}="${minStart(className)}"
+                :view-action="viewAction"
+                :edit-action="editAction"
+                :remove-action="removeAction"
                 @request-view="view${majStart(className)}"{{#if !isView}}
                 @request-delete="openDeletePopup"
                 @request-update="goToUpdateFormView"{{/if}}
@@ -5207,6 +5228,18 @@
           loading: {
             type: Boolean,
             default: false,
+          },
+          viewAction: {
+            type: Boolean,
+            default: true,
+          },
+          editAction: {
+            type: Boolean,
+            default: true,
+          },
+          removeAction: {
+            type: Boolean,
+            default: true,
           },
         })
         const emit = defineEmits<{
@@ -5726,7 +5759,15 @@
         import { use${majPluralize(className)} } from '@/composables/use${majPluralize(className)}'
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import GenesisButton from '@/components/button/GenesisButton.vue'
-        import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'
+        import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'{{#if isParentTable}}
+        import EntityTable from '@/components/table/EntityTable.vue'
+        import type { EntitySearchField } from '@/models/EntityModel'
+        import router from '@/router'
+        {{#each children}}
+        import { use${majStart(this.className)}s } from '@/composables/use${majStart(this.className)}s'
+        import { ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model'
+        import ${majStart(this.className)}List from '@/entities/${minStart(this.className)}/${majStart(this.className)}List.vue'
+        {{/each}}{{/if}}
       selector: "${majStart(className)}DetailsView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5752,15 +5793,61 @@
             </div>
             <!-- Entity details -->
             <${majStart(className)}Details v-if="entity" :${minStart(className)}="entity" />
+            {{#if isParentTable}}
+            {{#each children}}
+            <div class="card bg-base-100 border border-base-300">
+              <div class="card-body">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-base-300">
+                  <div class="flex items-center gap-3">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <h2 class="text-lg font-semibold text-base-content">
+                          {{ $t('entities.${minStart(className)}.nav.title') }}
+                        </h2>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-4">
+                  <EntityTable
+                    :entity-model="${minStart(this.className)}Entity"
+                    :entity-search-fields="${minStart(this.className)}SearchFields"
+                    :default-active-filters="['${minStart(this.parentFk)}']"
+                    :searchFn="search${minStart(this.className)}s"
+                    :getPaginationData="${minStart(className)}GetPaginationData"
+                    :listComponent="${minStart(this.className)}List"
+                    :entities="${minStart(this.className)}s"
+                    :message="${minStart(this.className)}Message"
+                    :show-filters="false"
+                    :edit-action="false"
+                    :remove-action="false"
+                  />
+                </div>
+              </div>
+            </div>            
+            {{/each}}
+            {{/if}}
           </div>
         </template>
+
       style: "<style scoped></style>"
       export: |
         const route = useRoute()
         const pathId = Number(route.params.id)
         const { get${majStart(className)}ById, goToListView } = use${majPluralize(className)}()
         const entity = ref<${majStart(className)} | null>(null)
-
+        {{if isParentTable}}
+        {{#each children}}
+        const {
+          ${minStart(this.className)}s,
+          search${minStart(this.className)}s,
+          message: ${minStart(this.className)}Message,
+          getPaginationData: ${minStart(this.className)}GetPaginationData,
+        } = use${minStart(this.className)}s()
+        const ${minStart(this.className)}SearchFields = ref<EntitySearchField[]>(${minStart(this.className)}.getAllSearchFieldsMetadata())
+        const ${minStart(this.className)}Entity = ref<Record<string, unknown>>({ ${minStart(this.parentFk)}: pathId }
+        {{/each}}{{/if}}
         onMounted(async () => {
           const result = await get${majStart(className)}ById(pathId)
           entity.value = result.data || null
@@ -5843,6 +5930,7 @@
                 </div>
                 {{#if isParentTable}}{{#each children}}
                 <${majStart(this.className)}TableForm
+                  :initial-data="${minStart(this.className)}sData"
                   :get-table-data-callback="set${majStart(this.className)}s"
                   :violations="${minStart(this.className)}Violations"
                   class="w-full"
@@ -5861,9 +5949,11 @@
       export: |
         const props = defineProps<{
           ${minStart(className)}?: ${majStart(className)}
-          {{#if isParentTable}}violations?:{
+          {{#if isParentTable}}
+          {{#each children}}${minStart(this.className)}sData?: ${majStart(this.className)}FormDTO[]{{/each}}
+          violations?:{
             ${minStart(className)}: Record<string, string>
-            {{#each children}}${minStart(this.className)}s: Record<string, string>{{/each}}
+            {{#each children}}${minStart(this.className)}s: Record<string, string>[]{{/each}}
           }
           {{else}}violations?: Record<string, string> | null{{/if}}
           submitLabel?: string
@@ -5919,7 +6009,13 @@
         import { usePopup } from '@/composables/usePopup';
         import GenesisButton from '@/components/button/GenesisButton.vue';
         import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue';
-        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'
+        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'{{#if isParentTable}}
+        {{#each children}}
+        import { use${majStart(this.className)}s } from '@/composables/use${majStart(this.className)}s'
+        import { ${majStart(this.className)}FormDTO, type ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model'
+        {{/each}}
+        import { PaginationRequestParameter } from '@/models/api/RequestModel'
+        {{/if}}
       selector: "${majStart(className)}UpdateView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5941,7 +6037,11 @@
             <!-- Form -->
             <div v-if="entity">
               <${minStart(className)}-form
-                :${minStart(className)}="entity"
+                :${minStart(className)}="entity"{{#if isParentTable}}
+                {{#each children}}
+                :${minStart(this.className)}sData="initial${majStart(this.className)}s"
+                {{/each}}{{/if}}
+                :violations="violations"
                 :submit-label="$t('entity.update.submitLabel', { entity: '${majStart(className)}' })"
                 @submit="updateHandler"
                 @cancel="cancelHandler"
@@ -5965,7 +6065,72 @@
         const { get${majStart(className)}ById, goToListView, update${majStart(className)}, view${majStart(className)}, message } = use${majPluralize(className)}()
         const entity = ref<${majStart(className)} | null>(null)
         const freezeStore = useFreezeScreenStore()
-
+        {{#if isParentTable}}
+        const { ${minStart(this.className)}s, search${majStart(this.className)}s } = use${majStart(this.className)}s();
+        {{#each children}}
+        const ${minStart(this.className)}sLoaded = ref(false);
+        const initial${majStart(this.className)}s = ref<${majEach(children, 'className')}[]>([])
+        const load${majStart(this.className)} = async () => {
+          try {
+            const filters: Partial<${minStart(this.className)}> = { saleidSales: new ${majStart(class)}({ saleId: pathId }) }
+            await search${majStart(this.className)}(true, filters, new PaginationRequestParameter(), [])
+            initial${majStart(this.className)}.value = ${majStart(this.className)}FormDTO.parseList(${minStart(this.className)}.value)
+            ${minStart(this.className)}Loaded.value = true
+          } catch (error) {
+            console.error('Error loading ${minStart(className)} with details:', error)
+            ${minStart(this.className)}Loaded.value = true // Continuer même en cas d'erreur
+          }
+        }
+        {{/each}}
+        const violations = ref<
+          | {
+            ${minStart(className)}: Record<string, string>
+            {{#each children}}
+            ${minStart(className)}s: Record<string, string>[]
+            {{/each}
+            }
+          | undefined
+        >(undefined)
+        
+        const updateHandler = async (payload: {
+          ${minStart(className)}: Partial<${majStart(className)}FormDTO>
+          {{#each children}}
+          ${minStart(className)}s: ${majStart(className)}FormDTO[]
+          {{/each}}
+        }) => {
+          freezeStore.freeze('Updating ${minStart(className)} ' + pathId + ' ...')
+          message.value = null
+          violations.value = {
+            ${minStart(className)}: {},
+            {{#each children}}
+            ${minStart(className)}s: [],
+            {{/each}}
+          }
+          try {
+            const { data, errors } = await updateSale(pathId, payload)
+          
+            if (errors && Object.keys(errors).length > 0) {
+              // Gérer les erreurs de validation
+              violations.value = errors as {
+                ${minStart(className)}: Record<string, string>
+                {{#each children}}
+                ${minStart(className)}s: Record<string, string>[]
+              {{/each}}
+              }
+            } else if (data && !message.value) {
+              view${majStart(className)}(data)
+            } else {
+              throw new Error(String(message.value))
+            }
+          } catch (error: unknown) {
+              console.error(error)
+          } finally {
+            freezeStore.unfreeze()
+          }
+        }        
+        {{else}}
+        const violations = ref<Record<string, object> | null>(null)
+        
         const updateHandler = async (formDTO: Partial<${majStart(className)}FormDTO>) => {        
           freezeStore.freeze('Updating ${minStart(className)} '+pathId+' ...')
           try {
@@ -5979,6 +6144,8 @@
           }
         }
         
+        {{/if}}
+        
         const cancelHandler = () => {
           if (entity.value){
             view${majStart(className)}(entity.value)
@@ -5988,7 +6155,8 @@
         onMounted(async () => {
           const result = await get${majStart(className)}ById(pathId)
           if (result.data){
-              entity.value = result.data
+              entity.value = result.data{{#if isParentTable}}
+              await load${majStart(this.className)}s()
           }
           else {
             openPopup()
@@ -6037,7 +6205,10 @@
             </div>
   
             <${minStart(className)}-form
-              :submit-label="$t('entity.create.submitLabel', { entity: '${majStart(className)}' })"
+              :submit-label="$t('entity.create.submitLabel', { entity: '${majStart(className)}' })"{{#if isParentTable}}
+              {{#each children}}
+              :${minStart(this.className)}sData="initial${majStart(this.className)}s"
+              {{/each}}{{/if}}
               :violations="violations"
               @submit="createHandler"
               @cancel="goToListView"
@@ -6045,7 +6216,7 @@
   
             <AlertPopup
               :message="message ?? undefined"
-              title="Error 500"
+              title="Error"
               :visible="alertPopup"
               @close="closePopup"
             />
@@ -6055,9 +6226,52 @@
       export: |
         const { create${majStart(className)}, goToListView, message, view${majStart(className)} } = use${majPluralize(className)}()
         const { openPopup, closePopup, visible: alertPopup } = usePopup()
+        const freezeStore = useFreezeScreenStore(){{#if isParentTable}}
+        const violations = ref<
+          | {
+            ${minStart(className)}: Record<string, string>
+            {{#each children}}
+            ${minStart(className)}s: Record<string, string>[]
+            {{/each}
+            }
+          | undefined
+        >(undefined)
+        {{#each children}}
+        const initial${majStart(this.className)}s = ref<${majStart(this.className)}FormDTO[]>([])
+        {{/each}}
+        
+        const createHandler = async (payload: {
+          ${minStart(className)}: Partial<${majStart(className)}FormDTO>
+          {{#each children}}
+          ${minStart(className)}s: ${majStart(className)}FormDTO[]
+          {{/each}}
+        }) => {
+          freezeStore.freeze('Creating a new ${majStart(className)} ...')
+          violations.value = undefined
+          message.value = null
+          try {
+            const { data, errors } = await create${majStart(className)}(payload)
+            if (errors && Object.keys(errors).length > 0){
+              violations.value = errors as {
+                ${minStart(className)}: Record<string, string>
+                {{#each children}}
+                ${minStart(className)}s: Record<string, string>[]
+                {{/each}}
+              }
+            }else if (data && !message.value) {
+              view${majStart(className)}(data)
+            } else {
+              throw new Error(String(message.value))
+            }
+          } catch (error: unknown) {
+            console.error('Error creating ${minStart(className)}:',error)
+            openPopup()
+          } finally {
+            freezeStore.unfreeze()
+          }
+        }
+        {{else}}
         const violations = ref<Record<string, object> | null>(null)
-        const freezeStore = useFreezeScreenStore()
-
         const createHandler = async (formDTO: {{#if isParentTable}}{ ${minStart(className)}: Partial<${majStart(className)}FormDTO>{{#each children}}; ${minStart(this.className)}s: ${majStart(this.className)}FormDTO[]{{/each}} }{{else}}Partial<${majStart(className)}FormDTO>{{/if}}) => {
           freezeStore.freeze('Creating a new ${majStart(className)} ...')
           try {
@@ -6068,11 +6282,13 @@
               throw new Error(String(message.value))
             }
           } catch (error: unknown) {
-            console.error(error)
+            console.error('Error creating ${minStart(className)}:',error)
+            openPopup()
           } finally {
             freezeStore.unfreeze()
           }
         }
+        {{/if}}
       destinationPath: "${destinationFolder}/src/views/${minStart(className)}"
       componentAdditionalFiles: [ ]
   serviceComponent:
@@ -6140,7 +6356,20 @@
         return wrap${majStart(className)}(RestResponse.handleDataResponse<${majStart(className)}>(response)) as DataResponse<${majStart(className)}>
       }{{/if}}
 
-      {{#if !isView}}/** PUT update */
+      {{#if notViewAndParent}}
+      /** PUT update */
+      export async function update(
+        id: number | string | undefined,
+        data: { 
+          sale: Partial<${majStart(className)}>
+          {{#each children}} ${minStart(this.className)}s: Partial<${majStart(this.className)}>[]{{/each}} 
+        }
+      ) {
+        if (!id) throw new Error('update: id is required')
+        const response = await restApi.PURL + '/' + id, data)
+        return wrapSale(RestResponse.handleDataResponse<Sale>(response)) as DataResponse<Sale>
+      }
+      {{elseIf !isView}}/** PUT update */
       export async function update(id: number | string | undefined, data: Partial<${majStart(className)}>) {
         if (!id) throw new Error("update: id is required")
         const response = await restApi.PUT(BASE_URL + '/' + id, data)
@@ -6300,7 +6529,12 @@
           {{/each}}{{removeLine}}
           return instance
         }
-
+      
+        static parseList(data?: ${majStart(className)}[] | null): ${majStart(className)}FormDTO[] {
+          if (!data || data.length === 0) return []
+          return data.map((item) => ${majStart(className)}FormDTO.parse(item))
+        }
+  
         async toEntity(): Promise<Partial<${majStart(className)}>> {
           const entity: Partial<${majStart(className)}> = new ${majStart(className)}({
             {{#each fieldsNotFK}}
@@ -6463,7 +6697,7 @@
         </template>
 
         <script setup lang="ts">
-        import { onMounted, ref } from 'vue'
+        import { onMounted, ref, watch } from 'vue'
         import { useTableForm } from '@/composables/useTableForm'
         import { ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
         import GenesisAddButton from '@/components/button/GenesisAddButton.vue'
@@ -6500,6 +6734,13 @@
         onMounted(() => {
           props.getTableDataCallback(getTableData())
         })
+        watch(
+          () => rows.value,
+          () => {
+            props.getTableDataCallback(getTableData())
+          },
+          { deep: true },
+        )
         </script>
 
         <style scoped>

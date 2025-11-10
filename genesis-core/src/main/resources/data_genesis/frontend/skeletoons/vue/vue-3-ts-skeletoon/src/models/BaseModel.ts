@@ -23,6 +23,9 @@ export abstract class BaseModel {
   }
 
   static createLabelSearchFilter(value: unknown): object {
+    if (value == null || value == '') {
+      return {}
+    }
     return { [this.getReferenceKey()]: value }
   }
 
