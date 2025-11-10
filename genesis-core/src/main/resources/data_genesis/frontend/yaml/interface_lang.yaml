@@ -183,76 +183,31 @@
             },
 
             // Entity definitions (scalable for many entities)
-            entities: {
-              categorie: {
-                name: 'categorie | categories',
+            entities:{
+              {{#each entities}}
+              {{#if !this.isView}}
+              ${minStart(this.className)}: {
+                name: '${minStart(this.className)} | ${minStart(this.className)}s',
                 nav: {
-                  title: '@.capitalize:entities.categorie.name',
-                  create: 'create @.capitalize:entities.categorie.name',
-                  list: '@.capitalize:entities.categorie.name @:common.list',
+                  title: '@.capitalize:entities.${minStart(this.className)}.name',
+                  create: 'Create @.capitalize:entities.${minStart(this.className)}.name',
+                  list: '@.capitalize:entities.${minStart(this.className)}.name @:common.list',
                 },
-              },
-              customer: {
-                name: 'customer | customers',
-                nav: {
-                  title: '@.capitalize:entities.customer.name',
-                  create: 'create @.capitalize:entities.customer.name',
-                  list: '@.capitalize:entities.customer.name @:common.list',
-                },
-              },
-              employee: {
-                name: 'employee | employees',
-                nav: {
-                  title: '@.capitalize:entities.employee.name',
-                  create: 'create @.capitalize:entities.employee.name',
-                  list: '@.capitalize:entities.employee.name @:common.list',
-                },
-              },
-              product: {
-                name: 'product | products',
-                nav: {
-                  title: '@.capitalize:entities.product.name',
-                  create: 'create @.capitalize:entities.product.name',
-                  list: '@.capitalize:entities.product.name @:common.list',
-                },
-              },
-              sale: {
-                name: 'sale | sales',
-                nav: {
-                  title: '@.capitalize:entities.sale.name',
-                  create: 'create @.capitalize:entities.sale.name',
-                  list: '@.capitalize:entities.sale.name @:common.list',
-                },
-              },
-              salesItem: {
-                name: 'salesItem | salesItems',
-                nav: {
-                  title: '@.capitalize:entities.salesItem.name',
-                  create: 'create @.capitalize:entities.salesItem.name',
-                  list: '@.capitalize:entities.salesItem.name @:common.list',
-                },
-              },
-              supplier: {
-                name: 'supplier | suppliers',
-                nav: {
-                  title: '@.capitalize:entities.supplier.name',
-                  create: 'create @.capitalize:entities.supplier.name',
-                  list: '@.capitalize:entities.supplier.name @:common.list',
-                },
-              },
-
+              },{{/if}}
+              {{/each}}
             },
             views: {
-              vSupplierProductNumber: {
-                name: 'vSupplierProductNumber | vSupplierProductNumbers',
+              {{#each entities}}
+              {{#if this.isView}}
+              ${minStart(this.className)}: {
+                name: '${minStart(this.className)} | ${minStart(this.className)}s',
                 nav: {
-                  title: '@.capitalize:views.vSupplierProductNumber.name',
-                  list: '@.capitalize:views.vSupplierProductNumber.name @:common.list',
+                  title: '@.capitalize:views.${minStart(this.className)}.name',
+                  list: '@.capitalize:views.${minStart(this.className)}.name @:common.list',                  
                 },
-              },
-
+              },{{/if}}
+              {{/each}}
             },
-
             error: {
               error: 'Error',
               400: 'Bad request',
@@ -529,74 +484,30 @@
         },
     
         // Définitions d’entités (scalable)
-        entities: {
-          categorie: {
-            name: 'categorie | categories',
+        entities:{
+          {{#each entities}}
+          {{#if !this.isView}}
+          ${minStart(this.className)}: {
+            name: '${minStart(this.className)} | ${minStart(this.className)}s',
             nav: {
-              title: '@.capitalize:entities.categorie.name',
-              create: 'create @.capitalize:entities.categorie.name',
-              list: '@.capitalize:entities.categorie.name @:common.list',
+              title: '@.capitalize:entities.${minStart(this.className)}.name',
+              create: 'Create @.capitalize:entities.${minStart(this.className)}.name',
+              list: '@.capitalize:entities.${minStart(this.className)}.name @:common.list',
             },
-          },
-          customer: {
-            name: 'customer | customers',
-            nav: {
-              title: '@.capitalize:entities.customer.name',
-              create: 'create @.capitalize:entities.customer.name',
-              list: '@.capitalize:entities.customer.name @:common.list',
-            },
-          },
-          employee: {
-            name: 'employee | employees',
-            nav: {
-              title: '@.capitalize:entities.employee.name',
-              create: 'create @.capitalize:entities.employee.name',
-              list: '@.capitalize:entities.employee.name @:common.list',
-            },
-          },
-          product: {
-            name: 'product | products',
-            nav: {
-              title: '@.capitalize:entities.product.name',
-              create: 'create @.capitalize:entities.product.name',
-              list: '@.capitalize:entities.product.name @:common.list',
-            },
-          },
-          sale: {
-            name: 'sale | sales',
-            nav: {
-              title: '@.capitalize:entities.sale.name',
-              create: 'create @.capitalize:entities.sale.name',
-              list: '@.capitalize:entities.sale.name @:common.list',
-            },
-          },
-          salesItem: {
-            name: 'salesItem | salesItems',
-            nav: {
-              title: '@.capitalize:entities.salesItem.name',
-              create: 'create @.capitalize:entities.salesItem.name',
-              list: '@.capitalize:entities.salesItem.name @:common.list',
-            },
-          },
-          supplier: {
-            name: 'supplier | suppliers',
-            nav: {
-              title: '@.capitalize:entities.supplier.name',
-              create: 'create @.capitalize:entities.supplier.name',
-              list: '@.capitalize:entities.supplier.name @:common.list',
-            },
-          },
-        
+          },{{/if}}
+          {{/each}}
         },
         views: {
-          vSupplierProductNumber: {
-            name: 'vSupplierProductNumber | vSupplierProductNumbers',
+          {{#each entities}}
+          {{#if this.isView}}
+          ${minStart(this.className)}: {
+            name: '${minStart(this.className)} | ${minStart(this.className)}s',
             nav: {
-              title: '@.capitalize:views.vSupplierProductNumber.name',
-              list: '@.capitalize:views.vSupplierProductNumber.name @:common.list',
+              title: '@.capitalize:views.${minStart(this.className)}.name',
+              list: '@.capitalize:views.${minStart(this.className)}.name @:common.list',                  
             },
-          },
-        
+          },{{/if}}
+          {{/each}}
         },
     
         error: {

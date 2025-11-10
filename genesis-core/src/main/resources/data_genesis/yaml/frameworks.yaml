@@ -4956,7 +4956,7 @@
                   {
                       item.${majStart(this.parentFk)} = ${minStart(className)}.${majStart(parentPk)};
                   
-                      if (existing${majStart(this.className)}s.Any(e => e.${majStart(this.childPk)} == item.${majStart(this.childPk)} && item.${majStart(this.childPk} != default)) 
+                      if (existing${majStart(this.className)}s.Any(e => e.${majStart(this.childPk)} == item.${majStart(this.childPk)} && item.${majStart(this.childPk)} != default)) 
                       {
                           _dbContext.Entry(item).State = EntityState.Modified;
                       }
@@ -5115,7 +5115,7 @@
       {{tab}})]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), StatusCodes.Status200OK)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]Update
       {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Get${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to retrieve", Required = true)] ${pkColumnType} id)
       {{tab}}{
       {{tab}}{{tab}}try {
