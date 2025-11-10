@@ -28,6 +28,7 @@ public class MereFilleMetadataProvider {
         metadata.put("className", tableMetadata.getTable().getClassName());
         metadata.put("isRequired", tableMetadata.isMandatory());
         metadata.put("parentFk",  StringUtils.toCamelCase(tableMetadata.getColumn().getReferencedColumn()));
+        metadata.put("childPk", tableMetadata.getTable().getPrimaryColumn().getName());
         return metadata;
     }
 }
