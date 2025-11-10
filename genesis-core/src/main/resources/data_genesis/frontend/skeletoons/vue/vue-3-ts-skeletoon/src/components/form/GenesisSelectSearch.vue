@@ -88,7 +88,7 @@ const props = defineProps<{
     searchTerm: string,
     pagination: PaginationRequestParameter,
   ) => Promise<{ options: SelectOption[]; pagination: PaginationData }>
-  defaultValue?: string
+  defaultValue?: string | number | object
   loading?: boolean
   rowInput?: boolean
   pageSize?: number
@@ -159,7 +159,10 @@ const loadOptions = async (reset = false) => {
   if (reset) pagination.value.reset(props.pageSize ?? 10)
   else pagination.value = pagination.value.nextPage()
 
-  const result = await props.searchFunction(searchModel.value, pagination.value.toParameter())
+  const result = await props.searchFunction(
+    String(searchModel.value),
+    pagination.value.toParameter(),
+  )
   options.value = reset ? result.options : options.value.concat(result.options)
   pagination.value = result.pagination
   hasMore.value = pagination.value.hasNext()

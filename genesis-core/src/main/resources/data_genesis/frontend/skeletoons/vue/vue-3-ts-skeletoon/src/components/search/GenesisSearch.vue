@@ -7,13 +7,13 @@
       @click="emitSearch"
       type="button"
       class="btn-primary border-0 shadow"
-      ><FilterIcon class="mr-2" />
+    ><FilterIcon class="mr-2" />
       <span>{{ $t('button.applySearch') }}</span>
     </GenesisButton>
 
     <!-- Reset -->
     <GenesisButton
-      class="btn btn-ghost border-0 "
+      class="btn btn-ghost border-0"
       title="Reset filter"
       type="button"
       :class="activeFields.length ? 'text-error' : 'btn-disabled'"
@@ -33,6 +33,7 @@
           v-if="field.type === 'select' && field.selectSearch"
           :label="field.label"
           class="border-0"
+          :defaultValue="searchModel[field.key] ?? ''"
           :rowInput="true"
           :search-function="field.selectSearch"
           @option-selected="
@@ -71,12 +72,7 @@
 
     <!-- Dropdown ajout de filtre -->
     <div class="dropdown">
-      <GenesisButton
-        class="btn btn-ghost"
-        type="button"
-        tabindex="0"
-        title="Add filter criteria"
-      >
+      <GenesisButton class="btn btn-ghost" type="button" tabindex="0" title="Add filter criteria">
         <PlusIcon />
       </GenesisButton>
 
@@ -111,8 +107,8 @@ import FilterIcon from '@/components/icons/FilterIcon.vue'
 import ReloadIcon from '@/components/icons/ReloadIcon.vue'
 import XIcon from '@/components/icons/XIcon.vue'
 import GenesisSelectSearch from '@/components/form/GenesisSelectSearch.vue'
+import { nextTick, onMounted } from 'vue'
 
-// ✅ Props
 const props = withDefaults(
   defineProps<{
     initialModel: Record<string, unknown>
@@ -125,13 +121,11 @@ const props = withDefaults(
   },
 )
 
-// ✅ Emits
 const emit = defineEmits<{
   (e: 'update:filter', filters: Record<string, unknown>): void
   (e: 'search', filters: Record<string, unknown>): void
 }>()
 
-// ✅ Use composable
 const {
   searchModel,
   activeFieldKeys,
@@ -142,17 +136,16 @@ const {
   desactivateField,
   resetFilters,
   getFiltersValues,
-} = useSearch(props.initialModel, props.searchFields)
+} = useSearch(props.initialModel, props.searchFields, props.defaultActive)
 
-// ✅ Initialize active fields
 if (props.defaultActive?.length) {
   activeFieldKeys.value.push(...props.defaultActive)
 }
 
-// ✅ Handlers
 const onFilterSelected = (key: string) => {
   selectedFieldToAdd.value = key
   activateField()
+  updateFilters()
 }
 
 const updateFilters = () => {
@@ -177,6 +170,12 @@ const clearAllFilters = () => {
   updateFilters()
   emitSearch()
 }
+
+onMounted(async () => {
+  // ✅ Attendre le prochain tick pour que Vue mette à jour le DOM
+  await nextTick()
+  emitSearch()
+})
 </script>
 
 <style scoped>

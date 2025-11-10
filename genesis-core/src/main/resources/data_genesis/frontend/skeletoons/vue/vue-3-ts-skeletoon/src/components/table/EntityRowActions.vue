@@ -1,9 +1,15 @@
 <template>
-  <GenesisButton class="btn-outline btn-square border-0" title="Voir Details" @click="viewRow">
+  <GenesisButton
+    v-show="view"
+    class="btn-outline btn-square border-0"
+    title="Voir Details"
+    @click="viewRow"
+  >
     <ViewIcon />
   </GenesisButton>
 
   <GenesisButton
+    v-show="edit"
     class="btn-outline btn-square border-0"
     title="Modifier"
     @click="editRow"
@@ -12,6 +18,7 @@
   </GenesisButton>
 
   <GenesisButton
+    v-show="remove"
     class="btn-outline btn-square border-0 text-error"
     title="Supprimer"
     @click="deleteRow"
@@ -26,6 +33,14 @@ import ViewIcon from '../icons/ViewIcon.vue'
 import EditIcon from '../icons/EditIcon.vue'
 import TrashIcon from '../icons/TrashIcon.vue'
 
+withDefaults(
+  defineProps<{
+    view: boolean
+    remove: boolean
+    edit: boolean
+  }>(),
+  { view: true, remove: true, edit: true },
+)
 // ✅ Declare emits
 const emit = defineEmits<{
   (e: 'delete-row'): void

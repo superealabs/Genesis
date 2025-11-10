@@ -5,7 +5,9 @@
       <!-- Search -->
       <GenesisSearch
         :initial-model="entityModel"
+        v-show="showFilters"
         :searchFields="entitySearchFields"
+        :default-active="defaultActiveFilters"
         @update:filter="updateFilters"
         @search="multiCriteriaSearch"
       />
@@ -21,19 +23,10 @@
             id="inputItemsPerPage"
             type="number"
             class="input input-bordered w-20 h-8 focus:border-0"
-            @change="multiCriteriaSearch"
-            @keydown.enter="multiCriteriaSearch"
+            @change="multiCriteriaSearch()"
+            @keydown.enter="multiCriteriaSearch()"
           />
         </div>
-
-        <!-- Future export (example DaisyUI style) -->
-        <!--
-        <div class="flex items-center gap-2">
-          <select id="select-export" class="select select-bordered select">
-            <option value="csv">CSV</option>
-          </select>
-        </div>
-        -->
       </div>
     </div>
 
@@ -43,6 +36,9 @@
         :message="message"
         :data="entities"
         :loading="loading"
+        :removeAction="removeAction"
+        :editAction="editAction"
+        :viewAction="viewAction"
         @request:refresh="doSearch"
         @sortby="sortByAndSearch"
       />
@@ -75,26 +71,35 @@ import type { EntitySearchField } from '@/models/EntityModel'
 import type { PaginationData } from '@/models/api/PageResponseModel'
 import type { PaginationRequestParameter, SortFieldParameter } from '@/models/api/RequestModel'
 
-const props = defineProps<{
-  entityModel: Record<string, unknown>
-  entitySearchFields: EntitySearchField[]
-  searchFn: (
-    unpagined: boolean,
-    filters: Record<string, unknown>,
-    pagination: PaginationRequestParameter,
-    sortFields: SortFieldParameter[],
-  ) => Promise<void>
-  getPaginationData: () => PaginationData
-  listComponent: object
-  entities: unknown[]
-  loading?: boolean
-  message?: string | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    entityModel: Record<string, unknown>
+    entitySearchFields: EntitySearchField[]
+    searchFn: (
+      unpagined: boolean,
+      filters: Record<string, unknown>,
+      pagination: PaginationRequestParameter,
+      sortFields: SortFieldParameter[],
+    ) => Promise<void>
+    getPaginationData: () => PaginationData
+    listComponent: object
+    entities: unknown[]
+    loading?: boolean
+    message?: string | null
+    defaultActiveFilters?: string[]
+    showFilters?: boolean
+    editAction?: boolean
+    viewAction?: boolean
+    removeAction?: boolean
+  }>(),
+  { showFilters: true, editAction: true, viewAction: true, removeAction: true },
+)
 
 const { updateFilters, changePage, page, totalPages, itemsPerPage, doSearch, sortByAndSearch } =
   useEntityTable(props.searchFn, props.getPaginationData)
 
-function multiCriteriaSearch() {
+function multiCriteriaSearch(filters?: Record<string, unknown>) {
+  updateFilters(filters)
   changePage(1)
 }
 

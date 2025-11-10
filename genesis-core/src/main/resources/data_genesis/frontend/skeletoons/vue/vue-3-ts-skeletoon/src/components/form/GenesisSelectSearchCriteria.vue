@@ -10,7 +10,7 @@
         <slot name="label">{{ label }}</slot>
       </label>
     </div>
-    <div class="relative w-full min-w-50 flex-grow">
+    <div class="relative w-full min-w-50 grow">
       <slot
         name="selected-value"
         :value="selectedValue"

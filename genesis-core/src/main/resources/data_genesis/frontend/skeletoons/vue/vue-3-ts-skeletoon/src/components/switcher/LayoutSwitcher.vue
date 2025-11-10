@@ -1,6 +1,6 @@
 <template>
   <button class="btn btn-outline btn-md" @click="toggleLayout">
-    Switch to {{ layoutStore.currentLayout === 'sidebar' ? 'Topbar' : 'Sidebar' }} Layout
+    {{ $t('settings.switchLayout') }}
   </button>
 </template>
 

@@ -48,7 +48,8 @@ export function useEntityTable(
     freezeScreenStore.unfreeze()
   }
 
-  const updateFilters = (filters: Record<string, unknown>) => {
+  const updateFilters = (filters?: Record<string, unknown>) => {
+    if (!filters) return
     currentFilters.value = filters
   }
 

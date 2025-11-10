@@ -2976,7 +2976,7 @@
                         <span class="hidden lg:inline">{{ $t(section.sectionName) }}</span>
                       </summary>
 
-                      <ul class="p-2 menu dropdown-content bg-base-200 rounded-box shadow-md w-52 z-[1]">
+                      <ul class="p-2 menu dropdown-content bg-base-200 rounded-box shadow-md w-52">
                         <GenesisTopNavList :items="section.navChilds" @close="closeDropdown" />
                       </ul>
                     </details>
@@ -3387,12 +3387,37 @@
         }
       destinationPath: "${destinationFolder}"
 
+    - fileType: "Vite config"
+      fileName: "vite.config"
+      extension: "ts"
+      content: |
+        import { fileURLToPath, URL } from 'node:url'
+
+        import { defineConfig } from 'vite'
+        import vue from '@vitejs/plugin-vue'
+        import vueDevTools from 'vite-plugin-vue-devtools'
+        import tailwindcss from '@tailwindcss/vite'
+
+        // https://vite.dev/config/
+        export default defineConfig({
+          plugins: [vue(), vueDevTools(), tailwindcss()],
+          resolve: {
+            alias: {
+              '@': fileURLToPath(new URL('./src', import.meta.url)),
+            },
+          },
+          server: {
+            port: parseInt(${frontendPort} || 5173,
+          },
+        })
+
+      destinationPath: "${destinationFolder}"
+
     - fileType: "Env File"
       fileName: "{{removeLine}}"
       extension: "env"
       content: |
         VITE_APP_API_URL=http://${apiUrl}:${projectPort}/${toKebabCase(projectName)}
-        VITE_APP_PORT=${frontendPort}
       destinationPath: "${destinationFolder}"
 
     - fileType: "Vue App Main"
@@ -3602,6 +3627,7 @@
         import type { RouteRecordRaw } from 'vue-router'
         import HomeView from '@/views/HomeView.vue'
         import SettingsView from '@/views/settings/SettingsView.vue'
+        import NotFoundView from '@/views/NotFoundView.vue'
         import MainLayout from '@/layouts/MainLayout.vue'{{#if useJWT}}
         import AuthLayout from '@/layouts/AuthLayout.vue'
         import authRoutes from './authRoutes'{{/if}}
@@ -3647,6 +3673,11 @@
             component: AuthLayout,
             children: [...authRoutes],
           },{{/if}}
+          {
+            path: '/:pathMatch(.*)*',
+            name: 'not-found',
+            component: NotFoundView,
+          },
         ]
         export default routes
       destinationPath: "${destinationFolder}/src/router"
@@ -3732,8 +3763,10 @@
       fileName: "i18n"
       extension: "ts"
       content: |
-        /* Import lang Files */{{#each langList}}
-        import ${lowerCase(this.name)} from '@/lang/${lowerCase(this.name)}.ts'{{/each}}
+        /* Import lang Files */
+        {{#each langList}}
+        import ${lowerCase(this.name)} from '@/lang/${lowerCase(this.name)}'
+        {{/each}}
         import { createI18n } from 'vue-i18n'
         const i18n = createI18n({
           legacy: false,
@@ -5247,7 +5280,7 @@
   
             <!-- Table -->
             <EntityTable
-              :entity-model="new ${majStart(className)}()"
+              :entity-model="{}"
               :entity-search-fields="searchFields"
               :searchFn="search${majPluralize(className)}"
               :getPaginationData="getPaginationData"
@@ -5359,12 +5392,12 @@
                 }
                 return result
               }
-              {{/if}}{{#if !isView}}
-              /**
+
+              {{#if notViewAndParent}}/**
                * Create a new ${minStart(className)}
-               * @param ${minStart(className)}FormDTO ${majStart(className)} object to create
-               */{{/if}}
-              {{#if notViewAndParent}}const create${majStart(className)} = async (fullData: { ${minStart(className)}: Partial<${majStart(className)}FormDTO>{{#each children}}; ${minStart(this.className)}s: ${majStart(this.className)}FormDTO[]{{/each}} })=> {
+               * @param fullData Object containing ${minStart(className)} and his details
+               */
+              const create${majStart(className)} = async (fullData: { ${minStart(className)}: Partial<${majStart(className)}FormDTO>{{#each children}}; ${minStart(this.className)}s: ${majStart(this.className)}FormDTO[]{{/each}} })=> {
                 const dto = new ${majStart(className)}FormDTO(fullData.${minStart(className)})
                 const ${minStart(className)}: Partial<${majStart(className)}> = await dto.toEntity()
                 {{#each children}}
@@ -5377,6 +5410,10 @@
                 return { data, errors }
               }
               {{elseIf !isView}}
+              /**
+               * Create a new ${minStart(className)}
+               * @param ${minStart(className)}FormDTO ${majStart(className)} object to create
+               */
               const create${majStart(className)} = async (${minStart(className)}FormDTO: Partial<${majStart(className)}FormDTO>) => {
                 const dto = new ${majStart(className)}FormDTO(${minStart(className)}FormDTO)
                 const ${minStart(className)}: Partial<${majStart(className)}> = await dto.toEntity()
@@ -5386,7 +5423,42 @@
                 }
                 return { data, errors }
               }
-              {{/if}}{{#if !isView}}
+              {{/if}}
+              {{#if notViewAndParent}}/**
+              * Update an existing ${minStart(className)} with full details
+              * @param id ${majStart(className)} ID to update
+              * @param fullData Object containing ${minStart(className)} and its details
+              */
+              const update${majStart(className)} = async (
+                id: ${pkColumnType} | string,
+                fullData: {
+                  ${minStart(className)}: Partial<${majStart(className)}FormDTO>
+                  {{#each children}}; ${minStart(this.className)}s: ${majStart(this.className)}FormDTO[]{{/each}} 
+                },
+              ) => {
+                const dto = new ${majStart(className)}FormDTO(fullData.${minStart(className)})
+                const ${minStart(className)}: Partial<${majStart(className)}> = await dto.toEntity()
+
+                {{#each children}}
+                const ${minStart(this.className)}s: Partial<${majStart(this.className)}>[] = await ${majStart(this.className)}FormDTO.toEntities(
+                  fullData.${minStart(this.className)}s,
+                )
+                {{/each}}
+                const { data, error, errors } = await ${minStart(className)}Service.updateFull(
+                id, 
+                { 
+                  ${minStart(className)}
+                  {{#each children}}
+                  , ${minStart(this.className)}s
+                  {{/each}} 
+                }
+               )
+               if (error) {
+                message.value = error
+               }
+               return { data, errors }
+              }
+              {{elseIf !isView}}
               /**
                * Update an existing ${minStart(className)}
                * @param ${minStart(className)}FormDTO ${majStart(className)} object to update
@@ -5417,7 +5489,7 @@
                 } = await ${minStart(className)}Service.getAll(pagination, sortFields)
                 handleResponse(data, err, paginationresult)
 
-                if (unpagined) {
+                if (unpagined && ${minStart(className)}s.value.length > 0) {
                   while (paginationData.value.hasNext()) {
                     paginationData.value.nextPage()
                     const {
