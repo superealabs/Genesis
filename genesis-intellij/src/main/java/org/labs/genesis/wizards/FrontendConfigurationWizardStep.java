@@ -50,7 +50,12 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
         if (projectGenerationContext.getFramework() instanceof FrameworkMVC) {
             ((FrameworkMVC) projectGenerationContext.getFramework()).setFrontendLayout(this.frontendLayout);
             ((FrameworkMVC) projectGenerationContext.getFramework()).setProjectBranding(this.branding);
-            projectGenerationContext.setViewsTemplate(((FrameworkMVC) projectGenerationContext.getFramework()).findViewsTemplateById(1));
+
+            if ( projectGenerationContext.getFramework().getId() == 6) {
+                projectGenerationContext.setViewsTemplate(((FrameworkMVC) projectGenerationContext.getFramework()).findViewsTemplateById(2));
+            } else {
+                projectGenerationContext.setViewsTemplate(((FrameworkMVC) projectGenerationContext.getFramework()).findViewsTemplateById(1));
+            }
         }
     }
 

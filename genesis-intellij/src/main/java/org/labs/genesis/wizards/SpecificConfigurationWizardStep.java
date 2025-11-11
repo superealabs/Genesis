@@ -101,6 +101,21 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             frameworkConfiguration.put("role", specificConfigurationForm.getRoleField().getText().trim());
         }
 
+        // Gestion de la création du venv pour Django
+        if (framework != null && framework.getCoreFramework() != null && 
+            framework.getCoreFramework().equalsIgnoreCase("Django")) {
+            boolean createVenv = specificConfigurationForm.getCreateVenvCheckBox() != null && 
+                                specificConfigurationForm.getCreateVenvCheckBox().isSelected();
+            frameworkConfiguration.put("createVenv", createVenv);
+
+            // Gestion de l'auth optionnelle (login/inscription)
+            boolean enableAuth = true;
+            if (specificConfigurationForm.getEnableAuthCheckBox() != null) {
+                enableAuth = specificConfigurationForm.getEnableAuthCheckBox().isSelected();
+            }
+            frameworkConfiguration.put("enableAuth", enableAuth);
+        }
+
         // Ajouter projectPort et projectDescription au contexte
         projectGenerationContext.setProjectPort(specificConfigurationForm.getProjectPortField().getText().trim());
         projectGenerationContext.setProjectDescription(specificConfigurationForm.getProjectDescriptionField().getText().trim());

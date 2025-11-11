@@ -296,8 +296,15 @@ public class FrameworkFrontendMetadataProvider {
 
     public static HashMap<String, Object> getRessourceHashMap(FrontendFramework frontendFramework) {
         HashMap<String, Object> metadata = new HashMap<>();
-        metadata.putAll(getBrandingHashMap(frontendFramework.getProjectBranding()));
-        metadata.putAll(getLayoutHashMap(frontendFramework.getFrontendLayout()));
+        if (frontendFramework == null) {
+            return metadata; // Return empty map if framework is not configured
+        }
+        if (frontendFramework.getProjectBranding() != null) {
+            metadata.putAll(getBrandingHashMap(frontendFramework.getProjectBranding()));
+        }
+        if (frontendFramework.getFrontendLayout() != null) {
+            metadata.putAll(getLayoutHashMap(frontendFramework.getFrontendLayout()));
+        }
         return  metadata;
     }
 
@@ -323,6 +330,9 @@ public class FrameworkFrontendMetadataProvider {
 
     public  static  List<Map<String,Object>> getRoutesHashMap(FrontendFramework frontendFramework){
         List<Map<String, Object>> routes = new ArrayList<>();
+        if (frontendFramework == null || frontendFramework.getComponentRoutes() == null) {
+            return routes; // Return empty list if framework or routes are not configured
+        }
         for (ComponentRoute route : frontendFramework.getComponentRoutes()) {
             routes.add(getRouteHashMap(route));
         }

@@ -50,6 +50,8 @@ public class SpecificConfigurationForm {
     private JLabel cacheableLabel;
     private JScrollPane allTablesAndViewsNamesPane;
     private JBList<String> selectedTableAndViewNamesList;
+    private JCheckBox createVenvCheckBox;
+    private JCheckBox enableAuthCheckBox;
     @Setter
     private List<String> allTablesAndViewsNames  = new ArrayList<>();
 
@@ -96,6 +98,33 @@ public class SpecificConfigurationForm {
             useAnEurekaServerCheckBox.setVisible(false);
             eurekaServerHostLabel.setVisible(false);
             eurekaServerHostField.setVisible(false);
+            
+            // Afficher le checkbox venv uniquement pour Django
+            if (framework.getCoreFramework() != null && framework.getCoreFramework().equalsIgnoreCase("Django")) {
+                if (createVenvCheckBox != null) {
+                    createVenvCheckBox.setVisible(true);
+                    createVenvCheckBox.setSelected(true); // Par défaut, créer le venv
+                }
+                if (enableAuthCheckBox != null) {
+                    enableAuthCheckBox.setVisible(true);
+                    enableAuthCheckBox.setSelected(true); // Par défaut, activer l'authentification
+                }
+            } else {
+                if (createVenvCheckBox != null) {
+                    createVenvCheckBox.setVisible(false);
+                }
+                if (enableAuthCheckBox != null) {
+                    enableAuthCheckBox.setVisible(false);
+                }
+            }
+        } else {
+            // Masquer le checkbox venv pour les autres frameworks
+            if (createVenvCheckBox != null) {
+                createVenvCheckBox.setVisible(false);
+            }
+            if (enableAuthCheckBox != null) {
+                enableAuthCheckBox.setVisible(false);
+            }
         }
     }
 
@@ -128,6 +157,16 @@ public class SpecificConfigurationForm {
         cacheableLabel.setVisible(false);
         selectedTableAndViewNamesList.setVisible(false);
         allTablesAndViewsNamesPane.setVisible(false);
+
+        // Masquer le checkbox venv par défaut
+        if (createVenvCheckBox != null) {
+            createVenvCheckBox.setVisible(false);
+        }
+
+        // Masquer le checkbox d'authentification par défaut
+        if (enableAuthCheckBox != null) {
+            enableAuthCheckBox.setVisible(false);
+        }
 
         // Désactiver Eureka par défaut
         useAnEurekaServerCheckBox.setSelected(false);

@@ -6,6 +6,7 @@ import org.labs.genesis.frontend.generator.model.FrontendDestinationPaths;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
+import org.labs.utils.StringUtils;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -14,7 +15,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider.*;
@@ -25,6 +28,32 @@ public class ViewsGenerator implements IViewsGenerator {
 
     public ViewsGenerator(GenesisTemplateEngine engine) {
         this.engine = engine;
+    }
+
+    /**
+     * Vérifie si l'authentification est activée pour le projet Django
+     * @param frameworkOptions Les options du framework
+     * @return true si l'authentification est activée, false sinon. Par défaut, retourne true si l'option n'est pas spécifiée.
+     */
+    public static boolean isAuthenticationEnabled(Map<String, Object> frameworkOptions) {
+        if (frameworkOptions == null) {
+            return true; // Par défaut, l'authentification est activée
+        }
+        
+        Object enableAuthValue = frameworkOptions.get("enableAuth");
+        if (enableAuthValue == null) {
+            return true; // Par défaut, l'authentification est activée
+        }
+        
+        if (enableAuthValue instanceof Boolean) {
+            return (Boolean) enableAuthValue;
+        }
+        
+        if (enableAuthValue instanceof String) {
+            return Boolean.parseBoolean((String) enableAuthValue);
+        }
+        
+        return true; // Par défaut, l'authentification est activée
     }
 
     @Override
@@ -213,8 +242,147 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String result = engine.render(firstResult, metadataFinally);
         FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
+        
+        // Générer la page d'accueil
+        generateHomePage(framework, frameworkOptions, language, viewsTemplate, Arrays.stream(tableMetadata).toList(), destinationFolder, projectName, groupLink);
 
         return "";
+    }
+
+    /**
+     * Génère la page d'accueil pour Django
+     */
+    private void generateHomePage(FrameworkMVC framework,
+                                 Map<String, Object> frameworkOptions,
+                                 Language language,
+                                 ViewsTemplate viewsTemplate,
+                                 java.util.List<TableMetadata> entities,
+                                 String destinationFolder,
+                                 String projectName,
+                                 String groupLink) throws Exception {
+        if (language.getId() != framework.getLanguageId()) {
+            throw new RuntimeException("Incompatibility detected: the language '" + language.getName() + "' (provided ID: " + language.getId() + ") is not compatible with the framework '" + framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
+        }
+
+        // Générer le template HTML de la page d'accueil
+        generateHomeTemplate(framework, frameworkOptions, language, viewsTemplate, entities, destinationFolder, projectName, groupLink);
+        
+        // Générer les templates d'authentification uniquement si l'authentification est activée
+        if (isAuthenticationEnabled(frameworkOptions)) {
+            generateAuthTemplates(framework, frameworkOptions, language, viewsTemplate, destinationFolder, projectName, groupLink);
+        }
+    }
+
+    /**
+     * Génère le template HTML de la page d'accueil
+     */
+    private void generateHomeTemplate(FrameworkMVC framework,
+                                     Map<String, Object> frameworkOptions,
+                                     Language language,
+                                     ViewsTemplate viewsTemplate,
+                                     java.util.List<TableMetadata> entities,
+                                     String destinationFolder,
+                                     String projectName,
+                                     String groupLink) throws Exception {
+        String templateContent = loadViewHomeTemplate(viewsTemplate);
+
+        // Créer un HashMap spécifique pour la page d'accueil sans dépendre d'un TableMetadata spécifique
+        HashMap<String, Object> metadataFinally = getHomePageMetadata(framework, frameworkOptions, language, entities, destinationFolder, projectName, groupLink);
+
+        // Générer le contenu des cartes de statistiques et d'actions
+        String statsCards = generateStatsCards(entities);
+
+        metadataFinally.put("statsCards", statsCards);
+
+        String fileSavePath = framework.getView().getViewSavePath();
+        fileSavePath = engine.simpleRender(fileSavePath, metadataFinally);
+
+        FileUtils.createDirectory(fileSavePath);
+
+        String fileName = "home";
+        String result = engine.render(templateContent, metadataFinally);
+        FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
+    }
+
+    /**
+     * Génère les cartes de statistiques pour les entités
+     */
+    private String generateStatsCards(java.util.List<TableMetadata> entities) {
+        StringBuilder cards = new StringBuilder();
+        for (TableMetadata entity : entities) {
+            if (!entity.getIsView()) {
+                cards.append(
+                    "<div class=\"stat-card\">\n" +
+                    "    <div class=\"stat-content\">\n" +
+                    "        <h3>" + entity.getClassName() + "s</h3>\n" +
+                    "        <div class=\"stat-number\"> {{"+StringUtils.minStart(entity.getClassName()) + "_count }} </div>\n" +
+                    "    </div>\n" +
+                    "    <a href=\"{% url '" + StringUtils.minStart(entity.getClassName()) + "_list' %}\" class=\"stat-link\">Voir toutes</a>\n" +
+                    "</div>\n"
+                );
+            }
+        }
+        return cards.toString();
+    }
+
+    /**
+     * Crée les métadonnées spécifiques pour la page d'accueil
+     */
+    private HashMap<String, Object> getHomePageMetadata(FrameworkMVC framework,
+                                                       Map<String, Object> frameworkOptions,
+                                                       Language language,
+                                                       java.util.List<TableMetadata> entities,
+                                                       String destinationFolder,
+                                                       String projectName,
+                                                       String groupLink) {
+        HashMap<String, Object> metadata = new HashMap<>();
+        
+        // Métadonnées générales
+        metadata.put("destinationFolder", destinationFolder);
+        metadata.put("projectName", projectName);
+        metadata.put("groupLink", groupLink);
+        metadata.put("groupLinkPath", groupLink != null ? groupLink.replace(".", "/") : "");
+        
+        // Métadonnées du framework
+        metadata.putAll(getGeneralViewHashMap(framework));
+        
+        // Métadonnées des entités
+        metadata.put("entities", getTableMetadataListForHome(entities));
+        
+        // Métadonnées spécifiques à la page d'accueil
+        metadata.put("pkColumn", "");
+        metadata.put("pkColumnType", "");
+        metadata.put("tableName", "");
+        metadata.put("className", "");
+        metadata.put("entityName", "");
+        metadata.put("classNameLink", "");
+        metadata.put("isView", false);
+        
+        // Ajouter enableAuth dans les métadonnées (par défaut true si non spécifié)
+        boolean enableAuth = true;
+        if (frameworkOptions != null && frameworkOptions.containsKey("enableAuth")) {
+            Object enableAuthValue = frameworkOptions.get("enableAuth");
+            if (enableAuthValue instanceof Boolean) {
+                enableAuth = (Boolean) enableAuthValue;
+            } else if (enableAuthValue instanceof String) {
+                enableAuth = Boolean.parseBoolean((String) enableAuthValue);
+            }
+        }
+        metadata.put("enableAuth", enableAuth);
+        
+        return metadata;
+    }
+
+    /**
+     * Crée une liste de métadonnées pour les entités de la page d'accueil
+     */
+    private List<Map<String, Object>> getTableMetadataListForHome(java.util.List<TableMetadata> entities) {
+        List<Map<String, Object>> entityList = new ArrayList<>();
+        for (TableMetadata entity : entities) {
+            Map<String, Object> entityMap = getTableMetadataHashMap(entity);
+            entityList.add(entityMap);
+        }
+        return entityList;
     }
 
     @Override
@@ -314,5 +482,77 @@ public class ViewsGenerator implements IViewsGenerator {
 
     private String loadViewEditTemplate(ViewsTemplate viewsTemplate) throws IOException {
         return FileUtils.getFileContent(Constantes.TEMPLATES_PATH+ "/" + viewsTemplate.getTemplate() + "/" + viewsTemplate.getEditTemplate() + "." + Constantes.TEMPLATE_EXT);
+    }
+
+    private String loadViewHomeTemplate(ViewsTemplate viewsTemplate) throws IOException {
+        return FileUtils.getFileContent(Constantes.TEMPLATES_PATH+ "/" + viewsTemplate.getTemplate() + "/DjangoHomeTemplate." + Constantes.TEMPLATE_EXT);
+    }
+
+    /**
+     * Génère les templates d'authentification (login et register)
+     */
+    private void generateAuthTemplates(FrameworkMVC framework,
+                                     Map<String, Object> frameworkOptions,
+                                     Language language,
+                                     ViewsTemplate viewsTemplate,
+                                     String destinationFolder,
+                                     String projectName,
+                                     String groupLink) throws Exception {
+        
+        // Créer le dossier auth s'il n'existe pas
+        String authTemplatePath = destinationFolder + "/templates/" + projectName + "/auth";
+        FileUtils.createDirectory(authTemplatePath);
+        
+        // Générer le template de login
+        generateLoginTemplate(framework, frameworkOptions, language, viewsTemplate, destinationFolder, projectName, groupLink);
+        
+        // Générer le template de register
+        generateRegisterTemplate(framework, frameworkOptions, language, viewsTemplate, destinationFolder, projectName, groupLink);
+    }
+
+    /**
+     * Génère le template de login
+     */
+    private void generateLoginTemplate(FrameworkMVC framework,
+                                     Map<String, Object> frameworkOptions,
+                                     Language language,
+                                     ViewsTemplate viewsTemplate,
+                                     String destinationFolder,
+                                     String projectName,
+                                     String groupLink) throws Exception {
+        
+        Map<String, Object> metadata = getHomePageMetadata(framework, frameworkOptions, language, new ArrayList<>(), destinationFolder, projectName, groupLink);
+        
+        String templateContent = loadLoginTemplate(viewsTemplate);
+        String renderedContent = engine.render(templateContent, metadata);
+
+        FileUtils.createFile(destinationFolder + "/" + projectName + "/templates/" + projectName + "/auth", "login", "html", renderedContent);
+    }
+
+    /**
+     * Génère le template de register
+     */
+    private void generateRegisterTemplate(FrameworkMVC framework,
+                                        Map<String, Object> frameworkOptions,
+                                        Language language,
+                                        ViewsTemplate viewsTemplate,
+                                        String destinationFolder,
+                                        String projectName,
+                                        String groupLink) throws Exception {
+        
+        Map<String, Object> metadata = getHomePageMetadata(framework, frameworkOptions, language, new ArrayList<>(), destinationFolder, projectName, groupLink);
+        
+        String templateContent = loadRegisterTemplate(viewsTemplate);
+        String renderedContent = engine.render(templateContent, metadata);
+
+        FileUtils.createFile(destinationFolder +"/"+ projectName + "/templates/" + projectName + "/auth", "register", "html", renderedContent);
+    }
+
+    private String loadLoginTemplate(ViewsTemplate viewsTemplate) throws IOException {
+        return FileUtils.getFileContent(Constantes.TEMPLATES_PATH+ "/" + viewsTemplate.getTemplate() + "/DjangoLoginTemplate." + Constantes.TEMPLATE_EXT);
+    }
+
+    private String loadRegisterTemplate(ViewsTemplate viewsTemplate) throws IOException {
+        return FileUtils.getFileContent(Constantes.TEMPLATES_PATH+ "/" + viewsTemplate.getTemplate() + "/DjangoRegisterTemplate." + Constantes.TEMPLATE_EXT);
     }
 }
