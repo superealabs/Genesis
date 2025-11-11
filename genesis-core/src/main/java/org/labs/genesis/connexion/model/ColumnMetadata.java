@@ -8,10 +8,9 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.FrontendLanguage;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Setter
 @Getter
@@ -70,8 +69,9 @@ public class ColumnMetadata {
             return;
         }
         this.nullable = false;
+        Map<String, Object> safeValidationAnnotations = Objects.requireNonNullElse(frameworkValidationAnnotations, new HashMap<>());
         Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(this);
-        String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("notNull","{{removeLine}}");
+        String annotationTemplate = (String) safeValidationAnnotations.getOrDefault("notNull","{{removeLine}}");
         String annotationResult = engine.render(annotationTemplate, fieldHashMap);
         this.validationAnnotations.put("notNull",annotationResult);
     }
@@ -85,8 +85,9 @@ public class ColumnMetadata {
                 || !this.isInterval)
             )
         {
+            Map<String, Object> safeValidationAnnotations = Objects.requireNonNullElse(frameworkValidationAnnotations, new HashMap<>());
             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(this);
-            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("defaultValue","{{removeLine}}");
+            String annotationTemplate = (String) safeValidationAnnotations.getOrDefault("defaultValue","{{removeLine}}");
             String annotationResult = engine.render(annotationTemplate, fieldHashMap);
             this.validationAnnotations.put("defaultValue",annotationResult);
         }
@@ -95,8 +96,9 @@ public class ColumnMetadata {
     public void setColumnSize(int columnSize, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
         this.columnSize = columnSize;
         if (this.isText) {
+            Map<String, Object> safeValidationAnnotations = Objects.requireNonNullElse(frameworkValidationAnnotations, new HashMap<>());
             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(this);
-            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("maxSize","{{removeLine}}");
+            String annotationTemplate = (String) safeValidationAnnotations.getOrDefault("maxSize","{{removeLine}}");
             String annotationResult = engine.render(annotationTemplate, fieldHashMap);
             this.validationAnnotations.put("maxSize",annotationResult);
         }
@@ -105,8 +107,9 @@ public class ColumnMetadata {
     public void setDecimalDigits(int decimalDigits, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
         this.decimalDigits = decimalDigits;
         if(this.isNumericWithPrecision){
+            Map<String, Object> safeValidationAnnotations = Objects.requireNonNullElse(frameworkValidationAnnotations, new HashMap<>());
             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(this);
-            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("digits","{{removeLine}}");
+            String annotationTemplate = (String) safeValidationAnnotations.getOrDefault("digits","{{removeLine}}");
             String annotationResult = engine.render(annotationTemplate, fieldHashMap);
             this.validationAnnotations.put("digits",annotationResult);
         }
@@ -124,12 +127,12 @@ public class ColumnMetadata {
                                               GenesisTemplateEngine engine,
                                               String currentValue,
                                               boolean isMin) throws Exception {
-
+        Map<String, Object> safeValidationAnnotations = Objects.requireNonNullElse(frameworkValidationAnnotations, new HashMap<>());
         if ((isMin && hasMaxConstraint()) || (!isMin && hasMinConstraint())) {
-            if (frameworkValidationAnnotations.containsKey("numericMinimumAndMaximumValue")) {
+            if (safeValidationAnnotations.containsKey("numericMinimumAndMaximumValue")) {
                 Object otherValue = getOppositeBoundValue(isMin);
                 if (otherValue != null) {
-                    String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("numericMinimumAndMaximumValue", "{{removeLine}}");
+                    String annotationTemplate = (String) safeValidationAnnotations.getOrDefault("numericMinimumAndMaximumValue", "{{removeLine}}");
                     fieldHashMap.put("minValue", isMin ? currentValue : otherValue);
                     fieldHashMap.put("maxValue", isMin ? otherValue : currentValue);
                     String annotationResult = engine.render(annotationTemplate, fieldHashMap);
@@ -166,11 +169,11 @@ public class ColumnMetadata {
             Map<String, Object> frameworkValidationAnnotations,
             Map<String, Object> fieldHashMap,
             GenesisTemplateEngine engine) throws Exception {
-
+        Map<String, Object> safeValidationAnnotations = Objects.requireNonNullElse(frameworkValidationAnnotations, new HashMap<>());
         if (validationAnnotations.containsKey("notNull")
-                && frameworkValidationAnnotations.containsKey("notNullAndNotBlank")) {
+                && safeValidationAnnotations.containsKey("notNullAndNotBlank")) {
 
-            String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault(
+            String annotationTemplate = (String) safeValidationAnnotations.getOrDefault(
                     "notNullAndNotBlank", "{{removeLine}}"
             );
             String annotationResult = engine.render(annotationTemplate, fieldHashMap);

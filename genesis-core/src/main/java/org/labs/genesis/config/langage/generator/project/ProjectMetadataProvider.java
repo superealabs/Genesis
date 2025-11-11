@@ -41,10 +41,26 @@ public class ProjectMetadataProvider {
             configFile.put("databasePassword", database.getCredentials().getPwd());
             configFile.put("databaseType", database.getName());
             configFile.put("databaseVersion", database.getDriverVersion());
+
+            // Django-specific database configuration
+            configFile.put("databaseEngine", getDjangoDatabaseEngine(database.getName()));
+            configFile.put("databaseName", database.getCredentials().getDatabaseName());
+            // configFile.put("databaseUser", database.getCredentials().getUser());
+            configFile.put("databaseHost", database.getCredentials().getHost());
+            configFile.put("databasePort", database.getCredentials().getPort());
         }
         configFile.putAll(frameworkOptions);
 
         return configFile;
+    }
+    private static String getDjangoDatabaseEngine(String databaseType) {
+        return switch (databaseType) {
+            case "MySQL" -> "django.db.backends.mysql";
+            case "PostgreSQL" -> "django.db.backends.postgresql";
+            case "SQL Server" -> "django.db.backends.sqlite3"; // Fallback to SQLite for SQL Server
+            case "Oracle" -> "django.db.backends.sqlite3"; // Fallback to SQLite for Oracle
+            default -> "django.db.backends.sqlite3";
+        };
     }
 
     static HashMap<String, Object> getDependencyFileHashMap(String projectDescription, Database database, Language language, Framework framework, Map<String, Object> langageConfiguration, Map<String, Object> frameworkConfiguration) {
@@ -62,6 +78,10 @@ public class ProjectMetadataProvider {
         allDependencies.addAll(additionalSecurityDependencies);
         List<HashMap<String, String>> additionalCacheProviderDependencies = getFrameworkCachingDependenciesHashMaps(framework, frameworkConfiguration);
         allDependencies.addAll(additionalCacheProviderDependencies);
+        // Filter out Django from dependencies to avoid duplication in requirements.txt (Django is already added explicitly)
+        if (framework.getCoreFramework() != null && framework.getCoreFramework().equalsIgnoreCase("Django")) {
+            allDependencies.removeIf(dep -> "Django".equals(dep.get("artifactId")));
+        }
         dependencyFileMap.put("dependencies", allDependencies);
 
         if (database != null && framework.getUseDB()) {
@@ -182,6 +202,18 @@ public class ProjectMetadataProvider {
         combinedMap.putAll(getInitialHashMap(destinationFolder, projectName, groupLink));
         combinedMap.putAll(getFrameworkSecurityTrueBooleansHashMap(framework,frameworkOptions));
         combinedMap.putAll(getFrameworkCachingTrueBooleansHashMap(framework,frameworkOptions));
+
+        // Ajouter enableAuth dans les métadonnées (par défaut true si non spécifié)
+        boolean enableAuth = true;
+        if (frameworkOptions != null && frameworkOptions.containsKey("enableAuth")) {
+            Object enableAuthValue = frameworkOptions.get("enableAuth");
+            if (enableAuthValue instanceof Boolean) {
+                enableAuth = (Boolean) enableAuthValue;
+            } else if (enableAuthValue instanceof String) {
+                enableAuth = Boolean.parseBoolean((String) enableAuthValue);
+            }
+        }
+        combinedMap.put("enableAuth", enableAuth);
 
         return combinedMap;
     }

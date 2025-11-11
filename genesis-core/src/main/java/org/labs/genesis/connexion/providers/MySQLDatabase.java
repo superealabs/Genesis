@@ -10,8 +10,10 @@ import org.labs.genesis.engine.GenesisTemplateEngine;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.labs.utils.StringUtils.toCamelCase;
 
@@ -131,7 +133,10 @@ public class MySQLDatabase extends Database {
         String databaseName = connex.getCatalog();
 
         try (ResultSet columns = metaData.getColumns(databaseName, null, tableName, null)) {
-            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+            Map<String, Object> frameworkValidationAnnotations = Objects.requireNonNullElse(
+                    framework.getModel().getValidationAnnotations(), 
+                    new HashMap<>()
+            );
             while (columns.next()) {
                 // Vérification CRITIQUE : s'assurer que la colonne vient de la bonne table
                 String actualTableName = columns.getString("TABLE_NAME");
@@ -225,7 +230,10 @@ public class MySQLDatabase extends Database {
 
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
-                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> frameworkValidationAnnotations = Objects.requireNonNullElse(
+                                    framework.getModel().getValidationAnnotations(), 
+                                    new HashMap<>()
+                            );
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             fieldHashMap.put("value",value);
                             col.getValidationAnnotations().put("numericMinimumValueData",value);
@@ -260,7 +268,10 @@ public class MySQLDatabase extends Database {
 
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
-                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> frameworkValidationAnnotations = Objects.requireNonNullElse(
+                                    framework.getModel().getValidationAnnotations(), 
+                                    new HashMap<>()
+                            );
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             fieldHashMap.put("value",value);
                             col.getValidationAnnotations().put("numericMaximumValueData",value);
@@ -296,7 +307,10 @@ public class MySQLDatabase extends Database {
 
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
-                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> frameworkValidationAnnotations = Objects.requireNonNullElse(
+                                    framework.getModel().getValidationAnnotations(), 
+                                    new HashMap<>()
+                            );
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             fieldHashMap.put("value",value);
                             col.getValidationAnnotations().put("numericMinimumInclusiveValueData",value);
@@ -332,7 +346,10 @@ public class MySQLDatabase extends Database {
 
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(columnName) && col.isNumeric()) {
-                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> frameworkValidationAnnotations = Objects.requireNonNullElse(
+                                    framework.getModel().getValidationAnnotations(), 
+                                    new HashMap<>()
+                            );
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             fieldHashMap.put("value",value);
                             col.getValidationAnnotations().put("numericMaximumInclusiveValueData",value);
@@ -365,7 +382,10 @@ public class MySQLDatabase extends Database {
                     String colName = rs.getString("column_name");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
-                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> frameworkValidationAnnotations = Objects.requireNonNullElse(
+                                    framework.getModel().getValidationAnnotations(), 
+                                    new HashMap<>()
+                            );
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("notBlank","{{removeLine}}");
                             String annotationResult = engine.render(annotationTemplate, fieldHashMap);
@@ -395,7 +415,10 @@ public class MySQLDatabase extends Database {
                     String minLength = rs.getString("min_length");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
-                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> frameworkValidationAnnotations = Objects.requireNonNullElse(
+                                    framework.getModel().getValidationAnnotations(), 
+                                    new HashMap<>()
+                            );
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             fieldHashMap.put("minLength",minLength);
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("minAndMaxSize","{{removeLine}}");
@@ -422,7 +445,10 @@ public class MySQLDatabase extends Database {
                     String pattern = rs.getString("regex_pattern");
                     for (ColumnMetadata col : columns) {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
-                            Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
+                            Map<String, Object> frameworkValidationAnnotations = Objects.requireNonNullElse(
+                                    framework.getModel().getValidationAnnotations(), 
+                                    new HashMap<>()
+                            );
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
                             fieldHashMap.put("value",pattern);
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("regexPattern","{{removeLine}}");

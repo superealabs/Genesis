@@ -1,6 +1,6 @@
 - id: 1
   frameworkId: 1
-  name: "Spring Security - JWT"
+  name: "JWT"
   securityFiles:
     - fileType: "Roles Entity"
       fileName: "RoleEntity"
@@ -991,8 +991,11 @@
 
     - fileType: "UserAuthController"
       fileName: "UserAuthController"
+    - fileType: "Example security class"
+      fileName: "ExampleClass"
       extension: "java"
       content: |
+        package ${groupLink}.${lowerCase(projectName)};
         package ${groupLink}.${lowerCase(projectName)}.config.security.controllers;
 
         import java.util.List;
@@ -2510,7 +2513,7 @@
   metadataBooleanTrueKeys:
     - "useJWT"
 - id: 3
-  frameworkId: 6
+  frameworkId: 8
   name: "Nest Security - JWT"
   securityFiles:
     - fileType: "Roles Entity"

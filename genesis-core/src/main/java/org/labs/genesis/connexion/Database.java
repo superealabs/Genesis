@@ -32,7 +32,7 @@ public abstract class Database {
     private String port;
     private Map<String, String> types;
     private List<String> excludeSchemas;
-    protected Credentials credentials;
+    private Credentials credentials;
     private Map<String, Object> databaseMetadata;
     private Map<String, Framework.Dependency> dependencies;
     private ConstraintQueries constraintQueries;
@@ -203,10 +203,9 @@ public abstract class Database {
                 String columnType = columns.getString("TYPE_NAME");
 
                 String isNullable = columns.getString("IS_NULLABLE");
-
+                String defaultValue = columns.getString("COLUMN_DEF");
                 int decimalDigits = columns.getInt("DECIMAL_DIGITS");
                 int columnSize = columns.getInt("COLUMN_SIZE");
-                String defaultValue = columns.getString("COLUMN_DEF");
                 boolean isColumnNumeric = isColumnNumeric(columns);
                 boolean isColumnNumericWithPrecision = isColumnNumericWithPrecision(columns);
                 boolean isColumnText = isColumnText(columns);
@@ -268,7 +267,7 @@ public abstract class Database {
         return listeCols;
     }
 
-    protected String getDatabaseType(ResultSet columns) throws Exception {
+    public String getDatabaseType(ResultSet columns) throws Exception {
         String columnType = columns.getString("TYPE_NAME");
 
         if (columns.getInt("DATA_TYPE") == Types.NUMERIC && this.getId() == Constantes.Oracle_ID) {

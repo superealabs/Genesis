@@ -5483,7 +5483,7 @@
       version: "{{removeLine}}"
       scope: "{{removeLine}}"
 
-- id: 6
+- id: 8
   languageId: 4
   coreFramework: "NestJS"
   name: "NestJS-WEB API"
@@ -7203,12 +7203,498 @@
       defaultOption: "NONE"
   dependencies: []
 
+- id: 7
+  languageId: 5
+  coreFramework: "Django"
+  name: "Django API"
+  template: "Template"
+  useDB: true
+  withGroupId: true
+  useCloud: false
+  useEurekaServer: false
+  isGateway: false
+  additionalFiles:
+    - fileType: "settings"
+      fileName: "settings"
+      extension: "py"
+      content: |
+        import os
+        from pathlib import Path
+
+        BASE_DIR = Path(__file__).resolve().parent.parent
+
+        SECRET_KEY = 'replace-this-with-your-secret-key'
+        DEBUG = True
+        ALLOWED_HOSTS = []
+
+        INSTALLED_APPS = [
+            'django.contrib.admin',
+            'django.contrib.auth',
+            'django.contrib.contenttypes',
+            'django.contrib.sessions',
+            'django.contrib.messages',
+            'django.contrib.staticfiles',
+            'rest_framework',
+            'drf_yasg',
+            '${projectName}',
+        ]
+
+        MIDDLEWARE = [
+            'django.middleware.security.SecurityMiddleware',
+            'django.contrib.sessions.middleware.SessionMiddleware',
+            'django.middleware.common.CommonMiddleware',
+            'django.middleware.csrf.CsrfViewMiddleware',
+            'django.contrib.auth.middleware.AuthenticationMiddleware',
+            'django.contrib.messages.middleware.MessageMiddleware',
+            'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        ]
+
+        ROOT_URLCONF = '${projectName}.urls'
+
+        TEMPLATES = [
+            {
+                'BACKEND': 'django.template.backends.django.DjangoTemplates',
+                'DIRS': [],
+                'APP_DIRS': True,
+                'OPTIONS': {
+                    'context_processors': [
+                        'django.template.context_processors.debug',
+                        'django.template.context_processors.request',
+                        'django.contrib.auth.context_processors.auth',
+                        'django.contrib.messages.context_processors.messages',
+                    ],
+                },
+            },
+        ]
+
+        WSGI_APPLICATION = '${projectName}.wsgi.application'
+
+        DATABASES = {
+            'default': {
+                'ENGINE': '${databaseEngine}',
+                'NAME': '${databaseName}',
+                'USER': '${databaseUsername}',
+                'PASSWORD': '${databasePassword}',
+                'HOST': '${databaseHost}',
+                'PORT': '${databasePort}',
+            }
+        }
+
+        AUTH_PASSWORD_VALIDATORS = [
+            {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+            {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+            {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+            {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+        ]
+
+        LANGUAGE_CODE = 'en-us'
+        TIME_ZONE = 'UTC'
+        USE_I18N = True
+        USE_L10N = True
+        USE_TZ = True
+
+        STATIC_URL = '/static/'
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
 
+    - fileType: "mainApp"
+      fileName: "admin"
+      extension: "py"
+      content: |
+        from django.contrib import admin
+        from django.apps import apps
 
+        # Auto-register all models
+        app_config = apps.get_app_config('${projectName}')
+        for model in app_config.get_models():
+            try:
+                admin.site.register(model)
+            except admin.sites.AlreadyRegistered:
+                pass
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
+    - fileType: "mainApp"
+      fileName: "apps"
+      extension: "py"
+      content: |
+        from django.apps import AppConfig
 
+        class ${majStart(projectName)}Config(AppConfig):
+            default_auto_field = 'django.db.models.BigAutoField'
+            name = '${projectName}'
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
+    - fileType: "mainApp"
+      fileName: "serializers"
+      extension: "py"
+      content: |
+        from rest_framework import serializers
+        from django.apps import apps
 
+        # Auto-generate serializers for all Django models
+        for model in apps.get_app_config('${projectName}').get_models():
+            serializer_name = f"{model.__name__}Serializer"
+            serializer_class = type(serializer_name, (serializers.ModelSerializer,), {
+                'Meta': type('Meta', (), {
+                    'model': model,
+                    'fields': '__all__'
+                })
+            })
+            globals()[serializer_name] = serializer_class
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
 
+    - fileType: "mainApp"
+      fileName: "__init__"
+      extension: "py"
+      content: |
+        ${entitiesImports}
 
+        __all__ = [${entitiesAll}]
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/models"
+
+    - fileType: "mainProject"
+      fileName: "urls"
+      extension: "py"
+      content: |
+        from django.contrib import admin
+        from django.urls import path, include
+        from drf_yasg.views import get_schema_view
+        from drf_yasg import openapi
+        from rest_framework.permissions import AllowAny
+
+        from ${projectName}.api import viewsets
+
+        schema_view = get_schema_view(
+            openapi.Info(
+                title="${projectName} API",
+                default_version='v1',
+                description="REST API for ${projectName} with function-based views",
+                contact=openapi.Contact(email="admin@${projectName}.com"),
+                license=openapi.License(name="MIT License"),
+            ),
+            public=True,
+            permission_classes=(AllowAny,),
+        )
+
+        urlpatterns = [
+            path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+            path('admin/', admin.site.urls),
+            {{#each entities}}
+            path('api/${lowerCase(this)}/', viewsets.${lowerCase(this)}_list_create, name='${lowerCase(this)}-list-create'),
+            path('api/${lowerCase(this)}/<int:pk>/', viewsets.${lowerCase(this)}_detail, name='${lowerCase(this)}-detail'),
+            {{/each}}
+            path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+            path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+        ]
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
+
+    - fileType: "python"
+      fileName: "__init__"
+      extension: "py"
+      content: |
+        # Auto-discover and export all function-based views in this package
+        import pkgutil
+        import importlib
+        import inspect
+        from types import FunctionType
+
+        __all__ = []
+
+        for _, module_name, _ in pkgutil.iter_modules(__path__):
+            module = importlib.import_module(f"{__name__}.{module_name}")
+            for name, obj in inspect.getmembers(module):
+                if isinstance(obj, FunctionType) and obj.__module__ == module.__name__:
+                    globals()[name] = obj
+                    __all__.append(name)
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/api/viewsets"
+
+    - fileType: "mainProject"
+      fileName: "wsgi"
+      extension: "py"
+      content: |
+        import os
+        from django.core.wsgi import get_wsgi_application
+
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', '${projectName}.settings')
+        application = get_wsgi_application()
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}"
+  configurations:
+    - name: "Framework Version"
+      variableName: "frameworkVersion"
+      options:
+        - "5.2.6"
+        - "4.2.7"
+        - "4.1.13"
+      defaultOption: "5.2.6"
+    - name: "Database Engine"
+      variableName: "databaseEngine"
+      options:
+        - "django.db.backends.mysql"
+        - "django.db.backends.postgresql"
+        - "django.db.backends.sqlite3"
+      defaultOption: "django.db.backends.mysql"
+    - name: "Database Name"
+      variableName: "databaseName"
+      options:
+        - "myproject_db"
+      defaultOption: "myproject_db"
+    - name: "Database User"
+      variableName: "databaseUser"
+      options:
+        - "root"
+      defaultOption: "root"
+    - name: "Database Password"
+      variableName: "databasePassword"
+      options:
+        - "password"
+      defaultOption: "password"
+    - name: "Database Host"
+      variableName: "databaseHost"
+      options:
+        - "localhost"
+      defaultOption: "localhost"
+    - name: "Database Port"
+      variableName: "databasePort"
+      options:
+        - "3306"
+        - "5432"
+        - "1433"
+      defaultOption: "3306"
+  dependencies:
+    - groupId: "django"
+      artifactId: "Django"
+      version: "${frameworkVersion}"
+      scope: ""
+
+    - groupId: "mysqlclient"
+      artifactId: "mysqlclient"
+      version: "2.2.4"
+      scope: ""
+
+    - groupId: "djangorestframework"
+      artifactId: "djangorestframework"
+      version: "3.15.2"
+      scope: ""
+
+    - groupId: "drf-yasg"
+      artifactId: "drf-yasg"
+      version: "1.21.7"
+      scope: ""
+
+  model:
+    toGenerate: true
+    modelImports: |
+      from django.db import models
+    modelExtends: "(models.Model)"
+    modelAnnotations: ""
+    modelFieldContent: |
+      {{space}}{{#each fields}}{{#if this.isPrimaryKey}}
+      {{space}}${this.name} = models.AutoField(primary_key=True){{elseIf this.isForeignKey}}
+      {{space}}${this.name} = models.${this.djangoArgs}{{else}}
+      {{space}}${this.name} = models.${this.djangoArgs}{{/if}}
+      {{space}}{{/each}}
+    modelGetterSetter: |
+      {{space}}def __str__(self):
+      {{space}}{{space}}return f"${majStart(className)} {self.${pkColumn}}"
+    modelConstructors: |
+      {{space}}class Meta:
+      {{space}}{{space}}db_table = '${tableName}'
+    modelSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/models"
+    modelPackage: "{{removeLine}}"
+    modelAdditionalFiles:
+      - fileType: "python"
+        fileName: "${lowerCase(className)}_views"
+        extension: "py"
+        content: |
+          from rest_framework.decorators import api_view
+          from rest_framework.response import Response
+          from rest_framework import status
+          from django.shortcuts import get_object_or_404
+          from drf_yasg.utils import swagger_auto_schema
+          from drf_yasg import openapi
+          from ${projectName}.models import ${majStart(className)}
+          from ${projectName}.serializers import ${majStart(className)}Serializer
+
+          @swagger_auto_schema(
+              method='get',
+              operation_summary='List all ${majStart(className)}s',
+              operation_description='Retrieve a list of all ${lowerCase(className)}s',
+              responses={
+                  200: ${majStart(className)}Serializer(many=True),
+              },
+              tags=['${majStart(className)}']
+          )
+          @swagger_auto_schema(
+              method='post',
+              operation_summary='Create a new ${majStart(className)}',
+              operation_description='Create a new ${lowerCase(className)} instance',
+              request_body=${majStart(className)}Serializer,
+              responses={
+                  201: ${majStart(className)}Serializer,
+                  400: 'Bad request - validation errors',
+              },
+              tags=['${majStart(className)}']
+          )
+          @api_view(['GET', 'POST'])
+          def ${lowerCase(className)}_list_create(request):
+              """
+              List all ${lowerCase(className)}s or create a new ${lowerCase(className)}.
+              """
+              if request.method == 'GET':
+                  ${lowerCase(className)}s = ${majStart(className)}.objects.all()
+                  serializer = ${majStart(className)}Serializer(${lowerCase(className)}s, many=True)
+                  return Response(serializer.data)
+              
+              elif request.method == 'POST':
+                  serializer = ${majStart(className)}Serializer(data=request.data)
+                  if serializer.is_valid():
+                      serializer.save()
+                      return Response(serializer.data, status=status.HTTP_201_CREATED)
+                  return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+          @swagger_auto_schema(
+              method='get',
+              operation_summary='Retrieve a ${majStart(className)}',
+              operation_description='Get details of a specific ${lowerCase(className)} by ID',
+              manual_parameters=[
+                  openapi.Parameter('pk', openapi.IN_PATH, description='${majStart(className)} ID', type=openapi.TYPE_INTEGER),
+              ],
+              responses={
+                  200: ${majStart(className)}Serializer,
+                  404: '${majStart(className)} not found',
+              },
+              tags=['${majStart(className)}']
+          )
+          @swagger_auto_schema(
+              method='put',
+              operation_summary='Update a ${majStart(className)} (full)',
+              operation_description='Update all fields of a ${lowerCase(className)} instance',
+              manual_parameters=[
+                  openapi.Parameter('pk', openapi.IN_PATH, description='${majStart(className)} ID', type=openapi.TYPE_INTEGER),
+              ],
+              request_body=${majStart(className)}Serializer,
+              responses={
+                  200: ${majStart(className)}Serializer,
+                  400: 'Bad request - validation errors',
+                  404: '${majStart(className)} not found',
+              },
+              tags=['${majStart(className)}']
+          )
+          @swagger_auto_schema(
+              method='patch',
+              operation_summary='Update a ${majStart(className)} (partial)',
+              operation_description='Update specific fields of a ${lowerCase(className)} instance',
+              manual_parameters=[
+                  openapi.Parameter('pk', openapi.IN_PATH, description='${majStart(className)} ID', type=openapi.TYPE_INTEGER),
+              ],
+              request_body=${majStart(className)}Serializer,
+              responses={
+                  200: ${majStart(className)}Serializer,
+                  400: 'Bad request - validation errors',
+                  404: '${majStart(className)} not found',
+              },
+              tags=['${majStart(className)}']
+          )
+          @swagger_auto_schema(
+              method='delete',
+              operation_summary='Delete a ${majStart(className)}',
+              operation_description='Delete a ${lowerCase(className)} instance',
+              manual_parameters=[
+                  openapi.Parameter('pk', openapi.IN_PATH, description='${majStart(className)} ID', type=openapi.TYPE_INTEGER),
+              ],
+              responses={
+                  204: '${majStart(className)} deleted successfully',
+                  404: '${majStart(className)} not found',
+              },
+              tags=['${majStart(className)}']
+          )
+          @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+          def ${lowerCase(className)}_detail(request, pk):
+              """
+              Retrieve, update or delete a ${lowerCase(className)} instance.
+              """
+              ${lowerCase(className)} = get_object_or_404(${majStart(className)}, pk=pk)
+              
+              if request.method == 'GET':
+                  serializer = ${majStart(className)}Serializer(${lowerCase(className)})
+                  return Response(serializer.data)
+              
+              elif request.method == 'PUT':
+                  serializer = ${majStart(className)}Serializer(${lowerCase(className)}, data=request.data)
+                  if serializer.is_valid():
+                      serializer.save()
+                      return Response(serializer.data)
+                  return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+              
+              elif request.method == 'PATCH':
+                  serializer = ${majStart(className)}Serializer(${lowerCase(className)}, data=request.data, partial=True)
+                  if serializer.is_valid():
+                      serializer.save()
+                      return Response(serializer.data)
+                  return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+              
+              elif request.method == 'DELETE':
+                  ${lowerCase(className)}.delete()
+                  return Response(status=status.HTTP_204_NO_CONTENT)
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/api/viewsets"
+  controller:
+    toGenerate: true
+    controllerImports: |
+      from django.http import JsonResponse
+      from django.views.decorators.csrf import csrf_exempt
+      from django.views.decorators.http import require_http_methods
+      from django.shortcuts import get_object_or_404
+      from django.core.serializers import serialize
+      from django.utils.decorators import method_decorator
+      from ${projectName}.models import ${majStart(className)}
+      import json
+    controllerAnnotations: ""
+    controllerExtends: ""
+    controllerName: "api_${lowerCase(className)}"
+    controllerFieldContent: |
+      @require_http_methods(["GET"])
+      def ${lowerCase(className)}_list(request):
+      {{tab}}objects = ${majStart(className)}.objects.all()
+      {{tab}}data = json.loads(serialize("json", objects))
+      {{tab}}return JsonResponse(data, safe=False)
+
+      @require_http_methods(["GET"])
+      def ${lowerCase(className)}_detail(request, pk):
+      {{tab}}obj = get_object_or_404(${majStart(className)}, pk=pk)
+      {{tab}}data = json.loads(serialize("json", [obj]))[0]
+      {{tab}}return JsonResponse(data, safe=False)
+
+      @csrf_exempt
+      @require_http_methods(["POST"])
+      def ${lowerCase(className)}_create(request):
+      {{tab}}body = json.loads(request.body.decode("utf-8"))
+      {{tab}}obj = ${majStart(className)}.objects.create(**body)
+      {{tab}}return JsonResponse({"id": obj.id}, status=201)
+
+      @csrf_exempt
+      @require_http_methods(["PUT", "PATCH"])
+      def ${lowerCase(className)}_update(request, pk):
+      {{tab}}obj = get_object_or_404(${majStart(className)}, pk=pk)
+      {{tab}}body = json.loads(request.body.decode("utf-8"))
+      {{tab}}for key, value in body.items():
+      {{tab}}{{tab}}setattr(obj, key, value)
+      {{tab}}obj.save()
+      {{tab}}return JsonResponse({"id": obj.id}, status=200)
+
+      @csrf_exempt
+      @require_http_methods(["DELETE"])
+      def ${lowerCase(className)}_delete(request, pk):
+      {{tab}}obj = get_object_or_404(${majStart(className)}, pk=pk)
+      {{tab}}obj.delete()
+      {{tab}}return JsonResponse({}, status=204)
+    controllerConstructors: "{{removeLine}}"
+    controllerMethodContent: "{{removeLine}}"
+    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/api"
+    controllerPackage: "{{removeLine}}"
+    controllerAdditionalFiles:
+      - fileType: "python"
+        fileName: "__init__"
+        extension: "py"
+        content: |
+          # Package API
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/api"
