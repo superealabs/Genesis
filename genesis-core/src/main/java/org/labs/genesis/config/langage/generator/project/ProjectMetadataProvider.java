@@ -78,6 +78,10 @@ public class ProjectMetadataProvider {
         allDependencies.addAll(additionalSecurityDependencies);
         List<HashMap<String, String>> additionalCacheProviderDependencies = getFrameworkCachingDependenciesHashMaps(framework, frameworkConfiguration);
         allDependencies.addAll(additionalCacheProviderDependencies);
+        // Filter out Django from dependencies to avoid duplication in requirements.txt (Django is already added explicitly)
+        if (framework.getCoreFramework() != null && framework.getCoreFramework().equalsIgnoreCase("Django")) {
+            allDependencies.removeIf(dep -> "Django".equals(dep.get("artifactId")));
+        }
         dependencyFileMap.put("dependencies", allDependencies);
 
         if (database != null && framework.getUseDB()) {

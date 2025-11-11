@@ -527,6 +527,9 @@ public class FrameworkMetadataProvider {
 
     public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName) throws Exception {
         String packageDefault = "";
+        if (framework.getModelDao() == null) {
+            throw new RuntimeException("ModelDao is not configured for framework: " + framework.getName());
+        }
         packageDefault = framework.getModelDao().getModelDaoSavePath();
         System.out.println("Get hashmapDAO global " + packageDefault);
         System.out.println(tableMetadata.size()+ " SIZEEEEE");
@@ -556,6 +559,14 @@ public class FrameworkMetadataProvider {
         }
 
         // Generate imports for models/__init__.py
+        Map<String, Object> entitiesMetadata = generateEntitiesImportsAndAll(tableMetadata);
+        metadata.putAll(entitiesMetadata);
+        metadata.put("entities", fields);
+        metadata.put("allEntities", getTableMetadataList(tableMetadata));
+        return metadata;
+    }
+
+    public static Map<String, Object> generateEntitiesImportsAndAll(List<TableMetadata> tableMetadata) {
         List<String> entitiesImports = new ArrayList<>();
         List<String> entitiesAll = new ArrayList<>();
         for (TableMetadata tableMetadatum : tableMetadata) {
@@ -563,9 +574,7 @@ public class FrameworkMetadataProvider {
             entitiesImports.add("from ." + className + " import " + className);
             entitiesAll.add("'" + className + "'");
         }
-
-        metadata.put("entities", fields);
-        metadata.put("allEntities", getTableMetadataList(tableMetadata));
+        Map<String, Object> metadata = new HashMap<>();
         metadata.put("entitiesImports", String.join("\n", entitiesImports));
         metadata.put("entitiesAll", String.join(", ", entitiesAll));
         return metadata;
