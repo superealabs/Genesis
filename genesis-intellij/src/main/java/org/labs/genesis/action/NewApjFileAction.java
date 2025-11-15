@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.action.apjwizard.ApjWizardDialog;
 import org.labs.genesis.icon.SdkIcons;
 
 import javax.swing.*;
@@ -16,7 +17,8 @@ public class NewApjFileAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        //
+        ApjWizardDialog dialog = new ApjWizardDialog();
+        dialog.show();
     }
 
     @Override

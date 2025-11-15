@@ -1,0 +1,53 @@
+- id : 1
+  name : "Page Recherche"
+  imports : |
+    <%@ page import="affichage.PageRecherche"%>
+    <%@ page import="${packageMapping}" %>
+  pr : |
+    <% try{ 
+        ${mapping} o = new ${mapping}();
+        o.setNomTable("${nomTable}");
+        String[] listeCrt = {${listeCrt}};
+        String[] listeInt = {${listeInt}};
+        String[] libEntete = {${libEntete}};
+        PageRecherche pr = new PageRecherche(o, request, listeCrt, listeInt,4, libEntete, libEntete.length);
+        pr.setTitre("${titre}");
+        pr.setUtilisateur((user.UserEJB) session.getValue("u"));
+        pr.setLien((String) session.getValue("lien"));
+        pr.setApres("${apres}");
+
+        String[] colSomme = ${colSomme};
+        pr.creerObjetPage(libEntete, colSomme);
+
+        String[] libEnteteAffiche = {${libEnteteAffiche}};
+        pr.getTableau().setLibelleAffiche(libEnteteAffiche);
+    %>
+
+  html : |
+    <div class="content-wrapper">
+        <section class="content-header">
+            <h1><%= pr.getTitre() %></h1>
+        </section>
+        <section class="content">
+            <form action="<%=pr.getLien()%>?but=<%= pr.getApres() %>" method="post">
+                <%
+                    out.println(pr.getFormu().getHtmlEnsemble());
+                %>
+            </form>
+            <%
+                out.println(pr.getTableauRecap().getHtml());
+            %>
+            <br>
+            <%
+                out.println(pr.getTableau().getHtml());
+                out.println(pr.getBasPage());
+            %>
+        </section>
+    </div>
+  basPage : |
+    <%
+        }catch(Exception e){
+
+            e.printStackTrace();
+        }
+    %>
