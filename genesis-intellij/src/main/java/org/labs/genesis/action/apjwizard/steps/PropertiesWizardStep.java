@@ -7,10 +7,10 @@ import javax.swing.*;
 
 public class PropertiesWizardStep implements WizardStep {
     private final PropertiesForm propertiesForm;
-    private final ApjGenerationContext apjGenerationContext;
+    private final ApjGenerationContext context;
 
-    public PropertiesWizardStep(ApjGenerationContext apjGenerationContext) {
-        this.apjGenerationContext = apjGenerationContext;
+    public PropertiesWizardStep(ApjGenerationContext context) {
+        this.context = context;
         propertiesForm = new PropertiesForm();
     }
 
@@ -31,8 +31,10 @@ public class PropertiesWizardStep implements WizardStep {
 
     @Override
     public void onNext() {
-
+        String selectedType = (String) propertiesForm.getFileApjType().getSelectedItem();
+        context.setApjType(selectedType);
     }
+
 
     @Override
     public void onBack() {

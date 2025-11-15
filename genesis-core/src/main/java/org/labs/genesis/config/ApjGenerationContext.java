@@ -7,6 +7,9 @@ import org.labs.genesis.apj.affichage.gen.PageRechercheGen;
 @Getter
 @Setter
 public class ApjGenerationContext {
+    public static final String PAGE_RECHERCHE = "PageRecherche";
+    public static final String PAGE_INSERT = "PageInsert";
+
     private String libDir;
     private String projectJarDir;
     private String locationDir;

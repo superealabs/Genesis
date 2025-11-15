@@ -1,26 +1,28 @@
 package org.labs.genesis.action.apjwizard.steps;
 
-import org.labs.genesis.action.apjwizard.forms.PageRechercheForm;
+import org.labs.genesis.action.apjwizard.forms.PageInsertForm;
 import org.labs.genesis.config.ApjGenerationContext;
-import javax.swing.*;
 
-public class PageRechercheWizardStep implements WizardStep {
-    private final PageRechercheForm pageRechercheForm;
+import javax.swing.*;
+import java.awt.*;
+
+public class PageInsertWizardStep implements WizardStep {
+    private final PageInsertForm pageInsertWizardStep;
     private final ApjGenerationContext context;
 
-    public PageRechercheWizardStep(ApjGenerationContext context) {
+    public PageInsertWizardStep(ApjGenerationContext context) {
         this.context = context;
-        this.pageRechercheForm = new PageRechercheForm();
+        this.pageInsertWizardStep = new PageInsertForm();
     }
 
     @Override
     public JComponent getComponent() {
-        return pageRechercheForm.getMainPanel();
+        return pageInsertWizardStep.getMainPanel();
     }
 
     @Override
     public String getTitle() {
-        return "Page Recherche";
+        return "Page Insert";
     }
 
     @Override

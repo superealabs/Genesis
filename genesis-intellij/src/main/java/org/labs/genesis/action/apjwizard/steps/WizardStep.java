@@ -12,7 +12,5 @@ public interface WizardStep {
 
     void onNext();
 
-    default void onBack() {
-
-    }
+    default void onBack() {}
 }
