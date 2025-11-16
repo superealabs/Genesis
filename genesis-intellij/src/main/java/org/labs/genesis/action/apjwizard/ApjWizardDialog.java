@@ -2,25 +2,112 @@ package org.labs.genesis.action.apjwizard;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.Nullable;
+import org.labs.genesis.action.apjwizard.steps.PageInsertWizardStep;
+import org.labs.genesis.action.apjwizard.steps.PageRechercheWizardStep;
 import org.labs.genesis.action.apjwizard.steps.PropertiesWizardStep;
+import org.labs.genesis.action.apjwizard.steps.WizardStep;
 import org.labs.genesis.config.ApjGenerationContext;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.labs.genesis.config.ApjGenerationContext.*;
 
 public class ApjWizardDialog extends DialogWrapper {
-    private JPanel mainPanel;
-    private final PropertiesWizardStep step;
+    private final JPanel mainPanel;
+    private final ApjGenerationContext context;
+    private final List<WizardStep> steps = new ArrayList<>();
+    private int currentStepIndex = 0;
 
     public ApjWizardDialog() {
         super(true);
-        step = new PropertiesWizardStep(new ApjGenerationContext());
+        context = new ApjGenerationContext();
+        mainPanel = new JPanel(new BorderLayout());
+        steps.add(new PropertiesWizardStep(context));
         init();
+        updateStep();
+    }
+
+    private void updateStep() {
+        WizardStep step = steps.get(currentStepIndex);
+        mainPanel.removeAll();
+        mainPanel.add(step.getComponent(), BorderLayout.CENTER);
+        setTitle(step.getTitle());
+        mainPanel.revalidate();
+        mainPanel.repaint();
+    }
+
+    private void nextStep() {
+        WizardStep step = steps.get(currentStepIndex);
+
+        if (!step.validateStep()) return;
+        step.onNext();
+
+        if (currentStepIndex == 0) {
+            WizardStep nextStep = switch (context.getApjType()) {
+                case PAGE_RECHERCHE -> new PageRechercheWizardStep(context);
+                case PAGE_INSERT -> new PageInsertWizardStep(context);
+                default -> null;
+            };
+
+            if (nextStep != null) {
+                if (steps.size() > 1) {
+                    steps.set(1, nextStep);
+                } else {
+                    steps.add(nextStep);
+                }
+                currentStepIndex++;
+                updateStep();
+                return;
+            }
+        }
+
+        if (currentStepIndex == steps.size() - 1) {
+            close(OK_EXIT_CODE);
+        }
     }
 
 
+    private void previousStep() {
+        if (currentStepIndex > 0) {
+            currentStepIndex--;
+            updateStep();
+        }
+    }
+
     @Override
     protected @Nullable JComponent createCenterPanel() {
-        return step.getComponent();
+        return mainPanel;
+    }
+
+    @Override
+    protected Action[] createActions() {
+        return new Action[]{
+            new DialogWrapperAction("Back") {
+                @Override
+                protected void doAction(ActionEvent e) {
+                    previousStep();
+                }
+            },
+            new DialogWrapperAction("Next") {
+                @Override
+                protected void doAction(ActionEvent e) {
+                    nextStep();
+                }
+            },
+            getCancelAction()
+        };
+    }
+
+    @Override
+    protected void doOKAction() {
+        WizardStep step = steps.get(currentStepIndex);
+        if (!step.validateStep()) return;
+
+        step.onNext();
+        super.doOKAction();
     }
 }
