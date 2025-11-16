@@ -1,5 +1,5 @@
 export class RegisterDTO{
-  name?: string
+  username?: string
   email?:string
   password?:string
   roleidRoleEntity: {
@@ -7,7 +7,7 @@ export class RegisterDTO{
   }
 
   constructor(name?:string, email?:string, password?:string, roleId?:string) {
-    this.name = name
+    this.username = name
     this.email = email
     this.password = password
     this.roleidRoleEntity = {

@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
@@ -38,6 +39,7 @@ public class ProjectGenerationContext {
     private List<String> viewNames;
     private List<TableMetadata> entityTables;
     private List<TableMetadata> viewTables;
+    private List<RelationParameter> relationParameters;
     private Connection connection;
     private List<String> generationOptions;
     private boolean generateProjectStructure = true;
@@ -136,5 +138,19 @@ public class ProjectGenerationContext {
             }
         }
         return null;
+    }
+    public List<TableMetadata> getAllTables(){
+        List<TableMetadata> allTables = new ArrayList<>();
+        if(this.entityTables != null){
+            allTables.addAll(this.entityTables);
+        }
+        if(this.viewTables != null){
+            allTables.addAll(this.viewTables);
+        }
+        return allTables;
+    }
+
+    public String getDestinationFolder() {
+        return destinationFolder+"/"+projectName;
     }
 }

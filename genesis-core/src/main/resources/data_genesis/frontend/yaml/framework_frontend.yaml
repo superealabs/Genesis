@@ -2456,18 +2456,18 @@
 
         <template>
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-semibold text-base-content">Profile View</h2>
+            <h2 class="text-xl font-semibold text-base-content">{{ $t('profile.myProfile') }}</h2>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="">
-              <label for="userName" class="block text-sm font-medium mb-1">Username</label>
+              <label for="userName" class="block text-sm font-medium mb-1">{{ $t('authentication.username') }}</label>
               <div id="userName" class="input w-full bg-base-100 cursor-default">
                 <span>{{ user.username ?? '' }}</span>
               </div>
             </div>
 
             <div class="">
-              <label for="userEmail" class="block text-sm font-medium mb-1">Email</label>
+              <label for="userEmail" class="block text-sm font-medium mb-1">{{ $t('authentication.email')}}</label>
               <div id="userEmail" class="input w-full bg-base-100 cursor-default">
                 <span>{{ user.email ?? '' }}</span>
               </div>
@@ -2476,9 +2476,9 @@
 
           <div class="flex gap-4 mt-4">
             <router-link to="/auth/change-password">
-              <GenesisButton label="Modifier le mot de passe" />
+              <GenesisButton :label="$t('profile.changePassword')" />
             </router-link>
-            <GenesisButton label="Update Profile" @click="goToUpdateProfile" />
+            <GenesisButton :label="$t('profile.edit')" @click="goToUpdateProfile" />
           </div>
 
           <div class="mt-4">
@@ -2976,7 +2976,7 @@
                         <span class="hidden lg:inline">{{ $t(section.sectionName) }}</span>
                       </summary>
 
-                      <ul class="p-2 menu dropdown-content bg-base-200 rounded-box shadow-md w-52">
+                      <ul class="p-2 menu dropdown-content bg-base-200 rounded-box shadow-md w-52 z-[1]">
                         <GenesisTopNavList :items="section.navChilds" @close="closeDropdown" />
                       </ul>
                     </details>
@@ -5212,7 +5212,7 @@
           <!-- Delete confirmation popup -->
           <DeleteConfirmationPopup
             :visible="deletePopup"
-            :message="`Are you sure you want to delete ${majStart(className)} ${selectedEntity?.id}?`"
+            :message="$t('confirmation.delete')"
             @confirm="confirmDelete"
             @cancel="closePopup"
           />{{/if}}
@@ -5320,6 +5320,7 @@
               :listComponent="${majStart(className)}List"
               :entities="${minPluralize(className)}"
               :message="message"
+              @export:csv="onExport"
             />
           </div>
         </template>
@@ -5327,10 +5328,14 @@
       destinationPath: "${destinationFolder}/src/views/${minStart(className)}"
       export: |
         // Composable for managing entities
-        const {${minPluralize(className)}, search${majPluralize(className)}, message, getPaginationData{{#if !isView}}, goToCreateFormView{{/if}} } = use${majPluralize(className)}()
+        const {${minPluralize(className)}, search${majPluralize(className)}, message, getPaginationData{{#if !isView}}, goToCreateFormView{{/if}}, export${majStart(className)}sToCsv } = use${majPluralize(className)}()
 
         // Reactive search fields
         const searchFields = ref<EntitySearchField[]>(${majStart(className)}.getAllSearchFieldsMetadata());
+        
+        const onExport = async () => {
+          await export${majStart(className)}sToCsv(${minPluralize(className)}.value)
+        }
       componentAdditionalFiles:
         - fileType: "Entity Composable"
           fileName: "use${majPluralize(className)}"
@@ -5582,6 +5587,10 @@
                 }
                 stopLoading()
               }
+              const export${majStart(className)}sToCsv = async (data: Partial<${majStart(className)}[]>) => {
+                console.log('Exporting ${majStart(className)} to CSV', data)
+                await ${minStart(className)}Service.exportCsv(data)
+              }
 
               /** Getter for pagination data */
               const getPaginationData = () => paginationData.value
@@ -5592,7 +5601,7 @@
                 message,
                 paginationData,
                 getPaginationData,
-
+                export${majStart(className)}sToCsv,
                 load${majStart(className)}s,
                 search${majStart(className)}s,
                 get${majStart(className)}ById,
@@ -5625,7 +5634,7 @@
                 name: '${minStart(className)}detailsview',
                 component: () => import('@/views/${minStart(className)}/${majStart(className)}DetailsView.vue'),
                 {{#if useJWT}}meta: { requiresAuth: true },{{/if}}
-              },{{#if !isView and useJWT}}
+              },{{#if isView=false and useJWT=true}}
               {
                 path: '${minStart(className)}s/update/:id',
                 name: '${minStart(className)}updateview',
@@ -5812,7 +5821,7 @@
                   <EntityTable
                     :entity-model="${minStart(this.className)}Entity"
                     :entity-search-fields="${minStart(this.className)}SearchFields"
-                    :default-active-filters="['${minStart(this.parentFk)}']"
+                    :default-active-filters="['${minStart(this.parentName)}']"
                     :searchFn="search${majStart(this.className)}s"
                     :getPaginationData="${minStart(this.className)}GetPaginationData"
                     :listComponent="${majStart(this.className)}List"
@@ -5845,7 +5854,7 @@
           getPaginationData: ${minStart(this.className)}GetPaginationData,
         } = use${majStart(this.className)}s()
         const ${minStart(this.className)}SearchFields = ref<EntitySearchField[]>(${majStart(this.className)}.getAllSearchFieldsMetadata())
-        const ${minStart(this.className)}Entity = ref<Record<string, unknown>>({ ${minStart(this.parentFk)}: pathId })
+        const ${minStart(this.className)}Entity = ref<Record<string, unknown>>({ ${minStart(this.parentName)}: pathId })
         {{/each}}{{/if}}
         onMounted(async () => {
           const result = await get${majStart(className)}ById(pathId)
@@ -5883,24 +5892,24 @@
                   {{elseIf this.isForeignKey and isParentTable}}
                   <!-- ${formatReadable(this.name)} FK -->
                   <GenesisSelectSearchCriteria
-                    v-if="${minStart(this.type)}SearchField?.multicriteriaSelect"
+                    v-if="${minStart(this.name)}SearchField?.multicriteriaSelect"
                     label="${formatReadable(this.name)}"
                     key="${minStart(className)}${majStart(this.name)}"
-                    :search-function="${minStart(this.type)}SearchField?.multicriteriaSelect.searchFunction"
-                    :filters="${minStart(this.type)}SearchField?.multicriteriaSelect.filters"
-                    :default-value="${minStart(this.type)}DefaultValue"
+                    :search-function="${minStart(this.name)}SearchField?.multicriteriaSelect.searchFunction"
+                    :filters="${minStart(this.name)}SearchField?.multicriteriaSelect.filters"
+                    :default-value="${minStart(this.name)}DefaultValue"
                     :violation="${minStart(className)}Violations ? ${minStart(className)}Violations['${minStart(this.name)}'] : undefined"
                     @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = String(selectedValue))"
                   />
                   {{elseIf this.isForeignKey}}
                   <!-- ${formatReadable(this.name)} FK -->
                   <GenesisSelectSearchCriteria
-                    v-if="${minStart(this.type)}SearchField?.multicriteriaSelect"
+                    v-if="${minStart(this.name)}SearchField?.multicriteriaSelect"
                     label="${formatReadable(this.name)}"
                     key="${minStart(className)}${majStart(this.name)}"
-                    :search-function="${minStart(this.type)}SearchField?.multicriteriaSelect.searchFunction"
-                    :filters="${minStart(this.type)}SearchField?.multicriteriaSelect.filters"
-                    :default-value="${minStart(this.type)}DefaultValue"
+                    :search-function="${minStart(this.name)}SearchField?.multicriteriaSelect.searchFunction"
+                    :filters="${minStart(this.name)}SearchField?.multicriteriaSelect.filters"
+                    :default-value="${minStart(this.name)}DefaultValue"
                     :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = String(selectedValue))"
                   />
@@ -5969,8 +5978,8 @@
         {{/if}}
         const formModel = ref<Partial<${majStart(className)}FormDTO>>({ ...${majStart(className)}FormDTO.parse(props.${minStart(className)}) })
         {{#each fieldsFK}}
-        const ${minStart(this.type)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
-        const ${minStart(this.type)}DefaultValue = props.${minStart(className)}
+        const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
+        const ${minStart(this.name)}DefaultValue = props.${minStart(className)}
         ? (props.${minStart(className)}?.${this.name}?.getReferenceValue?.() ?? undefined)
         : undefined
         {{/each}}
@@ -6071,7 +6080,7 @@
         const initial${majStart(this.className)}s = ref<${majStart(this.className)}FormDTO[]>([])
         const load${majStart(this.className)}s = async () => {
           try {
-            const filters: Partial<${majStart(this.className)}> = { saleidSales: new ${majStart(className)}({ saleId: pathId }) }
+            const filters: Partial<${majStart(this.className)}> = { ${minStart(this.parentName)}: new ${majStart(className)}({ ${minStart(parentPk)}: pathId }) }
             await search${majStart(this.className)}s(true, filters, new PaginationRequestParameter(), [])
             initial${majStart(this.className)}s.value = ${majStart(this.className)}FormDTO.parseList(${minStart(this.className)}s.value)
             ${minStart(this.className)}Loaded.value = true
@@ -6106,7 +6115,7 @@
             {{/each}}
           }
           try {
-            const { data, errors } = await updateSale(pathId, payload)
+            const { data, errors } = await update${majStart(className)}(pathId, payload)
           
             if (errors && Object.keys(errors).length > 0) {
               // Gérer les erreurs de validation
@@ -6116,7 +6125,8 @@
                 ${minStart(this.className)}s: Record<string, string>[]
               {{/each}}
               }
-            } else if (data && !message.value) {
+            } 
+            if (data && !message.value) {
               view${majStart(className)}(data)
             } else {
               throw new Error(String(message.value))
@@ -6259,7 +6269,8 @@
                 ${minStart(this.className)}s: Record<string, string>[]
                 {{/each}}
               }
-            }else if (data && !message.value) {
+            }
+            if (data && !message.value) {
               view${majStart(className)}(data)
             } else {
               throw new Error(String(message.value))
@@ -6296,6 +6307,7 @@
     destinationPath: "${destinationFolder}/src/services"
     imports: |
       import api from '@/services/api'
+      import {getFilenameFromHeaders, triggerFileDownload} from "@/utils/download.ts";
       import RestResponse from '@/models/api/RestResponseModel'
       import { type IPageResponse } from '@/models/api/PageResponseModel'
       import {
@@ -6360,14 +6372,14 @@
       /** PUT update */
       export async function update(
         id: number | string | undefined,
-        data: { 
-          sale: Partial<${majStart(className)}>
+        data: {
+          ${minStart(className)}: Partial<${majStart(className)}>
           {{#each children}} ${minStart(this.className)}s: Partial<${majStart(this.className)}>[]{{/each}} 
         }
       ) {
         if (!id) throw new Error('update: id is required')
         const response = await restApi.PUT(BASE_URL + '/' + id, data)
-        return wrapSale(RestResponse.handleDataResponse<Sale>(response)) as DataResponse<Sale>
+        return wrap${majStart(className)}(RestResponse.handleDataResponse<${majStart(className)}>(response)) as DataResponse<${majStart(className)}>
       }
       {{elseIf !isView}}/** PUT update */
       export async function update(id: number | string | undefined, data: Partial<${majStart(className)}>) {
@@ -6385,6 +6397,40 @@
           error: response.returnCode !== 1 ? response.message : null,
         };
       }{{/if}}
+      export async function exportCsv(
+        ${minStart(className)}s: Partial<${majStart(className)}[]>,
+      ): Promise<{ success: boolean; error: string | null }> {
+           const url = import.meta.env.VITE_APP_API_URL+BASE_URL+'/export/csv'
+           
+           try {
+           const response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(${minStart(className)}s),
+         })
+           if (!response.ok) {
+           const errorText = await response.text()
+           console.error('CSV Export Failed - Server Error:', response.status, errorText)
+                            throw new Error(`CSV export failed: ${response.statusText}. Status: ${response.status}.`)
+         }
+           const blob = await response.blob()
+           const contentDisposition = response.headers.get('content-disposition');
+           triggerFileDownload(blob,getFilenameFromHeaders(contentDisposition,"${majStart(className)}.csv"));
+           return {
+                            success: true,
+                            error: null,
+         }
+         
+         } catch (error) {
+           console.error('Error during CSV export:', error)
+           return {
+                            success: false,
+                            error: error instanceof Error ? error.message : 'An unknown error occurred during export.',
+         }
+         }
+      }      
 
   modelComponent:
     imports: |
@@ -6510,14 +6556,15 @@
       export class ${majStart(className)}FormDTO {
         {{#each fields}}
         {{#if this.isForeignKey}}
-        ${minStart(this.name)}?: string{{else}}
+        ${minStart(this.name)}?: string
+        {{elseIf this.isDate}}${minStart(this.name)}?: string{{else}}
         ${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
 
         constructor(data?: Partial<${majStart(className)}FormDTO>) {
           {{#each fields}}
           {{#if this.isForeignKey}}this.${minStart(this.name)} = data?.${minStart(this.name)} ?? ""
-          {{elseIf this.isDate}}this.${minStart(this.name)} = data?.${minStart(this.name)} ? new Date(data.${minStart(this.name)}) : undefined
+          {{elseIf this.isDate}}this.${minStart(this.name)} = data?.${minStart(this.name)} ? data.${minStart(this.name)} : undefined
           {{else}}this.${minStart(this.name)} = data?.${minStart(this.name)}{{/if}}
           {{/each}}{{removeLine}}
         }
@@ -6589,7 +6636,8 @@
 
         const formModel = ref<${majStart(className)}FormDTO>(props.${minStart(className)})
         {{#each fieldsFK}}
-        const ${minStart(this.type)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
+        {{#if this.isParentForeignKey}}{{removeLine}}
+        {{else}}const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}'){{/if}}
         {{/each}}
 
         function removeRow() {
@@ -6612,12 +6660,12 @@
             {{elseIf this.isForeignKey}}
             <td>
               <GenesisSelectSearchCriteria
-                v-if="${minStart(this.type)}SearchField?.multicriteriaSelect"
+                v-if="${minStart(this.name)}SearchField?.multicriteriaSelect"
                 :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                 placeholder="Select ${formatReadable(this.name)}"
                 key="${majStart(className)}${majStart(this.name)}"
-                :search-function="${minStart(this.type)}SearchField?.multicriteriaSelect.searchFunction"
-                :filters="${minStart(this.type)}SearchField?.multicriteriaSelect.filters"
+                :search-function="${minStart(this.name)}SearchField?.multicriteriaSelect.searchFunction"
+                :filters="${minStart(this.name)}SearchField?.multicriteriaSelect.filters"
                 :default-value="formModel.${minStart(this.name)}"
                 default-key="${minStart(this.name)}"
                 @option-selected="
@@ -6666,6 +6714,7 @@
                   <tr class="text-primary-focus">
                     <th class="">#</th>
                     {{#each fields}}{{#if this.isPrimaryKey}}{{removeLine}}
+                    {{elseIf this.isParentForeignKey}}{{removeLine}}
                     {{else}}
                     <th class="">${formatReadable(this.name)}</th>
                     {{/if}}{{/each}}{{removeLine}}  
@@ -6751,1696 +6800,1696 @@
         </style>
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
 
-- id: 3
-  languageId: 1
-  coreFramework: "React"
-  name: "React App"
-  template: "React-template"
-  initPath: "react/react-ts-skeletoon"
-  componentExtension: "tsx"
-  frontendPaths:
-    faviconPath: "${destinationFolder}/public"
-    logoPath: "${destinationFolder}/public"
-    langsPath: "${destinationFolder}/src/locales"
-  authenticationFiles:
-    - fileType: "Service Auth"
-      fileName: "auth"
-      extension: "ts"
-      content: |
-        // src/services/auth.ts
-        import axios from 'axios';
-        import { ApiResponse } from './api';
-
-        const API_BASE = import.meta.env.VITE_API_BASE as string;
-
-        interface AuthRequest { username: string; password: string; }
-        interface RegisterPayload {
-            name: string;
-            email: string;
-            password: string;
-            roleidRoleEntity?: { id: number };
-        }
-        interface UpdateRequest { name?: string; email?: string; }
-        interface ChangePasswordRequest { oldPassword: string; newPassword: string; confirmPassword: string; }
-
-        export const authService = {
-            login: (payload: AuthRequest) =>
-                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/login`, payload)
-                      .then(r => r.data),
-
-            // S’appuie sur l’intercepteur axios pour Authorization
-            me: () =>
-                axios.get<ApiResponse<any>>(`$[API_BASE]/auth/current`).then(r => r.data),
-
-            register: (payload: RegisterPayload) =>
-                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/register`, payload).then(r => r.data),
-
-            updateProfile: (payload: UpdateRequest) =>
-                axios.patch<ApiResponse<string>>(`$[API_BASE]/auth/update`, payload).then(r => r.data),
-
-            changePassword: (payload: ChangePasswordRequest) =>
-                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/change-password`, payload).then(r => r.data),
-
-            logout: () =>
-                axios.post<ApiResponse<void>>(`$[API_BASE]/auth/logout`, {}).then(r => r.data),
-
-            refresh: (token: string) =>
-                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/refresh`, { refreshToken: token })
-                    .then(res => res.data),
-        };
-      destinationPath: "${destinationFolder}/src/services"
-    - fileType: "AuthContext"
-      fileName: "AuthContext"
-      extension: "tsx"
-      content: |
-        // src/contexts/AuthContext.tsx
-        // src/contexts/AuthContext.tsx
-        import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-        import { authService } from '@/services/auth';
-        import { useSnackbar } from 'notistack';
-
-        type User = { username: string; email?: string };
-        type AuthCtx = {
-            user: User | null;
-            token: string | null;
-            login: (u: string, p: string) => Promise<void>;
-            logout: () => void;
-            loading: boolean;
-            // nouvelles
-            register: (payload: { name: string; email: string; password: string }) => Promise<{ message?: string } | void>;
-            fetchCurrent: () => Promise<void>;
-            updateProfile: (payload: { name?: string; email?: string }) => Promise<void>;
-            changePassword: (payload: { oldPassword: string; newPassword: string; confirmPassword: string }) => Promise<void>;
-        };
-
-        const AuthContext = createContext<AuthCtx>(null!);
-        const REFRESH_INTERVAL_MS = Number(import.meta.env.VITE_REFRESH_INTERVAL_MS ?? 60000);
-
-        export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-            const { enqueueSnackbar } = useSnackbar();
-            const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-            const [user, setUser] = useState<User | null>(null);
-            const [loading, setLoading] = useState(true);
-            const intervalRef = useRef<number | null>(null);
-
-            const clearTimer = () => {
-                if (intervalRef.current) {
-                    window.clearInterval(intervalRef.current);
-                    intervalRef.current = null;
-                }
-            };
-
-            const logout = () => {
-                clearTimer();
-                if (token) authService.logout().catch(() => {});
-                localStorage.removeItem('token');
-                setToken(null);
-                setUser(null);
-            };
-
-            const startRefreshTimer = (tk: string) => {
-                clearTimer();
-                intervalRef.current = window.setInterval(async () => {
-                    try {
-                        const res = await authService.refresh(tk);
-                        const newToken = res.data;
-                        localStorage.setItem('token', newToken);
-                        setToken(newToken);
-                    } catch {
-                        logout();
-                    }
-                }, REFRESH_INTERVAL_MS);
-            };
-
-            const fetchCurrent = async () => {
-                const res = await authService.me();
-                setUser({ username: res.data.username, email: (res.data as any).email });
-            };
-
-            useEffect(() => {
-                if (!token) {
-                    setLoading(false);
-                    return;
-                }
-                authService
-                    .me()
-                    .then(res => {
-                        setUser({ username: res.data.username, email: (res.data as any).email });
-                        startRefreshTimer(token);
-                    })
-                    .catch(() => logout())
-                    .finally(() => setLoading(false));
-            }, [token]);
-
-            const login = async (username: string, password: string) => {
-                const res = await authService.login({ username, password });
-                const jwt = res.data;
-                localStorage.setItem('token', jwt);
-                setToken(jwt);
-                startRefreshTimer(jwt);
-                await fetchCurrent();
-            };
-
-            const register = async (payload: { name: string; email: string; password: string }) => {
-                // laisser la page gérer les toasts/navigation
-                const res = await authService.register(payload);
-                return res; // retourner pour permettre l’affichage du message
-            };
-
-            const updateProfile = async (payload: { name?: string; email?: string }) => {
-                const oldUsername = user?.username;
-                await authService.updateProfile(payload);
-
-                if (payload.name && payload.name !== oldUsername) {
-                    enqueueSnackbar('Username changed successfully', { variant: 'success' });
-                } else {
-                    // Seulement l'email a changé, on peut rafraîchir
-                    await fetchCurrent();
-                    enqueueSnackbar('Profile updated successfully', { variant: 'success' });
-                }
-            };
-
-            const changePassword = async (payload: {oldPassword: string; newPassword: string; confirmPassword: string;}) => {
-                await authService.changePassword(payload);
-                enqueueSnackbar('Password changed, please sign in again', { variant: 'success' });
-                logout(); // ProtectedRoute enverra vers /login quand user=null
-            };
-
-            return (
-                <AuthContext.Provider
-                    value={{ user, token, loading, login, logout, register, fetchCurrent, updateProfile, changePassword }}
-                >
-                    {children}
-                </AuthContext.Provider>
-            );
-        };
-
-        export const useAuth = () => useContext(AuthContext);
-      destinationPath: "${destinationFolder}/src/contexts"
-    - fileType: "Configuration file"
-      fileName: "{{removeLine}}"
-      extension: "env"
-      content: |
-        VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
-        VITE_REFRESH_INTERVAL_MS=60000
-      destinationPath: "${destinationFolder}/"
-    - fileType: "ProtectedRoute"
-      fileName: "ProtectedRoute"
-      extension: "tsx"
-      content: |
-        // src/router/ProtectedRoute.tsx
-        import { Navigate, Outlet, useLocation } from 'react-router-dom';
-        import { useAuth } from '@/contexts/AuthContext';
-        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
-
-        export default function ProtectedRoute() {
-          const { user, loading } = useAuth();
-          const location = useLocation();
-
-          /* déjà sur login → on laisse le flux se terminer sans re-navigation */
-          if (location.pathname === '/login') return <Outlet />;
-
-          if (loading) return <BackdropBlocker open />;
-          return user ? <Outlet /> : <Navigate to="/login" replace state={{ from: location }} />;
-        }
-      destinationPath: "${destinationFolder}/src/router"
-    - fileType: "Login page"
-      fileName: "Login"
-      extension: "tsx"
-      content: |
-        // src/pages/auth/Login.tsx
-        import { useState, useEffect, useRef } from 'react';
-        import { useAuth } from '@/contexts/AuthContext';
-        import { useNavigate, useLocation } from 'react-router-dom';
-        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
-        import { useSnackbar } from 'notistack';
-        import { useTranslation } from 'react-i18next';
-        import LanguageSwitcher from '@/components/LanguageSwitcher';
-
-        export default function Login() {
-            const [username, setUsername] = useState('');
-            const [password, setPassword] = useState('');
-            const { login, token, user } = useAuth(); // ← user ajouté
-            const navigate = useNavigate();
-            const { enqueueSnackbar } = useSnackbar();
-            const { t } = useTranslation();
-            const location = useLocation();
-            const from = location.state?.from?.pathname || '/';
-
-            const hasNavigatedRef = useRef(false);
-
-            useEffect(() => {
-                if (token && user && !hasNavigatedRef.current) {
-                    hasNavigatedRef.current = true;
-                    navigate(from, { replace: true });
-                }
-            }, [token, user, from, navigate]);
-
-            const handleSubmit = async (e: React.FormEvent) => {
-                e.preventDefault();
-                try {
-                    await login(username, password);
-                } catch {
-                    enqueueSnackbar(t('messages.authentication.invalid'), { variant: 'error' });
-                }
-            };
-
-            return (
-                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                    <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-                        <LanguageSwitcher />
-                    </Box>
-                    <Paper sx={{ p: 4, width: 360 }}>
-                        <Typography variant="h5" mb={3} textAlign="center">{t('messages.authentication.title')}  </Typography>
-                        <form onSubmit={handleSubmit}>
-                            <TextField fullWidth label={t('messages.authentication.username')} value={username} onChange={e => setUsername(e.target.value)} required />
-                            <TextField fullWidth label={t('messages.authentication.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
-                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>{t('messages.authentication.submit')} </Button>
-                            <Button fullWidth variant="text" sx={{ mt: 1 }} onClick={() => navigate('/register')}>
-                                {t('messages.authentication.createAccount')}
-                            </Button>
-                        </form>
-                    </Paper>
-                </Box>
-            );
-        }
-      destinationPath: "${destinationFolder}/src/pages/auth"
-    - fileType: "Register page"
-      fileName: "Register"
-      extension: "tsx"
-      content: |
-        // src/pages/auth/Register.tsx
-        import { useState } from 'react';
-        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
-        import { useAuth } from '@/contexts/AuthContext';
-        import { useSnackbar } from 'notistack';
-        import { useNavigate } from 'react-router-dom';
-        import {useTranslation} from "react-i18next";
-        import LanguageSwitcher from '@/components/LanguageSwitcher';
-
-        export default function Register() {
-            const { register } = useAuth();
-            const { enqueueSnackbar } = useSnackbar();
-            const navigate = useNavigate();
-            const { t } = useTranslation();
-
-            const [name, setName] = useState('');
-            const [email, setEmail] = useState('');
-            const [password, setPassword] = useState('');
-            const [submitting, setSubmitting] = useState(false);
-
-            const handleSubmit = async (e: React.FormEvent) => {
-                e.preventDefault();
-                if (submitting) return;
-                setSubmitting(true);
-                try {
-                    // Aucun rôle envoyé: le backend affecte le rôle par défaut
-                    const res = await register({ name, email, password });
-                    enqueueSnackbar(res?.message || t('messages.register.success'), { variant: 'success' });
-                    // Laisser le toast s’afficher puis rediriger vers le login
-                    setTimeout(() => navigate('/login', { replace: true }), 1500);
-                } catch (err: any) {
-                    const body = err?.response?.data;
-                    enqueueSnackbar(t('messages.register.error'), { variant: 'error' });
-                } finally {
-                    setSubmitting(false);
-                }
-
-            };
-
-            return (
-                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                    <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-                        <LanguageSwitcher />
-                    </Box>
-                    <Paper sx={{ p: 4, width: 380 }}>
-                        <Typography variant="h5" mb={3} textAlign="center">{t('messages.register.title')}</Typography>
-                        <form onSubmit={handleSubmit}>
-                            <TextField fullWidth label={t('messages.register.name')} value={name} onChange={e => setName(e.target.value)} required />
-                            <TextField fullWidth sx={{ mt: 2 }} label={t('messages.register.email')} type="email" value={email} onChange={e => setEmail(e.target.value)} required />
-                            <TextField fullWidth sx={{ mt: 2 }} label={t('messages.register.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-                            <Button fullWidth sx={{ mt: 3 }} variant="contained" type="submit" disabled={submitting}>
-                                {t('messages.register.submit')}
-                            </Button>
-                            <Button fullWidth sx={{ mt: 1 }} variant="text" onClick={() => navigate('/login')}>
-                                {t('messages.register.backToSignIn')}
-                            </Button>
-                        </form>
-                    </Paper>
-                </Box>
-            );
-        }
-      destinationPath: "${destinationFolder}/src/pages/auth"
-    - fileType: "Profile update page"
-      fileName: "Profile"
-      extension: "tsx"
-      content: |
-        // src/pages/auth/Profile.tsx
-        import { useState, useEffect } from 'react';
-        import { TextField, Button, Paper, Typography, Box, Alert } from '@mui/material';
-        import { useAuth } from '@/contexts/AuthContext';
-        import { useSnackbar } from 'notistack';
-        import { useTranslation } from 'react-i18next';
-        import { useNavigate } from 'react-router-dom';
-        import { pageContainerSx } from '@/styles/mui-patterns';
-        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
-
-        export default function Profile() {
-            const { user, updateProfile, logout } = useAuth();
-            const { enqueueSnackbar } = useSnackbar();
-            const { t } = useTranslation();
-            const navigate = useNavigate();
-
-            const [name, setName] = useState('');
-            const [email, setEmail] = useState('');
-            const [submitting, setSubmitting] = useState(false);
-
-            useEffect(() => {
-                if (user) {
-                    setName(user.username || '');
-                    setEmail(user.email || '');
-                }
-            }, [user]);
-
-            const handleSubmit = async (e: React.FormEvent) => {
-                e.preventDefault();
-                if (submitting) return;
-
-                // ✅ Vérifier si le username change
-                const usernameChanged = name !== user?.username;
-
-                setSubmitting(true);
-                try {
-                    await updateProfile({ name, email });
-
-                    // ✅ Si le username a changé, déconnecter l'utilisateur
-                    if (usernameChanged) {
-                        enqueueSnackbar(
-                            t('messages.profile.usernameChangedLogout'),
-                            { variant: 'warning', autoHideDuration: 3000 }
-                        );
-
-                        // Déconnexion après 2 secondes
-                        setTimeout(() => {
-                            logout();
-                            navigate('/login', { replace: true });
-                        }, 2000);
-                    } else {
-                        enqueueSnackbar(t('messages.profile.updateSuccess'), { variant: 'success' });
-                    }
-                } catch (err: any) {
-                    const body = err?.response?.data;
-                    enqueueSnackbar(body?.message || t('messages.profile.updateError'), { variant: 'error' });
-                } finally {
-                    setSubmitting(false);
-                }
-            };
-
-            return (
-                <>
-                    <BackdropBlocker open={submitting} />
-                    <Box sx={pageContainerSx}>
-                        <Paper sx={{ p: 4, maxWidth: 480, mx: 'auto', mt: 4 }}>
-                            <Typography variant="h5" mb={3} textAlign="center">
-                                {t('messages.profile.edit')}
-                            </Typography>
-
-                            {/* ✅ Avertissement si le username va changer */}
-                            {name !== user?.username && (
-                                <Alert severity="warning" sx={{ mb: 2 }}>
-                                    {t('messages.profile.usernameChangeWarning')}
-                                </Alert>
-                            )}
-
-                            <form onSubmit={handleSubmit}>
-                                <TextField
-                                    fullWidth
-                                    label={t('messages.register.name')}
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    required
-                                    sx={{ mb: 2 }}
-                                />
-                                <TextField
-                                    fullWidth
-                                    label={t('messages.register.email')}
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    sx={{ mb: 3 }}
-                                />
-
-                                <Button
-                                    fullWidth
-                                    variant="contained"
-                                    type="submit"
-                                    disabled={submitting}
-                                >
-                                    {t('messages.common.save')}
-                                </Button>
-                            </form>
-                        </Paper>
-                    </Box>
-                </>
-            );
-        }
-      destinationPath: "${destinationFolder}/src/pages/auth"
-    - fileType: "ChangePassword page"
-      fileName: "ChangePassword"
-      extension: "tsx"
-      content: |
-        // src/pages/auth/ChangePassword.tsx
-        import { useState } from 'react';
-        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
-        import { useAuth } from '@/contexts/AuthContext';
-        import { useSnackbar } from 'notistack';
-        import { useTranslation } from 'react-i18next';
-        import { pageContainerSx } from '@/styles/mui-patterns';
-        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
-
-        export default function ChangePassword() {
-            const { changePassword } = useAuth();
-            const { enqueueSnackbar } = useSnackbar();
-            const { t } = useTranslation();
-
-            const [oldPassword, setOldPassword] = useState('');
-            const [newPassword, setNewPassword] = useState('');
-            const [confirmPassword, setConfirmPassword] = useState('');
-            const [submitting, setSubmitting] = useState(false);
-
-            const handleSubmit = async (e: React.FormEvent) => {
-                e.preventDefault();
-                if (submitting) return;
-
-                if (newPassword !== confirmPassword) {
-                    enqueueSnackbar(t('messages.profile.passwordMismatch'), { variant: 'error' });
-                    return;
-                }
-
-                setSubmitting(true);
-                try {
-                    await changePassword({ oldPassword, newPassword, confirmPassword });
-                    enqueueSnackbar(t('messages.profile.passwordChangeSuccess'), { variant: 'success' });
-                    // Redirection automatique vers login par le contexte
-                } catch (err: any) {
-                    const body = err?.response?.data;
-                    enqueueSnackbar(body?.message || t('messages.profile.passwordChangeError'), { variant: 'error' });
-                } finally {
-                    setSubmitting(false);
-                }
-            };
-
-            return (
-                <>
-                    <BackdropBlocker open={submitting} />
-                    <Box sx={pageContainerSx}>
-                        <Paper sx={{ p: 4, maxWidth: 480, mx: 'auto', mt: 4 }}>
-                            <Typography variant="h5" mb={3} textAlign="center">
-                                {t('messages.profile.changePassword')}
-                            </Typography>
-
-                            <form onSubmit={handleSubmit}>
-                                <TextField
-                                    fullWidth
-                                    label={t('messages.profile.oldPassword')}
-                                    type="password"
-                                    value={oldPassword}
-                                    onChange={(e) => setOldPassword(e.target.value)}
-                                    required
-                                    sx={{ mb: 2 }}
-                                />
-                                <TextField
-                                    fullWidth
-                                    label={t('messages.profile.newPassword')}
-                                    type="password"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    required
-                                    sx={{ mb: 2 }}
-                                />
-                                <TextField
-                                    fullWidth
-                                    label={t('messages.profile.confirmPassword')}
-                                    type="password"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    required
-                                    sx={{ mb: 3 }}
-                                />
-
-                                <Button
-                                    fullWidth
-                                    variant="contained"
-                                    type="submit"
-                                    disabled={submitting}
-                                >
-                                    {t('messages.common.save')}
-                                </Button>
-                            </form>
-                        </Paper>
-                    </Box>
-                </>
-            );
-        }
-      destinationPath: "${destinationFolder}/src/pages/auth"
-    - fileType: "Router file"
-      fileName: "router"
-      extension: "tsx"
-      content: |
-        // src/router.tsx
-        import RootLayout from './layouts/RootLayout';
-        import { createBrowserRouter, Navigate } from 'react-router-dom';
-        import ProtectedRoute from '@/router/ProtectedRoute';
-        import Login from '@/pages/auth/Login';
-        import Register from '@/pages/auth/Register';
-        import Profile from '@/pages/auth/Profile';
-        import ChangePassword from '@/pages/auth/ChangePassword';
-        {{#each routes}}
-        import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
-        {{/each}}
-
-        export const router = createBrowserRouter([
-            {
-                path: '/login',
-                element: <Login />,
-            },
-            { path: 'register', element: <Register /> },
-            {
-                path: '/',
-                element: (
-                    <ProtectedRoute /> // ← tout ce qui est en-dessous nécessite auth
-                ),
-                children: [
-                    {
-                        path: '/',
-                        element: <Navigate to="{{#each routes}}{{#if @first}}${this.routerLink}{{/if}}{{/each}}" replace />,
-                    },
-                    {
-                        path: '/',
-                        element: <RootLayout/>,
-                        children: [
-                            {
-                                path: '/profile',
-                                element: <Profile />,
-                            },
-                            {
-                                path: '/change-password',
-                                element: <ChangePassword />,
-                            },
-                            {{#each routes}}
-                            {
-                              path: '${this.routerLink}',
-                              element: <${this.componentSelector} />,
-                            },
-                            {{/each}}
-                        ],
-                    },
-                ],
-            },
-        ]);
-      destinationPath: "${destinationFolder}/src"
-    - fileType: "index file"
-      fileName: "index"
-      extension: "tsx"
-      content: |
-        // src/index.tsx
-        import React from 'react';
-        import ReactDOM from 'react-dom/client';
-        import { RouterProvider } from 'react-router-dom';
-        import { router } from './router';
-        import './index.css';
-        import './i18n'; 
-        import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-        import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-        import { SnackbarProvider } from 'notistack';
-        import { ThemeProvider } from './contexts/ThemeContext';
-        import { CssBaseline } from '@mui/material';
-        import 'dayjs/locale/fr';
-        import dayjs from 'dayjs';
-        import { AuthProvider } from '@/contexts/AuthContext';
-        dayjs.locale('fr');
-
-        ReactDOM.createRoot(document.getElementById('root')!).render(
-            <React.StrictMode>
-                <ThemeProvider>
-                    <CssBaseline />
-                    <AuthProvider>
-                        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
-                            <SnackbarProvider maxSnack={3} autoHideDuration={1500}>
-                                <RouterProvider router={router} />
-                            </SnackbarProvider>
-                        </LocalizationProvider>
-                    </AuthProvider>
-                </ThemeProvider>
-            </React.StrictMode>
-        );
-      destinationPath: "${destinationFolder}/src"
-    - fileType: "api"
-      fileName: "api"
-      extension: "ts"
-      content: |
-        // src/services/api.ts
-        import axios from 'axios';
-
-        const API_BASE = import.meta.env.VITE_API_BASE as string;
-
-        export interface ApiResponse<T> {
-            status: number;
-            message: string;
-            returnCode: number;
-            data: T;
-            timestamp: string;
-        }
-
-        interface SearchParams {
-            endpoint: string;
-            page: number;
-            size: number;
-            sort: `$[string],$['asc' | 'desc']`;
-            filter: Record<string, unknown>;
-        }
-
-        /* =============== REQUEST : toujours mettre le token =============== */
-        axios.interceptors.request.use(config => {
-            const tok = localStorage.getItem('token');
-            if (tok) config.headers.Authorization = `Bearer $[tok]`;
-            return config;
-        });
-
-        /* ===============  EXPORT DES FONCTIONS EXISTANTES =============== */
-        export async function search<T>({ endpoint, page, size, sort, filter }: SearchParams) {
-            const { data } = await axios.post(
-                `$[API_BASE]$[endpoint]`,
-                filter,
-                { params: { page, size, sortParam: sort } }
-            );
-            return {
-                content: (data.data?.content as T[]) ?? [],
-                totalPages: data.data?.page?.totalPages ?? 0,
-            };
-        }
-
-        export async function create<T>(endpoint: string, payload: Omit<T, 'id'>) {
-            const { data } = await axios.post<ApiResponse<T>>(`$[API_BASE]$[endpoint]`, payload);
-            return data;
-        }
-
-        export async function getById<T>(endpoint: string, id: number) {
-            const { data } = await axios.get<ApiResponse<T>>(`$[API_BASE]$[endpoint]/$[id]`);
-            return data.data;
-        }
-
-        export async function update<T>(endpoint: string, id: number, payload: Partial<T>) {
-            const { data } = await axios.put<ApiResponse<T>>(`$[API_BASE]$[endpoint]/$[id]`, payload);
-            return data;
-        }
-
-        export async function remove(endpoint: string, id: string | number) {
-            const { data } = await axios.delete<ApiResponse<void>>(`$[API_BASE]$[endpoint]/$[id]`);
-            return data;
-        }
-      destinationPath: "${destinationFolder}/src/services"
-    - fileType: "SettingsMenu"
-      fileName: "index"
-      extension: "tsx"
-      content: |
-        // src/components/SettingsMenu/index.tsx
-        import { useState } from 'react';
-        import {
-            IconButton,
-            Menu,
-            MenuItem,
-            ListItemIcon,
-            ListItemText,
-            Divider,
-            FormControl,
-            InputLabel,
-            Select,
-            SelectChangeEvent,
-            Box,
-            Card,
-            CardContent,
-            Typography,
-            Avatar,
-        } from '@mui/material';
-        import {
-            Settings,
-            Brightness4,
-            Brightness7,
-            ViewSidebar,
-            ViewAgenda,
-            Logout,
-            Person,
-            Edit,
-            Lock
-        } from '@mui/icons-material';
-        import { useThemeMode } from '@/contexts/ThemeContext';
-        import { useAuth } from '@/contexts/AuthContext';
-        import { useTranslation } from 'react-i18next';
-        import { useNavigate } from 'react-router-dom';
-
-        interface SettingsMenuProps {
-            layout: 'vertical' | 'horizontal';
-            onLayoutChange: (layout: 'vertical' | 'horizontal') => void;
-            compact?: boolean;
-        }
-
-        export default function SettingsMenu({ layout, onLayoutChange, compact = false }: SettingsMenuProps) {
-            const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-            const { mode, toggleTheme } = useThemeMode();
-            const { logout, user } = useAuth(); 
-            const { i18n, t } = useTranslation();
-            const navigate = useNavigate();
-
-            const open = Boolean(anchorEl);
-
-            const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-                setAnchorEl(event.currentTarget);
-            };
-
-            const handleClose = () => {
-                setAnchorEl(null);
-            };
-
-            const handleLayoutChange = (newLayout: 'vertical' | 'horizontal') => {
-                onLayoutChange(newLayout);
-                handleClose();
-            };
-
-            const handleLanguageChange = (event: SelectChangeEvent<string>) => {
-                i18n.changeLanguage(event.target.value);
-            };
-
-            const handleLogout = () => {
-                logout();
-                navigate('/login', { replace: true });
-                handleClose();
-            };
-
-            const handleNavigateProfile = () => {
-                navigate('/profile');
-                handleClose();
-            };
-
-            const handleNavigatePassword = () => {
-                navigate('/change-password');
-                handleClose();
-            };
-
-            const getSupportedLanguages = (): string[] => {
-                if (Array.isArray(i18n.options.supportedLngs)) {
-                    return i18n.options.supportedLngs.filter((l) => l !== 'cimode');
-                }
-                if (i18n.services.resourceStore.data) {
-                    return Object.keys(i18n.services.resourceStore.data).filter((l) => l !== 'cimode');
-                }
-                return [i18n.language || 'en'];
-            };
-
-            const supportedLanguages = getSupportedLanguages();
-
-            return (
-                <>
-                    <IconButton onClick={handleClick} color="inherit" size={compact ? 'small' : 'medium'}>
-                        <Settings />
-                    </IconButton>
-
-                    <Menu
-                        anchorEl={anchorEl}
-                        open={open}
-                        onClose={handleClose}
-                        onClick={handleClose}
-                        PaperProps={{
-                            elevation: 0,
-                            sx: {
-                                overflow: 'visible',
-                                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-                                mt: 1.5,
-                                minWidth: 280,
-                            },
-                        }}
-                        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                    >
-                        {/* ✅ CARD PROFIL UTILISATEUR */}
-                        {user && (
-                            <>
-                                <Box sx={{ p: 2 }}>
-                                    <Card
-                                        elevation={0}
-                                        sx={{
-                                            bgcolor: 'action.hover',
-                                            borderRadius: 2
-                                        }}
-                                    >
-                                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                                            <Box display="flex" alignItems="center" gap={1.5}>
-                                                <Avatar sx={{ bgcolor: 'primary.main' }}>
-                                                    <Person />
-                                                </Avatar>
-                                                <Box>
-                                                    <Typography variant="subtitle2" fontWeight={600}>
-                                                        {user.username}
-                                                    </Typography>
-                                                    {user.email && (
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            {user.email}
-                                                        </Typography>
-                                                    )}
-                                                </Box>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </Box>
-                                <Divider />
-                            </>
-                        )}
-
-                        {/* ✅ MODIFIER MON PROFIL */}
-                        <MenuItem onClick={handleNavigateProfile}>
-                            <ListItemIcon>
-                                <Edit fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText>{t('messages.profile.edit')}</ListItemText>
-                        </MenuItem>
-
-                        {/* ✅ CHANGER MOT DE PASSE */}
-                        <MenuItem onClick={handleNavigatePassword}>
-                            <ListItemIcon>
-                                <Lock fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText>{t('messages.profile.changePassword')}</ListItemText>
-                        </MenuItem>
-
-                        <Divider />
-
-                        {/* Mode disposition */}
-                        <MenuItem onClick={() => handleLayoutChange(layout === 'vertical' ? 'horizontal' : 'vertical')}>
-                            <ListItemIcon>
-                                {layout === 'vertical' ? <ViewAgenda fontSize="small" /> : <ViewSidebar fontSize="small" />}
-                            </ListItemIcon>
-                            <ListItemText>
-                                {layout === 'vertical'
-                                    ? t('messages.layout.switchToHorizontal')
-                                    : t('messages.layout.switchToVertical')
-                                }
-                            </ListItemText>
-                        </MenuItem>
-
-                        <Divider />
-
-                        {/* Mode clair/sombre */}
-                        <MenuItem onClick={toggleTheme}>
-                            <ListItemIcon>
-                                {mode === 'dark' ? <Brightness7 fontSize="small" /> : <Brightness4 fontSize="small" />}
-                            </ListItemIcon>
-                            <ListItemText>
-                                {mode === 'dark'
-                                    ? t('messages.theme.switchToLight')
-                                    : t('messages.theme.switchToDark')
-                                }
-                            </ListItemText>
-                        </MenuItem>
-
-                        <Divider />
-
-                        {/* Choix de langue */}
-                        <MenuItem>
-                            <FormControl fullWidth size="small" sx={{ minWidth: 120 }}>
-                                <InputLabel>{t('messages.language.choose')}</InputLabel>
-                                <Select
-                                    value={i18n.language}
-                                    label={t('messages.language.choose')}
-                                    onChange={handleLanguageChange}
-                                >
-                                    {supportedLanguages.map((lang) => (
-                                        <MenuItem key={lang} value={lang}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <span>{getFlagEmoji(lang)}</span>
-                                                <span>{t(`messages.language.$[lang]`)}</span>
-                                            </Box>
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </MenuItem>
-
-                        <Divider />
-
-                        {/* Déconnexion */}
-                        <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-                            <ListItemIcon sx={{ color: 'error.main' }}>
-                                <Logout fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText>
-                                {t('messages.authentication.logout')}
-                            </ListItemText>
-                        </MenuItem>
-                    </Menu>
-                </>
-            );
-        }
-
-        function getFlagEmoji(langCode: string): string {
-            const languageFlags: Record<string, string> = {
-                en: '🇬🇧',
-                fr: '🇫🇷',
-                es: '🇪🇸',
-                de: '🇩🇪',
-                it: '🇮🇹',
-                pt: '🇵🇹',
-                'pt-BR': '🇧🇷',
-                zh: '🇨🇳',
-                ja: '🇯🇵',
-            };
-            return languageFlags[langCode] || languageFlags[langCode.split('-')[0]] || '🏳️';
-        }
-      destinationPath: "${destinationFolder}/src/components/SettingsMenu"
-  additionalFiles:
-    - fileType: "App name config"
-      fileName: "app"
-      extension: "ts"
-      content: |
-        export const appConfig = {
-            title: '${projectName}',           // ou mettre undefined pour une image
-            logoUrl: {{#if useLogoLink}}'${logoUrl}'{{elseIf hasLogo}}'${logoUrl}'{{else}}undefined as string | undefined{{/if}},
-        };
-      destinationPath: "${destinationFolder}/src/config/"
-    - fileType: "Navigation items config file"
-      fileName: "navItems"
-      extension: "tsx"
-      content: |
-        import { NavItem } from '@/types/navigation';
-        import { List, Add } from '@mui/icons-material';
-
-        export const navItems: NavItem[] = [
-            {{#each entities}}
-            {
-                label: '${formatReadable(this.className)}',
-                icon: <List />,
-                children: [
-                    {
-                        label: 'messages.navigation.list',
-                        path: '/${toKebabCase(this.className)}s',
-                        icon: <List />,
-                    },
-                    {{#if !this.isView}}{{removeLine}}
-                    {
-                        label: 'messages.navigation.add',
-                        path: '/${toKebabCase(this.className)}s/create',
-                        icon: <Add />
-                    },
-                    {{/if}}{{removeLine}}
-                ]
-            },
-            {{/each}}{{removeLine}}
-        ];
-      destinationPath: "${destinationFolder}/src/config/"
-    - fileType: "Router file"
-      fileName: "router"
-      extension: "tsx"
-      content: |
-        // src/router.tsx
-        import RootLayout from './layouts/RootLayout';
-        import { createBrowserRouter } from 'react-router-dom';
-        {{#each routes}}
-        import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
-        {{/each}}
-
-        export const router = createBrowserRouter([
-            {
-                path: '/',
-                element: <RootLayout/>,  
-                children: [
-                    {{#each routes}}
-                    {
-                      path: '${this.routerLink}',
-                      element: <${this.componentSelector} />,
-                    },
-                    {{/each}}
-                ],
-            },
-        ]);
-      destinationPath: "${destinationFolder}/src/"
-    - fileType: "App-files"
-      fileName: "index"
-      extension: "html"
-      content: |
-        <!doctype html>
-        <html lang="fr">
-        <head>
-          <meta charset="UTF-8" />
-          <link rel="icon" href="{{#if useFaviconLink}}${faviconUrl}{{else}}/favicon.ico{{/if}}" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>${projectName}</title>
-        </head>
-        <body>
-        <div id="root"></div>
-        <script type="module" src="/src/index.tsx"></script>
-        </body>
-        </html>
-      destinationPath: "${destinationFolder}/"
-    - fileType: "Configuration file"
-      fileName: "{{removeLine}}"
-      extension: "env"
-      content: |
-        VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
-      destinationPath: "${destinationFolder}/"
-    - fileType: "i18n file"
-      fileName: "i18n"
-      extension: "js"
-      content: |
-        // src/i18n.js
-        import i18n from 'i18next';
-        import { initReactI18next } from 'react-i18next';
-        import LanguageDetector from 'i18next-browser-languagedetector';
-        
-        {{#each langList}}
-        import ${lowerCase(this.name)} from './locales/${lowerCase(this.name)}'
-        {{/each}}{{removeLine}}
-
-        i18n
-            .use(LanguageDetector)
-            .use(initReactI18next)
-            .init({
-                resources: {
-                    {{#each langList}}
-                    ${this.locale}: { translation: ${lowerCase(this.name)} },
-                    {{/each}}{{removeLine}}
-                },
-                fallbackLng: {{#each langList}}{{#if @first}}'${this.locale}'{{/if}}{{/each}},
-                interpolation: { escapeValue: false },
-            });
-
-        export default i18n;
-      destinationPath: "${destinationFolder}/src"
-    - fileType: "RootLayout file"
-      fileName: "RootLayout"
-      extension: "tsx"
-      content: |
-        // src/layouts/RootLayout.tsx
-        import Sidebar from '@/components/Sidebar/Sidebar';
-        import { Outlet } from 'react-router-dom';
-        import { useState } from 'react';
-
-        export default function RootLayout() {
-            const [layout, setLayout] = useState<'vertical' | 'horizontal'>('{{#if navbarPreference = Sidebar}}vertical{{else}}horizontal{{/if}}');
-          
-            return (
-                <>
-                    {layout === 'horizontal' ? (
-                        <>
-                            <Sidebar layout="horizontal" onLayoutChange={setLayout} />
-                            <Outlet />
-                        </>
-                    ) : (
-                        <div style={{ display: 'flex', minHeight: '100vh' }}>
-                            <Sidebar layout="vertical" onLayoutChange={setLayout} />
-                            <main style={{ flex: 1, padding: '1rem' }}>
-                                <Outlet />
-                            </main>
-                        </div>
-                    )}
-                </>
-            );
-        }
-      destinationPath: "${destinationFolder}/src/layouts"
-    - fileType: "ThemeContext file"
-      fileName: "ThemeContext"
-      extension: "tsx"
-      content: |
-        // src/contexts/ThemeContext.tsx
-        import React, { createContext, useContext, useEffect, useState } from 'react';
-        import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
-        import { createTheme } from '@mui/material';
-
-        type ThemeMode = 'light' | 'dark';
-
-        interface ThemeContextType {
-            mode: ThemeMode;
-            toggleTheme: () => void;
-        }
-
-        const ThemeContext = createContext<ThemeContextType>({
-            mode: 'light',
-            toggleTheme: () => {},
-        });
-        export const useThemeMode = () => useContext(ThemeContext);
-
-        /* ---------- couleurs sidebar ---------- */
-        const sidebarColors = {
-            light: { bg: '#2c3e50', text: '#ffffff' },
-            dark:  { bg: '#111827', text: '#e2e8f0' },
-        };
-
-        /* ---------- tokens ---------- */
-        const baseTokens = {
-            typography: {
-                fontFamily: '"Inter", "Roboto", "Helvetica Neue", sans-serif',
-                h1: { fontSize: '2.25rem', fontWeight: 700 },
-                h2: { fontSize: '1.875rem', fontWeight: 600 },
-                h3: { fontSize: '1.5rem', fontWeight: 600 },
-                body1: { fontSize: '1rem', lineHeight: 1.5 },
-                body2: { fontSize: '0.875rem', lineHeight: 1.43 },
-            },
-            spacing: 4,
-            shape: { borderRadius: 6 },
-            grey: {
-                50: '#f9fafb', 100: '#f3f4f6', 200: '#e5e7eb', 300: '#d1d5db',
-                400: '#9ca3af', 500: '#6b7280', 600: '#4b5563',
-                700: '#374151', 800: '#1f2937', 900: '#111827',
-            },
-        };
-
-        /* ---------- thèmes ---------- */
-        const lightTheme = createTheme({
-            palette: {
-                mode: 'light',
-                primary:   { main: '${primaryColor}' },
-                secondary: { main: '${secondaryColor}' },
-                error:     { main: '#ef4444' },
-                warning:   { main: '#f59e0b' },
-                info:      { main: '#3b82f6' },
-                success:   { main: '#10b981' },
-                background: { default: '#ffffff', paper: '#ffffff' },
-                text:       { primary: '#111827', secondary: '#6b7280' },
-                ...baseTokens.grey,
-            },
-            ...baseTokens,
-            components: {
-                MuiDrawer: {
-                    styleOverrides: {
-                        paper: { backgroundColor: sidebarColors.light.bg, color: sidebarColors.light.text },
-                    },
-                },
-                MuiAppBar: {
-                    styleOverrides: {
-                        root: { backgroundColor: sidebarColors.light.bg, color: sidebarColors.light.text },
-                    },
-                },
-            },
-        });
-
-        const darkTheme = createTheme({
-            palette: {
-                mode: 'dark',
-                primary:   { main: '${primaryColor}' },
-                secondary: { main: '${secondaryColor}' },
-                error:     { main: '#ff5252' },
-                warning:   { main: '#ffa726' },
-                info:      { main: '#64b5f6' },
-                success:   { main: '#4caf50' },
-                background: { default: '#121212', paper: '#1e1e1e' },
-                text:       { primary: '#ffffff', secondary: '#b0bec5' },
-                ...baseTokens.grey,
-            },
-            ...baseTokens,
-            components: {
-                MuiDrawer: {
-                    styleOverrides: {
-                        paper: { backgroundColor: sidebarColors.dark.bg, color: sidebarColors.dark.text },
-                    },
-                },
-                MuiAppBar: {
-                    styleOverrides: {
-                        root: { backgroundColor: sidebarColors.dark.bg, color: sidebarColors.dark.text },
-                    },
-                },
-            },
-        });
-
-        /* ---------- provider ---------- */
-        export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-            const [mode, setMode] = useState<ThemeMode>(() => {
-                const saved = localStorage.getItem('theme');
-                return (saved === 'dark' ? 'dark' : 'light') as ThemeMode;
-            });
-
-            useEffect(() => {
-                localStorage.setItem('theme', mode);
-            }, [mode]);
-
-            const toggleTheme = () => setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
-            const theme = mode === 'light' ? lightTheme : darkTheme;
-
-            return (
-                <ThemeContext.Provider value={{ mode, toggleTheme }}>
-                    <MuiThemeProvider theme={theme}>{children}</MuiThemeProvider>
-                </ThemeContext.Provider>
-            );
-        };
-      destinationPath: "${destinationFolder}/src/contexts"
-  components:
-    - componentType: "List"
-      generateForView: true
-      router:
-        link: "/${toKebabCase(className)}s"
-        label: "${formatReadable(classNameLink)}"
-      importFile: |
-        import { Edit, Delete } from '@mui/icons-material';
-        import { useNavigate } from 'react-router-dom';
-        
-        import {${majStart(className)}, ${toCamelCase(className)}Meta, ${toCamelCase(className)}Columns, ${toCamelCase(className)}Filters} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
-        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
-      importComponent: |
-        import GenericListPage from '@/components/GenericListPage/GenericListPage';
-        import ActionButtons from '@/components/ActionButtons';
-        import {useDelete} from "@/hooks/useDelete";
-        import {useTranslation} from "react-i18next";
-      selector: "${majStart(className)}List"
-      export: |
-        const columns = [
-            ...${toCamelCase(className)}Columns,
-            {{#if !isView}}{{removeLine}}
-            {
-                header: 'Actions',
-                accessor: (row: ${majStart(className)}) => <RowActions row={row} />, // ✅ composant séparé
-            },
-            {{/if}}{{removeLine}}
-        ];
-        {{removeLine}}
-        {{#if !isView}}
-        function RowActions({ row }: { row: ${majStart(className)} }) {
-            const { t } = useTranslation();
-            const navigate = useNavigate();
-            const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => window.location.reload());
-
-            return (
-                <ActionButtons
-                    actions={[
-                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`), title:`$[t('messages.common.edit')]` },
-                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}), title:`$[t('messages.common.delete')]` },
-                    ]}
-                />
-            );
-        }
-        {{/if}}
-        export default function ${majStart(className)}List() {
-            const { t } = useTranslation();
-            return GenericListPage<${majStart(className)}>({
-                entityName: ${toCamelCase(className)}Meta.entityName,
-                columns,
-                availableFilters: ${toCamelCase(className)}Filters,
-                defaultSort: ${toCamelCase(className)}Meta.defaultSort,
-                searchFn: ${toCamelCase(className)}Service.search,
-                pageTitle: `${majStart(className)} $[t('messages.entity.list.nav')]`,
-                {{#if !isView}}{{removeLine}}
-                createRoute: '/${toKebabCase(className)}s/create'
-                {{/if}}{{removeLine}}
-            })();
-        }
-      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
-      componentName: "${toKebabCase(className)}-list"
-      componentAdditionalFiles: []
-    - componentType: "Detail"
-      generateForView: true
-      router:
-        link: "/${toKebabCase(className)}s/:id"
-        label: "${formatReadable(classNameLink)} Detail"
-      importFile: |
-        import { Edit, Delete } from '@mui/icons-material';
-        import { useNavigate } from 'react-router-dom';
-
-        import {${majStart(className)}, ${toCamelCase(className)}Meta, ${toCamelCase(className)}Columns } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
-        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
-      importComponent: |
-        import GenericDetailPage from '@/components/GenericDetailPage/GenericDetailPage';
-        import {useDelete} from "@/hooks/useDelete";
-        import { Typography } from '@mui/material';
-        import {useTranslation} from "react-i18next";
-      selector: "${majStart(className)}Detail"
-      export: |
-        export default function ${majStart(className)}Detail() {
-            const navigate = useNavigate();
-            const { t } = useTranslation();
-            {{#if !isView}}
-            const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => {
-                  navigate('/${toKebabCase(className)}s'); 
-            });
-            {{/if}}
-        
-            return GenericDetailPage({
-                entityName: ${toCamelCase(className)}Meta.entityName,
-                service: ${toCamelCase(className)}Service,
-                columns: ${toCamelCase(className)}Columns,
-                backRoute: '/${toKebabCase(className)}s',
-                actions: [
-                    {{#if !isView}}{{removeLine}}
-                    {
-                        label: `$[t('messages.common.edit')]`,
-                        icon: <Edit />,
-                        variant: 'outlined',
-                        color: 'primary',
-                        onClick: (row, navigate) => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`),
-                    },
-                    {
-                        label: `$[t('messages.common.delete')]`,
-                        icon: <Delete />,
-                        variant: 'outlined',
-                        color: 'error',
-                        onClick: (row) => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}), 
-                    },
-                    {{/if}}{{removeLine}}
-                ],
-                tabs: [
-                    //Example use of tab
-                    //{
-                        //label: 'Tab1',
-                        //render: (row: ${majStart(className)}) => (
-                            //<Typography>Content for ${majStart(className)} ID #{row.{{#each fieldsPK}}${this.name}{{/each}} }.</Typography>
-                        //),
-                    //},
-                ],
-            })();
-        }
-      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
-      componentName: "${toKebabCase(className)}-detail"
-      componentAdditionalFiles: [ ]
-    - componentType: "Add"
-      router:
-        link: "/${toKebabCase(className)}s/create"
-        label: "Create ${formatReadable(classNameLink)}"
-      importFile: |
-        import {${majStart(className)}, ${toCamelCase(className)}Meta, formFields} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
-        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
-      selector: "Create${majStart(className)}"
-      generateForView: false
-      importComponent: |
-        import GenericFormBuilder from '@/components/GenericForm/GenericFormBuilder';
-        import {ApiResponse} from "@/services/api";
-        import {useTranslation} from "react-i18next";
-      export: |
-        export default function Create${majStart(className)}() {
-            const { t } = useTranslation();
-
-            const handleSubmit = async (data: any): Promise<ApiResponse<${majStart(className)}>> => {
-                return await ${toCamelCase(className)}Service.create(data);
-            };
-
-            return (
-                <GenericFormBuilder
-                    entityName={${toCamelCase(className)}Meta.entityName}
-                    fields={formFields as any}
-                    onSubmit={handleSubmit}
-                    redirectTo="/${toKebabCase(className)}s"
-                    title={`$[t('messages.common.add')] ${toKebabCase(className)}`}
-                    mode="create"
-                    idKey="{{#each fieldsPK}}${this.name}{{/each}}"
-                    detailRedirect="/${toKebabCase(className)}s/:id"
-                />
-            );
-        }
-      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
-      componentName: "${toKebabCase(className)}-create"
-      componentAdditionalFiles: []
-    - componentType: "Update"
-      router:
-        link: "/${toKebabCase(className)}s/:id/edit"
-        label: "Update ${formatReadable(classNameLink)}"
-      importFile: |
-        import { ${majStart(className)}, ${toCamelCase(className)}Meta, updateFormFields } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
-        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
-      selector: "Update${majStart(className)}"
-      generateForView: false
-      importComponent: |
-        import GenericUpdateFormBuilder from '@/components/GenericForm/GenericUpdateFormBuilder';
-        import {useTranslation} from "react-i18next";
-      export: |
-        export default function Update${majStart(className)}() {
-            const { t } = useTranslation();
-            return (
-                <GenericUpdateFormBuilder<${majStart(className)}>
-                    entityName={${toCamelCase(className)}Meta.entityName}
-                    fields={updateFormFields}
-                    getById={${toCamelCase(className)}Service.getById}
-                    update={${toCamelCase(className)}Service.update}
-                    title={`$[t('messages.common.edit')] ${toKebabCase(className)}`}
-                    detailRedirect="/${toKebabCase(className)}s/:id"
-                />
-            );
-        }
-      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
-      componentName: "${toKebabCase(className)}-update"
-      componentAdditionalFiles: []
-  serviceComponent:
-    imports: |
-      // src/models/${toKebabCase(className)}/${toKebabCase(className)}.service.ts
-      import type { ${majStart(className)} } from './${toKebabCase(className)}.model';
-      import type { FilterState } from '@/types/filter';
-      import { getById, search {{#if !isView}},create,remove, update{{/if}} } from "@/services/api";
-    methods: |
-      export const ${toCamelCase(className)}Service = {
-          search(params: {
-              page: number;
-              size: number;
-              sort: `$[string],$['asc' | 'desc']`;
-              filter: FilterState;
-          }) {
-              return search<${majStart(className)}>({
-                  endpoint: '/${lowerCase(classNameLink)}/search',
-                  ...params,
-              });
-          },
-
-          async getById(id: number) {
-              return getById<${majStart(className)}>('/${lowerCase(classNameLink)}', id);
-          },
-
-          create(${toCamelCase(className)}: Omit<${majStart(className)}, 'id'>) {
-              return create<${majStart(className)}>('/${lowerCase(classNameLink)}', ${toCamelCase(className)});
-          },
-
-          async update(id: number, ${toCamelCase(className)}: Partial<${majStart(className)}>) {
-              return update<${majStart(className)}>('/${lowerCase(classNameLink)}', id, ${toCamelCase(className)});
-          },
-
-          delete: (id: string | number) => remove('/${toKebabCase(className)}s', id),
-      };
-    destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
-    name: "${toKebabCase(className)}.service"
-  modelComponent:
-    imports: |
-      // src/models/${toKebabCase(className)}/${toKebabCase(className)}.model.ts
-      import dayjs from "dayjs";
-      import { format } from 'date-fns';
-      import 'dayjs/plugin/utc'; 
-      import utc from 'dayjs/plugin/utc'; 
-      import { parseTimeString } from '@/utils/timeParser';
-      import {formatDuration} from "@/utils/formatDuration";
-      dayjs.extend(utc); // Utilise le plugin utc
-    exports : |
-      export interface ${majStart(className)} {
-      {{tab}}{{#each fields}}
-      {{tab}}{{#if this.isForeignKey}}${this.name}: ${this.referencedColumnType}{{else}}
-      {{tab}}${this.name}: ${this.typeBase}{{/if}}
-      {{tab}}{{/each}}{{removeLine}}
-      {{tab}}[key: string]: unknown;
-      }
-      
-      export const ${toCamelCase(className)}Meta = {
-          entityName: '${majStart(className)}',
-          endpoint: '/${toKebabCase(className)}s/search',
-          defaultSort: '{{#each fieldsPK}}${this.name}{{/each}},asc' as const
-      };
-      
-      export const ${toCamelCase(className)}Columns = [
-          {{#each fieldsFK}}
-          {
-            header: '${this.type}',
-            accessor: (row: ${majStart(className)}) => (row.${this.name} as any)?.${this.referencedPrimaryKeyColumn} ?? '-',
-            sortKey: '${this.name}',
-            link: (row: ${majStart(className)}) => `/${toKebabCase(this.type)}s/$[(row.${this.name} as any)?.${this.referencedPrimaryKeyColumn}]?from=/${toKebabCase(className)}s`
-          },
-          {{/each}}{{removeLine}}
-          {{#each fieldsNotFK}}
-          {{#if this.isPrimaryKey}}
-          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' ,link: (row: ${majStart(className)}) => `/${toKebabCase(className)}s/$[row.${this.name}]`},
-          {{elseIf this.isDate}}
-          {
-            header: '${formatReadable(this.name)}',
-            accessor: (row: ${majStart(className)}) => {
-              if (!row.${this.name}) return '-';
-              const d = new Date(row.${this.name} as unknown as string);
-              return isNaN(d.getTime())
-                  ? '-'
-                  : d.toLocaleDateString('fr-FR');  
-            },
-            sortKey: '${this.name}'
-          },
-          {{elseIf this.isDateTime }}
-          {
-            header: '${formatReadable(this.name)}',
-            accessor: (row: ${majStart(className)} ) => {
-               const date = row.${this.name};
-               if (!date) return '-';
-               const dateObject = new Date(date);
-               return isNaN(dateObject.getTime()) ? '-' : format(dateObject, "dd/MM/yyyy HH:mm:ss");
-            },
-            sortKey: '${this.name}'
-          },
-          {{elseIf this.isTimeTz}} 
-          {
-            header: '${formatReadable(this.name)}',
-              accessor: (row: ${majStart(className)}) => {
-                  const timeStr = row.${this.name};
-                  if (!timeStr) return '-';
-      
-                  const clean = timeStr.replace('Z', '');          
-                  const parts = clean.split(':');
-      
-                  if (parts.length < 2) return '-';                  
-                  const [h, m, s] = [...parts, '00'].map(Number);   
-                  const d = dayjs.utc(`1970-01-01 $[h]:$[m]:$[s]`, 'YYYY-MM-DD HH:mm:ss');
-                  return d.isValid() ? d.format('HH:mm:ss') : '-';
-              },
-            sortKey: '${this.name}'
-          },
-          {{elseIf this.isTime }}
-          {
-            header: '${formatReadable(this.name)}',
-            accessor: (row: ${majStart(className)} ) => {
-                const timeStr = row.${this.name};  
-                if (!timeStr) return '-';
-                const [h, m, s] = timeStr.replace('Z', '').split(':').map(Number);
-                const dateObj = new Date(1970, 0, 1, h, m, s);
-                return format(dateObj, 'HH:mm:ss');
-            },
-            sortKey: '${this.name}'
-          },
-          {{elseIf this.isInterval}}
-          {
-            header: '${formatReadable(this.name)}',
-            accessor: (row: ${majStart(className)}) => formatDuration(row.${this.name}),
-            sortKey: '${this.name}'
-          },
-          {{else}}
-          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' },
-          {{/if}}{{/each}}{{removeLine}}
-      ]
-      
-      export const ${toCamelCase(className)}Filters = {
-          {{#each fieldsFK}}
-          ${this.name}: {
-            label: '${formatReadable(this.type)}',
-            type: '${this.referencedColumnType}' as const,
-            nestedKey: '${this.referencedPrimaryKeyColumn}' as const
-          },
-          {{/each}}{{removeLine}}
-          {{#each fieldsNotFK}}
-          {{#if this.isPrimaryKey}}
-          ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const },
-          {{elseIf this.isText}}
-          ${this.name}: { label: '${formatReadable(this.name)}', type: 'text' as const },
-          {{elseIf this.isNumeric }}
-          ${this.name}: { label: '${formatReadable(this.name)}', type: 'number' as const },
-          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'number' as const },
-          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'number' as const },
-          {{elseIf this.isDate}}
-          ${this.name}: { label: '${formatReadable(this.name)}', type: 'Date' as const },
-          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'Date' as const },
-          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'Date' as const },
-          {{elseIf this.isTimeTz}} 
-          ${this.name}: { label: '${formatReadable(this.name)}', type: 'timeTz' as const },
-          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'timeTz' as const },
-          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'timeTz' as const },
-          {{elseIf this.isDateTimeTz}}  
-          ${this.name}: { label: '${formatReadable(this.name)}', type: 'DateTimeTZ' as const },
-          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'DateTimeTZ' as const },
-          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'DateTimeTZ' as const },
-          {{elseIf this.isDateTime}}  
-          ${this.name}: { label: '${formatReadable(this.name)}', type: 'DateTime' as const },
-          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'DateTime' as const },
-          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'DateTime' as const },
-          {{elseIf this.isTime }}
-          ${this.name}: { label: '${formatReadable(this.name)}', type: 'time' as const },
-          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'time' as const },
-          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'time' as const },
-          {{elseIf this.isInterval}}
-          ${this.name}: { label: '${formatReadable(this.name)}', type: 'interval' as const },
-          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'interval' as const },
-          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'interval' as const },
-          {{/if}}{{/each}}{{removeLine}}
-      };
-      
-      export const formFields = {
-          {{#each fieldsFK}}
-          ${this.name}: {
-            label: '${this.type}',
-            type: 'select' as const,
-            required: ${this.isRequired},
-            foreignKey: {
-              endpoint: '/${toKebabCase(this.type)}s?page=0&size=1000',
-              labelKey: '${this.referencedPrimaryKeyColumn}',
-              valueKey: '${this.referencedPrimaryKeyColumn}'
-            },
-            transform: (value: any) => ({ ${this.referencedPrimaryKeyColumn}: Number(value) }),
-          },
-          {{/each}}{{removeLine}}
-          {{#each fieldsNotFK}}
-          {{#if this.isPrimaryKey}}
-          {{removeLine}}
-          {{elseIf this.isTimeTz}} 
-          ${this.name}: {
-                label: '${formatReadable(this.name)}',
-                type: 'timeTz' as const,
-                required: true,
-                transform: (value: any) => {
-                    if (!value || typeof value !== 'string') return null;
-                    const d = dayjs.utc(`1970-01-01T$[value]`); 
-                    return d.isValid() ? d.format('HH:mm:ss') + 'Z' : null;
-                },
-          },
-          {{elseIf this.isDateTimeTz}}
-          ${this.name}: {
-            label: '${formatReadable(this.name)}',
-            type: 'datetime' as const,
-            required: ${this.isRequired},
-            transform: (value: string) =>
-                                 value ? dayjs(value).utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null
-          },
-          {{elseIf this.isDateTime}}
-          ${this.name}: {
-            label: '${formatReadable(this.name)}',
-            type: 'datetime' as const,
-            required: ${this.isRequired},
-            transform: (value: string) =>
-                                 value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null,
-          },
-          {{elseIf this.isTime }}
-          ${this.name}: {
-            label: '${formatReadable(this.name)}',
-            type: 'time' as const,
-            required: ${this.isRequired},
-            transform: (value: any) => {
-                if (!value) return null;
-                const parsed = parseTimeString(String(value));
-                return parsed ? parsed.format('HH:mm:ss') : null;
-            },
-          },
-          {{elseIf this.isInterval}}
-          ${this.name}: {
-            label: '${formatReadable(this.name)}',
-            type: 'interval' as const,
-            required: ${this.isRequired},
-          },
-          {{else}}
-          ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const, required: ${this.isRequired} },
-          {{/if}}{{/each}}{{removeLine}}
-      } as const;
-      
-      export const updateFormFields = {
-          {{#each fieldsPK}}
-          ${this.name}: {
-            label: '${formatReadable(this.name)}',
-            type: '${this.typeBase}' as const,
-            required: true,
-            readonly: true, 
-          },
-          {{/each}}{{removeLine}}
-          ...formFields, 
-      };
-    destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
-    name: "${toKebabCase(className)}.model"
-  mereFiles: [ ]
-  filleFiles: [ ]
+#- id: 3
+#  languageId: 1
+#  coreFramework: "React"
+#  name: "React App"
+#  template: "React-template"
+#  initPath: "react/react-ts-skeletoon"
+#  componentExtension: "tsx"
+#  frontendPaths:
+#    faviconPath: "${destinationFolder}/public"
+#    logoPath: "${destinationFolder}/public"
+#    langsPath: "${destinationFolder}/src/locales"
+#  authenticationFiles:
+#    - fileType: "Service Auth"
+#      fileName: "auth"
+#      extension: "ts"
+#      content: |
+#        // src/services/auth.ts
+#        import axios from 'axios';
+#        import { ApiResponse } from './api';
+#
+#        const API_BASE = import.meta.env.VITE_API_BASE as string;
+#
+#        interface AuthRequest { username: string; password: string; }
+#        interface RegisterPayload {
+#            name: string;
+#            email: string;
+#            password: string;
+#            roleidRoleEntity?: { id: number };
+#        }
+#        interface UpdateRequest { name?: string; email?: string; }
+#        interface ChangePasswordRequest { oldPassword: string; newPassword: string; confirmPassword: string; }
+#
+#        export const authService = {
+#            login: (payload: AuthRequest) =>
+#                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/login`, payload)
+#                      .then(r => r.data),
+#
+#            // S’appuie sur l’intercepteur axios pour Authorization
+#            me: () =>
+#                axios.get<ApiResponse<any>>(`$[API_BASE]/auth/current`).then(r => r.data),
+#
+#            register: (payload: RegisterPayload) =>
+#                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/register`, payload).then(r => r.data),
+#
+#            updateProfile: (payload: UpdateRequest) =>
+#                axios.patch<ApiResponse<string>>(`$[API_BASE]/auth/update`, payload).then(r => r.data),
+#
+#            changePassword: (payload: ChangePasswordRequest) =>
+#                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/change-password`, payload).then(r => r.data),
+#
+#            logout: () =>
+#                axios.post<ApiResponse<void>>(`$[API_BASE]/auth/logout`, {}).then(r => r.data),
+#
+#            refresh: (token: string) =>
+#                axios.post<ApiResponse<string>>(`$[API_BASE]/auth/refresh`, { refreshToken: token })
+#                    .then(res => res.data),
+#        };
+#      destinationPath: "${destinationFolder}/src/services"
+#    - fileType: "AuthContext"
+#      fileName: "AuthContext"
+#      extension: "tsx"
+#      content: |
+#        // src/contexts/AuthContext.tsx
+#        // src/contexts/AuthContext.tsx
+#        import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+#        import { authService } from '@/services/auth';
+#        import { useSnackbar } from 'notistack';
+#
+#        type User = { username: string; email?: string };
+#        type AuthCtx = {
+#            user: User | null;
+#            token: string | null;
+#            login: (u: string, p: string) => Promise<void>;
+#            logout: () => void;
+#            loading: boolean;
+#            // nouvelles
+#            register: (payload: { name: string; email: string; password: string }) => Promise<{ message?: string } | void>;
+#            fetchCurrent: () => Promise<void>;
+#            updateProfile: (payload: { name?: string; email?: string }) => Promise<void>;
+#            changePassword: (payload: { oldPassword: string; newPassword: string; confirmPassword: string }) => Promise<void>;
+#        };
+#
+#        const AuthContext = createContext<AuthCtx>(null!);
+#        const REFRESH_INTERVAL_MS = Number(import.meta.env.VITE_REFRESH_INTERVAL_MS ?? 60000);
+#
+#        export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+#            const { enqueueSnackbar } = useSnackbar();
+#            const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+#            const [user, setUser] = useState<User | null>(null);
+#            const [loading, setLoading] = useState(true);
+#            const intervalRef = useRef<number | null>(null);
+#
+#            const clearTimer = () => {
+#                if (intervalRef.current) {
+#                    window.clearInterval(intervalRef.current);
+#                    intervalRef.current = null;
+#                }
+#            };
+#
+#            const logout = () => {
+#                clearTimer();
+#                if (token) authService.logout().catch(() => {});
+#                localStorage.removeItem('token');
+#                setToken(null);
+#                setUser(null);
+#            };
+#
+#            const startRefreshTimer = (tk: string) => {
+#                clearTimer();
+#                intervalRef.current = window.setInterval(async () => {
+#                    try {
+#                        const res = await authService.refresh(tk);
+#                        const newToken = res.data;
+#                        localStorage.setItem('token', newToken);
+#                        setToken(newToken);
+#                    } catch {
+#                        logout();
+#                    }
+#                }, REFRESH_INTERVAL_MS);
+#            };
+#
+#            const fetchCurrent = async () => {
+#                const res = await authService.me();
+#                setUser({ username: res.data.username, email: (res.data as any).email });
+#            };
+#
+#            useEffect(() => {
+#                if (!token) {
+#                    setLoading(false);
+#                    return;
+#                }
+#                authService
+#                    .me()
+#                    .then(res => {
+#                        setUser({ username: res.data.username, email: (res.data as any).email });
+#                        startRefreshTimer(token);
+#                    })
+#                    .catch(() => logout())
+#                    .finally(() => setLoading(false));
+#            }, [token]);
+#
+#            const login = async (username: string, password: string) => {
+#                const res = await authService.login({ username, password });
+#                const jwt = res.data;
+#                localStorage.setItem('token', jwt);
+#                setToken(jwt);
+#                startRefreshTimer(jwt);
+#                await fetchCurrent();
+#            };
+#
+#            const register = async (payload: { name: string; email: string; password: string }) => {
+#                // laisser la page gérer les toasts/navigation
+#                const res = await authService.register(payload);
+#                return res; // retourner pour permettre l’affichage du message
+#            };
+#
+#            const updateProfile = async (payload: { name?: string; email?: string }) => {
+#                const oldUsername = user?.username;
+#                await authService.updateProfile(payload);
+#
+#                if (payload.name && payload.name !== oldUsername) {
+#                    enqueueSnackbar('Username changed successfully', { variant: 'success' });
+#                } else {
+#                    // Seulement l'email a changé, on peut rafraîchir
+#                    await fetchCurrent();
+#                    enqueueSnackbar('Profile updated successfully', { variant: 'success' });
+#                }
+#            };
+#
+#            const changePassword = async (payload: {oldPassword: string; newPassword: string; confirmPassword: string;}) => {
+#                await authService.changePassword(payload);
+#                enqueueSnackbar('Password changed, please sign in again', { variant: 'success' });
+#                logout(); // ProtectedRoute enverra vers /login quand user=null
+#            };
+#
+#            return (
+#                <AuthContext.Provider
+#                    value={{ user, token, loading, login, logout, register, fetchCurrent, updateProfile, changePassword }}
+#                >
+#                    {children}
+#                </AuthContext.Provider>
+#            );
+#        };
+#
+#        export const useAuth = () => useContext(AuthContext);
+#      destinationPath: "${destinationFolder}/src/contexts"
+#    - fileType: "Configuration file"
+#      fileName: "{{removeLine}}"
+#      extension: "env"
+#      content: |
+#        VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
+#        VITE_REFRESH_INTERVAL_MS=60000
+#      destinationPath: "${destinationFolder}/"
+#    - fileType: "ProtectedRoute"
+#      fileName: "ProtectedRoute"
+#      extension: "tsx"
+#      content: |
+#        // src/router/ProtectedRoute.tsx
+#        import { Navigate, Outlet, useLocation } from 'react-router-dom';
+#        import { useAuth } from '@/contexts/AuthContext';
+#        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
+#
+#        export default function ProtectedRoute() {
+#          const { user, loading } = useAuth();
+#          const location = useLocation();
+#
+#          /* déjà sur login → on laisse le flux se terminer sans re-navigation */
+#          if (location.pathname === '/login') return <Outlet />;
+#
+#          if (loading) return <BackdropBlocker open />;
+#          return user ? <Outlet /> : <Navigate to="/login" replace state={{ from: location }} />;
+#        }
+#      destinationPath: "${destinationFolder}/src/router"
+#    - fileType: "Login page"
+#      fileName: "Login"
+#      extension: "tsx"
+#      content: |
+#        // src/pages/auth/Login.tsx
+#        import { useState, useEffect, useRef } from 'react';
+#        import { useAuth } from '@/contexts/AuthContext';
+#        import { useNavigate, useLocation } from 'react-router-dom';
+#        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+#        import { useSnackbar } from 'notistack';
+#        import { useTranslation } from 'react-i18next';
+#        import LanguageSwitcher from '@/components/LanguageSwitcher';
+#
+#        export default function Login() {
+#            const [username, setUsername] = useState('');
+#            const [password, setPassword] = useState('');
+#            const { login, token, user } = useAuth(); // ← user ajouté
+#            const navigate = useNavigate();
+#            const { enqueueSnackbar } = useSnackbar();
+#            const { t } = useTranslation();
+#            const location = useLocation();
+#            const from = location.state?.from?.pathname || '/';
+#
+#            const hasNavigatedRef = useRef(false);
+#
+#            useEffect(() => {
+#                if (token && user && !hasNavigatedRef.current) {
+#                    hasNavigatedRef.current = true;
+#                    navigate(from, { replace: true });
+#                }
+#            }, [token, user, from, navigate]);
+#
+#            const handleSubmit = async (e: React.FormEvent) => {
+#                e.preventDefault();
+#                try {
+#                    await login(username, password);
+#                } catch {
+#                    enqueueSnackbar(t('messages.authentication.invalid'), { variant: 'error' });
+#                }
+#            };
+#
+#            return (
+#                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+#                    <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+#                        <LanguageSwitcher />
+#                    </Box>
+#                    <Paper sx={{ p: 4, width: 360 }}>
+#                        <Typography variant="h5" mb={3} textAlign="center">{t('messages.authentication.title')}  </Typography>
+#                        <form onSubmit={handleSubmit}>
+#                            <TextField fullWidth label={t('messages.authentication.username')} value={username} onChange={e => setUsername(e.target.value)} required />
+#                            <TextField fullWidth label={t('messages.authentication.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required sx={{ mt: 2 }} />
+#                            <Button fullWidth variant="contained" type="submit" sx={{ mt: 3 }}>{t('messages.authentication.submit')} </Button>
+#                            <Button fullWidth variant="text" sx={{ mt: 1 }} onClick={() => navigate('/register')}>
+#                                {t('messages.authentication.createAccount')}
+#                            </Button>
+#                        </form>
+#                    </Paper>
+#                </Box>
+#            );
+#        }
+#      destinationPath: "${destinationFolder}/src/pages/auth"
+#    - fileType: "Register page"
+#      fileName: "Register"
+#      extension: "tsx"
+#      content: |
+#        // src/pages/auth/Register.tsx
+#        import { useState } from 'react';
+#        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+#        import { useAuth } from '@/contexts/AuthContext';
+#        import { useSnackbar } from 'notistack';
+#        import { useNavigate } from 'react-router-dom';
+#        import {useTranslation} from "react-i18next";
+#        import LanguageSwitcher from '@/components/LanguageSwitcher';
+#
+#        export default function Register() {
+#            const { register } = useAuth();
+#            const { enqueueSnackbar } = useSnackbar();
+#            const navigate = useNavigate();
+#            const { t } = useTranslation();
+#
+#            const [name, setName] = useState('');
+#            const [email, setEmail] = useState('');
+#            const [password, setPassword] = useState('');
+#            const [submitting, setSubmitting] = useState(false);
+#
+#            const handleSubmit = async (e: React.FormEvent) => {
+#                e.preventDefault();
+#                if (submitting) return;
+#                setSubmitting(true);
+#                try {
+#                    // Aucun rôle envoyé: le backend affecte le rôle par défaut
+#                    const res = await register({ name, email, password });
+#                    enqueueSnackbar(res?.message || t('messages.register.success'), { variant: 'success' });
+#                    // Laisser le toast s’afficher puis rediriger vers le login
+#                    setTimeout(() => navigate('/login', { replace: true }), 1500);
+#                } catch (err: any) {
+#                    const body = err?.response?.data;
+#                    enqueueSnackbar(t('messages.register.error'), { variant: 'error' });
+#                } finally {
+#                    setSubmitting(false);
+#                }
+#
+#            };
+#
+#            return (
+#                <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+#                    <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+#                        <LanguageSwitcher />
+#                    </Box>
+#                    <Paper sx={{ p: 4, width: 380 }}>
+#                        <Typography variant="h5" mb={3} textAlign="center">{t('messages.register.title')}</Typography>
+#                        <form onSubmit={handleSubmit}>
+#                            <TextField fullWidth label={t('messages.register.name')} value={name} onChange={e => setName(e.target.value)} required />
+#                            <TextField fullWidth sx={{ mt: 2 }} label={t('messages.register.email')} type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+#                            <TextField fullWidth sx={{ mt: 2 }} label={t('messages.register.password')} type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+#                            <Button fullWidth sx={{ mt: 3 }} variant="contained" type="submit" disabled={submitting}>
+#                                {t('messages.register.submit')}
+#                            </Button>
+#                            <Button fullWidth sx={{ mt: 1 }} variant="text" onClick={() => navigate('/login')}>
+#                                {t('messages.register.backToSignIn')}
+#                            </Button>
+#                        </form>
+#                    </Paper>
+#                </Box>
+#            );
+#        }
+#      destinationPath: "${destinationFolder}/src/pages/auth"
+#    - fileType: "Profile update page"
+#      fileName: "Profile"
+#      extension: "tsx"
+#      content: |
+#        // src/pages/auth/Profile.tsx
+#        import { useState, useEffect } from 'react';
+#        import { TextField, Button, Paper, Typography, Box, Alert } from '@mui/material';
+#        import { useAuth } from '@/contexts/AuthContext';
+#        import { useSnackbar } from 'notistack';
+#        import { useTranslation } from 'react-i18next';
+#        import { useNavigate } from 'react-router-dom';
+#        import { pageContainerSx } from '@/styles/mui-patterns';
+#        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
+#
+#        export default function Profile() {
+#            const { user, updateProfile, logout } = useAuth();
+#            const { enqueueSnackbar } = useSnackbar();
+#            const { t } = useTranslation();
+#            const navigate = useNavigate();
+#
+#            const [name, setName] = useState('');
+#            const [email, setEmail] = useState('');
+#            const [submitting, setSubmitting] = useState(false);
+#
+#            useEffect(() => {
+#                if (user) {
+#                    setName(user.username || '');
+#                    setEmail(user.email || '');
+#                }
+#            }, [user]);
+#
+#            const handleSubmit = async (e: React.FormEvent) => {
+#                e.preventDefault();
+#                if (submitting) return;
+#
+#                // ✅ Vérifier si le username change
+#                const usernameChanged = name !== user?.username;
+#
+#                setSubmitting(true);
+#                try {
+#                    await updateProfile({ name, email });
+#
+#                    // ✅ Si le username a changé, déconnecter l'utilisateur
+#                    if (usernameChanged) {
+#                        enqueueSnackbar(
+#                            t('messages.profile.usernameChangedLogout'),
+#                            { variant: 'warning', autoHideDuration: 3000 }
+#                        );
+#
+#                        // Déconnexion après 2 secondes
+#                        setTimeout(() => {
+#                            logout();
+#                            navigate('/login', { replace: true });
+#                        }, 2000);
+#                    } else {
+#                        enqueueSnackbar(t('messages.profile.updateSuccess'), { variant: 'success' });
+#                    }
+#                } catch (err: any) {
+#                    const body = err?.response?.data;
+#                    enqueueSnackbar(body?.message || t('messages.profile.updateError'), { variant: 'error' });
+#                } finally {
+#                    setSubmitting(false);
+#                }
+#            };
+#
+#            return (
+#                <>
+#                    <BackdropBlocker open={submitting} />
+#                    <Box sx={pageContainerSx}>
+#                        <Paper sx={{ p: 4, maxWidth: 480, mx: 'auto', mt: 4 }}>
+#                            <Typography variant="h5" mb={3} textAlign="center">
+#                                {t('messages.profile.edit')}
+#                            </Typography>
+#
+#                            {/* ✅ Avertissement si le username va changer */}
+#                            {name !== user?.username && (
+#                                <Alert severity="warning" sx={{ mb: 2 }}>
+#                                    {t('messages.profile.usernameChangeWarning')}
+#                                </Alert>
+#                            )}
+#
+#                            <form onSubmit={handleSubmit}>
+#                                <TextField
+#                                    fullWidth
+#                                    label={t('messages.register.name')}
+#                                    value={name}
+#                                    onChange={(e) => setName(e.target.value)}
+#                                    required
+#                                    sx={{ mb: 2 }}
+#                                />
+#                                <TextField
+#                                    fullWidth
+#                                    label={t('messages.register.email')}
+#                                    type="email"
+#                                    value={email}
+#                                    onChange={(e) => setEmail(e.target.value)}
+#                                    required
+#                                    sx={{ mb: 3 }}
+#                                />
+#
+#                                <Button
+#                                    fullWidth
+#                                    variant="contained"
+#                                    type="submit"
+#                                    disabled={submitting}
+#                                >
+#                                    {t('messages.common.save')}
+#                                </Button>
+#                            </form>
+#                        </Paper>
+#                    </Box>
+#                </>
+#            );
+#        }
+#      destinationPath: "${destinationFolder}/src/pages/auth"
+#    - fileType: "ChangePassword page"
+#      fileName: "ChangePassword"
+#      extension: "tsx"
+#      content: |
+#        // src/pages/auth/ChangePassword.tsx
+#        import { useState } from 'react';
+#        import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+#        import { useAuth } from '@/contexts/AuthContext';
+#        import { useSnackbar } from 'notistack';
+#        import { useTranslation } from 'react-i18next';
+#        import { pageContainerSx } from '@/styles/mui-patterns';
+#        import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
+#
+#        export default function ChangePassword() {
+#            const { changePassword } = useAuth();
+#            const { enqueueSnackbar } = useSnackbar();
+#            const { t } = useTranslation();
+#
+#            const [oldPassword, setOldPassword] = useState('');
+#            const [newPassword, setNewPassword] = useState('');
+#            const [confirmPassword, setConfirmPassword] = useState('');
+#            const [submitting, setSubmitting] = useState(false);
+#
+#            const handleSubmit = async (e: React.FormEvent) => {
+#                e.preventDefault();
+#                if (submitting) return;
+#
+#                if (newPassword !== confirmPassword) {
+#                    enqueueSnackbar(t('messages.profile.passwordMismatch'), { variant: 'error' });
+#                    return;
+#                }
+#
+#                setSubmitting(true);
+#                try {
+#                    await changePassword({ oldPassword, newPassword, confirmPassword });
+#                    enqueueSnackbar(t('messages.profile.passwordChangeSuccess'), { variant: 'success' });
+#                    // Redirection automatique vers login par le contexte
+#                } catch (err: any) {
+#                    const body = err?.response?.data;
+#                    enqueueSnackbar(body?.message || t('messages.profile.passwordChangeError'), { variant: 'error' });
+#                } finally {
+#                    setSubmitting(false);
+#                }
+#            };
+#
+#            return (
+#                <>
+#                    <BackdropBlocker open={submitting} />
+#                    <Box sx={pageContainerSx}>
+#                        <Paper sx={{ p: 4, maxWidth: 480, mx: 'auto', mt: 4 }}>
+#                            <Typography variant="h5" mb={3} textAlign="center">
+#                                {t('messages.profile.changePassword')}
+#                            </Typography>
+#
+#                            <form onSubmit={handleSubmit}>
+#                                <TextField
+#                                    fullWidth
+#                                    label={t('messages.profile.oldPassword')}
+#                                    type="password"
+#                                    value={oldPassword}
+#                                    onChange={(e) => setOldPassword(e.target.value)}
+#                                    required
+#                                    sx={{ mb: 2 }}
+#                                />
+#                                <TextField
+#                                    fullWidth
+#                                    label={t('messages.profile.newPassword')}
+#                                    type="password"
+#                                    value={newPassword}
+#                                    onChange={(e) => setNewPassword(e.target.value)}
+#                                    required
+#                                    sx={{ mb: 2 }}
+#                                />
+#                                <TextField
+#                                    fullWidth
+#                                    label={t('messages.profile.confirmPassword')}
+#                                    type="password"
+#                                    value={confirmPassword}
+#                                    onChange={(e) => setConfirmPassword(e.target.value)}
+#                                    required
+#                                    sx={{ mb: 3 }}
+#                                />
+#
+#                                <Button
+#                                    fullWidth
+#                                    variant="contained"
+#                                    type="submit"
+#                                    disabled={submitting}
+#                                >
+#                                    {t('messages.common.save')}
+#                                </Button>
+#                            </form>
+#                        </Paper>
+#                    </Box>
+#                </>
+#            );
+#        }
+#      destinationPath: "${destinationFolder}/src/pages/auth"
+#    - fileType: "Router file"
+#      fileName: "router"
+#      extension: "tsx"
+#      content: |
+#        // src/router.tsx
+#        import RootLayout from './layouts/RootLayout';
+#        import { createBrowserRouter, Navigate } from 'react-router-dom';
+#        import ProtectedRoute from '@/router/ProtectedRoute';
+#        import Login from '@/pages/auth/Login';
+#        import Register from '@/pages/auth/Register';
+#        import Profile from '@/pages/auth/Profile';
+#        import ChangePassword from '@/pages/auth/ChangePassword';
+#        {{#each routes}}
+#        import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
+#        {{/each}}
+#
+#        export const router = createBrowserRouter([
+#            {
+#                path: '/login',
+#                element: <Login />,
+#            },
+#            { path: 'register', element: <Register /> },
+#            {
+#                path: '/',
+#                element: (
+#                    <ProtectedRoute /> // ← tout ce qui est en-dessous nécessite auth
+#                ),
+#                children: [
+#                    {
+#                        path: '/',
+#                        element: <Navigate to="{{#each routes}}{{#if @first}}${this.routerLink}{{/if}}{{/each}}" replace />,
+#                    },
+#                    {
+#                        path: '/',
+#                        element: <RootLayout/>,
+#                        children: [
+#                            {
+#                                path: '/profile',
+#                                element: <Profile />,
+#                            },
+#                            {
+#                                path: '/change-password',
+#                                element: <ChangePassword />,
+#                            },
+#                            {{#each routes}}
+#                            {
+#                              path: '${this.routerLink}',
+#                              element: <${this.componentSelector} />,
+#                            },
+#                            {{/each}}
+#                        ],
+#                    },
+#                ],
+#            },
+#        ]);
+#      destinationPath: "${destinationFolder}/src"
+#    - fileType: "index file"
+#      fileName: "index"
+#      extension: "tsx"
+#      content: |
+#        // src/index.tsx
+#        import React from 'react';
+#        import ReactDOM from 'react-dom/client';
+#        import { RouterProvider } from 'react-router-dom';
+#        import { router } from './router';
+#        import './index.css';
+#        import './i18n';
+#        import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+#        import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+#        import { SnackbarProvider } from 'notistack';
+#        import { ThemeProvider } from './contexts/ThemeContext';
+#        import { CssBaseline } from '@mui/material';
+#        import 'dayjs/locale/fr';
+#        import dayjs from 'dayjs';
+#        import { AuthProvider } from '@/contexts/AuthContext';
+#        dayjs.locale('fr');
+#
+#        ReactDOM.createRoot(document.getElementById('root')!).render(
+#            <React.StrictMode>
+#                <ThemeProvider>
+#                    <CssBaseline />
+#                    <AuthProvider>
+#                        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="fr">
+#                            <SnackbarProvider maxSnack={3} autoHideDuration={1500}>
+#                                <RouterProvider router={router} />
+#                            </SnackbarProvider>
+#                        </LocalizationProvider>
+#                    </AuthProvider>
+#                </ThemeProvider>
+#            </React.StrictMode>
+#        );
+#      destinationPath: "${destinationFolder}/src"
+#    - fileType: "api"
+#      fileName: "api"
+#      extension: "ts"
+#      content: |
+#        // src/services/api.ts
+#        import axios from 'axios';
+#
+#        const API_BASE = import.meta.env.VITE_API_BASE as string;
+#
+#        export interface ApiResponse<T> {
+#            status: number;
+#            message: string;
+#            returnCode: number;
+#            data: T;
+#            timestamp: string;
+#        }
+#
+#        interface SearchParams {
+#            endpoint: string;
+#            page: number;
+#            size: number;
+#            sort: `$[string],$['asc' | 'desc']`;
+#            filter: Record<string, unknown>;
+#        }
+#
+#        /* =============== REQUEST : toujours mettre le token =============== */
+#        axios.interceptors.request.use(config => {
+#            const tok = localStorage.getItem('token');
+#            if (tok) config.headers.Authorization = `Bearer $[tok]`;
+#            return config;
+#        });
+#
+#        /* ===============  EXPORT DES FONCTIONS EXISTANTES =============== */
+#        export async function search<T>({ endpoint, page, size, sort, filter }: SearchParams) {
+#            const { data } = await axios.post(
+#                `$[API_BASE]$[endpoint]`,
+#                filter,
+#                { params: { page, size, sortParam: sort } }
+#            );
+#            return {
+#                content: (data.data?.content as T[]) ?? [],
+#                totalPages: data.data?.page?.totalPages ?? 0,
+#            };
+#        }
+#
+#        export async function create<T>(endpoint: string, payload: Omit<T, 'id'>) {
+#            const { data } = await axios.post<ApiResponse<T>>(`$[API_BASE]$[endpoint]`, payload);
+#            return data;
+#        }
+#
+#        export async function getById<T>(endpoint: string, id: number) {
+#            const { data } = await axios.get<ApiResponse<T>>(`$[API_BASE]$[endpoint]/$[id]`);
+#            return data.data;
+#        }
+#
+#        export async function update<T>(endpoint: string, id: number, payload: Partial<T>) {
+#            const { data } = await axios.put<ApiResponse<T>>(`$[API_BASE]$[endpoint]/$[id]`, payload);
+#            return data;
+#        }
+#
+#        export async function remove(endpoint: string, id: string | number) {
+#            const { data } = await axios.delete<ApiResponse<void>>(`$[API_BASE]$[endpoint]/$[id]`);
+#            return data;
+#        }
+#      destinationPath: "${destinationFolder}/src/services"
+#    - fileType: "SettingsMenu"
+#      fileName: "index"
+#      extension: "tsx"
+#      content: |
+#        // src/components/SettingsMenu/index.tsx
+#        import { useState } from 'react';
+#        import {
+#            IconButton,
+#            Menu,
+#            MenuItem,
+#            ListItemIcon,
+#            ListItemText,
+#            Divider,
+#            FormControl,
+#            InputLabel,
+#            Select,
+#            SelectChangeEvent,
+#            Box,
+#            Card,
+#            CardContent,
+#            Typography,
+#            Avatar,
+#        } from '@mui/material';
+#        import {
+#            Settings,
+#            Brightness4,
+#            Brightness7,
+#            ViewSidebar,
+#            ViewAgenda,
+#            Logout,
+#            Person,
+#            Edit,
+#            Lock
+#        } from '@mui/icons-material';
+#        import { useThemeMode } from '@/contexts/ThemeContext';
+#        import { useAuth } from '@/contexts/AuthContext';
+#        import { useTranslation } from 'react-i18next';
+#        import { useNavigate } from 'react-router-dom';
+#
+#        interface SettingsMenuProps {
+#            layout: 'vertical' | 'horizontal';
+#            onLayoutChange: (layout: 'vertical' | 'horizontal') => void;
+#            compact?: boolean;
+#        }
+#
+#        export default function SettingsMenu({ layout, onLayoutChange, compact = false }: SettingsMenuProps) {
+#            const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+#            const { mode, toggleTheme } = useThemeMode();
+#            const { logout, user } = useAuth();
+#            const { i18n, t } = useTranslation();
+#            const navigate = useNavigate();
+#
+#            const open = Boolean(anchorEl);
+#
+#            const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+#                setAnchorEl(event.currentTarget);
+#            };
+#
+#            const handleClose = () => {
+#                setAnchorEl(null);
+#            };
+#
+#            const handleLayoutChange = (newLayout: 'vertical' | 'horizontal') => {
+#                onLayoutChange(newLayout);
+#                handleClose();
+#            };
+#
+#            const handleLanguageChange = (event: SelectChangeEvent<string>) => {
+#                i18n.changeLanguage(event.target.value);
+#            };
+#
+#            const handleLogout = () => {
+#                logout();
+#                navigate('/login', { replace: true });
+#                handleClose();
+#            };
+#
+#            const handleNavigateProfile = () => {
+#                navigate('/profile');
+#                handleClose();
+#            };
+#
+#            const handleNavigatePassword = () => {
+#                navigate('/change-password');
+#                handleClose();
+#            };
+#
+#            const getSupportedLanguages = (): string[] => {
+#                if (Array.isArray(i18n.options.supportedLngs)) {
+#                    return i18n.options.supportedLngs.filter((l) => l !== 'cimode');
+#                }
+#                if (i18n.services.resourceStore.data) {
+#                    return Object.keys(i18n.services.resourceStore.data).filter((l) => l !== 'cimode');
+#                }
+#                return [i18n.language || 'en'];
+#            };
+#
+#            const supportedLanguages = getSupportedLanguages();
+#
+#            return (
+#                <>
+#                    <IconButton onClick={handleClick} color="inherit" size={compact ? 'small' : 'medium'}>
+#                        <Settings />
+#                    </IconButton>
+#
+#                    <Menu
+#                        anchorEl={anchorEl}
+#                        open={open}
+#                        onClose={handleClose}
+#                        onClick={handleClose}
+#                        PaperProps={{
+#                            elevation: 0,
+#                            sx: {
+#                                overflow: 'visible',
+#                                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+#                                mt: 1.5,
+#                                minWidth: 280,
+#                            },
+#                        }}
+#                        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+#                        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+#                    >
+#                        {/* ✅ CARD PROFIL UTILISATEUR */}
+#                        {user && (
+#                            <>
+#                                <Box sx={{ p: 2 }}>
+#                                    <Card
+#                                        elevation={0}
+#                                        sx={{
+#                                            bgcolor: 'action.hover',
+#                                            borderRadius: 2
+#                                        }}
+#                                    >
+#                                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+#                                            <Box display="flex" alignItems="center" gap={1.5}>
+#                                                <Avatar sx={{ bgcolor: 'primary.main' }}>
+#                                                    <Person />
+#                                                </Avatar>
+#                                                <Box>
+#                                                    <Typography variant="subtitle2" fontWeight={600}>
+#                                                        {user.username}
+#                                                    </Typography>
+#                                                    {user.email && (
+#                                                        <Typography variant="caption" color="text.secondary">
+#                                                            {user.email}
+#                                                        </Typography>
+#                                                    )}
+#                                                </Box>
+#                                            </Box>
+#                                        </CardContent>
+#                                    </Card>
+#                                </Box>
+#                                <Divider />
+#                            </>
+#                        )}
+#
+#                        {/* ✅ MODIFIER MON PROFIL */}
+#                        <MenuItem onClick={handleNavigateProfile}>
+#                            <ListItemIcon>
+#                                <Edit fontSize="small" />
+#                            </ListItemIcon>
+#                            <ListItemText>{t('messages.profile.edit')}</ListItemText>
+#                        </MenuItem>
+#
+#                        {/* ✅ CHANGER MOT DE PASSE */}
+#                        <MenuItem onClick={handleNavigatePassword}>
+#                            <ListItemIcon>
+#                                <Lock fontSize="small" />
+#                            </ListItemIcon>
+#                            <ListItemText>{t('messages.profile.changePassword')}</ListItemText>
+#                        </MenuItem>
+#
+#                        <Divider />
+#
+#                        {/* Mode disposition */}
+#                        <MenuItem onClick={() => handleLayoutChange(layout === 'vertical' ? 'horizontal' : 'vertical')}>
+#                            <ListItemIcon>
+#                                {layout === 'vertical' ? <ViewAgenda fontSize="small" /> : <ViewSidebar fontSize="small" />}
+#                            </ListItemIcon>
+#                            <ListItemText>
+#                                {layout === 'vertical'
+#                                    ? t('messages.layout.switchToHorizontal')
+#                                    : t('messages.layout.switchToVertical')
+#                                }
+#                            </ListItemText>
+#                        </MenuItem>
+#
+#                        <Divider />
+#
+#                        {/* Mode clair/sombre */}
+#                        <MenuItem onClick={toggleTheme}>
+#                            <ListItemIcon>
+#                                {mode === 'dark' ? <Brightness7 fontSize="small" /> : <Brightness4 fontSize="small" />}
+#                            </ListItemIcon>
+#                            <ListItemText>
+#                                {mode === 'dark'
+#                                    ? t('messages.theme.switchToLight')
+#                                    : t('messages.theme.switchToDark')
+#                                }
+#                            </ListItemText>
+#                        </MenuItem>
+#
+#                        <Divider />
+#
+#                        {/* Choix de langue */}
+#                        <MenuItem>
+#                            <FormControl fullWidth size="small" sx={{ minWidth: 120 }}>
+#                                <InputLabel>{t('messages.language.choose')}</InputLabel>
+#                                <Select
+#                                    value={i18n.language}
+#                                    label={t('messages.language.choose')}
+#                                    onChange={handleLanguageChange}
+#                                >
+#                                    {supportedLanguages.map((lang) => (
+#                                        <MenuItem key={lang} value={lang}>
+#                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+#                                                <span>{getFlagEmoji(lang)}</span>
+#                                                <span>{t(`messages.language.$[lang]`)}</span>
+#                                            </Box>
+#                                        </MenuItem>
+#                                    ))}
+#                                </Select>
+#                            </FormControl>
+#                        </MenuItem>
+#
+#                        <Divider />
+#
+#                        {/* Déconnexion */}
+#                        <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+#                            <ListItemIcon sx={{ color: 'error.main' }}>
+#                                <Logout fontSize="small" />
+#                            </ListItemIcon>
+#                            <ListItemText>
+#                                {t('messages.authentication.logout')}
+#                            </ListItemText>
+#                        </MenuItem>
+#                    </Menu>
+#                </>
+#            );
+#        }
+#
+#        function getFlagEmoji(langCode: string): string {
+#            const languageFlags: Record<string, string> = {
+#                en: '🇬🇧',
+#                fr: '🇫🇷',
+#                es: '🇪🇸',
+#                de: '🇩🇪',
+#                it: '🇮🇹',
+#                pt: '🇵🇹',
+#                'pt-BR': '🇧🇷',
+#                zh: '🇨🇳',
+#                ja: '🇯🇵',
+#            };
+#            return languageFlags[langCode] || languageFlags[langCode.split('-')[0]] || '🏳️';
+#        }
+#      destinationPath: "${destinationFolder}/src/components/SettingsMenu"
+#  additionalFiles:
+#    - fileType: "App name config"
+#      fileName: "app"
+#      extension: "ts"
+#      content: |
+#        export const appConfig = {
+#            title: '${projectName}',           // ou mettre undefined pour une image
+#            logoUrl: {{#if useLogoLink}}'${logoUrl}'{{elseIf hasLogo}}'${logoUrl}'{{else}}undefined as string | undefined{{/if}},
+#        };
+#      destinationPath: "${destinationFolder}/src/config/"
+#    - fileType: "Navigation items config file"
+#      fileName: "navItems"
+#      extension: "tsx"
+#      content: |
+#        import { NavItem } from '@/types/navigation';
+#        import { List, Add } from '@mui/icons-material';
+#
+#        export const navItems: NavItem[] = [
+#            {{#each entities}}
+#            {
+#                label: '${formatReadable(this.className)}',
+#                icon: <List />,
+#                children: [
+#                    {
+#                        label: 'messages.navigation.list',
+#                        path: '/${toKebabCase(this.className)}s',
+#                        icon: <List />,
+#                    },
+#                    {{#if !this.isView}}{{removeLine}}
+#                    {
+#                        label: 'messages.navigation.add',
+#                        path: '/${toKebabCase(this.className)}s/create',
+#                        icon: <Add />
+#                    },
+#                    {{/if}}{{removeLine}}
+#                ]
+#            },
+#            {{/each}}{{removeLine}}
+#        ];
+#      destinationPath: "${destinationFolder}/src/config/"
+#    - fileType: "Router file"
+#      fileName: "router"
+#      extension: "tsx"
+#      content: |
+#        // src/router.tsx
+#        import RootLayout from './layouts/RootLayout';
+#        import { createBrowserRouter } from 'react-router-dom';
+#        {{#each routes}}
+#        import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
+#        {{/each}}
+#
+#        export const router = createBrowserRouter([
+#            {
+#                path: '/',
+#                element: <RootLayout/>,
+#                children: [
+#                    {{#each routes}}
+#                    {
+#                      path: '${this.routerLink}',
+#                      element: <${this.componentSelector} />,
+#                    },
+#                    {{/each}}
+#                ],
+#            },
+#        ]);
+#      destinationPath: "${destinationFolder}/src/"
+#    - fileType: "App-files"
+#      fileName: "index"
+#      extension: "html"
+#      content: |
+#        <!doctype html>
+#        <html lang="fr">
+#        <head>
+#          <meta charset="UTF-8" />
+#          <link rel="icon" href="{{#if useFaviconLink}}${faviconUrl}{{else}}/favicon.ico{{/if}}" />
+#          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+#          <title>${projectName}</title>
+#        </head>
+#        <body>
+#        <div id="root"></div>
+#        <script type="module" src="/src/index.tsx"></script>
+#        </body>
+#        </html>
+#      destinationPath: "${destinationFolder}/"
+#    - fileType: "Configuration file"
+#      fileName: "{{removeLine}}"
+#      extension: "env"
+#      content: |
+#        VITE_API_BASE=http://localhost:${projectPort}/${toKebabCase(projectName)}
+#      destinationPath: "${destinationFolder}/"
+#    - fileType: "i18n file"
+#      fileName: "i18n"
+#      extension: "js"
+#      content: |
+#        // src/i18n.js
+#        import i18n from 'i18next';
+#        import { initReactI18next } from 'react-i18next';
+#        import LanguageDetector from 'i18next-browser-languagedetector';
+#
+#        {{#each langList}}
+#        import ${lowerCase(this.name)} from './locales/${lowerCase(this.name)}'
+#        {{/each}}{{removeLine}}
+#
+#        i18n
+#            .use(LanguageDetector)
+#            .use(initReactI18next)
+#            .init({
+#                resources: {
+#                    {{#each langList}}
+#                    ${this.locale}: { translation: ${lowerCase(this.name)} },
+#                    {{/each}}{{removeLine}}
+#                },
+#                fallbackLng: {{#each langList}}{{#if @first}}'${this.locale}'{{/if}}{{/each}},
+#                interpolation: { escapeValue: false },
+#            });
+#
+#        export default i18n;
+#      destinationPath: "${destinationFolder}/src"
+#    - fileType: "RootLayout file"
+#      fileName: "RootLayout"
+#      extension: "tsx"
+#      content: |
+#        // src/layouts/RootLayout.tsx
+#        import Sidebar from '@/components/Sidebar/Sidebar';
+#        import { Outlet } from 'react-router-dom';
+#        import { useState } from 'react';
+#
+#        export default function RootLayout() {
+#            const [layout, setLayout] = useState<'vertical' | 'horizontal'>('{{#if navbarPreference = Sidebar}}vertical{{else}}horizontal{{/if}}');
+#
+#            return (
+#                <>
+#                    {layout === 'horizontal' ? (
+#                        <>
+#                            <Sidebar layout="horizontal" onLayoutChange={setLayout} />
+#                            <Outlet />
+#                        </>
+#                    ) : (
+#                        <div style={{ display: 'flex', minHeight: '100vh' }}>
+#                            <Sidebar layout="vertical" onLayoutChange={setLayout} />
+#                            <main style={{ flex: 1, padding: '1rem' }}>
+#                                <Outlet />
+#                            </main>
+#                        </div>
+#                    )}
+#                </>
+#            );
+#        }
+#      destinationPath: "${destinationFolder}/src/layouts"
+#    - fileType: "ThemeContext file"
+#      fileName: "ThemeContext"
+#      extension: "tsx"
+#      content: |
+#        // src/contexts/ThemeContext.tsx
+#        import React, { createContext, useContext, useEffect, useState } from 'react';
+#        import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+#        import { createTheme } from '@mui/material';
+#
+#        type ThemeMode = 'light' | 'dark';
+#
+#        interface ThemeContextType {
+#            mode: ThemeMode;
+#            toggleTheme: () => void;
+#        }
+#
+#        const ThemeContext = createContext<ThemeContextType>({
+#            mode: 'light',
+#            toggleTheme: () => {},
+#        });
+#        export const useThemeMode = () => useContext(ThemeContext);
+#
+#        /* ---------- couleurs sidebar ---------- */
+#        const sidebarColors = {
+#            light: { bg: '#2c3e50', text: '#ffffff' },
+#            dark:  { bg: '#111827', text: '#e2e8f0' },
+#        };
+#
+#        /* ---------- tokens ---------- */
+#        const baseTokens = {
+#            typography: {
+#                fontFamily: '"Inter", "Roboto", "Helvetica Neue", sans-serif',
+#                h1: { fontSize: '2.25rem', fontWeight: 700 },
+#                h2: { fontSize: '1.875rem', fontWeight: 600 },
+#                h3: { fontSize: '1.5rem', fontWeight: 600 },
+#                body1: { fontSize: '1rem', lineHeight: 1.5 },
+#                body2: { fontSize: '0.875rem', lineHeight: 1.43 },
+#            },
+#            spacing: 4,
+#            shape: { borderRadius: 6 },
+#            grey: {
+#                50: '#f9fafb', 100: '#f3f4f6', 200: '#e5e7eb', 300: '#d1d5db',
+#                400: '#9ca3af', 500: '#6b7280', 600: '#4b5563',
+#                700: '#374151', 800: '#1f2937', 900: '#111827',
+#            },
+#        };
+#
+#        /* ---------- thèmes ---------- */
+#        const lightTheme = createTheme({
+#            palette: {
+#                mode: 'light',
+#                primary:   { main: '${primaryColor}' },
+#                secondary: { main: '${secondaryColor}' },
+#                error:     { main: '#ef4444' },
+#                warning:   { main: '#f59e0b' },
+#                info:      { main: '#3b82f6' },
+#                success:   { main: '#10b981' },
+#                background: { default: '#ffffff', paper: '#ffffff' },
+#                text:       { primary: '#111827', secondary: '#6b7280' },
+#                ...baseTokens.grey,
+#            },
+#            ...baseTokens,
+#            components: {
+#                MuiDrawer: {
+#                    styleOverrides: {
+#                        paper: { backgroundColor: sidebarColors.light.bg, color: sidebarColors.light.text },
+#                    },
+#                },
+#                MuiAppBar: {
+#                    styleOverrides: {
+#                        root: { backgroundColor: sidebarColors.light.bg, color: sidebarColors.light.text },
+#                    },
+#                },
+#            },
+#        });
+#
+#        const darkTheme = createTheme({
+#            palette: {
+#                mode: 'dark',
+#                primary:   { main: '${primaryColor}' },
+#                secondary: { main: '${secondaryColor}' },
+#                error:     { main: '#ff5252' },
+#                warning:   { main: '#ffa726' },
+#                info:      { main: '#64b5f6' },
+#                success:   { main: '#4caf50' },
+#                background: { default: '#121212', paper: '#1e1e1e' },
+#                text:       { primary: '#ffffff', secondary: '#b0bec5' },
+#                ...baseTokens.grey,
+#            },
+#            ...baseTokens,
+#            components: {
+#                MuiDrawer: {
+#                    styleOverrides: {
+#                        paper: { backgroundColor: sidebarColors.dark.bg, color: sidebarColors.dark.text },
+#                    },
+#                },
+#                MuiAppBar: {
+#                    styleOverrides: {
+#                        root: { backgroundColor: sidebarColors.dark.bg, color: sidebarColors.dark.text },
+#                    },
+#                },
+#            },
+#        });
+#
+#        /* ---------- provider ---------- */
+#        export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+#            const [mode, setMode] = useState<ThemeMode>(() => {
+#                const saved = localStorage.getItem('theme');
+#                return (saved === 'dark' ? 'dark' : 'light') as ThemeMode;
+#            });
+#
+#            useEffect(() => {
+#                localStorage.setItem('theme', mode);
+#            }, [mode]);
+#
+#            const toggleTheme = () => setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
+#            const theme = mode === 'light' ? lightTheme : darkTheme;
+#
+#            return (
+#                <ThemeContext.Provider value={{ mode, toggleTheme }}>
+#                    <MuiThemeProvider theme={theme}>{children}</MuiThemeProvider>
+#                </ThemeContext.Provider>
+#            );
+#        };
+#      destinationPath: "${destinationFolder}/src/contexts"
+#  components:
+#    - componentType: "List"
+#      generateForView: true
+#      router:
+#        link: "/${toKebabCase(className)}s"
+#        label: "${formatReadable(classNameLink)}"
+#      importFile: |
+#        import { Edit, Delete } from '@mui/icons-material';
+#        import { useNavigate } from 'react-router-dom';
+#
+#        import {${majStart(className)}, ${toCamelCase(className)}Meta, ${toCamelCase(className)}Columns, ${toCamelCase(className)}Filters} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+#        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+#      importComponent: |
+#        import GenericListPage from '@/components/GenericListPage/GenericListPage';
+#        import ActionButtons from '@/components/ActionButtons';
+#        import {useDelete} from "@/hooks/useDelete";
+#        import {useTranslation} from "react-i18next";
+#      selector: "${majStart(className)}List"
+#      export: |
+#        const columns = [
+#            ...${toCamelCase(className)}Columns,
+#            {{#if !isView}}{{removeLine}}
+#            {
+#                header: 'Actions',
+#                accessor: (row: ${majStart(className)}) => <RowActions row={row} />, // ✅ composant séparé
+#            },
+#            {{/if}}{{removeLine}}
+#        ];
+#        {{removeLine}}
+#        {{#if !isView}}
+#        function RowActions({ row }: { row: ${majStart(className)} }) {
+#            const { t } = useTranslation();
+#            const navigate = useNavigate();
+#            const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => window.location.reload());
+#
+#            return (
+#                <ActionButtons
+#                    actions={[
+#                        { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`), title:`$[t('messages.common.edit')]` },
+#                        { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}), title:`$[t('messages.common.delete')]` },
+#                    ]}
+#                />
+#            );
+#        }
+#        {{/if}}
+#        export default function ${majStart(className)}List() {
+#            const { t } = useTranslation();
+#            return GenericListPage<${majStart(className)}>({
+#                entityName: ${toCamelCase(className)}Meta.entityName,
+#                columns,
+#                availableFilters: ${toCamelCase(className)}Filters,
+#                defaultSort: ${toCamelCase(className)}Meta.defaultSort,
+#                searchFn: ${toCamelCase(className)}Service.search,
+#                pageTitle: `${majStart(className)} $[t('messages.entity.list.nav')]`,
+#                {{#if !isView}}{{removeLine}}
+#                createRoute: '/${toKebabCase(className)}s/create'
+#                {{/if}}{{removeLine}}
+#            })();
+#        }
+#      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+#      componentName: "${toKebabCase(className)}-list"
+#      componentAdditionalFiles: []
+#    - componentType: "Detail"
+#      generateForView: true
+#      router:
+#        link: "/${toKebabCase(className)}s/:id"
+#        label: "${formatReadable(classNameLink)} Detail"
+#      importFile: |
+#        import { Edit, Delete } from '@mui/icons-material';
+#        import { useNavigate } from 'react-router-dom';
+#
+#        import {${majStart(className)}, ${toCamelCase(className)}Meta, ${toCamelCase(className)}Columns } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+#        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+#      importComponent: |
+#        import GenericDetailPage from '@/components/GenericDetailPage/GenericDetailPage';
+#        import {useDelete} from "@/hooks/useDelete";
+#        import { Typography } from '@mui/material';
+#        import {useTranslation} from "react-i18next";
+#      selector: "${majStart(className)}Detail"
+#      export: |
+#        export default function ${majStart(className)}Detail() {
+#            const navigate = useNavigate();
+#            const { t } = useTranslation();
+#            {{#if !isView}}
+#            const handleDelete = useDelete(${toCamelCase(className)}Service.delete, () => {
+#                  navigate('/${toKebabCase(className)}s');
+#            });
+#            {{/if}}
+#
+#            return GenericDetailPage({
+#                entityName: ${toCamelCase(className)}Meta.entityName,
+#                service: ${toCamelCase(className)}Service,
+#                columns: ${toCamelCase(className)}Columns,
+#                backRoute: '/${toKebabCase(className)}s',
+#                actions: [
+#                    {{#if !isView}}{{removeLine}}
+#                    {
+#                        label: `$[t('messages.common.edit')]`,
+#                        icon: <Edit />,
+#                        variant: 'outlined',
+#                        color: 'primary',
+#                        onClick: (row, navigate) => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`),
+#                    },
+#                    {
+#                        label: `$[t('messages.common.delete')]`,
+#                        icon: <Delete />,
+#                        variant: 'outlined',
+#                        color: 'error',
+#                        onClick: (row) => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}),
+#                    },
+#                    {{/if}}{{removeLine}}
+#                ],
+#                tabs: [
+#                    //Example use of tab
+#                    //{
+#                        //label: 'Tab1',
+#                        //render: (row: ${majStart(className)}) => (
+#                            //<Typography>Content for ${majStart(className)} ID #{row.{{#each fieldsPK}}${this.name}{{/each}} }.</Typography>
+#                        //),
+#                    //},
+#                ],
+#            })();
+#        }
+#      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+#      componentName: "${toKebabCase(className)}-detail"
+#      componentAdditionalFiles: [ ]
+#    - componentType: "Add"
+#      router:
+#        link: "/${toKebabCase(className)}s/create"
+#        label: "Create ${formatReadable(classNameLink)}"
+#      importFile: |
+#        import {${majStart(className)}, ${toCamelCase(className)}Meta, formFields} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+#        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+#      selector: "Create${majStart(className)}"
+#      generateForView: false
+#      importComponent: |
+#        import GenericFormBuilder from '@/components/GenericForm/GenericFormBuilder';
+#        import {ApiResponse} from "@/services/api";
+#        import {useTranslation} from "react-i18next";
+#      export: |
+#        export default function Create${majStart(className)}() {
+#            const { t } = useTranslation();
+#
+#            const handleSubmit = async (data: any): Promise<ApiResponse<${majStart(className)}>> => {
+#                return await ${toCamelCase(className)}Service.create(data);
+#            };
+#
+#            return (
+#                <GenericFormBuilder
+#                    entityName={${toCamelCase(className)}Meta.entityName}
+#                    fields={formFields as any}
+#                    onSubmit={handleSubmit}
+#                    redirectTo="/${toKebabCase(className)}s"
+#                    title={`$[t('messages.common.add')] ${toKebabCase(className)}`}
+#                    mode="create"
+#                    idKey="{{#each fieldsPK}}${this.name}{{/each}}"
+#                    detailRedirect="/${toKebabCase(className)}s/:id"
+#                />
+#            );
+#        }
+#      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+#      componentName: "${toKebabCase(className)}-create"
+#      componentAdditionalFiles: []
+#    - componentType: "Update"
+#      router:
+#        link: "/${toKebabCase(className)}s/:id/edit"
+#        label: "Update ${formatReadable(classNameLink)}"
+#      importFile: |
+#        import { ${majStart(className)}, ${toCamelCase(className)}Meta, updateFormFields } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
+#        import { ${toCamelCase(className)}Service } from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.service';
+#      selector: "Update${majStart(className)}"
+#      generateForView: false
+#      importComponent: |
+#        import GenericUpdateFormBuilder from '@/components/GenericForm/GenericUpdateFormBuilder';
+#        import {useTranslation} from "react-i18next";
+#      export: |
+#        export default function Update${majStart(className)}() {
+#            const { t } = useTranslation();
+#            return (
+#                <GenericUpdateFormBuilder<${majStart(className)}>
+#                    entityName={${toCamelCase(className)}Meta.entityName}
+#                    fields={updateFormFields}
+#                    getById={${toCamelCase(className)}Service.getById}
+#                    update={${toCamelCase(className)}Service.update}
+#                    title={`$[t('messages.common.edit')] ${toKebabCase(className)}`}
+#                    detailRedirect="/${toKebabCase(className)}s/:id"
+#                />
+#            );
+#        }
+#      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+#      componentName: "${toKebabCase(className)}-update"
+#      componentAdditionalFiles: []
+#  serviceComponent:
+#    imports: |
+#      // src/models/${toKebabCase(className)}/${toKebabCase(className)}.service.ts
+#      import type { ${majStart(className)} } from './${toKebabCase(className)}.model';
+#      import type { FilterState } from '@/types/filter';
+#      import { getById, search {{#if !isView}},create,remove, update{{/if}} } from "@/services/api";
+#    methods: |
+#      export const ${toCamelCase(className)}Service = {
+#          search(params: {
+#              page: number;
+#              size: number;
+#              sort: `$[string],$['asc' | 'desc']`;
+#              filter: FilterState;
+#          }) {
+#              return search<${majStart(className)}>({
+#                  endpoint: '/${lowerCase(classNameLink)}/search',
+#                  ...params,
+#              });
+#          },
+#
+#          async getById(id: number) {
+#              return getById<${majStart(className)}>('/${lowerCase(classNameLink)}', id);
+#          },
+#
+#          create(${toCamelCase(className)}: Omit<${majStart(className)}, 'id'>) {
+#              return create<${majStart(className)}>('/${lowerCase(classNameLink)}', ${toCamelCase(className)});
+#          },
+#
+#          async update(id: number, ${toCamelCase(className)}: Partial<${majStart(className)}>) {
+#              return update<${majStart(className)}>('/${lowerCase(classNameLink)}', id, ${toCamelCase(className)});
+#          },
+#
+#          delete: (id: string | number) => remove('/${toKebabCase(className)}s', id),
+#      };
+#    destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
+#    name: "${toKebabCase(className)}.service"
+#  modelComponent:
+#    imports: |
+#      // src/models/${toKebabCase(className)}/${toKebabCase(className)}.model.ts
+#      import dayjs from "dayjs";
+#      import { format } from 'date-fns';
+#      import 'dayjs/plugin/utc';
+#      import utc from 'dayjs/plugin/utc';
+#      import { parseTimeString } from '@/utils/timeParser';
+#      import {formatDuration} from "@/utils/formatDuration";
+#      dayjs.extend(utc); // Utilise le plugin utc
+#    exports : |
+#      export interface ${majStart(className)} {
+#      {{tab}}{{#each fields}}
+#      {{tab}}{{#if this.isForeignKey}}${this.name}: ${this.referencedColumnType}{{else}}
+#      {{tab}}${this.name}: ${this.typeBase}{{/if}}
+#      {{tab}}{{/each}}{{removeLine}}
+#      {{tab}}[key: string]: unknown;
+#      }
+#
+#      export const ${toCamelCase(className)}Meta = {
+#          entityName: '${majStart(className)}',
+#          endpoint: '/${toKebabCase(className)}s/search',
+#          defaultSort: '{{#each fieldsPK}}${this.name}{{/each}},asc' as const
+#      };
+#
+#      export const ${toCamelCase(className)}Columns = [
+#          {{#each fieldsFK}}
+#          {
+#            header: '${this.type}',
+#            accessor: (row: ${majStart(className)}) => (row.${this.name} as any)?.${this.referencedPrimaryKeyColumn} ?? '-',
+#            sortKey: '${this.name}',
+#            link: (row: ${majStart(className)}) => `/${toKebabCase(this.type)}s/$[(row.${this.name} as any)?.${this.referencedPrimaryKeyColumn}]?from=/${toKebabCase(className)}s`
+#          },
+#          {{/each}}{{removeLine}}
+#          {{#each fieldsNotFK}}
+#          {{#if this.isPrimaryKey}}
+#          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' ,link: (row: ${majStart(className)}) => `/${toKebabCase(className)}s/$[row.${this.name}]`},
+#          {{elseIf this.isDate}}
+#          {
+#            header: '${formatReadable(this.name)}',
+#            accessor: (row: ${majStart(className)}) => {
+#              if (!row.${this.name}) return '-';
+#              const d = new Date(row.${this.name} as unknown as string);
+#              return isNaN(d.getTime())
+#                  ? '-'
+#                  : d.toLocaleDateString('fr-FR');
+#            },
+#            sortKey: '${this.name}'
+#          },
+#          {{elseIf this.isDateTime }}
+#          {
+#            header: '${formatReadable(this.name)}',
+#            accessor: (row: ${majStart(className)} ) => {
+#               const date = row.${this.name};
+#               if (!date) return '-';
+#               const dateObject = new Date(date);
+#               return isNaN(dateObject.getTime()) ? '-' : format(dateObject, "dd/MM/yyyy HH:mm:ss");
+#            },
+#            sortKey: '${this.name}'
+#          },
+#          {{elseIf this.isTimeTz}}
+#          {
+#            header: '${formatReadable(this.name)}',
+#              accessor: (row: ${majStart(className)}) => {
+#                  const timeStr = row.${this.name};
+#                  if (!timeStr) return '-';
+#
+#                  const clean = timeStr.replace('Z', '');
+#                  const parts = clean.split(':');
+#
+#                  if (parts.length < 2) return '-';
+#                  const [h, m, s] = [...parts, '00'].map(Number);
+#                  const d = dayjs.utc(`1970-01-01 $[h]:$[m]:$[s]`, 'YYYY-MM-DD HH:mm:ss');
+#                  return d.isValid() ? d.format('HH:mm:ss') : '-';
+#              },
+#            sortKey: '${this.name}'
+#          },
+#          {{elseIf this.isTime }}
+#          {
+#            header: '${formatReadable(this.name)}',
+#            accessor: (row: ${majStart(className)} ) => {
+#                const timeStr = row.${this.name};
+#                if (!timeStr) return '-';
+#                const [h, m, s] = timeStr.replace('Z', '').split(':').map(Number);
+#                const dateObj = new Date(1970, 0, 1, h, m, s);
+#                return format(dateObj, 'HH:mm:ss');
+#            },
+#            sortKey: '${this.name}'
+#          },
+#          {{elseIf this.isInterval}}
+#          {
+#            header: '${formatReadable(this.name)}',
+#            accessor: (row: ${majStart(className)}) => formatDuration(row.${this.name}),
+#            sortKey: '${this.name}'
+#          },
+#          {{else}}
+#          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' },
+#          {{/if}}{{/each}}{{removeLine}}
+#      ]
+#
+#      export const ${toCamelCase(className)}Filters = {
+#          {{#each fieldsFK}}
+#          ${this.name}: {
+#            label: '${formatReadable(this.type)}',
+#            type: '${this.referencedColumnType}' as const,
+#            nestedKey: '${this.referencedPrimaryKeyColumn}' as const
+#          },
+#          {{/each}}{{removeLine}}
+#          {{#each fieldsNotFK}}
+#          {{#if this.isPrimaryKey}}
+#          ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const },
+#          {{elseIf this.isText}}
+#          ${this.name}: { label: '${formatReadable(this.name)}', type: 'text' as const },
+#          {{elseIf this.isNumeric }}
+#          ${this.name}: { label: '${formatReadable(this.name)}', type: 'number' as const },
+#          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'number' as const },
+#          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'number' as const },
+#          {{elseIf this.isDate}}
+#          ${this.name}: { label: '${formatReadable(this.name)}', type: 'Date' as const },
+#          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'Date' as const },
+#          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'Date' as const },
+#          {{elseIf this.isTimeTz}}
+#          ${this.name}: { label: '${formatReadable(this.name)}', type: 'timeTz' as const },
+#          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'timeTz' as const },
+#          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'timeTz' as const },
+#          {{elseIf this.isDateTimeTz}}
+#          ${this.name}: { label: '${formatReadable(this.name)}', type: 'DateTimeTZ' as const },
+#          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'DateTimeTZ' as const },
+#          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'DateTimeTZ' as const },
+#          {{elseIf this.isDateTime}}
+#          ${this.name}: { label: '${formatReadable(this.name)}', type: 'DateTime' as const },
+#          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'DateTime' as const },
+#          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'DateTime' as const },
+#          {{elseIf this.isTime }}
+#          ${this.name}: { label: '${formatReadable(this.name)}', type: 'time' as const },
+#          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'time' as const },
+#          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'time' as const },
+#          {{elseIf this.isInterval}}
+#          ${this.name}: { label: '${formatReadable(this.name)}', type: 'interval' as const },
+#          ${this.name}Min: { label: '${formatReadable(this.name)} Min', type: 'interval' as const },
+#          ${this.name}Max: { label: '${formatReadable(this.name)} Max', type: 'interval' as const },
+#          {{/if}}{{/each}}{{removeLine}}
+#      };
+#
+#      export const formFields = {
+#          {{#each fieldsFK}}
+#          ${this.name}: {
+#            label: '${this.type}',
+#            type: 'select' as const,
+#            required: ${this.isRequired},
+#            foreignKey: {
+#              endpoint: '/${toKebabCase(this.type)}s?page=0&size=1000',
+#              labelKey: '${this.referencedPrimaryKeyColumn}',
+#              valueKey: '${this.referencedPrimaryKeyColumn}'
+#            },
+#            transform: (value: any) => ({ ${this.referencedPrimaryKeyColumn}: Number(value) }),
+#          },
+#          {{/each}}{{removeLine}}
+#          {{#each fieldsNotFK}}
+#          {{#if this.isPrimaryKey}}
+#          {{removeLine}}
+#          {{elseIf this.isTimeTz}}
+#          ${this.name}: {
+#                label: '${formatReadable(this.name)}',
+#                type: 'timeTz' as const,
+#                required: true,
+#                transform: (value: any) => {
+#                    if (!value || typeof value !== 'string') return null;
+#                    const d = dayjs.utc(`1970-01-01T$[value]`);
+#                    return d.isValid() ? d.format('HH:mm:ss') + 'Z' : null;
+#                },
+#          },
+#          {{elseIf this.isDateTimeTz}}
+#          ${this.name}: {
+#            label: '${formatReadable(this.name)}',
+#            type: 'datetime' as const,
+#            required: ${this.isRequired},
+#            transform: (value: string) =>
+#                                 value ? dayjs(value).utc().format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null
+#          },
+#          {{elseIf this.isDateTime}}
+#          ${this.name}: {
+#            label: '${formatReadable(this.name)}',
+#            type: 'datetime' as const,
+#            required: ${this.isRequired},
+#            transform: (value: string) =>
+#                                 value ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss.SSS[Z]') : null,
+#          },
+#          {{elseIf this.isTime }}
+#          ${this.name}: {
+#            label: '${formatReadable(this.name)}',
+#            type: 'time' as const,
+#            required: ${this.isRequired},
+#            transform: (value: any) => {
+#                if (!value) return null;
+#                const parsed = parseTimeString(String(value));
+#                return parsed ? parsed.format('HH:mm:ss') : null;
+#            },
+#          },
+#          {{elseIf this.isInterval}}
+#          ${this.name}: {
+#            label: '${formatReadable(this.name)}',
+#            type: 'interval' as const,
+#            required: ${this.isRequired},
+#          },
+#          {{else}}
+#          ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const, required: ${this.isRequired} },
+#          {{/if}}{{/each}}{{removeLine}}
+#      } as const;
+#
+#      export const updateFormFields = {
+#          {{#each fieldsPK}}
+#          ${this.name}: {
+#            label: '${formatReadable(this.name)}',
+#            type: '${this.typeBase}' as const,
+#            required: true,
+#            readonly: true,
+#          },
+#          {{/each}}{{removeLine}}
+#          ...formFields,
+#      };
+#    destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
+#    name: "${toKebabCase(className)}.model"
+#  mereFiles: [ ]
+#  filleFiles: [ ]

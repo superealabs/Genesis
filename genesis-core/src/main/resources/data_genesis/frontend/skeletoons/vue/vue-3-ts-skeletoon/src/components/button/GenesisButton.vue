@@ -1,5 +1,5 @@
 <template>
-  <button v-bind="$attrs" class="btn" @click="onClick" :disabled="isLoading">
+  <button v-bind="$attrs" class="btn" :disabled="isLoading">
     <span v-if="isLoading" class="loading loading-spinner"></span>
     <span v-else>
       <i v-if="icon" :class="icon" />
@@ -16,12 +16,5 @@ defineProps<{
   label?: string
   isLoading?: boolean
 }>()
-
-const emit = defineEmits<{
-  (e: 'click', event: MouseEvent): void
-}>()
-
-const onClick = (event: MouseEvent) => {
-  emit('click', event)
-}
 </script>
+qa

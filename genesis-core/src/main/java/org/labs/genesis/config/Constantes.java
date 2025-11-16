@@ -53,11 +53,14 @@ public class Constantes {
     public  static  final   int VUE_JS_ID = 2;
     public  static  final   int REACT_ID = 3;
     public  static  final   String FRONTEND_SKELLETTON_DIRECTORY = "data_genesis/frontend/skeletoons/";
-    public  static  final   String WEBAPP_DIR_TEMPLATE = "${destinationFolder}/${majStart(projectName)}_${majStart(webappFolder)}";
+    public  static  final   String WEBAPP_DIR_TEMPLATE = "${destinationFolder}/${majStart(projectName)}${majStart(webappFolder)}";
     public  static  final   String FRONTEND_TEMPLATE_DIRECTORY = DATA_PATH+"/frontend/template";
     public static final int Node_ID = 3;
 
     // VIEWS TEMPLATE
     public static final int Template_1_ID = 1;
     public static final int Template_2_ID = 2;
+
+    // Post generation template
+    public  static final String GENESIS_FILE_PATH = DATA_PATH+"/templates/PostGenerationTemplate/GenesisFile";
 }

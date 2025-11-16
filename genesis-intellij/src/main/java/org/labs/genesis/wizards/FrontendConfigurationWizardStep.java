@@ -64,14 +64,7 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
         this.frontendLayout.setPrimaryColor(frontendConfigurationForm.getPrimaryColorField().getText());
         this.frontendLayout.setSecondaryColor(frontendConfigurationForm.getSecondaryColorField().getText());
         this.frontendLayout.setAdditionalCss(frontendConfigurationForm.getCssTextArea().getText());
-        List<InterfaceLang> langs = frontendConfigurationForm.getInterfaceLangOptions().getSelectedValuesList();
-        if (langs.size() < 0) {
-            InterfaceLang defaultLang = ProjectGenerator.langs.get(1);
-            frontendLayout.setLangs( new ArrayList<>());
-            frontendLayout.getLangs().add(defaultLang);
-        } else  {
-            this.frontendLayout.setLangs(frontendConfigurationForm.getInterfaceLangOptions().getSelectedValuesList());
-        }
+        this.frontendLayout.setLangs(frontendConfigurationForm.getInterfaceLangOptions().getSelectedValuesList());
     }
 
     public void updateBranding(){
@@ -112,7 +105,6 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
             else if(frontendConfigurationForm.getFrontendFrameworkOptions().getSelectedItem() == null){
                 throw new ConfigurationException("Please select a frontend framework to use for generation");
             }
-            frontendLayout.isValid();
             Framework framework = projectGenerationContext.getFramework();
             if (framework instanceof FrameworkMVC) {
                 validateFrameworkMVCConfiguration((FrameworkMVC) framework);

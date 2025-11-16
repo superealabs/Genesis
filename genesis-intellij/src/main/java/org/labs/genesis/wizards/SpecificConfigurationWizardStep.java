@@ -2,12 +2,19 @@ package org.labs.genesis.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
-import org.labs.genesis.config.Constantes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.forms.SpecificConfigurationForm;
 import org.labs.utils.StringUtils;
+import com.intellij.openapi.project.Project;
+import com.intellij.ide.impl.ProjectUtil;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -122,10 +129,41 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
         projectGenerationContext.setFrameworkConfiguration(frameworkConfiguration);
 
-        // Génération du projet
+        Project project = ProjectUtil.getProjectForComponent(specificConfigurationForm.getMainPanel());
+        if (project == null) {
+            project = ProjectUtil.getActiveProject();
+        }
+
+        if (project == null) {
+            throw new IllegalStateException("Impossible de déterminer le contexte Project IntelliJ.");
+        }
         try {
-            generateProject();
+            ProgressManager.getInstance().run(new Task.Modal(project, "Génération du Projet", true) {
+                @Override
+                public void run(@NotNull ProgressIndicator indicator) {
+                    // Le code exécuté ici s'exécute dans un thread de travail (pas l'EDT)
+                    indicator.setText("Préparation de la structure du projet...");
+                    indicator.setFraction(0.1);
+                    try {
+                        generateProject();
+
+                        indicator.setText("Génération terminée !");
+                        indicator.setFraction(1.0);
+
+                    } catch (Exception e) {
+                        throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
+                    }
+                }
+            });
+            Messages.showInfoMessage(project,
+                    "Le projet a été généré avec succès !",
+                    "Succès de la Génération");
+
         } catch (Exception e) {
+            Messages.showErrorDialog(project,
+                    "Une erreur inattendue est survenue lors de la génération : " + e.getMessage() + "\n\n" +
+                            "Veuillez consulter la console d'exécution ou les **logs d'IntelliJ** pour plus de détails (Help -> Show Log in Explorer/Finder).",
+                    "Échec de la Génération du Projet");
             throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
         }
     }

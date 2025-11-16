@@ -1,5 +1,5 @@
 <template>
-  <ul class="menu menu-vertical w-full">
+  <ul class="menu w-full">
     <li v-for="item in items" :key="item.navTitle">
       <router-link
         v-if="item.navLink"

@@ -38,7 +38,6 @@ public class FontendGenerator implements IFrontendGenerator{
         String templateArchitecture = loadTemplate(frontendFramework);
         HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
         metadataForFinalRender.putAll(FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType));
-
         for(Component component:frontendFramework.getComponents()) {
             if(tableMetadata.getIsView() && !component.getGenerateForView())
             {
@@ -100,20 +99,22 @@ public class FontendGenerator implements IFrontendGenerator{
     }
 
     @Override
-    public String generateService(Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception {
+    public String generateService(String securityType, Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception {
         if(language.getId()!=frontendFramework.getLanguageId()){
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the frontend framework '" +
                     frontendFramework.getName() + "' (required language ID: '" + frontendFramework.getLanguageId() + "').");
         }
 
-        ServiceComponent serviceComponent= frontendFramework.getServiceComponent();
 
+        ServiceComponent serviceComponent= frontendFramework.getServiceComponent();
         String templateArchitecture = loadTemplateForServices(frontendFramework);
         HashMap<String,Object> metadataPrimary = FrameworkFrontendMetadataProvider.getServiceHashMap(serviceComponent, language, tableMetadata);
+
         String structure = engine.simpleRender(templateArchitecture, metadataPrimary);
 
         HashMap<String,Object> metadataForFinalRender= FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
+        metadataForFinalRender.putAll(FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType));
         String finalStringForService = engine.render(structure,metadataForFinalRender);
         finalStringForService=engine.simpleRenderAlt(finalStringForService,metadataForFinalRender);
 
@@ -137,7 +138,7 @@ public class FontendGenerator implements IFrontendGenerator{
     }
 
     @Override
-    public String generateModel(Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly) throws Exception{
+    public String generateModel(String securityType, Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly) throws Exception{
 
         if(language.getId()!=frontendFramework.getLanguageId()){
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
@@ -152,6 +153,8 @@ public class FontendGenerator implements IFrontendGenerator{
         HashMap<String, Object> metadataPrimary = FrameworkFrontendMetadataProvider.getModelHashMap(modelComponent, language, tableMetadata);
         structure = engine.simpleRender(structure,metadataPrimary);
         HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
+        metadataForFinalRender.putAll(FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType));
+
         String finalStringForModel = engine.render(structure,metadataForFinalRender);
         finalStringForModel=engine.simpleRenderAlt(finalStringForModel,metadataForFinalRender);
 
@@ -181,10 +184,7 @@ public class FontendGenerator implements IFrontendGenerator{
     @Override
     public  String generateRessources(ProjectGenerationContext context, List<TableMetadata> allEntities) throws  Exception{
         FrontendFramework frontendFramework = context.getFrontendFramework();
-
-        // Vérification de sécurité : si pas de frontend framework configuré, on sort
         if (frontendFramework == null) {
-            System.out.println("⚠️  Aucun frontend framework configuré, génération des ressources ignorée");
             return "";
         }
         HashMap<String, Object> metadata = FrameworkFrontendMetadataProvider.getLangsHashMap(context, allEntities);

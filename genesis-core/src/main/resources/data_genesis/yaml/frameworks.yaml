@@ -2168,8 +2168,7 @@
             NameClaimType = ClaimTypes.NameIdentifier
           };
         });
-        
-        {{#if useJWT}}
+
         builder.Services.AddAuthorization(options =>
         {
           options.DefaultPolicy = new AuthorizationPolicyBuilder("Bearer")
@@ -4909,7 +4908,7 @@
                   var ${minStart(this.className)}sList = ${minStart(this.className)}s.ToList();
                   foreach (var item in ${minStart(this.className)}sList)
                   {
-                      item.${majStart(this.parentFk)} = ${minStart(className)}.${majStart(parentPk)};
+                      item.${majStart(this.parentColumnNameFiled)} = ${minStart(className)}.${majStart(parentPk)};
                   }
                   _dbContext.Set<${majStart(this.className)}>().AddRange(${minStart(this.className)}sList);
                   await _dbContext.SaveChangesAsync();
@@ -4938,7 +4937,7 @@
                   
                   {{#each children}}
                   var existing${majStart(this.className)}s = await _dbContext.Set<${majStart(this.className)}>()
-                      .Where(d => d.${majStart(this.parentFk)} == ${minStart(className)}.${majStart(parentPk)})
+                      .Where(d => d.${majStart(this.parentColumnNameFiled)} == ${minStart(className)}.${majStart(parentPk)})
                       .AsNoTracking() // Important pour éviter le tracking par défaut avant la manipulation
                       .ToListAsync();
                   
@@ -4954,7 +4953,7 @@
                   // b. Éléments à ajouter/mettre à jour
                   foreach (var item in current${majStart(this.className)}s)
                   {
-                      item.${majStart(this.parentFk)} = ${minStart(className)}.${majStart(parentPk)};
+                      item.${majStart(this.parentColumnNameFiled)} = ${minStart(className)}.${majStart(parentPk)};
                   
                       if (existing${majStart(this.className)}s.Any(e => e.${majStart(this.childPk)} == item.${majStart(this.childPk)} && item.${majStart(this.childPk)} != default)) 
                       {
@@ -4994,7 +4993,7 @@
                   }
                   {{#each children}}
                   var ${minStart(this.className)}sToDelete = await _dbContext.Set<${majStart(this.className)}>()
-                  .Where(d => d.${majStart(this.parentFk)} == ${minStart(className)}.${majStart(parentPk)})
+                  .Where(d => d.${majStart(this.parentColumnNameFiled)} == ${minStart(className)}.${majStart(parentPk)})
                   .ToListAsync();
                   
                   _dbContext.Set<${majStart(this.className)}>().RemoveRange(${minStart(this.className)}sToDelete);
@@ -5115,7 +5114,7 @@
       {{tab}})]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), StatusCodes.Status200OK)]
       {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]Update
+      {{tab}}[ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
       {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Get${majStart(className)}([SwaggerParameter(Description = "ID of the ${formatReadable(className)} to retrieve", Required = true)] ${pkColumnType} id)
       {{tab}}{
       {{tab}}{{tab}}try {

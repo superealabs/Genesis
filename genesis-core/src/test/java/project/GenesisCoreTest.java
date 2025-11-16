@@ -42,16 +42,6 @@ public class GenesisCoreTest {
                 setAllowPublicKeyRetrieval(true).
                 setSID("ORCLBDD").
                 setDriverType("thin");
-
-        credentials
-                .setHost("localhost")
-                .setPort("5432")
-                .setSchemaName("public")
-                .setDatabaseName("fanamby_presence")
-                .setUser("chan_alex")
-                .setPwd("chanalex");
-
-//
         try {
 
             int databaseId = Constantes.Oracle_ID;//
@@ -124,6 +114,95 @@ public class GenesisCoreTest {
             context.setGenerateFrontendApp(true);
 
             projectGenerator.generateProject(context);
+
+            // Assertion pour vérifier si le dossier existe
+            Path path = Path.of(destinationFolder);
+            assertTrue(Files.exists(path) && Files.isDirectory(path), "Le dossier de destination n'existe pas.");
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void generateProjetVueJS() {
+        var credentials = new Credentials()
+                .setHost("localhost")
+                .setPort("5432")
+                .setSchemaName("public")
+                .setDatabaseName("relations")
+                .setUser("chan_alex")
+                .setPwd("chanalex")
+                .setTrustCertificate(true).
+                setUseSSL(true).
+                setAllowPublicKeyRetrieval(true);
+        try {
+            int databaseId = Constantes.PostgreSQL_ID;
+            int languageId = Constantes.CSharp_ID;
+            int frameworkId = Constantes.NET_ID;
+            int projectId = Constantes.ASP_ID;
+            int frontendLangageId=Constantes.TYPESCRIPT_ID;
+            int frontendFrameworkId=Constantes.VUE_JS_ID;
+
+            var database = ProjectGenerator.databases.get(databaseId);
+            var language = ProjectGenerator.languages.get(languageId);
+            var framework = ProjectGenerator.frameworks.get(frameworkId);
+            var project = ProjectGenerator.projects.get(projectId);
+            var frontendLangage=ProjectGenerator.frontendLanguage.get(frontendLangageId);
+            var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
+
+            List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
+            String projectName = "projetSynch";
+            String groupLink = "org.synch";
+            String projectPort = "8080";
+            String logLevel = "Information";
+            String projectDescription = "An ASP.NET BEGIN Project";
+            String frameworkVersion = "8.0";
+            String languageVersion = "";
+            String destinationFolder = "/home/itu-chan-alex/Stage/generated";
+
+            ProjectGenerator projectGenerator = new ProjectGenerator();
+
+            HashMap<String, Object> frameworkConfiguration = new HashMap<>();
+            frameworkConfiguration.put("loggingLevel", logLevel);
+            frameworkConfiguration.put("frameworkVersion", frameworkVersion);
+
+            //======SECURITY CONFIG ==========//
+            frameworkConfiguration.put("securityType", ".NET Security - JWT");
+
+            //===== USE EUREKA SERVER =======//
+            framework.setUseCloud(false);
+            framework.setUseEurekaServer(false);
+            frameworkConfiguration.put("eurekaServerURL", "http://localhost:8761/eureka");
+            frameworkConfiguration.put("projectNonSecurePort", projectPort);
+            //==============================//
+
+            HashMap<String, Object> languageConfiguration = new HashMap<>();
+            frameworkConfiguration.put("languageVersion", languageVersion);
+            List<String> entityNames = new ArrayList<>();
+            ProjectGenerationContext context = new ProjectGenerationContext();
+            context.setDatabase(database);
+            context.setLanguage(language);
+            context.setFramework(framework);
+            context.setFrontendFramework(frontendFramework);
+            context.setFrontendLanguage(frontendLangage);
+            context.setProject(project);
+            context.setCredentials(credentials);
+            context.setDestinationFolder(destinationFolder);
+            context.setProjectName(projectName);
+            context.setGroupLink(groupLink);
+            context.setProjectPort(projectPort);
+            context.setProjectDescription(projectDescription);
+            context.setLanguageConfiguration(languageConfiguration);
+            context.setFrameworkConfiguration(frameworkConfiguration);
+            context.setEntityNames(entityNames);
+            context.setGenerationOptions(generationOptions);
+            context.setGenerateProjectStructure(true);
+            context.setViewNames(new ArrayList<>());
+            context.setGenerateFrontendApp(false);
+
+            projectGenerator.generateProject(context);
+
 
             // Assertion pour vérifier si le dossier existe
             Path path = Path.of(destinationFolder);

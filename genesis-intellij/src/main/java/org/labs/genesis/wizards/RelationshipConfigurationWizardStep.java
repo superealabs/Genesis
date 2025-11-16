@@ -29,9 +29,7 @@ public class RelationshipConfigurationWizardStep extends ModuleWizardStep {
     public void updateDataModel() {
         try {
             List<RelationParameter> relations = relationshipConfigurationForm.getRelationParameters();
-            for (RelationParameter relationParameter : relations) {
-                relationParameter.setParameter();
-            }
+            projectGenerationContext.setRelationParameters(relations);
         }
         catch (Exception e){
             throw new RuntimeException(e);

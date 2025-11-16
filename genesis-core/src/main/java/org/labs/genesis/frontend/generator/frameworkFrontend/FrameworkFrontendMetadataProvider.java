@@ -75,8 +75,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("destinationFolder", context.getDestinationFolder());
         metadata.put("projectName", context.getProjectName());
         metadata.put("webappFolder", context.getWebappFolder());
-        String webappFolder = engine.simpleRender(Constantes.WEBAPP_DIR_TEMPLATE, metadata);
-        return  webappFolder;
+        return engine.simpleRender(Constantes.WEBAPP_DIR_TEMPLATE, metadata);
     }
 
     public  static  HashMap<String, Object> getInterfaceLangHashMap(InterfaceLang lang){
@@ -100,17 +99,10 @@ public class FrameworkFrontendMetadataProvider {
         if (layout == null){
             layout = new FrontendLayout();
         }
-        HashMap<String, Object> metadata = new HashMap<>();
-        metadata.put("additionalCss",layout.additionalCss);
-        metadata.put("primaryColor",layout.primaryColor);
-        metadata.put("secondaryColor",layout.secondaryColor);
-        metadata.put("navbarPreference",layout.navbar);
-        metadata.put("langList",getInerfaceLangList(layout.langs));
-        return  metadata;
+        return getLayoutHashMap(layout);
     }
 
     public static HashMap<String, Object> getLayoutHashMap(FrontendLayout layout){
-//        FrontendLayout layout = frontendFramework.getFrontendLayout();
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("additionalCss",layout.additionalCss);
         metadata.put("primaryColor",layout.primaryColor);
@@ -125,20 +117,10 @@ public class FrameworkFrontendMetadataProvider {
         if (branding == null){
             branding = new ProjectBranding();
         }
-        HashMap<String, Object> metadata = new HashMap<>();
-        metadata.put("faviconUrl", branding.getFaviconUrl());
-        metadata.put("useFaviconLink", branding.useFaviconLink());
-        metadata.put("hasFavicon", branding.hasFavicon());
-
-        metadata.put("logoUrl",branding.getLogoUrl());
-        metadata.put("useLogoLink", branding.useLogoLink());
-        metadata.put("hasLogo", branding.hasLogo());
-
-        return  metadata;
+        return getBrandingHashMap(branding);
     }
 
     public static HashMap<String, Object> getBrandingHashMap(ProjectBranding branding){
-//        ProjectBranding branding = frontendFramework.getProjectBranding();
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("faviconUrl", branding.getFaviconUrl());
         metadata.put("useFaviconLink", branding.useFaviconLink());
@@ -297,7 +279,7 @@ public class FrameworkFrontendMetadataProvider {
     public static HashMap<String, Object> getRessourceHashMap(FrontendFramework frontendFramework) {
         HashMap<String, Object> metadata = new HashMap<>();
         if (frontendFramework == null) {
-            return metadata; // Return empty map if framework is not configured
+            return metadata;
         }
         if (frontendFramework.getProjectBranding() != null) {
             metadata.putAll(getBrandingHashMap(frontendFramework.getProjectBranding()));
@@ -309,8 +291,7 @@ public class FrameworkFrontendMetadataProvider {
     }
 
     public static HashMap<String, Object> getLangsHashMap(ProjectGenerationContext context, List<TableMetadata> tableMetadatas) {
-        HashMap<String, Object> metadata = new HashMap<>();
-        metadata.putAll(getWebappHashMap(context));
+        HashMap<String, Object> metadata = new HashMap<>(getWebappHashMap(context));
         metadata.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
         return  metadata;
     }
@@ -331,7 +312,7 @@ public class FrameworkFrontendMetadataProvider {
     public  static  List<Map<String,Object>> getRoutesHashMap(FrontendFramework frontendFramework){
         List<Map<String, Object>> routes = new ArrayList<>();
         if (frontendFramework == null || frontendFramework.getComponentRoutes() == null) {
-            return routes; // Return empty list if framework or routes are not configured
+            return routes;
         }
         for (ComponentRoute route : frontendFramework.getComponentRoutes()) {
             routes.add(getRouteHashMap(route));

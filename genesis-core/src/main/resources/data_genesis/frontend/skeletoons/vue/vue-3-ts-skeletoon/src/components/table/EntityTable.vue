@@ -26,6 +26,9 @@
             @change="multiCriteriaSearch()"
             @keydown.enter="multiCriteriaSearch()"
           />
+          <GenesisButton @click="onExport" type="button" class="btn btn-outline w-20 h-8">
+            {{ $t('button.export') }}
+          </GenesisButton>
         </div>
       </div>
     </div>
@@ -70,6 +73,7 @@ import { useEntityTable } from '@/composables/useEntityTable'
 import type { EntitySearchField } from '@/models/EntityModel'
 import type { PaginationData } from '@/models/api/PageResponseModel'
 import type { PaginationRequestParameter, SortFieldParameter } from '@/models/api/RequestModel'
+import GenesisButton from "@/components/button/GenesisButton.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -95,6 +99,14 @@ const props = withDefaults(
   { showFilters: true, editAction: true, viewAction: true, removeAction: true },
 )
 
+const emit = defineEmits<{
+  (e: 'export:csv'): void
+}>()
+
+const onExport = () => {
+  console.log('Export requested')
+  emit('export:csv')
+}
 const { updateFilters, changePage, page, totalPages, itemsPerPage, doSearch, sortByAndSearch } =
   useEntityTable(props.searchFn, props.getPaginationData)
 

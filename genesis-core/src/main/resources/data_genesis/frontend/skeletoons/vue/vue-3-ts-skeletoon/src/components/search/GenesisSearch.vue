@@ -43,7 +43,6 @@
             }
           "
         />
-
         <GenesisInput
           v-else
           class="border-0"

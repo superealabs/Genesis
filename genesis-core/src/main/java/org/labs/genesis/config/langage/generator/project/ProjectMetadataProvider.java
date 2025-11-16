@@ -5,14 +5,13 @@ import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.engine.GenesisTemplateEngine;
-import org.labs.utils.StringUtils;
 
 import java.util.*;
 
 public class ProjectMetadataProvider {
     private static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
 
-    static HashMap<String, Object> getInitialHashMap(String destinationFolder, String projectName, String groupLink) {
+    public static HashMap<String, Object> getInitialHashMap(String destinationFolder, String projectName, String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName", projectName);
@@ -21,7 +20,7 @@ public class ProjectMetadataProvider {
         return metadata;
     }
 
-    static HashMap<String, Object> getConfigFileHashMap(String projectPort, Database database, Credentials credentials, Language language, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
+    public static HashMap<String, Object> getConfigFileHashMap(String projectPort, Database database, Credentials credentials, Language language, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
         HashMap<String, Object> configFile = new HashMap<>();
         configFile.put("projectPort", projectPort);
 
@@ -63,7 +62,7 @@ public class ProjectMetadataProvider {
         };
     }
 
-    static HashMap<String, Object> getDependencyFileHashMap(String projectDescription, Database database, Language language, Framework framework, Map<String, Object> langageConfiguration, Map<String, Object> frameworkConfiguration) {
+    public static HashMap<String, Object> getDependencyFileHashMap(String projectDescription, Database database, Language language, Framework framework, Map<String, Object> langageConfiguration, Map<String, Object> frameworkConfiguration) {
         HashMap<String, Object> dependencyFileMap = new HashMap<>();
         dependencyFileMap.putAll(langageConfiguration);
         dependencyFileMap.putAll(frameworkConfiguration);
@@ -194,7 +193,7 @@ public class ProjectMetadataProvider {
         return frameworkFrameworkCachingBooleanMetadata;
     }
 
-    static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName, String groupLink, String projectPort, Database database, Credentials credentials, @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
+    public static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName, String groupLink, String projectPort, Database database, Credentials credentials, @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
         HashMap<String, Object> combinedMap = new HashMap<>();
         System.out.println("Project files edits hashmap");
         combinedMap.putAll(getConfigFileHashMap(projectPort, database, credentials, language, framework, frameworkOptions));

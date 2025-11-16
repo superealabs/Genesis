@@ -15,10 +15,10 @@
       <!-- Buttons -->
       <div class="flex items-center justify-center gap-2">
         <GenesisButton @click="confirm" class="btn btn-error text-white">
-          <span>Confirm delete</span>
+          <span>{{ $t('button.delete') }}</span>
         </GenesisButton>
         <GenesisButton @click="cancel" class="btn btn-outline">
-          <span>Cancel</span>
+          <span>{{ $t('button.cancel') }}</span>
         </GenesisButton>
       </div>
     </div>

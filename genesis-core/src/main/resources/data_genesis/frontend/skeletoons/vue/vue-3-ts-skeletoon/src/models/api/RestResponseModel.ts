@@ -7,7 +7,7 @@ export interface IRestResponse<T> {
   message: string
   returnCode: number
   data?: T
-  errors: Record<string, string> | null
+  errors: Record<string, object> | null
 }
 
 export default class RestResponse<T> implements IRestResponse<T> {
@@ -16,10 +16,10 @@ export default class RestResponse<T> implements IRestResponse<T> {
   message: string
   returnCode: number
   data?: T
-  errors: Record<string, string> | null
+  errors: Record<string, object> | null
 
   constructor(
-    errors: Record<string, string> | null,
+    errors: Record<string, object> | null,
     status?: number,
     timestamp?: Date,
     message?: string,
