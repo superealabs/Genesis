@@ -38,6 +38,10 @@ public class ApjWizardDialog extends DialogWrapper {
         setTitle(step.getTitle());
         mainPanel.revalidate();
         mainPanel.repaint();
+        SwingUtilities.invokeLater(() -> {
+            pack();
+            centerDialog();
+        });
     }
 
     private void nextStep() {
@@ -109,5 +113,23 @@ public class ApjWizardDialog extends DialogWrapper {
 
         step.onNext();
         super.doOKAction();
+    }
+
+    private void centerDialog() {
+        SwingUtilities.invokeLater(() -> {
+            Window window = getWindow();
+            if (window == null) return;
+
+            GraphicsConfiguration gc = window.getGraphicsConfiguration();
+            if (gc == null) {
+                window.setLocationRelativeTo(null);
+                return;
+            }
+
+            Rectangle bounds = gc.getBounds();
+            int x = bounds.x + (bounds.width - window.getWidth()) / 2;
+            int y = bounds.y + (bounds.height - window.getHeight()) / 2;
+            window.setLocation(x, y);
+        });
     }
 }
