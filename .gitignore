@@ -1,7 +1,7 @@
 ### Custom ###
 *.http
 genesis-core/src/main/resources/genesis-core.properties
-
+./archive/
 ### Gradle ###
 .gradle
 !gradle/wrapper/gradle-wrapper.jar
