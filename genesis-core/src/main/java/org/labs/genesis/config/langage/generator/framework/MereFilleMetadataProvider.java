@@ -11,16 +11,26 @@ import java.util.List;
 public class MereFilleMetadataProvider {
     public static HashMap<String, Object> getRelationsHashMap(TableMetadata tableMetadata){
         HashMap<String, Object> metadata = new HashMap<>();
-        metadata.put("isParentTable", tableMetadata.getIsParent());
-        metadata.put("isChildTable", tableMetadata.getIsChild());
-        metadata.put("parentPk", tableMetadata.getPrimaryColumn().getName());
-        List<HashMap<String, Object>> children = new ArrayList<>();
-        for (ChildTableMetadata child : tableMetadata.getChildTables()) {
-            children.add(getChildHashMap(child));
+        if (tableMetadata.getIsParent()){
+            metadata.put("isParentTable", true);
+            metadata.put("isChildTable", false);
+            metadata.put("parentPk", tableMetadata.getPrimaryColumn().getName());
+            List<HashMap<String, Object>> children = new ArrayList<>();
+            for (ChildTableMetadata child : tableMetadata.getChildTables()) {
+                children.add(getChildHashMap(child));
+            }
+            metadata.put("children", children);
+            metadata.put("notViewAndParent", !tableMetadata.getIsView() && tableMetadata.getIsParent());
+        } else if (tableMetadata.getIsChild()) {
+            metadata.put("isParentTable", false);
+            metadata.put("isChildTable", true);
+            metadata.put("notViewAndChild", !tableMetadata.getIsView() && tableMetadata.getIsChild());
+            List<HashMap<String, Object>> parents = new ArrayList<>();
+            for (TableMetadata parent : tableMetadata.getParentTables()) {
+                parents.add(getParentHashMap(parent));
+            }
+            metadata.put("parents", parents);
         }
-        metadata.put("children", children);
-        metadata.put("notViewAndParent", !tableMetadata.getIsView() && tableMetadata.getIsParent());
-        metadata.put("notViewAndChild", !tableMetadata.getIsView() && tableMetadata.getIsChild());
         return metadata;
     }
     public static HashMap<String, Object> getChildHashMap(ChildTableMetadata tableMetadata){
@@ -30,6 +40,12 @@ public class MereFilleMetadataProvider {
         metadata.put("parentName",  tableMetadata.getColumn().getName());
         metadata.put("parentColumnNameFiled", StringUtils.toCamelCase(tableMetadata.getColumn().getReferencedColumn()));
         metadata.put("childPk", tableMetadata.getTable().getPrimaryColumn().getName());
+        return metadata;
+    }
+
+    public static HashMap<String, Object> getParentHashMap(TableMetadata tableMetadata){
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("className", tableMetadata.getClassName());
         return metadata;
     }
 }

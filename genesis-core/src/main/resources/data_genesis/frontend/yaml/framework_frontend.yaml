@@ -5,6 +5,7 @@
   template: "Angular-template"
   initPath: "angular/angular-skeletoon"
   componentExtension: "ts"
+  defaultPort: "4200"
   frontendPaths:
     faviconPath: "${destinationFolder}/src"
     logoPath: "${destinationFolder}/src/assets/icon"
@@ -1632,6 +1633,7 @@
   template: "Vue3TS-template"
   initPath: "vue/vue-3-ts-skeletoon"
   componentExtension: "vue"
+  defaultPort: "5173"
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/src/assets/images"
@@ -6807,6 +6809,7 @@
 #  template: "React-template"
 #  initPath: "react/react-ts-skeletoon"
 #  componentExtension: "tsx"
+#  defaultPort: "3000"
 #  frontendPaths:
 #    faviconPath: "${destinationFolder}/public"
 #    logoPath: "${destinationFolder}/public"

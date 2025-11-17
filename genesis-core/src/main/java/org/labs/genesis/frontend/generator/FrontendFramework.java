@@ -32,6 +32,7 @@ public class FrontendFramework
     private FrontendDestinationPaths frontendPaths;
     private List<FilesEdit> mereFiles = new ArrayList<>();
     private List<FilesEdit> filleFiles = new ArrayList<>();
+    private String defaultPort = "9000" ;
 
 
     public  FrontendFramework(){

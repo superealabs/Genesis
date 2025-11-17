@@ -43,6 +43,7 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
     public void updateDataModel() {
         projectGenerationContext.setFrontendLanguage((FrontendLanguage)frontendConfigurationForm.getFrontendLanguageOptions().getSelectedItem());
         projectGenerationContext.setFrontendFramework((FrontendFramework) frontendConfigurationForm.getFrontendFrameworkOptions().getSelectedItem());
+        projectGenerationContext.setFrontendPort(frontendConfigurationForm.getPortInput().getText().trim());
         updateLayout();
         updateBranding();
         projectGenerationContext.getFrontendFramework().setFrontendLayout(this.frontendLayout);
@@ -61,9 +62,10 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
 
     public  void updateLayout(){
         this.frontendLayout.setNavbar((String)frontendConfigurationForm.getNavbarSelect().getSelectedItem());
-        this.frontendLayout.setPrimaryColor(frontendConfigurationForm.getPrimaryColorField().getText());
-        this.frontendLayout.setSecondaryColor(frontendConfigurationForm.getSecondaryColorField().getText());
-        this.frontendLayout.setAdditionalCss(frontendConfigurationForm.getCssTextArea().getText());
+        this.frontendLayout.setPrimaryColor(frontendConfigurationForm.getPrimaryColorField().getText().trim());
+        this.frontendLayout.setSecondaryColor(frontendConfigurationForm.getSecondaryColorField().getText().trim());
+//        this.frontendLayout.setAdditionalCss(frontendConfigurationForm.getCssTextArea().getText());
+        this.frontendLayout.setAdditionalCss("");
         this.frontendLayout.setLangs(frontendConfigurationForm.getInterfaceLangOptions().getSelectedValuesList());
     }
 

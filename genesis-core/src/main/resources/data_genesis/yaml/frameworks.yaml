@@ -4679,8 +4679,8 @@
     serviceMethodContent: |
       Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)});
       {{#if isParentTable}}Task<${majStart(className)}> CreateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}}, IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});{{else}}{{removeLine}}{{/if}}
-      {{#if isParentTable}}Task<${majStart(className)}?> UpdateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}},IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});{{else}}{{removeLine}}{{/if}}
-      {{#if isParentTable}}Task DeleteFull${majStart(className)}Async(${pkColumnType} id);{{else}}{{removeLine}}{{/if}}
+      Task<${majStart(className)}?> UpdateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}},IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});{{else}}{{removeLine}}{{/if}}
+      Task DeleteFull${majStart(className)}Async(${pkColumnType} id);{{else}}{{removeLine}}{{/if}}
     serviceConstructors: "{{removeLine}}"
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
     servicePackage: "${majStart(projectName)}.Services.Interface"
@@ -5049,12 +5049,18 @@
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
       {{tab}}private readonly I${majStart(className)}Service _service;
-      {{tab}}private readonly I${majStart(className)}Repository _repository;
+      {{tab}}private readonly I${majStart(className)}Repository _repository;{{#if isParentTable}}
+      {{#each children}}
+      {{tab}}private readonly I${majStart(this.className)}Service _${minStart(this.className)}Service;
+      {{/each}}{{/if}}
     controllerConstructors: |
-      {{tab}}public ${majStart(className)}Controller(I${majStart(className)}Service service, I${majStart(className)}Repository repository)
+      {{tab}}public ${majStart(className)}Controller(I${majStart(className)}Service service, I${majStart(className)}Repository repository{{#if isParentTable}}{{#each children}}, I${majStart(this.className)}Service ${minStart(this.className)}Service{{/each}}{{/if}})
       {{tab}}{
       {{tab}}{{tab}}_service = service;
-      {{tab}}{{tab}}_repository = repository;
+      {{tab}}{{tab}}_repository = repository;{{#if isParentTable}}
+      {{#each children}}
+      {{tab}}{{tab}}_${minStart(this.className)}Service = ${minStart(this.className)}Service;
+      {{/each}}{{/if}}
       {{tab}}}
     controllerMethodContent: |
       
@@ -5414,6 +5420,50 @@
       {{tab}}{{tab}}}
       {{tab}}}
       {{else}}{{removeLine}}{{/if}}
+      {{#if isParentTable}}
+      {{#each children}}
+              [HttpGet("{id}/${minStart(this.className)}s")]
+              [Authorize]
+              [SwaggerOperation(
+                Summary = "Get ${minStart(this.className)}s attached with a ${minStart(className)} ID",
+                Description = "Retrieve a list of ${minStart(this.className)}s from a ${minStart(className)} item ID"
+                  )]
+              [ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), StatusCodes.Status200OK)]
+              [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+              [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+              public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(this.className)}>>>> GetSaleDetailsBySale(
+              [SwaggerParameter(Description = "ID of the ${majStart(className)} to retrieve", Required = true)] long id,
+              [FromQuery, SwaggerParameter("Page number (0-indexed)", Required = false)] int page = 0,
+              [FromQuery, SwaggerParameter("Size of the page", Required = false)] int size = 10,
+              [FromQuery, SwaggerParameter("Sort order", Required = false)] string? sortParam = null
+              )
+              {
+                  try
+                  {
+                      var ${minStart(className)} = await _service.GetByIdAsync(id{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
+                      if (${minStart(className)} == null){
+                          return NotFound(ApiResponse<object>.Error(StatusCodes.Status404NotFound, $"${majStart(className)} not found with saleId : {id}"));
+                      }
+                      ${majStart(this.className)}Dto dto = new ${majStart(this.className)}Dto
+                      {
+                          SaleId = ${minStart(className)}.SaleId
+                      };
+                      var ${minStart(this.className)}sData = await _${minStart(this.className)}Service.SearchAsync(dto, page, size, sortParam);
+                      return Ok(ApiResponse<PagedResponse<${majStart(this.className)}>>.Success(StatusCodes.Status200OK, "${majStart(this.className)}s retrieved successfully", ${minStart(this.className)}sData));
+                  }
+                  catch (ResourceNotFoundException ex)
+                  {
+                      return NotFound(ApiResponse<object>.Error(StatusCodes.Status404NotFound, ex.Message));
+                  }
+                  catch (Exception ex)
+                  {
+                      return StatusCode(StatusCodes.Status500InternalServerError,
+                      ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"Error while retrieving ${minStart(className)}: {ex.Message}"));
+                  }
+              }
+    
+      {{/each}}{{/if}}
+      
 
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"

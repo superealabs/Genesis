@@ -22,7 +22,7 @@ public class ProjectGenerationContext {
     public static final String COMPONENT_DAO = "DAO";
     public static final String COMPONENT_SERVICE = "Service";
     public static final String COMPONENT_CONTROLLER = "Controller";
-
+    public String frontendPort;
     private Database database;
     private Language language;
     private Framework framework;

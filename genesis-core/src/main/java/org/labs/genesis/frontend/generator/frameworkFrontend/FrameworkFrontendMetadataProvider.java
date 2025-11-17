@@ -268,7 +268,7 @@ public class FrameworkFrontendMetadataProvider {
         data.put("routes",getRoutesHashMap(frontendFramework));
         data.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
         data.put("port",projectPort);
-        data.put("frontendPort",9000);
+        data.put("frontendPort",context.getFrontendPort());
         data.put("apiUrl", "localhost");
         data.putAll(getRessourceHashMap(frontendFramework));
         HashMap<String,Object> folder=FrameworkFrontendMetadataProvider.getWebappHashMap(context);

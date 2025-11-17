@@ -20,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 public class FrontendConfigurationForm {
@@ -38,7 +39,6 @@ public class FrontendConfigurationForm {
     private JLabel secondaryColorLabel;
     private JButton secondaryColorPickerButton;
     private TextFieldWithBrowseButton logoFileField;
-    private JTextArea cssTextArea;
     private TextFieldWithBrowseButton faviconFileField;
     private JTextField logoLinkField;
     private JTextField faviconLinkField;
@@ -50,9 +50,10 @@ public class FrontendConfigurationForm {
     private JLabel faviconFileLabel;
     private JLabel faviconLinkLabel;
     private JLabel navbarLabel;
-    private JLabel cssLabel;
     private JLabel languagesLabel;
     private JLabel brandingLabel;
+    private JTextField portInput;
+    private JLabel portLabel;
 
     private File logoFile;
     private File faviconFile;
@@ -201,6 +202,7 @@ public class FrontendConfigurationForm {
         frameworkLabel.setVisible(true);
         frontendLanguageOptions.setVisible(true);
         frontendFrameworkOptions.setVisible(true);
+        portInput.setVisible(true);
 
         templateEngine.setVisible(false);
         viewsTemplateEngineOptions.setVisible(false);
@@ -227,6 +229,7 @@ public class FrontendConfigurationForm {
 
         if (frontendFrameworkOptions.getItemCount() > 0) {
             frontendFrameworkOptions.setSelectedIndex(0);
+            portInput.setText(((FrontendFramework) Objects.requireNonNull(frontendFrameworkOptions.getSelectedItem())).getDefaultPort());
         }
     }
 
@@ -260,6 +263,7 @@ public class FrontendConfigurationForm {
         frameworkLabel.setVisible(false);
         frontendLanguageOptions.setVisible(false);
         frontendFrameworkOptions.setVisible(false);
+        portInput.setVisible(false);
 
         viewsTemplateEngineOptions.removeAllItems();
         viewsTemplateEngineOptions.addItem(frameworkMVC.getView().getViewTemplateEngine());
