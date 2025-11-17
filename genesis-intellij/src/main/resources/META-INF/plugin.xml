@@ -27,6 +27,7 @@
         <moduleBuilder builderClass="org.labs.genesis.module.GenesisModuleBuilder"
                        id="GENESIS_MODULE_TYPE"
                        order="first"/>
+        <projectService serviceImplementation="org.labs.genesis.state.ApjProjectService"/>
     </extensions>
 
     <actions>

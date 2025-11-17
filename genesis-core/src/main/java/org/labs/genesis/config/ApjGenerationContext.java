@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.apj.affichage.gen.PageRechercheGen;
 
+import java.sql.Connection;
+
 @Getter
 @Setter
 public class ApjGenerationContext {
@@ -15,5 +17,7 @@ public class ApjGenerationContext {
     private String locationDir;
     private String apjType;
 
+
     private PageRechercheGen pr;
+    private Connection connection;
 }

@@ -1,5 +1,6 @@
 package org.labs.genesis.action.apjwizard;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.Nullable;
 import org.labs.genesis.action.apjwizard.steps.PageInsertWizardStep;
@@ -7,6 +8,8 @@ import org.labs.genesis.action.apjwizard.steps.PageRechercheWizardStep;
 import org.labs.genesis.action.apjwizard.steps.PropertiesWizardStep;
 import org.labs.genesis.action.apjwizard.steps.WizardStep;
 import org.labs.genesis.config.ApjGenerationContext;
+import org.labs.genesis.state.ApjProjectService;
+import org.labs.genesis.state.ApjProjectState;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,11 +25,11 @@ public class ApjWizardDialog extends DialogWrapper {
     private final List<WizardStep> steps = new ArrayList<>();
     private int currentStepIndex = 0;
 
-    public ApjWizardDialog() {
+    public ApjWizardDialog(Project project) {
         super(true);
         context = new ApjGenerationContext();
         mainPanel = new JPanel(new BorderLayout());
-        steps.add(new PropertiesWizardStep(context));
+        steps.add(new PropertiesWizardStep(context,project));
         init();
         updateStep();
     }

@@ -1,5 +1,7 @@
 package org.labs.genesis.action.apjwizard.forms;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import lombok.Getter;
 
@@ -17,5 +19,15 @@ public class PropertiesForm {
     public PropertiesForm() {
         fileApjType.addItem(PAGE_RECHERCHE);
         fileApjType.addItem(PAGE_INSERT);
+
+        FileChooserDescriptor folderChooser = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+        folderChooser.withTitle("Select Lib Directory");
+        folderChooser.withDescription("Choose the lib directory for your project");
+        libDir.addBrowseFolderListener(null, folderChooser);
+
+        FileChooserDescriptor jarChooser = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+        jarChooser.withTitle("Select Project JAR Directory");
+        jarChooser.withDescription("Choose project JARs ");
+        jarDir.addBrowseFolderListener(null, jarChooser);
     }
 }
