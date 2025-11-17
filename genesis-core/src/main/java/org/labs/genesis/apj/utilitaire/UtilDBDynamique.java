@@ -19,12 +19,15 @@ public class UtilDBDynamique {
             }
         }
 
-        URLClassLoader loader = new URLClassLoader(urls, UtilDBDynamique.class.getClassLoader());
+        URLClassLoader loader = new URLClassLoader(urls, ClassLoader.getSystemClassLoader());
         Thread.currentThread().setContextClassLoader(loader);
-
         Class<?> utilClass = loader.loadClass("utilitaire.UtilDB");
         Object utilInstance = utilClass.getDeclaredConstructor().newInstance();
         Method getConnMethod = utilClass.getMethod("GetConn");
-        return (Connection) getConnMethod.invoke(utilInstance);
+        Connection conn = (Connection) getConnMethod.invoke(utilInstance);
+        if (conn == null || conn.isClosed()) {
+            throw new Exception("Failed to establish connection");
+        }
+        return conn;
     }
 }

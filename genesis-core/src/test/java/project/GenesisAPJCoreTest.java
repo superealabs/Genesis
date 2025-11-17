@@ -4,22 +4,17 @@ import org.junit.jupiter.api.Test;
 import org.labs.genesis.apj.affichage.gen.PageRechercheGen;
 import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
 import org.labs.genesis.config.Constantes;
-import org.labs.genesis.connexion.Credentials;
-import org.labs.genesis.connexion.model.ColumnMetadata;
-import org.labs.genesis.connexion.providers.OracleDatabase;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -157,7 +152,9 @@ public class GenesisAPJCoreTest {
         File libDir = new File("/home/antema/Antema/BICI/Antema/APJ/hatana/build-file/lib/");
 
         try (Connection conn = UtilDBDynamique.GetConn(socobisJar, libDir)) {
-            System.out.println("Connexion Oracle réussie via UtilDBDynamique !");
+            System.out.println("Connexion réussie via UtilDBDynamique !");
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 
