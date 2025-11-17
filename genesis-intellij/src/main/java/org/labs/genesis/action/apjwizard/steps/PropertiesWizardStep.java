@@ -28,6 +28,7 @@ public class PropertiesWizardStep implements WizardStep {
 
         propertiesForm.getLibDir().setText(state.getLibDir());
         propertiesForm.getJarDir().setText(state.getProjectJarDir());
+        propertiesForm.getLocation().setText(context.getLocationDir());
         context.setLibDir(state.getLibDir());
         context.setProjectJarDir(state.getProjectJarDir());
     }

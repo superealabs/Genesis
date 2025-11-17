@@ -29,5 +29,10 @@ public class PropertiesForm {
         jarChooser.withTitle("Select Project JAR Directory");
         jarChooser.withDescription("Choose project JARs ");
         jarDir.addBrowseFolderListener(null, jarChooser);
+
+        FileChooserDescriptor locationChooser = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+        locationChooser.withTitle("Select Project Location");
+        locationChooser.withDescription("Choose location for your file");
+        location.addBrowseFolderListener(null, locationChooser);
     }
 }

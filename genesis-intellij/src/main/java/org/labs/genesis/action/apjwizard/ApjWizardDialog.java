@@ -2,14 +2,13 @@ package org.labs.genesis.action.apjwizard;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.labs.genesis.action.apjwizard.steps.PageInsertWizardStep;
 import org.labs.genesis.action.apjwizard.steps.PageRechercheWizardStep;
 import org.labs.genesis.action.apjwizard.steps.PropertiesWizardStep;
 import org.labs.genesis.action.apjwizard.steps.WizardStep;
 import org.labs.genesis.config.ApjGenerationContext;
-import org.labs.genesis.state.ApjProjectService;
-import org.labs.genesis.state.ApjProjectState;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,9 +24,13 @@ public class ApjWizardDialog extends DialogWrapper {
     private final List<WizardStep> steps = new ArrayList<>();
     private int currentStepIndex = 0;
 
-    public ApjWizardDialog(Project project) {
+    public ApjWizardDialog(Project project, VirtualFile file) {
         super(true);
         context = new ApjGenerationContext();
+        if (file != null) {
+            String folderPath = file.isDirectory() ? file.getPath() : file.getParent().getPath();
+            context.setLocationDir(folderPath);
+        }
         mainPanel = new JPanel(new BorderLayout());
         steps.add(new PropertiesWizardStep(context,project));
         init();
