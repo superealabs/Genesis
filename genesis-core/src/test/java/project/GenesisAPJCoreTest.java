@@ -15,6 +15,7 @@ import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -157,6 +158,46 @@ public class GenesisAPJCoreTest {
             e.printStackTrace();
         }
     }
+
+
+    @Test
+    void testListerTablesEtVues() throws Exception {
+        File socobisJar = new File("/home/antema/Antema/BICI/Antema/APJ/hatana/build-file/socobis_jar/");
+        File libDir = new File("/home/antema/Antema/BICI/Antema/APJ/hatana/build-file/lib/");
+
+        try (Connection conn = UtilDBDynamique.GetConn(socobisJar, libDir)) {
+            System.out.println("Connexion réussie via UtilDBDynamique !");
+
+            DatabaseMetaData metaData = conn.getMetaData();
+            String catalog = conn.getCatalog();
+            String schema = null;
+            try {
+                schema = conn.getSchema();
+            } catch (AbstractMethodError | SQLFeatureNotSupportedException e) {
+                schema = null;
+            }
+            try (ResultSet rs = metaData.getTables(catalog, schema, "%", new String[]{"TABLE"})) {
+                System.out.println("========================================================================");
+                System.out.println("Tables accessibles :");
+                while (rs.next()) {
+                    String tableName = rs.getString("TABLE_NAME");
+                    System.out.println(tableName);
+                }
+            }
+            try (ResultSet rs = metaData.getTables(catalog, schema, "%", new String[]{"VIEW"})) {
+                System.out.println("========================================================================");
+                System.out.println("Vues accessibles :");
+                while (rs.next()) {
+                    String tableName = rs.getString("TABLE_NAME");
+                    System.out.println(tableName);
+                }
+            }
+
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
 
 
 }

@@ -23,6 +23,7 @@ public class ApjWizardDialog extends DialogWrapper {
     private final ApjGenerationContext context;
     private final List<WizardStep> steps = new ArrayList<>();
     private int currentStepIndex = 0;
+    private final Project project;
 
     public ApjWizardDialog(Project project, VirtualFile file) {
         super(true);
@@ -33,6 +34,7 @@ public class ApjWizardDialog extends DialogWrapper {
         }
         mainPanel = new JPanel(new BorderLayout());
         steps.add(new PropertiesWizardStep(context,project));
+        this.project = project;
         init();
         updateStep();
     }
@@ -58,7 +60,7 @@ public class ApjWizardDialog extends DialogWrapper {
 
         if (currentStepIndex == 0) {
             WizardStep nextStep = switch (context.getApjType()) {
-                case PAGE_RECHERCHE -> new PageRechercheWizardStep(context);
+                case PAGE_RECHERCHE -> new PageRechercheWizardStep(context,project);
                 case PAGE_INSERT -> new PageInsertWizardStep(context);
                 default -> null;
             };
