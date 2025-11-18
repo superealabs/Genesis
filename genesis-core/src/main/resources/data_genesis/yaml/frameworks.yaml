@@ -4678,8 +4678,8 @@
     serviceFieldContent: "{{removeLine}}"
     serviceMethodContent: |
       Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)});
-      {{#if isParentTable}}Task<${majStart(className)}> CreateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}}, IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});{{else}}{{removeLine}}{{/if}}
-      Task<${majStart(className)}?> UpdateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}},IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});{{else}}{{removeLine}}{{/if}}
+      {{#if isParentTable}}Task<${majStart(className)}> CreateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}}, IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});
+      Task<${majStart(className)}?> UpdateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}},IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});
       Task DeleteFull${majStart(className)}Async(${pkColumnType} id);{{else}}{{removeLine}}{{/if}}
     serviceConstructors: "{{removeLine}}"
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"

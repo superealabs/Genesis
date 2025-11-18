@@ -142,7 +142,7 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
                 @Override
                 public void run(@NotNull ProgressIndicator indicator) {
                     // Le code exécuté ici s'exécute dans un thread de travail (pas l'EDT)
-                    indicator.setText("Préparation de la structure du projet...");
+                    indicator.setText("Project generation in progress...");
                     indicator.setFraction(0.1);
                     try {
                         generateProject();
