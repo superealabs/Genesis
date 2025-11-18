@@ -14,7 +14,7 @@
       <button
         type="button"
         @click="togglePasswordVisibility"
-        class="absolute top-0 bottom-0 right-0 p-3 flex items-center text-base-content/70 hover:text-base-content"
+        class="absolute top-0 bottom-0 right-0 p-3 flex items-center text-base-content/70 hover:text-base-content z-2"
         :aria-label="inputType === 'password' ? 'Show password' : 'Hide password'"
       >
         <ViewIcon v-if="inputType === 'password'" />

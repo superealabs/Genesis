@@ -6,19 +6,19 @@
         <div class="text-8xl font-bold text-error mb-4">404</div>
 
         <!-- Message -->
-        <h2 class="card-title text-2xl mb-2">Page introuvable</h2>
-        <p class="text-base-content/70 mb-6">
-          Désolé, la page que vous recherchez n'existe pas ou a été déplacée.
-        </p>
+        <h2 class="card-title text-2xl mb-2">{{ $t('error.404.title') }}</h2>
+        <p class="text-base-content/70 mb-6">{{ $t('error.404.description') }}</p>
 
         <!-- Boutons d'action -->
         <div class="card-actions flex-col sm:flex-row gap-3 w-full">
           <GenesisButton @click="goBack" class="btn-outline btn-secondary flex-1">
             <LeftArrowIcon />
-            Retour
+            {{ $t('button.back') }}
           </GenesisButton>
 
-          <GenesisButton @click="goHome" class="btn-primary flex-1"> Accueil </GenesisButton>
+          <GenesisButton @click="goHome" class="btn-primary flex-1">
+            {{ $t('navbar.home') }}
+          </GenesisButton>
         </div>
       </div>
     </div>

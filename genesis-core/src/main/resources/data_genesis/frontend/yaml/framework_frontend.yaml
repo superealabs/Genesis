@@ -3016,13 +3016,13 @@
         </template>
 
         <script setup lang="ts">
-        import { ref } from 'vue'; // Nécessaire pour gérer l'état d'ouverture
+        import { ref } from 'vue'
         import GenesisTopNavList from './GenesisTopNavList.vue'
         import navigations from '@/config/navigations.ts'
         import HomeIcon from '@/components/icons/HomeIcon.vue'
         import GearIcon from '@/components/icons/GearIcon.vue'
         import AppLogo from '@/components/AppLogo.vue'
-        import LanguageSwitcherButton from '@/components/switcher/LanguageSwitcherButto{{#if useJWT}}
+        import LanguageSwitcherButton from '@/components/switcher/LanguageSwitcherButton.vue'{{#if useJWT}}
         import UserNavProfile from '@/components/user/UserNavProfile.vue'
         import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
 
@@ -3234,8 +3234,12 @@
               const response = await instance.request(config)
               return RestResponse.fromJson<T>(response.data)
             } catch (error: unknown) {
-              if ((error as AxiosError).response) {
-                return RestResponse.fromJson<T>((error as AxiosError).response?.data)
+              if ((error as AxiosError).response) { 
+                {{#if useJWT}}const badResponse = RestResponse.fromJson<T>((error as AxiosError).response?.data)
+                if (badResponse.status == 401) {
+                  authentication.logout()
+                }
+                return badResponse{{else}}return RestResponse.fromJson<T>((error as AxiosError).response?.data){{/if}}
               }
               throw error
             }
@@ -3631,7 +3635,7 @@
         import type { RouteRecordRaw } from 'vue-router'
         import HomeView from '@/views/HomeView.vue'
         import SettingsView from '@/views/settings/SettingsView.vue'
-        import NotFoundView from '@/views/NotFoundView.vue'
+        import NotFoundView from '@/views/error/NotFoundView.vue'
         import MainLayout from '@/layouts/MainLayout.vue'{{#if useJWT}}
         import AuthLayout from '@/layouts/AuthLayout.vue'
         import authRoutes from './authRoutes'{{/if}}
@@ -5156,9 +5160,9 @@
         import ${majStart(className)}Row from './${majStart(className)}Row.vue'
         import { use${majStart(className)}s } from '@/composables/use${majStart(className)}s'
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'{{#if !isView}}
+        import { usePopup } from '@/composables/usePopup'
         import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
-        import { ref } from 'vue'
-        import type { PropType } from 'vue'{{/if}}
+        import { ref } from 'vue'{{/if}}
         import { SortFieldParameter } from '@/models/api/RequestModel'
         import SortButton from '@/components/button/SortButton.vue'
         import type { PropType } from 'vue'
@@ -5651,7 +5655,10 @@
                 goToUpdateFormView,
                 delete${majStart(className)},
                 create${majStart(className)},
-                update${majStart(className)},{{/if}}
+                update${majStart(className)},{{/if}}{{#if isChildTable}}
+                {{#each parents}}
+                getAll${majStart(className)}sBy${majStart(this.className)}Id,
+                {{/each}}{{/if}}
               }
             }
           destinationPath: "${destinationFolder}/src/composables"
@@ -5863,7 +5870,7 @@
                     :entity-model="${minStart(this.className)}Entity"
                     :entity-search-fields="${minStart(this.className)}SearchFields"
                     :default-active-filters="['${minStart(this.parentName)}']"
-                    :searchFn="get{majStart(this.className)}sData"
+                    :searchFn="get${majStart(this.className)}sData"
                     :getPaginationData="${minStart(this.className)}GetPaginationData"
                     :listComponent="${majStart(this.className)}List"
                     :entities="${minStart(this.className)}s"
@@ -5894,13 +5901,13 @@
           message: ${minStart(this.className)}Message,
           getPaginationData: ${minStart(this.className)}GetPaginationData,
         } = use${majStart(this.className)}s()
-        const get{majStart(this.className)}sData = async (
+        const get${majStart(this.className)}sData = async (
           unpagined: boolean,
           filters: Record<string, unknown>,
           pagination: PaginationRequestParameter,
           sortFields: SortFieldParameter[],
         ) => {
-          return await getAll{majStart(this.className)}sBy${majStart(this.parentColumnNameFiled)}(pathId, unpagined, pagination, sortFields)
+          return await getAll${majStart(this.className)}sBy${majStart(this.parentColumnNameFiled)}(pathId, unpagined, pagination, sortFields)
         }
         const ${minStart(this.className)}SearchFields = ref<EntitySearchField[]>(${majStart(this.className)}.getAllSearchFieldsMetadata())
         const ${minStart(this.className)}Entity = ref<Record<string, unknown>>({ ${minStart(this.parentName)}: pathId })
@@ -6005,7 +6012,8 @@
       style: "<style scoped></style>"
       export: |
         const props = defineProps<{
-          ${minStart(className)}?: ${majStart(className)}{{#if isParentTable}}
+          ${minStart(className)}?: ${majStart(className)}
+          {{#if isParentTable}}
           {{#each children}}${minStart(this.className)}sData?: ${majStart(this.className)}[]{{/each}}
           violations?:{
             ${minStart(className)}: Record<string, string>
@@ -6100,7 +6108,7 @@
               <${minStart(className)}-form
                 :${minStart(className)}="entity"{{#if isParentTable}}
                 {{#each children}}
-                :${minStart(this.className)}sData="{minStart(this.className)}s"
+                :${minStart(this.className)}sData="${minStart(this.className)}s"
                 {{/each}}{{/if}}
                 :violations="violations"
                 :submit-label="$t('entity.update.submitLabel', { entity: '${majStart(className)}' })"
@@ -6128,7 +6136,7 @@
         const freezeStore = useFreezeScreenStore()
         {{#if isParentTable}}
         {{#each children}}
-        const { ${minStart(this.className)}s, getAll{majStart(this.className)}sBy${majStart(this.parentColumnNameFiled)} } = use${majStart(this.className)}s();
+        const { ${minStart(this.className)}s, getAll${majStart(this.className)}sBy${majStart(this.parentColumnNameFiled)} } = use${majStart(this.className)}s();
         const ${minStart(this.className)}Loaded = ref(false);
         const load${majStart(this.className)}s = async () => {
           try {
@@ -6507,20 +6515,14 @@
       {{/each}}{{removeLine}}
     exports: |
       export interface I${majStart(className)} {
-        {{#each fields}}{{#if this.isForeignKey}}
-        ${minStart(this.name)}?: ${majStart(this.type)}
-        {{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}
-        {{elseIf this.isDate}}${minStart(this.name)}?: string
-        {{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
+        {{#each fields}}
+        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
       }
 
       export class ${majStart(className)} extends BaseModel implements I${majStart(className)} {
-        {{#each fields}}{{#if this.isForeignKey}}
-        ${minStart(this.name)}?: ${majStart(this.type)}
-        {{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}
-        {{elseIf this.isDate}}${minStart(this.name)}?: ${this.typeBase}
-        {{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
+        {{#each fields}}
+        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
 
         constructor(data?: Partial<I${majStart(className)}>) {
@@ -6700,13 +6702,13 @@
           (e: 'udpate:model-value', value: ${majStart(className)}FormDTO): void
         }>()
 
-        const formModel = ref<${majStart(className)}FormDTO>({majStart(className)}FormDTO.parse(props.${minStart(className)}))
+        const formModel = ref<${majStart(className)}FormDTO>(${majStart(className)}FormDTO.parse(props.${minStart(className)}))
         {{#each fieldsFK}}
         {{#if this.isParentForeignKey}}{{removeLine}}
-        {{else}}const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}'){{/if}}
+        {{else}}const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
         const ${minStart(this.name)}DefaultValue = props.${minStart(className)}
         ? (props.${minStart(className)}?.${this.name}?.getReferenceValue?.() ?? undefined)
-        : undefined        
+        : undefined{{/if}}      
         {{/each}}
 
         function removeRow() {

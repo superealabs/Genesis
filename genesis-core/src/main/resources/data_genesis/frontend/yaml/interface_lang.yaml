@@ -173,7 +173,8 @@
               create: 'Create',
               cancel: 'Cancel',
               validate:'Submit',
-              export: 'Export to CSV'
+              export: 'Export to CSV',
+              back: 'Retrun',
             },
 
             settings: {
@@ -215,7 +216,10 @@
               error: 'Error',
               400: 'Bad request',
               403: 'Access denided',
-              404: 'Not found',
+              404: {
+                title: 'Page not found',
+                description: "Sorry, the page you are searching doesn't exist or moved to another url",
+              },
               500: 'Error 500',
             },
             layout: {
@@ -478,6 +482,7 @@
           backToList: 'Retour à la @:common.list',
           backToListDescription: 'Retour à la @:common.view @:common.list',
           export: 'Exporter en CSV',
+          back: 'Retour',
         },
     
         settings: {
@@ -520,7 +525,10 @@
           error: 'Erreur',
           400: 'Requête invalide',
           403: 'Accès interdit',
-          404: 'Page introuvable',
+          404: {
+            title: 'Page introuvable',
+            description: "Désolé, la page que vous recherchez n'existe pas ou a été déplacée.",
+          },
           500: 'Erreur interne (500)',
         },
         layout: {
