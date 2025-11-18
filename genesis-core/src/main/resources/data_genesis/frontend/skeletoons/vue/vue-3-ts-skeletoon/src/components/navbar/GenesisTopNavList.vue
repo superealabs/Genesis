@@ -1,5 +1,5 @@
 <template>
-  <ul class="menu w-full">
+  <ul class="menu menu-vertical w-full">
     <li v-for="item in items" :key="item.navTitle">
       <router-link
         v-if="item.navLink"
@@ -52,16 +52,5 @@ const closeAllDropdowns = () => {
   font-weight: bold;
   color: var(--color-primary);
   position: relative;
-}
-
-.router-link-active::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: var(--color-primary);
-  border-radius: 4px;
 }
 </style>

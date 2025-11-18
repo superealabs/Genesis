@@ -1,54 +1,49 @@
 import { type Ref, ref } from 'vue'
 
-export type RowItem<T> = { _internalId: number; data: T }
+export type RowItem<T, Q> = { _internalId: number; data: T; rowValue: Q }
 
 let nextId = 1
 const getNextId = () => nextId++
 
-export function useTableForm<T extends object>(
-  initialData: T[] = [],
-  rowTemplate: (init: Partial<T>) => T,
-) {
+export function useTableForm<T extends object, Q extends object>(initialData: T[] = []) {
   if (initialData.length > 0) {
     nextId = initialData.length + 1
   }
 
-  const initialRows: RowItem<T>[] = initialData.map((data, index) => ({
+  const initialRows: RowItem<T, Q>[] = initialData.map((data, index) => ({
     data,
     _internalId: index + 1,
-  })) as RowItem<T>[]
+    rowValue: {},
+  })) as RowItem<T, Q>[]
 
-  const rows = ref<RowItem<T>[]>(initialRows) as Ref<RowItem<T>[]>
+  const rows = ref<RowItem<T, Q>[]>(initialRows) as Ref<RowItem<T, Q>[]>
 
   const addRow = (qte = 1, defaultData: Partial<T> = {}) => {
     for (let i = 0; i < qte; i++) {
       const newRow = {
-        data: rowTemplate(defaultData),
+        data: defaultData,
         _internalId: getNextId(),
-      } as RowItem<T>
+        rowValue: {},
+      } as RowItem<T, Q>
       rows.value.push(newRow)
     }
   }
 
   const removeRow = (id: number) => {
-    if (rows.value.length > 1) {
+    if (rows.value.length > 0) {
       rows.value = rows.value.filter((row) => row._internalId !== id)
     } else {
-      // Optionnel: Empêcher la suppression de la dernière ligne et la réinitialiser
-      console.warn('Cannot remove the last row. Resetting fields instead.')
-      const lastRow = rows.value[0]
-      // Réinitialiser les champs de la dernière ligne
-      Object.assign(lastRow, rowTemplate({}))
+      console.warn('Cannot remove from empty rows')
     }
   }
 
-  const getTableData = (): T[] => {
+  const getTableData = (): Q[] => {
     return rows.value
       .map((row) => {
-        const { data } = row
-        return data
+        const { rowValue } = row
+        return rowValue
       })
-      .filter((data) => data !== null) as T[]
+      .filter((data) => data !== null) as Q[]
   }
 
   if (rows.value.length === 0) {

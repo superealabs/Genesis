@@ -1903,7 +1903,6 @@
         })
       destinationPath: "${destinationFolder}/src/stores"
 
-
     - fileType: "Login Form"
       fileName: "LoginForm"
       extension: "vue"
@@ -2969,7 +2968,7 @@
                   <li v-for="(section, index) in navigations" :key="section.sectionName" class="relative">
 
                     <details
-                      class="dropdown dropdown-bottom dropdown-end lg:dropdown-start"
+                      class="dropdown-bottom dropdown-end lg:dropdown-start"
                       :open="openSectionIndex === index"
                       @toggle="handleDropdownToggle(index, $event)"
                     >
@@ -2978,13 +2977,15 @@
                         <span class="hidden lg:inline">{{ $t(section.sectionName) }}</span>
                       </summary>
 
-                      <ul class="p-2 menu dropdown-content bg-base-200 rounded-box shadow-md w-52 z-[1]">
+                      <ul class="p-2 menu dropdown-content bg-base-200 rounded-box shadow-md min-w-52 z-3">
                         <GenesisTopNavList :items="section.navChilds" @close="closeDropdown" />
                       </ul>
                     </details>
                   </li>
                 </ul>
                 <div class="h-6 border-l border-base-content/10 mx-2"></div>
+                
+                <LanguageSwitcherButton />
 
                 <router-link
                   to="/home"
@@ -3020,7 +3021,8 @@
         import navigations from '@/config/navigations.ts'
         import HomeIcon from '@/components/icons/HomeIcon.vue'
         import GearIcon from '@/components/icons/GearIcon.vue'
-        import AppLogo from '@/components/AppLogo.vue'{{#if useJWT}}
+        import AppLogo from '@/components/AppLogo.vue'
+        import LanguageSwitcherButton from '@/components/switcher/LanguageSwitcherButto{{#if useJWT}}
         import UserNavProfile from '@/components/user/UserNavProfile.vue'
         import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
 
@@ -5152,7 +5154,6 @@
       componentName: "${majStart(className)}List"
       importFile: |
         import ${majStart(className)}Row from './${majStart(className)}Row.vue'
-        import { usePopup } from '@/composables/usePopup'
         import { use${majStart(className)}s } from '@/composables/use${majStart(className)}s'
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'{{#if !isView}}
         import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
@@ -5160,6 +5161,7 @@
         import type { PropType } from 'vue'{{/if}}
         import { SortFieldParameter } from '@/models/api/RequestModel'
         import SortButton from '@/components/button/SortButton.vue'
+        import type { PropType } from 'vue'
       selector: "${majStart(className)}List"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5321,7 +5323,9 @@
               :getPaginationData="getPaginationData"
               :listComponent="${majStart(className)}List"
               :entities="${minPluralize(className)}"
-              :message="message"
+              :message="message"{{#if isView}}
+              :remove-action="false"
+              :edit-action="false"{{/if}}
               @export:csv="onExport"
             />
           </div>
@@ -5593,7 +5597,41 @@
                 console.log('Exporting ${majStart(className)} to CSV', data)
                 await ${minStart(className)}Service.exportCsv(data)
               }
-
+              {{#if isChildTable}}
+              {{#each parents}}
+              const getAll${majStart(className)}sBy${majStart(this.className)}Id = async (
+                ${minStart(this.className)}Id: number | string | undefined,
+                unpagined: boolean = false,
+                pagination: PaginationRequestParameter,
+                sortFields: SortFieldParameter[],
+              ) => {
+                message.value = null
+                startLoading()
+                const {
+                  data,
+                  error: err,
+                  pagination: paginationresult,
+                } = await ${minStart(className)}Service.getAllBy${majStart(this.className)}Id(${minStart(this.className)}Id, pagination, sortFields)
+                handleResponse(data, err, paginationresult)
+                
+                if (unpagined) {
+                  while (paginationData.value.hasNext() && ${minStart(className)}s.value.length > 0) {
+                    paginationData.value.nextPage()
+                    const {
+                      data: nextData,
+                      error: nextErr,
+                      pagination: nextPagination,
+                    } = await ${minStart(className)}Service.getAllBy${majStart(this.className)}Id(
+                      ${minStart(this.className)}Id,
+                      paginationData.value.toParameter(),
+                      sortFields,
+                    )
+                    handleResponse(nextData, nextErr, nextPagination, true)
+                  }
+                }
+                stopLoading()
+              }
+              {{/each}}{{/if}}
               /** Getter for pagination data */
               const getPaginationData = () => paginationData.value
 
@@ -5773,6 +5811,7 @@
         import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'{{#if isParentTable}}
         import EntityTable from '@/components/table/EntityTable.vue'
         import type { EntitySearchField } from '@/models/EntityModel'
+        import type { PaginationRequestParameter, SortFieldParameter } from '@/models/api/RequestModel'
         {{#each children}}
         import { use${majStart(this.className)}s } from '@/composables/use${majStart(this.className)}s'
         import { ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model'
@@ -5824,7 +5863,7 @@
                     :entity-model="${minStart(this.className)}Entity"
                     :entity-search-fields="${minStart(this.className)}SearchFields"
                     :default-active-filters="['${minStart(this.parentName)}']"
-                    :searchFn="search${majStart(this.className)}s"
+                    :searchFn="get{majStart(this.className)}sData"
                     :getPaginationData="${minStart(this.className)}GetPaginationData"
                     :listComponent="${majStart(this.className)}List"
                     :entities="${minStart(this.className)}s"
@@ -5851,10 +5890,18 @@
         {{#each children}}
         const {
           ${minStart(this.className)}s,
-          search${majStart(this.className)}s,
+          getAll${majStart(this.className)}sBy${majStart(className)}Id,
           message: ${minStart(this.className)}Message,
           getPaginationData: ${minStart(this.className)}GetPaginationData,
         } = use${majStart(this.className)}s()
+        const get{majStart(this.className)}sData = async (
+          unpagined: boolean,
+          filters: Record<string, unknown>,
+          pagination: PaginationRequestParameter,
+          sortFields: SortFieldParameter[],
+        ) => {
+          return await getAll{majStart(this.className)}sBy${majStart(this.parentColumnNameFiled)}(pathId, unpagined, pagination, sortFields)
+        }
         const ${minStart(this.className)}SearchFields = ref<EntitySearchField[]>(${majStart(this.className)}.getAllSearchFieldsMetadata())
         const ${minStart(this.className)}Entity = ref<Record<string, unknown>>({ ${minStart(this.parentName)}: pathId })
         {{/each}}{{/if}}
@@ -5872,12 +5919,12 @@
         label: "{{removeLine}}"
       componentName: "${majStart(className)}Form"
       importFile: |
-        {{#if isParentTable}} import { ref, computed } from 'vue'{{else}}import { ref } from 'vue'{{/if}} 
+        {{#if isParentTable}} import { ref, computed, onMounted } from 'vue'{{else}}import { ref } from 'vue'{{/if}} 
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model.ts'
         import GenesisButton from '@/components/button/GenesisButton.vue'
         import GenesisInput from '@/components/form/GenesisInput.vue'{{#if containsForeignKey}}
         import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'{{/if}}{{#if isParentTable}}
-        {{#each children}}import type { ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model.ts'
+        {{#each children}}import{ ${majStart(this.className)}FormDTO, type ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model.ts'
         import ${majStart(this.className)}TableForm from '@/entities/${minStart(this.className)}/${majStart(this.className)}TableForm.vue'{{/each}}{{/if}}
       selector: "${majStart(className)}Form"
       standalone: true
@@ -5958,14 +6005,12 @@
       style: "<style scoped></style>"
       export: |
         const props = defineProps<{
-          ${minStart(className)}?: ${majStart(className)}
-          {{#if isParentTable}}
-          {{#each children}}${minStart(this.className)}sData?: ${majStart(this.className)}FormDTO[]{{/each}}
+          ${minStart(className)}?: ${majStart(className)}{{#if isParentTable}}
+          {{#each children}}${minStart(this.className)}sData?: ${majStart(this.className)}[]{{/each}}
           violations?:{
             ${minStart(className)}: Record<string, string>
             {{#each children}}${minStart(this.className)}s: Record<string, string>[]{{/each}}
-          }
-          {{else}}violations?: Record<string, string> | null{{/if}}
+          }{{else}}violations?: Record<string, string> | null{{/if}}
           submitLabel?: string
         }>()
 
@@ -5999,7 +6044,13 @@
 
         function cancelForm() {
           emit('cancel', formModel.value)
-        }
+        }{{#if isParentTable}}
+        onMounted(async () => {
+          {{#each children}}
+          if (Array.isArray(props.${minStart(this.className)}sData) && props.${minStart(this.className)}sData.length > 0) {
+            set${majStart(this.className)}s(${majStart(this.className)}FormDTO.parseList(props.${minStart(this.className)}sData))
+          }{{/each}}
+        }){{/if}}
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
       componentAdditionalFiles: [ ]
 
@@ -6022,7 +6073,7 @@
         import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'{{#if isParentTable}}
         {{#each children}}
         import { use${majStart(this.className)}s } from '@/composables/use${majStart(this.className)}s'
-        import { ${majStart(this.className)}FormDTO, type ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model'
+        import { ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'
         {{/each}}
         import { PaginationRequestParameter } from '@/models/api/RequestModel'
         {{/if}}
@@ -6049,7 +6100,7 @@
               <${minStart(className)}-form
                 :${minStart(className)}="entity"{{#if isParentTable}}
                 {{#each children}}
-                :${minStart(this.className)}sData="initial${majStart(this.className)}s"
+                :${minStart(this.className)}sData="{minStart(this.className)}s"
                 {{/each}}{{/if}}
                 :violations="violations"
                 :submit-label="$t('entity.update.submitLabel', { entity: '${majStart(className)}' })"
@@ -6077,14 +6128,11 @@
         const freezeStore = useFreezeScreenStore()
         {{#if isParentTable}}
         {{#each children}}
-        const { ${minStart(this.className)}s, search${majStart(this.className)}s } = use${majStart(this.className)}s();
+        const { ${minStart(this.className)}s, getAll{majStart(this.className)}sBy${majStart(this.parentColumnNameFiled)} } = use${majStart(this.className)}s();
         const ${minStart(this.className)}Loaded = ref(false);
-        const initial${majStart(this.className)}s = ref<${majStart(this.className)}FormDTO[]>([])
         const load${majStart(this.className)}s = async () => {
           try {
-            const filters: Partial<${majStart(this.className)}> = { ${minStart(this.parentName)}: new ${majStart(className)}({ ${minStart(parentPk)}: pathId }) }
-            await search${majStart(this.className)}s(true, filters, new PaginationRequestParameter(), [])
-            initial${majStart(this.className)}s.value = ${majStart(this.className)}FormDTO.parseList(${minStart(this.className)}s.value)
+            await getAll${majStart(this.className)}sBy${majStart(className)}Id(pathId, true, new PaginationRequestParameter(), [])
             ${minStart(this.className)}Loaded.value = true
           } catch (error) {
             console.error('Error loading ${minStart(className)} with details:', error)
@@ -6194,7 +6242,7 @@
         import { usePopup } from '@/composables/usePopup'
         import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore'
         import { ref } from 'vue'{{#if isParentTable}}
-        {{#each children}}import type { ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'{{/each}}
+        {{#each children}}import type { ${majStart(this.className)}, ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'{{/each}}
         {{/if}}
       selector: "${majStart(className)}CreateView"
       standalone: true
@@ -6250,7 +6298,7 @@
           | undefined
         >(undefined)
         {{#each children}}
-        const initial${majStart(this.className)}s = ref<${majStart(this.className)}FormDTO[]>([])
+        const initial${majStart(this.className)}s = ref<${majStart(this.className)}[]>([])
         {{/each}}
         
         const createHandler = async (payload: {
@@ -6417,22 +6465,36 @@
            console.error('CSV Export Failed - Server Error:', response.status, errorText)
                             throw new Error(`CSV export failed: ${response.statusText}. Status: ${response.status}.`)
          }
-           const blob = await response.blob()
-           const contentDisposition = response.headers.get('content-disposition');
-           triggerFileDownload(blob,getFilenameFromHeaders(contentDisposition,"${majStart(className)}.csv"));
-           return {
-                            success: true,
-                            error: null,
+            const blob = await response.blob()
+            const contentDisposition = response.headers.get('content-disposition');
+            triggerFileDownload(blob,getFilenameFromHeaders(contentDisposition,"${majStart(className)}.csv"));
+            return {
+              success: true,
+              error: null,
          }
          
-         } catch (error) {
-           console.error('Error during CSV export:', error)
-           return {
-                            success: false,
-                            error: error instanceof Error ? error.message : 'An unknown error occurred during export.',
-         }
-         }
-      }      
+          } catch (error) {
+            console.error('Error during CSV export:', error)
+            return {
+              success: false,
+              error: error instanceof Error ? error.message : 'An unknown error occurred during export.',
+            }
+          }
+        }{{#if isChildTable}}
+        {{#each parents}}
+        export async function getAllBy${majStart(this.className)}Id(
+          id: number | string | undefined,
+          pagination?: PaginationRequestParameter,
+          sortFields?: SortFieldParameter[],
+        ) {
+          if (!id) throw new Error('getAllBy${majStart(this.className)}Id: id of ${minStart(this.className)} is required')
+          const request = new RequestModel('/${minStart(this.className)}s/' + id + BASE_URL, pagination, sortFields)
+          const response = await restApiWithPage.GET(request.buildRequestUrl())
+          return wrap${majStart(className)}(
+            RestResponse.handlePagedResponse<${majStart(className)}>(response),
+          ) as PagedDataResponse<${majStart(className)}>
+        }{{/each}}{{/if}}
+        
 
   modelComponent:
     imports: |
@@ -6448,6 +6510,7 @@
         {{#each fields}}{{#if this.isForeignKey}}
         ${minStart(this.name)}?: ${majStart(this.type)}
         {{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}
+        {{elseIf this.isDate}}${minStart(this.name)}?: string
         {{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
       }
@@ -6456,6 +6519,7 @@
         {{#each fields}}{{#if this.isForeignKey}}
         ${minStart(this.name)}?: ${majStart(this.type)}
         {{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}
+        {{elseIf this.isDate}}${minStart(this.name)}?: ${this.typeBase}
         {{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
 
@@ -6627,7 +6691,7 @@
 
         const props = defineProps<{
           internalId: number
-          ${minStart(className)}: ${majStart(className)}FormDTO
+          ${minStart(className)}: ${majStart(className)}
           violations?: Record<string, string> | null
         }>()
 
@@ -6636,10 +6700,13 @@
           (e: 'udpate:model-value', value: ${majStart(className)}FormDTO): void
         }>()
 
-        const formModel = ref<${majStart(className)}FormDTO>(props.${minStart(className)})
+        const formModel = ref<${majStart(className)}FormDTO>({majStart(className)}FormDTO.parse(props.${minStart(className)}))
         {{#each fieldsFK}}
         {{#if this.isParentForeignKey}}{{removeLine}}
         {{else}}const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}'){{/if}}
+        const ${minStart(this.name)}DefaultValue = props.${minStart(className)}
+        ? (props.${minStart(className)}?.${this.name}?.getReferenceValue?.() ?? undefined)
+        : undefined        
         {{/each}}
 
         function removeRow() {
@@ -6668,8 +6735,7 @@
                 key="${majStart(className)}${majStart(this.name)}"
                 :search-function="${minStart(this.name)}SearchField?.multicriteriaSelect.searchFunction"
                 :filters="${minStart(this.name)}SearchField?.multicriteriaSelect.filters"
-                :default-value="formModel.${minStart(this.name)}"
-                default-key="${minStart(this.name)}"
+                :default-value="${minStart(this.name)}DefaultValue"
                 @option-selected="
                   (selectedValue) => {
                     formModel.${minStart(this.name)} = String(selectedValue)
@@ -6730,7 +6796,7 @@
                       :${minStart(className)}="row.data"
                       :violations="violations ? violations[index] : undefined"
                       @request:remove="removeRowHandler(row._internalId)"
-                      @udpate:model-value="(rowData) => (row.data = rowData)"
+                      @udpate:model-value="(rowData) => (row.rowValue = rowData)"
                     />
                   </template>
                 </tbody>
@@ -6751,26 +6817,21 @@
         <script setup lang="ts">
         import { onMounted, ref, watch } from 'vue'
         import { useTableForm } from '@/composables/useTableForm'
-        import { ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
+        import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
         import GenesisAddButton from '@/components/button/GenesisAddButton.vue'
         import ${majStart(className)}RowForm from '@/entities/${minStart(className)}/${majStart(className)}RowForm.vue'
         import GenesisInput from '@/components/form/GenesisInput.vue'
         import PlusIcon from '@/components/icons/PlusIcon.vue'
 
-        const rowTemplate = (init: Partial<${majStart(className)}FormDTO> = {}): ${majStart(className)}FormDTO =>
-          new ${majStart(className)}FormDTO({
-            ...init,
-          })
         const rowToAdd = ref(10)
         const props = defineProps<{
           getTableDataCallback: (data: ${majStart(className)}FormDTO[]) => void
-          initialData?: ${majStart(className)}FormDTO[]
+          initialData?: ${majStart(className)}[]
           violations?: Record<string, string>[]
         }>()
 
-        const { rows, addRow, removeRow, getTableData } = useTableForm<${majStart(className)}FormDTO>(
+        const { rows, addRow, removeRow, getTableData } = useTableForm<${majStart(className)}, ${majStart(className)}FormDTO>(
           props.initialData,
-          rowTemplate,
         )
 
         const addRowHandler = () => {

@@ -1,12 +1,10 @@
 <template>
   <button v-bind="$attrs" class="btn" :disabled="isLoading">
     <span v-if="isLoading" class="loading loading-spinner"></span>
-    <span v-else>
+    <slot v-else>
       <i v-if="icon" :class="icon" />
-      <slot>
-        <span v-if="label">{{ label }}</span>
-      </slot>
-    </span>
+      <span v-if="label">{{ label }}</span>
+    </slot>
   </button>
 </template>
 

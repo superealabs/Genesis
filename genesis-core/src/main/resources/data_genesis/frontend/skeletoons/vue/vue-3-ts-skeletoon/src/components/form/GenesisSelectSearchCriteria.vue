@@ -99,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 // 1. Import useDropdown
 import { useDropdown } from '@/composables/useDropdown'
 import { PaginationData } from '@/models/api/PageResponseModel'
@@ -116,7 +116,6 @@ defineOptions({
   inheritAttrs: false,
 })
 
-/* Props & Emits (Unchanged) */
 const props = defineProps<{
   label?: string
   placeholder?: string
@@ -137,18 +136,15 @@ const emit = defineEmits<{
   (e: 'option-selected', value: string | number): void
 }>()
 
-/* State */
-// 2. Use refs for trigger and content, but no longer need manual setup/teardown in onMounted/onBeforeUnmount
 const inputRef = ref<HTMLElement | null>(null)
 const dropdownRef = ref<HTMLDivElement | null>(null)
 const listRef = ref<HTMLDivElement | null>(null)
 
-// 3. Destructure properties from the composable, replacing manual state and logic
 const {
-  showDropdown: showDropdownState, // Use an alias to match the original state variable name
+  showDropdown: showDropdownState,
   openDropdown,
   hideDropdown,
-} = useDropdown(inputRef, dropdownRef) // `as any` might be needed if types are strict
+} = useDropdown(inputRef, dropdownRef)
 
 const selectedValue = ref(props.defaultValue ?? '')
 const loadingPage = ref(false)
@@ -162,7 +158,6 @@ const pagination = ref(
 )
 const options = ref<SelectOption[]>([])
 
-/* Computed (Unchanged) */
 const defaultFilter = computed(() => [props.defaultKey ?? ''])
 const defaultFilterValue = computed(() =>
   props.defaultKey && props.defaultKey.length > 0 ? { [props.defaultKey]: props.defaultValue } : {},
@@ -174,10 +169,7 @@ const inputId = computed(() =>
     : 'select-search-' + Math.random().toString(36).substring(2, 8),
 )
 
-/* Dropdown control (Modified to incorporate data loading) */
-// This custom function is needed because we must load data *before* opening the dropdown.
 const openDropdownAndLoad = async () => {
-  // Use the openDropdown from the composable to set state
   openDropdown()
   await loadOptions(true)
 }
@@ -190,9 +182,7 @@ const toggleDropdownAndLoad = () => {
   }
 }
 
-/* Lifecycle Hook (Modified to remove manual click outside logic) */
 onMounted(() => {
-  // Keep the default value initialization logic
   if (props.defaultValue && props.defaultKey) {
     props
       .searchFunction(
@@ -207,11 +197,6 @@ onMounted(() => {
   }
 })
 
-onBeforeUnmount(() => {
-  // Nothing needed here, useDropdown cleans up its event listener
-})
-
-/* Search + infinite scroll (Unchanged) */
 const loadOptions = async (reset = false) => {
   if (loadingPage.value || !hasMore.value) return
 
@@ -228,6 +213,7 @@ const loadOptions = async (reset = false) => {
   hasMore.value = pagination.value.hasNext()
   loadingPage.value = false
 }
+/* Option select (Uses hideDropdown from composable) */
 
 const updateFilter = (filters: Record<string, unknown>) => {
   currentFilters.value = filters
@@ -247,7 +233,6 @@ const onScroll = async () => {
   }
 }
 
-/* Option select (Uses hideDropdown from composable) */
 const selectOption = (option: SelectOption) => {
   selectedValue.value = option.label
   emit('option-selected', option.value)

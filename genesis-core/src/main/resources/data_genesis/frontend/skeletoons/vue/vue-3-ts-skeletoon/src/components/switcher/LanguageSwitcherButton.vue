@@ -1,19 +1,15 @@
 <template>
   <div class="dropdown dropdown-start">
-    <label tabindex="0" class="select gap-3">
-      <img
-        :src="getFlagUrl(languageStore.language)"
-        :alt="languageStore.language"
-        class="w-5 h-5 rounded"
-      />
-      <span class="hidden md:inline text-sm font-medium">
+    <GenesisButton class="btn btn-ghost text-center flex items-center">
+      <WorldIcon />
+      <span class="md:inline text-sm font-medium">
         {{ languageStore.language.toUpperCase() }}
       </span>
-    </label>
+    </GenesisButton>
 
     <ul
       tabindex="0"
-      class="dropdown-content menu p-2 shadow bg-base-200 text-base-content rounded-box w-75"
+      class="dropdown-content menu p-2 shadow bg-base-200 text-base-content rounded-box w-25"
     >
       <li
         v-for="locale in $i18n.availableLocales"
@@ -32,6 +28,8 @@
 <script setup lang="ts">
 import { useLanguageStore } from '@/stores/useLanguageStore'
 import { getFlagUrl } from '@/utils/flagsUtils'
+import WorldIcon from '../icons/WorldIcon.vue'
+import GenesisButton from '../button/GenesisButton.vue'
 
 const languageStore = useLanguageStore()
 </script>
