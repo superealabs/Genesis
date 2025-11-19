@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.langage.generator.sub.models.TableGenerationModel;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.frontend.FrontendLanguage;
@@ -254,5 +255,9 @@ public class TableMetadata {
         if (parentTables == null) { setParentTables(new ArrayList<>());}
         this.parentTables.add(parentTable);
         this.setIsChild(true);
+    }
+
+    public TableGenerationModel getGenerationModel() {
+        return new TableGenerationModel(this);
     }
 }

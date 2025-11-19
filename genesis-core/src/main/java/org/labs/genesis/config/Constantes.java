@@ -60,7 +60,4 @@ public class Constantes {
     // VIEWS TEMPLATE
     public static final int Template_1_ID = 1;
     public static final int Template_2_ID = 2;
-
-    // Post generation template
-    public  static final String GENESIS_FILE_PATH = DATA_PATH+"/templates/PostGenerationTemplate/GenesisFile";
 }

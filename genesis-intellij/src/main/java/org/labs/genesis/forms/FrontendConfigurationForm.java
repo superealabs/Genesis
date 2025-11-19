@@ -217,6 +217,11 @@ public class FrontendConfigurationForm {
     }
 
     private void populateFrameworkOptions(FrontendLanguage frontendLanguage) {
+        ActionListener[] listeners = frontendFrameworkOptions.getActionListeners();
+        for (ActionListener listener : listeners) {
+            frontendFrameworkOptions.removeActionListener(listener);
+        }
+
         frontendFrameworkOptions.removeAllItems();
         List<FrontendFramework> frameworks = ProjectGenerator.frontendFrameworks.values().stream()
                 .filter(f -> f.getLanguageId() == frontendLanguage.getId())
@@ -231,6 +236,12 @@ public class FrontendConfigurationForm {
             frontendFrameworkOptions.setSelectedIndex(0);
             portInput.setText(((FrontendFramework) Objects.requireNonNull(frontendFrameworkOptions.getSelectedItem())).getDefaultPort());
         }
+        frontendFrameworkOptions.addActionListener(e -> {
+            FrontendFramework selectedFramework = (FrontendFramework) frontendFrameworkOptions.getSelectedItem();
+            if (selectedFramework != null) {
+                portInput.setText(selectedFramework.getDefaultPort());
+            }
+        });
     }
 
     private void disableForm(){

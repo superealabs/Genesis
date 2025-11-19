@@ -46,7 +46,6 @@ public class ColumnMetadata {
     private int columnSize;
     private Boolean isParentForeignKey = false;
     private Map<String, Object> validationAnnotations = new HashMap<>();
-    private Map<String, Object> validationRules = new HashMap<>();
 
     public void setFrontEndType(FrontendLanguage frontendLanguage, Database database)
     {
