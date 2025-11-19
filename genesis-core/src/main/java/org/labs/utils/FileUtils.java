@@ -258,5 +258,34 @@ public class FileUtils {
         return objectMapper.readValue(inputStream, clazz);
     }
 
+    public static <T> void toJson(T object, String filePath) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        File file = new File(filePath);
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, object);
+    }
+
+    public static <T> void toYaml(T object, String yamlFilePath) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+        File file = new File(yamlFilePath);
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }
+        objectMapper.writeValue(file, object);
+    }
+
+    public static <T> String toJsonString(T object) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+    }
+
+    public static <T> String toYamlString(T object) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+        return objectMapper.writeValueAsString(object);
+    }
 
 }
