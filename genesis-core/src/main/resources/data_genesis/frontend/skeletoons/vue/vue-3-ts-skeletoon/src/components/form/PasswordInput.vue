@@ -37,18 +37,9 @@ const isVisible = ref(false)
 
 const inputType = computed(() => (isVisible.value ? 'text' : 'password'))
 
-// Method to toggle the visibility state
 const togglePasswordVisibility = () => {
   isVisible.value = !isVisible.value
 }
 </script>
 
-<style scoped>
-/* NOTE: For the icon to be positioned correctly, you might need to ensure:
-  1. The main input container inside GenesisInput has `position: relative`.
-  2. The input field itself has padding on the right to prevent the icon from overlapping the text.
-
-  Since we are slotting into GenesisInput, you might need to adjust the structure of GenesisInput
-  to support this append/suffix placement accurately.
-*/
-</style>
+<style scoped></style>
