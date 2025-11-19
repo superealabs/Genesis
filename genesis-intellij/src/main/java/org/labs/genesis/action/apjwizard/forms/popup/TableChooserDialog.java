@@ -1,4 +1,4 @@
-package org.labs.genesis.action.apjwizard.forms;
+package org.labs.genesis.action.apjwizard.forms.popup;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.treeStructure.Tree;
