@@ -642,8 +642,10 @@ public class ProjectGenerator {
                 }
                 List<TableMetadata> entities = context.getEntityTables();
                 List<TableMetadata> views = context.getViewTables();
-                for (RelationParameter parameter: context.getRelationParameters()){
-                    parameter.setParameter();
+                if (context.getRelationParameters() != null) {
+                    for (RelationParameter parameter: context.getRelationParameters()){
+                        parameter.setParameter();
+                    }
                 }
 
                 generateFullBackendProject(context, entities, views);

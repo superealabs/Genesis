@@ -125,12 +125,12 @@ public class GenesisCoreTest {
     }
 
     @Test
-    void generateProjetVueJS() {
+    void generateProjetDotNetVueJS() {
         var credentials = new Credentials()
                 .setHost("localhost")
                 .setPort("5432")
                 .setSchemaName("public")
-                .setDatabaseName("relations")
+                .setDatabaseName("fanamby")
                 .setUser("chan_alex")
                 .setPwd("chanalex")
                 .setTrustCertificate(true).
@@ -152,8 +152,8 @@ public class GenesisCoreTest {
             var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
 
             List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
-            String projectName = "projetSynch";
-            String groupLink = "org.synch";
+            String projectName = "FanambyPresence";
+            String groupLink = "mg.akademia";
             String projectPort = "8080";
             String logLevel = "Information";
             String projectDescription = "An ASP.NET BEGIN Project";
@@ -200,6 +200,8 @@ public class GenesisCoreTest {
             context.setGenerateProjectStructure(true);
             context.setViewNames(new ArrayList<>());
             context.setGenerateFrontendApp(false);
+            context.setGenerateFrontendApp(true);
+            context.setFrontendPort(frontendFramework.getDefaultPort());
 
             projectGenerator.generateProject(context);
 
