@@ -8,6 +8,8 @@ import org.labs.genesis.renderer.TableMetadataListCellRenderer;
 import org.labs.genesis.renderer.TableMetadataTableCellRenderer;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.util.ArrayList;
@@ -44,19 +46,7 @@ public class RelationshipConfigurationForm {
         initializeTable();
     }
 
-    private void initializeTable() {
-        String[] columnNames = {"Parent Entity", "Child Entity", "Is Mandatory"};
 
-        DefaultTableModel model = new DefaultTableModel(null, columnNames) {
-            @Override
-            public boolean isCellEditable(int row, int column) {return false;}
-        };
-        relationTable.setModel(model);
-
-        TableCellRenderer tableMetadataRenderer = new TableMetadataTableCellRenderer();
-        relationTable.getColumnModel().getColumn(0).setCellRenderer(tableMetadataRenderer);
-        relationTable.getColumnModel().getColumn(1).setCellRenderer(tableMetadataRenderer);
-    }
 
     public void populateSelect(Dictionary<String,List<TableMetadata>> relations) {
         List<TableMetadata> parents = relations.get("PARENTS");
@@ -70,9 +60,52 @@ public class RelationshipConfigurationForm {
 
     private void initializeListners(){
         addRelationButton.addActionListener(e -> addRelation());
-
-        // NOUVEAU LISTENER POUR LE BOUTON DE SUPPRESSION
         removeLineButton.addActionListener(e -> removeRelation());
+    }
+
+    private void initializeTable() {
+        String[] columnNames = {"Parent Entity", "Child Entity", "Is Mandatory"};
+        DefaultTableModel model = new DefaultTableModel(null, columnNames) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 2;
+            }
+
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex == 2) {
+                    return Boolean.class;
+                }
+                return super.getColumnClass(columnIndex);
+            }
+        };
+        relationTable.setModel(model);
+
+        TableCellRenderer tableMetadataRenderer = new TableMetadataTableCellRenderer();
+        relationTable.getColumnModel().getColumn(0).setCellRenderer(tableMetadataRenderer);
+        relationTable.getColumnModel().getColumn(1).setCellRenderer(tableMetadataRenderer);
+
+        model.addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 2) {
+                    int row = e.getFirstRow();
+                    Object newValue = model.getValueAt(row, 2);
+                    System.out.println("Valeur modifiée à la ligne " + row + ": " + newValue);
+                    handleMandatoryChange(row, newValue);
+                }
+            }
+        });
+    }
+
+    private void handleMandatoryChange(int row, Object newValue) {
+        if (row >= 0 && row < relationParameters.size() && newValue instanceof Boolean isMandatory) {
+            RelationParameter relation = relationParameters.get(row);
+            relation.setMandatory(isMandatory);
+            System.out.println("Relation mise à jour: " + relation.getParentTable() +
+                    " -> " + relation.getChildTable() +
+                    " (Mandatory: " + isMandatory + ")");
+        }
     }
 
     private void addRelation(){
@@ -90,7 +123,11 @@ public class RelationshipConfigurationForm {
             JOptionPane.showMessageDialog(mainPanel, "The table "+parentSelected.getTableName()+" has no relation to "+childSelected.getTableName(), "Relation invalid", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        RelationParameter currentRelation = new RelationParameter(parentSelected, childSelected, fkColumn.isNullable());
+        RelationParameter currentRelation = new RelationParameter(
+                parentSelected.getTableName(),
+                childSelected.getTableName(),
+                !fkColumn.isNullable()
+        );
         if (relationParameters.contains(currentRelation)){
             JOptionPane.showMessageDialog(mainPanel, "This relation already exists.", "Duplicate Relation", JOptionPane.WARNING_MESSAGE);
             return;

@@ -20,7 +20,6 @@ public class FrontEndTest {
     public void testCollectionYamlData()
     {
         ProjectGenerator projectGenerator = new ProjectGenerator();
-
     }
 
     @Test

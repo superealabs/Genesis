@@ -131,7 +131,7 @@ public class ProjectGenerationContext {
         return splitTables;
     }
 
-    private TableMetadata findTableByName(String tableName, List<TableMetadata> tables) {
+    public TableMetadata findTableByName(String tableName, List<TableMetadata> tables) {
         for (TableMetadata table : tables) {
             if (table.getTableName().equalsIgnoreCase(tableName)) {
                 return table;

@@ -644,7 +644,7 @@ public class ProjectGenerator {
                 List<TableMetadata> views = context.getViewTables();
                 if (context.getRelationParameters() != null) {
                     for (RelationParameter parameter: context.getRelationParameters()){
-                        parameter.setParameter();
+                        parameter.setParameter(context);
                     }
                 }
 

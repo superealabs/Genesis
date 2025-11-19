@@ -1,13 +1,14 @@
 package org.labs.genesis.connexion.model;
 
 import lombok.*;
+import org.labs.genesis.config.ProjectGenerationContext;
 
 @Getter
 @Setter
 @AllArgsConstructor
 public class RelationParameter {
-    private TableMetadata parentTable;
-    private TableMetadata childTable;
+    private String parentTable;
+    private String childTable;
     private Boolean mandatory;
 
     public Object[] toRow(){
@@ -17,15 +18,17 @@ public class RelationParameter {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof RelationParameter){
-            boolean childCheck = this.getChildTable().getClassName().equals(((RelationParameter) obj).getChildTable().getClassName());
-            boolean parentCheck = this.getParentTable().getClassName().equals(((RelationParameter) obj).getParentTable().getClassName());
+            boolean childCheck = this.getChildTable().equalsIgnoreCase(((RelationParameter) obj).getChildTable());
+            boolean parentCheck = this.getParentTable().equalsIgnoreCase(((RelationParameter) obj).getParentTable());
             return childCheck && parentCheck;
         }
         return  false;
     }
 
-    public void setParameter(){
-        parentTable.addChild(childTable, mandatory);
-        childTable.setParentTable(parentTable);
+    public void setParameter(ProjectGenerationContext context){
+        TableMetadata parentTableMetadata = context.findTableByName(parentTable, context.getEntityTables());
+        TableMetadata childTableMetadata = context.findTableByName(childTable, context.getEntityTables());
+        parentTableMetadata.addChild(childTableMetadata, mandatory);
+        childTableMetadata.setParentTable(parentTableMetadata);
     }
 }
