@@ -1,5 +1,6 @@
 package org.labs.genesis.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.langage.*;
@@ -9,6 +10,7 @@ import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
+import org.labs.utils.StringUtils;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -45,11 +47,42 @@ public class ProjectGenerationContext {
     private boolean generateProjectStructure = true;
     // Frontend Generation
     private  boolean generateFrontendApp = true;
+    private  boolean generateFrontendSkeletons = true;
+    private  boolean generateFrontendStructure = true;
     private FrontendFramework frontendFramework;
     private FrontendLanguage frontendLanguage;
     private String webappFolder = "webapp";
     // FrameworkMVC specific configurations
+    private  boolean generateViewsTemplates = true;
     private ViewsTemplate viewsTemplate;
+
+    public ProjectGenerationContext duplicateWithNoTables(){
+        ProjectGenerationContext copy = new ProjectGenerationContext();
+        copy.setFrontendPort(this.frontendPort);
+        copy.setDatabase(this.database);
+        copy.setLanguage(this.language);
+        copy.setFramework(this.framework);
+        copy.setProject(this.project);
+        copy.setCredentials(this.credentials);
+        copy.setDestinationFolder(this.destinationFolder);
+        copy.setProjectName(this.projectName);
+        copy.setGroupLink(this.groupLink);
+        copy.setProjectPort(this.projectPort);
+        copy.setProjectDescription(this.projectDescription);
+        copy.setFrameworkConfiguration(this.frameworkConfiguration);
+        copy.setLanguageConfiguration(this.languageConfiguration);
+        copy.setEntityNames(new ArrayList<>());
+        copy.setViewNames(new ArrayList<>());
+        copy.setRelationParameters(new ArrayList<>(this.getRelationParameters()));
+        copy.setGenerationOptions(new ArrayList<>(this.getGenerationOptions()));
+        copy.setGenerateProjectStructure(this.generateProjectStructure);
+        copy.setGenerateFrontendApp(this.generateFrontendApp);
+        copy.setFrontendFramework(this.frontendFramework);
+        copy.setFrontendLanguage(this.frontendLanguage);
+        copy.setConnection(this.connection);
+        copy.setViewsTemplate(this.viewsTemplate);
+        return copy;
+    }
 
     public ProjectGenerationContext setDatabase(Database database) {
         this.database = database;
@@ -96,10 +129,18 @@ public class ProjectGenerationContext {
         return this;
     }
 
+    @JsonIgnore
     public void setEntityTables(Connection connection) throws SQLException, ClassNotFoundException {
-
         this.entityTables = database.getEntitiesByNames(this.getEntityNames(), connection, credentials, language, framework);
     }
+    public void setEntityTables(List<TableMetadata> tables){
+        this.entityTables = tables;
+    }
+    public void setViewTables(List<TableMetadata> views){
+        this.viewTables = views;
+    }
+
+    @JsonIgnore
     public void setViewTables(Connection connection) throws SQLException, ClassNotFoundException {
         this.viewTables = database.getViewsByNames(this.getViewNames(), connection, credentials, language, framework);
     }
@@ -111,6 +152,27 @@ public class ProjectGenerationContext {
             throw new RuntimeException(e);
         }
     }
+
+    public void setEntityNamesFromTables(List<TableMetadata> entityTables) {
+        List<String> entityNames = new ArrayList<>();
+        for (TableMetadata table : entityTables) {
+            entityNames.add(table.getTableName());
+        }
+        setEntityNames(entityNames);
+    }
+
+    public void setViewNamesFromTables(List<TableMetadata> viewTables) {
+        List<String> viewNames = new ArrayList<>();
+        for (TableMetadata table : viewTables) {
+            viewNames.add(table.getTableName());
+        }
+        setViewNames(viewNames);
+    }
+
+    public Set<TableMetadata> getEntitiesSet() {
+        return new HashSet<>(this.entityTables);
+    }
+
     public Dictionary<String, List<TableMetadata>> splitTableByRelations() {
         Dictionary<String, List<TableMetadata>> splitTables = new java.util.Hashtable<>();
         List<TableMetadata> childTables = new java.util.ArrayList<>();
@@ -122,12 +184,8 @@ public class ProjectGenerationContext {
             }
         }
 
-        // 4. Mettre les résultats dans le dictionnaire
-        // Les "PARENTS" sont toutes les tables référencées.
         splitTables.put("PARENTS", this.entityTables);
-        // Les "CHILDS" sont toutes les tables qui ont au moins une FK.
         splitTables.put("CHILDS", childTables);
-
         return splitTables;
     }
 
@@ -151,6 +209,6 @@ public class ProjectGenerationContext {
     }
 
     public String getDestinationFolder() {
-        return destinationFolder+"/"+projectName;
+        return destinationFolder+"/"+ StringUtils.toPascalCase(projectName);
     }
 }

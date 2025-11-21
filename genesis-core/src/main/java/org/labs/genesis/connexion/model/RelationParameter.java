@@ -6,6 +6,7 @@ import org.labs.genesis.config.ProjectGenerationContext;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class RelationParameter {
     private String parentTable;
     private String childTable;

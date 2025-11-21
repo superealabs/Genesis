@@ -60,4 +60,9 @@ public class Constantes {
     // VIEWS TEMPLATE
     public static final int Template_1_ID = 1;
     public static final int Template_2_ID = 2;
+
+    // SUB Generation
+    public static final String GENESIS_CONTEXT_FILENAME = "genesis-context";
+    public static final String GENESIS_CONTEXT_FILE_EXTENSION = "json";
+    public static final String GENESIS_CONTEXT_FILE = GENESIS_CONTEXT_FILENAME+"."+GENESIS_CONTEXT_FILE_EXTENSION;
 }

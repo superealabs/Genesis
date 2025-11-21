@@ -50,15 +50,8 @@ public class FontendGenerator implements IFrontendGenerator{
             finalStringForComponent=engine.simpleRenderAlt(finalStringForComponent,metadataForFinalRender);
 
             String fileSavePath;
-            if (generateComponentOnly) {
-                // simplified path : destinationFolder/projectName/models
-                fileSavePath = destinationFolder + "/" + projectName + "/models";
-            } else {
-                //using the configured path in the frontendframework
-                fileSavePath = component.getDestinationPath();
-                fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
-            }
-            // ensure that the folder exists
+            fileSavePath = component.getDestinationPath();
+            fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
             FileUtils.createDirectory(fileSavePath);
 
             String componentName=component.getComponentName();
@@ -120,12 +113,8 @@ public class FontendGenerator implements IFrontendGenerator{
 
 
         String fileSavePath;
-        if (generateComponentOnly) {
-            fileSavePath = destinationFolder + "/" + projectName + "/src/services";
-        } else {
-            fileSavePath = serviceComponent.getDestinationPath();
-            fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
-        }
+        fileSavePath = serviceComponent.getDestinationPath();
+        fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
 
         String serviceName=serviceComponent.getName();
         serviceName=engine.render(serviceName, metadataForFinalRender);
@@ -159,14 +148,9 @@ public class FontendGenerator implements IFrontendGenerator{
         finalStringForModel=engine.simpleRenderAlt(finalStringForModel,metadataForFinalRender);
 
         String fileSavePath;
-        if (generateComponentOnly) {
-            // simplified path : destinationFolder/projectName/models
-            fileSavePath = destinationFolder + "/" + projectName + "/models";
-        } else {
-            //using the configured path in the frontendframework
-            fileSavePath = modelComponent.getDestinationPath();
-            fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
-        }
+        fileSavePath = modelComponent.getDestinationPath();
+        fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
+
         // ensure that the folder exists
 
         String modelName=modelComponent.getName();

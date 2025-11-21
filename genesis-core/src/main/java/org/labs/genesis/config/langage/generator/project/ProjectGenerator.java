@@ -6,7 +6,8 @@ import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.framework.APIGenerator;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.config.langage.generator.framework.GenesisGenerator;
-import org.labs.genesis.config.langage.generator.sub.SubGenerator;
+import org.labs.genesis.config.langage.generator.sync.builder.GenesisContextBuilder;
+import org.labs.genesis.config.langage.generator.sync.models.GenesisContextModel;
 import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.frontend.generator.ViewsGenerator;
 import org.labs.genesis.connexion.Credentials;
@@ -121,8 +122,8 @@ public class ProjectGenerator {
 
     public static void initFrontendProjectFiles(ProjectGenerationContext context){
         FrontendFramework frontendFramework = context.getFrontendFramework();
-        if (frontendFramework == null) {
-            return; // Skip frontend initialization if framework is not configured
+        if ( !context.isGenerateFrontendSkeletons() || frontendFramework == null) {
+            return;
         }
         String destinationFilePath = FrameworkFrontendMetadataProvider.getWebappFolder(context);
         String sourcePath = Constantes.FRONTEND_SKELLETTON_DIRECTORY + frontendFramework.getInitPath();
@@ -179,8 +180,56 @@ public class ProjectGenerator {
         }
     }
 
+    public static Framework findFrameworkById(int frameworkId) {
+        Framework framework = ProjectGenerator.frameworks.get(frameworkId);
+        if (frameworkId > 0 && framework == null) {
+            throw new RuntimeException("Framework not found: " + frameworkId);
+        }
+        return framework;
+    }
+
+    public static FrontendFramework findFrontendFrameworkById(int frameworkId) {
+        FrontendFramework framework = ProjectGenerator.frontendFrameworks.get(frameworkId);
+        if (frameworkId > 0 && framework == null) {
+            throw new RuntimeException("Frontend Framework not found: " + frameworkId);
+        }
+        return framework;
+    }
+
+    public static Project findProjectById(int projectId) {
+        Project project = ProjectGenerator.projects.get(projectId);
+        if (projectId > 0 && project == null) {
+            throw new RuntimeException("Project not found: " + projectId);
+        }
+        return  project;
+    }
+
+    public static Language findLanguageById(int languageId) {
+        Language language = ProjectGenerator.languages.get(languageId);
+        if (languageId > 0 && language == null) {
+            throw new RuntimeException("Language with id " + languageId + " not found.");
+        }
+        return language;
+    }
+
+    public static FrontendLanguage findFrontendLanguageById(int languageId) {
+        FrontendLanguage language = ProjectGenerator.frontendLanguage.get(languageId);
+        if (languageId > 0 && language == null) {
+            throw new RuntimeException("Frontend Language with id " + languageId + " not found.");
+        }
+        return language;
+    }
+
+    public static Database findDatabaseById(int databaseId) {
+        Database database = ProjectGenerator.databases.get(databaseId);
+        if (databaseId > 0 && database == null) {
+            throw new RuntimeException("Database not found: " + databaseId);
+        }
+        return database;
+    }
+
     private void generateFrontentProjectFiles(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {
-        if (!context.isGenerateFrontendApp()){
+        if (!context.isGenerateFrontendApp() || !context.isGenerateFrontendStructure()) {
             return;
         }
         FrontendFramework frontendFramework = context.getFrontendFramework();
@@ -208,7 +257,10 @@ public class ProjectGenerator {
         frontendGenerator.generateRessources(context, entities);
     }
 
-    private static void generateViewsFiles (ProjectGenerationContext context, ViewsTemplate viewsTemplate) throws Exception {
+    private void generateViewsFiles (ProjectGenerationContext context, ViewsTemplate viewsTemplate) throws Exception {
+        if (!context.isGenerateViewsTemplates()){
+            return;
+        }
         HashMap<String, Object> initializeHashMap = getInitialHashMap(
                 context.getDestinationFolder(),
                 context.getProjectName(),
@@ -227,7 +279,10 @@ public class ProjectGenerator {
         renderFilesEdits(frameworkMVC.getView().getTemplateEngineFilesEdits(), frontendHashMap);
     }
 
-    private void generateProjectFiles(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {
+    protected void generateProjectFiles(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {
+        if (!context.isGenerateProjectStructure()){
+            return;
+        }
         HashMap<String, Object> initializeHashMap = getInitialHashMap(
                 context.getDestinationFolder(),
                 context.getProjectName(),
@@ -542,35 +597,24 @@ public class ProjectGenerator {
 
     public void generateProject(ProjectGenerationContext context) throws Exception {
         if (context.isGenerateProjectStructure()) {
-            // Générer le projet complet
             generateFullProject(context);
-            postGeneration(context);
+            generateGenesisfile(context);
         } else {
-            // Générer uniquement les composants
             generateComponentsOnly(context);
         }
     }
-    private  void generateFullBackendProject(ProjectGenerationContext context, List<TableMetadata> entities, List<TableMetadata> views) throws Exception {
+    private  void generateFullBackendProject(ProjectGenerationContext context, List<TableMetadata> entities, boolean generateComponentOnly) throws Exception {
         GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
         for (TableMetadata tableMetadata : entities) {
             generateBackendComponents(
                     context,
                     genesisGenerator,
                     tableMetadata,
-                    false
-            );
-        }
-
-        for (TableMetadata tableMetadata : views) {
-            generateBackendComponents(
-                    context,
-                    genesisGenerator,
-                    tableMetadata,
-                    false
+                    generateComponentOnly
             );
         }
     }
-    private  void generateFullFrontendProject(ProjectGenerationContext context, List<TableMetadata> entities, List<TableMetadata> views) throws Exception {
+    private  void generateFullFrontendProject(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {
         if (!context.isGenerateFrontendApp()) { return; }
         IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
         initFrontendProjectFiles(context);
@@ -582,16 +626,8 @@ public class ProjectGenerator {
                     false
             );
         }
-        for (TableMetadata tableMetadata : views) {
-            generateFrontendComponents(
-                    context,
-                    frontendGenerator,
-                    tableMetadata,
-                    false
-            );
-        }
     }
-    private void generateFullViewsComponents(ProjectGenerationContext context, List<TableMetadata> entities, List<TableMetadata> views) throws Exception {
+    private void generateFullViewsComponents(ProjectGenerationContext context, List<TableMetadata> allEntities) throws Exception {
         IViewsGenerator viewsGenerator = new ViewsGenerator(ProjectGenerator.engine);
         FrameworkMVC framework = (FrameworkMVC) context.getFramework();
         Language language = context.getLanguage();
@@ -600,22 +636,11 @@ public class ProjectGenerator {
         ViewsTemplate viewsTemplate = context.getViewsTemplate();
         String groupLink = context.getGroupLink();
 
-        List<TableMetadata> allEntities = new ArrayList<>();
-        allEntities.addAll(entities);
-        allEntities.addAll(views);
 
         viewsGenerator.generateMainLayout(framework, frameworkOptions, language, viewsTemplate, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
         viewsGenerator.generateErrorPage(framework, frameworkOptions, language, viewsTemplate, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
         viewsGenerator.generateResources(framework, frameworkOptions, language, viewsTemplate, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
-        for (TableMetadata tableMetadata : entities) {
-            generateViewsComponents(
-                    context,
-                    viewsGenerator,
-                    tableMetadata,
-                    false
-            );
-        }
-        for (TableMetadata tableMetadata : views) {
+        for (TableMetadata tableMetadata : allEntities) {
             generateViewsComponents(
                     context,
                     viewsGenerator,
@@ -624,48 +649,17 @@ public class ProjectGenerator {
             );
         }
     }
-    private void generateFullProject(ProjectGenerationContext context) throws Exception {
+    protected void generateFullProject(ProjectGenerationContext context) throws Exception {
         Database database = context.getDatabase();
         Framework framework = context.getFramework();
         Credentials credentials = context.getCredentials();
         useRealSidAndDriverType(database,credentials);
         Connection connection = context.getConnection();
-        Language language = context.getLanguage();
 
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
-                if (context.getEntityTables() == null || context.getEntityTables().isEmpty()) {
-                    context.setEntityTables(connex);
-                }
-                if (context.getViewTables() == null || context.getViewTables().isEmpty()) {
-                    context.setViewTables(connex);
-                }
-                List<TableMetadata> entities = context.getEntityTables();
-                List<TableMetadata> views = context.getViewTables();
-                if (context.getRelationParameters() != null) {
-                    for (RelationParameter parameter: context.getRelationParameters()){
-                        parameter.setParameter(context);
-                    }
-                }
-
-                generateFullBackendProject(context, entities, views);
-                if (framework instanceof FrameworkMVC) {
-                    generateFullViewsComponents(context, entities, views);
-                } else {
-                    generateFullFrontendProject(context, entities, views);
-                }
-
-                List<TableMetadata> allEntities = new ArrayList<>();
-                allEntities.addAll(entities);
-                allEntities.addAll(views);
-
-                generateProjectFiles(context, allEntities);
-                if (framework instanceof FrameworkMVC) {
-                    ViewsTemplate viewsTemplate = context.getViewsTemplate();
-                    generateViewsFiles(context, viewsTemplate);
-                } else {
-                    generateFrontentProjectFiles(context, allEntities);
-                }
+                List<TableMetadata> allEntities = generateFullProjectComponents(context, connex, false);
+                generateFullProjectStrucutres(context, allEntities);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException("\nError in generateFullProject : \n" + e);
@@ -675,7 +669,44 @@ public class ProjectGenerator {
         }
     }
 
-    private void useRealSidAndDriverType(Database database,Credentials credentials)
+    public List<TableMetadata> generateFullProjectComponents(ProjectGenerationContext context, Connection connex, boolean generateComponentOnly) throws Exception {
+        if (context.getEntityTables() == null || context.getEntityTables().isEmpty()) {
+            context.setEntityTables(connex);
+        }
+        if (context.getViewTables() == null || context.getViewTables().isEmpty()) {
+            context.setViewTables(connex);
+        }
+        List<TableMetadata> allEntities = context.getAllTables();
+        generateFullProjectComponents(context, allEntities, generateComponentOnly);
+        return allEntities;
+    }
+    public List<TableMetadata> generateFullProjectComponents(ProjectGenerationContext context, List<TableMetadata> allEntities, boolean generateComponentOnly) throws Exception {
+        if (context.getRelationParameters() != null) {
+            for (RelationParameter parameter: context.getRelationParameters()){
+                parameter.setParameter(context);
+            }
+        }
+        generateFullBackendProject(context, allEntities, generateComponentOnly);
+        if (context.getFramework() instanceof FrameworkMVC) {
+            generateFullViewsComponents(context, allEntities);
+        } else {
+            generateFullFrontendProject(context, allEntities);
+        }
+        return allEntities;
+    }
+    public void generateFullProjectStrucutres(ProjectGenerationContext context, List<TableMetadata> allEntities) throws Exception {
+        if (allEntities == null || allEntities.isEmpty()) {
+            allEntities = context.getAllTables();
+        }
+        generateProjectFiles(context, allEntities);
+        if (context.getFramework() instanceof FrameworkMVC) {
+            ViewsTemplate viewsTemplate = context.getViewsTemplate();
+            generateViewsFiles(context, viewsTemplate);
+        } else {
+            generateFrontentProjectFiles(context, allEntities);
+        }
+    }
+    protected void useRealSidAndDriverType(Database database,Credentials credentials)
     {
         if (credentials == null) {
             return;
@@ -698,7 +729,7 @@ public class ProjectGenerator {
             File oldVenv = new File(projectPath + "/venv");
             if (oldVenv.exists()) {
                 System.out.println("   🗑️  Suppression de l'ancien environnement virtuel...");
-                deleteDirectory(oldVenv);
+                FileUtils.deleteDirectory(oldVenv);
             }
 
             // Créer un nouvel environnement virtuel
@@ -749,65 +780,24 @@ public class ProjectGenerator {
         }
     }
 
-    private void deleteDirectory(File directory) {
-        if (directory.exists()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        deleteDirectory(file);
-                    } else {
-                        file.delete();
-                    }
-                }
-            }
-            directory.delete();
-        }
-    }
-
-    private void generateComponentsOnly(ProjectGenerationContext context) {
+    private List<TableMetadata> generateComponentsOnly(ProjectGenerationContext context) {
         Database database = context.getDatabase();
         Framework framework = context.getFramework();
         Credentials credentials = context.getCredentials();
         Connection connection = context.getConnection();
-        Language language = context.getLanguage();
-
+        List<TableMetadata> allEntities = new ArrayList<>();
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
-                List<TableMetadata> entities = database.getEntitiesByNames(context.getEntityNames(), connex, credentials, language, framework);
-                List<TableMetadata> views = database.getViewsByNames(context.getViewNames(), connex, credentials, language, framework);
-                GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
-
-                for (TableMetadata tableMetadata : entities) {
-                    generateBackendComponents(
-                            context,
-                            genesisGenerator,
-                            tableMetadata,
-                            true
-                    );
-                }
-
-                for (TableMetadata tableMetadata : views) {
-                    generateBackendComponents(
-                            context,
-                            genesisGenerator,
-                            tableMetadata,
-                            true
-                    );
-                }
+                allEntities = generateFullProjectComponents(context, connex, true);
             } catch (Exception e) {
                 throw new RuntimeException("\nError in generateComponentsOnly : \n" + e);
             }
         }
+        return allEntities;
     }
 
-    private void postGeneration(ProjectGenerationContext context){
-        // Generate genesis.json
-        SubGenerator subGenerator = new SubGenerator(context);
-        try {
-            subGenerator.generateGenesisfile();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public GenesisContextModel generateGenesisfile(ProjectGenerationContext context) throws Exception {
+        GenesisContextBuilder contextBuilder = new GenesisContextBuilder();
+        return contextBuilder.generateGenesisfile(context);
     }
 }

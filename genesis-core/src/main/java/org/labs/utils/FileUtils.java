@@ -223,7 +223,7 @@ public class FileUtils {
         file.mkdir();
     }
 
-    public static <T> T fromJson(Class<T> clazz, String resourcePath) throws IOException {
+    public static <T> T fromJson(Class<T> clazz, String path) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
@@ -231,13 +231,22 @@ public class FileUtils {
         module.addDeserializer(Database.class, new DatabaseDeserializer());
         objectMapper.registerModule(module);
 
-        // Charger le fichier depuis le classpath
-        InputStream inputStream = FileUtils.class.getClassLoader().getResourceAsStream(resourcePath);
-        if (inputStream == null) {
-            throw new FileNotFoundException("File not found : " + resourcePath);
+        // Vérifier si c'est un chemin absolu (commence par / ou contient :)
+        if (path.startsWith("/") || path.contains(":")) {
+            // Chemin absolu sur le système de fichiers
+            File file = new File(path);
+            if (!file.exists()) {
+                throw new FileNotFoundException("File not found : " + path);
+            }
+            return objectMapper.readValue(file, clazz);
+        } else {
+            // Chemin relatif depuis le classpath
+            InputStream inputStream = FileUtils.class.getClassLoader().getResourceAsStream(path);
+            if (inputStream == null) {
+                throw new FileNotFoundException("File not found in classpath : " + path);
+            }
+            return objectMapper.readValue(inputStream, clazz);
         }
-
-        return objectMapper.readValue(inputStream, clazz);
     }
 
 
@@ -288,4 +297,26 @@ public class FileUtils {
         return objectMapper.writeValueAsString(object);
     }
 
+    public static void deleteDirectory(File directory) {
+        if (directory.exists()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectory(file);
+                    } else {
+                        file.delete();
+                    }
+                }
+            }
+            directory.delete();
+        }
+    }
+
+    public static void deleteFile(String filePath) {
+        File file = new File(filePath);
+        if (file.exists() && file.isFile()) {
+            file.delete();
+        }
+    }
 }

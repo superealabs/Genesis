@@ -60,7 +60,12 @@ public class ColumnMetadata {
 
     public void setUiType(FrontendLanguage frontendLanguage)
     {
-        this.uiType = frontendLanguage.getInputTypes().get(this.getFrontEndType());
+        setUiType(frontendLanguage.getInputTypes().get(this.getFrontEndType()));
+    }
+
+    private void setUiType(String uiType)
+    {
+        this.uiType = uiType;
     }
 
     public void setNullable(String nullable, Map<String, Object> frameworkValidationAnnotations, GenesisTemplateEngine engine) throws Exception {
