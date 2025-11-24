@@ -46,15 +46,7 @@
           <text value="Project Description"/>
         </properties>
       </component>
-      <component id="c7f8a" class="javax.swing.JCheckBox" binding="createVenvCheckBox" default-binding="true">
-        <constraints>
-          <grid row="2" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <selected value="true"/>
-          <text value="Create Python virtual environment (venv)"/>
-        </properties>
-      </component>
+
       <component id="a65ab" class="javax.swing.JLabel" binding="loggingLevelLabel">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">

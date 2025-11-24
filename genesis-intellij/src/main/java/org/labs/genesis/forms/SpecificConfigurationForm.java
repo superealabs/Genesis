@@ -50,10 +50,10 @@ public class SpecificConfigurationForm {
     private JLabel cacheableLabel;
     private JScrollPane allTablesAndViewsNamesPane;
     private JBList<String> selectedTableAndViewNamesList;
-    private JCheckBox createVenvCheckBox;
+
     private JCheckBox enableAuthCheckBox;
     @Setter
-    private List<String> allTablesAndViewsNames  = new ArrayList<>();
+    private List<String> allTablesAndViewsNames = new ArrayList<>();
 
     public void initializeForm() {
         // Masquer tous les composants dépendants au début
@@ -98,30 +98,22 @@ public class SpecificConfigurationForm {
             useAnEurekaServerCheckBox.setVisible(false);
             eurekaServerHostLabel.setVisible(false);
             eurekaServerHostField.setVisible(false);
-            
+
             // Afficher le checkbox venv uniquement pour Django
             if (framework.getCoreFramework() != null && framework.getCoreFramework().equalsIgnoreCase("Django")) {
-                if (createVenvCheckBox != null) {
-                    createVenvCheckBox.setVisible(true);
-                    createVenvCheckBox.setSelected(true); // Par défaut, créer le venv
-                }
+
                 if (enableAuthCheckBox != null) {
                     enableAuthCheckBox.setVisible(true);
                     enableAuthCheckBox.setSelected(true); // Par défaut, activer l'authentification
                 }
             } else {
-                if (createVenvCheckBox != null) {
-                    createVenvCheckBox.setVisible(false);
-                }
                 if (enableAuthCheckBox != null) {
                     enableAuthCheckBox.setVisible(false);
                 }
             }
         } else {
             // Masquer le checkbox venv pour les autres frameworks
-            if (createVenvCheckBox != null) {
-                createVenvCheckBox.setVisible(false);
-            }
+
             if (enableAuthCheckBox != null) {
                 enableAuthCheckBox.setVisible(false);
             }
@@ -159,9 +151,6 @@ public class SpecificConfigurationForm {
         allTablesAndViewsNamesPane.setVisible(false);
 
         // Masquer le checkbox venv par défaut
-        if (createVenvCheckBox != null) {
-            createVenvCheckBox.setVisible(false);
-        }
 
         // Masquer le checkbox d'authentification par défaut
         if (enableAuthCheckBox != null) {
@@ -262,7 +251,7 @@ public class SpecificConfigurationForm {
     }
 
     private void initializeRouteConfigurationTable() {
-        String[] columnNames = {"Route ID", "URI", "Path", "Methods"};
+        String[] columnNames = { "Route ID", "URI", "Path", "Methods" };
         DefaultTableModel model = new DefaultTableModel(null, columnNames) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -271,7 +260,7 @@ public class SpecificConfigurationForm {
         };
 
         // Ajouter une ligne initiale
-        model.addRow(new Object[]{"", "", "", ""});
+        model.addRow(new Object[] { "", "", "", "" });
         routeConfigurationOption.setModel(model);
 
         // Personnaliser les couleurs de sélection
@@ -285,7 +274,7 @@ public class SpecificConfigurationForm {
     private void configureRouteButtons() {
         DefaultTableModel model = (DefaultTableModel) routeConfigurationOption.getModel();
 
-        addRouteButton.addActionListener(e -> model.addRow(new Object[]{"", "", "", ""}));
+        addRouteButton.addActionListener(e -> model.addRow(new Object[] { "", "", "", "" }));
         removeRouteButton.addActionListener(e -> {
             int selectedRow = routeConfigurationOption.getSelectedRow();
             if (selectedRow != -1) {
@@ -294,8 +283,7 @@ public class SpecificConfigurationForm {
                 Messages.showErrorDialog(
                         mainPanel,
                         "Please select a row to delete.",
-                        "Error"
-                );
+                        "Error");
             }
         });
     }

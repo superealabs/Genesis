@@ -2,7 +2,7 @@ package org.labs.genesis.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
-import org.labs.genesis.config.Constantes;
+
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
@@ -10,8 +10,7 @@ import org.labs.genesis.forms.SpecificConfigurationForm;
 import org.labs.utils.StringUtils;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.sql.SQLException;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,25 +51,24 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         if (specificConfigurationForm.getUseAnEurekaServerCheckBox().isSelected()) {
             framework.setUseCloud(true);
             framework.setUseEurekaServer(true);
-            frameworkConfiguration.put("eurekaServerURL", specificConfigurationForm.getEurekaServerHostField().getText().trim());
+            frameworkConfiguration.put("eurekaServerURL",
+                    specificConfigurationForm.getEurekaServerHostField().getText().trim());
         }
 
         // Gestion de loggingLevel
         frameworkConfiguration.put("loggingLevel", Objects.requireNonNullElseGet(
-                specificConfigurationForm.getLoggingLevelOptions().getSelectedItem(), () -> "").toString()
-        );
+                specificConfigurationForm.getLoggingLevelOptions().getSelectedItem(), () -> "").toString());
 
         // Gestion du type de sécurisation
         frameworkConfiguration.put("securityType", Objects.requireNonNullElseGet(
-                specificConfigurationForm.getSecurityTypeOptions().getSelectedItem(), () -> "").toString()
-        );
+                specificConfigurationForm.getSecurityTypeOptions().getSelectedItem(), () -> "").toString());
 
         // Gestion du cache
         frameworkConfiguration.put("cacheProvider", Objects.requireNonNullElseGet(
-                specificConfigurationForm.getCacheProviderOptions().getSelectedItem(), () -> "").toString()
-        );
+                specificConfigurationForm.getCacheProviderOptions().getSelectedItem(), () -> "").toString());
         if (!specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList().isEmpty()) {
-            List<String> selectedEntities = specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList();
+            List<String> selectedEntities = specificConfigurationForm.getSelectedTableAndViewNamesList()
+                    .getSelectedValuesList();
 
             // Formate every entity name to match with class naming convention
             List<String> entitiesCacheable = selectedEntities.stream()
@@ -90,22 +88,21 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
         // Gestion de hibernate ddl option
         frameworkConfiguration.put("hibernateDdlAuto", Objects.requireNonNullElseGet(
-                specificConfigurationForm.getDdlAutoOptions().getSelectedItem(), () -> "").toString()
-        );
+                specificConfigurationForm.getDdlAutoOptions().getSelectedItem(), () -> "").toString());
 
         // Gestion des routes et de l'authentification si c'est une Gateway
         if (framework != null && framework.getIsGateway()) {
             frameworkConfiguration.put("routes", specificConfigurationForm.getRouteConfigurationData());
             frameworkConfiguration.put("username", specificConfigurationForm.getUsernameField().getText().trim());
-            frameworkConfiguration.put("password", new String(specificConfigurationForm.getPasswordField().getPassword()).trim());
+            frameworkConfiguration.put("password",
+                    new String(specificConfigurationForm.getPasswordField().getPassword()).trim());
             frameworkConfiguration.put("role", specificConfigurationForm.getRoleField().getText().trim());
         }
 
         // Gestion de la création du venv pour Django
-        if (framework != null && framework.getCoreFramework() != null && 
-            framework.getCoreFramework().equalsIgnoreCase("Django")) {
-            boolean createVenv = specificConfigurationForm.getCreateVenvCheckBox() != null && 
-                                specificConfigurationForm.getCreateVenvCheckBox().isSelected();
+        if (framework != null && framework.getCoreFramework() != null &&
+                framework.getCoreFramework().equalsIgnoreCase("Django")) {
+            boolean createVenv = true;
             frameworkConfiguration.put("createVenv", createVenv);
 
             // Gestion de l'auth optionnelle (login/inscription)
@@ -118,7 +115,8 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
         // Ajouter projectPort et projectDescription au contexte
         projectGenerationContext.setProjectPort(specificConfigurationForm.getProjectPortField().getText().trim());
-        projectGenerationContext.setProjectDescription(specificConfigurationForm.getProjectDescriptionField().getText().trim());
+        projectGenerationContext
+                .setProjectDescription(specificConfigurationForm.getProjectDescriptionField().getText().trim());
 
         projectGenerationContext.setFrameworkConfiguration(frameworkConfiguration);
 
@@ -183,7 +181,8 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         if (!frameworkHasConfiguration(framework, "logginglevel")) {
             return;
         }
-        String loggingLevel = Objects.toString(specificConfigurationForm.getLoggingLevelOptions().getSelectedItem(), "").trim();
+        String loggingLevel = Objects.toString(specificConfigurationForm.getLoggingLevelOptions().getSelectedItem(), "")
+                .trim();
         if (loggingLevel.isEmpty()) {
             throw new ConfigurationException("Logging Level cannot be empty.");
         }
@@ -193,7 +192,8 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         if (!frameworkHasConfiguration(framework, "hibernateDdlAuto")) {
             return;
         }
-        String hibernateDdlAuto = Objects.toString(specificConfigurationForm.getDdlAutoOptions().getSelectedItem(), "").trim();
+        String hibernateDdlAuto = Objects.toString(specificConfigurationForm.getDdlAutoOptions().getSelectedItem(), "")
+                .trim();
         if (hibernateDdlAuto.isEmpty()) {
             throw new ConfigurationException("Hibernate DDL Auto cannot be empty.");
         }
@@ -217,11 +217,13 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         String username = specificConfigurationForm.getUsernameField().getText().trim();
         String password = new String(specificConfigurationForm.getPasswordField().getPassword()).trim();
         String role = specificConfigurationForm.getRoleField().getText().trim();
-        HashMap<String, String> gatewayMap = new HashMap<>() {{
-            put(username, "Username for API Gateway cannot be empty.");
-            put(password, "Password for API Gateway cannot be empty.");
-            put(role, "Role for API Gateway cannot be empty.");
-        }};
+        HashMap<String, String> gatewayMap = new HashMap<>() {
+            {
+                put(username, "Username for API Gateway cannot be empty.");
+                put(password, "Password for API Gateway cannot be empty.");
+                put(role, "Role for API Gateway cannot be empty.");
+            }
+        };
         for (Map.Entry<String, String> e : gatewayMap.entrySet()) {
             if (e.getKey().isEmpty()) {
                 throw new ConfigurationException(e.getValue());
@@ -264,7 +266,8 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
         } finally {
             Connection con = projectGenerationContext.getConnection();
-            if(con!=null) con.close();
+            if (con != null)
+                con.close();
         }
     }
 
