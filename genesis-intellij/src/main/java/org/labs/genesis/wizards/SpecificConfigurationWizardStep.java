@@ -105,11 +105,9 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             boolean createVenv = true;
             frameworkConfiguration.put("createVenv", createVenv);
 
-            // Gestion de l'auth optionnelle (login/inscription)
-            boolean enableAuth = true;
-            if (specificConfigurationForm.getEnableAuthCheckBox() != null) {
-                enableAuth = specificConfigurationForm.getEnableAuthCheckBox().isSelected();
-            }
+            // Map securityType to enableAuth for backward compatibility with templates
+            String securityType = (String) frameworkConfiguration.getOrDefault("securityType", "NONE");
+            boolean enableAuth = "Django Authentication".equalsIgnoreCase(securityType);
             frameworkConfiguration.put("enableAuth", enableAuth);
         }
 
@@ -207,7 +205,8 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
     }
 
     private void validateCache() throws ConfigurationException {
-        if (!specificConfigurationForm.getCacheProviderOptions().getSelectedItem().equals("NONE") &&
+        Object selectedCacheProvider = specificConfigurationForm.getCacheProviderOptions().getSelectedItem();
+        if (selectedCacheProvider != null && !selectedCacheProvider.equals("NONE") &&
                 specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList().isEmpty()) {
             throw new ConfigurationException("Please select at least one table or view to cache.");
         }

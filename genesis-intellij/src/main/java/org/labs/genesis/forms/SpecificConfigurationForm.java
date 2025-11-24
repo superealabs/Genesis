@@ -51,7 +51,6 @@ public class SpecificConfigurationForm {
     private JScrollPane allTablesAndViewsNamesPane;
     private JBList<String> selectedTableAndViewNamesList;
 
-    private JCheckBox enableAuthCheckBox;
     @Setter
     private List<String> allTablesAndViewsNames = new ArrayList<>();
 
@@ -102,21 +101,9 @@ public class SpecificConfigurationForm {
             // Afficher le checkbox venv uniquement pour Django
             if (framework.getCoreFramework() != null && framework.getCoreFramework().equalsIgnoreCase("Django")) {
 
-                if (enableAuthCheckBox != null) {
-                    enableAuthCheckBox.setVisible(true);
-                    enableAuthCheckBox.setSelected(true); // Par défaut, activer l'authentification
-                }
-            } else {
-                if (enableAuthCheckBox != null) {
-                    enableAuthCheckBox.setVisible(false);
-                }
             }
         } else {
             // Masquer le checkbox venv pour les autres frameworks
-
-            if (enableAuthCheckBox != null) {
-                enableAuthCheckBox.setVisible(false);
-            }
         }
     }
 
@@ -153,9 +140,6 @@ public class SpecificConfigurationForm {
         // Masquer le checkbox venv par défaut
 
         // Masquer le checkbox d'authentification par défaut
-        if (enableAuthCheckBox != null) {
-            enableAuthCheckBox.setVisible(false);
-        }
 
         // Désactiver Eureka par défaut
         useAnEurekaServerCheckBox.setSelected(false);

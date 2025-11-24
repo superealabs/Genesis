@@ -7422,10 +7422,10 @@
     - name: "Framework Version"
       variableName: "frameworkVersion"
       options:
-        - "5.2.6"
-        - "4.2.7"
+        - "4.2.26"
+        - "4.2.25"
         - "4.1.13"
-      defaultOption: "5.2.6"
+      defaultOption: "4.2.26"
     - name: "Database Engine"
       variableName: "databaseEngine"
       options:
@@ -7460,6 +7460,12 @@
         - "5432"
         - "1433"
       defaultOption: "3306"
+    - name: "Security Type"
+      variableName: "securityType"
+      options:
+        - "NONE"
+        - "Django Authentication"
+      defaultOption: "Django Authentication"
   dependencies:
     - groupId: "django"
       artifactId: "Django"

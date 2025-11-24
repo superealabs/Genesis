@@ -3351,12 +3351,13 @@
         - "4.2.23"
         - "4.2.24"
         - "4.2.25"
-      defaultOption: "5.2.6"
+      defaultOption: "4.2.25"
     - name: "Security Type"
       variableName: "securityType"
       options:
         - "NONE"
-      defaultOption: "NONE"
+        - "Django Authentication"
+      defaultOption: "Django Authentication"
     - name: "Cache Provider"
       variableName: "cacheProvider"
       options:
