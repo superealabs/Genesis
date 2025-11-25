@@ -47,6 +47,62 @@ public class ColumnMetadata {
     private Boolean isParentForeignKey = false;
     private Map<String, Object> validationAnnotations = new HashMap<>();
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        ColumnMetadata other = (ColumnMetadata) obj;
+
+        boolean same = true;
+
+        same = same && Objects.equals(this.name, other.name);
+        same = same && Objects.equals(this.type, other.type);
+//        same = same && Objects.equals(this.frontEndType, other.frontEndType);
+//        same = same && Objects.equals(this.uiType, other.uiType);
+//        same = same && Objects.equals(this.frontEndReferencedColumnType, other.frontEndReferencedColumnType);
+        same = same && Objects.equals(this.databaseColumnType, other.databaseColumnType);
+        same = same && Objects.equals(this.referencedTable, other.referencedTable);
+        same = same && Objects.equals(this.columnType, other.columnType);
+        same = same && Objects.equals(this.referencedColumn, other.referencedColumn);
+        same = same && Objects.equals(this.referencedColumnType, other.referencedColumnType);
+        same = same && Objects.equals(this.referencedPrimaryKeyColumn, other.referencedPrimaryKeyColumn);
+        same = same && Objects.equals(this.defaultValue, other.defaultValue);
+
+        same = same && this.primary == other.primary;
+        same = same && this.foreign == other.foreign;
+        same = same && this.unique == other.unique;
+        same = same && this.nullable == other.nullable;
+        same = same && this.isNumeric == other.isNumeric;
+        same = same && this.isNumericWithPrecision == other.isNumericWithPrecision;
+        same = same && this.isText == other.isText;
+        same = same && this.isDate == other.isDate;
+        same = same && this.isTime == other.isTime;
+        same = same && this.isTimeTz == other.isTimeTz;
+        same = same && this.isDateTime == other.isDateTime;
+        same = same && this.isDateTimeTz == other.isDateTimeTz;
+        same = same && this.useTimeZone == other.useTimeZone;
+        same = same && this.isInterval == other.isInterval;
+
+        same = same && this.decimalDigits == other.decimalDigits;
+        same = same && this.columnSize == other.columnSize;
+
+        same = same && Objects.equals(this.isParentForeignKey, other.isParentForeignKey);
+        same = same && Objects.equals(this.validationAnnotations, other.validationAnnotations);
+
+        return same;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, type, frontEndType, uiType, frontEndReferencedColumnType,
+                databaseColumnType, primary, foreign, referencedTable, columnType,
+                referencedColumn, referencedColumnType, referencedPrimaryKeyColumn,
+                unique, nullable, isNumeric, isNumericWithPrecision, isText, isDate,
+                isTime, isTimeTz, isDateTime, isDateTimeTz, useTimeZone, isInterval,
+                defaultValue, decimalDigits, columnSize, isParentForeignKey, validationAnnotations);
+    }
+
     public void setFrontEndType(FrontendLanguage frontendLanguage, Database database)
     {
         this.frontEndType = frontendLanguage.getTypes().get(database.getTypes().get(columnType));

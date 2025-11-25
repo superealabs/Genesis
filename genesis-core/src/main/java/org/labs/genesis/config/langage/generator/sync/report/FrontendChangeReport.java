@@ -23,7 +23,10 @@ public class FrontendChangeReport implements IChangeReport {
     }
 
     @Override
-    public void onTableModification() {
-        throw new UnsupportedOperationException("On table modification Not supported yet.");
+    public void onUpdateTable() {
+        this.generateAdditionalFiles = false;
+        this.generateModel = true;
+        this.generateComponents = true;
+        this.generateService = true;
     }
 }

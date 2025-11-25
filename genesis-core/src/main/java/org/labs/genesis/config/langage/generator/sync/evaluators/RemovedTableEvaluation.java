@@ -20,6 +20,7 @@ public class RemovedTableEvaluation implements IDatabaseEvaluator {
         for ( TableMetadata tableMetadata :removedTables){
             TableChangeReport tableReport = report.getTableReport(tableMetadata.getTableName());
             tableReport.onRemoveTable(tableMetadata);
+            report.addTableReport(tableReport);
         }
     }
 }

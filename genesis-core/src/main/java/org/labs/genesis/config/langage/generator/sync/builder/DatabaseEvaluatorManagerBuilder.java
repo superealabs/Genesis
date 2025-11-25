@@ -9,6 +9,7 @@ public class DatabaseEvaluatorManagerBuilder {
         IDatabaseEvaluator[] evaluators = new IDatabaseEvaluator[]{
                 TableEvaluationBuilder.buildAddedTableEvaluation(evaluationParameters),
                 TableEvaluationBuilder.buildRemovedTableEvaluation(evaluationParameters),
+                TableEvaluationBuilder.buildColumnModificationEvaluation(evaluationParameters)
         };
         return new DatabaseEvaluatorsManager(evaluators);
     }

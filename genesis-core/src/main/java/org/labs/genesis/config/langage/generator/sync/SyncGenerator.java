@@ -81,7 +81,13 @@ public class SyncGenerator extends ProjectGenerator {
         if (evaluationContext == null) {
             throw new IllegalStateException("Evaluation context is not set. Please run evaluateDatabaseChanges before generating the project.");
         }
+        evaluationContext.setProjectName(evaluationContext.getProjectName()+"Copy");
         super.generateFullProject(context);
+    }
+
+    @Override
+    public GenesisContextModel generateGenesisfile(ProjectGenerationContext context) throws Exception {
+        return super.generateGenesisfile(evaluationContext);
     }
 
     @Override

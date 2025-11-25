@@ -45,7 +45,7 @@ public class DatabaseReportManager {
     public List<TableMetadata> getRemovedTables(){
         return this.tableReports.values().stream()
                 .filter(report -> report.getCategory().equals(ReportCategory.REMOVAL))
-                .map(TableChangeReport::getNewTable)
+                .map(TableChangeReport::getOldTable)
                 .toList();
     }
 

@@ -31,7 +31,11 @@ public class WebApiChangeReport implements IChangeReport {
     }
 
     @Override
-    public void onTableModification() {
-        throw new UnsupportedOperationException("On table modification Not supported yet.");
+    public void onUpdateTable() {
+        this.generateAdditionalFiles = false;
+        this.generateModel = true;
+        this.generateDAO = true;
+        this.generateService = true;
+        this.generateController = true;
     }
 }

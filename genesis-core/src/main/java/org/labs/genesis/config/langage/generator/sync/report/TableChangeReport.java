@@ -32,4 +32,11 @@ public class TableChangeReport {
         this.newTable = null;
         this.getWebApiChangeReport().onRemoveTable();
     }
+
+    public void onUpdateTable(TableMetadata oldTable, TableMetadata newTable){
+        this.category = ReportCategory.MODIFICATION;
+        this.oldTable = oldTable;
+        this.newTable = newTable;
+        this.getWebApiChangeReport().onUpdateTable();
+    }
 }

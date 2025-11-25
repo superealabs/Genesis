@@ -13,8 +13,7 @@ public class PostGenerationTest {
 
     @Test
     public void fetchContextFile() {
-        String projectDirectory = "/home/itu-chan-alex/Stage/generated/FanambyPresence";
-        ProjectGenerator projectGenerator = new ProjectGenerator();
+        String projectDirectory = "/home/itu-chan-alex/Stage/generated/FanambyPresenceBackup";
         SyncGenerator syncGenerator = new SyncGenerator();
         EvaluationParameters evaluationParameters = new EvaluationParameters();
         try {
