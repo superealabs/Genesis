@@ -12,10 +12,15 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Scanner;
+import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
 public class FileUtils {
@@ -256,6 +261,54 @@ public class FileUtils {
         }
 
         return objectMapper.readValue(inputStream, clazz);
+    }
+
+    public static <T> List<T> fromYamlDirectory(Class<T> clazz, String directoryPath) throws IOException {
+        List<T> result = new ArrayList<>();
+        ClassLoader cl = FileUtils.class.getClassLoader();
+        URL dirUrl = cl.getResource(directoryPath);
+
+        if (dirUrl == null) {
+            throw new FileNotFoundException("Directory not found: " + directoryPath);
+        }
+
+        // MODE 1 : Exécution en IDE / tests → protocole = "file"
+        if (dirUrl.getProtocol().equals("file")) {
+            File dir = new File(dirUrl.getFile());
+            File[] yamlFiles = dir.listFiles((d, name) -> name.endsWith(".yaml"));
+
+            if (yamlFiles != null) {
+                for (File file : yamlFiles) {
+                    result.add(fromYaml(clazz, directoryPath + "/" + file.getName()));
+                }
+            }
+            return result;
+        }
+
+        // MODE 2 : Exécution dans un JAR → protocole = "jar"
+        if (dirUrl.getProtocol().equals("jar")) {
+            String jarPath = dirUrl.getPath().substring(5, dirUrl.getPath().indexOf("!"));
+            try (JarFile jar = new JarFile(URLDecoder.decode(jarPath, StandardCharsets.UTF_8))) {
+
+                String prefix = directoryPath + "/";
+
+                jar.stream()
+                        .filter(e -> !e.isDirectory() &&
+                                e.getName().startsWith(prefix) &&
+                                e.getName().endsWith(".yaml"))
+                        .forEach(entry -> {
+                            try (InputStream in = jar.getInputStream(entry)) {
+                                ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+                                result.add(mapper.readValue(in, clazz));
+                            } catch (IOException ex) {
+                                throw new RuntimeException("Error reading YAML: " + entry.getName(), ex);
+                            }
+                        });
+            }
+            return result;
+        }
+
+        throw new UnsupportedOperationException("Unsupported protocol: " + dirUrl.getProtocol());
     }
 
 
