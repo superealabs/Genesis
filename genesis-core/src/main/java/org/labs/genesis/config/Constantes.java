@@ -11,7 +11,6 @@ public class Constantes {
     public static final String FRAMEWORK_CACHING_YAML = "data_genesis/yaml/framework-caching.yaml";
     public static final String DATA_PATH = "data_genesis";
     public static final String MODEL_TEMPLATE_EXT = "genesis";
-    public static final String PROJECT_APJ_YAML = "data_genesis/yaml/apj/page-recherche.yaml";
 
     // DATABASES
     public static final int MySQL_ID = 1;

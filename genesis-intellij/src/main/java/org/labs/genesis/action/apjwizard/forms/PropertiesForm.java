@@ -12,7 +12,7 @@ import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
 import java.io.File;
 import java.sql.Connection;
 import javax.swing.*;
-import static org.labs.genesis.config.ApjGenerationContext.*;
+import static org.labs.genesis.apj.ApjGenerationContext.*;
 
 @Getter
 public class PropertiesForm {

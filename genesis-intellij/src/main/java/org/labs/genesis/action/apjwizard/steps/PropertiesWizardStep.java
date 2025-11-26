@@ -2,7 +2,7 @@ package org.labs.genesis.action.apjwizard.steps;
 
 import com.intellij.openapi.project.Project;
 import org.labs.genesis.action.apjwizard.forms.PropertiesForm;
-import org.labs.genesis.config.ApjGenerationContext;
+import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.state.ApjProjectService;
 import org.labs.genesis.state.ApjProjectState;
 

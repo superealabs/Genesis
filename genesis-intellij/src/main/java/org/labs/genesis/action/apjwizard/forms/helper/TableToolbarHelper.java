@@ -21,7 +21,6 @@ public class TableToolbarHelper {
 
     public void init() {
         ToolbarDecorator decorator = ToolbarDecorator.createDecorator(table);
-
         if (addActionGroup != null) {
             decorator.setAddAction(button -> {
                 ActionPopupMenu popup = ActionManager.getInstance()

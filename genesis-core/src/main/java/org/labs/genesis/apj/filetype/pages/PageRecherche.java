@@ -1,13 +1,12 @@
-package org.labs.genesis.apj.affichage.gen;
+package org.labs.genesis.apj.filetype.pages;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.labs.genesis.apj.filetype.ApjFile;
 
 @Getter
 @Setter
-
-public class PageRechercheGen {
-    private int id;
+public class PageRecherche extends ApjFile {
     private String packageMapping;
     private String mapping;
     private String nomTable;
@@ -19,13 +18,12 @@ public class PageRechercheGen {
     private String titre;
     private String apres;
 
-    private String name;
     private String imports;
     private String pr;
     private String html;
     private String basPage;
 
-    public PageRechercheGen(){
+    public PageRecherche(){
 
     }
 }

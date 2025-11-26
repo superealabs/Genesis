@@ -8,7 +8,7 @@ import org.labs.genesis.action.apjwizard.steps.PageInsertWizardStep;
 import org.labs.genesis.action.apjwizard.steps.PageRechercheWizardStep;
 import org.labs.genesis.action.apjwizard.steps.PropertiesWizardStep;
 import org.labs.genesis.action.apjwizard.steps.WizardStep;
-import org.labs.genesis.config.ApjGenerationContext;
+import org.labs.genesis.apj.ApjGenerationContext;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,7 +16,7 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.labs.genesis.config.ApjGenerationContext.*;
+import static org.labs.genesis.apj.ApjGenerationContext.*;
 
 public class ApjWizardDialog extends DialogWrapper {
     private final JPanel mainPanel;

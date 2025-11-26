@@ -1,7 +1,7 @@
 package org.labs.genesis.action.apjwizard.steps;
 
 import org.labs.genesis.action.apjwizard.forms.PageRechercheForm;
-import org.labs.genesis.config.ApjGenerationContext;
+import org.labs.genesis.apj.ApjGenerationContext;
 import javax.swing.*;
 import com.intellij.openapi.project.Project;
 
@@ -27,7 +27,7 @@ public class PageRechercheWizardStep implements WizardStep {
 
     @Override
     public String getTitle() {
-        return "Page Recherche";
+        return "PageRecherche";
     }
 
     @Override
