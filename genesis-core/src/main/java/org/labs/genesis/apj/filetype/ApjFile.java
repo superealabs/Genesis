@@ -5,7 +5,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ApjFile {
+public abstract class ApjFile implements ApjMetadataProvider{
     private int id;
     private String name;
+    private String imports;
+    private String template;
+    private String fileName;
+    private String extension;
 }

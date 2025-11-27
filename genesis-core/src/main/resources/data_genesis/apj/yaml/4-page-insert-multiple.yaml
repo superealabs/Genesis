@@ -1,0 +1,7 @@
+id : 4
+name : "PageInsertMultiple"
+template : "page"
+extension : "jsp"
+imports : |
+  <%@ page import="affichage.PageInsertMultiple"%>
+  <%@ page import="${packageMapping}" %>

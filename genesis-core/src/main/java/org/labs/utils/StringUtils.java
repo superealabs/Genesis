@@ -1,5 +1,8 @@
 package org.labs.utils;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 public class StringUtils {
 
     public static String removeLastS(String input) {
@@ -92,6 +95,15 @@ public class StringUtils {
 
     public static String formatReadableLowerCase(String s) {
         return baseFormat(s).toLowerCase();
+    }
+
+    public static String quoteAndJoin(String[] array) {
+        if (array == null || array.length == 0) {
+            return "";
+        }
+        return Arrays.stream(array)
+                .map(s -> "\"" + s + "\"")
+                .collect(Collectors.joining(", "));
     }
 
 }

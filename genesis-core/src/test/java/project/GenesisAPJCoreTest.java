@@ -1,14 +1,13 @@
 package project;
 
 import org.junit.jupiter.api.Test;
-import org.labs.genesis.apj.affichage.gen.PageRechercheGen;
+import org.labs.genesis.apj.ApjGenerationContext;
+import org.labs.genesis.apj.filetype.pages.PageRecherche;
+import org.labs.genesis.apj.generator.ApjFileGenerator;
 import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
-import org.labs.genesis.config.Constantes;
-import org.labs.genesis.engine.GenesisTemplateEngine;
-import org.labs.utils.FileUtils;
+import org.labs.utils.StringUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -17,53 +16,16 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class GenesisAPJCoreTest {
 
-    public static HashMap<String, Object> getPageRecherchePrimaryHashMap(PageRechercheGen prg) {
-        HashMap<String, Object> map = new HashMap<>();
-        map.put("imports", prg.getImports());
-        map.put("pr", prg.getPr());
-        map.put("html", prg.getHtml());
-        map.put("basPage", prg.getBasPage());
-        return map;
-    }
-
-    public static HashMap<String, Object> getPageRechercheHashMap(PageRechercheGen prg) {
-        HashMap<String, Object> map = new HashMap<>();
-        map.put("packageMapping", prg.getPackageMapping());
-        map.put("mapping", prg.getMapping());
-        map.put("nomTable", prg.getNomTable());
-        map.put("listeCrt", prg.getListeCrt());
-        map.put("listeInt", prg.getListeInt());
-        map.put("colSomme", prg.getColSomme());
-        map.put("libEntete", prg.getLibEntete());
-        map.put("titre", prg.getTitre());
-        map.put("apres", prg.getApres());
-        map.put("libEnteteAffiche", prg.getLibEnteteAffiche());
-        return map;
-    }
-
-    public static String quoteAndJoin(String[] array) {
-        if (array == null || array.length == 0) {
-            return "";
-        }
-        return Arrays.stream(array)
-                .map(s -> "\"" + s + "\"")
-                .collect(Collectors.joining(", "));
-    }
-
     @Test
-    public void genererFichierAPJ() throws IOException {
-//        String fileSavePath = "../generated/apj";
-        String fileSavePath = "/home/antema/Antema/BICI/Antema/APJ/hatana/socobis-war/web/pages/annexe/produit";
-        PageRechercheGen[] pages = FileUtils.fromYaml(PageRechercheGen[].class, Constantes.PROJECT_APJ_YAML);
-        Map<Integer, PageRechercheGen> projects = Arrays.stream(pages)
-                .collect(Collectors.toMap(PageRechercheGen::getId, page -> page));
-        System.out.println("coucou");
+    public void genererFichierAPJ() throws Exception {
+        ApjFileGenerator generator = new ApjFileGenerator();
+        ApjGenerationContext context = new ApjGenerationContext();
 
-        PageRechercheGen pr = projects.get(1);
+        PageRecherche pr = (PageRecherche) ApjFileGenerator.apjFileMap.get(1);
+        pr.setFileName("ingredient-liste");
         pr.setPackageMapping("produits.IngredientsLib");
         pr.setMapping("IngredientsLib");
         pr.setNomTable("AS_INGREDIENTS_LIB_DATY");
@@ -75,20 +37,18 @@ public class GenesisAPJCoreTest {
         String[] libEntete = {"id", "libelle","categorieingredient","unite"};
         String[] libEnteteAffiche = {"ID", "D&eacute;signation","Cat&eacute;gorie","Unit&eacute;"};
 
-        pr.setListeCrt(quoteAndJoin(listeCrt));
-        pr.setListeInt(quoteAndJoin(listeInt));
-        pr.setLibEntete(quoteAndJoin(libEntete));
-        pr.setLibEnteteAffiche(quoteAndJoin(libEnteteAffiche));
+        pr.setListeCrt(StringUtils.quoteAndJoin(listeCrt));
+        pr.setListeInt(StringUtils.quoteAndJoin(listeInt));
+        pr.setLibEntete(StringUtils.quoteAndJoin(libEntete));
+        pr.setLibEnteteAffiche(StringUtils.quoteAndJoin(libEnteteAffiche));
 
-        HashMap<String, Object> metadataPrimary = getPageRecherchePrimaryHashMap(pr);
-        String templateContent = FileUtils.getFileContent(Constantes.DATA_PATH + "/pr" + "." + Constantes.MODEL_TEMPLATE_EXT);
-        GenesisTemplateEngine engine = new GenesisTemplateEngine();
-        String result = engine.simpleRender(templateContent, metadataPrimary);
-        HashMap<String, Object> metadata = getPageRechercheHashMap(pr);
-        result = engine.simpleRender(result, metadata);
-
-        FileUtils.createFile(fileSavePath, "test-liste", "jsp", result);
+        String fileSavePath = "/home/antema/Antema/BICI/Antema/APJ/hatana/socobis-war/web/pages/annexe/produit/test";
+        context.setLocationDir(fileSavePath);
+        context.setApjfile(pr);
+        generator.generateApjFile(context);
     }
+
+
 
     @Test
     void testClassloader() throws Exception {

@@ -1,0 +1,7 @@
+id : 3
+name : "PageInsert"
+template : "page"
+extension : "jsp"
+imports : |
+  <%@ page import="affichage.PageInsert"%>
+  <%@ page import="${packageMapping}" %>

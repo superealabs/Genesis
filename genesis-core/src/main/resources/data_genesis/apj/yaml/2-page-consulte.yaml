@@ -1,0 +1,7 @@
+id : 2
+name : "PageConsulte"
+template : "page"
+extension : "jsp"
+imports : |
+  <%@ page import="affichage.PageConsulte"%>
+  <%@ page import="${packageMapping}" %>
