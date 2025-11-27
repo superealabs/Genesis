@@ -1,5 +1,7 @@
 package org.labs.genesis.action.apjwizard.steps;
 
+import com.intellij.openapi.options.ConfigurationException;
+
 import javax.swing.*;
 
 public interface WizardStep {
@@ -8,7 +10,7 @@ public interface WizardStep {
 
     JComponent getComponent();
 
-    boolean validateStep();
+    boolean validateStep() throws ConfigurationException;
 
     void onNext();
 

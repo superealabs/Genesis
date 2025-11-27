@@ -4,8 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.apj.filetype.ApjFile;
 
-import java.sql.Connection;
-
 @Getter
 @Setter
 public class ApjGenerationContext {
@@ -14,5 +12,5 @@ public class ApjGenerationContext {
     private String projectJarDir;
     private String locationDir;
     private ApjFile apjfile;
-    private Connection connection;
+
 }

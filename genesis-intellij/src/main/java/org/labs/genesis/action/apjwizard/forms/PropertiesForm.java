@@ -10,14 +10,11 @@ import lombok.Getter;
 import org.labs.genesis.apj.filetype.ApjFile;
 import org.labs.genesis.apj.generator.ApjFileGenerator;
 import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
-import org.labs.genesis.config.langage.Language;
-import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 
 import java.io.File;
 import java.sql.Connection;
 import java.util.List;
 import javax.swing.*;
-import static org.labs.genesis.apj.ApjGenerationContext.*;
 
 @Getter
 public class PropertiesForm {

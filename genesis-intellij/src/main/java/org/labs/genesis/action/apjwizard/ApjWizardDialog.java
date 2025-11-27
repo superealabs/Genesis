@@ -1,9 +1,11 @@
 package org.labs.genesis.action.apjwizard;
 
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.labs.genesis.action.apjwizard.forms.popup.PopUtils;
 import org.labs.genesis.action.apjwizard.steps.PageInsertWizardStep;
 import org.labs.genesis.action.apjwizard.steps.PageRechercheWizardStep;
 import org.labs.genesis.action.apjwizard.steps.PropertiesWizardStep;
@@ -53,7 +55,7 @@ public class ApjWizardDialog extends DialogWrapper {
         });
     }
 
-    private void nextStep() {
+    private void nextStep() throws ConfigurationException {
         WizardStep step = steps.get(currentStepIndex);
 
         if (!step.validateStep()) return;
@@ -108,7 +110,11 @@ public class ApjWizardDialog extends DialogWrapper {
             new DialogWrapperAction("Next") {
                 @Override
                 protected void doAction(ActionEvent e) {
-                    nextStep();
+                    try {
+                        nextStep();
+                    } catch (ConfigurationException ex) {
+                        PopUtils.showValidationError(mainPanel,ex);
+                    }
                 }
             },
             getCancelAction()
@@ -118,7 +124,12 @@ public class ApjWizardDialog extends DialogWrapper {
     @Override
     protected void doOKAction() {
         WizardStep step = steps.get(currentStepIndex);
-        if (!step.validateStep()) return;
+        try {
+            if (!step.validateStep()) return;
+        } catch (ConfigurationException e) {
+            PopUtils.showValidationError(mainPanel,e);
+            return;
+        }
 
         step.onNext();
         super.doOKAction();

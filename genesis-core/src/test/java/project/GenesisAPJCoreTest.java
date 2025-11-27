@@ -5,6 +5,7 @@ import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.filetype.pages.PageRecherche;
 import org.labs.genesis.apj.generator.ApjFileGenerator;
 import org.labs.genesis.apj.utilitaire.ConstantesApj;
+import org.labs.genesis.apj.utilitaire.UtilClassLoader;
 import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
 import org.labs.utils.StringUtils;
 
@@ -49,42 +50,18 @@ public class GenesisAPJCoreTest {
         generator.generateApjFile(context);
     }
 
-
-
     @Test
-    void testClassloader() throws Exception {
+    void testUtilClassLoader() throws Exception {
         File classesDir = new File("/home/antema/Antema/BICI/Antema/APJ/hatana/build-file/socobis_jar/");
         File libDir = new File("/home/antema/Antema/BICI/Antema/APJ/hatana/build-file/lib/");
 
-        File[] jarFiles = libDir.listFiles(f -> f.getName().endsWith(".jar"));
-        int urlsLength = (jarFiles != null ? jarFiles.length : 0) + 1;
-        URL[] urls = new URL[urlsLength];
+        URLClassLoader loader = UtilClassLoader.buildLoader(classesDir, libDir);
+        Class<?> cls = UtilClassLoader.loadClass(loader, "produits.IngredientsLib");
 
-        urls[0] = classesDir.toURI().toURL();
-        if (jarFiles != null) {
-            for (int i = 0; i < jarFiles.length; i++) {
-                urls[i + 1] = jarFiles[i].toURI().toURL();
-            }
+        List<Field> attributs = UtilClassLoader.listFields(cls, "ClassMAPTable");
+        for (Field f : attributs) {
+            System.out.println(f.getName());
         }
-        Class<?> cls = null;
-        try {
-            URLClassLoader loader = new URLClassLoader(urls, this.getClass().getClassLoader());
-            cls = loader.loadClass("produits.IngredientsLib");
-        } catch (ClassNotFoundException e) {
-            throw new Exception("Classe introuvable : produits.IngredentsLib", e);
-        }
-        Class<?> current = cls;
-        List<Field> attributs = new ArrayList<>();
-        while (current != null && !current.getSimpleName().equals("ClassMAPTable")) {
-            Field[] fields = current.getDeclaredFields();
-            Collections.addAll(attributs, fields);
-            current = current.getSuperclass();
-        }
-        System.out.println("----------------------------------");
-        for (Field field : attributs) {
-            System.out.println(field.getName());
-        }
-        System.out.println("==================================");
 
         try (Connection conn = UtilDBDynamique.GetConn(classesDir, libDir)) {
             DatabaseMetaData metaData = conn.getMetaData();
@@ -105,7 +82,6 @@ public class GenesisAPJCoreTest {
             }
 
         }
-
     }
 
     @Test

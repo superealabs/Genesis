@@ -1,13 +1,16 @@
 package org.labs.genesis.action.apjwizard.steps;
 
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.labs.genesis.action.apjwizard.forms.PropertiesForm;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.filetype.ApjFile;
+import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
 import org.labs.genesis.state.ApjProjectService;
 import org.labs.genesis.state.ApjProjectState;
 
 import javax.swing.*;
+import java.sql.Connection;
 
 public class PropertiesWizardStep implements WizardStep {
     private final PropertiesForm propertiesForm;
@@ -44,11 +47,6 @@ public class PropertiesWizardStep implements WizardStep {
         return "Properties";
     }
 
-    @Override
-    public boolean validateStep() {
-        return true;
-    }
-
     private void saveState() {
         if (project == null) return;
 
@@ -62,16 +60,38 @@ public class PropertiesWizardStep implements WizardStep {
 
     @Override
     public void onNext() {
+        context.setLocationDir(propertiesForm.getLocation().getText());
         context.setLibDir(propertiesForm.getLibDir().getText());
         context.setProjectJarDir(propertiesForm.getJarDir().getText());
         context.setApjfile((ApjFile) propertiesForm.getFileApjOptions().getSelectedItem());
         saveState();
     }
 
-
     @Override
     public void onBack() {
         WizardStep.super.onBack();
+    }
+
+    @Override
+    public boolean validateStep() throws ConfigurationException {
+        String location = propertiesForm.getLocation().getText();
+        String libDir = propertiesForm.getLibDir().getText();
+        String jarDir = propertiesForm.getJarDir().getText();
+        if (location.isEmpty()) {
+            throw new ConfigurationException("The location path cannot be empty.");
+        }
+        if (libDir.isEmpty()) {
+            throw new ConfigurationException("The lib path cannot be empty.");
+        }
+        if (jarDir.isEmpty()) {
+            throw new ConfigurationException("The project jar path cannot be empty.");
+        }
+        try (Connection conn = UtilDBDynamique.GetConn(jarDir,libDir)) {
+            // Connection successful, nothing else to do
+        } catch (Exception e) {
+            throw new ConfigurationException("Connection failed: " + e.getMessage());
+        }
+        return true;
     }
 
 
