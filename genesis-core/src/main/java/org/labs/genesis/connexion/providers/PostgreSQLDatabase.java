@@ -5,6 +5,7 @@ import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProv
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
+import org.labs.utils.StringUtils;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -370,7 +371,7 @@ public class PostgreSQLDatabase extends Database {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
                             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
                             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(col);
-                            fieldHashMap.put("value",pattern);
+                            fieldHashMap.put("value", StringUtils.correctPattern(pattern));
                             String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("regexPattern","{{removeLine}}");
                             String annotationResult = engine.render(annotationTemplate, fieldHashMap);
                             col.getValidationAnnotations().put("regexPattern",annotationResult);

@@ -5,6 +5,7 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
+import org.labs.utils.StringUtils;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -191,7 +192,7 @@ public class SQLServerDatabase extends Database {
                         if (col.getReferencedColumn().equalsIgnoreCase(colName) && col.isText()) {
                             Map<String, Object> annotations = framework.getModel().getValidationAnnotations();
                             Map<String, Object> fieldMap = FrameworkMetadataProvider.getFieldHashMap(col);
-                            fieldMap.put("value", pattern);
+                            fieldMap.put("value", StringUtils.correctPattern(pattern));
                             String template = (String) annotations.getOrDefault("regexPattern", "{{removeLine}}");
                             String result = engine.render(template, fieldMap);
                             col.getValidationAnnotations().put("regexPattern", result);

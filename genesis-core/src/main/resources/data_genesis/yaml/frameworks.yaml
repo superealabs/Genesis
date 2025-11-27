@@ -1189,7 +1189,6 @@
       version: "10.19.0"
       scope: "{{removeLine}}"
 
-
   model:
     toGenerate: true
     modelImports: |
@@ -1497,18 +1496,28 @@
       import org.springframework.data.jpa.repository.JpaRepository;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
       import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+      {{#if isChildTable=true}}
+      import java.util.List;
+      {{#each parents}}
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(this.className)};
+      {{/each}}
+      {{else}}{{removeLine}}{{/if}}
 
     modelDaoAnnotations: ""
     modelDaoClassKeyword: "public interface"
     modelDaoExtends: "extends JpaRepository<${majStart(className)}, ${pkColumnType}>, JpaSpecificationExecutor<${majStart(className)}>"
     modelDaoName: "${majStart(className)}Repository"
     modelDaoFieldContent: "{{removeLine}}"
-    modelDaoMethodContent: "{{removeLine}}"
+    modelDaoMethodContent: |
+      {{#if isChildTable=true}}
+      {{#each parents}}
+      {{tab}}List<${majStart(className)}> findBy${majStart(this.parentName)}(${this.className} ${minStart(this.parentName)});
+      {{/each}}
+      {{else}}{{removeLine}}{{/if}}
     modelDaoConstructors: "{{removeLine}}"
     modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
     modelDaoPackage: "${groupLink}.${lowerCase(projectName)}.repositories;"
     modelDaoAdditionalFiles: [ ]
-
 
   service:
     toGenerate: true
@@ -1529,6 +1538,13 @@
       import java.util.List;
       {{#if cacheableWithEhcache}}import org.springframework.cache.annotation.Cacheable;{{else}}{{removeLine}}{{/if}}
       {{#if cacheableWithEhcache and isView = false}}import org.springframework.cache.annotation.CacheEvict;{{else}}{{removeLine}}{{/if}}
+      {{#if isParentTable=true and hasChildrenForm=true}}
+      import jakarta.transaction.Transactional;
+      import java.util.stream.Collectors;
+      {{#each childrenWithForm}}
+      import ${groupLink}.${lowerCase(projectName)}.repositories.${majStart(this.className)}Repository;
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(this.className)};
+      {{/each}}{{/if}}
 
     serviceAnnotations: |
       @Service
@@ -1536,10 +1552,16 @@
     serviceExtends: "implements ${majStart(className)}Service"
     serviceName: "Default${majStart(className)}Service"
     serviceFieldContent: |
-      {{tab}}private final ${majStart(className)}Repository ${minStart(className)}Repository;
+      {{tab}}private final ${majStart(className)}Repository ${minStart(className)}Repository;{{#if isParentTable=true and hasChildrenForm=true}}
+      {{#each childrenWithForm}}
+      {{tab}}private final ${majStart(this.className)}Repository ${minStart(this.className)}Repository;
+      {{/each}}{{/if}}
     serviceConstructors: |
-      {{tab}}public Default${majStart(className)}Service(${majStart(className)}Repository ${minStart(className)}Repository) {
-      {{tab}}   this.${minStart(className)}Repository = ${minStart(className)}Repository;
+      {{tab}}public Default${majStart(className)}Service(${majStart(className)}Repository ${minStart(className)}Repository{{#if isParentTable=true and hasChildrenForm=true}}{{#each childrenWithForm}}, ${majStart(this.className)}Repository ${minStart(this.className)}Repository{{/each}}{{/if}}) {
+      {{tab}}   this.${minStart(className)}Repository = ${minStart(className)}Repository;{{#if isParentTable=true and hasChildrenForm=true}}
+      {{#each childrenWithForm}}
+      {{tab}}this.${minStart(this.className)}Repository = ${minStart(this.className)}Repository;
+      {{/each}}{{/if}}
       {{tab}}}
     serviceMethodContent: |
       {{tab}}@Override
@@ -1614,6 +1636,100 @@
       {{tab}}        throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
       {{tab}}}{{else}}{{removeLine}}{{/if}}
+      
+      {{#if isParentTable=true and hasChildrenForm=true}}
+      @Override
+      @Transactional
+      public ${majStart(className)} createFull${majStart(className)}(${majStart(className)} ${minStart(className)}{{#each childrenWithForm}}, List<${majStart(this.className)}> ${minStart(this.className)}s{{/each}}) {
+        try {
+          ${minStart(className)} = ${minStart(className)}Repository.save(${minStart(className)});
+          
+          {{#each childrenWithForm}}
+          for (${majStart(this.className)} ${minStart(this.className)} : ${minStart(this.className)}s) {
+            ${minStart(this.className)}.set${majStart(this.parentName)}(${minStart(className)});
+            ${minStart(this.className)}.set${majStart(this.childPk)}(null);
+          }
+          
+          ${minStart(this.className)}Repository.saveAll(${minStart(this.className)}s);
+          {{/each}}
+          
+          return ${minStart(className)};
+        } catch (Exception ex) {
+          throw new InternalServerErrorException(
+          "Error during atomic creation of ${majStart(className)} and its details.", ex);
+        }
+      }
+        
+      @Override
+      @Transactional
+      public ${majStart(className)} updateFull${majStart(className)}(${pkColumnType} ${pkColumn}, ${majStart(className)} ${minStart(className)}{{#each childrenWithForm}}, List<${majStart(this.className)}> ${minStart(this.className)}s{{/each}}) {
+        try {
+          if (!${minStart(className)}Repository.existsById(${pkColumn})) {
+            throw new ResourceNotFoundException("${majStart(className)} not found with id: " + ${pkColumn});
+          }
+      
+          ${minStart(className)}.set${majStart(pkColumn)}(${pkColumn});
+          ${minStart(className)} = ${minStart(className)}Repository.save(${minStart(className)});
+      
+          {{#each childrenWithForm}}
+          List<${majStart(this.className)}> existing${majStart(this.className)}s = ${minStart(this.className)}Repository.findBy${majStart(this.parentName)}(${minStart(className)});
+  
+          List<${majStart(this.className)}> ${minStart(this.className)}sToDelete = existing${majStart(this.className)}s.stream()
+            .filter(existing -> ${minStart(this.className)}s.stream()
+            .noneMatch(current -> current.get${majStart(this.childPk)}() != null && current.get${majStart(this.childPk)}().equals(existing.get${majStart(this.childPk)}())))
+            .collect(Collectors.toList());
+          if (!${minStart(this.className)}sToDelete.isEmpty()) {
+            ${minStart(this.className)}Repository.deleteAll(${minStart(this.className)}sToDelete);
+          }
+  
+          for (${majStart(this.className)} ${minStart(this.className)} : ${minStart(this.className)}s) {
+            ${minStart(this.className)}.set${majStart(this.parentName)}(${minStart(className)});
+            
+            if (${minStart(this.className)}.get${majStart(this.childPk)}() != null && 
+                existing${majStart(this.className)}s.stream()
+                  .anyMatch(e -> e.get${majStart(this.childPk)}().equals(${minStart(this.className)}.get${majStart(this.childPk)}()))) {
+                ${minStart(this.className)}Repository.save(${minStart(this.className)});
+            } else {
+                ${minStart(this.className)}.set${majStart(this.childPk)}(null);
+                ${minStart(this.className)}Repository.save(${minStart(this.className)});
+            }
+          }
+          {{/each}}
+          
+          return ${minStart(className)};
+        } catch (ResourceNotFoundException ex) {
+          throw ex;
+        } catch (Exception ex) {
+          throw new InternalServerErrorException("Error during atomic update of ${majStart(className)} and its details.", ex);
+        }
+      }
+        
+        @Override
+        @Transactional
+        public void deleteFull${majStart(className)}(${pkColumnType} id) {
+        try {
+        ${majStart(className)} ${minStart(className)} = ${minStart(className)}Repository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException(
+        "${majStart(className)} not found with ${pkColumn}: " + id));
+              
+              {{#each childrenWithForm}}
+              List<${majStart(this.className)}> ${minStart(this.className)}sToDelete = ${minStart(this.className)}Repository.findBy${majStart(this.parentName)}(${minStart(className)});
+              
+              if (!${minStart(this.className)}sToDelete.isEmpty()) {
+                  ${minStart(this.className)}Repository.deleteAll(${minStart(this.className)}sToDelete);
+              }
+              {{/each}}
+              
+              ${minStart(className)}Repository.delete(${minStart(className)});
+              
+          } catch (ResourceNotFoundException ex) {
+              throw ex;
+          } catch (Exception ex) {
+              throw new InternalServerErrorException(
+                  "Error during atomic deletion of ${majStart(className)} and its details.", ex);
+      }
+      }
+        {{/if}}
 
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
     servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
@@ -1624,7 +1740,10 @@
         content: |
           package ${groupLink}.${lowerCase(projectName)}.services.interfaces;
           
-          import ${groupLink}.${lowerCase(projectName)}.models.${className};
+          import ${groupLink}.${lowerCase(projectName)}.models.${className};{{#if isParentTable=true and hasChildrenForm=true}}
+          {{#each childrenWithForm}}
+          import ${groupLink}.${lowerCase(projectName)}.models.${majStart(this.className)};
+          {{/each}}{{/if}}
           import ${groupLink}.${lowerCase(projectName)}.models.dto.${className}Search;
           import org.springframework.data.domain.Page;
           import org.springframework.data.domain.Pageable;    
@@ -1648,6 +1767,10 @@
           
               void delete${className}(${pkColumnType} ${pkColumn});
               {{else}}{{removeLine}}{{/if}}
+
+              {{#if isParentTable=true and hasChildrenForm=true}}${majStart(className)} createFull${majStart(className)}(${className} ${minStart(className)}{{#each childrenWithForm}},List<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});
+              ${majStart(className)} updateFull${majStart(className)}(${pkColumnType} ${pkColumn}, ${className} ${minStart(className)}{{#each childrenWithForm}},List<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});
+              void deleteFull${majStart(className)}(${pkColumnType} ${pkColumn});{{else}}{{removeLine}}{{/if}}
           }
 
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services/interfaces"
@@ -1670,8 +1793,17 @@
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
       import ${groupLink}.${lowerCase(projectName)}.models.dto.${majStart(className)}Search;
       import org.springframework.web.bind.annotation.*;
-      import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
+      import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;{{#if isParentTable}}
+      {{#each children}}
+      import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(this.className)}Service;
+      import ${groupLink}.${lowerCase(projectName)}.models.dto.${majStart(this.className)}Search;
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(this.className)};
+      {{/each}}{{/if}}
+      {{#if isParentTable=true and hasChildrenForm=true}}
+      import ${groupLink}.${lowerCase(projectName)}.models.dto.${majStart(className)}FullDto;
+      {{else}}{{removeLine}}{{/if}}
       import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
+      import org.springframework.dao.DataIntegrityViolationException;
       import org.springframework.data.domain.Page;
       import org.springframework.validation.BindingResult;
       import org.springframework.data.domain.PageRequest;
@@ -1691,10 +1823,16 @@
     controllerExtends: ""
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
-      {{tab}}private final ${majStart(className)}Service ${lowerCase(className)}Service;
+      {{tab}}private final ${majStart(className)}Service ${lowerCase(className)}Service;{{#if isParentTable}}
+      {{#each children}}
+      {{tab}}private final ${majStart(this.className)}Service ${lowerCase(this.className)}Service;
+      {{/each}}{{/if}}
     controllerConstructors: |
-      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${lowerCase(className)}Service) {
-      {{tab}}   this.${lowerCase(className)}Service = ${lowerCase(className)}Service;
+      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${lowerCase(className)}Service{{#if isParentTable}}{{#each children}}, ${majStart(this.className)}Service ${lowerCase(this.className)}Service{{/each}}{{/if}}) {
+      {{tab}}   this.${lowerCase(className)}Service = ${lowerCase(className)}Service;{{#if isParentTable}}
+      {{tab}}{{#each children}}
+      {{tab}}   this.${lowerCase(this.className)}Service = ${lowerCase(this.className)}Service;
+      {{tab}}{{/each}}{{/if}}
       {{tab}}}
     controllerMethodContent: |
       {{tab}}@Operation(
@@ -1852,10 +1990,74 @@
       {{#if !isView}} 
       
       {{tab}}@Operation(
-      {{tab}}    summary = "Create new ${formatReadableLowerCase(className)}",
-      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
-      {{else}}{{removeLine}}{{/if}}
-      {{#if !isView}}
+      {{tab}}    summary = "Create new ${formatReadableLowerCase(className)}",{{else}}{{removeLine}}{{/if}}
+      {{tab}}    {{#if isView=false and useBearerToken=true}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
+      {{#if notViewAndParent=true and hasChildrenForm=true }}
+      {{tab}}    description = "Create a new ${minStart(className)} and its details. The operation is atomic: all or nothing."
+      {{tab}})
+      {{tab}}@ApiResponses({
+      {{tab}}   @ApiResponse(
+      {{tab}}     responseCode = "201",
+      {{tab}}     description = "${majStart(className)} created successfully",
+      {{tab}}     content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+      {{tab}}   ),
+      {{tab}}   @ApiResponse(
+      {{tab}}     responseCode = "400",
+      {{tab}}     description = "Validation failed for one or more entities"
+      {{tab}}   ),
+      {{tab}}   @ApiResponse(
+      {{tab}}     responseCode = "500",
+      {{tab}}     description = "Internal server error"
+      {{tab}}   )
+      {{tab}}})
+      {{tab}}@PostMapping
+      {{tab}}public ResponseEntity<?> createFull${majStart(className)}(
+      {{tab}}    @Parameter(description = "${majStart(className)} object to be created with {{#each childrenWithForm}}${minStart(this.className)}s{{#unless @last}}, {{/unless}}{{/each}}", required = true)
+      {{tab}}    @RequestBody @Valid ${majStart(className)}FullDto dto,
+      {{tab}}    BindingResult bindingResult
+      {{tab}}) {
+      {{tab}}  if (bindingResult.hasErrors()) {
+      {{tab}}    HashMap<String, String> errors = new HashMap<>();
+      {{tab}}    bindingResult.getFieldErrors().forEach(error -> {
+      {{tab}}      {{tab}}errors.put(error.getField(), error.getDefaultMessage());
+      {{tab}}    });
+      {{tab}}    RestResponse<HashMap<String, String>> errorResponse =
+      {{tab}}    RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST,
+      {{tab}}    "Validation failed", errors);
+      {{tab}}    return ResponseEntity.badRequest().body(errorResponse);
+      {{tab}} }
+      {{tab}}  
+      {{tab}}  try {
+      {{tab}}    ${majStart(className)} ${minStart(className)} = dto.get${majStart(className)}();
+      {{tab}}    {{#each childrenWithForm}}
+      {{tab}}    List<${majStart(this.className)}> ${minStart(this.className)}s = dto.get${majStart(this.className)}s();
+      {{tab}}    {{/each}}
+      {{tab}}    ${majStart(className)} created${majStart(className)} = ${lowerCase(className)}Service.createFull${majStart(className)}(${minStart(className)}{{#each childrenWithForm}}, ${minStart(this.className)}s{{/each}});
+      {{tab}}    RestResponse<${majStart(className)}> response = RestResponse.buildSuccessResponse(
+      {{tab}}      HttpStatus.CREATED,
+      {{tab}}      "${majStart(className)} and its details created successfully (Atomic operation)",
+      {{tab}}      created${majStart(className)}
+      {{tab}}    );
+      {{tab}}    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+      {{tab}}  } catch (DataIntegrityViolationException ex) {
+      {{tab}}    String message = String.format("A database error occurred during the transaction (e.g., constraint violation): %s",
+      {{tab}}      {{tab}}ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage());
+      {{tab}}    RestResponse<String> errorResponse = RestResponse.buildErrorResponse(
+      {{tab}}      HttpStatus.BAD_REQUEST,
+      {{tab}}      message,
+      {{tab}}      null
+      {{tab}}    );
+      {{tab}}    return ResponseEntity.badRequest().body(errorResponse);
+      {{tab}}  } catch (Exception ex) {
+      {{tab}}    RestResponse<String> errorResponse = RestResponse.buildErrorResponse(
+      {{tab}}      HttpStatus.INTERNAL_SERVER_ERROR,
+      {{tab}}      String.format("An unexpected error occurred while creating the ${minStart(className)}: %s", ex.getMessage()),
+      {{tab}}      null
+      {{tab}}    );
+      {{tab}}    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+      {{tab}}  }
+      {{tab}}}
+      {{elseIf !isView }} 
       {{tab}}    description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1891,13 +2093,106 @@
       {{tab}}            "${formatReadableLowerCase(className)} created successfully", new${majStart(className)});
       {{tab}}    return ResponseEntity.status(HttpStatus.CREATED).body(response);
       {{tab}}}
-      {{else}}{{removeLine}}{{/if}}
+      {{/if}}
       {{#if !isView}} 
       {{tab}}@Operation(
-      {{tab}}    summary = "Update existing ${formatReadableLowerCase(className)}",
-      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
-      {{else}}{{removeLine}}{{/if}}
-      {{#if !isView}}
+      {{tab}}    summary = "Update existing ${formatReadableLowerCase(className)}",{{/if}}
+      {{tab}}    {{#if isView=false and useBearerToken=true}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
+      {{#if notViewAndParent=true and hasChildrenForm=true }}
+                description = "Update an existing ${minStart(className)} and its details. The operation is atomic: all or nothing."
+            )
+            @ApiResponses({
+            @ApiResponse(
+            responseCode = "200",
+            description = "${majStart(className)} updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+            ),
+            @ApiResponse(
+            responseCode = "404",
+            description = "${majStart(className)} not found with the provided ID"
+            ),
+            @ApiResponse(
+            responseCode = "400",
+            description = "Validation failed or database constraint violation"
+            ),
+            @ApiResponse(
+            responseCode = "500",
+            description = "Internal server error"
+            )
+          })
+          @PutMapping("/{${pkColumn}}")
+          public ResponseEntity<?> updateFull${majStart(className)}(
+            @Parameter(description = "ID of the ${minStart(className)} to update", required = true)
+            @PathVariable ${pkColumnType} ${pkColumn},
+            @Parameter(description = "Updated ${minStart(className)} object with {{#each childrenWithForm}}${minStart(this.className)}s{{#unless @last}}, {{/unless}}{{/each}}", required = true)
+            @RequestBody @Valid ${majStart(className)}FullDto dto,
+            BindingResult bindingResult
+          ) {
+            if (bindingResult.hasErrors()) {
+              HashMap<String, String> errors = new HashMap<>();
+              bindingResult.getFieldErrors().forEach(error -> {
+              errors.put(error.getField(), error.getDefaultMessage());
+              });
+              RestResponse<HashMap<String, String>> errorResponse =
+              RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST,
+              "Validation failed", errors);
+              
+              return ResponseEntity.badRequest().body(errorResponse);
+            }
+            
+            try {
+              // Check if ${minStart(className)} exists
+              ${majStart(className)} existing${majStart(className)} = ${lowerCase(className)}Service.get${majStart(className)}ById(${pkColumn});
+              if (existing${majStart(className)} == null) {
+                RestResponse<String> errorResponse = RestResponse.buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                String.format("${majStart(className)} not found with ${pkColumn}: %s", ${pkColumn}),
+                null
+                );
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+              }
+              
+              ${majStart(className)} ${minStart(className)} = dto.get${majStart(className)}();
+              {{#each childrenWithForm}}
+                List<${majStart(this.className)}> ${minStart(this.className)}s = dto.get${majStart(this.className)}s();
+              {{/each}}
+              
+              ${majStart(className)} updated${majStart(className)} = ${lowerCase(className)}Service.updateFull${majStart(className)}(
+                  ${pkColumn}, ${minStart(className)}{{#each childrenWithForm}}, ${minStart(this.className)}s{{/each}}
+              );
+              
+              RestResponse<${majStart(className)}> response = RestResponse.buildSuccessResponse(
+                  HttpStatus.OK,
+                  "${majStart(className)} and its details updated successfully (Atomic operation)",
+                  updated${majStart(className)}
+              );
+              return ResponseEntity.ok(response);
+              } catch (ResourceNotFoundException ex) {
+              RestResponse<String> errorResponse = RestResponse.buildErrorResponse(
+                  HttpStatus.NOT_FOUND,
+                  String.format("${majStart(className)} not found with ${pkColumn}: %s", ${pkColumn}),
+                  null
+              );
+              return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+              } catch (DataIntegrityViolationException ex) {
+              String message = String.format("A database error occurred during the transaction (e.g., constraint violation): %s", 
+                  ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage());
+              RestResponse<String> errorResponse = RestResponse.buildErrorResponse(
+                  HttpStatus.BAD_REQUEST,
+                  message,
+                  null
+              );
+              return ResponseEntity.badRequest().body(errorResponse);
+            } catch (Exception ex) {
+              RestResponse<String> errorResponse = RestResponse.buildErrorResponse(
+                  HttpStatus.INTERNAL_SERVER_ERROR,
+                  String.format("An unexpected error occurred while updating the ${minStart(className)}: %s", ex.getMessage()),
+                  null
+              );
+              return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+            }
+          }
+      {{elseIf !isView}}
       {{tab}}    description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1915,8 +2210,6 @@
       {{tab}}        description = "Invalid ${formatReadableLowerCase(className)} supplied"
       {{tab}}    )
       {{tab}}})
-      {{else}}{{removeLine}}{{/if}}
-      {{#if !isView}} 
       {{tab}}@PutMapping("/{${pkColumn}}")
       {{tab}}public ResponseEntity<?> update${majStart(className)}(
       {{tab}}    @Parameter(description = "ID of the ${formatReadableLowerCase(className)} to update", required = true)
@@ -1944,10 +2237,56 @@
       {{else}}{{removeLine}}{{/if}}
       {{#if !isView}}
       {{tab}}@Operation(
-      {{tab}}    summary = "Delete ${formatReadableLowerCase(className)}",
-      {{tab}}    {{#if useBearerToken}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}    
-      {{else}}{{removeLine}}{{/if}}
-      {{#if !isView}}
+      {{tab}}    summary = "Delete ${formatReadableLowerCase(className)}",{{/if}}
+      {{tab}}    {{#if isView=false and useBearerToken=true}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}    
+      {{#if notViewAndParent=true and hasChildrenForm=true}}
+                description = "Delete an existing ${minStart(className)} and all its associated details. The operation is atomic: all or nothing."
+            )
+            @ApiResponses({
+              @ApiResponse(
+                responseCode = "200",
+                description = "${majStart(className)} deleted successfully"
+              ),
+              @ApiResponse(
+                responseCode = "404",
+                description = "${majStart(className)} not found with the provided ID"
+              ),
+              @ApiResponse(
+                responseCode = "500",
+                description = "Internal server error"
+              )
+            })
+            @DeleteMapping("/{${pkColumn}}")
+            public ResponseEntity<RestResponse<Void>> deleteFull${majStart(className)}(
+              @Parameter(description = "ID of the ${minStart(className)} to delete", required = true)
+              @PathVariable ${pkColumnType} ${pkColumn}
+            ) {
+              try {
+                ${lowerCase(className)}Service.deleteFull${majStart(className)}(${pkColumn});
+                return ResponseEntity.ok(
+                  RestResponse.buildSuccessResponse(
+                    HttpStatus.OK,
+                    "${majStart(className)} deleted successfully",
+                    null
+                  )
+                );
+              } catch (ResourceNotFoundException ex) {
+                RestResponse<Void> errorResponse = RestResponse.buildErrorResponse(
+                  HttpStatus.NOT_FOUND,
+                  String.format("${majStart(className)} not found with ${pkColumn}: %s", ${pkColumn}),
+                  null
+                );
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+              } catch (Exception ex) {
+                RestResponse<Void> errorResponse = RestResponse.buildErrorResponse(
+                  HttpStatus.INTERNAL_SERVER_ERROR,
+                  String.format("Error while performing atomic deletion of ${minStart(className)}: %s", ex.getMessage()),
+                  null
+                );
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+              }
+            } 
+      {{elseIf !isView }}
       {{tab}}    description = "Delete a ${formatReadableLowerCase(className)} item by its ID. Returns success even if ${formatReadableLowerCase(className)} was already deleted."
       {{tab}})
       {{tab}}@ApiResponses({
@@ -1982,11 +2321,108 @@
       {{tab}}{{tab}}}
       {{tab}}}
       {{else}}{{removeLine}}{{/if}}
+      {{#each children}}
+      @Operation(
+        summary = "Get ${minStart(this.className)}s attached with a ${minStart(className)} ID",
+        {{#if isView=false and useBearerToken=true}}security = { @SecurityRequirement(name = "bearerAuth") },{{else}}{{removeLine}}{{/if}}
+        description = "Retrieve a list of ${minStart(this.className)}s from a ${minStart(className)} item ID"
+      )
+      @ApiResponses({
+        @ApiResponse(
+          responseCode = "200",
+          description = "${majStart(this.className)}s retrieved successfully",
+          content = @Content(mediaType = "application/json", schema = @Schema(implementation = RestResponse.class))
+        ),
+        @ApiResponse(
+          responseCode = "404",
+          description = "${majStart(className)} not found with the provided ID"
+        ),
+        @ApiResponse(
+          responseCode = "500",
+          description = "Internal server error"
+        )
+      })
+      @GetMapping("/{${pkColumn}}/${lowerCase(this.className)}s")
+      public ResponseEntity<?> get${majStart(this.className)}sBy${majStart(className)}(
+        @Parameter(description = "ID of the ${minStart(className)} to retrieve", required = true)
+        @PathVariable ${pkColumnType} ${pkColumn},
+        @Parameter(description = "Page number (0-indexed)", required = false)
+        @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "Size of the page", required = false)
+        @RequestParam(defaultValue = "10") int size,
+        @Parameter(description = "Sort order", required = false)
+        @RequestParam(defaultValue = "${this.pkColumn},asc", required = false) String sortParam
+      ) {
+      try {
+        ${majStart(className)} ${minStart(className)} = ${lowerCase(className)}Service.get${majStart(className)}ById(${pkColumn});
+        if (${minStart(className)} == null) {
+          RestResponse<String> errorResponse = RestResponse.buildErrorResponse(
+            HttpStatus.NOT_FOUND,
+            String.format("${majStart(className)} not found with ${pkColumn}: %s", ${pkColumn}),
+            null
+          );
+          return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        }
+        Sort sortObj = WebUtils.createSortObject(sortParam);
+        Pageable pageable = PageRequest.of(page, size, sortObj);
+        ${majStart(this.className)}Search object = new ${majStart(this.className)}Search();
+        object.set${majStart(this.parentName)}(${minStart(className)});
+        
+        Page<${majStart(this.className)}> ${minStart(this.className)}sData = ${lowerCase(this.className)}Service.getAll${majStart(this.className)}(pageable, object);
+        
+        RestResponse<Page<${majStart(this.className)}>> response = RestResponse.buildSuccessResponse(
+          HttpStatus.OK,
+          "${majStart(this.className)}s retrieved successfully",
+          ${minStart(this.className)}sData
+        );
+        return ResponseEntity.ok(response);
+      } catch (ResourceNotFoundException ex) {
+        RestResponse<String> errorResponse = RestResponse.buildErrorResponse(
+          HttpStatus.NOT_FOUND,
+          ex.getMessage(),
+          null
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+      } catch (Exception ex) {
+        RestResponse<String> errorResponse = RestResponse.buildErrorResponse(
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          String.format("Error while retrieving ${minStart(className)}: %s", ex.getMessage()),
+          null
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+      }
+      }
+      {{/each}}
 
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
     controllerAdditionalFiles: [ ]
-  mereFiles: [ ]
+  mereFiles:
+    - fileType: "FullDTO"
+      fileName: "${majStart(className)}FullDto"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.models.dto;
+
+        import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+        {{#if isParentTable}}
+        {{#each childrenWithForm}}
+        import ${groupLink}.${lowerCase(projectName)}.models.${majStart(this.className)};
+        {{/each}}{{/if}}
+        import java.util.List;
+        import lombok.Getter;
+        import lombok.Setter;
+        
+        @Setter
+        @Getter
+        public class ${majStart(className)}FullDto {
+            private ${majStart(className)} ${minStart(className)};
+            {{#if isParentTable}}
+            {{#each childrenWithForm}}
+            private List<${majStart(this.className)}> ${minStart(this.className)}s;
+            {{/each}}{{/if}}
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models/dto"
   filleFiles: [ ]
 
 - id: 2
@@ -4570,10 +5006,10 @@
               return dtos == null ? [] : dtos.Select(t => t.ToEntity()).ToList();
             }
           
-            {{#if isParentTable}}public class ${majStart(className)}FullDto
+            {{#if isParentTable=true and hasChildrenForm=true}}public class ${majStart(className)}FullDto
             {
               public required ${majStart(className)}Dto ${majStart(className)} { get; set; }
-              {{#each children}}
+              {{#each childrenWithForm}}
               public{{#if isRequired}} required{{/if}} ${majStart(this.className)}Dto[]{{#if isRequired}}?{{/if}} ${majStart(this.className)}s { get; set; }
               {{/each}}
             }{{else}}{{removeLine}}
@@ -4678,8 +5114,8 @@
     serviceFieldContent: "{{removeLine}}"
     serviceMethodContent: |
       Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)});
-      {{#if isParentTable}}Task<${majStart(className)}> CreateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}}, IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});
-      Task<${majStart(className)}?> UpdateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}},IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});
+      {{#if isParentTable=true and hasChildrenForm=true}}Task<${majStart(className)}> CreateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each childrenWithForm}}, IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});
+      Task<${majStart(className)}?> UpdateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each childrenWithForm}},IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}});
       Task DeleteFull${majStart(className)}Async(${pkColumnType} id);{{else}}{{removeLine}}{{/if}}
     serviceConstructors: "{{removeLine}}"
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Interface"
@@ -4897,14 +5333,14 @@
                   throw new InternalServerErrorException("Error while checking the existence of ${formatReadableLowerCase(className)}", ex);
                 }
               }
-              {{#if isParentTable}}public async Task<${majStart(className)}> CreateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each children}}, IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}}) {
+              {{#if isParentTable=true and hasChildrenForm=true}}public async Task<${majStart(className)}> CreateFull${majStart(className)}Async(${majStart(className)} ${minStart(className)}{{#each childrenWithForm}}, IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}}) {
                 using var transaction = await _dbContext.Database.BeginTransactionAsync();
           
                 try
                 {
                   _dbContext.Set<${majStart(className)}>().Add(${minStart(className)});
                   await _dbContext.SaveChangesAsync();
-                  {{#each children}}// ${majStart(this.className)} details
+                  {{#each childrenWithForm}}// ${majStart(this.className)} details
                   var ${minStart(this.className)}sList = ${minStart(this.className)}s.ToList();
                   foreach (var item in ${minStart(this.className)}sList)
                   {
@@ -4925,7 +5361,7 @@
               }
 
               public async Task<${majStart(className)}?> UpdateFull${majStart(className)}Async(
-                ${majStart(className)} ${minStart(className)}{{#each children}},
+                ${majStart(className)} ${minStart(className)}{{#each childrenWithForm}},
                 IEnumerable<${majStart(this.className)}> ${minStart(this.className)}s{{/each}}
               )
               {
@@ -4935,7 +5371,7 @@
                   _dbContext.Set<${majStart(className)}>().Update(${minStart(className)});
                   await _dbContext.SaveChangesAsync();
                   
-                  {{#each children}}
+                  {{#each childrenWithForm}}
                   var existing${majStart(this.className)}s = await _dbContext.Set<${majStart(this.className)}>()
                       .Where(d => d.${majStart(this.parentColumnNameFiled)} == ${minStart(className)}.${majStart(parentPk)})
                       .AsNoTracking() // Important pour éviter le tracking par défaut avant la manipulation
@@ -4991,7 +5427,7 @@
                   {
                     throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + id);
                   }
-                  {{#each children}}
+                  {{#each childrenWithForm}}
                   var ${minStart(this.className)}sToDelete = await _dbContext.Set<${majStart(this.className)}>()
                   .Where(d => d.${majStart(this.parentColumnNameFiled)} == ${minStart(className)}.${majStart(parentPk)})
                   .ToListAsync();
@@ -5182,7 +5618,7 @@
       {{tab}}public async Task<ActionResult<ApiResponse<${majStart(className)}>>> Create([SwaggerParameter(Description = "${formatReadable(className)} object to be created", Required = true)] ${majStart(className)}Dto.${majStart(className)}FullDto dto)
       {{tab}}{
       {{tab}}{{tab}}var ${minStart(className)} = dto.${majStart(className)}.ToEntity();
-      {{tab}}{{tab}}{{#each children}}
+      {{tab}}{{tab}}{{#each childrenWithForm}}
       {{tab}}{{tab}}var ${minStart(this.className)}s = ${majStart(this.className)}Dto.ToEntity(dto.${majStart(this.className)}s);
       {{tab}}{{tab}}{{/each}}
       {{tab}}{{tab}}
@@ -5195,18 +5631,18 @@
       {{tab}}{{tab}}}
       {{tab}}{{tab}}{{/each}}
       
-      {{tab}}{{tab}}if (!${minStart(className)}Validations.IsValid{{#each children}} || !${minStart(this.className)}sValidations.IsValid{{/each}})
+      {{tab}}{{tab}}if (!${minStart(className)}Validations.IsValid{{#each childrenWithForm}} || !${minStart(this.className)}sValidations.IsValid{{/each}})
       {{tab}}{{tab}}{
       {{tab}}{{tab}}    var errors = new Dictionary<string, object>();
       {{tab}}{{tab}}    WebUtils.ParseErrorValidations(${minStart(className)}Validations, errors, "${minStart(className)}");
-      {{tab}}{{tab}}    {{#each children}}
+      {{tab}}{{tab}}    {{#each childrenWithForm}}
       {{tab}}{{tab}}    WebUtils.ParseErrorValidations(${minStart(this.className)}sValidations, errors, "${minStart(this.className)}s");
       {{tab}}{{tab}}    {{/each}}
       {{tab}}{{tab}}    return BadRequest(ApiResponse<object>.Error(StatusCodes.Status400BadRequest, "Validation failed for one or more entities.", errors));
       {{tab}}{{tab}}}
       {{tab}}{{tab}} try
       {{tab}}{{tab}}{
-      {{tab}}{{tab}}    var created${majStart(className)} = await _service.CreateFull${majStart(className)}Async(${minStart(className)}{{#each children}}, ${minStart(this.className)}s{{/each}});
+      {{tab}}{{tab}}    var created${majStart(className)} = await _service.CreateFull${majStart(className)}Async(${minStart(className)}{{#each childrenWithForm}}, ${minStart(this.className)}s{{/each}});
       {{tab}}{{tab}}    return StatusCode(StatusCodes.Status201Created,
       {{tab}}{{tab}}        ApiResponse<${majStart(className)}>.Success(StatusCodes.Status201Created, "${majStart(className)} and its details created successfully (Atomic operation).", created${majStart(className)}));
       {{tab}}{{tab}}}
@@ -5282,13 +5718,13 @@
       
       {{tab}}{{tab}}    // Mapping et association de l'ID
       {{tab}}{{tab}}    var ${minStart(className)} = dto.${majStart(className)}.ToEntity(id);
-      {{tab}}{{tab}}    {{#each children}}
+      {{tab}}{{tab}}    {{#each childrenWithForm}}
       {{tab}}{{tab}}    var ${minStart(this.className)}s = ${majStart(this.className)}Dto.ToEntity(dto.${majStart(this.className)}s);
       {{tab}}{{tab}}    {{/each}}
       {{tab}}{{tab}}
       {{tab}}{{tab}}    // Validation
       {{tab}}{{tab}}    var ${minStart(className)}Validations = EntityValidator.ValidateEntity(${minStart(className)});
-      {{tab}}{{tab}}    {{#each children}}// Validate ${formatReadableLowerCase(this.className)}s
+      {{tab}}{{tab}}    {{#each childrenWithForm}}// Validate ${formatReadableLowerCase(this.className)}s
       {{tab}}{{tab}}    var ${minStart(this.className)}sValidations = new ValidationCheckManager();
       {{tab}}{{tab}}    foreach (var ${minStart(this.className)}Validation in ${minStart(this.className)}s.Select(EntityValidator.ValidateEntity))
       {{tab}}{{tab}}    {
@@ -5296,18 +5732,18 @@
       {{tab}}{{tab}}    }
       {{tab}}{{tab}}    {{/each}}
       
-      {{tab}}{{tab}}    if (!${minStart(className)}Validations.IsValid{{#each children}} || !${minStart(this.className)}sValidations.IsValid{{/each}})
+      {{tab}}{{tab}}    if (!${minStart(className)}Validations.IsValid{{#each childrenWithForm}} || !${minStart(this.className)}sValidations.IsValid{{/each}})
       {{tab}}{{tab}}    {
       {{tab}}{{tab}}        var errors = new Dictionary<string, object>();
       {{tab}}{{tab}}        WebUtils.ParseErrorValidations(${minStart(className)}Validations, errors, "${minStart(className)}");
-      {{tab}}{{tab}}        {{#each children}}
+      {{tab}}{{tab}}        {{#each childrenWithForm}}
       {{tab}}{{tab}}        WebUtils.ParseErrorValidations(${minStart(this.className)}sValidations, errors, "${minStart(this.className)}s");
       {{tab}}{{tab}}        {{/each}}
       {{tab}}{{tab}}        return BadRequest(ApiResponse<object>.Error(StatusCodes.Status400BadRequest, "Validation failed for one or more entities.", errors));
       {{tab}}{{tab}}    }
       
       {{tab}}{{tab}}    // Appel au service de mise à jour Full (atomique)
-      {{tab}}{{tab}}    var updated${majStart(className)} = await _service.UpdateFull${majStart(className)}Async(${minStart(className)}{{#each children}}, ${minStart(this.className)}s{{/each}});
+      {{tab}}{{tab}}    var updated${majStart(className)} = await _service.UpdateFull${majStart(className)}Async(${minStart(className)}{{#each childrenWithForm}}, ${minStart(this.className)}s{{/each}});
       {{tab}}{{tab}}
       {{tab}}{{tab}}    return Ok(
       {{tab}}{{tab}}        ApiResponse<${majStart(className)}>.Success(StatusCodes.Status200OK, "${majStart(className)} and its details updated successfully (Atomic operation).", updated${majStart(className)}));
@@ -5616,7 +6052,6 @@
       scope: "test"
   mereFiles: [ ]
   filleFiles: [ ]
-
 
 - id: 4
   languageId: 1

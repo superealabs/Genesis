@@ -46,8 +46,6 @@ public class RelationshipConfigurationForm {
         initializeTable();
     }
 
-
-
     public void populateSelect(Dictionary<String,List<TableMetadata>> relations) {
         List<TableMetadata> parents = relations.get("PARENTS");
         List<TableMetadata> children = relations.get("CHILDS");
@@ -64,16 +62,25 @@ public class RelationshipConfigurationForm {
     }
 
     private void initializeTable() {
-        String[] columnNames = {"Parent Entity", "Child Entity", "Is Mandatory"};
+        String[] columnNames = {"Parent Entity", "Child Entity", "Form", "Is Mandatory"};
         DefaultTableModel model = new DefaultTableModel(null, columnNames) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 2;
+                // Form (colonne 2) est toujours éditable
+                if (column == 2) {
+                    return true;
+                }
+                // Is Mandatory (colonne 3) n'est éditable que si Form est coché
+                if (column == 3) {
+                    Object formValue = getValueAt(row, 2);
+                    return formValue instanceof Boolean && (Boolean) formValue;
+                }
+                return false;
             }
 
             @Override
             public Class<?> getColumnClass(int columnIndex) {
-                if (columnIndex == 2) {
+                if (columnIndex == 2 || columnIndex == 3) {
                     return Boolean.class;
                 }
                 return super.getColumnClass(columnIndex);
@@ -88,23 +95,43 @@ public class RelationshipConfigurationForm {
         model.addTableModelListener(new TableModelListener() {
             @Override
             public void tableChanged(TableModelEvent e) {
-                if (e.getType() == TableModelEvent.UPDATE && e.getColumn() == 2) {
+                if (e.getType() == TableModelEvent.UPDATE) {
                     int row = e.getFirstRow();
-                    Object newValue = model.getValueAt(row, 2);
-                    System.out.println("Valeur modifiée à la ligne " + row + ": " + newValue);
-                    handleMandatoryChange(row, newValue);
+                    int column = e.getColumn();
+
+                    if (column == 2) {
+                        Object formValue = model.getValueAt(row, 2);
+                        handleFormChange(row, formValue);
+                    }
+                    else if (column == 3) {
+                        Object mandatoryValue = model.getValueAt(row, 3);
+                        handleMandatoryChange(row, mandatoryValue);
+                    }
                 }
             }
         });
     }
 
+    private void handleFormChange(int row, Object newValue) {
+        if (row >= 0 && row < relationParameters.size() && newValue instanceof Boolean hasForm) {
+            RelationParameter relation = relationParameters.get(row);
+            relation.setHasForm(hasForm);
+            if (!hasForm) {
+                relation.setMandatory(false);
+                DefaultTableModel model = (DefaultTableModel) relationTable.getModel();
+                model.setValueAt(false, row, 3);
+            }
+            relationTable.repaint();
+        }
+    }
+
     private void handleMandatoryChange(int row, Object newValue) {
         if (row >= 0 && row < relationParameters.size() && newValue instanceof Boolean isMandatory) {
             RelationParameter relation = relationParameters.get(row);
-            relation.setMandatory(isMandatory);
-            System.out.println("Relation mise à jour: " + relation.getParentTable() +
-                    " -> " + relation.getChildTable() +
-                    " (Mandatory: " + isMandatory + ")");
+
+            if (relation.getHasForm()) {
+                relation.setMandatory(isMandatory);
+            }
         }
     }
 
@@ -126,8 +153,10 @@ public class RelationshipConfigurationForm {
         RelationParameter currentRelation = new RelationParameter(
                 parentSelected.getTableName(),
                 childSelected.getTableName(),
-                !fkColumn.isNullable()
+                false,
+                false
         );
+
         if (relationParameters.contains(currentRelation)){
             JOptionPane.showMessageDialog(mainPanel, "This relation already exists.", "Duplicate Relation", JOptionPane.WARNING_MESSAGE);
             return;

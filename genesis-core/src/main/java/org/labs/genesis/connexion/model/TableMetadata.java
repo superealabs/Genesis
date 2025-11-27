@@ -36,7 +36,7 @@ public class TableMetadata {
     private Boolean isParent = false;
     private Boolean isChild = false;
     private List<ChildTableMetadata> childTables = new ArrayList<>();
-    private List<TableMetadata> parentTables = new ArrayList<>();
+    private List<ParentTableMetadata> parentTables = new ArrayList<>();
 
     public void setColumnsFrontendTypes(FrontendLanguage frontendLanguage,Database database)
     {
@@ -239,7 +239,7 @@ public class TableMetadata {
         return null;
     }
 
-    public void addChild(TableMetadata child, Boolean mandatory){
+    public void addChild(TableMetadata child, Boolean mandatory, Boolean hasForm){
         if (childTables == null) { setChildTables(new ArrayList<>());}
         if (child == null)  return;
         if (childTables.contains(child)) {
@@ -247,13 +247,19 @@ public class TableMetadata {
         }
         ColumnMetadata fkColumn = child.findForeingKeyColumnByClassName(this.getClassName());
         fkColumn.setIsParentForeignKey(true);
-        this.childTables.add(new ChildTableMetadata(child, mandatory, fkColumn));
+        this.childTables.add(new ChildTableMetadata(child, mandatory, hasForm, fkColumn));
         this.setIsParent(true);
     }
 
     public void setParentTable(TableMetadata parentTable) {
         if (parentTables == null) { setParentTables(new ArrayList<>());}
-        this.parentTables.add(parentTable);
+        if (parentTable == null)  return;
+        if (parentTables.contains(parentTable)) {
+            return;
+        }
+        ColumnMetadata fkColumn = this.findForeingKeyColumnByClassName(parentTable.getClassName());
+        fkColumn.setIsParentForeignKey(true);
+        this.parentTables.add(new ParentTableMetadata(parentTable, fkColumn));
         this.setIsChild(true);
     }
 

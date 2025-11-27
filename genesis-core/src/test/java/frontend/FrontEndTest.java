@@ -6,6 +6,7 @@ import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Credentials;
+import org.labs.genesis.connexion.model.RelationParameter;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -120,7 +121,7 @@ public class FrontEndTest {
                 .setHost("localhost")
                 .setPort("5432")
                 .setSchemaName("public")
-                .setDatabaseName("fanamby")
+                .setDatabaseName("bakery")
                 .setUser("chan_alex")
                 .setPwd("chanalex")
                 .setTrustCertificate(true).
@@ -142,7 +143,7 @@ public class FrontEndTest {
             var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
 
             List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
-            String projectName = "FanambyPresence";
+            String projectName = "relations";
             String groupLink = "mg.akademia";
             String projectPort = "8000";
             String logLevel = "INFO";
@@ -151,6 +152,8 @@ public class FrontEndTest {
             String frameworkVersion = "3.3.6";
             String languageVersion = "21";
             String destinationFolder = "/home/itu-chan-alex/Stage/generated";
+            List<RelationParameter> relations = new ArrayList<>();
+            relations.add(new RelationParameter("sales", "sales_details", false, false));
 
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
@@ -196,6 +199,7 @@ public class FrontEndTest {
             context.setGenerateProjectStructure(true);
             context.setGenerateFrontendApp(true);
             context.setFrontendPort(frontendFramework.getDefaultPort());
+            context.setRelationParameters(relations);
 
             projectGenerator.generateProject(context);
 

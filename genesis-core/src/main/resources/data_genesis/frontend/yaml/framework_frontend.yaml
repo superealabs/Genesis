@@ -5357,8 +5357,8 @@
             import { useLoading } from './useLoading'
             import { PaginationRequestParameter, SortFieldParameter } from '@/models/api/RequestModel'
             import { PaginationData } from '@/models/api/PageResponseModel'
-            import { useRouter } from 'vue-router'{{#if isParentTable}}
-            {{#each children}}
+            import { useRouter } from 'vue-router'{{#if isParentTable=true and hasChildrenForm=true}}
+            {{#each childrenWithForm}}
             import { ${majStart(this.className)}, ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'
             {{/each}}
             {{/if}}
@@ -5441,7 +5441,7 @@
                 return result
               }{{/if}}
 
-              {{#if notViewAndParent}}/**
+              {{#if notViewAndParent=true and hasChildrenForm=true}}/**
                * Create a new ${minStart(className)}
                * @param fullData Object containing ${minStart(className)} and his details
                */
@@ -5472,7 +5472,7 @@
                 return { data, errors }
               }
               {{/if}}
-              {{#if notViewAndParent}}/**
+              {{#if notViewAndParent=true and hasChildrenForm=true}}/**
               * Update an existing ${minStart(className)} with full details
               * @param id ${majStart(className)} ID to update
               * @param fullData Object containing ${minStart(className)} and its details
@@ -5926,12 +5926,12 @@
         label: "{{removeLine}}"
       componentName: "${majStart(className)}Form"
       importFile: |
-        {{#if isParentTable}} import { ref, computed, onMounted } from 'vue'{{else}}import { ref } from 'vue'{{/if}} 
+        {{#if isParentTable=true and hasChildrenForm=true}} import { ref, computed, onMounted } from 'vue'{{else}}import { ref } from 'vue'{{/if}} 
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model.ts'
         import GenesisButton from '@/components/button/GenesisButton.vue'
         import GenesisInput from '@/components/form/GenesisInput.vue'{{#if containsForeignKey}}
-        import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'{{/if}}{{#if isParentTable}}
-        {{#each children}}import{ ${majStart(this.className)}FormDTO, type ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model.ts'
+        import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'{{/if}}{{#if isParentTable=true and hasChildrenForm=true}}
+        {{#each childrenWithForm}}import{ ${majStart(this.className)}FormDTO, type ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model.ts'
         import ${majStart(this.className)}TableForm from '@/entities/${minStart(this.className)}/${majStart(this.className)}TableForm.vue'{{/each}}{{/if}}
       selector: "${majStart(className)}Form"
       standalone: true
@@ -5992,7 +5992,7 @@
                   {{/if}}
                   {{/each}}{{removeLine}}
                 </div>
-                {{#if isParentTable}}{{#each children}}
+                {{#if isParentTable=true and hasChildrenForm=true}}{{#each childrenWithForm}}
                 <${majStart(this.className)}TableForm
                   :initial-data="${minStart(this.className)}sData"
                   :get-table-data-callback="set${majStart(this.className)}s"
@@ -6013,8 +6013,8 @@
       export: |
         const props = defineProps<{
           ${minStart(className)}?: ${majStart(className)}
-          {{#if isParentTable}}
-          {{#each children}}${minStart(this.className)}sData?: ${majStart(this.className)}[]{{/each}}
+          {{#if isParentTable=true and hasChildrenForm=true}}
+          {{#each childrenWithForm}}${minStart(this.className)}sData?: ${majStart(this.className)}[]{{/each}}
           violations?:{
             ${minStart(className)}: Record<string, string>
             {{#each children}}${minStart(this.className)}s: Record<string, string>[]{{/each}}
@@ -6023,12 +6023,12 @@
         }>()
 
         const emit = defineEmits<{
-          (e: 'submit', payload: {{#if isParentTable}}{ ${minStart(className)}: Partial<${majStart(className)}FormDTO>{{#each children}}; ${minStart(this.className)}s: ${majStart(this.className)}FormDTO[]{{/each}} }{{else}}Partial<${majStart(className)}FormDTO>{{/if}}): void
+          (e: 'submit', payload: {{#if isParentTable=true and hasChildrenForm=true}}{ ${minStart(className)}: Partial<${majStart(className)}FormDTO>{{#each childrenWithForm}}; ${minStart(this.className)}s: ${majStart(this.className)}FormDTO[]{{/each}} }{{else}}Partial<${majStart(className)}FormDTO>{{/if}}): void
           (e: 'cancel', payload: Partial<${majStart(className)}FormDTO>): void
         }>()
-        {{#if isParentTable}}
+        {{#if isParentTable=true and hasChildrenForm=true}}
         const ${minStart(className)}Violations = computed(() => props.violations ? props.violations.${minStart(className)} : {})
-        {{#each children}}const ${minStart(this.className)}Violations = computed(() => props.violations ? props.violations.${minStart(this.className)}s : [])
+        {{#each childrenWithForm}}const ${minStart(this.className)}Violations = computed(() => props.violations ? props.violations.${minStart(this.className)}s : [])
         {{/each}}
         {{/if}}
         const formModel = ref<Partial<${majStart(className)}FormDTO>>({ ...${majStart(className)}FormDTO.parse(props.${minStart(className)}) })
@@ -6038,23 +6038,23 @@
         ? (props.${minStart(className)}?.${this.name}?.getReferenceValue?.() ?? undefined)
         : undefined
         {{/each}}
-        {{#if isParentTable}}
-        {{#each children}}
+        {{#if isParentTable=true and hasChildrenForm=true}}
+        {{#each childrenWithForm}}
         const ${minStart(this.className)}s =ref<${majStart(this.className)}FormDTO[]>([])
         const set${majStart(this.className)}s = (data: ${majStart(this.className)}FormDTO[]) => {
           ${minStart(this.className)}s.value = data
         }
         {{/each}}{{/if}}
         function handleSubmit() {
-          {{#if isParentTable}}emit('submit', { ${minStart(className)}: formModel.value{{#each children}}, ${minStart(this.className)}s: ${minStart(this.className)}s.value{{/each}} }){{else}}
+          {{#if isParentTable=true and hasChildrenForm=true}}emit('submit', { ${minStart(className)}: formModel.value{{#each childrenWithForm}}, ${minStart(this.className)}s: ${minStart(this.className)}s.value{{/each}} }){{else}}
           emit('submit', formModel.value){{/if}}
         }
 
         function cancelForm() {
           emit('cancel', formModel.value)
-        }{{#if isParentTable}}
+        }{{#if isParentTable=true and hasChildrenForm=true}}
         onMounted(async () => {
-          {{#each children}}
+          {{#each childrenWithForm}}
           if (Array.isArray(props.${minStart(this.className)}sData) && props.${minStart(this.className)}sData.length > 0) {
             set${majStart(this.className)}s(${majStart(this.className)}FormDTO.parseList(props.${minStart(this.className)}sData))
           }{{/each}}
@@ -6078,8 +6078,8 @@
         import { usePopup } from '@/composables/usePopup';
         import GenesisButton from '@/components/button/GenesisButton.vue';
         import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue';
-        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'{{#if isParentTable}}
-        {{#each children}}
+        import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'{{#if isParentTable=true and hasChildrenForm=true}}
+        {{#each childrenWithForm}}
         import { use${majStart(this.className)}s } from '@/composables/use${majStart(this.className)}s'
         import { ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'
         {{/each}}
@@ -6104,10 +6104,10 @@
             </div>
 
             <!-- Form -->
-            <div v-if="entity{{#if isParentTable}}{{#each children}} && ${minStart(this.className)}Loaded{{/each}}{{/if}}">
+            <div v-if="entity{{#if isParentTable=true and hasChildrenForm=true}}{{#each childrenWithForm}} && ${minStart(this.className)}Loaded{{/each}}{{/if}}">
               <${minStart(className)}-form
-                :${minStart(className)}="entity"{{#if isParentTable}}
-                {{#each children}}
+                :${minStart(className)}="entity"{{#if isParentTable=true and hasChildrenForm=true}}
+                {{#each childrenWithForm}}
                 :${minStart(this.className)}sData="${minStart(this.className)}s"
                 {{/each}}{{/if}}
                 :violations="violations"
@@ -6134,8 +6134,8 @@
         const { get${majStart(className)}ById, goToListView, update${majStart(className)}, view${majStart(className)}, message } = use${majPluralize(className)}()
         const entity = ref<${majStart(className)} | null>(null)
         const freezeStore = useFreezeScreenStore()
-        {{#if isParentTable}}
-        {{#each children}}
+        {{#if isParentTable=true and hasChildrenForm=true}}
+        {{#each childrenWithForm}}
         const { ${minStart(this.className)}s, getAll${majStart(this.className)}sBy${majStart(this.parentColumnNameFiled)} } = use${majStart(this.className)}s();
         const ${minStart(this.className)}Loaded = ref(false);
         const load${majStart(this.className)}s = async () => {
@@ -6222,8 +6222,8 @@
         onMounted(async () => {
           const result = await get${majStart(className)}ById(pathId)
           if (result.data){
-              entity.value = result.data{{#if isParentTable}}
-              {{#each children}}
+              entity.value = result.data{{#if isParentTable=true and hasChildrenForm=true}}
+              {{#each childrenWithForm}}
               await load${majStart(this.className)}s()
               {{/each}}{{/if}}
           }
@@ -6249,8 +6249,8 @@
         import { use${majPluralize(className)} } from '@/composables/use${majPluralize(className)}'
         import { usePopup } from '@/composables/usePopup'
         import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore'
-        import { ref } from 'vue'{{#if isParentTable}}
-        {{#each children}}import type { ${majStart(this.className)}, ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'{{/each}}
+        import { ref } from 'vue'{{#if isParentTable=true and hasChildrenForm=true}}
+        {{#each childrenWithForm}}import type { ${majStart(this.className)}, ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'{{/each}}
         {{/if}}
       selector: "${majStart(className)}CreateView"
       standalone: true
@@ -6274,8 +6274,8 @@
             </div>
   
             <${minStart(className)}-form
-              :submit-label="$t('entity.create.submitLabel', { entity: '${majStart(className)}' })"{{#if isParentTable}}
-              {{#each children}}
+              :submit-label="$t('entity.create.submitLabel', { entity: '${majStart(className)}' })"{{#if isParentTable=true and hasChildrenForm=true}}
+              {{#each childrenWithForm}}
               :${minStart(this.className)}sData="initial${majStart(this.className)}s"
               {{/each}}{{/if}}
               :violations="violations"
@@ -6295,11 +6295,11 @@
       export: |
         const { create${majStart(className)}, goToListView, message, view${majStart(className)} } = use${majPluralize(className)}()
         const { openPopup, closePopup, visible: alertPopup } = usePopup()
-        const freezeStore = useFreezeScreenStore(){{#if isParentTable}}
+        const freezeStore = useFreezeScreenStore(){{#if isParentTable=true and hasChildrenForm=true}}
         const violations = ref<
           | {
             ${minStart(className)}: Record<string, string>
-            {{#each children}}
+            {{#each childrenWithForm}}
             ${minStart(this.className)}s: Record<string, string>[]
             {{/each}}
             }
@@ -6374,8 +6374,8 @@
         SortFieldParameter,
       } from '@/models/api/RequestModel'
       import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
-      import type { DataResponse, PagedDataResponse } from '@/models/api/DataResponseModel'{{#if isParentTable}}
-      {{#each children}}import type { ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model'{{/each}}
+      import type { DataResponse, PagedDataResponse } from '@/models/api/DataResponseModel'{{#if isParentTable=true and hasChildrenForm=true}}
+      {{#each childrenWithForm}}import type { ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model'{{/each}}
       {{/if}}
     methods: |
       const restApiWithPage = api<IPageResponse<${majStart(className)}>>()

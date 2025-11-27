@@ -11,6 +11,7 @@ public class RelationParameter {
     private String parentTable;
     private String childTable;
     private Boolean mandatory;
+    private Boolean hasForm;
 
     public Object[] toRow(){
         return new Object[]{parentTable, childTable, mandatory};
@@ -29,7 +30,10 @@ public class RelationParameter {
     public void setParameter(ProjectGenerationContext context){
         TableMetadata parentTableMetadata = context.findTableByName(parentTable, context.getEntityTables());
         TableMetadata childTableMetadata = context.findTableByName(childTable, context.getEntityTables());
-        parentTableMetadata.addChild(childTableMetadata, mandatory);
+        if (parentTableMetadata == null || childTableMetadata == null){
+            return;
+        }
+        parentTableMetadata.addChild(childTableMetadata, mandatory, hasForm);
         childTableMetadata.setParentTable(parentTableMetadata);
     }
 }

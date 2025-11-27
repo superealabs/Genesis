@@ -34,8 +34,8 @@ public class Framework {
     private Controller controller;
     private List<FrameworkSecurity> frameworkSecurities;
     private List<FrameworkCaching> frameworkCaching;
-    private List<FilesEdit> mereFiles;
-    private List<FilesEdit> filleFiles;
+    private List<FilesEdit> mereFiles = new ArrayList<>();
+    private List<FilesEdit> filleFiles = new ArrayList<>();
 
     public void setFrameworkSecurities() throws IOException {
         this.frameworkSecurities = Arrays.stream(FileUtils.fromYaml(FrameworkSecurity[].class, Constantes.FRAMEWORK_SECURITY_YAML))
