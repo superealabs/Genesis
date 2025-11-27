@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.filetype.pages.PageRecherche;
 import org.labs.genesis.apj.generator.ApjFileGenerator;
+import org.labs.genesis.apj.utilitaire.ConstantesApj;
 import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
 import org.labs.utils.StringUtils;
 
@@ -24,7 +25,7 @@ public class GenesisAPJCoreTest {
         ApjFileGenerator generator = new ApjFileGenerator();
         ApjGenerationContext context = new ApjGenerationContext();
 
-        PageRecherche pr = (PageRecherche) ApjFileGenerator.apjFileMap.get(1);
+        PageRecherche pr = (PageRecherche) ApjFileGenerator.apjFileMap.get(ConstantesApj.PAGE_RECHERCHE_ID);
         pr.setFileName("ingredient-liste");
         pr.setPackageMapping("produits.IngredientsLib");
         pr.setMapping("IngredientsLib");

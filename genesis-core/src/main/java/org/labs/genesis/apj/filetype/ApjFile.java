@@ -12,4 +12,9 @@ public abstract class ApjFile implements ApjMetadataProvider{
     private String template;
     private String fileName;
     private String extension;
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

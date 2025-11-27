@@ -7,17 +7,22 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkLabel;
 import lombok.Getter;
+import org.labs.genesis.apj.filetype.ApjFile;
+import org.labs.genesis.apj.generator.ApjFileGenerator;
 import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
+import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 
 import java.io.File;
 import java.sql.Connection;
+import java.util.List;
 import javax.swing.*;
 import static org.labs.genesis.apj.ApjGenerationContext.*;
 
 @Getter
 public class PropertiesForm {
     private JPanel mainPanel;
-    private JComboBox<String> fileApjType;
+    private JComboBox<ApjFile> fileApjOptions;
     private TextFieldWithBrowseButton jarDir;
     private TextFieldWithBrowseButton libDir;
     private TextFieldWithBrowseButton location;
@@ -25,10 +30,16 @@ public class PropertiesForm {
     private JLabel connectionStatusLabel;
 
     public PropertiesForm() {
-        fileApjType.addItem(PAGE_RECHERCHE);
-        fileApjType.addItem(PAGE_INSERT);
         setupFolderChoosers();
         addTestConnectionButtonListener();
+        populateApjFileOptions();
+    }
+
+    public void populateApjFileOptions() {
+        List<ApjFile> apjFiles = ApjFileGenerator.apjFileMap.values().stream().toList();
+        for (ApjFile apjFile : apjFiles) {
+            fileApjOptions.addItem(apjFile);
+        }
     }
 
     private void setupFolderChoosers() {

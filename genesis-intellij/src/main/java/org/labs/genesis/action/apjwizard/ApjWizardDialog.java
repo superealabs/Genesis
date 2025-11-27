@@ -9,6 +9,7 @@ import org.labs.genesis.action.apjwizard.steps.PageRechercheWizardStep;
 import org.labs.genesis.action.apjwizard.steps.PropertiesWizardStep;
 import org.labs.genesis.action.apjwizard.steps.WizardStep;
 import org.labs.genesis.apj.ApjGenerationContext;
+import org.labs.genesis.apj.utilitaire.ConstantesApj;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,9 +60,9 @@ public class ApjWizardDialog extends DialogWrapper {
         step.onNext();
 
         if (currentStepIndex == 0) {
-            WizardStep nextStep = switch (context.getApjType()) {
-                case PAGE_RECHERCHE -> new PageRechercheWizardStep(context,project);
-                case PAGE_INSERT -> new PageInsertWizardStep(context);
+            WizardStep nextStep = switch (context.getApjfile().getId()) {
+                case ConstantesApj.PAGE_RECHERCHE_ID -> new PageRechercheWizardStep(context,project);
+                case ConstantesApj.PAGE_INSERT_ID -> new PageInsertWizardStep(context);
                 default -> null;
             };
 

@@ -3,6 +3,7 @@ package org.labs.genesis.action.apjwizard.steps;
 import com.intellij.openapi.project.Project;
 import org.labs.genesis.action.apjwizard.forms.PropertiesForm;
 import org.labs.genesis.apj.ApjGenerationContext;
+import org.labs.genesis.apj.filetype.ApjFile;
 import org.labs.genesis.state.ApjProjectService;
 import org.labs.genesis.state.ApjProjectState;
 
@@ -63,7 +64,7 @@ public class PropertiesWizardStep implements WizardStep {
     public void onNext() {
         context.setLibDir(propertiesForm.getLibDir().getText());
         context.setProjectJarDir(propertiesForm.getJarDir().getText());
-        context.setApjType((String) propertiesForm.getFileApjType().getSelectedItem());
+        context.setApjfile((ApjFile) propertiesForm.getFileApjOptions().getSelectedItem());
         saveState();
     }
 
