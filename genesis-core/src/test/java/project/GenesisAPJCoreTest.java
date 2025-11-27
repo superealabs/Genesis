@@ -11,7 +11,6 @@ import org.labs.utils.StringUtils;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -105,32 +104,21 @@ public class GenesisAPJCoreTest {
         try (Connection conn = UtilDBDynamique.GetConn(socobisJar, libDir)) {
             System.out.println("Connexion réussie via UtilDBDynamique !");
 
-            DatabaseMetaData metaData = conn.getMetaData();
-            String catalog = conn.getCatalog();
-            String schema = null;
-            try {
-                schema = conn.getSchema();
-            } catch (AbstractMethodError | SQLFeatureNotSupportedException e) {
-                schema = null;
-            }
-            try (ResultSet rs = metaData.getTables(catalog, schema, "%", new String[]{"TABLE"})) {
-                System.out.println("========================================================================");
-                System.out.println("Tables accessibles :");
-                while (rs.next()) {
-                    String tableName = rs.getString("TABLE_NAME");
-                    System.out.println(tableName);
-                }
-            }
-            try (ResultSet rs = metaData.getTables(catalog, schema, "%", new String[]{"VIEW"})) {
-                System.out.println("========================================================================");
-                System.out.println("Vues accessibles :");
-                while (rs.next()) {
-                    String tableName = rs.getString("TABLE_NAME");
-                    System.out.println(tableName);
-                }
+            String[] tables = UtilDBDynamique.getTablesOrViews(conn, false);
+            String[] vues = UtilDBDynamique.getTablesOrViews(conn, true);
+
+            System.out.println("=======================================");
+            System.out.println("Tables accessibles :");
+            for (String name : tables) {
+                System.out.println(name);
             }
 
-        } catch (Exception e){
+            System.out.println("=======================================");
+            System.out.println("Vues accessibles :");
+            for (String name : vues) {
+                System.out.println(name);
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

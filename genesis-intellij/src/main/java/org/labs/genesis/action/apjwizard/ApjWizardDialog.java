@@ -19,7 +19,6 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.labs.genesis.apj.ApjGenerationContext.*;
 
 public class ApjWizardDialog extends DialogWrapper {
     private final JPanel mainPanel;
@@ -131,7 +130,11 @@ public class ApjWizardDialog extends DialogWrapper {
             return;
         }
 
-        step.onNext();
+        try {
+            step.onNext();
+        } catch (ConfigurationException ex) {
+            PopUtils.showValidationError(mainPanel,ex);
+        }
         super.doOKAction();
     }
 

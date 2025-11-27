@@ -3,6 +3,7 @@ package org.labs.genesis.action.apjwizard.steps;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.labs.genesis.action.apjwizard.forms.PropertiesForm;
+import org.labs.genesis.action.apjwizard.forms.helper.ProgressUtils;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.filetype.ApjFile;
 import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
@@ -22,6 +23,7 @@ public class PropertiesWizardStep implements WizardStep {
         this.project = project;
         propertiesForm = new PropertiesForm();
         loadPersistedValues();
+        propertiesForm.addTestConnectionButtonListener(project);
     }
 
     private void loadPersistedValues() {
@@ -59,13 +61,35 @@ public class PropertiesWizardStep implements WizardStep {
     }
 
     @Override
-    public void onNext() {
+    public void onNext() throws ConfigurationException {
+        String jarDir = propertiesForm.getJarDir().getText();
+        String libDir = propertiesForm.getLibDir().getText();
         context.setLocationDir(propertiesForm.getLocation().getText());
-        context.setLibDir(propertiesForm.getLibDir().getText());
-        context.setProjectJarDir(propertiesForm.getJarDir().getText());
+        context.setLibDir(libDir);
+        context.setProjectJarDir(jarDir);
         context.setApjfile((ApjFile) propertiesForm.getFileApjOptions().getSelectedItem());
+
+        ProgressUtils.runWithProgress(project, "Loading Tables and Views...", indicator -> {
+            try (Connection conn = UtilDBDynamique.GetConn(jarDir, libDir)) {
+
+                ProgressUtils.updateProgress(indicator, "Loading tables...", 0.5);
+                String[] tables = UtilDBDynamique.getTablesOrViews(conn, false);
+
+                ProgressUtils.updateProgress(indicator, "Loading views...", 0.9);
+                String[] vues = UtilDBDynamique.getTablesOrViews(conn, true);
+
+                context.setTables(tables);
+                context.setVues(vues);
+
+                ProgressUtils.updateProgress(indicator, "Done", 1.0);
+
+            } catch (Exception e) {
+                throw new ConfigurationException("Connection failed: " + e.getMessage());
+            }
+        });
         saveState();
     }
+
 
     @Override
     public void onBack() {
@@ -77,20 +101,17 @@ public class PropertiesWizardStep implements WizardStep {
         String location = propertiesForm.getLocation().getText();
         String libDir = propertiesForm.getLibDir().getText();
         String jarDir = propertiesForm.getJarDir().getText();
-        if (location.isEmpty()) {
-            throw new ConfigurationException("The location path cannot be empty.");
-        }
-        if (libDir.isEmpty()) {
-            throw new ConfigurationException("The lib path cannot be empty.");
-        }
-        if (jarDir.isEmpty()) {
-            throw new ConfigurationException("The project jar path cannot be empty.");
-        }
-        try (Connection conn = UtilDBDynamique.GetConn(jarDir,libDir)) {
-            // Connection successful, nothing else to do
-        } catch (Exception e) {
-            throw new ConfigurationException("Connection failed: " + e.getMessage());
-        }
+        if (location.isEmpty()) throw new ConfigurationException("The location path cannot be empty.");
+        if (libDir.isEmpty()) throw new ConfigurationException("The lib path cannot be empty.");
+        if (jarDir.isEmpty()) throw new ConfigurationException("The project jar path cannot be empty.");
+
+        ProgressUtils.runWithProgress(project, "Validating Database Connection...", indicator -> {
+            try (Connection conn = UtilDBDynamique.GetConn(jarDir, libDir)) {
+                ProgressUtils.updateProgress(indicator, "Connection successful", 1.0);
+            } catch (Exception e) {
+                throw new ConfigurationException("Connection failed: " + e.getMessage());
+            }
+        });
         return true;
     }
 

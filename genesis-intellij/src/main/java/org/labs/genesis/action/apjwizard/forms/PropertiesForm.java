@@ -2,16 +2,18 @@ package org.labs.genesis.action.apjwizard.forms;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkLabel;
 import lombok.Getter;
+import org.labs.genesis.action.apjwizard.forms.helper.ProgressUtils;
 import org.labs.genesis.apj.filetype.ApjFile;
 import org.labs.genesis.apj.generator.ApjFileGenerator;
 import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
 
-import java.io.File;
 import java.sql.Connection;
 import java.util.List;
 import javax.swing.*;
@@ -28,7 +30,6 @@ public class PropertiesForm {
 
     public PropertiesForm() {
         setupFolderChoosers();
-        addTestConnectionButtonListener();
         populateApjFileOptions();
     }
 
@@ -52,25 +53,24 @@ public class PropertiesForm {
         field.addBrowseFolderListener(null, chooser);
     }
 
-    private void addTestConnectionButtonListener() {
+    public void addTestConnectionButtonListener(Project project) {
         testConnectionButton.setListener((source, data) -> {
-            File socobisJarFile = new File(jarDir.getText());
-            File libDirectory = new File(libDir.getText());
+            String jarPath = jarDir.getText();
+            String libPath = libDir.getText();
 
-            try (Connection conn = UtilDBDynamique.GetConn(socobisJarFile, libDirectory)) {
-                Messages.showInfoMessage(
-                        mainPanel,
-                        "Connection successful!",
-                        "Success"
-                );
+            try {
+                ProgressUtils.runWithProgress(project, "Testing Database Connection...", indicator -> {
+                    try (Connection conn = UtilDBDynamique.GetConn(jarPath, libPath)) {
+                        ProgressUtils.updateProgress(indicator, "Connection successful", 1.0);
+                    } catch (Exception e) {
+                        throw new ConfigurationException(e.getMessage());
+                    }
+                });
+                Messages.showInfoMessage(mainPanel, "Connection successful!", "Success");
                 connectionStatusLabel.setText("<html>Connection successful!</html>");
                 connectionStatusLabel.setForeground(JBColor.GREEN);
             } catch (Exception ex) {
-                Messages.showErrorDialog(
-                        mainPanel,
-                        "Connection failed:\n" + ex.getMessage(),
-                        "Error"
-                );
+                Messages.showErrorDialog(mainPanel, "Connection failed:\n" + ex.getMessage(), "Error");
                 connectionStatusLabel.setText("<html>Connection failed:<br>" + ex.getMessage() + "</html>");
                 connectionStatusLabel.setForeground(JBColor.RED);
             }

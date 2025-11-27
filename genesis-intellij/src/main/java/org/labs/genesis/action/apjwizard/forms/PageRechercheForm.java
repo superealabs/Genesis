@@ -151,7 +151,7 @@ public class PageRechercheForm {
         });
     }
 
-    public void showTableTree(List<String> tables, List<String> views) {
+    public void showTableTree(String[] tables, String[] views) {
         TableTreeChooser chooser = new TableTreeChooser(mainPanel, tables, views);
         String table = chooser.showDialog();
         if (table != null) {

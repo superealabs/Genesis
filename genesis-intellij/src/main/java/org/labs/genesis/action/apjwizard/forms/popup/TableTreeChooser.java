@@ -9,23 +9,23 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.List;
 
 public class TableTreeChooser {
 
     private final JPanel parentPanel;
-    private final List<String> tables;
-    private final List<String> views;
+    private final String[] tables;
+    private final String[] views;
     private String selectedTable;
 
-    public TableTreeChooser(JPanel parentPanel, List<String> tables, List<String> views) {
+    public TableTreeChooser(JPanel parentPanel, String[] tables, String[] views) {
         this.parentPanel = parentPanel;
         this.tables = tables;
         this.views = views;
     }
 
+
     public String showDialog() {
-        if ((tables == null || tables.isEmpty()) && (views == null || views.isEmpty())) {
+        if ((tables == null || tables.length == 0) && (views == null || views.length == 0)) {
             new EmptyDialog(parentPanel, "No tables or views available").showDialog();
             return null;
         }
@@ -33,11 +33,19 @@ public class TableTreeChooser {
 
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("root");
         DefaultMutableTreeNode tablesNode = new DefaultMutableTreeNode("Tables");
-        tables.forEach(t -> tablesNode.add(new DefaultMutableTreeNode(t)));
+        if (tables != null) {
+            for (String t : tables) {
+                tablesNode.add(new DefaultMutableTreeNode(t));
+            }
+        }
         root.add(tablesNode);
 
         DefaultMutableTreeNode viewsNode = new DefaultMutableTreeNode("Views");
-        views.forEach(v -> viewsNode.add(new DefaultMutableTreeNode(v)));
+        if (views != null) {
+            for (String v : views) {
+                viewsNode.add(new DefaultMutableTreeNode(v));
+            }
+        }
         root.add(viewsNode);
 
         Tree tree = new Tree(root);

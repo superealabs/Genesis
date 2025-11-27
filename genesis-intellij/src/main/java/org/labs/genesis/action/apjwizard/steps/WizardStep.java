@@ -12,7 +12,7 @@ public interface WizardStep {
 
     boolean validateStep() throws ConfigurationException;
 
-    void onNext();
+    void onNext() throws ConfigurationException;
 
     default void onBack() {}
 }

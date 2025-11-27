@@ -5,8 +5,6 @@ import org.labs.genesis.apj.ApjGenerationContext;
 import javax.swing.*;
 import com.intellij.openapi.project.Project;
 
-import java.util.List;
-
 public class PageRechercheWizardStep implements WizardStep {
     private final PageRechercheForm pageRechercheForm;
     private final ApjGenerationContext context;
@@ -14,8 +12,8 @@ public class PageRechercheWizardStep implements WizardStep {
     public PageRechercheWizardStep(ApjGenerationContext context,Project project) {
         this.context = context;
         this.pageRechercheForm = new PageRechercheForm();
-        List<String> tables = null;
-        List<String> views = null;
+        String[] tables = context.getTables();
+        String[] views = context.getVues();
         pageRechercheForm.showClassChooser(project);
         pageRechercheForm.getChooseTableButton().addActionListener(e -> pageRechercheForm.showTableTree(tables, views));
     }
