@@ -41,16 +41,21 @@ public class SyncGenerationForm {
         columnModel.getColumn(1).setPreferredWidth(120);  // Category
         columnModel.getColumn(2).setPreferredWidth(400);  // Descriptions
 
+        // Renderer personnalisé pour colorer les lignes selon la catégorie
         reportTable.setDefaultRenderer(Object.class, new CategoryCellRenderer());
     }
 
     public void populateTableReport(DatabaseReportManager reportManager) {
+        // Vider la table existante
         tableModel.clearReports();
 
         if (reportManager == null || reportManager.getTableReports() == null) {
             return;
         }
+
+        // Récupérer tous les rapports et les ajouter au modèle
         Map<String, TableChangeReport> reports = reportManager.getTableReports();
+
         for (TableChangeReport report : reports.values()) {
             tableModel.addReport(report);
         }
@@ -72,6 +77,7 @@ public class SyncGenerationForm {
         return null;
     }
 
+    // Classe interne pour le rendu personnalisé des cellules
     private static class CategoryCellRenderer extends DefaultTableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
@@ -80,6 +86,7 @@ public class SyncGenerationForm {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
             if (!isSelected) {
+                // Récupérer la catégorie de la ligne
                 Object categoryValue = table.getValueAt(row, 1);
                 if (categoryValue != null) {
                     String category = categoryValue.toString();

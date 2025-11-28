@@ -10,9 +10,10 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
-import org.labs.genesis.config.langage.generator.indicator.GenesisProcessIndicator;
+import org.labs.genesis.config.langage.generator.indicator.ProgressReporter;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.forms.SpecificConfigurationForm;
+import org.labs.genesis.indicator.IntelliJProgressAdapter;
 import org.labs.utils.StringUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.ide.impl.ProjectUtil;
@@ -142,11 +143,7 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             ProgressManager.getInstance().run(new Task.Modal(project, "Génération du Projet", true) {
                 @Override
                 public void run(@NotNull ProgressIndicator indicator) {
-                    GenesisProcessIndicator processIndicator = new GenesisProcessIndicator();
-                    // Le code exécuté ici s'exécute dans un thread de travail (pas l'EDT)
-                    processIndicator.setState("Project generation in progress...",0.1);
-                    indicator.setText(processIndicator.getMessage());
-                    indicator.setFraction(processIndicator.getProgress());
+                    IntelliJProgressAdapter processIndicator = new IntelliJProgressAdapter(indicator);
                     try {
                         generateProject(processIndicator);
                         indicator.setText("Génération terminée !");
@@ -296,7 +293,7 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         }
     }
 
-    private void generateProject(GenesisProcessIndicator indicator) throws Exception {
+    private void generateProject(ProgressReporter indicator) throws Exception {
         try {
             projectGenerator.generateProject(projectGenerationContext, indicator);
         } catch (Exception e) {

@@ -6,6 +6,7 @@ import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
+import org.labs.genesis.config.langage.generator.indicator.ProgressReporter;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMetadataProvider;
@@ -91,17 +92,17 @@ public class SyncGenerator extends ProjectGenerator {
 
 
     @Override
-    protected void generateFullProject(ProjectGenerationContext context) throws Exception {
+    protected void generateFullProject(ProjectGenerationContext context, ProgressReporter indicator) throws Exception {
         if (evaluationContext == null) {
             throw new IllegalStateException("Evaluation context is not set. Please run evaluateDatabaseChanges before generating the project.");
         }
         evaluationContext.setProjectName(evaluationContext.getProjectName()+"Copy");
-        super.generateFullProject(context);
+        super.generateFullProject(context, indicator);
     }
 
     @Override
-    public GenesisContextModel generateGenesisfile(ProjectGenerationContext context) throws Exception {
-        return super.generateGenesisfile(evaluationContext);
+    public GenesisContextModel generateGenesisfile(ProjectGenerationContext context, ProgressReporter indicator) throws Exception {
+        return super.generateGenesisfile(evaluationContext, indicator);
     }
 
     @Override

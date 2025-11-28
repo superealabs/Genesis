@@ -6,8 +6,8 @@ import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.framework.APIGenerator;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.config.langage.generator.framework.GenesisGenerator;
-import org.labs.genesis.remover.IAPIRemover;
-import org.labs.genesis.config.langage.generator.indicator.GenesisProcessIndicator;
+import org.labs.genesis.config.langage.generator.indicator.NoOpProgressReporter;
+import org.labs.genesis.config.langage.generator.indicator.ProgressReporter;
 import org.labs.genesis.config.langage.generator.sync.builder.GenesisContextBuilder;
 import org.labs.genesis.config.langage.generator.sync.models.GenesisContextModel;
 import org.labs.genesis.connexion.model.RelationParameter;
@@ -621,16 +621,15 @@ public class ProjectGenerator {
     }
 
     public void generateProject(ProjectGenerationContext context) throws Exception {
-        generateProject(context, null);
+        generateProject(context, new NoOpProgressReporter());
     }
 
-    public void generateProject(ProjectGenerationContext context, GenesisProcessIndicator indicator) throws Exception {
-        indicator.setState("Oh lala ah", 15);
+    public void generateProject(ProjectGenerationContext context, ProgressReporter indicator) throws Exception {
         if (context.isGenerateProjectStructure()) {
-            generateFullProject(context);
-            generateGenesisfile(context);
+            generateFullProject(context, indicator);
+            generateGenesisfile(context, indicator);
         } else {
-            generateComponentsOnly(context);
+            generateComponentsOnly(context, indicator);
         }
     }
     private  void generateFullBackendProject(ProjectGenerationContext context, List<TableMetadata> entities, boolean generateComponentOnly) throws Exception {
@@ -679,7 +678,9 @@ public class ProjectGenerator {
             );
         }
     }
-    protected void generateFullProject(ProjectGenerationContext context) throws Exception {
+    protected void generateFullProject(ProjectGenerationContext context, ProgressReporter indicator) throws Exception {
+        indicator.setFraction(0.1);
+        indicator.setText("Checking generation settings...");
         Database database = context.getDatabase();
         Framework framework = context.getFramework();
         Credentials credentials = context.getCredentials();
@@ -688,7 +689,8 @@ public class ProjectGenerator {
 
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
-                List<TableMetadata> allEntities = generateFullProjectComponents(context, connex, false);
+                indicator.setText("Connecting to the database...");
+                List<TableMetadata> allEntities = generateFullProjectComponents(context, connex, false, indicator);
                 generateFullProjectStrucutres(context, allEntities);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -699,19 +701,22 @@ public class ProjectGenerator {
         }
     }
 
-    public List<TableMetadata> generateFullProjectComponents(ProjectGenerationContext context, Connection connex, boolean generateComponentOnly) throws Exception {
+    public List<TableMetadata> generateFullProjectComponents(ProjectGenerationContext context, Connection connex, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
         if (context.getEntityTables() == null || context.getEntityTables().isEmpty()) {
+            indicator.setText("Fetching entity tables from database");
             context.setEntityTables(connex);
         }
         if (context.getViewTables() == null || context.getViewTables().isEmpty()) {
+            indicator.setText("Fetching view tables from database");
             context.setViewTables(connex);
         }
         List<TableMetadata> allEntities = context.getAllTables();
-        generateFullProjectComponents(context, allEntities, generateComponentOnly);
+        generateFullProjectComponents(context, allEntities, generateComponentOnly, indicator);
         return allEntities;
     }
-    public void generateFullProjectComponents(ProjectGenerationContext context, List<TableMetadata> allEntities, boolean generateComponentOnly) throws Exception {
+    public void generateFullProjectComponents(ProjectGenerationContext context, List<TableMetadata> allEntities, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
         if (context.getRelationParameters() != null) {
+            indicator.setText("Setup relation parameters");
             for (RelationParameter parameter: context.getRelationParameters()){
                 parameter.setParameter(context);
             }
@@ -809,7 +814,7 @@ public class ProjectGenerator {
         }
     }
 
-    private List<TableMetadata> generateComponentsOnly(ProjectGenerationContext context) {
+    private List<TableMetadata> generateComponentsOnly(ProjectGenerationContext context, ProgressReporter indicator) {
         Database database = context.getDatabase();
         Framework framework = context.getFramework();
         Credentials credentials = context.getCredentials();
@@ -817,7 +822,7 @@ public class ProjectGenerator {
         List<TableMetadata> allEntities = new ArrayList<>();
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
-                allEntities = generateFullProjectComponents(context, connex, true);
+                allEntities = generateFullProjectComponents(context, connex, true, indicator);
             } catch (Exception e) {
                 throw new RuntimeException("\nError in generateComponentsOnly : \n" + e);
             }
@@ -825,7 +830,7 @@ public class ProjectGenerator {
         return allEntities;
     }
 
-    public GenesisContextModel generateGenesisfile(ProjectGenerationContext context) throws Exception {
+    public GenesisContextModel generateGenesisfile(ProjectGenerationContext context, ProgressReporter indicator) throws Exception {
         GenesisContextBuilder contextBuilder = new GenesisContextBuilder();
         return contextBuilder.generateGenesisfile(context);
     }
