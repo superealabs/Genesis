@@ -135,4 +135,9 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
     public void onFrameworkSelected() {
         frontendConfigurationForm.updateFormWithFrontendFrameworkOptions();
     }
+
+    @Override
+    public boolean isStepVisible() {
+        return this.projectGenerationContext.getGenerationProcess().isGenerateProjectProcess();
+    }
 }

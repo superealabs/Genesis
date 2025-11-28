@@ -14,18 +14,15 @@ public class ColumnModificationEvaluation implements IDatabaseEvaluator {
         for (TableMetadata initialTable : initialTables) {
             for (TableMetadata targetTable : targetTables) {
                 if (initialTable.getTableName().equalsIgnoreCase(targetTable.getTableName())) {
-                    evaluateTablesColumnsCount(initialTable, targetTable, report);
+                    evaluateTableColumns(initialTable, targetTable, report);
                 }
             }
         }
     }
 
-    public void evaluateTablesColumnsCount(TableMetadata initialTable, TableMetadata targetTable, DatabaseReportManager report) {
+    public void evaluateTableColumns(TableMetadata initialTable, TableMetadata targetTable, DatabaseReportManager report) {
         boolean hasChanges = false;
-
-        if (initialTable.getColumns().length != targetTable.getColumns().length) {
-            hasChanges = true;
-        }
+        List<String> description = new ArrayList<>();
         Map<String, ColumnMetadata> targetColumnsMap = Arrays.stream(targetTable.getColumns())
                 .collect(Collectors.toMap(
                         col -> col.getName().toLowerCase(),
@@ -38,9 +35,11 @@ public class ColumnModificationEvaluation implements IDatabaseEvaluator {
 
             if (targetCol == null) {
                 hasChanges = true;
+                description.add("Column '" + initialCol.getName() + "' was removed.");
                 break;
             } else if (!initialCol.equals(targetCol)) {
                 hasChanges = true;
+                description.add("Column '" + initialCol.getName() + "' was modified.");
                 break;
             }
         }
@@ -55,6 +54,7 @@ public class ColumnModificationEvaluation implements IDatabaseEvaluator {
             for (ColumnMetadata targetCol : targetTable.getColumns()) {
                 if (!initialColumnsMap.containsKey(targetCol.getName().toLowerCase())) {
                     hasChanges = true;
+                    description.add("Column '" + targetCol.getName() + "' was added.");
                     break;
                 }
             }
@@ -62,8 +62,14 @@ public class ColumnModificationEvaluation implements IDatabaseEvaluator {
 
         if (hasChanges) {
             TableChangeReport tableChangeReport = report.getTableReport(initialTable.getTableName());
-            tableChangeReport.onUpdateTable(initialTable, targetTable);
+            tableChangeReport.onUpdateTable(initialTable, targetTable, description);
+            onModelUpdateColumn(tableChangeReport);
             report.addTableReport(tableChangeReport);
         }
+    }
+
+    private void onModelUpdateColumn(TableChangeReport tableChangeReport) {
+        tableChangeReport.updateWebApiChangeReport(true, true, false, false);
+        tableChangeReport.updateFrontendChangeReport(true,true, false);
     }
 }

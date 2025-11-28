@@ -136,5 +136,8 @@ public class InitializationWizardStep extends ModuleWizardStep {
         return true;
     }
 
-
+    @Override
+    public boolean isStepVisible() {
+        return this.projectGenerationContext.getGenerationProcess().isGenerateProjectProcess();
+    }
 }

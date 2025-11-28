@@ -39,14 +39,16 @@ public class FirstWizardStep extends ModuleWizardStep {
 
     @Override
     public void updateDataModel() {
+        try {
+            // New project
+            context.getGenerationProcess().setGenerateProjectProcess(form.getGenerateNewProject().isSelected());
+            // Rule to code
+            context.getGenerationProcess().setRunToCodeGenerationProcess(form.ruleTodCodeSelected());
+            context.getGenerationProcess().setGenerateProjectProcess(form.ruleTodCodeSelected());
+            // Sync project
+            context.getGenerationProcess().setSynchGenerationProcess(form.getSyncProject().isSelected());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
-
-//    @Override
-//    public boolean validate() throws ConfigurationException {
-//    }
-
-//    @Override
-//    public boolean isStepVisible() {
-//
-//    }
 }

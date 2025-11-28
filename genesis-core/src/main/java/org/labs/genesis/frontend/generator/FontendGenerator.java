@@ -9,6 +9,8 @@ import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMetadataProvider;
 import org.labs.genesis.frontend.generator.model.*;
+import org.labs.genesis.frontend.generator.resources.BrandingGenerator;
+import org.labs.genesis.frontend.generator.resources.LangGenerator;
 import org.labs.utils.FileUtils;
 import org.labs.utils.StringUtils;
 
@@ -172,41 +174,10 @@ public class FontendGenerator implements IFrontendGenerator{
             return "";
         }
         HashMap<String, Object> metadata = FrameworkFrontendMetadataProvider.getLangsHashMap(context, allEntities);
-        // Generate logo
-        String logoPath = frontendFramework.getFrontendPaths().getLogoPath();
-        logoPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(logoPath, metadata));
-        if (!frontendFramework.getProjectBranding().useLogoLink() && frontendFramework.getProjectBranding().hasLogo()){
-            File logoFile = frontendFramework.getProjectBranding().getLogoFile();
-            try{
-                Path targetPath = Paths.get(logoPath, frontendFramework.getProjectBranding().getLogoUrl());
-                Files.createDirectories(targetPath.getParent());
-                Files.copy(logoFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-            }
-            catch (IOException e){
-                throw new Exception("Unable to upload the logo file at "+logoPath+" : "+e.getMessage(),e);
-            }
-        }
-
-        // Generate favicon
-        String faviconPath = frontendFramework.getFrontendPaths().getFaviconPath();
-        faviconPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(faviconPath, metadata));
-        if (!frontendFramework.getProjectBranding().useFaviconLink() && frontendFramework.getProjectBranding().hasFavicon()){
-            File faviconFile = frontendFramework.getProjectBranding().getFaviconFile();
-            try{
-                Path targetPath = Paths.get(faviconPath,frontendFramework.getProjectBranding().getFaviconUrl());
-                Files.copy(faviconFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-            }
-            catch (IOException e){
-                throw new Exception("Unable to updload the favicon at "+faviconPath+" : "+e.getMessage(),e);
-            }
-        }
-        // Generate lang files
-        List<InterfaceLang> langs = frontendFramework.getFrontendLayout().getLangs();
-        String langPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(frontendFramework.getFrontendPaths().langsPath, metadata));
-        for (InterfaceLang lang : langs) {
-            String content = engine.render(lang.getContent(),metadata);
-            FileUtils.createFile(langPath,lang.getName().toLowerCase(), context.getFrontendLanguage().getExtension(), content);
-        }
+        BrandingGenerator brandingGenerator = new BrandingGenerator(engine);
+        brandingGenerator.generateRessources(context, metadata);
+        LangGenerator langGenerator = new LangGenerator(engine);
+        langGenerator.generateRessources(context, metadata);
         return "";
     }
 

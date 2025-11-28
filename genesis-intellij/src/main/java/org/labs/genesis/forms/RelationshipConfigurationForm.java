@@ -61,6 +61,16 @@ public class RelationshipConfigurationForm {
         removeLineButton.addActionListener(e -> removeRelation());
     }
 
+    public void setTableData(List<RelationParameter> relations){
+        this.relationParameters.clear();
+        this.relationParameters.addAll(relations);
+        DefaultTableModel model = (DefaultTableModel) relationTable.getModel();
+        model.setRowCount(0);
+        for (RelationParameter relation : relations){
+            model.addRow(relation.toRow());
+        }
+    }
+
     private void initializeTable() {
         String[] columnNames = {"Parent Entity", "Child Entity", "Form", "Is Mandatory"};
         DefaultTableModel model = new DefaultTableModel(null, columnNames) {

@@ -157,4 +157,8 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
         }
     }
 
+    @Override
+    public boolean isStepVisible() {
+        return this.projectGenerationContext.getGenerationProcess().isGenerateProjectProcess();
+    }
 }

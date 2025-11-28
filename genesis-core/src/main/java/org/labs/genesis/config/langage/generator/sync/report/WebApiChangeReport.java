@@ -5,14 +5,25 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class WebApiChangeReport implements IChangeReport {
-    public Boolean generateAdditionalFiles = false;
-    public Boolean generateModel = false;
-    public Boolean generateDAO = false;
-    public Boolean generateService = false;
-    public Boolean generateController = false;
+public class WebApiChangeReport {
+    public Boolean generateAdditionalFiles;
+    public Boolean generateModel;
+    public Boolean generateDAO;
+    public Boolean generateService;
+    public Boolean generateController;
 
-    @Override
+    public WebApiChangeReport() {
+        this(false, false, false, false, false);
+    }
+
+    public WebApiChangeReport(Boolean generateAdditionalFiles, Boolean generateModel, Boolean generateDAO, Boolean generateService, Boolean generateController) {
+        this.generateAdditionalFiles = generateAdditionalFiles;
+        this.generateModel = generateModel;
+        this.generateDAO = generateDAO;
+        this.generateService = generateService;
+        this.generateController = generateController;
+    }
+
     public void onAddTable() {
         this.generateAdditionalFiles = true;
         this.generateModel = true;
@@ -21,7 +32,6 @@ public class WebApiChangeReport implements IChangeReport {
         this.generateController = true;
     }
 
-    @Override
     public void onRemoveTable() {
         this.generateAdditionalFiles = true;
         this.generateModel = false;
@@ -30,12 +40,12 @@ public class WebApiChangeReport implements IChangeReport {
         this.generateController = false;
     }
 
-    @Override
-    public void onUpdateTable() {
+    public void onUpdateTable(Boolean model, Boolean dao, Boolean service, Boolean controller) {
         this.generateAdditionalFiles = false;
-        this.generateModel = true;
-        this.generateDAO = true;
-        this.generateService = true;
-        this.generateController = true;
+        this.generateModel = model;
+        this.generateDAO = dao;
+        this.generateService = service;
+        this.generateController = controller;
     }
+
 }

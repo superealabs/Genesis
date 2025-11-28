@@ -1,12 +1,11 @@
 package org.labs.genesis.config.langage.generator.sync.report;
 
-public class FrontendChangeReport implements IChangeReport {
+public class FrontendChangeReport {
     public Boolean generateAdditionalFiles = false;
     public Boolean generateModel = false;
     public Boolean generateService = false;
     public Boolean generateComponents = false;
 
-    @Override
     public void onAddTable() {
         this.generateAdditionalFiles = true;
         this.generateModel = true;
@@ -14,7 +13,6 @@ public class FrontendChangeReport implements IChangeReport {
         this.generateService = true;
     }
 
-    @Override
     public void onRemoveTable() {
         this.generateAdditionalFiles = true;
         this.generateModel = false;
@@ -22,11 +20,10 @@ public class FrontendChangeReport implements IChangeReport {
         this.generateService = false;
     }
 
-    @Override
-    public void onUpdateTable() {
+    public void onUpdateTable(Boolean model, Boolean components, Boolean service) {
         this.generateAdditionalFiles = false;
-        this.generateModel = true;
-        this.generateComponents = true;
-        this.generateService = true;
+        this.generateModel = model;
+        this.generateComponents = components;
+        this.generateService = service;
     }
 }

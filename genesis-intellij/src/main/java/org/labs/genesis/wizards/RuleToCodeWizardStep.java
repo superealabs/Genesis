@@ -68,6 +68,6 @@ public class RuleToCodeWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-       return initStep.getFirstForm().ruleTodCodeSelected();
+        return context.getGenerationProcess().isRunToCodeGenerationProcess();
     }
 }

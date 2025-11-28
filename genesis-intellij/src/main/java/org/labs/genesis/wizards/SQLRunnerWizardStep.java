@@ -4,6 +4,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.forms.SQLRunnerForm;
 
+import javax.naming.ConfigurationException;
 import javax.swing.*;
 
 public class SQLRunnerWizardStep extends ModuleWizardStep {
@@ -24,6 +25,8 @@ public class SQLRunnerWizardStep extends ModuleWizardStep {
     @Override
     public void updateDataModel() {}
 
-    //@Override
-    //public boolean validate() throws ConfigurationException {}
+    @Override
+    public boolean isStepVisible() {
+        return this.projectGenerationContext.getGenerationProcess().isGenerateProjectProcess();
+    }
 }

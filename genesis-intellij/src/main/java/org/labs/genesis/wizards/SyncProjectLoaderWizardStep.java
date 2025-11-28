@@ -10,15 +10,17 @@ import javax.swing.*;
 
 public class SyncProjectLoaderWizardStep extends ModuleWizardStep {
     private final SyncProjectLoaderForm form;
-    public SyncGenerator syncGenerator;
-    private final FirstWizardStep firstWizardStep;
+    public final SyncGenerator syncGenerator;
     private ProjectGenerationContext projectGenerationContext;
+    private RelationshipConfigurationWizardStep relationshipConfigurationWizardStep;
+    private SynchGenerationWizardStep synchGenerationWizardStep;
 
-    public SyncProjectLoaderWizardStep(ProjectGenerationContext context, FirstWizardStep firstWizardStep) {
+    public SyncProjectLoaderWizardStep(ProjectGenerationContext context, RelationshipConfigurationWizardStep relationshipConfigurationWizardStep, SynchGenerationWizardStep synchGenerationWizardStep) {
         this.syncGenerator = new SyncGenerator();
-        this.firstWizardStep = firstWizardStep;
         this.form = new SyncProjectLoaderForm();
         this.projectGenerationContext = context;
+        this.relationshipConfigurationWizardStep = relationshipConfigurationWizardStep;
+        this.synchGenerationWizardStep = synchGenerationWizardStep;
     }
     @Override
     public JComponent getComponent() {
@@ -28,7 +30,12 @@ public class SyncProjectLoaderWizardStep extends ModuleWizardStep {
     @Override
     public void updateDataModel() {
         try {
-            projectGenerationContext = syncGenerator.loadProjectContext(form.getFolderField().getText());
+            ProjectGenerationContext loadProjectContext = syncGenerator.loadProjectContext(form.getFolderField().getText());
+            loadProjectContext.setGenerationProcess(projectGenerationContext.generationProcess);
+            this.projectGenerationContext = loadProjectContext;
+            relationshipConfigurationWizardStep.setProjectGenerationContext(projectGenerationContext);
+            relationshipConfigurationWizardStep.updateTableSelects();
+            synchGenerationWizardStep.setContext(projectGenerationContext, syncGenerator);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -49,6 +56,6 @@ public class SyncProjectLoaderWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        return firstWizardStep.getFirstForm().syncSelected();
+        return projectGenerationContext.getGenerationProcess().isSynchGenerationProcess();
     }
 }

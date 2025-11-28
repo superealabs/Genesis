@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.langage.*;
+import org.labs.genesis.config.langage.generator.indicator.IntellijGenerationProcess;
+import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
+import org.labs.genesis.config.langage.generator.sync.report.FrontendChangeReport;
+import org.labs.genesis.config.langage.generator.sync.report.WebApiChangeReport;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.RelationParameter;
@@ -24,6 +28,10 @@ public class ProjectGenerationContext {
     public static final String COMPONENT_DAO = "DAO";
     public static final String COMPONENT_SERVICE = "Service";
     public static final String COMPONENT_CONTROLLER = "Controller";
+    public static  final String FRONTEND_COMPONENT_MODEL = "Model";
+    public static  final String FRONTEND_COMPONENT_SERVICE = "Service";
+    public static  final String FRONTEND_COMPONENT = "Components";
+    public IntellijGenerationProcess generationProcess;
     public String frontendPort;
     private Database database;
     private Language language;
@@ -44,6 +52,7 @@ public class ProjectGenerationContext {
     private List<RelationParameter> relationParameters;
     private Connection connection;
     private List<String> generationOptions;
+    private List<String> frontendGenerationOptions;
     private boolean generateProjectStructure = true;
     // Frontend Generation
     private  boolean generateFrontendApp = true;
@@ -55,6 +64,11 @@ public class ProjectGenerationContext {
     // FrameworkMVC specific configurations
     private  boolean generateViewsTemplates = true;
     private ViewsTemplate viewsTemplate;
+
+    public ProjectGenerationContext(){
+        this.generationProcess = new IntellijGenerationProcess();
+        this.frontendGenerationOptions = getAllFrontendGenerationOptions();
+    }
 
     public ProjectGenerationContext duplicateWithNoTables(){
         ProjectGenerationContext copy = new ProjectGenerationContext();
@@ -75,6 +89,8 @@ public class ProjectGenerationContext {
         copy.setViewNames(new ArrayList<>());
         copy.setRelationParameters(new ArrayList<>(this.getRelationParameters()));
         copy.setGenerationOptions(new ArrayList<>(this.getGenerationOptions()));
+        copy.setFrontendGenerationOptions(new ArrayList<>(this.getFrontendGenerationOptions()));
+        copy.setGenerationProcess(this.generationProcess);
         copy.setGenerateProjectStructure(this.generateProjectStructure);
         copy.setGenerateFrontendApp(this.generateFrontendApp);
         copy.setFrontendFramework(this.frontendFramework);
@@ -169,10 +185,6 @@ public class ProjectGenerationContext {
         setViewNames(viewNames);
     }
 
-    public Set<TableMetadata> getEntitiesSet() {
-        return new HashSet<>(this.entityTables);
-    }
-
     public Dictionary<String, List<TableMetadata>> splitTableByRelations() {
         Dictionary<String, List<TableMetadata>> splitTables = new java.util.Hashtable<>();
         List<TableMetadata> childTables = new java.util.ArrayList<>();
@@ -187,6 +199,65 @@ public class ProjectGenerationContext {
         splitTables.put("PARENTS", this.entityTables);
         splitTables.put("CHILDS", childTables);
         return splitTables;
+    }
+
+    public void applyWebApiChangeReport(WebApiChangeReport webApiChangeReport){
+        if (this.getFramework() == null){
+            return;
+        }
+        resetFramework();
+        if (this.getFramework().getModel() != null){
+            this.getFramework().getModel().setToGenerate(webApiChangeReport.getGenerateModel());
+        }
+        if (this.getFramework().getModelDao() != null){
+            this.getFramework().getModelDao().setToGenerate(webApiChangeReport.getGenerateDAO());
+        }
+        if (this.getFramework().getService() != null){
+            this.getFramework().getService().setToGenerate(webApiChangeReport.getGenerateService());
+        }
+        if (this.getFramework().getController() != null){
+            this.getFramework().getController().setToGenerate(webApiChangeReport.getGenerateController());
+        }
+
+        if (webApiChangeReport.generateAdditionalFiles){
+            setGenerateProjectStructure(true);
+        }
+    }
+
+    public void applyFrontendChangeReport(FrontendChangeReport frontendChangeReport){
+        resetFrontendGenerationOptions();
+        if (!frontendChangeReport.generateModel && this.getFrontendGenerationOptions().contains(FRONTEND_COMPONENT_MODEL)){
+            this.getFrontendGenerationOptions().add(FRONTEND_COMPONENT_MODEL);
+        }
+
+        if (!frontendChangeReport.generateComponents && this.getFrontendGenerationOptions().contains(FRONTEND_COMPONENT)){
+            this.getFrontendGenerationOptions().add(FRONTEND_COMPONENT);
+        }
+
+        if (!frontendChangeReport.generateService && this.getFrontendGenerationOptions().contains(FRONTEND_COMPONENT_SERVICE)){
+            this.getFrontendGenerationOptions().add(FRONTEND_COMPONENT_SERVICE);
+        }
+
+        if (frontendChangeReport.generateAdditionalFiles){
+            setGenerateFrontendStructure(true);
+        }
+    }
+
+    public void resetFramework(){
+        Framework framework = ProjectGenerator.findFrameworkById(this.getFramework().getId());
+        this.setFramework(framework);
+    }
+
+    public void resetFrontendGenerationOptions(){
+        this.setFrontendGenerationOptions(getAllFrontendGenerationOptions());
+    }
+
+    public List<String> getAllFrontendGenerationOptions(){
+        List<String> allOptions = new ArrayList<>();
+        allOptions.add(FRONTEND_COMPONENT);
+        allOptions.add(FRONTEND_COMPONENT_MODEL);
+        allOptions.add(FRONTEND_COMPONENT_SERVICE);
+        return allOptions;
     }
 
     public TableMetadata findTableByName(String tableName, List<TableMetadata> tables) {

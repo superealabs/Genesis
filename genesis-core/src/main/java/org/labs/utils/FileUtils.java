@@ -319,4 +319,7 @@ public class FileUtils {
             file.delete();
         }
     }
+    public static void deleteFile(String filePath, String fileName, String fileExtension) {
+        deleteFile(filePath + "/" + fileName + "." + fileExtension);
+    }
 }

@@ -140,4 +140,9 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
     private void updateRelationsOptionsOnEntityChange(Dictionary<String,List<TableMetadata>> relations) {
         this.relationshipConfigurationWizardStep.updateTableSelects(relations);
     }
+
+    @Override
+    public boolean isStepVisible() {
+        return this.projectGenerationContext.getGenerationProcess().isGenerateProjectProcess();
+    }
 }

@@ -1,4 +1,4 @@
-package org.labs.genesis.config.langage.generator.framework;
+package org.labs.genesis.remover;
 
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.langage.Framework;
@@ -7,85 +7,48 @@ import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider.*;
+import static org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider.getPrimaryModelDaoHashMap;
 
-public class APIGenerator implements GenesisGenerator {
+public class APIRemover implements IAPIRemover {
     private final GenesisTemplateEngine engine;
 
-    public APIGenerator(GenesisTemplateEngine engine) {
+    public APIRemover(GenesisTemplateEngine engine) {
         this.engine = engine;
     }
 
-
     @Override
-    public String generateModel(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
-        // Vérification de compatibilité
+    public String removeModel(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
         if (language.getId() != framework.getLanguageId()) {
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the framework '" +
                     framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
         }
-
-        // Chargement du template
-        String templateContent = FrameworkTemplateLoader.loadModelTemplate(framework);
-
-        // Rendu intermédiaire
-        HashMap<String, Object> metadataPrimary = getModelHashMap(framework, language, tableMetadata);
-        String result = engine.simpleRender(templateContent, metadataPrimary);
-
-        // Rendu final
         HashMap<String, Object> metadataFinally = getHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
-
-        // Ajustement du chemin de sauvegarde en fonction de generateComponentOnly
         String fileSavePath;
         if (generateComponentOnly) {
-            // Chemin simplifié : destinationFolder/projectName/models
             fileSavePath = destinationFolder + "/" + projectName + "/models";
         } else {
-            // Utiliser le chemin configuré dans le framework
             fileSavePath = framework.getModel().getModelSavePath();
             fileSavePath = engine.simpleRender(fileSavePath, metadataFinally);
         }
-
-        // S'assurer que le répertoire existe
-        FileUtils.createDirectory(fileSavePath);
-
-        // Création du fichier correspondant
         String fileName = tableMetadata.getClassName();
-
-        // convention de nommage pour node
-        if(framework.getId()==Constantes.ExpressJs_ID){
-            String className = tableMetadata.getClassName();
-            fileName = className.substring(0,1).toLowerCase() + className.substring(1)+".entity";
-        }
-        result = engine.render(result, metadataFinally);
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
-
-        ProjectGenerator.renderFilesEdits(framework.getModel().getModelAdditionalFiles(), metadataFinally);
-        //ProjectGenerator.renderFilesEdits(framework.getModel().getModelTestUnitFiles(), metadataFinally);
-        return result;
+        FileUtils.deleteFile(fileSavePath, fileName, language.getExtension());
+        ProjectGenerator.removeFilesEdits(framework.getModel().getModelAdditionalFiles(), metadataFinally);
+        return fileSavePath;
     }
 
     @Override
-    public String generateDao(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
-        // Vérification de compatibilité
+    public String removeDao(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
         if (language.getId() != framework.getLanguageId()) {
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the framework '" +
                     framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
         }
-
-        // Chargement du template
-        String templateContent = FrameworkTemplateLoader.loadModelTemplate(framework);
-
-        // Rendu intermédiaire
-        HashMap<String, Object> metadataPrimary = getModelDaoHashMap(framework, language, tableMetadata);
-        String result = engine.simpleRender(templateContent, metadataPrimary);
-
-        // Rendu final
         HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
         metadataFinally.putAll(getPrimaryModelDaoHashMap(framework, tableMetadata));
 
@@ -100,11 +63,6 @@ public class APIGenerator implements GenesisGenerator {
             fileSavePath = framework.getModelDao().getModelDaoSavePath();
             fileSavePath = engine.simpleRender(fileSavePath, metadataFinally);
         }
-
-        // S'assurer que le répertoire existe
-        FileUtils.createDirectory(fileSavePath);
-
-        // Création du fichier
         String fileName;
         if (generateComponentOnly) {
             fileName = tableMetadata.getClassName() + "Repository";
@@ -115,36 +73,23 @@ public class APIGenerator implements GenesisGenerator {
             fileName = framework.getModelDao().getModelDaoName();
             fileName = engine.simpleRender(fileName, metadataFinally);
         }
-
-        result = engine.render(result, metadataFinally);
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
-
-        // Si generateComponentOnly est false, on rend les fichiers additionnels
-        if (!generateComponentOnly) {
-            ProjectGenerator.renderFilesEdits(framework.getModelDao().getModelDaoAdditionalFiles(), metadataFinally);
+        if(framework.getId()==Constantes.ExpressJs_ID){
+            String className = tableMetadata.getClassName();
+            fileName = className.substring(0,1).toLowerCase() + className.substring(1)+".entity";
         }
-        return result;
+        FileUtils.deleteFile(fileSavePath, fileName, language.getExtension());
+        ProjectGenerator.removeFilesEdits(framework.getModelDao().getModelDaoAdditionalFiles(), metadataFinally);
+        return fileSavePath;
     }
 
     @Override
-    public String generateService(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
-        // Vérification de compatibilité
+    public String removeService(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
         if (language.getId() != framework.getLanguageId()) {
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the framework '" +
                     framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
         }
-        // Chargement du template
-        String templateContent = FrameworkTemplateLoader.loadModelTemplate(framework);
-
-        // Rendu intermédiaire
-        HashMap<String, Object> metadataPrimary = getServiceHashMap(framework, language, tableMetadata);
-        String result = engine.simpleRender(templateContent, metadataPrimary);
-
-        // Rendu final
         HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
-
-        // Ajustement du chemin de sauvegarde
         String fileSavePath;
         if (generateComponentOnly) {
             fileSavePath = destinationFolder + "/" + projectName + "/services";
@@ -152,11 +97,6 @@ public class APIGenerator implements GenesisGenerator {
             fileSavePath = framework.getService().getServiceSavePath();
             fileSavePath = engine.simpleRender(fileSavePath, metadataFinally);
         }
-
-        // S'assurer que le répertoire existe
-        FileUtils.createDirectory(fileSavePath);
-
-        // Création du fichier
         String fileName;
         if (generateComponentOnly) {
             // convention de nommage node
@@ -177,39 +117,19 @@ public class APIGenerator implements GenesisGenerator {
                 fileName = engine.simpleRender(fileName, metadataFinally);
             }
         }
-
-        result = engine.render(result, metadataFinally);
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
-
-        // Si generateComponentOnly est false, on rend les fichiers additionnels
-        if (!generateComponentOnly) {
-            ProjectGenerator.renderFilesEdits(framework.getService().getServiceAdditionalFiles(), metadataFinally);
-        }
-
-        return result;
+        FileUtils.deleteFile(fileSavePath, fileName, language.getExtension());
+        ProjectGenerator.removeFilesEdits(framework.getService().getServiceAdditionalFiles(), metadataFinally);
+        return fileSavePath;
     }
 
     @Override
-    public String generateController(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
-        // Vérification de compatibilité
+    public String removeController(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
         if (language.getId() != framework.getLanguageId()) {
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the framework '" +
                     framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
         }
-
-
-        // Chargement du template
-        String templateContent = FrameworkTemplateLoader.loadModelTemplate(framework);
-
-        // Rendu intermédiaire
-        HashMap<String, Object> metadataPrimary = getControllerHashMap(framework, language, tableMetadata);
-        String result = engine.simpleRender(templateContent, metadataPrimary);
-
-        // Rendu final
         HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
-
-        // Ajustement du chemin de sauvegarde
         String fileSavePath;
         if (generateComponentOnly) {
             fileSavePath = destinationFolder + "/" + projectName + "/controllers";
@@ -217,11 +137,6 @@ public class APIGenerator implements GenesisGenerator {
             fileSavePath = framework.getController().getControllerSavePath();
             fileSavePath = engine.simpleRender(fileSavePath, metadataFinally);
         }
-
-        // S'assurer que le répertoire existe
-        FileUtils.createDirectory(fileSavePath);
-
-        // Création du fichier
         String fileName;
         if (generateComponentOnly) {
             // convention de nommage node
@@ -242,16 +157,9 @@ public class APIGenerator implements GenesisGenerator {
                 fileName = engine.simpleRender(fileName, metadataFinally);
             }
         }
-
-        result = engine.render(result, metadataFinally);
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
-
-        // Si generateComponentOnly est false, on rend les fichiers additionnels
-        if (!generateComponentOnly) {
-            ProjectGenerator.renderFilesEdits(framework.getController().getControllerAdditionalFiles(), metadataFinally);
-        }
-
-        return result;
+        FileUtils.deleteFile(fileSavePath, fileName, language.getExtension());
+        ProjectGenerator.removeFilesEdits(framework.getController().getControllerAdditionalFiles(), metadataFinally);
+        return fileSavePath;
     }
 
 }

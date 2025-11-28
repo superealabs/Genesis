@@ -44,7 +44,8 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
         RuleToCodeWizardAIStep ruleToCodeWizardAIStep =  new RuleToCodeWizardAIStep(projectGenerationContext , firstWizardStep );
 
         // Sync Generation
-        SyncProjectLoaderWizardStep syncProjectLoaderWizardStep = new SyncProjectLoaderWizardStep(projectGenerationContext, firstWizardStep);
+        SynchGenerationWizardStep syncGenerationWizardStep = new SynchGenerationWizardStep();
+        SyncProjectLoaderWizardStep syncProjectLoaderWizardStep = new SyncProjectLoaderWizardStep(projectGenerationContext, relationshipConfigurationWizardStep, syncGenerationWizardStep);
 
         FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(projectGenerationContext );
         FrontendConditionalWizardStep frontendConditionalWizardStep = new FrontendConditionalWizardStep(projectGenerationContext, frontendConfigurationWizardStep);
@@ -60,6 +61,7 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
                 relationshipConfigurationWizardStep,
                 frontendConditionalWizardStep,
                 specificConfigurationWizardStep,
+                syncGenerationWizardStep,
         };
     }
 

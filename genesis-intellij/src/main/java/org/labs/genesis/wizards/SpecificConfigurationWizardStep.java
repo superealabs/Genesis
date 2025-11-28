@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.generator.indicator.GenesisProcessIndicator;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.forms.SpecificConfigurationForm;
 import org.labs.utils.StringUtils;
@@ -141,12 +142,13 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             ProgressManager.getInstance().run(new Task.Modal(project, "Génération du Projet", true) {
                 @Override
                 public void run(@NotNull ProgressIndicator indicator) {
+                    GenesisProcessIndicator processIndicator = new GenesisProcessIndicator();
                     // Le code exécuté ici s'exécute dans un thread de travail (pas l'EDT)
-                    indicator.setText("Project generation in progress...");
-                    indicator.setFraction(0.1);
+                    processIndicator.setState("Project generation in progress...",0.1);
+                    indicator.setText(processIndicator.getMessage());
+                    indicator.setFraction(processIndicator.getProgress());
                     try {
-                        generateProject();
-
+                        generateProject(processIndicator);
                         indicator.setText("Génération terminée !");
                         indicator.setFraction(1.0);
 
@@ -294,9 +296,9 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         }
     }
 
-    private void generateProject() throws Exception {
+    private void generateProject(GenesisProcessIndicator indicator) throws Exception {
         try {
-            projectGenerator.generateProject(projectGenerationContext);
+            projectGenerator.generateProject(projectGenerationContext, indicator);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
@@ -318,5 +320,10 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             throw new IllegalArgumentException("At least one table or view must be selected");
         }
         specificConfigurationForm.updateFormWithTablesAndViews(selectedValues, selectedViewValues);
+    }
+
+    @Override
+    public boolean isStepVisible() {
+        return projectGenerationContext.getGenerationProcess().isGenerateProjectProcess();
     }
 }

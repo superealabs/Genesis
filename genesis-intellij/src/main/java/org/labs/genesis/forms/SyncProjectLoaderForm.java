@@ -8,10 +8,8 @@ import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import lombok.Getter;
 import org.labs.genesis.config.Constantes;
-
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,7 +17,6 @@ import java.nio.file.Paths;
 @Getter
 public class SyncProjectLoaderForm {
     private JPanel mainPanel;
-    private JPanel selectPanel;
     private TextFieldWithBrowseButton folderField;
     private JLabel statusLabel;
     private static final String GENESIS_CONTEXT_FILE = Constantes.GENESIS_CONTEXT_FILE;
@@ -45,11 +42,7 @@ public class SyncProjectLoaderForm {
     }
 
     private void setupStatusLabel() {
-        if (statusLabel == null) {
-            statusLabel = new JLabel();
-            statusLabel.setHorizontalAlignment(SwingConstants.LEFT);
-            selectPanel.add(statusLabel);
-        }
+        statusLabel.setText("");
     }
 
     private void setupListeners() {

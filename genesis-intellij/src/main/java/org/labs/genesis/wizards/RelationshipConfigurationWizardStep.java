@@ -2,6 +2,7 @@ package org.labs.genesis.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
+import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
@@ -13,7 +14,8 @@ import java.util.List;
 
 public class RelationshipConfigurationWizardStep extends ModuleWizardStep {
     private final RelationshipConfigurationForm relationshipConfigurationForm;
-    private final ProjectGenerationContext projectGenerationContext;
+    @Setter
+    private ProjectGenerationContext projectGenerationContext;
 
     public RelationshipConfigurationWizardStep(ProjectGenerationContext projectGenerationContext){
         this.projectGenerationContext = projectGenerationContext;
@@ -38,5 +40,15 @@ public class RelationshipConfigurationWizardStep extends ModuleWizardStep {
 
     public void updateTableSelects(Dictionary<String,List<TableMetadata>> relations) {
         this.relationshipConfigurationForm.populateSelect(relations);
+    }
+    public void updateTableSelects() {
+        this.relationshipConfigurationForm.populateSelect(this.projectGenerationContext.splitTableByRelations());
+        this.relationshipConfigurationForm.setTableData(projectGenerationContext.getRelationParameters());
+    }
+
+    @Override
+    public boolean isStepVisible() {
+        return this.projectGenerationContext.getGenerationProcess().isGenerateProjectProcess() ||
+               this.projectGenerationContext.getGenerationProcess().isSynchGenerationProcess();
     }
 }
