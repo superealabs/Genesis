@@ -14,7 +14,7 @@ public class PageRechercheWizardStep implements WizardStep {
         this.pageRechercheForm = new PageRechercheForm();
         String[] tables = context.getTables();
         String[] views = context.getVues();
-        pageRechercheForm.showClassChooser(project);
+        pageRechercheForm.showClassChooser(project,context);
         pageRechercheForm.getChooseTableButton().addActionListener(e -> pageRechercheForm.showTableTree(tables, views));
     }
 

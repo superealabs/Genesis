@@ -29,7 +29,6 @@ public class PropertiesForm {
     private JLabel connectionStatusLabel;
 
     public PropertiesForm() {
-        setupFolderChoosers();
         populateApjFileOptions();
     }
 
@@ -40,17 +39,17 @@ public class PropertiesForm {
         }
     }
 
-    private void setupFolderChoosers() {
-        setupFolderChooser(libDir, "Select Lib Directory", "Choose the lib directory for your project");
-        setupFolderChooser(jarDir, "Select Project JAR Directory", "Choose project JARs");
-        setupFolderChooser(location, "Select Project Location", "Choose location for your file");
+    public void setupFolderChoosers(Project project) {
+        setupFolderChooser(project,libDir, "Select Lib Directory", "Choose the lib directory for your project");
+        setupFolderChooser(project,jarDir, "Select Project JAR Directory", "Choose project JARs");
+        setupFolderChooser(project,location, "Select Project Location", "Choose location for your file");
     }
 
-    private void setupFolderChooser(TextFieldWithBrowseButton field, String title, String description) {
+    private void setupFolderChooser(Project project,TextFieldWithBrowseButton field, String title, String description) {
         FileChooserDescriptor chooser = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         chooser.withTitle(title);
         chooser.withDescription(description);
-        field.addBrowseFolderListener(null, chooser);
+        field.addBrowseFolderListener(project, chooser);
     }
 
     public void addTestConnectionButtonListener(Project project) {

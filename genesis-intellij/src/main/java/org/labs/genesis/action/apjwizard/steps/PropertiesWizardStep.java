@@ -22,16 +22,16 @@ public class PropertiesWizardStep implements WizardStep {
         this.context = context;
         this.project = project;
         propertiesForm = new PropertiesForm();
-        loadPersistedValues();
-        propertiesForm.addTestConnectionButtonListener(project);
+        loadStateAndInitializeForm();
     }
 
-    private void loadPersistedValues() {
+    private void loadStateAndInitializeForm() {
         if (project == null) return;
+        propertiesForm.setupFolderChoosers(project);
+        propertiesForm.addTestConnectionButtonListener(project);
 
         ApjProjectState state = ApjProjectService.getInstance(project).getState();
         if (state == null) return;
-
         propertiesForm.getLibDir().setText(state.getLibDir());
         propertiesForm.getJarDir().setText(state.getProjectJarDir());
         propertiesForm.getLocation().setText(context.getLocationDir());

@@ -45,6 +45,10 @@ public class UtilClassLoader {
         return fields;
     }
 
+    public static List<Field> listFieldsStopClassMAPTable(Class<?> cls) {
+        return listFields(cls, "ClassMAPTable");
+    }
+
     public static void closeLoader(URLClassLoader loader) {
         try {
             loader.close();
