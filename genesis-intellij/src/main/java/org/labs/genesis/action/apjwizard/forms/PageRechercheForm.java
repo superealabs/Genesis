@@ -58,8 +58,11 @@ public class PageRechercheForm {
     private DefaultTableModel recapTableModel;
     private DefaultTableModel tableauTableModel;
     private List<String> availableFiltreFields;
+    private LinkedHashMap<String, ApjField> allFieldsMap = new LinkedHashMap<>();
     private LinkedHashMap<String, ApjField> availableRecapFieldsMap = new LinkedHashMap<>();
     private LinkedHashMap<String, ApjField> availableTabFieldsMap = new LinkedHashMap<>();
+    private LinkedHashMap<String, ApjField> availableFilterFieldsMap = new LinkedHashMap<>();
+    private LinkedHashMap<String, ApjField> availableBetweenFilterFieldsMap = new LinkedHashMap<>();
     private List<ApjField> apjFields;
 
     public PageRechercheForm() {
@@ -81,40 +84,94 @@ public class PageRechercheForm {
         nomTableField.setEditable(false);
     }
 
+    private JBTable initTable(JBTable table,DefaultTableModel tableModel,JScrollPane scroll){
+        table = new JBTable(tableModel);
+        table.setDefaultRenderer(Object.class, new TableRenderer());
+        table.setDragEnabled(true);
+        table.setDropMode(DropMode.INSERT_ROWS);
+        table.setTransferHandler(new TableRowTransferHandler(table));
+        scroll.setViewportView(table);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        scroll.setViewportBorder(null);
+        return table;
+    }
+
+
     private void initFiltreTable() {
         filtreTableModel = new TableauTableModel(new Object[]{"Champ", "Libellé"});
-        filtreTable = new JBTable(filtreTableModel);
-        filtreTable.setDefaultRenderer(Object.class, new TableRenderer());
-        scrollFiltre.setViewportView(filtreTable);
-        scrollFiltre.setBorder(BorderFactory.createEmptyBorder());
-        scrollFiltre.setViewportBorder(null);
+        filtreTable = initTable(filtreTable, filtreTableModel, scrollFiltre);
         DefaultActionGroup filtreGroup = new DefaultActionGroup();
         filtreGroup.add(new AnAction("Simple") {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-
+                showAddFieldsFilterAndAddRows(filtreTableModel, false);
             }
         });
         filtreGroup.add(new AnAction("Intervalle") {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-
+                showAddFieldsFilterAndAddRows(filtreTableModel, true);
             }
         });
         TableToolbarHelper.builder()
             .table(filtreTable)
             .panel(filtrePanel)
             .addActionGroup(filtreGroup)
+            .removeAction(() -> removeSelectedFilterRow(filtreTable, filtreTableModel))
             .build().init();
     }
 
+    private void showAddFieldsFilterAndAddRows(DefaultTableModel tableModel, boolean isBetween) {
+        LinkedHashMap<String, ApjField> map = isBetween ? availableBetweenFilterFieldsMap : availableFilterFieldsMap;
+        FieldSelectionDialog dialog = new FieldSelectionDialog(mainPanel, new ArrayList<>(map.keySet()));
+        dialog.show();
+        List<String> selectedFields = dialog.getSelected();
+        if (selectedFields == null || selectedFields.isEmpty()) return;
+
+        for (String fieldName : selectedFields) {
+            availableBetweenFilterFieldsMap.remove(fieldName);
+            ApjField field = availableFilterFieldsMap.remove(fieldName);
+            if (field == null) continue;
+            if (isBetween) {
+                tableModel.addRow(new Object[]{fieldName+"1", StringUtils.majStart(fieldName)+" min"});
+                tableModel.addRow(new Object[]{fieldName+"2", StringUtils.majStart(fieldName)+" max"});
+                continue;
+            }
+            tableModel.addRow(new Object[]{fieldName, StringUtils.majStart(fieldName)});
+        }
+    }
+
+    private void removeSelectedFilterRow(JBTable table, DefaultTableModel model) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow < 0) return;
+
+        String fieldName = table.getValueAt(selectedRow, 0).toString();
+        if ((fieldName.endsWith("1") || fieldName.endsWith("2"))) {
+            String baseName = fieldName.substring(0, fieldName.length() - 1);
+            if (allFieldsMap.containsKey(baseName)) {
+                availableBetweenFilterFieldsMap.put(baseName, allFieldsMap.get(baseName));
+                availableFilterFieldsMap.put(baseName, allFieldsMap.get(baseName));
+                for (int i = model.getRowCount() - 1; i >= 0; i--) {
+                    Object v = model.getValueAt(i, 0);
+                    if (v == null) continue;
+                    String name = v.toString();
+                    if (name.equals(baseName + "1") || name.equals(baseName + "2")) {
+                        model.removeRow(i);
+                    }
+                }
+                return;
+            }
+        }
+        ApjField apjField = new ApjField();
+        apjField.setNom(fieldName);
+        availableFilterFieldsMap.put(fieldName, apjField);
+        model.removeRow(selectedRow);
+    }
+
+
     private void initRecapTable() {
         recapTableModel = new TableauTableModel(new Object[]{"Colonne", "Libellé"});
-        recapTable = new JBTable(recapTableModel);
-        recapTable.setDefaultRenderer(Object.class, new TableRenderer());
-        scrollRecap.setViewportView(recapTable);
-        scrollRecap.setBorder(BorderFactory.createEmptyBorder());
-        scrollRecap.setViewportBorder(null);
+        recapTable = initTable(recapTable, recapTableModel, scrollRecap);
         TableToolbarHelper.builder()
             .table(recapTable)
             .panel(recapitulationPanel)
@@ -138,14 +195,7 @@ public class PageRechercheForm {
 
     private void initTableauTable() {
         tableauTableModel = new TableauTableModel(new Object[]{"Colonne", "Libellé", "Lien", "AttLien"});
-        tableauTable = new JBTable(tableauTableModel);
-        tableauTable.setDefaultRenderer(Object.class, new TableRenderer());
-        tableauTable.setDragEnabled(true);
-        tableauTable.setDropMode(DropMode.INSERT_ROWS);
-        tableauTable.setTransferHandler(new TableRowTransferHandler(tableauTable));
-        scrollTableau.setViewportView(tableauTable);
-        scrollTableau.setBorder(BorderFactory.createEmptyBorder());
-        scrollTableau.setViewportBorder(null);
+        tableauTable = initTable(tableauTable, tableauTableModel, scrollTableau);
         TableToolbarHelper.builder()
             .table(tableauTable)
             .panel(tableauPanel)
@@ -191,8 +241,7 @@ public class PageRechercheForm {
                     Class<?> cls = loader.loadClass(mappingField.getText());
                     List<Field> fields = UtilClassLoader.listFieldsStopClassMAPTable(cls);
                     List<ApjField> apjFields = ApjField.javaFieldsToApjFields(fields);
-                    loadAvailableRecapFields(apjFields);
-                    loadAvailableTabFields(apjFields);
+                    loadFieldsMap(apjFields);
                 } catch (Exception ignored) {
 
                 }
@@ -200,19 +249,23 @@ public class PageRechercheForm {
         });
     }
 
-    private void loadAvailableRecapFields(List<ApjField> fields) {
+    private void loadFieldsMap(List<ApjField> fields) {
+        allFieldsMap.clear();
+        availableFilterFieldsMap.clear();
+        availableBetweenFilterFieldsMap.clear();
         availableRecapFieldsMap.clear();
+        availableTabFieldsMap.clear();
+
         for (ApjField field : fields) {
+            allFieldsMap.put(field.getNom(), field);
+            availableFilterFieldsMap.put(field.getNom(), field);
+            availableTabFieldsMap.put(field.getNom(), field);
+            if (field.isRangeable()) {
+                availableBetweenFilterFieldsMap.put(field.getNom(), field);
+            }
             if (field.isSummable()) {
                 availableRecapFieldsMap.put(field.getNom(), field);
             }
-        }
-    }
-
-    private void loadAvailableTabFields(List<ApjField> fields) {
-        availableTabFieldsMap.clear();
-        for (ApjField field : fields) {
-            availableTabFieldsMap.put(field.getNom(), field);
         }
     }
 
