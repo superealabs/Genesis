@@ -20,6 +20,7 @@ import org.labs.genesis.action.apjwizard.forms.helper.TableToolbarHelper;
 import org.labs.genesis.action.apjwizard.forms.popup.FieldSelectionDialog;
 import org.labs.genesis.action.apjwizard.forms.popup.TableTreeChooser;
 import org.labs.genesis.action.apjwizard.forms.renderer.TableRenderer;
+import org.labs.genesis.action.apjwizard.forms.tablehandler.FormTableModel;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.TableRowTransferHandler;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.TableauTableModel;
 import org.labs.genesis.apj.ApjGenerationContext;
@@ -98,7 +99,7 @@ public class PageRechercheForm {
 
 
     private void initFiltreTable() {
-        filtreTableModel = new TableauTableModel(new Object[]{"Champ", "Libellé"});
+        filtreTableModel = new FormTableModel(new Object[]{"Champ", "Libellé"});
         filtreTable = initTable(filtreTable, filtreTableModel, scrollFiltre);
         DefaultActionGroup filtreGroup = new DefaultActionGroup();
         filtreGroup.add(new AnAction("Simple") {
@@ -165,12 +166,13 @@ public class PageRechercheForm {
         ApjField apjField = new ApjField();
         apjField.setNom(fieldName);
         availableFilterFieldsMap.put(fieldName, apjField);
+        availableBetweenFilterFieldsMap.put(fieldName, apjField);
         model.removeRow(selectedRow);
     }
 
 
     private void initRecapTable() {
-        recapTableModel = new TableauTableModel(new Object[]{"Colonne", "Libellé"});
+        recapTableModel = new FormTableModel(new Object[]{"Colonne", "Libellé"});
         recapTable = initTable(recapTable, recapTableModel, scrollRecap);
         TableToolbarHelper.builder()
             .table(recapTable)
