@@ -33,4 +33,13 @@ public interface ProgressReporter {
     default boolean isActive() {
         return true;
     }
+
+    default void setProgress(double progress, String message, String details) {
+        setText(message);
+        setFraction(progress);
+        setText2(details);
+    }
+    default void setProgress(double progress, String message) {
+        setProgress(progress, message, "");
+    }
 }

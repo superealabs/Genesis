@@ -69,6 +69,8 @@ public class SyncGenerator extends ProjectGenerator {
         try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)){
             evaluationContext.setConnection(connex);
             evaluationContext.setTables();
+            this.evaluationContext.applyTableRelations();
+            this.databaseReportManager.clear();
             evaluateEntitiesChanges(initialContext, evaluationContext, evaluator);
             evaluateViewsChanges(initialContext, evaluationContext, evaluator);
         }
@@ -140,8 +142,8 @@ public class SyncGenerator extends ProjectGenerator {
     }
 
     @Override
-    public void generateFullProjectStrucutres(ProjectGenerationContext context, List<TableMetadata> allEntities) throws Exception {
-        super.generateFullProjectStrucutres(evaluationContext, allEntities);
+    public void generateFullProjectStrucutres(ProjectGenerationContext context, List<TableMetadata> allEntities, ProgressReporter indicator) throws Exception {
+        super.generateFullProjectStrucutres(evaluationContext, allEntities, indicator);
     }
 
     @Override

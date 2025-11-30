@@ -58,9 +58,6 @@ public class ColumnMetadata {
 
         same = same && Objects.equals(this.name, other.name);
         same = same && Objects.equals(this.type, other.type);
-//        same = same && Objects.equals(this.frontEndType, other.frontEndType);
-//        same = same && Objects.equals(this.uiType, other.uiType);
-//        same = same && Objects.equals(this.frontEndReferencedColumnType, other.frontEndReferencedColumnType);
         same = same && Objects.equals(this.databaseColumnType, other.databaseColumnType);
         same = same && Objects.equals(this.referencedTable, other.referencedTable);
         same = same && Objects.equals(this.columnType, other.columnType);

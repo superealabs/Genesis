@@ -18,7 +18,10 @@ public class SyncGenerationForm {
     private JPanel mainPanel;
     private JPanel summaryTitlePanel;
     private JTable reportTable;
+    private JButton refreshButton;
     private TableReportModel tableModel;
+
+
 
     public SyncGenerationForm() {
         initializeTable();
@@ -41,7 +44,6 @@ public class SyncGenerationForm {
         columnModel.getColumn(1).setPreferredWidth(120);  // Category
         columnModel.getColumn(2).setPreferredWidth(400);  // Descriptions
 
-        // Renderer personnalisé pour colorer les lignes selon la catégorie
         reportTable.setDefaultRenderer(Object.class, new CategoryCellRenderer());
     }
 

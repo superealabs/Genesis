@@ -29,9 +29,7 @@ public class SynchGenerationWizardStep extends ModuleWizardStep {
 
     @Override
     public JComponent getComponent() {
-        if (!isInitialized && syncGenerator != null) {
-            initializeData();
-        }
+        initializeData();
         return syncGenerationForm.getMainPanel();
     }
 
@@ -50,19 +48,20 @@ public class SynchGenerationWizardStep extends ModuleWizardStep {
                     @Override
                     public void run(@NotNull ProgressIndicator indicator) {
                         IntelliJProgressAdapter processIndicator = new IntelliJProgressAdapter(indicator);
+                        indicator.setText("Processing ...");
+                        indicator.setFraction(0);
                         try {
                             syncGenerator.generateProject(generationContextManager.getContext(),processIndicator);
-                            indicator.setText("Génération terminée !");
+                            indicator.setText("Synchronization completed");
                             indicator.setFraction(1.0);
-
                         } catch (Exception e) {
                             throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
                         }
                     }
                 });
                 Messages.showInfoMessage(project,
-                        "Le projet a été généré avec succès !",
-                        "Succès de la Génération");
+                        "Project synchronization completed successfully",
+                        "Success");
 
             } catch (Exception e) {
                 Messages.showErrorDialog(project,
@@ -92,10 +91,9 @@ public class SynchGenerationWizardStep extends ModuleWizardStep {
     }
 
     private void initializeData() {
-        if (isInitialized) {
+        if (syncGenerator == null) {
             return;
         }
-
         try {
             syncGenerator.evaluateDatabaseChanges(generationContextManager.getContext());
             if (syncGenerator.getDatabaseReportManager() != null) {

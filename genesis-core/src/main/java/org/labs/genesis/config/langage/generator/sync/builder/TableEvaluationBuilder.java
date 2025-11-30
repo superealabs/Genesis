@@ -1,7 +1,7 @@
 package org.labs.genesis.config.langage.generator.sync.builder;
 
 import org.labs.genesis.config.langage.generator.sync.evaluators.AddedTableEvaluation;
-import org.labs.genesis.config.langage.generator.sync.evaluators.ColumnModificationEvaluation;
+import org.labs.genesis.config.langage.generator.sync.evaluators.TableModificationEvaluation;
 import org.labs.genesis.config.langage.generator.sync.evaluators.RemovedTableEvaluation;
 
 public class TableEvaluationBuilder {
@@ -13,7 +13,7 @@ public class TableEvaluationBuilder {
         return  new RemovedTableEvaluation();
     }
 
-    public static ColumnModificationEvaluation buildColumnModificationEvaluation() {
-        return  new ColumnModificationEvaluation();
+    public static TableModificationEvaluation buildColumnModificationEvaluation() {
+        return  new TableModificationEvaluation();
     }
 }

@@ -145,19 +145,18 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
                 @Override
                 public void run(@NotNull ProgressIndicator indicator) {
                     IntelliJProgressAdapter processIndicator = new IntelliJProgressAdapter(indicator);
+                    processIndicator.setProgress(0,"Processing ...");
                     try {
                         generateProject(processIndicator);
-                        indicator.setText("Génération terminée !");
-                        indicator.setFraction(1.0);
-
+                        processIndicator.setProgress(1,"Generation complete");
                     } catch (Exception e) {
                         throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
                     }
                 }
             });
             Messages.showInfoMessage(project,
-                    "Le projet a été généré avec succès !",
-                    "Succès de la Génération");
+                    "Project generation completed successfully",
+                    "Success");
 
         } catch (Exception e) {
             Messages.showErrorDialog(project,

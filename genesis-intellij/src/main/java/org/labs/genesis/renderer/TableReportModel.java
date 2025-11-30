@@ -100,6 +100,6 @@ public class TableReportModel extends AbstractTableModel {
             return descriptions.get(0);
         }
 
-        return String.join("; ", descriptions);
+        return String.join("\n", descriptions);
     }
 }

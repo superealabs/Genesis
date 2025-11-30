@@ -237,7 +237,7 @@ public class ProjectGenerator {
         return database;
     }
 
-    private void generateFrontendProjectFiles(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {
+    private void generateFrontendProjectFiles(ProjectGenerationContext context, List<TableMetadata> entities, ProgressReporter indicator) throws Exception {
         if (!context.isGenerateFrontendApp() || !context.isGenerateFrontendStructure()) {
             return;
         }
@@ -248,20 +248,26 @@ public class ProjectGenerator {
         HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(entities, context);
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
+        indicator.setFraction(0.73);
         selectedSecurityOption.ifPresent(security -> {
             try {
                 HashMap<String, Object> securityMap=FrameworkFrontendMetadataProvider. getHashMapForSecurity(securityType,context);
                 finalRenderData.putAll(securityMap);
                 if (frontendFramework.getAuthenticationFiles() != null) {
+                    indicator.setText2("generating frontend authentication files");
                     renderFilesEdits(frontendFramework.getAuthenticationFiles(),finalRenderData);
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
+        indicator.setFraction(0.76);
         if (frontendFramework.getAdditionalFiles() != null) {
+            indicator.setText2("generating frontend additional files");
             renderFilesEdits(frontendFramework.getAdditionalFiles(),finalRenderData);
         }
+        indicator.setFraction(0.85);
+        indicator.setText2("generating frontend ressources");
         IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
         frontendGenerator.generateRessources(context, entities);
     }
@@ -288,7 +294,7 @@ public class ProjectGenerator {
         renderFilesEdits(frameworkMVC.getView().getTemplateEngineFilesEdits(), frontendHashMap);
     }
 
-    protected void generateProjectFiles(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {
+    protected void generateProjectFiles(ProjectGenerationContext context, List<TableMetadata> entities, ProgressReporter indicator) throws Exception {
         if (!context.isGenerateProjectStructure()){
             return;
         }
@@ -349,15 +355,24 @@ public class ProjectGenerator {
             projectFilesEdits = new ArrayList<>(context.getProject().getProjectFilesEdits());
         }
 
+        indicator.setText2("renderinng project files");
+        indicator.setFraction(0.62);
         renderAndCopyFiles(context.getProject().getProjectFiles(), projectFilesEditsHashMap);
+        indicator.setFraction(0.63);
         renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
+        indicator.setFraction(0.64);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
+        indicator.setFraction(0.65);
+        indicator.setText2("generation project files");
         renderFilesEdits(projectFilesEdits, projectFilesEditsHashMap);
+        indicator.setFraction(0.67);
+        indicator.setText2("generation framework additional files");
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
 
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
         System.out.println(securityType + " SECURITYYY");
 
+        indicator.setFraction(0.68);
         if (securityType != null && !securityType.isBlank()) {
             Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework()
                     .getFrameworkSecurities()
@@ -367,27 +382,31 @@ public class ProjectGenerator {
 
             selectedSecurityOption.ifPresent(security -> {
                 try {
+                    indicator.setText2("generating framework security files");
                     renderFilesEdits(security.getSecurityFiles(), projectFilesEditsHashMap);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             });
         }
-
+        indicator.setFraction(0.69);
         String cacheProvider = (String) context.getFrameworkConfiguration().get("cacheProvider");
         Optional<FrameworkCaching> selectedCacheProviderOption = context.getFramework().getSelectedCacheProviderByName(cacheProvider);
 
         selectedCacheProviderOption.ifPresent(frameworkCaching -> {
             try {
+                indicator.setText2("generating framework caching files");
                 renderFilesEdits(frameworkCaching.getConfigFiles(), projectFilesEditsHashMap);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
 
+        indicator.setFraction(0.7);
         // Post-setup for Django: create venv and install requirements
         try {
             if (context.getFramework().getCoreFramework().equalsIgnoreCase("Django")) {
+                indicator.setText2("generating django virtual environnement");
                 // Vérifier si l'utilisateur a choisi de créer le venv
                 Map<String, Object> frameworkConfig = context.getFrameworkConfiguration();
                 boolean createVenv = true; // Par défaut, créer le venv si l'option n'est pas spécifiée
@@ -634,30 +653,40 @@ public class ProjectGenerator {
     }
     private  void generateFullBackendProject(ProjectGenerationContext context, List<TableMetadata> entities, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
         GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
+        indicator.setProgress(0.4,"Generating backend components");
+        int i = 0;
         for (TableMetadata tableMetadata : entities) {
-            indicator.setText("Generating backend components for table: " + tableMetadata.getTableName());
-            indicator.setFraction(0.4);
+            indicator.setText2("Generating files for entity: " + tableMetadata.getTableName());
+            if (i == entities.size() - 1) {
+                indicator.setFraction(0.45);
+            }
             generateBackendComponents(
                     context,
                     genesisGenerator,
                     tableMetadata,
                     generateComponentOnly
             );
+            i++;
         }
     }
     private  void generateFullFrontendProject(ProjectGenerationContext context, List<TableMetadata> entities, ProgressReporter indicator) throws Exception {
         if (!context.isGenerateFrontendApp()) { return; }
         IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
         initFrontendProjectFiles(context);
+        indicator.setProgress(0.5,"Generating frontend components");
+        int i=0;
         for (TableMetadata tableMetadata : entities) {
-            indicator.setText("Generating frontend components for table: " + tableMetadata.getTableName());
-            indicator.setFraction(0.4);
+            indicator.setText2("Generating files for entity: " + tableMetadata.getTableName());
+            if (i == entities.size() - 1) {
+                indicator.setFraction(0.55);
+            }
             generateFrontendComponents(
                     context,
                     frontendGenerator,
                     tableMetadata,
                     false
             );
+            i++;
         }
     }
     private void generateFullViewsComponents(ProjectGenerationContext context, List<TableMetadata> allEntities) throws Exception {
@@ -683,8 +712,7 @@ public class ProjectGenerator {
         }
     }
     protected void generateFullProject(ProjectGenerationContext context, ProgressReporter indicator) throws Exception {
-        indicator.setFraction(0.1);
-        indicator.setText("Checking generation settings...");
+        indicator.setProgress(0.1,"Checking generation settings...");
         Database database = context.getDatabase();
         Framework framework = context.getFramework();
         Credentials credentials = context.getCredentials();
@@ -693,38 +721,37 @@ public class ProjectGenerator {
 
         if (framework.getUseDB()) {
             try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
-                indicator.setText("Connecting to the database...");
                 List<TableMetadata> allEntities = generateFullProjectComponents(context, connex, false, indicator);
-                generateFullProjectStrucutres(context, allEntities);
+                generateFullProjectStrucutres(context, allEntities, indicator);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException("\nError in generateFullProject : \n" + e);
             }
         } else {
-            generateProjectFiles(context, null);
+            generateProjectFiles(context, null,indicator);
         }
     }
 
     public List<TableMetadata> generateFullProjectComponents(ProjectGenerationContext context, Connection connex, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
+        indicator.setProgress(0.2,"Fetching data from database...");
         if (context.getEntityTables() == null || context.getEntityTables().isEmpty()) {
-            indicator.setText("Fetching entity tables from database");
+            indicator.setText2("Fetching tables");
             context.setEntityTables(connex);
         }
         if (context.getViewTables() == null || context.getViewTables().isEmpty()) {
-            indicator.setText("Fetching view tables from database");
+            indicator.setText("Fetching views");
             context.setViewTables(connex);
         }
+        indicator.setText2("Build all entities table");
+        indicator.setFraction(0.25);
         List<TableMetadata> allEntities = context.getAllTables();
         generateFullProjectComponents(context, allEntities, generateComponentOnly, indicator);
         return allEntities;
     }
     public void generateFullProjectComponents(ProjectGenerationContext context, List<TableMetadata> allEntities, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
-        if (context.getRelationParameters() != null) {
-            indicator.setText("Setup relation parameters");
-            for (RelationParameter parameter: context.getRelationParameters()){
-                parameter.setParameter(context);
-            }
-        }
+        indicator.setProgress(0.3,"Setup relation parameters");
+        context.applyTableRelations();
+        indicator.setFraction(0.35);
         generateFullBackendProject(context, allEntities, generateComponentOnly, indicator);
         if (context.getFramework() instanceof FrameworkMVC) {
             generateFullViewsComponents(context, allEntities);
@@ -732,16 +759,17 @@ public class ProjectGenerator {
             generateFullFrontendProject(context, allEntities, indicator);
         }
     }
-    public void generateFullProjectStrucutres(ProjectGenerationContext context, List<TableMetadata> allEntities) throws Exception {
+    public void generateFullProjectStrucutres(ProjectGenerationContext context, List<TableMetadata> allEntities, ProgressReporter indicator) throws Exception {
+        indicator.setProgress(0.6, "Generating project structures");
         if (allEntities == null || allEntities.isEmpty()) {
             allEntities = context.getAllTables();
         }
-        generateProjectFiles(context, allEntities);
+        generateProjectFiles(context, allEntities, indicator);
         if (context.getFramework() instanceof FrameworkMVC) {
             ViewsTemplate viewsTemplate = context.getViewsTemplate();
             generateViewsFiles(context, viewsTemplate);
         } else {
-            generateFrontendProjectFiles(context, allEntities);
+            generateFrontendProjectFiles(context, allEntities, indicator);
         }
     }
     protected void useRealSidAndDriverType(Database database,Credentials credentials)
@@ -835,6 +863,7 @@ public class ProjectGenerator {
     }
 
     public GenesisContextModel generateGenesisfile(ProjectGenerationContext context, ProgressReporter indicator) throws Exception {
+        indicator.setProgress(0.9, "Finalisation generation","generating genesis file context");
         GenesisContextBuilder contextBuilder = new GenesisContextBuilder();
         return contextBuilder.generateGenesisfile(context);
     }

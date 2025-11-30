@@ -55,4 +55,8 @@ public class DatabaseReportManager {
                 .map(TableChangeReport::getNewTable)
                 .toList();
     }
+
+    public void clear(){
+        this.tableReports.clear();
+    }
 }

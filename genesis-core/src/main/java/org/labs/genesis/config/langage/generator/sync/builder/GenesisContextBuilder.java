@@ -55,6 +55,8 @@ public class GenesisContextBuilder {
         contextModel.addViewsToContext(context);
         context.setEntityNamesFromTables(context.getEntityTables());
         context.setViewNamesFromTables(context.getViewTables());
+        context.setRelationParameters(context.getRelationParameters());
+        context.applyTableRelations();
         return context;
     }
 }

@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Setter
 @Getter
 @AllArgsConstructor
@@ -16,11 +18,16 @@ public class ChildTableMetadata {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof ChildTableMetadata other) {
-            if(this.table.getTableName().equalsIgnoreCase(other.getTable().getTableName())){
-                return true;
-            }
-        }
-        return super.equals(obj);
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        boolean same = true;
+        ChildTableMetadata other = (ChildTableMetadata) obj;
+
+        same = same && Objects.equals(this.table.getTableName(), other.table.getTableName());
+        same = same && Objects.equals(this.mandatory, other.mandatory);
+        same = same && Objects.equals(this.hasForm, other.hasForm);
+        same = same && Objects.equals(this.column, other.column);
+
+        return  same;
     }
 }

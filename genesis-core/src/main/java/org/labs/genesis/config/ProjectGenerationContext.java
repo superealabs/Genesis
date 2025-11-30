@@ -282,4 +282,13 @@ public class ProjectGenerationContext {
     public String getDestinationFolder() {
         return destinationFolder+"/"+ StringUtils.toPascalCase(projectName);
     }
+
+    public void applyTableRelations(){
+        if (getRelationParameters() == null ){
+            return;
+        }
+        for (RelationParameter relationParameter : this.getRelationParameters()) {
+            relationParameter.setParameter(this);
+        }
+    }
 }
