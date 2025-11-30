@@ -184,7 +184,7 @@ public class ProjectGenerator {
             System.out.println("Rendered file name: " + fileName);
             System.out.println("Extension: " + extension);
 
-            FileUtils.createFile(destinationFilePath, fileName, extension, content);
+            FileUtils.createOrMergeFile((String)initializeHashMap.get("destinationFolder"),destinationFilePath, fileName, extension, content);
             System.out.println("File edited and created successfully: " + fileName + "\n");
         }
     }
@@ -632,9 +632,11 @@ public class ProjectGenerator {
             generateComponentsOnly(context, indicator);
         }
     }
-    private  void generateFullBackendProject(ProjectGenerationContext context, List<TableMetadata> entities, boolean generateComponentOnly) throws Exception {
+    private  void generateFullBackendProject(ProjectGenerationContext context, List<TableMetadata> entities, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
         GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
         for (TableMetadata tableMetadata : entities) {
+            indicator.setText("Generating backend components for table: " + tableMetadata.getTableName());
+            indicator.setFraction(0.4);
             generateBackendComponents(
                     context,
                     genesisGenerator,
@@ -643,11 +645,13 @@ public class ProjectGenerator {
             );
         }
     }
-    private  void generateFullFrontendProject(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {
+    private  void generateFullFrontendProject(ProjectGenerationContext context, List<TableMetadata> entities, ProgressReporter indicator) throws Exception {
         if (!context.isGenerateFrontendApp()) { return; }
         IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
         initFrontendProjectFiles(context);
         for (TableMetadata tableMetadata : entities) {
+            indicator.setText("Generating frontend components for table: " + tableMetadata.getTableName());
+            indicator.setFraction(0.4);
             generateFrontendComponents(
                     context,
                     frontendGenerator,
@@ -721,11 +725,11 @@ public class ProjectGenerator {
                 parameter.setParameter(context);
             }
         }
-        generateFullBackendProject(context, allEntities, generateComponentOnly);
+        generateFullBackendProject(context, allEntities, generateComponentOnly, indicator);
         if (context.getFramework() instanceof FrameworkMVC) {
             generateFullViewsComponents(context, allEntities);
         } else {
-            generateFullFrontendProject(context, allEntities);
+            generateFullFrontendProject(context, allEntities, indicator);
         }
     }
     public void generateFullProjectStrucutres(ProjectGenerationContext context, List<TableMetadata> allEntities) throws Exception {

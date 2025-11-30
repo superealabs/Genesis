@@ -65,4 +65,8 @@ public class Constantes {
     public static final String GENESIS_CONTEXT_FILENAME = "genesis-context";
     public static final String GENESIS_CONTEXT_FILE_EXTENSION = "json";
     public static final String GENESIS_CONTEXT_FILE = GENESIS_CONTEXT_FILENAME+"."+GENESIS_CONTEXT_FILE_EXTENSION;
+
+
+    public static final String GENESIS_GENERATION_TEMP_FILE_EXTENSION = "temp";
+    public static final String GENESIS_BASE_FILES_HIDDEN_DIRECTORY_NAME = ".base";
 }

@@ -96,7 +96,7 @@ public class SyncGenerator extends ProjectGenerator {
         if (evaluationContext == null) {
             throw new IllegalStateException("Evaluation context is not set. Please run evaluateDatabaseChanges before generating the project.");
         }
-        evaluationContext.setProjectName(evaluationContext.getProjectName()+"Copy");
+        evaluationContext.setProjectName(evaluationContext.getProjectName());
         super.generateFullProject(context, indicator);
     }
 
@@ -106,27 +106,42 @@ public class SyncGenerator extends ProjectGenerator {
     }
 
     @Override
-    public List<TableMetadata> generateFullProjectComponents(ProjectGenerationContext context, Connection connex, boolean generateComponentOnly) throws Exception {
+    public List<TableMetadata> generateFullProjectComponents(ProjectGenerationContext context, Connection connex, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
+        indicator.setText("Setting up generation context for synchronization...");
+        indicator.setFraction(0.2);
         evaluationContext.setGenerateFrontendSkeletons(false);
         evaluationContext.setGenerateFrontendStructure(false);
+        evaluationContext.setGenerateProjectStructure(false);
         List<TableMetadata> addedTables = databaseReportManager.getAddedTables();
         List<TableMetadata> updatedTables = databaseReportManager.getUpdatedTables();
         List<TableMetadata> deletedTables = databaseReportManager.getRemovedTables();
         Set<TableMetadata> allTables = new HashSet<>(context.getAllTables());
 
         List<TableMetadata> entitiesForGeneration = new ArrayList<>();
-        if (addedTables != null && !addedTables.isEmpty()) {
-            allTables.addAll(addedTables);
-        }
-        if (updatedTables != null && !updatedTables.isEmpty()){
-            entitiesForGeneration.addAll(updatedTables);
-        }
         if (deletedTables != null && !deletedTables.isEmpty()){
+            indicator.setText("Removing components for deleted tables...");
+            indicator.setFraction(0.2);
             deletedTables.forEach(allTables::remove);
             removeFullProjectComponents(evaluationContext, deletedTables, generateComponentOnly);
         }
-        super.generateFullProjectComponents(evaluationContext, entitiesForGeneration, generateComponentOnly);
+        if (addedTables != null && !addedTables.isEmpty()) {
+            indicator.setText("Generating components for added tables...");
+            indicator.setFraction(0.3);
+            allTables.addAll(addedTables);
+            entitiesForGeneration.addAll(addedTables);
+        }
+        if (updatedTables != null && !updatedTables.isEmpty()){
+            indicator.setText("Updating components for modified tables...");
+            indicator.setFraction(0.3);
+            entitiesForGeneration.addAll(updatedTables);
+        }
+        super.generateFullProjectComponents(evaluationContext, entitiesForGeneration, generateComponentOnly, indicator);
         return allTables.stream().toList();
+    }
+
+    @Override
+    public void generateFullProjectStrucutres(ProjectGenerationContext context, List<TableMetadata> allEntities) throws Exception {
+        super.generateFullProjectStrucutres(evaluationContext, allEntities);
     }
 
     @Override

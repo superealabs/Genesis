@@ -62,7 +62,7 @@ public class APIGenerator implements GenesisGenerator {
             fileName = className.substring(0,1).toLowerCase() + className.substring(1)+".entity";
         }
         result = engine.render(result, metadataFinally);
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
+        FileUtils.createOrMergeFile(destinationFolder, fileSavePath, fileName, language.getExtension(), result);
 
         ProjectGenerator.renderFilesEdits(framework.getModel().getModelAdditionalFiles(), metadataFinally);
         //ProjectGenerator.renderFilesEdits(framework.getModel().getModelTestUnitFiles(), metadataFinally);
@@ -117,7 +117,7 @@ public class APIGenerator implements GenesisGenerator {
         }
 
         result = engine.render(result, metadataFinally);
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
+        FileUtils.createOrMergeFile(destinationFolder,fileSavePath, fileName, language.getExtension(), result);
 
         // Si generateComponentOnly est false, on rend les fichiers additionnels
         if (!generateComponentOnly) {
@@ -179,7 +179,7 @@ public class APIGenerator implements GenesisGenerator {
         }
 
         result = engine.render(result, metadataFinally);
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
+        FileUtils.createOrMergeFile(destinationFolder,fileSavePath, fileName, language.getExtension(), result);
 
         // Si generateComponentOnly est false, on rend les fichiers additionnels
         if (!generateComponentOnly) {
@@ -244,7 +244,7 @@ public class APIGenerator implements GenesisGenerator {
         }
 
         result = engine.render(result, metadataFinally);
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
+        FileUtils.createOrMergeFile(destinationFolder,fileSavePath, fileName, language.getExtension(), result);
 
         // Si generateComponentOnly est false, on rend les fichiers additionnels
         if (!generateComponentOnly) {

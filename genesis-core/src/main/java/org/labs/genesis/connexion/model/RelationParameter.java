@@ -14,7 +14,7 @@ public class RelationParameter {
     private Boolean hasForm;
 
     public Object[] toRow(){
-        return new Object[]{parentTable, childTable, mandatory};
+        return new Object[]{parentTable, childTable, hasForm, mandatory};
     }
 
     @Override

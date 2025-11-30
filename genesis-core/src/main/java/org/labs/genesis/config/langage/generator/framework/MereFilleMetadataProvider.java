@@ -38,6 +38,12 @@ public class MereFilleMetadataProvider {
             }
             metadata.put("parents", parents);
         }
+        else {
+            metadata.put("isParentTable", false);
+            metadata.put("isChildTable", false);
+            metadata.put("children", null);
+            metadata.put("parents", null);
+        }
         return metadata;
     }
     public static HashMap<String, Object> getChildHashMap(ChildTableMetadata tableMetadata){

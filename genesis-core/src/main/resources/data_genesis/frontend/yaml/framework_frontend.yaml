@@ -1,1630 +1,1630 @@
-- id: 1
-  languageId: 1
-  coreFramework: "Angular"
-  name: "Angular App"
-  template: "Angular-template"
-  initPath: "angular/angular-skeletoon"
-  componentExtension: "ts"
-  defaultPort: "4200"
-  frontendPaths:
-    faviconPath: "${destinationFolder}/src"
-    logoPath: "${destinationFolder}/src/assets/icon"
-    langsPath: "${destinationFolder}/src/lang"
-  authenticationFiles:
-    - fileType: "Banner file"
-      fileName: "banner.component"
-      extension: "html"
-      content: |
-        {{#if useJWT}}
-        <header class="app-banner">
-          <div class="banner-header">
-            <div class="app-title">
-              <img [src]="logoPath" alt="App Logo" (error)="onLogoError()" />
-            </div>
-            <div class="app-title" >
-              <span>{{ title }}</span>
-            </div>
-          </div>
-        
-          <div class="banner-actions">
-            <label for="language">{{this.content.banner.lang}} :</label>
-            <select id="language" [(ngModel)]="selectedLanguage" (change)="changeLanguage(selectedLanguage)">
-              <option *ngFor="let lang of Language | keyvalue" [value]="lang.value">
-                {{ lang.value }}
-              </option>
-            </select>
-          
-            <button class="banner-btn outline" (click)="disconnect()">
-              <i class="bi bi-box-arrow-in-right"></i> {{this.content.banner.disconnect}}
-            </button>
-          </div>
-          </header>
-        {{else}}no ts{{/if}}
-      destinationPath: "${destinationFolder}/src/app/shared/banner/"
-    - fileType: "Banner file"
-      fileName: "banner.component"
-      extension: "ts"
-      content: |
-        {{#if useJWT}}
-            import { Component, Input, OnInit } from '@angular/core';
-            import { RouterModule } from '@angular/router';
-            import { CommonModule } from '@angular/common';
-            import { FormsModule } from '@angular/forms';
-            import { Language, LanguageService } from '../services/language/language.service';
-            import { MotherComponent } from '../mother-component/mother.component';
-            import { AuthService } from '../../features/authentication/services/authentication.service';
-            import { TranslateService } from '../services/language/translate.service';
-            
-            
-            
-            @Component({
-              selector: 'app-banner',
-              standalone: true,
-              imports: [RouterModule, CommonModule, FormsModule],
-              templateUrl: './banner.component.html',
-              styleUrls: ['./banner.component.css']
-            })
-            export class BannerComponent extends MotherComponent implements OnInit{
-                @Input() title: string = "${projectName}";
-                @Input() logoPath: string = "assets/icon/logo.jpg";
-              
-                logoAvailable = true;
-                selectedLanguage: Language = Language.EN;
-                Language = Language;
-          
-                constructor(
-                  override langService: LanguageService,
-                  override translateService: TranslateService,
-                  private authService: AuthService
-                    ) {
-                    super(langService, translateService);
-                }
-          
-          
-                onLogoError() {
-                  this.logoAvailable = false;
-                }
-          
-                disconnect()
-                {
-                  this.authService.logout();
-                }
-          
-                changeLanguage(lang: Language) 
-                {
-                  this.langService.setLanguage(lang);
-                  this.selectedLanguage = lang;
-                }
-            }
-            {{else}}no ts{{/if}}
-      destinationPath: "${destinationFolder}/src/app/shared/banner/"
-    - fileType: "App-files"
-      fileName: "app.component"
-      extension: "html"
-      content: |
-        {{#if useJWT}}
-        <app-banner *ngIf="isLoggedIn" title="${projectName}"></app-banner>
-        <div class="app-layout">
-          <app-sidebar *ngIf="isLoggedIn" [entities]="entities" [views]="views"></app-sidebar>
-            <div class="main-content">
-              <router-outlet></router-outlet>
-            </div>
-        </div>
-        {{else}}no ts{{/if}}
-      destinationPath: "${destinationFolder}/src/app/"
-    - fileType: "App-files"
-      fileName: "app.component"
-      extension: "ts"
-      content: |
-        {{#if useJWT}}
-        import { Component } from '@angular/core';
-        import { RouterOutlet,RouterModule } from '@angular/router';
-        import {HttpClientModule } from '@angular/common/http';
-        
-        import { BannerComponent } from './shared/banner/banner.component';
-        
-        import { SidebarComponent } from './shared/sidebar/sidebar.component';
-        import { CommonModule } from '@angular/common';
-        import { AuthService } from './features/authentication/services/authentication.service';
-        
-        
-        import { AuthInterceptor } from './features/authentication/interceptor.component';
-        import { Router } from '@angular/router';
-
-        @Component({
-          selector: 'app-root',
-          standalone: true,
-          imports: [RouterOutlet,RouterModule,SidebarComponent,CommonModule,HttpClientModule,BannerComponent],
-          templateUrl: './app.component.html',
-          styleUrls: ['./app.component.css']
-        })
-
-        export class AppComponent {
-          title = '${projectName}';
-          isLoggedIn: boolean = false;
-          
-          constructor(private authService: AuthService, private router: Router ) {
-              this.authService.isLoggedIn$.subscribe(status => {
-              this.isLoggedIn = status;
-              if (!status) {
-              const currentUrl = this.router.url;
-              if (currentUrl !== '') {
-              this.router.navigate(['']);
-              }
-            }
-            });
-          }
-          entities={
-          {{tab}}{{#each entities}}{{removeLine}}
-          {{#if !this.isView}}'${formatReadable(this.className)}s': '/${toKebabCase(this.className)}s'{{/if}}
-          {{tab}}{{#if !@last  and !this.isView}},{{/if}}{{/each}}{{removeLine}}
-          } 
-          views={
-          {{tab}}{{#each entities}}{{removeLine}}
-          {{#if this.isView}}'${formatReadable(this.className)}': '/${toKebabCase(this.className)}s',{{/if}}
-          {{tab}}{{#if @last}}'end':''{{/if}}{{/each}}{{removeLine}}
-          } 
-        }
-        {{else}}no ts{{/if}}
-      destinationPath: "${destinationFolder}/src/app/"
-    - fileType: "App-files"
-      fileName: "app.routes"
-      extension: "ts"
-      content: |
-        {{#if useJWT}}
-        import { Routes } from '@angular/router';
-        import { WelcomeComponent } from './shared/welcome/welcome.component';
-
-        {{#each entities}}{{removeLine}}
-        import { ${minStart(this.className)}Routes } from './features/${toKebabCase(this.className)}/${toKebabCase(this.className)}.routes'
-        {{/each}}{{removeLine}}
-  
-        import { loginRoutes } from './features/authentication/authentication.route';
-        
-        export const routes: Routes = [
-          ...loginRoutes,
-          {
-                path: 'welcome',
-                component: WelcomeComponent,
-          },
-          {{#each entities}}{{removeLine}}
-          ...${minStart(this.className)}Routes
-          {{#if !@last}},{{/if}}{{/each}}{{removeLine}}
-        ];
-        {{else}}no ts{{/if}}
-      destinationPath: "${destinationFolder}/src/app/"
-    - fileType: "main files"
-      fileName: "main"
-      extension: "ts"
-      content: |
-        {{#if useJWT}}
-            import { bootstrapApplication } from '@angular/platform-browser';
-            import { AppComponent } from './app/app.component';
-            import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-            import { provideRouter } from '@angular/router';
-            import { AuthInterceptor } from './app/features/authentication/interceptor.component';
-            import { routes } from './app/app.routes';
-            import { HTTP_INTERCEPTORS } from '@angular/common/http';
-            
-            bootstrapApplication(AppComponent, {
-              providers: [
-                provideHttpClient(withInterceptorsFromDi()),
-                { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
-                provideRouter(routes)
-              ]
-            }).catch(err => console.error(err));
-            
-          {{else}}no ts{{/if}}
-      destinationPath: "${destinationFolder}/src"
-    - fileType: "interceptor files"
-      fileName: "interceptor.component"
-      extension: "ts"
-      content: |
-        {{#if useJWT}}
-        import { Injectable } from '@angular/core';
-        import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpErrorResponse } from '@angular/common/http';
-        import { Observable, throwError } from 'rxjs';
-        import { catchError } from 'rxjs/operators';
-        import { Router } from '@angular/router';
-        import { environment } from '../../../environments/environment';
-
-        @Injectable()
-        export class AuthInterceptor implements HttpInterceptor {
-        
-          private readonly apiUrl = environment.apiUrl;
-          constructor(private router: Router) {}
-          
-          intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-            if (req.url === this.apiUrl+"/auth/login") {
-              return next.handle(req);
-            }
-            const token = localStorage.getItem('authToken'); 
-            
-            let authReq = req;
-            if (token) {
-              authReq = req.clone({
-                setHeaders: {
-                  Authorization: "Bearer "+token
-                }
-              });
-            }
-            return next.handle(authReq).pipe(
-              catchError((error: HttpErrorResponse) => {
-                if (error.status === 401) {
-                  console.warn('forbidden, redirecting to login');
-                  this.router.navigate(['']);
-                } else if (error.status === 403) {
-                  console.warn('access denied');
-                }
-                return throwError(() => error);
-              })
-            );
-          }
-        }
-        {{else}}no ts{{/if}}
-      destinationPath: "${destinationFolder}/src/app/features/authentication"
-    - fileType: "authentication files"
-      fileName: "authentication.route"
-      extension: "ts"
-      content: |
-        {{#if useJWT}}
-        import { Routes } from '@angular/router';
-        export const loginRoutes: Routes = [
-          {
-            path: '',
-            loadComponent: () => import('./login/login.component').then(m => m.LoginComponent)
-          }
-        ];
-        {{else}}no ts{{/if}}
-      destinationPath: "${destinationFolder}/src/app/features/authentication"
-    - fileType: "authentication files"
-      fileName: "authentication.service"
-      extension: "ts"
-      content: |
-        {{#if useJWT}}
-        import { Injectable } from '@angular/core';
-        import { HttpClient,HttpParams } from '@angular/common/http';
-        import { BehaviorSubject, Observable } from 'rxjs';
-        import {  tap } from 'rxjs/operators';
-        import { environment } from '../../../../environments/environment';
-        import { Router } from '@angular/router';
-
-        interface LoginResponse {
-          status: number;
-          message: string;
-          returnCode: number;
-          data: any;
-          errors: any;
-          timestamp: string;
-        }
-
-        @Injectable({ providedIn: 'root' })
-        export class AuthService {
-
-           private readonly apiUrl = environment.apiUrl+'/auth';
-           constructor(private http: HttpClient,private router:Router) {}   
-
-           private loggedIn = new BehaviorSubject<boolean>(false);
-
-          isLoggedIn$ = this.loggedIn.asObservable();
-
-            login(email: string, password: string): Observable<LoginResponse> {
-                const payload = {
-                username: email,
-                password: password
-                };
-
-                return this.http.post<LoginResponse>(this.apiUrl+"/login" ,payload)
-                .pipe(
-                    tap(response => {
-                    if (response.status === 200) {
-                        this.loggedIn.next(true);
-                    } else {
-                        this.loggedIn.next(false);
-                    }
-                    })
-                );
-            }
-          logout(): void {
-              const token = localStorage.getItem('authToken');
-              if (!token) {
-                this.clearAndRedirect();
-                return;
-              }
-              const params = new HttpParams().set('Authorization', token);
-              this.http.post(this.apiUrl + '/logout', {}, { params })
-              .subscribe({
-              next: () => {
-                this.clearAndRedirect();
-              },
-              error: (err) => {
-                console.error('Logout failed', err);
-                this.clearAndRedirect();
-              }
-            });
-          }
-            private clearAndRedirect() {
-              localStorage.removeItem('authToken');
-              this.loggedIn.next(false);
-              this.router.navigate(['/']);
-            }
-        }
-        {{else}}no ts{{/if}}
-      destinationPath: "${destinationFolder}/src/app/features/authentication/services"
-    - fileType: "authentication files"
-      fileName: "login.component"
-      extension: "ts"
-      content: |
-        {{#if useJWT}}
-          import { Component } from '@angular/core';
-          import { CommonModule } from '@angular/common';
-          import { FormsModule } from '@angular/forms';
-          import { AuthService } from '../services/authentication.service';
-          import { warnMeUp } from '../../../../utilities/utilities';
-          import { Router } from '@angular/router';
-          
-          @Component({
-            selector: 'app-login',
-            standalone: true,
-            imports: [CommonModule, FormsModule],
-            templateUrl: './login.component.html',
-            styleUrls: ['./login.component.css']
-            })
-          export class LoginComponent {
-              email: string = '';
-              password: string = '';
-              
-              logoPath: string="assets/icon/logo.jpg"
-                logoAvailable = true;
-              
-                onLogoError() {
-                this.logoAvailable = false;
-              }
-              
-              loading: boolean = false;
-              
-              constructor(private authService: AuthService, private router: Router) {}
-              
-                  onSubmit() {
-                    if (!this.email || !this.password) return;
-                
-                    this.loading = true; // start loading
-                    this.authService.login(this.email, this.password).subscribe({
-                        next: (res) => {
-                          this.loading = false; // stop loading
-                          if (res.status === 200) {
-                          localStorage.setItem('authToken', res.data);
-                          this.router.navigate(['/welcome']);
-                          } else {
-                          warnMeUp('error', res.message || 'Unknown error');
-                          }
-                      },
-                        error: (err) => {
-                          this.loading = false; // stop loading
-                          if (err.status === 401) {
-                          warnMeUp('error', err.error?.message || 'Authentication failed');
-                          } else {
-                          warnMeUp('error', err.message || 'Unexpected error');
-                          }
-                        }
-                    });
-                  }
-              }
-        {{else}}no html{{/if}}
-      destinationPath: "${destinationFolder}/src/app/features/authentication/login"
-    - fileType: "authentication files"
-      fileName: "login.component"
-      extension: "html"
-      content: |
-        {{#if useJWT}} 
-          <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
-            <div class="card shadow-lg p-4" style="width: 22rem; border-radius: 12px;">
-                <div class="sidebar-header">
-                   <div class="app-title" *ngIf="!logoAvailable">
-                       <span>Your</span><span class="blue">App</span>
-                           </div>
-                                <div class="app-title" *ngIf="logoAvailable">
-                                  <img [src]="logoPath" alt="App Logo" (error)="onLogoError()" />
-                                </div>
-                           </div>
-                                                                                  
-                   <form (ngSubmit)="onSubmit()" class="needs-validation" novalidate>
-                      <div class="mb-3">
-                         <label for="email" class="form-label fw-semibold">Login</label>
-                        <div class="input-group">
-                              <input
-                                 type="email"
-                                 class="form-control"
-                                 id="email"
-                                 [(ngModel)]="email"
-                                 name="email"
-                                 placeholder="adress@gmail.com"
-                                 required
-                              />
-                              <span class="input-group-text">
-                                <i class="bi bi-envelope"></i>
-                              </span>
-                        </div>
-                      </div>
-                      <div class="mb-3">
-                        <label for="password" class="form-label fw-semibold">Password</label>
-                        <div class="input-group">
-                         <input
-                            type="password"
-                            class="form-control"
-                            id="password"
-                            [(ngModel)]="password"
-                            name="password"
-                            placeholder="••••••"
-                            required
-                         />
-                         <span class="input-group-text">
-                           <i class="bi bi-lock"></i>
-                         </span>
-                        </div>
-                       </div>
-                      <button type="submit" class="btn w-100 text-white fw-semibold login-btn" [disabled]="loading">
-                        <span *ngIf="!loading">Sign In</span>
-                        <span *ngIf="loading">
-                          <i class="bi bi-arrow-clockwise spin me-2"></i>Loading...
-                        </span>
-                      </button>
-                  </form>
-            </div>
-          </div>
-        {{else}}no html{{/if}}
-      destinationPath: "${destinationFolder}/src/app/features/authentication/login"
-    - fileType: "authentication files"
-      fileName: "login.component"
-      extension: "css"
-      content: |
-        {{#if useJWT}} 
-            @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css');
-            @import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css');
-            
-               .spin {
-                  display: inline-block;
-                  animation: spin 1s linear infinite;
-              }
-            
-                @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            app-title {
-              font-size: 1.4rem;
-              font-weight: 700;
-              margin-top: 0;
-              margin-bottom: 2.4rem;
-              text-align: center;
-            }
-                
-                .app-title .blue {
-                  color: var(--primary);
-                }
-                
-                .app-title img {
-                  height: 70px;
-                  width: auto;
-                  display: block;
-                  margin-left: auto;
-                  margin-right: auto;
-                  margin-top: auto;
-                }
-                
-                
-            .login-btn {
-              background: var(--primary) !important;
-              border-radius: 8px;
-            }
-                
-            .login-btn:hover {
-              background: var(--primary-dark) !important;
-            }
-                
-            .login-btn:active {
-              background: var(--primary-light) !important;
-            }
-              
-            {{else}}no css{{/if}}
-      destinationPath: "${destinationFolder}/src/app/features/authentication/login"
-  additionalFiles:
-    - fileType: "Language file"
-      fileName: "language.service"
-      extension: "ts"
-      content: |
-        import { Injectable } from '@angular/core';
-        import { BehaviorSubject } from 'rxjs';
-
-        export enum Language 
-        { {{#each langList}}
-          ${upperCase(this.locale)} = '${this.locale}',
-          {{/each}}{{removeLine}}
-        }
-        
-        @Injectable({
-         providedIn: 'root'
-        })
-        export class LanguageService {
-         private languageSubject = new BehaviorSubject<Language>(Language.EN);
-         language$ = this.languageSubject.asObservable();
-
-         setLanguage(lang: Language) {
-           this.languageSubject.next(lang);
-         }
-
-         get currentLanguage(): Language {
-           return this.languageSubject.value;
-         }
-
-         formatValue(value: any): string {
-           if (value == null) return '';
-
-           if (typeof value === 'number') {
-             return this.formatNumber(value);
-           }
-           else if (value instanceof Date || this.isDateString(value)) {
-             return this.formatDate(value);
-           }
-           else if (typeof value === 'string') {
-             return value;
-           }
-           else {
-             return String(value);
-           }
-         }
-
-         formatDateTime(value: Date | string | number): string {
-           if (!value) return '';
-           const date = new Date(value);
-           return new Intl.DateTimeFormat(this.currentLanguage, {
-             year:'numeric', month:'2-digit', day:'2-digit',
-             hour:'2-digit', minute:'2-digit', second:'2-digit'
-           }).format(date);
-         }
-
-         formatTime(value: Date | string | number): string {
-           if (!value) return '';
-           const date = new Date(value);
-           return new Intl.DateTimeFormat(this.currentLanguage, { hour:'2-digit', minute:'2-digit', second:'2-digit' }).format(date);
-         }
-
-         private isDateString(value: any): boolean {
-           return typeof value === 'string' && !isNaN(Date.parse(value));
-         }
-
-         formatNumber(value: number): string {
-           if (value == null) return '';
-           return new Intl.NumberFormat(this.currentLanguage).format(value);
-         }
-
-         formatDate(value: Date | string | number): string {
-           if (!value) return '';
-           const date = new Date(value);
-           const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0;
-           if (hasTime) {
-             return new Intl.DateTimeFormat(this.currentLanguage, {
-               year: 'numeric',
-               month: '2-digit',
-               day: '2-digit',
-               hour: '2-digit',
-               minute: '2-digit',
-               second: '2-digit'
-             }).format(date);
-           } else {
-             return new Intl.DateTimeFormat(this.currentLanguage, {
-               year: 'numeric',
-               month: '2-digit',
-               day: '2-digit'
-             }).format(date);
-           }
-         }
-
-         makeItReadable(value: string): string {
-           if (!value) return '';
-           let readable = value.replace(/[_\-]+/g, ' ');
-
-           const idPattern = /^([a-zA-Z]+)id([A-Z][a-zA-Z]*)$/;
-           const match = readable.match(idPattern);
-           if (match) {
-             readable = match[1];
-           } else {
-             readable = readable.replace(/([a-z])([A-Z])/g, '$1 $2');
-           }
-           readable = readable.charAt(0).toUpperCase() + readable.slice(1).trim();
-
-           return readable;
-         }
-        }
-
-      destinationPath: "${destinationFolder}/src/app/shared/services/language"
-    - fileType: "Index page"
-      fileName: "index"
-      extension: "html"
-      content: |
-        <!doctype html>
-        <html lang="en">
-        <head>
-          <meta charset="utf-8">
-          <title>${projectName}</title>
-          <base href="/">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <link rel="icon" type="image/x-icon" href="{{#if useFaviconLink}}${faviconUrl}{{else}}favicon.ico{{/if}}">
-        </head>
-        <body>
-          <app-root></app-root>
-        </body>
-        </html>
-      destinationPath: "${destinationFolder}/src"
-    - fileType: "App-files"
-      fileName: "app.constante"
-      extension: "ts"
-      content: |
-        {{#if useLogoLink}}export const linkToImage="${logoUrl}";{{else}}export const linkToImage="assets/icon/logo.jpg";{{/if}}
-      destinationPath: "${destinationFolder}/src/app/"
-    - fileType: "css for layout"
-      fileName: "styles"
-      extension: "css"
-      content: |
-        html, body {
-          height: 100%;
-          margin: 0;
-          padding: 0;
-        }
-          app-root {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            width: 100%;
-          }
-        :root {
-
-          --primary: ${primaryColor};
-          --secondary: ${secondaryColor};
-
-          --primary-light: color-mix(in srgb, var(--primary) 75%, white); 
-          --primary-dark: color-mix(in srgb, var(--primary) 85%, black);
-
-          --bg-hover: color-mix(in srgb, var(--secondary) 10%, white);   
-          --bg-active: color-mix(in srgb, var(--secondary) 15%, white); 
-        }
-      destinationPath: "${destinationFolder}/src"
-    - fileType: "App-files"
-      fileName: "app.component"
-      extension: "ts"
-      content: |
-        import { Component } from '@angular/core';
-        import { RouterOutlet,RouterModule } from '@angular/router';
-        import { BannerComponent } from './shared/banner/banner.component';
-        
-        import { SidebarComponent } from './shared/sidebar/sidebar.component';
-        
-        @Component({
-          selector: 'app-root',
-          standalone: true,
-          imports: [RouterOutlet,RouterModule,SidebarComponent,BannerComponent],  
-          templateUrl: './app.component.html',
-          styleUrls: ['./app.component.css']      
-        })
-        
-        export class AppComponent {
-          title = '${projectName}';
-
-          entities={
-          {{tab}}{{#each entities}}{{removeLine}}
-          {{#if !this.isView}}'${formatReadable(this.className)}s': '/${toKebabCase(this.className)}s'{{/if}}
-          {{tab}}{{#if !@last  and !this.isView}},{{/if}}{{/each}}{{removeLine}}
-          } 
-          views={
-          {{tab}}{{#each entities}}{{removeLine}}
-          {{#if this.isView}}'${formatReadable(this.className)}': '/${toKebabCase(this.className)}s',{{/if}}
-          {{tab}}{{#if @last}}'end':''{{/if}}{{/each}}{{removeLine}}
-          } 
-        }
-      destinationPath: "${destinationFolder}/src/app/"
-    - fileType: "App-files"
-      fileName: "app.routes"
-      extension: "ts"
-      content: |
-        import { Routes } from '@angular/router';
-        import { WelcomeComponent } from './shared/welcome/welcome.component';
-        
-        {{#each entities}}{{removeLine}}
-        import { ${minStart(this.className)}Routes } from './features/${toKebabCase(this.className)}/${toKebabCase(this.className)}.routes'
-        {{/each}}{{removeLine}}
-      
-        export const routes: Routes = [
-          {
-                path: '',
-                component: WelcomeComponent,
-          },
-          {{#each entities}}{{removeLine}}
-          ...${minStart(this.className)}Routes
-          {{#if !@last}},{{/if}}{{/each}}{{removeLine}}
-        ];
-      destinationPath: "${destinationFolder}/src/app/"
-    - fileType: "App-files"
-      fileName: "app.component"
-      extension: "html"
-      content: |
-        <app-banner title="${projectName}"></app-banner>
-        <div class="app-layout">
-          <app-sidebar [entities]="entities" [views]="views"></app-sidebar>
-            <div class="main-content">
-              <router-outlet></router-outlet>
-            </div>
-        </div>
-      destinationPath: "${destinationFolder}/src/app/"
-    - fileType: "App-files"
-      fileName: "app.component"
-      extension: "css"
-      content: |
-        .app-layout {
-          display: flex;
-          height: 100vh;
-          font-family: sans-serif;
-        }
-
-        app-sidebar {
-          width: 220px;
-          flex-shrink: 0;
-          border-right: 1px solid #e5e7eb;
-          background-color: #fff;
-          height: 100vh;
-          padding: 1rem;
-        }
-
-        .main-content {
-          flex-grow: 1;
-          padding: 0.5rem 2rem 2rem 2rem;
-          background-color: #f9fafb;
-          overflow-y: auto;
-
-        }
-      destinationPath: "${destinationFolder}/src/app/"
-    - fileType: "Environment-file"
-      fileName: "environment"
-      extension: "ts"
-      content: |
-          export const environment = {
-          {{tab}}production: false,
-          {{tab}}apiUrl: 'http://localhost:${projectPort}/${toKebabCase(projectName)}'
-          };
-      destinationPath: "${destinationFolder}/src/environments/"
-    - fileType: "Environment-file"
-      fileName: "environment.prod"
-      extension: "ts"
-      content: |
-        export const environment = {
-        
-        {{tab}}production: true,
-        {{tab}}apiUrl: 'http://localhost:${projectPort}/${toKebabCase(projectName)}'
-        };
-      destinationPath: "${destinationFolder}/src/environments/"
-    - fileType: "Utilities"
-      fileName: "utilities"
-      extension: "ts"
-      content: |
-        import Swal from 'sweetalert2';
-
-
-        export function warnMeUp(title:string,text:string,color:string='#ff0000',icon: 'success' | 'error' | 'warning' | 'info' | 'question' = 'error')
-          {
-            Swal.fire({
-            title: title,
-            text: text,
-            icon: icon,
-            confirmButtonText: 'close',
-            confirmButtonColor: color
-          });
-        }
-        export function objectToRecord<T extends object>(obj: T): Record<string, any> {
-          const record: Record<string, any> = {};
-        
-          Object.entries(obj).forEach(([key, value]) => {
-            if (value && typeof value === 'object' && !Array.isArray(value)) {
-              const entries = Object.entries(value);
-              if (entries.length >= 2) {
-                record[key] = entries[1][1];
-              } else if (entries.length === 1) {
-                record[key] = entries[0][1];
-              } else {
-              record[key] = '';
-              }
-            } else {
-            record[key] = value;
-            }
-          });
-          return record;
-        }
-        export  function expandSeparatorNotation(flatObj: Record<string, any>,separator:string): any {
-          const result: any = {};
-        
-          for (const key in flatObj) {
-            if (!flatObj.hasOwnProperty(key)) continue;
-            
-              const value = flatObj[key];
-              const keys = key.split(separator);
-              let current = result;
-              
-              keys.forEach((part, index) => {
-                if (index === keys.length - 1) {
-                current[part] = value;
-                } else {
-                if (!current[part]) current[part] = {};
-                current = current[part];
-                }
-              });
-            }
-          return result;
-        }
-        export function recursiveObjectsTo2DArray(data: Record<string, any>[]): any[][] {
-          if (data.length === 0) return [];
-        
-          const allKeys: string[] = [];
-          for (let i = 0; i < data.length; i++) {
-            const obj = data[i];
-            for (const key in obj) {
-              if (!allKeys.includes(key)) {
-                allKeys.push(key);
-              }
-            }
-          }
-          const result: any[][] = [];
-          for (let i = 0; i < data.length; i++) {
-            const row: any[] = [];
-            const obj = data[i];
-          
-            for (let j = 0; j < allKeys.length; j++) {
-              const key = allKeys[j];
-              const value = obj[key];
-              row.push(extractSecondValueIfObject(value));
-            }
-            result.push(row);
-          }
-          return result;
-        }
-        
-        function extractSecondValueIfObject(value: any): any {
-            if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-            const values = Object.values(value);
-            return values.length >= 2 ? values[1] : values[0];
-          }
-          return value;
-        }
-
-        
-        export  function expandDotNotation(flatObj: Record<string, any>): any {
-          const result: any = {};
-
-          for (const key in flatObj) {
-            if (!flatObj.hasOwnProperty(key)) continue;
-
-            const value = flatObj[key];
-            const keys = key.split('.');
-            let current = result;
-
-            keys.forEach((part, index) => {
-              if (index === keys.length - 1) {
-                current[part] = value;
-              } else {
-                if (!current[part]) current[part] = {};
-                current = current[part];
-              }
-            });
-          }
-
-          return result;
-        }
-        export function cleanObject<T>(obj: Partial<T>): Partial<T> {
-          if (typeof obj !== 'object' || obj === null) {
-            return obj;
-          }
-
-          const entries = Object.entries(obj)
-            .map(([key, value]) => {
-              if (value && typeof value === 'object' && !Array.isArray(value)) {
-                const cleanedValue = cleanObject(value);
-                if (Object.keys(cleanedValue).length === 0) {
-                  return null;
-                }
-                return [key, cleanedValue];
-              }
-              if (value !== '' && value !== undefined && value !== null) {
-                return [key, value];
-              }
-              return null;
-            })
-            .filter((entry): entry is [string, any] => entry !== null);
-
-          return Object.fromEntries(entries) as Partial<T>;
-        }
-      destinationPath: "${destinationFolder}/src/utilities/"
-  components:
-    - componentType: "list"
-      generateForView: true
-      router:
-        link: "/${toKebabCase(className)}s"
-        label: "${formatReadable(classNameLink)}"
-      importFile: |
-        import { Component, OnInit, OnDestroy } from '@angular/core';
-        import { CommonModule } from '@angular/common';
-        import { HttpClientModule } from '@angular/common/http';
-        import { takeUntil } from 'rxjs/operators';
-        import { Subject ,forkJoin} from 'rxjs';
-        
-        import { expandDotNotation,recursiveObjectsTo2DArray,warnMeUp } from '../../../../utilities/utilities';
-        
-        import { DynamicSearchFormComponent, SearchField } from '../../../shared/dynamic-search-form/dynamic-search-form.component';
-        import { ListComponent } from '../../../shared/list/list.component';
-        import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-        import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-        import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
-        import { Column } from '../../../shared/list/list.component';
-        
-        import { ${className} } from '../models/${toKebabCase(className)}.model'
-        import { ${className}Service } from '../services/${toKebabCase(className)}.service'
-        
-        {{#each fieldsFK}}
-        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
-        import {${toPascalCase(this.type)}Service} from '../../${toKebabCase(this.type)}/services/${toKebabCase(this.type)}.service'
-        {{/each}}
-      selector: "app-${toKebabCase(className)}-list"
-      standalone: true
-      importComponent: "[CommonModule, DynamicSearchFormComponent, PaginationComponent,ListComponent,PageHeaderComponent,LoadingIconComponent]"
-      template: "./${toKebabCase(className)}-list.component.html"
-      style: "./${toKebabCase(className)}-list.component.css"
-      export: |
-        export class ${majStart(className)}ListComponent implements OnInit, OnDestroy {
-            
-            private destroy$ = new Subject<void>();
-            
-            data:any[][]=[];
-            
-            sortOrientation: boolean=true;
-            sortColumn=0;
-        
-            columns: Column[] =[{{#each fields}}{{#if this.isNotForeignKey}}{ fieldName: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.typeBase}' }{{elseIf this.isForeignKey}}{ fieldName: '${this.type}', label: '${formatReadable(this.type)}', type: 'string' }{{/if}}{{#if !@last}},{{/if}}{{/each}}];
-        
-            ${minStart(className)}s: ${majStart(className)}[] = [];
-            
-            {{#each fieldsFK}}{{removeLine}}
-            ${minStart(this.type)}s: ${majStart(this.type)}[] = []; 
-            {{/each}}{{removeLine}}
-        
-            formValueAttribute: Record<string, any> = {};
-            isLoading: boolean = false;
-        
-            searchFields: SearchField[] = [
-            {{tab}}{{tab}}{{#each fieldsFK}}
-                {
-                  key: '${this.name}.${this.referencedPrimaryKeyColumn}',
-                  label: '${this.type}',
-                  type: 'select',
-                  options: []
-                },
-            {{tab}}{{tab}}{{/each}}{{removeLine}}
-            {{tab}}{{tab}}{{#each fieldsNotFK}}
-                {{#if this.isPrimaryKey}}
-                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isText or this.isInterval }}
-                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isNumeric }}
-                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'number' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'number' }{{elseIf this.isDate }}
-                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' }{{elseIf this.isDateTime}}
-                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'datetime-local' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'datetime-local' }{{elseIf this.isTime}}
-                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'time' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' }{{/if}}
-            {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
-            ];
-        
-            sort(columnIndex:number,sortOrientation:boolean){
-                this.sortOrientation=sortOrientation;
-                this.sortColumn=columnIndex;
-                const mappedValue = expandDotNotation(this.formValueAttribute);
-                const sortParam=(this.columns[this.sortColumn]).fieldName+','+(this.sortOrientation?'asc':'desc');
-                this.load${majStart(className)}s(mappedValue,sortParam);
-            }
-             
-             constructor(
-                {{#each fieldsFK}}{{removeLine}}
-                 private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
-                {{/each}}{{removeLine}}
-                private ${minStart(className)}Service: ${majStart(className)}Service
-             ) {}
-        
-            load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {},sortParam:string=(this.columns[this.sortColumn]).fieldName+',asc;'): void {
-                this.isLoading = true;
-                this.${minStart(className)}Service.search${majStart(className)}s(criteria, this.currentPage-1, this.itemNumber,sortParam).pipe(takeUntil(this.destroy$)).subscribe({
-                next: (${minStart(className)}s: ${majStart(className)}[]) => {
-                        this.${minStart(className)}s = ${minStart(className)}s;
-                        this.totalItems=this.${minStart(className)}Service.elementNumber;  
-                        this.data=recursiveObjectsTo2DArray(${minStart(className)}s);
-                        this.isLoading = false;
-              },
-                error: (err) => {
-                  console.error('error while searching data :', err);
-                  warnMeUp('error','error while fetching data');
-                  this.isLoading = false;
-              }
-              });
-            }
-        
-            totalItems: number = 1000;
-            currentPage: number=1;
-            itemNumber: number=12;
-        
-            onNumberRowChange(lineNumber:number):void
-            {
-              this.itemNumber=Number(lineNumber);
-              this.onSearch(this.formValueAttribute);
-            }
-            onPageRangeChange(page:number): void {
-                  this.currentPage =page;
-                  this.onSearch(this.formValueAttribute);
-            }
-        
-            onSearch(formValue: any): void {
-              this.formValueAttribute=formValue
-              const mappedValue = expandDotNotation(formValue);
-              this.load${majStart(className)}s(mappedValue);
-            }
-            {{#if !isView}}{{removeLine}}
-            delete${majStart(className)} = (line: any[]) => {
-              const id = line[0];
-              this.${minStart(className)}Service.delete${majStart(className)}ById(id.toString()).pipe(takeUntil(this.destroy$)).subscribe({
-                  next: () => {
-                      this.data = this.data.filter(d => d[0] !== id);
-                      this.${minStart(className)}s = this.${minStart(className)}s.filter(c => c.{{#each fieldsPK}}${this.name}{{/each}} !== id);
-                      warnMeUp('success','line of data deleted successfully','#28a745','success')  
-                  },
-                    error: (err) => {
-                      console.error('error while deleting data :', err);
-                      warnMeUp('error','error while deleting data');
-                  }
-                });
-            }
-            {{/if}}
-            
-            {{#if containsForeignKey}}
-            ngOnInit(): void {
-                  this.load${majStart(className)}s();
-                  this.isLoading = true;
-                  forkJoin([
-                      {{#each fieldsFK}}{{removeLine}}
-                      this.${minStart(this.type)}Service.get${majStart(this.type)}s(),
-                      {{/each}}{{removeLine}}
-                  ]).pipe(takeUntil(this.destroy$)).subscribe({
-                      next: ([{{#each fieldsFK}}${minStart(this.type)}s,{{/each}}]) => {
-                          {{#each fieldsFK}}
-                          this.${minStart(this.type)}s = ${minStart(this.type)}s;
-                          const ${minStart(this.type)}Field = this.searchFields.find(f => f.key === '${this.name}.${this.referencedPrimaryKeyColumn}');
-                          if (${minStart(this.type)}Field) {
-                            ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: d.${this.referencedPrimaryKeyColumn},label: entries[1][1]};}); 
-                          }
-                          {{/each}}
-                          this.isLoading = false;
-                      },
-                      error: (err) => {
-                          warnMeUp('error','error while collecting datas');
-                          this.isLoading = false;
-                      }
-                  });
-            }
-            {{else}}{{removeLine}}
-            ngOnInit(): void {
-                  this.load${majStart(className)}s();
-            }
-            {{/if}}{{removeLine}}
-            
-            ngOnDestroy() {
-                this.destroy$.next();
-                this.destroy$.complete();
-            } 
-        
-        }
-      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
-      componentName: "${toKebabCase(className)}-list.component"
-      componentAdditionalFiles:
-        - fileType: "html template"
-          fileName: "${toKebabCase(className)}-list.component"
-          extension: "html"
-          content: |
-            <app-page-header name="${formatReadable(classNameLink)}" [isView]=${isView}></app-page-header>
-            <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)" [onRowsChange]="onNumberRowChange.bind(this)"></app-dynamic-search-form>
-            <br>
-            <app-list [sortFn]="sort.bind(this)" [columns]="columns" [datas]="data" {{#if !isView}}[deleteFn]="delete${majStart(className)}"{{/if}} [isView]=${isView} {{#if !isView}}routeToDetail="${toKebabCase(className)}s/details" routeToModify="${toKebabCase(className)}s/modify"{{/if}}></app-list>
-            <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
-            <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="itemNumber" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
-        - fileType: "css template"
-          fileName: "${toKebabCase(className)}-list.component"
-          extension: "css"
-          content: |
-            {{newline}}
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
-        - fileType: "Entity Routes"
-          fileName: "${toKebabCase(className)}.routes"
-          extension: "ts"
-          content: |
-            import { Routes } from '@angular/router';
-            export const ${minStart(className)}Routes: Routes = [
-              {
-                path: '${toKebabCase(className)}s',
-                loadComponent: () => import('./${toKebabCase(className)}-list/${toKebabCase(className)}-list.component').then(m => m.${majStart(className)}ListComponent )
-              }{{#if !isView}},
-              {
-                path: '${toKebabCase(className)}s/add',
-                loadComponent: () => import('./${toKebabCase(className)}-form/${toKebabCase(className)}-form.component').then(m => m.${majStart(className)}FormComponent)
-              },
-              {
-                path: '${toKebabCase(className)}s/details/:id',
-                loadComponent: () => import('./${toKebabCase(className)}-details/${toKebabCase(className)}-details.component').then(m => m.${majStart(className)}DetailsComponent)
-              },
-              {
-                path: '${toKebabCase(className)}s/modify/:id',
-                loadComponent: () => import('./${toKebabCase(className)}-form/${toKebabCase(className)}-form.component').then(m => m.${majStart(className)}FormComponent)
-              }{{/if}}
-            ];
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}"
-    - componentType: "form"
-      router:
-        link: " "
-        label: " "
-      importFile: |
-        import { Component, OnInit, OnDestroy } from '@angular/core';
-        import { CommonModule } from '@angular/common';
-        import { HttpClientModule } from '@angular/common/http';
-        import { ReactiveFormsModule, FormGroup } from '@angular/forms';
-        import { Subject, forkJoin, takeUntil } from 'rxjs';
-        import { ActivatedRoute } from '@angular/router';
-        import { Router } from '@angular/router';
-      
-        import { DynamicFieldComponent, FieldConfig } from '../../../shared/dynamic-field/dynamic-field.component';
-        import { DynamicFormComponent } from '../../../shared/dynamic-form/dynamic-form.component';
-        import { LinkButtonComponent } from '../../../shared/link-button/link-button.component';
-        import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-        import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
-        import { warnMeUp } from '../../../../utilities/utilities';
-
-
-        
-        import { ${className} } from '../models/${toKebabCase(className)}.model'
-        import { ${className}Service } from '../services/${toKebabCase(className)}.service'
-
-        {{#each fieldsFK}}
-        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
-        import {${toPascalCase(this.type)}Service} from '../../${toKebabCase(this.type)}/services/${toKebabCase(this.type)}.service'
-        {{/each}}
-      selector: "app-${toKebabCase(className)}-form"
-      generateForView: false
-      standalone: true
-      importComponent: "[CommonModule, ReactiveFormsModule, DynamicFieldComponent, LoadingIconComponent, PageHeaderComponent, LinkButtonComponent, DynamicFormComponent]"
-      template: "./${toKebabCase(className)}-form.component.html"
-      style: "./${toKebabCase(className)}-form.component.css"
-      export: |
-        export class ${majStart(className)}FormComponent implements OnInit, OnDestroy 
-        {
-          private destroy$ = new Subject<void>();
-          isLoading: boolean = false;
-          form: FormGroup = new FormGroup({});
-          formUpdate:boolean=false;
-          validationErrors:any;
-        
-          id:string ='';
-          ${minStart(className)}ToUpdate?: ${majStart(className)};
-          {{#each fieldsFK}}{{removeLine}}
-          ${minStart(this.type)}s: ${majStart(this.type)}[] = []; 
-          {{/each}}{{removeLine}}
-        
-          fields: FieldConfig[] = [
-            {{tab}}{{tab}}{{#each fieldsFK}}
-              { type: 'select', name: '${this.name}', label: '${this.type}', options: [] },
-            {{tab}}{{tab}}{{/each}}{{removeLine}}
-            {{tab}}{{tab}}{{#each simpleFields}}
-            {{#if this.isText}}{{removeLine}}
-              { type: 'text', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isNumeric or this.isInterval}}
-              { type: 'number', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDate }}
-              { type: 'date', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDateTime}}
-              { type: 'datetime-local', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isTime}}
-              { type: 'time', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{/if}}{{#if !@last}},{{/if}}
-              {{tab}}{{/each}}{{removeLine}}
-          ];
-  
-
-          constructor(
-                private route: ActivatedRoute,
-                private router :Router,
-                {{#each fieldsFK}}{{removeLine}}
-                 private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
-                {{/each}}{{removeLine}}
-                private ${minStart(className)}Service: ${majStart(className)}Service
-          ){}
-          
-          submit(payload:any): void {
-              this.isLoading = true;
-              {{#each fieldsFK}}{{removeLine}}
-              payload.${this.name}=JSON.parse(payload.${this.name});
-              {{/each}}{{removeLine}}
-              var ${minStart(className)}: ${majStart(className)} = payload;
-              const serviceCall = this.formUpdate?this.${minStart(className)}Service.update${majStart(className)}(${minStart(className)} ,this.id):this.${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
-              serviceCall.pipe(takeUntil(this.destroy$))
-              .subscribe({
-                next: res => {
-                  this.isLoading = false;
-                  warnMeUp('Success', '${majStart(className)} created successfully','#28a745','success');
-                  this.form.reset();
-                  this.validationErrors={};
-                  this.router.navigate(['${toKebabCase(className)}s']);
-                },
-                  error: err => {
-                    warnMeUp('error', 'Error while making a move on ${minStart(className)} ');
-                    const apiErrors = err.error?.errors;
-                    this.validationErrors=apiErrors;
-                    this.isLoading = false;
-                }
-              });
-          }
-          
-            load${majStart(className)}(id: string): void {
-                  this.isLoading = true;
-                  this.${minStart(className)}Service.get${majStart(className)}ById(id)
-                      .pipe(takeUntil(this.destroy$))
-                      .subscribe({
-                      next: (${minStart(className)}: ${majStart(className)}) => {
-                          this.${minStart(className)}ToUpdate = ${minStart(className)};
-                          this.isLoading = false;
-                        },
-                      error: (err) => {
-                          console.error('Error while loading ${minStart(className)}:', err);
-                          warnMeUp('error', 'Error while fetching ${minStart(className)}');
-                          this.isLoading = false;
-                        }
-                    });
-            }
-
-            {{#if containsForeignKey}}
-            ngOnInit(): void {
-                const ${minStart(className)}Id = this.route.snapshot.paramMap.get('id');
-                if (${minStart(className)}Id) {
-                  this.id=${minStart(className)}Id;
-                  this.formUpdate=true
-                  this.load${majStart(className)}(${minStart(className)}Id);
-                }
-                this.isLoading = true;
-                forkJoin([
-                    {{#each fieldsFK}}{{removeLine}}
-                    this.${minStart(this.type)}Service.get${majStart(this.type)}s(),
-                     {{/each}}{{removeLine}}
-                 ]).pipe(takeUntil(this.destroy$)).subscribe({
-                      next: ([{{#each fieldsFK}}${minStart(this.type)}s,{{/each}}]) => {
-                          {{#each fieldsFK}}
-                          this.${minStart(this.type)}s = ${minStart(this.type)}s;
-                          const ${minStart(this.type)}Field = this.fields.find(f => f.name === '${this.name}');
-                          if (${minStart(this.type)}Field) {
-                            ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: JSON.stringify(d),label: entries[1][1]};}); 
-                          }
-                          {{/each}}
-                          this.isLoading = false;
-                      },
-                      error: (err) => {
-                          warnMeUp('error','error while collecting data');
-                          this.isLoading = false;
-                      }
-                  });
-            }
-            {{else}}{{removeLine}}
-            ngOnInit(): void {
-              const ${minStart(className)}Id = this.route.snapshot.paramMap.get('id');
-                if (${minStart(className)}Id) {
-                  this.id=${minStart(className)}Id;
-                  this.formUpdate=true
-                  this.load${majStart(className)}(${minStart(className)}Id);
-                }
-            }
-            {{/if}}{{removeLine}}
-        
-          ngOnDestroy(): void {
-              this.destroy$.next();
-              this.destroy$.complete();
-          }
-          
-        }
-      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
-      componentName: "${toKebabCase(className)}-form.component"
-      componentAdditionalFiles:
-        - fileType: "html template"
-          fileName: "${toKebabCase(className)}-form.component"
-          extension: "html"
-          content: |
-            <app-page-header name="${majStart(className)}s" context="Form" [isView]=true [isForm]=true></app-page-header>
-            <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
-            <ng-container *ngIf="formUpdate; else insertForm">
-              <app-dynamic-form
-                *ngIf="${minStart(className)}ToUpdate"
-                [fields]="fields"
-                [form]="form"
-                [submitFn]="submit.bind(this)"
-                [initialData]="${minStart(className)}ToUpdate"
-                [validationErrors]="validationErrors"
-            >
-              </app-dynamic-form>
-            </ng-container>
-            
-            <ng-template #insertForm>
-              <app-dynamic-form
-                [fields]="fields"
-                [form]="form"
-                [submitFn]="submit.bind(this)"
-                [validationErrors]="validationErrors"
-            >
-              </app-dynamic-form>
-            </ng-template>
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
-        - fileType: "css template"
-          fileName: "${toKebabCase(className)}-form.component"
-          extension: "css"
-          content: |
-            {{newline}}
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
-    - componentType: "details"
-      router:
-        link: " "
-        label: " "
-      importFile: |
-        import { Component, OnInit, OnDestroy } from '@angular/core';
-        import { CommonModule } from '@angular/common';
-        import { HttpClientModule } from '@angular/common/http';
-        import { ActivatedRoute,Router } from '@angular/router';
-        import { takeUntil } from 'rxjs/operators';
-        import { Subject } from 'rxjs';
-        
-        import { warnMeUp } from '../../../../utilities/utilities';
-
-        import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
-        import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
-        import { DetailViewComponent } from '../../../shared/detail-view/detail-view.component';
-
-        import { ${majStart(className)} } from '../models/${toKebabCase(className)}.model';
-        import { ${majStart(className)}Service } from '../services/${toKebabCase(className)}.service';
-      selector: "app-${toKebabCase(className)}-details"
-      generateForView: false
-      standalone: true
-      importComponent: "[CommonModule, PageHeaderComponent, LoadingIconComponent, DetailViewComponent]"
-      template: "./${toKebabCase(className)}-details.component.html"
-      style: "./${toKebabCase(className)}-details.component.css"
-      export: |
-        export class ${majStart(className)}DetailsComponent implements OnInit, OnDestroy
-        {
-            private destroy$ = new Subject<void>();
-            
-            ${minStart(className)}?: ${majStart(className)};
-            id?:string ;
-            isLoading = false;
-            
-            constructor(
-              private route: ActivatedRoute,
-              private navigator: Router,
-              private ${minStart(className)}Service: ${majStart(className)}Service
-            ) {}
-            
-            ngOnInit(): void {
-                const ${minStart(className)}Id = this.route.snapshot.paramMap.get('id');
-                if (${minStart(className)}Id) {
-                this.id=${minStart(className)}Id;
-                this.load${majStart(className)}(${minStart(className)}Id);
-              }
-            }
-              load${majStart(className)}(id: string): void {
-                  this.isLoading = true;
-                  this.${minStart(className)}Service.get${majStart(className)}ById(id)
-                  .pipe(takeUntil(this.destroy$))
-                  .subscribe({
-                  next: (${minStart(className)}: ${majStart(className)}) => {
-                          this.${minStart(className)} = ${minStart(className)};
-                          this.isLoading = false;
-                },
-                  error: (err) => {
-                    console.error('Error loading product:', err);
-                    warnMeUp('error', 'Error while fetching ${minStart(className)}');
-                    this.isLoading = false;
-                }
-                });
-              }
-        
-            ngOnDestroy(): void {
-                this.destroy$.next();
-                this.destroy$.complete();
-            }
-            
-            delete${majStart(className)} = (id:string) => {
-                this.${minStart(className)}Service.delete${majStart(className)}ById(id.toString()).pipe(takeUntil(this.destroy$)).subscribe({
-                next: () => {
-                  warnMeUp('success','line of data deleted successfully','#28a745','success') ;
-                  this.navigator.navigate(['${toKebabCase(className)}s']);
-              },
-                error: (err) => {
-                  console.error('error while deleting ${minStart(className)} :', err);
-                  warnMeUp('error','error while deleting ${minStart(className)}');
-              }
-              });
-            }
-            
-        }
-      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-details"
-      componentName: "${toKebabCase(className)}-details.component"
-      componentAdditionalFiles:
-        - fileType: "html template"
-          fileName: "${toKebabCase(className)}-details.component"
-          extension: "html"
-          content: |
-            <app-page-header name="${majStart(className)}s" context="Details" [isView]=true [isDetail]=true></app-page-header>
-
-            <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
-
-            <div *ngIf="!isLoading && ${minStart(className)}">
-              <app-detail-view [object]="${minStart(className)}" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id" LinkContext='${toKebabCase(className)}s'></app-detail-view>
-            </div>
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-details"
-        - fileType: "css template"
-          fileName: "${toKebabCase(className)}-details.component"
-          extension: "css"
-          content: |
-            {{newline}}
-          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-details"
-  serviceComponent:
-    imports: |
-      import { Injectable } from '@angular/core';
-      import { HttpClient, HttpParams  } from '@angular/common/http';
-      import { Observable, catchError, throwError, map,of } from 'rxjs';
-      import { cleanObject } from '../../../../utilities/utilities';
-      import { environment } from '../../../../environments/environment';
-      import { ${majStart(className)}ListDTO,${majStart(className)}DTO,${majStart(className)} } from '../models/${toKebabCase(className)}.model'
-    methods: |
-      export class ${majStart(className)}Service{
-      {{tab}}private readonly apiUrl = environment.apiUrl+'/${lowerCase(classNameLink)}';
-      {{tab}}constructor(private http: HttpClient) {}
-        
-        elementNumber:number=0;
-        
-        search${majStart(classNameLink)}(
-            criteria: Partial<${majStart(className)}>,
-            page: number = 0,
-            size: number = 10,
-            sortParam: string = '{{#each fieldsPK}}${this.name},asc;{{/each}}'
-          ): Observable<${majStart(className)}[]> {
-            const cleanedCriteria = cleanObject(criteria);
-            const url = this.apiUrl+'/search';
-      
-            const params = new HttpParams()
-            .set('page', page.toString())
-            .set('size', size.toString())
-            .set('sortParam', sortParam);
-      
-            return this.http.post<${majStart(className)}ListDTO>(url, cleanedCriteria, { params }).pipe(
-              map((response) => {
-                this.elementNumber = response.data?.page?.totalElements ?? 0;
-                const ${minStart(className)}s: ${majStart(className)}[] = (response.data?.content ?? []).map(item => new  ${majStart(className)}(item));
-                return ${minStart(className)}s;
-              }),
-              catchError(err => {
-                const isNotFound = err.status === 404 ;
-                if (isNotFound) {
-                  return of([]);
-                }
-                else{
-                  console.error('Error while searching ${lowerCase(classNameLink)}', err);
-                  return throwError(() => err);
-                }
-              })
-            );
-        }
-      {{#if !isView}}{{removeLine}}
-        delete${majStart(className)}ById(id: string): Observable<void> {
-          const url = this.apiUrl+'/'+id;
-          return this.http.delete<void>(url).pipe(
-            catchError(err => {
-            console.error('Error while deleting ${majStart(className)} with id: '+id, err);
-                    return throwError(() => err);})
-          );
-        }
-      
-        create${majStart(className)}(${minStart(className)}: Partial<${majStart(className)}>): Observable<${majStart(className)}> {
-          return this.http.post<${majStart(className)}>(this.apiUrl, ${minStart(className)}).pipe(
-            map(response => response),
-              catchError(err => {
-                return throwError(err);
-              })
-            );
-        }
-      
-        update${majStart(className)}(${minStart(className)}: Partial<${majStart(className)}>,id:string): Observable<${majStart(className)}> {
-            return this.http.put<${majStart(className)}>(this.apiUrl+"/"+id, ${minStart(className)}).pipe(
-              map(response => response),
-              catchError(err => {
-                return throwError(err);
-              })
-            );
-        }
-      {{/if}}{{removeLine}}
-      
-      {{tab}}get${majStart(className)}ById(id: string): Observable<${majStart(className)}> {
-      {{tab}}{{tab}}const url = this.apiUrl+'/'+id;
-      {{tab}}{{tab}}return this.http.get<${majStart(className)}DTO>(url).pipe(
-      {{tab}}{{tab}}{{tab}}map((response) => response.data ?? []),
-      {{tab}}{{tab}}{{tab}}catchError(err => {
-      {{tab}}{{tab}}{{tab}}{{tab}}console.error(`Error while collecting data of ${majStart(className)} with id: ${id}`, err);
-      {{tab}}{{tab}}{{tab}}{{tab}}return throwError(() => new Error('API calling error'));
-      {{tab}}{{tab}}{{tab}}})
-      {{tab}}{{tab}});
-      {{tab}}}
-      
-      {{tab}}get${majStart(className)}s(page: number = 0,size: number = 1000,sortParam: string = '{{#each fieldsPK}}${this.name},asc;{{/each}}'): Observable<${majStart(className)}[]> {
-      {{tab}}{{tab}}const params = new HttpParams()
-      {{tab}}{{tab}}{{tab}}.set('page', page.toString())
-      {{tab}}{{tab}}{{tab}}.set('size', size.toString())
-      {{tab}}{{tab}}{{tab}}.set('sortParam', sortParam);
-      {{tab}}{{tab}}return this.http.get<${majStart(className)}ListDTO>(this.apiUrl, { params }).pipe(
-      {{tab}}{{tab}}{{tab}}map(response => response.data?.content ?? []),
-      {{tab}}{{tab}}{{tab}}catchError(err => {
-      {{tab}}{{tab}}{{tab}}{{tab}}const isNotFound = err.status === 404 ;
-      {{tab}}{{tab}}{{tab}}{{tab}}if (isNotFound) {
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}return of([]);
-      {{tab}}{{tab}}{{tab}}{{tab}}} else {
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}console.error('Error while collecting  ${lowerCase(classNameLink)}', err);
-      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}return throwError(() => err);
-      {{tab}}{{tab}}{{tab}}{{tab}}}
-      {{tab}}{{tab}}{{tab}}})
-      {{tab}}{{tab}});
-      {{tab}}}
-      }
-    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/services"
-    name: "${toKebabCase(className)}.service"
-  modelComponent:
-    imports: |
-      {{#each fieldsFK}}
-        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
-      {{/each}}
-    exports : |
-      export class ${majStart(className)}
-      {
-      {{tab}}{{#each fields}}
-      {{tab}}{{#if this.isForeignKey}}${this.name}: ${toPascalCase(this.type)}{{else}}
-      {{tab}}${this.name}: ${this.typeBase}{{/if}}
-      {{tab}}{{/each}}{{removeLine}}
-        
-         constructor(data: any) {
-            {{tab}}{{#each fields}}
-            {{tab}}this.${this.name}=data.${this.name}
-            {{tab}}{{/each}}{{removeLine}}  
-         }
-      }
-      
-      export interface ${majStart(className)}DTO{
-      {{tab}}status: number;
-      {{tab}}message: string;
-      {{tab}}returnCode: number;
-      {{tab}}data: ${majStart(className)};
-      {{tab}}timestamp: string;
-      }
-      
-      export interface ${majStart(className)}ListDTO{
-      {{tab}}status: number;
-      {{tab}}message: string;
-      {{tab}}returnCode: number;
-      {{tab}}data: {
-      {{tab}}{{tab}}content: ${majStart(className)}[];
-      {{tab}}{{tab}}page: {
-      {{tab}}{{tab}}{{tab}}size: number;
-      {{tab}}{{tab}}{{tab}}number: number;
-      {{tab}}{{tab}}{{tab}}totalElements: number;
-      {{tab}}{{tab}}{{tab}}totalPages: number;
-      {{tab}}{{tab}}};
-      {{tab}}};
-      {{tab}}errors: any;
-      {{tab}}timestamp: string;
-      }
-    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/models"
-    name: "${toKebabCase(className)}.model"
-  mereFiles: [ ]
-  filleFiles: [ ]
+#- id: 1
+#  languageId: 1
+#  coreFramework: "Angular"
+#  name: "Angular App"
+#  template: "Angular-template"
+#  initPath: "angular/angular-skeletoon"
+#  componentExtension: "ts"
+#  defaultPort: "4200"
+#  frontendPaths:
+#    faviconPath: "${destinationFolder}/src"
+#    logoPath: "${destinationFolder}/src/assets/icon"
+#    langsPath: "${destinationFolder}/src/lang"
+#  authenticationFiles:
+#    - fileType: "Banner file"
+#      fileName: "banner.component"
+#      extension: "html"
+#      content: |
+#        {{#if useJWT}}
+#        <header class="app-banner">
+#          <div class="banner-header">
+#            <div class="app-title">
+#              <img [src]="logoPath" alt="App Logo" (error)="onLogoError()" />
+#            </div>
+#            <div class="app-title" >
+#              <span>{{ title }}</span>
+#            </div>
+#          </div>
+#
+#          <div class="banner-actions">
+#            <label for="language">{{this.content.banner.lang}} :</label>
+#            <select id="language" [(ngModel)]="selectedLanguage" (change)="changeLanguage(selectedLanguage)">
+#              <option *ngFor="let lang of Language | keyvalue" [value]="lang.value">
+#                {{ lang.value }}
+#              </option>
+#            </select>
+#
+#            <button class="banner-btn outline" (click)="disconnect()">
+#              <i class="bi bi-box-arrow-in-right"></i> {{this.content.banner.disconnect}}
+#            </button>
+#          </div>
+#          </header>
+#        {{else}}no ts{{/if}}
+#      destinationPath: "${destinationFolder}/src/app/shared/banner/"
+#    - fileType: "Banner file"
+#      fileName: "banner.component"
+#      extension: "ts"
+#      content: |
+#        {{#if useJWT}}
+#            import { Component, Input, OnInit } from '@angular/core';
+#            import { RouterModule } from '@angular/router';
+#            import { CommonModule } from '@angular/common';
+#            import { FormsModule } from '@angular/forms';
+#            import { Language, LanguageService } from '../services/language/language.service';
+#            import { MotherComponent } from '../mother-component/mother.component';
+#            import { AuthService } from '../../features/authentication/services/authentication.service';
+#            import { TranslateService } from '../services/language/translate.service';
+#
+#
+#
+#            @Component({
+#              selector: 'app-banner',
+#              standalone: true,
+#              imports: [RouterModule, CommonModule, FormsModule],
+#              templateUrl: './banner.component.html',
+#              styleUrls: ['./banner.component.css']
+#            })
+#            export class BannerComponent extends MotherComponent implements OnInit{
+#                @Input() title: string = "${projectName}";
+#                @Input() logoPath: string = "assets/icon/logo.jpg";
+#
+#                logoAvailable = true;
+#                selectedLanguage: Language = Language.EN;
+#                Language = Language;
+#
+#                constructor(
+#                  override langService: LanguageService,
+#                  override translateService: TranslateService,
+#                  private authService: AuthService
+#                    ) {
+#                    super(langService, translateService);
+#                }
+#
+#
+#                onLogoError() {
+#                  this.logoAvailable = false;
+#                }
+#
+#                disconnect()
+#                {
+#                  this.authService.logout();
+#                }
+#
+#                changeLanguage(lang: Language)
+#                {
+#                  this.langService.setLanguage(lang);
+#                  this.selectedLanguage = lang;
+#                }
+#            }
+#            {{else}}no ts{{/if}}
+#      destinationPath: "${destinationFolder}/src/app/shared/banner/"
+#    - fileType: "App-files"
+#      fileName: "app.component"
+#      extension: "html"
+#      content: |
+#        {{#if useJWT}}
+#        <app-banner *ngIf="isLoggedIn" title="${projectName}"></app-banner>
+#        <div class="app-layout">
+#          <app-sidebar *ngIf="isLoggedIn" [entities]="entities" [views]="views"></app-sidebar>
+#            <div class="main-content">
+#              <router-outlet></router-outlet>
+#            </div>
+#        </div>
+#        {{else}}no ts{{/if}}
+#      destinationPath: "${destinationFolder}/src/app/"
+#    - fileType: "App-files"
+#      fileName: "app.component"
+#      extension: "ts"
+#      content: |
+#        {{#if useJWT}}
+#        import { Component } from '@angular/core';
+#        import { RouterOutlet,RouterModule } from '@angular/router';
+#        import {HttpClientModule } from '@angular/common/http';
+#
+#        import { BannerComponent } from './shared/banner/banner.component';
+#
+#        import { SidebarComponent } from './shared/sidebar/sidebar.component';
+#        import { CommonModule } from '@angular/common';
+#        import { AuthService } from './features/authentication/services/authentication.service';
+#
+#
+#        import { AuthInterceptor } from './features/authentication/interceptor.component';
+#        import { Router } from '@angular/router';
+#
+#        @Component({
+#          selector: 'app-root',
+#          standalone: true,
+#          imports: [RouterOutlet,RouterModule,SidebarComponent,CommonModule,HttpClientModule,BannerComponent],
+#          templateUrl: './app.component.html',
+#          styleUrls: ['./app.component.css']
+#        })
+#
+#        export class AppComponent {
+#          title = '${projectName}';
+#          isLoggedIn: boolean = false;
+#
+#          constructor(private authService: AuthService, private router: Router ) {
+#              this.authService.isLoggedIn$.subscribe(status => {
+#              this.isLoggedIn = status;
+#              if (!status) {
+#              const currentUrl = this.router.url;
+#              if (currentUrl !== '') {
+#              this.router.navigate(['']);
+#              }
+#            }
+#            });
+#          }
+#          entities={
+#          {{tab}}{{#each entities}}{{removeLine}}
+#          {{#if !this.isView}}'${formatReadable(this.className)}s': '/${toKebabCase(this.className)}s'{{/if}}
+#          {{tab}}{{#if !@last  and !this.isView}},{{/if}}{{/each}}{{removeLine}}
+#          }
+#          views={
+#          {{tab}}{{#each entities}}{{removeLine}}
+#          {{#if this.isView}}'${formatReadable(this.className)}': '/${toKebabCase(this.className)}s',{{/if}}
+#          {{tab}}{{#if @last}}'end':''{{/if}}{{/each}}{{removeLine}}
+#          }
+#        }
+#        {{else}}no ts{{/if}}
+#      destinationPath: "${destinationFolder}/src/app/"
+#    - fileType: "App-files"
+#      fileName: "app.routes"
+#      extension: "ts"
+#      content: |
+#        {{#if useJWT}}
+#        import { Routes } from '@angular/router';
+#        import { WelcomeComponent } from './shared/welcome/welcome.component';
+#
+#        {{#each entities}}{{removeLine}}
+#        import { ${minStart(this.className)}Routes } from './features/${toKebabCase(this.className)}/${toKebabCase(this.className)}.routes'
+#        {{/each}}{{removeLine}}
+#
+#        import { loginRoutes } from './features/authentication/authentication.route';
+#
+#        export const routes: Routes = [
+#          ...loginRoutes,
+#          {
+#                path: 'welcome',
+#                component: WelcomeComponent,
+#          },
+#          {{#each entities}}{{removeLine}}
+#          ...${minStart(this.className)}Routes
+#          {{#if !@last}},{{/if}}{{/each}}{{removeLine}}
+#        ];
+#        {{else}}no ts{{/if}}
+#      destinationPath: "${destinationFolder}/src/app/"
+#    - fileType: "main files"
+#      fileName: "main"
+#      extension: "ts"
+#      content: |
+#        {{#if useJWT}}
+#            import { bootstrapApplication } from '@angular/platform-browser';
+#            import { AppComponent } from './app/app.component';
+#            import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+#            import { provideRouter } from '@angular/router';
+#            import { AuthInterceptor } from './app/features/authentication/interceptor.component';
+#            import { routes } from './app/app.routes';
+#            import { HTTP_INTERCEPTORS } from '@angular/common/http';
+#
+#            bootstrapApplication(AppComponent, {
+#              providers: [
+#                provideHttpClient(withInterceptorsFromDi()),
+#                { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+#                provideRouter(routes)
+#              ]
+#            }).catch(err => console.error(err));
+#
+#          {{else}}no ts{{/if}}
+#      destinationPath: "${destinationFolder}/src"
+#    - fileType: "interceptor files"
+#      fileName: "interceptor.component"
+#      extension: "ts"
+#      content: |
+#        {{#if useJWT}}
+#        import { Injectable } from '@angular/core';
+#        import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpErrorResponse } from '@angular/common/http';
+#        import { Observable, throwError } from 'rxjs';
+#        import { catchError } from 'rxjs/operators';
+#        import { Router } from '@angular/router';
+#        import { environment } from '../../../environments/environment';
+#
+#        @Injectable()
+#        export class AuthInterceptor implements HttpInterceptor {
+#
+#          private readonly apiUrl = environment.apiUrl;
+#          constructor(private router: Router) {}
+#
+#          intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+#            if (req.url === this.apiUrl+"/auth/login") {
+#              return next.handle(req);
+#            }
+#            const token = localStorage.getItem('authToken');
+#
+#            let authReq = req;
+#            if (token) {
+#              authReq = req.clone({
+#                setHeaders: {
+#                  Authorization: "Bearer "+token
+#                }
+#              });
+#            }
+#            return next.handle(authReq).pipe(
+#              catchError((error: HttpErrorResponse) => {
+#                if (error.status === 401) {
+#                  console.warn('forbidden, redirecting to login');
+#                  this.router.navigate(['']);
+#                } else if (error.status === 403) {
+#                  console.warn('access denied');
+#                }
+#                return throwError(() => error);
+#              })
+#            );
+#          }
+#        }
+#        {{else}}no ts{{/if}}
+#      destinationPath: "${destinationFolder}/src/app/features/authentication"
+#    - fileType: "authentication files"
+#      fileName: "authentication.route"
+#      extension: "ts"
+#      content: |
+#        {{#if useJWT}}
+#        import { Routes } from '@angular/router';
+#        export const loginRoutes: Routes = [
+#          {
+#            path: '',
+#            loadComponent: () => import('./login/login.component').then(m => m.LoginComponent)
+#          }
+#        ];
+#        {{else}}no ts{{/if}}
+#      destinationPath: "${destinationFolder}/src/app/features/authentication"
+#    - fileType: "authentication files"
+#      fileName: "authentication.service"
+#      extension: "ts"
+#      content: |
+#        {{#if useJWT}}
+#        import { Injectable } from '@angular/core';
+#        import { HttpClient,HttpParams } from '@angular/common/http';
+#        import { BehaviorSubject, Observable } from 'rxjs';
+#        import {  tap } from 'rxjs/operators';
+#        import { environment } from '../../../../environments/environment';
+#        import { Router } from '@angular/router';
+#
+#        interface LoginResponse {
+#          status: number;
+#          message: string;
+#          returnCode: number;
+#          data: any;
+#          errors: any;
+#          timestamp: string;
+#        }
+#
+#        @Injectable({ providedIn: 'root' })
+#        export class AuthService {
+#
+#           private readonly apiUrl = environment.apiUrl+'/auth';
+#           constructor(private http: HttpClient,private router:Router) {}
+#
+#           private loggedIn = new BehaviorSubject<boolean>(false);
+#
+#          isLoggedIn$ = this.loggedIn.asObservable();
+#
+#            login(email: string, password: string): Observable<LoginResponse> {
+#                const payload = {
+#                username: email,
+#                password: password
+#                };
+#
+#                return this.http.post<LoginResponse>(this.apiUrl+"/login" ,payload)
+#                .pipe(
+#                    tap(response => {
+#                    if (response.status === 200) {
+#                        this.loggedIn.next(true);
+#                    } else {
+#                        this.loggedIn.next(false);
+#                    }
+#                    })
+#                );
+#            }
+#          logout(): void {
+#              const token = localStorage.getItem('authToken');
+#              if (!token) {
+#                this.clearAndRedirect();
+#                return;
+#              }
+#              const params = new HttpParams().set('Authorization', token);
+#              this.http.post(this.apiUrl + '/logout', {}, { params })
+#              .subscribe({
+#              next: () => {
+#                this.clearAndRedirect();
+#              },
+#              error: (err) => {
+#                console.error('Logout failed', err);
+#                this.clearAndRedirect();
+#              }
+#            });
+#          }
+#            private clearAndRedirect() {
+#              localStorage.removeItem('authToken');
+#              this.loggedIn.next(false);
+#              this.router.navigate(['/']);
+#            }
+#        }
+#        {{else}}no ts{{/if}}
+#      destinationPath: "${destinationFolder}/src/app/features/authentication/services"
+#    - fileType: "authentication files"
+#      fileName: "login.component"
+#      extension: "ts"
+#      content: |
+#        {{#if useJWT}}
+#          import { Component } from '@angular/core';
+#          import { CommonModule } from '@angular/common';
+#          import { FormsModule } from '@angular/forms';
+#          import { AuthService } from '../services/authentication.service';
+#          import { warnMeUp } from '../../../../utilities/utilities';
+#          import { Router } from '@angular/router';
+#
+#          @Component({
+#            selector: 'app-login',
+#            standalone: true,
+#            imports: [CommonModule, FormsModule],
+#            templateUrl: './login.component.html',
+#            styleUrls: ['./login.component.css']
+#            })
+#          export class LoginComponent {
+#              email: string = '';
+#              password: string = '';
+#
+#              logoPath: string="assets/icon/logo.jpg"
+#                logoAvailable = true;
+#
+#                onLogoError() {
+#                this.logoAvailable = false;
+#              }
+#
+#              loading: boolean = false;
+#
+#              constructor(private authService: AuthService, private router: Router) {}
+#
+#                  onSubmit() {
+#                    if (!this.email || !this.password) return;
+#
+#                    this.loading = true; // start loading
+#                    this.authService.login(this.email, this.password).subscribe({
+#                        next: (res) => {
+#                          this.loading = false; // stop loading
+#                          if (res.status === 200) {
+#                          localStorage.setItem('authToken', res.data);
+#                          this.router.navigate(['/welcome']);
+#                          } else {
+#                          warnMeUp('error', res.message || 'Unknown error');
+#                          }
+#                      },
+#                        error: (err) => {
+#                          this.loading = false; // stop loading
+#                          if (err.status === 401) {
+#                          warnMeUp('error', err.error?.message || 'Authentication failed');
+#                          } else {
+#                          warnMeUp('error', err.message || 'Unexpected error');
+#                          }
+#                        }
+#                    });
+#                  }
+#              }
+#        {{else}}no html{{/if}}
+#      destinationPath: "${destinationFolder}/src/app/features/authentication/login"
+#    - fileType: "authentication files"
+#      fileName: "login.component"
+#      extension: "html"
+#      content: |
+#        {{#if useJWT}}
+#          <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
+#            <div class="card shadow-lg p-4" style="width: 22rem; border-radius: 12px;">
+#                <div class="sidebar-header">
+#                   <div class="app-title" *ngIf="!logoAvailable">
+#                       <span>Your</span><span class="blue">App</span>
+#                           </div>
+#                                <div class="app-title" *ngIf="logoAvailable">
+#                                  <img [src]="logoPath" alt="App Logo" (error)="onLogoError()" />
+#                                </div>
+#                           </div>
+#
+#                   <form (ngSubmit)="onSubmit()" class="needs-validation" novalidate>
+#                      <div class="mb-3">
+#                         <label for="email" class="form-label fw-semibold">Login</label>
+#                        <div class="input-group">
+#                              <input
+#                                 type="email"
+#                                 class="form-control"
+#                                 id="email"
+#                                 [(ngModel)]="email"
+#                                 name="email"
+#                                 placeholder="adress@gmail.com"
+#                                 required
+#                              />
+#                              <span class="input-group-text">
+#                                <i class="bi bi-envelope"></i>
+#                              </span>
+#                        </div>
+#                      </div>
+#                      <div class="mb-3">
+#                        <label for="password" class="form-label fw-semibold">Password</label>
+#                        <div class="input-group">
+#                         <input
+#                            type="password"
+#                            class="form-control"
+#                            id="password"
+#                            [(ngModel)]="password"
+#                            name="password"
+#                            placeholder="••••••"
+#                            required
+#                         />
+#                         <span class="input-group-text">
+#                           <i class="bi bi-lock"></i>
+#                         </span>
+#                        </div>
+#                       </div>
+#                      <button type="submit" class="btn w-100 text-white fw-semibold login-btn" [disabled]="loading">
+#                        <span *ngIf="!loading">Sign In</span>
+#                        <span *ngIf="loading">
+#                          <i class="bi bi-arrow-clockwise spin me-2"></i>Loading...
+#                        </span>
+#                      </button>
+#                  </form>
+#            </div>
+#          </div>
+#        {{else}}no html{{/if}}
+#      destinationPath: "${destinationFolder}/src/app/features/authentication/login"
+#    - fileType: "authentication files"
+#      fileName: "login.component"
+#      extension: "css"
+#      content: |
+#        {{#if useJWT}}
+#            @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css');
+#            @import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css');
+#
+#               .spin {
+#                  display: inline-block;
+#                  animation: spin 1s linear infinite;
+#              }
+#
+#                @keyframes spin {
+#                0% { transform: rotate(0deg); }
+#                100% { transform: rotate(360deg); }
+#              }
+#            app-title {
+#              font-size: 1.4rem;
+#              font-weight: 700;
+#              margin-top: 0;
+#              margin-bottom: 2.4rem;
+#              text-align: center;
+#            }
+#
+#                .app-title .blue {
+#                  color: var(--primary);
+#                }
+#
+#                .app-title img {
+#                  height: 70px;
+#                  width: auto;
+#                  display: block;
+#                  margin-left: auto;
+#                  margin-right: auto;
+#                  margin-top: auto;
+#                }
+#
+#
+#            .login-btn {
+#              background: var(--primary) !important;
+#              border-radius: 8px;
+#            }
+#
+#            .login-btn:hover {
+#              background: var(--primary-dark) !important;
+#            }
+#
+#            .login-btn:active {
+#              background: var(--primary-light) !important;
+#            }
+#
+#            {{else}}no css{{/if}}
+#      destinationPath: "${destinationFolder}/src/app/features/authentication/login"
+#  additionalFiles:
+#    - fileType: "Language file"
+#      fileName: "language.service"
+#      extension: "ts"
+#      content: |
+#        import { Injectable } from '@angular/core';
+#        import { BehaviorSubject } from 'rxjs';
+#
+#        export enum Language
+#        { {{#each langList}}
+#          ${upperCase(this.locale)} = '${this.locale}',
+#          {{/each}}{{removeLine}}
+#        }
+#
+#        @Injectable({
+#         providedIn: 'root'
+#        })
+#        export class LanguageService {
+#         private languageSubject = new BehaviorSubject<Language>(Language.EN);
+#         language$ = this.languageSubject.asObservable();
+#
+#         setLanguage(lang: Language) {
+#           this.languageSubject.next(lang);
+#         }
+#
+#         get currentLanguage(): Language {
+#           return this.languageSubject.value;
+#         }
+#
+#         formatValue(value: any): string {
+#           if (value == null) return '';
+#
+#           if (typeof value === 'number') {
+#             return this.formatNumber(value);
+#           }
+#           else if (value instanceof Date || this.isDateString(value)) {
+#             return this.formatDate(value);
+#           }
+#           else if (typeof value === 'string') {
+#             return value;
+#           }
+#           else {
+#             return String(value);
+#           }
+#         }
+#
+#         formatDateTime(value: Date | string | number): string {
+#           if (!value) return '';
+#           const date = new Date(value);
+#           return new Intl.DateTimeFormat(this.currentLanguage, {
+#             year:'numeric', month:'2-digit', day:'2-digit',
+#             hour:'2-digit', minute:'2-digit', second:'2-digit'
+#           }).format(date);
+#         }
+#
+#         formatTime(value: Date | string | number): string {
+#           if (!value) return '';
+#           const date = new Date(value);
+#           return new Intl.DateTimeFormat(this.currentLanguage, { hour:'2-digit', minute:'2-digit', second:'2-digit' }).format(date);
+#         }
+#
+#         private isDateString(value: any): boolean {
+#           return typeof value === 'string' && !isNaN(Date.parse(value));
+#         }
+#
+#         formatNumber(value: number): string {
+#           if (value == null) return '';
+#           return new Intl.NumberFormat(this.currentLanguage).format(value);
+#         }
+#
+#         formatDate(value: Date | string | number): string {
+#           if (!value) return '';
+#           const date = new Date(value);
+#           const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0;
+#           if (hasTime) {
+#             return new Intl.DateTimeFormat(this.currentLanguage, {
+#               year: 'numeric',
+#               month: '2-digit',
+#               day: '2-digit',
+#               hour: '2-digit',
+#               minute: '2-digit',
+#               second: '2-digit'
+#             }).format(date);
+#           } else {
+#             return new Intl.DateTimeFormat(this.currentLanguage, {
+#               year: 'numeric',
+#               month: '2-digit',
+#               day: '2-digit'
+#             }).format(date);
+#           }
+#         }
+#
+#         makeItReadable(value: string): string {
+#           if (!value) return '';
+#           let readable = value.replace(/[_\-]+/g, ' ');
+#
+#           const idPattern = /^([a-zA-Z]+)id([A-Z][a-zA-Z]*)$/;
+#           const match = readable.match(idPattern);
+#           if (match) {
+#             readable = match[1];
+#           } else {
+#             readable = readable.replace(/([a-z])([A-Z])/g, '$1 $2');
+#           }
+#           readable = readable.charAt(0).toUpperCase() + readable.slice(1).trim();
+#
+#           return readable;
+#         }
+#        }
+#
+#      destinationPath: "${destinationFolder}/src/app/shared/services/language"
+#    - fileType: "Index page"
+#      fileName: "index"
+#      extension: "html"
+#      content: |
+#        <!doctype html>
+#        <html lang="en">
+#        <head>
+#          <meta charset="utf-8">
+#          <title>${projectName}</title>
+#          <base href="/">
+#          <meta name="viewport" content="width=device-width, initial-scale=1">
+#          <link rel="icon" type="image/x-icon" href="{{#if useFaviconLink}}${faviconUrl}{{else}}favicon.ico{{/if}}">
+#        </head>
+#        <body>
+#          <app-root></app-root>
+#        </body>
+#        </html>
+#      destinationPath: "${destinationFolder}/src"
+#    - fileType: "App-files"
+#      fileName: "app.constante"
+#      extension: "ts"
+#      content: |
+#        {{#if useLogoLink}}export const linkToImage="${logoUrl}";{{else}}export const linkToImage="assets/icon/logo.jpg";{{/if}}
+#      destinationPath: "${destinationFolder}/src/app/"
+#    - fileType: "css for layout"
+#      fileName: "styles"
+#      extension: "css"
+#      content: |
+#        html, body {
+#          height: 100%;
+#          margin: 0;
+#          padding: 0;
+#        }
+#          app-root {
+#            display: flex;
+#            flex-direction: column;
+#            height: 100%;
+#            width: 100%;
+#          }
+#        :root {
+#
+#          --primary: ${primaryColor};
+#          --secondary: ${secondaryColor};
+#
+#          --primary-light: color-mix(in srgb, var(--primary) 75%, white);
+#          --primary-dark: color-mix(in srgb, var(--primary) 85%, black);
+#
+#          --bg-hover: color-mix(in srgb, var(--secondary) 10%, white);
+#          --bg-active: color-mix(in srgb, var(--secondary) 15%, white);
+#        }
+#      destinationPath: "${destinationFolder}/src"
+#    - fileType: "App-files"
+#      fileName: "app.component"
+#      extension: "ts"
+#      content: |
+#        import { Component } from '@angular/core';
+#        import { RouterOutlet,RouterModule } from '@angular/router';
+#        import { BannerComponent } from './shared/banner/banner.component';
+#
+#        import { SidebarComponent } from './shared/sidebar/sidebar.component';
+#
+#        @Component({
+#          selector: 'app-root',
+#          standalone: true,
+#          imports: [RouterOutlet,RouterModule,SidebarComponent,BannerComponent],
+#          templateUrl: './app.component.html',
+#          styleUrls: ['./app.component.css']
+#        })
+#
+#        export class AppComponent {
+#          title = '${projectName}';
+#
+#          entities={
+#          {{tab}}{{#each entities}}{{removeLine}}
+#          {{#if !this.isView}}'${formatReadable(this.className)}s': '/${toKebabCase(this.className)}s'{{/if}}
+#          {{tab}}{{#if !@last  and !this.isView}},{{/if}}{{/each}}{{removeLine}}
+#          }
+#          views={
+#          {{tab}}{{#each entities}}{{removeLine}}
+#          {{#if this.isView}}'${formatReadable(this.className)}': '/${toKebabCase(this.className)}s',{{/if}}
+#          {{tab}}{{#if @last}}'end':''{{/if}}{{/each}}{{removeLine}}
+#          }
+#        }
+#      destinationPath: "${destinationFolder}/src/app/"
+#    - fileType: "App-files"
+#      fileName: "app.routes"
+#      extension: "ts"
+#      content: |
+#        import { Routes } from '@angular/router';
+#        import { WelcomeComponent } from './shared/welcome/welcome.component';
+#
+#        {{#each entities}}{{removeLine}}
+#        import { ${minStart(this.className)}Routes } from './features/${toKebabCase(this.className)}/${toKebabCase(this.className)}.routes'
+#        {{/each}}{{removeLine}}
+#
+#        export const routes: Routes = [
+#          {
+#                path: '',
+#                component: WelcomeComponent,
+#          },
+#          {{#each entities}}{{removeLine}}
+#          ...${minStart(this.className)}Routes
+#          {{#if !@last}},{{/if}}{{/each}}{{removeLine}}
+#        ];
+#      destinationPath: "${destinationFolder}/src/app/"
+#    - fileType: "App-files"
+#      fileName: "app.component"
+#      extension: "html"
+#      content: |
+#        <app-banner title="${projectName}"></app-banner>
+#        <div class="app-layout">
+#          <app-sidebar [entities]="entities" [views]="views"></app-sidebar>
+#            <div class="main-content">
+#              <router-outlet></router-outlet>
+#            </div>
+#        </div>
+#      destinationPath: "${destinationFolder}/src/app/"
+#    - fileType: "App-files"
+#      fileName: "app.component"
+#      extension: "css"
+#      content: |
+#        .app-layout {
+#          display: flex;
+#          height: 100vh;
+#          font-family: sans-serif;
+#        }
+#
+#        app-sidebar {
+#          width: 220px;
+#          flex-shrink: 0;
+#          border-right: 1px solid #e5e7eb;
+#          background-color: #fff;
+#          height: 100vh;
+#          padding: 1rem;
+#        }
+#
+#        .main-content {
+#          flex-grow: 1;
+#          padding: 0.5rem 2rem 2rem 2rem;
+#          background-color: #f9fafb;
+#          overflow-y: auto;
+#
+#        }
+#      destinationPath: "${destinationFolder}/src/app/"
+#    - fileType: "Environment-file"
+#      fileName: "environment"
+#      extension: "ts"
+#      content: |
+#          export const environment = {
+#          {{tab}}production: false,
+#          {{tab}}apiUrl: 'http://localhost:${projectPort}/${toKebabCase(projectName)}'
+#          };
+#      destinationPath: "${destinationFolder}/src/environments/"
+#    - fileType: "Environment-file"
+#      fileName: "environment.prod"
+#      extension: "ts"
+#      content: |
+#        export const environment = {
+#
+#        {{tab}}production: true,
+#        {{tab}}apiUrl: 'http://localhost:${projectPort}/${toKebabCase(projectName)}'
+#        };
+#      destinationPath: "${destinationFolder}/src/environments/"
+#    - fileType: "Utilities"
+#      fileName: "utilities"
+#      extension: "ts"
+#      content: |
+#        import Swal from 'sweetalert2';
+#
+#
+#        export function warnMeUp(title:string,text:string,color:string='#ff0000',icon: 'success' | 'error' | 'warning' | 'info' | 'question' = 'error')
+#          {
+#            Swal.fire({
+#            title: title,
+#            text: text,
+#            icon: icon,
+#            confirmButtonText: 'close',
+#            confirmButtonColor: color
+#          });
+#        }
+#        export function objectToRecord<T extends object>(obj: T): Record<string, any> {
+#          const record: Record<string, any> = {};
+#
+#          Object.entries(obj).forEach(([key, value]) => {
+#            if (value && typeof value === 'object' && !Array.isArray(value)) {
+#              const entries = Object.entries(value);
+#              if (entries.length >= 2) {
+#                record[key] = entries[1][1];
+#              } else if (entries.length === 1) {
+#                record[key] = entries[0][1];
+#              } else {
+#              record[key] = '';
+#              }
+#            } else {
+#            record[key] = value;
+#            }
+#          });
+#          return record;
+#        }
+#        export  function expandSeparatorNotation(flatObj: Record<string, any>,separator:string): any {
+#          const result: any = {};
+#
+#          for (const key in flatObj) {
+#            if (!flatObj.hasOwnProperty(key)) continue;
+#
+#              const value = flatObj[key];
+#              const keys = key.split(separator);
+#              let current = result;
+#
+#              keys.forEach((part, index) => {
+#                if (index === keys.length - 1) {
+#                current[part] = value;
+#                } else {
+#                if (!current[part]) current[part] = {};
+#                current = current[part];
+#                }
+#              });
+#            }
+#          return result;
+#        }
+#        export function recursiveObjectsTo2DArray(data: Record<string, any>[]): any[][] {
+#          if (data.length === 0) return [];
+#
+#          const allKeys: string[] = [];
+#          for (let i = 0; i < data.length; i++) {
+#            const obj = data[i];
+#            for (const key in obj) {
+#              if (!allKeys.includes(key)) {
+#                allKeys.push(key);
+#              }
+#            }
+#          }
+#          const result: any[][] = [];
+#          for (let i = 0; i < data.length; i++) {
+#            const row: any[] = [];
+#            const obj = data[i];
+#
+#            for (let j = 0; j < allKeys.length; j++) {
+#              const key = allKeys[j];
+#              const value = obj[key];
+#              row.push(extractSecondValueIfObject(value));
+#            }
+#            result.push(row);
+#          }
+#          return result;
+#        }
+#
+#        function extractSecondValueIfObject(value: any): any {
+#            if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+#            const values = Object.values(value);
+#            return values.length >= 2 ? values[1] : values[0];
+#          }
+#          return value;
+#        }
+#
+#
+#        export  function expandDotNotation(flatObj: Record<string, any>): any {
+#          const result: any = {};
+#
+#          for (const key in flatObj) {
+#            if (!flatObj.hasOwnProperty(key)) continue;
+#
+#            const value = flatObj[key];
+#            const keys = key.split('.');
+#            let current = result;
+#
+#            keys.forEach((part, index) => {
+#              if (index === keys.length - 1) {
+#                current[part] = value;
+#              } else {
+#                if (!current[part]) current[part] = {};
+#                current = current[part];
+#              }
+#            });
+#          }
+#
+#          return result;
+#        }
+#        export function cleanObject<T>(obj: Partial<T>): Partial<T> {
+#          if (typeof obj !== 'object' || obj === null) {
+#            return obj;
+#          }
+#
+#          const entries = Object.entries(obj)
+#            .map(([key, value]) => {
+#              if (value && typeof value === 'object' && !Array.isArray(value)) {
+#                const cleanedValue = cleanObject(value);
+#                if (Object.keys(cleanedValue).length === 0) {
+#                  return null;
+#                }
+#                return [key, cleanedValue];
+#              }
+#              if (value !== '' && value !== undefined && value !== null) {
+#                return [key, value];
+#              }
+#              return null;
+#            })
+#            .filter((entry): entry is [string, any] => entry !== null);
+#
+#          return Object.fromEntries(entries) as Partial<T>;
+#        }
+#      destinationPath: "${destinationFolder}/src/utilities/"
+#  components:
+#    - componentType: "list"
+#      generateForView: true
+#      router:
+#        link: "/${toKebabCase(className)}s"
+#        label: "${formatReadable(classNameLink)}"
+#      importFile: |
+#        import { Component, OnInit, OnDestroy } from '@angular/core';
+#        import { CommonModule } from '@angular/common';
+#        import { HttpClientModule } from '@angular/common/http';
+#        import { takeUntil } from 'rxjs/operators';
+#        import { Subject ,forkJoin} from 'rxjs';
+#
+#        import { expandDotNotation,recursiveObjectsTo2DArray,warnMeUp } from '../../../../utilities/utilities';
+#
+#        import { DynamicSearchFormComponent, SearchField } from '../../../shared/dynamic-search-form/dynamic-search-form.component';
+#        import { ListComponent } from '../../../shared/list/list.component';
+#        import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+#        import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+#        import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
+#        import { Column } from '../../../shared/list/list.component';
+#
+#        import { ${className} } from '../models/${toKebabCase(className)}.model'
+#        import { ${className}Service } from '../services/${toKebabCase(className)}.service'
+#
+#        {{#each fieldsFK}}
+#        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
+#        import {${toPascalCase(this.type)}Service} from '../../${toKebabCase(this.type)}/services/${toKebabCase(this.type)}.service'
+#        {{/each}}
+#      selector: "app-${toKebabCase(className)}-list"
+#      standalone: true
+#      importComponent: "[CommonModule, DynamicSearchFormComponent, PaginationComponent,ListComponent,PageHeaderComponent,LoadingIconComponent]"
+#      template: "./${toKebabCase(className)}-list.component.html"
+#      style: "./${toKebabCase(className)}-list.component.css"
+#      export: |
+#        export class ${majStart(className)}ListComponent implements OnInit, OnDestroy {
+#
+#            private destroy$ = new Subject<void>();
+#
+#            data:any[][]=[];
+#
+#            sortOrientation: boolean=true;
+#            sortColumn=0;
+#
+#            columns: Column[] =[{{#each fields}}{{#if this.isNotForeignKey}}{ fieldName: '${this.name}', label: '${formatReadable(this.name)}', type: '${this.typeBase}' }{{elseIf this.isForeignKey}}{ fieldName: '${this.type}', label: '${formatReadable(this.type)}', type: 'string' }{{/if}}{{#if !@last}},{{/if}}{{/each}}];
+#
+#            ${minStart(className)}s: ${majStart(className)}[] = [];
+#
+#            {{#each fieldsFK}}{{removeLine}}
+#            ${minStart(this.type)}s: ${majStart(this.type)}[] = [];
+#            {{/each}}{{removeLine}}
+#
+#            formValueAttribute: Record<string, any> = {};
+#            isLoading: boolean = false;
+#
+#            searchFields: SearchField[] = [
+#            {{tab}}{{tab}}{{#each fieldsFK}}
+#                {
+#                  key: '${this.name}.${this.referencedPrimaryKeyColumn}',
+#                  label: '${this.type}',
+#                  type: 'select',
+#                  options: []
+#                },
+#            {{tab}}{{tab}}{{/each}}{{removeLine}}
+#            {{tab}}{{tab}}{{#each fieldsNotFK}}
+#                {{#if this.isPrimaryKey}}
+#                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isText or this.isInterval }}
+#                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isNumeric }}
+#                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'number' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'number' }{{elseIf this.isDate }}
+#                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' }{{elseIf this.isDateTime}}
+#                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'datetime-local' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'datetime-local' }{{elseIf this.isTime}}
+#                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'time' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' }{{/if}}
+#            {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
+#            ];
+#
+#            sort(columnIndex:number,sortOrientation:boolean){
+#                this.sortOrientation=sortOrientation;
+#                this.sortColumn=columnIndex;
+#                const mappedValue = expandDotNotation(this.formValueAttribute);
+#                const sortParam=(this.columns[this.sortColumn]).fieldName+','+(this.sortOrientation?'asc':'desc');
+#                this.load${majStart(className)}s(mappedValue,sortParam);
+#            }
+#
+#             constructor(
+#                {{#each fieldsFK}}{{removeLine}}
+#                 private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
+#                {{/each}}{{removeLine}}
+#                private ${minStart(className)}Service: ${majStart(className)}Service
+#             ) {}
+#
+#            load${majStart(className)}s(criteria: Partial<${majStart(className)}> = {},sortParam:string=(this.columns[this.sortColumn]).fieldName+',asc;'): void {
+#                this.isLoading = true;
+#                this.${minStart(className)}Service.search${majStart(className)}s(criteria, this.currentPage-1, this.itemNumber,sortParam).pipe(takeUntil(this.destroy$)).subscribe({
+#                next: (${minStart(className)}s: ${majStart(className)}[]) => {
+#                        this.${minStart(className)}s = ${minStart(className)}s;
+#                        this.totalItems=this.${minStart(className)}Service.elementNumber;
+#                        this.data=recursiveObjectsTo2DArray(${minStart(className)}s);
+#                        this.isLoading = false;
+#              },
+#                error: (err) => {
+#                  console.error('error while searching data :', err);
+#                  warnMeUp('error','error while fetching data');
+#                  this.isLoading = false;
+#              }
+#              });
+#            }
+#
+#            totalItems: number = 1000;
+#            currentPage: number=1;
+#            itemNumber: number=12;
+#
+#            onNumberRowChange(lineNumber:number):void
+#            {
+#              this.itemNumber=Number(lineNumber);
+#              this.onSearch(this.formValueAttribute);
+#            }
+#            onPageRangeChange(page:number): void {
+#                  this.currentPage =page;
+#                  this.onSearch(this.formValueAttribute);
+#            }
+#
+#            onSearch(formValue: any): void {
+#              this.formValueAttribute=formValue
+#              const mappedValue = expandDotNotation(formValue);
+#              this.load${majStart(className)}s(mappedValue);
+#            }
+#            {{#if !isView}}{{removeLine}}
+#            delete${majStart(className)} = (line: any[]) => {
+#              const id = line[0];
+#              this.${minStart(className)}Service.delete${majStart(className)}ById(id.toString()).pipe(takeUntil(this.destroy$)).subscribe({
+#                  next: () => {
+#                      this.data = this.data.filter(d => d[0] !== id);
+#                      this.${minStart(className)}s = this.${minStart(className)}s.filter(c => c.{{#each fieldsPK}}${this.name}{{/each}} !== id);
+#                      warnMeUp('success','line of data deleted successfully','#28a745','success')
+#                  },
+#                    error: (err) => {
+#                      console.error('error while deleting data :', err);
+#                      warnMeUp('error','error while deleting data');
+#                  }
+#                });
+#            }
+#            {{/if}}
+#
+#            {{#if containsForeignKey}}
+#            ngOnInit(): void {
+#                  this.load${majStart(className)}s();
+#                  this.isLoading = true;
+#                  forkJoin([
+#                      {{#each fieldsFK}}{{removeLine}}
+#                      this.${minStart(this.type)}Service.get${majStart(this.type)}s(),
+#                      {{/each}}{{removeLine}}
+#                  ]).pipe(takeUntil(this.destroy$)).subscribe({
+#                      next: ([{{#each fieldsFK}}${minStart(this.type)}s,{{/each}}]) => {
+#                          {{#each fieldsFK}}
+#                          this.${minStart(this.type)}s = ${minStart(this.type)}s;
+#                          const ${minStart(this.type)}Field = this.searchFields.find(f => f.key === '${this.name}.${this.referencedPrimaryKeyColumn}');
+#                          if (${minStart(this.type)}Field) {
+#                            ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: d.${this.referencedPrimaryKeyColumn},label: entries[1][1]};});
+#                          }
+#                          {{/each}}
+#                          this.isLoading = false;
+#                      },
+#                      error: (err) => {
+#                          warnMeUp('error','error while collecting datas');
+#                          this.isLoading = false;
+#                      }
+#                  });
+#            }
+#            {{else}}{{removeLine}}
+#            ngOnInit(): void {
+#                  this.load${majStart(className)}s();
+#            }
+#            {{/if}}{{removeLine}}
+#
+#            ngOnDestroy() {
+#                this.destroy$.next();
+#                this.destroy$.complete();
+#            }
+#
+#        }
+#      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
+#      componentName: "${toKebabCase(className)}-list.component"
+#      componentAdditionalFiles:
+#        - fileType: "html template"
+#          fileName: "${toKebabCase(className)}-list.component"
+#          extension: "html"
+#          content: |
+#            <app-page-header name="${formatReadable(classNameLink)}" [isView]=${isView}></app-page-header>
+#            <app-dynamic-search-form [searchFields]="searchFields" [onSubmitFn]="onSearch.bind(this)" [onRowsChange]="onNumberRowChange.bind(this)"></app-dynamic-search-form>
+#            <br>
+#            <app-list [sortFn]="sort.bind(this)" [columns]="columns" [datas]="data" {{#if !isView}}[deleteFn]="delete${majStart(className)}"{{/if}} [isView]=${isView} {{#if !isView}}routeToDetail="${toKebabCase(className)}s/details" routeToModify="${toKebabCase(className)}s/modify"{{/if}}></app-list>
+#            <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
+#            <app-pagination [totalItems]="totalItems" [currentPage]="currentPage"  [itemsPerPage]="itemNumber" [onPageRangeChange]="onPageRangeChange.bind(this)"> </app-pagination>
+#          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
+#        - fileType: "css template"
+#          fileName: "${toKebabCase(className)}-list.component"
+#          extension: "css"
+#          content: |
+#            {{newline}}
+#          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-list"
+#        - fileType: "Entity Routes"
+#          fileName: "${toKebabCase(className)}.routes"
+#          extension: "ts"
+#          content: |
+#            import { Routes } from '@angular/router';
+#            export const ${minStart(className)}Routes: Routes = [
+#              {
+#                path: '${toKebabCase(className)}s',
+#                loadComponent: () => import('./${toKebabCase(className)}-list/${toKebabCase(className)}-list.component').then(m => m.${majStart(className)}ListComponent )
+#              }{{#if !isView}},
+#              {
+#                path: '${toKebabCase(className)}s/add',
+#                loadComponent: () => import('./${toKebabCase(className)}-form/${toKebabCase(className)}-form.component').then(m => m.${majStart(className)}FormComponent)
+#              },
+#              {
+#                path: '${toKebabCase(className)}s/details/:id',
+#                loadComponent: () => import('./${toKebabCase(className)}-details/${toKebabCase(className)}-details.component').then(m => m.${majStart(className)}DetailsComponent)
+#              },
+#              {
+#                path: '${toKebabCase(className)}s/modify/:id',
+#                loadComponent: () => import('./${toKebabCase(className)}-form/${toKebabCase(className)}-form.component').then(m => m.${majStart(className)}FormComponent)
+#              }{{/if}}
+#            ];
+#          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}"
+#    - componentType: "form"
+#      router:
+#        link: " "
+#        label: " "
+#      importFile: |
+#        import { Component, OnInit, OnDestroy } from '@angular/core';
+#        import { CommonModule } from '@angular/common';
+#        import { HttpClientModule } from '@angular/common/http';
+#        import { ReactiveFormsModule, FormGroup } from '@angular/forms';
+#        import { Subject, forkJoin, takeUntil } from 'rxjs';
+#        import { ActivatedRoute } from '@angular/router';
+#        import { Router } from '@angular/router';
+#
+#        import { DynamicFieldComponent, FieldConfig } from '../../../shared/dynamic-field/dynamic-field.component';
+#        import { DynamicFormComponent } from '../../../shared/dynamic-form/dynamic-form.component';
+#        import { LinkButtonComponent } from '../../../shared/link-button/link-button.component';
+#        import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+#        import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
+#        import { warnMeUp } from '../../../../utilities/utilities';
+#
+#
+#
+#        import { ${className} } from '../models/${toKebabCase(className)}.model'
+#        import { ${className}Service } from '../services/${toKebabCase(className)}.service'
+#
+#        {{#each fieldsFK}}
+#        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
+#        import {${toPascalCase(this.type)}Service} from '../../${toKebabCase(this.type)}/services/${toKebabCase(this.type)}.service'
+#        {{/each}}
+#      selector: "app-${toKebabCase(className)}-form"
+#      generateForView: false
+#      standalone: true
+#      importComponent: "[CommonModule, ReactiveFormsModule, DynamicFieldComponent, LoadingIconComponent, PageHeaderComponent, LinkButtonComponent, DynamicFormComponent]"
+#      template: "./${toKebabCase(className)}-form.component.html"
+#      style: "./${toKebabCase(className)}-form.component.css"
+#      export: |
+#        export class ${majStart(className)}FormComponent implements OnInit, OnDestroy
+#        {
+#          private destroy$ = new Subject<void>();
+#          isLoading: boolean = false;
+#          form: FormGroup = new FormGroup({});
+#          formUpdate:boolean=false;
+#          validationErrors:any;
+#
+#          id:string ='';
+#          ${minStart(className)}ToUpdate?: ${majStart(className)};
+#          {{#each fieldsFK}}{{removeLine}}
+#          ${minStart(this.type)}s: ${majStart(this.type)}[] = [];
+#          {{/each}}{{removeLine}}
+#
+#          fields: FieldConfig[] = [
+#            {{tab}}{{tab}}{{#each fieldsFK}}
+#              { type: 'select', name: '${this.name}', label: '${this.type}', options: [] },
+#            {{tab}}{{tab}}{{/each}}{{removeLine}}
+#            {{tab}}{{tab}}{{#each simpleFields}}
+#            {{#if this.isText}}{{removeLine}}
+#              { type: 'text', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isNumeric or this.isInterval}}
+#              { type: 'number', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDate }}
+#              { type: 'date', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDateTime}}
+#              { type: 'datetime-local', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isTime}}
+#              { type: 'time', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{/if}}{{#if !@last}},{{/if}}
+#              {{tab}}{{/each}}{{removeLine}}
+#          ];
+#
+#
+#          constructor(
+#                private route: ActivatedRoute,
+#                private router :Router,
+#                {{#each fieldsFK}}{{removeLine}}
+#                 private ${minStart(this.type)}Service: ${majStart(this.type)}Service ,
+#                {{/each}}{{removeLine}}
+#                private ${minStart(className)}Service: ${majStart(className)}Service
+#          ){}
+#
+#          submit(payload:any): void {
+#              this.isLoading = true;
+#              {{#each fieldsFK}}{{removeLine}}
+#              payload.${this.name}=JSON.parse(payload.${this.name});
+#              {{/each}}{{removeLine}}
+#              var ${minStart(className)}: ${majStart(className)} = payload;
+#              const serviceCall = this.formUpdate?this.${minStart(className)}Service.update${majStart(className)}(${minStart(className)} ,this.id):this.${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
+#              serviceCall.pipe(takeUntil(this.destroy$))
+#              .subscribe({
+#                next: res => {
+#                  this.isLoading = false;
+#                  warnMeUp('Success', '${majStart(className)} created successfully','#28a745','success');
+#                  this.form.reset();
+#                  this.validationErrors={};
+#                  this.router.navigate(['${toKebabCase(className)}s']);
+#                },
+#                  error: err => {
+#                    warnMeUp('error', 'Error while making a move on ${minStart(className)} ');
+#                    const apiErrors = err.error?.errors;
+#                    this.validationErrors=apiErrors;
+#                    this.isLoading = false;
+#                }
+#              });
+#          }
+#
+#            load${majStart(className)}(id: string): void {
+#                  this.isLoading = true;
+#                  this.${minStart(className)}Service.get${majStart(className)}ById(id)
+#                      .pipe(takeUntil(this.destroy$))
+#                      .subscribe({
+#                      next: (${minStart(className)}: ${majStart(className)}) => {
+#                          this.${minStart(className)}ToUpdate = ${minStart(className)};
+#                          this.isLoading = false;
+#                        },
+#                      error: (err) => {
+#                          console.error('Error while loading ${minStart(className)}:', err);
+#                          warnMeUp('error', 'Error while fetching ${minStart(className)}');
+#                          this.isLoading = false;
+#                        }
+#                    });
+#            }
+#
+#            {{#if containsForeignKey}}
+#            ngOnInit(): void {
+#                const ${minStart(className)}Id = this.route.snapshot.paramMap.get('id');
+#                if (${minStart(className)}Id) {
+#                  this.id=${minStart(className)}Id;
+#                  this.formUpdate=true
+#                  this.load${majStart(className)}(${minStart(className)}Id);
+#                }
+#                this.isLoading = true;
+#                forkJoin([
+#                    {{#each fieldsFK}}{{removeLine}}
+#                    this.${minStart(this.type)}Service.get${majStart(this.type)}s(),
+#                     {{/each}}{{removeLine}}
+#                 ]).pipe(takeUntil(this.destroy$)).subscribe({
+#                      next: ([{{#each fieldsFK}}${minStart(this.type)}s,{{/each}}]) => {
+#                          {{#each fieldsFK}}
+#                          this.${minStart(this.type)}s = ${minStart(this.type)}s;
+#                          const ${minStart(this.type)}Field = this.fields.find(f => f.name === '${this.name}');
+#                          if (${minStart(this.type)}Field) {
+#                            ${minStart(this.type)}Field.options = this.${minStart(this.type)}s.map(d => {const entries = Object.entries(d); return {value: JSON.stringify(d),label: entries[1][1]};});
+#                          }
+#                          {{/each}}
+#                          this.isLoading = false;
+#                      },
+#                      error: (err) => {
+#                          warnMeUp('error','error while collecting data');
+#                          this.isLoading = false;
+#                      }
+#                  });
+#            }
+#            {{else}}{{removeLine}}
+#            ngOnInit(): void {
+#              const ${minStart(className)}Id = this.route.snapshot.paramMap.get('id');
+#                if (${minStart(className)}Id) {
+#                  this.id=${minStart(className)}Id;
+#                  this.formUpdate=true
+#                  this.load${majStart(className)}(${minStart(className)}Id);
+#                }
+#            }
+#            {{/if}}{{removeLine}}
+#
+#          ngOnDestroy(): void {
+#              this.destroy$.next();
+#              this.destroy$.complete();
+#          }
+#
+#        }
+#      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
+#      componentName: "${toKebabCase(className)}-form.component"
+#      componentAdditionalFiles:
+#        - fileType: "html template"
+#          fileName: "${toKebabCase(className)}-form.component"
+#          extension: "html"
+#          content: |
+#            <app-page-header name="${majStart(className)}s" context="Form" [isView]=true [isForm]=true></app-page-header>
+#            <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
+#            <ng-container *ngIf="formUpdate; else insertForm">
+#              <app-dynamic-form
+#                *ngIf="${minStart(className)}ToUpdate"
+#                [fields]="fields"
+#                [form]="form"
+#                [submitFn]="submit.bind(this)"
+#                [initialData]="${minStart(className)}ToUpdate"
+#                [validationErrors]="validationErrors"
+#            >
+#              </app-dynamic-form>
+#            </ng-container>
+#
+#            <ng-template #insertForm>
+#              <app-dynamic-form
+#                [fields]="fields"
+#                [form]="form"
+#                [submitFn]="submit.bind(this)"
+#                [validationErrors]="validationErrors"
+#            >
+#              </app-dynamic-form>
+#            </ng-template>
+#          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
+#        - fileType: "css template"
+#          fileName: "${toKebabCase(className)}-form.component"
+#          extension: "css"
+#          content: |
+#            {{newline}}
+#          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
+#    - componentType: "details"
+#      router:
+#        link: " "
+#        label: " "
+#      importFile: |
+#        import { Component, OnInit, OnDestroy } from '@angular/core';
+#        import { CommonModule } from '@angular/common';
+#        import { HttpClientModule } from '@angular/common/http';
+#        import { ActivatedRoute,Router } from '@angular/router';
+#        import { takeUntil } from 'rxjs/operators';
+#        import { Subject } from 'rxjs';
+#
+#        import { warnMeUp } from '../../../../utilities/utilities';
+#
+#        import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
+#        import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
+#        import { DetailViewComponent } from '../../../shared/detail-view/detail-view.component';
+#
+#        import { ${majStart(className)} } from '../models/${toKebabCase(className)}.model';
+#        import { ${majStart(className)}Service } from '../services/${toKebabCase(className)}.service';
+#      selector: "app-${toKebabCase(className)}-details"
+#      generateForView: false
+#      standalone: true
+#      importComponent: "[CommonModule, PageHeaderComponent, LoadingIconComponent, DetailViewComponent]"
+#      template: "./${toKebabCase(className)}-details.component.html"
+#      style: "./${toKebabCase(className)}-details.component.css"
+#      export: |
+#        export class ${majStart(className)}DetailsComponent implements OnInit, OnDestroy
+#        {
+#            private destroy$ = new Subject<void>();
+#
+#            ${minStart(className)}?: ${majStart(className)};
+#            id?:string ;
+#            isLoading = false;
+#
+#            constructor(
+#              private route: ActivatedRoute,
+#              private navigator: Router,
+#              private ${minStart(className)}Service: ${majStart(className)}Service
+#            ) {}
+#
+#            ngOnInit(): void {
+#                const ${minStart(className)}Id = this.route.snapshot.paramMap.get('id');
+#                if (${minStart(className)}Id) {
+#                this.id=${minStart(className)}Id;
+#                this.load${majStart(className)}(${minStart(className)}Id);
+#              }
+#            }
+#              load${majStart(className)}(id: string): void {
+#                  this.isLoading = true;
+#                  this.${minStart(className)}Service.get${majStart(className)}ById(id)
+#                  .pipe(takeUntil(this.destroy$))
+#                  .subscribe({
+#                  next: (${minStart(className)}: ${majStart(className)}) => {
+#                          this.${minStart(className)} = ${minStart(className)};
+#                          this.isLoading = false;
+#                },
+#                  error: (err) => {
+#                    console.error('Error loading product:', err);
+#                    warnMeUp('error', 'Error while fetching ${minStart(className)}');
+#                    this.isLoading = false;
+#                }
+#                });
+#              }
+#
+#            ngOnDestroy(): void {
+#                this.destroy$.next();
+#                this.destroy$.complete();
+#            }
+#
+#            delete${majStart(className)} = (id:string) => {
+#                this.${minStart(className)}Service.delete${majStart(className)}ById(id.toString()).pipe(takeUntil(this.destroy$)).subscribe({
+#                next: () => {
+#                  warnMeUp('success','line of data deleted successfully','#28a745','success') ;
+#                  this.navigator.navigate(['${toKebabCase(className)}s']);
+#              },
+#                error: (err) => {
+#                  console.error('error while deleting ${minStart(className)} :', err);
+#                  warnMeUp('error','error while deleting ${minStart(className)}');
+#              }
+#              });
+#            }
+#
+#        }
+#      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-details"
+#      componentName: "${toKebabCase(className)}-details.component"
+#      componentAdditionalFiles:
+#        - fileType: "html template"
+#          fileName: "${toKebabCase(className)}-details.component"
+#          extension: "html"
+#          content: |
+#            <app-page-header name="${majStart(className)}s" context="Details" [isView]=true [isDetail]=true></app-page-header>
+#
+#            <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
+#
+#            <div *ngIf="!isLoading && ${minStart(className)}">
+#              <app-detail-view [object]="${minStart(className)}" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id" LinkContext='${toKebabCase(className)}s'></app-detail-view>
+#            </div>
+#          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-details"
+#        - fileType: "css template"
+#          fileName: "${toKebabCase(className)}-details.component"
+#          extension: "css"
+#          content: |
+#            {{newline}}
+#          destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-details"
+#  serviceComponent:
+#    imports: |
+#      import { Injectable } from '@angular/core';
+#      import { HttpClient, HttpParams  } from '@angular/common/http';
+#      import { Observable, catchError, throwError, map,of } from 'rxjs';
+#      import { cleanObject } from '../../../../utilities/utilities';
+#      import { environment } from '../../../../environments/environment';
+#      import { ${majStart(className)}ListDTO,${majStart(className)}DTO,${majStart(className)} } from '../models/${toKebabCase(className)}.model'
+#    methods: |
+#      export class ${majStart(className)}Service{
+#      {{tab}}private readonly apiUrl = environment.apiUrl+'/${lowerCase(classNameLink)}';
+#      {{tab}}constructor(private http: HttpClient) {}
+#
+#        elementNumber:number=0;
+#
+#        search${majStart(classNameLink)}(
+#            criteria: Partial<${majStart(className)}>,
+#            page: number = 0,
+#            size: number = 10,
+#            sortParam: string = '{{#each fieldsPK}}${this.name},asc;{{/each}}'
+#          ): Observable<${majStart(className)}[]> {
+#            const cleanedCriteria = cleanObject(criteria);
+#            const url = this.apiUrl+'/search';
+#
+#            const params = new HttpParams()
+#            .set('page', page.toString())
+#            .set('size', size.toString())
+#            .set('sortParam', sortParam);
+#
+#            return this.http.post<${majStart(className)}ListDTO>(url, cleanedCriteria, { params }).pipe(
+#              map((response) => {
+#                this.elementNumber = response.data?.page?.totalElements ?? 0;
+#                const ${minStart(className)}s: ${majStart(className)}[] = (response.data?.content ?? []).map(item => new  ${majStart(className)}(item));
+#                return ${minStart(className)}s;
+#              }),
+#              catchError(err => {
+#                const isNotFound = err.status === 404 ;
+#                if (isNotFound) {
+#                  return of([]);
+#                }
+#                else{
+#                  console.error('Error while searching ${lowerCase(classNameLink)}', err);
+#                  return throwError(() => err);
+#                }
+#              })
+#            );
+#        }
+#      {{#if !isView}}{{removeLine}}
+#        delete${majStart(className)}ById(id: string): Observable<void> {
+#          const url = this.apiUrl+'/'+id;
+#          return this.http.delete<void>(url).pipe(
+#            catchError(err => {
+#            console.error('Error while deleting ${majStart(className)} with id: '+id, err);
+#                    return throwError(() => err);})
+#          );
+#        }
+#
+#        create${majStart(className)}(${minStart(className)}: Partial<${majStart(className)}>): Observable<${majStart(className)}> {
+#          return this.http.post<${majStart(className)}>(this.apiUrl, ${minStart(className)}).pipe(
+#            map(response => response),
+#              catchError(err => {
+#                return throwError(err);
+#              })
+#            );
+#        }
+#
+#        update${majStart(className)}(${minStart(className)}: Partial<${majStart(className)}>,id:string): Observable<${majStart(className)}> {
+#            return this.http.put<${majStart(className)}>(this.apiUrl+"/"+id, ${minStart(className)}).pipe(
+#              map(response => response),
+#              catchError(err => {
+#                return throwError(err);
+#              })
+#            );
+#        }
+#      {{/if}}{{removeLine}}
+#
+#      {{tab}}get${majStart(className)}ById(id: string): Observable<${majStart(className)}> {
+#      {{tab}}{{tab}}const url = this.apiUrl+'/'+id;
+#      {{tab}}{{tab}}return this.http.get<${majStart(className)}DTO>(url).pipe(
+#      {{tab}}{{tab}}{{tab}}map((response) => response.data ?? []),
+#      {{tab}}{{tab}}{{tab}}catchError(err => {
+#      {{tab}}{{tab}}{{tab}}{{tab}}console.error(`Error while collecting data of ${majStart(className)} with id: ${id}`, err);
+#      {{tab}}{{tab}}{{tab}}{{tab}}return throwError(() => new Error('API calling error'));
+#      {{tab}}{{tab}}{{tab}}})
+#      {{tab}}{{tab}});
+#      {{tab}}}
+#
+#      {{tab}}get${majStart(className)}s(page: number = 0,size: number = 1000,sortParam: string = '{{#each fieldsPK}}${this.name},asc;{{/each}}'): Observable<${majStart(className)}[]> {
+#      {{tab}}{{tab}}const params = new HttpParams()
+#      {{tab}}{{tab}}{{tab}}.set('page', page.toString())
+#      {{tab}}{{tab}}{{tab}}.set('size', size.toString())
+#      {{tab}}{{tab}}{{tab}}.set('sortParam', sortParam);
+#      {{tab}}{{tab}}return this.http.get<${majStart(className)}ListDTO>(this.apiUrl, { params }).pipe(
+#      {{tab}}{{tab}}{{tab}}map(response => response.data?.content ?? []),
+#      {{tab}}{{tab}}{{tab}}catchError(err => {
+#      {{tab}}{{tab}}{{tab}}{{tab}}const isNotFound = err.status === 404 ;
+#      {{tab}}{{tab}}{{tab}}{{tab}}if (isNotFound) {
+#      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}return of([]);
+#      {{tab}}{{tab}}{{tab}}{{tab}}} else {
+#      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}console.error('Error while collecting  ${lowerCase(classNameLink)}', err);
+#      {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}return throwError(() => err);
+#      {{tab}}{{tab}}{{tab}}{{tab}}}
+#      {{tab}}{{tab}}{{tab}}})
+#      {{tab}}{{tab}});
+#      {{tab}}}
+#      }
+#    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/services"
+#    name: "${toKebabCase(className)}.service"
+#  modelComponent:
+#    imports: |
+#      {{#each fieldsFK}}
+#        import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
+#      {{/each}}
+#    exports : |
+#      export class ${majStart(className)}
+#      {
+#      {{tab}}{{#each fields}}
+#      {{tab}}{{#if this.isForeignKey}}${this.name}: ${toPascalCase(this.type)}{{else}}
+#      {{tab}}${this.name}: ${this.typeBase}{{/if}}
+#      {{tab}}{{/each}}{{removeLine}}
+#
+#         constructor(data: any) {
+#            {{tab}}{{#each fields}}
+#            {{tab}}this.${this.name}=data.${this.name}
+#            {{tab}}{{/each}}{{removeLine}}
+#         }
+#      }
+#
+#      export interface ${majStart(className)}DTO{
+#      {{tab}}status: number;
+#      {{tab}}message: string;
+#      {{tab}}returnCode: number;
+#      {{tab}}data: ${majStart(className)};
+#      {{tab}}timestamp: string;
+#      }
+#
+#      export interface ${majStart(className)}ListDTO{
+#      {{tab}}status: number;
+#      {{tab}}message: string;
+#      {{tab}}returnCode: number;
+#      {{tab}}data: {
+#      {{tab}}{{tab}}content: ${majStart(className)}[];
+#      {{tab}}{{tab}}page: {
+#      {{tab}}{{tab}}{{tab}}size: number;
+#      {{tab}}{{tab}}{{tab}}number: number;
+#      {{tab}}{{tab}}{{tab}}totalElements: number;
+#      {{tab}}{{tab}}{{tab}}totalPages: number;
+#      {{tab}}{{tab}}};
+#      {{tab}}};
+#      {{tab}}errors: any;
+#      {{tab}}timestamp: string;
+#      }
+#    destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/models"
+#    name: "${toKebabCase(className)}.model"
+#  mereFiles: [ ]
+#  filleFiles: [ ]
 
 - id: 2
   languageId: 1
@@ -3077,7 +3077,8 @@
             style="min-width: 280px;"
           >
             <!-- Brand -->
-            <router-link to="/" class="flex justify-content-center items-center px-6">      <AppLogo size="80" />
+            <router-link to="/" class="flex justify-center items-center px-6">      
+              <AppLogo size="80" />
               <h1 class="text-lg font-semibold tracking-wide uppercase truncate">
                 {{ $t('projectName') }}
               </h1>
@@ -5851,37 +5852,28 @@
             <${majStart(className)}Details v-if="entity" :${minStart(className)}="entity" />
             {{#if isParentTable}}
             {{#each children}}
-            <div class="card bg-base-100 border border-base-300">
-              <div class="card-body">
-                <div class="flex items-center justify-between mb-4 pb-3 border-b border-base-300">
-                  <div class="flex items-center gap-3">
-                    <div>
-                      <div class="flex items-center gap-2">
-                        <h2 class="text-lg font-semibold text-base-content">
-                          {{ $t('entities.${minStart(className)}.nav.title') }}
-                        </h2>
-                      </div>
-                    </div>
+            <div class="tabs tabs-border">
+              <input type="radio" name="details_tab" class="tab" :aria-label="$t('entities.${minStart(this.className)}.nav.title')" checked />
+              <div class="tab-content card bg-base-100 border border-base-300">
+                <div class="card-body">
+                  <div class="mt-4">
+                    <EntityTable
+                      :entity-model="${minStart(this.className)}Entity"
+                      :entity-search-fields="${minStart(this.className)}SearchFields"
+                      :default-active-filters="['${minStart(this.parentName)}']"
+                      :searchFn="get${majStart(this.className)}sData"
+                      :getPaginationData="${minStart(this.className)}GetPaginationData"
+                      :listComponent="${majStart(this.className)}List"
+                      :entities="${minStart(this.className)}s"
+                      :message="${minStart(this.className)}Message"
+                      :show-filters="false"
+                      :edit-action="false"
+                      :remove-action="false"
+                    />
                   </div>
                 </div>
-
-                <div class="mt-4">
-                  <EntityTable
-                    :entity-model="${minStart(this.className)}Entity"
-                    :entity-search-fields="${minStart(this.className)}SearchFields"
-                    :default-active-filters="['${minStart(this.parentName)}']"
-                    :searchFn="get${majStart(this.className)}sData"
-                    :getPaginationData="${minStart(this.className)}GetPaginationData"
-                    :listComponent="${majStart(this.className)}List"
-                    :entities="${minStart(this.className)}s"
-                    :message="${minStart(this.className)}Message"
-                    :show-filters="false"
-                    :edit-action="false"
-                    :remove-action="false"
-                  />
-                </div>
-              </div>
-            </div>            
+              </div>            
+            </div>
             {{/each}}
             {{/if}}
           </div>
@@ -5907,7 +5899,7 @@
           pagination: PaginationRequestParameter,
           sortFields: SortFieldParameter[],
         ) => {
-          return await getAll${majStart(this.className)}sBy${majStart(this.parentColumnNameFiled)}(pathId, unpagined, pagination, sortFields)
+          return await getAll${majStart(this.className)}sBy${majStart(className)}Id(pathId, unpagined, pagination, sortFields)
         }
         const ${minStart(this.className)}SearchFields = ref<EntitySearchField[]>(${majStart(this.className)}.getAllSearchFieldsMetadata())
         const ${minStart(this.className)}Entity = ref<Record<string, unknown>>({ ${minStart(this.parentName)}: pathId })
@@ -6012,12 +6004,15 @@
       style: "<style scoped></style>"
       export: |
         const props = defineProps<{
-          ${minStart(className)}?: ${majStart(className)}
-          {{#if isParentTable=true and hasChildrenForm=true}}
-          {{#each childrenWithForm}}${minStart(this.className)}sData?: ${majStart(this.className)}[]{{/each}}
+          ${minStart(className)}?: ${majStart(className)}{{#if isParentTable=true and hasChildrenForm=true}}
+          {{#each childrenWithForm}}
+          ${minStart(this.className)}sData?: ${majStart(this.className)}[]
+          {{/each}}
           violations?:{
             ${minStart(className)}: Record<string, string>
-            {{#each children}}${minStart(this.className)}s: Record<string, string>[]{{/each}}
+            {{#each childrenWithForm}}
+            ${minStart(this.className)}s: Record<string, string>[]
+            {{/each}}
           }{{else}}violations?: Record<string, string> | null{{/if}}
           submitLabel?: string
         }>()
@@ -6420,19 +6415,22 @@
         return wrap${majStart(className)}(RestResponse.handleDataResponse<${majStart(className)}>(response)) as DataResponse<${majStart(className)}>
       }
       
+      {{#if notViewAndParent=true and hasChildrenForm=true}}
       /** POST create */
-      {{#if notViewAndParent}}export async function create(data: { ${minStart(className)}: Partial<${majStart(className)}>{{#each children}}; ${minStart(this.className)}s: Partial<${majStart(this.className)}>[]{{/each}} }){{else}}export async function create(data: Partial<${majStart(className)}>){{/if}}{{#if !view}}{
+      export async function create(data: { ${minStart(className)}: Partial<${majStart(className)}>{{#each childrenWithForm}}; ${minStart(this.className)}s: Partial<${majStart(this.className)}>[]{{/each}} }){{else}}export async function create(data: Partial<${majStart(className)}>){{/if}}{{#if !view}}{
         const response = await restApi.POST(BASE_URL, data)
         return wrap${majStart(className)}(RestResponse.handleDataResponse<${majStart(className)}>(response)) as DataResponse<${majStart(className)}>
       }{{/if}}
 
-      {{#if notViewAndParent}}
+      {{#if notViewAndParent=true and hasChildrenForm=true}}
       /** PUT update */
       export async function update(
         id: number | string | undefined,
         data: {
           ${minStart(className)}: Partial<${majStart(className)}>
-          {{#each children}} ${minStart(this.className)}s: Partial<${majStart(this.className)}>[]{{/each}} 
+          {{#each childrenWithForm}} 
+          ${minStart(this.className)}s: Partial<${majStart(this.className)}>[]
+          {{/each}} 
         }
       ) {
         if (!id) throw new Error('update: id is required')
@@ -6496,7 +6494,7 @@
           sortFields?: SortFieldParameter[],
         ) {
           if (!id) throw new Error('getAllBy${majStart(this.className)}Id: id of ${minStart(this.className)} is required')
-          const request = new RequestModel('/${minStart(this.className)}s/' + id + BASE_URL, pagination, sortFields)
+          const request = new RequestModel('/${lowerCase(this.className)}s/' + id + BASE_URL, pagination, sortFields)
           const response = await restApiWithPage.GET(request.buildRequestUrl())
           return wrap${majStart(className)}(
             RestResponse.handlePagedResponse<${majStart(className)}>(response),

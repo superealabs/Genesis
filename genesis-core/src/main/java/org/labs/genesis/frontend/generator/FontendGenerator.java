@@ -61,7 +61,7 @@ public class FontendGenerator implements IFrontendGenerator{
 
             // creating matching file
             String fileName = componentName;
-            FileUtils.createFile(fileSavePath, fileName, frontendFramework.getComponentExtension(), finalStringForComponent);
+            FileUtils.createOrMergeFile(destinationFolder, fileSavePath, fileName, frontendFramework.getComponentExtension(), finalStringForComponent);
 
             ProjectGenerator.renderFilesEdits(component.getComponentAdditionalFiles(), metadataForFinalRender);
 
@@ -123,7 +123,7 @@ public class FontendGenerator implements IFrontendGenerator{
 
         // Creating matching file
         String fileName = serviceName;
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), finalStringForService);
+        FileUtils.createOrMergeFile(destinationFolder, fileSavePath, fileName, language.getExtension(), finalStringForService);
 
         return "";
     }
@@ -162,7 +162,7 @@ public class FontendGenerator implements IFrontendGenerator{
 
         String fileName = modelName;
 
-        FileUtils.createFile(fileSavePath,fileName, language.getExtension(), finalStringForModel);
+        FileUtils.createOrMergeFile(destinationFolder, fileSavePath,fileName, language.getExtension(), finalStringForModel);
 
         return "";
     }

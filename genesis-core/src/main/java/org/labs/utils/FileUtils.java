@@ -5,13 +5,18 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.config.Constantes;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.adapter.DatabaseDeserializer;
+import org.labs.genesis.merge.FileMergeInput;
+import org.labs.genesis.merge.MergeOutcome;
+import org.labs.genesis.merge.MergeTool;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.util.Collections;
@@ -87,12 +92,13 @@ public class FileUtils {
         createSimpleFile(filePath, fileName, fileExtension, fileContent);
     }
 
-    public static void createSimpleFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
+    public static File createSimpleFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
         File file = new File(filePath + "/" + fileName + "." + fileExtension);
         if (file.exists()) {
             file.delete();
         }
         Files.write(file.toPath(), fileContent.getBytes());
+        return  file;
     }
 
     public static void copyFile(String sourceFilePath, String destinationFilePath, String fileName) throws IOException {
@@ -203,6 +209,44 @@ public class FileUtils {
         }
     }
 
+    private static void applyGeneratedMergeOutcome(MergeOutcome mergeOutcome) throws IOException {
+        FileMergeInput mergeInput = mergeOutcome.input;
+        if (mergeOutcome.hasConflict){
+            Files.write(mergeOutcome.conflictFile.toPath(), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
+            return;
+        }
+        // merge content into current file
+        Files.write(mergeInput.currentFile.toPath(), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
+        // generated file into
+        Files.write(mergeInput.baseFile.toPath(),   Files.readAllBytes(mergeInput.newFile.toPath()));
+    }
+    public static void createOrMergeFile(String destinationFolder, String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
+        File generatedFile = createGenerationTempFile(filePath, fileName, fileExtension, fileContent);
+        File existingFile = new File(filePath + "/" + fileName + "." + fileExtension);
+        File baseDirectory = generateBaseDirectoryIfAbsent(destinationFolder);
+        File baseFile = new File(baseDirectory.getPath() + "/" + fileName + "." + fileExtension);
+
+        FileMergeInput mergeInput = new FileMergeInput(baseFile, existingFile, generatedFile);
+        MergeOutcome mergeOutcome = MergeTool.merge(mergeInput,true);
+        applyGeneratedMergeOutcome(mergeOutcome);
+    }
+
+
+    public static File generateBaseDirectoryIfAbsent(String destinationFolder){
+        if (destinationFolder != null && destinationFolder.contains("Webapp")){
+            destinationFolder = destinationFolder.substring(0, destinationFolder.lastIndexOf('/'));
+        }
+        File baseDirectory = new File(destinationFolder+"/"+ Constantes.GENESIS_BASE_FILES_HIDDEN_DIRECTORY_NAME);
+        if (!baseDirectory.exists()){
+            createFileStructure(baseDirectory.getPath());
+        }
+        return baseDirectory;
+    }
+
+    public static File createGenerationTempFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
+         File tempFile = createSimpleFile(filePath , fileName, fileExtension+".temp", fileContent);
+         return  tempFile;
+    }
 
     public static void createDirectory(String filePath) {
         String filename = "";

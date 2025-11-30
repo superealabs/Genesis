@@ -29,7 +29,7 @@ public class LangGenerator implements IResourceGenerator {
         String langPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(frontendFramework.getFrontendPaths().langsPath, metadata));
         for (InterfaceLang lang : langs) {
             String content = engine.render(lang.getContent(),metadata);
-            FileUtils.createFile(langPath,lang.getName().toLowerCase(), context.getFrontendLanguage().getExtension(), content);
+            FileUtils.createOrMergeFile(context.getDestinationFolder(), langPath,lang.getName().toLowerCase(), context.getFrontendLanguage().getExtension(), content);
         }
         return "";
     }
