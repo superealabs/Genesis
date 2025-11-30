@@ -12,14 +12,22 @@ pr : |
       String[] listeCrt = {${listeCrt}};
       String[] listeInt = {${listeInt}};
       String[] libEntete = {${libEntete}};
-      PageRecherche pr = new PageRecherche(o, request, listeCrt, listeInt,4, libEntete, libEntete.length);
+      PageRecherche pr = new PageRecherche(o, request, listeCrt, listeInt, 4, libEntete, libEntete.length);
       pr.setTitre("${titre}");
       pr.setUtilisateur((user.UserEJB) session.getValue("u"));
       pr.setLien((String) session.getValue("lien"));
       pr.setApres("${apres}");
+  
+      {{#each champs}}
+      pr.getFormu().getChamp("${this.nom}").setLibelle("${this.libelle}");
+      {{/each}}{{removeLine}}
 
       String[] colSomme = ${colSomme};
       pr.creerObjetPage(libEntete, colSomme);
+      {{#if isWithColSomme}}
+      String[] enteteRecap = {${enteteRecap}};
+      pr.getTableauRecap().setLibeEntete(enteteRecap);
+      {{else}}{{removeLine}}{{/if}}{{removeLine}}
 
       String[] libEnteteAffiche = {${libEnteteAffiche}};
       pr.getTableau().setLibelleAffiche(libEnteteAffiche);

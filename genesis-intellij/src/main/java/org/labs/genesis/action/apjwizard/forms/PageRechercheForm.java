@@ -65,6 +65,11 @@ public class PageRechercheForm {
     private LinkedHashMap<String, ApjField> availableFilterFieldsMap = new LinkedHashMap<>();
     private LinkedHashMap<String, ApjField> availableBetweenFilterFieldsMap = new LinkedHashMap<>();
     private List<ApjField> apjFields;
+    private ApjField[] dataFiltre;
+    private ApjField[] dataRecap;
+    private ApjField[] dataTableau;
+    private String[] listeCrt;
+    private String[] listeInt;
 
     public PageRechercheForm() {
         initializeUI();
@@ -278,4 +283,77 @@ public class PageRechercheForm {
             nomTableField.setText(table);
         }
     }
+
+    public void fillDataTables(){
+        this.setDataFiltre();
+        this.setDataRecap();
+        this.setDataTableau();
+    }
+
+    private ApjField[] getDataTable(JTable table) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        int rowCount = model.getRowCount();
+        ApjField[] fields = new ApjField[rowCount];
+        for (int i = 0; i < rowCount; i++) {
+            String nom = String.valueOf(model.getValueAt(i, 0));
+            String libelle = String.valueOf(model.getValueAt(i, 1));
+            ApjField f = new ApjField();
+            f.setNom(nom);
+            f.setLibelle(libelle);
+            fields[i] = f;
+        }
+        return fields;
+    }
+
+
+    private void setDataRecap(){
+        this.dataRecap = getDataTable(recapTable);
+    }
+
+    private void setDataFiltre(){
+        List<String> listeCrt = new ArrayList<>();
+        List<String> listeInt = new ArrayList<>();
+        DefaultTableModel model = (DefaultTableModel) filtreTable.getModel();
+        int rowCount = model.getRowCount();
+        ApjField[] fields = new ApjField[rowCount];
+        for (int i = 0; i < rowCount; i++) {
+            String nom = String.valueOf(model.getValueAt(i, 0));
+            String libelle = String.valueOf(model.getValueAt(i, 1));
+            ApjField f = new ApjField();
+            f.setNom(nom);
+            f.setLibelle(libelle);
+            fields[i] = f;
+            String baseName = nom.substring(0, nom.length() - 1);
+            if (nom.endsWith("2") && allFieldsMap.containsKey(baseName)) continue;
+            if (nom.endsWith("1") && allFieldsMap.containsKey(baseName)) {
+                listeCrt.add(baseName);
+                listeInt.add(baseName);
+            } else {
+                listeCrt.add(nom);
+            }
+        }
+        this.listeCrt = listeCrt.toArray(new String[0]);
+        this.listeInt = listeInt.toArray(new String[0]);
+        this.dataFiltre = fields;
+    }
+
+    private void setDataTableau(){
+        DefaultTableModel model = (DefaultTableModel) tableauTable.getModel();
+        int rowCount = model.getRowCount();
+        ApjField[] fields = new ApjField[rowCount];
+        for (int i = 0; i < rowCount; i++) {
+            String nom = String.valueOf(model.getValueAt(i, 0));
+            String libelle = String.valueOf(model.getValueAt(i, 1));
+            String lien = String.valueOf(model.getValueAt(i, 2));
+            String attLien = String.valueOf(model.getValueAt(i, 3));
+            ApjField f = new ApjField();
+            f.setNom(nom);
+            f.setLibelle(libelle);
+            f.setLien(lien);
+            f.setAttLien(attLien);
+            fields[i] = f;
+        }
+        this.dataTableau = fields;
+    }
+
 }

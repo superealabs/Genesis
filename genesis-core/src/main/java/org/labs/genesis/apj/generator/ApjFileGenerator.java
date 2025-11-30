@@ -50,7 +50,7 @@ public class ApjFileGenerator {
         String result = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadata = apjFile.buildMetadata();
-        result = engine.simpleRender(result, metadata);
+        result = engine.render(result, metadata);
 
         FileUtils.createFile(context.getLocationDir(), apjFile.getFileName(), apjFile.getExtension(), result);
     }
