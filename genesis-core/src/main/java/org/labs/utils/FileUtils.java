@@ -84,12 +84,12 @@ public class FileUtils {
         }
     }
 
-    public static void createFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
+    public static File createFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
         // creation de la structure du projet
         createFileStructure(filePath);
 
         // creation du fichier et son contenu
-        createSimpleFile(filePath, fileName, fileExtension, fileContent);
+        return createSimpleFile(filePath, fileName, fileExtension, fileContent);
     }
 
     public static File createSimpleFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
@@ -213,12 +213,13 @@ public class FileUtils {
         FileMergeInput mergeInput = mergeOutcome.input;
         if (mergeOutcome.hasConflict){
             Files.write(mergeOutcome.conflictFile.toPath(), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
-            return;
+        }else {
+            // merge content into current file
+            Files.write(mergeInput.currentFile.toPath(), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
         }
-        // merge content into current file
-        Files.write(mergeInput.currentFile.toPath(), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
-        // generated file into
+        // generated file into baseFile
         Files.write(mergeInput.baseFile.toPath(),   Files.readAllBytes(mergeInput.newFile.toPath()));
+        deleteFile(mergeInput.newFile.getPath());
     }
     public static void createOrMergeFile(String destinationFolder, String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
         File generatedFile = createGenerationTempFile(filePath, fileName, fileExtension, fileContent);
@@ -244,7 +245,7 @@ public class FileUtils {
     }
 
     public static File createGenerationTempFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
-         File tempFile = createSimpleFile(filePath , fileName, fileExtension+".temp", fileContent);
+         File tempFile = createFile(filePath , fileName, fileExtension+"."+Constantes.GENESIS_GENERATION_TEMP_FILE_EXTENSION, fileContent);
          return  tempFile;
     }
 

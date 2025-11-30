@@ -1,10 +1,12 @@
 package org.labs.genesis.merge;
 
+import org.eclipse.jgit.diff.HistogramDiff;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.merge.MergeAlgorithm;
 import org.eclipse.jgit.merge.MergeFormatter;
 import org.eclipse.jgit.merge.MergeResult;
+import org.eclipse.jgit.merge.MergeStrategy;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
