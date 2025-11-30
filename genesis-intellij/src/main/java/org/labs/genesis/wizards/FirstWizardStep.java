@@ -3,17 +3,18 @@ package org.labs.genesis.wizards;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.FirstForm;
 
 
 import javax.swing.*;
 
 public class FirstWizardStep extends ModuleWizardStep {
-    private final ProjectGenerationContext context;
+    private final GenerationContextManager generationContextManager;
     private final FirstForm form;
 
-    public FirstWizardStep(ProjectGenerationContext context ) {
-        this.context = context;
+    public FirstWizardStep(GenerationContextManager generationContextManager ) {
+        this.generationContextManager = generationContextManager;
         this.form = new FirstForm();
     }
 
@@ -41,12 +42,14 @@ public class FirstWizardStep extends ModuleWizardStep {
     public void updateDataModel() {
         try {
             // New project
-            context.getGenerationProcess().setGenerateProjectProcess(form.getGenerateNewProject().isSelected());
+            generationContextManager.getContext().getGenerationProcess().setGenerateProjectProcess(form.getGenerateNewProject().isSelected());
             // Rule to code
-            context.getGenerationProcess().setRunToCodeGenerationProcess(form.ruleTodCodeSelected());
-            context.getGenerationProcess().setGenerateProjectProcess(form.ruleTodCodeSelected());
+            generationContextManager.getContext().getGenerationProcess().setRunToCodeGenerationProcess(form.ruleTodCodeSelected());
+            if (form.ruleTodCodeSelected()) {
+                generationContextManager.getContext().getGenerationProcess().setGenerateProjectProcess(true);
+            }
             // Sync project
-            context.getGenerationProcess().setSynchGenerationProcess(form.getSyncProject().isSelected());
+            generationContextManager.getContext().getGenerationProcess().setSynchGenerationProcess(form.getSyncProject().isSelected());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -7,6 +7,7 @@ import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkMVC;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.config.langage.Project;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.InitializationForm;
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ public class InitializationWizardStep extends ModuleWizardStep {
     public final SpecificConfigurationWizardStep specificConfigurationWizardStep;
     public final FrontendConfigurationWizardStep frontendConfigurationWizardStep;
     private final InitializationForm newProjectPanel;
-    private final ProjectGenerationContext projectGenerationContext;
+    private final GenerationContextManager generationContextManager;
     // added as attributes to avoid repetition
     private String projectName;
     private String groupId;
@@ -29,9 +30,9 @@ public class InitializationWizardStep extends ModuleWizardStep {
     private Project buildTool;
     private Framework projectType;
 
-    public InitializationWizardStep(ProjectGenerationContext projectGenerationContext, SpecificConfigurationWizardStep specificConfigurationWizardStep, FrontendConfigurationWizardStep frontendConfigurationWizardStep) {
+    public InitializationWizardStep(GenerationContextManager generationContextManager, SpecificConfigurationWizardStep specificConfigurationWizardStep, FrontendConfigurationWizardStep frontendConfigurationWizardStep) {
         newProjectPanel = new InitializationForm();
-        this.projectGenerationContext = projectGenerationContext;
+        this.generationContextManager = generationContextManager;
         this.specificConfigurationWizardStep = specificConfigurationWizardStep;
         this.frontendConfigurationWizardStep = frontendConfigurationWizardStep;
     }
@@ -70,9 +71,9 @@ public class InitializationWizardStep extends ModuleWizardStep {
                 "languageVersion", languageVersion,
                 "frameworkVersion", frameworkVersion
         );
-        projectGenerationContext.setLanguageConfiguration(languageConfiguration);
+        generationContextManager.getContext().setLanguageConfiguration(languageConfiguration);
 
-        projectGenerationContext
+        generationContextManager.getContext()
                 .setProjectName(projectName)
                 .setDestinationFolder(location)
                 .setLanguage(language)
@@ -81,7 +82,7 @@ public class InitializationWizardStep extends ModuleWizardStep {
                 .setGroupLink(groupId);
 
         specificConfigurationWizardStep.onFrameworkSelected(framework);
-        projectGenerationContext.setGenerateFrontendApp(framework.getUseFrontendApp());
+        generationContextManager.getContext().setGenerateFrontendApp(framework.getUseFrontendApp());
         if (framework instanceof FrameworkMVC) {
             frontendConfigurationWizardStep.onFrameworkMVCSelected((FrameworkMVC) framework);
         } else {
@@ -138,6 +139,6 @@ public class InitializationWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        return this.projectGenerationContext.getGenerationProcess().isGenerateProjectProcess();
+        return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess();
     }
 }

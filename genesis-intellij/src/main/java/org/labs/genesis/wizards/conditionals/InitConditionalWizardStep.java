@@ -8,15 +8,16 @@ package org.labs.genesis.wizards.conditionals;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.context.GenerationContextManager;
 
 import javax.swing.*;
 
 public class InitConditionalWizardStep extends ModuleWizardStep {
-    private final ProjectGenerationContext context;
+    private final GenerationContextManager generationContextManager;
     private final ModuleWizardStep actualStep;
 
-    public InitConditionalWizardStep(ProjectGenerationContext context, ModuleWizardStep actualStep) {
-        this.context = context;
+    public InitConditionalWizardStep(GenerationContextManager generationContextManager, ModuleWizardStep actualStep) {
+        this.generationContextManager = generationContextManager;
         this.actualStep = actualStep;
     }
 
@@ -38,9 +39,9 @@ public class InitConditionalWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        Framework framework = context.getFramework();
+        Framework framework = generationContextManager.getContext().getFramework();
         return framework != null
-                && framework.getUseDB();
+                && framework.getUseDB() && actualStep.isStepVisible();
     }
 
 }

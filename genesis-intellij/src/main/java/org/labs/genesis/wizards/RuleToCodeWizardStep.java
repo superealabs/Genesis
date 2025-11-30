@@ -5,12 +5,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.RuleToCodeForm ;
 import javax.swing.*;
 
 public class RuleToCodeWizardStep extends ModuleWizardStep {
 
-    private final ProjectGenerationContext context;
+    private final GenerationContextManager generationContextManager;
     private final RuleToCodeForm form;
     private final FirstWizardStep initStep ;
 
@@ -18,9 +19,9 @@ public class RuleToCodeWizardStep extends ModuleWizardStep {
     private Framework framework ;
     private String yamlContent ;
 
-    public RuleToCodeWizardStep(ProjectGenerationContext context , FirstWizardStep initStep) {
+    public RuleToCodeWizardStep(GenerationContextManager generationContextManager , FirstWizardStep initStep) {
         this.form = new RuleToCodeForm();
-        this.context = context;
+        this.generationContextManager = generationContextManager;
         this.initStep = initStep;
     }
     private void initializeAttributes(String pathProject , Framework framework , String yamlContent ) {
@@ -49,7 +50,7 @@ public class RuleToCodeWizardStep extends ModuleWizardStep {
                 selectedFramework,
                 form.getYamlContentArea().getText()
         );
-        context
+        generationContextManager.getContext()
                 .setDestinationFolder(pathProject)
                 .setFramework(selectedFramework)
                 .setProjectDescription(yamlContent);
@@ -68,6 +69,6 @@ public class RuleToCodeWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        return context.getGenerationProcess().isRunToCodeGenerationProcess();
+        return generationContextManager.getContext().getGenerationProcess().isRunToCodeGenerationProcess();
     }
 }

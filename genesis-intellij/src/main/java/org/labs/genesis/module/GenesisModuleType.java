@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.icon.SdkIcons;
 import org.labs.genesis.wizards.*;
 import org.labs.genesis.wizards.conditionals.FrontendConditionalWizardStep;
@@ -29,32 +30,33 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
     public ModuleWizardStep @NotNull [] createWizardSteps(@NotNull WizardContext wizardContext,
                                                           @NotNull GenesisModuleBuilder moduleBuilder,
                                                           @NotNull ModulesProvider modulesProvider) {
-
-        SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(projectGenerationContext);
-        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(projectGenerationContext);
-        InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(projectGenerationContext, databaseConfigurationWizardStep);
-        SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(projectGenerationContext);
-        RelationshipConfigurationWizardStep relationshipConfigurationWizardStep = new RelationshipConfigurationWizardStep(projectGenerationContext);
-        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext, specificConfigurationWizardStep, relationshipConfigurationWizardStep);
-        GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(projectGenerationContext, generationOptionWizardStep);
-
+        GenerationContextManager generationContextManager = new GenerationContextManager(projectGenerationContext);
+        SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(generationContextManager);
+        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(generationContextManager);
+        InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(generationContextManager, databaseConfigurationWizardStep);
+        SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(generationContextManager);
+        RelationshipConfigurationWizardStep relationshipConfigurationWizardStep = new RelationshipConfigurationWizardStep(generationContextManager);
+        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(generationContextManager, specificConfigurationWizardStep, relationshipConfigurationWizardStep);
+        GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(generationContextManager, generationOptionWizardStep);
         //Rule to code
-        FirstWizardStep firstWizardStep = new FirstWizardStep(projectGenerationContext);
-        RuleToCodeWizardStep ruleToCodeWizardStep = new RuleToCodeWizardStep(projectGenerationContext , firstWizardStep );
-        RuleToCodeWizardAIStep ruleToCodeWizardAIStep =  new RuleToCodeWizardAIStep(projectGenerationContext , firstWizardStep );
+        FirstWizardStep firstWizardStep = new FirstWizardStep(generationContextManager);
+        RuleToCodeWizardStep ruleToCodeWizardStep = new RuleToCodeWizardStep(generationContextManager , firstWizardStep );
+        RuleToCodeWizardAIStep ruleToCodeWizardAIStep =  new RuleToCodeWizardAIStep(generationContextManager , firstWizardStep );
 
         // Sync Generation
-        SynchGenerationWizardStep syncGenerationWizardStep = new SynchGenerationWizardStep();
-        SyncProjectLoaderWizardStep syncProjectLoaderWizardStep = new SyncProjectLoaderWizardStep(projectGenerationContext, relationshipConfigurationWizardStep, syncGenerationWizardStep);
+        SynchGenerationWizardStep syncGenerationWizardStep = new SynchGenerationWizardStep(generationContextManager);
+        SyncProjectLoaderWizardStep syncProjectLoaderWizardStep = new SyncProjectLoaderWizardStep(generationContextManager, relationshipConfigurationWizardStep, syncGenerationWizardStep);
 
-        FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(projectGenerationContext );
-        FrontendConditionalWizardStep frontendConditionalWizardStep = new FrontendConditionalWizardStep(projectGenerationContext, frontendConfigurationWizardStep);
+        FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(generationContextManager );
+        FrontendConditionalWizardStep frontendConditionalWizardStep = new FrontendConditionalWizardStep(generationContextManager, frontendConfigurationWizardStep);
+
+        InitializationWizardStep initializationWizardStep = new InitializationWizardStep(generationContextManager, specificConfigurationWizardStep,frontendConfigurationWizardStep);
         return new ModuleWizardStep[]{
                 firstWizardStep,
                 ruleToCodeWizardStep,
                 ruleToCodeWizardAIStep ,
                 syncProjectLoaderWizardStep,
-                new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep,frontendConfigurationWizardStep) ,
+                initializationWizardStep,
                 initConditionalWizardStep,
                 sqlRunnerWizardStep,
                 genConfigConditionalWizardStep,

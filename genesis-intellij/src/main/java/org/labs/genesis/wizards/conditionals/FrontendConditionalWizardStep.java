@@ -9,15 +9,17 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.context.GenerationContextManager;
 
 import javax.swing.*;
 
 public class FrontendConditionalWizardStep extends ModuleWizardStep {
-    private final ProjectGenerationContext context;
+    private final GenerationContextManager generationContextManager;
     private final ModuleWizardStep actualStep;
 
-    public FrontendConditionalWizardStep(ProjectGenerationContext context, ModuleWizardStep actualStep) {
-        this.context = context;
+
+    public FrontendConditionalWizardStep(GenerationContextManager generationContextManager, ModuleWizardStep actualStep) {
+        this.generationContextManager = generationContextManager;
         this.actualStep = actualStep;
     }
 
@@ -47,8 +49,8 @@ public class FrontendConditionalWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        Framework framework = context.getFramework();
+        Framework framework = generationContextManager.getContext().getFramework();
         return framework != null
-                && framework.getUseFrontendApp();
+                && framework.getUseFrontendApp() && actualStep.isStepVisible();
     }
 }

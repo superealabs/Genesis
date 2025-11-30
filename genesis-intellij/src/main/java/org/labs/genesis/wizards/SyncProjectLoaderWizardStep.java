@@ -4,21 +4,21 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.generator.sync.SyncGenerator;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.SyncProjectLoaderForm;
-
 import javax.swing.*;
 
 public class SyncProjectLoaderWizardStep extends ModuleWizardStep {
     private final SyncProjectLoaderForm form;
     public final SyncGenerator syncGenerator;
-    private ProjectGenerationContext projectGenerationContext;
-    private RelationshipConfigurationWizardStep relationshipConfigurationWizardStep;
-    private SynchGenerationWizardStep synchGenerationWizardStep;
+    private final RelationshipConfigurationWizardStep relationshipConfigurationWizardStep;
+    private final SynchGenerationWizardStep synchGenerationWizardStep;
+    GenerationContextManager generationContextManager;
 
-    public SyncProjectLoaderWizardStep(ProjectGenerationContext context, RelationshipConfigurationWizardStep relationshipConfigurationWizardStep, SynchGenerationWizardStep synchGenerationWizardStep) {
+    public SyncProjectLoaderWizardStep(GenerationContextManager generationContextManager, RelationshipConfigurationWizardStep relationshipConfigurationWizardStep, SynchGenerationWizardStep synchGenerationWizardStep) {
+        this.generationContextManager = generationContextManager;
         this.syncGenerator = new SyncGenerator();
         this.form = new SyncProjectLoaderForm();
-        this.projectGenerationContext = context;
         this.relationshipConfigurationWizardStep = relationshipConfigurationWizardStep;
         this.synchGenerationWizardStep = synchGenerationWizardStep;
     }
@@ -31,11 +31,10 @@ public class SyncProjectLoaderWizardStep extends ModuleWizardStep {
     public void updateDataModel() {
         try {
             ProjectGenerationContext loadProjectContext = syncGenerator.loadProjectContext(form.getFolderField().getText());
-            loadProjectContext.setGenerationProcess(projectGenerationContext.generationProcess);
-            this.projectGenerationContext = loadProjectContext;
-            relationshipConfigurationWizardStep.setProjectGenerationContext(projectGenerationContext);
+            loadProjectContext.setGenerationProcess(generationContextManager.getContext().generationProcess);
+            generationContextManager.setContext(loadProjectContext);
             relationshipConfigurationWizardStep.updateTableSelects();
-            synchGenerationWizardStep.setContext(projectGenerationContext, syncGenerator);
+            synchGenerationWizardStep.setSyncGenerator(syncGenerator);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -56,6 +55,6 @@ public class SyncProjectLoaderWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        return projectGenerationContext.getGenerationProcess().isSynchGenerationProcess();
+        return generationContextManager.getContext().getGenerationProcess().isSynchGenerationProcess();
     }
 }

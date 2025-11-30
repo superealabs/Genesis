@@ -1,21 +1,30 @@
 package org.labs.genesis.wizards;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.generator.sync.SyncGenerator;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.SyncGenerationForm;
+import org.labs.genesis.indicator.IntelliJProgressAdapter;
 
 import javax.swing.*;
 
 public class SynchGenerationWizardStep extends ModuleWizardStep {
     public SyncGenerationForm syncGenerationForm;
-    public ProjectGenerationContext context;
+    public GenerationContextManager generationContextManager;
     private SyncGenerator syncGenerator;
     private boolean isInitialized = false;
 
-    public SynchGenerationWizardStep() {
+    public SynchGenerationWizardStep(GenerationContextManager generationContextManager) {
         this.syncGenerationForm = new SyncGenerationForm();
+        this.generationContextManager = generationContextManager;
     }
 
     @Override
@@ -28,17 +37,50 @@ public class SynchGenerationWizardStep extends ModuleWizardStep {
 
     @Override
     public void updateDataModel() {
+            Project project = ProjectUtil.getProjectForComponent(syncGenerationForm.getMainPanel());
+            if (project == null) {
+                project = ProjectUtil.getActiveProject();
+            }
+
+            if (project == null) {
+                throw new IllegalStateException("Impossible de déterminer le contexte Project IntelliJ.");
+            }
+            try {
+                ProgressManager.getInstance().run(new Task.Modal(project, "Génération du Projet", true) {
+                    @Override
+                    public void run(@NotNull ProgressIndicator indicator) {
+                        IntelliJProgressAdapter processIndicator = new IntelliJProgressAdapter(indicator);
+                        try {
+                            syncGenerator.generateProject(generationContextManager.getContext(),processIndicator);
+                            indicator.setText("Génération terminée !");
+                            indicator.setFraction(1.0);
+
+                        } catch (Exception e) {
+                            throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
+                        }
+                    }
+                });
+                Messages.showInfoMessage(project,
+                        "Le projet a été généré avec succès !",
+                        "Succès de la Génération");
+
+            } catch (Exception e) {
+                Messages.showErrorDialog(project,
+                        "Une erreur inattendue est survenue lors de la génération : " + e.getMessage() + "\n\n" +
+                                "Veuillez consulter la console d'exécution ou les **logs d'IntelliJ** pour plus de détails (Help -> Show Log in Explorer/Finder).",
+                        "Échec de la Génération du Projet");
+                throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
+            }
     }
 
-    public void setContext(ProjectGenerationContext context, SyncGenerator syncGenerator) {
-        this.context = context;
+    public void setSyncGenerator(SyncGenerator syncGenerator) {
         this.syncGenerator = syncGenerator;
         this.isInitialized = false;
     }
 
     @Override
     public boolean isStepVisible() {
-        return context.getGenerationProcess().isSynchGenerationProcess() && syncGenerator != null;
+        return generationContextManager.getContext().getGenerationProcess().isSynchGenerationProcess() && syncGenerator != null;
     }
 
     @Override
@@ -55,7 +97,7 @@ public class SynchGenerationWizardStep extends ModuleWizardStep {
         }
 
         try {
-            syncGenerator.evaluateDatabaseChanges(context);
+            syncGenerator.evaluateDatabaseChanges(generationContextManager.getContext());
             if (syncGenerator.getDatabaseReportManager() != null) {
                 syncGenerationForm.populateTableReport(syncGenerator.getDatabaseReportManager());
             }

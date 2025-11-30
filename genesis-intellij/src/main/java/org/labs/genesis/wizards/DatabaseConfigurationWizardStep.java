@@ -7,6 +7,7 @@ import com.intellij.ui.JBColor;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.DatabaseConfigurationForm;
 
 import javax.swing.*;
@@ -17,11 +18,11 @@ import static org.labs.genesis.Utils.formatErrorMessageHtml;
 
 public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
     private final DatabaseConfigurationForm databaseConfigurationForm;
-    private final ProjectGenerationContext projectGenerationContext;
+    private final GenerationContextManager generationContextManager;
 
-    public DatabaseConfigurationWizardStep(ProjectGenerationContext projectGenerationContext) {
+    public DatabaseConfigurationWizardStep(GenerationContextManager generationContextManager) {
         databaseConfigurationForm = new DatabaseConfigurationForm();
-        this.projectGenerationContext = projectGenerationContext;
+        this.generationContextManager = generationContextManager;
     }
 
     @Override
@@ -73,19 +74,19 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
      */
     private void updateContextAndEstablishConnection(Database selectedDatabase) throws Exception {
         // Update database in the context
-        projectGenerationContext.setDatabase(selectedDatabase);
+        generationContextManager.getContext().setDatabase(selectedDatabase);
 
         // Create credentials from the form inputs
         Credentials credentials = selectedDatabase.getCredentials();
-        projectGenerationContext.setCredentials(credentials);
+        generationContextManager.getContext().setCredentials(credentials);
 
         // Close existing connection if any
-        if (projectGenerationContext.getConnection() != null) {
-            projectGenerationContext.getConnection().close();
+        if (generationContextManager.getContext().getConnection() != null) {
+            generationContextManager.getContext().getConnection().close();
         }
         /// TODO: Add an else block here to avoid the connection error at second startup
         // Establish a new connection and update the context
-        projectGenerationContext.setConnection(selectedDatabase.getConnection(credentials));
+        generationContextManager.getContext().setConnection(selectedDatabase.getConnection(credentials));
     }
 
 
@@ -159,6 +160,6 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        return this.projectGenerationContext.getGenerationProcess().isGenerateProjectProcess();
+        return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess();
     }
 }

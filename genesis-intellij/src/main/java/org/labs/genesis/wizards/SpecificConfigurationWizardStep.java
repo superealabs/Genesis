@@ -12,6 +12,7 @@ import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.generator.indicator.ProgressReporter;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.SpecificConfigurationForm;
 import org.labs.genesis.indicator.IntelliJProgressAdapter;
 import org.labs.utils.StringUtils;
@@ -31,12 +32,12 @@ import java.util.stream.Stream;
 
 public class SpecificConfigurationWizardStep extends ModuleWizardStep {
     private final SpecificConfigurationForm specificConfigurationForm;
-    private final ProjectGenerationContext projectGenerationContext;
+    private final GenerationContextManager generationContextManager;
     private final ProjectGenerator projectGenerator = new ProjectGenerator();
 
-    public SpecificConfigurationWizardStep(ProjectGenerationContext projectGenerationContext) {
+    public SpecificConfigurationWizardStep(GenerationContextManager generationContextManagert) {
         this.specificConfigurationForm = new SpecificConfigurationForm();
-        this.projectGenerationContext = projectGenerationContext;
+        this.generationContextManager = generationContextManagert;
 
         // Initialiser les composants du formulaire
         specificConfigurationForm.initializeForm();
@@ -54,7 +55,7 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public void updateDataModel() {
-        Framework framework = projectGenerationContext.getFramework();
+        Framework framework = generationContextManager.getContext().getFramework();
         Map<String, Object> frameworkConfiguration = new HashMap<>();
 
         // Gestion d'Eureka
@@ -126,10 +127,10 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         }
 
         // Ajouter projectPort et projectDescription au contexte
-        projectGenerationContext.setProjectPort(specificConfigurationForm.getProjectPortField().getText().trim());
-        projectGenerationContext.setProjectDescription(specificConfigurationForm.getProjectDescriptionField().getText().trim());
+        generationContextManager.getContext().setProjectPort(specificConfigurationForm.getProjectPortField().getText().trim());
+        generationContextManager.getContext().setProjectDescription(specificConfigurationForm.getProjectDescriptionField().getText().trim());
 
-        projectGenerationContext.setFrameworkConfiguration(frameworkConfiguration);
+        generationContextManager.getContext().setFrameworkConfiguration(frameworkConfiguration);
 
         Project project = ProjectUtil.getProjectForComponent(specificConfigurationForm.getMainPanel());
         if (project == null) {
@@ -169,7 +170,7 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean validate() throws ConfigurationException {
-        Framework framework = projectGenerationContext.getFramework();
+        Framework framework = generationContextManager.getContext().getFramework();
 
         // Valider les options spécifiques au framework
         validateLoggingLevel(framework);
@@ -295,12 +296,12 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
     private void generateProject(ProgressReporter indicator) throws Exception {
         try {
-            projectGenerator.generateProject(projectGenerationContext, indicator);
+            projectGenerator.generateProject(generationContextManager.getContext(), indicator);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
         } finally {
-            Connection con = projectGenerationContext.getConnection();
+            Connection con = generationContextManager.getContext().getConnection();
             if(con!=null) con.close();
         }
     }
@@ -321,6 +322,6 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        return projectGenerationContext.getGenerationProcess().isGenerateProjectProcess();
+        return generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess();
     }
 }

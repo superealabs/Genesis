@@ -5,6 +5,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.connexion.model.TableMetadata;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.GenerationOptionForm;
 
 import javax.swing.*;
@@ -16,13 +17,13 @@ import static org.labs.genesis.forms.GenerationOptionForm.SELECT_ALL;
 
 public class GenerationOptionWizardStep extends ModuleWizardStep {
     private final GenerationOptionForm generationOptionForm;
-    private final ProjectGenerationContext projectGenerationContext;
+    private final GenerationContextManager generationContextManager;
     public final SpecificConfigurationWizardStep specificConfigurationWizardStep;
     private final  RelationshipConfigurationWizardStep relationshipConfigurationWizardStep;
 
-    public GenerationOptionWizardStep(ProjectGenerationContext projectGenerationContext, SpecificConfigurationWizardStep specificConfigurationWizardStep, RelationshipConfigurationWizardStep relationshipConfigurationWizardStep) {
-        this.projectGenerationContext = projectGenerationContext;
-        this.generationOptionForm = new GenerationOptionForm(projectGenerationContext);
+    public GenerationOptionWizardStep(GenerationContextManager generationContextManager, SpecificConfigurationWizardStep specificConfigurationWizardStep, RelationshipConfigurationWizardStep relationshipConfigurationWizardStep) {
+        this.generationContextManager = generationContextManager;
+        this.generationOptionForm = new GenerationOptionForm(generationContextManager.getContext());
         this.specificConfigurationWizardStep = specificConfigurationWizardStep;
         this.relationshipConfigurationWizardStep = relationshipConfigurationWizardStep;
     }
@@ -49,19 +50,19 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
 
             // Gérer la sélection des entités
             List<String> selectedEntities = handleEntitySelection(allTableNames, selectedValues);
-            projectGenerationContext.setEntityNames(selectedEntities);
+            generationContextManager.getContext().setEntityNames(selectedEntities);
 
             // Gérer la sélection des vues
             List<String> selectedViews = handleEntitySelection(allViewNames, selectedViewValues);
-            projectGenerationContext.setViewNames(selectedViews);
+            generationContextManager.getContext().setViewNames(selectedViews);
 
             // Gérer la sélection des composants
             List<String> selectedComponent = generationOptionForm.getComponentChoice().getSelectedValuesList();
             if (selectedComponent != null) {
-                projectGenerationContext.setGenerationOptions(selectedComponent);
+                generationContextManager.getContext().setGenerationOptions(selectedComponent);
             }
-            projectGenerationContext.setTables();
-            updateRelationsOptionsOnEntityChange(projectGenerationContext.splitTableByRelations());
+            generationContextManager.getContext().setTables();
+            updateRelationsOptionsOnEntityChange(generationContextManager.getContext().splitTableByRelations());
             specificConfigurationWizardStep.onTablesAndViewsSelected(handleSelectAll(selectedValues, generationOptionForm.getAllTableNames()), handleSelectAll(selectedViewValues, generationOptionForm.getAllViewsNames()));
         } catch (Exception e) {
             Messages.showErrorDialog(
@@ -143,6 +144,6 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        return this.projectGenerationContext.getGenerationProcess().isGenerateProjectProcess();
+        return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess();
     }
 }

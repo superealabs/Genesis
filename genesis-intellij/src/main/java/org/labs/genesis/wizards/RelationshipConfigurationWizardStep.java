@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.RelationshipConfigurationForm;
 
 import javax.swing.*;
@@ -15,10 +16,10 @@ import java.util.List;
 public class RelationshipConfigurationWizardStep extends ModuleWizardStep {
     private final RelationshipConfigurationForm relationshipConfigurationForm;
     @Setter
-    private ProjectGenerationContext projectGenerationContext;
+    private GenerationContextManager generationContextManager;
 
-    public RelationshipConfigurationWizardStep(ProjectGenerationContext projectGenerationContext){
-        this.projectGenerationContext = projectGenerationContext;
+    public RelationshipConfigurationWizardStep(GenerationContextManager generationContextManager){
+        this.generationContextManager = generationContextManager;
         this.relationshipConfigurationForm = new RelationshipConfigurationForm();
     }
 
@@ -31,7 +32,7 @@ public class RelationshipConfigurationWizardStep extends ModuleWizardStep {
     public void updateDataModel() {
         try {
             List<RelationParameter> relations = relationshipConfigurationForm.getRelationParameters();
-            projectGenerationContext.setRelationParameters(relations);
+            generationContextManager.getContext().setRelationParameters(relations);
         }
         catch (Exception e){
             throw new RuntimeException(e);
@@ -42,13 +43,13 @@ public class RelationshipConfigurationWizardStep extends ModuleWizardStep {
         this.relationshipConfigurationForm.populateSelect(relations);
     }
     public void updateTableSelects() {
-        this.relationshipConfigurationForm.populateSelect(this.projectGenerationContext.splitTableByRelations());
-        this.relationshipConfigurationForm.setTableData(projectGenerationContext.getRelationParameters());
+        this.relationshipConfigurationForm.populateSelect(this.generationContextManager.getContext().splitTableByRelations());
+        this.relationshipConfigurationForm.setTableData(generationContextManager.getContext().getRelationParameters());
     }
 
     @Override
     public boolean isStepVisible() {
-        return this.projectGenerationContext.getGenerationProcess().isGenerateProjectProcess() ||
-               this.projectGenerationContext.getGenerationProcess().isSynchGenerationProcess();
+        return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess() ||
+               this.generationContextManager.getContext().getGenerationProcess().isSynchGenerationProcess();
     }
 }

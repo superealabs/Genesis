@@ -8,6 +8,7 @@ import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkMVC;
 import org.labs.genesis.config.langage.ViewsTemplate;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.FrontendConfigurationForm;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
@@ -23,13 +24,13 @@ import java.util.Map;
 
 public class FrontendConfigurationWizardStep extends ModuleWizardStep {
     private final FrontendConfigurationForm frontendConfigurationForm;
-    private final ProjectGenerationContext projectGenerationContext;
+    private final GenerationContextManager generationContextManager;
     private final FrontendLayout frontendLayout;
     private final ProjectBranding branding;
 
-    public FrontendConfigurationWizardStep(ProjectGenerationContext projectGenerationContext){
+    public FrontendConfigurationWizardStep(GenerationContextManager generationContextManager){
         this.frontendConfigurationForm = new FrontendConfigurationForm();
-        this.projectGenerationContext = projectGenerationContext;
+        this.generationContextManager = generationContextManager;
         this.frontendLayout = new FrontendLayout();
         this.branding = new ProjectBranding();
     }
@@ -41,21 +42,21 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public void updateDataModel() {
-        projectGenerationContext.setFrontendLanguage((FrontendLanguage)frontendConfigurationForm.getFrontendLanguageOptions().getSelectedItem());
-        projectGenerationContext.setFrontendFramework((FrontendFramework) frontendConfigurationForm.getFrontendFrameworkOptions().getSelectedItem());
-        projectGenerationContext.setFrontendPort(frontendConfigurationForm.getPortInput().getText().trim());
+        generationContextManager.getContext().setFrontendLanguage((FrontendLanguage)frontendConfigurationForm.getFrontendLanguageOptions().getSelectedItem());
+        generationContextManager.getContext().setFrontendFramework((FrontendFramework) frontendConfigurationForm.getFrontendFrameworkOptions().getSelectedItem());
+        generationContextManager.getContext().setFrontendPort(frontendConfigurationForm.getPortInput().getText().trim());
         updateLayout();
         updateBranding();
-        projectGenerationContext.getFrontendFramework().setFrontendLayout(this.frontendLayout);
-        projectGenerationContext.getFrontendFramework().setProjectBranding(this.branding);
-        if (projectGenerationContext.getFramework() instanceof FrameworkMVC) {
-            ((FrameworkMVC) projectGenerationContext.getFramework()).setFrontendLayout(this.frontendLayout);
-            ((FrameworkMVC) projectGenerationContext.getFramework()).setProjectBranding(this.branding);
+        generationContextManager.getContext().getFrontendFramework().setFrontendLayout(this.frontendLayout);
+        generationContextManager.getContext().getFrontendFramework().setProjectBranding(this.branding);
+        if (generationContextManager.getContext().getFramework() instanceof FrameworkMVC) {
+            ((FrameworkMVC) generationContextManager.getContext().getFramework()).setFrontendLayout(this.frontendLayout);
+            ((FrameworkMVC) generationContextManager.getContext().getFramework()).setProjectBranding(this.branding);
 
-            if ( projectGenerationContext.getFramework().getId() == 6) {
-                projectGenerationContext.setViewsTemplate(((FrameworkMVC) projectGenerationContext.getFramework()).findViewsTemplateById(2));
+            if ( generationContextManager.getContext().getFramework().getId() == 6) {
+                generationContextManager.getContext().setViewsTemplate(((FrameworkMVC) generationContextManager.getContext().getFramework()).findViewsTemplateById(2));
             } else {
-                projectGenerationContext.setViewsTemplate(((FrameworkMVC) projectGenerationContext.getFramework()).findViewsTemplateById(1));
+                generationContextManager.getContext().setViewsTemplate(((FrameworkMVC) generationContextManager.getContext().getFramework()).findViewsTemplateById(1));
             }
         }
     }
@@ -97,17 +98,17 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
     public boolean validate() throws ConfigurationException {
         try {
             if (frontendConfigurationForm.getFrontendGeneration().isSelected()) {
-                projectGenerationContext.setGenerateFrontendApp(false);
+                generationContextManager.getContext().setGenerateFrontendApp(false);
                 return  true;
             }
-            projectGenerationContext.setGenerateFrontendApp(true);
+            generationContextManager.getContext().setGenerateFrontendApp(true);
             if(frontendConfigurationForm.getFrontendLanguageOptions().getSelectedItem() == null){
                 throw new ConfigurationException("Please select an appropriate frontend language");
             }
             else if(frontendConfigurationForm.getFrontendFrameworkOptions().getSelectedItem() == null){
                 throw new ConfigurationException("Please select a frontend framework to use for generation");
             }
-            Framework framework = projectGenerationContext.getFramework();
+            Framework framework = generationContextManager.getContext().getFramework();
             if (framework instanceof FrameworkMVC) {
                 validateFrameworkMVCConfiguration((FrameworkMVC) framework);
             }
@@ -138,6 +139,6 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        return this.projectGenerationContext.getGenerationProcess().isGenerateProjectProcess();
+        return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess();
     }
 }
