@@ -5,7 +5,7 @@ extension : "jsp"
 imports : |
   <%@ page import="affichage.PageRecherche"%>
   <%@ page import="${packageMapping}" %>
-pr : |
+jspBlock : |
   <% try{ 
       ${mapping} o = new ${mapping}();
       o.setNomTable("${nomTable}");

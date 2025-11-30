@@ -27,7 +27,7 @@ public class PageRecherche extends ApjFile {
     private String apres;
 
     private String imports;
-    private String pr;
+    private String jspBlock;
     private String html;
     private String basPage;
     private ApjField[] champs;
@@ -43,7 +43,7 @@ public class PageRecherche extends ApjFile {
     public HashMap<String, Object> getPrimaryHashMap() {
         HashMap<String, Object> map = new HashMap<>();
         map.put("imports", this.getImports());
-        map.put("pr", this.getPr());
+        map.put("jspBlock", this.getJspBlock());
         map.put("html", this.getHtml());
         map.put("basPage", this.getBasPage());
         return map;
