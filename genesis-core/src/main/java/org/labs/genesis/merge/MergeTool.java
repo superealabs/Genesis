@@ -27,9 +27,10 @@ public class MergeTool {
                 Files.write(input.baseFile.toPath(), freshContent);
             }
             mergedContent = new String(freshContent, StandardCharsets.UTF_8);
-        }
-        if (mergedContent != null){
             return new MergeOutcome(input,false, mergedContent, null);
+        }
+        if (!input.currentFile.exists()) {
+            return new MergeOutcome(input,false, null, null);
         }
         RawText base   = new RawText(Files.readAllBytes(input.baseFile.toPath()));
         RawText ours   = new RawText(Files.readAllBytes(input.currentFile.toPath()));
@@ -56,7 +57,7 @@ public class MergeTool {
         if (!hasConflict) {
             return new MergeOutcome(input,false, mergedContent, null);
         }
-        File conflictFile = new File(input.currentFile.getPath() + ".conflict");
+        File conflictFile = new File(input.currentFile.getPath());
         return  new MergeOutcome(input, true, mergedContent, conflictFile);
     }
 }

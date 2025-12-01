@@ -121,7 +121,7 @@ public class FrontEndTest {
                 .setHost("localhost")
                 .setPort("5432")
                 .setSchemaName("public")
-                .setDatabaseName("bakery")
+                .setDatabaseName("fanamby")
                 .setUser("chan_alex")
                 .setPwd("chanalex")
                 .setTrustCertificate(true).
@@ -143,8 +143,8 @@ public class FrontEndTest {
             var frontendFramework=ProjectGenerator.frontendFrameworks.get(frontendFrameworkId);
 
             List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
-            String projectName = "relations";
-            String groupLink = "mg.akademia";
+            String projectName = "FanambyPresence";
+            String groupLink = "org.example";
             String projectPort = "8000";
             String logLevel = "INFO";
             String hibernateDdlAuto = "none";
@@ -153,7 +153,25 @@ public class FrontEndTest {
             String languageVersion = "21";
             String destinationFolder = "/home/itu-chan-alex/Stage/generated";
             List<RelationParameter> relations = new ArrayList<>();
-            relations.add(new RelationParameter("sales", "sales_details", false, false));
+//            "relationsRules" : [ {
+//                "parentTable" : "match_foot",
+//                        "childTable" : "composition",
+//                        "mandatory" : false,
+//                        "hasForm" : true
+//            }, {
+//                "parentTable" : "match_foot",
+//                        "childTable" : "presence_match",
+//                        "mandatory" : false,
+//                        "hasForm" : true
+//            }, {
+//                "parentTable" : "entrainement",
+//                        "childTable" : "presence_entrainement",
+//                        "mandatory" : false,
+//                        "hasForm" : true
+//            } ]
+            relations.add(new RelationParameter("entrainement", "presence_entrainement", false, true));
+            relations.add(new RelationParameter("match_foot", "composition", false, true));
+            relations.add(new RelationParameter("match_foot", "presence_match", false, true));
 
 
             ProjectGenerator projectGenerator = new ProjectGenerator();

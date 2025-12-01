@@ -5923,8 +5923,10 @@
         import GenesisButton from '@/components/button/GenesisButton.vue'
         import GenesisInput from '@/components/form/GenesisInput.vue'{{#if containsForeignKey}}
         import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'{{/if}}{{#if isParentTable=true and hasChildrenForm=true}}
-        {{#each childrenWithForm}}import{ ${majStart(this.className)}FormDTO, type ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model.ts'
-        import ${majStart(this.className)}TableForm from '@/entities/${minStart(this.className)}/${majStart(this.className)}TableForm.vue'{{/each}}{{/if}}
+        {{#each childrenWithForm}}
+        import{ ${majStart(this.className)}FormDTO, type ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model.ts'
+        import ${majStart(this.className)}TableForm from '@/entities/${minStart(this.className)}/${majStart(this.className)}TableForm.vue'
+        {{/each}}{{/if}}
       selector: "${majStart(className)}Form"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5937,7 +5939,7 @@
                 <div class="grid grid-cols-1 gap-4">
                   {{#each fields}}
                   {{#if this.isPrimaryKey}}{{removeLine}}
-                  {{elseIf this.isForeignKey and isParentTable}}
+                  {{elseIf this.isForeignKey and hasChildrenForm}}
                   <!-- ${formatReadable(this.name)} FK -->
                   <GenesisSelectSearchCriteria
                     v-if="${minStart(this.name)}SearchField?.multicriteriaSelect"
@@ -5961,7 +5963,7 @@
                     :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = String(selectedValue))"
                   />
-                  {{elseIf isParentTable}}
+                  {{elseIf isParentTable=true and hasChildrenForm=true}}
                   <!-- ${formatReadable(this.name)} -->
                   <GenesisInput
                     label="${formatReadable(this.name)}"
@@ -6004,7 +6006,8 @@
       style: "<style scoped></style>"
       export: |
         const props = defineProps<{
-          ${minStart(className)}?: ${majStart(className)}{{#if isParentTable=true and hasChildrenForm=true}}
+          ${minStart(className)}?: ${majStart(className)}
+          {{#if isParentTable=true and hasChildrenForm=true}}
           {{#each childrenWithForm}}
           ${minStart(this.className)}sData?: ${majStart(this.className)}[]
           {{/each}}
@@ -6013,7 +6016,8 @@
             {{#each childrenWithForm}}
             ${minStart(this.className)}s: Record<string, string>[]
             {{/each}}
-          }{{else}}violations?: Record<string, string> | null{{/if}}
+          }
+          {{else}}violations?: Record<string, string> | null{{/if}}
           submitLabel?: string
         }>()
 
@@ -6064,15 +6068,15 @@
         label: "{{removeLine}}"
       componentName: "${majStart(className)}UpdateView"
       importFile: |
-        import { ref, onMounted } from 'vue';
-        import { useRoute } from 'vue-router';
-        import ${majStart(className)}Form from '@/entities/${minStart(className)}/${majStart(className)}Form.vue';
-        import AlertPopup from '@/components/popup/AlertPopup.vue';
-        import { use${majPluralize(className)} } from '@/composables/use${majPluralize(className)}';
-        import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model';
-        import { usePopup } from '@/composables/usePopup';
-        import GenesisButton from '@/components/button/GenesisButton.vue';
-        import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue';
+        import { ref, onMounted } from 'vue'
+        import { useRoute } from 'vue-router'
+        import ${majStart(className)}Form from '@/entities/${minStart(className)}/${majStart(className)}Form.vue'
+        import AlertPopup from '@/components/popup/AlertPopup.vue'
+        import { use${majPluralize(className)} } from '@/composables/use${majPluralize(className)}'
+        import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
+        import { usePopup } from '@/composables/usePopup'
+        import GenesisButton from '@/components/button/GenesisButton.vue'
+        import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'
         import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore.ts'{{#if isParentTable=true and hasChildrenForm=true}}
         {{#each childrenWithForm}}
         import { use${majStart(this.className)}s } from '@/composables/use${majStart(this.className)}s'
@@ -6131,7 +6135,7 @@
         const freezeStore = useFreezeScreenStore()
         {{#if isParentTable=true and hasChildrenForm=true}}
         {{#each childrenWithForm}}
-        const { ${minStart(this.className)}s, getAll${majStart(this.className)}sBy${majStart(this.parentColumnNameFiled)} } = use${majStart(this.className)}s();
+        const { ${minStart(this.className)}s, getAll${majStart(this.className)}sBy${majStart(className)}Id } = use${majStart(this.className)}s();
         const ${minStart(this.className)}Loaded = ref(false);
         const load${majStart(this.className)}s = async () => {
           try {
@@ -6245,8 +6249,9 @@
         import { usePopup } from '@/composables/usePopup'
         import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore'
         import { ref } from 'vue'{{#if isParentTable=true and hasChildrenForm=true}}
-        {{#each childrenWithForm}}import type { ${majStart(this.className)}, ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'{{/each}}
-        {{/if}}
+        {{#each childrenWithForm}}
+        import type { ${majStart(this.className)}, ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'
+        {{/each}}{{/if}}
       selector: "${majStart(className)}CreateView"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -6370,8 +6375,9 @@
       } from '@/models/api/RequestModel'
       import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
       import type { DataResponse, PagedDataResponse } from '@/models/api/DataResponseModel'{{#if isParentTable=true and hasChildrenForm=true}}
-      {{#each childrenWithForm}}import type { ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model'{{/each}}
-      {{/if}}
+      {{#each childrenWithForm}}
+      import type { ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model'
+      {{/each}}{{/if}}
     methods: |
       const restApiWithPage = api<IPageResponse<${majStart(className)}>>()
       const restApi = api<${majStart(className)}>()
@@ -6685,7 +6691,7 @@
         <script setup lang="ts">
         import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'
         import GenesisInput from '@/components/form/GenesisInput.vue'
-        import { ref } from 'vue'
+        import { ref, onMounted } from 'vue'
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
         import TrashIcon from '@/components/icons/TrashIcon.vue'
 
@@ -6716,6 +6722,10 @@
         function updateModel() {
           emit('udpate:model-value', formModel.value)
         }
+        
+        onMounted(() => {
+          updateModel()
+        })
         </script>
 
         <template>

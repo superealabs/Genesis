@@ -11,6 +11,7 @@ import org.labs.genesis.connexion.adapter.DatabaseDeserializer;
 import org.labs.genesis.merge.FileMergeInput;
 import org.labs.genesis.merge.MergeOutcome;
 import org.labs.genesis.merge.MergeTool;
+import org.labs.utils.enums.FilesUtilsMode;
 
 import java.io.*;
 import java.net.URI;
@@ -24,6 +25,11 @@ import java.util.Scanner;
 import java.util.stream.Stream;
 
 public class FileUtils {
+    public static FilesUtilsMode mode = FilesUtilsMode.GENERATION;
+
+    public static void setMode(FilesUtilsMode mode) {
+        FileUtils.mode = mode;
+    }
 
     public static String getFileContent(String resourcePath) throws IOException {
         StringBuilder content = new StringBuilder();
@@ -163,7 +169,6 @@ public class FileUtils {
         }
     }
 
-
     private static @NotNull URI getResourceUri(String sourceDir) throws IOException {
         // Obtenir le class loader actuel
         ClassLoader classLoader = FileUtils.class.getClassLoader();
@@ -211,14 +216,14 @@ public class FileUtils {
 
     private static void applyGeneratedMergeOutcome(MergeOutcome mergeOutcome) throws IOException {
         FileMergeInput mergeInput = mergeOutcome.input;
-        if (mergeOutcome.hasConflict){
+        if (mergeOutcome.hasConflict && mergeOutcome.mergedContent != null) {
             Files.write(mergeOutcome.conflictFile.toPath(), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
-        }else {
+        } else if (mergeOutcome.mergedContent != null) {
             // merge content into current file
             Files.write(mergeInput.currentFile.toPath(), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
         }
         // generated file into baseFile
-        Files.write(mergeInput.baseFile.toPath(),   Files.readAllBytes(mergeInput.newFile.toPath()));
+        Files.write(mergeInput.baseFile.toPath(), Files.readAllBytes(mergeInput.newFile.toPath()));
         deleteFile(mergeInput.newFile.getPath());
     }
     public static void createOrMergeFile(String destinationFolder, String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
