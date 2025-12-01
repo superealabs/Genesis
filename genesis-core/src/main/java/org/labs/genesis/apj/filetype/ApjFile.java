@@ -16,10 +16,29 @@ public abstract class ApjFile implements ApjMetadataProvider{
     private String template;
     private String fileName;
     private String extension;
+    private String jspBlock;
+    private String html;
+    private String basPage;
+    private String titre;
+    private String packageMapping;
+    private String mapping;
+    private String nomTable;
+    private ApjField[] champs;
+    private String apres;
 
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public HashMap<String, Object> getPrimaryHashMap() {
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("imports", this.getImports());
+        map.put("jspBlock", this.getJspBlock());
+        map.put("html", this.getHtml());
+        map.put("basPage", this.getBasPage());
+        return map;
     }
 
     public static @NotNull Map<String, Object> getApjFieldHashMap(ApjField field) {
@@ -29,6 +48,7 @@ public abstract class ApjFile implements ApjMetadataProvider{
         fieldMap.put("type", field.getType());
         fieldMap.put("lien", field.getLien());
         fieldMap.put("attLien", field.getAttLien());
+        fieldMap.put("isVisible", field.isVisible());
         return fieldMap;
     }
 

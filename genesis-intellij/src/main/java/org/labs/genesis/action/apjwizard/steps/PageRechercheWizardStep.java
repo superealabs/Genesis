@@ -66,10 +66,7 @@ public class PageRechercheWizardStep implements WizardStep {
         pr.setChamps(pageRechercheForm.getDataFiltre());
         pr.setRecap(pageRechercheForm.getDataRecap());
         pr.setTableau(pageRechercheForm.getDataTableau());
-
         pr.makeRecapAndTableau();
-        context.setApjfile(pr);
-
         try {
             generator.generateApjFile(context);
             String fullName = pr.getFileName() + "." + pr.getExtension();

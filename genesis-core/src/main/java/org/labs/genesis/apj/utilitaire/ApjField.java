@@ -15,6 +15,7 @@ public class ApjField {
     private String type;
     private String attLien;
     private String lien;
+    private boolean visible;
 
     public static List<ApjField> javaFieldsToApjFields(List<Field> fields) {
         List<ApjField> apjFields = new ArrayList<>();

@@ -4,4 +4,57 @@ template : "page"
 extension : "jsp"
 imports : |
   <%@ page import="affichage.PageInsert"%>
+  <%@ page import="user.UserEJB" %>
   <%@ page import="${packageMapping}" %>
+jspBlock : |
+  <% try{ 
+      UserEJB u = (user.UserEJB) session.getValue("u");
+      String mapping = "${packageMapping}";
+      String nomTable = "${nomTable}";
+      String apres = "${apres}";
+  
+      ${mapping} o = new ${mapping}();
+      o.setNomTable("${nomTable}");
+      PageInsert pi = new PageInsert(o, request, u);
+      pi.setLien((String) session.getValue("lien"));  
+      pi.setTitre("${titre}");
+  
+      {{#each champs}}
+      {{#if this.isVisible}}
+      pi.getFormu().getChamp("${this.nom}").setLibelle("${this.libelle}");
+      {{else}}
+      pi.getFormu().getChamp("${this.nom}").setVisible(${this.isVisible});
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+   
+      String acte = request.getParameter("acte");
+      if(acte != null && acte.equalsIgnoreCase("update")){
+          pi.setTitre("${titreUpdate}");
+      }
+
+      pi.preparerDataFormu();
+      pi.getFormu().makeHtmlInsertTabIndex();
+  %>
+
+html : |
+  <div class="content-wrapper">
+      <h1> <%=pi.getTitre()%></h1>
+      <form action="<%=pi.getLien()%>?but=apresTarif.jsp" method="post" name="<%=nomTable%>" id="<%=nomTable%>">
+          <%
+              out.println(pi.getFormu().getHtmlInsert());
+              out.println(pi.getHtmlAddOnPopup());
+          %>
+          <input name="acte" type="hidden" id="nature" value="insert">
+          <input name="bute" type="hidden" id="bute" value="<%=apres%>">
+          <input name="classe" type="hidden" id="classe" value="<%=mapping%>">
+          <input name="nomtable" type="hidden" id="nomtable" value="<%=nomTable%>">
+      </form>
+  </div>
+basPage : |
+  <% } catch (Exception e) {
+    e.printStackTrace();
+  %>
+  <script language="JavaScript"> alert('<%=e.getMessage()%>');
+      history.back();
+  </script>
+  <% }%>

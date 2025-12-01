@@ -20,7 +20,7 @@ import org.labs.genesis.action.apjwizard.forms.helper.TableToolbarHelper;
 import org.labs.genesis.action.apjwizard.forms.popup.FieldSelectionDialog;
 import org.labs.genesis.action.apjwizard.forms.popup.TableTreeChooser;
 import org.labs.genesis.action.apjwizard.forms.renderer.TableRenderer;
-import org.labs.genesis.action.apjwizard.forms.tablehandler.FormTableModel;
+import org.labs.genesis.action.apjwizard.forms.tablehandler.BasicTableModel;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.TableRowTransferHandler;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.TableauTableModel;
 import org.labs.genesis.apj.ApjGenerationContext;
@@ -104,7 +104,7 @@ public class PageRechercheForm {
 
 
     private void initFiltreTable() {
-        filtreTableModel = new FormTableModel(new Object[]{"Champ", "Libellé"});
+        filtreTableModel = new BasicTableModel(new Object[]{"Champ", "Libellé"});
         filtreTable = initTable(filtreTable, filtreTableModel, scrollFiltre);
         DefaultActionGroup filtreGroup = new DefaultActionGroup();
         filtreGroup.add(new AnAction("Simple") {
@@ -177,7 +177,7 @@ public class PageRechercheForm {
 
 
     private void initRecapTable() {
-        recapTableModel = new FormTableModel(new Object[]{"Colonne", "Libellé"});
+        recapTableModel = new BasicTableModel(new Object[]{"Colonne", "Libellé"});
         recapTable = initTable(recapTable, recapTableModel, scrollRecap);
         TableToolbarHelper.builder()
             .table(recapTable)
@@ -249,11 +249,18 @@ public class PageRechercheForm {
                     List<Field> fields = UtilClassLoader.listFieldsStopClassMAPTable(cls);
                     List<ApjField> apjFields = ApjField.javaFieldsToApjFields(fields);
                     loadFieldsMap(apjFields);
+                    removeAllRows(filtreTableModel);
+                    removeAllRows(recapTableModel);
+                    removeAllRows(tableauTableModel);
                 } catch (Exception ignored) {
 
                 }
             }
         });
+    }
+
+    private void removeAllRows(DefaultTableModel model) {
+        model.setRowCount(0);
     }
 
     private void loadFieldsMap(List<ApjField> fields) {

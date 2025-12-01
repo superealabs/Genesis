@@ -63,7 +63,7 @@ public class ApjWizardDialog extends DialogWrapper {
         if (currentStepIndex == 0) {
             WizardStep nextStep = switch (context.getApjfile().getId()) {
                 case ConstantesApj.PAGE_RECHERCHE_ID -> new PageRechercheWizardStep(context,project);
-                case ConstantesApj.PAGE_INSERT_ID -> new PageInsertWizardStep(context);
+                case ConstantesApj.PAGE_INSERT_ID -> new PageInsertWizardStep(context,project);
                 default -> null;
             };
 

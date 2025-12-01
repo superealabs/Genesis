@@ -14,23 +14,12 @@ import java.util.Map;
 @Getter
 @Setter
 public class PageRecherche extends ApjFile {
-    private String packageMapping;
-    private String mapping;
-    private String nomTable;
     private String listeCrt;
     private String listeInt;
     private String libEntete;
     private String enteteRecap;
     private String colSomme;
     private String libEnteteAffiche;
-    private String titre;
-    private String apres;
-
-    private String imports;
-    private String jspBlock;
-    private String html;
-    private String basPage;
-    private ApjField[] champs;
     private ApjField[] recap;
     private ApjField[] tableau;
     private boolean withColSomme = false;
@@ -41,12 +30,7 @@ public class PageRecherche extends ApjFile {
 
     @Override
     public HashMap<String, Object> getPrimaryHashMap() {
-        HashMap<String, Object> map = new HashMap<>();
-        map.put("imports", this.getImports());
-        map.put("jspBlock", this.getJspBlock());
-        map.put("html", this.getHtml());
-        map.put("basPage", this.getBasPage());
-        return map;
+        return super.getPrimaryHashMap();
     }
 
     @Override

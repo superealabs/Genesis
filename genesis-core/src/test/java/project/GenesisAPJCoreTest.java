@@ -15,7 +15,6 @@ import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
-import java.sql.SQLFeatureNotSupportedException;
 import java.util.*;
 
 public class GenesisAPJCoreTest {
