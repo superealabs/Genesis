@@ -27,9 +27,19 @@ public class PropertiesForm {
     private TextFieldWithBrowseButton location;
     private LinkLabel<String> testConnectionButton;
     private JLabel connectionStatusLabel;
+    private JCheckBox sansBaseCheckBox;
 
     public PropertiesForm() {
         populateApjFileOptions();
+        initConfig();
+    }
+
+    public void initConfig() {
+        sansBaseCheckBox.addItemListener(e -> {
+            boolean selected = sansBaseCheckBox.isSelected();
+            testConnectionButton.setEnabled(!selected);
+            connectionStatusLabel.setEnabled(!selected);
+        });
     }
 
     public void populateApjFileOptions() {

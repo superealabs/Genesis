@@ -69,6 +69,11 @@ public class PropertiesWizardStep implements WizardStep {
         context.setProjectJarDir(jarDir);
         context.setApjfile((ApjFile) propertiesForm.getFileApjOptions().getSelectedItem());
 
+        boolean sansBase = propertiesForm.getSansBaseCheckBox().isSelected();
+        if (sansBase) {
+            return;
+        };
+
         ProgressUtils.runWithProgress(project, "Loading Tables and Views...", indicator -> {
             try (Connection conn = UtilDBDynamique.GetConn(jarDir, libDir)) {
 
@@ -105,6 +110,10 @@ public class PropertiesWizardStep implements WizardStep {
         if (libDir.isEmpty()) throw new ConfigurationException("The lib path cannot be empty.");
         if (jarDir.isEmpty()) throw new ConfigurationException("The project jar path cannot be empty.");
 
+        boolean sansBase = propertiesForm.getSansBaseCheckBox().isSelected();
+        if (sansBase) {
+            return true;
+        };
         ProgressUtils.runWithProgress(project, "Validating Database Connection...", indicator -> {
             try (Connection conn = UtilDBDynamique.GetConn(jarDir, libDir)) {
                 ProgressUtils.updateProgress(indicator, "Connection successful", 1.0);
