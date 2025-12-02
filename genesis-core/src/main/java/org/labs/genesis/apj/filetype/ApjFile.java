@@ -4,7 +4,11 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.apj.utilitaire.ApjField;
+import org.labs.utils.StringUtils;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -25,6 +29,7 @@ public abstract class ApjFile implements ApjMetadataProvider{
     private String nomTable;
     private ApjField[] champs;
     private String apres;
+    private String ordre;
 
     @Override
     public String toString() {
@@ -53,4 +58,16 @@ public abstract class ApjFile implements ApjMetadataProvider{
         return fieldMap;
     }
 
+    public void makeOrdre(){
+        if (this.getChamps() == null) {
+            return;
+        }
+        List<String> ordreList = new ArrayList<>();
+        for (ApjField field : this.getChamps()) {
+            if (field.isVisible()){
+                ordreList.add(field.getNom());
+            }
+        }
+        this.setOrdre(StringUtils.quoteAndJoin(ordreList.toArray(new String[0])));
+    }
 }

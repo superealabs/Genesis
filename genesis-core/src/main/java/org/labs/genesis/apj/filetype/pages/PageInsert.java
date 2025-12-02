@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.apj.filetype.ApjFile;
 import org.labs.genesis.apj.utilitaire.ApjField;
+import org.labs.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ public class PageInsert extends ApjFile {
 
     @Override
     public HashMap<String, Object> buildMetadata() {
+        super.makeOrdre();
         HashMap<String, Object> map = new HashMap<>();
         map.put("packageMapping", this.getPackageMapping());
         map.put("mapping", this.getMapping());
@@ -33,6 +35,7 @@ public class PageInsert extends ApjFile {
         map.put("titre", this.getTitre());
         map.put("apres", this.getApres());
         map.put("titreUpdate", this.getTitreUpdate());
+        map.put("ordre", this.getOrdre());
         map.put("champs", getChampsList());
         return map;
     }

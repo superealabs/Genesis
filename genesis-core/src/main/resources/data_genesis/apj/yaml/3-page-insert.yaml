@@ -28,6 +28,9 @@ jspBlock : |
       {{/if}}{{removeLine}}
       {{/each}}{{removeLine}}
    
+      String[] ordre = {${ordre}};
+      pi.getFormu().setOrdre(ordre);
+   
       String acte = request.getParameter("acte");
       if(acte != null && acte.equalsIgnoreCase("update")){
           pi.setTitre("${titreUpdate}");

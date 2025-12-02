@@ -19,7 +19,6 @@ public class PageConsulte extends ApjFile {
     private String pageModif;
     private String pageApresDelete;
     private boolean withOnglet;
-    private String ordre;
 
     @Override
     public HashMap<String, Object> getPrimaryHashMap() {
@@ -28,7 +27,7 @@ public class PageConsulte extends ApjFile {
 
     @Override
     public HashMap<String, Object> buildMetadata() {
-        makeOrdre();
+        super.makeOrdre();
         HashMap<String, Object> map = new HashMap<>();
         map.put("packageMapping", this.getPackageMapping());
         map.put("mapping", this.getMapping());
@@ -54,16 +53,4 @@ public class PageConsulte extends ApjFile {
         return fields;
     }
 
-    private void makeOrdre(){
-        if (this.getChamps() == null) {
-            return;
-        }
-        List<String> ordreList = new ArrayList<>();
-        for (ApjField field : this.getChamps()) {
-            if (field.isVisible()){
-                ordreList.add(field.getNom());
-            }
-        }
-        this.setOrdre(StringUtils.quoteAndJoin(ordreList.toArray(new String[0])));
-    }
 }
