@@ -5,6 +5,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkLabel;
 import lombok.Getter;
 import lombok.Setter;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -13,10 +14,15 @@ import org.labs.genesis.wizards.fieldHandler.*;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.labs.genesis.Utils.formatErrorMessage;
-import static org.labs.genesis.Utils.formatErrorMessageHtml;
+import static org.labs.genesis.Utils.formatErrorMessageHtml;import java.awt.Window;
+import com.intellij.util.ui.UIUtil;
+
 
 @Getter
 public class DatabaseConfigurationForm {
@@ -50,12 +56,19 @@ public class DatabaseConfigurationForm {
 
     private LinkLabel<String> testConnectionButton;
     private JLabel connectionStatusLabel;
+
+    private JComboBox<String> comboBoxProjectList;
+    private JComboBox<ProjectGenerationContext> contextList ;
+    private JLabel labelListProject;
+    private JButton addDatabaseButton;
+    private final List<ProjectGenerationContext> listProjectGenerationContexts ;
+
     private boolean isUpdating = false;
 
     @Setter
     private boolean connectionSuccessful = false;
 
-    public DatabaseConfigurationForm() {
+    public DatabaseConfigurationForm(List<ProjectGenerationContext> listProjectGenerationContexts ) {
         populateDmsOptions();
         initializeDefaultValues();
         addListeners();
@@ -64,9 +77,50 @@ public class DatabaseConfigurationForm {
         if (dmsOptions.getItemCount() > 0) {
             dmsOptions.setSelectedIndex(0);
         }
-
+        contextList = new JComboBox<>();
+        this.listProjectGenerationContexts = listProjectGenerationContexts;
         addTestConnectionButtonListener();
     }
+    public void refreshUI(boolean isMultiProject) {
+        if (isMultiProject) {
+            addListProject();
+            comboBoxProjectList.setVisible(true);
+            labelListProject.setVisible(true);
+            addDatabaseButton.setVisible(true);
+        } else {
+            comboBoxProjectList.setVisible(false);
+            labelListProject.setVisible(false);
+            addDatabaseButton.setVisible(false);
+        }
+    }
+
+
+    public void addListProject() {
+        DefaultComboBoxModel<String> nameModel = new DefaultComboBoxModel<>();
+        DefaultComboBoxModel<ProjectGenerationContext> contextModel = new DefaultComboBoxModel<>();
+
+        for (ProjectGenerationContext context : listProjectGenerationContexts) {
+            nameModel.addElement(context.getProjectName() + " " + context.getFramework().getName());
+            contextModel.addElement(context);
+        }
+        comboBoxProjectList.setModel(nameModel);
+        comboBoxProjectList.setVisible(true);
+        comboBoxProjectList.revalidate();
+        comboBoxProjectList.repaint();
+
+        contextList.setModel(contextModel);
+        contextList.setVisible(true);
+        contextList.revalidate();
+        contextList.repaint();
+
+        comboBoxProjectList.addActionListener(e -> {
+            int index = comboBoxProjectList.getSelectedIndex();
+            if (index >= 0 && index < contextList.getModel().getSize()) {
+                contextList.setSelectedIndex(index);
+            }
+        });
+    }
+
 
     private void addTestConnectionButtonListener() {
         testConnectionButton.setListener((LinkLabel<String> source, String data) -> {

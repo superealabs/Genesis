@@ -11,6 +11,8 @@ import org.labs.genesis.config.langage.Project;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
 import java.util.List;
 
 @Getter
@@ -32,8 +34,15 @@ public class InitializationForm {
     private JLabel buildToolLabel;
     private JLabel projectType;
     private JLabel frameworkVersionLabel;
-    private JLabel groupIdLabel;
+    private JLabel groupIdLabel;  
     private JTextField groupIdField;
+
+    // --- ADD MULTI PROJECT ---
+    private JCheckBox multiProjectCheckBox;
+    private JLabel numberOfProjectLabel;
+    private JLabel numberProject;
+    private JButton validateButton;
+    private JButton resetButton;
 
     public InitializationForm() {
         // Créez un FileChooserDescriptor pour sélectionner un seul dossier
@@ -56,6 +65,31 @@ public class InitializationForm {
 
         // Add listeners for dependent comboboxes
         addListeners();
+        mainPanel.addComponentListener(new ComponentAdapter() {
+        });
+        disableForm();
+        useMultiProject();
+    }
+    private void useMultiProject() {
+        multiProjectCheckBox.addActionListener(e -> {
+            if (multiProjectCheckBox.isSelected()) {
+                enableForm();
+            } else {
+                disableForm();
+            }
+        });
+    }
+    private void disableForm() {
+        numberOfProjectLabel.setEnabled(false);
+        numberProject.setEnabled(false);
+        validateButton.setEnabled(false);
+        resetButton.setEnabled(false);
+    }
+    private void enableForm(){
+        numberOfProjectLabel.setEnabled(true);
+        numberProject.setEnabled(true);
+        validateButton.setEnabled(true);
+        resetButton.setEnabled(true);
     }
 
     private void addListeners() {
