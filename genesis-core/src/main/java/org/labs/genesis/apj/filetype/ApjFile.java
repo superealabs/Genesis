@@ -49,6 +49,7 @@ public abstract class ApjFile implements ApjMetadataProvider{
         fieldMap.put("lien", field.getLien());
         fieldMap.put("attLien", field.getAttLien());
         fieldMap.put("isVisible", field.isVisible());
+        fieldMap.put("isWithLien", field.isWithLien());
         return fieldMap;
     }
 

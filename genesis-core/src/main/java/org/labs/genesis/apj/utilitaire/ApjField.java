@@ -16,6 +16,19 @@ public class ApjField {
     private String attLien;
     private String lien;
     private boolean visible;
+    private boolean withLien;
+
+    public void setLien(String lien) {
+        this.lien = lien;
+        this.withLien = lien != null && !lien.isEmpty() && !(lien.equals("null"));
+    }
+
+    public void checkVisibleAndUpdateLien() {
+        if (!this.visible) {
+            this.lien = null;
+            this.withLien = false;
+        }
+    }
 
     public static List<ApjField> javaFieldsToApjFields(List<Field> fields) {
         List<ApjField> apjFields = new ArrayList<>();

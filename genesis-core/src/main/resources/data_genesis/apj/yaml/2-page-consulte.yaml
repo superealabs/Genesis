@@ -3,5 +3,113 @@ name : "PageConsulte"
 template : "page"
 extension : "jsp"
 imports : |
-  <%@ page import="affichage.PageConsulte"%>
+  <%@ page pageEncoding="UTF-8" contentType="text/html; charset=UTF-8" %>
+  <%@ page import="user.UserEJB" %>
+  <%@ page import="affichage.PageConsulte" %>
   <%@ page import="${packageMapping}" %>
+  {{#if isWithOnglet}}{{removeLine}}
+  <%@ page import="java.util.HashMap" %>
+  <%@ page import="java.util.Map" %>
+  {{/if}}{{removeLine}}
+jspBlock : |
+  <% try{ 
+      UserEJB u = (user.UserEJB)session.getValue("u");
+      String lien = (String) session.getValue("lien");
+  
+      ${mapping} o = new ${mapping}();
+      o.setNomTable("${nomTable}");
+      PageConsulte pc = new PageConsulte(o, request, u);
+      pc.setTitre("${titre}");
+      String id = pc.getBase().getTuppleID();
+  
+      {{#each champs}}
+      {{#if this.isVisible}}
+      pc.getChampByName("${this.nom}").setLibelle("${this.libelle}");
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+      {{#each champs}}
+      {{#if !this.isVisible}}
+      pc.getChampByName("${this.nom}").setVisible(false);
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+      {{#each champs}}
+      {{#if this.isWithLien}}
+      pc.getChampByName("${this.nom}").setLien(lien+"${this.lien}.jsp","id=");
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+  
+      String[] ordre = {${ordre}};
+      pc.setOrdre(ordre);
+  
+      {{#if isWithOnglet}}{{removeLine}}
+      String pageActuel = "${pageActuel}.jsp";
+      {{/if}}{{removeLine}}
+      String pageRetour = "${pageRetour}.jsp";
+      String pageModif = "${pageModif}.jsp";
+      String pageApresDelete = "${pageApresDelete}.jsp";
+      String classe = "${packageMapping}";
+  
+      {{#if isWithOnglet}}{{removeLine}}
+      Map<String, String> map = new HashMap<>();
+      map.put("inc/exemple-page-detail", "");
+      String tab = request.getParameter("tab");
+      if (tab == null) {
+          tab = "inc/exemple-page-detail";
+      }
+      map.put(tab, "active");
+      tab = tab + ".jsp";
+      {{/if}}{{removeLine}}
+  %>
+
+html : |
+  <div class="content-wrapper">
+  
+  <h1 class="box-title"><a href=<%= lien + "?but=" + pageRetour%>> <i class="fa fa-angle-left"></i></a><%=pc.getTitre()%></h1>
+  
+  <div class="row m-0">
+      <div class="col-md-3"></div>
+      <div class="col-md-6">
+          <div class="box-fiche">
+              <div class="box">
+                  <div class="box-body">
+                      <%
+                          out.println(pc.getHtml());
+                      %>
+                      <br/>
+                      <div class="box-footer">
+                          <a class="btn btn-warning pull-right"  href="<%= lien + "?but="+ pageModif +"&id=" + id +"&acte=update"%>" style="margin-right: 10px">Modifier</a>
+                          <a  class="pull-right" href="<%= lien + "?but=apresTarif.jsp&id=" + id+"&acte=delete&bute="+pageApresDelete+"&classe="+classe %>"><button class="btn btn-danger">Supprimer</button></a>
+                      </div>
+                      <br/>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+  {{#if isWithOnglet}}{{removeLine}}
+  <div class="row m-0">
+      <div class="col-md-12 nopadding">
+          <div class="nav-tabs-custom">
+              <ul class="nav nav-tabs">
+                  <!-- Exemple d'onglet -->
+                  <li class="<%=map.get("inc/exemple-page-detail")%>"><a href="<%= lien %>?but=<%= pageActuel %>&id=<%= id %>&tab=inc/exemple-page-detail">D&eacute;tails</a></li>
+              </ul>
+              <div class="tab-content">
+  <%--                    <jsp:include page="<%= tab %>" >--%>
+  <%--                        <jsp:param name="id" value="<%= id %>" />--%>
+  <%--                    </jsp:include>--%>
+              </div>
+          </div>
+          
+          </div>
+      </div>
+  </div>
+  {{/if}}{{removeLine}}
+basPage : |
+  <% } catch (Exception e) {
+    e.printStackTrace();
+  %>
+  <script language="JavaScript"> alert('<%=e.getMessage()%>');
+      history.back();
+  </script>
+  <% }%>

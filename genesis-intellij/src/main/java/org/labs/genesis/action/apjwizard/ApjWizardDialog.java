@@ -6,10 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.labs.genesis.action.apjwizard.forms.popup.PopUtils;
-import org.labs.genesis.action.apjwizard.steps.PageInsertWizardStep;
-import org.labs.genesis.action.apjwizard.steps.PageRechercheWizardStep;
-import org.labs.genesis.action.apjwizard.steps.PropertiesWizardStep;
-import org.labs.genesis.action.apjwizard.steps.WizardStep;
+import org.labs.genesis.action.apjwizard.steps.*;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.utilitaire.ConstantesApj;
 
@@ -64,6 +61,7 @@ public class ApjWizardDialog extends DialogWrapper {
             WizardStep nextStep = switch (context.getApjfile().getId()) {
                 case ConstantesApj.PAGE_RECHERCHE_ID -> new PageRechercheWizardStep(context,project);
                 case ConstantesApj.PAGE_INSERT_ID -> new PageInsertWizardStep(context,project);
+                case ConstantesApj.PAGE_CONSULTE_ID -> new PageConsulteWizardStep(context,project);
                 default -> null;
             };
 
