@@ -5,6 +5,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import lombok.Getter;
 import lombok.Setter;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkMVC;
 
@@ -55,6 +56,64 @@ public class SpecificConfigurationForm {
     @Setter
     private List<String> allTablesAndViewsNames  = new ArrayList<>();
 
+    private JComboBox<String> comboBoxProjectList;
+    private JComboBox<ProjectGenerationContext> contextList ;
+    private JLabel labelListProject;
+    private JButton addSpecificConfigurationButton;
+    private final List<ProjectGenerationContext> listProjectGenerationContexts ;
+
+    public SpecificConfigurationForm(List<ProjectGenerationContext> listProjectGenerationContexts) {
+        this.listProjectGenerationContexts = listProjectGenerationContexts;
+        contextList = new JComboBox<>();
+    }
+    public void refreshUI(boolean isMultiProject) {
+        if (isMultiProject) {
+            addListProject();
+            comboBoxProjectList.setVisible(true);
+            labelListProject.setVisible(true);
+            addSpecificConfigurationButton.setVisible(true);
+        } else {
+            comboBoxProjectList.setVisible(false);
+            labelListProject.setVisible(false);
+            addSpecificConfigurationButton.setVisible(false);
+        }
+    }
+
+    public void addListProject() {
+        DefaultComboBoxModel<String> nameModel = new DefaultComboBoxModel<>();
+        DefaultComboBoxModel<ProjectGenerationContext> contextModel = new DefaultComboBoxModel<>();
+
+        for (ProjectGenerationContext context : listProjectGenerationContexts) {
+            String frontend = (context.getFrontendFramework() != null)
+                    ? " / " + context.getFrontendFramework().getName()
+                    : "";
+            nameModel.addElement(
+                    context.getProjectName() + " " +
+                            context.getFramework().getName() + " / " +
+                            context.getDatabase().getName() + " / " +
+                            context.getCredentials().getDatabaseName() +
+                            frontend
+            );
+            contextModel.addElement(context);
+        }
+        comboBoxProjectList.setModel(nameModel);
+        comboBoxProjectList.setVisible(true);
+        comboBoxProjectList.revalidate();
+        comboBoxProjectList.repaint();
+
+        contextList.setModel(contextModel);
+        contextList.setVisible(true);
+        contextList.revalidate();
+        contextList.repaint();
+
+        comboBoxProjectList.addActionListener(e -> {
+            int index = comboBoxProjectList.getSelectedIndex();
+            if (index >= 0 && index < contextList.getModel().getSize()) {
+                contextList.setSelectedIndex(index);
+            }
+        });
+
+    }
     public void initializeForm() {
         // Masquer tous les composants dépendants au début
         hideAllDependentComponents();
@@ -84,7 +143,9 @@ public class SpecificConfigurationForm {
             // Configurer type de sécurité
             configureSecurityType(framework);
             // Configure cache provider
-            configureCacheProvider(framework);
+            if( framework.getId() == 3 || framework.getIsGateway()) { //EurekaServer and Gateway
+                configureCacheProviderShow();
+            }else{configureCacheProvider(framework);}
 
             if (framework.getIsGateway()) {
                 configureGatewayComponents();
@@ -202,6 +263,9 @@ public class SpecificConfigurationForm {
                 .forEach(option -> securityTypeOptions.addItem(option));
     }
 
+    private void configureCacheProviderShow(){
+        cacheProviderOptions.addItem("NONE");
+    }
     private void configureCacheProvider(Framework framework) {
         cacheProviderLabel.setVisible(true);
         cacheProviderOptions.setVisible(true);

@@ -17,6 +17,7 @@ import org.labs.genesis.wizards.RuleToCodeWizardStep ;
 import javax.swing.*;
 
 import static org.labs.genesis.module.GenesisModuleBuilder.projectGenerationContext;
+import static org.labs.genesis.module.GenesisModuleBuilder.listProjectGenerationContexts;
 
 final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
     private static final String ID = "GENESIS_MODULE_TYPE";
@@ -30,11 +31,11 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
                                                           @NotNull GenesisModuleBuilder moduleBuilder,
                                                           @NotNull ModulesProvider modulesProvider) {
 
-        SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(projectGenerationContext);
-        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(projectGenerationContext);
+        SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(projectGenerationContext,listProjectGenerationContexts);
+        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(projectGenerationContext,listProjectGenerationContexts);
         InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(projectGenerationContext, databaseConfigurationWizardStep);
         SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(projectGenerationContext);
-        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext, specificConfigurationWizardStep);
+        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext,listProjectGenerationContexts,specificConfigurationWizardStep);
         GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(projectGenerationContext, generationOptionWizardStep);
 
         //Rule to code
@@ -43,13 +44,13 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
         RuleToCodeWizardAIStep ruleToCodeWizardAIStep =  new RuleToCodeWizardAIStep(projectGenerationContext , firstWizardStep );
 
 
-        FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(projectGenerationContext );
+        FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(projectGenerationContext,listProjectGenerationContexts );
         FrontendConditionalWizardStep frontendConditionalWizardStep = new FrontendConditionalWizardStep(projectGenerationContext, frontendConfigurationWizardStep);
         return new ModuleWizardStep[]{
                 firstWizardStep,
                 ruleToCodeWizardStep,
                 ruleToCodeWizardAIStep ,
-                new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep,frontendConfigurationWizardStep) ,
+                new InitializationWizardStep(projectGenerationContext,listProjectGenerationContexts,specificConfigurationWizardStep,frontendConfigurationWizardStep) ,
                 initConditionalWizardStep,
                 sqlRunnerWizardStep,
                 genConfigConditionalWizardStep,

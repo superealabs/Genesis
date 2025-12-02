@@ -19,7 +19,12 @@ public class FrontendConditionalWizardStep extends ModuleWizardStep {
         this.context = context;
         this.actualStep = actualStep;
     }
-
+    @Override
+    public void updateStep() {
+        if (isStepVisible()) {
+            actualStep.updateStep();
+        }
+    }
     @Override
     public JComponent getComponent() {
         if (isStepVisible()) {
