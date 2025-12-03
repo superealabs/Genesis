@@ -3,8 +3,7 @@ package org.labs.genesis.apj.filetype.pages;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.apj.filetype.ApjFile;
-import org.labs.genesis.apj.utilitaire.ApjField;
-import org.labs.utils.StringUtils;
+import org.labs.genesis.apj.component.ApjField;
 
 import java.util.ArrayList;
 import java.util.HashMap;

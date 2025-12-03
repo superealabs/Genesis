@@ -20,7 +20,7 @@ public class PageRechercheWizardStep implements WizardStep {
 
     public PageRechercheWizardStep(ApjGenerationContext context,Project project) {
         this.context = context;
-        this.pageRechercheForm = new PageRechercheForm();
+        this.pageRechercheForm = new PageRechercheForm(context,project);
         this.project = project;
         String[] tables = context.getTables();
         String[] views = context.getVues();
@@ -66,7 +66,7 @@ public class PageRechercheWizardStep implements WizardStep {
         pr.setChamps(pageRechercheForm.getDataFiltre());
         pr.setRecap(pageRechercheForm.getDataRecap());
         pr.setTableau(pageRechercheForm.getDataTableau());
-        pr.makeRecapAndTableau();
+        pr.build();
         try {
             generator.generateApjFile(context);
             String fullName = pr.getFileName() + "." + pr.getExtension();

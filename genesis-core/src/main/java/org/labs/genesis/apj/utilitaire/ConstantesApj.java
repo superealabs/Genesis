@@ -8,6 +8,13 @@ public class ConstantesApj {
     public static final String DATA_PATH = "data_genesis/apj";
 
 
+    public static final String LISTE = "Liste";
+    public static final String LISTE_STRING = "Liste String";
+    public static final String OUI_NON = "Oui/Non";
+    public static final String SIMPLE = "Simple";
+    public static final String INTERVALLE = "Intervalle";
+
+
     public static final int PAGE_RECHERCHE_ID = 1;
     public static final int PAGE_CONSULTE_ID = 2;
     public static final int PAGE_INSERT_ID = 3;

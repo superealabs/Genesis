@@ -3,7 +3,7 @@ package org.labs.genesis.apj.filetype;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
-import org.labs.genesis.apj.utilitaire.ApjField;
+import org.labs.genesis.apj.component.ApjField;
 import org.labs.utils.StringUtils;
 
 import java.util.ArrayList;

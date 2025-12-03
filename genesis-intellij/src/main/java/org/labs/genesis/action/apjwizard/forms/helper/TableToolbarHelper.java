@@ -19,7 +19,7 @@ public class TableToolbarHelper {
     private final Consumer<JBTable> addAction;
     private final DefaultActionGroup addActionGroup;
 
-    public void init() {
+    public void init(int top, int left,int bottom, int right) {
         ToolbarDecorator decorator = ToolbarDecorator.createDecorator(table);
         if (addActionGroup != null) {
             decorator.setAddAction(button -> {
@@ -37,10 +37,14 @@ public class TableToolbarHelper {
         }
 
         JPanel decoPanel = decorator.createPanel();
-        decoPanel.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, JBColor.border()));
+        decoPanel.setBorder(BorderFactory.createMatteBorder(top, left, bottom, right, JBColor.border()));
 
         panel.removeAll();
         panel.setLayout(new BorderLayout());
         panel.add(decoPanel, BorderLayout.CENTER);
+    }
+
+    public void init() {
+        init(0,1,1,1);
     }
 }

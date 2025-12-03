@@ -1,7 +1,8 @@
-package org.labs.genesis.apj.utilitaire;
+package org.labs.genesis.apj.component;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.labs.genesis.apj.utilitaire.TypeUtil;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ public class ApjField {
     private String type;
     private String attLien;
     private String lien;
+    private String details;
     private boolean visible;
     private boolean withLien;
 

@@ -13,7 +13,7 @@ import org.labs.genesis.action.apjwizard.forms.renderer.TableRenderer;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.FormTableModel;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.TableRowTransferHandler;
 import org.labs.genesis.apj.ApjGenerationContext;
-import org.labs.genesis.apj.utilitaire.ApjField;
+import org.labs.genesis.apj.component.ApjField;
 import org.labs.genesis.apj.utilitaire.UtilClassLoader;
 import org.labs.utils.StringUtils;
 

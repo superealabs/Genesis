@@ -18,13 +18,17 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.action.apjwizard.forms.helper.TableToolbarHelper;
 import org.labs.genesis.action.apjwizard.forms.popup.FieldSelectionDialog;
+import org.labs.genesis.action.apjwizard.forms.popup.ListDetailsDialog;
+import org.labs.genesis.action.apjwizard.forms.popup.ListeStringDialog;
 import org.labs.genesis.action.apjwizard.forms.popup.TableTreeChooser;
 import org.labs.genesis.action.apjwizard.forms.renderer.TableRenderer;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.BasicTableModel;
+import org.labs.genesis.action.apjwizard.forms.tablehandler.FilterTableModel;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.TableRowTransferHandler;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.TableauTableModel;
 import org.labs.genesis.apj.ApjGenerationContext;
-import org.labs.genesis.apj.utilitaire.ApjField;
+import org.labs.genesis.apj.component.ApjField;
+import org.labs.genesis.apj.utilitaire.ConstantesApj;
 import org.labs.genesis.apj.utilitaire.UtilClassLoader;
 import org.labs.utils.StringUtils;
 
@@ -64,14 +68,21 @@ public class PageRechercheForm {
     private LinkedHashMap<String, ApjField> availableTabFieldsMap = new LinkedHashMap<>();
     private LinkedHashMap<String, ApjField> availableFilterFieldsMap = new LinkedHashMap<>();
     private LinkedHashMap<String, ApjField> availableBetweenFilterFieldsMap = new LinkedHashMap<>();
+    private LinkedHashMap<String, ApjField> availableListFilterFieldsMap = new LinkedHashMap<>();
+    private LinkedHashMap<String, ApjField> availableListStringFilterFieldsMap = new LinkedHashMap<>();
+    private LinkedHashMap<String, ApjField> availableOuiNonFilterFieldsMap = new LinkedHashMap<>();
     private List<ApjField> apjFields;
     private ApjField[] dataFiltre;
     private ApjField[] dataRecap;
     private ApjField[] dataTableau;
     private String[] listeCrt;
     private String[] listeInt;
+    private final ApjGenerationContext context;
+    private final Project project;
 
-    public PageRechercheForm() {
+    public PageRechercheForm(ApjGenerationContext context, Project project) {
+        this.context = context;
+        this.project = project;
         initializeUI();
         initFiltreTable();
         initRecapTable();
@@ -104,19 +115,37 @@ public class PageRechercheForm {
 
 
     private void initFiltreTable() {
-        filtreTableModel = new BasicTableModel(new Object[]{"Champ", "Libellé"});
+        filtreTableModel = new FilterTableModel(new Object[]{"Type","Champ", "Libellé","Détails"});
         filtreTable = initTable(filtreTable, filtreTableModel, scrollFiltre);
         DefaultActionGroup filtreGroup = new DefaultActionGroup();
-        filtreGroup.add(new AnAction("Simple") {
+        filtreGroup.add(new AnAction(ConstantesApj.SIMPLE) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-                showAddFieldsFilterAndAddRows(filtreTableModel, false);
+                showAddFieldsFilterAndAddRows(ConstantesApj.SIMPLE,filtreTableModel);
             }
         });
-        filtreGroup.add(new AnAction("Intervalle") {
+        filtreGroup.add(new AnAction(ConstantesApj.INTERVALLE) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-                showAddFieldsFilterAndAddRows(filtreTableModel, true);
+                showAddFieldsFilterAndAddRows(ConstantesApj.INTERVALLE,filtreTableModel);
+            }
+        });
+        filtreGroup.add(new AnAction(ConstantesApj.LISTE) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                showAddFieldsFilterAndAddRows(ConstantesApj.LISTE,filtreTableModel);
+            }
+        });
+        filtreGroup.add(new AnAction(ConstantesApj.LISTE_STRING) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                showAddFieldsFilterAndAddRows(ConstantesApj.LISTE_STRING,filtreTableModel);
+            }
+        });
+        filtreGroup.add(new AnAction(ConstantesApj.OUI_NON) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                showAddFieldsFilterAndAddRows(ConstantesApj.OUI_NON,filtreTableModel);
             }
         });
         TableToolbarHelper.builder()
@@ -127,36 +156,74 @@ public class PageRechercheForm {
             .build().init();
     }
 
-    private void showAddFieldsFilterAndAddRows(DefaultTableModel tableModel, boolean isBetween) {
-        LinkedHashMap<String, ApjField> map = isBetween ? availableBetweenFilterFieldsMap : availableFilterFieldsMap;
-        FieldSelectionDialog dialog = new FieldSelectionDialog(mainPanel, new ArrayList<>(map.keySet()));
-        dialog.show();
-        List<String> selectedFields = dialog.getSelected();
+    private void showAddFieldsFilterAndAddRows(String type,DefaultTableModel tableModel) {
+        List<String> selectedFields = getSelectedFields(type);
         if (selectedFields == null || selectedFields.isEmpty()) return;
+
+        String details = "";
+        boolean withDetail = false;
+        if (type.equalsIgnoreCase(ConstantesApj.LISTE)){
+            ListDetailsDialog listeDialog = new ListDetailsDialog(mainPanel, context, project);
+            listeDialog.showDialog();
+            String result = listeDialog.getDetails();
+            if (result == null) return;
+            details = result;
+            withDetail = true;
+        } else if (type.equalsIgnoreCase(ConstantesApj.LISTE_STRING)){
+            ListeStringDialog listeStringDialog = new ListeStringDialog(mainPanel);
+            listeStringDialog.showDialog();
+            String result = listeStringDialog.getDetails();
+            if (result == null) return;
+            details = result;
+            withDetail = true;
+        }
 
         for (String fieldName : selectedFields) {
             availableBetweenFilterFieldsMap.remove(fieldName);
+            availableOuiNonFilterFieldsMap.remove(fieldName);
+            availableListStringFilterFieldsMap.remove(fieldName);
+            availableListFilterFieldsMap.remove(fieldName);
             ApjField field = availableFilterFieldsMap.remove(fieldName);
             if (field == null) continue;
-            if (isBetween) {
-                tableModel.addRow(new Object[]{fieldName+"1", StringUtils.majStart(fieldName)+" min"});
-                tableModel.addRow(new Object[]{fieldName+"2", StringUtils.majStart(fieldName)+" max"});
+            if (type.equalsIgnoreCase(ConstantesApj.INTERVALLE)) {
+                tableModel.addRow(new Object[]{type,fieldName+"1", StringUtils.majStart(fieldName)+" min"});
+                tableModel.addRow(new Object[]{type,fieldName+"2", StringUtils.majStart(fieldName)+" max"});
                 continue;
             }
-            tableModel.addRow(new Object[]{fieldName, StringUtils.majStart(fieldName)});
+            if (withDetail) {
+                tableModel.addRow(new Object[]{type,fieldName, StringUtils.majStart(fieldName),details});
+                continue;
+            }
+            tableModel.addRow(new Object[]{type,fieldName, StringUtils.majStart(fieldName)});
         }
+    }
+
+    private List<String> getSelectedFields(String type) {
+        LinkedHashMap<String, ApjField> map = availableFilterFieldsMap;
+        switch (type){
+            case ConstantesApj.INTERVALLE -> map = availableBetweenFilterFieldsMap;
+            case ConstantesApj.OUI_NON -> map = availableOuiNonFilterFieldsMap;
+            case ConstantesApj.LISTE -> map = availableListFilterFieldsMap;
+            case ConstantesApj.LISTE_STRING -> map = availableListStringFilterFieldsMap;
+        }
+        FieldSelectionDialog dialog = new FieldSelectionDialog(mainPanel, new ArrayList<>(map.keySet()));
+        dialog.show();
+        return dialog.getSelected();
     }
 
     private void removeSelectedFilterRow(JBTable table, DefaultTableModel model) {
         int selectedRow = table.getSelectedRow();
         if (selectedRow < 0) return;
 
-        String fieldName = table.getValueAt(selectedRow, 0).toString();
+        String fieldName = table.getValueAt(selectedRow, 2).toString();
         if ((fieldName.endsWith("1") || fieldName.endsWith("2"))) {
             String baseName = fieldName.substring(0, fieldName.length() - 1);
             if (allFieldsMap.containsKey(baseName)) {
                 availableBetweenFilterFieldsMap.put(baseName, allFieldsMap.get(baseName));
                 availableFilterFieldsMap.put(baseName, allFieldsMap.get(baseName));
+                availableOuiNonFilterFieldsMap.put(baseName, allFieldsMap.get(baseName));
+                availableListFilterFieldsMap.put(baseName, allFieldsMap.get(baseName));
+                availableListStringFilterFieldsMap.put(baseName, allFieldsMap.get(baseName));
                 for (int i = model.getRowCount() - 1; i >= 0; i--) {
                     Object v = model.getValueAt(i, 0);
                     if (v == null) continue;
@@ -172,6 +239,9 @@ public class PageRechercheForm {
         apjField.setNom(fieldName);
         availableFilterFieldsMap.put(fieldName, apjField);
         availableBetweenFilterFieldsMap.put(fieldName, apjField);
+        availableOuiNonFilterFieldsMap.put(fieldName, apjField);
+        availableListFilterFieldsMap.put(fieldName, apjField);
+        availableListStringFilterFieldsMap.put(fieldName, apjField);
         model.removeRow(selectedRow);
     }
 
@@ -269,16 +339,23 @@ public class PageRechercheForm {
         availableBetweenFilterFieldsMap.clear();
         availableRecapFieldsMap.clear();
         availableTabFieldsMap.clear();
+        availableListFilterFieldsMap.clear();
+        availableListStringFilterFieldsMap.clear();
+        availableOuiNonFilterFieldsMap.clear();
 
         for (ApjField field : fields) {
             allFieldsMap.put(field.getNom(), field);
             availableFilterFieldsMap.put(field.getNom(), field);
             availableTabFieldsMap.put(field.getNom(), field);
+            availableListFilterFieldsMap.put(field.getNom(), field);
+            availableListStringFilterFieldsMap.put(field.getNom(), field);
             if (field.isRangeable()) {
                 availableBetweenFilterFieldsMap.put(field.getNom(), field);
             }
             if (field.isSummable()) {
                 availableRecapFieldsMap.put(field.getNom(), field);
+                availableOuiNonFilterFieldsMap.put(field.getNom(), field);
+
             }
         }
     }
@@ -324,11 +401,15 @@ public class PageRechercheForm {
         int rowCount = model.getRowCount();
         ApjField[] fields = new ApjField[rowCount];
         for (int i = 0; i < rowCount; i++) {
-            String nom = String.valueOf(model.getValueAt(i, 0));
-            String libelle = String.valueOf(model.getValueAt(i, 1));
+            String type = String.valueOf(model.getValueAt(i, 0));
+            String nom = String.valueOf(model.getValueAt(i, 1));
+            String libelle = String.valueOf(model.getValueAt(i, 2));
+            String details = String.valueOf(model.getValueAt(i, 3));
             ApjField f = new ApjField();
             f.setNom(nom);
             f.setLibelle(libelle);
+            f.setType(type);
+            f.setDetails(details);
             fields[i] = f;
             String baseName = nom.substring(0, nom.length() - 1);
             if (nom.endsWith("2") && allFieldsMap.containsKey(baseName)) continue;
