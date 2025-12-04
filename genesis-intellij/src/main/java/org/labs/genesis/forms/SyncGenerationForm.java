@@ -5,11 +5,14 @@ import lombok.Setter;
 import org.labs.genesis.config.langage.generator.sync.report.DatabaseReportManager;
 import org.labs.genesis.config.langage.generator.sync.report.TableChangeReport;
 import org.labs.genesis.renderer.TableReportModel;
+import org.labs.genesis.wizards.SynchGenerationWizardStep;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Map;
 
 @Getter
@@ -20,25 +23,29 @@ public class SyncGenerationForm {
     private JTable reportTable;
     private JButton refreshButton;
     private TableReportModel tableModel;
+    private final SynchGenerationWizardStep parentStep;
 
 
-
-    public SyncGenerationForm() {
+    public SyncGenerationForm(SynchGenerationWizardStep synchGenerationWizardStep) {
+        this.parentStep = synchGenerationWizardStep;
         initializeTable();
+        refreshButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                parentStep.refreshData();
+            }
+        });
     }
 
     private void initializeTable() {
-        // Créer le modèle personnalisé
         tableModel = new TableReportModel();
         reportTable.setModel(tableModel);
 
-        // Configuration de l'apparence de la table
         reportTable.setFillsViewportHeight(true);
         reportTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         reportTable.getTableHeader().setReorderingAllowed(false);
         reportTable.setRowHeight(30);
 
-        // Ajuster les largeurs des colonnes
         TableColumnModel columnModel = reportTable.getColumnModel();
         columnModel.getColumn(0).setPreferredWidth(150);  // Table
         columnModel.getColumn(1).setPreferredWidth(120);  // Category
@@ -48,16 +55,11 @@ public class SyncGenerationForm {
     }
 
     public void populateTableReport(DatabaseReportManager reportManager) {
-        // Vider la table existante
         tableModel.clearReports();
-
         if (reportManager == null || reportManager.getTableReports() == null) {
             return;
         }
-
-        // Récupérer tous les rapports et les ajouter au modèle
         Map<String, TableChangeReport> reports = reportManager.getTableReports();
-
         for (TableChangeReport report : reports.values()) {
             tableModel.addReport(report);
         }
@@ -79,7 +81,6 @@ public class SyncGenerationForm {
         return null;
     }
 
-    // Classe interne pour le rendu personnalisé des cellules
     private static class CategoryCellRenderer extends DefaultTableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
@@ -94,18 +95,6 @@ public class SyncGenerationForm {
                     String category = categoryValue.toString();
 
                     switch (category) {
-                        case "ADDITION":
-                            c.setBackground(new Color(220, 255, 220)); // Vert clair
-                            break;
-                        case "REMOVAL":
-                            c.setBackground(new Color(255, 220, 220)); // Rouge clair
-                            break;
-                        case "MODIFICATION":
-                            c.setBackground(new Color(255, 250, 200)); // Jaune clair
-                            break;
-                        case "UNCATEGORISED":
-                            c.setBackground(new Color(240, 240, 240)); // Gris clair
-                            break;
                         default:
                             c.setBackground(Color.WHITE);
                     }

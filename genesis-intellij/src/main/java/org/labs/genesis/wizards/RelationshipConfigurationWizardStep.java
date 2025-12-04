@@ -12,6 +12,7 @@ import org.labs.genesis.forms.RelationshipConfigurationForm;
 import javax.swing.*;
 import java.util.Dictionary;
 import java.util.List;
+import java.util.Objects;
 
 public class RelationshipConfigurationWizardStep extends ModuleWizardStep {
     private final RelationshipConfigurationForm relationshipConfigurationForm;
@@ -43,8 +44,12 @@ public class RelationshipConfigurationWizardStep extends ModuleWizardStep {
         this.relationshipConfigurationForm.populateSelect(relations);
     }
     public void updateTableSelects() {
-        this.relationshipConfigurationForm.populateSelect(this.generationContextManager.getContext().splitTableByRelations());
-        this.relationshipConfigurationForm.setTableData(generationContextManager.getContext().getRelationParameters());
+        updateTableSelects(generationContextManager.getContext());
+    }
+
+    public void updateTableSelects(ProjectGenerationContext context) {
+        this.relationshipConfigurationForm.populateSelect(context.splitTableByRelations());
+        this.relationshipConfigurationForm.setTableData(context.getRelationParameters());
     }
 
     @Override

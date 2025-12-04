@@ -72,8 +72,8 @@ public class TableModificationEvaluation implements IDatabaseEvaluator {
     }
 
     private void onModelUpdateColumn(TableChangeReport tableChangeReport) {
-        tableChangeReport.updateWebApiChangeReport(true, true, false, false);
-        tableChangeReport.updateFrontendChangeReport(true,true, false);
+        tableChangeReport.updateWebApiChangeReport(true, true, true, true);
+        tableChangeReport.updateFrontendChangeReport(true,true, true);
     }
 
     private void onRelationUpdate(TableChangeReport tableChangeReport){

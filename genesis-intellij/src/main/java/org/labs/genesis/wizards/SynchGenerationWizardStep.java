@@ -23,7 +23,7 @@ public class SynchGenerationWizardStep extends ModuleWizardStep {
     private boolean isInitialized = false;
 
     public SynchGenerationWizardStep(GenerationContextManager generationContextManager) {
-        this.syncGenerationForm = new SyncGenerationForm();
+        this.syncGenerationForm = new SyncGenerationForm(this);
         this.generationContextManager = generationContextManager;
     }
 
@@ -95,6 +95,7 @@ public class SynchGenerationWizardStep extends ModuleWizardStep {
             return;
         }
         try {
+            syncGenerator.clearReports();
             syncGenerator.evaluateDatabaseChanges(generationContextManager.getContext());
             if (syncGenerator.getDatabaseReportManager() != null) {
                 syncGenerationForm.populateTableReport(syncGenerator.getDatabaseReportManager());
@@ -110,8 +111,6 @@ public class SynchGenerationWizardStep extends ModuleWizardStep {
 
     public void refreshData() {
         isInitialized = false;
-        if (syncGenerator != null) {
-            initializeData();
-        }
+        initializeData();
     }
 }

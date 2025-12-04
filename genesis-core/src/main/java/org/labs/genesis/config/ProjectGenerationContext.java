@@ -12,6 +12,7 @@ import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
+import org.labs.genesis.exceptions.InvalipRelationParameter;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.utils.StringUtils;
@@ -287,8 +288,17 @@ public class ProjectGenerationContext {
         if (getRelationParameters() == null ){
             return;
         }
+        List<RelationParameter> invalids = new ArrayList<>();
         for (RelationParameter relationParameter : this.getRelationParameters()) {
-            relationParameter.setParameter(this);
+            try {
+                relationParameter.setParameter(this);
+            } catch (InvalipRelationParameter ex){
+                invalids.add(relationParameter);
+            }
+        }
+
+        for (RelationParameter relationParameter : invalids){
+            this.getRelationParameters().remove(relationParameter);
         }
     }
 }

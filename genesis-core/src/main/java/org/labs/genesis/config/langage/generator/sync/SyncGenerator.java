@@ -7,6 +7,7 @@ import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
 import org.labs.genesis.config.langage.generator.indicator.ProgressReporter;
+import org.labs.genesis.config.langage.generator.sync.evaluators.IDatabaseEvaluator;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMetadataProvider;
@@ -60,32 +61,56 @@ public class SyncGenerator extends ProjectGenerator {
         return projectGenerationContext;
     }
 
-    public void evaluateDatabaseChanges(ProjectGenerationContext initialContext) throws Exception {
+    public void evaluateDatabaseChanges(ProjectGenerationContext initialContext, IDatabaseEvaluator[] evaluators) throws Exception {
+        if (this.evaluationContext == null) {
+            initEvaluationContext(initialContext);
+        }
+        evaluateDatabaseChanges(initialContext, this.evaluationContext, new DatabaseEvaluatorsManager(evaluators), databaseReportManager);
+    }
+    public void evaluateDatabaseChanges(ProjectGenerationContext initialContext, ProjectGenerationContext evaluationContext, IDatabaseEvaluator[] evaluators, DatabaseReportManager databaseReportManager) throws Exception {
+        evaluateDatabaseChanges(initialContext, evaluationContext, new DatabaseEvaluatorsManager(evaluators), databaseReportManager);
+    }
+
+    public void initEvaluationContext(ProjectGenerationContext initialContext) throws Exception {
         this.evaluationContext = initialContext.duplicateWithNoTables();
+        clearReports();
         Connection connection = initialContext.getConnection();
         Database database = initialContext.getDatabase();
         Credentials credentials = initialContext.getCredentials();
-        DatabaseEvaluatorsManager evaluator = DatabaseEvaluatorManagerBuilder.build();
         try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)){
             evaluationContext.setConnection(connex);
             evaluationContext.setTables();
             this.evaluationContext.applyTableRelations();
-            this.databaseReportManager.clear();
-            evaluateEntitiesChanges(initialContext, evaluationContext, evaluator);
-            evaluateViewsChanges(initialContext, evaluationContext, evaluator);
         }
         catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void evaluateEntitiesChanges(ProjectGenerationContext initialContext, ProjectGenerationContext evaluationContext, DatabaseEvaluatorsManager evaluator) throws Exception {
+    public void evaluateDatabaseChanges(ProjectGenerationContext initialContext) throws Exception {
+        if (this.evaluationContext == null) {
+            initEvaluationContext(initialContext);
+        }
+        evaluateDatabaseChanges(initialContext, this.evaluationContext, DatabaseEvaluatorManagerBuilder.build(), this.databaseReportManager);
+    }
+
+    public void clearReports() {
+        this.databaseReportManager.clear();
+    }
+
+    public void evaluateDatabaseChanges(ProjectGenerationContext initialContext, ProjectGenerationContext evaluationContext, DatabaseEvaluatorsManager evaluator, DatabaseReportManager databaseReportManager) throws Exception {
+        evaluationContext.setRelationParameters(initialContext.getRelationParameters());
+        evaluateEntitiesChanges(initialContext, evaluationContext, evaluator, databaseReportManager);
+        evaluateViewsChanges(initialContext, evaluationContext, evaluator, databaseReportManager);
+    }
+
+    public void evaluateEntitiesChanges(ProjectGenerationContext initialContext, ProjectGenerationContext evaluationContext, DatabaseEvaluatorsManager evaluator, DatabaseReportManager databaseReportManager) throws Exception {
         List<TableMetadata> initialTables = initialContext.getEntityTables();
         List<TableMetadata> targetTables = evaluationContext.getEntityTables();
         evaluator.evaluate(initialTables, targetTables, databaseReportManager);
     }
 
-    public void evaluateViewsChanges(ProjectGenerationContext initialContext, ProjectGenerationContext evaluationContext, DatabaseEvaluatorsManager evaluator) throws Exception {
+    public void evaluateViewsChanges(ProjectGenerationContext initialContext, ProjectGenerationContext evaluationContext, DatabaseEvaluatorsManager evaluator, DatabaseReportManager databaseReportManager) throws Exception {
         List<TableMetadata> initialViews = initialContext.getViewTables();
         List<TableMetadata> targetTables = evaluationContext.getViewTables();
         evaluator.evaluate(initialViews, targetTables, databaseReportManager);

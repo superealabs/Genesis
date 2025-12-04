@@ -33,7 +33,8 @@ public class SyncProjectLoaderWizardStep extends ModuleWizardStep {
             ProjectGenerationContext loadProjectContext = syncGenerator.loadProjectContext(form.getFolderField().getText());
             loadProjectContext.setGenerationProcess(generationContextManager.getContext().generationProcess);
             generationContextManager.setContext(loadProjectContext);
-            relationshipConfigurationWizardStep.updateTableSelects();
+            syncGenerator.evaluateDatabaseChanges(loadProjectContext);
+            relationshipConfigurationWizardStep.updateTableSelects(syncGenerator.getEvaluationContext());
             synchGenerationWizardStep.setSyncGenerator(syncGenerator);
         } catch (Exception ex) {
             throw new RuntimeException(ex);

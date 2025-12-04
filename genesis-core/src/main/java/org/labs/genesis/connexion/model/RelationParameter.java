@@ -2,6 +2,7 @@ package org.labs.genesis.connexion.model;
 
 import lombok.*;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.exceptions.InvalipRelationParameter;
 
 @Getter
 @Setter
@@ -27,13 +28,13 @@ public class RelationParameter {
         return  false;
     }
 
-    public void setParameter(ProjectGenerationContext context){
+    public void setParameter(ProjectGenerationContext context) throws InvalipRelationParameter{
         TableMetadata parentTableMetadata = context.findTableByName(parentTable, context.getEntityTables());
         TableMetadata childTableMetadata = context.findTableByName(childTable, context.getEntityTables());
         if (parentTableMetadata == null || childTableMetadata == null){
-            return;
+            throw new InvalipRelationParameter("Parent table and child table are not defined");
         }
-        parentTableMetadata.addChild(childTableMetadata, mandatory, hasForm);
-        childTableMetadata.setParentTable(parentTableMetadata);
+            parentTableMetadata.addChild(childTableMetadata, mandatory, hasForm);
+            childTableMetadata.setParentTable(parentTableMetadata);
     }
 }

@@ -22,12 +22,8 @@ public class ChildTableMetadata {
         if (obj == null || getClass() != obj.getClass()) return false;
         boolean same = true;
         ChildTableMetadata other = (ChildTableMetadata) obj;
-
         same = same && Objects.equals(this.table.getTableName(), other.table.getTableName());
-        same = same && Objects.equals(this.mandatory, other.mandatory);
-        same = same && Objects.equals(this.hasForm, other.hasForm);
         same = same && Objects.equals(this.column, other.column);
-
         return  same;
     }
 }

@@ -16,7 +16,7 @@ public class AddedTableEvaluation implements IDatabaseEvaluator {
                 .collect(Collectors.toSet());
         List<TableMetadata> toAddTables = targetTables.stream()
                 .filter(table -> !initialTableNames.contains(table.getTableName()))
-                .collect(Collectors.toList());
+                .toList();
         if (!toAddTables.isEmpty()) {
             for (TableMetadata tableMetadata : toAddTables){
                 TableChangeReport tableReport = report.getTableReport(tableMetadata.getTableName());
