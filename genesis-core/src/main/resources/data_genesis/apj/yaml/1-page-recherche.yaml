@@ -31,19 +31,16 @@ jspBlock : |
       {{#if this.isOuiNon}}
       liste[${this.index}] = new Liste("${this.nom}");
       liste[${this.index}].makeListeOuiNon();
-  
       {{elseIf this.isListeString}}
       String[] aff${this.index} = {${this.col}};
       String[] val${this.index} = {${this.val}};
       liste[${this.index}] = new Liste("test",aff${this.index}, val${this.index});
-  
       {{else}}
       ${this.mapping} liste${this.index} = new ${this.mapping}();
       liste${this.index}.setNomTable("${this.nomTable}");
       liste[${this.index}] = new Liste("${this.nom}",liste${this.index},"${this.col}","${this.val}");
-  
       {{/if}}{{removeLine}}
-      {{/each}}{{removeLine}}{{removeLine}}
+      {{/each}}{{removeLine}}
       pr.getFormu().changerEnChamp(liste);
       {{/if}}{{removeLine}}
   

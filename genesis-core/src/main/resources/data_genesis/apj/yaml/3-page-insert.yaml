@@ -7,6 +7,12 @@ imports : |
   <%@ page import="affichage.PageInsert"%>
   <%@ page import="user.UserEJB" %>
   <%@ page import="${packageMapping}" %>
+  {{#if isWithListe}}{{removeLine}}
+  <%@ page import="affichage.Liste"%>
+  {{#each packageImports}}
+  <%@ page import="${this.package}" %>
+  {{/each}}{{removeLine}}
+  {{/if}}{{removeLine}}
 jspBlock : |
   <% try{ 
       UserEJB u = (user.UserEJB) session.getValue("u");
@@ -20,10 +26,37 @@ jspBlock : |
       pi.setLien((String) session.getValue("lien"));  
       pi.setTitre("${titre}");
   
+      {{#if isWithListe}}{{removeLine}}
+      Liste[] liste = new Liste[${listeSize}];
+      {{#each listes}}
+      {{#if this.isOuiNon}}
+      liste[${this.index}] = new Liste("${this.nom}");
+      liste[${this.index}].makeListeOuiNon();
+      {{elseIf this.isListeString}}
+      String[] aff${this.index} = {${this.col}};
+      String[] val${this.index} = {${this.val}};
+      liste[${this.index}] = new Liste("test",aff${this.index}, val${this.index});
+      {{else}}
+      ${this.mapping} liste${this.index} = new ${this.mapping}();
+      liste${this.index}.setNomTable("${this.nomTable}");
+      liste[${this.index}] = new Liste("${this.nom}",liste${this.index},"${this.col}","${this.val}");
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}{{removeLine}}
+      pi.getFormu().changerEnChamp(liste);
+      {{/if}}{{removeLine}}
+
       {{#each champs}}
       {{#if this.isVisible}}
       pi.getFormu().getChamp("${this.nom}").setLibelle("${this.libelle}");
-      {{else}}
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+      {{#each champs}}
+      {{#if this.isWithAutre}}
+      pi.getFormu().getChamp("${this.nom}").setAutre("${this.autre}");
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+      {{#each champs}}
+      {{#if !this.isVisible}}
       pi.getFormu().getChamp("${this.nom}").setVisible(${this.isVisible});
       {{/if}}{{removeLine}}
       {{/each}}{{removeLine}}

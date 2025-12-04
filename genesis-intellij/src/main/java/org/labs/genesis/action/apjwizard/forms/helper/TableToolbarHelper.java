@@ -18,9 +18,12 @@ public class TableToolbarHelper {
     private final Runnable removeAction;
     private final Consumer<JBTable> addAction;
     private final DefaultActionGroup addActionGroup;
+    private final DefaultActionGroup updateActionGroup;
+    private final Runnable updateAction;
 
     public void init(int top, int left,int bottom, int right) {
         ToolbarDecorator decorator = ToolbarDecorator.createDecorator(table);
+        int index = 0;
         if (addActionGroup != null) {
             decorator.setAddAction(button -> {
                 ActionPopupMenu popup = ActionManager.getInstance()
@@ -28,13 +31,30 @@ public class TableToolbarHelper {
                 Component addButton = decorator.getActionsPanel().getComponent(0);
                 popup.getComponent().show(addButton, 0, addButton.getHeight());
             });
+            index++;
         } else if (addAction != null) {
             decorator.setAddAction(button -> addAction.accept(table));
+            index++;
         }
 
         if (removeAction != null) {
             decorator.setRemoveAction(button -> removeAction.run());
+            index++;
         }
+
+        if (updateActionGroup != null) {
+            int finalIndex = index;
+            decorator.setEditAction(button -> {
+                ActionPopupMenu popup = ActionManager.getInstance()
+                        .createActionPopupMenu("UpdateFieldMenu", updateActionGroup);
+                Component editButton = decorator.getActionsPanel().getComponent(finalIndex);
+                popup.getComponent().show(editButton, 0, editButton.getHeight());
+            });
+        } else if (updateAction != null) {
+            decorator.setEditAction(button -> updateAction.run());
+        }
+
+
 
         JPanel decoPanel = decorator.createPanel();
         decoPanel.setBorder(BorderFactory.createMatteBorder(top, left, bottom, right, JBColor.border()));

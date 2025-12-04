@@ -17,10 +17,6 @@ public class FormTableModel extends DefaultTableModel {
         return column != 0;
     }
 
-    @Override
-    public Class<?> getColumnClass(int columnIndex) {
-        if (columnIndex == 2) return Boolean.class;
-        return String.class;
-    }
+
 
 }

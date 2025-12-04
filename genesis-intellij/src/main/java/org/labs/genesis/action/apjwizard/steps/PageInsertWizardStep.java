@@ -22,7 +22,7 @@ public class PageInsertWizardStep implements WizardStep {
     public PageInsertWizardStep(ApjGenerationContext context, Project project) {
         this.context = context;
         this.project = project;
-        this.pageInsertForm = new PageInsertForm();
+        this.pageInsertForm = new PageInsertForm(context,project);
         String[] tables = context.getTables();
         String[] views = context.getVues();
         pageInsertForm.showClassChooser(project,context);
@@ -65,6 +65,7 @@ public class PageInsertWizardStep implements WizardStep {
         pi.setTitreUpdate(titreUpdate);
         pi.setApres(pi.getFileName());
         pi.setChamps(pageInsertForm.getDataForm());
+        pi.build();
         try {
             generator.generateApjFile(context);
             String fullName = pi.getFileName() + "." + pi.getExtension();

@@ -160,7 +160,7 @@ public class PageRechercheForm {
         List<String> selectedFields = getSelectedFields(type);
         if (selectedFields == null || selectedFields.isEmpty()) return;
 
-        String details = "";
+        String details = null;
         boolean withDetail = false;
         if (type.equalsIgnoreCase(ConstantesApj.LISTE)){
             ListDetailsDialog listeDialog = new ListDetailsDialog(mainPanel, context, project);

@@ -36,15 +36,24 @@ public class PageInsert extends ApjFile {
         map.put("titreUpdate", this.getTitreUpdate());
         map.put("ordre", this.getOrdre());
         map.put("champs", getChampsList());
+        map.put("isWithListe", this.isWithListe());
+        map.put("listeSize", this.getListes().size());
+        map.put("listes", this.getListesList());
+        map.put("packageImports", this.getPackageImports());
         return map;
     }
 
     private List<Map<String, Object>> getChampsList() {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ApjField field : this.getChamps()) {
+            field.checkAutre();
             Map<String, Object> fieldMap = getApjFieldHashMap(field);
             fields.add(fieldMap);
         }
         return fields;
+    }
+
+    public void build(){
+        super.makeListe();
     }
 }

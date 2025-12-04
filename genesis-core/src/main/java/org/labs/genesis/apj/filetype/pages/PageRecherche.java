@@ -2,7 +2,6 @@ package org.labs.genesis.apj.filetype.pages;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.apj.component.Liste;
 import org.labs.genesis.apj.filetype.ApjFile;
 import org.labs.genesis.apj.component.ApjField;
@@ -22,10 +21,7 @@ public class PageRecherche extends ApjFile {
     private String libEnteteAffiche;
     private ApjField[] recap;
     private ApjField[] tableau;
-    private List<Liste> listes = new ArrayList<>();
     private boolean withColSomme = false;
-    private boolean withListe = false;
-    private List<Map<String, String>> packageImports = new ArrayList<>();
 
     public PageRecherche(){
 
@@ -57,28 +53,6 @@ public class PageRecherche extends ApjFile {
         map.put("listes", this.getListesList());
         map.put("packageImports", this.getPackageImports());
         return map;
-    }
-
-    public static @NotNull Map<String, Object> getListeHashMap(Liste liste) {
-        Map<String, Object> listeMap = new HashMap<>();
-        listeMap.put("nom", liste.getNom());
-        listeMap.put("index", liste.getIndex());
-        listeMap.put("val", liste.getVal());
-        listeMap.put("col", liste.getCol());
-        listeMap.put("isListeString", liste.isListeString());
-        listeMap.put("isOuiNon", liste.isOuiNon());
-        listeMap.put("mapping", liste.getMapping());
-        listeMap.put("nomTable", liste.getNomTable());
-        return listeMap;
-    }
-
-    public List<Map<String, Object>> getListesList(){
-        List<Map<String, Object>> listesMaps = new ArrayList<>();
-        for (Liste liste : this.getListes()) {
-            Map<String, Object> listeMap = getListeHashMap(liste);
-            listesMaps.add(listeMap);
-        }
-        return listesMaps;
     }
 
     private List<Map<String, Object>> getChampsList() {
@@ -124,46 +98,6 @@ public class PageRecherche extends ApjFile {
         this.setLibEnteteAffiche(StringUtils.quoteAndJoin(libEnteteAffiche));
     }
 
-    public void makeListe(){
-        this.getListes().clear();
-        int index = 0;
-        List<Map<String, String>> imports = new ArrayList<>();
-        for (ApjField field : this.getChamps()){
-            if (field.getType() == null){
-                continue;
-            }
-            if (field.getType().equalsIgnoreCase(ConstantesApj.OUI_NON)){
-                Liste liste = new Liste();
-                liste.setNom(field.getNom());
-                liste.setIndex(index);
-                liste.setOuiNon(true);
-                index++;
-                this.getListes().add(liste);
-            } else if (field.getType().equalsIgnoreCase(ConstantesApj.LISTE_STRING)){
-                Liste liste = new Liste();
-                liste.setNom(field.getNom());
-                liste.setValColByDetails(field.getDetails());
-                liste.setIndex(index);
-                liste.setListeString(true);
-                index++;
-                this.getListes().add(liste);
-            } else if (field.getType().equalsIgnoreCase(ConstantesApj.LISTE)){
-                Liste liste = new Liste();
-                liste.setNom(field.getNom());
-                liste.buildByDetails(field.getDetails());
-                Map<String, String> item = new HashMap<>();
-                item.put("package", liste.getPackageMapping());
-                imports.add(item);
-                liste.setIndex(index);
-                index++;
-                this.getListes().add(liste);
-            }
-        }
-        if (!this.getListes().isEmpty()) {
-            this.setPackageImports(imports);
-            this.setWithListe(true);
-        }
-    }
 
     public void makeRecapAndTableau(){
         makeEnteteRecap();
@@ -172,7 +106,7 @@ public class PageRecherche extends ApjFile {
 
     public void build(){
         makeRecapAndTableau();
-        makeListe();
+        super.makeListe();
     }
 
 }

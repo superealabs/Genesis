@@ -17,8 +17,10 @@ public class ApjField {
     private String attLien;
     private String lien;
     private String details;
+    private String autre;
     private boolean visible;
     private boolean withLien;
+    private boolean withAutre;
 
     public void setLien(String lien) {
         this.lien = lien;
@@ -30,6 +32,10 @@ public class ApjField {
             this.lien = null;
             this.withLien = false;
         }
+    }
+
+    public void checkAutre() {
+        this.withAutre = this.autre != null && !this.autre.isEmpty() && !(this.autre.equals("null"));
     }
 
     public static List<ApjField> javaFieldsToApjFields(List<Field> fields) {
