@@ -13,7 +13,6 @@ import java.util.Map;
 @Getter
 @Setter
 public class PageInsert extends ApjFile {
-    private String titreUpdate;
 
     public PageInsert(){
 

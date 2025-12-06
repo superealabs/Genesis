@@ -14,7 +14,16 @@ public class InsertTableModel extends DefaultTableModel {
 
     @Override
     public boolean isCellEditable(int row, int column) {
-        return column != 1 && column != 2 && column != 4 && column != 5;
+        if (column == 0) {
+            return true;
+        }
+
+        Boolean visible = (Boolean) getValueAt(row, 0);
+        if (visible != null && !visible) {
+            return false;
+        }
+
+        return column != 1 && column != 4 && column != 5;
     }
 
     @Override

@@ -5,6 +5,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import lombok.Builder;
+import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.icon.SdkIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,9 +22,14 @@ public class TableToolbarHelper {
     private final DefaultActionGroup addActionGroup;
     private final DefaultActionGroup updateActionGroup;
     private final Runnable updateAction;
+    private final String customButtonText;
+    private final Runnable customButtonAction;
 
-    public void init(int top, int left,int bottom, int right) {
+    public void init(int top, int left, int bottom, int right) {
         ToolbarDecorator decorator = ToolbarDecorator.createDecorator(table);
+        decorator.setAddActionName("Ajouter");
+        decorator.setRemoveActionName("Supprimer");
+        decorator.setEditActionName("Modifier");
         int index = 0;
         if (addActionGroup != null) {
             decorator.setAddAction(button -> {
@@ -54,6 +61,21 @@ public class TableToolbarHelper {
             decorator.setEditAction(button -> updateAction.run());
         }
 
+        if (customButtonText != null && customButtonAction != null) {
+            decorator.addExtraAction(new AnAction(customButtonText, "Generate labels using AI", SdkIcons.IA_ICON) {
+                @Override
+                public void actionPerformed(@NotNull AnActionEvent e) {
+                    customButtonAction.run();
+                }
+
+                @Override
+                public void update(@NotNull AnActionEvent e) {
+                    super.update(e);
+                    boolean enabled = table.getSelectedRow() != -1;
+                    e.getPresentation().setEnabled(enabled);
+                }
+            });
+        }
 
 
         JPanel decoPanel = decorator.createPanel();

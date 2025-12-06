@@ -2,13 +2,14 @@ package project;
 
 import org.junit.jupiter.api.Test;
 import org.labs.genesis.apj.ApjGenerationContext;
+import org.labs.genesis.apj.component.ApjField;
 import org.labs.genesis.apj.filetype.pages.PageRecherche;
 import org.labs.genesis.apj.generator.ApjFileGenerator;
 import org.labs.genesis.apj.utilitaire.ConstantesApj;
 import org.labs.genesis.apj.utilitaire.UtilClassLoader;
 import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
+import org.labs.genesis.config.langage.generator.project.LlmApiClient;
 import org.labs.utils.StringUtils;
-
 import java.io.File;
 import java.lang.reflect.Field;
 import java.net.URLClassLoader;
@@ -96,32 +97,24 @@ public class GenesisAPJCoreTest {
 
 
     @Test
-    void testListerTablesEtVues() throws Exception {
-        File socobisJar = new File("/home/antema/Antema/BICI/Antema/APJ/hatana/build-file/socobis_jar/");
-        File libDir = new File("/home/antema/Antema/BICI/Antema/APJ/hatana/build-file/lib/");
+    public void testGenererLibelles() throws Exception {
+        ApjField[] fields = {
+            new ApjField("idhistorique", "String"),
+            new ApjField("heure", "String"),
+            new ApjField("objet", "String"),
+            new ApjField("action", "double"),
+            new ApjField("idutilisateur", "String"),
+            new ApjField("refobjet", "String"),
+            new ApjField("depense", "String"),
+            new ApjField("datehistorique", "Date")
+        };
+        String mapping = "produits.Historique";
+        LlmApiClient llmClient = new LlmApiClient();
+        String[] libelles = llmClient.askForLabel(mapping, fields);
 
-        try (Connection conn = UtilDBDynamique.GetConn(socobisJar, libDir)) {
-            System.out.println("Connexion réussie via UtilDBDynamique !");
-
-            String[] tables = UtilDBDynamique.getTablesOrViews(conn, false);
-            String[] vues = UtilDBDynamique.getTablesOrViews(conn, true);
-
-            System.out.println("=======================================");
-            System.out.println("Tables accessibles :");
-            for (String name : tables) {
-                System.out.println(name);
-            }
-
-            System.out.println("=======================================");
-            System.out.println("Vues accessibles :");
-            for (String name : vues) {
-                System.out.println(name);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        for (String libelle : libelles) {
+            System.out.println(libelle);
         }
     }
-
-
 
 }

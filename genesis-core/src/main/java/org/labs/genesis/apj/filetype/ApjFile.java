@@ -26,6 +26,7 @@ public abstract class ApjFile implements ApjMetadataProvider{
     private String html;
     private String basPage;
     private String titre;
+    private String titreUpdate;
     private String packageMapping;
     private String mapping;
     private String nomTable;

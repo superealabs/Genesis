@@ -22,6 +22,15 @@ public class ApjField {
     private boolean withLien;
     private boolean withAutre;
 
+    public ApjField() {
+
+    }
+
+    public ApjField(String nom, String type) {
+        this.nom = nom;
+        this.type = type;
+    }
+
     public void setLien(String lien) {
         this.lien = lien;
         this.withLien = lien != null && !lien.isEmpty() && !(lien.equals("null"));
