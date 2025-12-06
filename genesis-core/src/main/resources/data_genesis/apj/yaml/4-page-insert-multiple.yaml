@@ -3,5 +3,107 @@ name : "PageInsertMultiple"
 template : "page"
 extension : "jsp"
 imports : |
+  <%@ page pageEncoding="UTF-8" contentType="text/html; charset=UTF-8" %>
   <%@ page import="affichage.PageInsertMultiple"%>
+  <%@ page import="user.UserEJB" %>
   <%@ page import="${packageMapping}" %>
+  <%@ page import="${packageMappingFille}" %>
+  {{#if isWithListe}}{{removeLine}}
+  <%@ page import="affichage.Liste"%>
+  {{#each packageImports}}
+  <%@ page import="${this.package}" %>
+  {{/each}}{{removeLine}}
+  {{/if}}{{removeLine}}
+jspBlock : |
+  <% try{ 
+      UserEJB u = (user.UserEJB) session.getValue("u");
+      String classeMere = "${packageMapping}";
+      String classeFille = "${packageMappingFille}";
+      String nomTableFille = "${nomTableFille}";
+      String colonneMere = "${colonneMere}";
+      String apres = "${apres}";
+  
+      ${mapping} mere = new ${mapping}();
+      mere.setNomTable("${nomTable}");
+      ${mappingFille} fille = new ${mappingFille}();
+      fille.setNomTable("${nomTableFille}");
+      int taille = 10;
+      PageInsertMultiple pi = new PageInsertMultiple(mere, fille, request, taille, u);
+      pi.setLien((String) session.getValue("lien"));  
+      pi.setTitre("${titre}");
+  
+      {{#if isWithListe}}{{removeLine}}
+      Liste[] liste = new Liste[${listeSize}];
+      {{#each listes}}
+      {{#if this.isOuiNon}}
+      liste[${this.index}] = new Liste("${this.nom}");
+      liste[${this.index}].makeListeOuiNon();
+      {{elseIf this.isListeString}}
+      String[] aff${this.index} = {${this.col}};
+      String[] val${this.index} = {${this.val}};
+      liste[${this.index}] = new Liste("test",aff${this.index}, val${this.index});
+      {{else}}
+      ${this.mapping} liste${this.index} = new ${this.mapping}();
+      liste${this.index}.setNomTable("${this.nomTable}");
+      liste[${this.index}] = new Liste("${this.nom}",liste${this.index},"${this.col}","${this.val}");
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}{{removeLine}}
+      pi.getFormu().changerEnChamp(liste);
+      {{/if}}{{removeLine}}
+
+      {{#each champs}}
+      {{#if this.isVisible}}
+      pi.getFormu().getChamp("${this.nom}").setLibelle("${this.libelle}");
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+      {{#each champs}}
+      {{#if this.isWithAutre}}
+      pi.getFormu().getChamp("${this.nom}").setAutre("${this.autre}");
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+      {{#each champs}}
+      {{#if !this.isVisible}}
+      pi.getFormu().getChamp("${this.nom}").setVisible(${this.isVisible});
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+  
+      // Data Fille
+  
+      String[] ordre = {${ordre}};
+      pi.getFormu().setOrdre(ordre);
+  
+      String acte = request.getParameter("acte");
+      if(acte != null && acte.equalsIgnoreCase("update")){
+          pi.setTitre("${titreUpdate}");
+      }
+
+      pi.preparerDataFormu();
+      pi.getFormu().makeHtmlInsertTabIndex();
+      pi.getFormufle().makeHtmlInsertTableauIndex();
+  %>
+
+html : |
+  <div class="content-wrapper">
+      <h1><%=pi.getTitre()%></h1>
+      <form id="formId" class='container' action="<%=pi.getLien()%>?but=apresMultiple.jsp" method="post" >
+          <%
+              out.println(pi.getFormu().getHtmlInsert());
+              out.println(pi.getFormufle().getHtmlTableauInsert());
+          %>
+          <input name="acte" type="hidden" id="nature" value="insert">
+          <input name="bute" type="hidden" id="bute" value="<%=apres%>">
+          <input name="classe" type="hidden" id="classe" value="<%=classeMere%>">
+          <input name="classefille" type="hidden" id="classefille" value="<%=classeFille%>">
+          <input name="nomtable" type="hidden" id="nomtable" value=<%=nomTableFille%>>
+          <input name="nombreLigne" type="hidden" id="nombreLigne" value="<%=taille%>">
+          <input name="colonneMere" type="hidden" id="colonneMere" value="<%=colonneMere%>">
+      </form>
+  </div>
+basPage : |
+  <% } catch (Exception e) {
+    e.printStackTrace();
+  %>
+  <script language="JavaScript"> alert('<%=e.getMessage()%>');
+      history.back();
+  </script>
+  <% }%>

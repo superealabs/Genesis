@@ -75,7 +75,7 @@ jspBlock : |
 
 html : |
   <div class="content-wrapper">
-      <h1> <%=pi.getTitre()%></h1>
+      <h1><%=pi.getTitre()%></h1>
       <form action="<%=pi.getLien()%>?but=apresTarif.jsp" method="post" name="<%=nomTable%>" id="<%=nomTable%>">
           <%
               out.println(pi.getFormu().getHtmlInsert());

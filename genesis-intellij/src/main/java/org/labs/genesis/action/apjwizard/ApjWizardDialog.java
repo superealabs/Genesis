@@ -62,6 +62,7 @@ public class ApjWizardDialog extends DialogWrapper {
                 case ConstantesApj.PAGE_RECHERCHE_ID -> new PageRechercheWizardStep(context,project);
                 case ConstantesApj.PAGE_INSERT_ID -> new PageInsertWizardStep(context,project);
                 case ConstantesApj.PAGE_CONSULTE_ID -> new PageConsulteWizardStep(context,project);
+                case ConstantesApj.PAGE_INSERT_MULTIPLE_ID -> new PageInsertMultipleWizardStep(context,project);
                 default -> null;
             };
 
