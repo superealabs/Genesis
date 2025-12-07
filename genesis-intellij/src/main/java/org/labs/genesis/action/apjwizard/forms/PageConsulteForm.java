@@ -10,11 +10,12 @@ import lombok.Setter;
 import org.labs.genesis.action.apjwizard.forms.helper.TableToolbarHelper;
 import org.labs.genesis.action.apjwizard.forms.popup.TableTreeChooser;
 import org.labs.genesis.action.apjwizard.forms.renderer.TableRenderer;
-import org.labs.genesis.action.apjwizard.forms.tablehandler.FormTableModel;
+import org.labs.genesis.action.apjwizard.forms.tablehandler.ConsulteTableModel;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.TableRowTransferHandler;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.component.ApjField;
 import org.labs.genesis.apj.utilitaire.UtilClassLoader;
+import org.labs.genesis.config.langage.generator.project.LlmApiClient;
 import org.labs.utils.StringUtils;
 
 import javax.swing.*;
@@ -45,10 +46,8 @@ public class PageConsulteForm {
     private JButton chooseTableButton;
     private JTextField titreField;
     private JCheckBox withOngletCheckBox;
-    private JTextField pageActuelField;
     private JTextField pageRetourField;
     private JTextField pageModifField;
-    private JLabel pageActuelLabel;
     private JBTable formTable;
     private DefaultTableModel formTableModel;
     private ApjField[] dataForm;
@@ -68,21 +67,25 @@ public class PageConsulteForm {
         chooseClassButton.setFocusPainted(true);
         chooseClassButton.setBackground(mappingField.getBackground());
         nomTableField.setEditable(false);
-        withOngletCheckBox.addItemListener(e -> {
-            boolean selected = withOngletCheckBox.isSelected();
-            pageActuelField.setEnabled(selected);
-            pageActuelLabel.setEnabled(selected);
-        });
-        pageActuelField.setEnabled(false);
-        pageActuelLabel.setEnabled(false);
+    }
+
+    private void fixSizeColumn(JBTable table,int row,int size) {
+        table.getColumnModel().getColumn(row).setPreferredWidth(size);
+        table.getColumnModel().getColumn(row).setMinWidth(size);
+        table.getColumnModel().getColumn(row).setMaxWidth(size);
     }
 
     private void initFormTable() {
-        formTableModel = new FormTableModel(new Object[]{"Champ", "Libellé","Visible","Lien"});
+        formTableModel = new ConsulteTableModel(new Object[]{"Visible","Champ", "Libellé","Lien"});
         formTable = new JBTable(formTableModel);
+        formTable.getEmptyText().setText("Aucune ligne à afficher");
         formTable.setDefaultRenderer(Object.class, new TableRenderer());
         formTable.setDragEnabled(true);
         formTable.setDropMode(DropMode.INSERT_ROWS);
+        formTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        fixSizeColumn(formTable,0,30);
+        fixSizeColumn(formTable,1,130);
+        fixSizeColumn(formTable,2,160);
         formTable.setTransferHandler(new TableRowTransferHandler(formTable));
         scrollFiltre.setViewportView(formTable);
         scrollFiltre.setBorder(BorderFactory.createEmptyBorder());
@@ -91,7 +94,30 @@ public class PageConsulteForm {
         TableToolbarHelper.builder()
             .table(formTable)
             .panel(filtrePanel)
+            .customButtonText("Générer les libellés via l'IA")
+            .customButtonAction(this::askAI)
             .build().init();
+    }
+
+    private void askAI() {
+        int[] selectedRows = formTable.getSelectedRows();
+        ApjField[] fields = new ApjField[selectedRows.length];
+        for (int i = 0; i < selectedRows.length; i++) {
+            String nom = String.valueOf(formTableModel.getValueAt(selectedRows[i], 1));
+            fields[i] = new ApjField();
+            fields[i].setNom(nom);
+        }
+        String mapping = this.getMappingField().getText();
+        LlmApiClient llmClient = new LlmApiClient();
+        String[] libelles = new String[selectedRows.length];
+        try {
+            libelles = llmClient.askForLabel(mapping, fields);
+        } catch (Exception ignored) {
+
+        }
+        for (int i = 0; i < libelles.length; i++) {
+            formTableModel.setValueAt(libelles[i], selectedRows[i], 2);
+        }
     }
 
     public void showClassChooser(Project project, ApjGenerationContext context) {
@@ -123,7 +149,7 @@ public class PageConsulteForm {
         removeAllRows();
         for (ApjField field : fields) {
             String fieldName = field.getNom();
-            formTableModel.addRow(new Object[]{fieldName, StringUtils.majStart(fieldName),Boolean.TRUE});
+            formTableModel.addRow(new Object[]{Boolean.TRUE,fieldName, StringUtils.majStart(fieldName)});
         }
     }
 
@@ -144,9 +170,9 @@ public class PageConsulteForm {
         int rowCount = model.getRowCount();
         ApjField[] fields = new ApjField[rowCount];
         for (int i = 0; i < rowCount; i++) {
-            String nom = String.valueOf(model.getValueAt(i, 0));
-            String libelle = String.valueOf(model.getValueAt(i, 1));
-            boolean visible = (Boolean) model.getValueAt(i, 2);
+            String nom = String.valueOf(model.getValueAt(i, 1));
+            String libelle = String.valueOf(model.getValueAt(i, 2));
+            boolean visible = (Boolean) model.getValueAt(i, 0);
             String lien = String.valueOf(model.getValueAt(i, 3));
             ApjField f = new ApjField();
             f.setNom(nom);

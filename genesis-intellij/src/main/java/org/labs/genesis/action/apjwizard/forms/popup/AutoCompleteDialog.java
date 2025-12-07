@@ -121,6 +121,7 @@ public class AutoCompleteDialog extends JDialog{
         tableModel = new DefaultTableModel(new Object[]{"Champ Retour","Champ Retour Mapping"},0);
         tableValues = initTable(tableValues, tableModel, scroll);
         tableValues.setModel(tableModel);
+        tableValues.getEmptyText().setText("Aucune ligne à afficher");
         String[] champRetourOptions = {"id", "val", "desce"};
         String[] mappingOptions = {"id", "val", "desce"};
         tableValues.getColumnModel().getColumn(0)

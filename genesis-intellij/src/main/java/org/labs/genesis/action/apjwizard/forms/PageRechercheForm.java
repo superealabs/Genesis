@@ -30,6 +30,7 @@ import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.component.ApjField;
 import org.labs.genesis.apj.utilitaire.ConstantesApj;
 import org.labs.genesis.apj.utilitaire.UtilClassLoader;
+import org.labs.genesis.config.langage.generator.project.LlmApiClient;
 import org.labs.utils.StringUtils;
 
 @Getter
@@ -113,46 +114,44 @@ public class PageRechercheForm {
         return table;
     }
 
+    private void fixSizeColumn(JBTable table,int row,int size) {
+        table.getColumnModel().getColumn(row).setPreferredWidth(size);
+        table.getColumnModel().getColumn(row).setMinWidth(size);
+        table.getColumnModel().getColumn(row).setMaxWidth(size);
+    }
+
+    private void addUpdateGroup(DefaultActionGroup group, String name,DefaultTableModel tableModel) {
+        group.add(new AnAction(name) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                showAddFieldsFilterAndAddRows(name,tableModel);
+            }
+        });
+    }
 
     private void initFiltreTable() {
-        filtreTableModel = new FilterTableModel(new Object[]{"Type","Champ", "Libellé","Détails"});
+        filtreTableModel = new FilterTableModel(new Object[]{"Champ", "Libellé", "Type","Détails"});
         filtreTable = initTable(filtreTable, filtreTableModel, scrollFiltre);
+        filtreTable.getEmptyText().setText("Aucune ligne à afficher");
+        filtreTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        fixSizeColumn(filtreTable,0,130);
+        fixSizeColumn(filtreTable,1,140);
+        fixSizeColumn(filtreTable,2,100);
+
         DefaultActionGroup filtreGroup = new DefaultActionGroup();
-        filtreGroup.add(new AnAction(ConstantesApj.SIMPLE) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                showAddFieldsFilterAndAddRows(ConstantesApj.SIMPLE,filtreTableModel);
-            }
-        });
-        filtreGroup.add(new AnAction(ConstantesApj.INTERVALLE) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                showAddFieldsFilterAndAddRows(ConstantesApj.INTERVALLE,filtreTableModel);
-            }
-        });
-        filtreGroup.add(new AnAction(ConstantesApj.LISTE) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                showAddFieldsFilterAndAddRows(ConstantesApj.LISTE,filtreTableModel);
-            }
-        });
-        filtreGroup.add(new AnAction(ConstantesApj.LISTE_STRING) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                showAddFieldsFilterAndAddRows(ConstantesApj.LISTE_STRING,filtreTableModel);
-            }
-        });
-        filtreGroup.add(new AnAction(ConstantesApj.OUI_NON) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                showAddFieldsFilterAndAddRows(ConstantesApj.OUI_NON,filtreTableModel);
-            }
-        });
+        addUpdateGroup(filtreGroup,ConstantesApj.SIMPLE,filtreTableModel);
+        addUpdateGroup(filtreGroup,ConstantesApj.INTERVALLE,filtreTableModel);
+        addUpdateGroup(filtreGroup,ConstantesApj.LISTE,filtreTableModel);
+        addUpdateGroup(filtreGroup,ConstantesApj.LISTE_STRING,filtreTableModel);
+        addUpdateGroup(filtreGroup,ConstantesApj.OUI_NON,filtreTableModel);
+
         TableToolbarHelper.builder()
             .table(filtreTable)
             .panel(filtrePanel)
             .addActionGroup(filtreGroup)
             .removeAction(() -> removeSelectedFilterRow(filtreTable, filtreTableModel))
+            .customButtonText("Générer les libellés via l'IA")
+            .customButtonAction(() -> askAI(filtreTableModel, filtreTable))
             .build().init();
     }
 
@@ -186,15 +185,15 @@ public class PageRechercheForm {
             ApjField field = availableFilterFieldsMap.remove(fieldName);
             if (field == null) continue;
             if (type.equalsIgnoreCase(ConstantesApj.INTERVALLE)) {
-                tableModel.addRow(new Object[]{type,fieldName+"1", StringUtils.majStart(fieldName)+" min"});
-                tableModel.addRow(new Object[]{type,fieldName+"2", StringUtils.majStart(fieldName)+" max"});
+                tableModel.addRow(new Object[]{fieldName+"1", StringUtils.majStart(fieldName)+" min",type});
+                tableModel.addRow(new Object[]{fieldName+"2", StringUtils.majStart(fieldName)+" max",type});
                 continue;
             }
             if (withDetail) {
-                tableModel.addRow(new Object[]{type,fieldName, StringUtils.majStart(fieldName),details});
+                tableModel.addRow(new Object[]{fieldName, StringUtils.majStart(fieldName),details,type});
                 continue;
             }
-            tableModel.addRow(new Object[]{type,fieldName, StringUtils.majStart(fieldName)});
+            tableModel.addRow(new Object[]{fieldName, StringUtils.majStart(fieldName),type});
         }
     }
 
@@ -249,12 +248,38 @@ public class PageRechercheForm {
     private void initRecapTable() {
         recapTableModel = new BasicTableModel(new Object[]{"Colonne", "Libellé"});
         recapTable = initTable(recapTable, recapTableModel, scrollRecap);
+        recapTable.getEmptyText().setText("Aucune ligne à afficher");
+        recapTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        fixSizeColumn(recapTable,0,170);
         TableToolbarHelper.builder()
             .table(recapTable)
             .panel(recapitulationPanel)
             .addAction((t) -> showAddFieldsRecapAndAddRows(recapTableModel))
             .removeAction(() -> removeSelectedRow(recapTable, recapTableModel, availableRecapFieldsMap))
+            .customButtonText("Générer les libellés via l'IA")
+            .customButtonAction(() -> askAI(recapTableModel, recapTable))
             .build().init();
+    }
+
+    private void askAI(DefaultTableModel model, JBTable table) {
+        int[] selectedRows = table.getSelectedRows();
+        ApjField[] fields = new ApjField[selectedRows.length];
+        for (int i = 0; i < selectedRows.length; i++) {
+            String nom = String.valueOf(model.getValueAt(selectedRows[i], 0));
+            fields[i] = new ApjField();
+            fields[i].setNom(nom);
+        }
+        String mapping = this.getMappingField().getText();
+        LlmApiClient llmClient = new LlmApiClient();
+        String[] libelles = new String[selectedRows.length];
+        try {
+            libelles = llmClient.askForLabel(mapping, fields);
+        } catch (Exception ignored) {
+
+        }
+        for (int i = 0; i < libelles.length; i++) {
+            model.setValueAt(libelles[i], selectedRows[i], 1);
+        }
     }
 
     private void showAddFieldsRecapAndAddRows(DefaultTableModel tableModel) {
@@ -273,11 +298,18 @@ public class PageRechercheForm {
     private void initTableauTable() {
         tableauTableModel = new TableauTableModel(new Object[]{"Colonne", "Libellé", "Lien", "AttLien"});
         tableauTable = initTable(tableauTable, tableauTableModel, scrollTableau);
+        tableauTable.getEmptyText().setText("Aucune ligne à afficher");
+        tableauTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        fixSizeColumn(tableauTable,0,130);
+        fixSizeColumn(tableauTable,1,140);
+        fixSizeColumn(tableauTable,2,150);
         TableToolbarHelper.builder()
             .table(tableauTable)
             .panel(tableauPanel)
             .addAction((t) -> showAddFieldsTabAndAddRows(tableauTableModel))
             .removeAction(() -> removeSelectedRow(tableauTable, tableauTableModel, availableTabFieldsMap))
+            .customButtonText("Générer les libellés via l'IA")
+            .customButtonAction(() -> askAI(tableauTableModel, tableauTable))
             .build().init();
     }
 
@@ -401,9 +433,9 @@ public class PageRechercheForm {
         int rowCount = model.getRowCount();
         ApjField[] fields = new ApjField[rowCount];
         for (int i = 0; i < rowCount; i++) {
-            String type = String.valueOf(model.getValueAt(i, 0));
-            String nom = String.valueOf(model.getValueAt(i, 1));
-            String libelle = String.valueOf(model.getValueAt(i, 2));
+            String type = String.valueOf(model.getValueAt(i, 2));
+            String nom = String.valueOf(model.getValueAt(i, 0));
+            String libelle = String.valueOf(model.getValueAt(i, 1));
             String details = String.valueOf(model.getValueAt(i, 3));
             ApjField f = new ApjField();
             f.setNom(nom);

@@ -14,7 +14,7 @@ public class FilterTableModel extends DefaultTableModel {
 
     @Override
     public boolean isCellEditable(int row, int column) {
-        return column != 0 && column != 1 && column != 3;
+        return column != 0 && column != 2 && column != 3;
     }
 
 }

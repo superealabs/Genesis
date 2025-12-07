@@ -23,7 +23,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Nom:"/>
+              <text value="Nom du fichier :"/>
             </properties>
           </component>
           <component id="ca00c" class="javax.swing.JLabel">
@@ -31,7 +31,7 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Mapping mère:"/>
+              <text value="Mapping Java Mère:"/>
             </properties>
           </component>
           <component id="4a60b" class="javax.swing.JTextField" binding="nomField">
@@ -56,10 +56,11 @@
               <component id="7806e" class="javax.swing.JButton" binding="chooseClassButton">
                 <constraints border-constraint="East"/>
                 <properties>
+                  <icon value="icons/java.png"/>
                   <maximumSize width="30" height="30"/>
                   <minimumSize width="30" height="30"/>
                   <preferredSize width="30" height="30"/>
-                  <text value="..."/>
+                  <text value=""/>
                 </properties>
               </component>
             </children>
@@ -77,7 +78,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Titre:"/>
+              <text value="Titre :"/>
             </properties>
           </component>
           <component id="f5c45" class="javax.swing.JTextField" binding="titreUpdateField">
@@ -93,7 +94,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Titre update:"/>
+              <text value="Titre pour la modification :"/>
             </properties>
           </component>
           <component id="88514" class="javax.swing.JTextField" binding="colonneMereField">
@@ -109,7 +110,7 @@
               <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Colonne mère"/>
+              <text value="Liaison :"/>
             </properties>
           </component>
           <component id="8966a" class="javax.swing.JLabel" binding="nomTableLabel">
@@ -117,7 +118,7 @@
               <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="NomTable mère:"/>
+              <text value="Nom Table Fille:"/>
             </properties>
           </component>
           <grid id="d5c14" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -130,10 +131,11 @@
               <component id="e8caf" class="javax.swing.JButton" binding="chooseTableButton">
                 <constraints border-constraint="East"/>
                 <properties>
+                  <icon value="icons/table.png"/>
                   <maximumSize width="30" height="30"/>
                   <minimumSize width="30" height="30"/>
                   <preferredSize width="30" height="30"/>
-                  <text value="..."/>
+                  <text value=""/>
                 </properties>
               </component>
               <component id="482bb" class="javax.swing.JTextField" binding="nomTableField">
@@ -156,10 +158,11 @@
               <component id="e8d06" class="javax.swing.JButton" binding="chooseClassFilleButton">
                 <constraints border-constraint="East"/>
                 <properties>
+                  <icon value="icons/java.png"/>
                   <maximumSize width="30" height="30"/>
                   <minimumSize width="30" height="30"/>
                   <preferredSize width="30" height="30"/>
-                  <text value="..."/>
+                  <text value=""/>
                 </properties>
               </component>
             </children>
@@ -169,7 +172,7 @@
               <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Mapping fille:"/>
+              <text value="Mapping Java Fille :"/>
             </properties>
           </component>
           <grid id="d0aa4" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -182,10 +185,11 @@
               <component id="8c342" class="javax.swing.JButton" binding="chooseTableFilleButton">
                 <constraints border-constraint="East"/>
                 <properties>
+                  <icon value="icons/table.png"/>
                   <maximumSize width="30" height="30"/>
                   <minimumSize width="30" height="30"/>
                   <preferredSize width="30" height="30"/>
-                  <text value="..."/>
+                  <text value=""/>
                 </properties>
               </component>
               <component id="87a89" class="javax.swing.JTextField" binding="nomTableFilleField">
@@ -199,7 +203,7 @@
               <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="NomTable fille:"/>
+              <text value="Nom Table Fille:"/>
             </properties>
           </component>
         </children>
@@ -230,6 +234,21 @@
                     <border type="none"/>
                     <children>
                       <scrollpane id="b0dfc" binding="scrollFiltre">
+                        <constraints border-constraint="Center"/>
+                        <properties/>
+                        <border type="none"/>
+                        <children/>
+                      </scrollpane>
+                    </children>
+                  </grid>
+                  <grid id="7fd" binding="fillePanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                    <constraints>
+                      <tabbedpane title="Formulaire Fille"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <scrollpane id="76841" binding="scrollFille">
                         <constraints border-constraint="Center"/>
                         <properties/>
                         <border type="none"/>

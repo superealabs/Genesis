@@ -55,7 +55,6 @@ public class PageConsulteWizardStep implements WizardStep {
         String nomTable = pageConsulteForm.getNomTableField().getText();
         String titre = pageConsulteForm.getTitreField().getText();
         String pageApresDelete = pageConsulteForm.getPageApresDelete().getText();
-        String pageActuel = pageConsulteForm.getPageActuelField().getText();
         String pageModif = pageConsulteForm.getPageModifField().getText();
         String pageRetour = pageConsulteForm.getPageRetourField().getText();
         boolean withOnglet = pageConsulteForm.getWithOngletCheckBox().isSelected();
@@ -65,7 +64,7 @@ public class PageConsulteWizardStep implements WizardStep {
         pc.setMapping(mapping);
         pc.setNomTable(nomTable);
         pc.setTitre(titre);
-        pc.setPageActuel(pageActuel);
+        pc.setPageActuel(pc.getFileName());
         pc.setPageModif(pageModif);
         pc.setPageRetour(pageRetour);
         pc.setPageApresDelete(pageApresDelete);
@@ -80,10 +79,10 @@ public class PageConsulteWizardStep implements WizardStep {
             if (vf != null) {
                 FileEditorManager.getInstance(this.project).openFile(vf, true);
             } else {
-                throw new ConfigurationException("File not found: " + filePath);
+                throw new ConfigurationException("Fichier introuvable : " + filePath);
             }
         } catch (Exception e) {
-            throw new ConfigurationException("Generation failed : " + e.getMessage());
+            throw new ConfigurationException("Échec de la génération : " + e.getMessage());
         }
     }
 }

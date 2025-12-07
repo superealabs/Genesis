@@ -50,9 +50,9 @@ public class PropertiesForm {
     }
 
     public void setupFolderChoosers(Project project) {
-        setupFolderChooser(project,libDir, "Select Lib Directory", "Choose the lib directory for your project");
-        setupFolderChooser(project,jarDir, "Select Project JAR Directory", "Choose project JARs");
-        setupFolderChooser(project,location, "Select Project Location", "Choose location for your file");
+        setupFolderChooser(project, libDir, "Sélectionner le dossier lib", "Choisissez le dossier lib pour votre projet");
+        setupFolderChooser(project, jarDir, "Sélectionner le dossier jar du projet", "Choisissez le dossier jar du projet");
+        setupFolderChooser(project, location, "Sélectionner l’emplacement du projet", "Choisissez l’emplacement pour votre fichier");
     }
 
     private void setupFolderChooser(Project project,TextFieldWithBrowseButton field, String title, String description) {
@@ -68,19 +68,19 @@ public class PropertiesForm {
             String libPath = libDir.getText();
 
             try {
-                ProgressUtils.runWithProgress(project, "Testing Database Connection...", indicator -> {
+                ProgressUtils.runWithProgress(project, "Test de la connexion à la base de données…", indicator -> {
                     try (Connection conn = UtilDBDynamique.GetConn(jarPath, libPath)) {
-                        ProgressUtils.updateProgress(indicator, "Connection successful", 1.0);
+                        ProgressUtils.updateProgress(indicator, "Connexion réussie", 1.0);
                     } catch (Exception e) {
                         throw new ConfigurationException(e.getMessage());
                     }
                 });
-                Messages.showInfoMessage(mainPanel, "Connection successful!", "Success");
-                connectionStatusLabel.setText("<html>Connection successful!</html>");
+                Messages.showInfoMessage(mainPanel, "Connexion réussie!", "Succès");
+                connectionStatusLabel.setText("<html>Connexion réussie!</html>");
                 connectionStatusLabel.setForeground(JBColor.GREEN);
             } catch (Exception ex) {
-                Messages.showErrorDialog(mainPanel, "Connection failed:\n" + ex.getMessage(), "Error");
-                connectionStatusLabel.setText("<html>Connection failed:<br>" + ex.getMessage() + "</html>");
+                Messages.showErrorDialog(mainPanel, "Échec de la connexion :\n" + ex.getMessage(), "Erreur");
+                connectionStatusLabel.setText("<html>Échec de la connexion :<br>" + ex.getMessage() + "</html>");
                 connectionStatusLabel.setForeground(JBColor.RED);
             }
         }, null);

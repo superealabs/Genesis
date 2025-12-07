@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.action.apjwizard.forms.helper.TableToolbarHelper;
+import org.labs.genesis.action.apjwizard.forms.popup.AutoCompleteDialog;
 import org.labs.genesis.action.apjwizard.forms.popup.ListDetailsDialog;
 import org.labs.genesis.action.apjwizard.forms.popup.ListeStringDialog;
 import org.labs.genesis.action.apjwizard.forms.popup.TableTreeChooser;
@@ -22,6 +23,7 @@ import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.component.ApjField;
 import org.labs.genesis.apj.utilitaire.ConstantesApj;
 import org.labs.genesis.apj.utilitaire.UtilClassLoader;
+import org.labs.genesis.config.langage.generator.project.LlmApiClient;
 import org.labs.utils.StringUtils;
 
 import javax.swing.*;
@@ -56,8 +58,12 @@ public class PageInsertMultipleForm {
     private JTextField mappingFilleField;
     private JButton chooseClassFilleButton;
     private JButton chooseTableFilleButton;
+    private JScrollPane scrollFille;
+    private JPanel fillePanel;
     private JBTable formTable;
+    private JBTable formFilleTable;
     private DefaultTableModel formTableModel;
+    private DefaultTableModel formFilleTableModel;
     private ApjField[] dataForm;
     private final ApjGenerationContext context;
     private final Project project;
@@ -67,6 +73,7 @@ public class PageInsertMultipleForm {
         this.project = project;
         initializeUI();
         initFormTable();
+        initFormulaireFille();
     }
 
     private void initializeUI() {
@@ -81,54 +88,110 @@ public class PageInsertMultipleForm {
         nomTableField.setEditable(false);
     }
 
+    private void addUpdateGroup(DefaultActionGroup group, String name) {
+        group.add(new AnAction(name) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                updateRows(name);
+            }
+        });
+    }
+
+    private void fixSizeColumn(JBTable table,int row,int size) {
+        table.getColumnModel().getColumn(row).setPreferredWidth(size);
+        table.getColumnModel().getColumn(row).setMinWidth(size);
+        table.getColumnModel().getColumn(row).setMaxWidth(size);
+    }
+
     private void initFormTable() {
         formTableModel = new InsertTableModel(new Object[]{"Visible","Champ","Libellé","Autre","Type","Détails"});
         formTable = new JBTable(formTableModel);
+        formTable.getEmptyText().setText("Aucune ligne à afficher");
         formTable.setDefaultRenderer(Object.class, new TableRenderer());
         formTable.setDragEnabled(true);
         formTable.setDropMode(DropMode.INSERT_ROWS);
         formTable.setTransferHandler(new TableRowTransferHandler(formTable));
+        formTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        fixSizeColumn(formTable,0,30);
+        fixSizeColumn(formTable,1,115);
+        fixSizeColumn(formTable,2,125);
+        fixSizeColumn(formTable,3,70);
+        fixSizeColumn(formTable,4,80);
+
         scrollFiltre.setViewportView(formTable);
         scrollFiltre.setBorder(BorderFactory.createEmptyBorder());
         formTable.setBorder(BorderFactory.createEmptyBorder());
-        scrollFiltre.setViewportBorder(null);
+
         DefaultActionGroup updateGroup = new DefaultActionGroup();
-        updateGroup.add(new AnAction(ConstantesApj.LISTE) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                updateRows(ConstantesApj.LISTE);
-            }
-        });
-        updateGroup.add(new AnAction(ConstantesApj.LISTE_STRING) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                updateRows(ConstantesApj.LISTE_STRING);
-            }
-        });
-        updateGroup.add(new AnAction(ConstantesApj.OUI_NON) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                updateRows(ConstantesApj.OUI_NON);
-            }
-        });
-        updateGroup.add(new AnAction(ConstantesApj.AUTO_COMPLETE) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                updateRows(ConstantesApj.AUTO_COMPLETE);
-            }
-        });
-        updateGroup.add(new AnAction(ConstantesApj.SIMPLE) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                updateRows(ConstantesApj.SIMPLE);
-            }
-        });
+        addUpdateGroup(updateGroup,ConstantesApj.LISTE);
+        addUpdateGroup(updateGroup,ConstantesApj.LISTE_STRING);
+        addUpdateGroup(updateGroup,ConstantesApj.OUI_NON);
+        addUpdateGroup(updateGroup,ConstantesApj.AUTO_COMPLETE);
+        addUpdateGroup(updateGroup,ConstantesApj.SIMPLE);
         TableToolbarHelper.builder()
             .table(formTable)
             .panel(filtrePanel)
             .updateActionGroup(updateGroup)
+            .customButtonText("Générer les libellés via l'IA")
+            .customButtonAction(this::askAI)
             .build().init();
     }
+
+    private void initFormulaireFille() {
+        formFilleTableModel = new InsertTableModel(new Object[]{"Visible","Champ","Libellé","Autre","Type","Détails"});
+        formFilleTable = new JBTable(formFilleTableModel);
+        formFilleTable.getEmptyText().setText("Aucune ligne à afficher");
+        formFilleTable.setDefaultRenderer(Object.class, new TableRenderer());
+        formFilleTable.setDragEnabled(true);
+        formFilleTable.setDropMode(DropMode.INSERT_ROWS);
+        formFilleTable.setTransferHandler(new TableRowTransferHandler(formFilleTable));
+        formFilleTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        fixSizeColumn(formFilleTable,0,30);
+        fixSizeColumn(formFilleTable,1,115);
+        fixSizeColumn(formFilleTable,2,125);
+        fixSizeColumn(formFilleTable,3,70);
+        fixSizeColumn(formFilleTable,4,80);
+
+        scrollFille.setViewportView(formFilleTable);
+        scrollFille.setBorder(BorderFactory.createEmptyBorder());
+        formFilleTable.setBorder(BorderFactory.createEmptyBorder());
+
+        DefaultActionGroup updateGroup = new DefaultActionGroup();
+        addUpdateGroup(updateGroup,ConstantesApj.LISTE);
+        addUpdateGroup(updateGroup,ConstantesApj.LISTE_STRING);
+        addUpdateGroup(updateGroup,ConstantesApj.OUI_NON);
+        addUpdateGroup(updateGroup,ConstantesApj.AUTO_COMPLETE);
+        addUpdateGroup(updateGroup,ConstantesApj.SIMPLE);
+        TableToolbarHelper.builder()
+            .table(formFilleTable)
+            .panel(fillePanel)
+            .updateActionGroup(updateGroup)
+            .customButtonText("Générer les libellés via l'IA")
+            .customButtonAction(this::askAI)
+            .build().init();
+    }
+
+    private void askAI() {
+        int[] selectedRows = formTable.getSelectedRows();
+        ApjField[] fields = new ApjField[selectedRows.length];
+        for (int i = 0; i < selectedRows.length; i++) {
+            String nom = String.valueOf(formTableModel.getValueAt(selectedRows[i], 1));
+            fields[i] = new ApjField();
+            fields[i].setNom(nom);
+        }
+        String mapping = this.getMappingField().getText();
+        LlmApiClient llmClient = new LlmApiClient();
+        String[] libelles = new String[selectedRows.length];
+        try {
+            libelles = llmClient.askForLabel(mapping, fields);
+        } catch (Exception ignored) {
+
+        }
+        for (int i = 0; i < libelles.length; i++) {
+            formTableModel.setValueAt(libelles[i], selectedRows[i], 2);
+        }
+    }
+
 
 
     private void updateRows(String type) {
@@ -148,6 +211,13 @@ public class PageInsertMultipleForm {
             ListeStringDialog listeStringDialog = new ListeStringDialog(mainPanel);
             listeStringDialog.showDialog();
             String result = listeStringDialog.getDetails();
+            if (result == null) return;
+            details = result;
+            withDetail = true;
+        } else if (type.equalsIgnoreCase(ConstantesApj.AUTO_COMPLETE)) {
+            AutoCompleteDialog listeDialog = new AutoCompleteDialog(mainPanel, context, project);
+            listeDialog.showDialog();
+            String result = listeDialog.getDetails();
             if (result == null) return;
             details = result;
             withDetail = true;
@@ -185,12 +255,33 @@ public class PageInsertMultipleForm {
             PsiClass selectedClass = chooser.getSelected();
             if (selectedClass != null) {
                 mappingFilleField.setText(selectedClass.getQualifiedName());
+                try {
+                    URLClassLoader loader = UtilClassLoader.buildLoader(context.getProjectJarDir(), context.getLibDir());
+                    Class<?> cls = loader.loadClass(mappingFilleField.getText());
+                    List<Field> fields = UtilClassLoader.listFieldsStopClassMAPTable(cls);
+                    List<ApjField> apjFields = ApjField.javaFieldsToApjFields(fields);
+                    loadAllFilleFields(apjFields);
+                } catch (Exception ignored) {
+
+                }
             }
         });
     }
 
     private void removeAllRows() {
         formTableModel.setRowCount(0);
+    }
+
+    private void removeAllFilleRows() {
+        formTableModel.setRowCount(0);
+    }
+
+    private void loadAllFilleFields(List<ApjField> fields) {
+        removeAllFilleRows();
+        for (ApjField field : fields) {
+            String fieldName = field.getNom();
+            formFilleTableModel.addRow(new Object[]{Boolean.TRUE,fieldName, StringUtils.majStart(fieldName),null,ConstantesApj.SIMPLE,null});
+        }
     }
 
     private void loadAllFields(List<ApjField> fields) {

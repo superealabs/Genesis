@@ -46,7 +46,7 @@ public class PropertiesWizardStep implements WizardStep {
 
     @Override
     public String getTitle() {
-        return "Properties";
+        return "Propriétés";
     }
 
     private void saveState() {
