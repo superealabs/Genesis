@@ -13,6 +13,7 @@ import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.action.apjwizard.forms.helper.TableToolbarHelper;
 import org.labs.genesis.action.apjwizard.forms.listener.PlaceholderTextFieldHelper;
+import org.labs.genesis.action.apjwizard.forms.popup.AutoCompleteDialog;
 import org.labs.genesis.action.apjwizard.forms.popup.ListDetailsDialog;
 import org.labs.genesis.action.apjwizard.forms.popup.ListeStringDialog;
 import org.labs.genesis.action.apjwizard.forms.popup.TableTreeChooser;
@@ -122,7 +123,6 @@ public class PageInsertForm {
         addUpdateGroup(updateGroup,ConstantesApj.LISTE_STRING);
         addUpdateGroup(updateGroup,ConstantesApj.OUI_NON);
         addUpdateGroup(updateGroup,ConstantesApj.AUTO_COMPLETE);
-        addUpdateGroup(updateGroup,ConstantesApj.AUTO_COMPLETE_INSERT);
         addUpdateGroup(updateGroup,ConstantesApj.SIMPLE);
         TableToolbarHelper.builder()
             .table(formTable)
@@ -170,6 +170,13 @@ public class PageInsertForm {
             ListeStringDialog listeStringDialog = new ListeStringDialog(mainPanel);
             listeStringDialog.showDialog();
             String result = listeStringDialog.getDetails();
+            if (result == null) return;
+            details = result;
+            withDetail = true;
+        } else if (type.equalsIgnoreCase(ConstantesApj.AUTO_COMPLETE)) {
+            AutoCompleteDialog listeDialog = new AutoCompleteDialog(mainPanel, context, project);
+            listeDialog.showDialog();
+            String result = listeDialog.getDetails();
             if (result == null) return;
             details = result;
             withDetail = true;

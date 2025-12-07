@@ -14,7 +14,6 @@ public class ConstantesApj {
     public static final String SIMPLE = "Simple";
     public static final String INTERVALLE = "Intervalle";
     public static final String AUTO_COMPLETE = "AutoComplete";
-    public static final String AUTO_COMPLETE_INSERT = "AutoCompletInsert";
 
 
     public static final int PAGE_RECHERCHE_ID = 1;

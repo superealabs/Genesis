@@ -117,12 +117,6 @@ public class PageInsertMultipleForm {
                 updateRows(ConstantesApj.AUTO_COMPLETE);
             }
         });
-        updateGroup.add(new AnAction(ConstantesApj.AUTO_COMPLETE_INSERT) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                updateRows(ConstantesApj.AUTO_COMPLETE_INSERT);
-            }
-        });
         updateGroup.add(new AnAction(ConstantesApj.SIMPLE) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {

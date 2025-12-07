@@ -25,7 +25,7 @@ public class ListeStringDialog extends JDialog {
     public ListeStringDialog(JComponent parent) {
         super(SwingUtilities.getWindowAncestor(parent));
         setModal(true);
-        setTitle("MakeListeString");
+        setTitle("Liste String");
         setContentPane(mainPanel);
         pack();
         setLocationRelativeTo(parent);
