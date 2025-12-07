@@ -37,7 +37,7 @@ public class ListDetailsDialog extends JDialog{
         this.context = context;
         this.project = project;
         setModal(true);
-        setTitle("MakeListe");
+        setTitle("Liste");
         setContentPane(mainPanel);
         pack();
         setLocationRelativeTo(parent);
@@ -47,9 +47,10 @@ public class ListDetailsDialog extends JDialog{
     }
 
     private void initHooks() {
+        chooseClassButton.setToolTipText("Cliquez pour sélectionner une classe Java du projet");
         chooseClassButton.addActionListener(e -> {
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-                    .createAllProjectScopeChooser("Select Class");
+                    .createAllProjectScopeChooser("Sélectionner une classe");
             chooser.showDialog();
             PsiClass selectedClass = chooser.getSelected();
             if (selectedClass != null) {

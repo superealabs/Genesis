@@ -101,6 +101,7 @@ public class PageInsertForm {
     private void initFormTable() {
         formTableModel = new InsertTableModel(new Object[]{"Visible","Champ","Libellé","Autre","Type","Détails"});
         formTable = new JBTable(formTableModel);
+        formTable.getEmptyText().setText("Aucune ligne à afficher");
         formTable.setDefaultRenderer(Object.class, new TableRenderer());
         formTable.setDragEnabled(true);
         formTable.setDropMode(DropMode.INSERT_ROWS);
@@ -183,9 +184,10 @@ public class PageInsertForm {
     }
 
     public void showClassChooser(Project project, ApjGenerationContext context) {
+        chooseClassButton.setToolTipText("Cliquez pour sélectionner une classe Java du projet");
         chooseClassButton.addActionListener(e -> {
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-                    .createAllProjectScopeChooser("Select Class");
+                    .createAllProjectScopeChooser("Sélectionner une classe");
             chooser.showDialog();
             PsiClass selectedClass = chooser.getSelected();
             if (selectedClass != null) {

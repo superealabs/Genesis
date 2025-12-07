@@ -16,7 +16,7 @@ public class TableChooserDialog extends DialogWrapper {
     public TableChooserDialog(Component parent, Tree tree) {
         super(parent, true);
         this.tree = tree;
-        setTitle("Choose Table or View");
+        setTitle("Choisir une table ou une vue");
         init();
     }
 

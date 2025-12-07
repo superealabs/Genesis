@@ -26,7 +26,7 @@ public class TableTreeChooser {
 
     public String showDialog() {
         if ((tables == null || tables.length == 0) && (views == null || views.length == 0)) {
-            new EmptyDialog(parentPanel, "No tables or views available").showDialog();
+            new EmptyDialog(parentPanel, "Aucune table ni vue disponible").showDialog();
             return null;
         }
 
@@ -40,7 +40,7 @@ public class TableTreeChooser {
         }
         root.add(tablesNode);
 
-        DefaultMutableTreeNode viewsNode = new DefaultMutableTreeNode("Views");
+        DefaultMutableTreeNode viewsNode = new DefaultMutableTreeNode("Vues");
         if (views != null) {
             for (String v : views) {
                 viewsNode.add(new DefaultMutableTreeNode(v));

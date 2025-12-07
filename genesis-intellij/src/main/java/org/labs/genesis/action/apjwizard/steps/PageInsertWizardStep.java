@@ -5,6 +5,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import org.labs.genesis.action.apjwizard.forms.PageInsertForm;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.filetype.pages.PageInsert;
@@ -12,6 +13,7 @@ import org.labs.genesis.apj.generator.ApjFileGenerator;
 
 
 import javax.swing.*;
+import java.awt.*;
 
 public class PageInsertWizardStep implements WizardStep {
     private final PageInsertForm pageInsertForm;
@@ -53,11 +55,26 @@ public class PageInsertWizardStep implements WizardStep {
         if (idx != -1) {
             mapping = fullMapping.substring(idx + 1);
         }
+        Color fgTitre = pageInsertForm.getTitreField().getForeground();
+        Color fgTitreUpdate = pageInsertForm.getTitreUpdateField().getForeground();
+        Color fgFileName = pageInsertForm.getNomField().getForeground();
         String nomTable = pageInsertForm.getNomTableField().getText();
         String titre = pageInsertForm.getTitreField().getText();
         String titreUpdate = pageInsertForm.getTitreUpdateField().getText();
+        String fileName = pageInsertForm.getNomField().getText();
+
+        if (fgTitre.equals(JBColor.GRAY)) {
+            titre = "";
+        }
+        if (fgTitreUpdate.equals(JBColor.GRAY)) {
+            titreUpdate = "";
+        }
+        if (fgFileName.equals(JBColor.GRAY)) {
+            fileName = "";
+        }
+
         PageInsert pi = (PageInsert) context.getApjfile();
-        pi.setFileName(pageInsertForm.getNomField().getText());
+        pi.setFileName(fileName);
         pi.setPackageMapping(fullMapping);
         pi.setMapping(mapping);
         pi.setNomTable(nomTable);

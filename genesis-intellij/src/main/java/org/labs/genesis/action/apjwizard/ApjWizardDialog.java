@@ -99,23 +99,28 @@ public class ApjWizardDialog extends DialogWrapper {
     @Override
     protected Action[] createActions() {
         return new Action[]{
-            new DialogWrapperAction("Back") {
+            new DialogWrapperAction("Précédent") {
                 @Override
                 protected void doAction(ActionEvent e) {
                     previousStep();
                 }
             },
-            new DialogWrapperAction("Next") {
+            new DialogWrapperAction("Suivant") {
                 @Override
                 protected void doAction(ActionEvent e) {
                     try {
                         nextStep();
                     } catch (ConfigurationException ex) {
-                        PopUtils.showValidationError(mainPanel,ex);
+                        PopUtils.showValidationError(mainPanel, ex);
                     }
                 }
             },
-            getCancelAction()
+            new DialogWrapperAction("Annuler") {
+                @Override
+                protected void doAction(ActionEvent e) {
+                    doCancelAction();
+                }
+            }
         };
     }
 
