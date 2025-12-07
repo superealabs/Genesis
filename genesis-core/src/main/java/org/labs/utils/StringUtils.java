@@ -106,4 +106,27 @@ public class StringUtils {
                 .collect(Collectors.joining(", "));
     }
 
+    public static String escapeAccents(String input) {
+        if (input == null) return null;
+
+        return input
+            .replace("é", "&eacute;")
+            .replace("è", "&egrave;")
+            .replace("ê", "&ecirc;")
+            .replace("à", "&agrave;")
+            .replace("â", "&acirc;")
+            .replace("ù", "&ugrave;")
+            .replace("û", "&ucirc;")
+            .replace("î", "&icirc;")
+            .replace("ô", "&ocirc;")
+            .replace("ç", "&ccedil;")
+            .replace("É", "&Eacute;")
+            .replace("È", "&Egrave;")
+            .replace("Ê", "&Ecirc;")
+            .replace("À", "&Agrave;")
+            .replace("Â", "&Acirc;")
+            .replace("Ç", "&Ccedil;");
+    }
+
+
 }

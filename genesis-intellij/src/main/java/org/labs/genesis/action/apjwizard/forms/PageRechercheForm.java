@@ -80,15 +80,26 @@ public class PageRechercheForm {
     private String[] listeInt;
     private final ApjGenerationContext context;
     private final Project project;
+    private boolean isOnglet;
 
-    public PageRechercheForm(ApjGenerationContext context, Project project) {
+    public PageRechercheForm(ApjGenerationContext context, Project project, boolean isOnglet) {
         this.context = context;
         this.project = project;
+        this.isOnglet = isOnglet;
         initializeUI();
-        initFiltreTable();
-        initRecapTable();
+
+        if (isOnglet) {
+            if (titreField != null) titreField.setVisible(false);
+            if (titreLabel != null) titreLabel.setVisible(false);
+            if (filtrePanel != null) tabPane.remove(filtrePanel);
+            if (recapitulationPanel != null) tabPane.remove(recapitulationPanel);
+        } else {
+            initFiltreTable();
+            initRecapTable();
+        }
         initTableauTable();
     }
+
 
     private void initializeUI() {
         if (scrollProperties != null) {
@@ -401,9 +412,12 @@ public class PageRechercheForm {
     }
 
     public void fillDataTables(){
+        this.setDataTableau();
+        if (this.isOnglet()){
+            return;
+        }
         this.setDataFiltre();
         this.setDataRecap();
-        this.setDataTableau();
     }
 
     private ApjField[] getDataTable(JTable table) {
