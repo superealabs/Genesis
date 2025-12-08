@@ -28,12 +28,15 @@ public class ApjFileGenerator {
             PageInsert pi = FileUtils.fromYaml(PageInsert.class, ConstantesApj.PAGE_INSERT);
             PageInsertMultiple pim = FileUtils.fromYaml(PageInsertMultiple.class, ConstantesApj.PAGE_INSERT_MULTIPLE);
             PageRecherche pro = FileUtils.fromYaml(PageRecherche.class, ConstantesApj.PAGE_RECHERCHE_ONGLET);
+            PageRecherche prg = FileUtils.fromYaml(PageRecherche.class, ConstantesApj.PAGE_RECHERCHE_GROUPE);
             pro.setOnglet(true);
+
             apjFileMap.put(pr.getId(),pr);
             apjFileMap.put(pc.getId(),pc);
             apjFileMap.put(pi.getId(),pi);
             apjFileMap.put(pim.getId(),pim);
             apjFileMap.put(pro.getId(),pro);
+            apjFileMap.put(prg.getId(),prg);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -56,6 +59,7 @@ public class ApjFileGenerator {
         HashMap<String, Object> metadata = apjFile.buildMetadata();
         result = engine.render(result, metadata);
         result = StringUtils.escapeAccents(result);
+
 
         FileUtils.createFile(context.getLocationDir(), apjFile.getFileName(), apjFile.getExtension(), result);
     }
