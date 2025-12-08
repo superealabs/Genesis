@@ -1,0 +1,38 @@
+id : 8
+name : "MappingMereFille"
+template : "page"
+extension : "java"
+imports : |
+  <%@ page pageEncoding="UTF-8" contentType="text/html; charset=UTF-8" %>
+  <%@ page import="affichage.PageRecherche"%>
+  <%@ page import="${packageMapping}" %>
+jspBlock : |
+  <% try{ 
+      ${mapping} o = new ${mapping}();
+      o.setNomTable("${nomTable}");
+      String[] listeCrt = {};
+      String[] listeInt = {};
+      String[] libEntete = {${libEntete}};
+      PageRecherche pr = new PageRecherche(o, request, listeCrt, listeInt, 4, libEntete, libEntete.length);
+      pr.setUtilisateur((user.UserEJB) session.getValue("u"));
+      pr.setLien((String) session.getValue("lien"));
+  
+      String[] colSomme = null;
+      pr.creerObjetPage(libEntete, colSomme);
+
+      String[] libEnteteAffiche = {${libEnteteAffiche}};
+      pr.getTableau().setLibelleAffiche(libEnteteAffiche);
+  %>
+
+html : |
+  <div class="box-body">
+      <%  if(pr.getTableau().getHtml() != null){
+              out.println(pr.getTableau().getHtml());
+          } else{ %>
+              <center><h4>Aucune donn&eacute;e trouv&eacute;e</h4></center>
+      <%  } %>
+  </div>
+basPage : |
+  <% } catch (Exception e) {
+    e.printStackTrace();
+  } %>

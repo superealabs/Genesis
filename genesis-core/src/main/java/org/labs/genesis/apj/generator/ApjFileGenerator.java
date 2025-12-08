@@ -2,6 +2,8 @@ package org.labs.genesis.apj.generator;
 
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.filetype.ApjFile;
+import org.labs.genesis.apj.filetype.mapping.Mapping;
+import org.labs.genesis.apj.filetype.mapping.MappingMereFille;
 import org.labs.genesis.apj.filetype.pages.PageConsulte;
 import org.labs.genesis.apj.filetype.pages.PageInsert;
 import org.labs.genesis.apj.filetype.pages.PageInsertMultiple;
@@ -28,8 +30,11 @@ public class ApjFileGenerator {
             PageInsert pi = FileUtils.fromYaml(PageInsert.class, ConstantesApj.PAGE_INSERT);
             PageInsertMultiple pim = FileUtils.fromYaml(PageInsertMultiple.class, ConstantesApj.PAGE_INSERT_MULTIPLE);
             PageRecherche pro = FileUtils.fromYaml(PageRecherche.class, ConstantesApj.PAGE_RECHERCHE_ONGLET);
-            PageRecherche prg = FileUtils.fromYaml(PageRecherche.class, ConstantesApj.PAGE_RECHERCHE_GROUPE);
             pro.setOnglet(true);
+            PageRecherche prg = FileUtils.fromYaml(PageRecherche.class, ConstantesApj.PAGE_RECHERCHE_GROUPE);
+            Mapping mapping = FileUtils.fromYaml(Mapping.class, ConstantesApj.MAPPING);
+            MappingMereFille mappingFille = FileUtils.fromYaml(MappingMereFille.class, ConstantesApj.MAPPING_MERE_FILLE);
+
 
             apjFileMap.put(pr.getId(),pr);
             apjFileMap.put(pc.getId(),pc);
@@ -37,6 +42,8 @@ public class ApjFileGenerator {
             apjFileMap.put(pim.getId(),pim);
             apjFileMap.put(pro.getId(),pro);
             apjFileMap.put(prg.getId(),prg);
+            apjFileMap.put(mapping.getId(),mapping);
+            apjFileMap.put(mappingFille.getId(),mappingFille);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

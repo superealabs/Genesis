@@ -7,6 +7,8 @@ public class ConstantesApj {
     public static final String PAGE_INSERT_MULTIPLE = "data_genesis/apj/yaml/4-page-insert-multiple.yaml";
     public static final String PAGE_RECHERCHE_ONGLET = "data_genesis/apj/yaml/5-page-recherche-onglet.yaml";
     public static final String PAGE_RECHERCHE_GROUPE = "data_genesis/apj/yaml/6-page-recherche-groupe.yaml";
+    public static final String MAPPING = "data_genesis/apj/yaml/7-mapping.yaml";
+    public static final String MAPPING_MERE_FILLE = "data_genesis/apj/yaml/8-mapping-mere-fille.yaml";
     public static final String DATA_PATH = "data_genesis/apj";
 
 
@@ -24,4 +26,6 @@ public class ConstantesApj {
     public static final int PAGE_INSERT_MULTIPLE_ID = 4;
     public static final int PAGE_RECHERCHE_ONGLET_ID = 5;
     public static final int PAGE_RECHERCHE_GROUPE_ID = 6;
+    public static final int MAPPING_ID = 7;
+    public static final int MAPPING_MERE_FILLE_ID = 8;
 }

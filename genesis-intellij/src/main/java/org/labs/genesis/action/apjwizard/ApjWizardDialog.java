@@ -65,6 +65,8 @@ public class ApjWizardDialog extends DialogWrapper {
                 case ConstantesApj.PAGE_INSERT_MULTIPLE_ID -> new PageInsertMultipleWizardStep(context,project);
                 case ConstantesApj.PAGE_RECHERCHE_ONGLET_ID -> new PageRechercheWizardStep(context,project,true);
                 case ConstantesApj.PAGE_RECHERCHE_GROUPE_ID -> new PageRechercheGroupeWizardStep(context,project);
+                case ConstantesApj.MAPPING_ID -> new PageRechercheGroupeWizardStep(context,project);
+                case ConstantesApj.MAPPING_MERE_FILLE_ID -> new PageRechercheGroupeWizardStep(context,project);
                 default -> null;
             };
 

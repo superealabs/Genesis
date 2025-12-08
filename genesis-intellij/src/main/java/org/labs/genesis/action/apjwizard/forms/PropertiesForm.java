@@ -2,6 +2,8 @@ package org.labs.genesis.action.apjwizard.forms;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -14,6 +16,7 @@ import org.labs.genesis.apj.filetype.ApjFile;
 import org.labs.genesis.apj.generator.ApjFileGenerator;
 import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
 
+import java.awt.*;
 import java.sql.Connection;
 import java.util.List;
 import javax.swing.*;
@@ -28,10 +31,13 @@ public class PropertiesForm {
     private LinkLabel<String> testConnectionButton;
     private JLabel connectionStatusLabel;
     private JCheckBox sansBaseCheckBox;
+    private TextFieldWithBrowseButton racineProjetField;
+    private TextFieldWithBrowseButton racinePageField;
 
     public PropertiesForm() {
         populateApjFileOptions();
         initConfig();
+        configureFileApjRenderer();
     }
 
     public void initConfig() {
@@ -41,6 +47,34 @@ public class PropertiesForm {
             connectionStatusLabel.setEnabled(!selected);
         });
     }
+
+    private void configureFileApjRenderer() {
+        fileApjOptions.setRenderer(new ListCellRenderer<ApjFile>() {
+            private final DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
+
+            @Override
+            public Component getListCellRendererComponent(
+                    JList<? extends ApjFile> list,
+                    ApjFile apjFile,
+                    int index,
+                    boolean isSelected,
+                    boolean cellHasFocus) {
+
+                JLabel label = (JLabel) defaultRenderer.getListCellRendererComponent(
+                        list, apjFile, index, isSelected, cellHasFocus);
+
+                if (apjFile != null) {
+                    FileType jsp = FileTypeManager.getInstance().getFileTypeByExtension(apjFile.getExtension());
+                    Icon icon = jsp.getIcon();
+                    label.setText(apjFile.toString());
+                    label.setIcon(icon);
+                }
+
+                return label;
+            }
+        });
+    }
+
 
     public void populateApjFileOptions() {
         List<ApjFile> apjFiles = ApjFileGenerator.apjFileMap.values().stream().toList();
