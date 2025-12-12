@@ -5868,7 +5868,7 @@
               [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
               [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
               public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(this.className)}>>>> GetSaleDetailsBySale(
-              [SwaggerParameter(Description = "ID of the ${majStart(className)} to retrieve", Required = true)] long id,
+              [SwaggerParameter(Description = "ID of the ${majStart(className)} to retrieve", Required = true)] ${pkColumnType} ${pkColumn},
               [FromQuery, SwaggerParameter("Page number (0-indexed)", Required = false)] int page = 0,
               [FromQuery, SwaggerParameter("Size of the page", Required = false)] int size = 10,
               [FromQuery, SwaggerParameter("Sort order", Required = false)] string? sortParam = null
@@ -5876,9 +5876,9 @@
               {
                   try
                   {
-                      var ${minStart(className)} = await _service.GetByIdAsync(id{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
+                      var ${minStart(className)} = await _service.GetByIdAsync(${pkColumn}{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
                       if (${minStart(className)} == null){
-                          return NotFound(ApiResponse<object>.Error(StatusCodes.Status404NotFound, $"${majStart(className)} not found with saleId : {id}"));
+                          return NotFound(ApiResponse<object>.Error(StatusCodes.Status404NotFound, $"${majStart(className)} not found with saleId : {${pkColumn}}"));
                       }
                       ${majStart(this.className)}Dto dto = new ${majStart(this.className)}Dto
                       {

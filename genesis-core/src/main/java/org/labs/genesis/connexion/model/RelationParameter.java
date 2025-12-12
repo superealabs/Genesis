@@ -34,7 +34,7 @@ public class RelationParameter {
         if (parentTableMetadata == null || childTableMetadata == null){
             throw new InvalipRelationParameter("Parent table and child table are not defined");
         }
-            parentTableMetadata.addChild(childTableMetadata, mandatory, hasForm);
-            childTableMetadata.setParentTable(parentTableMetadata);
+        parentTableMetadata.addChild(childTableMetadata, mandatory, hasForm);
+        childTableMetadata.addParentTable(parentTableMetadata);
     }
 }

@@ -100,6 +100,7 @@ public class SyncGenerator extends ProjectGenerator {
 
     public void evaluateDatabaseChanges(ProjectGenerationContext initialContext, ProjectGenerationContext evaluationContext, DatabaseEvaluatorsManager evaluator, DatabaseReportManager databaseReportManager) throws Exception {
         evaluationContext.setRelationParameters(initialContext.getRelationParameters());
+        this.evaluationContext.applyTableRelations();
         evaluateEntitiesChanges(initialContext, evaluationContext, evaluator, databaseReportManager);
         evaluateViewsChanges(initialContext, evaluationContext, evaluator, databaseReportManager);
     }

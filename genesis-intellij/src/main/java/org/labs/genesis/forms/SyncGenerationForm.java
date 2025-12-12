@@ -88,27 +88,26 @@ public class SyncGenerationForm {
                                                        int row, int column) {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-            if (!isSelected) {
-                // Récupérer la catégorie de la ligne
-                Object categoryValue = table.getValueAt(row, 1);
-                if (categoryValue != null) {
-                    String category = categoryValue.toString();
-
-                    switch (category) {
-                        default:
-                            c.setBackground(Color.WHITE);
-                    }
-                } else {
-                    c.setBackground(Color.WHITE);
-                }
-            }
-
-            // Alignement du texte
-            if (column == 1) { // Category - centré
-                setHorizontalAlignment(CENTER);
-            } else {
-                setHorizontalAlignment(LEFT);
-            }
+//            if (!isSelected) {
+//                Object categoryValue = table.getValueAt(row, 1);
+//                if (categoryValue != null) {
+//                    String category = categoryValue.toString();
+//
+//                    switch (category) {
+//                        default:
+//                            c.setBackground(Color.WHITE);
+//                    }
+//                } else {
+//                    c.setBackground(Color.WHITE);
+//                }
+//            }
+//
+//            // Alignement du texte
+//            if (column == 1) { // Category - centré
+//                setHorizontalAlignment(CENTER);
+//            } else {
+//                setHorizontalAlignment(LEFT);
+//            }
 
             return c;
         }

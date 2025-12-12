@@ -24,7 +24,6 @@ public class LangGenerator implements IResourceGenerator {
         if (frontendFramework == null) {
             return "";
         }
-        // Generate lang files
         List<InterfaceLang> langs = frontendFramework.getFrontendLayout().getLangs();
         String langPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(frontendFramework.getFrontendPaths().langsPath, metadata));
         for (InterfaceLang lang : langs) {

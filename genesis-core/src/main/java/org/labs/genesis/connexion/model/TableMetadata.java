@@ -249,14 +249,14 @@ public class TableMetadata {
         }
         ChildTableMetadata childTableMetadata = new ChildTableMetadata(child, mandatory, hasForm, fkColumn);
         if (childTables.contains(childTableMetadata)) {
-            throw new InvalipRelationParameter("Parameter already define in the parent tablemetadata");
+            childTables.remove(childTableMetadata);
         }
         fkColumn.setIsParentForeignKey(true);
-        this.childTables.add(childTableMetadata);
+        this.childTables.remove(childTableMetadata);
         this.setIsParent(true);
     }
 
-    public void setParentTable(TableMetadata parentTable) throws InvalipRelationParameter{
+    public void addParentTable(TableMetadata parentTable) throws InvalipRelationParameter{
         if (parentTables == null) { setParentTables(new ArrayList<>());}
         if (parentTable == null)  throw new InvalipRelationParameter("Parameter cannot be set on child with null parent");;
         ColumnMetadata fkColumn = this.findForeingKeyColumnByClassName(parentTable.getClassName());
@@ -264,12 +264,11 @@ public class TableMetadata {
             throw new InvalipRelationParameter("Parameter cannot be set with invalid columns");
         }
         ParentTableMetadata parentTableMetadata = new ParentTableMetadata(parentTable, fkColumn);
-        if (parentTables.contains(parentTableMetadata)) {
-            throw new InvalipRelationParameter("Parameter already define in the child tablemetadata");
+        if (!parentTables.contains(parentTableMetadata)) {
+            fkColumn.setIsParentForeignKey(true);
+            this.parentTables.add(parentTableMetadata);
+            this.setIsChild(true);
         }
-        fkColumn.setIsParentForeignKey(true);
-        this.parentTables.add(parentTableMetadata);
-        this.setIsChild(true);
     }
 
     public TableGenerationModel generateGenerationModel(

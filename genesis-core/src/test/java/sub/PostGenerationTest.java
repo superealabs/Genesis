@@ -11,12 +11,35 @@ public class PostGenerationTest {
 
     @Test
     public void fetchContextFile() {
-        String projectDirectory = "/home/itu-chan-alex/Stage/generated/FanambyPresenceBackup";
+        String projectDirectory = "/home/itu-chan-alex/Stage/generated/ProjectBackup";
+        SyncGenerator syncGenerator = new SyncGenerator();
+        try {
+            ProjectGenerationContext context = syncGenerator.loadProjectContext(projectDirectory);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void evaluateContextFile() {
+        String projectDirectory = "/home/itu-chan-alex/Stage/generated/ProjectBackup";
         SyncGenerator syncGenerator = new SyncGenerator();
         try {
             ProjectGenerationContext context = syncGenerator.loadProjectContext(projectDirectory);
             syncGenerator.evaluateDatabaseChanges(context);
-            syncGenerator.generateProject(context);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    @Test
+    public void updateProject() {
+        String projectDirectory = "/home/itu-chan-alex/Stage/generated/ProjectBackup";
+        SyncGenerator syncGenerator = new SyncGenerator();
+        try {
+            ProjectGenerationContext context = syncGenerator.loadProjectContext(projectDirectory);
+            syncGenerator.evaluateDatabaseChanges(context);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
