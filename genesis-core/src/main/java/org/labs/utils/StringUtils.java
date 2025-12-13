@@ -1,5 +1,7 @@
 package org.labs.utils;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -136,5 +138,15 @@ public class StringUtils {
             .replace("Ç", "&Ccedil;");
     }
 
-
+    public static String relativeOrFilename(String root, String filePath) {
+        if (root == null || filePath == null) {
+            return null;
+        }
+        Path rootPath = Paths.get(root).normalize();
+        Path targetPath = Paths.get(filePath).normalize();
+        if (targetPath.startsWith(rootPath)) {
+            return rootPath.relativize(targetPath).toString();
+        }
+        return targetPath.getFileName().toString();
+    }
 }

@@ -42,10 +42,10 @@ jspBlock : |
       pc.setOrdre(ordre);
   
       {{#if isWithOnglet}}{{removeLine}}
-      String pageActuel = "${pageActuel}.jsp";
+      String pageActuel = "${pageActuel}";
       {{/if}}{{removeLine}}
       String pageRetour = "${pageRetour}.jsp";
-      String pageModif = "${pageModif}.jsp";
+      String pageModif = "${pageModif}.jsp&acte=update";
       String pageApresDelete = "${pageApresDelete}.jsp";
       String classe = "${packageMapping}";
   
@@ -77,7 +77,7 @@ html : |
                       %>
                       <br/>
                       <div class="box-footer">
-                          <a class="btn btn-warning pull-right"  href="<%= lien + "?but="+ pageModif +"&id=" + id +"&acte=update"%>" style="margin-right: 10px">Modifier</a>
+                          <a class="btn btn-warning pull-right"  href="<%= lien + "?but="+ pageModif +"&id=" + id %>" style="margin-right: 10px">Modifier</a>
                           <a  class="pull-right" href="<%= lien + "?but=apresTarif.jsp&id=" + id+"&acte=delete&bute="+pageApresDelete+"&classe="+classe %>"><button class="btn btn-danger">Supprimer</button></a>
                       </div>
                       <br/>

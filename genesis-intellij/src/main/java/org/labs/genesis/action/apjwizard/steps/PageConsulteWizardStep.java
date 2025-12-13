@@ -9,6 +9,7 @@ import org.labs.genesis.action.apjwizard.forms.PageConsulteForm;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.filetype.pages.PageConsulte;
 import org.labs.genesis.apj.generator.ApjFileGenerator;
+import org.labs.utils.StringUtils;
 
 import javax.swing.*;
 
@@ -64,7 +65,9 @@ public class PageConsulteWizardStep implements WizardStep {
         pc.setMapping(mapping);
         pc.setNomTable(nomTable);
         pc.setTitre(titre);
-        pc.setPageActuel(pc.getFileName());
+        String fullName = pc.getFileName() + "." + pc.getExtension();
+        String filePath = context.getLocationDir() + "/" + fullName;
+        pc.setPageActuel(StringUtils.relativeOrFilename(context.getRacinePage(),filePath));
         pc.setPageModif(pageModif);
         pc.setPageRetour(pageRetour);
         pc.setPageApresDelete(pageApresDelete);
@@ -72,8 +75,6 @@ public class PageConsulteWizardStep implements WizardStep {
         pc.setChamps(pageConsulteForm.getDataForm());
         try {
             generator.generateApjFile(context);
-            String fullName = pc.getFileName() + "." + pc.getExtension();
-            String filePath = context.getLocationDir() + "/" + fullName;
 
             VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
             if (vf != null) {

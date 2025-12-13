@@ -67,7 +67,9 @@ public class PageRechercheWizardStep implements WizardStep {
         pr.setMapping(mapping);
         pr.setNomTable(nomTable);
         pr.setTitre(titre);
-        pr.setApres(pr.getFileName());
+        String fullName = pr.getFileName() + "." + pr.getExtension();
+        String filePath = context.getLocationDir() + "/" + fullName;
+        pr.setApres(StringUtils.relativeOrFilename(context.getRacinePage(),filePath));
         pr.setListeCrt(StringUtils.quoteAndJoin(pageRechercheForm.getListeCrt()));
         pr.setListeInt(StringUtils.quoteAndJoin(pageRechercheForm.getListeInt()));
         pr.setChamps(pageRechercheForm.getDataFiltre());
@@ -76,8 +78,6 @@ public class PageRechercheWizardStep implements WizardStep {
         pr.build();
         try {
             generator.generateApjFile(context);
-            String fullName = pr.getFileName() + "." + pr.getExtension();
-            String filePath = context.getLocationDir() + "/" + fullName;
 
             VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
             if (vf != null) {

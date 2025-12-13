@@ -117,4 +117,12 @@ public class GenesisAPJCoreTest {
         }
     }
 
+    @Test
+    public void testPath(){
+        String root = "/home/antema/Antema/BICI/Socobis/socobis/socobis-war/web/pages";
+        String file = "/home/antema/Antema/BICI/Socobis/socobis/socobis-war/web/pages/analyse/mon-fichier";
+
+        String result = StringUtils.relativeOrFilename(root, file);
+        System.out.println(result);
+    }
 }
