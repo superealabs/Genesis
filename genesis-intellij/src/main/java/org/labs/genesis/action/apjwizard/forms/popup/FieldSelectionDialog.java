@@ -17,7 +17,7 @@ public class FieldSelectionDialog extends DialogWrapper {
     public FieldSelectionDialog(Component parent, List<String> options) {
         super(parent, true);
         this.options = options;
-        setTitle("Select Fields");
+        setTitle("Choisissez un ou plusieurs champs");
         init();
     }
 

@@ -66,7 +66,6 @@ public class PageConsulteForm {
         chooseClassButton.setContentAreaFilled(true);
         chooseClassButton.setFocusPainted(true);
         chooseClassButton.setBackground(mappingField.getBackground());
-        nomTableField.setEditable(false);
     }
 
     private void fixSizeColumn(JBTable table,int row,int size) {

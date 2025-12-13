@@ -87,6 +87,8 @@ public class PropertiesForm {
         setupFolderChooser(project, libDir, "Sélectionner le dossier lib", "Choisissez le dossier lib pour votre projet");
         setupFolderChooser(project, jarDir, "Sélectionner le dossier jar du projet", "Choisissez le dossier jar du projet");
         setupFolderChooser(project, location, "Sélectionner l’emplacement du projet", "Choisissez l’emplacement pour votre fichier");
+        setupFolderChooser(project, racineProjetField, "Sélectionner la racine du projet Java", "Choisissez le dossier racine contenant le code Java");
+        setupFolderChooser(project, racinePageField, "Sélectionner la racine des pages",  "Choisissez le dossier contenant vos pages");
     }
 
     private void setupFolderChooser(Project project,TextFieldWithBrowseButton field, String title, String description) {

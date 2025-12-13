@@ -55,7 +55,6 @@ public class PageInsertForm {
     private JPanel mappingPanel;
     private JButton chooseTableButton;
     private JTextField titreField;
-    private JLabel fileNameLabel;
     private JBTable formTable;
     private DefaultTableModel formTableModel;
     private ApjField[] dataForm;
@@ -67,9 +66,8 @@ public class PageInsertForm {
         this.project = project;
         initializeUI();
         initFormTable();
-        new PlaceholderTextFieldHelper(nomField, fileNameLabel, ".jsp", "etudiant-saisie");
-        new PlaceholderTextFieldHelper(titreField, null, null, "Saisie d'un étudiant");
-        new PlaceholderTextFieldHelper(titreUpdateField, null, null, "Modification d'un étudiant");
+//        new PlaceholderTextFieldHelper(titreField, null, null, "Saisie d'un étudiant");
+//        new PlaceholderTextFieldHelper(titreUpdateField, null, null, "Modification d'un étudiant");
     }
 
     private void initializeUI() {
@@ -81,7 +79,6 @@ public class PageInsertForm {
         chooseClassButton.setContentAreaFilled(true);
         chooseClassButton.setFocusPainted(true);
         chooseClassButton.setBackground(mappingField.getBackground());
-        nomTableField.setEditable(false);
     }
 
     private void addUpdateGroup(DefaultActionGroup group, String name) {

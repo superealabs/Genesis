@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.lang.reflect.Field;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -110,7 +111,6 @@ public class PageRechercheForm {
         chooseClassButton.setContentAreaFilled(true);
         chooseClassButton.setFocusPainted(true);
         chooseClassButton.setBackground(mappingField.getBackground());
-        nomTableField.setEditable(false);
     }
 
     private JBTable initTable(JBTable table,DefaultTableModel tableModel,JScrollPane scroll){
@@ -201,7 +201,7 @@ public class PageRechercheForm {
                 continue;
             }
             if (withDetail) {
-                tableModel.addRow(new Object[]{fieldName, StringUtils.majStart(fieldName),details,type});
+                tableModel.addRow(new Object[]{fieldName, StringUtils.majStart(fieldName),type,details});
                 continue;
             }
             tableModel.addRow(new Object[]{fieldName, StringUtils.majStart(fieldName),type});
@@ -349,9 +349,10 @@ public class PageRechercheForm {
     }
 
     public void showClassChooser(Project project, ApjGenerationContext context) {
+        chooseClassButton.setToolTipText("Cliquez pour sélectionner une classe Java du projet");
         chooseClassButton.addActionListener(e -> {
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-                    .createAllProjectScopeChooser("Select Class");
+                    .createAllProjectScopeChooser("Sélectionner une classe");
             chooser.showDialog();
             PsiClass selectedClass = chooser.getSelected();
             if (selectedClass != null) {
@@ -365,9 +366,7 @@ public class PageRechercheForm {
                     removeAllRows(filtreTableModel);
                     removeAllRows(recapTableModel);
                     removeAllRows(tableauTableModel);
-                } catch (Exception ignored) {
-
-                }
+                } catch (Exception ignored) { }
             }
         });
     }

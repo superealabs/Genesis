@@ -34,9 +34,13 @@ public class PropertiesWizardStep implements WizardStep {
         if (state == null) return;
         propertiesForm.getLibDir().setText(state.getLibDir());
         propertiesForm.getJarDir().setText(state.getProjectJarDir());
+        propertiesForm.getRacineProjetField().setText(state.getRacineProjet());
+        propertiesForm.getRacinePageField().setText(state.getRacinePage());
         propertiesForm.getLocation().setText(context.getLocationDir());
         context.setLibDir(state.getLibDir());
         context.setProjectJarDir(state.getProjectJarDir());
+        context.setRacinePage(state.getRacinePage());
+        context.setRacineProjet(state.getRacineProjet());
     }
 
     @Override
@@ -58,6 +62,8 @@ public class PropertiesWizardStep implements WizardStep {
 
         state.setLibDir(context.getLibDir());
         state.setProjectJarDir(context.getProjectJarDir());
+        state.setRacineProjet(context.getRacineProjet());
+        state.setRacinePage(context.getRacinePage());
     }
 
     @Override

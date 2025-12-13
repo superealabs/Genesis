@@ -10,6 +10,8 @@ public class ApjGenerationContext {
     private String libDir;
     private String projectJarDir;
     private String locationDir;
+    private String racineProjet;
+    private String racinePage;
     private ApjFile apjfile;
     private String[] tables;
     private String[] vues;

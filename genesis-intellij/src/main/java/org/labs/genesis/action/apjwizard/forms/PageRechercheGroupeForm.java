@@ -104,7 +104,6 @@ public class PageRechercheGroupeForm {
         chooseClassButton.setContentAreaFilled(true);
         chooseClassButton.setFocusPainted(true);
         chooseClassButton.setBackground(mappingField.getBackground());
-        nomTableField.setEditable(false);
     }
 
     private JBTable initTable(JBTable table,DefaultTableModel tableModel,JScrollPane scroll){

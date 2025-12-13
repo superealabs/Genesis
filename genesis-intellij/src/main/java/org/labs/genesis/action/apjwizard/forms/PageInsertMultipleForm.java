@@ -85,7 +85,6 @@ public class PageInsertMultipleForm {
         chooseClassButton.setContentAreaFilled(true);
         chooseClassButton.setFocusPainted(true);
         chooseClassButton.setBackground(mappingField.getBackground());
-        nomTableField.setEditable(false);
     }
 
     private void addUpdateGroup(DefaultActionGroup group, String name) {

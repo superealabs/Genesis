@@ -8,4 +8,6 @@ import lombok.Setter;
 public class ApjProjectState {
     private String libDir = "";
     private String projectJarDir = "";
+    private String racineProjet = "";
+    private String racinePage = "";
 }
