@@ -70,11 +70,15 @@ public class PropertiesWizardStep implements WizardStep {
     public void onNext() throws ConfigurationException {
         String jarDir = propertiesForm.getJarDir().getText();
         String libDir = propertiesForm.getLibDir().getText();
+        String racinePage = propertiesForm.getRacinePageField().getText();
+        String racineProjet = propertiesForm.getRacineProjetField().getText();
         context.setLocationDir(propertiesForm.getLocation().getText());
         context.setLibDir(libDir);
         context.setProjectJarDir(jarDir);
+        context.setRacinePage(racinePage);
+        context.setRacineProjet(racineProjet);
         context.setApjfile((ApjFile) propertiesForm.getFileApjOptions().getSelectedItem());
-
+        saveState();
         boolean sansBase = propertiesForm.getSansBaseCheckBox().isSelected();
         if (sansBase) {
             return;
@@ -98,7 +102,6 @@ public class PropertiesWizardStep implements WizardStep {
                 throw new ConfigurationException("Connection failed: " + e.getMessage());
             }
         });
-        saveState();
     }
 
 
