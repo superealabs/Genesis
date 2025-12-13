@@ -14,6 +14,7 @@ import org.labs.genesis.action.apjwizard.forms.tablehandler.ConsulteTableModel;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.TableRowTransferHandler;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.component.ApjField;
+import org.labs.genesis.apj.utilitaire.ConstantesApj;
 import org.labs.genesis.apj.utilitaire.UtilClassLoader;
 import org.labs.genesis.config.langage.generator.project.LlmApiClient;
 import org.labs.utils.StringUtils;
@@ -110,7 +111,7 @@ public class PageConsulteForm {
         LlmApiClient llmClient = new LlmApiClient();
         String[] libelles = new String[selectedRows.length];
         try {
-            libelles = llmClient.askForLabel(mapping, fields);
+            libelles = llmClient.askForLabel(mapping, fields, ConstantesApj.STANDARD);
         } catch (Exception ignored) {
 
         }

@@ -12,6 +12,7 @@ import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
+import org.labs.genesis.apj.utilitaire.ConstantesApj;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -243,41 +244,11 @@ public class LlmApiClient {
         }
     }
 
-    public String[] askForLabel(String mapping, ApjField[] apjFields) throws Exception {
+    public String[] askForLabel(String[] fields,String prompt) throws Exception {
         setConfigFile();
         String apiToken = this.getApiKey();
         String model = this.getDefaultModel();
         HttpClient client = HttpClient.newHttpClient();
-        String[] fields = new String[apjFields.length];
-        for (int i = 0; i < apjFields.length; i++) {
-            fields[i] = apjFields[i].toString();
-        }
-
-        String prompt = """
-        Pour la classe Java "%s", génère uniquement des libellés lisibles en français pour ces attributs : %s.
-        
-        - Chaque libellé doit correspondre à un attribut.
-        - Transforme les noms camelCase en mots séparés.
-        - Mets la première lettre de chaque libellé en majuscule.
-        - Adapte automatiquement les mots pour qu'ils soient compréhensibles par un utilisateur final en français.
-        - Ne crée pas de synonymes complexes ou inventés.
-        - Conserve l'ordre des attributs.
-        - Le libellé doit correspondre au sens du mot:
-        - Voici plusieurs exemple :
-            (String)idOrigine -> Id Origine,
-            (String)idClient -> Id Client,
-            (String)idPompisteLib -> Pompiste
-            (Date)dateNaissance -> Date de naissance,
-            (double)pv -> Prix de vente,
-            (double)pvAncien -> Ancien prix de vente,
-            (String)etatLib -> État,
-            (String)totalEncaissement -> Total des encaissements,
-            (double)depense -> Dépense,
-        - **Répond uniquement par un tableau JSON de chaînes**, rien d'autre. Exemple de format attendu :
-        
-        ["Prix de vente", "Unité", "Ancien prix de vente", "Date de demande", "Date"]
-        Aucune explication, aucun objet, juste le tableau JSON.
-        """.formatted(mapping, String.join(", ", fields));
 
         String jsonPrompt = JSONObject.quote(prompt);
 
@@ -299,8 +270,6 @@ public class LlmApiClient {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         String json = response.body();
-        System.out.println("Réponse brute de l'API : " + json);
-
         ObjectMapper mapper = new ObjectMapper();
         var rootNode = mapper.readTree(json);
         String content = rootNode
@@ -323,9 +292,111 @@ public class LlmApiClient {
             }
             libelles = corrected;
         }
-
         return libelles;
     }
 
+
+    public String[] askForLabel(String mapping,ApjField[] apjFields,String type) throws Exception {
+        String[] fields = new String[apjFields.length];
+        for (int i = 0; i < apjFields.length; i++) {
+            fields[i] = apjFields[i].toString();
+        }
+
+        String prompt = switch (type) {
+            case ConstantesApj.STANDARD -> """
+                Pour la classe Java "%s", génère uniquement des libellés lisibles en français pour ces attributs : %s.
+                
+                - Chaque libellé doit correspondre à un attribut.
+                - Transforme les noms camelCase en mots séparés.
+                - Mets la première lettre de chaque libellé en majuscule.
+                - Adapte automatiquement les mots pour qu'ils soient compréhensibles par un utilisateur final en français.
+                - Ne crée pas de synonymes complexes ou inventés.
+                - Conserve l'ordre des attributs.
+                - Le libellé doit correspondre au sens du mot:
+                - Voici plusieurs exemple :
+                    (String)idOrigine -> Id Origine,
+                    (String)idClient -> Id Client,
+                    (String)idPompisteLib -> Pompiste
+                    (Date)dateNaissance -> Date de naissance,
+                    (double)pv -> Prix de vente,
+                    (double)pvAncien -> Ancien prix de vente,
+                    (String)etatLib -> État,
+                    (String)totalEncaissement -> Total des encaissements,
+                    (double)depense -> Dépense,
+                - **Répond uniquement par un tableau JSON de chaînes**, rien d'autre. Exemple de format attendu :
+                
+                ["Prix de vente", "Unité", "Ancien prix de vente", "Date de demande", "Date"]
+                Aucune explication, aucun objet, juste le tableau JSON.
+                """.formatted(mapping, String.join(", ", fields));
+            case ConstantesApj.FILTRE -> """
+                Pour la classe Java "%s", génère uniquement des libellés lisibles en français pour ces attributs : %s.
+                
+                - Chaque libellé doit correspondre à un attribut.
+                - Transforme les noms camelCase en mots séparés.
+                - Mets la première lettre de chaque libellé en majuscule.
+                - Adapte automatiquement les mots pour qu'ils soient compréhensibles par un utilisateur final en français.
+                - Ne crée pas de synonymes complexes ou inventés.
+                - Conserve l'ordre des attributs.
+                - Le libellé doit correspondre au sens du mot.
+                - Si un attribut se termine par "1" ou "2" et qu'ils forment une paire (exemple : pv1, pv2),
+                alors :
+                - l'attribut avec "1" correspond au minimum → libellé terminé par "min"
+                - l'attribut avec "2" correspond au maximum → libellé terminé par "max"
+                Exemple :
+                pv1 -> Prix de vente min
+                pv2 -> Prix de vente max
+                
+                - Voici plusieurs exemples :
+                (String)idOrigine -> Id Origine
+                (String)idClient -> Id Client
+                (String)idPompisteLib -> Pompiste
+                (Date)dateNaissance -> Date de naissance
+                (double)pv -> Prix de vente
+                (double)pvAncien -> Ancien prix de vente
+                (String)etatLib -> État
+                (String)totalEncaissement -> Total des encaissements
+                (double)depense -> Dépense
+                
+                - **Répond uniquement par un tableau JSON de chaînes**, rien d'autre.
+                Exemple de format attendu :
+                
+                ["Prix de vente", "Unité", "Ancien prix de vente", "Date de demande", "Date"]
+                
+                Aucune explication, aucun objet, juste le tableau JSON.
+                """.formatted(mapping, String.join(", ", fields));
+            case ConstantesApj.RECAP -> """
+                Pour la classe Java "%s", génère uniquement des libellés lisibles en français
+                pour une section de récapitulation affichée au-dessus d'un tableau de liste,
+                à partir de ces attributs : %s.
+                
+                Objectif :
+                - Produire des libellés de synthèse (récapitulatif), pas des libellés de colonnes.
+                
+                Règles :
+                - Les libellés doivent être compréhensibles par un utilisateur final.
+                - Ne crée pas de synonymes complexes ou inventés.
+                - Conserve l'ordre des attributs.
+                
+                Règles de génération :
+                  → commencer le libellé par "Somme ".
+                - Adapter automatiquement le reste du libellé en français correct.
+                
+                Exemples :
+                - pv → Somme des prix de vente
+                - montantTtc → Somme des montants TTC
+                - totalEncaissement → Somme des encaissements
+                
+                - **Répond uniquement par un tableau JSON de chaînes**, rien d'autre.
+                
+                Exemple de format attendu :
+                ["Somme des prix de vente", "Somme des montants TTC"]
+                
+                Aucune explication, aucun objet, juste le tableau JSON.
+                """.formatted(mapping, String.join(", ", fields));
+            default -> "";
+        };
+
+        return askForLabel(fields,prompt);
+    }
 
 }

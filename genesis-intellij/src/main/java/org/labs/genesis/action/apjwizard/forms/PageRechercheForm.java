@@ -162,7 +162,7 @@ public class PageRechercheForm {
             .addActionGroup(filtreGroup)
             .removeAction(() -> removeSelectedFilterRow(filtreTable, filtreTableModel))
             .customButtonText("Générer les libellés via l'IA")
-            .customButtonAction(() -> askAI(filtreTableModel, filtreTable))
+            .customButtonAction(() -> askAI(filtreTableModel, filtreTable,ConstantesApj.FILTRE))
             .build().init();
     }
 
@@ -268,11 +268,11 @@ public class PageRechercheForm {
             .addAction((t) -> showAddFieldsRecapAndAddRows(recapTableModel))
             .removeAction(() -> removeSelectedRow(recapTable, recapTableModel, availableRecapFieldsMap))
             .customButtonText("Générer les libellés via l'IA")
-            .customButtonAction(() -> askAI(recapTableModel, recapTable))
+            .customButtonAction(() -> askAI(recapTableModel, recapTable,ConstantesApj.RECAP))
             .build().init();
     }
 
-    private void askAI(DefaultTableModel model, JBTable table) {
+    private void askAI(DefaultTableModel model, JBTable table,String type) {
         int[] selectedRows = table.getSelectedRows();
         ApjField[] fields = new ApjField[selectedRows.length];
         for (int i = 0; i < selectedRows.length; i++) {
@@ -284,7 +284,7 @@ public class PageRechercheForm {
         LlmApiClient llmClient = new LlmApiClient();
         String[] libelles = new String[selectedRows.length];
         try {
-            libelles = llmClient.askForLabel(mapping, fields);
+            libelles = llmClient.askForLabel(mapping, fields,type);
         } catch (Exception ignored) {
 
         }
@@ -320,7 +320,7 @@ public class PageRechercheForm {
             .addAction((t) -> showAddFieldsTabAndAddRows(tableauTableModel))
             .removeAction(() -> removeSelectedRow(tableauTable, tableauTableModel, availableTabFieldsMap))
             .customButtonText("Générer les libellés via l'IA")
-            .customButtonAction(() -> askAI(tableauTableModel, tableauTable))
+            .customButtonAction(() -> askAI(tableauTableModel, tableauTable,ConstantesApj.STANDARD))
             .build().init();
     }
 

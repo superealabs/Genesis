@@ -277,7 +277,7 @@ public class PageRechercheGroupeForm {
         LlmApiClient llmClient = new LlmApiClient();
         String[] libelles = new String[selectedRows.length];
         try {
-            libelles = llmClient.askForLabel(mapping, fields);
+            libelles = llmClient.askForLabel(mapping, fields,ConstantesApj.STANDARD);
         } catch (Exception ignored) {
 
         }

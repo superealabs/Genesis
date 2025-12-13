@@ -110,7 +110,7 @@ public class GenesisAPJCoreTest {
         };
         String mapping = "produits.Historique";
         LlmApiClient llmClient = new LlmApiClient();
-        String[] libelles = llmClient.askForLabel(mapping, fields);
+        String[] libelles = llmClient.askForLabel(mapping, fields,ConstantesApj.STANDARD);
 
         for (String libelle : libelles) {
             System.out.println(libelle);

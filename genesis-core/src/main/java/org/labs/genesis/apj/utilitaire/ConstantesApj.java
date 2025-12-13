@@ -19,6 +19,10 @@ public class ConstantesApj {
     public static final String INTERVALLE = "Intervalle";
     public static final String AUTO_COMPLETE = "AutoComplete";
 
+    public static final String FILTRE = "Filtre";
+    public static final String RECAP = "Recap";
+    public static final String RECAP_GROUPE = "RecapGroupe";
+    public static final String STANDARD = "Standard";
 
     public static final int PAGE_RECHERCHE_ID = 1;
     public static final int PAGE_CONSULTE_ID = 2;
