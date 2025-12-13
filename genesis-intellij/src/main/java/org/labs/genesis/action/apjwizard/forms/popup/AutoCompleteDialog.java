@@ -19,13 +19,13 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.lang.reflect.Field;
 import java.net.URLClassLoader;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 @Getter
 @Setter
 public class AutoCompleteDialog extends JDialog{
     private JComboBox<String> affCombo;
-    private JComboBox<String> valCombo;
     private JTextField mappingField;
     private JButton chooseClassButton;
     private JTextField nomTableField;
@@ -44,13 +44,18 @@ public class AutoCompleteDialog extends JDialog{
     private final Project project;
     private DefaultTableModel tableModel;
     private JBTable tableValues;
+    private LinkedHashMap<String, ApjField> allFieldsMap = new LinkedHashMap<>();
+    private String[] champRetourOptions = new String[0];
+    private String[] mappingOptions = new String[0];
 
-    public AutoCompleteDialog(JComponent parent, ApjGenerationContext context, Project project) {
+
+    public AutoCompleteDialog(JComponent parent, ApjGenerationContext context, Project project,LinkedHashMap<String, ApjField> allFieldsMap) {
         super(SwingUtilities.getWindowAncestor(parent));
         this.context = context;
         this.project = project;
         setModal(true);
         setTitle("AutoComplete");
+        this.allFieldsMap = allFieldsMap;
         setContentPane(mainPanel);
         pack();
         setLocationRelativeTo(parent);
@@ -122,19 +127,17 @@ public class AutoCompleteDialog extends JDialog{
         tableValues = initTable(tableValues, tableModel, scroll);
         tableValues.setModel(tableModel);
         tableValues.getEmptyText().setText("Aucune ligne à afficher");
-        String[] champRetourOptions = {"id", "val", "desce"};
-        String[] mappingOptions = {"id", "val", "desce"};
-        tableValues.getColumnModel().getColumn(0)
-                .setCellEditor(new ComboCellEditor(champRetourOptions));
-
+        String[] mappingOptions = allFieldsMap.keySet().toArray(new String[0]);
         tableValues.getColumnModel().getColumn(1)
             .setCellEditor(new ComboCellEditor(mappingOptions));
         TableToolbarHelper.builder()
             .table(tableValues)
             .panel(tablePanel)
-            .addAction((t) -> {
-                tableModel.addRow(new Object[]{"", ""});
-            })
+                .addAction((t) -> {
+                    String defaultChamp = champRetourOptions.length > 0 ? champRetourOptions[0] : "";
+                    String defaultMapping = mappingOptions.length > 0 ? mappingOptions[0] : "";
+                    tableModel.addRow(new Object[]{defaultChamp, defaultMapping});
+                })
             .removeAction(() -> {
                 int selected = tableValues.getSelectedRow();
                 if (selected >= 0) tableModel.removeRow(selected);
@@ -148,22 +151,46 @@ public class AutoCompleteDialog extends JDialog{
 
     public String getDetails() {
         if (!validated) return null;
-
+        if (tableValues.isEditing()) {
+            tableValues.getCellEditor().stopCellEditing();
+        }
         String mapping = mappingField.getText().trim();
         String table = nomTableField.getText().trim();
-        String aff = String.valueOf(affCombo.getSelectedItem());
-        String val = String.valueOf(valCombo.getSelectedItem());
-
-        return "{" + mapping + "," + table + "," + aff + "," + val + "}";
+        StringBuilder result = new StringBuilder("{" + mapping + "," + table + "}");
+        StringBuilder blocAff = new StringBuilder("{");
+        StringBuilder blocVal = new StringBuilder("{");
+        boolean first = true;
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            String a = tableModel.getValueAt(i, 0) != null ? tableModel.getValueAt(i, 0).toString().trim() : "";
+            String v = tableModel.getValueAt(i, 1) != null ? tableModel.getValueAt(i, 1).toString().trim() : "";
+            if (a.isEmpty() && v.isEmpty()) continue;
+            if (a.isEmpty()) a = v;
+            if (v.isEmpty()) v = a;
+            if (!first) {
+                blocAff.append(",");
+                blocVal.append(",");
+            } else {
+                first = false;
+            }
+            blocAff.append(a);
+            blocVal.append(v);
+        }
+        blocAff.append("}");
+        blocVal.append("}");
+        result.append(blocAff).append(blocVal);
+        if (inclurePageDInsertionCheckBox.isSelected()) {
+            String pageInsert = pageInsertionField.getText().trim();
+            String affComboVal = affCombo.getSelectedItem() != null ? affCombo.getSelectedItem().toString().trim() : "";
+            result.append("{").append(pageInsert).append(",").append(affComboVal).append("}");
+        }
+        return result.toString();
     }
-
 
     private void initEvents() {
         okButton.addActionListener(e -> {
             if (mappingField.getText().trim().isEmpty()) return;
             if (nomTableField.getText().trim().isEmpty()) return;
             if (affCombo.getSelectedItem() == null) return;
-            if (valCombo.getSelectedItem() == null) return;
 
             validated = true;
             dispose();
@@ -175,15 +202,20 @@ public class AutoCompleteDialog extends JDialog{
         });
     }
 
-
     public void setFields(List<String> fieldNames) {
         affCombo.removeAllItems();
-        valCombo.removeAllItems();
-
         for (String f : fieldNames) {
             affCombo.addItem(f);
-            valCombo.addItem(f);
         }
+        champRetourOptions = fieldNames.toArray(new String[0]);
+
+        if (tableValues == null || tableValues.getColumnModel().getColumnCount() == 0) {
+            return;
+        }
+
+        tableValues.getColumnModel().getColumn(0)
+                .setCellEditor(new ComboCellEditor(champRetourOptions));
     }
+
 
 }

@@ -108,7 +108,7 @@ public class ListDetailsDialog extends JDialog{
     }
 
 
-    public void setFields(java.util.List<String> fieldNames) {
+    public void setFields(List<String> fieldNames) {
         affCombo.removeAllItems();
         valCombo.removeAllItems();
 

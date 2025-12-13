@@ -8,7 +8,6 @@ import lombok.Setter;
 public class Liste {
     private String nom;
     private int index;
-    private String type;
     private String mapping;
     private String packageMapping;
     private String nomTable;

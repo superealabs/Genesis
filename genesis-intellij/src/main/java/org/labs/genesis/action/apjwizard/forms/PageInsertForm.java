@@ -32,6 +32,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.net.URLClassLoader;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 @Getter
@@ -60,6 +61,7 @@ public class PageInsertForm {
     private ApjField[] dataForm;
     private final ApjGenerationContext context;
     private final Project project;
+    private LinkedHashMap<String, ApjField> allFieldsMap = new LinkedHashMap<>();
 
     public PageInsertForm(ApjGenerationContext context, Project project) {
         this.context = context;
@@ -171,7 +173,7 @@ public class PageInsertForm {
             details = result;
             withDetail = true;
         } else if (type.equalsIgnoreCase(ConstantesApj.AUTO_COMPLETE)) {
-            AutoCompleteDialog listeDialog = new AutoCompleteDialog(mainPanel, context, project);
+            AutoCompleteDialog listeDialog = new AutoCompleteDialog(mainPanel, context, project,allFieldsMap);
             listeDialog.showDialog();
             String result = listeDialog.getDetails();
             if (result == null) return;
@@ -214,8 +216,10 @@ public class PageInsertForm {
     }
 
     private void loadAllFields(List<ApjField> fields) {
+        allFieldsMap.clear();
         removeAllRows();
         for (ApjField field : fields) {
+            allFieldsMap.put(field.getNom(), field);
             String fieldName = field.getNom();
             formTableModel.addRow(new Object[]{Boolean.TRUE,fieldName, StringUtils.majStart(fieldName),null,ConstantesApj.SIMPLE,null});
         }

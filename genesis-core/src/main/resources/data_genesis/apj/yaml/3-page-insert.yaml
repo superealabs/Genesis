@@ -60,6 +60,11 @@ jspBlock : |
       pi.getFormu().getChamp("${this.nom}").setVisible(${this.isVisible});
       {{/if}}{{removeLine}}
       {{/each}}{{removeLine}}
+      {{#each champs}}
+      {{#if this.isAutoComplete}}
+      pi.getFormu().getChamp("${this.nom}")${this.autoCompleteDeclaration};
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
    
       String[] ordre = {${ordre}};
       pi.getFormu().setOrdre(ordre);

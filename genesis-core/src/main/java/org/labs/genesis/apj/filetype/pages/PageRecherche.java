@@ -144,7 +144,7 @@ public class PageRecherche extends ApjFile {
             return;
         }
         makeRecapAndTableau();
-        super.makeListe();
+        super.makeListeAndAutoComplete();
     }
 
 }

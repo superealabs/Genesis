@@ -60,6 +60,6 @@ public class PageInsertMultiple extends ApjFile {
     }
 
     public void build(){
-        super.makeListe();
+        super.makeListeAndAutoComplete();
     }
 }

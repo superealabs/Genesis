@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.apj.component.ApjField;
+import org.labs.genesis.apj.component.AutoComplete;
 import org.labs.genesis.apj.component.Liste;
 import org.labs.genesis.apj.utilitaire.ConstantesApj;
 import org.labs.utils.StringUtils;
@@ -85,10 +86,12 @@ public abstract class ApjFile implements ApjMetadataProvider{
         fieldMap.put("attLien", field.getAttLien());
         fieldMap.put("isVisible", field.isVisible());
         fieldMap.put("isWithLien", field.isWithLien());
+        fieldMap.put("isAutoComplete", field.isAutoComplete());
+        fieldMap.put("autoCompleteDeclaration", field.getAutoCompleteDeclaration());
         return fieldMap;
     }
 
-    public void makeListe(){
+    public void makeListeAndAutoComplete(){
         this.getListes().clear();
         int index = 0;
         List<Map<String, String>> imports = new ArrayList<>();
@@ -121,6 +124,12 @@ public abstract class ApjFile implements ApjMetadataProvider{
                 liste.setIndex(index);
                 index++;
                 this.getListes().add(liste);
+            } else if (field.getType().equalsIgnoreCase(ConstantesApj.AUTO_COMPLETE)){
+                AutoComplete autoComplete = new AutoComplete();
+                autoComplete.setDetails(field.getDetails());
+                autoComplete.build();
+                field.setAutoComplete(true);
+                field.setAutoCompleteDeclaration(autoComplete.getDeclaration());
             }
         }
         if (!this.getListes().isEmpty()) {

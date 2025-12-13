@@ -53,6 +53,6 @@ public class PageInsert extends ApjFile {
     }
 
     public void build(){
-        super.makeListe();
+        super.makeListeAndAutoComplete();
     }
 }

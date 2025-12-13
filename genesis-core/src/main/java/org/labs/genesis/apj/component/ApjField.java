@@ -21,6 +21,8 @@ public class ApjField {
     private boolean visible;
     private boolean withLien;
     private boolean withAutre;
+    private boolean isAutoComplete;
+    private String autoCompleteDeclaration;
 
     public ApjField() {
 

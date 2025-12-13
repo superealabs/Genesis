@@ -30,6 +30,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.lang.reflect.Field;
 import java.net.URLClassLoader;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 @Getter
@@ -67,6 +68,7 @@ public class PageInsertMultipleForm {
     private ApjField[] dataForm;
     private final ApjGenerationContext context;
     private final Project project;
+    private LinkedHashMap<String, ApjField> allFieldsMap = new LinkedHashMap<>();
 
     public PageInsertMultipleForm(ApjGenerationContext context, Project project) {
         this.context = context;
@@ -214,7 +216,7 @@ public class PageInsertMultipleForm {
             details = result;
             withDetail = true;
         } else if (type.equalsIgnoreCase(ConstantesApj.AUTO_COMPLETE)) {
-            AutoCompleteDialog listeDialog = new AutoCompleteDialog(mainPanel, context, project);
+            AutoCompleteDialog listeDialog = new AutoCompleteDialog(mainPanel, context, project,allFieldsMap);
             listeDialog.showDialog();
             String result = listeDialog.getDetails();
             if (result == null) return;
