@@ -15,6 +15,9 @@ public class PageRecherche extends ApjFile {
     private String listeCrt;
     private String listeInt;
     private String libEntete;
+    private String lienTableau;
+    private String colonneLien;
+    private String attributLien;
     private String enteteRecap;
     private String colSomme;
     private String libEnteteAffiche;
@@ -22,6 +25,7 @@ public class PageRecherche extends ApjFile {
     private ApjField[] tableau;
     private boolean withColSomme = false;
     private boolean isOnglet = false;
+    private boolean withLien = false;
 
     public PageRecherche(){
 
@@ -53,6 +57,12 @@ public class PageRecherche extends ApjFile {
             map.put("listeSize", this.getListes().size());
             map.put("listes", this.getListesList());
             map.put("packageImports", this.getPackageImports());
+        }
+        if (this.isWithLien()){
+            map.put("lienTableau", this.getLienTableau());
+            map.put("colonneLien", this.getColonneLien());
+            map.put("attributLien", this.getAttributLien());
+            map.put("isWithLien", this.isWithLien());
         }
         return map;
     }
@@ -95,6 +105,28 @@ public class PageRecherche extends ApjFile {
         for (int i = 0; i < data.length; i++){
             libEntete[i] = data[i].getNom();
             libEnteteAffiche[i] = data[i].getLibelle();
+        }
+
+        List<ApjField> withLien = new ArrayList<>();
+        for (ApjField field : data){
+            if (field.isWithLien()){
+                withLien.add(field);
+            }
+        }
+        String[] lienTableau = new String[withLien.size()];
+        String[] colonneLien = new String[withLien.size()];
+        String[] attributLien = new String[withLien.size()];
+        for (int i = 0; i < withLien.size(); i++){
+            ApjField field = withLien.get(i);
+            lienTableau[i] = "pr.getLien() + \"?but="+field.getLien()+".jsp\"";
+            colonneLien[i] = field.getNom();
+            attributLien[i] = field.getAttLien();
+        }
+        if (!withLien.isEmpty()){
+            this.setLienTableau(StringUtils.join(lienTableau));
+            this.setColonneLien(StringUtils.quoteAndJoin(colonneLien));
+            this.setAttributLien(StringUtils.quoteAndJoin(attributLien));
+            this.setWithLien(true);
         }
         this.setLibEntete(StringUtils.quoteAndJoin(libEntete));
         this.setLibEnteteAffiche(StringUtils.quoteAndJoin(libEnteteAffiche));

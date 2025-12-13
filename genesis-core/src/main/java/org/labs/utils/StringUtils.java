@@ -103,8 +103,16 @@ public class StringUtils {
         }
         return Arrays.stream(array)
                 .map(s -> "\"" + s + "\"")
-                .collect(Collectors.joining(", "));
+                .collect(Collectors.joining(","));
     }
+
+    public static String join(String[] array) {
+        if (array == null || array.length == 0) {
+            return "";
+        }
+        return String.join(",", array);
+    }
+
 
     public static String escapeAccents(String input) {
         if (input == null) return null;

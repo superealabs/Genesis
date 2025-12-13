@@ -24,8 +24,7 @@ jspBlock : |
       pr.setUtilisateur((user.UserEJB) session.getValue("u"));
       pr.setLien((String) session.getValue("lien"));
       pr.setApres("${apres}");
-  
-      {{#if isWithListe}}{{removeLine}}
+      {{#if isWithListe}}
       Liste[] liste = new Liste[${listeSize}];
       {{#each listes}}
       {{#if this.isOuiNon}}
@@ -43,11 +42,9 @@ jspBlock : |
       {{/each}}{{removeLine}}
       pr.getFormu().changerEnChamp(liste);
       {{/if}}{{removeLine}}
-  
       {{#each champs}}
       pr.getFormu().getChamp("${this.nom}").setLibelle("${this.libelle}");
-      {{/each}}{{removeLine}}
-
+      {{/each}}
       String[] colSomme = ${colSomme};
       pr.creerObjetPage(libEntete, colSomme);
       {{#if isWithColSomme}}
@@ -55,6 +52,15 @@ jspBlock : |
       pr.getTableauRecap().setLibeEntete(enteteRecap);
       {{else}}{{removeLine}}{{/if}}{{removeLine}}
 
+      {{#if isWithLien}}{{removeLine}}
+      String[] lienTableau = {${lienTableau}};
+      String[] colonneLien = {${colonneLien}};
+      String[] attributLien = {${attributLien}};
+      pr.getTableau().setLien(lienTableau);
+      pr.getTableau().setColonneLien(colonneLien);
+      pr.getTableau().setAttLien(attributLien);
+
+      {{/if}}{{removeLine}}
       String[] libEnteteAffiche = {${libEnteteAffiche}};
       pr.getTableau().setLibelleAffiche(libEnteteAffiche);
   %>
