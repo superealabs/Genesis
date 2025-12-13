@@ -10,6 +10,7 @@ import org.labs.genesis.action.apjwizard.forms.PageInsertForm;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.filetype.pages.PageInsert;
 import org.labs.genesis.apj.generator.ApjFileGenerator;
+import org.labs.utils.StringUtils;
 
 
 import javax.swing.*;
@@ -80,13 +81,14 @@ public class PageInsertWizardStep implements WizardStep {
         pi.setNomTable(nomTable);
         pi.setTitre(titre);
         pi.setTitreUpdate(titreUpdate);
-        pi.setApres(pi.getFileName());
+        String fullName = pi.getFileName() + "." + pi.getExtension();
+        String filePath = context.getLocationDir() + "/" + fullName;
+        pi.setApres(StringUtils.relativeOrFilename(context.getRacinePage(),filePath));
         pi.setChamps(pageInsertForm.getDataForm());
         pi.build();
         try {
             generator.generateApjFile(context);
-            String fullName = pi.getFileName() + "." + pi.getExtension();
-            String filePath = context.getLocationDir() + "/" + fullName;
+
 
             VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
             if (vf != null) {

@@ -20,6 +20,15 @@ jspBlock : |
       String[] colSomme = null;
       pr.creerObjetPage(libEntete, colSomme);
 
+      {{#if isWithLien}}{{removeLine}}
+      String[] lienTableau = {${lienTableau}};
+      String[] colonneLien = {${colonneLien}};
+      String[] attributLien = {${attributLien}};
+      pr.getTableau().setLien(lienTableau);
+      pr.getTableau().setColonneLien(colonneLien);
+      pr.getTableau().setAttLien(attributLien);
+
+      {{/if}}{{removeLine}}
       String[] libEnteteAffiche = {${libEnteteAffiche}};
       pr.getTableau().setLibelleAffiche(libEnteteAffiche);
   %>

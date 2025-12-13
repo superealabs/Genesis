@@ -51,7 +51,7 @@ public class AutoComplete {
             this.setInsert(true);
 
             declaration = String.format(
-                    ".setPageAppelCompleteInsert(\"%s\",\"id\",\"%s\",\"%s\",\"%s\",\"%s\",\"id;%s\")",
+                    ".setPageAppelCompleteInsert(\"%s\",\"id\",\"%s\",\"%s\",\"%s\",\"%s.jsp\",\"id;%s\")",
                     this.getMapping(), this.getNomTable(), this.getRetour(), this.getRetourMapping(),
                     this.getPageInsert(), this.getVal()
             );
