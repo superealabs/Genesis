@@ -327,7 +327,7 @@ public class LlmApiClient {
                 
                 ["Prix de vente", "Unité", "Ancien prix de vente", "Date de demande", "Date"]
                 Aucune explication, aucun objet, juste le tableau JSON.
-                """.formatted(mapping, String.join(", ", fields));
+                """.formatted(mapping, String.join(",", fields));
             case ConstantesApj.FILTRE -> """
                 Pour la classe Java "%s", génère uniquement des libellés lisibles en français pour ces attributs : %s.
                 
@@ -363,7 +363,7 @@ public class LlmApiClient {
                 ["Prix de vente", "Unité", "Ancien prix de vente", "Date de demande", "Date"]
                 
                 Aucune explication, aucun objet, juste le tableau JSON.
-                """.formatted(mapping, String.join(", ", fields));
+                """.formatted(mapping, String.join(",", fields));
             case ConstantesApj.RECAP -> """
                 Pour la classe Java "%s", génère uniquement des libellés lisibles en français
                 pour une section de récapitulation affichée au-dessus d'un tableau de liste,
@@ -392,7 +392,36 @@ public class LlmApiClient {
                 ["Somme des prix de vente", "Somme des montants TTC"]
                 
                 Aucune explication, aucun objet, juste le tableau JSON.
-                """.formatted(mapping, String.join(", ", fields));
+                """.formatted(mapping, String.join(",", fields));
+            case ConstantesApj.RECAP_GROUPE -> """
+                Pour la classe Java "%s" :
+                
+                Tu es un assistant chargé de générer des **libellés clairs en français** pour une section de récapitulation au-dessus d’un tableau d’analyse de données pour la classe Java "%s".  
+                
+                Le tableau est organisé ainsi :
+                - Les colonnes peuvent être groupées par région, devise, ou autre critère.
+                - Les lignes correspondent à des attributs mesurables, par exemple : pv, montantTtc, montantTva.
+                - Les chiffres entre parenthèses dans les attributs indiquent la **position réelle de la ligne dans le tableau**.
+                
+                Règles :
+                - Ne crée pas de synonymes complexes ou inventés.
+                - Conserve l'ordre des attributs.
+                - Chaque libellé doit :
+                  1. Être compréhensible par un utilisateur final.
+                  2. Commencer par "La Xème ligne correspond à …", en respectant la position indiquée par le chiffre entre parenthèses.
+                  3. Indiquer la **somme** de l’attribut correspondant.
+                  4. Conserver l’ordre exact des attributs fournis.
+                
+                Tu dois répondre uniquement par un **tableau JSON de chaînes**, rien d’autre, sans explications ni commentaires.
+                
+                Exemple de format attendu :
+                [
+                  "La deuxième ligne correspond à la somme des quantités",
+                  "La troisième ligne correspond à la somme des montants TTC",
+                  "La cinquième ligne correspond à la somme de la TVA"
+                ]  
+                car les attributs reçus étaient : quantité (2), montantTtc (3), montantTva (5).
+                """.formatted(mapping, String.join(",", fields));
             default -> "";
         };
 

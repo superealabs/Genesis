@@ -67,7 +67,7 @@ public class PageRecherche extends ApjFile {
         return map;
     }
 
-    private List<Map<String, Object>> getChampsList() {
+    public List<Map<String, Object>> getChampsList() {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ApjField field : this.getChamps()) {
             Map<String, Object> fieldMap = getApjFieldHashMap(field);

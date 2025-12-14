@@ -4,10 +4,7 @@ import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.filetype.ApjFile;
 import org.labs.genesis.apj.filetype.mapping.Mapping;
 import org.labs.genesis.apj.filetype.mapping.MappingMereFille;
-import org.labs.genesis.apj.filetype.pages.PageConsulte;
-import org.labs.genesis.apj.filetype.pages.PageInsert;
-import org.labs.genesis.apj.filetype.pages.PageInsertMultiple;
-import org.labs.genesis.apj.filetype.pages.PageRecherche;
+import org.labs.genesis.apj.filetype.pages.*;
 import org.labs.genesis.apj.utilitaire.ConstantesApj;
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.engine.GenesisTemplateEngine;
@@ -31,7 +28,7 @@ public class ApjFileGenerator {
             PageInsertMultiple pim = FileUtils.fromYaml(PageInsertMultiple.class, ConstantesApj.PAGE_INSERT_MULTIPLE);
             PageRecherche pro = FileUtils.fromYaml(PageRecherche.class, ConstantesApj.PAGE_RECHERCHE_ONGLET);
             pro.setOnglet(true);
-            PageRecherche prg = FileUtils.fromYaml(PageRecherche.class, ConstantesApj.PAGE_RECHERCHE_GROUPE);
+            PageRechercheGroupe prg = FileUtils.fromYaml(PageRechercheGroupe.class, ConstantesApj.PAGE_RECHERCHE_GROUPE);
             Mapping mapping = FileUtils.fromYaml(Mapping.class, ConstantesApj.MAPPING);
             MappingMereFille mappingFille = FileUtils.fromYaml(MappingMereFille.class, ConstantesApj.MAPPING_MERE_FILLE);
 

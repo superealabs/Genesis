@@ -4,35 +4,86 @@ template : "page"
 extension : "jsp"
 imports : |
   <%@ page pageEncoding="UTF-8" contentType="text/html; charset=UTF-8" %>
-  <%@ page import="affichage.PageRecherche"%>
+  <%@ page import="affichage.PageRechercheGroupe"%>
   <%@ page import="${packageMapping}" %>
+  {{#if isWithListe}}{{removeLine}}
+  <%@ page import="affichage.Liste"%>
+  {{#each packageImports}}
+  <%@ page import="${this.package}" %>
+  {{/each}}{{removeLine}}
+  {{/if}}{{removeLine}}
 jspBlock : |
   <% try{ 
       ${mapping} o = new ${mapping}();
       o.setNomTable("${nomTable}");
-      String[] listeCrt = {};
-      String[] listeInt = {};
-      String[] libEntete = {${libEntete}};
-      PageRecherche pr = new PageRecherche(o, request, listeCrt, listeInt, 4, libEntete, libEntete.length);
+      String[] listeCrt = {${listeCrt}};
+      String[] listeInt = {${listeInt}};
+      String[] pourcentage = {};
+      String[] colGr = {"${colGr}"};
+      String[] colGrCol = {"${colGrCol}"};
+      String[] somDefaut = ${somDefaut};
+      PageRechercheGroupe pr = new PageRechercheGroupe(o, request, listeCrt, listeInt, 4, colGr, somDefaut, pourcentage, colGr.length , somDefaut.length);
       pr.setUtilisateur((user.UserEJB) session.getValue("u"));
       pr.setLien((String) session.getValue("lien"));
+      pr.setTitre("${titre}");
+      pr.setApres("${apres}");
+      {{#if isWithListe}}
+      Liste[] liste = new Liste[${listeSize}];
+      {{#each listes}}
+      {{#if this.isOuiNon}}
+      liste[${this.index}] = new Liste("${this.nom}");
+      liste[${this.index}].makeListeOuiNon();
+      {{elseIf this.isListeString}}
+      String[] aff${this.index} = {${this.col}};
+      String[] val${this.index} = {${this.val}};
+      liste[${this.index}] = new Liste("test",aff${this.index}, val${this.index});
+      {{else}}
+      ${this.mapping} liste${this.index} = new ${this.mapping}();
+      liste${this.index}.setNomTable("${this.nomTable}");
+      liste[${this.index}] = new Liste("${this.nom}",liste${this.index},"${this.col}","${this.val}");
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+      pr.getFormu().changerEnChamp(liste);
+      {{/if}}{{removeLine}}
+      {{#each champs}}
+      pr.getFormu().getChamp("${this.nom}").setLibelle("${this.libelle}");
+      {{/each}}{{removeLine}}
   
-      String[] colSomme = null;
-      pr.creerObjetPage(libEntete, colSomme);
-
-      String[] libEnteteAffiche = {${libEnteteAffiche}};
-      pr.getTableau().setLibelleAffiche(libEnteteAffiche);
+      pr.setNpp(500);
+      pr.creerObjetPageCroise(colGrCol,pr.getLien()+"?but=${lienColGrCol}.jsp");
+      String[] lienTableau = {};
+      pr.getTableau().setLien(lienTableau);
+      pr.getTableau().setColonneLien(somDefaut);
   %>
 
 html : |
-  <div class="box-body">
-      <%  if(pr.getTableau().getHtml() != null){
+  <div class="content-wrapper">
+      <section class="content-header">
+          <h1><%=pr.getTitre()%></h1>
+      </section>
+      <section class="content">
+          <form action="<%=pr.getLien()%>?but=<%= pr.getApres() %>" method="post" name="analyse" id="analyse">
+              <%
+                  out.println(pr.getFormu().getHtmlEnsemble());
+              %>
+          </form>
+          <ul>
+              {{#each somDefauts}}
+              <li>${this.libelle}</li>
+              {{/each}}{{removeLine}}
+          </ul>
+          <br>
+          <%
               out.println(pr.getTableau().getHtml());
-          } else{ %>
-              <center><h4>Aucune donn&eacute;e trouv&eacute;e</h4></center>
-      <%  } %>
+              out.println(pr.getBasPage());
+          %>
+      </section>
   </div>
 basPage : |
   <% } catch (Exception e) {
     e.printStackTrace();
-  } %>
+  %>
+  <script language="JavaScript"> alert('<%=e.getMessage()%>');
+      history.back();
+  </script>
+  <% }%>
