@@ -14,18 +14,12 @@ public class MergeTest {
 
     @Test
     public void testMerge() throws IOException {
-        File base = new File("/home/itu-chan-alex/Stage/generated/FanambyPresenceBackup/FanambyPresence/src/main/java/mg/akademia/fanambypresence/services/DefaultMatchFootService.java");
-        File user = new File("/home/itu-chan-alex/Stage/generated/FanambyPresenceBackup/FanambyPresence/src/main/java/mg/akademia/fanambypresence/services/DefaultMatchFootService.java");
-        File theirs = new File("/home/itu-chan-alex/Stage/generated/FanambyPresenceCopy/FanambyPresenceCopy/src/main/java/mg/akademia/fanambypresencecopy/services/DefaultMatchFootService.java");
+        File base = new File("/home/itu-chan-alex/Stage/generated/ProjectBackup/Project/src/main/java/mg/akademia/fanambypresence/services/DefaultMatchFootService.java");
+        File user = new File("/home/itu-chan-alex/Stage/generated/ProjectBackup/Project/src/main/java/mg/akademia/fanambypresence/services/DefaultMatchFootService.java");
+        File theirs = new File("/home/itu-chan-alex/Stage/generated/ProjectCopy/ProjectCopy/src/main/java/mg/akademia/fanambypresencecopy/services/DefaultMatchFootService.java");
 
         FileMergeInput mergeInput = new FileMergeInput(base, user, theirs);
         MergeOutcome merged = MergeTool.merge(mergeInput, true);
-
-//        if (!merged.contains("<<<<<<<")) {
-//            Files.write(user.toPath(), merged.getBytes(StandardCharsets.UTF_8));
-//        } else {
-            Files.write(new File("/home/itu-chan-alex/Stage/generated/.conflicts/Test.conflict").toPath(), merged.mergedContent.getBytes(StandardCharsets.UTF_8));
-//        }
-
+        Files.write(new File("/home/itu-chan-alex/Stage/generated/.conflicts/Test.conflict").toPath(), merged.mergedContent.getBytes(StandardCharsets.UTF_8));
     }
 }

@@ -40,6 +40,7 @@ public class PostGenerationTest {
         try {
             ProjectGenerationContext context = syncGenerator.loadProjectContext(projectDirectory);
             syncGenerator.evaluateDatabaseChanges(context);
+            syncGenerator.generateProject(context);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
