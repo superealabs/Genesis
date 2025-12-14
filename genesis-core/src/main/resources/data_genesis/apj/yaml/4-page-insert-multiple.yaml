@@ -8,12 +8,9 @@ imports : |
   <%@ page import="user.UserEJB" %>
   <%@ page import="${packageMapping}" %>
   <%@ page import="${packageMappingFille}" %>
-  {{#if isWithListe}}{{removeLine}}
-  <%@ page import="affichage.Liste"%>
   {{#each packageImports}}
   <%@ page import="${this.package}" %>
   {{/each}}{{removeLine}}
-  {{/if}}{{removeLine}}
 jspBlock : |
   <% try{ 
       UserEJB u = (user.UserEJB) session.getValue("u");
@@ -66,11 +63,54 @@ jspBlock : |
       pi.getFormu().getChamp("${this.nom}").setVisible(${this.isVisible});
       {{/if}}{{removeLine}}
       {{/each}}{{removeLine}}
+      {{#each champs}}
+      {{#if this.isAutoComplete}}
+      pi.getFormu().getChamp("${this.nom}")${this.autoCompleteDeclaration};
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
   
-      // Data Fille
+      {{#if isWithListeFille}}{{removeLine}}
+      Liste[] listeFille = new Liste[${listeFilleSize}];
+      {{#each listesFille}}
+      {{#if this.isOuiNon}}
+      listeFille[${this.index}] = new Liste("${this.nom}");
+      listeFille[${this.index}].makeListeOuiNon();
+      {{elseIf this.isListeString}}
+      String[] aff${this.index} = {${this.col}};
+      String[] val${this.index} = {${this.val}};
+      listeFille[${this.index}] = new Liste("test",aff${this.index}, val${this.index});
+      {{else}}
+      ${this.mapping} listeFille${this.index} = new ${this.mapping}();
+      listeFille${this.index}.setNomTable("${this.nomTable}");
+      listeFille[${this.index}] = new Liste("${this.nom}",listeFille${this.index},"${this.col}","${this.val}");
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}{{removeLine}}
+      pi.getFormufle().changerEnChamp(listeFille);
+      {{/if}}{{removeLine}}
+
+      {{#each champsFille}}
+      {{#if this.isVisible}}
+      pi.getFormufle().getChamp("${this.nom}_0").setLibelle("${this.libelle}");
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+      {{#each champsFille}}
+      {{#if this.isWithAutre}}
+      Champ.setAutre(pi.getFormufle().getChampFille("${this.nom}"),"${this.autre}");
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+      {{#each champsFille}}
+      {{#if !this.isVisible}}
+      Champ.setVisible(pi.getFormufle().getChampMulitple("${this.nom}").getListeChamp(),${this.isVisible});
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+      {{#each champsFille}}
+      {{#if this.isAutoComplete}}
+      ${this.autoCompleteDeclaration};
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
   
-      String[] ordre = {${ordre}};
-      pi.getFormu().setOrdre(ordre);
+      String[] colOrdre = {${colOrdre}};
+      pi.getFormufle().setColOrdre(colOrdre);
   
       String acte = request.getParameter("acte");
       if(acte != null && acte.equalsIgnoreCase("update")){

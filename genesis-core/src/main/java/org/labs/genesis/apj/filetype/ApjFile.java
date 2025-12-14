@@ -32,10 +32,14 @@ public abstract class ApjFile implements ApjMetadataProvider{
     private String mapping;
     private String nomTable;
     private ApjField[] champs;
+    private ApjField[] champsFille;
     private String apres;
     private String ordre;
+    private String colOrdre;
     private List<Liste> listes = new ArrayList<>();
+    private List<Liste> listesFille = new ArrayList<>();
     private boolean withListe = false;
+    private boolean withListeFille = false;
     private List<Map<String, String>> packageImports = new ArrayList<>();
 
     @Override
@@ -57,8 +61,16 @@ public abstract class ApjFile implements ApjMetadataProvider{
     }
 
     public List<Map<String, Object>> getListesList(){
+        return getListesList(this.getListes());
+    }
+
+    public List<Map<String, Object>> getListesFilleList(){
+        return getListesList(this.getListesFille());
+    }
+
+    public List<Map<String, Object>> getListesList(List<Liste> listes){
         List<Map<String, Object>> listesMaps = new ArrayList<>();
-        for (Liste liste : this.getListes()) {
+        for (Liste liste : listes) {
             Map<String, Object> listeMap = getListeHashMap(liste);
             listesMaps.add(listeMap);
         }
@@ -92,10 +104,17 @@ public abstract class ApjFile implements ApjMetadataProvider{
     }
 
     public void makeListeAndAutoComplete(){
-        this.getListes().clear();
+        makeListeAndAutoComplete(this.getChamps(), this.getListes(),false);
+    }
+
+    public void makeListeAndAutoCompleteFille(){
+        makeListeAndAutoComplete(this.getChampsFille(), this.getListesFille(),true);
+    }
+
+    public void makeListeAndAutoComplete(ApjField[] fields,List<Liste> listes,boolean isFille){
+        listes.clear();
         int index = 0;
-        List<Map<String, String>> imports = new ArrayList<>();
-        for (ApjField field : this.getChamps()){
+        for (ApjField field : fields){
             if (field.getType() == null){
                 continue;
             }
@@ -105,7 +124,7 @@ public abstract class ApjFile implements ApjMetadataProvider{
                 liste.setIndex(index);
                 liste.setOuiNon(true);
                 index++;
-                this.getListes().add(liste);
+                listes.add(liste);
             } else if (field.getType().equalsIgnoreCase(ConstantesApj.LISTE_STRING)){
                 Liste liste = new Liste();
                 liste.setNom(field.getNom());
@@ -113,28 +132,45 @@ public abstract class ApjFile implements ApjMetadataProvider{
                 liste.setIndex(index);
                 liste.setListeString(true);
                 index++;
-                this.getListes().add(liste);
+                listes.add(liste);
             } else if (field.getType().equalsIgnoreCase(ConstantesApj.LISTE)){
                 Liste liste = new Liste();
                 liste.setNom(field.getNom());
                 liste.buildByDetails(field.getDetails());
-                Map<String, String> item = new HashMap<>();
-                item.put("package", liste.getPackageMapping());
-                imports.add(item);
+                this.addPackageImport(liste.getPackageMapping());
                 liste.setIndex(index);
                 index++;
-                this.getListes().add(liste);
+                listes.add(liste);
             } else if (field.getType().equalsIgnoreCase(ConstantesApj.AUTO_COMPLETE)){
                 AutoComplete autoComplete = new AutoComplete();
                 autoComplete.setDetails(field.getDetails());
+                autoComplete.setNom(field.getNom());
+                autoComplete.setFille(isFille);
+                if (isFille){
+                    this.addPackageImport("affichage.Champ");
+                }
                 autoComplete.build();
                 field.setAutoComplete(true);
                 field.setAutoCompleteDeclaration(autoComplete.getDeclaration());
             }
         }
-        if (!this.getListes().isEmpty()) {
-            this.setPackageImports(imports);
-            this.setWithListe(true);
+        if (!listes.isEmpty()) {
+            if (isFille) {
+                this.setWithListeFille(true);
+            } else {
+                this.setWithListe(true);
+            }
+        }
+    }
+
+    public void addPackageImport(String pkg) {
+        boolean exists = packageImports.stream()
+                .anyMatch(m -> pkg.equals(m.get("package")));
+
+        if (!exists) {
+            Map<String, String> item = new HashMap<>();
+            item.put("package", pkg);
+            packageImports.add(item);
         }
     }
 
@@ -149,5 +185,18 @@ public abstract class ApjFile implements ApjMetadataProvider{
             }
         }
         this.setOrdre(StringUtils.quoteAndJoin(ordreList.toArray(new String[0])));
+    }
+
+    public void makeColOrdre(){
+        if (this.getChampsFille() == null) {
+            return;
+        }
+        List<String> ordreList = new ArrayList<>();
+        for (ApjField field : this.getChampsFille()) {
+            if (field.isVisible()){
+                ordreList.add(field.getNom());
+            }
+        }
+        this.setColOrdre(StringUtils.quoteAndJoin(ordreList.toArray(new String[0])));
     }
 }

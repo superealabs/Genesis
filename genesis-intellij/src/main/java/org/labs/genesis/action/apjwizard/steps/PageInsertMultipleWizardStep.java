@@ -9,6 +9,7 @@ import org.labs.genesis.action.apjwizard.forms.PageInsertMultipleForm;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.filetype.pages.PageInsertMultiple;
 import org.labs.genesis.apj.generator.ApjFileGenerator;
+import org.labs.utils.StringUtils;
 
 import javax.swing.*;
 
@@ -48,7 +49,7 @@ public class PageInsertMultipleWizardStep implements WizardStep {
     public void onNext() throws ConfigurationException {
         pageInsertMultipleForm.fillDataTables();
         String fullMapping = pageInsertMultipleForm.getMappingField().getText();
-        String fullMappingFille = pageInsertMultipleForm.getMappingField().getText();
+        String fullMappingFille = pageInsertMultipleForm.getMappingFilleField().getText();
         String mapping = fullMapping;
         String mappingFille = fullMappingFille;
         int idx = fullMapping.lastIndexOf('.');
@@ -75,14 +76,14 @@ public class PageInsertMultipleWizardStep implements WizardStep {
         pi.setColonneMere(colonneMere);
         pi.setTitre(titre);
         pi.setTitreUpdate(titreUpdate);
-        pi.setApres(pi.getFileName());
+        String fullName = pi.getFileName() + "." + pi.getExtension();
+        String filePath = context.getLocationDir() + "/" + fullName;
+        pi.setApres(StringUtils.relativeOrFilename(context.getRacinePage(),filePath));
         pi.setChamps(pageInsertMultipleForm.getDataForm());
+        pi.setChampsFille(pageInsertMultipleForm.getDataFormFille());
         pi.build();
         try {
             generator.generateApjFile(context);
-            String fullName = pi.getFileName() + "." + pi.getExtension();
-            String filePath = context.getLocationDir() + "/" + fullName;
-
             VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
             if (vf != null) {
                 FileEditorManager.getInstance(this.project).openFile(vf, true);

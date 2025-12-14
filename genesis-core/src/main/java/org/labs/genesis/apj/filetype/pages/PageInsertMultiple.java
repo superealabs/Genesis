@@ -16,6 +16,9 @@ public class PageInsertMultiple extends ApjFile {
     private String mappingFille;
     private String nomTableFille;
     private String colonneMere;
+    private ApjField[] champsFille;
+    private boolean isWithListeFille = false;
+
 
     public PageInsertMultiple(){
 
@@ -29,6 +32,7 @@ public class PageInsertMultiple extends ApjFile {
     @Override
     public HashMap<String, Object> buildMetadata() {
         super.makeOrdre();
+        super.makeColOrdre();
         HashMap<String, Object> map = new HashMap<>();
         map.put("packageMapping", this.getPackageMapping());
         map.put("packageMappingFille", this.getPackageMappingFille());
@@ -41,18 +45,34 @@ public class PageInsertMultiple extends ApjFile {
         map.put("apres", this.getApres());
         map.put("titreUpdate", this.getTitreUpdate());
         map.put("ordre", this.getOrdre());
+        map.put("colOrdre", this.getColOrdre());
         map.put("champs", getChampsList());
+        map.put("champsFille", getChampsListFille());
         map.put("isWithListe", this.isWithListe());
+        map.put("isWithListeFille", this.isWithListeFille());
         map.put("listeSize", this.getListes().size());
+        map.put("listeFilleSize", this.getListesFille().size());
         map.put("listes", this.getListesList());
+        map.put("listesFille", this.getListesFilleList());
         map.put("packageImports", this.getPackageImports());
         return map;
     }
 
-    private List<Map<String, Object>> getChampsList() {
+    public List<Map<String, Object>> getChampsList() {
+        return getChampsList(this.getChamps(),false);
+    }
+
+    public List<Map<String, Object>> getChampsListFille() {
+        return getChampsList(this.getChampsFille(),true);
+    }
+
+    private List<Map<String, Object>> getChampsList(ApjField[] champs,boolean isFille) {
         List<Map<String, Object>> fields = new ArrayList<>();
-        for (ApjField field : this.getChamps()) {
+        for (ApjField field : champs) {
             field.checkAutre();
+            if (field.isWithAutre() && isFille) {
+                this.addPackageImport("affichage.Champ");
+            }
             Map<String, Object> fieldMap = getApjFieldHashMap(field);
             fields.add(fieldMap);
         }
@@ -61,5 +81,9 @@ public class PageInsertMultiple extends ApjFile {
 
     public void build(){
         super.makeListeAndAutoComplete();
+        super.makeListeAndAutoCompleteFille();
+        if (!this.getListesFille().isEmpty() || !this.getListes().isEmpty()){
+            this.addPackageImport("affichage.Liste");
+        }
     }
 }

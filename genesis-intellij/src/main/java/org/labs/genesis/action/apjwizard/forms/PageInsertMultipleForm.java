@@ -66,9 +66,11 @@ public class PageInsertMultipleForm {
     private DefaultTableModel formTableModel;
     private DefaultTableModel formFilleTableModel;
     private ApjField[] dataForm;
+    private ApjField[] dataFormFille;
     private final ApjGenerationContext context;
     private final Project project;
     private LinkedHashMap<String, ApjField> allFieldsMap = new LinkedHashMap<>();
+    private LinkedHashMap<String, ApjField> allFieldsFilleMap = new LinkedHashMap<>();
 
     public PageInsertMultipleForm(ApjGenerationContext context, Project project) {
         this.context = context;
@@ -89,11 +91,11 @@ public class PageInsertMultipleForm {
         chooseClassButton.setBackground(mappingField.getBackground());
     }
 
-    private void addUpdateGroup(DefaultActionGroup group, String name) {
+    private void addUpdateGroup(DefaultActionGroup group, String name,boolean isFille) {
         group.add(new AnAction(name) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-                updateRows(name);
+                updateRows(name,isFille);
             }
         });
     }
@@ -124,17 +126,17 @@ public class PageInsertMultipleForm {
         formTable.setBorder(BorderFactory.createEmptyBorder());
 
         DefaultActionGroup updateGroup = new DefaultActionGroup();
-        addUpdateGroup(updateGroup,ConstantesApj.LISTE);
-        addUpdateGroup(updateGroup,ConstantesApj.LISTE_STRING);
-        addUpdateGroup(updateGroup,ConstantesApj.OUI_NON);
-        addUpdateGroup(updateGroup,ConstantesApj.AUTO_COMPLETE);
-        addUpdateGroup(updateGroup,ConstantesApj.SIMPLE);
+        addUpdateGroup(updateGroup,ConstantesApj.LISTE,false);
+        addUpdateGroup(updateGroup,ConstantesApj.LISTE_STRING,false);
+        addUpdateGroup(updateGroup,ConstantesApj.OUI_NON,false);
+        addUpdateGroup(updateGroup,ConstantesApj.AUTO_COMPLETE,false);
+        addUpdateGroup(updateGroup,ConstantesApj.SIMPLE,false);
         TableToolbarHelper.builder()
             .table(formTable)
             .panel(filtrePanel)
             .updateActionGroup(updateGroup)
             .customButtonText("Générer les libellés via l'IA")
-            .customButtonAction(this::askAI)
+            .customButtonAction(()->askAI(false))
             .build().init();
     }
 
@@ -158,25 +160,32 @@ public class PageInsertMultipleForm {
         formFilleTable.setBorder(BorderFactory.createEmptyBorder());
 
         DefaultActionGroup updateGroup = new DefaultActionGroup();
-        addUpdateGroup(updateGroup,ConstantesApj.LISTE);
-        addUpdateGroup(updateGroup,ConstantesApj.LISTE_STRING);
-        addUpdateGroup(updateGroup,ConstantesApj.OUI_NON);
-        addUpdateGroup(updateGroup,ConstantesApj.AUTO_COMPLETE);
-        addUpdateGroup(updateGroup,ConstantesApj.SIMPLE);
+        addUpdateGroup(updateGroup,ConstantesApj.LISTE,true);
+        addUpdateGroup(updateGroup,ConstantesApj.LISTE_STRING,true);
+        addUpdateGroup(updateGroup,ConstantesApj.OUI_NON,true);
+        addUpdateGroup(updateGroup,ConstantesApj.AUTO_COMPLETE,true);
+        addUpdateGroup(updateGroup,ConstantesApj.SIMPLE,true);
         TableToolbarHelper.builder()
             .table(formFilleTable)
             .panel(fillePanel)
             .updateActionGroup(updateGroup)
             .customButtonText("Générer les libellés via l'IA")
-            .customButtonAction(this::askAI)
+            .customButtonAction(()->askAI(true))
             .build().init();
     }
+    private void askAI(boolean isFille){
+        if (isFille) {
+            this.askAI(formFilleTableModel, formFilleTable);
+        } else {
+            this.askAI(formTableModel, formTable);
+        }
+    }
 
-    private void askAI() {
+    private void askAI(DefaultTableModel tableModel, JBTable formTable) {
         int[] selectedRows = formTable.getSelectedRows();
         ApjField[] fields = new ApjField[selectedRows.length];
         for (int i = 0; i < selectedRows.length; i++) {
-            String nom = String.valueOf(formTableModel.getValueAt(selectedRows[i], 1));
+            String nom = String.valueOf(tableModel.getValueAt(selectedRows[i], 1));
             fields[i] = new ApjField();
             fields[i].setNom(nom);
         }
@@ -189,14 +198,22 @@ public class PageInsertMultipleForm {
 
         }
         for (int i = 0; i < libelles.length; i++) {
-            formTableModel.setValueAt(libelles[i], selectedRows[i], 2);
+            tableModel.setValueAt(libelles[i], selectedRows[i], 2);
         }
     }
 
 
 
-    private void updateRows(String type) {
+    private void updateRows(String type,boolean isFille) {
+        LinkedHashMap<String, ApjField> allFields = allFieldsMap;
+        DefaultTableModel tableModel = formTableModel;
         int selectedRow = formTable.getSelectedRow();
+        if (isFille){
+            allFields = allFieldsFilleMap;
+            tableModel = formFilleTableModel;
+            selectedRow = formFilleTable.getSelectedRow();
+        }
+
         if (selectedRow < 0) return;
 
         String details = null;
@@ -216,7 +233,7 @@ public class PageInsertMultipleForm {
             details = result;
             withDetail = true;
         } else if (type.equalsIgnoreCase(ConstantesApj.AUTO_COMPLETE)) {
-            AutoCompleteDialog listeDialog = new AutoCompleteDialog(mainPanel, context, project,allFieldsMap);
+            AutoCompleteDialog listeDialog = new AutoCompleteDialog(mainPanel, context, project,allFields);
             listeDialog.showDialog();
             String result = listeDialog.getDetails();
             if (result == null) return;
@@ -224,16 +241,17 @@ public class PageInsertMultipleForm {
             withDetail = true;
         }
 
-        formTableModel.setValueAt(type, selectedRow, 4);
+        tableModel.setValueAt(type, selectedRow, 4);
         if (withDetail) {
-            formTableModel.setValueAt(details, selectedRow, 5);
+            tableModel.setValueAt(details, selectedRow, 5);
         }
     }
 
     public void showClassChooser(Project project, ApjGenerationContext context) {
+        chooseClassButton.setToolTipText("Cliquez pour sélectionner une classe Java du projet");
         chooseClassButton.addActionListener(e -> {
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-                    .createAllProjectScopeChooser("Select Class");
+                    .createAllProjectScopeChooser("Sélectionner une classe");
             chooser.showDialog();
             PsiClass selectedClass = chooser.getSelected();
             if (selectedClass != null) {
@@ -249,9 +267,10 @@ public class PageInsertMultipleForm {
                 }
             }
         });
+        chooseClassFilleButton.setToolTipText("Cliquez pour sélectionner une classe Java du projet");
         chooseClassFilleButton.addActionListener(e -> {
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-                    .createAllProjectScopeChooser("Select Class");
+                    .createAllProjectScopeChooser("Sélectionner une classe");
             chooser.showDialog();
             PsiClass selectedClass = chooser.getSelected();
             if (selectedClass != null) {
@@ -274,20 +293,24 @@ public class PageInsertMultipleForm {
     }
 
     private void removeAllFilleRows() {
-        formTableModel.setRowCount(0);
+        formFilleTableModel.setRowCount(0);
     }
 
     private void loadAllFilleFields(List<ApjField> fields) {
+        allFieldsFilleMap.clear();
         removeAllFilleRows();
         for (ApjField field : fields) {
+            allFieldsFilleMap.put(field.getNom(), field);
             String fieldName = field.getNom();
             formFilleTableModel.addRow(new Object[]{Boolean.TRUE,fieldName, StringUtils.majStart(fieldName),null,ConstantesApj.SIMPLE,null});
         }
     }
 
     private void loadAllFields(List<ApjField> fields) {
+        allFieldsMap.clear();
         removeAllRows();
         for (ApjField field : fields) {
+            allFieldsMap.put(field.getNom(), field);
             String fieldName = field.getNom();
             formTableModel.addRow(new Object[]{Boolean.TRUE,fieldName, StringUtils.majStart(fieldName),null,ConstantesApj.SIMPLE,null});
         }
@@ -303,6 +326,7 @@ public class PageInsertMultipleForm {
 
     public void fillDataTables(){
         this.dataForm = getDataTable(formTable);
+        this.dataFormFille = getDataTable(formFilleTable);
     }
 
     private ApjField[] getDataTable(JTable table) {
