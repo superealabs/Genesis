@@ -6,18 +6,21 @@ import org.labs.genesis.apj.filetype.mapping.Mapping;
 import org.labs.genesis.apj.filetype.mapping.MappingMereFille;
 import org.labs.genesis.apj.filetype.pages.*;
 import org.labs.genesis.apj.utilitaire.ConstantesApj;
+import org.labs.genesis.apj.utilitaire.Database;
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
 import org.labs.utils.StringUtils;
-
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ApjFileGenerator {
     public static final GenesisTemplateEngine engine;
     public static final Map<Integer, ApjFile> apjFileMap =  new HashMap<>();
+    public static final Map<Integer, Database> databases;
 
     static {
         try {
@@ -32,6 +35,8 @@ public class ApjFileGenerator {
             Mapping mapping = FileUtils.fromYaml(Mapping.class, ConstantesApj.MAPPING);
             MappingMereFille mappingFille = FileUtils.fromYaml(MappingMereFille.class, ConstantesApj.MAPPING_MERE_FILLE);
 
+            databases = Arrays.stream(FileUtils.fromJson(Database[].class, ConstantesApj.DATABASE_JSON))
+                .collect(Collectors.toMap(Database::getId, database -> database));
 
             apjFileMap.put(pr.getId(),pr);
             apjFileMap.put(pc.getId(),pc);

@@ -23,6 +23,9 @@ public class ApjField {
     private boolean withAutre;
     private boolean isAutoComplete;
     private String autoCompleteDeclaration;
+    private String nomBase;
+    private String typeBase;
+    private boolean isPrimaryKey;
 
     public ApjField() {
 

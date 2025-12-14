@@ -149,4 +149,21 @@ public class StringUtils {
         }
         return targetPath.getFileName().toString();
     }
+
+    public static String normalizeDbType(String typeBase) {
+        String upper = typeBase.toUpperCase();
+
+        if (upper.startsWith("VARCHAR2")) return "VARCHAR2";
+        if (upper.startsWith("CHAR")) return "CHAR";
+        if (upper.startsWith("NVARCHAR2")) return "NVARCHAR2";
+
+        if (upper.startsWith("NUMBER")) {
+            return upper.contains(",") ? "NUMBER(*,*)" : "NUMBER";
+        }
+
+        if (upper.startsWith("DATE")) return "DATE";
+
+        return upper;
+    }
+
 }

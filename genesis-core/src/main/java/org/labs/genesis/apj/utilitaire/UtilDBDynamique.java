@@ -1,10 +1,14 @@
 package org.labs.genesis.apj.utilitaire;
 
+import org.labs.genesis.apj.component.ApjField;
+
 import java.io.File;
 import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class UtilDBDynamique {
 
@@ -76,5 +80,82 @@ public class UtilDBDynamique {
         }
     }
 
+    public static List<ApjField> getTableColumns(Connection conn, String tableName) throws SQLException {
+        DatabaseMetaData meta = conn.getMetaData();
+        String dbName = meta.getDatabaseProductName();
 
+        Set<String> primaryKeys = new HashSet<>();
+        try (ResultSet pkRs = meta.getPrimaryKeys(null, getSchema(conn, dbName), tableName.toUpperCase())) {
+            while (pkRs.next()) {
+                primaryKeys.add(pkRs.getString("COLUMN_NAME"));
+            }
+        }
+        List<ApjField> fields = new ArrayList<>();
+        try (ResultSet colRs = meta.getColumns(null, getSchema(conn, dbName), tableName.toUpperCase(), null)) {
+            while (colRs.next()) {
+                String colName = colRs.getString("COLUMN_NAME");
+                String typeName = colRs.getString("TYPE_NAME");
+                int size = colRs.getInt("COLUMN_SIZE");
+                int precision = colRs.getInt("DECIMAL_DIGITS");
+
+                String ddlType;
+
+                if ("Oracle".equalsIgnoreCase(dbName)) {
+                    ddlType = oracleColumnType(typeName, size, precision);
+                } else if ("PostgreSQL".equalsIgnoreCase(dbName)) {
+                    ddlType = postgresColumnType(typeName, size, precision);
+                } else {
+                    ddlType = defaultColumnType(typeName, size, precision);
+                }
+
+                ApjField field = new ApjField();
+                field.setNomBase(colName);
+                field.setTypeBase(ddlType);
+                field.setPrimaryKey(primaryKeys.contains(colName));
+
+                fields.add(field);
+            }
+        }
+        return fields;
+    }
+
+    private static String getSchema(Connection conn, String dbName) throws SQLException {
+        if ("Oracle".equalsIgnoreCase(dbName)) return conn.getSchema() != null ? conn.getSchema() : "USER";
+        if ("PostgreSQL".equalsIgnoreCase(dbName)) return "public";
+        return conn.getSchema();
+    }
+
+    private static String oracleColumnType(String typeName, int size, int precision) {
+        if ("NUMBER".equalsIgnoreCase(typeName)) {
+            if (size > 0 && precision > 0) return String.format("NUMBER(%d,%d)", size, precision);
+            if (size > 0) return String.format("NUMBER(%d)", size);
+            return "NUMBER";
+        } else if (typeName.matches("VARCHAR2|CHAR|NVARCHAR2")) {
+            return typeName + "(" + size + ")";
+        } else if ("DATE".equalsIgnoreCase(typeName)) {
+            return "DATE";
+        } else {
+            return typeName;
+        }
+    }
+
+    private static String postgresColumnType(String typeName, int size, int precision) {
+        if ("NUMERIC".equalsIgnoreCase(typeName) || "DECIMAL".equalsIgnoreCase(typeName)) {
+            if (size > 0 && precision > 0) return String.format("NUMERIC(%d,%d)", size, precision);
+            if (size > 0) return String.format("NUMERIC(%d)", size);
+            return "NUMERIC";
+        } else if (typeName.matches("VARCHAR|CHAR|TEXT")) {
+            return typeName + "(" + size + ")";
+        } else if ("DATE".equalsIgnoreCase(typeName) || "TIMESTAMP".equalsIgnoreCase(typeName)) {
+            return typeName.toUpperCase();
+        } else {
+            return typeName;
+        }
+    }
+
+    private static String defaultColumnType(String typeName, int size, int precision) {
+        if (precision > 0) return String.format("%s(%d,%d)", typeName, size, precision);
+        if (size > 0) return String.format("%s(%d)", typeName, size);
+        return typeName;
+    }
 }

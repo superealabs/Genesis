@@ -1,0 +1,53 @@
+[
+  {
+    "id": 1,
+    "name": "Oracle",
+    "types": {
+      "NUMBER": "int",
+      "NUMBER(*,*)": "double",
+      "VARCHAR2": "String",
+      "DATE": "java.sql.Date",
+      "CLOB": "String",
+      "NCLOB": "String",
+      "BINARY_FLOAT": "double",
+      "BINARY_DOUBLE": "double",
+      "FLOAT": "double",
+      "INTEGER": "int",
+      "DECIMAL": "double",
+      "SMALLINT": "int",
+      "TINYINT": "int",
+      "CHAR": "String",
+      "NCHAR": "String",
+      "NVARCHAR2": "String",
+      "XMLTYPE": "String",
+      "ROWID": "String",
+      "UROWID": "String"
+    }
+  },
+  {
+    "id": 2,
+    "name": "PostgreSQL",
+    "types": {
+      "int2": "int",
+      "smallint": "int",
+      "integer": "int",
+      "int": "int",
+      "int4": "int",
+      "character varying": "String",
+      "text": "String",
+      "varchar": "String",
+      "real": "double",
+      "double": "double",
+      "float4": "double",
+      "float8": "double",
+      "double precision": "double",
+      "decimal": "double",
+      "numeric": "double",
+      "date": "java.sql.Date",
+      "inet": "String",
+      "cidr": "String",
+      "macaddr": "String",
+      "xml": "String"
+    }
+  }
+]

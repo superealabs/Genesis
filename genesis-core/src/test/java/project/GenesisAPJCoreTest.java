@@ -8,15 +8,20 @@ import org.labs.genesis.apj.generator.ApjFileGenerator;
 import org.labs.genesis.apj.utilitaire.ConstantesApj;
 import org.labs.genesis.apj.utilitaire.UtilClassLoader;
 import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
+import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.langage.generator.project.LlmApiClient;
+import org.labs.utils.FileUtils;
 import org.labs.utils.StringUtils;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.util.*;
+import java.util.stream.Collectors;
+import org.labs.genesis.apj.utilitaire.Database;
 
 public class GenesisAPJCoreTest {
 
@@ -125,4 +130,37 @@ public class GenesisAPJCoreTest {
         String result = StringUtils.relativeOrFilename(root, file);
         System.out.println(result);
     }
+
+    @Test
+    void testGetTableColumnsDisplay() throws Exception {
+        File classesDir = new File("/home/antema/Antema/BICI/Socobis/socobis/build-file/socobis_jar/");
+        File libDir = new File("/home/antema/Antema/BICI/Socobis/socobis/build-file/lib/");
+
+        try (Connection conn = UtilDBDynamique.GetConn(classesDir, libDir)) {
+
+            String tableName = "CLIENT";
+
+            List<ApjField> fields = Database.getTableColumns(conn, tableName);
+
+            System.out.println("Colonnes de la table " + tableName + " :\n");
+
+            for (ApjField field : fields) {
+                System.out.println(field.getNom());
+                System.out.println(field.getType());
+                System.out.println(field.getTypeBase());
+                System.out.println(field.getNomBase());
+                System.out.println("===================================");
+            }
+        }
+    }
+
+
+    @Test
+    public void test() throws IOException {
+        Map<Integer, Database> databases;
+        databases = Arrays.stream(FileUtils.fromJson(Database[].class, Constantes.DATABASE_JSON))
+                .collect(Collectors.toMap(Database::getId, database -> database));
+        System.out.println("test");
+    }
+
 }

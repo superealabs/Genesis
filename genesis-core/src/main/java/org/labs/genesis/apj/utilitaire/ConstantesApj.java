@@ -10,6 +10,7 @@ public class ConstantesApj {
     public static final String MAPPING = "data_genesis/apj/yaml/7-mapping.yaml";
     public static final String MAPPING_MERE_FILLE = "data_genesis/apj/yaml/8-mapping-mere-fille.yaml";
     public static final String DATA_PATH = "data_genesis/apj";
+    public static final String DATABASE_JSON = "data_genesis/apj/json/databases.json";
 
 
     public static final String LISTE = "Liste";
