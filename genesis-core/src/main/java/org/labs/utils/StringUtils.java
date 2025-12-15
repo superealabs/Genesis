@@ -1,5 +1,6 @@
 package org.labs.utils;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -149,6 +150,21 @@ public class StringUtils {
         }
         return targetPath.getFileName().toString();
     }
+
+    public static String getPackageFromFile(String rootPath, String fullPathName) {
+        if (rootPath == null || fullPathName == null) return null;
+        Path root = Paths.get(rootPath).normalize();
+        Path fullPath = Paths.get(fullPathName).normalize();
+
+        if (!fullPath.startsWith(root)) {
+            return null;
+        }
+        Path relative = root.relativize(fullPath);
+        Path parent = relative.getParent();
+        if (parent == null) return "";
+        return parent.toString().replace(File.separatorChar, '.');
+    }
+
 
     public static String normalizeDbType(String typeBase) {
         String upper = typeBase.toUpperCase();

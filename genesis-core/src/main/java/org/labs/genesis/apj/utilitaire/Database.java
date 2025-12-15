@@ -30,44 +30,48 @@ public class Database {
 
         Database database = databases.get(dbId);
 
+        String schema = dbProduct.equalsIgnoreCase("PostgreSQL") ? "public" : null;
+        String tableNameUc = tableName.toUpperCase();
+        String schemaUc = schema != null ? schema.toUpperCase() : null;
+
         Set<String> primaryKeys = new HashSet<>();
-        try (ResultSet pkRs = meta.getPrimaryKeys(null, conn.getSchema(), tableName)) {
+        try (ResultSet pkRs = meta.getPrimaryKeys(null, schemaUc, tableNameUc)) {
             while (pkRs.next()) {
-                primaryKeys.add(pkRs.getString("COLUMN_NAME"));
+                primaryKeys.add(pkRs.getString("COLUMN_NAME").toUpperCase());
             }
         }
 
-        List<ApjField> fields = new ArrayList<>();
-        try (ResultSet rs = meta.getColumns(null, conn.getSchema(), tableName, "%")) {
+        Map<String, ApjField> fieldsMap = new LinkedHashMap<>();
+        try (ResultSet rs = meta.getColumns(null, schemaUc, tableNameUc, "%")) {
             while (rs.next()) {
-                String columnName = rs.getString("COLUMN_NAME");
+                String columnName = rs.getString("COLUMN_NAME").toUpperCase();
+                if (fieldsMap.containsKey(columnName)) continue;
+
                 String typeName = rs.getString("TYPE_NAME");
                 int size = rs.getInt("COLUMN_SIZE");
                 int scale = rs.getInt("DECIMAL_DIGITS");
 
                 String typeBase;
-                if (scale > 0) {
-                    typeBase = typeName + "(" + size + "," + scale + ")";
-                } else if (size > 0) {
-                    typeBase = typeName + "(" + size + ")";
-                } else {
-                    typeBase = typeName;
-                }
+                if (scale > 0) typeBase = typeName + "(" + size + "," + scale + ")";
+                else if (size > 0) typeBase = typeName + "(" + size + ")";
+                else typeBase = typeName;
 
                 String normalizedDbType = StringUtils.normalizeDbType(typeBase);
                 String javaType = database.getTypes().get(normalizedDbType);
 
                 ApjField field = new ApjField();
-
                 field.setNomBase(columnName);
                 field.setNom(columnName.toLowerCase());
                 field.setTypeBase(typeBase);
                 field.setType(javaType != null ? javaType : "Object");
                 field.setPrimaryKey(primaryKeys.contains(columnName));
-                fields.add(field);
+
+                fieldsMap.put(columnName, field);
             }
         }
-        return fields;
+
+        return new ArrayList<>(fieldsMap.values());
     }
+
 
 }

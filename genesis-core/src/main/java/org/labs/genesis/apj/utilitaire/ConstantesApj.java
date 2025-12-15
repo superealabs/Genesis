@@ -24,6 +24,7 @@ public class ConstantesApj {
     public static final String RECAP = "Recap";
     public static final String RECAP_GROUPE = "RecapGroupe";
     public static final String STANDARD = "Standard";
+    public static final String ATTRIBUT = "Attribut";
 
     public static final int PAGE_RECHERCHE_ID = 1;
     public static final int PAGE_CONSULTE_ID = 2;
@@ -33,4 +34,8 @@ public class ConstantesApj {
     public static final int PAGE_RECHERCHE_GROUPE_ID = 6;
     public static final int MAPPING_ID = 7;
     public static final int MAPPING_MERE_FILLE_ID = 8;
+
+    public static final String CLASSMAPTABLE = "ClassMAPTable";
+    public static final String TYPEOBJET = "TypeObjet";
+    public static final String CLASSETAT = "ClassEtat";
 }

@@ -422,6 +422,24 @@ public class LlmApiClient {
                 ]  
                 car les attributs reçus étaient : quantité (2), montantTtc (3), montantTva (5).
                 """.formatted(mapping, String.join(",", fields));
+            case ConstantesApj.ATTRIBUT -> """
+                Assure que les attributs fournis : %s
+                soient conformes au style Java pour des noms d'attributs.
+            
+                Règles :
+                - Première lettre en minuscule.
+                - Conserver les underscores (_) existants.
+                - Les mots suivants commencent par une majuscule si nécessaire (camelCase léger).
+                - Conserver l'ordre exact des attributs.
+                - Aucune transformation en libellés français ou synonymes.
+                - Les noms transformés doivent rester **compatibles avec l'original** :
+                  si on compare avec l'original en utilisant equalsIgnoreCase, le résultat doit être vrai.
+            
+                - **Répond uniquement par un tableau JSON de chaînes**, rien d'autre.
+                Exemple de format attendu :
+                ["idCategorie", "id_venteLib", "date_naissance","dateModif"]
+                """.formatted(String.join(",", fields));
+
             default -> "";
         };
 

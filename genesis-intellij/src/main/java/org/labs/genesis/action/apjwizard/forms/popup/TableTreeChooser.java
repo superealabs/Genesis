@@ -4,12 +4,17 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
+@Getter
+@Setter
 public class TableTreeChooser {
 
     private final JPanel parentPanel;
@@ -46,7 +51,9 @@ public class TableTreeChooser {
                 viewsNode.add(new DefaultMutableTreeNode(v));
             }
         }
-        root.add(viewsNode);
+        if (this.getViews().length > 0) {
+            root.add(viewsNode);
+        }
 
         Tree tree = new Tree(root);
         tree.setRootVisible(false);

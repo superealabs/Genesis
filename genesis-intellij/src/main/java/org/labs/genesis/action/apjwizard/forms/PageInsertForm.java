@@ -12,7 +12,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.action.apjwizard.forms.helper.TableToolbarHelper;
-import org.labs.genesis.action.apjwizard.forms.listener.PlaceholderTextFieldHelper;
 import org.labs.genesis.action.apjwizard.forms.popup.AutoCompleteDialog;
 import org.labs.genesis.action.apjwizard.forms.popup.ListDetailsDialog;
 import org.labs.genesis.action.apjwizard.forms.popup.ListeStringDialog;
@@ -201,7 +200,7 @@ public class PageInsertForm {
                 try {
                     URLClassLoader loader = UtilClassLoader.buildLoader(context.getProjectJarDir(), context.getLibDir());
                     Class<?> cls = loader.loadClass(mappingField.getText());
-                    List<Field> fields = UtilClassLoader.listFieldsStopClassMAPTable(cls);
+                    List<Field> fields = UtilClassLoader.listFields(cls,"none");
                     List<ApjField> apjFields = ApjField.javaFieldsToApjFields(fields);
                     loadAllFields(apjFields);
                 } catch (Exception ignored) {

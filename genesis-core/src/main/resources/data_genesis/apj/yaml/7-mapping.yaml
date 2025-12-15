@@ -1,38 +1,50 @@
 id : 7
 name : "Mapping"
-template : "page"
+template : "mapping"
 extension : "java"
 imports : |
-  <%@ page pageEncoding="UTF-8" contentType="text/html; charset=UTF-8" %>
-  <%@ page import="affichage.PageRecherche"%>
-  <%@ page import="${packageMapping}" %>
-jspBlock : |
-  <% try{ 
-      ${mapping} o = new ${mapping}();
-      o.setNomTable("${nomTable}");
-      String[] listeCrt = {};
-      String[] listeInt = {};
-      String[] libEntete = {${libEntete}};
-      PageRecherche pr = new PageRecherche(o, request, listeCrt, listeInt, 4, libEntete, libEntete.length);
-      pr.setUtilisateur((user.UserEJB) session.getValue("u"));
-      pr.setLien((String) session.getValue("lien"));
+  package ${packageMapping};
   
-      String[] colSomme = null;
-      pr.creerObjetPage(libEntete, colSomme);
+  import bean.${superclasse};
+  import java.sql.Connection;
+  {{#each packageImports}}
+  import ${this.package};
+  {{/each}}{{removeLine}}
 
-      String[] libEnteteAffiche = {${libEnteteAffiche}};
-      pr.getTableau().setLibelleAffiche(libEnteteAffiche);
-  %>
-
-html : |
-  <div class="box-body">
-      <%  if(pr.getTableau().getHtml() != null){
-              out.println(pr.getTableau().getHtml());
-          } else{ %>
-              <center><h4>Aucune donn&eacute;e trouv&eacute;e</h4></center>
-      <%  } %>
-  </div>
-basPage : |
-  <% } catch (Exception e) {
-    e.printStackTrace();
-  } %>
+body : |
+  public class ${mapping} extends ${superclasse} {
+      {{#each champs}}
+      private ${this.type} ${this.nom};
+      {{/each}}{{removeLine}}
+  
+      {{#each champs}}
+      public ${this.type} get${majStart(this.nom)}() {
+          return ${this.nom};
+      }
+  
+      public void set${majStart(this.nom)}(${this.type} ${this.nom}) {
+          this.${this.nom} = ${this.nom};
+      }
+  
+      {{/each}}{{removeLine}}
+  
+      public ${mapping}() {
+          this.setNomTable("${nomTable}");
+      }
+  
+      @Override
+      public void construirePK(Connection c) throws Exception {
+          this.preparePk("","");
+          this.set${majStart(pk)}(makePK(c));
+      }
+  
+      @Override
+      public String getTuppleID() {
+          return ${pk};
+      }
+  
+      @Override
+      public String getAttributIDName() {
+          return "${pk}";
+      }
+  }

@@ -88,8 +88,6 @@ public class PageInsertWizardStep implements WizardStep {
         pi.build();
         try {
             generator.generateApjFile(context);
-
-
             VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
             if (vf != null) {
                 FileEditorManager.getInstance(this.project).openFile(vf, true);

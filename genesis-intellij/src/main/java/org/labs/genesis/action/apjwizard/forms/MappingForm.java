@@ -1,59 +1,58 @@
 package org.labs.genesis.action.apjwizard.forms;
 
-import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
 import com.intellij.ui.table.JBTable;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.action.apjwizard.forms.helper.TableToolbarHelper;
 import org.labs.genesis.action.apjwizard.forms.popup.TableTreeChooser;
 import org.labs.genesis.action.apjwizard.forms.renderer.TableRenderer;
-import org.labs.genesis.action.apjwizard.forms.tablehandler.ConsulteTableModel;
+import org.labs.genesis.action.apjwizard.forms.tablehandler.MappingTableModel;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.TableRowTransferHandler;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.component.ApjField;
 import org.labs.genesis.apj.utilitaire.ConstantesApj;
+import org.labs.genesis.apj.utilitaire.Database;
 import org.labs.genesis.apj.utilitaire.UtilClassLoader;
+import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
 import org.labs.genesis.config.langage.generator.project.LlmApiClient;
-import org.labs.utils.StringUtils;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.lang.reflect.Field;
 import java.net.URLClassLoader;
+import java.sql.Connection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
-public class PageConsulteForm {
+public class MappingForm {
     private JPanel mainPanel;
     private JTextField nomField;
-    private JTextField mappingField;
     private JTextField nomTableField;
-    private JTextField pageApresDelete;
     private JLabel nomLabel;
     private JPanel generalPanel;
-    private JLabel nomTableLabel;
-    private JLabel titreLabel;
     private JPanel propertiesPanel;
     private JScrollPane scrollProperties;
     private JTabbedPane tabPane;
     private JPanel filtrePanel;
     private JScrollPane scrollFiltre;
-    private JButton chooseClassButton;
-    private JPanel mappingPanel;
+    private JComboBox<String> superClassComboBox;
     private JButton chooseTableButton;
-    private JTextField titreField;
-    private JCheckBox withOngletCheckBox;
-    private JTextField pageRetourField;
-    private JTextField pageModifField;
     private JBTable formTable;
     private DefaultTableModel formTableModel;
     private ApjField[] dataForm;
+    private final Project project;
+    private final ApjGenerationContext context;
+    private String primaryKey;
 
-    public PageConsulteForm() {
+    public MappingForm(ApjGenerationContext context, Project project) {
+        this.project = project;
+        this.context = context;
+        populateSuperClasseOption();
         initializeUI();
         initFormTable();
     }
@@ -63,29 +62,22 @@ public class PageConsulteForm {
             scrollProperties.setBorder(BorderFactory.createEmptyBorder());
             scrollProperties.setViewportBorder(null);
         }
-        chooseClassButton.setBorder(UIManager.getBorder("TextField.border"));
-        chooseClassButton.setContentAreaFilled(true);
-        chooseClassButton.setFocusPainted(true);
-        chooseClassButton.setBackground(mappingField.getBackground());
     }
 
-    private void fixSizeColumn(JBTable table,int row,int size) {
-        table.getColumnModel().getColumn(row).setPreferredWidth(size);
-        table.getColumnModel().getColumn(row).setMinWidth(size);
-        table.getColumnModel().getColumn(row).setMaxWidth(size);
+    public void populateSuperClasseOption() {
+        String[] superClasses = {ConstantesApj.CLASSMAPTABLE,ConstantesApj.TYPEOBJET,ConstantesApj.CLASSETAT};
+        for (String superClass : superClasses) {
+            superClassComboBox.addItem(superClass);
+        }
     }
 
     private void initFormTable() {
-        formTableModel = new ConsulteTableModel(new Object[]{"Visible","Champ", "Libellé","Lien"});
+        formTableModel = new MappingTableModel(new Object[]{"Nom colonne","Type", "Nom attribut Java","Type Java"});
         formTable = new JBTable(formTableModel);
         formTable.getEmptyText().setText("Aucune ligne à afficher");
         formTable.setDefaultRenderer(Object.class, new TableRenderer());
         formTable.setDragEnabled(true);
         formTable.setDropMode(DropMode.INSERT_ROWS);
-        formTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-        fixSizeColumn(formTable,0,30);
-        fixSizeColumn(formTable,1,130);
-        fixSizeColumn(formTable,2,160);
         formTable.setTransferHandler(new TableRowTransferHandler(formTable));
         scrollFiltre.setViewportView(formTable);
         scrollFiltre.setBorder(BorderFactory.createEmptyBorder());
@@ -94,7 +86,7 @@ public class PageConsulteForm {
         TableToolbarHelper.builder()
             .table(formTable)
             .panel(filtrePanel)
-            .customButtonText("Générer les libellés via l'IA")
+            .customButtonText("Générer les nom d'attribut via l'IA")
             .customButtonAction(this::askAI)
             .build().init();
     }
@@ -103,15 +95,15 @@ public class PageConsulteForm {
         int[] selectedRows = formTable.getSelectedRows();
         ApjField[] fields = new ApjField[selectedRows.length];
         for (int i = 0; i < selectedRows.length; i++) {
-            String nom = String.valueOf(formTableModel.getValueAt(selectedRows[i], 1));
+            String nom = String.valueOf(formTableModel.getValueAt(selectedRows[i], 2));
             fields[i] = new ApjField();
             fields[i].setNom(nom);
         }
-        String mapping = this.getMappingField().getText();
+        String mapping = "";
         LlmApiClient llmClient = new LlmApiClient();
         String[] libelles = new String[selectedRows.length];
         try {
-            libelles = llmClient.askForLabel(mapping, fields, ConstantesApj.STANDARD);
+            libelles = llmClient.askForLabel(mapping, fields, ConstantesApj.ATTRIBUT);
         } catch (Exception ignored) {
 
         }
@@ -120,37 +112,47 @@ public class PageConsulteForm {
         }
     }
 
-    public void showClassChooser(Project project, ApjGenerationContext context) {
-        chooseClassButton.setToolTipText("Cliquez pour sélectionner une classe Java du projet");
-        chooseClassButton.addActionListener(e -> {
-            TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-                    .createAllProjectScopeChooser("Sélectionner une classe");
-            chooser.showDialog();
-            PsiClass selectedClass = chooser.getSelected();
-            if (selectedClass != null) {
-                mappingField.setText(selectedClass.getQualifiedName());
-                try {
-                    URLClassLoader loader = UtilClassLoader.buildLoader(context.getProjectJarDir(), context.getLibDir());
-                    Class<?> cls = loader.loadClass(mappingField.getText());
-                    List<Field> fields = UtilClassLoader.listFieldsStopClassMAPTable(cls);
-                    List<ApjField> apjFields = ApjField.javaFieldsToApjFields(fields);
-                    loadAllFields(apjFields);
-                } catch (Exception ignored) {
-
-                }
-            }
-        });
-    }
-
     private void removeAllRows() {
         formTableModel.setRowCount(0);
     }
 
+    private Set<String> loadSuperclassFieldNames(String superClassName) throws Exception {
+        URLClassLoader loader = UtilClassLoader.buildLoader(context.getProjectJarDir(), context.getLibDir());
+        Class<?> cls = loader.loadClass(superClassName);
+        List<Field> superFields = UtilClassLoader.listFields(cls, "none");
+
+        return superFields.stream()
+                .map(Field::getName)
+                .collect(Collectors.toSet());
+    }
+
+
     private void loadAllFields(List<ApjField> fields) {
         removeAllRows();
+        Set<String> superClassFields = Collections.emptySet();
+        try {
+            String superClassName = String.valueOf(superClassComboBox.getSelectedItem());
+            if (superClassName != null && !superClassName.isBlank()) {
+                superClassFields = loadSuperclassFieldNames("bean."+superClassName);
+            }
+        } catch (Exception ignored) {
+
+        }
         for (ApjField field : fields) {
-            String fieldName = field.getNom();
-            formTableModel.addRow(new Object[]{Boolean.TRUE,fieldName, StringUtils.majStart(fieldName)});
+            if (superClassFields.contains(field.getNom())) {
+                continue;
+            }
+
+            if (field.isPrimaryKey()) {
+                primaryKey = field.getNom();
+            }
+
+            formTableModel.addRow(new Object[]{
+                field.getNomBase(),
+                field.getTypeBase(),
+                field.getNom(),
+                field.getType()
+            });
         }
     }
 
@@ -159,8 +161,15 @@ public class PageConsulteForm {
         String table = chooser.showDialog();
         if (table != null) {
             nomTableField.setText(table);
+            try (Connection conn = UtilDBDynamique.GetConn(context.getProjectJarDir(), context.getLibDir())) {
+                List<ApjField> fields = Database.getTableColumns(conn, table);
+                loadAllFields(fields);
+            } catch (Exception ignored) {
+
+            }
         }
     }
+
 
     public void fillDataTables(){
         this.dataForm = getDataTable(formTable);
@@ -171,19 +180,21 @@ public class PageConsulteForm {
         int rowCount = model.getRowCount();
         ApjField[] fields = new ApjField[rowCount];
         for (int i = 0; i < rowCount; i++) {
-            String nom = String.valueOf(model.getValueAt(i, 1));
-            String libelle = String.valueOf(model.getValueAt(i, 2));
-            boolean visible = (Boolean) model.getValueAt(i, 0);
-            String lien = String.valueOf(model.getValueAt(i, 3));
+            String nomBase = String.valueOf(model.getValueAt(i, 0));
+            String typeBase = String.valueOf(model.getValueAt(i, 1));
+            String nom = String.valueOf(model.getValueAt(i, 2));
+            String type = String.valueOf(model.getValueAt(i, 3));
             ApjField f = new ApjField();
+            if (nomBase.equalsIgnoreCase(primaryKey)) {
+                this.setPrimaryKey(nom);
+            }
             f.setNom(nom);
-            f.setLibelle(libelle);
-            f.setVisible(visible);
-            f.setLien(lien);
+            f.setType(type);
+            f.setTypeBase(typeBase);
+            f.setNomBase(nomBase);
             fields[i] = f;
         }
         return fields;
     }
-
 
 }

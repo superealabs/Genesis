@@ -138,7 +138,7 @@ public class GenesisAPJCoreTest {
 
         try (Connection conn = UtilDBDynamique.GetConn(classesDir, libDir)) {
 
-            String tableName = "CLIENT";
+            String tableName = "UNITE";
 
             List<ApjField> fields = Database.getTableColumns(conn, tableName);
 
@@ -163,4 +163,14 @@ public class GenesisAPJCoreTest {
         System.out.println("test");
     }
 
+
+    @Test
+    public void testExtractPackage(){
+        String root = "/home/user/project/src";
+        String fullPath = "/home/user/project/src/org/labs/genesis/apj/utilitaire/Database.java";
+
+        String pkg = StringUtils.getPackageFromFile(root, fullPath);
+        System.out.println(pkg);
+
+    }
 }
