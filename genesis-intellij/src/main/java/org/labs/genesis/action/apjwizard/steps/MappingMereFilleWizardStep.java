@@ -14,6 +14,7 @@ import org.labs.genesis.apj.utilitaire.ConstantesApj;
 import org.labs.utils.StringUtils;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 @Getter
 public class MappingMereFilleWizardStep implements WizardStep {
@@ -26,9 +27,6 @@ public class MappingMereFilleWizardStep implements WizardStep {
         this.context = context;
         this.mappingForm = new MappingMereFilleForm(context,project);
         this.project = project;
-        String[] tables = context.getTables();
-        mappingForm.getChooseTableButton().addActionListener(e -> mappingForm.showTableTree(tables, null));
-        mappingForm.getChooseTableFilleButton().addActionListener(e -> mappingForm.showTableTreeFille(tables, null));
     }
 
     @Override
@@ -38,7 +36,7 @@ public class MappingMereFilleWizardStep implements WizardStep {
 
     @Override
     public String getTitle() {
-        return "Mapping";
+        return "MappingMereFille";
     }
 
     @Override
@@ -71,6 +69,7 @@ public class MappingMereFilleWizardStep implements WizardStep {
         }
         mapping.setClasseLiaison(pack+fileNameFille);
         mapping.setMere(true);
+        mapping.setFille(false);
         try {
             generator.generateApjFile(context);
             VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
@@ -82,6 +81,7 @@ public class MappingMereFilleWizardStep implements WizardStep {
         } catch (Exception e) {
             throw new ConfigurationException("Échec de la génération : " + e.getMessage());
         }
+        mapping.setPackageImports(new ArrayList<>());
         mapping.setFileName(fileNameFille);
         mapping.setMapping(fileNameFille);
         mapping.setNomTable(nomTableFille);

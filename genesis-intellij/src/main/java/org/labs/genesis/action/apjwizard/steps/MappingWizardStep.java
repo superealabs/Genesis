@@ -27,8 +27,6 @@ public class MappingWizardStep implements WizardStep {
         this.context = context;
         this.mappingForm = new MappingForm(context,project);
         this.project = project;
-        String[] tables = context.getTables();
-        mappingForm.getChooseTableButton().addActionListener(e -> mappingForm.showTableTree(tables, null));
     }
 
     @Override

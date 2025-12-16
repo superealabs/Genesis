@@ -22,11 +22,7 @@ public class PageConsulteWizardStep implements WizardStep {
     public PageConsulteWizardStep(ApjGenerationContext context, Project project) {
         this.context = context;
         this.project = project;
-        this.pageConsulteForm = new PageConsulteForm();
-        String[] tables = context.getTables();
-        String[] views = context.getVues();
-        pageConsulteForm.showClassChooser(project,context);
-        pageConsulteForm.getChooseTableButton().addActionListener(e -> pageConsulteForm.showTableTree(tables, views));
+        this.pageConsulteForm = new PageConsulteForm(context,project);
     }
 
     @Override

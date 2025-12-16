@@ -216,7 +216,7 @@ public class LlmApiClient {
         }
     }
 
-    public void setConfigFile() {
+    public void setConfigFile() throws Exception {
         this.setWorkerConfig();
         try {
             HttpRequest request = HttpRequest.newBuilder()
@@ -229,7 +229,7 @@ public class LlmApiClient {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                throw new RuntimeException("Erreur lors de l'appel au Worker : " + response.statusCode() + " -> " + response.body());
+                throw new Exception("Erreur lors de l'appel au Worker : " + response.statusCode() + " -> " + response.body());
             }
 
             ObjectMapper mapper = new ObjectMapper();
@@ -240,7 +240,7 @@ public class LlmApiClient {
             this.defaultModel = node.path("apiModel").asText();
 
         } catch (Exception e) {
-            throw new RuntimeException("Impossible de récupérer les credentials via le Worker", e);
+            throw new Exception("Impossible de récupérer les credentials via le Worker :"+e.getMessage());
         }
     }
 
@@ -413,6 +413,17 @@ public class LlmApiClient {
                   4. Conserver l’ordre exact des attributs fournis.
                 
                 Tu dois répondre uniquement par un **tableau JSON de chaînes**, rien d’autre, sans explications ni commentaires.
+                
+                - Voici plusieurs exemples d'attributs et leurs libellés correspondants :
+                (String)idOrigine -> Id Origine
+                (String)idClient -> Id Client
+                (String)idPompisteLib -> Pompiste
+                (Date)dateNaissance -> Date de naissance
+                (double)pv -> Prix de vente
+                (double)pvAncien -> Ancien prix de vente
+                (String)etatLib -> État
+                (String)totalEncaissement -> Total des encaissements
+                (double)depense -> Dépense
                 
                 Exemple de format attendu :
                 [

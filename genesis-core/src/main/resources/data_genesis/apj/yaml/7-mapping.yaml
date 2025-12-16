@@ -40,7 +40,7 @@ body : |
       }
       {{/if}}{{removeLine}}
   
-      public ${majStart(mapping)}() {
+      public ${majStart(mapping)}() throws Exception {
           this.setNomTable("${nomTable}");
           {{#if isMere}}{{removeLine}}
           this.setNomClasseFille("${classeLiaison}");

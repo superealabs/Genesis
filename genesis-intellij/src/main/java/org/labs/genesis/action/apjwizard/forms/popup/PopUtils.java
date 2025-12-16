@@ -13,4 +13,10 @@ public class PopUtils {
         label.setPreferredSize(new Dimension(300, 75));
         JOptionPane.showMessageDialog(parent, label, "Validation Error", JOptionPane.ERROR_MESSAGE);
     }
+
+    public static void showError(JComponent parent, String message) {
+        JLabel label = new JLabel("<html>" + message + "</html>");
+        label.setPreferredSize(new Dimension(300, 75));
+        JOptionPane.showMessageDialog(parent, label, "Erreur", JOptionPane.ERROR_MESSAGE);
+    }
 }

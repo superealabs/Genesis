@@ -12,7 +12,6 @@ import org.labs.genesis.apj.filetype.pages.PageInsert;
 import org.labs.genesis.apj.generator.ApjFileGenerator;
 import org.labs.utils.StringUtils;
 
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -26,10 +25,6 @@ public class PageInsertWizardStep implements WizardStep {
         this.context = context;
         this.project = project;
         this.pageInsertForm = new PageInsertForm(context,project);
-        String[] tables = context.getTables();
-        String[] views = context.getVues();
-        pageInsertForm.showClassChooser(project,context);
-        pageInsertForm.getChooseTableButton().addActionListener(e -> pageInsertForm.showTableTree(tables, views));
     }
 
     @Override

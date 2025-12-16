@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import java.util.concurrent.atomic.AtomicReference;
 public final class ProgressUtils {
 
-    public static void checkCanceled(ProgressIndicator indicator) {
+    public static void checkCanceled(ProgressIndicator indicator) throws ProcessCanceledException {
         if (indicator != null && indicator.isCanceled()) {
             throw new ProcessCanceledException();
         }
@@ -24,21 +24,32 @@ public final class ProgressUtils {
     }
 
     public static void runWithProgress(Project project, String title, ProgressTask task) throws ConfigurationException {
-        AtomicReference<ConfigurationException> exceptionRef = new AtomicReference<>();
+        AtomicReference<Exception> exceptionRef = new AtomicReference<>();
         boolean success = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
             try {
-                task.run(ProgressManager.getInstance().getProgressIndicator());
-            } catch (ConfigurationException e) {
+                ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+                task.run(indicator);
+            } catch (Exception e) {
                 exceptionRef.set(e);
             }
         }, title, true, project);
 
-        if (!success) throw new ConfigurationException("Operation cancelled by user.");
-        if (exceptionRef.get() != null) throw exceptionRef.get();
+        if (!success) {
+            throw new ConfigurationException("Opération annulée par l’utilisateur.");
+        }
+
+        if (exceptionRef.get() != null) {
+            Exception e = exceptionRef.get();
+            if (e instanceof ProcessCanceledException) {
+                throw new ConfigurationException("Opération annulée par l’utilisateur.");
+            }
+            if (e instanceof ConfigurationException) throw (ConfigurationException) e;
+            throw new ConfigurationException("Erreur : " + e.getMessage());
+        }
     }
 
     @FunctionalInterface
     public interface ProgressTask {
-        void run(ProgressIndicator indicator) throws ConfigurationException, ProcessCanceledException;
+        void run(ProgressIndicator indicator) throws Exception;
     }
 }

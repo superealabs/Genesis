@@ -1,10 +1,14 @@
 package org.labs.genesis.action.apjwizard.forms;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.table.JBTable;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
+import org.labs.genesis.action.apjwizard.forms.helper.ProgressUtils;
 import org.labs.genesis.action.apjwizard.forms.helper.TableToolbarHelper;
+import org.labs.genesis.action.apjwizard.forms.popup.PopUtils;
 import org.labs.genesis.action.apjwizard.forms.popup.TableTreeChooser;
 import org.labs.genesis.action.apjwizard.forms.renderer.TableRenderer;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.MappingTableModel;
@@ -36,7 +40,6 @@ public class MappingForm {
     private JLabel nomLabel;
     private JPanel generalPanel;
     private JPanel propertiesPanel;
-    private JScrollPane scrollProperties;
     private JTabbedPane tabPane;
     private JPanel filtrePanel;
     private JScrollPane scrollFiltre;
@@ -48,20 +51,23 @@ public class MappingForm {
     private final Project project;
     private final ApjGenerationContext context;
     private String primaryKey;
+    private enum Colonne {
+        NOMBASE(0),
+        TYPEBASE(1),
+        NOM(2),
+        TYPE(3);
+        final int index;
+        Colonne(int index) {
+            this.index = index;
+        }
+    }
 
     public MappingForm(ApjGenerationContext context, Project project) {
         this.project = project;
         this.context = context;
         populateSuperClasseOption();
-        initializeUI();
+        addActionListenerOnTableButton();
         initFormTable();
-    }
-
-    private void initializeUI() {
-        if (scrollProperties != null) {
-            scrollProperties.setBorder(BorderFactory.createEmptyBorder());
-            scrollProperties.setViewportBorder(null);
-        }
     }
 
     public void populateSuperClasseOption() {
@@ -71,6 +77,7 @@ public class MappingForm {
         }
     }
 
+    @SneakyThrows
     private void initFormTable() {
         formTableModel = new MappingTableModel(new Object[]{"Nom colonne","Type", "Nom attribut Java","Type Java"});
         formTable = new JBTable(formTableModel);
@@ -91,62 +98,81 @@ public class MappingForm {
             .build().init();
     }
 
-    private void askAI() {
-        int[] selectedRows = formTable.getSelectedRows();
-        ApjField[] fields = new ApjField[selectedRows.length];
-        for (int i = 0; i < selectedRows.length; i++) {
-            String nom = String.valueOf(formTableModel.getValueAt(selectedRows[i], 2));
-            fields[i] = new ApjField();
-            fields[i].setNom(nom);
-        }
-        String mapping = "";
-        LlmApiClient llmClient = new LlmApiClient();
-        String[] libelles = new String[selectedRows.length];
+    private void askAI(){
         try {
-            libelles = llmClient.askForLabel(mapping, fields, ConstantesApj.ATTRIBUT);
-        } catch (Exception ignored) {
-
+            ProgressUtils.runWithProgress(project, "Traitement de la demande par l'IA…", indicator -> {
+                int[] selectedRows = formTable.getSelectedRows();
+                ApjField[] fields = new ApjField[selectedRows.length];
+                for (int i = 0; i < selectedRows.length; i++) {
+                    String nom = String.valueOf(formTableModel.getValueAt(selectedRows[i], Colonne.NOMBASE.index));
+                    fields[i] = new ApjField();
+                    fields[i].setNom(nom.toLowerCase());
+                }
+                String mapping = "";
+                LlmApiClient llmClient = new LlmApiClient();
+                String[] libelles = llmClient.askForLabel(mapping, fields, ConstantesApj.ATTRIBUT);
+                for (int i = 0; i < libelles.length; i++) {
+                    formTableModel.setValueAt(libelles[i], selectedRows[i], Colonne.NOM.index);
+                }
+            });
+        } catch (Exception e) {
+            PopUtils.showError(mainPanel, "Erreur lors de la communication avec l'IA : " + e.getMessage());
         }
-        for (int i = 0; i < libelles.length; i++) {
-            formTableModel.setValueAt(libelles[i], selectedRows[i], 2);
-        }
     }
 
-    private void removeAllRows() {
-        formTableModel.setRowCount(0);
+    public void addActionListenerOnTableButton(){
+        getChooseTableButton().addActionListener(e -> showTableTree());
     }
 
-    private Set<String> loadSuperclassFieldNames(String superClassName) throws Exception {
-        URLClassLoader loader = UtilClassLoader.buildLoader(context.getProjectJarDir(), context.getLibDir());
-        Class<?> cls = loader.loadClass(superClassName);
-        List<Field> superFields = UtilClassLoader.listFields(cls, "none");
-
-        return superFields.stream()
-                .map(Field::getName)
-                .collect(Collectors.toSet());
-    }
-
-
-    private void loadAllFields(List<ApjField> fields) {
-        removeAllRows();
-        Set<String> superClassFields = Collections.emptySet();
+    public void showTableTree() {
         try {
-            String superClassName = String.valueOf(superClassComboBox.getSelectedItem());
-            if (superClassName != null && !superClassName.isBlank()) {
-                superClassFields = loadSuperclassFieldNames("bean."+superClassName);
+            String[] tables = context.getTables();
+            String[] views = context.getVues();
+            TableTreeChooser chooser = new TableTreeChooser(mainPanel, tables, views);
+            String table = chooser.showDialog();
+            if (table == null) return;
+            nomTableField.setText(table);
+            loadTableColumns(table);
+        } catch (Exception e) {
+            PopUtils.showError(mainPanel, "Erreur de chargement des colonnes : " + e.getMessage());
+        }
+    }
+
+    private void loadTableColumns(String table) throws Exception {
+        ProgressUtils.runWithProgress(project, "Chargement des colonnes de \"" + table + "\"...", indicator -> {
+            ProgressUtils.updateProgress(indicator, "Connexion à la base de données...", 0.3);
+            try (Connection conn = UtilDBDynamique.GetConn(context.getProjectJarDir(), context.getLibDir())) {
+                List<ApjField> fields = Database.getTableColumns(conn, table);
+
+                ProgressUtils.updateProgress(indicator, "Mise à jour du tableau...", 0.85);
+                ApplicationManager.getApplication().invokeAndWait(() -> {
+                    try {
+                        loadAllFields(fields);
+                    } catch (Exception e) {
+                        PopUtils.showError(mainPanel, "Erreur lors de la mise à jour du tableau : " + e.getMessage());
+                    }
+                });
+
+                ProgressUtils.updateProgress(indicator, "Chargement terminé !", 1.0);
             }
-        } catch (Exception ignored) {
+        });
+    }
 
+    private void loadAllFields(List<ApjField> fields) throws Exception {
+        formTableModel.setRowCount(0);
+        Set<String> superClassFields = Collections.emptySet();
+        String superClassName = String.valueOf(superClassComboBox.getSelectedItem());
+        if (superClassName != null && !superClassName.isBlank()) {
+            superClassFields = loadSuperclassFieldNames("bean."+superClassName);
         }
+
         for (ApjField field : fields) {
             if (superClassFields.contains(field.getNom())) {
                 continue;
             }
-
             if (field.isPrimaryKey()) {
                 primaryKey = field.getNom();
             }
-
             formTableModel.addRow(new Object[]{
                 field.getNomBase(),
                 field.getTypeBase(),
@@ -156,20 +182,15 @@ public class MappingForm {
         }
     }
 
-    public void showTableTree(String[] tables, String[] views) {
-        TableTreeChooser chooser = new TableTreeChooser(mainPanel, tables, views);
-        String table = chooser.showDialog();
-        if (table != null) {
-            nomTableField.setText(table);
-            try (Connection conn = UtilDBDynamique.GetConn(context.getProjectJarDir(), context.getLibDir())) {
-                List<ApjField> fields = Database.getTableColumns(conn, table);
-                loadAllFields(fields);
-            } catch (Exception ignored) {
+    private Set<String> loadSuperclassFieldNames(String superClassName) throws Exception {
+        URLClassLoader loader = UtilClassLoader.buildLoader(context.getProjectJarDir(), context.getLibDir());
+        Class<?> cls = loader.loadClass(superClassName);
+        List<Field> superFields = UtilClassLoader.listFields(cls, "none");
 
-            }
-        }
+        return superFields.stream()
+            .map(Field::getName)
+            .collect(Collectors.toSet());
     }
-
 
     public void fillDataTables(){
         this.dataForm = getDataTable(formTable);
@@ -180,10 +201,10 @@ public class MappingForm {
         int rowCount = model.getRowCount();
         ApjField[] fields = new ApjField[rowCount];
         for (int i = 0; i < rowCount; i++) {
-            String nomBase = String.valueOf(model.getValueAt(i, 0));
-            String typeBase = String.valueOf(model.getValueAt(i, 1));
-            String nom = String.valueOf(model.getValueAt(i, 2));
-            String type = String.valueOf(model.getValueAt(i, 3));
+            String nomBase = String.valueOf(model.getValueAt(i, Colonne.NOMBASE.index));
+            String typeBase = String.valueOf(model.getValueAt(i, Colonne.TYPEBASE.index));
+            String nom = String.valueOf(model.getValueAt(i, Colonne.NOM.index));
+            String type = String.valueOf(model.getValueAt(i, Colonne.TYPE.index));
             ApjField f = new ApjField();
             if (nomBase.equalsIgnoreCase(primaryKey)) {
                 this.setPrimaryKey(nom);

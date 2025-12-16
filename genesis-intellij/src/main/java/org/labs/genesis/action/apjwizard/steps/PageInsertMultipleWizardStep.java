@@ -23,11 +23,6 @@ public class PageInsertMultipleWizardStep implements WizardStep {
         this.context = context;
         this.project = project;
         this.pageInsertMultipleForm = new PageInsertMultipleForm(context,project);
-        String[] tables = context.getTables();
-        String[] views = context.getVues();
-        pageInsertMultipleForm.showClassChooser(project,context);
-        pageInsertMultipleForm.getChooseTableButton().addActionListener(e -> pageInsertMultipleForm.showTableTree(tables, views));
-        pageInsertMultipleForm.getChooseTableFilleButton().addActionListener(e -> pageInsertMultipleForm.showTableTree(tables, views));
     }
 
     @Override

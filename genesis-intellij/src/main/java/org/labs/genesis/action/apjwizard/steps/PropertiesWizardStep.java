@@ -84,22 +84,22 @@ public class PropertiesWizardStep implements WizardStep {
             return;
         };
 
-        ProgressUtils.runWithProgress(project, "Loading Tables and Views...", indicator -> {
+        ProgressUtils.runWithProgress(project, "Chargement des tables et vues…", indicator -> {
             try (Connection conn = UtilDBDynamique.GetConn(jarDir, libDir)) {
 
-                ProgressUtils.updateProgress(indicator, "Loading tables...", 0.5);
+                ProgressUtils.updateProgress(indicator, "Chargement des tables...", 0.5);
                 String[] tables = UtilDBDynamique.getTablesOrViews(conn, false);
 
-                ProgressUtils.updateProgress(indicator, "Loading views...", 0.9);
+                ProgressUtils.updateProgress(indicator, "Chargement des vues...", 0.9);
                 String[] vues = UtilDBDynamique.getTablesOrViews(conn, true);
 
                 context.setTables(tables);
                 context.setVues(vues);
 
-                ProgressUtils.updateProgress(indicator, "Done", 1.0);
+                ProgressUtils.updateProgress(indicator, "Terminé", 1.0);
 
             } catch (Exception e) {
-                throw new ConfigurationException("Connection failed: " + e.getMessage());
+                throw new ConfigurationException("Échec de la connexion: " + e.getMessage());
             }
         });
     }
@@ -123,11 +123,11 @@ public class PropertiesWizardStep implements WizardStep {
         if (sansBase) {
             return true;
         };
-        ProgressUtils.runWithProgress(project, "Validating Database Connection...", indicator -> {
+        ProgressUtils.runWithProgress(project, "Validation de la connexion à la base de données…", indicator -> {
             try (Connection conn = UtilDBDynamique.GetConn(jarDir, libDir)) {
-                ProgressUtils.updateProgress(indicator, "Connection successful", 1.0);
+                ProgressUtils.updateProgress(indicator, "Connexion réussie!", 1.0);
             } catch (Exception e) {
-                throw new ConfigurationException("Connection failed: " + e.getMessage());
+                throw new ConfigurationException("Échec de la connexion: " + e.getMessage());
             }
         });
         return true;

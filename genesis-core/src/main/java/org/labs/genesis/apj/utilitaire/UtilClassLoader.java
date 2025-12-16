@@ -55,4 +55,32 @@ public class UtilClassLoader {
         } catch (Exception ignored) {
         }
     }
+
+    public static List<Field> listFieldsStopOnSuperClassApj(Class<?> cls) {
+        List<Field> fields = new ArrayList<>();
+        Class<?> current = cls;
+
+        while (current != null) {
+            String name = current.getSimpleName();
+            if (ConstantesApj.CLASSMAPTABLE.equals(name)) {
+                break;
+            }
+
+            if (ConstantesApj.CLASSETAT.equals(name)) {
+                try {
+                    fields.add(current.getDeclaredField("etat"));
+                } catch (NoSuchFieldException ignored) {}
+                break;
+            }
+            if (ConstantesApj.CLASSFILLE.equals(name) || ConstantesApj.CLASSMERE.equals(name)) {
+                current = current.getSuperclass();
+                continue;
+            }
+            Collections.addAll(fields, current.getDeclaredFields());
+            current = current.getSuperclass();
+        }
+        return fields;
+    }
+
+
 }

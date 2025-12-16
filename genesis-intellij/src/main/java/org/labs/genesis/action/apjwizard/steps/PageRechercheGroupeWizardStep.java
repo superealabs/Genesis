@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import lombok.Getter;
 import org.labs.genesis.action.apjwizard.forms.PageRechercheGroupeForm;
 import org.labs.genesis.apj.ApjGenerationContext;
-import org.labs.genesis.apj.filetype.pages.PageRecherche;
 import org.labs.genesis.apj.filetype.pages.PageRechercheGroupe;
 import org.labs.genesis.apj.generator.ApjFileGenerator;
 import org.labs.utils.StringUtils;
@@ -26,10 +25,6 @@ public class PageRechercheGroupeWizardStep implements WizardStep {
         this.context = context;
         this.pageRechercheGroupeForm = new PageRechercheGroupeForm(context,project);
         this.project = project;
-        String[] tables = context.getTables();
-        String[] views = context.getVues();
-        pageRechercheGroupeForm.showClassChooser(project,context);
-        pageRechercheGroupeForm.getChooseTableButton().addActionListener(e -> pageRechercheGroupeForm.showTableTree(tables, views));
     }
 
     @Override

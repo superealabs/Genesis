@@ -2,25 +2,30 @@ package org.labs.genesis.action.apjwizard.forms.popup;
 
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.table.JBTable;
 import lombok.Getter;
 import lombok.Setter;
+import org.labs.genesis.action.apjwizard.forms.helper.ProgressUtils;
 import org.labs.genesis.action.apjwizard.forms.helper.TableToolbarHelper;
 import org.labs.genesis.action.apjwizard.forms.renderer.TableRenderer;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.ComboCellEditor;
 import org.labs.genesis.action.apjwizard.forms.tablehandler.TableRowTransferHandler;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.component.ApjField;
+import org.labs.genesis.apj.utilitaire.Database;
 import org.labs.genesis.apj.utilitaire.UtilClassLoader;
+import org.labs.genesis.apj.utilitaire.UtilDBDynamique;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.lang.reflect.Field;
 import java.net.URLClassLoader;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.sql.Connection;
+import java.util.*;
 
 @Getter
 @Setter
@@ -47,6 +52,8 @@ public class AutoCompleteDialog extends JDialog{
     private LinkedHashMap<String, ApjField> allFieldsMap = new LinkedHashMap<>();
     private String[] champRetourOptions = new String[0];
     private String[] mappingOptions = new String[0];
+    private LinkedHashMap<String, ApjField> allInitialFieldsMap = new LinkedHashMap<>();
+    private LinkedHashMap<String, ApjField> allFieldsDataBaseMap = new LinkedHashMap<>();
 
 
     public AutoCompleteDialog(JComponent parent, ApjGenerationContext context, Project project,LinkedHashMap<String, ApjField> allFieldsMap) {
@@ -61,9 +68,10 @@ public class AutoCompleteDialog extends JDialog{
         setLocationRelativeTo(parent);
 
         initEvents();
-        initHooks();
         initConfig();
         initTable();
+        addActionListenerOnClassButton();
+        addActionListenerOnTableButton();
     }
 
     public void initConfig() {
@@ -80,33 +88,132 @@ public class AutoCompleteDialog extends JDialog{
         });
     }
 
-
-    private void initHooks() {
+    public void addActionListenerOnClassButton() {
         chooseClassButton.setToolTipText("Cliquez pour sélectionner une classe Java du projet");
-        chooseClassButton.addActionListener(e -> {
+        chooseClassButton.addActionListener(e -> handleClassSelection());
+    }
+
+    public void handleClassSelection() {
+        try {
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
                     .createAllProjectScopeChooser("Sélectionner une classe");
             chooser.showDialog();
             PsiClass selectedClass = chooser.getSelected();
-            if (selectedClass != null) {
-                mappingField.setText(selectedClass.getQualifiedName());
-                try {
-                    URLClassLoader loader = UtilClassLoader.buildLoader(context.getProjectJarDir(), context.getLibDir());
-                    Class<?> cls = loader.loadClass(selectedClass.getQualifiedName());
-                    List<Field> fields = UtilClassLoader.listFieldsStopClassMAPTable(cls);
-                    List<ApjField> apjFields = ApjField.javaFieldsToApjFields(fields);
-                    List<String> names = apjFields.stream().map(ApjField::getNom).toList();
-                    setFields(names);
-                } catch (Exception ignored) {
-                }
+            if (selectedClass == null) return;
+            String className = selectedClass.getQualifiedName();
+            mappingField.setText(className);
+            loadMapping(className);
+        } catch (Exception e) {
+            PopUtils.showError(mainPanel, "Erreur de chargement du mapping Java : " + e.getMessage());
+        }
+    }
+
+    private void loadMapping(String className) throws Exception {
+        ProgressUtils.runWithProgress(project, "Chargement du Mapping Java...", indicator -> {
+            URLClassLoader loader = UtilClassLoader.buildLoader(context.getProjectJarDir(), context.getLibDir());
+
+            ProgressUtils.updateProgress(indicator, "Classe Java en cours de chargement...", 0.3);
+            Class<?> cls = loader.loadClass(className);
+            List<Field> fields = UtilClassLoader.listFieldsStopOnSuperClassApj(cls);
+            List<ApjField> apjFields = ApjField.javaFieldsToApjFields(fields);
+
+            ProgressUtils.updateProgress(indicator, "Mise à jour des champs disponibles...", 0.85);
+            ApplicationManager.getApplication().invokeAndWait(() -> {
+                loadFieldsMap(apjFields);
+                setFields();
+            });
+            ProgressUtils.updateProgress(indicator, "Terminé", 1.0);
+        });
+    }
+
+    private void loadFieldsMap(List<ApjField> fields) {
+        allFieldsMap.clear();
+        allInitialFieldsMap.clear();
+        for (ApjField field : fields) {
+            allFieldsMap.put(field.getNom(), field);
+            allInitialFieldsMap.put(field.getNom(), field);
+        }
+    }
+
+    public void setFields() {
+        affCombo.removeAllItems();
+        List<String> fieldNames = new ArrayList<>();
+        affCombo.removeAllItems();
+        for (Map.Entry<String, ApjField> entry : allFieldsMap.entrySet()) {
+            String key = entry.getKey();
+            affCombo.addItem(key);
+            fieldNames.add(key);
+        }
+        champRetourOptions = fieldNames.toArray(new String[0]);
+        if (tableValues == null || tableValues.getColumnModel().getColumnCount() == 0) {
+            return;
+        }
+        tableValues.getColumnModel().getColumn(0)
+                .setCellEditor(new ComboCellEditor(champRetourOptions));
+    }
+
+    public void addActionListenerOnTableButton(){
+        getChooseTableButton().addActionListener(e -> showTableTree());
+    }
+
+    public void showTableTree() {
+        try {
+            String[] tables = context.getTables();
+            String[] views = context.getVues();
+            TableTreeChooser chooser = new TableTreeChooser(mainPanel, tables, views);
+            String table = chooser.showDialog();
+            if (table == null) return;
+            nomTableField.setText(table);
+            loadTableColumns(table);
+        } catch (Exception e) {
+            PopUtils.showError(mainPanel, "Erreur de chargement des colonnes : " + e.getMessage());
+        }
+    }
+
+    private void loadTableColumns(String table) throws Exception {
+        ProgressUtils.runWithProgress(project, "Chargement des colonnes de \""+table+"\"...", indicator -> {
+            try (Connection conn = UtilDBDynamique.GetConn(context.getProjectJarDir(), context.getLibDir())) {
+                List<ApjField> fields = Database.getTableColumns(conn, table);
+
+                ProgressUtils.updateProgress(indicator, "Mise à jour du tableau...", 0.85);
+                ApplicationManager.getApplication().invokeAndWait(() -> loadAllFieldsBase(fields));
+
+                ProgressUtils.updateProgress(indicator, "Terminé", 1.0);
             }
         });
+    }
 
-        chooseTableButton.addActionListener(e -> {
-            TableTreeChooser chooser = new TableTreeChooser(mainPanel, context.getTables(), context.getVues());
-            String table = chooser.showDialog();
-            if (table != null) nomTableField.setText(table);
-        });
+    private void loadAllFieldsBase(List<ApjField> fields) {
+        allFieldsDataBaseMap.clear();
+        for (ApjField field : fields) {
+            allFieldsDataBaseMap.put(field.getNom(), field);
+        }
+        List<ApjField> allFieldsReinit = new ArrayList<>(allInitialFieldsMap.values());
+        loadFieldsMap(allFieldsReinit);
+        removeNonCommun();
+        setFields();
+    }
+
+    private void removeNonCommun(){
+        Map<String, String> champsJava = new HashMap<>();
+        for (String nom : allFieldsMap.keySet()) {
+            champsJava.put(nom.toLowerCase(), nom);
+        }
+        Map<String, String> champsBase = new HashMap<>();
+        for (String nom : allFieldsDataBaseMap.keySet()) {
+            champsBase.put(nom.toLowerCase(), nom);
+        }
+        Set<String> communs = new HashSet<>(champsJava.keySet());
+        communs.retainAll(champsBase.keySet());
+        Set<String> toRemove = new HashSet<>();
+        for (String nomLower : champsJava.keySet()) {
+            if (!communs.contains(nomLower)) {
+                toRemove.add(champsJava.get(nomLower));
+            }
+        }
+        for (String key : toRemove) {
+            allFieldsMap.remove(key);
+        }
     }
 
     private JBTable initTable(JBTable table,DefaultTableModel tableModel,JScrollPane scroll){
@@ -202,20 +309,6 @@ public class AutoCompleteDialog extends JDialog{
         });
     }
 
-    public void setFields(List<String> fieldNames) {
-        affCombo.removeAllItems();
-        for (String f : fieldNames) {
-            affCombo.addItem(f);
-        }
-        champRetourOptions = fieldNames.toArray(new String[0]);
-
-        if (tableValues == null || tableValues.getColumnModel().getColumnCount() == 0) {
-            return;
-        }
-
-        tableValues.getColumnModel().getColumn(0)
-                .setCellEditor(new ComboCellEditor(champRetourOptions));
-    }
 
 
 }
