@@ -15,6 +15,10 @@ import java.util.Map;
 public class Mapping extends ApjFile {
     private String pk;
     private String superclasse;
+    private boolean isMere;
+    private boolean isFille;
+    private String liaison;
+    private String classeLiaison;
 
     @Override
     public HashMap<String, Object> getPrimaryHashMap() {
@@ -33,6 +37,10 @@ public class Mapping extends ApjFile {
         map.put("champs", getChampsList());
         map.put("packageImports", this.getPackageImports());
         map.put("packageImport", this.getPackageMapping());
+        map.put("isMere", this.isMere());
+        map.put("isFille", this.isFille());
+        map.put("liaison", this.getLiaison());
+        map.put("classeLiaison", this.getClasseLiaison());
         if (this.getPk()==null || this.getPk().isEmpty()) {
             map.put("pk", "id");
         } else {

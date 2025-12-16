@@ -38,4 +38,6 @@ public class ConstantesApj {
     public static final String CLASSMAPTABLE = "ClassMAPTable";
     public static final String TYPEOBJET = "TypeObjet";
     public static final String CLASSETAT = "ClassEtat";
+    public static final String CLASSMERE = "ClassMere";
+    public static final String CLASSFILLE = "ClassFille";
 }

@@ -51,7 +51,7 @@ public class TableTreeChooser {
                 viewsNode.add(new DefaultMutableTreeNode(v));
             }
         }
-        if (this.getViews().length > 0) {
+        if (this.getViews() != null) {
             root.add(viewsNode);
         }
 

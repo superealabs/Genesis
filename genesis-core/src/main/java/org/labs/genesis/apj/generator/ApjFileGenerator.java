@@ -33,7 +33,9 @@ public class ApjFileGenerator {
             pro.setOnglet(true);
             PageRechercheGroupe prg = FileUtils.fromYaml(PageRechercheGroupe.class, ConstantesApj.PAGE_RECHERCHE_GROUPE);
             Mapping mapping = FileUtils.fromYaml(Mapping.class, ConstantesApj.MAPPING);
-            MappingMereFille mappingFille = FileUtils.fromYaml(MappingMereFille.class, ConstantesApj.MAPPING_MERE_FILLE);
+            Mapping mappingFille = FileUtils.fromYaml(Mapping.class, ConstantesApj.MAPPING);
+            mappingFille.setId(ConstantesApj.MAPPING_MERE_FILLE_ID);
+            mappingFille.setName("MappingMereFille");
 
             databases = Arrays.stream(FileUtils.fromJson(Database[].class, ConstantesApj.DATABASE_JSON))
                 .collect(Collectors.toMap(Database::getId, database -> database));

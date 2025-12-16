@@ -12,7 +12,7 @@ imports : |
   {{/each}}{{removeLine}}
 
 body : |
-  public class ${mapping} extends ${superclasse} {
+  public class ${majStart(mapping)} extends ${superclasse} {
       {{#each champs}}
       private ${this.type} ${this.nom};
       {{/each}}{{removeLine}}
@@ -28,8 +28,28 @@ body : |
   
       {{/each}}{{removeLine}}
   
-      public ${mapping}() {
+      {{#if isFille}}{{removeLine}}
+      @Override
+      public String getNomClasseMere() {
+          return "${classeLiaison}";
+      }
+  
+      @Override
+      public String getLiaisonMere() {
+          return "${liaison}";
+      }
+      {{/if}}{{removeLine}}
+  
+      public ${majStart(mapping)}() {
           this.setNomTable("${nomTable}");
+          {{#if isMere}}{{removeLine}}
+          this.setNomClasseFille("${classeLiaison}");
+          this.setLiaisonFille("${liaison}");
+          {{/if}}{{removeLine}}
+          {{#if isFille}}{{removeLine}}
+          this.setNomClasseMere("${classeLiaison}");
+          this.setLiaisonMere("${liaison}");
+          {{/if}}{{removeLine}}
       }
   
       @Override
