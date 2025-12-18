@@ -116,10 +116,18 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
         // Gestion des routes et de l'authentification si c'est une Gateway
         if (framework != null && framework.getIsGateway()) {
-            frameworkConfiguration.put("routes", specificConfigurationForm.getRouteConfigurationData());
-            frameworkConfiguration.put("username", specificConfigurationForm.getUsernameField().getText().trim());
-            frameworkConfiguration.put("password", new String(specificConfigurationForm.getPasswordField().getPassword()).trim());
-            frameworkConfiguration.put("role", specificConfigurationForm.getRoleField().getText().trim());
+            if(!specificConfigurationForm.getUseOauth2()) {
+                frameworkConfiguration.put("routes", specificConfigurationForm.getRouteConfigurationData());
+                frameworkConfiguration.put("username", specificConfigurationForm.getUsernameField().getText().trim());
+                frameworkConfiguration.put("password", new String(specificConfigurationForm.getPasswordField().getPassword()).trim());
+                frameworkConfiguration.put("role", specificConfigurationForm.getRoleField().getText().trim());
+                framework.setUseGatewaySecurity(false);
+            }else{
+                frameworkConfiguration.put("routes", specificConfigurationForm.getRouteConfigurationData());
+                frameworkConfiguration.put("client-id", specificConfigurationForm.getClientIdField().getText().trim());
+                frameworkConfiguration.put("client-secret", specificConfigurationForm.getClientSecretField().getText().trim());
+                framework.setUseGatewaySecurity(true);
+            }
         }
 
         // Gestion de la création du venv pour Django
@@ -277,7 +285,11 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
         // Valider les champs pour les API Gateway
         if (framework != null && framework.getIsGateway()) {
-            validateGatewayAuthentication();
+            if (!specificConfigurationForm.getUseOauth2()){
+                validateGatewayAuthentication();
+            }else{
+                validateGatewayAuthenticationOauth2();
+            }
             validateRouteTable();
         }
 
@@ -299,12 +311,6 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
         // Valider la configuration du cache
         validateCache();
-
-        // Valider les champs pour les API Gateway
-        if (framework != null && framework.getIsGateway()) {
-            validateGatewayAuthentication();
-            validateRouteTable();
-        }
 
         return true;
     }
@@ -374,6 +380,19 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             put(password, "Password for API Gateway cannot be empty.");
             put(role, "Role for API Gateway cannot be empty.");
         }};
+        for (Map.Entry<String, String> e : gatewayMap.entrySet()) {
+            if (e.getKey().isEmpty()) {
+                throw new ConfigurationException(e.getValue());
+            }
+        }
+    }
+    private void validateGatewayAuthenticationOauth2() throws ConfigurationException {
+        String clientId = specificConfigurationForm.getClientIdField().getText().trim();
+        String clientSecret = specificConfigurationForm.getClientSecretField().getText().trim();
+        HashMap<String, String> gatewayMap = new HashMap<>() {{
+            put(clientId, "Client ID for API Gateway cannot be empty.");
+            put(clientSecret, "Client Secret for API Gateway cannot be empty.");
+        }} ;
         for (Map.Entry<String, String> e : gatewayMap.entrySet()) {
             if (e.getKey().isEmpty()) {
                 throw new ConfigurationException(e.getValue());

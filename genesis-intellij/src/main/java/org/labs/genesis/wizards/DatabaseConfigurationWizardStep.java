@@ -119,7 +119,6 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
                         "Success"
                 );
             }
-
         } catch (Exception e) {
             // Update the UI with error feedback
             String formattedMessageHtml = formatErrorMessageHtml(e.getMessage());
