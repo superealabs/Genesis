@@ -21,7 +21,6 @@ public class RuleToCodeWizardAIStep extends ModuleWizardStep {
     }
     @Override
     public void updateDataModel() {
-
     }
 
     @Override

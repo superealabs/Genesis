@@ -53,14 +53,21 @@ public class SpecificConfigurationForm {
     private JBList<String> selectedTableAndViewNamesList;
     private JCheckBox createVenvCheckBox;
     private JCheckBox enableAuthCheckBox;
+    private JLabel clientIdLabel;
+    private JLabel clientSecretLabel;
+    private JTextField clientIdField;
+    private JTextField clientSecretField;
     @Setter
     private List<String> allTablesAndViewsNames  = new ArrayList<>();
+    @Setter
+    Boolean useOauth2 = false;
 
     private JComboBox<String> comboBoxProjectList;
     private JComboBox<ProjectGenerationContext> contextList ;
     private JLabel labelListProject;
     private JButton addSpecificConfigurationButton;
     private final List<ProjectGenerationContext> listProjectGenerationContexts ;
+
 
     public SpecificConfigurationForm(List<ProjectGenerationContext> listProjectGenerationContexts) {
         this.listProjectGenerationContexts = listProjectGenerationContexts;
@@ -147,7 +154,11 @@ public class SpecificConfigurationForm {
                 configureCacheProviderShow();
             }else{configureCacheProvider(framework);}
 
+            configureGatewayComponentsOauth2Disable();
+
             if (framework.getIsGateway()) {
+                listenerSecurityGateway();
+                configureSecurityGateway() ;
                 configureGatewayComponents();
             }
             if (frameworkUsesDatabase(framework)) {
@@ -307,7 +318,61 @@ public class SpecificConfigurationForm {
         roleLabel.setVisible(true);
         roleField.setVisible(true);
     }
+    private void configureGatewayComponentsOauth2() {
+        scrollPaneRouteTable.setVisible(true);
+        routeConfigurationLabel.setVisible(true);
+        routeConfigurationOption.setVisible(true);
+        addRouteButton.setVisible(true);
+        removeRouteButton.setVisible(true);
 
+        clientIdLabel.setVisible(true);
+        clientIdField.setVisible(true);
+        clientSecretField.setVisible(true);
+        clientSecretLabel.setVisible(true);
+
+    }
+    private void configureGatewayComponentsOauth2Disable() {
+        scrollPaneRouteTable.setVisible(false);
+        routeConfigurationLabel.setVisible(false);
+        routeConfigurationOption.setVisible(false);
+        addRouteButton.setVisible(false);
+        removeRouteButton.setVisible(false);
+
+        clientIdLabel.setVisible(false);
+        clientIdField.setVisible(false);
+        clientSecretField.setVisible(false);
+        clientSecretLabel.setVisible(false);
+
+    }
+    private void configureSecurityGateway() {
+        securityTypeLabel.setVisible(true);
+        securityTypeOptions.setVisible(true);
+        securityTypeOptions.addItem("Simple");
+        securityTypeOptions.addItem("Google OAuth 2");
+    }
+    private void listenerSecurityGateway() {
+        securityTypeOptions.addActionListener( e -> {
+            String selectedOption = (String) securityTypeOptions.getSelectedItem();
+            if(selectedOption.equalsIgnoreCase("simple")){
+                configureGatewayComponents();
+                clientIdLabel.setVisible(false);
+                clientIdField.setVisible(false);
+                clientSecretField.setVisible(false);
+                clientSecretLabel.setVisible(false);
+                this.setUseOauth2(false);
+            }
+            if(selectedOption.equalsIgnoreCase("Google OAuth 2")){
+                configureGatewayComponentsOauth2();
+                defaultUsernameLabel.setVisible(false);
+                usernameField.setVisible(false);
+                passwordLabel.setVisible(false);
+                passwordField.setVisible(false);
+                roleLabel.setVisible(false);
+                roleField.setVisible(false);
+                this.setUseOauth2(true);
+            }
+        }) ;
+    }
     private void configureDatabaseComponents(Framework framework) {
         if (frameworkHasConfiguration(framework, "hibernateDdlAuto")) {
             hibernateDDLAutoLabel.setVisible(true);

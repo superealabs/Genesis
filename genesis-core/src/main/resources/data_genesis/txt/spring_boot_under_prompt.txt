@@ -1,15 +1,18 @@
 Target Framework: Spring Boot
 
 Specific Constraints:
+- Centralize repetitive exceptions: when multiple validations could throw the same exception with the same message,
+  combine all conditions into a single check and throw the exception once.
+- WARNING !!! Use @Query with JPQL inside an existing repository,
+  especially if a derived query method becomes too long or unreadable (example, existsByIdlivreLivreIdLivreAndDateRetourIsNullAndIdmembreMembreIdMembreNot).
 - Strict adherence to **Spring Data JPA** conventions.
-- Use only **native CRUD methods** and **Spring Data JPA Specifications** for all data access logic.
-- For complex queries, use **Specifications** exclusively — only when repository-derived methods cannot handle the requirement.
+- Use **native CRUD methods** and **Spring Data JPA Specifications** for all data access logic.
+- For complex queries, use **Specifications** only when repository-derived methods cannot handle the requirement.
 - For pagination, always use `Page<T>` and `Pageable`.
 - For relationships, use standard JPA mechanisms (fetch types, and `@EntityGraph` if necessary).
 - Code may use `Optional<T>`, `List<T>`, or `Page<T>` depending on context.
 - **No custom JPQL or SQL queries**, unless justified as an **extreme exception** (see below).
 - Business exceptions must be raised using **runtime exceptions** or **custom Spring exceptions**.
-
 
 Allowed CRUD Methods and Tools (examples, non-exhaustive):
 - `findAll(Pageable pageable)`
@@ -23,7 +26,6 @@ Allowed CRUD Methods and Tools (examples, non-exhaustive):
 Extreme Case – Controlled Exceptions
 **Custom JPQL or SQL**:
 - Allowed **only** when the business rule cannot be implemented efficiently with Specifications or CRUD methods.
-- Prefer `@Query` with JPQL inside an existing repository.
 - Native SQL is allowed **only** for strong technical reasons (e.g., performance optimization on large datasets).
 - For large datasets:
   - Use **pagination (`Pageable`)** or **batch processing** (`batch size`, `stream()`, `scroll()`).
@@ -40,20 +42,21 @@ Expected Output Format
   (no comment in the code ,juste du code !!!)
   @Repository: "name entity"Repository ( necessary if using in service )
     import xxx.xxx.xxx; (if necessary, no `public class` or anything else …)
-    type de retour findByXXX( param ) ; (if the function returns a list of data, you must use a paginated return type (e.g., Page<T>))
+    return type fonctionName( param ) ; (if the function returns a list of data, you must use a paginated return type (e.g., Page<T>))
 
   @Service: Defautl"name entity"Service ( example : DefaultEntityService non EntityService)
     import xxx.xxx.xxx ; (if necessary, no `public class` or anything else …)
     import xxx.xxx.models.name entity (xxx= pathModel + xxx= projectName ) ( using if function need dependence different model )
-    type de retour regleMetier ( param ) { ... code ... }
+    return type fonctionName( param ) { ... code ... }
 
   @Repository: "name entity"Repository ( necessary if using in service )
     import xxx.xxx.xxx; (if necessary, no `public class` or anything else …)
-    type de retour findByXXX( param ) ; (if the function returns a list of data, you must use a paginated return type (e.g., Page<T>))
+    return type fonctionName( param ) ; (if the function returns a list of data, you must use a paginated return type (e.g., Page<T>))
 
   @Service: Defautl"name entity"Service ( example : DefaultEntityService non EntityService)
     import xxx.xxx.xxx ; (if necessary, no `public class` or anything else …)
     import xxx.xxx.models.name entity (xxx= pathModel + xxx= projectName ) ( using if function need dependence different model )
-    type de retour regleMetier ( param ) { ... code ... }
+    return type fonctionName( param ) { ... code ... }
 
 All business rules defined in the YAML file must be applied!!!
+WARNING !!! Use @Query if derived query method becomes too long !!!

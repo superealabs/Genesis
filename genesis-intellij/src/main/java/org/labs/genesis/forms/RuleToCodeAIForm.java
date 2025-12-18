@@ -4,6 +4,8 @@ package org.labs.genesis.forms;
 import com.intellij.openapi.ui.Messages;
 import lombok.Getter;
 import lombok.Setter;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rtextarea.RTextScrollPane;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.generator.project.LlmApiConfig;
@@ -22,11 +24,14 @@ public class RuleToCodeAIForm {
     private JComboBox<String> aiOptionsComboBox;
     private JComboBox<LlmApiConfig> listLlmApiConfigsComboBox;
     private JButton integrateButton;
+    private JButton deleteButton;
     private JButton generateCodeButton;
-    private JTextArea codeContent ;
+
+    private RTextScrollPane scrollPane;
+    private RSyntaxTextArea codeContent;
+
     private JTextField tokenField;
     private JCheckBox checkPersonalToken;
-    private JScrollPane scrollPane;
     private final LlmApiClientRule llmApiClientRule;
     private final ProjectGenerationContext context;
 
@@ -50,6 +55,8 @@ public class RuleToCodeAIForm {
         generateCodeFromLLM();
         // ---------------- Integrete code ----------------
         integrateCode();
+        // ---------------- Delete code ----------------
+        deleteCode();
     }
     private void configureCheckPersonalToken() {
         checkPersonalToken.addActionListener(e -> {
@@ -137,6 +144,40 @@ public class RuleToCodeAIForm {
                 }
 
 
+            } catch (Exception ex) {
+                Messages.showErrorDialog(
+                        mainPanel,
+                        ex.getMessage(),
+                        "Error"
+                );
+            }
+
+        });
+    }
+    private void deleteCode(){
+        getDeleteButton().addActionListener(e -> {
+            try {
+                CodeInjector codeInjector = new CodeInjector();
+                if( validateAiCodeGenerated() ){
+                    String codeGenerated = this.codeContent.getText();
+                    Framework framework = context.getFramework();
+                    List<CodeBlock> blocks = codeInjector.splitCode(codeGenerated , framework.getId() );
+
+                    String pathProject = context.getDestinationFolder();
+                    Path path = Paths.get(pathProject) ;
+
+                    String basePath = path.getParent().toString();
+                    String projectName = path.getFileName().toString();
+
+                    System.out.println("Blocs code\n" + blocks);
+
+                    codeInjector.deleteBlocks(blocks , basePath , framework.getId(), projectName );
+                    Messages.showInfoMessage(
+                            mainPanel,
+                            "Delete code successful!",
+                            "Success"
+                    );
+                }
             } catch (Exception ex) {
                 Messages.showErrorDialog(
                         mainPanel,
