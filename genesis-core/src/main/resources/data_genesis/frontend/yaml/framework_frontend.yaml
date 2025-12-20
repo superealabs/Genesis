@@ -6800,7 +6800,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <template v-for="(row, index) in rows" :key="row._internalId + '-' + index">
+                  <template v-for="(row, index) in rows" :key="row._internalId">
                     <${majStart(className)}RowForm
                       :internalId="index + 1"
                       :${minStart(className)}="row.data"
