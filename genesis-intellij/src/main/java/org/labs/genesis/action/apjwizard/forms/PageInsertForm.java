@@ -65,7 +65,6 @@ public class PageInsertForm {
     private LinkedHashMap<String, ApjField> allInitialFieldsMap = new LinkedHashMap<>();
     private LinkedHashMap<String, ApjField> allFieldsDataBaseMap = new LinkedHashMap<>();
     private String primaryKey = "id";
-    private String etat = "etat";
     private enum Colonne {
         VISIBLE(0),
         NOM(1),
@@ -237,7 +236,7 @@ public class PageInsertForm {
         formTableModel.setRowCount(0);
         for (ApjField field : fields) {
             String fieldName = field.getNom();
-            if (fieldName.equalsIgnoreCase(primaryKey) || fieldName.equalsIgnoreCase(etat)) {
+            if (fieldName.equalsIgnoreCase(primaryKey)) {
                 continue;
             }
             formTableModel.addRow(new Object[]{Boolean.TRUE,fieldName, StringUtils.majStart(fieldName),null,ConstantesApj.SIMPLE,null});

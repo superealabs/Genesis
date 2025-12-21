@@ -408,8 +408,10 @@ public class PageRechercheForm {
     }
 
     private void removeDataPage(){
-        filtreTableModel.setRowCount(0);
-        recapTableModel.setRowCount(0);
+        if (!isOnglet) {
+            filtreTableModel.setRowCount(0);
+            recapTableModel.setRowCount(0);
+        }
         tableauTableModel.setRowCount(0);
     }
 

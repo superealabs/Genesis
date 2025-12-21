@@ -3,14 +3,11 @@ package org.labs.genesis.apj.utilitaire;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.apj.component.ApjField;
-import org.labs.utils.FileUtils;
 import org.labs.utils.StringUtils;
-
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static org.labs.genesis.apj.generator.ApjFileGenerator.databases;
 
 @Setter
 @Getter
@@ -24,13 +21,9 @@ public class Database {
         String dbProduct = meta.getDatabaseProductName();
         int dbId = dbProduct.equalsIgnoreCase("PostgreSQL") ? 2 : 1;
 
-        Map<Integer, Database> databases =
-                Arrays.stream(FileUtils.fromJson(Database[].class, ConstantesApj.DATABASE_JSON))
-                        .collect(Collectors.toMap(Database::getId, d -> d));
-
         Database database = databases.get(dbId);
 
-        String schema = dbProduct.equalsIgnoreCase("PostgreSQL") ? "public" : null;
+        String schema = dbProduct.equalsIgnoreCase("PostgreSQL") ? "public" : getCurrentOracleSchema(conn);
         String tableNameUc = tableName.toUpperCase();
         String schemaUc = schema != null ? schema.toUpperCase() : null;
 
@@ -51,19 +44,17 @@ public class Database {
                 int size = rs.getInt("COLUMN_SIZE");
                 int scale = rs.getInt("DECIMAL_DIGITS");
 
-                String typeBase;
-                if (scale > 0) typeBase = typeName + "(" + size + "," + scale + ")";
-                else if (size > 0) typeBase = typeName + "(" + size + ")";
-                else typeBase = typeName;
+                String typeBase = scale > 0 ? typeName + "(" + size + "," + scale + ")" :
+                        size > 0 ? typeName + "(" + size + ")" :
+                                typeName;
 
-                String normalizedDbType = StringUtils.normalizeDbType(typeBase);
-                String javaType = database.getTypes().get(normalizedDbType);
+                String javaType = database.getTypes().getOrDefault(StringUtils.normalizeDbType(typeBase), "Object");
 
                 ApjField field = new ApjField();
                 field.setNomBase(columnName);
                 field.setNom(columnName.toLowerCase());
                 field.setTypeBase(typeBase);
-                field.setType(javaType != null ? javaType : "Object");
+                field.setType(javaType);
                 field.setPrimaryKey(primaryKeys.contains(columnName));
 
                 fieldsMap.put(columnName, field);
@@ -73,5 +64,15 @@ public class Database {
         return new ArrayList<>(fieldsMap.values());
     }
 
+    private static String getCurrentOracleSchema(Connection conn) throws SQLException {
+        String sql = "SELECT SYS_CONTEXT('USERENV','CURRENT_SCHEMA') AS CURRENT_SCHEMA FROM DUAL";
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getString("CURRENT_SCHEMA");
+            }
+        }
+        throw new IllegalStateException("Impossible de déterminer le schéma Oracle courant");
+    }
 
 }

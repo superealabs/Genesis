@@ -77,7 +77,6 @@ public class PageInsertMultipleForm {
     private LinkedHashMap<String, ApjField> allFieldsDataBaseFilleMap = new LinkedHashMap<>();
     private String primaryKey = "id";
     private String primaryKeyFille = "id";
-    private String etat = "etat";
     private enum Colonne {
         VISIBLE(0),
         NOM(1),
@@ -292,7 +291,7 @@ public class PageInsertMultipleForm {
         tableModel.setRowCount(0);
         for (ApjField field : fields) {
             String fieldName = field.getNom();
-            if (fieldName.equalsIgnoreCase(pk) || fieldName.equalsIgnoreCase(etat)) {
+            if (fieldName.equalsIgnoreCase(pk)) {
                 continue;
             }
             tableModel.addRow(new Object[]{Boolean.TRUE,fieldName, StringUtils.majStart(fieldName),null,ConstantesApj.SIMPLE,null});
