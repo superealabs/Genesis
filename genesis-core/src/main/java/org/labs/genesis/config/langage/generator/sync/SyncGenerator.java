@@ -57,7 +57,11 @@ public class SyncGenerator extends ProjectGenerator {
         GenesisContextModel contextModel = loadGenesisFile(projectDirectory);
         GenesisContextBuilder contextBuilder = new GenesisContextBuilder();
         ProjectGenerationContext projectGenerationContext = contextBuilder.buildProjectGenerationContext(contextModel);
-        projectGenerationContext.setDestinationFolder(projectDirectory.substring(0, projectDirectory.lastIndexOf("/")));
+        try{
+            projectGenerationContext.setDestinationFolder(projectDirectory.substring(0, projectDirectory.lastIndexOf("/")));
+        }catch(Exception e){
+            projectGenerationContext.setDestinationFolder(projectDirectory.substring(0, projectDirectory.lastIndexOf("\\")));
+        }
         return projectGenerationContext;
     }
 

@@ -20,12 +20,15 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Stream;
 
 public class FileUtils {
     public static FilesUtilsMode mode = FilesUtilsMode.GENERATION;
+    public static List<File> CONFLICT_FILES = new ArrayList<File>();
 
     public static void setMode(FilesUtilsMode mode) {
         FileUtils.mode = mode;
@@ -217,6 +220,7 @@ public class FileUtils {
     private static void applyGeneratedMergeOutcome(MergeOutcome mergeOutcome) throws IOException {
         FileMergeInput mergeInput = mergeOutcome.input;
         if (mergeOutcome.hasConflict && mergeOutcome.mergedContent != null) {
+            CONFLICT_FILES.add(mergeOutcome.conflictFile);
             Files.write(mergeOutcome.conflictFile.toPath(), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
         } else if (mergeOutcome.mergedContent != null) {
             // merge content into current file
@@ -227,14 +231,19 @@ public class FileUtils {
         deleteFile(mergeInput.newFile.getPath());
     }
     public static void createOrMergeFile(String destinationFolder, String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
-        File generatedFile = createGenerationTempFile(filePath, fileName, fileExtension, fileContent);
-        File existingFile = new File(filePath + "/" + fileName + "." + fileExtension);
-        File baseDirectory = generateBaseDirectoryIfAbsent(destinationFolder);
-        File baseFile = new File(baseDirectory.getPath() + "/" + fileName + "." + fileExtension);
+        if (mode.equals(FilesUtilsMode.MERGE)) {
+            File generatedFile = createGenerationTempFile(filePath, fileName, fileExtension, fileContent);
+            File existingFile = new File(filePath + "/" + fileName + "." + fileExtension);
+            File baseDirectory = generateBaseDirectoryIfAbsent(destinationFolder);
+            File baseFile = new File(baseDirectory.getPath() + "/" + fileName + "." + fileExtension);
+            FileMergeInput mergeInput = new FileMergeInput(baseFile, existingFile, generatedFile);
+            MergeOutcome mergeOutcome = MergeTool.merge(mergeInput,true);
+            applyGeneratedMergeOutcome(mergeOutcome);
+        }
+        else if (mode.equals(FilesUtilsMode.GENERATION)) {
+            createFile(filePath, fileName, fileExtension, fileContent);
+        }
 
-        FileMergeInput mergeInput = new FileMergeInput(baseFile, existingFile, generatedFile);
-        MergeOutcome mergeOutcome = MergeTool.merge(mergeInput,true);
-        applyGeneratedMergeOutcome(mergeOutcome);
     }
 
 

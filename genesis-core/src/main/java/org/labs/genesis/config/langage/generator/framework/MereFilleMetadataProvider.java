@@ -12,9 +12,12 @@ import java.util.List;
 public class MereFilleMetadataProvider {
     public static HashMap<String, Object> getRelationsHashMap(TableMetadata tableMetadata){
         HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("isParentTable", false);
+        metadata.put("isChildTable", false);
+        metadata.put("children", null);
+        metadata.put("parents", null);
         if (tableMetadata.getIsParent()){
             metadata.put("isParentTable", true);
-            metadata.put("isChildTable", false);
             metadata.put("parentPk", tableMetadata.getPrimaryColumn().getName());
             List<HashMap<String, Object>> children = new ArrayList<>();
             List<HashMap<String, Object>> childrenWithForm = new ArrayList<>();
@@ -28,8 +31,8 @@ public class MereFilleMetadataProvider {
             metadata.put("childrenWithForm", childrenWithForm);
             metadata.put("hasChildrenForm", !childrenWithForm.isEmpty());
             metadata.put("notViewAndParent", !tableMetadata.getIsView() && tableMetadata.getIsParent());
-        } else if (tableMetadata.getIsChild()) {
-            metadata.put("isParentTable", false);
+        }
+        if (tableMetadata.getIsChild()) {
             metadata.put("isChildTable", true);
             metadata.put("notViewAndChild", !tableMetadata.getIsView() && tableMetadata.getIsChild());
             List<HashMap<String, Object>> parents = new ArrayList<>();
@@ -37,12 +40,6 @@ public class MereFilleMetadataProvider {
                 parents.add(getParentHashMap(parent));
             }
             metadata.put("parents", parents);
-        }
-        else {
-            metadata.put("isParentTable", false);
-            metadata.put("isChildTable", false);
-            metadata.put("children", null);
-            metadata.put("parents", null);
         }
         return metadata;
     }

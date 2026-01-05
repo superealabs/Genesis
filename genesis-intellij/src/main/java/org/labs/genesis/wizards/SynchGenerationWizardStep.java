@@ -7,14 +7,20 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.component.ConflictFilesDialog;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.generator.sync.SyncGenerator;
 import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.SyncGenerationForm;
 import org.labs.genesis.indicator.IntelliJProgressAdapter;
+import org.labs.utils.FileUtils;
 
 import javax.swing.*;
+import java.awt.*;
+import java.io.File;
 
 public class SynchGenerationWizardStep extends ModuleWizardStep {
     public SyncGenerationForm syncGenerationForm;
@@ -59,9 +65,14 @@ public class SynchGenerationWizardStep extends ModuleWizardStep {
                         }
                     }
                 });
-                Messages.showInfoMessage(project,
-                        "Project synchronization completed successfully",
-                        "Success");
+                String headerMessage = "Project synchronization completed successfully with "
+                        + FileUtils.CONFLICT_FILES.size() + " conflicts";
+
+                if (!FileUtils.CONFLICT_FILES.isEmpty()) {
+                    new ConflictFilesDialog(project, FileUtils.CONFLICT_FILES).show();
+                } else {
+                    Messages.showInfoMessage(project, headerMessage, "Success");
+                }
 
             } catch (Exception e) {
                 Messages.showErrorDialog(project,

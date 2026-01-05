@@ -5608,7 +5608,7 @@
       
       {{tab}}{{#if !isView}}[HttpPost]{{/if}}
       {{tab}}{{#if isView=false and useJWT=true}}[Authorize]{{else}}{{removeLine}}{{/if}}
-      {{tab}}{{#if notViewAndParent }}[SwaggerOperation(
+      {{tab}}{{#if isParentTable=true and hasChildrenForm=true}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)} with full details (Transactional)",
       {{tab}}{{tab}}Description = "Create a new ${formatReadableLowerCase(className)} and its details. The operation is atomic: all or nothing."
       {{tab}})]
@@ -5658,7 +5658,7 @@
       {{tab}}{{tab}}        ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"An unexpected error occurred while creating the order: {ex.Message}"));
       {{tab}}{{tab}}}
       {{tab}}}
-      {{else}}
+      {{elseIf !isView}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Create new ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Create a new ${formatReadableLowerCase(className)} item with the provided information"
@@ -5691,11 +5691,11 @@
       {{tab}}{{tab}}{{tab}}{{tab}}ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"Error while creating ${formatReadableLowerCase(className)}: {ex.Message}"));
       {{tab}}{{tab}}}
       {{tab}}}
-      {{/if}}
+      {{else}}{{removeLine}}{{/if}}
 
       {{#if !isView}}{{tab}}[HttpPut("{id}")]{{/if}}
       {{tab}}{{#if isView=false and useJWT=true}}[Authorize]{{else}}{{removeLine}}{{/if}}
-      {{tab}}{{#if notViewAndParent }}
+      {{tab}}{{#if isParentTable=true and hasChildrenForm=true}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)} with full details (Transactional)",
       {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} and its details. The operation is atomic: all or nothing."
@@ -5715,7 +5715,6 @@
       {{tab}}{{tab}}    {
       {{tab}}{{tab}}       return NotFound(ApiResponse<object>.Error(StatusCodes.Status404NotFound, $"${majStart(className)} not found with ${pkColumn} : {id}"));
       {{tab}}{{tab}}    }
-      
       {{tab}}{{tab}}    // Mapping et association de l'ID
       {{tab}}{{tab}}    var ${minStart(className)} = dto.${majStart(className)}.ToEntity(id);
       {{tab}}{{tab}}    {{#each childrenWithForm}}
@@ -5731,7 +5730,6 @@
       {{tab}}{{tab}}        ${minStart(this.className)}sValidations.AddValidationCheck(${minStart(this.className)}Validation);
       {{tab}}{{tab}}    }
       {{tab}}{{tab}}    {{/each}}
-      
       {{tab}}{{tab}}    if (!${minStart(className)}Validations.IsValid{{#each childrenWithForm}} || !${minStart(this.className)}sValidations.IsValid{{/each}})
       {{tab}}{{tab}}    {
       {{tab}}{{tab}}        var errors = new Dictionary<string, object>();
@@ -5741,7 +5739,6 @@
       {{tab}}{{tab}}        {{/each}}
       {{tab}}{{tab}}        return BadRequest(ApiResponse<object>.Error(StatusCodes.Status400BadRequest, "Validation failed for one or more entities.", errors));
       {{tab}}{{tab}}    }
-      
       {{tab}}{{tab}}    // Appel au service de mise à jour Full (atomique)
       {{tab}}{{tab}}    var updated${majStart(className)} = await _service.UpdateFull${majStart(className)}Async(${minStart(className)}{{#each childrenWithForm}}, ${minStart(this.className)}s{{/each}});
       {{tab}}{{tab}}
@@ -5760,7 +5757,7 @@
       {{tab}}{{tab}}        ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"An unexpected error occurred while updating the order: {ex.Message}"));
       {{tab}}{{tab}}}
       {{tab}}}
-      {{else}}
+      {{elseIf !isView}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Update existing ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Update an existing ${formatReadableLowerCase(className)} item with the provided information"
@@ -5801,11 +5798,11 @@
       {{tab}}{{tab}}{{tab}}{{tab}}ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"Error while updating ${formatReadableLowerCase(className)}: {ex.Message}"));
       {{tab}}{{tab}}}    
       {{tab}}}
-      {{/if}}
+      {{else}}{{removeLine}}{{/if}}
       
       {{#if !isView}}{{tab}}[HttpDelete("{id}")]{{/if}}
       {{tab}}{{#if isView=false and useJWT=true}}[Authorize]{{else}}{{removeLine}}{{/if}}
-      {{tab}}{{#if notViewAndParent }}
+      {{tab}}{{#if isParentTable=true and hasChildrenForm=true}}
       {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Delete existing ${formatReadableLowerCase(className)} with full details (Transactional)",
       {{tab}}{{tab}}Description = "Delete an existing ${formatReadableLowerCase(className)} and all its associated details. The operation is atomic: all or nothing."
@@ -5831,7 +5828,8 @@
       {{tab}}{{tab}}        ApiResponse<object>.Error(StatusCodes.Status500InternalServerError, $"Error while performing atomic deletion of ${minStart(className)}: {ex.Message}"));
       {{tab}}{{tab}}}
       {{tab}}}
-      {{tab}}{{else}}[SwaggerOperation(
+      {{elseIf !isView}}
+      {{tab}}[SwaggerOperation(
       {{tab}}{{tab}}Summary = "Delete ${formatReadableLowerCase(className)}",
       {{tab}}{{tab}}Description = "Delete a ${formatReadableLowerCase(className)} item by its ID"
       {{tab}})]
@@ -5856,11 +5854,11 @@
       {{tab}}{{tab}}}
       {{tab}}}
       {{else}}{{removeLine}}{{/if}}
+      {{tab}}{{#if isParentTable=true and useJWT=true}}[Authorize]{{/if}}
       {{#if isParentTable}}
       {{#each children}}
-              [HttpGet("{id}/${minStart(this.className)}s")]
-              [Authorize]
-              [SwaggerOperation(
+      {{tab}}[HttpGet("{id}/${minStart(this.className)}s")]
+      {{tab}}[SwaggerOperation(
                 Summary = "Get ${minStart(this.className)}s attached with a ${minStart(className)} ID",
                 Description = "Retrieve a list of ${minStart(this.className)}s from a ${minStart(className)} item ID"
                   )]
@@ -5868,7 +5866,7 @@
               [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
               [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
               public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(this.className)}>>>> GetSaleDetailsBySale(
-              [SwaggerParameter(Description = "ID of the ${majStart(className)} to retrieve", Required = true)] ${pkColumnType} ${pkColumn},
+              [SwaggerParameter(Description = "ID of the ${majStart(className)} to retrieve", Required = true)] ${pkColumnType} id,
               [FromQuery, SwaggerParameter("Page number (0-indexed)", Required = false)] int page = 0,
               [FromQuery, SwaggerParameter("Size of the page", Required = false)] int size = 10,
               [FromQuery, SwaggerParameter("Sort order", Required = false)] string? sortParam = null
@@ -5876,13 +5874,13 @@
               {
                   try
                   {
-                      var ${minStart(className)} = await _service.GetByIdAsync(${pkColumn}{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
+                      var ${minStart(className)} = await _service.GetByIdAsync(id{{#each fieldsFK}}, e => e.${majStart(this.name)}{{/each}});
                       if (${minStart(className)} == null){
-                          return NotFound(ApiResponse<object>.Error(StatusCodes.Status404NotFound, $"${majStart(className)} not found with saleId : {${pkColumn}}"));
+                          return NotFound(ApiResponse<object>.Error(StatusCodes.Status404NotFound, $"${majStart(className)} not found with ${pkColumn} : {id}"));
                       }
                       ${majStart(this.className)}Dto dto = new ${majStart(this.className)}Dto
                       {
-                          SaleId = ${minStart(className)}.SaleId
+                          ${majStart(this.parentColumnNameFiled)} = ${minStart(className)}.${majStart(parentPk)}
                       };
                       var ${minStart(this.className)}sData = await _${minStart(this.className)}Service.SearchAsync(dto, page, size, sortParam);
                       return Ok(ApiResponse<PagedResponse<${majStart(this.className)}>>.Success(StatusCodes.Status200OK, "${majStart(this.className)}s retrieved successfully", ${minStart(this.className)}sData));

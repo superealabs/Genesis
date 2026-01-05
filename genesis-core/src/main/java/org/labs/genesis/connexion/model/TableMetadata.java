@@ -249,10 +249,10 @@ public class TableMetadata {
         }
         ChildTableMetadata childTableMetadata = new ChildTableMetadata(child, mandatory, hasForm, fkColumn);
         if (childTables.contains(childTableMetadata)) {
-            childTables.remove(childTableMetadata);
+            return;
         }
         fkColumn.setIsParentForeignKey(true);
-        this.childTables.remove(childTableMetadata);
+        this.childTables.add(childTableMetadata);
         this.setIsParent(true);
     }
 
@@ -264,11 +264,12 @@ public class TableMetadata {
             throw new InvalipRelationParameter("Parameter cannot be set with invalid columns");
         }
         ParentTableMetadata parentTableMetadata = new ParentTableMetadata(parentTable, fkColumn);
-        if (!parentTables.contains(parentTableMetadata)) {
-            fkColumn.setIsParentForeignKey(true);
-            this.parentTables.add(parentTableMetadata);
-            this.setIsChild(true);
+        if (parentTables.contains(parentTableMetadata)) {
+            return;
         }
+        fkColumn.setIsParentForeignKey(true);
+        this.parentTables.add(parentTableMetadata);
+        this.setIsChild(true);
     }
 
     public TableGenerationModel generateGenerationModel(
