@@ -20,7 +20,12 @@ public class InitConditionalWizardStep extends ModuleWizardStep {
         this.generationContextManager = generationContextManager;
         this.actualStep = actualStep;
     }
-
+    @Override
+    public void updateStep() {
+        if (isStepVisible()) {
+                actualStep.updateStep();
+        }
+    }
     @Override
     public JComponent getComponent() {
         if (isStepVisible()) {

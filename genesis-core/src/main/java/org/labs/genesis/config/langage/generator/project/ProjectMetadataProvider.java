@@ -69,6 +69,7 @@ public class ProjectMetadataProvider {
         dependencyFileMap.put("projectDescription", projectDescription);
         dependencyFileMap.put("useCloud", framework.getUseCloud());
         dependencyFileMap.put("useEurekaServer", framework.getUseEurekaServer());
+        dependencyFileMap.put("useGatewaySecurity", framework.getUseGatewaySecurity());
 
         List<HashMap<String, String>> dependencies = getDependenciesHashMaps(framework);
         List<HashMap<String, String>> additionalSecurityDependencies = getFrameworkSecurityDependenciesHashMaps(framework, frameworkConfiguration);

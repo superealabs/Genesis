@@ -18,6 +18,7 @@ import org.labs.genesis.wizards.RuleToCodeWizardStep ;
 import javax.swing.*;
 
 import static org.labs.genesis.module.GenesisModuleBuilder.projectGenerationContext;
+import static org.labs.genesis.module.GenesisModuleBuilder.listProjectGenerationContexts;
 
 final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
     private static final String ID = "GENESIS_MODULE_TYPE";
@@ -30,14 +31,16 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
     public ModuleWizardStep @NotNull [] createWizardSteps(@NotNull WizardContext wizardContext,
                                                           @NotNull GenesisModuleBuilder moduleBuilder,
                                                           @NotNull ModulesProvider modulesProvider) {
+
         GenerationContextManager generationContextManager = new GenerationContextManager(projectGenerationContext);
-        SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(generationContextManager);
-        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(generationContextManager);
+        SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(generationContextManager,listProjectGenerationContexts);
+        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(generationContextManager,listProjectGenerationContexts);
         InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(generationContextManager, databaseConfigurationWizardStep);
         SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(generationContextManager);
         RelationshipConfigurationWizardStep relationshipConfigurationWizardStep = new RelationshipConfigurationWizardStep(generationContextManager);
-        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(generationContextManager, specificConfigurationWizardStep, relationshipConfigurationWizardStep);
+        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(generationContextManager,listProjectGenerationContexts,specificConfigurationWizardStep, relationshipConfigurationWizardStep);
         GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(generationContextManager, generationOptionWizardStep);
+
         //Rule to code
         FirstWizardStep firstWizardStep = new FirstWizardStep(generationContextManager);
         RuleToCodeWizardStep ruleToCodeWizardStep = new RuleToCodeWizardStep(generationContextManager , firstWizardStep );
@@ -47,10 +50,9 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
         SynchGenerationWizardStep syncGenerationWizardStep = new SynchGenerationWizardStep(generationContextManager);
         SyncProjectLoaderWizardStep syncProjectLoaderWizardStep = new SyncProjectLoaderWizardStep(generationContextManager, relationshipConfigurationWizardStep, syncGenerationWizardStep);
 
-        FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(generationContextManager );
+        FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(generationContextManager,listProjectGenerationContexts );
         FrontendConditionalWizardStep frontendConditionalWizardStep = new FrontendConditionalWizardStep(generationContextManager, frontendConfigurationWizardStep);
-
-        InitializationWizardStep initializationWizardStep = new InitializationWizardStep(generationContextManager, specificConfigurationWizardStep,frontendConfigurationWizardStep);
+        InitializationWizardStep initializationWizardStep = new InitializationWizardStep(generationContextManager,listProjectGenerationContexts,specificConfigurationWizardStep,frontendConfigurationWizardStep);
         return new ModuleWizardStep[]{
                 firstWizardStep,
                 ruleToCodeWizardStep,

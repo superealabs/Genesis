@@ -54,4 +54,17 @@ public class FirstWizardStep extends ModuleWizardStep {
             throw new RuntimeException(e);
         }
     }
+
+    @Override
+    public boolean validate() throws ConfigurationException {
+        if( !form.getAddRuleToCode().isSelected() && !form.getCreateProject().isSelected()) {
+            throw new ConfigurationException("Error : choose option !!");
+        }
+        return true;
+    }
+
+//    @Override
+//    public boolean isStepVisible() {
+//
+//    }
 }

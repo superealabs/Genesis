@@ -8,6 +8,7 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  useGatewaySecurity: false
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -2435,6 +2436,7 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  useGatewaySecurity: false
   additionalFiles:
     - fileType: "ProgramFile"
       fileName: "Program"
@@ -5914,6 +5916,7 @@
   useCloud: true
   useEurekaServer: false
   isGateway: false
+  useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
   additionalFiles:
@@ -6060,6 +6063,7 @@
   useCloud: true
   useEurekaServer: false
   isGateway: true
+  useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
   additionalFiles:
@@ -6119,9 +6123,11 @@
         import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
         import org.springframework.security.crypto.password.PasswordEncoder;
         import org.springframework.security.web.server.SecurityWebFilterChain;
+        
+        {{#if useGatewaySecurity}}
         import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
         import org.springframework.security.oauth2.jwt.ReactiveJwtDecoders;
-        
+        {{/if}}
         @Configuration
         @EnableWebFluxSecurity
         public class SecurityConfig {
@@ -6149,19 +6155,27 @@
             public PasswordEncoder passwordEncoder() {
                 return new BCryptPasswordEncoder();
             }
+            {{#if useGatewaySecurity}}
             @Bean
             public ReactiveJwtDecoder jwtDecoder() {
               return ReactiveJwtDecoders.fromIssuerLocation("https://accounts.google.com");
             }
+            {{/if}}
             @Bean
             public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
                 http
                 .authorizeExchange(exchanges -> exchanges
                 .anyExchange().authenticated()
-                )
-                .oauth2Login(Customizer.withDefaults())
-        
-                .oauth2ResourceServer(ServerHttpSecurity.OAuth2ResourceServerSpec::jwt);    
+                ); 
+                 
+                {{#if useGatewaySecurity}}
+                http
+                    .oauth2Login(Customizer.withDefaults())
+                    .oauth2ResourceServer(oauth2 ->oauth2.jwt(jwt -> jwt.jwtDecoder(jwtDecoder()))); 
+                {{else}}
+                http
+                    .httpBasic(Customizer.withDefaults());
+                {{/if}}
         
                 http.csrf(ServerHttpSecurity.CsrfSpec::disable);
                 return http.build();
@@ -6176,26 +6190,28 @@
       content: |
         server:
           port: ${projectPort}
-        
+        {{#if useGatewaySecurity}}
+        {{else}}
         security:
           user:
             username: ${username}
             password: ${password}
             role: ${toUpperCase(role)}
-        
+        {{/if}}
         spring:
           main:
             web-application-type: reactive
           application:
             name: ${toKebabCase(projectName)}
-
+          
+          {{#if useGatewaySecurity}}
           security:
             oauth2:
               client:
                 registration:
                   google:
-                    client-id: ""
-                    client-secret: ""
+                    client-id: ${client-id}
+                    client-secret: ${client-secret}
                 provider:
                   google:
                     authorization-uri: "https://accounts.google.com/o/oauth2/v2/auth"
@@ -6203,6 +6219,7 @@
                     user-info-uri: "https://www.googleapis.com/oauth2/v3/userinfo"
                     jwk-set-uri: "https://www.googleapis.com/oauth2/v3/certs"
                     user-name-attribute: "sub"
+          {{/if}}
           cloud:
             gateway:
               routes:
@@ -6214,7 +6231,7 @@
                   - Method=${this.method}
         
               {{/each}}{{#if useEurekaServer}}
-        eureka:
+        eureka: 
           client:
             service-url:
               defaultZone: ${eurekaServerURL}
@@ -6326,6 +6343,7 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  useGatewaySecurity: false
   additionalFiles:
     - fileType: "Exception"
       fileName: "ResourceNotFoundException"
@@ -8048,6 +8066,7 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  useGatewaySecurity: false
   additionalFiles:
     - fileType: "settings"
       fileName: "settings"

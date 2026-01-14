@@ -5,6 +5,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBList;
 import lombok.Getter;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
@@ -55,13 +56,60 @@ public class FrontendConfigurationForm {
     private JTextField portInput;
     private JLabel portLabel;
 
+    private JComboBox<String> comboBoxProjectList;
+    private JComboBox<ProjectGenerationContext> contextList ;
+    private JLabel labelListProject;
+    private JButton addFrontendButton;
+    private final List<ProjectGenerationContext> listProjectGenerationContexts ;
+
     private File logoFile;
     private File faviconFile;
 
-    public FrontendConfigurationForm() {
+    public FrontendConfigurationForm(List<ProjectGenerationContext> listProjectGenerationContexts) {
+        this.listProjectGenerationContexts = listProjectGenerationContexts;
+        contextList = new JComboBox<>();
         frontendGeneration.setSelected(false);
         initializeListners();
         initializeOptions();
+    }
+    public void refreshUI(boolean isMultiProject) {
+        if (isMultiProject) {
+            addListProject();
+            comboBoxProjectList.setVisible(true);
+            labelListProject.setVisible(true);
+            addFrontendButton.setVisible(true);
+        } else {
+            comboBoxProjectList.setVisible(false);
+            labelListProject.setVisible(false);
+            addFrontendButton.setVisible(false);
+        }
+    }
+
+    public void addListProject() {
+        DefaultComboBoxModel<String> nameModel = new DefaultComboBoxModel<>();
+        DefaultComboBoxModel<ProjectGenerationContext> contextModel = new DefaultComboBoxModel<>();
+
+        for (ProjectGenerationContext context : listProjectGenerationContexts) {
+            nameModel.addElement(context.getProjectName() + " " + context.getFramework().getName() + " " +context.getDatabase().getName() + " " + context.getCredentials().getDatabaseName());
+            contextModel.addElement(context);
+        }
+        comboBoxProjectList.setModel(nameModel);
+        comboBoxProjectList.setVisible(true);
+        comboBoxProjectList.revalidate();
+        comboBoxProjectList.repaint();
+
+        contextList.setModel(contextModel);
+        contextList.setVisible(true);
+        contextList.revalidate();
+        contextList.repaint();
+
+        comboBoxProjectList.addActionListener(e -> {
+            int index = comboBoxProjectList.getSelectedIndex();
+            if (index >= 0 && index < contextList.getModel().getSize()) {
+                contextList.setSelectedIndex(index);
+            }
+        });
+
     }
 
     private void initializeListners(){

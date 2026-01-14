@@ -50,7 +50,7 @@ public class CodeInjector {
         }
         return blocks;
     }
-
+    //INJECT CODE IN CLASS
     public Path injectBlockCondition( int idFramework , String projectPath , String projectName , Path filePath , CodeBlock block ) throws Exception {
         String layer = block.layer.trim();
         layer = layer.replaceAll("\\s", "") ;
@@ -113,7 +113,6 @@ public class CodeInjector {
         String newContent = before + "\n\n" + codeIndented + "\n" + after;
         Files.writeString(filePath, newContent);
     }
-
     public void injectImportInClass(Path filePath, String importToInject) throws Exception {
         String content = Files.readString(filePath);
 
@@ -138,7 +137,6 @@ public class CodeInjector {
         }
         Files.writeString(filePath, newContent.toString());
     }
-
     private String indentCode(String code) {
         StringBuilder sb = new StringBuilder();
         for (String line : code.split("\n")) {
@@ -146,5 +144,46 @@ public class CodeInjector {
         }
         return sb.toString();
     }
+
+
+    //DELETE CODE IN CLASS
+    public void deleteBlocks(@NotNull List<CodeBlock> blocks, String projectPath, int idFramework, String projectName) throws Exception {
+        Path filePath = null;
+        for (CodeBlock block : blocks) {
+
+            filePath = injectBlockCondition(idFramework, projectPath, projectName, filePath, block);
+
+            if ("import".equalsIgnoreCase(block.nameImport) || "using".equalsIgnoreCase(block.nameImport)) {
+                deleteImportInClass(filePath, block.code);
+            } else if ("none".equalsIgnoreCase(block.nameImport)) {
+                deleteCodeInClass(filePath, block.code);
+            }
+        }
+    }
+
+    public void deleteCodeInClass(Path filePath, String codeToDelete) throws Exception {
+        String content = Files.readString(filePath);
+
+        String codeIndented = indentCode(codeToDelete).trim();
+
+        if (content.contains(codeIndented)) {
+            content = content.replace(codeIndented, "").trim();
+            Files.writeString(filePath, content);
+        }
+    }
+
+    public void deleteImportInClass(Path filePath, String importToDelete) throws Exception {
+        String content = Files.readString(filePath);
+
+        if (!importToDelete.trim().endsWith(";")) {
+            importToDelete = importToDelete.trim() + ";";
+        }
+
+        if (content.contains(importToDelete)) {
+            content = content.replace(importToDelete, "").trim();
+            Files.writeString(filePath, content);
+        }
+    }
+
 
 }
