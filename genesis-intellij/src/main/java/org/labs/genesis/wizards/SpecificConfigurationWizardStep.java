@@ -38,7 +38,7 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
     private final ProjectGenerator projectGenerator = new ProjectGenerator();
     private final List<ProjectGenerationContext> listProjectGenerationContexts;
 
-    public SpecificConfigurationWizardStep(GenerationContextManager generationContextManagert, ProjectGenerationContext projectGenerationContext,List<ProjectGenerationContext> listProjectGenerationContexts) {
+    public SpecificConfigurationWizardStep(GenerationContextManager generationContextManagert,List<ProjectGenerationContext> listProjectGenerationContexts) {
         this.specificConfigurationForm = new SpecificConfigurationForm(listProjectGenerationContexts);
         this.generationContextManager = generationContextManagert;
         this.listProjectGenerationContexts = listProjectGenerationContexts;
