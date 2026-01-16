@@ -19,8 +19,8 @@ jspBlock : |
       String[] listeCrt = {${listeCrt}};
       String[] listeInt = {${listeInt}};
       String[] pourcentage = {};
-      String[] colGr = {"${colGr}"};
-      String[] colGrCol = {"${colGrCol}"};
+      String[] colGr = {${colGr}};
+      String[] colGrCol = {${colGrCol}};
       String[] somDefaut = ${somDefaut};
       PageRechercheGroupe pr = new PageRechercheGroupe(o, request, listeCrt, listeInt, 4, colGr, somDefaut, pourcentage, colGr.length , somDefaut.length);
       pr.setUtilisateur((user.UserEJB) session.getValue("u"));

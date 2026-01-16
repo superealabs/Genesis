@@ -54,8 +54,8 @@ public class PageRechercheGroupeWizardStep implements WizardStep {
         String nomTable = pageRechercheGroupeForm.getNomTableField().getText();
         String titre = pageRechercheGroupeForm.getTitreField().getText();
         String lienColGr = pageRechercheGroupeForm.getColGrColLien().getText();
-        String colGr =  String.valueOf(pageRechercheGroupeForm.getColGrField().getSelectedItem());
-        String colGrCol =  String.valueOf(pageRechercheGroupeForm.getColGrColField().getSelectedItem());
+        String[] colGr = pageRechercheGroupeForm.getColGrCol();
+        String[] colGrCol =  pageRechercheGroupeForm.getColGrCol();
         PageRechercheGroupe pr = (PageRechercheGroupe) context.getApjfile();
         pr.setFileName(pageRechercheGroupeForm.getNomField().getText());
         pr.setPackageMapping(fullMapping);
@@ -68,8 +68,8 @@ public class PageRechercheGroupeWizardStep implements WizardStep {
         pr.setListeCrt(StringUtils.quoteAndJoin(pageRechercheGroupeForm.getListeCrt()));
         pr.setListeInt(StringUtils.quoteAndJoin(pageRechercheGroupeForm.getListeInt()));
         pr.setLienColGrCol(lienColGr);
-        pr.setColGr(colGr);
-        pr.setColGrCol(colGrCol);
+        pr.setColGr(StringUtils.quoteAndJoin(colGr));
+        pr.setColGrCol(StringUtils.quoteAndJoin(colGrCol));
         pr.setChamps(pageRechercheGroupeForm.getDataFiltre());
         pr.setRecap(pageRechercheGroupeForm.getDataRecap());
         pr.build();

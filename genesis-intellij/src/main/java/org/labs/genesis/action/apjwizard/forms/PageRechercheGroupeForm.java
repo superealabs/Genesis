@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.table.JBTable;
@@ -54,16 +53,22 @@ public class PageRechercheGroupeForm {
     private JPanel recapitulationPanel;
     private JScrollPane scrollFiltre;
     private JScrollPane scrollRecap;
+    private JScrollPane scrollColonne;
     private JButton chooseClassButton;
     private JPanel mappingPanel;
     private JButton chooseTableButton;
-    private JComboBox<String> colGrColField;
-    private JComboBox<String> colGrField;
     private JTextField colGrColLien;
+    private JPanel colonnePanel;
+    private JPanel lignePanel;
+    private JScrollPane scrollLigne;
     private JBTable filtreTable;
     private JBTable recapTable;
+    private JBTable ligneTable;
+    private JBTable colonneTable;
     private DefaultTableModel filtreTableModel;
     private DefaultTableModel recapTableModel;
+    private DefaultTableModel ligneTableModel;
+    private DefaultTableModel colonneTableModel;
     private List<String> availableFiltreFields;
     private LinkedHashMap<String, ApjField> allInitialFieldsMap = new LinkedHashMap<>();
     private LinkedHashMap<String, ApjField> allFieldsMap = new LinkedHashMap<>();
@@ -75,11 +80,15 @@ public class PageRechercheGroupeForm {
     private LinkedHashMap<String, ApjField> availableListFilterFieldsMap = new LinkedHashMap<>();
     private LinkedHashMap<String, ApjField> availableListStringFilterFieldsMap = new LinkedHashMap<>();
     private LinkedHashMap<String, ApjField> availableOuiNonFilterFieldsMap = new LinkedHashMap<>();
+    private LinkedHashMap<String, ApjField> availableLigneMap = new LinkedHashMap<>();
+    private LinkedHashMap<String, ApjField> availableColonneMap = new LinkedHashMap<>();
     private List<ApjField> apjFields;
     private ApjField[] dataFiltre;
     private ApjField[] dataRecap;
     private String[] listeCrt;
     private String[] listeInt;
+    private String[] colGr;
+    private String[] colGrCol;
     private final ApjGenerationContext context;
     private final Project project;
     private enum ColonneFiltre {
@@ -100,12 +109,19 @@ public class PageRechercheGroupeForm {
             this.index = index;
         }
     }
+    private enum Basic {
+        CHAMP(0);
+        final int index;
+        Basic(int index) { this.index = index; }
+    }
 
     public PageRechercheGroupeForm(ApjGenerationContext context, Project project) {
         this.context = context;
         this.project = project;
         initFiltreTable();
         initRecapTable();
+        initLigneTable();
+        initColonneTable();
         addActionListenerOnClassButton();
         addActionListenerOnTableButton();
     }
@@ -252,6 +268,32 @@ public class PageRechercheGroupeForm {
         model.removeRow(selectedRow);
     }
 
+    private void initLigneTable() {
+        ligneTableModel = new BasicTableModel(new Object[]{"Champ"});
+        ligneTable = initTable(ligneTable, ligneTableModel, scrollLigne);
+        ligneTable.getEmptyText().setText("Aucune ligne à afficher");
+        ligneTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        TableToolbarHelper.builder()
+            .table(ligneTable)
+            .panel(lignePanel)
+            .addAction((t) -> showAddFieldsAndRows(ligneTableModel,availableLigneMap,true))
+            .removeAction(() -> removeSelectedRow(availableLigneMap,ligneTableModel,ligneTable))
+            .build().init();
+    }
+
+    private void initColonneTable() {
+        colonneTableModel = new BasicTableModel(new Object[]{"Champ"});
+        colonneTable = initTable(colonneTable, colonneTableModel, scrollColonne);
+        colonneTable.getEmptyText().setText("Aucune ligne à afficher");
+        colonneTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        TableToolbarHelper.builder()
+            .table(colonneTable)
+            .panel(colonnePanel)
+            .addAction((t) -> showAddFieldsAndRows(colonneTableModel,availableColonneMap,true))
+            .removeAction(() -> removeSelectedRow(availableColonneMap,colonneTableModel,colonneTable))
+            .build().init();
+    }
+
 
     private void initRecapTable() {
         recapTableModel = new BasicTableModel(new Object[]{"Colonne", "Libellé"});
@@ -262,8 +304,8 @@ public class PageRechercheGroupeForm {
         TableToolbarHelper.builder()
             .table(recapTable)
             .panel(recapitulationPanel)
-            .addAction((t) -> showAddFieldsRecapAndAddRows(recapTableModel))
-            .removeAction(this::removeSelectedRow)
+            .addAction((t) -> showAddFieldsAndRows(recapTableModel,availableRecapFieldsMap,false))
+            .removeAction(() -> removeSelectedRow(availableRecapFieldsMap,recapTableModel,recapTable))
             .customButtonText("Générer les libellés via l'IA")
             .customButtonAction(() -> askAI(true))
             .build().init();
@@ -303,28 +345,32 @@ public class PageRechercheGroupeForm {
         }
     }
 
-    private void showAddFieldsRecapAndAddRows(DefaultTableModel tableModel) {
-        FieldSelectionDialog dialog = new FieldSelectionDialog(mainPanel, new ArrayList<>(availableRecapFieldsMap.keySet()));
+    private void showAddFieldsAndRows(DefaultTableModel tableModel,LinkedHashMap<String, ApjField> map, boolean isDefault) {
+        FieldSelectionDialog dialog = new FieldSelectionDialog(mainPanel, new ArrayList<>(map.keySet()));
         dialog.show();
         List<String> selectedFields = dialog.getSelected();
         if (selectedFields == null || selectedFields.isEmpty()) return;
 
         for (String fieldName : selectedFields) {
-            ApjField field = availableRecapFieldsMap.remove(fieldName);
+            ApjField field = map.remove(fieldName);
             if (field == null) continue;
-            tableModel.addRow(new Object[]{fieldName,StringUtils.majStart(fieldName)});
+            if (isDefault) {
+                tableModel.addRow(new Object[]{fieldName});
+            } else {
+                tableModel.addRow(new Object[]{fieldName,StringUtils.majStart(fieldName)});
+            }
         }
     }
 
-    private void removeSelectedRow() {
-        int selectedRow = recapTable.getSelectedRow();
+    private void removeSelectedRow(LinkedHashMap<String, ApjField> map, DefaultTableModel model, JBTable table) {
+        int selectedRow = table.getSelectedRow();
         if (selectedRow < 0) return;
 
-        String fieldName = recapTable.getValueAt(selectedRow, ColonneSom.COLONNE.index).toString();
+        String fieldName = table.getValueAt(selectedRow, ColonneSom.COLONNE.index).toString();
         ApjField apjField = new ApjField();
         apjField.setNom(fieldName);
-        availableRecapFieldsMap.put(fieldName, apjField);
-        recapTableModel.removeRow(selectedRow);
+        map.put(fieldName, apjField);
+        model.removeRow(selectedRow);
     }
 
     public void addActionListenerOnClassButton() {
@@ -358,7 +404,6 @@ public class PageRechercheGroupeForm {
 
             ProgressUtils.updateProgress(indicator, "Mise à jour des champs disponibles...", 0.85);
             ApplicationManager.getApplication().invokeAndWait(() -> {
-                loadCombo(apjFields);
                 loadFieldsMap(apjFields);
                 removeDataPage();
             });
@@ -369,6 +414,8 @@ public class PageRechercheGroupeForm {
     private void removeDataPage(){
         filtreTableModel.setRowCount(0);
         recapTableModel.setRowCount(0);
+        colonneTableModel.setRowCount(0);
+        ligneTableModel.setRowCount(0);
     }
 
     private void loadFieldsMap(List<ApjField> fields){
@@ -381,6 +428,8 @@ public class PageRechercheGroupeForm {
         availableListFilterFieldsMap.clear();
         availableListStringFilterFieldsMap.clear();
         availableOuiNonFilterFieldsMap.clear();
+        availableColonneMap.clear();
+        availableLigneMap.clear();
 
         for (ApjField field : fields) {
             allFieldsMap.put(field.getNom(), field);
@@ -389,6 +438,8 @@ public class PageRechercheGroupeForm {
             availableTabFieldsMap.put(field.getNom(), field);
             availableListFilterFieldsMap.put(field.getNom(), field);
             availableListStringFilterFieldsMap.put(field.getNom(), field);
+            availableColonneMap.put(field.getNom(), field);
+            availableLigneMap.put(field.getNom(), field);
             if (field.isRangeable()) {
                 availableBetweenFilterFieldsMap.put(field.getNom(), field);
             }
@@ -397,16 +448,6 @@ public class PageRechercheGroupeForm {
                 availableOuiNonFilterFieldsMap.put(field.getNom(), field);
 
             }
-        }
-    }
-
-    private void loadCombo(List<ApjField> fields) {
-        List<String> fieldNames = fields.stream().map(ApjField::getNom).toList();
-        colGrColField.removeAllItems();
-        colGrField.removeAllItems();
-        for (String f : fieldNames) {
-            colGrColField.addItem(f);
-            colGrField.addItem(f);
         }
     }
 
@@ -449,8 +490,6 @@ public class PageRechercheGroupeForm {
         List<ApjField> allFieldsReinit = new ArrayList<>(allInitialFieldsMap.values());
         loadFieldsMap(allFieldsReinit);
         removeNonCommun(allFieldsMap, allFieldsDataBaseMap);
-        List<ApjField> newFields = new ArrayList<>(allFieldsMap.values());
-        loadCombo(newFields);
         removeDataPage();
     }
 
@@ -483,7 +522,9 @@ public class PageRechercheGroupeForm {
             availableBetweenFilterFieldsMap,
             availableListFilterFieldsMap,
             availableListStringFilterFieldsMap,
-            availableOuiNonFilterFieldsMap
+            availableOuiNonFilterFieldsMap,
+            availableColonneMap,
+            availableLigneMap
         );
         for (Map<String, ApjField> map : maps) {
             keys.forEach(map::remove);
@@ -493,6 +534,19 @@ public class PageRechercheGroupeForm {
     public void fillDataTables(){
         this.setDataFiltre();
         this.setDataRecap();
+        this.colGr = setBasicData(ligneTable);
+        this.colGrCol = setBasicData(colonneTable);
+    }
+
+    private String[] setBasicData(JBTable table) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        int rowCount = model.getRowCount();
+        String[] data = new String[rowCount];
+        for (int i = 0; i < rowCount; i++) {
+            String nom = String.valueOf(model.getValueAt(i, Basic.CHAMP.index));
+            data[i] = nom;
+        }
+        return data;
     }
 
     private ApjField[] getDataTable(JTable table) {
@@ -509,7 +563,6 @@ public class PageRechercheGroupeForm {
         }
         return fields;
     }
-
 
     private void setDataRecap(){
         this.dataRecap = getDataTable(recapTable);
