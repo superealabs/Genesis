@@ -49,10 +49,14 @@ public class MappingWizardStep implements WizardStep {
         mappingForm.fillDataTables();
         String nomTable = mappingForm.getNomTableField().getText();
         String fileName = mappingForm.getNomField().getText();
+        String indicePK = mappingForm.getIndicePK().getText();
+        String pSeq = mappingForm.getPSeq().getText();
         Mapping mapping = (Mapping) context.getApjfile();
         mapping.setFileName(mappingForm.getNomField().getText());
         mapping.setMapping(fileName);
         mapping.setNomTable(nomTable);
+        mapping.setIndicePK(indicePK);
+        mapping.setPSeq(pSeq);
         String fullName = mapping.getFileName() + "." + mapping.getExtension();
         String filePath = context.getLocationDir() + "/" + fullName;
         mapping.setPackageMapping(StringUtils.getPackageFromFile(context.getRacineProjet(),filePath));

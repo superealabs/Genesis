@@ -49,6 +49,10 @@ public class MappingMereFilleForm {
     private JTextField liaison;
     private JScrollPane scrollFille;
     private JPanel fillePanel;
+    private JTextField indicePKFille;
+    private JTextField pSeq;
+    private JTextField pSeqFille;
+    private JTextField indicePK;
     private JBTable formTable;
     private JBTable formTableFille;
     private DefaultTableModel formTableModel;

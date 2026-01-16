@@ -167,18 +167,16 @@ public class StringUtils {
 
 
     public static String normalizeDbType(String typeBase) {
-        String upper = typeBase.toUpperCase();
-
-        if (upper.startsWith("VARCHAR2")) return "VARCHAR2";
-        if (upper.startsWith("CHAR")) return "CHAR";
-        if (upper.startsWith("NVARCHAR2")) return "NVARCHAR2";
-
-        if (upper.startsWith("NUMBER")) {
-            return upper.contains(",") ? "NUMBER(*,*)" : "NUMBER";
+        String upper = typeBase.toLowerCase();
+        if (upper.startsWith("varchar2")) return "varchar2";
+        if (upper.startsWith("varchar")) return "varchar";
+        if (upper.startsWith("char")) return "char";
+        if (upper.startsWith("nvarchar2")) return "nvarchar2";
+        if (upper.startsWith("number")) {
+            return upper.contains(",") ? "number(*,*)" : "number";
         }
-
-        if (upper.startsWith("DATE")) return "DATE";
-
+        if (upper.startsWith("date")) return "date";
+        if (upper.startsWith("int")) return "int";
         return upper;
     }
 

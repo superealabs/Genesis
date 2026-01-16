@@ -45,6 +45,8 @@ public class MappingForm {
     private JScrollPane scrollFiltre;
     private JComboBox<String> superClassComboBox;
     private JButton chooseTableButton;
+    private JTextField indicePK;
+    private JTextField pSeq;
     private JBTable formTable;
     private DefaultTableModel formTableModel;
     private ApjField[] dataForm;

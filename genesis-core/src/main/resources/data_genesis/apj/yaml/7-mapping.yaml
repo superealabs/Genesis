@@ -54,7 +54,7 @@ body : |
   
       @Override
       public void construirePK(Connection c) throws Exception {
-          this.preparePk("","");
+          this.preparePk("${indicePK}","${pSeq}");
           this.set${majStart(pk)}(makePK(c));
       }
   

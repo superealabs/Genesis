@@ -19,23 +19,26 @@ public class Database {
     public static List<ApjField> getTableColumns(Connection conn, String tableName) throws Exception {
         DatabaseMetaData meta = conn.getMetaData();
         String dbProduct = meta.getDatabaseProductName();
-        int dbId = dbProduct.equalsIgnoreCase("PostgreSQL") ? 2 : 1;
+        boolean isPostgres = dbProduct.equalsIgnoreCase("PostgreSQL");
+        int dbId = isPostgres ? 2 : 1;
 
         Database database = databases.get(dbId);
 
-        String schema = dbProduct.equalsIgnoreCase("PostgreSQL") ? "public" : getCurrentOracleSchema(conn);
-        String tableNameUc = tableName.toUpperCase();
-        String schemaUc = schema != null ? schema.toUpperCase() : null;
+        String schema = isPostgres ? "public" : getCurrentOracleSchema(conn);
+        if (!isPostgres) {
+            tableName = tableName.toUpperCase();
+            schema = schema != null ? schema.toUpperCase() : null;
+        }
 
         Set<String> primaryKeys = new HashSet<>();
-        try (ResultSet pkRs = meta.getPrimaryKeys(null, schemaUc, tableNameUc)) {
+        try (ResultSet pkRs = meta.getPrimaryKeys(null, schema, tableName)) {
             while (pkRs.next()) {
                 primaryKeys.add(pkRs.getString("COLUMN_NAME").toUpperCase());
             }
         }
 
         Map<String, ApjField> fieldsMap = new LinkedHashMap<>();
-        try (ResultSet rs = meta.getColumns(null, schemaUc, tableNameUc, "%")) {
+        try (ResultSet rs = meta.getColumns(null, schema, tableName, "%")) {
             while (rs.next()) {
                 String columnName = rs.getString("COLUMN_NAME").toUpperCase();
                 if (fieldsMap.containsKey(columnName)) continue;

@@ -19,6 +19,8 @@ public class Mapping extends ApjFile {
     private boolean isFille;
     private String liaison;
     private String classeLiaison;
+    private String indicePK;
+    private String pSeq;
 
     @Override
     public HashMap<String, Object> getPrimaryHashMap() {
@@ -41,6 +43,8 @@ public class Mapping extends ApjFile {
         map.put("isFille", this.isFille());
         map.put("liaison", this.getLiaison());
         map.put("classeLiaison", this.getClasseLiaison());
+        map.put("indicePK", this.getIndicePK());
+        map.put("pSeq", this.getPSeq());
         if (this.getPk()==null || this.getPk().isEmpty()) {
             map.put("pk", "id");
         } else {

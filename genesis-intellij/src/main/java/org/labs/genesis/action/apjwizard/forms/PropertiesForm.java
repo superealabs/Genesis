@@ -8,6 +8,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkLabel;
 import lombok.Getter;
@@ -95,7 +96,9 @@ public class PropertiesForm {
         FileChooserDescriptor chooser = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         chooser.withTitle(title);
         chooser.withDescription(description);
-        field.addBrowseFolderListener(project, chooser);
+        field.addBrowseFolderListener(
+            new TextBrowseFolderListener(chooser, project)
+        );
     }
 
     public void addTestConnectionButtonListener(Project project) {

@@ -3,7 +3,6 @@ package org.labs.genesis.apj.generator;
 import org.labs.genesis.apj.ApjGenerationContext;
 import org.labs.genesis.apj.filetype.ApjFile;
 import org.labs.genesis.apj.filetype.mapping.Mapping;
-import org.labs.genesis.apj.filetype.mapping.MappingMereFille;
 import org.labs.genesis.apj.filetype.pages.*;
 import org.labs.genesis.apj.utilitaire.ConstantesApj;
 import org.labs.genesis.apj.utilitaire.Database;

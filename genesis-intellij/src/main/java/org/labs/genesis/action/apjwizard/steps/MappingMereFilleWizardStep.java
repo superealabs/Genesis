@@ -51,11 +51,17 @@ public class MappingMereFilleWizardStep implements WizardStep {
         String fileName = StringUtils.majStart(mappingForm.getNomField().getText());
         String nomTableFille = mappingForm.getNomTableFilleField().getText();
         String fileNameFille = StringUtils.majStart(mappingForm.getNomFilleField().getText());
+        String indicePK = mappingForm.getIndicePK().getText();
+        String pSeq = mappingForm.getPSeq().getText();
+        String indicePKFille = mappingForm.getIndicePKFille().getText();
+        String pSeqFille = mappingForm.getPSeqFille().getText();
         String liaison = mappingForm.getLiaison().getText();
         Mapping mapping = (Mapping) context.getApjfile();
         mapping.setFileName(fileName);
         mapping.setMapping(fileName);
         mapping.setNomTable(nomTable);
+        mapping.setIndicePK(indicePK);
+        mapping.setPSeq(pSeq);
         String fullName = mapping.getFileName() + "." + mapping.getExtension();
         String filePath = context.getLocationDir() + "/" + fullName;
         mapping.setPackageMapping(StringUtils.getPackageFromFile(context.getRacineProjet(),filePath));
@@ -85,6 +91,8 @@ public class MappingMereFilleWizardStep implements WizardStep {
         mapping.setFileName(fileNameFille);
         mapping.setMapping(fileNameFille);
         mapping.setNomTable(nomTableFille);
+        mapping.setIndicePK(indicePKFille);
+        mapping.setPSeq(pSeqFille);
         fullName = mapping.getFileName() + "." + mapping.getExtension();
         filePath = context.getLocationDir() + "/" + fullName;
         mapping.setPackageMapping(StringUtils.getPackageFromFile(context.getRacineProjet(),filePath));
