@@ -581,6 +581,7 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> altMap = new HashMap<>();
         altMap.putAll(getGeneralViewHashMap(frameworkMVC));
         altMap.put("assetsImportLink", frameworkMVC.getView().getLayout().getAssetsImportLink());
+        altMap.put("additionalPageLink", frameworkMVC.getView().getLayout().getAdditionalPageLink());
         altMap.put("viewAnnotations", frameworkMVC.getView().getLayout().getViewAnnotations());
         altMap.put("pageName", frameworkMVC.getView().getLayout().getPageName());
         altMap.put("navLink", frameworkMVC.getView().getLayout().getNavLink());

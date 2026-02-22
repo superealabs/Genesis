@@ -362,7 +362,7 @@ public class GenesisCoreTest {
             if (framework instanceof FrameworkMVC) {
                 FrameworkMVC frameworkMvc = (FrameworkMVC) framework;
 
-                frameworkMvc.setViewsTemplateEngine();
+//                frameworkMvc.setViewsTemplateEngine();
                 frameworkMvc.setViewsTemplate();
             }
 
@@ -378,7 +378,7 @@ public class GenesisCoreTest {
             String languageVersion = "";
             String destinationFolder = "E:/stage/dotnet mvc/hotfix";
 
-            int viewsTemplateEngineId = Constantes.Razor_ID;
+//            int viewsTemplateEngineId = Constantes.Razor_ID;
             int viewsTemplateId = Constantes.Template_1_ID;
 
             ProjectGenerator projectGenerator = new ProjectGenerator();
@@ -386,7 +386,7 @@ public class GenesisCoreTest {
             HashMap<String, Object> frameworkConfiguration = new HashMap<>();
             frameworkConfiguration.put("loggingLevel", logLevel);
             frameworkConfiguration.put("frameworkVersion", frameworkVersion);
-            frameworkConfiguration.put("templateEngineId", viewsTemplateEngineId);
+//            frameworkConfiguration.put("templateEngineId", viewsTemplateEngineId);
             frameworkConfiguration.put("templateId", viewsTemplateId);
 
             //===== USE EUREKA SERVER =======//
@@ -417,6 +417,105 @@ public class GenesisCoreTest {
             context.setViewNames(viewNames);
             context.setGenerationOptions(generationOptions);
             context.setGenerateProjectStructure(true);
+
+            projectGenerator.generateProject(context);
+
+            // Assertion pour vérifier si le dossier existe
+            Path path = Path.of(destinationFolder);
+            assertTrue(Files.exists(path) && Files.isDirectory(path), "Le dossier de destination n'existe pas.");
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    void generateProjectSpringMvc() {
+        var credentials = new Credentials()
+                .setHost("localhost")
+                .setPort("5432")
+                .setSchemaName("")
+                .setDatabaseName("trondro")
+                .setUser("postgres")
+                .setPwd("root")
+                .setTrustCertificate(true)
+                .setUseSSL(true)
+                .setAllowPublicKeyRetrieval(true)
+                .setSID("")
+                .setDriverType("");
+
+        try {
+            int databaseId = Constantes.PostgreSQL_ID;
+            int languageId = Constantes.Java_ID;
+            int frameworkId = Constantes.Spring_MVC_ID;
+            int projectId = Constantes.Maven_ID;
+
+            var database = ProjectGenerator.databases.get(databaseId);
+            var language = ProjectGenerator.languages.get(languageId);
+            var framework = ProjectGenerator.frameworks.get(frameworkId);
+            var project = ProjectGenerator.projects.get(projectId);
+
+            if (framework instanceof FrameworkMVC) {
+                FrameworkMVC frameworkMvc = (FrameworkMVC) framework;
+
+                frameworkMvc.setViewsTemplate();
+            }
+
+            framework.setFrameworkSecurities();
+
+            List<String> generationOptions = List.of("Model", "DAO", "Service", "Controller");
+            String projectName = "new";
+            String groupLink = "";
+            String projectPort = "8080";
+            String logLevel = "Information";
+            String hibernateDdlAuto = "none";
+            String projectDescription = "test";
+            String frameworkVersion = "3.3.6";
+            String languageVersion = "21";
+            String destinationFolder = "C:\\Users\\Marina\\Documents\\SpringMVC";
+
+            int viewsTemplateId = Constantes.Template_1_ID;
+
+            ProjectGenerator projectGenerator = new ProjectGenerator();
+
+            HashMap<String, Object> frameworkConfiguration = new HashMap<>();
+            frameworkConfiguration.put("hibernateDdlAuto", hibernateDdlAuto);
+            frameworkConfiguration.put("loggingLevel", logLevel);
+            frameworkConfiguration.put("frameworkVersion", frameworkVersion);
+            frameworkConfiguration.put("templateId", viewsTemplateId);
+
+            //===== USE EUREKA SERVER =======//
+            framework.setUseCloud(false);
+            framework.setUseEurekaServer(false);
+            frameworkConfiguration.put("eurekaServerURL", "http://localhost:8761/eureka");
+            frameworkConfiguration.put("projectNonSecurePort", projectPort);
+            //==============================//
+
+            HashMap<String, Object> languageConfiguration = new HashMap<>();
+            frameworkConfiguration.put("languageVersion", languageVersion);
+            List<String> entityNames = new ArrayList<>();
+            List<String> viewNames = new ArrayList<>();
+            ProjectGenerationContext context = new ProjectGenerationContext();
+            context.setDatabase(database);
+            context.setLanguage(language);
+            context.setFramework(framework);
+            context.setProject(project);
+            context.setCredentials(credentials);
+            context.setDestinationFolder(destinationFolder);
+            context.setProjectName(projectName);
+            context.setGroupLink(groupLink);
+            context.setProjectPort(projectPort);
+            context.setProjectDescription(projectDescription);
+            context.setLanguageConfiguration(languageConfiguration);
+            context.setFrameworkConfiguration(frameworkConfiguration);
+            context.setEntityNames(entityNames);
+            context.setViewNames(viewNames);
+            context.setGenerationOptions(generationOptions);
+            context.setGenerateProjectStructure(true);
+
+            if (framework instanceof FrameworkMVC) {
+                context.setViewsTemplate(((FrameworkMVC) framework).findViewsTemplateById(1));
+            }
 
             projectGenerator.generateProject(context);
 

@@ -2846,6 +2846,7 @@
     antiForgeryTokenTagHelper: "@Html.AntiForgeryToken()"
     layout:
       name: "_Layout"
+      additionalPageLink: ""
       assetsImportLink: "~/css/style.css\" asp-append-version=\"true"
       viewAnnotations: |
         @{
@@ -3167,7 +3168,62 @@
         - "NONE"
       defaultOption: "NONE"
 
-  dependencies: [ ]
+  dependencies:
+    - groupId: "org.projectlombok"
+      artifactId: "lombok"
+      version: "1.18.36"
+      scope: "provided"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-data-jpa"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-web"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-validation"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-test"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springdoc"
+      artifactId: "springdoc-openapi-starter-webmvc-ui"
+      version: "2.6.0"
+      scope: "{{removeLine}}"
+
+    - groupId: "io.hypersistence"
+      artifactId: "hypersistence-utils-hibernate-63"
+      version: "3.9.2"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.apache.commons"
+      artifactId: "commons-text"
+      version: "1.11.0"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-web"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-thymeleaf"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "nz.net.ultraq.thymeleaf"
+      artifactId: "thymeleaf-layout-dialect"
+      version: "3.3.0"
+      scope: "{{removeLine}}"
+
   model:
     toGenerate: true
     modelImports: |
@@ -3635,12 +3691,18 @@
     antiForgeryTokenTagHelper: "{{removeLine}}"
     layout:
       name: "base"
-      assetsImportLink: "{{removeLine}}"
+      additionalPageLink: "xmlns:th=\"http://www.thymeleaf.org\" xmlns:layout=\"http://www.ultraq.net.nz/thymeleaf/layout\""
+      assetsImportLink: "/css/style.css"
       viewAnnotations: "{{removeLine}}"
-      pageName: "{{removeLine}}"
-      navLink: "{{removeLine}}"
-      callContent: "{{removeLine}}"
-      logoutLink: "{{removeLine}}"
+      pageName: "$CONTENT_TITLE"
+#      navLink: "th:classappend=\"${#httpServletRequest.requestURI == '/${this.entityName}'} ? 'active'\" th:href=\"@{/${this.entityName}}\""
+      navLink: "th:href=\"@{/${minStart(this.entityName)}}\""
+      callContent: |
+        <div layout:fragment="content">
+            <!-- Contenu par défaut si aucune page ne définit 'content' -->
+            <p>${projectName}</p>
+        </div>
+      logoutLink: "th:action=\"@{/logout}\""
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/layout"
     list:
       name: "list"
