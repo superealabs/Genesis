@@ -58,6 +58,78 @@ body.theme-changing * {
     border-right: 1px solid var(--border-color);
 }
 
+.sidebar {
+    width: var(--sidebar-width);
+    transition: width var(--transition-normal);
+}
+
+/* État collapsed : sidebar fermée */
+.sidebar.collapsed {
+    width: 0;
+    border-right: none;
+}
+
+/* Masquer tout le contenu quand collapsed */
+.sidebar.collapsed .project-info,
+.sidebar.collapsed .navigation,
+.sidebar.collapsed .settings {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Adapter le main-content */
+body:has(.sidebar.collapsed) .main-content {
+    margin-left: 0;
+}
+
+/* ===== BOUTON TOGGLE ===== */
+
+.sidebar-toggle-btn {
+    position: fixed;
+    top: 20px;
+    left: calc(var(--sidebar-width) - 14px);
+    z-index: 1200;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: left var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+    flex-shrink: 0;
+}
+
+.sidebar-toggle-btn:hover {
+    background: var(--hover-color);
+}
+
+/* Position du bouton quand collapsed */
+body:has(.sidebar.collapsed) .sidebar-toggle-btn {
+    left: 10px;
+}
+
+/* Rotation de l'icône quand collapsed */
+body:has(.sidebar.collapsed) .sidebar-toggle-btn .sidebar-toggle-btn-icon {
+    transform: rotate(180deg);
+    transition: transform var(--transition-normal);
+}
+
+.sidebar-toggle-btn-icon {
+    transition: transform var(--transition-normal);
+}
+
+/* ===== MOBILE : masquer le toggle btn ===== */
+
+@media (max-width: 992px) {
+    .sidebar-toggle-btn {
+        display: none;
+    }
+}
 /* Contenu principal adaptatif */
 .main-content {
     flex: 1;
@@ -1245,12 +1317,16 @@ body:has(.sidebar) .main-content {
 
 #csvPreview {
     background: #fff;
-    padding: 50px;
-    min-width: 600px;
+    padding: 20px;
+    overflow-x: auto;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 #csvPreviewTable {
-    width: 100%;
+    width: auto;
+    min-width: 100%;
+    table-layout: auto;
     border-collapse: collapse;
     font-size: 0.9rem;
     color: #101010;
@@ -1260,8 +1336,10 @@ table#csvPreviewTable thead {
     background-color: transparent;
 }
 
-table#csvPreviewTable th,
-table#csvPreviewTable td {
+#csvPreviewTable th,
+#csvPreviewTable td {
+    white-space: nowrap;
+    min-width: 120px;
     border: 1px solid #ddd; padding: 6px;
     text-transform: capitalize;
     padding: 12px 15px;

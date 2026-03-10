@@ -46,6 +46,12 @@ ${viewAnnotations}
         </form>
 
         <div class="header-controls">
+            <!-- Order by -->
+            <div class="order-by-content">
+                <label data-i18n="orderby"></label>
+                <label style="font-size:12px;">${orderSortsTagHelper}</label>
+            </div>
+
             <!-- Dropdown Showing content -->
             <div class="showing-dropdown">
                 <label for="showingSelect" data-i18n="showing"></label>
@@ -117,8 +123,6 @@ ${viewAnnotations}
                 <h4 style="font-size: 1rem; margin-bottom: 8px;" data-i18n="export_format"></h4>
                 <select id="exportFormat" name="exportFormat" class="form-control" style="margin-top: 5px;">
                     <option value="csv" selected>CSV</option>
-                    <option value="pdf" disabled>PDF</option>
-                    <option value="excel" disabled>Excel</option>
                 </select>
             </div>
             <div id="csvPreviewContainer" style="margin-top: 15px;">
@@ -143,7 +147,7 @@ ${viewAnnotations}
                         </tbody>
                     </table>
                     <div id="csvPreviewNote" style="margin-top: 6px; font-size: 0.8rem; color: #666;">
-                        (${pageSizeValue})
+                        (${totalElementsTagHelper})
                     </div>
                 </div>
             </div>

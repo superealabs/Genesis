@@ -555,3 +555,33 @@ if (!document.querySelector('style[data-pagination-css]')) {
     style.textContent = paginationCSS;
     document.head.appendChild(style);
 }
+
+const sidebar = document.getElementById('sidebar');
+const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+
+const isMobile = () => window.innerWidth <= 992;
+
+if (!isMobile() && localStorage.getItem('sidebarCollapsed') === 'true') {
+    sidebar?.classList.add('collapsed');
+}
+
+if (isMobile()) {
+    sidebar?.classList.add('open');
+}
+
+sidebarToggleBtn?.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    localStorage.setItem('sidebarCollapsed', isCollapsed);
+});
+
+window.addEventListener('resize', () => {
+    if (isMobile()) {
+        sidebar?.classList.remove('collapsed');
+        sidebar?.classList.add('open');
+    } else {
+        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+            sidebar?.classList.add('collapsed');
+        }
+    }
+});

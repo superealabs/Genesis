@@ -9,7 +9,7 @@
     "log_out": "Se déconnecter",
     "settings": "Paramètres",
     "entities": "ENTITÉS",
-    "views": "VIEWS",
+    "views": "VUES",
     "data_preview": "Aperçu des données :",
     "list": "Liste",
     "create": "Créer",
@@ -39,5 +39,6 @@
     "save": "Enregistrer",
     "update": "Mettre à jour",
     "export_format": "Format d’exportation :",
+    "orderby": "Ordre:",
     "generate": "Générer"
 }

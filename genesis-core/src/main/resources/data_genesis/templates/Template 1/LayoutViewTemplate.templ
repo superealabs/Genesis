@@ -18,6 +18,17 @@ ${viewAnnotations}
 
     <!-- Sidebar -->
     <div class="{{#if navbarPreference = Topbar}}topbar{{else}}sidebar{{/if}}" id="{{#if navbarPreference = Topbar}}topbar{{else}}sidebar{{/if}}">
+        {{#if navbarPreference = Topbar}}
+
+        {{else}}
+        <!-- Bouton toggle sidebar -->
+        <button class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle sidebar">
+            <svg class="sidebar-toggle-btn-icon" width="14" height="14" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+        {{/if}}
         <div class="project-info">
             {{#if useLogoLink or hasLogo}}
             <div class="project-logo">

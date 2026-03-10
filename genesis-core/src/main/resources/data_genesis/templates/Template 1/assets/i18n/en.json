@@ -39,5 +39,6 @@
     "save": "Save",
     "update": "Update",
     "export_format": "Export format :",
+    "orderby": "Order:",
     "generate": "Generate"
 }
