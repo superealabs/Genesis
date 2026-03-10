@@ -88,8 +88,11 @@ public class FrameworkMVC extends Framework {
         private String deleteDataTagHelper;
         private String pageSizeTagHelper;
         private String dataValue;
+        private String orderSortsTagHelper;
         private String dataForeignValue;
         private String inlineLoopStatement;
+        private String inlineDataValue;
+        private String inlineDataForeignValue;
         private String blockLoopStatementStart;
         private String blockLoopStatementEnd;
         private String filterLink;

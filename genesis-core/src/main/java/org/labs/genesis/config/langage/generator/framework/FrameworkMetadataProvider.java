@@ -607,8 +607,11 @@ public class FrameworkMetadataProvider {
         altMap.put("deleteDataTagHelper", frameworkMVC.getView().getList().getDeleteDataTagHelper());
         altMap.put("pageSizeTagHelper", frameworkMVC.getView().getList().getPageSizeTagHelper());
         altMap.put("dataValue", frameworkMVC.getView().getList().getDataValue());
+        altMap.put("orderSortsTagHelper", frameworkMVC.getView().getList().getOrderSortsTagHelper());
         altMap.put("dataForeignValue", frameworkMVC.getView().getList().getDataForeignValue());
         altMap.put("inlineLoopStatement", frameworkMVC.getView().getList().getInlineLoopStatement());
+        altMap.put("inlineDataValue", frameworkMVC.getView().getList().getInlineDataValue());
+        altMap.put("inlineDataForeignValue", frameworkMVC.getView().getList().getInlineDataForeignValue());
         altMap.put("blockLoopStatementStart", frameworkMVC.getView().getList().getBlockLoopStatementStart());
         altMap.put("blockLoopStatementEnd", frameworkMVC.getView().getList().getBlockLoopStatementEnd());
         altMap.put("filterLink", frameworkMVC.getView().getList().getFilterLink());
