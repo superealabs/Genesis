@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>List ${className}</title>
+</head>
+<body>
+    <div class="header">
+        <h1 class="page-title">${className} / <span class="page-type"><span class="page-action"
+                    data-i18n="list"></span></span>
+        </h1>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    {{#each fields}}
+                    <th>
+                        <div class="th-content">
+                            <span>{{#if this.isForeignKey}} ${this.type} {{else}} ${majStart(this.name)} {{/if}}</span>
+                        </div>
+                    </th>
+                    {{/each}}{{removeLine}}
+                </tr>
+            </thead>
+            <tbody>
+                <tr ${inlineLoopStatement}>
+                    {{#each fields}}
+                    <td {{#if this.isForeignKey}}${inlineDataForeignValue}{{else}}${inlineDataValue}{{/if}}>
+                    </td>
+                    {{/each}}{{removeLine}}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
