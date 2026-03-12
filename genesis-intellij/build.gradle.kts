@@ -19,7 +19,7 @@ dependencies {
 tasks {
     patchPluginXml {
         sinceBuild.set("243")
-        untilBuild.set("251.*")
+        untilBuild.set("254.*")
     }
 
     signPlugin {
