@@ -5,9 +5,14 @@ plugins {
     id("org.jetbrains.intellij") version "1.17.3"
 }
 
+val targetIde = "IU"
+val platformVersion = "2025.3"
+val artifactSuffix = "intellij"
+
 intellij {
-    version.set("2024.3")
-    type.set("IU")
+    // Dynamiquement injecté selon le build (ou l'IDE actif)
+    version.set(platformVersion)
+    type.set(targetIde)
     plugins.set(listOf(/* Plugin Dependencies */))
 }
 
@@ -18,8 +23,9 @@ dependencies {
 
 tasks {
     patchPluginXml {
-        sinceBuild.set("243")
-        untilBuild.set("251.*")
+        // Extraction dynamique de la version de build (ex: "2024.3" -> "243", "2025.3" -> "253")
+        val buildNumber = platformVersion.substring(2, 4) + platformVersion.substring(5, 6)
+        sinceBuild.set(buildNumber)
     }
 
     signPlugin {
@@ -33,7 +39,7 @@ tasks {
     }
 
     buildPlugin {
-        archiveFileName.set("genesis-intellij-${projectVersion}.zip")
+        archiveFileName.set("genesis-$artifactSuffix-${platformVersion}.zip")
     }
 
     buildSearchableOptions {

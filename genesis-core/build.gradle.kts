@@ -20,7 +20,7 @@ dependencies {
     implementation("org.apache.commons:commons-text:1.11.0")
 
     // Logging
-    testImplementation("org.slf4j:slf4j-simple:2.0.12")
+    implementation("org.slf4j:slf4j-simple:2.0.12")
 }
 
 tasks.shadowJar {
