@@ -1,6 +1,7 @@
 # Audit du module `genesis-core`
 
-> **Date** : 17 mars 2026  
+> **Date de création** : 17 mars 2026  
+> **Dernière mise à jour** : 22 mars 2026  
 > **Scope** : Module `genesis-core` du projet Genesis — couche métier, connexion DB, configuration langages & frameworks.
 
 ---
@@ -77,6 +78,9 @@ Le tableau ci-dessous croise les exigences du **driver JDBC** avec les **fonctio
 > **MySQL < 8.0.16** : les CHECK constraints existent syntaxiquement mais sont **ignorées par le moteur**. La table `information_schema.CHECK_CONSTRAINTS` est vide. Genesis ne détectera aucune contrainte CHECK.
 >
 > **MySQL 5.7** : `REGEXP_SUBSTR`, CTE (`WITH`), et `CHECK_CONSTRAINTS` sont tous absents → **crash garanti** des requêtes de contraintes.
+
+> [!TIP]
+> **Mise à jour de robustesse (Mars 2026)** : Les requêtes MySQL (`REGEXP_SUBSTR`, `REGEXP_REPLACE`) gèrent désormais nativement l'omission ou la présence des backticks (`` \` ``) autour des colonnes dans la clause `CHECK_CLAUSE`, prévenant les erreurs de parsing des limites maximales et minimales de la base.
 
 #### PostgreSQL — Version minimale : **9.3**
 
@@ -334,7 +338,7 @@ Cela signifie que Genesis suppose que le **user = schema owner**, ce qui est le 
 | **Versions** | *(aucune configuration de version)* |
 | **Frameworks** | .NET API, .NET MVC |
 | **Projets** | ASP (ID = 2) |
-| **Annotations spéciales** | *(Aucune `attributeTypeAnnotations` définie)* |
+| **Annotations spéciales** | Les contraintes génèrent des attributs `[Range]` typés dynamiquement selon la cible (`int.MaxValue`, `long.MaxValue`, `double.MaxValue`) pour éviter les exceptions `InvalidOperationException` d'ASP.NET Core. |
 
 ---
 
@@ -411,31 +415,7 @@ Cela signifie que Genesis suppose que le **user = schema owner**, ce qui est le 
 | **Vues sans colonne [id](file:///Users/nomena/TAFF/genesis-project/genesis-core/src/main/java/org/labs/genesis/config/langage/generator/project/ProjectGenerator.java#492-503)** | La première colonne est utilisée comme PK fictive, ce qui peut être incorrect. |
 | **Enum / Check in-list** | Les contraintes CHECK de type `IN (...)` ne sont pas détectées pour générer des enums. |
 | **Héritage de tables** | Non supporté (pas de détection de `TABLE_TYPE`, `INHERITS` en PostgreSQL, etc.) |
-| **C# — types manquants** | `list[string]` (MySQL SET) et `timestamp[]` (PG tsrange) n'ont pas de mapping C#. |
 | **Frontend input mapping** | Uniquement défini pour C# (languageId=2). **Aucun mapping frontend pour Java**. |
-
-### 7.3 Bug potentiel dans `ColumnMetadata.setDefaultValue()`
-
-```java
-if (defaultValue != null &&
-        (!this.isDate
-        || !this.isTime
-        || !this.isDateTime
-        || !this.isInterval))
-```
-
-La condition utilise `||` (OR) avec des négations, ce qui fait que si **au moins un** des booléens est `false`, la condition est vraie. Cela signifie que les valeurs par défaut sont presque **toujours** traitées, même pour les colonnes date/time. Le développeur voulait probablement utiliser `&&` (AND) :
-
-```diff
--        (!this.isDate
--        || !this.isTime
--        || !this.isDateTime
--        || !this.isInterval)
-+        !this.isDate
-+        && !this.isTime
-+        && !this.isDateTime
-+        && !this.isInterval
-```
 
 ---
 
