@@ -29,6 +29,12 @@
                        order="first"/>
     </extensions>
 
+    <actions>
+        <action id="Genesis.GenerateAction" class="org.labs.genesis.actions.GenesisGenerateAction" text="Genesis Project Generator" description="Generate Genesis Project Core">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+
 </idea-plugin>
 
 
