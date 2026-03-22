@@ -121,6 +121,7 @@
         "${projectDescription}"
         
         - Project Architecture: 
+        ```text
         ${majStart(projectName)}/
         ├── Controllers/                        # Generated MVC Controllers
         ├── Data/                               # Database context
@@ -140,6 +141,7 @@
         │   ├── img/                            # Images
         │   └── i18n/                           # Internationalization files
         └── Program.cs                          # Application Entry Point
+        ```
         
         - Technical Prerequisites: 
           - IDE: Visual Studio 2022 or VS Code
@@ -244,7 +246,7 @@
         using Microsoft.AspNetCore.Mvc.Filters;
         using Microsoft.AspNetCore.Mvc.ViewFeatures;
         using System.Text.Json;
-        using ${majStart(projectName)}.Exceptions;
+        using Exceptions;
 
         public class GlobalExceptionFilter : IExceptionFilter
         {
@@ -2118,8 +2120,6 @@
       using System.ComponentModel.DataAnnotations;
       using System.ComponentModel.DataAnnotations.Schema;
       using System.ComponentModel;
-      using System.Text.Json;
-      using System.Text.Json.Serialization;
     modelExtends: ""
     modelAnnotations: |
       [Table("${tableName}")]
@@ -2663,7 +2663,8 @@
       {{tab}}        ${majStart(this.type)}PkColumn = ${minStart(this.type)}PkColumn,
       {{tab}}        ${majStart(this.type)}sSelectList = new SelectList(${minStart(this.type)}s?.Content ?? new List<${this.type}>(), ${minStart(this.type)}PkColumn, ${minStart(this.type)}DisplayColumn),
       {{tab}}        {{/each}}{{removeLine}}
-      {{tab}}        Search${majStart(className)}Criteria = dto
+      {{tab}}        Search${majStart(className)}Criteria = dto,
+      {{tab}}        CurrentSort = sortOrder ?? string.Empty
       {{tab}}    };
       
       {{tab}}    return View("Index", vm);

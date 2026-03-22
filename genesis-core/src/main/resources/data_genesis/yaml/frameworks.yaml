@@ -4280,10 +4280,10 @@
     validationAnnotations:
       notNull: '[Required(ErrorMessage = "${majStart(name)} cannot be null")]'
       maxSize: "[StringLength(${columnSize})]"
-      numericMinimumValue: '[Range(${value}, double.MaxValue)]'
-      numericMinimumInclusiveValue: '[Range(${value}, double.MaxValue)]'
-      numericMaximumValue: '[Range(double.MinValue, ${value})]'
-      numericMaximumInclusiveValue: '[Range(double.MinValue, ${value})]'
+      numericMinimumValue: '{{#if type = int? or type = int}}[Range(${value}, int.MaxValue)]{{elseIf type = long? or type = long}}[Range(${value}, long.MaxValue)]{{else}}[Range(${value}, double.MaxValue)]{{/if}}'
+      numericMinimumInclusiveValue: '{{#if type = int? or type = int}}[Range(${value}, int.MaxValue)]{{elseIf type = long? or type = long}}[Range(${value}, long.MaxValue)]{{else}}[Range(${value}, double.MaxValue)]{{/if}}'
+      numericMaximumValue: '{{#if type = int? or type = int}}[Range(int.MinValue, ${value})]{{elseIf type = long? or type = long}}[Range(long.MinValue, ${value})]{{else}}[Range(double.MinValue, ${value})]{{/if}}'
+      numericMaximumInclusiveValue: '{{#if type = int? or type = int}}[Range(int.MinValue, ${value})]{{elseIf type = long? or type = long}}[Range(long.MinValue, ${value})]{{else}}[Range(double.MinValue, ${value})]{{/if}}'
       numericMinimumAndMaximumValue: '[Range(${minValue}, ${maxValue})]'
       notBlank: '[Required(AllowEmptyStrings = false)]'
       minAndMaxSize: '[StringLength(${columnSize}, MinimumLength = ${minLength})]'
