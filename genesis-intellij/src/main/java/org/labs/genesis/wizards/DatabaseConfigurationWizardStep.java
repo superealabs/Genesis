@@ -81,9 +81,17 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
 
         // Close existing connection if any
         if (projectGenerationContext.getConnection() != null) {
-            projectGenerationContext.getConnection().close();
+            try {
+                if (!projectGenerationContext.getConnection().isClosed()) {
+                    projectGenerationContext.getConnection().close();
+                    System.out.println("Info: Previous database connection successfully closed.");
+                }
+            } catch (Exception e) {
+                System.out.println("Info: Previous database connection could not be closed cleanly (" + e.getMessage() + "). Proceeding with new connection.");
+                throw new ConfigurationException("Info: Previous database connection could not be closed cleanly (" + e.getMessage() + "). Proceeding with new connection.");
+            }
         }
-        /// TODO: Add an else block here to avoid the connection error at second startup
+        
         // Establish a new connection and update the context
         projectGenerationContext.setConnection(selectedDatabase.getConnection(credentials));
     }

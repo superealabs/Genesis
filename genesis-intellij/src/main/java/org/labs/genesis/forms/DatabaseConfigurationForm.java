@@ -243,7 +243,6 @@ public class DatabaseConfigurationForm {
             }
             databaseFields = extractorSignature.extractArgs(jdbcUrl);
             SwingUtilities.invokeLater(() -> {
-                System.out.println(databaseFields);
                 isUpdating = true;
                 hostField.setText(databaseFields.getHost());
                 portField.setText(databaseFields.getPort());

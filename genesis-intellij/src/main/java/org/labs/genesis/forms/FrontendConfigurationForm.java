@@ -56,10 +56,16 @@ public class FrontendConfigurationForm {
 
         FileChooserDescriptor faviconChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
                 .withTitle("Select favicon File")
-                .withDescription("Choose a .ico file to load into the editor")
+                .withDescription("Choose an image or icon file to load into the editor")
                 .withFileFilter(file -> {
                     String extension = file.getExtension();
-                    return extension.equals("ico") || extension.equals("svg");
+                    return extension != null && (
+                            extension.equalsIgnoreCase("ico") ||
+                            extension.equalsIgnoreCase("svg") ||
+                            extension.equalsIgnoreCase("png") ||
+                            extension.equalsIgnoreCase("jpg") ||
+                            extension.equalsIgnoreCase("jpeg")
+                    );
                 });
 
         FileChooserDescriptor logoChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()

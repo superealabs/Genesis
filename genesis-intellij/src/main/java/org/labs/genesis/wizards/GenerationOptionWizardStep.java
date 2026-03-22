@@ -43,17 +43,20 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
 
             // Gérer la sélection des entités
             List<String> selectedEntities = handleEntitySelection(allTableNames, selectedValues);
+            System.out.println("\n\n ====> Selected entities: " + selectedEntities);
             projectGenerationContext.setEntityNames(selectedEntities);
 
             // Gérer la sélection des vues
             List<String> selectedViews = handleEntitySelection(allViewNames, selectedViewValues);
             projectGenerationContext.setViewNames(selectedViews);
+            System.out.println("\n\n ====> Selected views: " + selectedViews);
 
             // Gérer la sélection des composants
             List<String> selectedComponent = generationOptionForm.getComponentChoice().getSelectedValuesList();
             if (selectedComponent != null) {
                 projectGenerationContext.setGenerationOptions(selectedComponent);
             }
+
         } catch (Exception e) {
             Messages.showErrorDialog(
                     generationOptionForm.getMainPanel(),

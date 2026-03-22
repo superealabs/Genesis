@@ -1,14 +1,12 @@
 package org.labs.genesis.connexion;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class Credentials {
     private String databaseName, schemaName, user, pwd, host, port, driverType, SID;
     private boolean useSSL, allowPublicKeyRetrieval, trustCertificate;

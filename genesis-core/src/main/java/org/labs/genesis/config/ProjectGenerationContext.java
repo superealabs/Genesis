@@ -2,6 +2,7 @@ package org.labs.genesis.config;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 @Getter
 @Setter
+@ToString
 public class ProjectGenerationContext {
 
     public static final String COMPONENT_MODEL = "Model";

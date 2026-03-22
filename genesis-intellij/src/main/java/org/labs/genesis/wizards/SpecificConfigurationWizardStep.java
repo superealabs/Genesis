@@ -2,6 +2,7 @@ package org.labs.genesis.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.ui.Messages;
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
@@ -83,9 +84,15 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
         // Génération du projet
         try {
+            System.out.println("\n\n ====> projectGenerationContext: " + projectGenerationContext);
             generateProject();
         } catch (Exception e) {
-            throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
+            Messages.showErrorDialog(
+                    specificConfigurationForm.getMainPanel(),
+                    "Project generation failed: " + e.getMessage(),
+                    "Error"
+            );
+            throw new RuntimeException(e);
         }
     }
 
