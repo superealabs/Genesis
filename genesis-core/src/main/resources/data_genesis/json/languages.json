@@ -135,7 +135,6 @@
       "NVARCHAR": "\"mock\"",
       "NVARCHAR2": "\"mock\"",
       "DECIMAL": "0.",
-      "SMALLINT": "0",
       "ENUM": "\"mock\"",
       "enum": "\"mock\"",
       "BIT": "true",
@@ -247,7 +246,9 @@
       "byte[]": "byte[]",
       "inet": "System.Net.IPAddress",
       "xml": "string",
-      "float": "float"
+      "float": "float",
+      "list[string]": "List<string>",
+      "timestamp[]": "DateTime[]"
     },
     "attributeTypeAnnotations": {},
     "mockData": {
