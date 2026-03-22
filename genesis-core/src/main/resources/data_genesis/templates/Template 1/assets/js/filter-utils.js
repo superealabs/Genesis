@@ -20,11 +20,85 @@ class SimpleFilterManager {
         this.filterInputsContainer = this.container.querySelector('.filter-inputs-container');
         this.form = this.container.querySelector('form');
         this.filterControls = this.container.querySelector('.filter-controls');
+        this.setupHiddenInputs();
+    }
+
+    setupHiddenInputs() {
+        const createHiddenInput = (name) => {
+            let input = this.form.querySelector(`input[name="${name}"]`);
+            if (!input) {
+                input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                this.form.appendChild(input);
+            }
+            return input;
+        };
+
+        this.pageInput = createHiddenInput('page');
+        this.pageSizeInput = createHiddenInput('pageSize');
+        this.sortOrderInput = createHiddenInput('sortOrder');
+
+        const urlParams = new URL(window.location.href).searchParams;
+        const fallbackPageSize = document.querySelector('form.ongoing-page input[name="pageSize"]')?.value || "10";
+        const fallbackSortOrder = document.querySelector('form.ongoing-page input[name="sortOrder"]')?.value || "";
+        const fallbackPage = document.querySelector('form.ongoing-page select[name="page"]')?.value || "0";
+
+        this.pageInput.value = urlParams.get('page') || fallbackPage;
+        this.pageSizeInput.value = urlParams.get('pageSize') || fallbackPageSize;
+        this.sortOrderInput.value = urlParams.get('sortOrder') || fallbackSortOrder;
     }
 
     setupEventListeners() {
-        // Laisser le formulaire se soumettre normalement
-        // On ne fait rien lors de la soumission
+        this.form.addEventListener('submit', (e) => {
+            if (e.submitter && e.submitter.id === 'applyFiltersBtn') {
+                this.pageInput.value = "0";
+            }
+        });
+
+        document.querySelectorAll('.sort-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = new URL(link.href);
+                const sortByParam = url.searchParams.get('sortBy');
+                if (sortByParam) {
+                    const field = sortByParam.split(',')[0];
+                    this.handleSortClick(field);
+                }
+            });
+        });
+
+        document.querySelectorAll('.pagination a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = new URL(link.href);
+                const page = url.searchParams.get('page');
+                if (page !== null) this.pageInput.value = page;
+                const pageSize = url.searchParams.get('pageSize');
+                if (pageSize !== null) this.pageSizeInput.value = pageSize;
+                this.form.submit();
+            });
+        });
+
+        const showingSelect = document.getElementById('showingSelect');
+        if (showingSelect) {
+            showingSelect.removeAttribute('onchange');
+            showingSelect.addEventListener('change', (e) => {
+                this.pageInput.value = "0";
+                this.pageSizeInput.value = e.target.value;
+                this.form.submit();
+            });
+        }
+
+        const pageSelect = document.querySelector('form.ongoing-page select[name="page"]');
+        if (pageSelect) {
+            pageSelect.addEventListener('change', (e) => {
+                this.pageInput.value = e.target.value;
+                this.form.submit();
+            });
+        }
+
+        this.setupResetSortButton();
 
         // Ouvrir/fermer le menu des filtres
         this.addFilterBtn.addEventListener('click', (e) => {
@@ -180,6 +254,57 @@ class SimpleFilterManager {
         if (!this.activeFilterIds.has(filterId)) {
             this.addFilter(filterId);
         }
+    }
+
+    handleSortClick(field) {
+        let currentSort = this.sortOrderInput.value || "";
+        let sortParts = currentSort.split(';').filter(s => s.trim() !== "");
+        let fieldIndex = sortParts.findIndex(s => s.startsWith(field + ','));
+        
+        if (fieldIndex !== -1) {
+            let part = sortParts[fieldIndex];
+            if (part.endsWith(',asc')) {
+                sortParts[fieldIndex] = field + ',desc';
+            } else {
+                sortParts.splice(fieldIndex, 1);
+            }
+        } else {
+            sortParts.push(field + ',asc');
+        }
+        
+        this.sortOrderInput.value = sortParts.join(';');
+        this.pageInput.value = "0"; 
+        this.form.submit();
+    }
+
+    setupResetSortButton() {
+        const orderByContent = document.querySelector('.order-by-content');
+        if (!orderByContent) return;
+
+        const currentSortValue = this.sortOrderInput?.value;
+        const hasActiveSort = currentSortValue && currentSortValue.trim() !== "";
+
+        const resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.className = 'reset-sort-btn';
+        resetBtn.title = 'Réinitialiser le tri';
+        resetBtn.disabled = !hasActiveSort;
+        resetBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        `;
+
+        resetBtn.addEventListener('click', () => {
+            if (!resetBtn.disabled) {
+                this.sortOrderInput.value = "";
+                this.pageInput.value = "0";
+                this.form.submit();
+            }
+        });
+
+        orderByContent.appendChild(resetBtn);
     }
 }
 

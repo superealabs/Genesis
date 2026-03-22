@@ -964,6 +964,46 @@ body:has(.sidebar) .main-content {
     border-color: var(--primary-color);
 }
 
+/* Order by content styling */
+.order-by-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-secondary);
+    padding: 6px 12px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.order-by-content label {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+
+.reset-sort-btn {
+    background: none;
+    border: none;
+    color: var(--error-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.reset-sort-btn:hover:not(:disabled) {
+    background: var(--hover-color);
+}
+
+.reset-sort-btn:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 /* Zone des filtres actifs */
 .active-filters {
     display: flex;
