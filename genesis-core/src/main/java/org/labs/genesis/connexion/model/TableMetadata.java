@@ -11,11 +11,13 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.utils.StringUtils;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-
 
 
 @Setter
@@ -29,6 +31,7 @@ public class TableMetadata {
     private ColumnMetadata primaryColumn;
     private String className;
     private Boolean isView;
+
 
     public void setColumnsFrontendTypes(FrontendLanguage frontendLanguage,Database database)
     {
@@ -62,8 +65,8 @@ public class TableMetadata {
             setIsView(false);
 
             List<ColumnMetadata> listeCols = database.fetchColumns(metaData, tableName, language,connect,framework);
-            fetchPrimaryKeys(metaData, tableName, listeCols);
-            fetchForeignKeys(metaData, tableName, language, listeCols);
+            fetchPrimaryKeys(metaData, tableName, listeCols, connect);
+            fetchForeignKeys(metaData, tableName, language, listeCols, connect);
 
             setClassName(
                     Stream.of(tableName)
@@ -136,8 +139,14 @@ public class TableMetadata {
         return initializeTableType(viewNames, connex, credentials, database, language, true,framework);
     }
 
-    private void fetchPrimaryKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> columns) throws SQLException {
-        try (ResultSet primaryKeys = metaData.getPrimaryKeys(null,  (database.getName().equals("Oracle")) ?database.getCredentials().getUser():database.getCredentials().getSchemaName(), tableName)) {
+    private void fetchPrimaryKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> columns, Connection connection) throws SQLException {
+        String schema = (database.getName().equals("Oracle"))
+                ? database.getCredentials().getUser()
+                : (database.getCredentials().getSchemaName() != null && !database.getCredentials().getSchemaName().isEmpty())
+                ? database.getCredentials().getSchemaName()
+                : connection.getCatalog();
+
+        try (ResultSet primaryKeys = metaData.getPrimaryKeys(null, schema, tableName)) {
             while (primaryKeys.next()) {
                 String pkColumnName = primaryKeys.getString("COLUMN_NAME");
 
@@ -169,8 +178,14 @@ public class TableMetadata {
         }
     }
 
-    private void fetchForeignKeys(DatabaseMetaData metaData, String tableName, Language language, List<ColumnMetadata> listeCols) throws SQLException {
-        try (ResultSet foreignKeys = metaData.getImportedKeys(null, (database.getName().equals("Oracle")) ?database.getCredentials().getUser():database.getCredentials().getSchemaName(), tableName)) {
+    private void fetchForeignKeys(DatabaseMetaData metaData, String tableName, Language language, List<ColumnMetadata> listeCols, Connection connection) throws SQLException {
+        String schema = (database.getName().equals("Oracle"))
+                ? database.getCredentials().getUser()
+                : (database.getCredentials().getSchemaName() != null && !database.getCredentials().getSchemaName().isEmpty())
+                ? database.getCredentials().getSchemaName()
+                : connection.getCatalog();
+
+        try (ResultSet foreignKeys = metaData.getImportedKeys(null, schema, tableName)) {
 
             while (foreignKeys.next()) {
                 String fkColumnName = foreignKeys.getString("FKCOLUMN_NAME");
@@ -190,11 +205,15 @@ public class TableMetadata {
                                         ));
                         field.setReferencedTable(pkTableName.transform(StringUtils::toCamelCase));
 
-                        try (ResultSet pkColumn = metaData.getColumns(null, (database.getName().equals("Oracle")) ?database.getCredentials().getUser():database.getCredentials().getSchemaName(), pkTableName, pkColumnName)) {
+                        try (ResultSet pkColumn = metaData.getColumns(null, schema, pkTableName, pkColumnName)) {
                             if (pkColumn.next()) {
                                 String pkColumnType = pkColumn.getString("TYPE_NAME");
                                 field.setDatabaseColumnType(pkColumnType);
-                                field.setReferencedColumnType(language.getTypes().get(database.getTypes().get(pkColumnType)));
+
+                                if (language.getTypes().get(database.getTypes().get(pkColumnType)) == null)
+                                    throw new RuntimeException("Database type not supported yet : " + pkColumnType +" ["+tableName+"("+fkColumnName+")]");
+                                else
+                                    field.setReferencedColumnType(language.getTypes().get(database.getTypes().get(pkColumnType)));
                             }
                         }
 
@@ -212,5 +231,4 @@ public class TableMetadata {
             }
         }
     }
-
 }

@@ -80,9 +80,9 @@ public class ColumnMetadata {
         this.defaultValue = defaultValue;
         if (defaultValue!=null &&
                 (!this.isDate
-                || !this.isTime
-                || !this.isDateTime
-                || !this.isInterval)
+                && !this.isTime
+                && !this.isDateTime
+                && !this.isInterval)
             )
         {
             Map<String, Object> fieldHashMap = FrameworkMetadataProvider.getFieldHashMap(this);

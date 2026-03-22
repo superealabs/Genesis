@@ -102,8 +102,9 @@ public abstract class Database {
     public List<String> getAllTableTypeNames(Connection connection, String tableType) throws SQLException {
         List<String> tableNames = new ArrayList<>();
         DatabaseMetaData metaData = connection.getMetaData();
+        String schema = (credentials.getSchemaName() != null && !credentials.getSchemaName().isEmpty()) ? credentials.getSchemaName() : connection.getCatalog();
 
-        try (ResultSet tables = metaData.getTables(null, credentials.getSchemaName(), "%", new String[]{tableType})) {
+        try (ResultSet tables = metaData.getTables(null, schema, "%", new String[]{tableType})) {
             while (tables.next()) {
                 String tableName = tables.getString("TABLE_NAME");
                 tableNames.add(tableName);
@@ -148,9 +149,10 @@ public abstract class Database {
     public List<String> getPaginatedTableNames(Connection connection, int index, int size) throws SQLException {
         List<String> tableNames = new ArrayList<>();
         DatabaseMetaData metaData = connection.getMetaData();
+        String schema = (credentials.getSchemaName() != null && !credentials.getSchemaName().isEmpty()) ? credentials.getSchemaName() : connection.getCatalog();
 
         int tempIndex = 0;
-        try (ResultSet tables = metaData.getTables(null, credentials.getSchemaName(), "%", new String[]{"TABLE"})) {
+        try (ResultSet tables = metaData.getTables(null, schema, "%", new String[]{"TABLE"})) {
             while (tables.next() && size > tableNames.size()) {
                 if (tempIndex < (index * size)) {
                     tempIndex++;
@@ -168,9 +170,10 @@ public abstract class Database {
     public List<String> getPaginatedViewNames(Connection connection, int index, int size) throws SQLException {
         List<String> viewNames = new ArrayList<>();
         DatabaseMetaData metaData = connection.getMetaData();
+        String schema = (credentials.getSchemaName() != null && !credentials.getSchemaName().isEmpty()) ? credentials.getSchemaName() : connection.getCatalog();
 
         int tempIndex = 0;
-        try (ResultSet views = metaData.getTables(null, credentials.getSchemaName(), "%", new String[]{"VIEW"})) {
+        try (ResultSet views = metaData.getTables(null, schema, "%", new String[]{"VIEW"})) {
             while (views.next() && size > viewNames.size()) {
                 if (tempIndex < (index * size)) {
                     tempIndex++;
@@ -194,7 +197,8 @@ public abstract class Database {
 
     public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language, Connection connex, Framework framework) throws SQLException {
         List<ColumnMetadata> listeCols = new ArrayList<>();
-        try (ResultSet columns = metaData.getColumns(null, this.getCredentials().getSchemaName(), tableName, null)) {
+        String schema = (getCredentials().getSchemaName() != null && !getCredentials().getSchemaName().isEmpty()) ? getCredentials().getSchemaName() : connex.getCatalog();
+        try (ResultSet columns = metaData.getColumns(null, schema, tableName, null)) {
             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
             while (columns.next()) {
                 ColumnMetadata column = new ColumnMetadata();
@@ -248,7 +252,7 @@ public abstract class Database {
         }
 
         try {
-            checkUnique(metaData, tableName, listeCols,framework);
+            checkUnique(metaData, tableName, listeCols,framework, connex);
             checkStrictMinConstraint(connex, tableName, listeCols,framework);
             checkMinConstraint(connex, tableName, listeCols,framework);
             checkStrictMaxConstraint(connex, tableName, listeCols,framework);
@@ -445,8 +449,9 @@ public abstract class Database {
                 || upper.equals("INTERVALDS");          // Oracle INTERVAL DAY TO SECOND
     }
 
-    protected void checkUnique(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> listeCols, Framework framework) throws SQLException {
-        try (ResultSet indexes = metaData.getIndexInfo(null, this.getCredentials().getSchemaName(), tableName, false, true)) {
+    protected void checkUnique(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> listeCols, Framework framework, Connection connection) throws SQLException {
+        String schema = (getCredentials().getSchemaName() != null && !getCredentials().getSchemaName().isEmpty()) ? getCredentials().getSchemaName() : connection.getCatalog();
+        try (ResultSet indexes = metaData.getIndexInfo(null, schema, tableName, false, true)) {
             while (indexes.next()) {
                 String columnNameInIndex = indexes.getString("COLUMN_NAME");
                 boolean isUnique = !indexes.getBoolean("NON_UNIQUE");
@@ -480,13 +485,7 @@ public abstract class Database {
         for(ColumnMetadata col : listeCols){
             Map<String, Object> map = col.getValidationAnnotations(); // ton map initial
 
-            Iterator<String> it = map.keySet().iterator();
-            while (it.hasNext()) {
-                String key = it.next();
-                if (key.toLowerCase().contains("data")) {
-                    it.remove();
-                }
-            }
+            map.keySet().removeIf(key -> key.toLowerCase().contains("data"));
         }
     }
 }

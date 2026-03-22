@@ -193,7 +193,7 @@ public class MySQLDatabase extends Database {
         }
 
         try {
-            checkUnique(metaData, tableName, listeCols,framework);
+            checkUnique(metaData, tableName, listeCols,framework, connex);
             checkStrictMinConstraint(connex, tableName, listeCols,framework);
             checkMinConstraint(connex, tableName, listeCols,framework);
             checkStrictMaxConstraint(connex, tableName, listeCols,framework);

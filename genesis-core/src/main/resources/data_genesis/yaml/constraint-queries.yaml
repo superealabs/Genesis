@@ -3,12 +3,13 @@
   checkMinimumConstraintQuery: |
     WITH parsed_constraints AS (
                         SELECT
-                            CONSTRAINT_SCHEMA AS database_name,
-                            TABLE_NAME,
-                            CONSTRAINT_NAME,
-                            CHECK_CLAUSE,
-                            REPLACE(REPLACE(CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
-                        FROM information_schema.CHECK_CONSTRAINTS
+                            cc.CONSTRAINT_SCHEMA AS database_name,
+                            tc.TABLE_NAME,
+                            cc.CONSTRAINT_NAME,
+                            cc.CHECK_CLAUSE,
+                            REPLACE(REPLACE(cc.CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
+                        FROM information_schema.CHECK_CONSTRAINTS cc
+                        JOIN information_schema.TABLE_CONSTRAINTS tc ON cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME AND cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA
                         WHERE
                             -- Inclure seulement celles avec >=, <= ou between
                             (CHECK_CLAUSE LIKE '%>=%' OR CHECK_CLAUSE LIKE '%between%')
@@ -24,18 +25,18 @@
                             cleaned_clause,
 
                             -- >=
-                            REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`\\s*>=\\s*([0-9]+(?:\\.[0-9]+)?)') AS match_gte,
+                            REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?\\s*>=\\s*([0-9]+(?:\\.[0-9]+)?)') AS match_gte,
                             -- BETWEEN
-                            REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`\\s+between\\s+[0-9]+(?:\\.[0-9]+)?\\s+and\\s+[0-9]+(?:\\.[0-9]+)?') AS match_between,
+                            REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?\\s+between\\s+[0-9]+(?:\\.[0-9]+)?\\s+and\\s+[0-9]+(?:\\.[0-9]+)?') AS match_between,
 
                             -- colonnes et valeurs
-                            REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`') AS col_gte,
+                            REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?') AS col_gte,
                             REGEXP_SUBSTR(cleaned_clause, '([0-9]+(?:\\.[0-9]+)?)') AS val_gte,
 
                             -- BETWEEN
                             CASE
-                                WHEN cleaned_clause REGEXP '`(\\w+)`\\s+between\\s+([0-9.]+)\\s+and\\s+([0-9.]+)' THEN
-                                    TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`'))
+                                WHEN cleaned_clause REGEXP '`?(\\w+)`?\\s+between\\s+([0-9.]+)\\s+and\\s+([0-9.]+)' THEN
+                                    TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?'))
                             END AS col_between,
                             CASE
                                 WHEN cleaned_clause REGEXP 'between\\s+([0-9.]+)\\s+and' THEN
@@ -54,17 +55,18 @@
   checkMaximumConstraintQuery: |
     WITH parsed_constraints AS (
                             SELECT
-                                CONSTRAINT_SCHEMA AS database_name,
-                                TABLE_NAME,
-                                CONSTRAINT_NAME,
-                                CHECK_CLAUSE,
-                                REPLACE(REPLACE(CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
-                            FROM information_schema.CHECK_CONSTRAINTS
+                                cc.CONSTRAINT_SCHEMA AS database_name,
+                                tc.TABLE_NAME,
+                                cc.CONSTRAINT_NAME,
+                                cc.CHECK_CLAUSE,
+                                REPLACE(REPLACE(cc.CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
+                            FROM information_schema.CHECK_CONSTRAINTS cc
+                            JOIN information_schema.TABLE_CONSTRAINTS tc ON cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME AND cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA
                             WHERE
                                 -- Inclure seulement celles avec <= ou between
                                 (CHECK_CLAUSE LIKE '%<=%' OR CHECK_CLAUSE LIKE '%between%')
                                 -- MAIS exclure les contraintes qui contiennent AUSSI une borne haute stricte <
-                                AND CHECK_CLAUSE NOT REGEXP '`\\w+`\\s*<\\s*[0-9]'
+                                AND CHECK_CLAUSE NOT REGEXP '`?\\w+`?\\s*<\\s*[0-9]'
                         ),
                         matches AS (
                             SELECT
@@ -75,19 +77,19 @@
                                 cleaned_clause,
 
                                 -- <= (forme directe)
-                                REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`\\s*<=\\s*([0-9]+(?:\\.[0-9]+)?)') AS match_lte,
+                                REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?\\s*<=\\s*([0-9]+(?:\\.[0-9]+)?)') AS match_lte,
 
                                 -- BETWEEN
-                                REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`\\s+between\\s+[0-9]+(?:\\.[0-9]+)?\\s+and\\s+[0-9]+(?:\\.[0-9]+)?') AS match_between,
+                                REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?\\s+between\\s+[0-9]+(?:\\.[0-9]+)?\\s+and\\s+[0-9]+(?:\\.[0-9]+)?') AS match_between,
 
                                 -- colonnes et valeurs
-                                REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`') AS col_lte,
-                                REGEXP_REPLACE(cleaned_clause, '.*`\\w+`\\s*<=\\s*([0-9]+(?:\\.[0-9]+)?).*', '\\1') AS val_lte,
+                                REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?') AS col_lte,
+                                REGEXP_REPLACE(cleaned_clause, '.*`?\\w+`?\\s*<=\\s*([0-9]+(?:\\.[0-9]+)?).*', '\\1') AS val_lte,
 
                                 -- BETWEEN
                                 CASE
-                                    WHEN cleaned_clause REGEXP '`(\\w+)`\\s+between\\s+([0-9.]+)\\s+and\\s+([0-9.]+)' THEN
-                                        TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`'))
+                                    WHEN cleaned_clause REGEXP '`?(\\w+)`?\\s+between\\s+([0-9.]+)\\s+and\\s+([0-9.]+)' THEN
+                                        TRIM(BOTH '`' FROM REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?'))
                                 END AS col_between,
                                 CASE
                                     WHEN cleaned_clause REGEXP 'between\\s+[0-9.]+\\s+and\\s+([0-9.]+)' THEN
@@ -106,12 +108,13 @@
   checkStrictMinimumConstraintQuery: |
     WITH parsed_constraints AS ( 
                         SELECT
-                        CONSTRAINT_SCHEMA AS database_name,
-                        TABLE_NAME,
-                        CONSTRAINT_NAME,
-                        CHECK_CLAUSE,
-                        REPLACE(REPLACE(CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
-                        FROM information_schema.CHECK_CONSTRAINTS
+                        cc.CONSTRAINT_SCHEMA AS database_name,
+                        tc.TABLE_NAME,
+                        cc.CONSTRAINT_NAME,
+                        cc.CHECK_CLAUSE,
+                        REPLACE(REPLACE(cc.CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
+                        FROM information_schema.CHECK_CONSTRAINTS cc
+                        JOIN information_schema.TABLE_CONSTRAINTS tc ON cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME AND cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA
                         WHERE
                         ((CHECK_CLAUSE LIKE '%>%' AND CHECK_CLAUSE NOT LIKE '%>=%'))
                     ),
@@ -122,10 +125,10 @@
                         CONSTRAINT_NAME,
                         CHECK_CLAUSE,
                         cleaned_clause,
-                        REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`\\s*>\\s*([0-9]+(?:\\.[0-9]+)?)') AS match_direct,
-                        REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`') AS col_direct,
+                        REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?\\s*>\\s*([0-9]+(?:\\.[0-9]+)?)') AS match_direct,
+                        REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?') AS col_direct,
                         REGEXP_SUBSTR(cleaned_clause, '([0-9]+(?:\\.[0-9]+)?)') AS val_direct,
-                        REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`$') AS col_inverse,
+                        REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?$') AS col_inverse,
                         REGEXP_SUBSTR(cleaned_clause, '^([0-9]+(?:\\.[0-9]+)?)') AS val_inverse
                     FROM parsed_constraints)
                     SELECT
@@ -139,14 +142,15 @@
   checkStrictMaximumConstraintQuery: |
     WITH parsed_constraints AS ( 
                            SELECT
-                           CONSTRAINT_SCHEMA AS database_name,
-                           TABLE_NAME,
-                           CONSTRAINT_NAME,
-                           CHECK_CLAUSE,
-                           REPLACE(REPLACE(CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
-                           FROM information_schema.CHECK_CONSTRAINTS
+                           cc.CONSTRAINT_SCHEMA AS database_name,
+                           tc.TABLE_NAME,
+                           cc.CONSTRAINT_NAME,
+                           cc.CHECK_CLAUSE,
+                           REPLACE(REPLACE(cc.CHECK_CLAUSE, '(', ''), ')', '') AS cleaned_clause
+                           FROM information_schema.CHECK_CONSTRAINTS cc
+                           JOIN information_schema.TABLE_CONSTRAINTS tc ON cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME AND cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA
                            WHERE
-                           (CHECK_CLAUSE REGEXP '`\\w+`\\s*<\\s*[0-9]+(?:\\.[0-9]+)?' OR CHECK_CLAUSE REGEXP '[0-9]+(?:\\.[0-9]+)?\\s*>\\s*`\\w+`')
+                           (CHECK_CLAUSE REGEXP '`?\\w+`?\\s*<\\s*[0-9]+(?:\\.[0-9]+)?' OR CHECK_CLAUSE REGEXP '[0-9]+(?:\\.[0-9]+)?\\s*>\\s*`?\\w+`?')
                        ),
                        matches AS (
                            SELECT
@@ -155,10 +159,10 @@
                            CONSTRAINT_NAME,
                            CHECK_CLAUSE,
                            cleaned_clause,
-                           REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`\\s*<\\s*([0-9]+(?:\\.[0-9]+)?)') AS match_direct,
-                           REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`') AS col_direct,
+                           REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?\\s*<\\s*([0-9]+(?:\\.[0-9]+)?)') AS match_direct,
+                           REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?') AS col_direct,
                            REGEXP_SUBSTR(cleaned_clause, '([0-9]+(?:\\.[0-9]+)?)') AS val_direct,
-                           REGEXP_SUBSTR(cleaned_clause, '`(\\w+)`$') AS col_inverse,
+                           REGEXP_SUBSTR(cleaned_clause, '`?(\\w+)`?$') AS col_inverse,
                            REGEXP_SUBSTR(cleaned_clause, '^([0-9]+(?:\\.[0-9]+)?)') AS val_inverse
                        FROM parsed_constraints)
                        SELECT
@@ -177,7 +181,7 @@
     with cc1 as (SELECT
                 cc.CONSTRAINT_NAME,
                 cc.CONSTRAINT_SCHEMA,
-                cc.TABLE_NAME,
+                tc.TABLE_NAME,
                 cc.CHECK_CLAUSE,
                 CASE
                     -- cas : trim(colonne) <> ''
@@ -201,6 +205,7 @@
                     ELSE NULL
                 END AS column_name
             FROM information_schema.check_constraints cc
+            JOIN information_schema.table_constraints tc ON cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME AND cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA
             WHERE cc.CHECK_CLAUSE REGEXP '(trim\\(\\s*`?[a-zA-Z0-9_]+`?\\s*\\)\\s*<>\\s*''''|''''\\s*<>\\s*trim\\(\\s*`?[a-zA-Z0-9_]+`?\\)|`?[a-zA-Z0-9_]+`?\\s*<>\\s*''''|''''\\s*<>\\s*`?[a-zA-Z0-9_]+`?)'),
             cc as (
             SELECT
@@ -216,24 +221,26 @@
             ORDER BY cc.TABLE_NAME, column_name;
   checkMinimumLengthConstraintQuery: |
     SELECT
-                table_name
-                constraint_name,
-                check_clause,
-                REPLACE(REGEXP_SUBSTR(check_clause, '`(\\w+)`'), '`', '') AS column_name,
-                REGEXP_SUBSTR(check_clause, '(>=|>)') AS operator,
-                CAST(REGEXP_SUBSTR(check_clause, '\\d+$') AS UNSIGNED) AS min_length
-            FROM information_schema.check_constraints
-            WHERE table_name = ? and CONSTRAINT_SCHEMA = ?
-            and check_clause REGEXP 'char_length\\s*\\(.*\\)\\s*(>=|>)\\s*\\d+';
+                tc.TABLE_NAME AS table_name,
+                cc.CONSTRAINT_NAME as constraint_name,
+                cc.CHECK_CLAUSE as check_clause,
+                REPLACE(REGEXP_SUBSTR(cc.CHECK_CLAUSE, '`(\\w+)`'), '`', '') AS column_name,
+                REGEXP_SUBSTR(cc.CHECK_CLAUSE, '(>=|>)') AS operator,
+                CAST(REGEXP_SUBSTR(cc.CHECK_CLAUSE, '\\d+$') AS UNSIGNED) AS min_length
+            FROM information_schema.check_constraints cc
+            JOIN information_schema.table_constraints tc ON cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME AND cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA
+            WHERE tc.TABLE_NAME = ? and cc.CONSTRAINT_SCHEMA = ?
+            and cc.CHECK_CLAUSE REGEXP 'char_length\\s*\\(.*\\)\\s*(>=|>)\\s*\\d+';
   checkRegexConstraintQuery: |
     WITH check_constraints AS (
             SELECT
-                table_name,
-                constraint_name,
-                check_clause,
-                CONSTRAINT_SCHEMA
-            FROM information_schema.check_constraints
-            WHERE check_clause LIKE '%REGEXP%'
+                tc.TABLE_NAME as table_name,
+                cc.CONSTRAINT_NAME as constraint_name,
+                cc.CHECK_CLAUSE as check_clause,
+                cc.CONSTRAINT_SCHEMA
+            FROM information_schema.check_constraints cc
+            JOIN information_schema.table_constraints tc ON cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME AND cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA
+            WHERE cc.CHECK_CLAUSE LIKE '%REGEXP%'
         ),
         regex_matches AS (
             SELECT
