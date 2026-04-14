@@ -91,7 +91,7 @@ Tout ça en **quelques clics** depuis IntelliJ IDEA, Rider, ou en ligne de comma
 ## 🔧 Comment ça marche ?
 
 ```mermaid
-flowchart LR
+graph LR
     A["🗄️ Votre Base de Données"] --> B["⚡ Genesis"]
     B --> C["☕ Spring Boot API"]
     B --> D["🔷 .NET Web API"]
@@ -113,11 +113,11 @@ flowchart LR
 ### Le workflow Genesis en 5 étapes
 
 ```mermaid
-flowchart TD
-    S1["1️⃣ Initialisation\nChoix du langage, framework\net dossier de sortie"] --> S2["2️⃣ Connexion BDD\nJDBC URL, credentials\net test de connexion"]
-    S2 --> S3["3️⃣ Sélection\nTables, vues et\ncomposants à générer"]
-    S3 --> S4["4️⃣ Configuration\nPort, sécurité, frontend\ncouleurs, logo, favicon"]
-    S4 --> S5["5️⃣ Génération\nCode complet prêt\nà compiler et lancer"]
+graph TD
+    S1["1️⃣ Initialisation<br>Choix du langage, framework<br>et dossier de sortie"] --> S2["2️⃣ Connexion BDD<br>JDBC URL, credentials<br>et test de connexion"]
+    S2 --> S3["3️⃣ Sélection<br>Tables, vues et<br>composants à générer"]
+    S3 --> S4["4️⃣ Configuration<br>Port, sécurité, frontend<br>couleurs, logo, favicon"]
+    S4 --> S5["5️⃣ Génération<br>Code complet prêt<br>à compiler et lancer"]
 
     style S1 fill:#e3f2fd,stroke:#1e88e5,color:#000
     style S2 fill:#e8f5e9,stroke:#43a047,color:#000
@@ -136,12 +136,12 @@ flowchart TD
 
 | # | Type de projet | Backend | Frontend |
 |--|--|--|--|
-| 1 | **Web API Spring Boot** | Java + Spring Boot | — |
-| 2 | **Web API .NET** | C# + ASP.NET Core | — |
+| 1 | **Web API Spring Boot** | Java + Spring Boot | React / Angular / Vue.js |
+| 2 | **Web API .NET** | C# + ASP.NET Core | React / Angular / Vue.js |
 | 3 | **MVC .NET** | C# + ASP.NET MVC | Razor Views + JS |
-| 4 | **Spring Boot + Gateway** | Java + Spring Cloud | — |
-| 5 | **.NET + Gateway** | C# + ASP.NET Core | — |
-| 6 | **Architecture complète** | Spring Boot + .NET + Eureka + Gateway | — |
+| 4 | **Spring Boot + Gateway** | Java + Spring Cloud | React / Angular / Vue.js |
+| 5 | **.NET + Gateway** | C# + ASP.NET Core | React / Angular / Vue.js |
+| 6 | **Architecture complète** | Spring Boot + .NET + Eureka + Gateway | React / Angular / Vue.js |
 
 ### Backends
 
@@ -150,6 +150,14 @@ flowchart TD
 | ☕ **Java / Spring Boot** | Java 17-23, Spring Boot 3.2-3.3 | Maven, Spring Data JPA, Spring Security, Swagger |
 | 🔷 **C# / .NET** | C# 8.0-9.0, .NET 8+ | Entity Framework Core, ASP.NET Core, Identity |
 | 🌐 **MVC .NET** | ASP.NET Core MVC | Razor Views, CRUD complet, filtres, tri, pagination |
+
+### Frontends
+
+| Framework | Versions | Langage | Description |
+|--|--|--|--|
+| ⚛️ **React** | 18.2.x | TypeScript | Composants fonctionnels, Hooks |
+| 🅰️ **Angular** | 17.3.x | TypeScript | Composants standalone, RxJS |
+| 💚 **Vue.js** | 3.5.x | TypeScript | Vue 3, Composition API |
 
 ### Frontend (Template 1)
 
@@ -358,6 +366,7 @@ genesis-core/src/main/resources/data_genesis/
 
 ## 🗺 Roadmap
 
+### ✅ Fonctionnalités complétées
 - [x] 🔌 Plugin IntelliJ IDEA
 - [x] 💻 CLI interactive
 - [x] 🐘 Support PostgreSQL, MySQL, SQL Server, Oracle
@@ -369,10 +378,33 @@ genesis-core/src/main/resources/data_genesis/
 - [x] 🎨 Templates frontend avec filtres, tri et pagination
 - [x] 🧠 Génération SQL par IA (LLM)
 - [x] 🐴 Compatibilité Rider (via Tools menu)
-- [ ] 📱 Support React / Angular / Vue.js (frontend séparé)
-- [ ] 🧪 Tests unitaires générés automatiquement
-- [ ] 📊 Dashboard de monitoring des projets générés
+- [x] 📱 Support React / Angular / Vue.js (frontend séparé)
+
+### 🚀 À venir (Backlog & Todo)
+- [ ] 📱 Support NextJs (SSR/SSG)
 - [ ] 🔄 Mode incrémental (regénérer uniquement ce qui a changé)
+- [ ] 🧪 Tests unitaires générés automatiquement
+- [ ] ⌗ Génération de datasets de test
+- [ ] 🚀 **FEATURE** - Terminer l'intégration de Spring-MVC
+- [ ] 🔨 **FEATURE** - Terminer l'intégration de NodeJs
+- [ ] 🐳 **FEATURE** - Intégration de Docker
+- [ ] 🐙 **FEATURE** - Intégration de Git
+- [ ] 🗂️ **FEATURE** - Prise en charge des types de données géographiques
+- [ ] 📊 **FEATURE** - Dashboard automatique (monitoring des projets générés)
+- [ ] 🎨 **FEATURE** - Layout personnalisé de l'application, possibilité de création de landing page
+- [ ] 📁 **FEATURE** – Upload fichier
+- [ ] 🔐 **FEATURE** - Gestion des secrets avec un `.env`
+- [ ] 🌍 **FEATURE** - Version web
+- [ ] ⏱ **FEATURE** - Moniteur d'application
+- [ ] 🖌 **FEATURE** - Personnalisation des templates de code utilisés par le moteur
+- [ ] 📝 **FEATURE** - Prise en charge de CKEditor pour les éditeurs de texte enrichi
+
+### 📣 Marketing & Communauté
+- [ ] 📖 Mettre en place les bonnes pratiques pour le référencement
+- [ ] 📰 Parler de la solution dans DEV Community
+- [ ] 💬 Suivre et interagir dans des Threads et autres réseaux
+- [ ] 🎥 Contact YT Channel
+- [ ] 📣 **PROMO** - Promouvoir GENESIS
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -418,7 +450,7 @@ Distribué sous la licence **MIT**. Voir le fichier [`LICENSE`](LICENSE) pour pl
 
 <!-- MARKDOWN LINKS & IMAGES -->
 [contributors-shield]: https://img.shields.io/github/contributors/superealabs/Genesis.svg?style=for-the-badge
-[contributors-url]: https://github.com/superealabs/Genesis/graphs/contributors
+[contributors-url]: https://github.com/superealabs/Genesis/people
 [forks-shield]: https://img.shields.io/github/forks/superealabs/Genesis.svg?style=for-the-badge
 [forks-url]: https://github.com/superealabs/Genesis/network/members
 [stars-shield]: https://img.shields.io/github/stars/superealabs/Genesis.svg?style=for-the-badge
