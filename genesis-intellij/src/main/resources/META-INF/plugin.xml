@@ -29,6 +29,15 @@
                        order="first"/>
     </extensions>
 
+    <actions>
+        <action id="org.labs.genesis.actions.GenesisGenerateAction"
+                class="org.labs.genesis.actions.GenesisGenerateAction"
+                text="Genesis Project Generator..."
+                description="Launch Genesis database-first code generator wizard">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+
 </idea-plugin>
 
 

@@ -12,7 +12,7 @@ extra["versions"] = mapOf(
     "lombok" to "1.18.36",
     "kotlin" to "1.9.24",
     "jackson" to "2.18.1",
-    "intellijPlugin" to "1.17.3",
+    "intellijPlugin" to "1.17.4",
     "javaparser" to "3.25.4"
 )
 
@@ -25,8 +25,8 @@ subprojects {
     }
 
     java {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     val versions = rootProject.extra["versions"] as Map<*, *>
@@ -54,7 +54,7 @@ subprojects {
         }
 
         withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-            kotlinOptions.jvmTarget = "17"
+            kotlinOptions.jvmTarget = "21"
         }
     }
 }
