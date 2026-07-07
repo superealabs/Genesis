@@ -66,12 +66,12 @@ public class ProjectGenerationContext {
     private  boolean generateViewsTemplates = true;
     private ViewsTemplate viewsTemplate;
 
-    public ProjectGenerationContext(){
+    public ProjectGenerationContext() {
         this.generationProcess = new IntellijGenerationProcess();
         this.frontendGenerationOptions = getAllFrontendGenerationOptions();
     }
 
-    public ProjectGenerationContext duplicateWithNoTables(){
+    public ProjectGenerationContext duplicateWithNoTables() {
         ProjectGenerationContext copy = new ProjectGenerationContext();
         copy.setFrontendPort(this.frontendPort);
         copy.setDatabase(this.database);

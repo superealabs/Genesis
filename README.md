@@ -121,7 +121,7 @@ Le plugin IntelliJ permet d'utiliser Genesis directement dans l'IDE.
     - Clonez le dépôt.
     - Pour lancer une instance d'IntelliJ IDEA avec le plugin en mode live, exécutez :
         ``` bash
-        gradle genesis-intellij:runIde` 
+        gradle genesis-intellij:runIde
         ```
 
 2. **Installation via le .zip : genesis-intellij.zip**

@@ -169,6 +169,12 @@ public class GenerationOptionForm {
     }
 
     private void handleLinkLabelShown() {
+        Connection conn = projectGenerationContext.getConnection();
+        if (conn == null) {
+            System.out.println("Connection not ready yet, skipping populateTableNames");
+            return; // Ne pas appeler populateTableNames() si la connection n'est pas prête
+        }
+
         populateTableNames();
         populateViewNames();
         refreshLinkLabel.setFocusable(true);
@@ -176,9 +182,12 @@ public class GenerationOptionForm {
     }
 
     private void populateTableNames() {
+        String message = "before tableNamePaginatorStrategy";
         try {
             this.tableNameStrategy = new TableNamePaginatorStrategy(this.projectGenerationContext, SELECT_ALL, this);
+            message = "before tableNameStrategy";
             List<String> list = tableNameStrategy.getTableNames();
+            message = "after tableNameStrategy";
             this.allTablesNames.addAll(list);
             tableNamesList.setListData(this.allTablesNames.toArray(new String[0]));
         } catch (IllegalStateException e) {
@@ -188,9 +197,10 @@ public class GenerationOptionForm {
                     "Error"
             );
         } catch (Exception e) {
+            // e.printStackTrace();
             Messages.showErrorDialog(
                     mainPanel,
-                    "Failed to retrieve table names: " + e.getMessage(),
+                    "Failed to retrieve table names: " + e.getMessage() + ", message personnalized : " + message,
                     "Error"
             );
         }

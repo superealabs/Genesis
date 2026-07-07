@@ -17,6 +17,10 @@ public abstract class TableNameStrategy {
     public TableNameStrategy(ProjectGenerationContext projectGenerationContext, String selectAll) {
         this.database = projectGenerationContext.getDatabase();
         this.connection = projectGenerationContext.getConnection();
+<<<<<<< HEAD
+=======
+        
+>>>>>>> 48c3c9a8 (fix bug : erreur de connection à la deuxième génération de projet)
         this.selectAll = selectAll;
     }
 

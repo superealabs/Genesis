@@ -45,3 +45,6 @@ bin/
 /tmp/
 /output/
 /.intellijPlatform/
+
+### Ny Antema logfix
+/_log-fix/

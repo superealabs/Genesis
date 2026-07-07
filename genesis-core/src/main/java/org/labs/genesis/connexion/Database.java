@@ -148,12 +148,38 @@ public abstract class Database {
 
     public List<String> getPaginatedTableNames(Connection connection, int index, int size) throws SQLException {
         List<String> tableNames = new ArrayList<>();
+<<<<<<< HEAD
         DatabaseMetaData metaData = connection.getMetaData();
+=======
+        System.out.println("=============================================================== PaginatedTableNames");
+
+    // DEBUG: Logger l'état de la connection
+        System.out.println("Connection class: " + connection.getClass().getName());
+        System.out.println("Connection isClosed: " + connection.isClosed());
+        System.out.println("Connection isValid: " + connection.isValid(2));
+        
+        DatabaseMetaData metaData = connection.getMetaData();
+        
+        // DEBUG: Logger les infos du metadata
+        System.out.println("Database product: " + metaData.getDatabaseProductName());
+        System.out.println("Database version: " + metaData.getDatabaseProductVersion());
+        System.out.println("URL: " + metaData.getURL());
+        System.out.println("User: " + metaData.getUserName());
+
+        // Ce code s'active dès l'apparition du GenerationOptionForm et déclenche l'exception "Failed to retrieve table names: This connection has been closed"
+        // DatabaseMetaData metaData = connection.getMetaData();
+
+        System.out.println("=============================================================== PaginatedTableNames after");
+>>>>>>> 48c3c9a8 (fix bug : erreur de connection à la deuxième génération de projet)
 
         int tempIndex = 0;
         try (ResultSet tables = metaData.getTables(null, credentials.getSchemaName(), "%", new String[]{"TABLE"})) {
             while (tables.next() && size > tableNames.size()) {
+<<<<<<< HEAD
                 if (tempIndex < (index * size)) {
+=======
+                if (tempIndex < (index *    size)) {
+>>>>>>> 48c3c9a8 (fix bug : erreur de connection à la deuxième génération de projet)
                     tempIndex++;
                     continue;
                 }
