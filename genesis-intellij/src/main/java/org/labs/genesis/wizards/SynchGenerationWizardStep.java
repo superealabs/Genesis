@@ -65,11 +65,6 @@ public class SynchGenerationWizardStep extends ModuleWizardStep {
                         }
                     }
                 });
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 48c3c9a8 (fix bug : erreur de connection à la deuxième génération de projet)
                 String headerMessage = "Project synchronization completed successfully with "
                         + FileUtils.CONFLICT_FILES.size() + " conflicts";
 
