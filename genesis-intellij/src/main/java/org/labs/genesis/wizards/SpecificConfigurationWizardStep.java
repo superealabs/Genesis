@@ -477,13 +477,10 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         } finally {
             Connection con = generationContextManager.getContext().getConnection();
             if(con!=null) con.close();
-<<<<<<< HEAD
-=======
 
 
             // Fix 1 : rajout de la déinitialisation du contexte
             generationContextManager.getContext().setConnection(null);
->>>>>>> 48c3c9a8 (fix bug : erreur de connection à la deuxième génération de projet)
         }
     }
 
