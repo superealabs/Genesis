@@ -1010,6 +1010,10 @@
               ddl-auto: ${hibernateDdlAuto}
             properties:
               hibernate.format_sql: true
+
+          jackson:
+            serialization:
+              write-dates-as-timestamps: false
         {{/if}}
         {{#if useSpringSecurityJWT}}
           flyway:
