@@ -5068,6 +5068,7 @@
         import { computed, type PropType } from 'vue'
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import EntityRowActions from '@/components/table/EntityRowActions.vue'
+        import { useDateFormat } from '@/composables/useDateFormat'
       selector: "${majStart(className)}Row"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5083,7 +5084,7 @@
                 }"
               >
                 <template v-if="field.type === 'date'">
-                  {{ ${minStart(className)}Data[field.key] ? $d(${minStart(className)}Data[field.key], 'long') : '--/--/--' }}
+                  {{ formatDate(${minStart(className)}Data[field.key]) }}
                 </template>
     
                 <template v-else-if="field.type === 'number'">
