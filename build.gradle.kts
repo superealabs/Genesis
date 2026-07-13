@@ -46,6 +46,8 @@ subprojects {
         testImplementation("org.mockito:mockito-core:5.11.0")
         testImplementation("org.assertj:assertj-core:3.25.3")
         testImplementation("org.jetbrains.kotlin:kotlin-test:${versions["kotlin"]}")
+        // JUnit Platform has its own version scheme; let the JUnit BOM align it with Jupiter.
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     }
 
     tasks {
