@@ -193,4 +193,22 @@ public class GenesisTemplateEngineTest {
          */
     }
 
+    @Test
+    void testComments() throws Exception {
+        String comment = """
+                <# test comment in template engine /#>
+                <h1>Title</h1>
+                <# add variable ${test} /#>
+                <h1>This is a paragraph: ${test}</h1>
+                """;
+        String result = engine.render(comment, Map.of("test", "test comment"));
+        String expectedOutput = """
+                <# test comment in template engine /#>
+                <h1>Title</h1>
+                <# add variable ${test} /#>
+                <h1>This is a paragraph: test comment</h1>
+                """;
+        assertEquals(expectedOutput, result);
+    }
+
 }
