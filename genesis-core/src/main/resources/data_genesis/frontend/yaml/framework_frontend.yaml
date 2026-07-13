@@ -5149,6 +5149,7 @@
         const deleteRow = () => emit('request-delete', props.${minStart(className)})
         const viewRow = () => emit('request-view', props.${minStart(className)})
         const updateRow = () => emit('request-update', props.${minStart(className)})
+        const { formatDate } = useDateFormat()
       componentName: "${majStart(className)}Row"
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
       componentAdditionalFiles: [ ]
