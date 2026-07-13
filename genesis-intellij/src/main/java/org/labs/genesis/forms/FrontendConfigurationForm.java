@@ -244,6 +244,10 @@ public class FrontendConfigurationForm {
         populateLanguageOptions();
         populateFrameworkOptions((FrontendLanguage) frontendLanguageOptions.getSelectedItem());
         interfaceLangOptions.setListData(ProjectGenerator.langs.values().toArray(new InterfaceLang[0]));
+        InterfaceLang defaultLanguage = ProjectGenerator.langs.get(1);
+        if (defaultLanguage != null) {
+            interfaceLangOptions.setSelectedValue(defaultLanguage, true);
+        }
         navbarSelect.setModel(new DefaultComboBoxModel<>(new String[]{"Sidebar","Topbar"}));
 
         languageLabel.setVisible(true);
