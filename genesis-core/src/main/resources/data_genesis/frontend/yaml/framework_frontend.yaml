@@ -5963,6 +5963,16 @@
                     :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = String(selectedValue))"
                   />
+                  {{elseIf this.uiType = checkbox}}
+                  <!-- ${formatReadable(this.name)} -->
+                  <label class="flex items-center gap-2">
+                  <input
+                  type="checkbox"
+                  class="checkbox"
+                  v-model="formModel.${minStart(this.name)}"
+                  />
+                  <span>${formatReadable(this.name)}</span>
+                  </label>
                   {{elseIf isParentTable=true and hasChildrenForm=true}}
                   <!-- ${formatReadable(this.name)} -->
                   <GenesisInput
