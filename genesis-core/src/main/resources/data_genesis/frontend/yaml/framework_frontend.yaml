@@ -5747,11 +5747,11 @@
                       <span>
                         {{#if this.isForeignKey}}
                           {{ ${minStart(className)}.${this.name}?.getReferenceValue() ?? '--' }}
-                        {{else if this.isDate}}
+                        {{elseIf this.isDate}}
                           {{ formatDate(${minStart(className)}.${this.name}) }}
-                        {{else if this.isDateTime}}
+                        {{elseIf this.isDateTime}}
                           {{ formatDate(${minStart(className)}.${this.name}) }}
-                        {{else if this.isNumeric}}
+                        {{elseIf this.isNumeric}}
                           {{ ${minStart(className)}.${this.name} != null ? $n(${minStart(className)}.${this.name}, 'decimal') : '--' }}
                         {{else}}
                           {{ ${minStart(className)}.${this.name} ?? '--' }}
