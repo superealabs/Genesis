@@ -5727,7 +5727,9 @@
         import { use${majPluralize(className)} } from '@/composables/use${majPluralize(className)}'
         import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
         import TrashIcon from '@/components/icons/TrashIcon.vue'
-        import EditIcon from '@/components/icons/EditIcon.vue'{{/if}}
+        import EditIcon from '@/components/icons/EditIcon.vue'
+        import { useDateFormat } from '@/composables/useDateFormat'
+        {{/if}}
       selector: "${majStart(className)}Details"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5741,7 +5743,19 @@
                   <div>
                     <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">${formatReadable(this.name)}</label>
                     <div id="${minStart(className)}${majStart(this.name)}" class="input w-full bg-base-100 cursor-default">
-                      <span>{{ ${minStart(className)}.${this.name}{{#if this.isForeignKey}}?.getReferenceValue() ?? ''{{elseIf this.isDate}}? $d(${minStart(className)}.${this.name}, 'long'):'--/--/--' {{elseIf this.isNumeric}}? $n(${minStart(className)}.${this.name}, 'decimal'): '--'{{else}} ?? ''{{/if}} }}</span>
+                      <span>
+                        {{#if this.isForeignKey}}
+                          {{ ${minStart(className)}.${this.name}?.getReferenceValue() ?? '--' }}
+                        {{else if this.isDate}}
+                          {{ formatDate(${minStart(className)}.${this.name}) }}
+                        {{else if this.isDateTime}}
+                          {{ formatDate(${minStart(className)}.${this.name}) }}
+                        {{else if this.isNumeric}}
+                          {{ ${minStart(className)}.${this.name} != null ? $n(${minStart(className)}.${this.name}, 'decimal') : '--' }}
+                        {{else}}
+                          {{ ${minStart(className)}.${this.name} ?? '--' }}
+                        {{/if}}
+                      </span>
                     </div>
                   </div>
                   {{/each}}{{removeLine}}
@@ -5800,7 +5814,11 @@
           if (!success) console.error(error)
           closePopup()
           goToListView()
-        }{{/if}}
+        }
+        
+        const { formatDate } = useDateFormat();
+
+        {{/if}}
       style: "<style scoped></style>"
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
       componentAdditionalFiles: [ ]
