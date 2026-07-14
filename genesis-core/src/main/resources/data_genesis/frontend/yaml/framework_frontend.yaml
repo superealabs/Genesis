@@ -5090,7 +5090,7 @@
                 </template>
         
                 <template v-else-if="field.type === 'select'">
-                  {{ ${minStart(className)}Data[field.key] != null ? ${minStart(className)}Data[field.key].getReferenceValue() : '--' }}
+                  {{ ${minStart(className)}Data[field.key] != null ? ${minStart(className)}Data[field.key].getKeyValue() : '--' }}
                 </template>
     
                 <template v-else>
@@ -5737,9 +5737,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {{#each fields}}
                   <div>
-                    <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">${formatReadable(this.name)}</label>
+                    <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">{{#if this.isForeignKey}}${formatReadabl(this.type)}{{else}}${formatReadable(this.name)}{{/if}}</label>
                     <div id="${minStart(className)}${majStart(this.name)}" class="input w-full bg-base-100 cursor-default">
-                      <span>{{ ${minStart(className)}.${this.name}{{#if this.isForeignKey}}?.getReferenceValue() ?? ''{{elseIf this.isDate}}? $d(${minStart(className)}.${this.name}, 'long'):'--/--/--' {{elseIf this.isNumeric}}? $n(${minStart(className)}.${this.name}, 'decimal'): '--'{{else}} ?? ''{{/if}} }}</span>
+                      <span>{{ ${minStart(className)}.${this.name}{{#if this.isForeignKey}}?.getKeyValue() ?? ''{{elseIf this.isDate}}? $d(${minStart(className)}.${this.name}, 'long'):'--/--/--' {{elseIf this.isNumeric}}? $n(${minStart(className)}.${this.name}, 'decimal'): '--'{{else}} ?? ''{{/if}} }}</span>
                     </div>
                   </div>
                   {{/each}}{{removeLine}}
@@ -6034,7 +6034,7 @@
         {{#each fieldsFK}}
         const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
         const ${minStart(this.name)}DefaultValue = props.${minStart(className)}
-        ? (props.${minStart(className)}?.${this.name}?.getReferenceValue?.() ?? undefined)
+        ? (props.${minStart(className)}?.${this.name}?.getKeyValue?.() ?? undefined)
         : undefined
         {{/each}}
         {{#if isParentTable=true and hasChildrenForm=true}}
@@ -6567,7 +6567,7 @@
           {{#each fields}}{{#if this.isForeignKey}}
           {
             key: '${this.name}',
-            label: '${formatReadable(this.name)}',
+            label: '${formatReadable(this.type)}',
             type: 'select',
             searchKey: ${majStart(this.type)}.getKey(),
             sortable: false,
