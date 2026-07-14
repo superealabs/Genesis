@@ -63,8 +63,6 @@ public class GenesisTemplateEngine {
         FUNCTIONS_MAP.put("toPascalCase", StringUtils::toPascalCase);
     }
 
-    private final Map<String, String> commentMap = new HashMap<>();
-
     public String simpleRender(String template, Map<String, Object> variables) {
         if (template == null || template.isEmpty()) {
             throw new IllegalArgumentException("The template must not be empty.");
@@ -137,13 +135,15 @@ public class GenesisTemplateEngine {
             throw new IllegalArgumentException("The template must not be empty.");
         }
 
-        if (variables == null || variables.isEmpty()) {
-            return template;
-        }
-
         StringBuilder result = new StringBuilder(template);
+        Map<String, String> protectedComments = new HashMap<>();
 
-        protectComments(result);
+        protectComments(result, protectedComments);
+
+        if (variables == null || variables.isEmpty()) {
+            restoreComments(result, protectedComments);
+            return result.toString();
+        }
 
         evaluateLoops(result, variables);
         evaluateConditionals(result, variables);
@@ -151,39 +151,34 @@ public class GenesisTemplateEngine {
         replaceVariables(result, variables);
         processSpecialTags(result);
 
-        restoreComments(result);
+        restoreComments(result, protectedComments);
 
         return result.toString();
     }
 
-    private void protectComments(StringBuilder template) {
+    private void protectComments(StringBuilder template, Map<String, String> protectedComments) {
         int startIndex = 0;
         while ((startIndex = template.indexOf(START_COMMENTARY_TAG, startIndex)) != -1) {
             int endIndex = template.indexOf(END_COMMENTARY_TAG, startIndex);
             if (endIndex == -1) break;
 
-            endIndex += END_COMMENTARY_TAG.length();
-
-            String comment = template.substring(startIndex, endIndex);
+            String commentContent = template.substring(startIndex + START_COMMENTARY_TAG.length(), endIndex);
+            int commentEndIndex = endIndex + END_COMMENTARY_TAG.length();
             String marker = generateUniqueMarker(startIndex);
-            commentMap.put(marker, comment);
+            protectedComments.put(marker, commentContent);
 
-            template.replace(startIndex, endIndex, marker);
+            template.replace(startIndex, commentEndIndex, marker);
             startIndex += marker.length();
         }
     }
 
-    private void restoreComments(StringBuilder template) {
-        for (Map.Entry<String, String> entry : commentMap.entrySet()) {
+    private void restoreComments(StringBuilder template, Map<String, String> protectedComments) {
+        for (Map.Entry<String, String> entry : protectedComments.entrySet()) {
             String marker = entry.getKey();
-            String comment = entry.getValue();
+            String commentContent = entry.getValue();
 
-            int index = template.indexOf(marker);
-            if (index != -1) {
-                template.replace(index, index + marker.length(), comment);
-            }
+            replaceAllOccurrences(template, marker, commentContent);
         }
-        commentMap.clear();
     }
 
     private String generateUniqueMarker(int position) {
