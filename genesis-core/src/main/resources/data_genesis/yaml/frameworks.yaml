@@ -1010,6 +1010,10 @@
               ddl-auto: ${hibernateDdlAuto}
             properties:
               hibernate.format_sql: true
+
+          jackson:
+            serialization:
+              write-dates-as-timestamps: false
         {{/if}}
         {{#if useSpringSecurityJWT}}
           flyway:
@@ -1180,25 +1184,20 @@
       version: "1.11.0"
       scope: "{{removeLine}}"
 
-    - groupId: "org.flywaydb"
-      artifactId: "flyway-core"
-      version: "10.19.0"
-      scope: "{{removeLine}}"
+    # - groupId: "org.flywaydb"
+    #   artifactId: "flyway-core"
+    #   version: "10.19.0"
+    #   scope: "{{removeLine}}"
 
-    - groupId: "org.flywaydb"
-      artifactId: "flyway-database-oracle"
-      version: "10.19.0"
-      scope: "{{removeLine}}"
+    # - groupId: "org.flywaydb"
+    #   artifactId: "flyway-database-oracle"
+    #   version: "10.19.0"
+    #   scope: "{{removeLine}}"
 
-    - groupId: "org.flywaydb"
-      artifactId: "flyway-database-postgresql"
-      version: "10.19.0"
-      scope: "{{removeLine}}"
-
-    #- groupId: "org.flywaydb"
-    #  artifactId: "flyway-sqlserver"
-    #  version: "10.19.0"
-    #  scope: "{{removeLine}}"
+    # - groupId: "org.flywaydb"
+    #   artifactId: "flyway-database-postgresql"
+    #   version: "10.19.0"
+    #   scope: "{{removeLine}}"
       
   model:
     toGenerate: true
@@ -1227,13 +1226,13 @@
       {{tab}}@ManyToOne
       {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{/if}}
-      {{#if !this.isForeignKey}}{{removeLine}}
+      <#{{#if !this.isForeignKey}}/#>{{removeLine}}
       {{tab}}{{#each this.attributeTypeAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}{{/if}}
+      {{tab}}{{/each}}{{removeLine}}<#{{/if}}/#>
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
       {{tab}}{{#if cacheableWithEhcache}}@Override

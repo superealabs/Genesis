@@ -242,7 +242,7 @@ public abstract class Database {
                 else
                     column.setType(language.getTypes().get(getDatabaseType(columns)));
 
-                column.setColumnType(columnType);
+                column.setColumnType(normalizeColumnType(columnType));
                 listeCols.add(column);
             }
         } catch (Exception e) {
@@ -269,6 +269,21 @@ public abstract class Database {
         return listeCols;
     }
 
+    public String normalizeColumnType(String columnType) {
+        if (columnType == null) {
+            return null;
+        }
+
+        String cleanedType = columnType.trim();
+
+        return this.getTypes()
+                .keySet()
+                .stream()
+                .filter(type -> type.equalsIgnoreCase(cleanedType))
+                .findFirst()
+                .orElse(cleanedType);
+    }
+
     public String getDatabaseType(ResultSet columns) throws Exception {
         String columnType = columns.getString("TYPE_NAME");
 
@@ -282,7 +297,7 @@ public abstract class Database {
         if (columns.getInt("DATA_TYPE") == Types.TIMESTAMP && this.getId() == Constantes.Oracle_ID) {
             columnType = getBeforeBracketsSimple(columnType);
         }
-        return this.getTypes().get(columnType);
+        return this.getTypes().get(normalizeColumnType(columnType));
     }
 
     private String getBeforeBracketsSimple(String columnType) {

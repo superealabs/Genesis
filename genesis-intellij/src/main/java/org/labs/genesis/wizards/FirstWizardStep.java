@@ -15,6 +15,8 @@ public class FirstWizardStep extends ModuleWizardStep {
 
     public FirstWizardStep(GenerationContextManager generationContextManager ) {
         this.generationContextManager = generationContextManager;
+        if(this.generationContextManager.getContext() != null && this.generationContextManager.getContext().getFrontendFramework() != null)
+            this.generationContextManager.getContext().getFrontendFramework().clearRoutes();
         this.form = new FirstForm();
     }
 

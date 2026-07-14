@@ -136,7 +136,18 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
         this.frontendLayout.setSecondaryColor(frontendConfigurationForm.getSecondaryColorField().getText().trim());
 //        this.frontendLayout.setAdditionalCss(frontendConfigurationForm.getCssTextArea().getText());
         this.frontendLayout.setAdditionalCss("");
-        this.frontendLayout.setLangs(frontendConfigurationForm.getInterfaceLangOptions().getSelectedValuesList());
+
+        List<InterfaceLang> selectedLanguages = new ArrayList<>(
+                frontendConfigurationForm
+                        .getInterfaceLangOptions()
+                        .getSelectedValuesList()
+        );
+
+        if (selectedLanguages.isEmpty()) {
+            selectedLanguages.add(ProjectGenerator.langs.get(1));
+        }
+
+        this.frontendLayout.setLangs(selectedLanguages);
     }
 
     public void updateBranding(){

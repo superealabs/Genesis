@@ -162,7 +162,7 @@
             },
 
             button: {
-              addEntity: 'Sdd @:common.new {entity}',
+              addEntity: 'Add @:common.new {entity}',
               applySearch: 'Apply',
               backTo: 'Back to {name}',
               backToList: 'Back to @:common.list',

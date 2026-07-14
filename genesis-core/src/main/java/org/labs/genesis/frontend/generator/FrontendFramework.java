@@ -47,6 +47,12 @@ public class FrontendFramework
         getComponentRoutes().add(route);
     }
 
+    public void clearRoutes() {
+        if(componentRoutes != null) {
+            componentRoutes.clear();
+        }
+    }
+
     public List<ComponentRoute> getComponentRoutes(){
         if(componentRoutes == null){
             componentRoutes = new ArrayList<>();

@@ -175,7 +175,16 @@ public class FrameworkFrontendMetadataProvider {
         Map<String, Object> fieldMap = new HashMap<>();
 
         fieldMap.put("typeBase", field.getFrontEndType());
-        fieldMap.put("uiType", field.getUiType());
+        String uiType = field.getUiType();
+
+        if (field.isDateTime() || field.isDateTimeTz()) {
+            uiType = "datetime-local"; // DateTime devient ceci
+        } else if (field.isDate()) {
+            uiType = "date"; // date reste date
+        } else if (field.isNumeric()) {
+            uiType = "number"; // Au cas où
+        }
+        fieldMap.put("uiType", uiType);
         fieldMap.put("type",field.getType());
         fieldMap.put("name", field.getName());
         fieldMap.put("isPrimaryKey", field.isPrimary());
