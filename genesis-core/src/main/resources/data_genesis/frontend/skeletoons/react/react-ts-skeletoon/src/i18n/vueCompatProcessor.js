@@ -1,4 +1,5 @@
 import { createResolver } from './vueResolver';
+import { resolvePlural } from './plural';
 
 let resolver;
 
@@ -15,6 +16,7 @@ const vueCompatProcessor = {
             return value;
         }
         let result = resolver(value, 0, options);
+        result = resolvePlural(result, options.count);
         return result;
     }
 };
