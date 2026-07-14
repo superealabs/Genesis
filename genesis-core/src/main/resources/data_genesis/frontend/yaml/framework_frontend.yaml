@@ -5737,7 +5737,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {{#each fields}}
                   <div>
-                    <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">{{#if this.isForeignKey}}${formatReadabl(this.type)}{{else}}${formatReadable(this.name)}{{/if}}</label>
+                    <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">{{#if this.isForeignKey}}${formatReadable(this.type)}{{else}}${formatReadable(this.name)}{{/if}}</label>
                     <div id="${minStart(className)}${majStart(this.name)}" class="input w-full bg-base-100 cursor-default">
                       <span>{{ ${minStart(className)}.${this.name}{{#if this.isForeignKey}}?.getKeyValue() ?? ''{{elseIf this.isDate}}? $d(${minStart(className)}.${this.name}, 'long'):'--/--/--' {{elseIf this.isNumeric}}? $n(${minStart(className)}.${this.name}, 'decimal'): '--'{{else}} ?? ''{{/if}} }}</span>
                     </div>
