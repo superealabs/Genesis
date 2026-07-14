@@ -178,11 +178,11 @@ public class FrameworkFrontendMetadataProvider {
         String uiType = field.getUiType();
 
         if (field.isDateTime() || field.isDateTimeTz()) {
-            uiType = "datetime-local"; // DateTime devient le truc là lol
+            uiType = "datetime-local"; // DateTime devient ceci
         } else if (field.isDate()) {
             uiType = "date"; // date reste date
         } else if (field.isNumeric()) {
-            uiType = "number"; // Au cas où, on ne sait jamais
+            uiType = "number"; // Au cas où
         }
         fieldMap.put("uiType", uiType);
         fieldMap.put("type",field.getType());
