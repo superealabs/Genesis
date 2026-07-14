@@ -1195,10 +1195,10 @@
       version: "10.19.0"
       scope: "{{removeLine}}"
 
-    - groupId: "org.flywaydb"
-      artifactId: "flyway-sqlserver"
-      version: "10.19.0"
-      scope: "{{removeLine}}"
+    #- groupId: "org.flywaydb"
+    #  artifactId: "flyway-sqlserver"
+    #  version: "10.19.0"
+    #  scope: "{{removeLine}}"
       
   model:
     toGenerate: true
