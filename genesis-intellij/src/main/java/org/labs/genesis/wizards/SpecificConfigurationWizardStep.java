@@ -480,7 +480,11 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
 
             // Fix 1 : rajout de la déinitialisation du contexte
-            generationContextManager.getContext().setConnection(null);
+            if(this.generationContextManager.getContext() != null) {
+                generationContextManager.getContext().setConnection(null);
+                 if(this.generationContextManager.getContext().getFrontendFramework() != null)
+                    this.generationContextManager.getContext().getFrontendFramework().clearRoutes();
+            }
         }
     }
 
