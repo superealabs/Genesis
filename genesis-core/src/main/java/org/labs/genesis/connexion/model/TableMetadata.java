@@ -204,8 +204,9 @@ public class TableMetadata {
                         try (ResultSet pkColumn = metaData.getColumns(null, database.getCredentials().getSchemaName(), pkTableName, pkColumnName)) {
                             if (pkColumn.next()) {
                                 String pkColumnType = pkColumn.getString("TYPE_NAME");
-                                field.setDatabaseColumnType(pkColumnType);
-                                field.setReferencedColumnType(language.getTypes().get(database.getTypes().get(pkColumnType)));
+                                String normalizedPkColumnType = database.normalizeColumnType(pkColumnType);
+                                field.setDatabaseColumnType(normalizedPkColumnType);
+                                field.setReferencedColumnType(language.getTypes().get(database.getTypes().get(normalizedPkColumnType)));
                             }
                         }
 
