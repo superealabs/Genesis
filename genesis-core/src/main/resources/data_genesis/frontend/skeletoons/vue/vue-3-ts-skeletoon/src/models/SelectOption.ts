@@ -36,7 +36,7 @@ export function createSelectSearchFunction<T extends BaseModel>(
         const entity = obj as T
         return {
           value: entity.getKeyValue(),
-          label: entity.getReferenceValue(),
+          label: entity.getKeyValue(),
         }
       }),
       pagination: response.pagination,
@@ -60,7 +60,7 @@ export function createMulticriteriatSearchFunction<T extends BaseModel>(service:
         const entity = obj as T
         return {
           value: entity.getKeyValue(),
-          label: entity.getReferenceValue(),
+          label: entity.getKeyValue(),
         }
       }),
       pagination: response.pagination,

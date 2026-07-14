@@ -5092,7 +5092,7 @@
                 </template>
         
                 <template v-else-if="field.type === 'select'">
-                  {{ ${minStart(className)}Data[field.key] != null ? ${minStart(className)}Data[field.key].getReferenceValue() : '--' }}
+                  {{ ${minStart(className)}Data[field.key] != null ? ${minStart(className)}Data[field.key].getKeyValue() : '--' }}
                 </template>
     
                 <template v-else>
@@ -5742,21 +5742,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {{#each fields}}
                   <div>
-                    <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">${formatReadable(this.name)}</label>
+                    <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">{{#if this.isForeignKey}}${formatReadable(this.type)}{{else}}${formatReadable(this.name)}{{/if}}</label>
                     <div id="${minStart(className)}${majStart(this.name)}" class="input w-full bg-base-100 cursor-default">
-                      <span>
-                        {{#if this.isForeignKey}}
-                          {{ ${minStart(className)}.${this.name}?.getReferenceValue() ?? '--' }}
-                        {{elseIf this.isDate}}
-                          {{ formatDate(${minStart(className)}.${this.name}) }}
-                        {{elseIf this.isDateTime}}
-                          {{ formatDate(${minStart(className)}.${this.name}) }}
-                        {{elseIf this.isNumeric}}
-                          {{ ${minStart(className)}.${this.name} != null ? $n(${minStart(className)}.${this.name}, 'decimal') : '--' }}
-                        {{else}}
-                          {{ ${minStart(className)}.${this.name} ?? '--' }}
-                        {{/if}}
-                      </span>
+                      <span>{{ ${minStart(className)}.${this.name}{{#if this.isForeignKey}}?.getKeyValue() ?? ''{{elseIf this.isDate}}? $d(${minStart(className)}.${this.name}, 'long'):'--/--/--' {{elseIf this.isNumeric}}? $n(${minStart(className)}.${this.name}, 'decimal'): '--'{{else}} ?? ''{{/if}} }}</span>
                     </div>
                   </div>
                   {{/each}}{{removeLine}}
@@ -5984,6 +5972,16 @@
                     :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = String(selectedValue))"
                   />
+                  {{elseIf this.uiType = checkbox}}
+                  <!-- ${formatReadable(this.name)} -->
+                  <label class="flex items-center gap-2">
+                  <input
+                  type="checkbox"
+                  class="checkbox"
+                  v-model="formModel.${minStart(this.name)}"
+                  />
+                  <span>${formatReadable(this.name)}</span>
+                  </label>
                   {{elseIf isParentTable=true and hasChildrenForm=true}}
                   <!-- ${formatReadable(this.name)} -->
                   <GenesisInput
@@ -6055,7 +6053,7 @@
         {{#each fieldsFK}}
         const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
         const ${minStart(this.name)}DefaultValue = props.${minStart(className)}
-        ? (props.${minStart(className)}?.${this.name}?.getReferenceValue?.() ?? undefined)
+        ? (props.${minStart(className)}?.${this.name}?.getKeyValue?.() ?? undefined)
         : undefined
         {{/each}}
         {{#if isParentTable=true and hasChildrenForm=true}}
@@ -6588,7 +6586,7 @@
           {{#each fields}}{{#if this.isForeignKey}}
           {
             key: '${this.name}',
-            label: '${formatReadable(this.name)}',
+            label: '${formatReadable(this.type)}',
             type: 'select',
             searchKey: ${majStart(this.type)}.getKey(),
             sortable: false,
@@ -7959,6 +7957,9 @@
         import i18n from 'i18next';
         import { initReactI18next } from 'react-i18next';
         import LanguageDetector from 'i18next-browser-languagedetector';
+        import vueCompatProcessor, {
+          initVueCompat
+        } from './i18n/vueCompatProcessor';
 
         {{#each langList}}
         import ${lowerCase(this.name)} from './locales/${lowerCase(this.name)}'
@@ -7967,6 +7968,7 @@
         i18n
             .use(LanguageDetector)
             .use(initReactI18next)
+            .use(vueCompatProcessor)
             .init({
                 resources: {
                     {{#each langList}}
@@ -7975,8 +7977,10 @@
                 },
                 fallbackLng: {{#each langList}}{{#if @first}}'${this.locale}'{{/if}}{{/each}},
                 interpolation: { escapeValue: false },
+                postProcess: ['vueCompat'],
             });
-
+        initVueCompat(i18n);
+        
         export default i18n;
       destinationPath: "${destinationFolder}/src"
     - fileType: "RootLayout file"
