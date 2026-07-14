@@ -3360,6 +3360,7 @@
             "bootstrap": "^5.3.7",
             "bootstrap-icons": "^1.13.1",
             "daisyui": "^5.0.50",
+            "dayjs": "^1.11.21",
             "patch-package": "^8.0.1",
             "pinia": "^3.0.3",
             "vee-validate": "^4.15.1",
@@ -5067,6 +5068,7 @@
         import { computed, type PropType } from 'vue'
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import EntityRowActions from '@/components/table/EntityRowActions.vue'
+        import { useDateFormat } from '@/composables/useDateFormat'
       selector: "${majStart(className)}Row"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5082,7 +5084,7 @@
                 }"
               >
                 <template v-if="field.type === 'date'">
-                  {{ ${minStart(className)}Data[field.key] ? $d(${minStart(className)}Data[field.key], 'long') : '--/--/--' }}
+                  {{ formatDate(${minStart(className)}Data[field.key]) }}
                 </template>
     
                 <template v-else-if="field.type === 'number'">
@@ -5147,6 +5149,7 @@
         const deleteRow = () => emit('request-delete', props.${minStart(className)})
         const viewRow = () => emit('request-view', props.${minStart(className)})
         const updateRow = () => emit('request-update', props.${minStart(className)})
+        const { formatDate } = useDateFormat()
       componentName: "${majStart(className)}Row"
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
       componentAdditionalFiles: [ ]
@@ -5725,7 +5728,9 @@
         import { use${majPluralize(className)} } from '@/composables/use${majPluralize(className)}'
         import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
         import TrashIcon from '@/components/icons/TrashIcon.vue'
-        import EditIcon from '@/components/icons/EditIcon.vue'{{/if}}
+        import EditIcon from '@/components/icons/EditIcon.vue'
+        import { useDateFormat } from '@/composables/useDateFormat'
+        {{/if}}
       selector: "${majStart(className)}Details"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5739,7 +5744,19 @@
                   <div>
                     <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">${formatReadable(this.name)}</label>
                     <div id="${minStart(className)}${majStart(this.name)}" class="input w-full bg-base-100 cursor-default">
-                      <span>{{ ${minStart(className)}.${this.name}{{#if this.isForeignKey}}?.getReferenceValue() ?? ''{{elseIf this.isDate}}? $d(${minStart(className)}.${this.name}, 'long'):'--/--/--' {{elseIf this.isNumeric}}? $n(${minStart(className)}.${this.name}, 'decimal'): '--'{{else}} ?? ''{{/if}} }}</span>
+                      <span>
+                        {{#if this.isForeignKey}}
+                          {{ ${minStart(className)}.${this.name}?.getReferenceValue() ?? '--' }}
+                        {{elseIf this.isDate}}
+                          {{ formatDate(${minStart(className)}.${this.name}) }}
+                        {{elseIf this.isDateTime}}
+                          {{ formatDate(${minStart(className)}.${this.name}) }}
+                        {{elseIf this.isNumeric}}
+                          {{ ${minStart(className)}.${this.name} != null ? $n(${minStart(className)}.${this.name}, 'decimal') : '--' }}
+                        {{else}}
+                          {{ ${minStart(className)}.${this.name} ?? '--' }}
+                        {{/if}}
+                      </span>
                     </div>
                   </div>
                   {{/each}}{{removeLine}}
@@ -5798,7 +5815,11 @@
           if (!success) console.error(error)
           closePopup()
           goToListView()
-        }{{/if}}
+        }
+        
+        const { formatDate } = useDateFormat();
+
+        {{/if}}
       style: "<style scoped></style>"
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
       componentAdditionalFiles: [ ]
