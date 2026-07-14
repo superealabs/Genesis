@@ -1222,13 +1222,13 @@
       {{tab}}@ManyToOne
       {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{/if}}
-      {{#if !this.isForeignKey}}{{removeLine}}
+      <#{{#if !this.isForeignKey}}/#>{{removeLine}}
       {{tab}}{{#each this.attributeTypeAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}{{/if}}
+      {{tab}}{{/each}}{{removeLine}}<#{{/if}}/#>
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
       {{tab}}{{#if cacheableWithEhcache}}@Override
