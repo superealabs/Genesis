@@ -83,7 +83,6 @@
           <li v-for="field in availableFields" :key="field.key">
             <div
               class=""
-              :disabled="activeFieldKeys.includes(field.key)"
               @click="onFilterSelected(field.key)"
             >
               {{ field.label }}
