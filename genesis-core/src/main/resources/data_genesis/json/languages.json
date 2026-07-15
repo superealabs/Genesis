@@ -146,8 +146,10 @@
       "BIGINT UNSIGNED": "0L"
     },
     "criteriaBuildSnippet": {
+      "int identity": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "datetime": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "DATETIME": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "datetime2": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "int": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "double": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "json": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
@@ -200,6 +202,7 @@
       "NUMBER": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "NUMBER(*,*)": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "FLOAT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
+      "float": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "BINARY_FLOAT": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "BINARY_DOUBLE": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
       "CHAR": "root.get(\"${this.name}\"), object.get${majStart(this.name)}()",
