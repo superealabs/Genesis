@@ -1028,7 +1028,7 @@
 
 - databaseId: 4
   databaseName: "Oracle"
-  checkMinimumConstraintQuery: 
+  checkMinimumConstraintQuery: |
     SELECT cols.column_name, cons.search_condition 
       FROM all_constraints cons
       JOIN all_cons_columns cols 
@@ -1036,9 +1036,7 @@
       AND cons.owner = cols.owner
       WHERE cons.constraint_type = 'C' 
         AND cons.table_name = ?
-    |
-  
-  checkMaximumConstraintQuery: 
+  checkMaximumConstraintQuery: |
     SELECT cols.column_name, cons.search_condition 
       FROM all_constraints cons
       JOIN all_cons_columns cols 
@@ -1046,13 +1044,75 @@
       AND cons.owner = cols.owner
       WHERE cons.constraint_type = 'C' 
         AND cons.table_name = ?
-    |
   checkStrictMinimumConstraintQuery: |
+    SELECT cols.column_name, cons.search_condition 
+      FROM all_constraints cons
+      JOIN all_cons_columns cols 
+        ON cons.constraint_name = cols.constraint_name 
+      AND cons.owner = cols.owner
+      WHERE cons.constraint_type = 'C' 
+        AND cons.table_name = ?
   checkStrictMaximumConstraintQuery: |
+    SELECT cols.column_name, cons.search_condition 
+      FROM all_constraints cons
+      JOIN all_cons_columns cols 
+        ON cons.constraint_name = cols.constraint_name 
+      AND cons.owner = cols.owner
+      WHERE cons.constraint_type = 'C' 
+        AND cons.table_name = ?
   checkPastDateConstraintQuery: |
+    SELECT cols.column_name, cons.search_condition 
+      FROM all_constraints cons
+      JOIN all_cons_columns cols 
+        ON cons.constraint_name = cols.constraint_name 
+      AND cons.owner = cols.owner
+      WHERE cons.constraint_type = 'C' 
+        AND cons.table_name = ?
   checkFutureDateConstraintQuery: |
+    SELECT cols.column_name, cons.search_condition 
+      FROM all_constraints cons
+      JOIN all_cons_columns cols 
+        ON cons.constraint_name = cols.constraint_name 
+      AND cons.owner = cols.owner
+      WHERE cons.constraint_type = 'C' 
+        AND cons.table_name = ?
   checkStrictPastDateConstraintQuery: |
+    SELECT cols.column_name, cons.search_condition 
+      FROM all_constraints cons
+      JOIN all_cons_columns cols 
+        ON cons.constraint_name = cols.constraint_name 
+      AND cons.owner = cols.owner
+      WHERE cons.constraint_type = 'C' 
+        AND cons.table_name = ?
   checkStrictFutureDateConstraintQuery: |
+    SELECT cols.column_name, cons.search_condition 
+      FROM all_constraints cons
+      JOIN all_cons_columns cols 
+        ON cons.constraint_name = cols.constraint_name 
+      AND cons.owner = cols.owner
+      WHERE cons.constraint_type = 'C' 
+        AND cons.table_name = ?
   checkNotBlankConstraintQuery: |
+    SELECT cols.column_name, cons.search_condition 
+      FROM all_constraints cons
+      JOIN all_cons_columns cols 
+        ON cons.constraint_name = cols.constraint_name 
+      AND cons.owner = cols.owner
+      WHERE cons.constraint_type = 'C' 
+        AND cons.table_name = ?
   checkMinimumLengthConstraintQuery: |
+    SELECT cols.column_name, cons.search_condition 
+      FROM all_constraints cons
+      JOIN all_cons_columns cols 
+        ON cons.constraint_name = cols.constraint_name 
+      AND cons.owner = cols.owner
+      WHERE cons.constraint_type = 'C' 
+        AND cons.table_name = ?
   checkRegexConstraintQuery: |
+    SELECT cols.column_name, cons.search_condition 
+      FROM all_constraints cons
+      JOIN all_cons_columns cols 
+        ON cons.constraint_name = cols.constraint_name 
+      AND cons.owner = cols.owner
+      WHERE cons.constraint_type = 'C' 
+        AND cons.table_name = ?
