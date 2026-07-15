@@ -8146,7 +8146,7 @@
         link: "/${toKebabCase(className)}s"
         label: "${formatReadable(classNameLink)}"
       importFile: |
-        import { Edit, Delete } from '@mui/icons-material';
+        import { Edit, Delete, Visibility } from '@mui/icons-material';
         import { useNavigate } from 'react-router-dom';
 
         import {${majStart(className)}, ${toCamelCase(className)}Meta, ${toCamelCase(className)}Columns, ${toCamelCase(className)}Filters} from '@/models/${toKebabCase(className)}/${toKebabCase(className)}.model';
@@ -8177,6 +8177,7 @@
             return (
                 <ActionButtons
                     actions={[
+                        { icon: <Visibility fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]`), title: `$[t('messages.common.details')]` },
                         { icon: <Edit fontSize="small" />, onClick: () => navigate(`/${toKebabCase(className)}s/$[row.{{#each fieldsPK}}${this.name}{{/each}}]/edit`), title:`$[t('messages.common.edit')]` },
                         { icon: <Delete fontSize="small" />, onClick: () => handleDelete(row.{{#each fieldsPK}}${this.name}{{/each}}), title:`$[t('messages.common.delete')]` },
                     ]}
