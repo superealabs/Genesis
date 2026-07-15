@@ -17,12 +17,12 @@ public class TableMetadataTestOracle {
         this.credentials = new Credentials()
                 .setHost("localhost")
                 .setPort("1521")
-                .setUser("C##TAHIANA")
-                .setPwd("tahiana")
-                .setSID("orclbdd")
-                .setUser("C##RH")
-                .setPwd("rh")
-                .setSID("orclbdd")
+                .setUser("genesis_tester")
+                .setPwd("orcl")
+                .setSID("ORCLCDB")
+                // .setUser("C##RH")
+                // .setPwd("rh")
+                // .setSID("orclbdd")
                 .setSchemaName("");
     }
 
@@ -40,6 +40,7 @@ public class TableMetadataTestOracle {
             TableMetadata[] entities = database.getEntities(connection, credentials, language,framework).toArray(new TableMetadata[0]);
             System.out.println("\n\nEntities : \n" + Arrays.toString(entities) + "\n\n");
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
