@@ -146,7 +146,12 @@ public class TableMetadata {
     }
 
     private void fetchPrimaryKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> columns) throws SQLException {
-        try (ResultSet primaryKeys = metaData.getPrimaryKeys(null, database.getCredentials().getSchemaName(), tableName)) {
+        // Résolution intelligente du schéma selon le type de base de données
+        String schema = (database.getName() != null && database.getName().equalsIgnoreCase("Oracle"))
+                ? resolveOracleSchema()
+                : database.getCredentials().getSchemaName();
+
+        try (ResultSet primaryKeys = metaData.getPrimaryKeys(null, schema, tableName)) {
             while (primaryKeys.next()) {
                 String pkColumnName = primaryKeys.getString("COLUMN_NAME");
 
@@ -179,12 +184,18 @@ public class TableMetadata {
     }
 
     private void fetchForeignKeys(DatabaseMetaData metaData, String tableName, Language language, List<ColumnMetadata> listeCols) throws SQLException {
-        try (ResultSet foreignKeys = metaData.getImportedKeys(null, database.getCredentials().getSchemaName(), tableName)) {
+        // Résolution intelligente du schéma selon le type de base de données
+        String schema = (database.getName() != null && database.getName().equalsIgnoreCase("Oracle"))
+                ? resolveOracleSchema()
+                : database.getCredentials().getSchemaName();
+
+        try (ResultSet foreignKeys = metaData.getImportedKeys(null, schema, tableName)) {
 
             while (foreignKeys.next()) {
                 String fkColumnName = foreignKeys.getString("FKCOLUMN_NAME");
                 String pkTableName = foreignKeys.getString("PKTABLE_NAME");
                 String pkColumnName = foreignKeys.getString("PKCOLUMN_NAME");
+                
                 for (ColumnMetadata field : listeCols) {
                     if (field.getReferencedColumn().equalsIgnoreCase(fkColumnName)) {
                         setHasFk(true);
@@ -201,7 +212,8 @@ public class TableMetadata {
                                         ));
                         field.setReferencedTable(pkTableName.transform(StringUtils::toCamelCase));
 
-                        try (ResultSet pkColumn = metaData.getColumns(null, database.getCredentials().getSchemaName(), pkTableName, pkColumnName)) {
+                        // IMPORTANT : On réutilise le même schéma résolu pour la sous-requête getColumns
+                        try (ResultSet pkColumn = metaData.getColumns(null, schema, pkTableName, pkColumnName)) {
                             if (pkColumn.next()) {
                                 String pkColumnType = pkColumn.getString("TYPE_NAME");
                                 String normalizedPkColumnType = database.normalizeColumnType(pkColumnType);
@@ -215,7 +227,6 @@ public class TableMetadata {
                                 .transform(StringUtils::removeLastS)
                                 .transform(StringUtils::majStart)
                         );
-
                     }
                 }
             }
@@ -276,5 +287,35 @@ public class TableMetadata {
     public TableGenerationModel generateGenerationModel(
     ) {
         return new TableGenerationModel(this);
+    }
+
+
+
+    /**
+     * Résout le nom du schéma pour les appels JDBC Oracle.
+     * Oracle stocke les identifiants non-quotés en MAJUSCULES.
+     * Les identifiants quotés ("...") conservent leur casse exacte.
+     */
+    private String resolveOracleSchema() {
+        String schema = database.getCredentials().getSchemaName();
+        
+        // Si le schéma est vide ou null, on utilise l'utilisateur connecté comme schéma par défaut
+        if (schema == null || schema.isEmpty()) {
+            schema = database.getCredentials().getUser();
+        }
+        
+        // Sécurité anti-null
+        if (schema == null) {
+            return null;
+        }
+
+        // Si le schéma contient déjà des minuscules, cela signifie 
+        // qu'il a été créé avec des guillemets doubles ("MonSchema") → on respecte la casse exacte
+        if (!schema.equals(schema.toUpperCase())) {
+            return schema; 
+        }
+        
+        // Sinon, c'est un identifiant standard Oracle → majuscules obligatoires pour JDBC
+        return schema.toUpperCase();
     }
 }
