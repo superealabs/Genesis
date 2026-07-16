@@ -507,7 +507,18 @@ public class FrameworkMetadataProvider {
         fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
         fieldMap.put("attributeTypeAnnotations", language.getAttributeTypeAnnotations().get(field.getType()));
         fieldMap.put("mockdata", language.getMockData().get(field.getColumnType()));
-        fieldMap.put("criteriaBuildSnippet", language.getCriteriaBuildSnippet().get(field.getColumnType()));
+        String criteriaBuildSnippet = language.getCriteriaBuildSnippet()
+                .entrySet()
+                .stream()
+                .filter(entry ->
+                        entry.getKey().equalsIgnoreCase(field.getColumnType())
+                )
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(
+                        "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
+                );
+        fieldMap.put("criteriaBuildSnippet", criteriaBuildSnippet);
         fieldMap.put("defaultValue", field.getDefaultValue());
         fieldMap.put("columnSize", field.getColumnSize());
         fieldMap.put("decimalDigits", field.getDecimalDigits());
