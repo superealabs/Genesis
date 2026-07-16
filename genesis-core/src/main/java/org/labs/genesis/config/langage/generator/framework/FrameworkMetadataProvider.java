@@ -505,7 +505,33 @@ public class FrameworkMetadataProvider {
         fieldMap.put("referencedColumnType", field.getReferencedColumnType());
         fieldMap.put("referencedPrimaryKeyColumn", field.getReferencedPrimaryKeyColumn());
         fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
-        fieldMap.put("attributeTypeAnnotations", language.getAttributeTypeAnnotations().get(field.getType()));
+        List<String> attributeTypeAnnotations = new ArrayList<>();
+        List<String> configuredAnnotations = language.getAttributeTypeAnnotations().get(field.getType());
+        if (configuredAnnotations != null) {
+            attributeTypeAnnotations.addAll(configuredAnnotations);
+        }
+        String columnType = field.getColumnType();
+        if ("String".equals(field.getType()) && columnType != null) {
+            String normalizedColumnType = columnType.trim().toLowerCase(Locale.ROOT);
+            boolean isNativeTextType =
+                    normalizedColumnType.startsWith("varchar")
+                            || normalizedColumnType.startsWith("nvarchar")
+                            || normalizedColumnType.startsWith("char")
+                            || normalizedColumnType.startsWith("nchar")
+                            || normalizedColumnType.equals("text")
+                            || normalizedColumnType.equals("tinytext")
+                            || normalizedColumnType.equals("mediumtext")
+                            || normalizedColumnType.equals("longtext")
+                            || normalizedColumnType.equals("clob")
+                            || normalizedColumnType.equals("nclob")
+                            || normalizedColumnType.equals("varchar2")
+                            || normalizedColumnType.equals("nvarchar2");
+            if (isNativeTextType) {
+                attributeTypeAnnotations.removeIf(annotation -> annotation.contains("org.hibernate.annotations.ColumnTransformer") && annotation.contains("CAST(${this.columnName} as varchar)")
+                );
+            }
+        }
+        fieldMap.put("attributeTypeAnnotations", attributeTypeAnnotations);
         fieldMap.put("mockdata", language.getMockData().get(field.getColumnType()));
         String criteriaBuildSnippet = language.getCriteriaBuildSnippet()
                 .entrySet()
