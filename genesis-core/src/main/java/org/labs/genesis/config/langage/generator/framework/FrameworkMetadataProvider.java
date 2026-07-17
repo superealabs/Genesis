@@ -1,6 +1,7 @@
 package org.labs.genesis.config.langage.generator.framework;
 
 import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -538,11 +539,12 @@ public class FrameworkMetadataProvider {
         System.out.println("Get hashmapDAO global " + packageDefault);
         System.out.println(tableMetadata.size()+ " SIZEEEEE");
         Database database = tableMetadata.getFirst().getDatabase();
+
         System.out.println("Get databaseee global ");
 
         String connectionString = database.getConnectionString().get(framework.getLanguageId());
         Map<String, Object> connectionStringMetadata = getCredentialsHashMap(database);
-        if(connectionStringMetadata.get("database").equals("genesis"))
+        if(database.getId() == Constantes.Oracle_ID)
         {
             connectionStringMetadata.put("database",database.getSid().toLowerCase());
         }
