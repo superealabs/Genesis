@@ -65,6 +65,17 @@ export class LanguageService {
 
   formatDate(value: Date | string | number): string {
     if (!value) return '';
+
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const [year, month, day] = value.split('-');
+        return new Intl.DateTimeFormat(this.currentLanguage, {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).format(new Date(Number(year), Number(month) - 1, Number(day)));
+    }
+
+
     const date = new Date(value);
     const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0;
     if (hasTime) {
