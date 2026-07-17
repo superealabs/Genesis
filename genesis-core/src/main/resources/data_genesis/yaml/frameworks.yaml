@@ -1118,9 +1118,9 @@
     - name: "Hibernate Ddl Auto"
       variableName: "hibernateDdlAuto"
       options:
+        - "none"
         - "create"
         - "create-drop"
-        - "none"
         - "update"
       defaultOption: "none"
     - name: "Security Type"
