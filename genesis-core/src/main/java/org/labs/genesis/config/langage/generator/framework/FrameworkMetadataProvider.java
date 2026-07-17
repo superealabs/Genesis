@@ -14,6 +14,8 @@ import org.labs.utils.StringUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.labs.genesis.config.database.NativeDatabaseTypeRegistry;
+
 public class FrameworkMetadataProvider {
     private static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
 
@@ -333,7 +335,7 @@ public class FrameworkMetadataProvider {
     private static List<Map<String, Object>> getFieldsList(TableMetadata tableMetadata, Language language) {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
-            Map<String, Object> fieldMap = getFieldHashMap(field, language);
+            Map<String, Object> fieldMap = getFieldHashMap(field, language, tableMetadata.getDatabase().getId());
             fieldMap.put("djangoArgs", buildDjangoArgs(field));
             fields.add(fieldMap);
         }
@@ -427,7 +429,7 @@ public class FrameworkMetadataProvider {
         List<Map<String, Object>> fieldsPK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (!field.isPrimary()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field, language);
+                Map<String, Object> fieldMap = getFieldHashMap(field, language, tableMetadata.getDatabase().getId());
                 fieldsPK.add(fieldMap);
             }
         }
@@ -438,7 +440,7 @@ public class FrameworkMetadataProvider {
         List<Map<String, Object>> fieldsFK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field, language);
+                Map<String, Object> fieldMap = getFieldHashMap(field, language,tableMetadata.getDatabase().getId());
 
                 String fieldType = field.getType();
 
@@ -489,7 +491,7 @@ public class FrameworkMetadataProvider {
         return fieldMap;
     }
 
-    public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field, Language language) {
+    public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field, Language language, int databaseId) {
         Map<String, Object> fieldMap = new HashMap<>();
 
         fieldMap.put("withGetters", false);
@@ -510,28 +512,13 @@ public class FrameworkMetadataProvider {
         if (configuredAnnotations != null) {
             attributeTypeAnnotations.addAll(configuredAnnotations);
         }
-        String columnType = field.getColumnType();
-        if ("String".equals(field.getType()) && columnType != null) {
-            String normalizedColumnType = columnType.trim().toLowerCase(Locale.ROOT);
-            boolean isNativeTextType =
-                    normalizedColumnType.startsWith("varchar")
-                            || normalizedColumnType.startsWith("nvarchar")
-                            || normalizedColumnType.startsWith("char")
-                            || normalizedColumnType.startsWith("nchar")
-                            || normalizedColumnType.equals("text")
-                            || normalizedColumnType.equals("tinytext")
-                            || normalizedColumnType.equals("mediumtext")
-                            || normalizedColumnType.equals("longtext")
-                            || normalizedColumnType.equals("clob")
-                            || normalizedColumnType.equals("nclob")
-                            || normalizedColumnType.equals("varchar2")
-                            || normalizedColumnType.equals("nvarchar2");
-            if (isNativeTextType) {
-                attributeTypeAnnotations.removeIf(annotation -> annotation.contains("org.hibernate.annotations.ColumnTransformer") && annotation.contains("CAST(${this.columnName} as varchar)")
-                );
-            }
+        boolean isNativeTextType = NativeDatabaseTypeRegistry.isNative(databaseId, field.getColumnType());
+        if ("String".equals(field.getType()) && isNativeTextType) {
+            attributeTypeAnnotations.removeIf(annotation ->
+                    annotation.contains("org.hibernate.annotations.ColumnTransformer") && annotation.contains("CAST(${this.columnName} as varchar)")
+            );
         }
-        fieldMap.put("attributeTypeAnnotations", attributeTypeAnnotations);
+        fieldMap.put("attributeTypeAnnotations",attributeTypeAnnotations);
         fieldMap.put("mockdata", language.getMockData().get(field.getColumnType()));
         String criteriaBuildSnippet = language.getCriteriaBuildSnippet()
                 .entrySet()
