@@ -1,0 +1,32 @@
+{
+  "1": [
+    "char*",
+    "varchar*",
+    "tinytext",
+    "text",
+    "mediumtext",
+    "longtext"
+  ],
+  "2": [
+    "char*",
+    "varchar*",
+    "text",
+    "citext"
+  ],
+  "3": [
+    "char*",
+    "varchar*",
+    "nchar*",
+    "nvarchar*",
+    "text",
+    "ntext"
+  ],
+  "4": [
+    "char*",
+    "nchar*",
+    "varchar2*",
+    "nvarchar2*",
+    "clob",
+    "nclob"
+  ]
+}

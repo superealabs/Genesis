@@ -15,6 +15,8 @@ import org.labs.utils.StringUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.labs.genesis.config.database.NativeDatabaseTypeRegistry;
+
 public class FrameworkMetadataProvider {
     private static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
 
@@ -334,7 +336,7 @@ public class FrameworkMetadataProvider {
     private static List<Map<String, Object>> getFieldsList(TableMetadata tableMetadata, Language language) {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
-            Map<String, Object> fieldMap = getFieldHashMap(field, language);
+            Map<String, Object> fieldMap = getFieldHashMap(field, language, tableMetadata.getDatabase().getId());
             fieldMap.put("djangoArgs", buildDjangoArgs(field));
             fields.add(fieldMap);
         }
@@ -428,7 +430,7 @@ public class FrameworkMetadataProvider {
         List<Map<String, Object>> fieldsPK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (!field.isPrimary()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field, language);
+                Map<String, Object> fieldMap = getFieldHashMap(field, language, tableMetadata.getDatabase().getId());
                 fieldsPK.add(fieldMap);
             }
         }
@@ -439,7 +441,7 @@ public class FrameworkMetadataProvider {
         List<Map<String, Object>> fieldsFK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field, language);
+                Map<String, Object> fieldMap = getFieldHashMap(field, language,tableMetadata.getDatabase().getId());
 
                 String fieldType = field.getType();
 
@@ -490,7 +492,7 @@ public class FrameworkMetadataProvider {
         return fieldMap;
     }
 
-    public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field, Language language) {
+    public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field, Language language, int databaseId) {
         Map<String, Object> fieldMap = new HashMap<>();
 
         fieldMap.put("withGetters", false);
@@ -506,9 +508,31 @@ public class FrameworkMetadataProvider {
         fieldMap.put("referencedColumnType", field.getReferencedColumnType());
         fieldMap.put("referencedPrimaryKeyColumn", field.getReferencedPrimaryKeyColumn());
         fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
-        fieldMap.put("attributeTypeAnnotations", language.getAttributeTypeAnnotations().get(field.getType()));
+        List<String> attributeTypeAnnotations = new ArrayList<>();
+        List<String> configuredAnnotations = language.getAttributeTypeAnnotations().get(field.getType());
+        if (configuredAnnotations != null) {
+            attributeTypeAnnotations.addAll(configuredAnnotations);
+        }
+        boolean isNativeTextType = NativeDatabaseTypeRegistry.isNative(databaseId, field.getColumnType());
+        if ("String".equals(field.getType()) && isNativeTextType) {
+            attributeTypeAnnotations.removeIf(annotation ->
+                    annotation.contains("org.hibernate.annotations.ColumnTransformer") && annotation.contains("CAST(${this.columnName} as varchar)")
+            );
+        }
+        fieldMap.put("attributeTypeAnnotations",attributeTypeAnnotations);
         fieldMap.put("mockdata", language.getMockData().get(field.getColumnType()));
-        fieldMap.put("criteriaBuildSnippet", language.getCriteriaBuildSnippet().get(field.getColumnType()));
+        String criteriaBuildSnippet = language.getCriteriaBuildSnippet()
+                .entrySet()
+                .stream()
+                .filter(entry ->
+                        entry.getKey().equalsIgnoreCase(field.getColumnType())
+                )
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(
+                        "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
+                );
+        fieldMap.put("criteriaBuildSnippet", criteriaBuildSnippet);
         fieldMap.put("defaultValue", field.getDefaultValue());
         fieldMap.put("columnSize", field.getColumnSize());
         fieldMap.put("decimalDigits", field.getDecimalDigits());
