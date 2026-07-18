@@ -1008,6 +1008,8 @@
             database-platform : org.hibernate.dialect.${skipEscape(databaseType)}Dialect
             hibernate:
               ddl-auto: ${hibernateDdlAuto}
+              naming:
+                physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
             properties:
               hibernate.format_sql: true
 
