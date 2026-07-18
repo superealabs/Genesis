@@ -42,7 +42,11 @@ public class FrameworkFrontendMetadataProvider {
         HashMap<String, Object> metadata = new HashMap<>();
 
         List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
-        metadata.put("fields", getFieldsList(tableMetadata));
+        List<Map<String, Object>> fields = getFieldsList(tableMetadata);
+        boolean containsFile = fields.stream()
+                .anyMatch(field -> "file".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        metadata.put("fields", fields);
+        metadata.put("containsFile", containsFile);
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", fkList);
         metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata));
