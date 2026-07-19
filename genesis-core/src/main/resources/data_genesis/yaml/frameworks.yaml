@@ -1412,6 +1412,8 @@
                   return (root, query, criteriaBuilder) -> {
                       List<Predicate> predicates = new ArrayList<>();
                       {{#each fields}}
+                      System.out.println("🔍 TEMPLATE DEBUG: name=${this.name} | columnType=[${this.columnType}] | isText=${this.isText} | isNumeric=${this.isNumeric}");
+
                       {{#if this.isPrimaryKey}}
                       if(object.get${majStart(this.name)}()!=null){
                           predicates.add(
@@ -1439,6 +1441,8 @@
                           );
                       }
                       WebUtils.addInterval(criteriaBuilder, root.get("${this.name}"), object.get${majStart(this.name)}Min(), object.get${majStart(this.name)}Max(), predicates);
+                      {{elseIf this.columnType = CLOB or this.columnType = BLOB}}
+                      // CLOB/BLOB field '${this.name}' skipped: not supported in JPA Criteria equality filter
                       {{else}}
                       if(object.get${majStart(this.name)}()!=null){
                           predicates.add(

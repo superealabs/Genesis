@@ -25,7 +25,7 @@ public class OracleDatabase extends Database {
         DatabaseMetaData metaData = connection.getMetaData();
 
         int tempIndex = 0;
-        try (ResultSet tables = metaData.getTables(null, getCredentials().getUser(), "%", new String[]{"TABLE"})) {
+        try (ResultSet tables = metaData.getTables(null, resolveOracleSchema(), "%", new String[]{"TABLE"})) {
             while (tables.next() && size > tableNames.size()) {
                 if (tempIndex < (index * size)) {
                     tempIndex++;
@@ -45,7 +45,7 @@ public class OracleDatabase extends Database {
         DatabaseMetaData metaData = connection.getMetaData();
 
         int tempIndex = 0;
-        try (ResultSet views = metaData.getTables(null, getCredentials().getUser(), "%", new String[]{"VIEW"})) {
+        try (ResultSet views = metaData.getTables(null, resolveOracleSchema(), "%", new String[]{"VIEW"})) {
             while (views.next() && size > viewNames.size()) {
                 if (tempIndex < (index * size)) {
                     tempIndex++;
@@ -453,14 +453,12 @@ public class OracleDatabase extends Database {
 
 
 
-    public String handleType(ResultSet columns)throws Exception{
-        String columnType=columns.getString("TYPE_NAME");
-        int decimalDigits = columns.getInt("DECIMAL_DIGITS");
-        if(decimalDigits>0 && columnType.contains("NUMBER"))
-        {
-            columnType = columns.getString("TYPE_NAME")+"(*,*)";
-        } else if (columnType.contains("TIMESTAMP")) {
-            columnType="TIMESTAMP";
+    public String handleType(String columnType, int decimalDigits) {
+        if (decimalDigits > 0 && columnType.contains("NUMBER")) {
+            return columnType + "(*,*)";
+        }
+        if (columnType.contains("TIMESTAMP")) {
+            return "TIMESTAMP";
         }
         return columnType;
     }
@@ -468,17 +466,19 @@ public class OracleDatabase extends Database {
     public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language,Connection connex,Framework framework) throws SQLException {
         List<ColumnMetadata> listeCols = new ArrayList<>();
 
-        try (ResultSet columns = metaData.getColumns(null, this.getCredentials().getUser(), tableName, null)) {
+
+        try (ResultSet columns = metaData.getColumns(null, resolveOracleSchema(), tableName, null)) {
             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
             while (columns.next()) {
                 ColumnMetadata column = new ColumnMetadata();
                 String columnName = columns.getString("COLUMN_NAME");
                 String columnType = columns.getString("TYPE_NAME");
-                String isNullable = columns.getString("IS_NULLABLE");
-                int decimalDigits = columns.getInt("DECIMAL_DIGITS");
-                columnType=handleType(columns);
                 int columnSize = columns.getInt("COLUMN_SIZE");
+                int decimalDigits = columns.getInt("DECIMAL_DIGITS");
+                columnType = handleType(columnType, decimalDigits);
+                // COLUMN_DEF doit être lu avant IS_NULLABLE
                 String defaultValue = columns.getString("COLUMN_DEF");
+                String isNullable = columns.getString("IS_NULLABLE");
                 boolean isColumnNumeric = isColumnNumeric(columns);
                 boolean isColumnNumericWithPrecision = isColumnNumericWithPrecision(columns);
                 boolean isColumnText = isColumnText(columns);
@@ -540,19 +540,28 @@ public class OracleDatabase extends Database {
         return listeCols;
     }
 
-
-
     @Override
     public List<String> getAllTableTypeNames(Connection connection, String tableType) throws SQLException {
         List<String> tableNames = new ArrayList<>();
+        DatabaseMetaData metaData = connection.getMetaData();
 
-        String sql = "SELECT tname FROM tab WHERE tabtype = ? AND tname NOT LIKE 'BIN$%'";
+        // Résolution intelligente du schéma pour Oracle
+        String schema = getCredentials().getSchemaName();
+        if (schema == null || schema.isEmpty()) {
+            schema = getCredentials().getUser();
+        }
+        if (schema != null && schema.equals(schema.toUpperCase())) {
+            schema = schema.toUpperCase();
+        }
+        // Si contient des minuscules → identifiant quoté, on garde la casse exacte
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, tableType.toUpperCase()); // Oracle stocke généralement en majuscules
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    tableNames.add(rs.getString("tname"));
+        // Utilisation de l'API JDBC standard au lieu de la vue legacy "tab"
+        try (ResultSet rs = metaData.getTables(null, schema, "%", new String[]{tableType.toUpperCase()})) {
+            while (rs.next()) {
+                String tableName = rs.getString("TABLE_NAME");
+                // Exclure les tables corbeille Oracle (BIN$...)
+                if (!tableName.startsWith("BIN$")) {
+                    tableNames.add(tableName);
                 }
             }
         }
@@ -589,5 +598,18 @@ public class OracleDatabase extends Database {
                 credentials.getHost(),
                 port,
                 credentials.getSID());
+    }
+
+
+    private String resolveOracleSchema() {
+        String schema = getCredentials().getSchemaName();
+        if (schema == null || schema.isEmpty()) {
+            schema = getCredentials().getUser();
+        }
+        if (schema == null) return null;
+        if (!schema.equals(schema.toUpperCase())) {
+            return schema;
+        }
+        return schema.toUpperCase();
     }
 }
