@@ -183,6 +183,8 @@ public class FrameworkFrontendMetadataProvider {
 
         if (field.isDateTime() || field.isDateTimeTz()) {
             uiType = "datetime-local"; // DateTime devient ceci
+        } else if (field.isTime()  || field.isTimeTz()) {
+            uiType = "time"; // Time devient ceci
         } else if (field.isDate()) {
             uiType = "date"; // date reste date
         } else if (field.isNumeric()) {
