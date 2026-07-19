@@ -28,13 +28,14 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { TimePicker } from "@mui/x-date-pickers";
 import { parseTimeString } from '@/utils/timeParser';
 import { formatTimeTz, parseTimeTz } from "@/utils/timeTzParser";
+import { fileToArray, bytesToUrl } from "@/utils/imageUtil";
 import { DurationInput } from "@/components/Input/DurationInput";
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 interface FormFieldConfig {
     label: string;
-    type: 'text' | 'number' | 'Date' | 'datetime' | 'time' | 'timeTz' | 'checkbox' | 'select' | 'interval';
+    type: 'text' | 'number' | 'Date' | 'datetime' | 'time' | 'timeTz' | 'checkbox' | 'select' | 'interval'  | 'Uint8Array';
     required?: boolean;
     readonly?: boolean;
     options?: readonly { readonly value: string | number; readonly label: string }[];
@@ -127,7 +128,10 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
         }
     }, [initialData, fields]);
 
-    const handleChange = (key: string, value: any) => {
+    const handleChange = async (key: string, value: any) => {
+        if (value instanceof File) {
+            value = await fileToArray(value)
+        }
         setFormData((prev) => ({ ...prev, [key]: value }));
     };
 
@@ -216,7 +220,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                         onClick={() => (window.location.href = redirectTo || '/')}
                         sx={{ flexShrink: 0 }}
                     >
-                        {t('messages.button.backToList')}
+                        {t('messfileages.button.backToList')}
                     </Button>
                 </Box>
 
@@ -367,7 +371,23 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                 error={Boolean(fieldErrors[key])}
                                                 helperText={fieldErrors[key] ?? ' '}
                                             />
-                                        ) : (
+                                        ) : config.type === 'Uint8Array' ? (
+                                            <>
+                                                <input
+                                                    type="file"
+                                                    onChange={(e) => handleChange(key, e.target.files?.[0] ?? null)}
+                                                />
+                                                <img
+                                                    src={bytesToUrl(formData[key] as number[])}
+                                                    alt={key}
+                                                    style={{
+                                                        maxWidth: "200px",
+                                                        maxHeight: "200px",
+                                                        objectFit: "contain"
+                                                    }}
+                                                />
+                                            </>
+                                        )  : (
                                             <TextField
                                                 fullWidth
                                                 margin="normal"

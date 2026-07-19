@@ -3,12 +3,14 @@ import { Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material'
 import { tableWrapperSx, tableHeaderSx, tableCellSx } from '@/styles/mui-patterns';
 import SortableHeader from '../SortableHeader/SortableHeader';
 import { Link } from '@mui/material';
+import { base64ToUrl } from "@/utils/imageUtil";
 
 export type Column<T> = {
     header: string;
     accessor: keyof T | ((row: T) => React.ReactNode);
     link?: (row: T) => string;   // ← URL complète ou fonction
     sortKey?: string;
+    type?: string;
 };
 
 interface Props<T> {
@@ -64,7 +66,44 @@ export default function DataTable<T extends Record<string, any>>({
                     <TableRow key={idx}>
                         {columns.map((col, j) => (
                             <TableCell key={j} sx={tableCellSx}>
-                                {col.link ? (
+                                {col.type === "file" ? (
+                                    col.link ? (
+                                        <Link
+                                            href={col.link(row)}
+                                            color="primary"
+                                            underline="hover"
+                                            sx={{ cursor: 'pointer' }}
+                                        >
+                                            <img
+                                                src={base64ToUrl(
+                                                    typeof col.accessor === 'function'
+                                                        ? col.accessor(row) as string
+                                                        : row[col.accessor] as unknown as string
+                                                )}
+                                                alt={col.header}
+                                                style={{
+                                                    maxWidth: "100px",
+                                                    maxHeight: "100px",
+                                                    objectFit: "contain"
+                                                }}
+                                            />
+                                        </Link>
+                                    ) : (
+                                        <img
+                                            src={base64ToUrl(
+                                                typeof col.accessor === 'function'
+                                                    ? col.accessor(row) as string
+                                                    : row[col.accessor] as unknown as string
+                                            )}
+                                            alt={col.header}
+                                            style={{
+                                                maxWidth: "100px",
+                                                maxHeight: "100px",
+                                                objectFit: "contain"
+                                            }}
+                                        />
+                                    )
+                                ) : col.link ? (
                                     <Link
                                         href={col.link(row)}
                                         color="primary"
