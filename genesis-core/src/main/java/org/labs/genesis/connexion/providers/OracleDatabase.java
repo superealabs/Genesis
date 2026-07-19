@@ -453,14 +453,12 @@ public class OracleDatabase extends Database {
 
 
 
-    public String handleType(ResultSet columns)throws Exception{
-        String columnType=columns.getString("TYPE_NAME");
-        int decimalDigits = columns.getInt("DECIMAL_DIGITS");
-        if(decimalDigits>0 && columnType.contains("NUMBER"))
-        {
-            columnType = columns.getString("TYPE_NAME")+"(*,*)";
-        } else if (columnType.contains("TIMESTAMP")) {
-            columnType="TIMESTAMP";
+    public String handleType(String columnType, int decimalDigits) {
+        if (decimalDigits > 0 && columnType.contains("NUMBER")) {
+            return columnType + "(*,*)";
+        }
+        if (columnType.contains("TIMESTAMP")) {
+            return "TIMESTAMP";
         }
         return columnType;
     }
@@ -475,11 +473,12 @@ public class OracleDatabase extends Database {
                 ColumnMetadata column = new ColumnMetadata();
                 String columnName = columns.getString("COLUMN_NAME");
                 String columnType = columns.getString("TYPE_NAME");
-                String isNullable = columns.getString("IS_NULLABLE");
-                int decimalDigits = columns.getInt("DECIMAL_DIGITS");
-                columnType=handleType(columns);
                 int columnSize = columns.getInt("COLUMN_SIZE");
+                int decimalDigits = columns.getInt("DECIMAL_DIGITS");
+                columnType = handleType(columnType, decimalDigits);
+                // COLUMN_DEF doit être lu avant IS_NULLABLE
                 String defaultValue = columns.getString("COLUMN_DEF");
+                String isNullable = columns.getString("IS_NULLABLE");
                 boolean isColumnNumeric = isColumnNumeric(columns);
                 boolean isColumnNumericWithPrecision = isColumnNumericWithPrecision(columns);
                 boolean isColumnText = isColumnText(columns);
