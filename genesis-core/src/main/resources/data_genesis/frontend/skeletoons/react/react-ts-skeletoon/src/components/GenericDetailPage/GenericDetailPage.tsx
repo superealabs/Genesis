@@ -99,7 +99,7 @@ export default function GenericDetailPage<T extends AnyRecord>(config: DetailCon
 
                     {/* Grille 2 colonnes */}
                     <Grid container spacing={3}>
-                        {config.columns.map(({ header, accessor }) => {
+                        {config.columns.map(({ header, accessor, type }) => {
                             const value = resolveValue(accessor);
                             return (
                                 <Grid item xs={12} sm={6} key={String(header)}>
