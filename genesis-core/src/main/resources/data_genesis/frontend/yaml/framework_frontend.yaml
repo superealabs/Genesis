@@ -1542,11 +1542,11 @@
               {{#if isParentTable=true and hasChildrenForm=true}}
               {{#each childrenWithForm}}
               <div style="margin-top: 2rem;">
-                <h3 style="font-size: 1rem; font-weight: 600; border-bottom: 2px solid #3b82f6; padding-bottom: 0.4rem; margin-bottom: 0.75rem;">${majStart(this.className)}</h3>
+                <h3 style="font-size: 1rem; font-weight: 600; border-bottom: 2px solid ${primaryColor}; padding-bottom: 0.4rem; margin-bottom: 0.75rem;">${majStart(this.className)}</h3>
                 <ng-container *ngIf="${minStart(this.className)}s && ${minStart(this.className)}s.length > 0; else noChildren">
                   <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
                     <thead>
-                      <tr style="background:#3b82f6; color:#fff;">
+                      <tr style="background:${primaryColor}; color:#fff;">
                         <th *ngFor="let col of getChildHeaders(${minStart(this.className)}s)" style="padding:0.5rem 0.75rem; text-align:left;">
                           {{ formatHeader(col) }}
                         </th>
@@ -1849,10 +1849,10 @@
         <div style="overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
             <thead>
-              <tr style="background:#f3f4f6;">
-                <th style="padding:0.5rem 0.75rem; text-align:left; font-weight:600; color:#374151;">#</th>
+              <tr style="background:${primaryColor};">
+                <th style="padding:0.5rem 0.75rem; text-align:left; font-weight:600; color:#fff;">#</th>
                 <ng-container *ngFor="let f of fields">
-                  <th style="padding:0.5rem 0.75rem; text-align:left; font-weight:600; color:#374151;">{{ f.label }}</th>
+                  <th style="padding:0.5rem 0.75rem; text-align:left; font-weight:600; color:#fff;">{{ f.label }}</th>
                 </ng-container>
                 <th style="padding:0.5rem 0.75rem;"></th>
               </tr>
@@ -1893,7 +1893,7 @@
           </table>
           <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.5rem; margin-top:0.5rem;">
             <span style="font-size:0.8rem; color:#6b7280;">{{ rows.length }} row(s)</span>
-            <button type="button" (click)="addRow()" style="background:#3b82f6; color:#fff; border:none; border-radius:4px; padding:0.4rem 0.9rem; cursor:pointer; font-weight:600;">+</button>
+            <button type="button" (click)="addRow()" style="background:${primaryColor}; color:#fff; border:none; border-radius:4px; padding:0.4rem 0.9rem; cursor:pointer; font-weight:600;">+</button>
           </div>
         </div>
       destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-table-form"
@@ -3757,7 +3757,7 @@
           <div class="w-full">
             <!-- Header -->
             <div class="items-center mb-6">
-              <h2 class="text-xl font-bold text-primary">{{ $t('home.greetDeveloper') }} 👋</h2>
+              <h2 class="text-xl font-bold text-primary">{{ $t('home.greetDeveloper') }}</h2>
               <span class="text-gray-500">{{ $t('home.welcome') }}</span>
             </div>
 
