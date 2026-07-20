@@ -1172,7 +1172,7 @@
         import { Component, OnInit, OnDestroy } from '@angular/core';
         import { CommonModule } from '@angular/common';
         import { HttpClientModule } from '@angular/common/http';
-        import { ReactiveFormsModule, FormGroup } from '@angular/forms';
+        import { ReactiveFormsModule, FormGroup, FormsModule } from '@angular/forms';
         import { Subject, forkJoin, takeUntil } from 'rxjs';
         import { ActivatedRoute } from '@angular/router';
         import { Router } from '@angular/router';
@@ -1193,10 +1193,15 @@
         import {${toPascalCase(this.type)}} from '../../${toKebabCase(this.type)}/models/${toKebabCase(this.type)}.model'
         import {${toPascalCase(this.type)}Service} from '../../${toKebabCase(this.type)}/services/${toKebabCase(this.type)}.service'
         {{/each}}
+        {{#if isParentTable=true and hasChildrenForm=true}}
+        {{#each childrenWithForm}}
+        import { ${majStart(this.className)}TableFormComponent } from '../../${toKebabCase(this.className)}/${toKebabCase(this.className)}-table-form/${toKebabCase(this.className)}-table-form.component'
+        {{/each}}
+        {{/if}}{{removeLine}}
       selector: "app-${toKebabCase(className)}-form"
       generateForView: false
       standalone: true
-      importComponent: "[CommonModule, ReactiveFormsModule, DynamicFieldComponent, LoadingIconComponent, PageHeaderComponent, LinkButtonComponent, DynamicFormComponent]"
+      importComponent: "[CommonModule, ReactiveFormsModule, FormsModule, DynamicFieldComponent, LoadingIconComponent, PageHeaderComponent, LinkButtonComponent, DynamicFormComponent{{#if isParentTable=true and hasChildrenForm=true}}{{#each childrenWithForm}}, ${majStart(this.className)}TableFormComponent{{/each}}{{/if}}]"
       template: "./${toKebabCase(className)}-form.component.html"
       style: "./${toKebabCase(className)}-form.component.css"
       export: |
@@ -1213,6 +1218,11 @@
           {{#each fieldsFK}}{{removeLine}}
           ${minStart(this.type)}s: ${majStart(this.type)}[] = [];
           {{/each}}{{removeLine}}
+          {{#if isParentTable=true and hasChildrenForm=true}}
+          {{#each childrenWithForm}}
+          ${minStart(this.className)}s: any[] = [];
+          {{/each}}
+          {{/if}}{{removeLine}}
 
           fields: FieldConfig[] = [
             {{tab}}{{tab}}{{#each fieldsFK}}
@@ -1244,7 +1254,12 @@
               payload.${this.name}=JSON.parse(payload.${this.name});
               {{/each}}{{removeLine}}
               var ${minStart(className)}: ${majStart(className)} = payload;
+              {{#if isParentTable=true and hasChildrenForm=true}}
+              const ${minStart(className)}Payload: any = { ${minStart(className)}: ${minStart(className)}{{#each childrenWithForm}}, ${minStart(this.className)}s: this.${minStart(this.className)}s{{/each}} };
+              const serviceCall = this.formUpdate?this.${minStart(className)}Service.update${majStart(className)}(${minStart(className)}Payload ,this.id):this.${minStart(className)}Service.create${majStart(className)}(${minStart(className)}Payload);
+              {{else}}
               const serviceCall = this.formUpdate?this.${minStart(className)}Service.update${majStart(className)}(${minStart(className)} ,this.id):this.${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
+              {{/if}}
               serviceCall.pipe(takeUntil(this.destroy$))
               .subscribe({
                 next: res => {
@@ -1255,7 +1270,7 @@
                   this.router.navigate(['${toKebabCase(className)}s']);
                 },
                   error: err => {
-                    warnMeUp('error', 'Error while making a move on ${minStart(className)} ');
+                    warnMeUp('error', err.error?.message ?? 'Error while making a move on ${minStart(className)} ');
                     const apiErrors = err.error?.errors;
                     this.validationErrors=apiErrors;
                     this.isLoading = false;
@@ -1278,6 +1293,16 @@
                           this.isLoading = false;
                         }
                     });
+                  {{#if isParentTable=true and hasChildrenForm=true}}
+                  {{#each childrenWithForm}}
+                  this.${minStart(className)}Service.get${majStart(this.className)}sBy${majStart(className)}(id)
+                    .pipe(takeUntil(this.destroy$))
+                    .subscribe({
+                      next: (data) => { this.${minStart(this.className)}s = data ?? []; },
+                      error: (err) => { console.error('Error while loading ${minStart(this.className)}s:', err); }
+                    });
+                  {{/each}}
+                  {{/if}}{{removeLine}}
             }
 
             {{#if containsForeignKey}}
@@ -1357,6 +1382,18 @@
             >
               </app-dynamic-form>
             </ng-template>
+
+            {{#if isParentTable=true and hasChildrenForm=true}}
+            {{#each childrenWithForm}}
+            <div class="card" style="margin-top: 1rem; padding: 1rem;">
+              <h3>${formatReadable(this.className)}s</h3>
+              <app-${toKebabCase(this.className)}-table-form
+                [initialData]="${minStart(this.className)}s"
+                (rowsChange)="${minStart(this.className)}s = $event"
+              ></app-${toKebabCase(this.className)}-table-form>
+            </div>
+            {{/each}}
+            {{/if}}{{removeLine}}
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
         - fileType: "css template"
           fileName: "${toKebabCase(className)}-form.component"
@@ -1364,6 +1401,7 @@
           content: |
             {{newline}}
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-form"
+
     - componentType: "details"
       router:
         link: " "
@@ -1398,6 +1436,11 @@
             ${minStart(className)}?: ${majStart(className)};
             id?:string ;
             isLoading = false;
+            {{#if isParentTable=true and hasChildrenForm=true}}
+            {{#each childrenWithForm}}
+            ${minStart(this.className)}s: any[] = [];
+            {{/each}}
+            {{/if}}{{removeLine}}
 
             constructor(
               private route: ActivatedRoute,
@@ -1412,6 +1455,7 @@
                 this.load${majStart(className)}(${minStart(className)}Id);
               }
             }
+
               load${majStart(className)}(id: string): void {
                   this.isLoading = true;
                   this.${minStart(className)}Service.get${majStart(className)}ById(id)
@@ -1427,11 +1471,44 @@
                     this.isLoading = false;
                 }
                 });
+                  {{#if isParentTable=true and hasChildrenForm=true}}
+                  {{#each childrenWithForm}}
+                  this.${minStart(className)}Service.get${majStart(this.className)}sBy${majStart(className)}(id)
+                    .pipe(takeUntil(this.destroy$))
+                    .subscribe({
+                      next: (data: any[]) => { this.${minStart(this.className)}s = data ?? []; },
+                      error: (err: any) => { console.error('Error while loading ${minStart(this.className)}s:', err); }
+                    });
+                  {{/each}}
+                  {{/if}}{{removeLine}}
               }
 
             ngOnDestroy(): void {
                 this.destroy$.next();
                 this.destroy$.complete();
+            }
+
+            objectToRecord(obj: any): any {
+              if (obj && typeof obj === 'object') {
+                const entries = Object.entries(obj);
+                return entries.length >= 2 ? entries[1][1] : (entries.length === 1 ? entries[0][1] : '');
+              }
+              return obj;
+            }
+
+            getChildHeaders(rows: any[]): string[] {
+              if (!rows || rows.length === 0) return [];
+              return Object.keys(rows[0]).filter(key => {
+                const lowerKey = key.toLowerCase();
+                const parentName = '${minStart(className)}'.toLowerCase();
+                return !lowerKey.includes(parentName);
+              });
+            }
+
+            formatHeader(key: string): string {
+              if (!key) return '';
+              const result = key.replace(/([A-Z])/g, ' $1');
+              return result.charAt(0).toUpperCase() + result.slice(1);
             }
 
             delete${majStart(className)} = (id:string) => {
@@ -1461,6 +1538,35 @@
 
             <div *ngIf="!isLoading && ${minStart(className)}">
               <app-detail-view [object]="${minStart(className)}" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id" LinkContext='${toKebabCase(className)}s'></app-detail-view>
+
+              {{#if isParentTable=true and hasChildrenForm=true}}
+              {{#each childrenWithForm}}
+              <div style="margin-top: 2rem;">
+                <h3 style="font-size: 1rem; font-weight: 600; border-bottom: 2px solid #3b82f6; padding-bottom: 0.4rem; margin-bottom: 0.75rem;">${majStart(this.className)}</h3>
+                <ng-container *ngIf="${minStart(this.className)}s && ${minStart(this.className)}s.length > 0; else noChildren">
+                  <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
+                    <thead>
+                      <tr style="background:#3b82f6; color:#fff;">
+                        <th *ngFor="let col of getChildHeaders(${minStart(this.className)}s)" style="padding:0.5rem 0.75rem; text-align:left;">
+                          {{ formatHeader(col) }}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let row of ${minStart(this.className)}s" style="border-bottom:1px solid #e5e7eb;">
+                        <td *ngFor="let col of getChildHeaders(${minStart(this.className)}s)" style="padding:0.5rem 0.75rem;">
+                          {{ objectToRecord(row[col]) }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </ng-container>
+                <ng-template #noChildren>
+                  <div style="text-align:center; padding:1rem; color:#9ca3af; border: 1px dashed #d1d5db; border-radius: 4px;">No ${minStart(this.className)}s found</div>
+                </ng-template>
+              </div>
+              {{/each}}
+              {{/if}}{{removeLine}}
             </div>
           destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-details"
         - fileType: "css template"
@@ -1556,6 +1662,28 @@
       {{tab}}{{tab}});
       {{tab}}}
 
+      {{#if isParentTable=true and hasChildrenForm=true}}
+      {{#each childrenWithForm}}
+      {{tab}}get${majStart(this.className)}sBy${majStart(className)}(id: string): Observable<any[]> {
+      {{tab}}{{tab}}const url = this.apiUrl+'/'+id+'/${minPluralize(this.className)}';
+      {{tab}}{{tab}}return this.http.get<any>(url).pipe(
+      {{tab}}{{tab}}{{tab}}map((response) => {
+      {{tab}}{{tab}}{{tab}}{{tab}}const data = response.data;
+      {{tab}}{{tab}}{{tab}}{{tab}}if (Array.isArray(data)) { return data; }
+      {{tab}}{{tab}}{{tab}}{{tab}}if (data?.content && Array.isArray(data.content)) { return data.content; }
+      {{tab}}{{tab}}{{tab}}{{tab}}return [];
+      {{tab}}{{tab}}{{tab}}}),
+      {{tab}}{{tab}}{{tab}}catchError(err => {
+      {{tab}}{{tab}}{{tab}}{{tab}}const isNotFound = err.status === 404;
+      {{tab}}{{tab}}{{tab}}{{tab}}if (isNotFound) { return of([]); }
+      {{tab}}{{tab}}{{tab}}{{tab}}console.error('Error while loading ${lowerCase(this.className)}s of ${lowerCase(className)} id: '+id, err);
+      {{tab}}{{tab}}{{tab}}{{tab}}return throwError(() => err);
+      {{tab}}{{tab}}{{tab}}})
+      {{tab}}{{tab}});
+      {{tab}}}
+      {{/each}}
+      {{/if}}{{removeLine}}
+
       {{tab}}get${majStart(className)}s(page: number = 0,size: number = 1000,sortParam: string = '{{#each fieldsPK}}${this.name},asc;{{/each}}'): Observable<${majStart(className)}[]> {
       {{tab}}{{tab}}const params = new HttpParams()
       {{tab}}{{tab}}{{tab}}.set('page', page.toString())
@@ -1624,7 +1752,151 @@
     destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/models"
     name: "${toKebabCase(className)}.model"
   mereFiles: [ ]
-  filleFiles: [ ]
+  filleFiles:
+    - fileType: "ts template"
+      fileName: "${toKebabCase(className)}-table-form.component"
+      extension: "ts"
+      content: |
+        import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+        import { CommonModule } from '@angular/common';
+        import { FormsModule } from '@angular/forms';
+        import { HttpClient } from '@angular/common/http';
+        import { environment } from '../../../../environments/environment';
+
+        export interface ${majStart(className)}TableFieldConfig {
+          type: string;
+          name: string;
+          label: string;
+          isFk?: boolean;
+          options?: {value: any; label: string}[];
+        }
+
+        @Component({
+          selector: 'app-${toKebabCase(className)}-table-form',
+          standalone: true,
+          imports: [CommonModule, FormsModule],
+          templateUrl: './${toKebabCase(className)}-table-form.component.html'
+        })
+        export class ${majStart(className)}TableFormComponent implements OnInit {
+          @Output() rowsChange = new EventEmitter<any[]>();
+          rows: any[] = [];
+
+          @Input()
+          set initialData(data: any[] | null | undefined) {
+            this.rows = (data ?? []).map(d => ({ ...d }));
+          }
+
+          fields: ${majStart(className)}TableFieldConfig[] = [
+            {{tab}}{{tab}}{{#each fieldsFK}}
+            {{tab}}{{tab}}{{#if this.isParentForeignKey}}{{removeLine}}
+            {{tab}}{{tab}}{{else}}
+            { type: 'select', name: '${this.name}', label: '${formatReadable(this.type)}', isFk: true, options: [] },
+            {{tab}}{{tab}}{{/if}}
+            {{tab}}{{/each}}{{removeLine}}
+            {{tab}}{{tab}}{{#each simpleFields}}
+            { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}', isFk: false }{{#if !@last}},{{/if}}
+            {{tab}}{{/each}}{{removeLine}}
+          ];
+
+          constructor(private http: HttpClient) {}
+
+          ngOnInit(): void {
+            {{#each fieldsFK}}
+            {{#if this.isParentForeignKey}}{{removeLine}}
+            {{else}}
+            this.http.get<any>(environment.apiUrl+'/${minPluralize(this.type)}').subscribe({
+              next: (res) => {
+                const list = res.data?.content ?? (Array.isArray(res.data) ? res.data : []);
+                const field = this.fields.find(f => f.name === '${this.name}');
+                if (field) {
+                  field.options = list.map((item: any) => {
+                    const entries = Object.entries(item);
+                    return { value: JSON.stringify(item), label: String(entries[1]?.[1] ?? entries[0]?.[1]) };
+                  });
+                }
+              }
+            });
+            {{/if}}
+            {{/each}}{{removeLine}}
+          }
+
+          trackByIndex(index: number): number {
+            return index;
+          }
+
+          addRow(): void {
+            const row: any = {};
+            this.fields.forEach(f => row[f.name] = null);
+            this.rows = [...this.rows, row];
+            this.rowsChange.emit(this.rows);
+          }
+
+          removeRow(index: number): void {
+            this.rows = this.rows.filter((_, i) => i !== index);
+            this.rowsChange.emit(this.rows);
+          }
+
+          onFieldChange(): void {
+            this.rows = [...this.rows];
+            this.rowsChange.emit(this.rows);
+          }
+        }
+      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-table-form"
+    - fileType: "html template"
+      fileName: "${toKebabCase(className)}-table-form.component"
+      extension: "html"
+      content: |
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
+            <thead>
+              <tr style="background:#f3f4f6;">
+                <th style="padding:0.5rem 0.75rem; text-align:left; font-weight:600; color:#374151;">#</th>
+                <ng-container *ngFor="let f of fields">
+                  <th style="padding:0.5rem 0.75rem; text-align:left; font-weight:600; color:#374151;">{{ f.label }}</th>
+                </ng-container>
+                <th style="padding:0.5rem 0.75rem;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of rows; let i = index; trackBy: trackByIndex" style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:0.4rem 0.75rem; color:#6b7280;">{{ i + 1 }}</td>
+                <ng-container *ngFor="let f of fields">
+                  <td style="padding:0.25rem 0.5rem;">
+                    <ng-container *ngIf="f.isFk; else plainInput">
+                      <select
+                        [ngModel]="row[f.name]"
+                        (ngModelChange)="row[f.name] = $event; onFieldChange()"
+                        [ngModelOptions]="{standalone: true}"
+                        style="width:100%; border:1px solid #d1d5db; border-radius:4px; padding:0.35rem 0.5rem;"
+                      >
+                        <option value="">-- select --</option>
+                        <option *ngFor="let opt of f.options" [value]="opt.value">{{ opt.label }}</option>
+                      </select>
+                    </ng-container>
+                    <ng-template #plainInput>
+                      <input
+                        [type]="f.type"
+                        [placeholder]="'Enter ' + f.label"
+                        [ngModel]="row[f.name]"
+                        (ngModelChange)="row[f.name] = $event; onFieldChange()"
+                        [ngModelOptions]="{standalone: true}"
+                        style="width:100%; border:1px solid #d1d5db; border-radius:4px; padding:0.35rem 0.5rem;"
+                      />
+                    </ng-template>
+                  </td>
+                </ng-container>
+                <td style="padding:0.25rem 0.5rem;">
+                  <button type="button" (click)="removeRow(i)" style="background:#ef4444; color:#fff; border:none; border-radius:4px; padding:0.35rem 0.6rem; cursor:pointer;">&#x1F5D1;</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.5rem; margin-top:0.5rem;">
+            <span style="font-size:0.8rem; color:#6b7280;">{{ rows.length }} row(s)</span>
+            <button type="button" (click)="addRow()" style="background:#3b82f6; color:#fff; border:none; border-radius:4px; padding:0.4rem 0.9rem; cursor:pointer; font-weight:600;">+</button>
+          </div>
+        </div>
+      destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-table-form"
 
 - id: 2
   languageId: 1
