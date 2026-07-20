@@ -8490,8 +8490,67 @@
         import {useDelete} from "@/hooks/useDelete";
         import { Typography } from '@mui/material';
         import {useTranslation} from "react-i18next";
+        {{#if isParentTable=true and hasChildrenForm=true}}
+        import { useEffect, useState } from 'react';
+        import { Table, TableHead, TableBody, TableRow, TableCell, Box } from '@mui/material';
+        {{/if}}{{removeLine}}
       selector: "${majStart(className)}Detail"
       export: |
+        {{#if isParentTable=true and hasChildrenForm=true}}
+        {{#each childrenWithForm}}
+        function ${majStart(this.className)}ChildTable({ parentId }: { parentId: number | string }) {
+            const { t } = useTranslation();
+            const [rows, setRows] = useState<any[]>([]);
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                ${toCamelCase(className)}Service.get${majStart(this.className)}sBy${majStart(className)}(parentId)
+                    .then(setRows)
+                    .finally(() => setLoading(false));
+            }, [parentId]);
+
+            if (loading) return <Typography variant="body2">{t('messages.state.loading')}</Typography>;
+            if (!rows || rows.length === 0) return <Typography variant="body2" color="text.secondary">{t('messages.state.notFound')}</Typography>;
+
+            const parentKey = '${lowerCase(className)}';
+            const headers = Object.keys(rows[0]).filter((key) => !key.toLowerCase().includes(parentKey));
+            const formatHeader = (key: string) => {
+                const result = key.replace(/([A-Z])/g, ' $1');
+                return result.charAt(0).toUpperCase() + result.slice(1);
+            };
+            const resolveCell = (value: any) => {
+                if (value && typeof value === 'object') {
+                    const entries = Object.entries(value);
+                    return entries.length >= 2 ? entries[1][1] : (entries.length === 1 ? entries[0][1] : '');
+                }
+                return value ?? '';
+            };
+
+            return (
+                <Box sx={{ overflowX: 'auto' }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow>
+                                {headers.map((col) => (
+                                    <TableCell key={col} sx={{ fontWeight: 600 }}>{formatHeader(col)}</TableCell>
+                                ))}
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {rows.map((row, i) => (
+                                <TableRow key={i}>
+                                    {headers.map((col) => (
+                                        <TableCell key={col}>{resolveCell(row[col])}</TableCell>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </Box>
+            );
+        }
+        {{/each}}
+        {{/if}}{{removeLine}}
         export default function ${majStart(className)}Detail() {
             const navigate = useNavigate();
             const { t } = useTranslation();
@@ -8525,6 +8584,16 @@
                     {{/if}}{{removeLine}}
                 ],
                 tabs: [
+                    {{#if isParentTable=true and hasChildrenForm=true}}{{removeLine}}
+                    {{#each childrenWithForm}}
+                    {
+                        label: '${majStart(this.className)}',
+                        render: (row: ${majStart(className)}) => (
+                            <${majStart(this.className)}ChildTable parentId={row.{{#each fieldsPK}}${this.name}{{/each}}} />
+                        ),
+                    },
+                    {{/each}}
+                    {{else}}{{removeLine}}
                     //Example use of tab
                     //{
                         //label: 'Tab1',
@@ -8532,6 +8601,7 @@
                             //<Typography>Content for ${majStart(className)} ID #{row.{{#each fieldsPK}}${this.name}{{/each}} }.</Typography>
                         //),
                     //},
+                    {{/if}}{{removeLine}}
                 ],
             })();
         }
@@ -8551,25 +8621,43 @@
         import GenericFormBuilder from '@/components/GenericForm/GenericFormBuilder';
         import {ApiResponse} from "@/services/api";
         import {useTranslation} from "react-i18next";
+        {{#if isParentTable=true and hasChildrenForm=true}}
+        import { useState } from 'react';
+        {{#each childrenWithForm}}
+        import ${majStart(this.className)}TableForm from '@/pages/${toKebabCase(this.className)}/${toKebabCase(this.className)}-table-form.component';
+        {{/each}}
+        {{/if}}{{removeLine}}
       export: |
         export default function Create${majStart(className)}() {
             const { t } = useTranslation();
+            {{#if isParentTable=true and hasChildrenForm=true}}
+            {{#each childrenWithForm}}
+            const [${minStart(this.className)}s, set${majStart(this.className)}s] = useState<any[]>([]);
+            {{/each}}
+            {{/if}}{{removeLine}}
 
             const handleSubmit = async (data: any): Promise<ApiResponse<${majStart(className)}>> => {
-                return await ${toCamelCase(className)}Service.create(data);
+                return await ${toCamelCase(className)}Service.create(data{{#each childrenWithForm}}, ${minStart(this.className)}s{{/each}});
             };
 
             return (
-                <GenericFormBuilder
-                    entityName={${toCamelCase(className)}Meta.entityName}
-                    fields={formFields as any}
-                    onSubmit={handleSubmit}
-                    redirectTo="/${toKebabCase(className)}s"
-                    title={`$[t('messages.common.add')] ${toKebabCase(className)}`}
-                    mode="create"
-                    idKey="{{#each fieldsPK}}${this.name}{{/each}}"
-                    detailRedirect="/${toKebabCase(className)}s/:id"
-                />
+                <>
+                    <GenericFormBuilder
+                        entityName={${toCamelCase(className)}Meta.entityName}
+                        fields={formFields as any}
+                        onSubmit={handleSubmit}
+                        redirectTo="/${toKebabCase(className)}s"
+                        title={`$[t('messages.common.add')] ${toKebabCase(className)}`}
+                        mode="create"
+                        idKey="{{#each fieldsPK}}${this.name}{{/each}}"
+                        detailRedirect="/${toKebabCase(className)}s/:id"
+                    />
+                    {{#if isParentTable=true and hasChildrenForm=true}}
+                    {{#each childrenWithForm}}
+                    <${majStart(this.className)}TableForm onRowsChange={set${majStart(this.className)}s} />
+                    {{/each}}
+                    {{/if}}{{removeLine}}
+                </>
             );
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
@@ -8587,18 +8675,45 @@
       importComponent: |
         import GenericUpdateFormBuilder from '@/components/GenericForm/GenericUpdateFormBuilder';
         import {useTranslation} from "react-i18next";
+        {{#if isParentTable=true and hasChildrenForm=true}}
+        import { useState, useEffect } from 'react';
+        import { useParams } from 'react-router-dom';
+        {{#each childrenWithForm}}
+        import ${majStart(this.className)}TableForm from '@/pages/${toKebabCase(this.className)}/${toKebabCase(this.className)}-table-form.component';
+        {{/each}}
+        {{/if}}{{removeLine}}
       export: |
         export default function Update${majStart(className)}() {
             const { t } = useTranslation();
+            {{#if isParentTable=true and hasChildrenForm=true}}
+            const { id } = useParams<{ id: string }>();
+            {{#each childrenWithForm}}
+            const [${minStart(this.className)}s, set${majStart(this.className)}s] = useState<any[]>([]);
+            {{/each}}
+
+            useEffect(() => {
+                if (!id) return;
+                {{#each childrenWithForm}}
+                ${toCamelCase(className)}Service.get${majStart(this.className)}sBy${majStart(className)}(id).then(set${majStart(this.className)}s);
+                {{/each}}
+            }, [id]);
+            {{/if}}{{removeLine}}
             return (
-                <GenericUpdateFormBuilder<${majStart(className)}>
-                    entityName={${toCamelCase(className)}Meta.entityName}
-                    fields={updateFormFields}
-                    getById={${toCamelCase(className)}Service.getById}
-                    update={${toCamelCase(className)}Service.update}
-                    title={`$[t('messages.common.edit')] ${toKebabCase(className)}`}
-                    detailRedirect="/${toKebabCase(className)}s/:id"
-                />
+                <>
+                    <GenericUpdateFormBuilder<${majStart(className)}>
+                        entityName={${toCamelCase(className)}Meta.entityName}
+                        fields={updateFormFields}
+                        getById={${toCamelCase(className)}Service.getById}
+                        update={{{#if isParentTable=true and hasChildrenForm=true}}(entityId: number, data: Partial<${majStart(className)}>) => ${toCamelCase(className)}Service.update(entityId, data{{#each childrenWithForm}}, ${minStart(this.className)}s{{/each}}){{else}}${toCamelCase(className)}Service.update{{/if}}}
+                        title={`$[t('messages.common.edit')] ${toKebabCase(className)}`}
+                        detailRedirect="/${toKebabCase(className)}s/:id"
+                    />
+                    {{#if isParentTable=true and hasChildrenForm=true}}
+                    {{#each childrenWithForm}}
+                    <${majStart(this.className)}TableForm initialData={${minStart(this.className)}s} onRowsChange={set${majStart(this.className)}s} />
+                    {{/each}}
+                    {{/if}}{{removeLine}}
+                </>
             );
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
@@ -8610,8 +8725,30 @@
       import type { ${majStart(className)} } from './${toKebabCase(className)}.model';
       import type { FilterState } from '@/types/filter';
       import { getById, search {{#if !isView}},create,remove, update{{/if}} } from "@/services/api";
+      {{#if isParentTable=true and hasChildrenForm=true}}
+      import axios from 'axios';
+      const API_BASE = import.meta.env.VITE_API_BASE as string;
+      {{/if}}{{removeLine}}
     methods: |
       export const ${toCamelCase(className)}Service = {
+          {{#if isParentTable=true and hasChildrenForm=true}}{{removeLine}}
+          {{#each childrenWithForm}}
+          async get${majStart(this.className)}sBy${majStart(className)}(id: number | string): Promise<any[]> {
+              try {
+                  const endpoint = '/${lowerCase(classNameLink)}/'+ id +'/${minPluralize(this.className)}';
+                  const { data } = await axios.get(''+ API_BASE + endpoint + '');
+                  const content = data?.data;
+                  if (Array.isArray(content)) return content;
+                  if (content?.content && Array.isArray(content.content)) return content.content;
+                  return [];
+              } catch (err: any) {
+                  if (err?.response?.status === 404) return [];
+                  console.error('Error while loading ${lowerCase(this.className)}s of ${lowerCase(className)} id: '+id, err);
+                  throw err;
+              }
+          },
+          {{/each}}
+          {{/if}}{{removeLine}}
           search(params: {
               page: number;
               size: number;
@@ -8628,12 +8765,22 @@
               return getById<${majStart(className)}>('/${lowerCase(classNameLink)}', id);
           },
 
-          create(${toCamelCase(className)}: Omit<${majStart(className)}, 'id'>) {
+          create(${toCamelCase(className)}: Omit<${majStart(className)}, 'id'>{{#each childrenWithForm}}, ${minStart(this.className)}s?: any[]{{/each}}) {
+              {{#if isParentTable=true and hasChildrenForm=true}}
+              const payload: any = { ${minStart(className)}: ${toCamelCase(className)}{{#each childrenWithForm}}, ${minStart(this.className)}s: ${minStart(this.className)}s ?? []{{/each}} };
+              return create<${majStart(className)}>('/${lowerCase(classNameLink)}', payload);
+              {{else}}
               return create<${majStart(className)}>('/${lowerCase(classNameLink)}', ${toCamelCase(className)});
+              {{/if}}{{removeLine}}
           },
 
-          async update(id: number, ${toCamelCase(className)}: Partial<${majStart(className)}>) {
+          async update(id: number, ${toCamelCase(className)}: Partial<${majStart(className)}>{{#each childrenWithForm}}, ${minStart(this.className)}s?: any[]{{/each}}) {
+              {{#if isParentTable=true and hasChildrenForm=true}}
+              const payload: any = { ${minStart(className)}: ${toCamelCase(className)}{{#each childrenWithForm}}, ${minStart(this.className)}s: ${minStart(this.className)}s ?? []{{/each}} };
+              return update<${majStart(className)}>('/${lowerCase(classNameLink)}', id, payload);
+              {{else}}
               return update<${majStart(className)}>('/${lowerCase(classNameLink)}', id, ${toCamelCase(className)});
+              {{/if}}{{removeLine}}
           },
 
           delete: (id: string | number) => remove('/${toKebabCase(className)}s', id),
@@ -8671,12 +8818,13 @@
             header: '${this.type}',
             accessor: (row: ${majStart(className)}) => (row.${this.name} as any)?.${this.referencedPrimaryKeyColumn} ?? '-',
             sortKey: '${this.name}',
+            type: 'select',
             link: (row: ${majStart(className)}) => `/${toKebabCase(this.type)}s/$[(row.${this.name} as any)?.${this.referencedPrimaryKeyColumn}]?from=/${toKebabCase(className)}s`
           },
           {{/each}}{{removeLine}}
           {{#each fieldsNotFK}}
           {{#if this.isPrimaryKey}}
-          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' ,link: (row: ${majStart(className)}) => `/${toKebabCase(className)}s/$[row.${this.name}]`},
+          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}', type: '${this.uiType}' ,link: (row: ${majStart(className)}) => `/${toKebabCase(className)}s/$[row.${this.name}]`},
           {{elseIf this.isDate}}
           {
             header: '${formatReadable(this.name)}',
@@ -8687,7 +8835,8 @@
                   ? '-'
                   : d.toLocaleDateString('fr-FR');
             },
-            sortKey: '${this.name}'
+            sortKey: '${this.name}',
+            type: '${this.uiType}'
           },
           {{elseIf this.isDateTime }}
           {
@@ -8698,7 +8847,8 @@
                const dateObject = new Date(date);
                return isNaN(dateObject.getTime()) ? '-' : format(dateObject, "dd/MM/yyyy HH:mm:ss");
             },
-            sortKey: '${this.name}'
+            sortKey: '${this.name}',
+            type: '${this.uiType}'
           },
           {{elseIf this.isTimeTz}}
           {
@@ -8715,7 +8865,8 @@
                   const d = dayjs.utc(`1970-01-01 $[h]:$[m]:$[s]`, 'YYYY-MM-DD HH:mm:ss');
                   return d.isValid() ? d.format('HH:mm:ss') : '-';
               },
-            sortKey: '${this.name}'
+            sortKey: '${this.name}',
+            type: '${this.uiType}'
           },
           {{elseIf this.isTime }}
           {
@@ -8727,13 +8878,15 @@
                 const dateObj = new Date(1970, 0, 1, h, m, s);
                 return format(dateObj, 'HH:mm:ss');
             },
-            sortKey: '${this.name}'
+            sortKey: '${this.name}',
+            type: '${this.uiType}'
           },
           {{elseIf this.isInterval}}
           {
             header: '${formatReadable(this.name)}',
             accessor: (row: ${majStart(className)}) => formatDuration(row.${this.name}),
-            sortKey: '${this.name}'
+            sortKey: '${this.name}',
+            type: '${this.uiType}'
           },
           {{else}}
           { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' },
@@ -8864,4 +9017,146 @@
     destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
     name: "${toKebabCase(className)}.model"
   mereFiles: [ ]
-  filleFiles: [ ]
+  filleFiles:
+    - fileType: "tsx template"
+      fileName: "${toKebabCase(className)}-table-form.component"
+      extension: "tsx"
+      content: |
+        import { useState, useEffect } from 'react';
+        import { Table, TableHead, TableBody, TableRow, TableCell, TextField, Select, MenuItem, IconButton, Box, Button, Typography } from '@mui/material';
+        import { Delete, Add } from '@mui/icons-material';
+        import axios from 'axios';
+
+        const API_BASE = import.meta.env.VITE_API_BASE as string;
+
+        export interface ${majStart(className)}TableFieldConfig {
+          type: string;
+          name: string;
+          label: string;
+          isFk?: boolean;
+          options?: { value: any; label: string }[];
+        }
+
+        interface ${majStart(className)}TableFormProps {
+          initialData?: any[];
+          onRowsChange: (rows: any[]) => void;
+        }
+
+        export default function ${majStart(className)}TableForm({ initialData, onRowsChange }: ${majStart(className)}TableFormProps) {
+          const [rows, setRows] = useState<any[]>(() => (initialData ?? []).map((d) => ({ ...d })));
+          const [fields, setFields] = useState<${majStart(className)}TableFieldConfig[]>([
+            {{tab}}{{tab}}{{#each fieldsFK}}
+            {{tab}}{{tab}}{{#if this.isParentForeignKey}}{{removeLine}}
+            {{tab}}{{tab}}{{else}}
+            { type: 'select', name: '${this.name}', label: '${formatReadable(this.type)}', isFk: true, options: [] },
+            {{tab}}{{tab}}{{/if}}
+            {{tab}}{{/each}}{{removeLine}}
+            {{tab}}{{tab}}{{#each simpleFields}}
+            { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}', isFk: false }{{#if !@last}},{{/if}}
+            {{tab}}{{/each}}{{removeLine}}
+          ]);
+
+          useEffect(() => {
+            setRows((initialData ?? []).map((d) => ({ ...d })));
+          }, [initialData]);
+
+          useEffect(() => {
+            {{#each fieldsFK}}
+            {{#if this.isParentForeignKey}}{{removeLine}}
+            {{else}}
+            axios.get(`${API_BASE}/${minPluralize(this.type)}`).then((res) => {
+              const list = res.data?.data?.content ?? (Array.isArray(res.data?.data) ? res.data.data : []);
+              setFields((prev) => prev.map((f) => {
+                if (f.name !== '${this.name}') return f;
+                return {
+                  ...f,
+                  options: list.map((item: any) => {
+                    const entries = Object.entries(item);
+                    return { value: JSON.stringify(item), label: String(entries[1]?.[1] ?? entries[0]?.[1]) };
+                  }),
+                };
+              }));
+            });
+            {{/if}}
+            {{/each}}{{removeLine}}
+          }, []);
+
+          const emit = (next: any[]) => {
+            setRows(next);
+            onRowsChange(next);
+          };
+
+          const addRow = () => {
+            const row: any = {};
+            fields.forEach((f) => (row[f.name] = null));
+            emit([...rows, row]);
+          };
+
+          const removeRow = (index: number) => {
+            emit(rows.filter((_, i) => i !== index));
+          };
+
+          const updateCell = (index: number, name: string, value: any) => {
+            const next = rows.map((r, i) => (i === index ? { ...r, [name]: value } : r));
+            emit(next);
+          };
+
+          return (
+            <Box sx={{ overflowX: 'auto', mt: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>#</TableCell>
+                    {fields.map((f) => (
+                      <TableCell key={f.name}>{f.label}</TableCell>
+                    ))}
+                    <TableCell />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {rows.map((row, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{i + 1}</TableCell>
+                      {fields.map((f) => (
+                        <TableCell key={f.name}>
+                          {f.isFk ? (
+                            <Select
+                              size="small"
+                              fullWidth
+                              value={row[f.name] ?? ''}
+                              onChange={(e) => updateCell(i, f.name, e.target.value)}
+                            >
+                              {(f.options ?? []).map((opt) => (
+                                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                              ))}
+                            </Select>
+                          ) : (
+                            <TextField
+                              size="small"
+                              type={f.type}
+                              fullWidth
+                              placeholder={`Enter ${f.label}`}
+                              value={row[f.name] ?? ''}
+                              onChange={(e) => updateCell(i, f.name, e.target.value)}
+                            />
+                          )}
+                        </TableCell>
+                      ))}
+                      <TableCell>
+                        <IconButton size="small" color="error" onClick={() => removeRow(i)}>
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, mt: 1 }}>
+                <Typography variant="caption" color="text.secondary">{rows.length} row(s)</Typography>
+                <Button size="small" variant="contained" startIcon={<Add />} onClick={addRow}>Add</Button>
+              </Box>
+            </Box>
+          );
+        }
+      destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
+
