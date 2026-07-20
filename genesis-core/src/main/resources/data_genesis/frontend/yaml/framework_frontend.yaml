@@ -8527,7 +8527,7 @@
             sortKey: '${this.name}'
           },
           {{else}}
-          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}' },
+          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}', type: '${this.uiType}' },
           {{/if}}{{/each}}{{removeLine}}
       ]
 
