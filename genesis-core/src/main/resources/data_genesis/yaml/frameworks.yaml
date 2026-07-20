@@ -1005,7 +1005,7 @@
             username: ${databaseUsername}
             password: ${databasePassword}
           jpa:
-            database-platform : org.hibernate.dialect.${skipEscape(databaseType)}Dialect
+            database-platform: ${hibernateDialect}
             hibernate:
               ddl-auto: ${hibernateDdlAuto}
               naming:
@@ -1218,12 +1218,11 @@
       @Table(name="${tableName}")
     modelFieldContent: |
       {{tab}}{{#each fields}}
-      {{tab}}{{#if this.isIntAndPrimaryKey}}
+      {{tab}}{{#if this.isGeneratedPrimaryKey}}
       {{tab}}@Id
       {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isPrimaryKey}}
       {{tab}}@Id
-      {{tab}}@org.hibernate.annotations.Generated(org.hibernate.annotations.GenerationTime.INSERT)
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
       {{tab}}@ManyToOne
       {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
@@ -1235,7 +1234,7 @@
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}<#{{/if}}/#>
-      {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
+      {{tab}}private ${this.type} ${this.name};
       {{tab}}{{/each}}
       {{tab}}{{#if cacheableWithEhcache}}@Override
       {{tab}}public String toString() {
