@@ -8858,7 +8858,10 @@
               labelKey: '${this.referencedPrimaryKeyColumn}',
               valueKey: '${this.referencedPrimaryKeyColumn}'
             },
-            transform: (value: any) => ({ ${this.referencedPrimaryKeyColumn}: Number(value) }),
+            transform: (value: any) => {
+              if(!value) return null
+              return { ${this.referencedPrimaryKeyColumn}: Number(value) }
+            },
           },
           {{/each}}{{removeLine}}
           {{#each fieldsNotFK}}

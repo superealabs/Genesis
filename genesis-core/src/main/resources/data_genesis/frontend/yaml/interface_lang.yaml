@@ -355,6 +355,7 @@
           no: 'aucun',
           read: 'lire',
           edit: 'Éditer',
+          save: 'Sauvegarder',
         },
         box_confirm: {
           H1Se: 'Voulez-vous effacer cet élément définitivement?',
