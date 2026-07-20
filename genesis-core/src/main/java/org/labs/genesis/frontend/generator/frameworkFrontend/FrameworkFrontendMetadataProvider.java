@@ -42,7 +42,11 @@ public class FrameworkFrontendMetadataProvider {
         HashMap<String, Object> metadata = new HashMap<>();
 
         List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
-        metadata.put("fields", getFieldsList(tableMetadata));
+        List<Map<String, Object>> fields = getFieldsList(tableMetadata);
+        boolean containsFile = fields.stream()
+                .anyMatch(field -> "file".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        metadata.put("fields", fields);
+        metadata.put("containsFile", containsFile);
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", fkList);
         metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata));
@@ -179,6 +183,8 @@ public class FrameworkFrontendMetadataProvider {
 
         if (field.isDateTime() || field.isDateTimeTz()) {
             uiType = "datetime-local"; // DateTime devient ceci
+        } else if (field.isTime()  || field.isTimeTz()) {
+            uiType = "time"; // Time devient ceci
         } else if (field.isDate()) {
             uiType = "date"; // date reste date
         } else if (field.isNumeric()) {

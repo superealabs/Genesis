@@ -58,7 +58,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:model-value', value: string): void
+  (e: 'update:model-value', value: string | File | null): void
 }>()
 
 const inputFormId = computed(() => {
@@ -72,7 +72,13 @@ const inputFormId = computed(() => {
 })
 
 const onInput = (e: Event) => {
-  const newVal = (e.target as HTMLInputElement).value
-  emit('update:model-value', newVal)
+  const input = e.target as HTMLInputElement
+
+  if (input.type === 'file') {
+    emit('update:model-value', input.files && input.files.length > 0 ? input.files[0] : null)
+    return
+  }
+
+  emit('update:model-value', input.value)
 }
 </script>

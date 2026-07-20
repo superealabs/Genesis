@@ -5069,6 +5069,7 @@
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import EntityRowActions from '@/components/table/EntityRowActions.vue'
         import { useDateFormat } from '@/composables/useDateFormat'
+        {{#if containsFile=true}}import { getUrl } from '@/composables/useImage'{{/if}}
       selector: "${majStart(className)}Row"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5093,6 +5094,12 @@
         
                 <template v-else-if="field.type === 'select'">
                   {{ ${minStart(className)}Data[field.key] != null ? ${minStart(className)}Data[field.key].getKeyValue() : '--' }}
+                </template>
+                
+                <template v-else-if="field.type === 'file'">
+                  <img v-if="${minStart(className)}Data[field.key]"
+                    :src="getUrl(${minStart(className)}Data[field.key])"
+                    :alt="field.key" class="max-h-10 max-w-10"/>
                 </template>
     
                 <template v-else>
@@ -5722,6 +5729,7 @@
       componentName: "${majStart(className)}Details"
       importFile: |
         import type { PropType } from 'vue'
+        {{#if containsFile=true}}import { getUrl } from '@/composables/useImage'{{/if}}
         import type { ${majStart(className)} } from '@/models/${majStart(className)}Model'{{#if !isView}}
         import GenesisButton from '@/components/button/GenesisButton.vue'
         import { usePopup } from '@/composables/usePopup'
@@ -5744,7 +5752,19 @@
                   <div>
                     <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">{{#if this.isForeignKey}}${formatReadable(this.type)}{{else}}${formatReadable(this.name)}{{/if}}</label>
                     <div id="${minStart(className)}${majStart(this.name)}" class="input w-full bg-base-100 cursor-default">
-                      <span>{{ ${minStart(className)}.${this.name}{{#if this.isForeignKey}}?.getKeyValue() ?? ''{{elseIf this.isDate}}? $d(${minStart(className)}.${this.name}, 'long'):'--/--/--' {{elseIf this.isNumeric}}? $n(${minStart(className)}.${this.name}, 'decimal'): '--'{{else}} ?? ''{{/if}} }}</span>
+                      {{#if this.uiType=file}}
+                      <img :src="getUrl(${minStart(className)}.${this.name})"
+                      alt="${formatReadable(this.name)}"
+                      class="max-h-full max-w-full"/>
+                      {{elseIf this.isForeignKey}}
+                      <span>{{ ${minStart(className)}.${this.name}?.getKeyValue() ?? '' }}</span>
+                      {{elseIf this.isDate}}
+                      <span>{{ ${minStart(className)}.${this.name} ? $d(${minStart(className)}.${this.name}, 'long') : '--/--/--' }}</span>
+                      {{elseIf this.isNumeric}}
+                      <span>{{ ${minStart(className)}.${this.name} ? $n(${minStart(className)}.${this.name}, 'decimal') : '--' }}</span>
+                      {{else}}
+                      <span>{{ ${minStart(className)}.${this.name} ?? '' }}</span>
+                      {{/if}}
                     </div>
                   </div>
                   {{/each}}{{removeLine}}
@@ -5927,7 +5947,7 @@
         label: "{{removeLine}}"
       componentName: "${majStart(className)}Form"
       importFile: |
-        {{#if isParentTable=true and hasChildrenForm=true}} import { ref, computed, onMounted } from 'vue'{{else}}import { ref } from 'vue'{{/if}} 
+        {{#if isParentTable=true and hasChildrenForm=true}} import { ref, computed, onMounted } from 'vue'{{elseIf containsFile=true}}import { computed, ref } from 'vue'{{else}}import { ref } from 'vue'{{/if}} 
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model.ts'
         import GenesisButton from '@/components/button/GenesisButton.vue'
         import GenesisInput from '@/components/form/GenesisInput.vue'{{#if containsForeignKey}}
@@ -5982,6 +6002,16 @@
                   />
                   <span>${formatReadable(this.name)}</span>
                   </label>
+                  {{elseIf isParentTable=true and hasChildrenForm=true and this.uiType=file}}
+                  <!-- ${formatReadable(this.name)} -->
+                  <GenesisInput
+                    label="${formatReadable(this.name)}"
+                    :violation="${minStart(className)}Violations ? ${minStart(className)}Violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    type="${this.uiType}"
+                    v-model="formModel.${minStart(this.name)}"
+                  />
+                  <img :src="${minStart(this.name)}Url" alt="No image"/>
                   {{elseIf isParentTable=true and hasChildrenForm=true}}
                   <!-- ${formatReadable(this.name)} -->
                   <GenesisInput
@@ -5992,6 +6022,16 @@
                     v-model="formModel.${minStart(this.name)}"
                     :value="formModel.${minStart(this.name)}"
                   />
+                  {{elseIf this.uiType=file}}
+                  <!-- ${formatReadable(this.name)} -->
+                  <GenesisInput
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    type="${this.uiType}"
+                    v-model="formModel.${minStart(this.name)}"
+                  />
+                  <img :src="${minStart(this.name)}Url" alt="No image"/>
                   {{else}}
                   <!-- ${formatReadable(this.name)} -->
                   <GenesisInput
@@ -6049,6 +6089,21 @@
         {{#each childrenWithForm}}const ${minStart(this.className)}Violations = computed(() => props.violations ? props.violations.${minStart(this.className)}s : [])
         {{/each}}
         {{/if}}
+                
+        {{#each fields}}
+        {{#if this.uiType = file}}
+        const ${minStart(this.name)}Url = computed(() => {
+          const ${minStart(this.name)} = formModel.value.${minStart(this.name)}
+          if (!${minStart(this.name)}) return ''
+        
+          if (${minStart(this.name)} instanceof File) {
+            return URL.createObjectURL(${minStart(this.name)})
+          }
+          return 'data:image/png;base64,'+${minStart(this.name)}
+        })
+        {{/if}}
+        {{/each}}
+        
         const formModel = ref<Partial<${majStart(className)}FormDTO>>({ ...${majStart(className)}FormDTO.parse(props.${minStart(className)}) })
         {{#each fieldsFK}}
         const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
@@ -6063,9 +6118,17 @@
           ${minStart(this.className)}s.value = data
         }
         {{/each}}{{/if}}
-        function handleSubmit() {
-          {{#if isParentTable=true and hasChildrenForm=true}}emit('submit', { ${minStart(className)}: formModel.value{{#each childrenWithForm}}, ${minStart(this.className)}s: ${minStart(this.className)}s.value{{/each}} }){{else}}
-          emit('submit', formModel.value){{/if}}
+        async function handleSubmit() {
+          const data: any = { ...formModel.value }
+          {{#each fields}}
+          {{#if this.uiType = file}}
+          if (data.${this.name} instanceof File) {
+            const buffer = await data.${this.name}.arrayBuffer()
+            data.${this.name} = Array.from(new Uint8Array(buffer))
+          }{{/if}}
+          {{/each}}
+          {{#if isParentTable=true and hasChildrenForm=true}}emit('submit', { ${minStart(className)}: data{{#each childrenWithForm}}, ${minStart(this.className)}s: ${minStart(this.className)}s.value{{/each}} })
+          {{else}}emit('submit', data){{/if}}
         }
 
         function cancelForm() {
@@ -6214,7 +6277,7 @@
           }
         }        
         {{else}}
-        const violations = ref<Record<string, string> | null>(null)
+        const violations = ref<Record<string, object> | null>(null)
         
         const updateHandler = async (formDTO: Partial<${majStart(className)}FormDTO>) => {        
           freezeStore.freeze('Updating ${minStart(className)} '+pathId+' ...')
@@ -6532,8 +6595,8 @@
       import { BaseModel } from './BaseModel'
       import { type EntitySearchField } from './EntityModel'{{#if containsForeignKey}}
       import { createSelectSearchFunction, createMulticriteriatSearchFunction } from './SelectOption'{{/if}}
-      {{#each fieldsFK}}
-      import { ${majStart(this.type)} } from './${majStart(this.type)}Model'
+      {{#each fieldsFK}}{{#if this.type != className}}
+      import { ${majStart(this.type)} } from './${majStart(this.type)}Model'{{/if}}
       import * as ${minStart(this.type)}Service from '@/services/${majStart(this.type)}Service'
       {{/each}}{{removeLine}}
     exports: |
