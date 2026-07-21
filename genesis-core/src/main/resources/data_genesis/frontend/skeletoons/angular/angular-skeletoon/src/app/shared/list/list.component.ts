@@ -6,7 +6,7 @@ import { Language,LanguageService } from '../services/language/language.service'
 
 
 export interface Column {
-  type: 'string' | 'number' | 'Date';
+  type: 'string' | 'number' | 'Date' | 'Uint8Array';
   label: string;
   fieldName: string;
 }
