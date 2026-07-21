@@ -75,6 +75,9 @@ public abstract class Database {
     }
 
     public List<TableMetadata> getEntitiesByNames(List<String> entityNames, Connection connection, Credentials credentials, Language language, Framework framework) throws SQLException, ClassNotFoundException {
+        if (entityNames == null)
+            return new ArrayList<>();
+
         if (entityNames.isEmpty())
             return getEntities(connection, credentials, language, framework);
 
@@ -88,6 +91,9 @@ public abstract class Database {
 
     public List<TableMetadata> getViewsByNames(List<String> viewNames, Connection connection, Credentials credentials, Language language, Framework framework) throws SQLException, ClassNotFoundException {
         if (viewNames == null)
+            return new ArrayList<>();
+
+        if (viewNames.isEmpty())
             return getViews(connection, credentials, language, framework);
 
         List<TableMetadata> tableMetadataList = new ArrayList<>();
