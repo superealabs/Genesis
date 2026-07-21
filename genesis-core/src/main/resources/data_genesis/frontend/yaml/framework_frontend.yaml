@@ -1037,7 +1037,8 @@
                 { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'number' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'number' }{{elseIf this.isDate }}
                 { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' }{{elseIf this.isDateTime}}
                 { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'datetime-local' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'datetime-local' }{{elseIf this.isTime}}
-                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'time' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' }{{/if}}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'time' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' }{{else}}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: '${this.uiType}' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' }{{/if}}
             {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
             ];
 
@@ -1260,7 +1261,8 @@
               { type: 'number', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDate }}
               { type: 'date', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDateTime}}
               { type: 'datetime-local', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isTime}}
-              { type: 'time', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{/if}}{{#if !@last}},{{/if}}
+              { type: 'time', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{else}}
+              { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{/if}}{{#if !@last}},{{/if}}
               {{tab}}{{/each}}{{removeLine}}
           ];
 
