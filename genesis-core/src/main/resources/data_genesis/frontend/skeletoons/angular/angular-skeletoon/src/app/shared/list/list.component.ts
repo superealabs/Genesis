@@ -34,11 +34,11 @@ export interface Column {
             {{ this.langService.formatValue(ligne[i]) }}
           </td>
           <td class="actions" *ngIf="!isView">
-            <button (click)="redirect(routeToDetail, ligne[0])" title="View" aria-label="View">
-              <i class="bi bi-file-text"></i>
+            <button (click)="redirect(routeToDetail, ligne[getIdIndex()])" title="View" aria-label="View">
+                <i class="bi bi-file-text"></i>
             </button>
-            <button (click)="redirect(routeToModify, ligne[0])" title="Edit" aria-label="Edit">
-              <i class="bi bi-pencil"></i>
+            <button (click)="redirect(routeToModify, ligne[getIdIndex()])" title="Edit" aria-label="Edit">
+                <i class="bi bi-pencil"></i>
             </button>
             <button (click)="openConfirmation(ligne)" title="Delete" aria-label="Delete">
               <i class="bi bi-trash"></i>
@@ -172,6 +172,11 @@ export class ListComponent implements OnInit{
 
   redirect(route: string, id: any) {
     this.router.navigate([route, id]);
+  }
+
+  getIdIndex(): number {
+      const index = this.columns.findIndex(col => col.fieldName.toLowerCase() === 'id');
+      return index !== -1 ? index : 0; // Fallback sur la première colonne si 'id' non trouvé
   }
 
 }
