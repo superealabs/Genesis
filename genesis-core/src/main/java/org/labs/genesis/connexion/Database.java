@@ -317,6 +317,7 @@ public abstract class Database {
 
     protected boolean isColumnNumeric(ResultSet column) throws Exception {
         int dataType = column.getInt("DATA_TYPE");
+        String typeName = column.getString("TYPE_NAME");
 
         return dataType == Types.INTEGER ||
                 dataType == Types.SMALLINT ||
@@ -326,7 +327,9 @@ public abstract class Database {
                 dataType == Types.REAL ||
                 dataType == Types.DOUBLE ||
                 dataType == Types.NUMERIC ||
-                dataType == Types.DECIMAL;
+                dataType == Types.DECIMAL ||
+                "BINARY_FLOAT".equalsIgnoreCase(typeName) ||
+                "BINARY_DOUBLE".equalsIgnoreCase(typeName);
     }
 
     protected boolean isColumnNumericWithPrecision(ResultSet column) throws Exception {
