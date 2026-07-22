@@ -76,6 +76,9 @@ public abstract class Database {
     }
 
     public List<TableMetadata> getEntitiesByNames(List<String> entityNames, Connection connection, Credentials credentials, Language language, Framework framework) throws SQLException, ClassNotFoundException {
+        if (entityNames == null)
+            return new ArrayList<>();
+
         if (entityNames.isEmpty())
             return getEntities(connection, credentials, language, framework);
 
@@ -89,6 +92,9 @@ public abstract class Database {
 
     public List<TableMetadata> getViewsByNames(List<String> viewNames, Connection connection, Credentials credentials, Language language, Framework framework) throws SQLException, ClassNotFoundException {
         if (viewNames == null)
+            return new ArrayList<>();
+
+        if (viewNames.isEmpty())
             return getViews(connection, credentials, language, framework);
 
         List<TableMetadata> tableMetadataList = new ArrayList<>();
@@ -323,6 +329,7 @@ public abstract class Database {
 
     protected boolean isColumnNumeric(ResultSet column) throws Exception {
         int dataType = column.getInt("DATA_TYPE");
+        String typeName = column.getString("TYPE_NAME");
 
         return dataType == Types.INTEGER ||
                 dataType == Types.SMALLINT ||
@@ -332,7 +339,9 @@ public abstract class Database {
                 dataType == Types.REAL ||
                 dataType == Types.DOUBLE ||
                 dataType == Types.NUMERIC ||
-                dataType == Types.DECIMAL;
+                dataType == Types.DECIMAL ||
+                "BINARY_FLOAT".equalsIgnoreCase(typeName) ||
+                "BINARY_DOUBLE".equalsIgnoreCase(typeName);
     }
 
     protected boolean isColumnNumericWithPrecision(ResultSet column) throws Exception {
