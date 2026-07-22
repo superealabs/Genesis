@@ -28,72 +28,65 @@ export class LanguageService {
     if (typeof value === 'number') {
       return this.formatNumber(value);
     }
-    else if (value instanceof Date || this.isDateString(value)) {
-      return this.formatDate(value);
+    else if (value instanceof Date) {
+      const hasTime = value.getHours() !== 0 || value.getMinutes() !== 0 || value.getSeconds() !== 0;
+      return hasTime ? this.formatDateTime(value) : this.formatDateOnly(value);
     }
     else if (typeof value === 'string') {
-      return value;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return this.formatDateOnly(value);       // ← ISO date-only
+      }
+      else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
+        return this.formatDateTime(value);        // ← ISO datetime
+      }
+      else if (/^\d{2}:\d{2}(:\d{2})?$/.test(value)) {
+        return this.formatTime(value);            // ← Time seule
+      }
+      return value;                               // ← String classique
     }
     else {
       return String(value);
     }
   }
 
+  /**
+   * Date seule (sans heure). Gère le cas ISO string sans fuseau horaire.
+   */
+  private formatDateOnly(value: Date | string): string {
+    if (!value) return '';
+
+    if (typeof value === 'string') {
+      // Parse local pour éviter le décalage UTC → local
+      const [year, month, day] = value.split('-').map(Number);
+      return new Intl.DateTimeFormat(this.currentLanguage, {
+        year: 'numeric', month: '2-digit', day: '2-digit'
+      }).format(new Date(year, month - 1, day));
+    }
+
+    // Objet Date natif
+    return new Intl.DateTimeFormat(this.currentLanguage, {
+      year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(value);
+  }
+
   formatDateTime(value: Date | string | number): string {
     if (!value) return '';
-    const date = new Date(value);
     return new Intl.DateTimeFormat(this.currentLanguage, {
-      year:'numeric', month:'2-digit', day:'2-digit',
-      hour:'2-digit', minute:'2-digit', second:'2-digit'
-    }).format(date);
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }).format(new Date(value));
   }
 
   formatTime(value: Date | string | number): string {
     if (!value) return '';
-    const date = new Date(value);
-    return new Intl.DateTimeFormat(this.currentLanguage, { hour:'2-digit', minute:'2-digit', second:'2-digit' }).format(date);
-  }
-
-  private isDateString(value: any): boolean {
-    return typeof value === 'string' && !isNaN(Date.parse(value));
+    return new Intl.DateTimeFormat(this.currentLanguage, {
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }).format(new Date(value));
   }
 
   formatNumber(value: number): string {
     if (value == null) return '';
     return new Intl.NumberFormat(this.currentLanguage).format(value);
-  }
-
-  formatDate(value: Date | string | number): string {
-    if (!value) return '';
-
-    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        const [year, month, day] = value.split('-');
-        return new Intl.DateTimeFormat(this.currentLanguage, {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        }).format(new Date(Number(year), Number(month) - 1, Number(day)));
-    }
-
-
-    const date = new Date(value);
-    const hasTime = date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0;
-    if (hasTime) {
-      return new Intl.DateTimeFormat(this.currentLanguage, {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      }).format(date);
-    } else {
-      return new Intl.DateTimeFormat(this.currentLanguage, {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).format(date);
-    }
   }
 
   makeItReadable(value: string): string {
@@ -111,6 +104,4 @@ export class LanguageService {
 
     return readable;
   }
-
-
 }
