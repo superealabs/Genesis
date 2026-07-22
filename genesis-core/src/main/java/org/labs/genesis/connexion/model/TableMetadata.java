@@ -64,6 +64,7 @@ public class TableMetadata {
 
             database.setDriverName(driverName);
             database.setDriverVersion(driverVersion);
+            database.setDatabaseMajorVersion(metaData.getDatabaseMajorVersion());
 
             setDatabase(database);
             String tableName = getTableName();

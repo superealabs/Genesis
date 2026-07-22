@@ -6239,7 +6239,7 @@
               <!-- <form @submit.prevent="handleSubmit" class=""> -->
                 <div class="grid grid-cols-1 gap-4">
                   {{#each fields}}
-                  {{#if this.isPrimaryKey}}{{removeLine}}
+                  {{#if this.isGeneratedPrimaryKey}}{{removeLine}}
                   {{elseIf this.isForeignKey and hasChildrenForm}}
                   <!-- ${formatReadable(this.name)} FK -->
                   <GenesisSelectSearchCriteria
@@ -8862,7 +8862,7 @@
           },
           {{/each}}{{removeLine}}
           {{#each fieldsNotFK}}
-          {{#if this.isPrimaryKey}}
+          {{#if this.isGeneratedPrimaryKey}}
           {{removeLine}}
           {{elseIf this.isTimeTz}}
           ${this.name}: {
@@ -8914,6 +8914,7 @@
       } as const;
 
       export const updateFormFields = {
+          ...formFields,
           {{#each fieldsPK}}
           ${this.name}: {
             label: '${formatReadable(this.name)}',
@@ -8922,7 +8923,6 @@
             readonly: true,
           },
           {{/each}}{{removeLine}}
-          ...formFields,
       };
     destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
     name: "${toKebabCase(className)}.model"

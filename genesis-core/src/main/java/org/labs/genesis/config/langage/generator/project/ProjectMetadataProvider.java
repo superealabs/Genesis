@@ -40,7 +40,19 @@ public class ProjectMetadataProvider {
             configFile.put("databasePassword", database.getCredentials().getPwd());
             configFile.put("databaseType", database.getName());
             configFile.put("databaseVersion", database.getDriverVersion());
-
+            boolean isOracleLegacy = "Oracle".equalsIgnoreCase(database.getName()) && database.getDatabaseMajorVersion() > 0 && database.getDatabaseMajorVersion() < 12;
+            String hibernateDialect;
+            if (isOracleLegacy) {
+                hibernateDialect =
+                        "org.hibernate.community.dialect.OracleLegacyDialect";
+            } else {
+                hibernateDialect =
+                        "org.hibernate.dialect."
+                                + database.getName()
+                                + "Dialect";
+            }
+            configFile.put("isOracleLegacy", isOracleLegacy);
+            configFile.put("hibernateDialect", hibernateDialect);
             // Django-specific database configuration
             configFile.put("databaseEngine", getDjangoDatabaseEngine(database.getName()));
             configFile.put("databaseName", database.getCredentials().getDatabaseName());
@@ -67,6 +79,8 @@ public class ProjectMetadataProvider {
         dependencyFileMap.putAll(langageConfiguration);
         dependencyFileMap.putAll(frameworkConfiguration);
         dependencyFileMap.put("projectDescription", projectDescription);
+        boolean isOracleLegacy = database != null && "Oracle".equalsIgnoreCase(database.getName()) && database.getDatabaseMajorVersion() > 0 && database.getDatabaseMajorVersion() < 12;
+        dependencyFileMap.put("isOracleLegacy", isOracleLegacy);
         dependencyFileMap.put("useCloud", framework.getUseCloud());
         dependencyFileMap.put("useEurekaServer", framework.getUseEurekaServer());
         dependencyFileMap.put("useGatewaySecurity", framework.getUseGatewaySecurity());
@@ -78,6 +92,15 @@ public class ProjectMetadataProvider {
         allDependencies.addAll(additionalSecurityDependencies);
         List<HashMap<String, String>> additionalCacheProviderDependencies = getFrameworkCachingDependenciesHashMaps(framework, frameworkConfiguration);
         allDependencies.addAll(additionalCacheProviderDependencies);
+        dependencyFileMap.put("isOracleLegacy", isOracleLegacy);
+        if (isOracleLegacy) {
+            HashMap<String, String> oracleLegacyDependency = new HashMap<>();
+            oracleLegacyDependency.put("groupId", "org.hibernate.orm");
+            oracleLegacyDependency.put("artifactId", "hibernate-community-dialects");
+            oracleLegacyDependency.put("version", "{{removeLine}}");
+            oracleLegacyDependency.put("scope", "{{removeLine}}");
+            allDependencies.add(oracleLegacyDependency);
+        }
         // Filter out Django from dependencies to avoid duplication in requirements.txt (Django is already added explicitly)
         if (framework.getCoreFramework() != null && framework.getCoreFramework().equalsIgnoreCase("Django")) {
             allDependencies.removeIf(dep -> "Django".equals(dep.get("artifactId")));
