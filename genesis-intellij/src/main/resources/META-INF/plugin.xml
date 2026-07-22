@@ -17,6 +17,7 @@
         Genesis : A Database-First code generator for Java Spring Boot and .NET for JetBrains IDEs
     </description>
 
+    <!-- <icon>icons/genesis-logo.svg</icon> -->
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
