@@ -220,7 +220,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                         onClick={() => (window.location.href = redirectTo || '/')}
                         sx={{ flexShrink: 0 }}
                     >
-                        {t('messfileages.button.backToList')}
+                        {t('messages.button.backToList')}
                     </Button>
                 </Box>
 
@@ -431,7 +431,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                             >
                                 {loading
                                     ? t(mode === 'create' ? 'messages.state.creating' : 'messages.state.updating')
-                                    : t(mode === 'create' ? 'messages.common.create' : 'messages.common.save')}
+                                    : t(mode === 'create' ? 'messages.common.create' : 'messages.common.edit')}
                             </Button>
                         </Box>
                     </form>
