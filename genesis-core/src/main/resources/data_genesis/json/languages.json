@@ -25,6 +25,7 @@
     },
     "types": {
       "int": "Integer",
+      "bigInteger": "java.math.BigInteger",
       "long": "Long",
       "double": "Double",
       "decimal": "Double",

@@ -308,8 +308,12 @@ public abstract class Database {
         if (columns.getInt("DATA_TYPE") == Types.NUMERIC && this.getId() == Constantes.Oracle_ID) {
             if (columns.getInt("DECIMAL_DIGITS") > 0) {
                 columnType = getBeforeBracketsSimple(columnType) + "(*,*)";
-            } else {
+            } else if (columns.getInt("COLUMN_SIZE") <= 9) {
                 columnType = getBeforeBracketsSimple(columnType);
+            } else if (columns.getInt("COLUMN_SIZE") <= 18) {
+                return "long";
+            } else {
+                return "bigInteger";
             }
         }
         if (columns.getInt("DATA_TYPE") == Types.TIMESTAMP && this.getId() == Constantes.Oracle_ID) {
