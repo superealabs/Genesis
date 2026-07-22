@@ -638,6 +638,32 @@
         }
 
       destinationPath: "${destinationFolder}/src/app/shared/services/language"
+    - fileType: "Translation service"
+      fileName: "translate.service"
+      extension: "ts"
+      content: |
+        import { Injectable } from '@angular/core';
+        import { Observable, of } from 'rxjs';
+        {{#each langList}}
+        import ${lowerCase(this.name)} from '../../../../lang/${lowerCase(this.name)}';
+        {{/each}}{{removeLine}}
+
+        @Injectable({
+          providedIn: 'root'
+        })
+        export class TranslateService {
+          getTranslation(lang: string): Observable<any> {
+            switch (lang) {
+              {{#each langList}}
+              case '${this.locale}':
+                return of(${lowerCase(this.name)}.messages);
+              {{/each}}{{removeLine}}
+              default:
+                {{#each langList}}{{#if @first}}return of(${lowerCase(this.name)}.messages);{{/if}}{{/each}}
+            }
+          }
+        }
+      destinationPath: "${destinationFolder}/src/app/shared/services/language"
     - fileType: "Index page"
       fileName: "index"
       extension: "html"
@@ -786,10 +812,10 @@
       fileName: "environment"
       extension: "ts"
       content: |
-          export const environment = {
-          {{tab}}production: false,
-          {{tab}}apiUrl: 'http://localhost:${projectPort}/${toKebabCase(projectName)}'
-          };
+        export const environment = {
+        {{tab}}production: false,
+        {{tab}}apiUrl: 'http://localhost:${projectPort}/${toKebabCase(projectName)}'
+        };
       destinationPath: "${destinationFolder}/src/environments/"
     - fileType: "Environment-file"
       fileName: "environment.prod"
@@ -1011,7 +1037,8 @@
                 { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'number' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'number' }{{elseIf this.isDate }}
                 { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' }{{elseIf this.isDateTime}}
                 { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'datetime-local' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'datetime-local' }{{elseIf this.isTime}}
-                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'time' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' }{{/if}}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'time' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' }{{else}}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: '${this.uiType}' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' }{{/if}}
             {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
             ];
 
@@ -1230,11 +1257,12 @@
             {{tab}}{{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each simpleFields}}
             {{#if this.isText}}{{removeLine}}
-              { type: 'text', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isNumeric or this.isInterval}}
+              { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isNumeric or this.isInterval}}
               { type: 'number', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDate }}
               { type: 'date', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDateTime}}
               { type: 'datetime-local', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isTime}}
-              { type: 'time', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{/if}}{{#if !@last}},{{/if}}
+              { type: 'time', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{else}}
+              { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{/if}}{{#if !@last}},{{/if}}
               {{tab}}{{/each}}{{removeLine}}
           ];
 
@@ -2379,7 +2407,7 @@
             <router-view />
           </main>
         </template>
-    
+        
         <script setup lang="ts"></script>
       destinationPath: "${destinationFolder}/src/layouts"
 
@@ -2828,11 +2856,11 @@
           const goToLoginView = () => {
             router.push({ path: '/auth/login' })
           }
-          
+        
           const goToProfileView = () => {
               router.push({ path: '/profile' })
           }
-  
+        
           const loginUser = async (token: string) => {
             useAuthenticationStore().setToken(token)
             const responseData = await authService.currentUser()
@@ -2877,7 +2905,7 @@
             const responseData = await authService.changePassword(data)
             return responseData
           }
-          
+        
           const updateProfile = async (data: UpdateProfileDTO) => {
             const responseData = await authService.updateProfile(data)
             if (responseData.success && responseData.data) {
@@ -2885,7 +2913,7 @@
             }
             return responseData
           }
-          
+        
           return {
             goToLoginView,
             goToProfileView,
@@ -3256,7 +3284,7 @@
                   </li>
                 </ul>
                 <div class="h-6 border-l border-base-content/10 mx-2"></div>
-                
+        
                 <LanguageSwitcherButton />
 
                 <router-link
@@ -5345,7 +5373,7 @@
       selector: "${majStart(className)}Row"
       standalone: true
       importComponent: "{{removeLine}}"
-      template: |    
+      template: |
         <template>
           <tr class="hover:bg-base-200">
             <template v-for="field in ${majStart(className)}.getAllSearchFieldsMetadata()" :key="field.key">
@@ -5359,7 +5387,7 @@
                 <template v-if="field.type === 'date'">
                   {{ formatDate(${minStart(className)}Data[field.key]) }}
                 </template>
-    
+        
                 <template v-else-if="field.type === 'number'">
                   {{ ${minStart(className)}Data[field.key] != null ? $n(${minStart(className)}Data[field.key], 'decimal') : '--' }}
                 </template>
@@ -5367,13 +5395,13 @@
                 <template v-else-if="field.type === 'select'">
                   {{ ${minStart(className)}Data[field.key] != null ? ${minStart(className)}Data[field.key].getKeyValue() : '--' }}
                 </template>
-                
+        
                 <template v-else-if="field.type === 'file'">
                   <img v-if="${minStart(className)}Data[field.key]"
                     :src="getUrl(${minStart(className)}Data[field.key])"
                     :alt="field.key" class="max-h-10 max-w-10"/>
                 </template>
-    
+        
                 <template v-else>
                   {{ ${minStart(className)}Data[field.key] ?? '--' }}
                 </template>
@@ -5601,7 +5629,7 @@
                 {{ $t('button.addEntity', { entity: '${majStart(className)}' }) }}
               </GenesisButton>{{/if}}
             </div>
-  
+        
             <!-- Table -->
             <EntityTable
               :entity-model="{}"
@@ -5900,7 +5928,7 @@
                   pagination: paginationresult,
                 } = await ${minStart(className)}Service.getAllBy${majStart(this.className)}Id(${minStart(this.className)}Id, pagination, sortFields)
                 handleResponse(data, err, paginationresult)
-                
+            
                 if (unpagined) {
                   while (paginationData.value.hasNext() && ${minStart(className)}s.value.length > 0) {
                     paginationData.value.nextPage()
@@ -6138,7 +6166,7 @@
                 {{ $t('entity.nav', { entity: '${majStart(className)}' }) }}
                 <span class="text-base-content/50 font-normal">{{ $t('entity.details.nav') }}</span>
               </h3>
-  
+        
               <!-- Back button -->
               <GenesisButton
                 :title="$t('button.backToListDescription')"
@@ -6361,7 +6389,7 @@
         {{#each childrenWithForm}}const ${minStart(this.className)}Violations = computed(() => props.violations ? props.violations.${minStart(this.className)}s : [])
         {{/each}}
         {{/if}}
-                
+        
         {{#each fields}}
         {{#if this.uiType = file}}
         const ${minStart(this.name)}Url = computed(() => {
@@ -6527,7 +6555,7 @@
           }
           try {
             const { data, errors } = await update${majStart(className)}(pathId, payload)
-          
+        
             if (errors && Object.keys(errors).length > 0) {
               // Gérer les erreurs de validation
               violations.value = errors as {
@@ -6626,7 +6654,7 @@
                 {{ $t('button.backToList') }}
               </GenesisButton>
             </div>
-  
+        
             <${minStart(className)}-form
               :submit-label="$t('entity.create.submitLabel', { entity: '${majStart(className)}' })"{{#if isParentTable=true and hasChildrenForm=true}}
               {{#each childrenWithForm}}
@@ -6636,7 +6664,7 @@
               @submit="createHandler"
               @cancel="goToListView"
             />
-  
+        
             <AlertPopup
               :message="message ?? undefined"
               title="Error"
@@ -6817,7 +6845,7 @@
         ${minStart(className)}s: Partial<${majStart(className)}[]>,
       ): Promise<{ success: boolean; error: string | null }> {
            const url = import.meta.env.VITE_APP_API_URL+BASE_URL+'/export/csv'
-           
+      
            try {
            const response = await fetch(url, {
                             method: 'POST',
@@ -6838,7 +6866,7 @@
               success: true,
               error: null,
          }
-         
+      
           } catch (error) {
             console.error('Error during CSV export:', error)
             return {
@@ -6860,7 +6888,7 @@
             RestResponse.handlePagedResponse<${majStart(className)}>(response),
           ) as PagedDataResponse<${majStart(className)}>
         }{{/each}}{{/if}}
-        
+  
 
   modelComponent:
     imports: |
@@ -6910,7 +6938,7 @@
           {{#if @first}}return '${this.name}'{{else}}{{removeLine}}{{/if}}
           {{/each}}{{removeLine}}
         }
-  
+      
         public override getReferenceValue(): string {
           {{#each simpleFields}}
           {{#if @first}}return String(this.${this.name}){{else}}{{removeLine}}{{/if}}
@@ -7008,7 +7036,7 @@
           if (!data || data.length === 0) return []
           return data.map((item) => ${majStart(className)}FormDTO.parse(item))
         }
-  
+      
         async toEntity(): Promise<Partial<${majStart(className)}>> {
           const entity: Partial<${majStart(className)}> = new ${majStart(className)}({
             {{#each fieldsNotFK}}
