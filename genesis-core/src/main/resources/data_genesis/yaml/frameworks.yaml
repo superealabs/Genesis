@@ -4686,9 +4686,14 @@
     modelAnnotations: |
       [Table("${tableName}")]
     modelFieldContent: |
-      {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
+      {{tab}}{{#each fields}}{{#if this.isGeneratedPrimaryKey}}
       {{tab}}[Key]
       {{tab}}[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+      {{tab}}[Column("${this.columnName}")]
+      {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }
+      {{elseIf this.isManualPrimaryKey}}
+      {{tab}}[Key]
+      {{tab}}[DatabaseGenerated(DatabaseGeneratedOption.None)]
       {{tab}}[Column("${this.columnName}")]
       {{tab}}public ${this.type} ${majStart(this.name)} { get; set; }
       {{elseIf this.isForeignKey}}
@@ -4964,11 +4969,17 @@
           
           using ${majStart(projectName)}.Serialization;
           using System.Text.Json.Serialization;
+          using System.ComponentModel.DataAnnotations;
 
           public class ${majStart(className)}Dto
           {
-          {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
-          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }{{elseIf this.isForeignKey}}
+          {{tab}}{{#each fields}}{{#if this.isGeneratedPrimaryKey}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+          
+          {{elseIf this.isManualPrimaryKey}}
+          {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
+          
+          {{elseIf this.isForeignKey}}
           {{tab}}
           {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
           {{tab}}public ${this.type}Dto? ${majStart(this.name)} { get; set; }
@@ -4996,11 +5007,17 @@
           
             public ${majStart(className)} ToEntity() => new()
             {
-              {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}{{removeLine}}
+              {{tab}}{{#each fields}}{{#if this.isGeneratedPrimaryKey}}{{removeLine}}
+
+              {{elseIf this.isManualPrimaryKey}}
+              {{tab}}${majStart(this.name)} =
+              ${majStart(this.name)}
+              ?? throw new ArgumentNullException(nameof(${majStart(this.name)}))
+          
               {{elseIf this.isForeignKey}}
               {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
               {{tab}}{{else}}
-              {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}{{#if this.isPrimaryKey}}{{removeLine}}{{/if}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}{{#if this.isGeneratedPrimaryKey}}{{removeLine}}{{/if}}
               {{tab}}{{/each}}
             };
           
