@@ -69,7 +69,7 @@
                 @Input() logoPath: string = "assets/icon/logo.jpg";
 
                 logoAvailable = true;
-                selectedLanguage: Language = Language.EN;
+                selectedLanguage: Language = {{#each langList}}{{#if @first}}Language.${upperCase(this.locale)}{{/if}}{{/each}};
                 Language = Language;
 
                 constructor(
@@ -546,7 +546,7 @@
           providedIn: 'root'
         })
         export class LanguageService {
-          private languageSubject = new BehaviorSubject<Language>(Language.EN);
+          private languageSubject = new BehaviorSubject<Language>({{#each langList}}{{#if @first}}Language.${upperCase(this.locale)}{{/if}}{{/each}});
           language$ = this.languageSubject.asObservable();
 
           setLanguage(lang: Language) {
@@ -9255,4 +9255,3 @@
           );
         }
       destinationPath: "${destinationFolder}/src/pages/${toKebabCase(className)}"
-

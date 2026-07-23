@@ -19,9 +19,15 @@ export class BannerComponent extends MotherComponent implements OnInit{
   @Input() logoPath: string = "assets/icon/logo.jpg";
 
   logoAvailable = true;
-  selectedLanguage: Language = Language.EN;
+  selectedLanguage: Language = this.langService.currentLanguage;
   Language = Language;
 
+  override ngOnInit(): void {
+    super.ngOnInit();
+    this.langService.language$.subscribe(lang => {
+      this.selectedLanguage = lang;
+    });
+  }
 
   onLogoError() {
     this.logoAvailable = false;
