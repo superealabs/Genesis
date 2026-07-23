@@ -9,6 +9,13 @@ import java.util.List;
 public class SQLRunner {
     private static final List<String> CONTROL_FLOW_STARTERS = Arrays.asList("IF", "BEGIN", "CASE");
 
+    private static boolean isCreateViewStatement(String query) {
+        String upperQuery = query.trim().toUpperCase();
+        return upperQuery.startsWith("CREATE VIEW")
+                || upperQuery.contains("CREATE OR ALTER VIEW")
+                || upperQuery.contains("CREATE OR REPLACE VIEW");
+    }
+
     /**
      * Executes a SQL script across any JDBC-compatible database.
      *
@@ -27,7 +34,7 @@ public class SQLRunner {
             for (String singleQuery : queries) {
                 singleQuery = singleQuery.trim();
                 if (!singleQuery.isEmpty()) {
-                    if (isControlFlowStatement(singleQuery)) {
+                    if (isControlFlowStatement(singleQuery) || isCreateViewStatement(singleQuery)) {
                         // Execute control-of-flow statements individually
                         statement.execute(singleQuery);
                     } else {
