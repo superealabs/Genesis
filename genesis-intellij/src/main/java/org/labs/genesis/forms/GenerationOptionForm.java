@@ -147,11 +147,8 @@ public class GenerationOptionForm {
             int selectedIndex = comboBoxProjectList.getSelectedIndex(); // index visible dans la combo
             if (selectedIndex >= 0 && selectedIndex < listProjectGenerationContexts.size()) {
                 this.projectGenerationContext = listProjectGenerationContexts.get(selectedIndex);
-                refreshTableAndViewForSelectedContext();
-            }else {
-                populateTableNames();
-                populateViewNames();
             }
+            refreshTableAndViewForSelectedContext();
         }, null);
 
 
