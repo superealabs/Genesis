@@ -498,6 +498,31 @@ public class FrameworkMetadataProvider {
     public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field, Language language, int databaseId) {
         Map<String, Object> fieldMap = new HashMap<>();
 
+        fieldMap.put("typeBase", field.getFrontEndType());
+        String uiType = field.getUiType();
+        if ("DateOnly".equals(field.getType())) {
+            uiType = "date";
+        } else if (
+                "DateTime".equals(field.getType()) || "DateTimeOffset".equals(field.getType()) || field.isDateTimeTz()
+        ) {
+            uiType = "datetime-local";
+        } else if (
+                "TimeOnly".equals(field.getType()) || field.isTime() || field.isTimeTz()
+        ) {
+            uiType = "time";
+        } else if (field.isNumeric()) {
+            uiType = "number";
+        }
+        fieldMap.put("uiType", uiType);
+        System.out.println(
+                "FIELD=" + field.getName()
+                        + " | columnType=" + field.getColumnType()
+                        + " | type=" + field.getType()
+                        + " | isDate=" + field.isDate()
+                        + " | isDateTime=" + field.isDateTime()
+                        + " | uiType=" + uiType
+        );
+        fieldMap.put("uiType", uiType);
         fieldMap.put("withGetters", false);
         fieldMap.put("withSetters", false);
         fieldMap.put("type", field.getType());

@@ -5691,7 +5691,7 @@
               const paginationData = ref(new PaginationData())
 
               /** Message for errors or notifications */
-              const message = ref<string | null>()
+              const message = ref<string | null>(null)
 
               /** Vue router instance for navigation */
               const router = useRouter()
@@ -6334,6 +6334,27 @@
                     v-model="formModel.${minStart(this.name)}"
                   />
                   <img :src="${minStart(this.name)}Url" alt="No image"/>
+                  {{elseIf this.type=DateOnly}}
+                  <!-- ${formatReadable(this.name)} | DateOnly -->
+                  <GenesisInput
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    type="date"
+                    v-model="formModel.${minStart(this.name)}"
+                    :value="formModel.${minStart(this.name)}"
+                  />
+        
+                  {{elseIf this.type=DateTime}}
+                  <!-- ${formatReadable(this.name)} | DateTime -->
+                  <GenesisInput
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    type="datetime-local"
+                    v-model="formModel.${minStart(this.name)}"
+                    :value="formModel.${minStart(this.name)}"
+                  />
                   {{else}}
                   <!-- ${formatReadable(this.name)} -->
                   <GenesisInput
@@ -6730,11 +6751,16 @@
           freezeStore.freeze('Creating a new ${majStart(className)} ...')
           try {
             const { data, errors } = await create${majStart(className)}(formDTO)
-            if (data && !message.value) view${majStart(className)}(data)
-            else {
+            if (errors) {
               violations.value = errors
-              throw new Error(String(message.value))
             }
+            if (data) {
+              view${majStart(className)}(data)
+              return
+            }
+            throw new Error(
+              message.value || 'Creation failed without an error message from the API.',
+            )
           } catch (error: unknown) {
             console.error('Error creating ${minStart(className)}:',error)
             openPopup()
@@ -7042,7 +7068,11 @@
         async toEntity(): Promise<Partial<${majStart(className)}>> {
           const entity: Partial<${majStart(className)}> = new ${majStart(className)}({
             {{#each fieldsNotFK}}
+            {{#if this.isDate}}
+            ${minStart(this.name)}: this.${minStart(this.name)} ? this.${minStart(this.name)}.split('T')[0] : undefined,
+            {{else}}
             ${minStart(this.name)}: this.${minStart(this.name)},
+            {{/if}}
             {{/each}}{{removeLine}}
           })
 
@@ -9050,11 +9080,18 @@
           {{#each fieldsNotFK}}
           {{#if this.isGeneratedPrimaryKey}}
           {{removeLine}}
+          {{elseIf this.isDate}}
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: 'date' as const,
+            required: ${this.isRequired},
+            transform: (value: string) => value ? value.split('T')[0] : null,
+          },
           {{elseIf this.isTimeTz}}
           ${this.name}: {
                 label: '${formatReadable(this.name)}',
                 type: 'timeTz' as const,
-                required: true,
+                required: ${this.isRequired},
                 transform: (value: any) => {
                     if (!value || typeof value !== 'string') return null;
                     const d = dayjs.utc(`1970-01-01T$[value]`);
