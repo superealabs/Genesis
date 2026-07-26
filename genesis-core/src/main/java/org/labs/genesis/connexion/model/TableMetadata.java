@@ -216,11 +216,13 @@ public class TableMetadata {
                         // IMPORTANT : On réutilise le même schéma résolu pour la sous-requête getColumns
                         try (ResultSet pkColumn = metaData.getColumns(null, schema, pkTableName, pkColumnName)) {
                             if (pkColumn.next()) {
-                                String pkColumnType = pkColumn.getString("TYPE_NAME");
-                                String normalizedPkColumnType = database.normalizeColumnType(pkColumnType);
-                                field.setDatabaseColumnType(normalizedPkColumnType);
-                                field.setReferencedColumnType(language.getTypes().get(database.getTypes().get(normalizedPkColumnType)));
+                                String databaseType = database.getDatabaseType(pkColumn);
+                                String languageType = language.getTypes().get(databaseType);
+                                field.setDatabaseColumnType(databaseType);
+                                field.setReferencedColumnType(languageType);
                             }
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
                         }
 
                         field.setType(pkTableName
