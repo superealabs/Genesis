@@ -235,6 +235,7 @@
     "types": {
       "int": "int",
       "long": "long",
+      "bigInteger": "decimal",
       "double": "double",
       "decimal": "decimal",
       "string": "string",

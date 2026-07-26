@@ -534,7 +534,7 @@ public class OracleDatabase extends Database {
                 column.setDecimalDigits(decimalDigits,frameworkValidationAnnotations,engine);
 
                 if (language.getTypes().get(getDatabaseType(columns)) == null)
-                    throw new RuntimeException("Database type not supported yet : " + columnType);
+                    throw new RuntimeException("Database type not supported yet: Oracle type " + columnType + " is mapped to Genesis type " + getDatabaseType(columns) + ", but this type is not configured for " + language.getName());
                 else
                     column.setType(language.getTypes().get(getDatabaseType(columns)));
 
