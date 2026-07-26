@@ -102,10 +102,19 @@ public class SQLRunnerForm {
 
         try {
             String content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-            sqlTextArea.setText(content);
+            SwingUtilities.invokeLater(() -> {
+                sqlTextArea.setText(content);
+                sqlTextArea.setCaretPosition(0);
+
+                rTextScrollPane.revalidate();
+                rTextScrollPane.repaint();
+
+                mainPanel.revalidate();
+                mainPanel.repaint();
+            });
         } catch (IOException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(mainPanel, "Error reading file: " + ex.getMessage());
+            SwingUtilities.invokeLater(() ->JOptionPane.showMessageDialog(mainPanel, "Error reading file: " + ex.getMessage()));
         }
     }
 
