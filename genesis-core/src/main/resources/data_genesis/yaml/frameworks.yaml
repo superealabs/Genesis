@@ -2679,7 +2679,23 @@
         using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
         {{/if}}
         using Microsoft.EntityFrameworkCore;
+        {{#if databaseType = Oracle}}
+        using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+        {{/if}}
         using Models;
+        {{#if databaseType = Oracle}}
+        public sealed class DateOnlyToDateTimeConverter
+        : ValueConverter<DateOnly, DateTime>
+        {
+          public DateOnlyToDateTimeConverter()
+          : base(
+          date => date.ToDateTime(TimeOnly.MinValue),
+          dateTime => DateOnly.FromDateTime(dateTime)
+          )
+          {
+          }
+        }
+        {{/if}}
         {{#if useJWT}}
         public class ${majStart(projectName)}Context : IdentityDbContext<ApplicationUser>
         {{else}}
@@ -2691,7 +2707,19 @@
             public ${majStart(projectName)}Context(DbContextOptions<${majStart(projectName)}Context> options) : base(options)
             {
             }
-            
+            {{#if databaseType = Oracle}}
+            protected override void ConfigureConventions(
+                ModelConfigurationBuilder configurationBuilder
+            )
+            {
+                base.ConfigureConventions(configurationBuilder);
+    
+                configurationBuilder
+                    .Properties<DateOnly>()
+                    .HaveConversion<DateOnlyToDateTimeConverter>()
+                    .HaveColumnType("DATE");
+            }
+            {{/if}}
             protected override void OnModelCreating(ModelBuilder modelBuilder)
             {
                 base.OnModelCreating(modelBuilder);
