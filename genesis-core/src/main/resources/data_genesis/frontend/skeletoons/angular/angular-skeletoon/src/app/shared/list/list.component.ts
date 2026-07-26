@@ -126,7 +126,7 @@ export class ListComponent implements OnInit{
   @Input() deleteFn?: (ligne: any) => void;
   @Input() isView: boolean = false;
   @Input() sortFn?: (colIndex: number, asc: boolean) => void;
-  @Input() language: Language = Language.EN;
+  @Input() language: Language = this.langService.currentLanguage;
 
   activeColumn: number = 0;
   sortAsc: boolean = true;

@@ -48,7 +48,7 @@ public class ProjectMetadataProvider {
             } else {
                 hibernateDialect =
                         "org.hibernate.dialect."
-                                + database.getName()
+                                + database.getName().replaceAll("\\s+", "")
                                 + "Dialect";
             }
             configFile.put("isOracleLegacy", isOracleLegacy);
