@@ -110,7 +110,7 @@ public class ColumnMetadata {
 
     public void setFrontEndReferencedColumnType(FrontendLanguage frontendLanguage, Database database)
     {
-        this.frontEndReferencedColumnType = frontendLanguage.getTypes().get(database.getTypes().get(databaseColumnType));
+        this.frontEndReferencedColumnType = frontendLanguage.getTypes().get(databaseColumnType);
     }
 
     public void setUiType(FrontendLanguage frontendLanguage)
