@@ -1444,18 +1444,19 @@
         import { takeUntil } from 'rxjs/operators';
         import { Subject } from 'rxjs';
 
-        import { warnMeUp } from '../../../../utilities/utilities';
+        import { warnMeUp, recursiveObjectsTo2DArray } from '../../../../utilities/utilities';
 
         import { PageHeaderComponent } from '../../../shared/page-header/page-header.component';
         import { LoadingIconComponent } from '../../../shared/loading-icon/loading-icon.component';
         import { DetailViewComponent } from '../../../shared/detail-view/detail-view.component';
+        import { ListComponent, Column } from '../../../shared/list/list.component';
 
         import { ${majStart(className)} } from '../models/${toKebabCase(className)}.model';
         import { ${majStart(className)}Service } from '../services/${toKebabCase(className)}.service';
       selector: "app-${toKebabCase(className)}-details"
       generateForView: false
       standalone: true
-      importComponent: "[CommonModule, PageHeaderComponent, LoadingIconComponent, DetailViewComponent]"
+      importComponent: "[CommonModule, PageHeaderComponent, LoadingIconComponent, DetailViewComponent, ListComponent]"
       template: "./${toKebabCase(className)}-details.component.html"
       style: "./${toKebabCase(className)}-details.component.css"
       export: |
@@ -1469,6 +1470,8 @@
             {{#if isParentTable=true and hasChildrenForm=true}}
             {{#each childrenWithForm}}
             ${minStart(this.className)}s: any[] = [];
+            ${minStart(this.className)}Data: any[][] = [];
+            ${minStart(this.className)}Columns: Column[] = [];
             {{/each}}
             {{/if}}{{removeLine}}
 
@@ -1506,7 +1509,11 @@
                   this.${minStart(className)}Service.get${majStart(this.className)}sBy${majStart(className)}(id)
                     .pipe(takeUntil(this.destroy$))
                     .subscribe({
-                      next: (data: any[]) => { this.${minStart(this.className)}s = data ?? []; },
+                      next: (data: any[]) => {
+                        this.${minStart(this.className)}s = data ?? [];
+                        this.${minStart(this.className)}Columns = this.buildChildColumns(this.${minStart(this.className)}s);
+                        this.${minStart(this.className)}Data = recursiveObjectsTo2DArray(this.${minStart(this.className)}s);
+                      },
                       error: (err: any) => { console.error('Error while loading ${minStart(this.className)}s:', err); }
                     });
                   {{/each}}
@@ -1518,21 +1525,14 @@
                 this.destroy$.complete();
             }
 
-            objectToRecord(obj: any): any {
-              if (obj && typeof obj === 'object') {
-                const entries = Object.entries(obj);
-                return entries.length >= 2 ? entries[1][1] : (entries.length === 1 ? entries[0][1] : '');
-              }
-              return obj;
-            }
-
-            getChildHeaders(rows: any[]): string[] {
+            // Construit dynamiquement les colonnes d'un tableau enfant à partir des clés de la première ligne
+            // (les champs de l'entité enfant ne sont pas connus statiquement dans ce contexte parent,
+            // donc on les déduit au runtime, en excluant la clé qui référence ce parent lui-même).
+            buildChildColumns(rows: any[]): Column[] {
               if (!rows || rows.length === 0) return [];
-              return Object.keys(rows[0]).filter(key => {
-                const lowerKey = key.toLowerCase();
-                const parentName = '${minStart(className)}'.toLowerCase();
-                return !lowerKey.includes(parentName);
-              });
+              return Object.keys(rows[0])
+                .filter(key => !key.toLowerCase().includes('${minStart(className)}'.toLowerCase()))
+                .map(key => ({ fieldName: key, label: this.formatHeader(key), type: 'string' }));
             }
 
             formatHeader(key: string): string {
@@ -1572,28 +1572,8 @@
               {{#if isParentTable=true and hasChildrenForm=true}}
               {{#each childrenWithForm}}
               <div style="margin-top: 2rem;">
-                <h3 style="font-size: 1rem; font-weight: 600; border-bottom: 2px solid ${primaryColor}; padding-bottom: 0.4rem; margin-bottom: 0.75rem;">${majStart(this.className)}</h3>
-                <ng-container *ngIf="${minStart(this.className)}s && ${minStart(this.className)}s.length > 0; else noChildren">
-                  <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
-                    <thead>
-                      <tr style="background:${primaryColor}; color:#fff;">
-                        <th *ngFor="let col of getChildHeaders(${minStart(this.className)}s)" style="padding:0.5rem 0.75rem; text-align:left;">
-                          {{ formatHeader(col) }}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let row of ${minStart(this.className)}s" style="border-bottom:1px solid #e5e7eb;">
-                        <td *ngFor="let col of getChildHeaders(${minStart(this.className)}s)" style="padding:0.5rem 0.75rem;">
-                          {{ objectToRecord(row[col]) }}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </ng-container>
-                <ng-template #noChildren>
-                  <div style="text-align:center; padding:1rem; color:#9ca3af; border: 1px dashed #d1d5db; border-radius: 4px;">No ${minStart(this.className)}s found</div>
-                </ng-template>
+                <h3 style="font-size: 1rem; font-weight: 600; border-bottom: 2px solid var(--primary); padding-bottom: 0.4rem; margin-bottom: 0.75rem;">${majStart(this.className)}</h3>
+                <app-list [columns]="${minStart(this.className)}Columns" [datas]="${minStart(this.className)}Data" [isView]=true ></app-list>
               </div>
               {{/each}}
               {{/if}}{{removeLine}}
@@ -1879,7 +1859,7 @@
         <div style="overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
             <thead>
-              <tr style="background:${primaryColor};">
+              <tr style="background:#000;">
                 <th style="padding:0.5rem 0.75rem; text-align:left; font-weight:600; color:#fff;">#</th>
                 <ng-container *ngFor="let f of fields">
                   <th style="padding:0.5rem 0.75rem; text-align:left; font-weight:600; color:#fff;">{{ f.label }}</th>
@@ -1923,7 +1903,7 @@
           </table>
           <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.5rem; margin-top:0.5rem;">
             <span style="font-size:0.8rem; color:#6b7280;">{{ rows.length }} row(s)</span>
-            <button type="button" (click)="addRow()" style="background:${primaryColor}; color:#fff; border:none; border-radius:4px; padding:0.4rem 0.9rem; cursor:pointer; font-weight:600;">+</button>
+            <button type="button" (click)="addRow()" style="background:#000; color:#fff; border:none; border-radius:4px; padding:0.4rem 0.9rem; cursor:pointer; font-weight:600;">+</button>
           </div>
         </div>
       destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-table-form"
