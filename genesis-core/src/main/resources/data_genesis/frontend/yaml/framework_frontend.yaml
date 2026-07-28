@@ -1034,14 +1034,15 @@
             {{tab}}{{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each fieldsNotFK}}
                 {{#if this.isPrimaryKey}}
-                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isText or this.isInterval }}
-                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' }{{elseIf this.isNumeric }}
-                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'number' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'number' }{{elseIf this.isDate }}
-                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' }{{elseIf this.isDateTime}}
-                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'datetime-local' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'datetime-local' }{{elseIf this.isTime}}
-                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'time' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' }{{else}}
-                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: '${this.uiType}' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' }{{/if}}
-            {{tab}}{{tab}}{{#if !@last}},{{/if}}{{/each}}
+                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' },{{elseIf this.isText or this.isInterval }}
+                { key: '${this.name}', label: '${formatReadableLowerCase(this.name)}', type: 'text' },{{elseIf this.isNumeric }}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'number' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'number' },{{elseIf this.isDate }}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'date' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'date' },{{elseIf this.isDateTime}}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'datetime-local' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'datetime-local' },{{elseIf this.isTime}}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: 'time' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' },{{elseIf this.uiType = file}}
+                {{removeLine}}{{else}}
+                { key: '${this.name}Min', label: '${formatReadableLowerCase(this.name)}Min', type: '${this.uiType}' },{ key: '${this.name}Max', label: '${formatReadableLowerCase(this.name)}Max', type: 'time' },{{/if}}
+            {{tab}}{{tab}}{{/each}}
             ];
 
             sort(columnIndex:number,sortOrientation:boolean){
