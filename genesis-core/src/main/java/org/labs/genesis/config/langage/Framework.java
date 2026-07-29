@@ -18,6 +18,7 @@ public class Framework {
     private String coreFramework;
     private String name;
     private String template;
+    private Boolean isProd = false;
     private Boolean useDB;
     private Boolean useCloud;
     private Boolean useEurekaServer;

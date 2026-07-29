@@ -3,6 +3,7 @@
   coreFramework: "Spring Boot"
   name: "Spring Boot - WEB API REST"
   template: "Template"
+  isProd: true
   useDB: true
   withGroupId: true
   useCloud: false
@@ -2443,6 +2444,7 @@
   coreFramework: ".NET"
   name: "ASP.NET Core - WEB API REST"
   template: "Template"
+  isProd: false
   useDB: true
   withGroupId: false
   useCloud: false
@@ -5969,6 +5971,7 @@
   coreFramework: "Spring Boot"
   name: "Spring Boot - Eureka Server"
   template: "Template"
+  isProd: false
   useDB: false
   useCloud: true
   useEurekaServer: false
@@ -6116,6 +6119,7 @@
   coreFramework: "Spring Boot"
   name: "Spring Boot - API Gateway"
   template: "Template"
+  isProd: false
   useDB: false
   useCloud: true
   useEurekaServer: false
@@ -6395,6 +6399,7 @@
   coreFramework: "NestJS"
   name: "NestJS-WEB API"
   template: "Template"
+  isProd: false
   useDB: true
   withGroupId: false
   useCloud: false
@@ -8118,6 +8123,7 @@
   coreFramework: "Django"
   name: "Django API"
   template: "Template"
+  isProd: false
   useDB: true
   withGroupId: true
   useCloud: false

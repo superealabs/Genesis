@@ -144,9 +144,20 @@ public class InitializationForm {
         }
     }
 
+    private List<Framework> getProdFrameworks() {
+        return ProjectGenerator.frameworks.values().stream()
+                .filter(framework -> Boolean.TRUE.equals(framework.getIsProd()))
+                .toList();
+    }
 
     private void populateLanguageOptions() {
-        List<Language> languages = ProjectGenerator.languages.values().stream().toList();
+        languageOptions.removeAllItems();
+        List<Framework> prodFrameworks = getProdFrameworks();
+        List<Language> languages = ProjectGenerator.languages.values().stream()
+                .filter(language -> prodFrameworks.stream()
+                        .anyMatch(framework ->
+                                framework.getLanguageId() == language.getId()))
+                .toList();
         for (Language language : languages) {
             languageOptions.addItem(language);
         }
@@ -154,16 +165,15 @@ public class InitializationForm {
 
     private void populateCoreFrameworkOptions(Language language) {
         coreFrameworkOptions.removeAllItems();
-        List<String> frameworks = ProjectGenerator.frameworks.values().stream()
-                .filter(f -> f.getLanguageId() == language.getId())
+        List<String> frameworks = getProdFrameworks().stream()
+                .filter(framework ->
+                        framework.getLanguageId() == language.getId())
                 .map(Framework::getCoreFramework)
                 .distinct()
                 .toList();
-
         for (String framework : frameworks) {
             coreFrameworkOptions.addItem(framework);
         }
-
         if (coreFrameworkOptions.getItemCount() > 0) {
             coreFrameworkOptions.setSelectedIndex(0);
         }
@@ -171,8 +181,10 @@ public class InitializationForm {
 
     private void populateFrameworkOptions(String coreFramework) {
         frameworkOptions.removeAllItems();
-        List<Framework> frameworks = ProjectGenerator.frameworks.values().stream()
-                .filter(f -> f.getCoreFramework().equalsIgnoreCase(coreFramework))
+        List<Framework> frameworks = getProdFrameworks().stream()
+                .filter(framework ->
+                        framework.getCoreFramework()
+                                .equalsIgnoreCase(coreFramework))
                 .distinct()
                 .toList();
 
@@ -184,7 +196,7 @@ public class InitializationForm {
             frameworkOptions.setSelectedIndex(0);
             Framework selectedFramework = (Framework) frameworkOptions.getSelectedItem();
             assert selectedFramework != null;
-            if (selectedFramework.getWithGroupId() != null && selectedFramework.getWithGroupId()) {
+            if (Boolean.TRUE.equals(selectedFramework.getWithGroupId())) {
                 groupIdLabel.setEnabled(true);
                 groupIdField.setEnabled(true);
                 groupIdField.setText("org.example");
