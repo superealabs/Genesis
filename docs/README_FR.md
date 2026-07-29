@@ -154,7 +154,7 @@ Par défaut, les relations sont nullables.
 
 ### Step 07 : Personnalisation des paramètres du front-end et de l’interface utilisateur
 
-L'utilisateur peut choisir la technologie front-end à utiliser pour son application ainsi que les configurations minimales de ce dernier :
+L'utilisateur peut choisir la technologie front-end(Domain Driver Design structure) à utiliser pour son application ainsi que les configurations minimales de ce dernier :
 
 - Port
 - Langage de développement

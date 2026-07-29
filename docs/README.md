@@ -157,7 +157,7 @@ By default, relationships are nullable.
 
 ### Step 07: Customize Front-End and User Interface Settings
 
-The user can choose the front-end technology to use for the application as well as its minimum configuration:
+The user can choose the front-end(Domain Driver Design structure) technology to use for the application as well as its minimum configuration:
 
 * Port
 * Development language
