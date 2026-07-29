@@ -345,7 +345,7 @@ public class OracleDatabase extends Database {
                 while (rs.next()) {
                     String colName = rs.getString("column_name");
                     String searchCondition = rs.getString("search_condition");
-                    Pattern pattern = Pattern.compile("TRIM\\([^\\)]+\\)\\s*<>\\s*''|IS\\s+NOT\\s+NULL", Pattern.CASE_INSENSITIVE);
+                    Pattern pattern = Pattern.compile("TRIM\\s*\\([^\\)]+\\)\\s*(?:<>\\s*''|IS\\s+NOT\\s+NULL)", Pattern.CASE_INSENSITIVE);
                     Matcher matcher = pattern.matcher(searchCondition);
                     if (matcher.find()) {
                         for (ColumnMetadata col : columns) {
@@ -355,7 +355,9 @@ public class OracleDatabase extends Database {
 
                                 String annotationTemplate = (String) frameworkValidationAnnotations.getOrDefault("notBlank", "{{removeLine}}");
                                 String annotationResult = engine.render(annotationTemplate, fieldHashMap);
-                                col.getValidationAnnotations().put("notBlank", annotationResult);
+                                if (!col.getValidationAnnotations().containsKey("notNullAndNotBlank")) {
+                                    col.getValidationAnnotations().put("notBlank", annotationResult);
+                                }
                                 col.checkAndCreateNotNullNotBlankCombinedAnnotation(frameworkValidationAnnotations, fieldHashMap, engine);
                                 break;
                             }
