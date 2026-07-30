@@ -8906,7 +8906,7 @@
               {{/if}}{{removeLine}}
           },
 
-          delete: (id: string | number) => remove('/${toKebabCase(className)}s', id),
+          delete: (id: string | number) => remove('/${lowerCase(classNameLink)}', id),
       };
     destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
     name: "${toKebabCase(className)}.service"
