@@ -6441,13 +6441,33 @@
           ${minStart(this.className)}s.value = data
         }
         {{/each}}{{/if}}
+        const fileToBase64 = (file: File): Promise<string> => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => {
+              if (typeof reader.result !== 'string') {
+                reject(new Error('Unable to read the selected file'))
+                return
+              } 
+              const commaIndex = reader.result.indexOf(',')
+              resolve(
+                commaIndex >= 0
+                ? reader.result.substring(commaIndex + 1)
+                : reader.result,
+              )
+            }  
+            reader.onerror = () => {
+              reject(reader.error ?? new Error('Unable to read the selected file'))
+            }
+            reader.readAsDataURL(file)
+          })
+        }
         async function handleSubmit() {
           const data: any = { ...formModel.value }
           {{#each fields}}
           {{#if this.uiType = file}}
           if (data.${this.name} instanceof File) {
-            const buffer = await data.${this.name}.arrayBuffer()
-            data.${this.name} = Array.from(new Uint8Array(buffer))
+            data.${this.name} = await fileToBase64(data.${this.name})
           }{{/if}}
           {{/each}}
           {{#if isParentTable=true and hasChildrenForm=true}}emit('submit', { ${minStart(className)}: data{{#each childrenWithForm}}, ${minStart(this.className)}s: ${minStart(this.className)}s.value{{/each}} })
