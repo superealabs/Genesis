@@ -5439,11 +5439,11 @@
                   var current${majStart(this.className)}s = ${minStart(this.className)}s.ToList();
                   
                   // a. Éléments à supprimer (ceux qui étaient en DB mais ne sont plus dans la liste reçue)
-                  var detailsToDelete = existing${majStart(this.className)}s
+                  var detailsToDelete${majStart(this.className)} = existing${majStart(this.className)}s
                       .Where(e => !current${majStart(this.className)}s.Any(c => c.${majStart(this.childPk)} == e.${majStart(this.childPk)} && e.${majStart(this.childPk)} != default))
                       .ToList();
 
-                  _dbContext.Set<${majStart(this.className)}>().RemoveRange(detailsToDelete);
+                  _dbContext.Set<${majStart(this.className)}>().RemoveRange(detailsToDelete${majStart(this.className)});
                   
                   // b. Éléments à ajouter/mettre à jour
                   foreach (var item in current${majStart(this.className)}s)
@@ -5924,7 +5924,7 @@
               [ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), StatusCodes.Status200OK)]
               [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
               [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-              public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(this.className)}>>>> GetSaleDetailsBySale(
+              public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(this.className)}>>>> GetSaleDetailsBySale${majStart(this.className)}(
               [SwaggerParameter(Description = "ID of the ${majStart(className)} to retrieve", Required = true)] ${pkColumnType} id,
               [FromQuery, SwaggerParameter("Page number (0-indexed)", Required = false)] int page = 0,
               [FromQuery, SwaggerParameter("Size of the page", Required = false)] int size = 10,
