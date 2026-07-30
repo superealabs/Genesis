@@ -230,7 +230,13 @@ public class ColumnMetadata {
             Map<String, Object> fieldHashMap,
             GenesisTemplateEngine engine) throws Exception {
         Map<String, Object> safeValidationAnnotations = Objects.requireNonNullElse(frameworkValidationAnnotations, new HashMap<>());
+        if (validationAnnotations.containsKey("notNullAndNotBlank")) {
+            validationAnnotations.remove("notNull");
+            validationAnnotations.remove("notBlank");
+            return;
+        }
         if (validationAnnotations.containsKey("notNull")
+                && validationAnnotations.containsKey("notBlank")
                 && safeValidationAnnotations.containsKey("notNullAndNotBlank")) {
 
             String annotationTemplate = (String) safeValidationAnnotations.getOrDefault(
