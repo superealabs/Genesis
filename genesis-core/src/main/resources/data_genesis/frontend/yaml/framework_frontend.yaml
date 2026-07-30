@@ -8923,7 +8923,7 @@
     exports : |
       export interface ${majStart(className)} {
       {{tab}}{{#each fields}}
-      {{tab}}{{#if this.isForeignKey}}${this.name}: ${this.referencedColumnType}{{else}}
+      {{tab}}{{#if this.isForeignKey}}${this.name}: ${this.uiType}{{else}}
       {{tab}}${this.name}: ${this.typeBase}{{/if}}
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}[key: string]: unknown;
