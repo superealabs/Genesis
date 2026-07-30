@@ -319,6 +319,9 @@ public abstract class Database {
         if (columns.getInt("DATA_TYPE") == Types.TIMESTAMP && this.getId() == Constantes.Oracle_ID) {
             columnType = getBeforeBracketsSimple(columnType);
         }
+        if(columnType.equalsIgnoreCase("float") && columns.getInt("COLUMN_SIZE") > 24) {
+            columnType = "double";
+        }
         return this.getTypes().get(normalizeColumnType(columnType));
     }
 
