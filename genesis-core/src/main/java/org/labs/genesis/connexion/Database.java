@@ -94,8 +94,8 @@ public abstract class Database {
         if (viewNames == null)
             return new ArrayList<>();
 
-        if (viewNames.isEmpty())
-            return getViews(connection, credentials, language, framework);
+//        if (viewNames.isEmpty())
+//            return getViews(connection, credentials, language, framework);
 
         List<TableMetadata> tableMetadataList = new ArrayList<>();
         for (String viewName : viewNames) {
