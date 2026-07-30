@@ -4729,6 +4729,9 @@
       {{tab}}[Column("${this.columnName}")]
       {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
       {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
       {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
       {{elseIf this.isTimeTz}}
       {{tab}}[Column("${this.columnName}")]
