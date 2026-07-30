@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators, AbstractControl, ValidatorFn, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common'; // pour *ngIf et *ngFor
+import { fileToBase64 } from '../file-utils';
 
 export interface FieldConfig {
   type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'file'| 'hidden' | 'datetime-local' | 'time';
@@ -101,9 +102,31 @@ export class DynamicFieldComponent implements OnInit {
   }
 
   // Gestion upload fichier
-  onFileChange(event: any) {
-    const file = event.target.files[0];
-    this.form.patchValue({ [this.field.name]: file });
-    this.form.get(this.field.name)?.updateValueAndValidity();
+  async onFileChange(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    const control = this.form.get(this.field.name);
+    if (!control) {
+      return;
+    }
+    if (!file) {
+      control.setValue(null);
+      control.updateValueAndValidity();
+      return;
+    }
+    try {
+      const base64 = await fileToBase64(file);
+      control.setValue(base64);
+      control.markAsDirty();
+      control.markAsTouched();
+      control.updateValueAndValidity();
+    } catch (error) {
+      console.error('Error while reading the selected file:', error);
+      control.setValue(null);
+      control.setErrors({
+        ...control.errors,
+        fileRead: true
+      });
+    }
   }
 }

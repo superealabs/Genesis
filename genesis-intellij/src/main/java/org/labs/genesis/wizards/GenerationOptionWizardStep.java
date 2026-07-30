@@ -197,7 +197,9 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
         // Vérifier si "*" est sélectionné
         if (selectedValues.contains(SELECT_ALL)) {
             System.out.println("All entities selected.");
-            return new ArrayList<>(); // Renvoie une liste vide pour indiquer "tout sélectionner"
+            ArrayList allSelected = new ArrayList<>(allTableNames);
+            allSelected.remove(SELECT_ALL);
+            return allSelected;
         }
 
         // Valider les entités sélectionnées

@@ -955,6 +955,7 @@
         import org.springframework.http.ResponseEntity;
         import org.springframework.web.bind.annotation.ExceptionHandler;
         import org.springframework.web.bind.annotation.RestControllerAdvice;
+        import org.springframework.dao.DataIntegrityViolationException;
         
         @Slf4j
         @RestControllerAdvice
@@ -979,6 +980,16 @@
                 RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
                 log.error("Illegal argument provided : {}", ex.getMessage(), ex);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+        
+            @ExceptionHandler(DataIntegrityViolationException.class)
+            public ResponseEntity<RestResponse<Void>> handleDataIntegrityViolationException(
+            DataIntegrityViolationException ex
+            ) {
+            RestResponse<Void> response = RestResponse.buildErrorResponse(
+                HttpStatus.CONFLICT, "Constraint violation" , null);
+                log.error("Database constraint violation: {}", ex.getMessage(), ex);
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
             }
         
             @ExceptionHandler(Exception.class)
@@ -1548,6 +1559,7 @@
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
       import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
       import ${groupLink}.${lowerCase(projectName)}.utils.ExportUtils;
+      import org.springframework.dao.DataIntegrityViolationException;
       import java.util.List;
       {{#if cacheableWithEhcache}}import org.springframework.cache.annotation.Cacheable;{{else}}{{removeLine}}{{/if}}
       {{#if cacheableWithEhcache and isView = false}}import org.springframework.cache.annotation.CacheEvict;{{else}}{{removeLine}}{{/if}}
@@ -1619,6 +1631,8 @@
       {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}        throw ex;
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
@@ -1632,7 +1646,9 @@
       {{tab}}        ${minStart(className)}.set${majStart(pkColumn)}(${pkColumn});
       {{tab}}        try {
       {{tab}}            return ${minStart(className)}Repository.save(${minStart(className)});
-      {{tab}}        } catch (Exception ex) {
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}            throw ex;    
+      {{tab}}    } catch (Exception ex) {
       {{tab}}            throw new InternalServerErrorException("Error while updating ${formatReadableLowerCase(className)}", ex);
       {{tab}}        }
       {{tab}}    } else {
@@ -4751,6 +4767,12 @@
       {{tab}}{{/each}}{{removeLine}}
       {{tab}}[JsonConverter(typeof(NullableIsoDurationJsonConverter))]
       {{tab}}public ${this.type}? ${majStart(this.name)}  { get; set; }
+      {{elseIf this.columnType = BLOB}}
+      {{tab}}[Column("${this.columnName}", TypeName = "BLOB")]
+      {{tab}}{{#each this.validationAnnotations}}
+      {{tab}}${this}
+      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}public ${this.type}? ${majStart(this.name)} { get; set; }
       {{tab}}{{else}}
       {{tab}}[Column("${this.columnName}")]
       {{tab}}{{#each this.validationAnnotations}}
@@ -5044,7 +5066,14 @@
           
               {{elseIf this.isForeignKey}}
               {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
-              {{tab}}{{else}}
+              
+              {{elseIf this.isDateTime}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}.HasValue ? DateTime.SpecifyKind(${majStart(this.name)}.Value, DateTimeKind.Utc) : null
+              
+              {{elseIf this.isDate}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}
+              
+              {{else}}
               {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}{{#if this.isGeneratedPrimaryKey}}{{removeLine}}{{/if}}
               {{tab}}{{/each}}
             };
@@ -5055,10 +5084,25 @@
               {{tab}}${majStart(this.name)} = id
               {{elseIf this.isForeignKey}}
               {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
-              {{tab}}{{else}}
+              
+              {{elseIf this.isDateTime}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}.HasValue ? DateTime.SpecifyKind(${majStart(this.name)}.Value, DateTimeKind.Utc) : null
+              
+              {{elseIf this.isDate}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}
+              
+              {{else}}
               {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}
               {{tab}}{{/each}}
             };
+
+            public void NormalizeSearchDates()
+            {
+            {{tab}}{{#each fields}}{{#if this.isDateTime}}
+            {{tab}}if (${majStart(this.name)}Min.HasValue) ${majStart(this.name)}Min = DateTime.SpecifyKind(${majStart(this.name)}Min.Value, DateTimeKind.Utc);
+            {{tab}}if (${majStart(this.name)}Max.HasValue) ${majStart(this.name)}Max = DateTime.SpecifyKind(${majStart(this.name)}Max.Value, DateTimeKind.Utc);
+            {{/if}}{{/each}}
+            }
           
             public static List<${majStart(className)}> ToEntity(${majStart(className)}Dto[]? dtos)
             {
@@ -5439,11 +5483,11 @@
                   var current${majStart(this.className)}s = ${minStart(this.className)}s.ToList();
                   
                   // a. Éléments à supprimer (ceux qui étaient en DB mais ne sont plus dans la liste reçue)
-                  var detailsToDelete = existing${majStart(this.className)}s
+                  var detailsToDelete${majStart(this.className)} = existing${majStart(this.className)}s
                       .Where(e => !current${majStart(this.className)}s.Any(c => c.${majStart(this.childPk)} == e.${majStart(this.childPk)} && e.${majStart(this.childPk)} != default))
                       .ToList();
 
-                  _dbContext.Set<${majStart(this.className)}>().RemoveRange(detailsToDelete);
+                  _dbContext.Set<${majStart(this.className)}>().RemoveRange(detailsToDelete${majStart(this.className)});
                   
                   // b. Éléments à ajouter/mettre à jour
                   foreach (var item in current${majStart(this.className)}s)
@@ -5924,7 +5968,7 @@
               [ProducesResponseType(typeof(ApiResponse<${majStart(className)}>), StatusCodes.Status200OK)]
               [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
               [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-              public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(this.className)}>>>> GetSaleDetailsBySale(
+              public async Task<ActionResult<ApiResponse<PagedResponse<${majStart(this.className)}>>>> GetSaleDetailsBySale${majStart(this.className)}(
               [SwaggerParameter(Description = "ID of the ${majStart(className)} to retrieve", Required = true)] ${pkColumnType} id,
               [FromQuery, SwaggerParameter("Page number (0-indexed)", Required = false)] int page = 0,
               [FromQuery, SwaggerParameter("Size of the page", Required = false)] int size = 10,

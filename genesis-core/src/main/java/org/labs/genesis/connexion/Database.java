@@ -94,8 +94,8 @@ public abstract class Database {
         if (viewNames == null)
             return new ArrayList<>();
 
-        if (viewNames.isEmpty())
-            return getViews(connection, credentials, language, framework);
+//        if (viewNames.isEmpty())
+//            return getViews(connection, credentials, language, framework);
 
         List<TableMetadata> tableMetadataList = new ArrayList<>();
         for (String viewName : viewNames) {
@@ -318,6 +318,9 @@ public abstract class Database {
         }
         if (columns.getInt("DATA_TYPE") == Types.TIMESTAMP && this.getId() == Constantes.Oracle_ID) {
             columnType = getBeforeBracketsSimple(columnType);
+        }
+        if(columnType.equalsIgnoreCase("float") && columns.getInt("COLUMN_SIZE") > 24) {
+            columnType = "double";
         }
         return this.getTypes().get(normalizeColumnType(columnType));
     }
