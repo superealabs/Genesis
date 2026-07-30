@@ -5060,7 +5060,14 @@
           
               {{elseIf this.isForeignKey}}
               {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
-              {{tab}}{{else}}
+              
+              {{elseIf this.isDateTime}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}.HasValue ? DateTime.SpecifyKind(${majStart(this.name)}.Value, DateTimeKind.Utc) : null
+              
+              {{elseIf this.isDate}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}
+              
+              {{else}}
               {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}{{#if this.isGeneratedPrimaryKey}}{{removeLine}}{{/if}}
               {{tab}}{{/each}}
             };
@@ -5071,10 +5078,25 @@
               {{tab}}${majStart(this.name)} = id
               {{elseIf this.isForeignKey}}
               {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
-              {{tab}}{{else}}
+              
+              {{elseIf this.isDateTime}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}.HasValue ? DateTime.SpecifyKind(${majStart(this.name)}.Value, DateTimeKind.Utc) : null
+              
+              {{elseIf this.isDate}}
+              {{tab}}${majStart(this.name)} = ${majStart(this.name)}
+              
+              {{else}}
               {{tab}}${majStart(this.name)} = ${majStart(this.name)}{{/if}}{{#if !@last}},{{/if}}
               {{tab}}{{/each}}
             };
+
+            public void NormalizeSearchDates()
+            {
+            {{tab}}{{#each fields}}{{#if this.isDateTime}}
+            {{tab}}if (${majStart(this.name)}Min.HasValue) ${majStart(this.name)}Min = DateTime.SpecifyKind(${majStart(this.name)}Min.Value, DateTimeKind.Utc);
+            {{tab}}if (${majStart(this.name)}Max.HasValue) ${majStart(this.name)}Max = DateTime.SpecifyKind(${majStart(this.name)}Max.Value, DateTimeKind.Utc);
+            {{/if}}{{/each}}
+            }
           
             public static List<${majStart(className)}> ToEntity(${majStart(className)}Dto[]? dtos)
             {
