@@ -9020,7 +9020,7 @@
           {{#each fieldsFK}}
           ${this.name}: {
             label: '${formatReadable(this.type)}',
-            type: '${this.referencedColumnType}' as const,
+            type: '${this.uiType}' as const,
             nestedKey: '${this.referencedPrimaryKeyColumn}' as const
           },
           {{/each}}{{removeLine}}
