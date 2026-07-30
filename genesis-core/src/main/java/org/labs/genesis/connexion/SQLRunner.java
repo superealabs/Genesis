@@ -3,8 +3,10 @@ package org.labs.genesis.connexion;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class SQLRunner {
     private static final List<String> CONTROL_FLOW_STARTERS = Arrays.asList("IF", "BEGIN", "CASE");
@@ -14,6 +16,24 @@ public class SQLRunner {
         return upperQuery.startsWith("CREATE VIEW")
                 || upperQuery.contains("CREATE OR ALTER VIEW")
                 || upperQuery.contains("CREATE OR REPLACE VIEW");
+    }
+
+    public static String removeComments(String sql) {
+        if (sql == null || sql.isBlank()) {
+            return sql;
+        }
+
+        // Supprime les commentaires multilignes /* ... */
+        sql = Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL)
+                .matcher(sql)
+                .replaceAll("");
+
+        // Supprime les commentaires sur une ligne -- ...
+        sql = Pattern.compile("(?m)--.*$")
+                .matcher(sql)
+                .replaceAll("");
+
+        return sql.trim();
     }
 
     /**
@@ -28,13 +48,18 @@ public class SQLRunner {
             throw new Exception("\nConnection is null\n");
         }
 
+        query = removeComments(query);
+        List<String> viewQueries = new ArrayList<>();
+
         String[] queries = query.split(";"); // Split script into individual statements
 
         try (Statement statement = connex.createStatement()) {
             for (String singleQuery : queries) {
                 singleQuery = singleQuery.trim();
                 if (!singleQuery.isEmpty()) {
-                    if (isControlFlowStatement(singleQuery) || isCreateViewStatement(singleQuery)) {
+                    if (isCreateViewStatement(singleQuery)) {
+                        viewQueries.add(singleQuery);
+                    } else if (isControlFlowStatement(singleQuery)) {
                         // Execute control-of-flow statements individually
                         statement.execute(singleQuery);
                     } else {
@@ -46,6 +71,11 @@ public class SQLRunner {
 
             // Execute batched statements
             statement.executeBatch();
+
+            for (String viewQuery : viewQueries) {
+                statement.execute(viewQuery);
+            }
+
             connex.commit();
         } catch (SQLException e) {
             connex.rollback();
