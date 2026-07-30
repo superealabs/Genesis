@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ConfirmationBoxComponent } from '../confirmation-box.component/confirmation-box.component';
 import { Language,LanguageService } from '../services/language/language.service';
-
+import {buildFileSource, getGeneratedFileName, isImageContent} from '../file-utils';
 
 export interface Column {
   type: 'string' | 'number' | 'Date' | 'Uint8Array';
@@ -31,7 +31,22 @@ export interface Column {
       <tbody>
         <tr *ngFor="let ligne of datas">
           <td *ngFor="let col of columns; let i = index">
-            {{ this.langService.formatValue(ligne[i]) }}
+            <ng-container *ngIf="col.type === 'Uint8Array'; else normalCell">
+              <img
+                *ngIf="ligne[i] && isImageContent(ligne[i]); else nonImageFile"
+                [src]="buildFileSource(ligne[i])"
+                [alt]="getGeneratedFileName(ligne[i])"
+                class="file-preview"
+              />
+              <ng-template #nonImageFile>
+                <span>
+                  {{ ligne[i] ? 'Fichier non prévisualisable' : 'Aucun fichier' }}
+                </span>
+              </ng-template>
+            </ng-container>
+            <ng-template #normalCell>
+              {{ langService.formatValue(ligne[i]) }}
+            </ng-template>
           </td>
           <td class="actions" *ngIf="!isView">
             <button (click)="redirect(routeToDetail, ligne[getIdIndex()])" title="View" aria-label="View">
@@ -87,6 +102,13 @@ export interface Column {
     .styled-table tbody tr:hover {
       background-color: #f9fafb;
     }
+    .file-preview {
+      width: 80px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 4px;
+      display: block;
+    }
     .actions {
       display: flex;
       gap: 0;
@@ -118,6 +140,9 @@ export interface Column {
   `]
 })
 export class ListComponent implements OnInit{
+  readonly buildFileSource = buildFileSource;
+  readonly getGeneratedFileName = getGeneratedFileName;
+  readonly isImageContent = isImageContent;
   @Input() columns: Column[] = [];
   @Input() datas: any[] = [];
   @Input() routeToDetail: string = 'entity';

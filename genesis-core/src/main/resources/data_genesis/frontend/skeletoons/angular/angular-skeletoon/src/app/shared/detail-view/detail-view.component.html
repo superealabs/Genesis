@@ -1,7 +1,28 @@
 <div class="detail-grid">
   <div class="detail-item" *ngFor="let item of entries">
     <label>{{ this.langService.makeItReadable(item[0])}}</label>
-    <input type="text" [value]="this.langService.formatValue(item[1])" readonly>
+    <ng-container *ngIf="isFileField(item[0]); else normalValue">
+      <img
+        *ngIf="item[1] && isImageContent(item[1]); else unavailableFile"
+        class="file-preview"
+        [src]="buildFileSource(item[1])"
+        [alt]="getGeneratedFileName(item[1])"
+      />
+      <ng-template #unavailableFile>
+        <input
+          type="text"
+          [value]="item[1] ? 'Fichier non prévisualisable' : 'Aucun fichier'"
+          readonly
+        />
+      </ng-template>
+    </ng-container>
+    <ng-template #normalValue>
+      <input
+        type="text"
+        [value]="langService.formatValue(item[1])"
+        readonly
+      />
+    </ng-template>
   </div>
 
   <div class="action-buttons">

@@ -1278,6 +1278,32 @@
                 {{/each}}{{removeLine}}
                 private ${minStart(className)}Service: ${majStart(className)}Service
           ){}
+        
+          private fileToBase64(file: File): Promise<string> {
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const result = reader.result;
+                if (typeof result !== 'string') {
+                  reject(new Error('Unable to read the selected file'));
+                  return;
+                }     
+                const separatorIndex = result.indexOf(',');  
+                resolve(
+                  separatorIndex >= 0
+                  ? result.substring(separatorIndex + 1)
+                  : result
+                );
+              };
+              reader.onerror = () => {
+                reject(
+                  reader.error ??
+                  new Error('An error occurred while reading the file')
+                );
+              };
+              reader.readAsDataURL(file);
+            });
+          }
 
           submit(payload:any): void {
               this.isLoading = true;
@@ -1467,6 +1493,11 @@
             ${minStart(className)}?: ${majStart(className)};
             id?:string ;
             isLoading = false;
+            fieldTypes: Record<string, string> = {
+              {{#each fieldsNotFK}}
+              '${this.name}': '${this.typeBase}',
+              {{/each}}
+            };
             {{#if isParentTable=true and hasChildrenForm=true}}
             {{#each childrenWithForm}}
             ${minStart(this.className)}s: any[] = [];
@@ -1568,7 +1599,7 @@
             <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
 
             <div *ngIf="!isLoading && ${minStart(className)}">
-              <app-detail-view [object]="${minStart(className)}" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id" LinkContext='${toKebabCase(className)}s'></app-detail-view>
+              <app-detail-view [object]="${minStart(className)}" [fieldTypes]="fieldTypes" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id" LinkContext='${toKebabCase(className)}s'></app-detail-view>
 
               {{#if isParentTable=true and hasChildrenForm=true}}
               {{#each childrenWithForm}}
