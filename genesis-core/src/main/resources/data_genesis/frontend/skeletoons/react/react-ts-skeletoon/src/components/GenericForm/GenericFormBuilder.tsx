@@ -175,6 +175,12 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
             if (body?.errors && typeof body.errors === 'object') {
                 setFieldErrors(body.errors);
             }
+            const errorMessage =
+                body?.message ||
+                body?.error ||
+                (typeof body === 'string' ? body : null) ||
+                err?.message ||
+                'An error occured';
             enqueueSnackbar(body?.message || 'Erreur', { variant: 'error' });
         } finally {
             setLoading(false);

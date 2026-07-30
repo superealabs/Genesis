@@ -955,6 +955,7 @@
         import org.springframework.http.ResponseEntity;
         import org.springframework.web.bind.annotation.ExceptionHandler;
         import org.springframework.web.bind.annotation.RestControllerAdvice;
+        import org.springframework.dao.DataIntegrityViolationException;
         
         @Slf4j
         @RestControllerAdvice
@@ -979,6 +980,16 @@
                 RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
                 log.error("Illegal argument provided : {}", ex.getMessage(), ex);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+        
+            @ExceptionHandler(DataIntegrityViolationException.class)
+            public ResponseEntity<RestResponse<Void>> handleDataIntegrityViolationException(
+            DataIntegrityViolationException ex
+            ) {
+            RestResponse<Void> response = RestResponse.buildErrorResponse(
+                HttpStatus.CONFLICT, "Constraint violation" , null);
+                log.error("Database constraint violation: {}", ex.getMessage(), ex);
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
             }
         
             @ExceptionHandler(Exception.class)
@@ -1548,6 +1559,7 @@
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
       import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
       import ${groupLink}.${lowerCase(projectName)}.utils.ExportUtils;
+      import org.springframework.dao.DataIntegrityViolationException;
       import java.util.List;
       {{#if cacheableWithEhcache}}import org.springframework.cache.annotation.Cacheable;{{else}}{{removeLine}}{{/if}}
       {{#if cacheableWithEhcache and isView = false}}import org.springframework.cache.annotation.CacheEvict;{{else}}{{removeLine}}{{/if}}
@@ -1619,6 +1631,8 @@
       {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}        throw ex;
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
@@ -1632,7 +1646,9 @@
       {{tab}}        ${minStart(className)}.set${majStart(pkColumn)}(${pkColumn});
       {{tab}}        try {
       {{tab}}            return ${minStart(className)}Repository.save(${minStart(className)});
-      {{tab}}        } catch (Exception ex) {
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}            throw ex;    
+      {{tab}}    } catch (Exception ex) {
       {{tab}}            throw new InternalServerErrorException("Error while updating ${formatReadableLowerCase(className)}", ex);
       {{tab}}        }
       {{tab}}    } else {
