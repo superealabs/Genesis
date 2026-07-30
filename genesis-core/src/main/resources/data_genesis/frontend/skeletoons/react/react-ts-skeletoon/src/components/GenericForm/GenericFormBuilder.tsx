@@ -28,7 +28,7 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { TimePicker } from "@mui/x-date-pickers";
 import { parseTimeString } from '@/utils/timeParser';
 import { formatTimeTz, parseTimeTz } from "@/utils/timeTzParser";
-import { fileToArray, bytesToUrl } from "@/utils/imageUtil";
+import { fileToBase64, bytesToUrl } from "@/utils/imageUtil";
 import { DurationInput } from "@/components/Input/DurationInput";
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
@@ -130,7 +130,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
 
     const handleChange = async (key: string, value: any) => {
         if (value instanceof File) {
-            value = await fileToArray(value)
+            value = await fileToBase64(value)
         }
         setFormData((prev) => ({ ...prev, [key]: value }));
     };
