@@ -146,6 +146,13 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                 payload[key] = config.transform(payload[key]);
             }
         });
+        Object.keys(payload).forEach(key => {
+            if (payload[key] === ''
+                    || payload[key] === null
+                    || payload[key] === undefined) {
+                delete payload[key];
+            }
+        });
 
         console.log('Payload:', payload);
 
