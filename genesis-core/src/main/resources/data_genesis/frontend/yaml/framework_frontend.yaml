@@ -6476,6 +6476,13 @@
         }
         async function handleSubmit() {
           const data: any = { ...formModel.value }
+          Object.keys(data).forEach(key => {
+            if (data[key] === ''
+                    || data[key] === null
+                    || data[key] === undefined) {
+                delete data[key];
+            }
+          });
           {{#each fields}}
           {{#if this.uiType = file}}
           if (data.${this.name} instanceof File) {
