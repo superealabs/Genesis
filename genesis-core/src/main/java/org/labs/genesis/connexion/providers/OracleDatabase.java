@@ -511,8 +511,8 @@ public class OracleDatabase extends Database {
                 boolean isColumnDate = isColumnDate(columns);
                 boolean isColumnTime = isColumnTime(columns);
                 boolean isColumnTimeTz = isColumnTimeTz(columns);
-                boolean isColumnDateTime = isColumnDateTime(columns);
-                boolean isColumnDateTimeTz = isColumnDateTimeTz(columns);
+                boolean isColumnDateTime = !isColumnDate && isColumnDateTime(columns);
+                boolean isColumnDateTimeTz = !isColumnDate && isColumnDateTimeTz(columns);
                 boolean useTimeZone = useTimeZone(columns);
                 boolean isColumnInterval = isColumnInterval(columns);
 
