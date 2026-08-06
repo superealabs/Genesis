@@ -149,7 +149,7 @@
               if (!status) {
               const currentUrl = this.router.url;
               if (currentUrl !== '') {
-              this.router.navigate(['']);
+              this.router.navigate(['/login']);
               }
             }
             });
@@ -252,7 +252,7 @@
               catchError((error: HttpErrorResponse) => {
                 if (error.status === 401) {
                   console.warn('forbidden, redirecting to login');
-                  this.router.navigate(['']);
+                  this.router.navigate(['/login']);
                 } else if (error.status === 403) {
                   console.warn('access denied');
                 }
@@ -271,7 +271,7 @@
         import { Routes } from '@angular/router';
         export const loginRoutes: Routes = [
           {
-            path: '',
+            path: 'login',
             loadComponent: () => import('./login/login.component').then(m => m.LoginComponent)
           }
         ];
@@ -346,7 +346,7 @@
             private clearAndRedirect() {
               localStorage.removeItem('authToken');
               this.loggedIn.next(false);
-              this.router.navigate(['/']);
+              this.router.navigate(['/login']);
             }
         }
         {{else}}no ts{{/if}}
@@ -760,12 +760,14 @@
         {{#each entities}}{{removeLine}}
         import { ${minStart(this.className)}Routes } from './features/${toKebabCase(this.className)}/${toKebabCase(this.className)}.routes'
         {{/each}}{{removeLine}}
+        {{#if useJWT}}import { loginRoutes } from './features/authentication/authentication.route'{{/if}}
 
         export const routes: Routes = [
           {
                 path: '',
                 component: WelcomeComponent,
           },
+          {{#if useJWT}}...loginRoutes{{/if}}
           {{#each entities}}{{removeLine}}
           ...${minStart(this.className)}Routes
           {{#if !@last}},{{/if}}{{/each}}{{removeLine}}

@@ -6,7 +6,7 @@ import { Language,LanguageService } from '../services/language/language.service'
 import {buildFileSource, getGeneratedFileName, isImageContent} from '../file-utils';
 
 export interface Column {
-  type: 'string' | 'number' | 'Date' | 'Uint8Array';
+  type: 'string' | 'number' | 'Date' | 'Uint8Array' | 'checkbox';
   label: string;
   fieldName: string;
 }
