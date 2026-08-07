@@ -1088,7 +1088,7 @@
         app:
           config:
             column-visibility:
-              file: ${user.dir}/config/column-visibility.json
+              file: <#${user.dir}/#>/config/column-visibility.json
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
 
