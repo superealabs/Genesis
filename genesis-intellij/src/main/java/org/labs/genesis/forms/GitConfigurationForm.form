@@ -1,0 +1,520 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/"
+      version="1"
+      bind-to-class="org.labs.genesis.forms.GitConfigurationForm">
+
+  <grid id="27dc6"
+        binding="mainPanel"
+        layout-manager="GridLayoutManager"
+        row-count="12"
+        column-count="4"
+        same-size-horizontally="false"
+        same-size-vertically="false"
+        hgap="10"
+        vgap="8">
+
+    <margin top="20" left="20" bottom="20" right="20"/>
+
+    <constraints>
+      <xy x="20" y="20" width="650" height="500"/>
+    </constraints>
+
+    <properties/>
+    <border type="none"/>
+
+    <children>
+
+      <!-- ===================================================== -->
+      <!-- TITLE -->
+      <!-- ===================================================== -->
+
+      <component id="gitTitle"
+                 class="javax.swing.JLabel">
+
+        <constraints>
+          <grid row="0"
+                column="0"
+                row-span="1"
+                col-span="4"
+                vsize-policy="0"
+                hsize-policy="0"
+                anchor="8"
+                fill="0"
+                indent="0"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Git configuration"/>
+          <font size="16" style="1"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- USE GIT -->
+      <!-- ===================================================== -->
+
+      <component id="useGit"
+                 class="javax.swing.JCheckBox"
+                 binding="useGitCheckBox"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="1"
+                column="0"
+                row-span="1"
+                col-span="4"
+                vsize-policy="0"
+                hsize-policy="3"
+                anchor="8"
+                fill="0"
+                indent="0"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Initialize Git repository"/>
+          <selected value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- REPOSITORY MODE LABEL -->
+      <!-- ===================================================== -->
+
+      <component id="repositoryModeLabel"
+                 class="javax.swing.JLabel"
+                 binding="repositoryModeLabel">
+
+        <constraints>
+          <grid row="2"
+                column="0"
+                row-span="1"
+                col-span="4"
+                vsize-policy="0"
+                hsize-policy="0"
+                anchor="8"
+                fill="0"
+                indent="0"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Repository structure:"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- SINGLE REPOSITORY -->
+      <!-- ===================================================== -->
+
+      <component id="singleRepository"
+                 class="javax.swing.JRadioButton"
+                 binding="singleRepositoryRadioButton"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="3"
+                column="0"
+                row-span="1"
+                col-span="4"
+                vsize-policy="0"
+                hsize-policy="3"
+                anchor="8"
+                fill="0"
+                indent="1"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="One repository for the entire project"/>
+          <selected value="true"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- SINGLE REPOSITORY NAME -->
+      <!-- ===================================================== -->
+
+      <component id="repositoryLabel"
+                 class="javax.swing.JLabel"
+                 binding="repositoryNameLabel">
+
+        <constraints>
+          <grid row="4"
+                column="0"
+                row-span="1"
+                col-span="1"
+                vsize-policy="0"
+                hsize-policy="0"
+                anchor="8"
+                fill="0"
+                indent="2"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Repository name:"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <component id="repositoryName"
+                 class="javax.swing.JTextField"
+                 binding="repositoryNameField"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="4"
+                column="1"
+                row-span="1"
+                col-span="3"
+                vsize-policy="0"
+                hsize-policy="6"
+                anchor="8"
+                fill="1"
+                indent="0"
+                use-parent-layout="false">
+
+            <preferred-size width="250" height="-1"/>
+
+          </grid>
+        </constraints>
+
+        <properties>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- SEPARATE REPOSITORIES -->
+      <!-- ===================================================== -->
+
+      <component id="separateRepositories"
+                 class="javax.swing.JRadioButton"
+                 binding="separateRepositoriesRadioButton"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="5"
+                column="0"
+                row-span="1"
+                col-span="4"
+                vsize-policy="0"
+                hsize-policy="3"
+                anchor="8"
+                fill="0"
+                indent="1"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Separate repositories for Frontend and Backend"/>
+          <selected value="false"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- BACKEND REPOSITORY -->
+      <!-- ===================================================== -->
+
+      <component id="backendLabel"
+                 class="javax.swing.JLabel"
+                 binding="backendRepositoryNameLabel">
+
+        <constraints>
+          <grid row="6"
+                column="0"
+                row-span="1"
+                col-span="1"
+                vsize-policy="0"
+                hsize-policy="0"
+                anchor="8"
+                fill="0"
+                indent="2"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Backend repository:"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <component id="backendName"
+                 class="javax.swing.JTextField"
+                 binding="backendRepositoryNameField"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="6"
+                column="1"
+                row-span="1"
+                col-span="3"
+                vsize-policy="0"
+                hsize-policy="6"
+                anchor="8"
+                fill="1"
+                indent="0"
+                use-parent-layout="false">
+
+            <preferred-size width="250" height="-1"/>
+
+          </grid>
+        </constraints>
+
+        <properties>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- FRONTEND REPOSITORY -->
+      <!-- ===================================================== -->
+
+      <component id="frontendLabel"
+                 class="javax.swing.JLabel"
+                 binding="frontendRepositoryNameLabel">
+
+        <constraints>
+          <grid row="7"
+                column="0"
+                row-span="1"
+                col-span="1"
+                vsize-policy="0"
+                hsize-policy="0"
+                anchor="8"
+                fill="0"
+                indent="2"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Frontend repository:"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <component id="frontendName"
+                 class="javax.swing.JTextField"
+                 binding="frontendRepositoryNameField"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="7"
+                column="1"
+                row-span="1"
+                col-span="3"
+                vsize-policy="0"
+                hsize-policy="6"
+                anchor="8"
+                fill="1"
+                indent="0"
+                use-parent-layout="false">
+
+            <preferred-size width="250" height="-1"/>
+
+          </grid>
+        </constraints>
+
+        <properties>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- REMOTE REPOSITORY -->
+      <!-- ===================================================== -->
+
+      <component id="remoteRepository"
+                 class="javax.swing.JCheckBox"
+                 binding="createRemoteRepositoryCheckBox"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="8"
+                column="0"
+                row-span="1"
+                col-span="4"
+                vsize-policy="0"
+                hsize-policy="3"
+                anchor="8"
+                fill="0"
+                indent="1"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Create remote repository on GitHub"/>
+          <selected value="false"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- GITHUB USERNAME -->
+      <!-- ===================================================== -->
+
+      <component id="githubUsernameLabel"
+                 class="javax.swing.JLabel"
+                 binding="githubUsernameLabel">
+
+        <constraints>
+          <grid row="9"
+                column="0"
+                row-span="1"
+                col-span="1"
+                vsize-policy="0"
+                hsize-policy="0"
+                anchor="8"
+                fill="0"
+                indent="2"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="GitHub username:"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <component id="githubUsername"
+                 class="javax.swing.JTextField"
+                 binding="githubUsernameField"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="9"
+                column="1"
+                row-span="1"
+                col-span="3"
+                vsize-policy="0"
+                hsize-policy="6"
+                anchor="8"
+                fill="1"
+                indent="0"
+                use-parent-layout="false">
+
+            <preferred-size width="250" height="-1"/>
+
+          </grid>
+        </constraints>
+
+        <properties>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- GITHUB TOKEN -->
+      <!-- ===================================================== -->
+
+      <component id="githubTokenLabel"
+                 class="javax.swing.JLabel"
+                 binding="githubTokenLabel">
+
+        <constraints>
+          <grid row="10"
+                column="0"
+                row-span="1"
+                col-span="1"
+                vsize-policy="0"
+                hsize-policy="0"
+                anchor="8"
+                fill="0"
+                indent="2"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Personal Access Token:"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <component id="githubToken"
+                 class="javax.swing.JPasswordField"
+                 binding="githubTokenField"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="10"
+                column="1"
+                row-span="1"
+                col-span="3"
+                vsize-policy="0"
+                hsize-policy="6"
+                anchor="8"
+                fill="1"
+                indent="0"
+                use-parent-layout="false">
+
+            <preferred-size width="250" height="-1"/>
+
+          </grid>
+        </constraints>
+
+        <properties>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- SPACER -->
+      <!-- ===================================================== -->
+
+      <vspacer id="spacer">
+        <constraints>
+          <grid row="11"
+                column="0"
+                row-span="1"
+                col-span="4"
+                vsize-policy="6"
+                hsize-policy="1"
+                anchor="0"
+                fill="2"
+                indent="0"
+                use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
+
+    </children>
+
+  </grid>
+
+</form>

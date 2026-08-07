@@ -3,6 +3,7 @@ package org.labs.genesis.config;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
+import org.labs.genesis.config.git.GitConfiguration;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.indicator.IntellijGenerationProcess;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
@@ -65,6 +66,7 @@ public class ProjectGenerationContext {
     // FrameworkMVC specific configurations
     private  boolean generateViewsTemplates = true;
     private ViewsTemplate viewsTemplate;
+    private GitConfiguration gitConfiguration;
 
     public ProjectGenerationContext() {
         this.generationProcess = new IntellijGenerationProcess();
