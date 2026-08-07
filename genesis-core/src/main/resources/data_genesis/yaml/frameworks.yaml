@@ -1096,6 +1096,20 @@
         spring.jpa.properties.hibernate.validator.apply_to_ddl=false
         spring.jpa.properties.hibernate.validator.autoregister_listeners=false
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/resources/"
+    
+    - fileType: "ConfigFile"
+      fileName: "column-visibility"
+      extension: "json"
+      content: |
+        {
+        {{#each allEntities}}
+          "${this.tableName}": {
+            "list": [{{#each this.fields}}"${this.name}"{{#if !@last}}, {{/if}}{{/each}}],
+            "detail": [{{#each this.fields}}"${this.name}"{{#if !@last}}, {{/if}}{{/each}}]
+          }{{#if !@last}},{{/if}}
+        {{/each}}
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/config"
 
   configurations:
     - name: "Logging Level"
