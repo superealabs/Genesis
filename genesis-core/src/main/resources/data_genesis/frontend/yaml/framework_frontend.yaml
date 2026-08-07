@@ -5640,7 +5640,9 @@
               :getPaginationData="getPaginationData"
               :listComponent="${majStart(className)}List"
               :entities="${minPluralize(className)}"
-              :message="message"{{#if isView}}
+              :message="message"
+              :visible-fields="visibleListFields"
+              @update:visible-fields="handleUpdateVisibleFields"{{#if isView}}
               :remove-action="false"
               :edit-action="false"{{/if}}
               @export:csv="onExport"
@@ -5650,15 +5652,37 @@
       style: "<style scoped></style>"
       destinationPath: "${destinationFolder}/src/views/${minStart(className)}"
       export: |
-        // Composable for managing entities
-        const {${minPluralize(className)}, search${majPluralize(className)}, message, getPaginationData{{#if !isView}}, goToCreateFormView{{/if}}, export${majStart(className)}sToCsv } = use${majPluralize(className)}()
+        const {
+          ${minPluralize(className)},
+          search${majPluralize(className)},
+          message,
+          getPaginationData,{{#if !isView}}
+          goToCreateFormView,{{/if}}
+          export${majStart(className)}sToCsv,
+          visibleListFields,
+          loadColumnConfig,
+          saveColumnConfig
+        } = use${majPluralize(className)}()
 
         // Reactive search fields
-        const searchFields = ref<EntitySearchField[]>(${majStart(className)}.getAllSearchFieldsMetadata());
-        
+        const searchFields = ref<EntitySearchField[]>(${majStart(className)}.getAllSearchFieldsMetadata())
+
+        // Gestion de la mise à jour des champs visibles (onClick appliquer)
+        const handleUpdateVisibleFields = async (newFields: string[]) => {
+          const result = await saveColumnConfig(newFields)
+          if (!result.success) {
+            console.error('Échec de la sauvegarde de la configuration des colonnes:', result.error)
+          }
+        }
+
         const onExport = async () => {
           await export${majStart(className)}sToCsv(${minPluralize(className)}.value)
         }
+
+        // Chargement de la configuration au montage du composant
+        onMounted(() => {
+          loadColumnConfig()
+        })
       componentAdditionalFiles:
         - fileType: "Entity Composable"
           fileName: "use${majPluralize(className)}"
