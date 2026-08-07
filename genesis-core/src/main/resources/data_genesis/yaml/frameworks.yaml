@@ -21,11 +21,12 @@
         import org.springframework.context.annotation.Bean;
         import org.springframework.boot.SpringApplication;
         import org.springframework.boot.autoconfigure.SpringBootApplication;
+        import org.springframework.scheduling.annotation.EnableScheduling;
         {{#if useEurekaServer}}import org.springframework.cloud.client.discovery.EnableDiscoveryClient;{{/if}}
         {{#if useEhcache}}import org.springframework.cache.annotation.EnableCaching;{{/if}}
-
         {{#if useEurekaServer}}@EnableDiscoveryClient{{/if}}
         {{#if useEhcache}}@EnableCaching{{/if}}
+        @EnableScheduling
         @SpringBootApplication
         public class ${majStart(projectName)}Application {
             public static void main(String[] args) {
