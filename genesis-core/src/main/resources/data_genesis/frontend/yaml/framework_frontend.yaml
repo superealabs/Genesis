@@ -5667,6 +5667,7 @@
             import { ref } from 'vue'
             import { ${majStart(className)}, {{#if !isView}}${majStart(className)}FormDTO{{/if}} } from '@/models/${majStart(className)}Model'
             import * as ${minStart(className)}Service from '@/services/${majStart(className)}Service'
+            import * as columnConfigService from '@/services/ColumnConfigService'
             import { useLoading } from './useLoading'
             import { PaginationRequestParameter, SortFieldParameter } from '@/models/api/RequestModel'
             import { PaginationData } from '@/models/api/PageResponseModel'
@@ -5675,6 +5676,8 @@
             import { ${majStart(this.className)}, ${majStart(this.className)}FormDTO } from '@/models/${majStart(this.className)}Model'
             {{/each}}
             {{/if}}
+
+            export const DEFAULT_LIST_VIEW_FIELDS = ['id']
 
             /**
              * Composable to manage ${majStart(className)} entities including CRUD operations,
@@ -5695,6 +5698,8 @@
 
               /** Vue router instance for navigation */
               const router = useRouter()
+
+              const visibleListFields = ref<string[]>([...DEFAULT_LIST_VIEW_FIELDS])
 
               /**
                 * Handles API response by updating the ${minStart(className)}s and pagination
@@ -5718,6 +5723,33 @@
                 }
                 if (pagination !== undefined) {
                   paginationData.value = new PaginationData(pagination)
+                }
+              }
+
+              const loadColumnConfig = async () => {
+                try {
+                  // ${EntityName} contient le nom de la table en minuscule (ex: 'personne')
+                  const response = await columnConfigService.getVisibleFields('${EntityName}', 'list')
+                  if (response.returnCode === 1 && response.data && response.data.length > 0) {
+                    visibleListFields.value = response.data
+                  }
+                } catch (error) {
+                  console.warn('Impossible de charger la config des colonnes, utilisation des valeurs par défaut.', error)
+                }
+              }
+
+              /** Sauvegarde la nouvelle configuration vers le serveur */
+              const saveColumnConfig = async (fields: string[]) => {
+                try {
+                  const response = await columnConfigService.updateVisibleFields('${minStart(EntityName)}', 'list', fields)
+                  if (response.returnCode === 1) {
+                    visibleListFields.value = fields
+                    return { success: true, error: null }
+                  } else {
+                    return { success: false, error: response.message || 'Erreur lors de la sauvegarde' }
+                  }
+                } catch (error) {
+                  return { success: false, error: 'Erreur réseau lors de la sauvegarde' }
                 }
               }
 
@@ -5953,10 +5985,18 @@
               const getPaginationData = () => paginationData.value
 
               return {
+                // state
                 ${minStart(className)}s,
                 loading,
                 message,
                 paginationData,
+
+                // State & function of column configuration configuration
+                visibleListFields,
+                loadColumnConfig,
+                saveColumnConfig,
+
+                // Actions
                 getPaginationData,
                 export${majStart(className)}sToCsv,
                 load${majStart(className)}s,
