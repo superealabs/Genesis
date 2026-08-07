@@ -5380,7 +5380,7 @@
           <tr class="hover:bg-base-200">
             <template v-for="field in ${majStart(className)}.getAllSearchFieldsMetadata()" :key="field.key">
               <td
-                v-show="field.showInTable"
+                v-show="field.showInTable && visibleFields.includes(field.key)"
                 class="px-3 py-2"
                 :class="{
                   'sticky left-0 bg-base-200 font-semibold': field.identifier,
@@ -5443,6 +5443,10 @@
             type: Boolean,
             default: true,
           },
+          visibleFields: {
+            type: Array as PropType<string[]>,
+            default: () => []
+          }
         })
         
         const ${minStart(className)}Data = computed(() => {
@@ -5475,10 +5479,9 @@
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'{{#if !isView}}
         import { usePopup } from '@/composables/usePopup'
         import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
-        import { ref } from 'vue'{{/if}}
+        import { ref, type PropType } from 'vue'{{/if}}
         import { SortFieldParameter } from '@/models/api/RequestModel'
         import SortButton from '@/components/button/SortButton.vue'
-        import type { PropType } from 'vue'
       selector: "${majStart(className)}List"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5487,9 +5490,9 @@
           <table class="table table-auto relative">
             <thead>
               <tr>
-                <template v-for="field in ${majStart(className)}.getAllSearchFieldsMetadata()" :key="field">
+                <template v-for="field in ${majStart(className)}.getAllSearchFieldsMetadata()" :key="field.key">
                   <th
-                    v-show="field.showInTable"
+                    v-show="field.showInTable && visibleFields.includes(field.key)"
                     class="sticky top-0 bg-primary text-primary-content px-3 py-2 font-bold min-w-35 z-1"
                     :class="{ 'left-0 z-2': field.identifier }"
                   >
@@ -5504,15 +5507,16 @@
                 <!-- Right sticky column -->
                 <th
                   class="sticky top-0 right-0 bg-primary text-primary-content px-3 py-2 font-bold min-w-35 z-2"
-                ></th>
+                >{{ message }}</th>
               </tr>
             </thead>
             <tbody class="bg-base-100">
               <!-- Empty message -->
               <tr v-if="!loading && message">
-                <td colspan="100" class="text-center py-4 text-gray-500">
-                  {{ message }}
-                </td>
+                <td
+                  :colspan="visibleFields.filter(f => ${majStart(className)}.getAllSearchFieldsMetadata().some(m => m.key === f && m.showInTable)).length + 1"
+                  class="text-center py-4 text-gray-500"
+                >
               </tr>
 
               <!-- Entity rows -->
@@ -5521,6 +5525,7 @@
                 v-for="${minStart(className)} in data"
                 :key="${minStart(className)}.getKeyValue()"
                 :${minStart(className)}="${minStart(className)}"
+                :visible-fields="visibleFields"
                 :view-action="viewAction"
                 :edit-action="editAction"
                 :remove-action="removeAction"
@@ -5562,6 +5567,10 @@
             type: Boolean,
             default: true,
           },
+          visibleFields: {
+            type: Array as PropType<string[]>,
+            default: () => []
+          }
         })
         const emit = defineEmits<{
           (e: 'request:refresh'): void
@@ -5606,7 +5615,7 @@
         label: "${majStart(className)}"
       componentName: "${majStart(className)}ListView"
       importFile: |
-        import { ref } from 'vue'
+        import { ref, onMounted } from 'vue'
         import type { EntitySearchField } from '@/models/EntityModel'
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import ${majStart(className)}List from '@/entities/${minStart(className)}/${majStart(className)}List.vue'
