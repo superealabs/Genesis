@@ -1084,6 +1084,11 @@
           expiration: 36000
         {{/if}}
 
+        app:
+          config:
+            column-visibility:
+              file: ${user.dir}/config/column-visibility.json
+
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
 
     - fileType: "Configuration file for test classes"
