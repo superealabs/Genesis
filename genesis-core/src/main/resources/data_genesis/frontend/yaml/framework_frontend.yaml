@@ -5729,7 +5729,7 @@
               const loadColumnConfig = async () => {
                 try {
                   // ${EntityName} contient le nom de la table en minuscule (ex: 'personne')
-                  const response = await columnConfigService.getVisibleFields('${EntityName}', 'list')
+                  const response = await columnConfigService.getVisibleFields('${minStart(EntityName)}', 'list')
                   if (response.returnCode === 1 && response.data && response.data.length > 0) {
                     visibleListFields.value = response.data
                   }
