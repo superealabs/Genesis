@@ -1765,6 +1765,7 @@
 
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
     servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
+    
     serviceAdditionalFiles:
       - fileType: "Interface service"
         fileName: "${majStart(className)}Service"
@@ -1806,7 +1807,142 @@
           }
 
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services/interfaces"
+      - fileType: "GlobalServiceInterface"
+        fileName: "ColumnVisibilityService"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.services.interfaces;
 
+          import java.util.List;
+
+          public interface ColumnVisibilityService {
+
+              /**
+              * Récupère les champs visibles pour une entité et un type de vue
+              * 
+              * @param entityName    Nom de l'entité (ex: "personne")
+              * @param componentType Type de vue (ex: "list", "detail")
+              * @return Liste des champs visibles
+              */
+              List<String> getVisibleFields(String entityName, String componentType);
+
+              /**
+              * Met à jour les champs visibles pour une entité et un type de vue
+              * 
+              * @param entityName    Nom de l'entité (ex: "personne")
+              * @param componentType Type de vue (ex: "list", "detail")
+              * @param fields        Liste des champs à afficher
+              */
+              void updateVisibleFields(String entityName, String componentType, List<String> fields);
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services/interfaces"
+      - fileType: "GlobalService"
+        fileName: "DefaultColumnVisibilityService"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.services;
+
+          import com.fasterxml.jackson.core.type.TypeReference;
+          import com.fasterxml.jackson.databind.ObjectMapper;
+          import com.fasterxml.jackson.databind.SerializationFeature;
+          import ${groupLink}.${lowerCase(projectName)}.services.interfaces.ColumnVisibilityService;
+          import org.springframework.beans.factory.annotation.Value;
+          import org.springframework.scheduling.annotation.Scheduled;
+          import org.springframework.stereotype.Service;
+
+          import jakarta.annotation.PostConstruct;
+          import java.io.File;
+          import java.io.IOException;
+          import java.util.Collections;
+          import java.util.List;
+          import java.util.Map;
+          import java.util.concurrent.ConcurrentHashMap;
+
+          @Service
+          public class DefaultColumnVisibilityService implements ColumnVisibilityService {
+
+              @Value("<#${app.config.column-visibility.file}/#>")
+              private String configFilePath;
+
+              private final ObjectMapper objectMapper;
+              private final Map<String, Map<String, List<String>>> visibilityConfig = new ConcurrentHashMap<>();
+              
+              private long lastModifiedTime = 0L;
+
+              public DefaultColumnVisibilityService() {
+                  this.objectMapper = new ObjectMapper();
+                  this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+              }
+
+              @PostConstruct
+              public void loadConfig() {
+                  reloadIfChanged();
+              }
+
+              @Scheduled(fixedDelay = 2000) 
+              public void checkForChanges() {
+                  reloadIfChanged();
+              }
+
+              private synchronized void reloadIfChanged() {
+                  File file = new File(configFilePath);
+                  if (!file.exists()) {
+                      return;
+                  }
+
+                  long currentLastModified = file.lastModified();
+                  
+                  if (currentLastModified > this.lastModifiedTime) {
+                      try {
+                          Map<String, Map<String, List<String>>> loadedConfig = objectMapper.readValue(
+                              file, 
+                              new TypeReference<Map<String, Map<String, List<String>>>>() {}
+                          );
+                          
+                          visibilityConfig.clear();
+                          visibilityConfig.putAll(loadedConfig);
+                          
+                          this.lastModifiedTime = currentLastModified;
+                          System.out.println("Configuration des colonnes rechargée (modification du fichier détectée)");
+                          
+                      } catch (IOException e) {
+                          System.err.println("Erreur lors du rechargement du fichier de configuration : " + e.getMessage());
+              }
+                  }
+              }
+
+              @Override
+              public List<String> getVisibleFields(String entityName, String componentType) {
+                  Map<String, List<String>> entityConfig = visibilityConfig.get(entityName.toLowerCase());
+                  if (entityConfig == null) {
+                      return Collections.emptyList();
+                  }
+                  return entityConfig.getOrDefault(componentType.toLowerCase(), Collections.emptyList());
+              }
+
+              @Override
+              public synchronized void updateVisibleFields(String entityName, String componentType, List<String> fields) {
+                  visibilityConfig
+                      .computeIfAbsent(entityName.toLowerCase(), k -> new ConcurrentHashMap<>())
+                      .put(componentType.toLowerCase(), fields);
+                  saveConfig();
+              }
+
+              private synchronized void saveConfig() {
+                  try {
+                      File file = new File(configFilePath);
+                      file.getParentFile().mkdirs();
+                      objectMapper.writeValue(file, visibilityConfig);
+                      
+                      this.lastModifiedTime = file.lastModified();
+                      
+                      System.out.println("Configuration sauvegardée avec succès dans : " + configFilePath);
+                  } catch (IOException e) {
+                      throw new RuntimeException("Erreur lors de la sauvegarde du fichier de configuration", e);
+                  }
+              }
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
   controller:
     toGenerate: true
     controllerImports: |
