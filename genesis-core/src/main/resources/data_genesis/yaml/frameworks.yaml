@@ -9,6 +9,40 @@
   useEurekaServer: false
   isGateway: false
   useGatewaySecurity: false
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        target/
+        !.mvn/wrapper/maven-wrapper.jar
+
+        .gradle/
+        build/
+        !gradle/wrapper/gradle-wrapper.jar
+
+        .classpath
+        .project
+        .settings/
+        .factorypath
+
+        .idea/
+        .vscode/
+        *.iml
+
+        *.class
+        *.log
+        hs_err_pid*
+
+        .env
+        application-local.yml
+        application-local.yaml
+        application-local.properties
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -2465,6 +2499,39 @@
   useEurekaServer: false
   isGateway: false
   useGatewaySecurity: false
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        bin/
+        obj/
+
+        .vs/
+        .idea/
+        .vscode/
+
+        *.user
+        *.userosscache
+        *.suo
+        *.userprefs
+
+        TestResults/
+        BenchmarkDotNet.Artifacts/
+
+        *.nupkg
+        *.snupkg
+        packages/
+
+        *.log
+
+        .env
+        appsettings.Local.json
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
   additionalFiles:
     - fileType: "ProgramFile"
       fileName: "Program"
@@ -6023,6 +6090,40 @@
   useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        target/
+        !.mvn/wrapper/maven-wrapper.jar
+
+        .gradle/
+        build/
+        !gradle/wrapper/gradle-wrapper.jar
+
+        .classpath
+        .project
+        .settings/
+        .factorypath
+
+        .idea/
+        .vscode/
+        *.iml
+
+        *.class
+        *.log
+        hs_err_pid*
+
+        .env
+        application-local.yml
+        application-local.yaml
+        application-local.properties
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -6170,6 +6271,40 @@
   useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        target/
+        !.mvn/wrapper/maven-wrapper.jar
+
+        .gradle/
+        build/
+        !gradle/wrapper/gradle-wrapper.jar
+
+        .classpath
+        .project
+        .settings/
+        .factorypath
+
+        .idea/
+        .vscode/
+        *.iml
+
+        *.class
+        *.log
+        hs_err_pid*
+
+        .env
+        application-local.yml
+        application-local.yaml
+        application-local.properties
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -6448,6 +6583,34 @@
   useEurekaServer: false
   isGateway: false
   useGatewaySecurity: false
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        node_modules/
+        dist/
+
+        .env
+        .env.*
+        !.env.example
+
+        npm-debug.log*
+        yarn-debug.log*
+        yarn-error.log*
+        pnpm-debug.log*
+
+        coverage/
+        .nyc_output/
+
+        .idea/
+        .vscode/
+        *.iml
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/"
+
   additionalFiles:
     - fileType: "Exception"
       fileName: "ResourceNotFoundException"
@@ -8171,6 +8334,66 @@
   useEurekaServer: false
   isGateway: false
   useGatewaySecurity: false
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        __pycache__/
+        *.py[cod]
+        *$py.class
+
+        *.so
+
+        .Python
+        build/
+        develop-eggs/
+        dist/
+        downloads/
+        eggs/
+        .eggs/
+        lib64/
+        parts/
+        sdist/
+        var/
+        wheels/
+        pip-wheel-metadata/
+        share/python-wheels/
+        *.egg-info/
+        .installed.cfg
+        *.egg
+        MANIFEST
+
+        venv/
+        .venv/
+        env/
+        ENV/
+
+        .pytest_cache/
+        .coverage
+        .coverage.*
+        htmlcov/
+        .tox/
+        .nox/
+
+        *.log
+
+        db.sqlite3
+        db.sqlite3-journal
+
+        media/
+        staticfiles/
+
+        .env
+        .env.*
+
+        .idea/
+        .vscode/
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
   additionalFiles:
     - fileType: "settings"
       fileName: "settings"

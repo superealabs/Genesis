@@ -669,13 +669,26 @@ public class ProjectGenerator {
 
         Framework framework = context.getFramework();
         FrontendFramework frontendFramework = context.getFrontendFramework();
+        if (framework == null) {
+            return;
+        }
+
         String projectPath = engine.simpleRender(context.getDestinationFolder(), Map.of("projectName", context.getProjectName()));
         String frontendPath = FrameworkFrontendMetadataProvider.getWebappFolder(context);
-        String backendPath = projectPath + "/" + StringUtils.majStart(context.getProjectName());
 
-        GitUtils.addBackendGitIgnore(framework.getId(), backendPath);
+        FilesEdit backendGitIgnoreFile = GitUtils.getGitIgnore(framework.getConditionalFiles());
+        String backendPath = backendGitIgnoreFile != null ? engine.simpleRender(backendGitIgnoreFile.getDestinationPath(),
+                Map.of("projectName", context.getProjectName(), "destinationFolder", context.getDestinationFolder()))
+            : projectPath + "/" + StringUtils.majStart(context.getProjectName());
+
+        GitUtils.generateGitIgnoreIfNeeded(backendGitIgnoreFile, backendPath);
+
         if(context.isGenerateProjectStructure()) {
-            GitUtils.addFrontendGitIgnore(frontendFramework.getId(), frontendPath);
+            if (frontendFramework == null) {
+                return;
+            }
+            FilesEdit frontendGitIgnoreFile = GitUtils.getGitIgnore(frontendFramework.getConditionalFiles());
+            GitUtils.generateGitIgnoreIfNeeded(frontendGitIgnoreFile, frontendPath);
         }
 
         if(config.isSeparateRepositories()) {

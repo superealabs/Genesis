@@ -1,6 +1,7 @@
 package org.labs.utils;
 
 import org.labs.genesis.config.Constantes;
+import org.labs.genesis.config.langage.FilesEdit;
 
 import java.io.IOException;
 import java.net.URI;
@@ -10,6 +11,8 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Optional;
 
 public class GitUtils {
 
@@ -156,43 +159,33 @@ public class GitUtils {
     }
 
     /**
-     * Ajoute le .gitignore correspondant au framework frontend.
+     * Génère le .gitignore à partir d'un fichier YAML défini dans le framework,
+     * ou utilise le fallback historique par ressource si aucun fichier YAML n'est fourni.
      */
-    public static void addFrontendGitIgnore(
-            int frameworkId,
+    public static void generateGitIgnoreIfNeeded(
+            FilesEdit gitIgnoreFile,
             String destinationPath
     ) throws IOException {
-
-        String gitignorePath =
-                Constantes.GITIGNORE_FRONTEND +
-                        "-" +
-                        frameworkId;
-
-        FileUtils.copyFile(
-                gitignorePath,
-                destinationPath,
-                ".gitignore"
-        );
+        if (gitIgnoreFile != null) {
+            String content = gitIgnoreFile.getContent() == null ? "" : gitIgnoreFile.getContent();
+            Path gitIgnoreTarget = Paths.get(destinationPath, ".gitignore");
+            FileUtils.createFileStructure(destinationPath);
+            Files.writeString(gitIgnoreTarget, content);
+        }
     }
 
-    /**
-     * Ajoute le .gitignore correspondant au framework backend.
-     */
-    public static void addBackendGitIgnore(
-            int frameworkId,
-            String destinationPath
-    ) throws IOException {
+    public static  FilesEdit getGitIgnore(List<FilesEdit> conditionalFiles) {
+        Optional<FilesEdit> gitIgnoreFile = conditionalFiles != null
+                ? conditionalFiles.stream()
+                .filter(file -> file != null && file.getFileName() != null)
+                .filter(file -> file.getFileName().equalsIgnoreCase(".gitignore") || file.getFileName().equalsIgnoreCase("gitignore"))
+                .findFirst()
+                : null;
 
-        String gitignorePath =
-                Constantes.GITIGNORE_BACKEND +
-                        "-" +
-                        frameworkId;
+        if(gitIgnoreFile != null && gitIgnoreFile.isPresent())
+            return  gitIgnoreFile.get();
 
-        FileUtils.copyFile(
-                gitignorePath,
-                destinationPath,
-                ".gitignore"
-        );
+        return null;
     }
 
     /**
