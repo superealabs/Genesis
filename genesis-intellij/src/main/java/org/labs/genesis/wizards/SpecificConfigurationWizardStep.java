@@ -180,8 +180,6 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             throw new IllegalStateException("Impossible de déterminer le contexte Project IntelliJ.");
         }
         try {
-            System.out.println("\n\n ====> projectGenerationContext: "
-                    + projectGenerationContext);
 
             ProgressManager.getInstance().run(
                     new Task.Modal(project, "Génération du Projet", true) {

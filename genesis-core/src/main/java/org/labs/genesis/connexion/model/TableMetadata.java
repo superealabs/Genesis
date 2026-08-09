@@ -75,8 +75,8 @@ public class TableMetadata {
             setIsView(false);
 
             List<ColumnMetadata> listeCols = database.fetchColumns(metaData, tableName, language,connect,framework);
-            fetchPrimaryKeys(metaData, tableName, listeCols, connect);
-            fetchForeignKeys(metaData, tableName, language, listeCols, connect);
+            fetchPrimaryKeys(metaData, tableName, listeCols);
+            fetchForeignKeys(metaData, tableName, language, listeCols);
 
             setClassName(
                     Stream.of(tableName)
