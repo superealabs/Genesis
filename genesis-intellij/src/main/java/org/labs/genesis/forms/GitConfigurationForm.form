@@ -143,6 +143,37 @@
 
 
       <!-- ===================================================== -->
+      <!-- SEPARATE REPOSITORIES -->
+      <!-- ===================================================== -->
+
+      <component id="separateRepositories"
+                 class="javax.swing.JRadioButton"
+                 binding="separateRepositoriesRadioButton"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="4"
+                column="0"
+                row-span="1"
+                col-span="4"
+                vsize-policy="0"
+                hsize-policy="3"
+                anchor="8"
+                fill="0"
+                indent="1"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Separate repositories for Frontend and Backend"/>
+          <selected value="false"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
       <!-- SINGLE REPOSITORY NAME -->
       <!-- ===================================================== -->
 
@@ -151,7 +182,7 @@
                  binding="repositoryNameLabel">
 
         <constraints>
-          <grid row="4"
+          <grid row="5"
                 column="0"
                 row-span="1"
                 col-span="1"
@@ -177,7 +208,7 @@
                  default-binding="true">
 
         <constraints>
-          <grid row="4"
+          <grid row="5"
                 column="1"
                 row-span="1"
                 col-span="3"
@@ -201,37 +232,6 @@
 
 
       <!-- ===================================================== -->
-      <!-- SEPARATE REPOSITORIES -->
-      <!-- ===================================================== -->
-
-      <component id="separateRepositories"
-                 class="javax.swing.JRadioButton"
-                 binding="separateRepositoriesRadioButton"
-                 default-binding="true">
-
-        <constraints>
-          <grid row="5"
-                column="0"
-                row-span="1"
-                col-span="4"
-                vsize-policy="0"
-                hsize-policy="3"
-                anchor="8"
-                fill="0"
-                indent="1"
-                use-parent-layout="false"/>
-        </constraints>
-
-        <properties>
-          <text value="Separate repositories for Frontend and Backend"/>
-          <selected value="false"/>
-          <visible value="false"/>
-        </properties>
-
-      </component>
-
-
-      <!-- ===================================================== -->
       <!-- BACKEND REPOSITORY -->
       <!-- ===================================================== -->
 
@@ -240,7 +240,7 @@
                  binding="backendRepositoryNameLabel">
 
         <constraints>
-          <grid row="6"
+          <grid row="5"
                 column="0"
                 row-span="1"
                 col-span="1"
@@ -266,7 +266,7 @@
                  default-binding="true">
 
         <constraints>
-          <grid row="6"
+          <grid row="5"
                 column="1"
                 row-span="1"
                 col-span="3"
@@ -298,7 +298,7 @@
                  binding="frontendRepositoryNameLabel">
 
         <constraints>
-          <grid row="7"
+          <grid row="6"
                 column="0"
                 row-span="1"
                 col-span="1"
@@ -321,6 +321,63 @@
       <component id="frontendName"
                  class="javax.swing.JTextField"
                  binding="frontendRepositoryNameField"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="6"
+                column="1"
+                row-span="1"
+                col-span="3"
+                vsize-policy="0"
+                hsize-policy="6"
+                anchor="8"
+                fill="1"
+                indent="0"
+                use-parent-layout="false">
+
+            <preferred-size width="250" height="-1"/>
+
+          </grid>
+        </constraints>
+
+        <properties>
+          <visible value="false"/>
+        </properties>
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- GITHUB USERNAME -->
+      <!-- ===================================================== -->
+
+      <component id="githubUsernameLabel"
+                 class="javax.swing.JLabel"
+                 binding="githubUsernameLabel">
+
+        <constraints>
+          <grid row="7"
+                column="0"
+                row-span="1"
+                col-span="1"
+                vsize-policy="0"
+                hsize-policy="0"
+                anchor="8"
+                fill="0"
+                indent="2"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="GitHub username:"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <component id="githubUsername"
+                 class="javax.swing.JTextField"
+                 binding="githubUsernameField"
                  default-binding="true">
 
         <constraints>
@@ -370,66 +427,8 @@
         </constraints>
 
         <properties>
-          <text value="Create remote repository on GitHub"/>
+          <text value="Configure remote repository"/>
           <selected value="false"/>
-          <visible value="false"/>
-        </properties>
-
-      </component>
-
-
-      <!-- ===================================================== -->
-      <!-- GITHUB USERNAME -->
-      <!-- ===================================================== -->
-
-      <component id="githubUsernameLabel"
-                 class="javax.swing.JLabel"
-                 binding="githubUsernameLabel">
-
-        <constraints>
-          <grid row="9"
-                column="0"
-                row-span="1"
-                col-span="1"
-                vsize-policy="0"
-                hsize-policy="0"
-                anchor="8"
-                fill="0"
-                indent="2"
-                use-parent-layout="false"/>
-        </constraints>
-
-        <properties>
-          <text value="GitHub username:"/>
-          <visible value="false"/>
-        </properties>
-
-      </component>
-
-
-      <component id="githubUsername"
-                 class="javax.swing.JTextField"
-                 binding="githubUsernameField"
-                 default-binding="true">
-
-        <constraints>
-          <grid row="9"
-                column="1"
-                row-span="1"
-                col-span="3"
-                vsize-policy="0"
-                hsize-policy="6"
-                anchor="8"
-                fill="1"
-                indent="0"
-                use-parent-layout="false">
-
-            <preferred-size width="250" height="-1"/>
-
-          </grid>
-        </constraints>
-
-        <properties>
           <visible value="false"/>
         </properties>
 
@@ -445,7 +444,7 @@
                  binding="githubTokenLabel">
 
         <constraints>
-          <grid row="10"
+          <grid row="9"
                 column="0"
                 row-span="1"
                 col-span="1"
@@ -471,7 +470,7 @@
                  default-binding="true">
 
         <constraints>
-          <grid row="10"
+          <grid row="9"
                 column="1"
                 row-span="1"
                 col-span="3"
@@ -500,7 +499,7 @@
 
       <vspacer id="spacer">
         <constraints>
-          <grid row="11"
+          <grid row="10"
                 column="0"
                 row-span="1"
                 col-span="4"
