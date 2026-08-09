@@ -4,10 +4,22 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import org.labs.genesis.config.Constantes;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.config.langage.generator.indicator.ProgressReporter;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.SpecificConfigurationForm;
+import org.labs.genesis.indicator.IntelliJProgressAdapter;
+import org.labs.utils.StringUtils;
+import com.intellij.openapi.project.Project;
+import com.intellij.ide.impl.ProjectUtil;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -17,18 +29,40 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.sql.Connection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SpecificConfigurationWizardStep extends ModuleWizardStep {
     private final SpecificConfigurationForm specificConfigurationForm;
-    private final ProjectGenerationContext projectGenerationContext;
+    private final GenerationContextManager generationContextManager;
     private final ProjectGenerator projectGenerator = new ProjectGenerator();
+    private final List<ProjectGenerationContext> listProjectGenerationContexts;
 
-    public SpecificConfigurationWizardStep(ProjectGenerationContext projectGenerationContext) {
-        this.specificConfigurationForm = new SpecificConfigurationForm();
-        this.projectGenerationContext = projectGenerationContext;
+    public SpecificConfigurationWizardStep(GenerationContextManager generationContextManagert,List<ProjectGenerationContext> listProjectGenerationContexts) {
+        this.specificConfigurationForm = new SpecificConfigurationForm(listProjectGenerationContexts);
+        this.generationContextManager = generationContextManagert;
+        this.listProjectGenerationContexts = listProjectGenerationContexts;
 
         // Initialiser les composants du formulaire
         specificConfigurationForm.initializeForm();
+        listenerAddSpecificConfiguration();
+    }
+    private boolean checkSpecificConfigurationInMultiProject() {
+        for (ProjectGenerationContext projectGenerationContext : listProjectGenerationContexts) {
+            if ( projectGenerationContext.getFrameworkConfiguration() == null)
+            { return false; }
+        }
+        return true;
+    }
+    private void listenerAddSpecificConfiguration() {
+        specificConfigurationForm.getAddSpecificConfigurationButton().addActionListener(e -> updateDataModelMulti());
+    }
+    @Override
+    public void updateStep() {
+        SwingUtilities.invokeLater(() -> {
+            boolean isMultiProject = !listProjectGenerationContexts.isEmpty();
+            specificConfigurationForm.refreshUI(isMultiProject);
+        });
     }
 
     public static boolean frameworkHasConfiguration(Framework framework, String variableName) {
@@ -43,7 +77,7 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public void updateDataModel() {
-        Framework framework = projectGenerationContext.getFramework();
+        Framework framework = generationContextManager.getContext().getFramework();
         Map<String, Object> frameworkConfiguration = new HashMap<>();
 
         // Gestion d'Eureka
@@ -63,6 +97,29 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
                 specificConfigurationForm.getSecurityTypeOptions().getSelectedItem(), () -> "").toString()
         );
 
+        // Gestion du cache
+        frameworkConfiguration.put("cacheProvider", Objects.requireNonNullElseGet(
+                specificConfigurationForm.getCacheProviderOptions().getSelectedItem(), () -> "").toString()
+        );
+        if (!specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList().isEmpty()) {
+            List<String> selectedEntities = specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList();
+
+            // Formate every entity name to match with class naming convention
+            List<String> entitiesCacheable = selectedEntities.stream()
+                    .filter(tableName -> tableName != null && !tableName.isBlank())
+                    .map(tableName -> Stream.of(tableName)
+                            .map(String::toLowerCase)
+                            .map(StringUtils::toCamelCase)
+                            .map(StringUtils::majStart)
+                            .map(StringUtils::removeLastS)
+                            .findFirst()
+                            .orElse(""))
+                    .filter(formatted -> !formatted.isEmpty())
+                    .collect(Collectors.toList());
+
+            frameworkConfiguration.put("entitiesCacheable", entitiesCacheable);
+        }
+
         // Gestion de hibernate ddl option
         frameworkConfiguration.put("hibernateDdlAuto", Objects.requireNonNullElseGet(
                 specificConfigurationForm.getDdlAutoOptions().getSelectedItem(), () -> "").toString()
@@ -70,35 +127,215 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
 
         // Gestion des routes et de l'authentification si c'est une Gateway
         if (framework != null && framework.getIsGateway()) {
-            frameworkConfiguration.put("routes", specificConfigurationForm.getRouteConfigurationData());
-            frameworkConfiguration.put("username", specificConfigurationForm.getUsernameField().getText().trim());
-            frameworkConfiguration.put("password", new String(specificConfigurationForm.getPasswordField().getPassword()).trim());
-            frameworkConfiguration.put("role", specificConfigurationForm.getRoleField().getText().trim());
+            if(!specificConfigurationForm.getUseOauth2()) {
+                frameworkConfiguration.put("routes", specificConfigurationForm.getRouteConfigurationData());
+                frameworkConfiguration.put("username", specificConfigurationForm.getUsernameField().getText().trim());
+                frameworkConfiguration.put("password", new String(specificConfigurationForm.getPasswordField().getPassword()).trim());
+                frameworkConfiguration.put("role", specificConfigurationForm.getRoleField().getText().trim());
+                framework.setUseGatewaySecurity(false);
+            }else{
+                frameworkConfiguration.put("routes", specificConfigurationForm.getRouteConfigurationData());
+                frameworkConfiguration.put("client-id", specificConfigurationForm.getClientIdField().getText().trim());
+                frameworkConfiguration.put("client-secret", specificConfigurationForm.getClientSecretField().getText().trim());
+                framework.setUseGatewaySecurity(true);
+            }
+        }
+
+        // Gestion de la création du venv pour Django
+        if (framework != null && framework.getCoreFramework() != null && 
+            framework.getCoreFramework().equalsIgnoreCase("Django")) {
+            boolean createVenv = specificConfigurationForm.getCreateVenvCheckBox() != null && 
+                                specificConfigurationForm.getCreateVenvCheckBox().isSelected();
+            frameworkConfiguration.put("createVenv", createVenv);
+
+            // Gestion de l'auth optionnelle (login/inscription)
+            boolean enableAuth = true;
+            if (specificConfigurationForm.getEnableAuthCheckBox() != null) {
+                enableAuth = specificConfigurationForm.getEnableAuthCheckBox().isSelected();
+            }
+            frameworkConfiguration.put("enableAuth", enableAuth);
         }
 
         // Ajouter projectPort et projectDescription au contexte
-        projectGenerationContext.setProjectPort(specificConfigurationForm.getProjectPortField().getText().trim());
-        projectGenerationContext.setProjectDescription(specificConfigurationForm.getProjectDescriptionField().getText().trim());
+        generationContextManager.getContext().setProjectPort(specificConfigurationForm.getProjectPortField().getText().trim());
+        generationContextManager.getContext().setProjectDescription(specificConfigurationForm.getProjectDescriptionField().getText().trim());
 
-        projectGenerationContext.setFrameworkConfiguration(frameworkConfiguration);
-
-        // Génération du projet
-        try {
-            System.out.println("\n\n ====> projectGenerationContext: " + projectGenerationContext);
-            generateProject();
-        } catch (Exception e) {
+        generationContextManager.getContext().setFrameworkConfiguration(frameworkConfiguration);
+        if (!checkSpecificConfigurationInMultiProject()) {
             Messages.showErrorDialog(
                     specificConfigurationForm.getMainPanel(),
+                    "One or more projects don't have a specific configuration.",
+                    "Error"
+            );
+            throw new IllegalArgumentException("Error, one or more projects don't have a specific configuration.") ;
+        }
+        // Génération du projet
+
+        Project project = ProjectUtil.getProjectForComponent(specificConfigurationForm.getMainPanel());
+        if (project == null) {
+            project = ProjectUtil.getActiveProject();
+        }
+
+        if (project == null) {
+            throw new IllegalStateException("Impossible de déterminer le contexte Project IntelliJ.");
+        }
+        try {
+            System.out.println("\n\n ====> projectGenerationContext: "
+                    + projectGenerationContext);
+
+            ProgressManager.getInstance().run(
+                    new Task.Modal(project, "Génération du Projet", true) {
+
+                        @Override
+                        public void run(@NotNull ProgressIndicator indicator) {
+                            IntelliJProgressAdapter processIndicator =
+                                    new IntelliJProgressAdapter(indicator);
+
+                            processIndicator.setProgress(0, "Processing ...");
+
+                            try {
+                                generateProject(processIndicator);
+
+                                processIndicator.setProgress(
+                                        1,
+                                        "Generation complete"
+                                );
+
+                            } catch (Exception e) {
+                                throw new RuntimeException(
+                                        "Project generation failed: "
+                                                + e.getMessage(),
+                                        e
+                                );
+                            }
+                        }
+                    }
+            );
+
+            Messages.showInfoMessage(
+                    project,
+                    "Project generation completed successfully",
+                    "Success"
+            );
+
+        } catch (Exception e) {
+
+            Messages.showErrorDialog(
+                    project,
+                    "Une erreur inattendue est survenue lors de la génération : "
+                            + e.getMessage()
+                            + "\n\n"
+                            + "Veuillez consulter la console d'exécution ou les "
+                            + "**logs d'IntelliJ** pour plus de détails "
+                            + "(Help -> Show Log in Explorer/Finder).",
+                    "Échec de la Génération du Projet"
+            );
+
+            throw new RuntimeException(
                     "Project generation failed: " + e.getMessage(),
+                    e
+            );
+        }
+    }
+    
+    public void updateDataModelMulti(){
+        try {
+            if(multivalidate()) {
+                ProjectGenerationContext newProjectGenerationContext = (ProjectGenerationContext) specificConfigurationForm.getContextList().getSelectedItem();
+                Framework framework = newProjectGenerationContext.getFramework();
+                Map<String, Object> frameworkConfiguration = new HashMap<>();
+
+                // Gestion d'Eureka
+                if (specificConfigurationForm.getUseAnEurekaServerCheckBox().isSelected()) {
+                    framework.setUseCloud(true);
+                    framework.setUseEurekaServer(true);
+                    frameworkConfiguration.put("eurekaServerURL", specificConfigurationForm.getEurekaServerHostField().getText().trim());
+                }
+
+                // Gestion de loggingLevel
+                frameworkConfiguration.put("loggingLevel", Objects.requireNonNullElseGet(
+                        specificConfigurationForm.getLoggingLevelOptions().getSelectedItem(), () -> "").toString()
+                );
+
+                // Gestion du type de sécurisation
+                frameworkConfiguration.put("securityType", Objects.requireNonNullElseGet(
+                        specificConfigurationForm.getSecurityTypeOptions().getSelectedItem(), () -> "").toString()
+                );
+
+                // Gestion du cache
+                frameworkConfiguration.put("cacheProvider", Objects.requireNonNullElseGet(
+                        specificConfigurationForm.getCacheProviderOptions().getSelectedItem(), () -> "").toString()
+                );
+                if (!specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList().isEmpty()) {
+                    List<String> selectedEntities = specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList();
+
+                    // Formate every entity name to match with class naming convention
+                    List<String> entitiesCacheable = selectedEntities.stream()
+                            .filter(tableName -> tableName != null && !tableName.isBlank())
+                            .map(tableName -> Stream.of(tableName)
+                                    .map(String::toLowerCase)
+                                    .map(StringUtils::toCamelCase)
+                                    .map(StringUtils::majStart)
+                                    .map(StringUtils::removeLastS)
+                                    .findFirst()
+                                    .orElse(""))
+                            .filter(formatted -> !formatted.isEmpty())
+                            .collect(Collectors.toList());
+
+                    frameworkConfiguration.put("entitiesCacheable", entitiesCacheable);
+                }
+
+                // Gestion de hibernate ddl option
+                frameworkConfiguration.put("hibernateDdlAuto", Objects.requireNonNullElseGet(
+                        specificConfigurationForm.getDdlAutoOptions().getSelectedItem(), () -> "").toString()
+                );
+
+                // Gestion des routes et de l'authentification si c'est une Gateway
+                if (framework != null && framework.getIsGateway()) {
+                    frameworkConfiguration.put("routes", specificConfigurationForm.getRouteConfigurationData());
+                    frameworkConfiguration.put("username", specificConfigurationForm.getUsernameField().getText().trim());
+                    frameworkConfiguration.put("password", new String(specificConfigurationForm.getPasswordField().getPassword()).trim());
+                    frameworkConfiguration.put("role", specificConfigurationForm.getRoleField().getText().trim());
+                }
+
+                // Gestion de la création du venv pour Django
+                if (framework != null && framework.getCoreFramework() != null &&
+                        framework.getCoreFramework().equalsIgnoreCase("Django")) {
+                    boolean createVenv = specificConfigurationForm.getCreateVenvCheckBox() != null &&
+                            specificConfigurationForm.getCreateVenvCheckBox().isSelected();
+                    frameworkConfiguration.put("createVenv", createVenv);
+
+                    // Gestion de l'auth optionnelle (login/inscription)
+                    boolean enableAuth = true;
+                    if (specificConfigurationForm.getEnableAuthCheckBox() != null) {
+                        enableAuth = specificConfigurationForm.getEnableAuthCheckBox().isSelected();
+                    }
+                    frameworkConfiguration.put("enableAuth", enableAuth);
+                }
+
+                // Ajouter projectPort et projectDescription au contexte
+                newProjectGenerationContext.setProjectPort(specificConfigurationForm.getProjectPortField().getText().trim());
+                newProjectGenerationContext.setProjectDescription(specificConfigurationForm.getProjectDescriptionField().getText().trim());
+
+                newProjectGenerationContext.setFrameworkConfiguration(frameworkConfiguration);
+                Messages.showInfoMessage(
+                        specificConfigurationForm.getMainPanel(),
+                        "Add specific configuration successful!",
+                        "Success"
+                );
+            }
+        }catch (Exception e){
+            Messages.showErrorDialog(
+                    specificConfigurationForm.getMainPanel(),
+                     e.getMessage(),
                     "Error"
             );
             throw new RuntimeException(e);
         }
     }
-
     @Override
     public boolean validate() throws ConfigurationException {
-        Framework framework = projectGenerationContext.getFramework();
+        Framework framework = generationContextManager.getContext().getFramework();
 
         // Valider les options spécifiques au framework
         validateLoggingLevel(framework);
@@ -111,11 +348,37 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         validateProjectPort();
         validateProjectDescription();
 
+        // Valider la configuration du cache
+        validateCache();
+
         // Valider les champs pour les API Gateway
         if (framework != null && framework.getIsGateway()) {
-            validateGatewayAuthentication();
+            if (!specificConfigurationForm.getUseOauth2()){
+                validateGatewayAuthentication();
+            }else{
+                validateGatewayAuthenticationOauth2();
+            }
             validateRouteTable();
         }
+
+        return true;
+    }
+    public boolean multivalidate() throws ConfigurationException {
+        Framework framework = generationContextManager.getContext().getFramework();
+
+        // Valider les options spécifiques au framework
+        validateLoggingLevel(framework);
+        validateHibernateDdlAuto(framework);
+
+        // Valider les options Eureka Server
+        validateEurekaServer();
+
+        // Valider les champs spécifiques au projet
+        validateProjectPort();
+        validateProjectDescription();
+
+        // Valider la configuration du cache
+        validateCache();
 
         return true;
     }
@@ -169,6 +432,13 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         }
     }
 
+    private void validateCache() throws ConfigurationException {
+        if (!specificConfigurationForm.getCacheProviderOptions().getSelectedItem().equals("NONE") &&
+                specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList().isEmpty()) {
+            throw new ConfigurationException("Please select at least one table or view to cache.");
+        }
+    }
+
     private void validateGatewayAuthentication() throws ConfigurationException {
         String username = specificConfigurationForm.getUsernameField().getText().trim();
         String password = new String(specificConfigurationForm.getPasswordField().getPassword()).trim();
@@ -178,6 +448,19 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             put(password, "Password for API Gateway cannot be empty.");
             put(role, "Role for API Gateway cannot be empty.");
         }};
+        for (Map.Entry<String, String> e : gatewayMap.entrySet()) {
+            if (e.getKey().isEmpty()) {
+                throw new ConfigurationException(e.getValue());
+            }
+        }
+    }
+    private void validateGatewayAuthenticationOauth2() throws ConfigurationException {
+        String clientId = specificConfigurationForm.getClientIdField().getText().trim();
+        String clientSecret = specificConfigurationForm.getClientSecretField().getText().trim();
+        HashMap<String, String> gatewayMap = new HashMap<>() {{
+            put(clientId, "Client ID for API Gateway cannot be empty.");
+            put(clientSecret, "Client Secret for API Gateway cannot be empty.");
+        }} ;
         for (Map.Entry<String, String> e : gatewayMap.entrySet()) {
             if (e.getKey().isEmpty()) {
                 throw new ConfigurationException(e.getValue());
@@ -212,15 +495,29 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
         }
     }
 
-    private void generateProject() throws Exception {
+    private void generateProject(ProgressReporter indicator) throws Exception {
         try {
-            projectGenerator.generateProject(projectGenerationContext);
+            if(listProjectGenerationContexts.isEmpty()){
+                projectGenerator.generateProject(generationContextManager.getContext(), indicator);
+            }else{
+                for(ProjectGenerationContext newProjectGenerationContext : listProjectGenerationContexts){
+                    projectGenerator.generateProject(newProjectGenerationContext, indicator);
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Project generation failed: " + e.getMessage(), e);
         } finally {
-            Connection con = projectGenerationContext.getConnection();
+            Connection con = generationContextManager.getContext().getConnection();
             if(con!=null) con.close();
+
+
+            // Fix 1 : rajout de la déinitialisation du contexte
+            if(this.generationContextManager.getContext() != null) {
+                generationContextManager.getContext().setConnection(null);
+                 if(this.generationContextManager.getContext().getFrontendFramework() != null)
+                    this.generationContextManager.getContext().getFrontendFramework().clearRoutes();
+            }
         }
     }
 
@@ -229,5 +526,17 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
             throw new IllegalArgumentException("Framework must not be null");
         }
         specificConfigurationForm.updateFormWithFramework(framework);
+    }
+
+    public void onTablesAndViewsSelected(List<String> selectedValues, List<String> selectedViewValues) {
+        if (selectedValues.isEmpty() && selectedViewValues.isEmpty()) {
+            throw new IllegalArgumentException("At least one table or view must be selected");
+        }
+        specificConfigurationForm.updateFormWithTablesAndViews(selectedValues, selectedViewValues);
+    }
+
+    @Override
+    public boolean isStepVisible() {
+        return generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess();
     }
 }

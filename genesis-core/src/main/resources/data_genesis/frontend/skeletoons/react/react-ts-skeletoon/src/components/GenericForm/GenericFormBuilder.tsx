@@ -28,12 +28,14 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { TimePicker } from "@mui/x-date-pickers";
 import { parseTimeString } from '@/utils/timeParser';
 import { formatTimeTz, parseTimeTz } from "@/utils/timeTzParser";
+import { fileToBase64, bytesToUrl } from "@/utils/imageUtil";
 import { DurationInput } from "@/components/Input/DurationInput";
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 
 interface FormFieldConfig {
     label: string;
-    type: 'text' | 'number' | 'Date' | 'datetime' | 'time' | 'timeTz' | 'checkbox' | 'select' | 'interval';
+    type: 'text' | 'number' | 'Date' | 'datetime' | 'time' | 'timeTz' | 'checkbox' | 'select' | 'interval'  | 'Uint8Array';
     required?: boolean;
     readonly?: boolean;
     options?: readonly { readonly value: string | number; readonly label: string }[];
@@ -87,25 +89,29 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
             for (const [key, config] of Object.entries(fields)) {
                 if (config.foreignKey) {
                     try {
-                        const url = `${import.meta.env.VITE_API_BASE}${config.foreignKey.endpoint}`;
-                        const response = await fetch(url);
-                        const data = await response.json();
-                        const content = data.content || data.data?.content || data;
+                        // ✅ Utiliser axios au lieu de fetch
+                        const response = await axios.get(
+                            `${import.meta.env.VITE_API_BASE}${config.foreignKey.endpoint}`
+                        )
+                        const data = response.data
+                        const content = data.content || data.data?.content || data
+
                         const options = Array.isArray(content)
                             ? content.map((item: any) => ({
                                 value: item[config.foreignKey!.valueKey],
                                 label: item[config.foreignKey!.labelKey],
                             }))
-                            : [];
-                        setForeignOptions((prev) => ({ ...prev, [key]: options }));
+                            : []
+
+                        setForeignOptions((prev) => ({ ...prev, [key]: options }))
                     } catch (error) {
-                        console.error(`Erreur chargement ${key}:`, error);
+                        console.error('Erreur chargement ' + key, error)
                     }
                 }
             }
-        };
-        loadForeignKeys();
-    }, [fields]);
+        }
+        loadForeignKeys()
+    }, [fields])
 
     useEffect(() => {
         if (initialData) {
@@ -122,7 +128,10 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
         }
     }, [initialData, fields]);
 
-    const handleChange = (key: string, value: any) => {
+    const handleChange = async (key: string, value: any) => {
+        if (value instanceof File) {
+            value = await fileToBase64(value)
+        }
         setFormData((prev) => ({ ...prev, [key]: value }));
     };
 
@@ -135,6 +144,13 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
         Object.entries(fields).forEach(([key, config]) => {
             if (config.transform) {
                 payload[key] = config.transform(payload[key]);
+            }
+        });
+        Object.keys(payload).forEach(key => {
+            if (payload[key] === ''
+                    || payload[key] === null
+                    || payload[key] === undefined) {
+                delete payload[key];
             }
         });
 
@@ -166,6 +182,12 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
             if (body?.errors && typeof body.errors === 'object') {
                 setFieldErrors(body.errors);
             }
+            const errorMessage =
+                body?.message ||
+                body?.error ||
+                (typeof body === 'string' ? body : null) ||
+                err?.message ||
+                'An error occured';
             enqueueSnackbar(body?.message || 'Erreur', { variant: 'error' });
         } finally {
             setLoading(false);
@@ -362,7 +384,23 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                 error={Boolean(fieldErrors[key])}
                                                 helperText={fieldErrors[key] ?? ' '}
                                             />
-                                        ) : (
+                                        ) : config.type === 'Uint8Array' ? (
+                                            <>
+                                                <input
+                                                    type="file"
+                                                    onChange={(e) => handleChange(key, e.target.files?.[0] ?? null)}
+                                                />
+                                                <img
+                                                    src={bytesToUrl(formData[key] as number[])}
+                                                    alt={key}
+                                                    style={{
+                                                        maxWidth: "200px",
+                                                        maxHeight: "200px",
+                                                        objectFit: "contain"
+                                                    }}
+                                                />
+                                            </>
+                                        )  : (
                                             <TextField
                                                 fullWidth
                                                 margin="normal"
@@ -406,7 +444,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                             >
                                 {loading
                                     ? t(mode === 'create' ? 'messages.state.creating' : 'messages.state.updating')
-                                    : t(mode === 'create' ? 'messages.common.create' : 'messages.common.save')}
+                                    : t(mode === 'create' ? 'messages.common.create' : 'messages.common.edit')}
                             </Button>
                         </Box>
                     </form>

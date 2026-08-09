@@ -7,8 +7,6 @@ import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
-
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,10 +20,6 @@ public class APIGenerator implements GenesisGenerator {
     }
 
 
-    private String loadTemplate(Framework framework) throws IOException {
-        return FileUtils.getFileContent(Constantes.DATA_PATH + "/" + framework.getTemplate() + "." + Constantes.MODEL_TEMPLATE_EXT);
-    }
-
     @Override
     public String generateModel(Framework framework, Map<String, Object> frameworkOptions, Language language, TableMetadata tableMetadata, String destinationFolder, String projectName, String groupLink, boolean generateComponentOnly) throws Exception {
         // Vérification de compatibilité
@@ -36,7 +30,7 @@ public class APIGenerator implements GenesisGenerator {
         }
 
         // Chargement du template
-        String templateContent = loadTemplate(framework);
+        String templateContent = FrameworkTemplateLoader.loadModelTemplate(framework);
 
         // Rendu intermédiaire
         HashMap<String, Object> metadataPrimary = getModelHashMap(framework, language, tableMetadata);
@@ -61,11 +55,17 @@ public class APIGenerator implements GenesisGenerator {
 
         // Création du fichier correspondant
         String fileName = tableMetadata.getClassName();
+
+        // convention de nommage pour node
+        if(framework.getId()==Constantes.ExpressJs_ID){
+            String className = tableMetadata.getClassName();
+            fileName = className.substring(0,1).toLowerCase() + className.substring(1)+".entity";
+        }
         result = engine.render(result, metadataFinally);
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
+        FileUtils.createOrMergeFile(destinationFolder, fileSavePath, fileName, language.getExtension(), result);
 
         ProjectGenerator.renderFilesEdits(framework.getModel().getModelAdditionalFiles(), metadataFinally);
-
+        //ProjectGenerator.renderFilesEdits(framework.getModel().getModelTestUnitFiles(), metadataFinally);
         return result;
     }
 
@@ -79,7 +79,7 @@ public class APIGenerator implements GenesisGenerator {
         }
 
         // Chargement du template
-        String templateContent = loadTemplate(framework);
+        String templateContent = FrameworkTemplateLoader.loadModelTemplate(framework);
 
         // Rendu intermédiaire
         HashMap<String, Object> metadataPrimary = getModelDaoHashMap(framework, language, tableMetadata);
@@ -94,6 +94,9 @@ public class APIGenerator implements GenesisGenerator {
         if (generateComponentOnly) {
             fileSavePath = destinationFolder + "/" + projectName + "/repositories";
         } else {
+            if (framework.getModelDao() == null) {
+                throw new RuntimeException("ModelDao is not configured for framework: " + framework.getName());
+            }
             fileSavePath = framework.getModelDao().getModelDaoSavePath();
             fileSavePath = engine.simpleRender(fileSavePath, metadataFinally);
         }
@@ -106,12 +109,15 @@ public class APIGenerator implements GenesisGenerator {
         if (generateComponentOnly) {
             fileName = tableMetadata.getClassName() + "Repository";
         } else {
+            if (framework.getModelDao() == null) {
+                throw new RuntimeException("ModelDao is not configured for framework: " + framework.getName());
+            }
             fileName = framework.getModelDao().getModelDaoName();
             fileName = engine.simpleRender(fileName, metadataFinally);
         }
 
         result = engine.render(result, metadataFinally);
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
+        FileUtils.createOrMergeFile(destinationFolder,fileSavePath, fileName, language.getExtension(), result);
 
         // Si generateComponentOnly est false, on rend les fichiers additionnels
         if (!generateComponentOnly) {
@@ -129,7 +135,7 @@ public class APIGenerator implements GenesisGenerator {
                     framework.getName() + "' (required language ID: '" + framework.getLanguageId() + "').");
         }
         // Chargement du template
-        String templateContent = loadTemplate(framework);
+        String templateContent = FrameworkTemplateLoader.loadModelTemplate(framework);
 
         // Rendu intermédiaire
         HashMap<String, Object> metadataPrimary = getServiceHashMap(framework, language, tableMetadata);
@@ -153,14 +159,27 @@ public class APIGenerator implements GenesisGenerator {
         // Création du fichier
         String fileName;
         if (generateComponentOnly) {
-            fileName = tableMetadata.getClassName() + "Service";
+            // convention de nommage node
+            if(framework.getId()== Constantes.ExpressJs_ID){
+                String className = tableMetadata.getClassName();
+                fileName = className.substring(0,1).toLowerCase() + className.substring(1) + ".service";
+            }else {
+                fileName = tableMetadata.getClassName() + "Service";
+            }
         } else {
-            fileName = framework.getService().getServiceName();
-            fileName = engine.simpleRender(fileName, metadataFinally);
+            System.out.println ("GENERATE SERVICE FRAMEWORK = "+ framework.getId());
+            if(framework.getId()== Constantes.ExpressJs_ID){
+                String className = tableMetadata.getClassName();
+                fileName = className.substring(0,1).toLowerCase() + className.substring(1) + ".service";
+                fileName = engine.simpleRender(fileName, metadataFinally);
+            }else {
+                fileName = framework.getService().getServiceName();
+                fileName = engine.simpleRender(fileName, metadataFinally);
+            }
         }
 
         result = engine.render(result, metadataFinally);
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
+        FileUtils.createOrMergeFile(destinationFolder,fileSavePath, fileName, language.getExtension(), result);
 
         // Si generateComponentOnly est false, on rend les fichiers additionnels
         if (!generateComponentOnly) {
@@ -181,7 +200,7 @@ public class APIGenerator implements GenesisGenerator {
 
 
         // Chargement du template
-        String templateContent = loadTemplate(framework);
+        String templateContent = FrameworkTemplateLoader.loadModelTemplate(framework);
 
         // Rendu intermédiaire
         HashMap<String, Object> metadataPrimary = getControllerHashMap(framework, language, tableMetadata);
@@ -205,14 +224,27 @@ public class APIGenerator implements GenesisGenerator {
         // Création du fichier
         String fileName;
         if (generateComponentOnly) {
-            fileName = tableMetadata.getClassName() + "Controller";
+            // convention de nommage node
+            if(framework.getId()== Constantes.ExpressJs_ID){
+                String className = tableMetadata.getClassName();
+                fileName = className.substring(0,1).toLowerCase() + className.substring(1) + ".controller";
+            }else {
+                fileName = tableMetadata.getClassName() + "Controller";
+            }
         } else {
-            fileName = framework.getController().getControllerName();
-            fileName = engine.simpleRender(fileName, metadataFinally);
+            if(framework.getId()== Constantes.ExpressJs_ID){
+                String className = tableMetadata.getClassName();
+                fileName = className.substring(0,1).toLowerCase() + className.substring(1) + ".controller";
+                fileName = engine.simpleRender(fileName, metadataFinally);
+            }else {
+
+                fileName = framework.getController().getControllerName();
+                fileName = engine.simpleRender(fileName, metadataFinally);
+            }
         }
 
         result = engine.render(result, metadataFinally);
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), result);
+        FileUtils.createOrMergeFile(destinationFolder,fileSavePath, fileName, language.getExtension(), result);
 
         // Si generateComponentOnly est false, on rend les fichiers additionnels
         if (!generateComponentOnly) {

@@ -1,0 +1,28 @@
+{
+    "projectName": "${projectName}",
+    "projectDescription": "${projectDescription}",
+    "projectPort": "${projectPort}",
+    "backend": {
+        "languageId": "${language.id}",
+        "frameworkId": "${framework.id}",
+        "groupLink": "${groupLink}",
+        "languageConfiguration": ${languageConfiguration},
+        "frameworkConfiguration": ${frameworkConfiguration},
+        "generationOptions": [
+        ]
+    },
+    "frontend": {
+    },
+    "database": {
+    },
+    "authentication": {
+    },
+    "entities": {
+        "names": [
+        ]
+    },
+    "views": {
+        "names": [
+        ]
+    }
+}

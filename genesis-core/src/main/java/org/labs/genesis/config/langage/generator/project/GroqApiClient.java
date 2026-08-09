@@ -112,7 +112,7 @@ public class GroqApiClient {
                 if (!choices.isEmpty()) {
                     HashMap<?, ?> firstChoice = (HashMap<?, ?>) choices.getFirst();
                     HashMap<?, ?> message = (HashMap<?, ?>) firstChoice.get("message");
-                    return (String) message.get("content");
+                    return stripMarkdownFences((String) message.get("content"));
                 }
             }
             throw new RuntimeException("Invalid response format: choices array is empty or malformed");
@@ -120,6 +120,13 @@ public class GroqApiClient {
             throw new RuntimeException("API call failed with status code: " + response.statusCode() + "\nError message : " + response.body());
         }
     }
-
+        private static String stripMarkdownFences(String content) {
+                if (content == null) return null;
+                String cleaned = content.trim();
+                cleaned = cleaned.replaceFirst("(?i)^```sql\\s*", "");
+                cleaned = cleaned.replaceFirst("^```\\s*", "");
+                cleaned = cleaned.replaceFirst("\\s*```\\s*$", "");
+                return cleaned.trim();
+        }
 
 }

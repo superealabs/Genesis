@@ -2,7 +2,10 @@ package org.labs.genesis.forms;
 
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBList;
 import lombok.Getter;
+import lombok.Setter;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkMVC;
 
@@ -43,7 +46,81 @@ public class SpecificConfigurationForm {
     private JTextField roleField;
     private JLabel securityTypeLabel;
     private JComboBox<String> securityTypeOptions;
+    private JLabel cacheProviderLabel;
+    private JComboBox<String> cacheProviderOptions;
+    private JLabel cacheableLabel;
+    private JScrollPane allTablesAndViewsNamesPane;
+    private JBList<String> selectedTableAndViewNamesList;
+    private JCheckBox createVenvCheckBox;
+    private JCheckBox enableAuthCheckBox;
+    private JLabel clientIdLabel;
+    private JLabel clientSecretLabel;
+    private JTextField clientIdField;
+    private JTextField clientSecretField;
+    @Setter
+    private List<String> allTablesAndViewsNames  = new ArrayList<>();
+    @Setter
+    Boolean useOauth2 = false;
 
+    private JComboBox<String> comboBoxProjectList;
+    private JComboBox<ProjectGenerationContext> contextList ;
+    private JLabel labelListProject;
+    private JButton addSpecificConfigurationButton;
+    private final List<ProjectGenerationContext> listProjectGenerationContexts ;
+
+
+    public SpecificConfigurationForm(List<ProjectGenerationContext> listProjectGenerationContexts) {
+        this.listProjectGenerationContexts = listProjectGenerationContexts;
+        contextList = new JComboBox<>();
+    }
+    public void refreshUI(boolean isMultiProject) {
+        if (isMultiProject) {
+            addListProject();
+            comboBoxProjectList.setVisible(true);
+            labelListProject.setVisible(true);
+            addSpecificConfigurationButton.setVisible(true);
+        } else {
+            comboBoxProjectList.setVisible(false);
+            labelListProject.setVisible(false);
+            addSpecificConfigurationButton.setVisible(false);
+        }
+    }
+
+    public void addListProject() {
+        DefaultComboBoxModel<String> nameModel = new DefaultComboBoxModel<>();
+        DefaultComboBoxModel<ProjectGenerationContext> contextModel = new DefaultComboBoxModel<>();
+
+        for (ProjectGenerationContext context : listProjectGenerationContexts) {
+            String frontend = (context.getFrontendFramework() != null)
+                    ? " / " + context.getFrontendFramework().getName()
+                    : "";
+            nameModel.addElement(
+                    context.getProjectName() + " " +
+                            context.getFramework().getName() + " / " +
+                            context.getDatabase().getName() + " / " +
+                            context.getCredentials().getDatabaseName() +
+                            frontend
+            );
+            contextModel.addElement(context);
+        }
+        comboBoxProjectList.setModel(nameModel);
+        comboBoxProjectList.setVisible(true);
+        comboBoxProjectList.revalidate();
+        comboBoxProjectList.repaint();
+
+        contextList.setModel(contextModel);
+        contextList.setVisible(true);
+        contextList.revalidate();
+        contextList.repaint();
+
+        comboBoxProjectList.addActionListener(e -> {
+            int index = comboBoxProjectList.getSelectedIndex();
+            if (index >= 0 && index < contextList.getModel().getSize()) {
+                contextList.setSelectedIndex(index);
+            }
+        });
+
+    }
     public void initializeForm() {
         // Masquer tous les composants dépendants au début
         hideAllDependentComponents();
@@ -60,7 +137,8 @@ public class SpecificConfigurationForm {
         loggingLevelOptions.setVisible(true);
         securityTypeLabel.setVisible(true);
         securityTypeOptions.setVisible(true);
-        useAnEurekaServerCheckBox.setVisible(true);
+        cacheProviderLabel.setVisible(true);
+        cacheProviderOptions.setVisible(true);
     }
 
     public void updateFormWithFramework(Framework framework) {
@@ -71,8 +149,16 @@ public class SpecificConfigurationForm {
             configureLoggingLevel(framework);
             // Configurer type de sécurité
             configureSecurityType(framework);
+            // Configure cache provider
+            if( framework.getId() == 3 || framework.getIsGateway()) { //EurekaServer and Gateway
+                configureCacheProviderShow();
+            }else{configureCacheProvider(framework);}
+
+            configureGatewayComponentsOauth2Disable();
 
             if (framework.getIsGateway()) {
+                listenerSecurityGateway();
+                configureSecurityGateway() ;
                 configureGatewayComponents();
             }
             if (frameworkUsesDatabase(framework)) {
@@ -84,6 +170,40 @@ public class SpecificConfigurationForm {
             useAnEurekaServerCheckBox.setVisible(false);
             eurekaServerHostLabel.setVisible(false);
             eurekaServerHostField.setVisible(false);
+            
+            // Afficher le checkbox venv uniquement pour Django
+            if (framework.getCoreFramework() != null && framework.getCoreFramework().equalsIgnoreCase("Django")) {
+                if (createVenvCheckBox != null) {
+                    createVenvCheckBox.setVisible(true);
+                    createVenvCheckBox.setSelected(true); // Par défaut, créer le venv
+                }
+                if (enableAuthCheckBox != null) {
+                    enableAuthCheckBox.setVisible(true);
+                    enableAuthCheckBox.setSelected(true); // Par défaut, activer l'authentification
+                }
+            } else {
+                if (createVenvCheckBox != null) {
+                    createVenvCheckBox.setVisible(false);
+                }
+                if (enableAuthCheckBox != null) {
+                    enableAuthCheckBox.setVisible(false);
+                }
+            }
+        } else {
+            // Masquer le checkbox venv pour les autres frameworks
+            if (createVenvCheckBox != null) {
+                createVenvCheckBox.setVisible(false);
+            }
+            if (enableAuthCheckBox != null) {
+                enableAuthCheckBox.setVisible(false);
+            }
+        }
+    }
+
+    public void updateFormWithTablesAndViews(List<String> selectedValues, List<String> selectedViewValues) {
+        if (!selectedValues.isEmpty() || !selectedViewValues.isEmpty()) {
+            // Configure selected tables and views
+            configureSelectedTablesAndViews(selectedValues, selectedViewValues);
         }
     }
 
@@ -104,6 +224,21 @@ public class SpecificConfigurationForm {
         // Masquer les composants de base de données
         hibernateDDLAutoLabel.setVisible(false);
         ddlAutoOptions.setVisible(false);
+
+        // Masquer la liste des tables & views
+        cacheableLabel.setVisible(false);
+        selectedTableAndViewNamesList.setVisible(false);
+        allTablesAndViewsNamesPane.setVisible(false);
+
+        // Masquer le checkbox venv par défaut
+        if (createVenvCheckBox != null) {
+            createVenvCheckBox.setVisible(false);
+        }
+
+        // Masquer le checkbox d'authentification par défaut
+        if (enableAuthCheckBox != null) {
+            enableAuthCheckBox.setVisible(false);
+        }
 
         // Désactiver Eureka par défaut
         useAnEurekaServerCheckBox.setSelected(false);
@@ -139,6 +274,36 @@ public class SpecificConfigurationForm {
                 .forEach(option -> securityTypeOptions.addItem(option));
     }
 
+    private void configureCacheProviderShow(){
+        cacheProviderOptions.addItem("NONE");
+    }
+    private void configureCacheProvider(Framework framework) {
+        cacheProviderLabel.setVisible(true);
+        cacheProviderOptions.setVisible(true);
+
+        cacheProviderOptions.removeAllItems();
+        framework.getConfigurations().stream()
+                .filter(config -> "cacheProvider".equals(config.getVariableName()))
+                .flatMap(config -> config.getOptions().stream())
+                .forEach(option -> cacheProviderOptions.addItem(option));
+
+        // Add ActionListener to cacheProviderOptions
+        cacheProviderOptions.addActionListener(e -> {
+            String selectedOption = (String) cacheProviderOptions.getSelectedItem();
+            boolean showCacheComponents = selectedOption != null && !selectedOption.equalsIgnoreCase("NONE");
+
+            cacheableLabel.setVisible(showCacheComponents);
+            selectedTableAndViewNamesList.setVisible(showCacheComponents);
+            allTablesAndViewsNamesPane.setVisible(showCacheComponents);
+        });
+    }
+
+    private void configureSelectedTablesAndViews(List<String> selectedValues, List<String> selectedViewValues) {
+        this.allTablesAndViewsNames.addAll(selectedValues);
+        this.allTablesAndViewsNames.addAll(selectedViewValues);
+        selectedTableAndViewNamesList.setListData(this.allTablesAndViewsNames.toArray(new String[0]));
+    }
+
     private void configureGatewayComponents() {
         scrollPaneRouteTable.setVisible(true);
         routeConfigurationLabel.setVisible(true);
@@ -153,7 +318,61 @@ public class SpecificConfigurationForm {
         roleLabel.setVisible(true);
         roleField.setVisible(true);
     }
+    private void configureGatewayComponentsOauth2() {
+        scrollPaneRouteTable.setVisible(true);
+        routeConfigurationLabel.setVisible(true);
+        routeConfigurationOption.setVisible(true);
+        addRouteButton.setVisible(true);
+        removeRouteButton.setVisible(true);
 
+        clientIdLabel.setVisible(true);
+        clientIdField.setVisible(true);
+        clientSecretField.setVisible(true);
+        clientSecretLabel.setVisible(true);
+
+    }
+    private void configureGatewayComponentsOauth2Disable() {
+        scrollPaneRouteTable.setVisible(false);
+        routeConfigurationLabel.setVisible(false);
+        routeConfigurationOption.setVisible(false);
+        addRouteButton.setVisible(false);
+        removeRouteButton.setVisible(false);
+
+        clientIdLabel.setVisible(false);
+        clientIdField.setVisible(false);
+        clientSecretField.setVisible(false);
+        clientSecretLabel.setVisible(false);
+
+    }
+    private void configureSecurityGateway() {
+        securityTypeLabel.setVisible(true);
+        securityTypeOptions.setVisible(true);
+        securityTypeOptions.addItem("Simple");
+        securityTypeOptions.addItem("Google OAuth 2");
+    }
+    private void listenerSecurityGateway() {
+        securityTypeOptions.addActionListener( e -> {
+            String selectedOption = (String) securityTypeOptions.getSelectedItem();
+            if(selectedOption.equalsIgnoreCase("simple")){
+                configureGatewayComponents();
+                clientIdLabel.setVisible(false);
+                clientIdField.setVisible(false);
+                clientSecretField.setVisible(false);
+                clientSecretLabel.setVisible(false);
+                this.setUseOauth2(false);
+            }
+            if(selectedOption.equalsIgnoreCase("Google OAuth 2")){
+                configureGatewayComponentsOauth2();
+                defaultUsernameLabel.setVisible(false);
+                usernameField.setVisible(false);
+                passwordLabel.setVisible(false);
+                passwordField.setVisible(false);
+                roleLabel.setVisible(false);
+                roleField.setVisible(false);
+                this.setUseOauth2(true);
+            }
+        }) ;
+    }
     private void configureDatabaseComponents(Framework framework) {
         if (frameworkHasConfiguration(framework, "hibernateDdlAuto")) {
             hibernateDDLAutoLabel.setVisible(true);
@@ -179,8 +398,6 @@ public class SpecificConfigurationForm {
                 return true; // Autoriser l'édition de toutes les cellules
             }
         };
-
-        // Ajouter une ligne initiale
         model.addRow(new Object[]{"", "", "", ""});
         routeConfigurationOption.setModel(model);
 

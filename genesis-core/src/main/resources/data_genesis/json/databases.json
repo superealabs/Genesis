@@ -11,13 +11,25 @@
       "2": {
         "groupId": "",
         "artifactId": "Pomelo.EntityFrameworkCore.MySql"
+      },
+      "4": {
+        "groupId": "npm",
+        "artifactId": "mysql2",
+        "version": "3.11.0"
+      },
+      "5": {
+        "groupId": "",
+        "artifactId": "mysqlclient",
+        "version": "2.2.4"
       }
     },
     "driverType": "",
     "sid": "",
     "connectionString": {
       "1": "jdbc:mysql://${host}:${port}/${database}",
-      "2": "Server=${host};Port=${port};Database=${database};User Id=${username};Password=${password};"
+      "2": "Server=${host};Port=${port};Database=${database};User Id=${username};Password=${password};",
+      "4": "mysql://${username}:${password}@${host}:${port}/${database}",
+      "5": "mysql://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "MySql"
@@ -91,13 +103,19 @@
         "groupId": "io.hypersistence",
         "artifactId": "hypersistence-utils-hibernate-63",
         "version": "3.8.4"
+      },
+      "4": {
+        "groupId": "npm",
+        "artifactId": "pg",
+        "version": "8.13.0"
       }
     },
     "driverType": "",
     "sid": "",
     "connectionString": {
       "1": "jdbc:postgresql://${host}:${port}/${database}",
-      "2": "Host=${host};Port=${port};Database=${database};Username=${username};Password=${password};"
+      "2": "Host=${host};Port=${port};Database=${database};Username=${username};Password=${password};",
+      "4": "postgres://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "Npgsql"
@@ -115,11 +133,14 @@
       "int4": "int",
       "int8": "long",
       "bigint": "long",
-      "serial": "long",
+      "smallserial": "int",
+      "serial": "int",
       "bigserial": "long",
       "character varying": "string",
       "text": "string",
       "varchar": "string",
+      "bpchar": "string",
+      "char": "string",
       "real": "double",
       "double": "double",
       "float4": "double",
@@ -133,6 +154,8 @@
       "timestamp": "timestamp",
       "timestamptz": "timestamptz",
       "bool": "boolean",
+      "boolean": "boolean",
+      "bit": "boolean",
       "time": "time",
       "timetz": "timetz",
       "tsrange": "timestamp[]",
@@ -167,13 +190,19 @@
       "2": {
         "groupId": "",
         "artifactId": "Microsoft.EntityFrameworkCore.SqlServer"
+      },
+      "4": {
+        "groupId": "npm",
+        "artifactId": "mssql",
+        "version": "11.0.1"
       }
     },
     "driverType": "",
     "sid": "",
     "connectionString": {
       "1": "jdbc:sqlserver://${host}:${port};databaseName=${database};encrypt=false;trustServerCertificate=true",
-      "2": "Server=${host};Database=${database};User Id=${username};Password=${password};Encrypt=false;TrustServerCertificate=true"
+      "2": "Server=${host};Database=${database};User Id=${username};Password=${password};Encrypt=false;TrustServerCertificate=true",
+      "4": "mssql://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "SqlServer"
@@ -193,7 +222,7 @@
       "float": "float",
       "real": "float",
       "double": "double",
-      "decimal": "double",
+      "decimal": "decimal",
       "numeric": "double",
       "money": "double",
       "smallmoney": "double",
@@ -252,13 +281,19 @@
       "2": {
         "groupId": "",
         "artifactId": "Oracle.EntityFrameworkCore"
+      },
+      "4": {
+        "groupId": "npm",
+        "artifactId": "oracledb",
+        "version": "6.6.0"
       }
     },
     "driverType": "thin",
     "sid": "ORCLCDB",
     "connectionString": {
       "1": "jdbc:oracle:${driverType}:@//${host}:${port}/${sid}",
-      "2": "User Id=${username};Password=${password};Data Source=${host}:${port}/${database}"
+      "2": "User Id=${username};Password=${password};Data Source=${host}:${port}/${database}",
+      "4": "oracle://${username}:${password}@${host}:${port}/${database}"
     },
     "daoName": {
       "2": "Oracle"
@@ -270,7 +305,7 @@
     "port": "1521",
     "types": {
       "NUMBER": "int",
-      "NUMBER(*,*)": "double",
+      "NUMBER(*,*)": "decimal",
       "VARCHAR2": "string",
       "VARCHAR": "string",
       "NVARCHAR": "string",
@@ -286,16 +321,17 @@
       "TEXT": "string",
       "NTEXT": "string",
       "TIMESTAMP(6)": "timestamp",
+      "TIMESTAMP(*)": "timestamp",
       "TIMESTAMP": "timestamp",
       "TIME": "time",
       "BLOB": "bytea",
       "CLOB": "string",
       "NCLOB": "string",
-      "BINARY_FLOAT": "double",
+      "BINARY_FLOAT": "float",
       "BINARY_DOUBLE": "double",
       "FLOAT": "double",
       "INTEGER": "int",
-      "DECIMAL": "double",
+      "DECIMAL": "decimal",
       "SMALLINT": "int",
       "TINYINT": "int",
       "BIGINT": "long",

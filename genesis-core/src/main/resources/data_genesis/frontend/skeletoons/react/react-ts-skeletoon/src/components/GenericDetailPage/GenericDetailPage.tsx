@@ -8,6 +8,7 @@ import {ArrowBack} from "@mui/icons-material";
 import { Tabs, Tab } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { base64ToUrl } from "@/utils/imageUtil";
 
 type AnyRecord = Record<string, any>;
 
@@ -31,7 +32,7 @@ interface DetailConfig<T extends AnyRecord> {
         getById: (id: number) => Promise<T>;
         delete: (id: string | number) => Promise<ApiResponse<void>>;
     };
-    columns: { header: string; accessor: keyof T | ((row: T) => React.ReactNode) }[];
+    columns: { header: string; accessor: keyof T | ((row: T) => React.ReactNode), type?: string }[];
     backRoute: string; // fallback si pas de state
     actions?: DetailAction<T>[];
     tabs?: DetailTab<T>[];           // <-- ajout
@@ -98,7 +99,7 @@ export default function GenericDetailPage<T extends AnyRecord>(config: DetailCon
 
                     {/* Grille 2 colonnes */}
                     <Grid container spacing={3}>
-                        {config.columns.map(({ header, accessor }) => {
+                        {config.columns.map(({ header, accessor, type }) => {
                             const value = resolveValue(accessor);
                             return (
                                 <Grid item xs={12} sm={6} key={String(header)}>
@@ -111,7 +112,17 @@ export default function GenericDetailPage<T extends AnyRecord>(config: DetailCon
                                                 <Chip label={value ? 'Yes' : 'No'} color={value ? 'success' : 'default'} size="small" />
                                             ) : (
                                                 <Typography fontWeight={500}>
-                                                    {value === null || value === undefined ? '-' : String(value)}
+                                                    { type == 'file' ? (
+                                                        <img
+                                                            src={base64ToUrl(value as string)}
+                                                            alt={header}
+                                                            style={{
+                                                                maxWidth: "200px",
+                                                                maxHeight: "200px",
+                                                                objectFit: "contain"
+                                                            }}
+                                                        />) :
+                                                    (value === null || value === undefined ? '-' : String(value))}
                                                 </Typography>
                                             )}
                                         </Box>

@@ -16,11 +16,13 @@ dependencies {
     implementation("com.mysql:mysql-connector-j:9.0.0")
     implementation("org.postgresql:postgresql:42.7.3")
     implementation("com.microsoft.sqlserver:mssql-jdbc:12.8.1.jre11")
-    implementation("com.oracle.database.jdbc:ojdbc8:19.8.0.0")
-    implementation("org.apache.commons:commons-text:1.11.0")
+    implementation("com.oracle.database.jdbc:ojdbc8:23.5.0.24.07")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:6.10.0.202406032230-r")
 
     // Logging
-    implementation("org.slf4j:slf4j-simple:2.0.12")
+    testImplementation("org.slf4j:slf4j-simple:2.0.12")
+
+    // JGIT
 }
 
 tasks.shadowJar {

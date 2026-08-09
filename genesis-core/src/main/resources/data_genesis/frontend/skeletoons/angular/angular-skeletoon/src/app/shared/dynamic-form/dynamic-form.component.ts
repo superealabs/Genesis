@@ -29,6 +29,16 @@ export class DynamicFormComponent extends MotherComponent implements OnInit{
     }
     if (!this.submitFn) return;
     const payload = { ...this.form.value };
+    // Supprime les champs vides
+    Object.keys(payload).forEach(key => {
+      if (
+        payload[key] === '' ||
+        payload[key] === null ||
+        payload[key] === undefined
+      ) {
+        delete payload[key];
+      }
+    });
     this.fields.forEach(field => {
       if (field.type === 'select' && field.options && field.options.length > 8 && Object.keys(this.initialData).length === 0) {
         const label = payload[field.name];

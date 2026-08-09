@@ -2,15 +2,19 @@ import { ref, computed } from 'vue'
 import type { EntitySearchField } from '@/models/EntityModel'
 
 export function useSearch(
-  initialModel: Record<string, unknown>,
+  initialModel: Record<string, unknown> = {},
   availableFilters: EntitySearchField[],
+  defaultActive: string[] = [],
 ) {
   const searchModel = ref({ ...initialModel })
-  const activeFieldKeys = ref<string[]>([])
+  const activeFieldKeys = ref<string[]>([...defaultActive])
   const selectedFieldToAdd = ref<string>('')
 
   // Holds the actual field metadata (mutated with options if loaded)
-  const fields = ref<EntitySearchField[]>([...availableFilters])
+  // const fields = ref<EntitySearchField[]>([...availableFilters])
+  const fields = computed(() => {
+    return availableFilters.filter((f) => f.showInFilter)
+  })
 
   const availableFields = computed(() =>
     fields.value.filter((f) => !activeFieldKeys.value.includes(f.key)),
@@ -33,10 +37,8 @@ export function useSearch(
   }
 
   function resetFilters() {
-    for (const key in searchModel.value) {
-      searchModel.value[key] = undefined
-    }
-    activeFieldKeys.value = []
+    searchModel.value = { ...initialModel }
+    activeFieldKeys.value = [...defaultActive]
   }
 
   function getFiltersValues() {
@@ -67,6 +69,6 @@ export function useSearch(
     desactivateField,
     resetFilters,
     getFiltersValues,
-    fields, // expose fields with loaded options
+    fields,
   }
 }

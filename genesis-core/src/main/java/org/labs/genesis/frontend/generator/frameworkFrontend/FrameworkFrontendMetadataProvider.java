@@ -3,6 +3,7 @@ package org.labs.genesis.frontend.generator.frameworkFrontend;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.langage.generator.framework.MereFilleMetadataProvider;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
@@ -21,23 +22,31 @@ public class FrameworkFrontendMetadataProvider {
 
 
     public static HashMap<String, Object> getHashMapForSecurity(String securityType,ProjectGenerationContext context) {
-        HashMap<String, Object> metadata = new HashMap<>();
+        HashMap<String, Object> metadata = getHashMapForSecurity(securityType);
+        metadata.putAll(getWebappHashMap(context));
+        return metadata;
+    }
 
+    public static HashMap<String, Object> getHashMapForSecurity(String securityType) {
+        HashMap<String, Object> metadata = new HashMap<>();
         if(securityType.contains("JWT")) {
             metadata.put("useJWT",true);
         }else
         {
             metadata.put("useJWT",false);
         }
-        metadata.putAll(getWebappHashMap(context));
         return metadata;
     }
 
-    public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata,String destinationFolder,String projectName) {
+    public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata, String destinationFolder, String projectName) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
-        metadata.put("fields", getFieldsList(tableMetadata));
+        List<Map<String, Object>> fields = getFieldsList(tableMetadata);
+        boolean containsFile = fields.stream()
+                .anyMatch(field -> "file".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        metadata.put("fields", fields);
+        metadata.put("containsFile", containsFile);
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", fkList);
         metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata));
@@ -49,6 +58,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("classNameLink",tableMetadata.getClassName()+"s");
 
         metadata.putAll(getHashMapComponentSavePath(destinationFolder, projectName, tableMetadata));
+        metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
 
         return metadata;
     }
@@ -69,8 +79,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("destinationFolder", context.getDestinationFolder());
         metadata.put("projectName", context.getProjectName());
         metadata.put("webappFolder", context.getWebappFolder());
-        String webappFolder = engine.simpleRender(Constantes.WEBAPP_DIR_TEMPLATE, metadata);
-        return  webappFolder;
+        return engine.simpleRender(Constantes.WEBAPP_DIR_TEMPLATE, metadata);
     }
 
     public  static  HashMap<String, Object> getInterfaceLangHashMap(InterfaceLang lang){
@@ -89,8 +98,15 @@ public class FrameworkFrontendMetadataProvider {
         return langList;
     }
 
+    public static HashMap<String, Object> getLayoutHashMap(FrontendFramework frontendFramework){
+        FrontendLayout layout = frontendFramework.getFrontendLayout();
+        if (layout == null){
+            layout = new FrontendLayout();
+        }
+        return getLayoutHashMap(layout);
+    }
+
     public static HashMap<String, Object> getLayoutHashMap(FrontendLayout layout){
-//        FrontendLayout layout = frontendFramework.getFrontendLayout();
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("additionalCss",layout.additionalCss);
         metadata.put("primaryColor",layout.primaryColor);
@@ -100,8 +116,15 @@ public class FrameworkFrontendMetadataProvider {
         return  metadata;
     }
 
+    public static HashMap<String, Object> getBrandingHashMap(FrontendFramework frontendFramework){
+        ProjectBranding branding = frontendFramework.getProjectBranding();
+        if (branding == null){
+            branding = new ProjectBranding();
+        }
+        return getBrandingHashMap(branding);
+    }
+
     public static HashMap<String, Object> getBrandingHashMap(ProjectBranding branding){
-//        ProjectBranding branding = frontendFramework.getProjectBranding();
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("faviconUrl", branding.getFaviconUrl());
         metadata.put("useFaviconLink", branding.useFaviconLink());
@@ -113,14 +136,11 @@ public class FrameworkFrontendMetadataProvider {
 
         return  metadata;
     }
-
     public static HashMap<String, Object> getWebappHashMap(ProjectGenerationContext context){
         HashMap<String, Object> metadata = new HashMap<>();
         String webappFolder = getWebappFolder(context);
         metadata.put("destinationFolder", webappFolder);
         metadata.put("projectName", context.getProjectName());
-        metadata.put("webappFolder", context.getWebappFolder());
-        metadata.put("webapp", webappFolder);
         metadata.put("projectPort", context.getProjectPort());
         metadata.put("title",context.getProjectDescription());
 
@@ -148,9 +168,8 @@ public class FrameworkFrontendMetadataProvider {
     private static List<Map<String, Object>> getNotFkAndPKFieldsList(TableMetadata tableMetadata) {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
-            if(!field.isForeign() && !field.isPrimary()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field);
-                fields.add(fieldMap);
+            if (!field.isForeign() && !(field.isPrimary() && field.isAutoGenerated())) {
+                fields.add(getFieldHashMap(field));
             }
         }
         return fields;
@@ -159,10 +178,32 @@ public class FrameworkFrontendMetadataProvider {
         Map<String, Object> fieldMap = new HashMap<>();
 
         fieldMap.put("typeBase", field.getFrontEndType());
-        fieldMap.put("uiType", field.getUiType());
+        String uiType = field.getUiType();
+
+        if (field.isDateTime() || field.isDateTimeTz()) {
+            uiType = "datetime-local"; // DateTime devient ceci
+        } else if (field.isTime()  || field.isTimeTz()) {
+            uiType = "time"; // Time devient ceci
+        } else if (field.isDate()) {
+            uiType = "date"; // date reste date
+        } else if (field.isNumeric()) {
+            uiType = "number"; // Au cas où
+        }
+
+        if (uiType == null || uiType.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Type frontend non reconnu pour le champ : "
+                            + field.getName()
+                            + " (type SQL : " + field.getColumnType() + ")"
+            );
+        }
+        fieldMap.put("uiType", uiType);
         fieldMap.put("type",field.getType());
         fieldMap.put("name", field.getName());
         fieldMap.put("isPrimaryKey", field.isPrimary());
+        fieldMap.put("isAutoGenerated", field.isAutoGenerated());
+        fieldMap.put("isGeneratedPrimaryKey", field.isPrimary() && field.isAutoGenerated());
+        fieldMap.put("isManualPrimaryKey", field.isPrimary() && !field.isAutoGenerated());
         fieldMap.put("isForeignKey", field.isForeign());
         fieldMap.put("columnType", field.getColumnType());
         fieldMap.put("columnName", field.getReferencedColumn());
@@ -175,7 +216,7 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("decimalDigits", field.getDecimalDigits());
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
-        fieldMap.put("isRequired", !field.isNullable());
+        fieldMap.put("isRequired", field.isPrimary() || !field.isNullable());
         fieldMap.put("isNumeric",field.isNumeric());
         fieldMap.put("isDate",field.isDate());
         fieldMap.put("isTime",field.isTime());
@@ -184,9 +225,10 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("isDateTimeTz",field.isDateTimeTz());
         fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
-        fieldMap.put("isText", field.isText());
+        fieldMap.put("isText", field.isText() || "text".equalsIgnoreCase(uiType));
         fieldMap.put("isNotForeignKey",!field.isForeign());
-        fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
+        fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary() && field.isAutoGenerated());
+        fieldMap.put("isParentForeignKey",field.getIsParentForeignKey());
 
         return fieldMap;
     }
@@ -243,23 +285,39 @@ public class FrameworkFrontendMetadataProvider {
         }
         return tableMetadatasAns;
     }
-    public  static HashMap<String, Object> getGlobalComponentsHashMap(FrontendFramework frontendFramework,String projectName,String destinationFolder,String port,List<TableMetadata> tableMetadatas){
+    public  static HashMap<String, Object> getGlobalComponentsHashMap(List<TableMetadata> tableMetadatas, ProjectGenerationContext context){
+        FrontendFramework frontendFramework = context.getFrontendFramework();
+        String projectPort = context.getProjectPort() ;
+
         HashMap<String, Object> data = new HashMap<>();
         data.put("routes",getRoutesHashMap(frontendFramework));
-        data.put("projectName",projectName);
-        data.put("destinationFolder",destinationFolder);
         data.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
-        data.put("port",port);
-        data.put("frontendPort",9000);
+        data.put("port",projectPort);
+        data.put("frontendPort",context.getFrontendPort());
         data.put("apiUrl", "localhost");
         data.putAll(getRessourceHashMap(frontendFramework));
+        HashMap<String,Object> folder=FrameworkFrontendMetadataProvider.getWebappHashMap(context);
+        data.putAll(folder);
         return  data;
     }
 
     public static HashMap<String, Object> getRessourceHashMap(FrontendFramework frontendFramework) {
         HashMap<String, Object> metadata = new HashMap<>();
-        metadata.putAll(getBrandingHashMap(frontendFramework.getProjectBranding()));
-        metadata.putAll(getLayoutHashMap(frontendFramework.getFrontendLayout()));
+        if (frontendFramework == null) {
+            return metadata;
+        }
+        if (frontendFramework.getProjectBranding() != null) {
+            metadata.putAll(getBrandingHashMap(frontendFramework.getProjectBranding()));
+        }
+        if (frontendFramework.getFrontendLayout() != null) {
+            metadata.putAll(getLayoutHashMap(frontendFramework.getFrontendLayout()));
+        }
+        return  metadata;
+    }
+
+    public static HashMap<String, Object> getLangsHashMap(ProjectGenerationContext context, List<TableMetadata> tableMetadatas) {
+        HashMap<String, Object> metadata = new HashMap<>(getWebappHashMap(context));
+        metadata.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
         return  metadata;
     }
 
@@ -278,6 +336,9 @@ public class FrameworkFrontendMetadataProvider {
 
     public  static  List<Map<String,Object>> getRoutesHashMap(FrontendFramework frontendFramework){
         List<Map<String, Object>> routes = new ArrayList<>();
+        if (frontendFramework == null || frontendFramework.getComponentRoutes() == null) {
+            return routes;
+        }
         for (ComponentRoute route : frontendFramework.getComponentRoutes()) {
             routes.add(getRouteHashMap(route));
         }

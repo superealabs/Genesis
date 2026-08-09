@@ -6,223 +6,304 @@
       messages: {
         projectName: '${projectName}',
         common: {
-          update: 'Update',
-          delete: 'Delete',
-          create: 'Create',
-          add:    'Add',
-          save: 'Save',
-          cancel: 'Cancel',
-          edit: 'Edit',
-          read:'read'
-        },
-        box_confirm:
-        {
-          H1Se:"Are you sure you want to delete this item?",
-          H2Se:"This cannot be undone"
-        },
-        header:
-        {
-          backList:"Back to list",
-          list:"List",
-          details:"Details",
-          add:"Add new",
-          form:"Form"
-        },
-        banner:
-        {
-          lang: 'Language',
-          disconnect:"disconnect"
-        },
-        saying_words:
-        {
-          entries:"new entries",
-          details:"details",
-          information:"information",
-          and:"and",
-          needs:"what you don't need"
-        },
-        navbar: {
-          core: 'Core',
-          entities: 'ENTITIES',
-          views: 'VIEWS',
-          settings: 'SETTING',
-          home: 'HOME',
-          customisation: 'LAYOUT CUSTOMISATION',
-        },
-        authentication: {
-          title: 'Sign in',
-          username: 'Username',
-          password: 'Password',
-          submit: 'Sign in',
-          invalid: 'Invalid credentials',
-          logout: 'Logout',
-          createAccount: "Create account",
-          backToSignIn: "Back to sign in",
-        },
-        register: {
-          title: "Create account",
-          name: "Name",
-          email: "Email",
-          password: "Password",
-          submit: "Register",
-          backToSignIn: "Back to sign in",
-          success: "Account created successfully",
-          error: "Registration failed"
-        },
-        home: {
-          greet: 'Hello',
-          greetDeveloper: '@.capitalize:home.greet Developer',
-          welcome: 'Welcome on @.capitalize:projectName frontend app',
-          simple_welcome:'Welcome',
-          titles: {
-            entities: 'List of entities',
-            views: 'List of views',
+              update: 'update',
+              delete: 'delete',
+              create: 'create',
+              apply: 'Apply',
+              go: 'go',
+              views: 'views',
+              view: 'view',
+              details: 'details',
+              list: 'list',
+              new: 'new',
+              actions: 'actions',
+              back: 'back',
+              layout: 'layout',
+              theme: 'theme',
+              general: 'general',
+              settings: 'settings',
+              entities: 'entities',
+              entity: 'entity',
+              filter: 'filter',
+              rows: 'rows',
+              showing: 'showing',
+              previous: 'previous',
+              next: 'next',
+              page: 'page',
+              add: 'add',
+              description: 'description',
+              return: 'return',
+              home: 'home',
+              login: 'login',
+              logout: 'logout',
+              register: 'register',
+              profile: 'profile',
+              username: 'username',
+              email: 'email',
+              password: 'password',
+              language: 'language',
+              confirm: 'confirm',
+              cancel: 'cancel',
+              no: 'no',
+              save: 'Save',
+              edit: 'Edit',
+              read:'read'
+            },
+            box_confirm:
+            {
+              H1Se:"Are you sure you want to delete this item?",
+              H2Se:"This cannot be undone"
+            },
+            header:
+            {
+              backList:"Back to list",
+              list:"List",
+              details:"Details",
+              add:"Add new",
+              form:"Form"
+            },
+            banner:
+            {
+              lang: 'Language',
+              disconnect:"logout"
+            },
+            saying_words:
+            {
+              entries:"new entries",
+              details:"details",
+              information:"information",
+              and:"and",
+              needs:"what you don't need"
+            },
+            navbar: {
+              core: 'Core',
+              entities: 'ENTITIES', 
+              views: 'VIEWS',
+              settings: 'Settings',
+              home: 'Home',
+              customisation: 'LAYOUT CUSTOMISATION',
+            },
+
+            authentication: {
+              login: 'Login',
+              logout: 'Logout',
+              register: 'Register',
+              profile: 'Profile',
+              username: 'Username',
+              email: 'Email',
+              password: 'Password',
+              confirmPassword: 'Confirm your @:common.password',
+              passwordPlaceholder: '••••••••',
+
+              title: 'Sign in',
+              submit: 'Sign in',
+              invalid: 'Invalid credentials',
+              createAccount: "Create account",
+              backToSignIn: "Back to sign in",
+              dontHaveAccount: "You don't have an account?",
+            },
+
+            register: {
+              title: "Create account",
+              name: "Name",
+              email: "Email",
+              password: "Password",
+              submit: "Register",
+              backToSignIn: "Back to sign in",
+              success: "Account created successfully",
+              error: "Registration failed",
+              haveAccount: 'You already have an account?',
+            },
+            home: {
+              greet: 'Hello',
+              greetDeveloper: '@.capitalize:home.greet Developer',
+              welcome: 'Welcome on @.capitalize:projectName frontend app',
+              simple_welcome:'Welcome',
+              titles: {
+                entities: 'List of @:common.entities',
+                views: 'List of @:common.views',
+              },
+            },
+
+            pagination: {
+              sizeLabel: 'Showing:',
+              previous: 'previous @:common.page',
+              next: 'next @:common.page',
+              goToLabel: 'Go to ',
+              totalRows: ' of {total} @:common.rows',
+              pageOf: 'Page {page} of {total}',
+            },
+
+            search: {
+              simple_filter:"Filters",
+              selection:"select a field",
+              filters: ' No @:common.filter | filter | filter ({count})',
+            },
+
+            entity: {
+              nav: '{entity} / ',
+              list: {
+                nav: 'List',
+                filters: 'Filters',
+                addFilter: 'Add filter',
+                removeFilter: 'Remove {{label}} filter',
+              },
+              create: {
+                nav: 'New',
+                submitLabel: 'Create {entity}',
+              },
+              update: {
+                nav: 'Update',
+                submitLabel: 'Update {entity}',
+              },
+              details: {
+                nav: 'Details',
+              },
+            },
+
+            button: {
+              addEntity: 'Add @:common.new {entity}',
+              applySearch: 'Apply',
+              backTo: 'Back to {name}',
+              backToList: 'Back to @:common.list',
+              backToListDescription: 'Return to the @:common.list @:common.view',
+              go: 'Go',
+              delete: 'Delete',
+              update: 'Update',
+              create: 'Create',
+              cancel: 'Cancel',
+              validate:'Submit',
+              export: 'Export to CSV',
+              back: 'Retrun',
+            },
+
+            settings: {
+              layout: 'Layout',
+              theme: 'Theme',
+              general: 'General',
+              language: 'Language',
+              pageTitle: 'Settings',
+              switchLayout: 'Switch Layout',
+            },
+
+            // Entity definitions (scalable for many entities)
+            entities:{
+              {{#each entities}}
+              {{#if !this.isView}}
+              ${minStart(this.className)}: {
+                name: '${minStart(this.className)} | ${minStart(this.className)}s',
+                nav: {
+                  title: '@.capitalize:entities.${minStart(this.className)}.name',
+                  create: 'Create @.capitalize:entities.${minStart(this.className)}.name',
+                  list: '@.capitalize:entities.${minStart(this.className)}.name @:common.list',
+                },
+              },{{/if}}
+              {{/each}}
+            },
+            views: {
+              {{#each entities}}
+              {{#if this.isView}}
+              ${minStart(this.className)}: {
+                name: '${minStart(this.className)} | ${minStart(this.className)}s',
+                nav: {
+                  title: '@.capitalize:views.${minStart(this.className)}.name',
+                  list: '@.capitalize:views.${minStart(this.className)}.name @:common.list',                  
+                },
+              },{{/if}}
+              {{/each}}
+            },
+            error: {
+              error: 'Error',
+              400: 'Bad request',
+              403: 'Access denided',
+              404: {
+                title: 'Page not found',
+                description: "Sorry, the page you are searching doesn't exist or moved to another url",
+              },
+              500: 'Error 500',
+            },
+            layout: {
+              switchToHorizontal: 'Switch to horizontal',
+              switchToVertical: 'Switch to vertical',
+            },
+            theme: {
+              switchToLight: 'Light mode',
+              switchToDark: 'Dark mode'
+            },
+            language: {
+              choose: 'Language',
+              en: 'English',
+              fr: 'French',
+              es: 'Spanish',
+              de: 'German',
+              it: 'Italian',
+              pt: 'Portuguese',
+              'pt-BR': 'Portuguese (Brazil)',
+              zh: 'Chinese',
+              ja: 'Japanese',
+            },
+            state: {
+              loading: 'Loading…',
+              notFound: 'Not found',
+              success: 'Success',
+              creating: 'Creating...',
+              updating: 'Updating...',
+            },
+            confirmation: {
+              delete: 'Confirm deletion?',
+            },
+            navigation: {
+              list: 'List',
+              add: 'Add',
+            },
+            profile: {
+              myProfile: 'My Profile',
+              edit: 'Edit Profile',
+              changePassword: 'Change Password',
+              oldPassword: 'Current Password',
+              newPassword: 'New Password',
+              confirmPassword: 'Confirm Password',
+              updateSuccess: 'Profile updated successfully',
+              updateError: 'Failed to update profile',
+              usernameChangedLogout: 'Username changed. You will be logged out to sign in with your new credentials.',
+              usernameChangeWarning: '⚠️ Warning: Changing your username will log you out. You will need to sign in with your new credentials.',
+              passwordChangeSuccess: 'Password changed successfully',
+              passwordChangeError: 'Failed to change password',
+              passwordMismatch: 'Passwords do not match',
+            },
           },
-        },
-        table: {
-          actions: 'Actions',
-        },
-        pagination: {
-          sizeLabel: 'Showing :',
-          previous: 'Previous',
-          next: 'Next',
-          goToLabel: 'Going to page :',
-          pageOf: 'Page {page} of {total}',
-        },
-        search: {
-          simple_filter:"Filters",
-          selection:"select a field",
-          filters: 'No filter | Filters | Filters ({count})',
-        },
-        entity: {
-          nav: '{entity} / ',
-          list: {
-            nav: 'List',
-            filters: 'Filters',
-            addFilter: 'Add filter',
-            removeFilter: 'Remove {{label}} filter',
+
+          dateTimeFormats: {
+            short: { year: 'numeric', month: 'short', day: 'numeric' },
+            long: { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' },
+            time: { hour: '2-digit', minute: '2-digit' },
+            full: {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              weekday: 'long',
+              hour: '2-digit',
+              minute: '2-digit',
+            },
           },
-          create: {
-            nav: 'New',
-            submitLabel: '@:common.create {entity}',
+          numberFormats: {
+            currency: {
+              style: 'currency',
+              currency: 'USD',
+              currencyDisplay: 'symbol',
+            },
+            decimal: {
+              style: 'decimal',
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            },
+            percent: {
+              style: 'percent',
+              useGrouping: true,
+            },
           },
-          update: {
-            nav: '@:common.update',
-            submitLabel: '@:common.update {entity}',
-          },
-          details: {
-            nav: 'Details',
-          },
-        },
-        button: {
-          addEntity: 'Add new {entity}',
-          validate:'Submit',
-          applySearch: 'Apply',
-          go: 'GO',
-          backToList: 'Back to list',
-          backToListDescription: 'Return to the list view',
-          delete:'delete'
-        },
-        error: {
-          error: 'Error',
-          400: 'Bad request',
-          403: 'Access denied',
-          404: 'Page not found',
-          500: 'Error 500',
-        },
-        layout: {
-          switchToHorizontal: 'Switch to horizontal',
-          switchToVertical: 'Switch to vertical',
-        },
-        theme: {
-          switchToLight: 'Light mode',
-          switchToDark: 'Dark mode'
-        },
-        language: {
-          choose: 'Language',
-          en: 'English',
-          fr: 'French',
-          es: 'Spanish',
-          de: 'German',
-          it: 'Italian',
-          pt: 'Portuguese',
-          'pt-BR': 'Portuguese (Brazil)',
-          zh: 'Chinese',
-          ja: 'Japanese',
-        },
-        state: {
-          loading: 'Loading…',
-          notFound: 'Not found',
-          success: 'Success',
-          creating: 'Creating...',
-          updating: 'Updating...',
-        },
-        confirmation: {
-          delete: 'Confirm deletion?',
-        },
-        navigation: {
-          list: 'List',
-          add: 'Add',
-        },
-        profile: {
-          edit: 'Edit Profile',
-          changePassword: 'Change Password',
-          oldPassword: 'Current Password',
-          newPassword: 'New Password',
-          confirmPassword: 'Confirm Password',
-          updateSuccess: 'Profile updated successfully',
-          updateError: 'Failed to update profile',
-          usernameChangedLogout: 'Username changed. You will be logged out to sign in with your new credentials.',
-          usernameChangeWarning: '⚠️ Warning: Changing your username will log you out. You will need to sign in with your new credentials.',
-          passwordChangeSuccess: 'Password changed successfully',
-          passwordChangeError: 'Failed to change password',
-          passwordMismatch: 'Passwords do not match',
-        },
-      },
-      // DateTime formatting
-      dateTimeFormats: {
-        short: {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        },
-        long: {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          weekday: 'long',
-        },
-        time: {
-          hour: '2-digit',
-          minute: '2-digit',
-        },
-        full: {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          weekday: 'long',
-          hour: '2-digit',
-          minute: '2-digit',
-        },
-      },
-      numberFormats: {
-        currency: {
-          style: 'currency',
-          currency: 'USD',
-          currencyDisplay: 'symbol', // $1,234.56
-        },
-        decimal: {
-          style: 'decimal',
-          minimumFractionDigits: 2, // 1,234.50
-          maximumFractionDigits: 2,
-        },
-        percent: {
-          style: 'percent',
-          useGrouping: true,
-        },
-      },
-    };
-    export default english;
+        }
+        export default english
 
 - id: 2
   name: "French"
@@ -232,25 +313,60 @@
       messages: {
         projectName: '${projectName}',
         common: {
-          update: 'Modifier',
-          delete: 'Supprimer',
-          create: 'Enregistrer',
+          update: 'modifier',
+          delete: 'supprimer',
+          create: 'créer',
+          apply: 'appliquer',
+          go: 'aller',
+    
+          views: 'vues',
+          view: 'vue',
+          details: 'détails',
+          list: 'liste',
+          new: 'nouveau',
+          actions: 'actions',
+          back: 'retour',
+          layout: 'mise en page',
+          theme: 'thème',
+          general: 'général',
+          settings: 'paramètres',
+          entities: 'entités',
+          entity: 'entité',
+          filter: 'filtre',
+          rows: 'lignes',
+          showing: 'affichage',
+          previous: 'précédent',
+          next: 'suivant',
+          page: 'page',
+          add: 'ajouter',
+          description: 'description',
+          return: 'retourner',
+          home: 'accueil',
+          login: 'connexion',
+          logout: 'déconnexion',
+          register: 'inscription',
+          profile: 'profil',
+          username: "nom d'utilisateur",
+          email: 'email',
+          password: 'mot de passe',
+          language: 'langue',
+          confirm: 'confirmer',
+          cancel: 'annuler',
+          no: 'aucun',
           read: 'lire',
-          add: 'Ajouter',
-          save: 'Enregistrer',
-          cancel: 'Annuler',
           edit: 'Éditer',
+          save: 'Sauvegarder',
         },
         box_confirm: {
-          H1Se: "Voulez-vous effacer cet élément définitivement?",
-          H2Se: "Pas de retour en arrière possible"
+          H1Se: 'Voulez-vous effacer cet élément définitivement?',
+          H2Se: 'Pas de retour en arrière possible'
         },
         header: {
-          backList: "Revenir à la liste",
-          list: "Liste",
-          details: "Détails",
+          backList: 'Revenir à la liste',
+          list: 'Liste',
+          details: 'Détails',
           add: "Formulaire d'ajout de",
-          form: "Formulaire"
+          form: 'Formulaire'
         },
         banner: {
           lang: 'Langue',
@@ -261,43 +377,55 @@
           details: "les détails",
           information: "les informations",
           and: "et",
-          needs: "ce dont vous n'avez pas besoin"
+          needs: "ce dont vous n'avez pas besoin",
         },
+    
         navbar: {
           core: 'Noyau',
-          entities: 'Entités',
-          views: 'Vues',
-          settings: 'Paramètres',
+          entities: 'ENTITES',
+          views: 'VUES',
+          settings: 'Parametres',
           home: 'Accueil',
-          customisation: 'Personnalisation de layout'
+          customisation: 'Personnalisation de layout',
         },
+    
         authentication: {
-          title: "Se connecter",
+          title: 'Se connecter',
+          login: 'Connexion',
+          logout: 'Se Deconnecter',
+          register: 'Inscription',
+          profile: 'Profile',
           username: 'Nom d’utilisateur',
+          email: 'Email',
           password: 'Mot de passe',
+          confirmPassword: 'Confirmer votre @:common.password',
           submit: 'Se connecter',
           invalid: 'Identifiants invalides',
-          logout: 'Déconnexion',
-          createAccount: "Créer un compte",
-          backToSignIn: "Retour à la connexion",
+          createAccount: 'Créer un compte',
+          backToSignIn: 'Retour à la connexion',
+          dontHaveAccount: "Vous n'avez pas de compte?",
+          passwordPlaceholder: '••••••••',
         },
+        
         register: {
-          title: "Créer un compte",
-          name: "Nom",
-          email: "Email",
-          password: "Mot de passe",
+          title: 'Créer un compte',
+          name: 'Nom',
+          email: 'Email',
+          password: 'Mot de passe',
           submit: "S'inscrire",
-          backToSignIn: "Retour à la connexion",
-          success: "Compte créé avec succès",
-          error: "Échec de l'inscription"
+          backToSignIn: 'Retour à la connexion',
+          success: 'Compte créé avec succès',
+          error: "Échec de l'inscription",
+          haveAccount: 'Vous avez déjà un compte?',
         },
+    
         home: {
           greet: 'Bonjour',
           greetDeveloper: '@.capitalize:home.greet Développeur',
           welcome: 'Bienvenue sur l’application frontend @.capitalize:projectName',
           titles: {
-            entities: 'Liste des entités',
-            views: 'Liste des vues',
+            entities: 'List des @:common.entities',
+            views: 'List des @:common.views',
           },
           simple_welcome: 'Bienvenue',
           add: 'Ajouter',
@@ -305,64 +433,112 @@
           cancel: 'Annuler',
           edit: 'Éditer',
         },
-        table: {
-          actions: 'Actions',
-        },
+    
         pagination: {
-          sizeLabel: 'Affichage :',
-          previous: 'Précédent',
-          next: 'Suivant',
-          goToLabel: 'Aller à la page :',
+          sizeLabel: 'Affichage:',
+          previous: 'page @:common.previous',
+          next: 'page @:common.next',
+          goToLabel: 'Aller à la page',
+          totalRows: ' sur {total} @:common.rows',
           pageOf: 'Page {page} sur {total}',
         },
+    
         search: {
-          simple_filter: "Filtres",
-          selection: "choisir un champ",
-          filters: 'Aucun filtre | Filtres | Filtres ({count})',
+          filters: '@.capitalize:common.no @:common.filter | filter | filter ({count})',
+          simple_filter: 'Filtres',
+          selection: 'Choisir un champ',
         },
+    
         entity: {
           nav: '{entity} / ',
           list: {
-            nav: 'Liste',
+            nav: 'List',
             filters: 'Filtres',
             addFilter: 'Ajouter un filtre',
             removeFilter: 'Supprimer le filtre {{label}}',
           },
           create: {
             nav: 'Nouveau',
-            submitLabel: '@:common.create {entity}',
+            submitLabel: 'Cree {entity}',
           },
           update: {
-            nav: '@:common.update',
-            submitLabel: '@:common.update {entity}',
+            nav: 'Modifier',
+            submitLabel: 'Modifier {entity}',
           },
           details: {
-            nav: 'Détails',
+            nav: 'Details',
           },
         },
+    
         button: {
-          addEntity: 'Ajouter un(e) nouveau(elle) {entity}',
+          addEntity: 'Cree un(e) @:common.new(elle) {entity}',
           applySearch: 'Appliquer',
           go: 'Aller',
           validate: 'Valider',
           delete: 'Supprimer',
-          backToList: 'Retour à la liste',
-          backToListDescription: 'Revenir à la vue en liste',
+          update: 'Modifier',
+          create: 'Cree',
+          cancel: 'Annuler',
+          backTo: 'Retrour vers {name}',
+          backToList: 'Retour à la @:common.list',
+          backToListDescription: 'Retour à la @:common.view @:common.list',
+          export: 'Exporter en CSV',
+          back: 'Retour',
         },
+    
+        settings: {
+          layout: 'Mise en page',
+          theme: 'Them',
+          general: 'General',
+          language: 'Langue',
+          pageTitle: 'Parametres',
+          switchLayout: 'Changer de mise en page',
+        },
+    
+        // Définitions d’entités (scalable)
+        entities:{
+          {{#each entities}}
+          {{#if !this.isView}}
+          ${minStart(this.className)}: {
+            name: '${minStart(this.className)} | ${minStart(this.className)}s',
+            nav: {
+              title: '@.capitalize:entities.${minStart(this.className)}.name',
+              create: 'Create @.capitalize:entities.${minStart(this.className)}.name',
+              list: '@.capitalize:entities.${minStart(this.className)}.name @:common.list',
+            },
+          },{{/if}}
+          {{/each}}
+        },
+        views: {
+          {{#each entities}}
+          {{#if this.isView}}
+          ${minStart(this.className)}: {
+            name: '${minStart(this.className)} | ${minStart(this.className)}s',
+            nav: {
+              title: '@.capitalize:views.${minStart(this.className)}.name',
+              list: '@.capitalize:views.${minStart(this.className)}.name @:common.list',                  
+            },
+          },{{/if}}
+          {{/each}}
+        },
+    
         error: {
           error: 'Erreur',
           400: 'Requête invalide',
           403: 'Accès interdit',
-          404: 'Page introuvable',
+          404: {
+            title: 'Page introuvable',
+            description: "Désolé, la page que vous recherchez n'existe pas ou a été déplacée.",
+          },
           500: 'Erreur interne (500)',
         },
         layout: {
-          switchToHorizontal: 'Passer à l\'horizontal',
+          switchToHorizontal: "Passer à l'horizontal",
           switchToVertical: 'Passer à la vertical',
         },
         theme: {
           switchToLight: 'Mode clair',
-          switchToDark: 'Mode sombre'
+          switchToDark: 'Mode sombre',
         },
         language: {
           choose: 'Langue',
@@ -391,6 +567,7 @@
           add: 'Ajouter',
         },
         profile: {
+          myProfile: 'Mon profil',
           edit: 'Modifier mon profil',
           changePassword: 'Changer mot de passe',
           oldPassword: 'Mot de passe actuel',
@@ -398,30 +575,18 @@
           confirmPassword: 'Confirmer mot de passe',
           updateSuccess: 'Profil mis à jour avec succès',
           updateError: 'Échec de la mise à jour',
-          usernameChangedLogout: 'Nom d\'utilisateur modifié. Vous allez être déconnecté pour vous reconnecter avec vos nouveaux identifiants.',
-          usernameChangeWarning: '⚠️ Attention : Changer votre nom d\'utilisateur vous déconnectera. Vous devrez vous reconnecter avec vos nouveaux identifiants.',
+          usernameChangedLogout: "Nom d'utilisateur modifié. Vous allez être déconnecté pour vous reconnecter avec vos nouveaux identifiants.",
+          usernameChangeWarning: "⚠️ Attention : Changer votre nom d'utilisateur vous déconnectera. Vous devrez vous reconnecter avec vos nouveaux identifiants.",
           passwordChangeSuccess: 'Mot de passe modifié avec succès',
           passwordChangeError: 'Échec du changement de mot de passe',
           passwordMismatch: 'Les mots de passe ne correspondent pas',
         },
-      },
-      // Formatage des dates
+    },
+    
       dateTimeFormats: {
-        short: {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        },
-        long: {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          weekday: 'long',
-        },
-        time: {
-          hour: '2-digit',
-          minute: '2-digit',
-        },
+        short: { year: 'numeric', month: 'short', day: 'numeric' },
+        long: { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' },
+        time: { hour: '2-digit', minute: '2-digit' },
         full: {
           year: 'numeric',
           month: 'long',
@@ -431,7 +596,7 @@
           minute: '2-digit',
         },
       },
-      // Formatage des nombres
+    
       numberFormats: {
         currency: {
           style: 'currency',
@@ -440,7 +605,7 @@
         },
         decimal: {
           style: 'decimal',
-          minimumFractionDigits: 2, // 1 234,50
+          minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         },
         percent: {
@@ -448,5 +613,5 @@
           useGrouping: true, // 88 %
         },
       },
-    };
-    export default french;
+    }
+      export default french

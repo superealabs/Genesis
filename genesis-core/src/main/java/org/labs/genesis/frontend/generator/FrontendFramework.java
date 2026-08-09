@@ -30,12 +30,27 @@ public class FrontendFramework
     private FrontendLayout frontendLayout;
     private ProjectBranding projectBranding;
     private FrontendDestinationPaths frontendPaths;
+    private List<FilesEdit> mereFiles = new ArrayList<>();
+    private List<FilesEdit> filleFiles = new ArrayList<>();
+    private String defaultPort = "9000" ;
+
+
+    public  FrontendFramework(){
+        setProjectBranding(new ProjectBranding());
+        setFrontendLayout(new FrontendLayout());
+    }
 
     public void addRoute(ComponentRoute route){
         if (route.getLabel() == null || route.getLabel().isEmpty()){
             route.setLabel( route.getComponentName());
         }
         getComponentRoutes().add(route);
+    }
+
+    public void clearRoutes() {
+        if(componentRoutes != null) {
+            componentRoutes.clear();
+        }
     }
 
     public List<ComponentRoute> getComponentRoutes(){

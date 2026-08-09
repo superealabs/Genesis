@@ -57,7 +57,7 @@
     type="file"
     class="form-control"
     [id]="field.name"
-    [formControl]="getControl()"
+    [attr.required]="field.constraints?.required ? true : null"
     (change)="onFileChange($event)"
   />
 
@@ -82,6 +82,7 @@
     <div *ngIf="form.get(field.name)?.errors?.['pastOrPresent']">Date must be in the past or today</div>
     <div *ngIf="form.get(field.name)?.errors?.['future']">Date must be in the future</div>
     <div *ngIf="form.get(field.name)?.errors?.['futureOrPresent']">Date must be today or later</div>
+    <div *ngIf="form.get(field.name)?.errors?.['fileRead']">The selected file could not be read</div>
   </div>
 
   <div class="error" *ngIf=" validationErrors && validationErrors[field.name]">

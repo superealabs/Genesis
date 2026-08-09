@@ -1,4 +1,3 @@
-import type { Ref } from 'vue'
 import type { SelectOption } from './SelectOption'
 import type { PaginationRequestParameter } from './api/RequestModel'
 import type { PaginationData } from './api/PageResponseModel'
@@ -16,7 +15,6 @@ export interface EntitySearchField {
   key: string
   label: string
   type: string
-  sortable: boolean
   searchKey?: string | number
   defaultValue?: string
   selectSearch?: (
@@ -24,4 +22,8 @@ export interface EntitySearchField {
     pagination: PaginationRequestParameter,
   ) => Promise<{ options: SelectOption[]; pagination: PaginationData }>
   multicriteriaSelect?: MultiCriteriaSelectSearch
+  showInTable?: boolean
+  sortable?: boolean
+  showInFilter?: boolean
+  identifier?: boolean
 }

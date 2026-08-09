@@ -361,6 +361,12 @@ genesis-core/src/main/resources/data_genesis/
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+1. **Développement en live**
+    - Clonez le dépôt.
+    - Pour lancer une instance d'IntelliJ IDEA avec le plugin en mode live, exécutez :
+        ``` bash
+        gradle genesis-intellij:runIde
+        ```
 
 ---
 

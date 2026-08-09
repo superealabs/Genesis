@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.labs.genesis.forms.FirstForm">
+  <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="30" left="30" bottom="30" right="30"/>
+    <constraints>
+      <xy x="6" y="3" width="944" height="543"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="9aa9b" class="javax.swing.JLabel" binding="rulesLabel">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Define business rules and generate business code automatically via AI."/>
+        </properties>
+      </component>
+      <component id="ruleCheckbox" class="javax.swing.JRadioButton" binding="addRuleToCode">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Add rule in project"/>
+        </properties>
+      </component>
+      <component id="120b0" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Update an existing generated project to the database changes"/>
+        </properties>
+      </component>
+      <component id="61b11" class="javax.swing.JRadioButton" binding="syncProject">
+        <constraints>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Synch Project"/>
+        </properties>
+      </component>
+      <component id="75b85" class="javax.swing.JLabel" binding="generationLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Start a new project with a ready-to-use structure based on your database."/>
+        </properties>
+      </component>
+      <component id="348a3" class="javax.swing.JRadioButton" binding="generateNewProject">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Generate new project"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>

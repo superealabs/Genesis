@@ -43,6 +43,8 @@ public class StringUtils {
 
 
     public static String toCamelCase(String string) {
+        if (string == null || string.isEmpty()) return string;
+
         return string.transform(s -> {
             String[] words = s.split("_");
             StringBuilder camelCase = new StringBuilder(words[0].toLowerCase());
@@ -141,5 +143,26 @@ public class StringUtils {
             return replacement + input.substring(index + marker.length());
         }
         return input;
+    }
+
+    public static String correctPattern(String pattern) {
+        if (pattern == null) {
+            return null;
+        }
+        StringBuilder corrected = new StringBuilder();
+        for (int i = 0; i < pattern.length(); i++) {
+            char c = pattern.charAt(i);
+            if (c == '\\') {
+                if (i + 1 < pattern.length() && pattern.charAt(i + 1) == '\\') {
+                    corrected.append("\\\\");
+                    i++;
+                } else {
+                    corrected.append("\\\\");
+                }
+            } else {
+                corrected.append(c);
+            }
+        }
+        return corrected.toString();
     }
 }

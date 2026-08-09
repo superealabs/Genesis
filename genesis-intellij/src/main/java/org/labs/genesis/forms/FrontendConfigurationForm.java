@@ -5,6 +5,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBList;
 import lombok.Getter;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
@@ -16,8 +17,11 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 public class FrontendConfigurationForm {
@@ -36,27 +40,95 @@ public class FrontendConfigurationForm {
     private JLabel secondaryColorLabel;
     private JButton secondaryColorPickerButton;
     private TextFieldWithBrowseButton logoFileField;
-    private JTextArea cssTextArea;
     private TextFieldWithBrowseButton faviconFileField;
     private JTextField logoLinkField;
     private JTextField faviconLinkField;
     private JBList<InterfaceLang> interfaceLangOptions;
+    private JCheckBox frontendGeneration;
+    private JLabel logoFileLabel;
+    private JLabel logoLinkLabel;
+    private JPanel favicon;
+    private JLabel faviconFileLabel;
+    private JLabel faviconLinkLabel;
+    private JLabel navbarLabel;
+    private JLabel languagesLabel;
+    private JLabel brandingLabel;
+    private JTextField portInput;
+    private JLabel portLabel;
+
+    private JComboBox<String> comboBoxProjectList;
+    private JComboBox<ProjectGenerationContext> contextList ;
+    private JLabel labelListProject;
+    private JButton addFrontendButton;
+    private final List<ProjectGenerationContext> listProjectGenerationContexts ;
 
     private File logoFile;
     private File faviconFile;
 
-    public FrontendConfigurationForm() {
+    public FrontendConfigurationForm(List<ProjectGenerationContext> listProjectGenerationContexts) {
+        this.listProjectGenerationContexts = listProjectGenerationContexts;
+        contextList = new JComboBox<>();
+        frontendGeneration.setSelected(false);
         initializeListners();
         initializeOptions();
+    }
+    public void refreshUI(boolean isMultiProject) {
+        if (isMultiProject) {
+            addListProject();
+            comboBoxProjectList.setVisible(true);
+            labelListProject.setVisible(true);
+            addFrontendButton.setVisible(true);
+        } else {
+            comboBoxProjectList.setVisible(false);
+            labelListProject.setVisible(false);
+            addFrontendButton.setVisible(false);
+        }
+    }
+
+    public void addListProject() {
+        DefaultComboBoxModel<String> nameModel = new DefaultComboBoxModel<>();
+        DefaultComboBoxModel<ProjectGenerationContext> contextModel = new DefaultComboBoxModel<>();
+
+        for (ProjectGenerationContext context : listProjectGenerationContexts) {
+            nameModel.addElement(context.getProjectName() + " " + context.getFramework().getName() + " " +context.getDatabase().getName() + " " + context.getCredentials().getDatabaseName());
+            contextModel.addElement(context);
+        }
+        comboBoxProjectList.setModel(nameModel);
+        comboBoxProjectList.setVisible(true);
+        comboBoxProjectList.revalidate();
+        comboBoxProjectList.repaint();
+
+        contextList.setModel(contextModel);
+        contextList.setVisible(true);
+        contextList.revalidate();
+        contextList.repaint();
+
+        comboBoxProjectList.addActionListener(e -> {
+            int index = comboBoxProjectList.getSelectedIndex();
+            if (index >= 0 && index < contextList.getModel().getSize()) {
+                contextList.setSelectedIndex(index);
+            }
+        });
+
     }
 
     private void initializeListners(){
         primaryColorPickerButton.addActionListener(new ColorPicker(primaryColorField ,Color.decode("#537cc2")));
         secondaryColorPickerButton.addActionListener(new ColorPicker(secondaryColorField ,new Color(0x53,0x7c,0xc2,0x26)));
+        frontendGeneration.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (frontendGeneration.isSelected()) {
+                    disableForm();
+                } else {
+                    enableForm();
+                }
+            }
+        });
 
         FileChooserDescriptor faviconChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
-                .withTitle("Select favicon File")
-                .withDescription("Choose an image or icon file to load into the editor")
+                .withTitle("Select favicon file")
+                .withDescription("Choose a .ico file to load into the editor")
                 .withFileFilter(file -> {
                     String extension = file.getExtension();
                     return extension != null && (
@@ -69,7 +141,7 @@ public class FrontendConfigurationForm {
                 });
 
         FileChooserDescriptor logoChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
-                .withTitle("Select logo File")
+                .withTitle("Select logo file")
                 .withDescription("Choose image or icon file to load into the editor")
                 .withFileFilter(file -> {
                     String extension = file.getExtension();
@@ -156,6 +228,7 @@ public class FrontendConfigurationForm {
         boolean hasText = text != null && !text.trim().isEmpty();
         // disable the file chooser if link is typed
         logoFileField.setEnabled(!hasText);
+        logoFileLabel.setEnabled(!hasText);
     }
 
     private void onFaviconFileChange() {
@@ -170,17 +243,24 @@ public class FrontendConfigurationForm {
         boolean hasText = text != null && !text.trim().isEmpty();
         // disable the file chooser if link is typed
         faviconFileField.setEnabled(!hasText);
+        faviconFileLabel.setEnabled(!hasText);
     }
 
     private  void initializeOptions(){
         populateLanguageOptions();
         populateFrameworkOptions((FrontendLanguage) frontendLanguageOptions.getSelectedItem());
         interfaceLangOptions.setListData(ProjectGenerator.langs.values().toArray(new InterfaceLang[0]));
+        InterfaceLang defaultLanguage = ProjectGenerator.langs.get(1);
+        if (defaultLanguage != null) {
+            interfaceLangOptions.setSelectedValue(defaultLanguage, true);
+        }
+        navbarSelect.setModel(new DefaultComboBoxModel<>(new String[]{"Sidebar","Topbar"}));
 
         languageLabel.setVisible(true);
         frameworkLabel.setVisible(true);
         frontendLanguageOptions.setVisible(true);
         frontendFrameworkOptions.setVisible(true);
+        portInput.setVisible(true);
 
         templateEngine.setVisible(false);
         viewsTemplateEngineOptions.setVisible(false);
@@ -195,6 +275,11 @@ public class FrontendConfigurationForm {
     }
 
     private void populateFrameworkOptions(FrontendLanguage frontendLanguage) {
+        ActionListener[] listeners = frontendFrameworkOptions.getActionListeners();
+        for (ActionListener listener : listeners) {
+            frontendFrameworkOptions.removeActionListener(listener);
+        }
+
         frontendFrameworkOptions.removeAllItems();
         List<FrontendFramework> frameworks = ProjectGenerator.frontendFrameworks.values().stream()
                 .filter(f -> f.getLanguageId() == frontendLanguage.getId())
@@ -207,6 +292,35 @@ public class FrontendConfigurationForm {
 
         if (frontendFrameworkOptions.getItemCount() > 0) {
             frontendFrameworkOptions.setSelectedIndex(0);
+            portInput.setText(((FrontendFramework) Objects.requireNonNull(frontendFrameworkOptions.getSelectedItem())).getDefaultPort());
+        }
+        frontendFrameworkOptions.addActionListener(e -> {
+            FrontendFramework selectedFramework = (FrontendFramework) frontendFrameworkOptions.getSelectedItem();
+            if (selectedFramework != null) {
+                portInput.setText(selectedFramework.getDefaultPort());
+            }
+        });
+    }
+
+    private void disableForm(){
+        setAccessiblePanel(mainPanel, false);
+        getFrontendGeneration().setEnabled(true);
+        getInterfaceLangOptions().setEnabled(false);
+    }
+
+    private void enableForm(){
+        setAccessiblePanel(mainPanel, true);
+        getFrontendGeneration().setEnabled(true);
+        getInterfaceLangOptions().setEnabled(true);
+    }
+
+    private void setAccessiblePanel(JPanel panel, boolean accessible){
+        panel.setEnabled(accessible);
+        for (Component component : panel.getComponents()) {
+            if (component instanceof JPanel){
+                setAccessiblePanel((JPanel) component, accessible);
+            }
+            component.setEnabled(accessible);
         }
     }
 
@@ -218,6 +332,7 @@ public class FrontendConfigurationForm {
         frameworkLabel.setVisible(false);
         frontendLanguageOptions.setVisible(false);
         frontendFrameworkOptions.setVisible(false);
+        portInput.setVisible(false);
 
         viewsTemplateEngineOptions.removeAllItems();
         viewsTemplateEngineOptions.addItem(frameworkMVC.getView().getViewTemplateEngine());

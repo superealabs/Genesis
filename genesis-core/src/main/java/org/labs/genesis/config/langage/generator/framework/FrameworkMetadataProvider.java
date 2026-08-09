@@ -1,9 +1,11 @@
 package org.labs.genesis.config.langage.generator.framework;
 
 import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.model.ChildTableMetadata;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
@@ -13,24 +15,25 @@ import org.labs.utils.StringUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.labs.genesis.config.database.NativeDatabaseTypeRegistry;
+
 public class FrameworkMetadataProvider {
     private static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
 
     public static @NotNull Map<String, Object> getCredentialsHashMap(Database database) {
         Credentials credentials = database.getCredentials();
 
-        return new HashMap<>(
-                Map.of("host", credentials.getHost(),
-                        "port", credentials.getPort(),
-                        "database", credentials.getDatabaseName(),
-                        "schema", credentials.getSchemaName(),
-                        "useSSL", credentials.isUseSSL(),
-                        "username", credentials.getUser(),
-                        "password", credentials.getPwd(),
-                        "driverType", credentials.getDriverType(),
-                        "sid", database.getSid()
-                )
-        );
+        Map<String, Object> map = new HashMap<>();
+        map.put("host", credentials.getHost());
+        map.put("port", credentials.getPort());
+        map.put("database", credentials.getDatabaseName());
+        map.put("schema", credentials.getSchemaName());
+        map.put("useSSL", credentials.isUseSSL());
+        map.put("username", credentials.getUser());
+        map.put("password", credentials.getPwd());
+        map.put("driverType", credentials.getDriverType());
+        map.put("sid", database.getSid());
+        return map;
     }
 
     public static HashMap<String, Object> getRelatedLanguageMetadata(Language language) {
@@ -57,6 +60,7 @@ public class FrameworkMetadataProvider {
         metadata.put("methods", framework.getModel().getModelGetterSetter());
         metadata.put("constructors", framework.getModel().getModelConstructors());
         metadata.put("classAnnotations", framework.getModel().getModelAnnotations());
+        metadata.put("extends", framework.getModel().getModelExtends());
         metadata.put("namespaceEnd", language.getSyntax().get("namespaceEnd") == null ? "{{removeLine}}" : language.getSyntax().get("namespaceEnd"));
         metadata.put("bracketEnd", language.getSyntax().get("bracketEnd") == null ? "{{removeLine}}" : language.getSyntax().get("namespaceEnd"));
 
@@ -184,6 +188,7 @@ public class FrameworkMetadataProvider {
         metadata.put("fields", getFieldsList(tableMetadata));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
+        metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
 
         return metadata;
     }
@@ -195,6 +200,7 @@ public class FrameworkMetadataProvider {
         metadata.put("fields", getFieldsList(tableMetadata, language));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
+        metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
 
         return metadata;
     }
@@ -214,6 +220,7 @@ public class FrameworkMetadataProvider {
         }
 
         metadata.put("tableName", tableMetadata.getTableName());
+        metadata.put("minClassName", StringUtils.minStart(tableMetadata.getClassName()));
         metadata.put("className", tableMetadata.getClassName());
         metadata.put("entityName", tableMetadata.getClassName());
         metadata.put("classNameLink", tableMetadata.getClassName() + "s");
@@ -221,6 +228,34 @@ public class FrameworkMetadataProvider {
         metadata.put("isView", tableMetadata.getIsView());
 
         metadata.putAll(getFrameworkSecurityTrueBooleanHashMap(framework,frameworkOptions));
+        String cacheProvider = (String) frameworkOptions.get("cacheProvider");
+        Optional<FrameworkCaching> selectedCacheProviderOption = framework.getSelectedCacheProviderByName(cacheProvider);
+
+        String handleSpace = StringUtils.toCamelCase(cacheProvider);
+        Object cacheableOption = frameworkOptions.get("entitiesCacheable");
+
+        if (selectedCacheProviderOption.isPresent() && cacheableOption instanceof List<?>) {
+            List<String> cacheableEntities = (List<String>) cacheableOption;
+
+            String className = tableMetadata.getClassName();
+            boolean isCacheable = cacheableEntities.contains(className);
+
+            metadata.put("cacheableWith" + StringUtils.majStart(handleSpace), isCacheable);
+        }
+
+        metadata.putAll(getFrameworkCachingTrueBooleanHashMap(framework,frameworkOptions));
+
+        // Ajouter enableAuth dans les métadonnées (par défaut true si non spécifié)
+        boolean enableAuth = true;
+        if (frameworkOptions != null && frameworkOptions.containsKey("enableAuth")) {
+            Object enableAuthValue = frameworkOptions.get("enableAuth");
+            if (enableAuthValue instanceof Boolean) {
+                enableAuth = (Boolean) enableAuthValue;
+            } else if (enableAuthValue instanceof String) {
+                enableAuth = Boolean.parseBoolean((String) enableAuthValue);
+            }
+        }
+        metadata.put("enableAuth", enableAuth);
     }
 
 
@@ -228,15 +263,19 @@ public class FrameworkMetadataProvider {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             Map<String, Object> fieldMap = getFieldHashMap(field);
+            // Enrich with Django-specific arguments to support constraints in templates
+            String djangoArgs = buildDjangoArgs(field);
+            fieldMap.put("djangoArgs", djangoArgs);
+            System.out.println("Field " + field.getName() + " djangoArgs: '" + djangoArgs + "'");
             fields.add(fieldMap);
         }
         return fields;
     }
 
-    private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata) {
+    private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata){
         List<Map<String, Object>> fieldsPK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
-            if (!field.isPrimary()) {
+            if (field.isPrimary()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field);
                 fieldsPK.add(fieldMap);
             }
@@ -256,6 +295,8 @@ public class FrameworkMetadataProvider {
                         .anyMatch(existing -> fieldType.equals(existing.get("type")));
 
                 if (!exists) {
+                    // Ajouter les données des options FK pour le template
+                    addForeignKeyOptions(fieldMap, field);
                     fieldsFK.add(fieldMap);
                 }
             }
@@ -263,20 +304,133 @@ public class FrameworkMetadataProvider {
         return fieldsFK;
     }
 
+    private static void addForeignKeyOptions(Map<String, Object> fieldMap, ColumnMetadata field) {
+        String fieldName = field.getName();
+        String referencedTableName = field.getType();// Le type contient le nom de la table référencée
+
+        // Créer des données d'exemple pour le template
+        // En production, ces données viendront du contrôleur Django
+        List<Map<String, Object>> options = new ArrayList<>();
+
+        // Générer 5 options d'exemple (en production, ce sera toutes les entrées de la table référencée)
+        for (int i = 1; i <= 5; i++) {
+            Map<String, Object> option = new HashMap<>();
+            option.put("id", i);
+
+            // Créer un texte d'affichage avec tous les champs disponibles
+            StringBuilder displayText = new StringBuilder();
+            displayText.append(i).append(" - ");
+
+            // Ajouter tous les champs de la table référencée pour l'affichage
+            // En production, cela sera généré dynamiquement par le contrôleur Django
+            displayText.append("Exemple ").append(referencedTableName).append(" ").append(i);
+
+            option.put("display", displayText.toString());
+            options.add(option);
+        }
+
+        // Ajouter les options au fieldMap avec un nom fixe pour le template
+        fieldMap.put("options", options);
+    }
+
     private static List<Map<String, Object>> getFieldsList(TableMetadata tableMetadata, Language language) {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
-            Map<String, Object> fieldMap = getFieldHashMap(field, language);
+            Map<String, Object> fieldMap = getFieldHashMap(field, language, tableMetadata.getDatabase().getId());
+            fieldMap.put("djangoArgs", buildDjangoArgs(field));
             fields.add(fieldMap);
         }
         return fields;
     }
 
+    // Build Django field arguments string (excluding verbose_name and db_column which are in template)
+    private static String buildDjangoArgs(ColumnMetadata field) {
+        List<String> parts = new ArrayList<>();
+
+        // Debug logging
+        System.out.println("buildDjangoArgs for field: " + field.getName() +
+                ", type: " + field.getType() +
+                ", isPrimary: " + field.isPrimary() +
+                ", isText: " + field.isText() +
+                ", columnSize: " + field.getColumnSize() +
+                ", isNullable: " + field.isNullable() +
+                ", isUnique: " + field.isUnique());
+
+        // Primary key handling - prefer Django AutoField types so the ID is auto-generated
+        if (field.isPrimary()) {
+            // Choose appropriate AutoField type
+            // If the mapped Django type is BigIntegerField, prefer BigAutoField, otherwise AutoField
+            String autoType = "AutoField";
+            if ("BigIntegerField".equals(field.getType())) {
+                autoType = "BigAutoField";
+            }
+            String result = autoType + "(primary_key=True)";
+            System.out.println("Primary key args: " + result);
+            return result;
+        }
+
+        // Foreign key handling - generate ForeignKey syntax
+        if (field.isForeign()) {
+            // For foreign keys, generate the full ForeignKey syntax with correct db_column
+            String result = "ForeignKey('" + field.getType() + "', on_delete=models.CASCADE, db_column='" +
+                           field.getReferencedColumn() + "'" +
+                           (field.isNullable() ? ", null=True, blank=True" : "") + ")";
+            System.out.println("Foreign key args: " + result);
+            return result;
+        }
+
+        // Text length - for CharField, always add max_length if not specified
+        if (field.isText()) {
+            int maxLength = field.getColumnSize() > 0 ? field.getColumnSize() : 255; // Default to 255 for CharField
+            parts.add("max_length=" + maxLength);
+        }
+
+        // Decimal precision/scale
+        if (field.isNumericWithPrecision() && field.getDecimalDigits() >= 0) {
+            // We do not have explicit max_digits; infer from columnType/metadata if available
+            // ColumnMetadata stores precision in columnSize for numerics with precision
+            int maxDigits = Math.max(field.getColumnSize(), 0);
+            int decimalPlaces = Math.max(field.getDecimalDigits(), 0);
+            if (maxDigits > 0) {
+                parts.add("max_digits=" + maxDigits);
+            }
+            parts.add("decimal_places=" + decimalPlaces);
+        }
+
+        // Nullability
+        if (field.isNullable()) {
+            parts.add("null=True");
+            parts.add("blank=True");
+        }
+
+        // Uniqueness
+        if (field.isUnique()) {
+            parts.add("unique=True");
+        }
+
+        // Default value (best-effort: only simple numerics and booleans to avoid quoting issues)
+        if (field.getDefaultValue() != null && !field.getDefaultValue().isBlank()) {
+            String dv = field.getDefaultValue();
+            if (field.isNumeric()) {
+                parts.add("default=" + dv);
+            } else if ("true".equalsIgnoreCase(dv) || "false".equalsIgnoreCase(dv)) {
+                parts.add("default=" + dv.toLowerCase());
+            }
+        }
+
+        // Build the complete field definition with db_column
+        parts.add("db_column='" + field.getReferencedColumn() + "'");
+        String args = String.join(", ", parts);
+        String result = field.getType() + "(" + args + ")";
+        System.out.println("Final djangoArgs for " + field.getName() + ": " + result);
+        return result;
+    }
+
     private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata, Language language) {
         List<Map<String, Object>> fieldsPK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
-            if (!field.isPrimary()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field, language);
+            if (field.isPrimary()) {
+                Map<String, Object> fieldMap = getFieldHashMap(field, language, tableMetadata.getDatabase().getId());
                 fieldsPK.add(fieldMap);
             }
         }
@@ -287,7 +441,7 @@ public class FrameworkMetadataProvider {
         List<Map<String, Object>> fieldsFK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field, language);
+                Map<String, Object> fieldMap = getFieldHashMap(field, language,tableMetadata.getDatabase().getId());
 
                 String fieldType = field.getType();
 
@@ -308,8 +462,13 @@ public class FrameworkMetadataProvider {
         fieldMap.put("withGetters", false);
         fieldMap.put("withSetters", false);
         fieldMap.put("type", field.getType());
+        fieldMap.put("typeLowerCase", field.getType() != null ? field.getType().toLowerCase() : "");
         fieldMap.put("name", field.getName());
+        fieldMap.put("djangoFieldName", field.isForeign() ? field.getType().toLowerCase() : field.getName());
         fieldMap.put("isPrimaryKey", field.isPrimary());
+        fieldMap.put("isAutoGenerated", field.isAutoGenerated());
+        fieldMap.put("isGeneratedPrimaryKey", field.isPrimary() && field.isAutoGenerated());
+        fieldMap.put("isManualPrimaryKey", field.isPrimary() && !field.isAutoGenerated());
         fieldMap.put("isForeignKey", field.isForeign());
         fieldMap.put("columnType", field.getColumnType());
         fieldMap.put("columnName", field.getReferencedColumn());
@@ -322,7 +481,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
         fieldMap.put("validationAnnotations", getFieldValidationAnnotations(field));
-        fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
+        fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary() && field.isAutoGenerated());
         fieldMap.put("isText",field.isText());
         fieldMap.put("isNumeric",field.isNumeric());
         fieldMap.put("isDate",field.isDate());
@@ -336,30 +495,82 @@ public class FrameworkMetadataProvider {
         return fieldMap;
     }
 
-    public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field, Language language) {
+    public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field, Language language, int databaseId) {
         Map<String, Object> fieldMap = new HashMap<>();
 
+        fieldMap.put("typeBase", field.getFrontEndType());
+        String uiType = field.getUiType();
+        if ("DateOnly".equals(field.getType())) {
+            uiType = "date";
+        } else if (
+                "DateTime".equals(field.getType()) || "DateTimeOffset".equals(field.getType()) || field.isDateTimeTz()
+        ) {
+            uiType = "datetime-local";
+        } else if (
+                "TimeOnly".equals(field.getType()) || field.isTime() || field.isTimeTz()
+        ) {
+            uiType = "time";
+        } else if (field.isNumeric()) {
+            uiType = "number";
+        }
+        fieldMap.put("uiType", uiType);
+        System.out.println(
+                "FIELD=" + field.getName()
+                        + " | columnType=" + field.getColumnType()
+                        + " | type=" + field.getType()
+                        + " | isDate=" + field.isDate()
+                        + " | isDateTime=" + field.isDateTime()
+                        + " | uiType=" + uiType
+        );
+        fieldMap.put("uiType", uiType);
         fieldMap.put("withGetters", false);
         fieldMap.put("withSetters", false);
         fieldMap.put("type", field.getType());
+        fieldMap.put("typeLowerCase", field.getType() != null ? field.getType().toLowerCase() : "");
         fieldMap.put("name", field.getName());
+        fieldMap.put("djangoFieldName", field.isForeign() ? field.getType().toLowerCase() : field.getName());
         fieldMap.put("isPrimaryKey", field.isPrimary());
+        fieldMap.put("isAutoGenerated", field.isAutoGenerated());
+        fieldMap.put("isGeneratedPrimaryKey", field.isPrimary() && field.isAutoGenerated());
+        fieldMap.put("isManualPrimaryKey", field.isPrimary() && !field.isAutoGenerated());
         fieldMap.put("isForeignKey", field.isForeign());
         fieldMap.put("columnType", field.getColumnType());
         fieldMap.put("columnName", field.getReferencedColumn());
         fieldMap.put("referencedColumnType", field.getReferencedColumnType());
         fieldMap.put("referencedPrimaryKeyColumn", field.getReferencedPrimaryKeyColumn());
         fieldMap.put("columnNameField", StringUtils.toCamelCase(field.getReferencedColumn()));
-        fieldMap.put("attributeTypeAnnotations", language.getAttributeTypeAnnotations().get(field.getType()));
+        List<String> attributeTypeAnnotations = new ArrayList<>();
+        List<String> configuredAnnotations = language.getAttributeTypeAnnotations().get(field.getType());
+        if (configuredAnnotations != null) {
+            attributeTypeAnnotations.addAll(configuredAnnotations);
+        }
+        boolean isNativeTextType = NativeDatabaseTypeRegistry.isNative(databaseId, field.getColumnType());
+        if ("String".equals(field.getType()) && isNativeTextType) {
+            attributeTypeAnnotations.removeIf(annotation ->
+                    annotation.contains("org.hibernate.annotations.ColumnTransformer") && annotation.contains("CAST(${this.columnName} as varchar)")
+            );
+        }
+        fieldMap.put("attributeTypeAnnotations",attributeTypeAnnotations);
         fieldMap.put("mockdata", language.getMockData().get(field.getColumnType()));
-        fieldMap.put("criteriaBuildSnippet", language.getCriteriaBuildSnippet().get(field.getColumnType()));
+        String criteriaBuildSnippet = language.getCriteriaBuildSnippet()
+                .entrySet()
+                .stream()
+                .filter(entry ->
+                        entry.getKey().equalsIgnoreCase(field.getColumnType())
+                )
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(
+                        "root.get(\"${this.name}\"), object.get${majStart(this.name)}()"
+                );
+        fieldMap.put("criteriaBuildSnippet", criteriaBuildSnippet);
         fieldMap.put("defaultValue", field.getDefaultValue());
         fieldMap.put("columnSize", field.getColumnSize());
         fieldMap.put("decimalDigits", field.getDecimalDigits());
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
         fieldMap.put("validationAnnotations", getFieldValidationAnnotations(field));
-        fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary());
+        fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary() && field.isAutoGenerated());
         fieldMap.put("isText",field.isText());
         fieldMap.put("isNumeric",field.isNumeric());
         fieldMap.put("isDate",field.isDate());
@@ -369,18 +580,31 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isDateTimeTz",field.isDateTimeTz());
         fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
+        fieldMap.put("isParentForeignKey",field.getIsParentForeignKey());
 
         return fieldMap;
     }
 
     public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName) throws Exception {
         String packageDefault = "";
+        if (framework.getModelDao() == null) {
+            throw new RuntimeException("ModelDao is not configured for framework: " + framework.getName());
+        }
         packageDefault = framework.getModelDao().getModelDaoSavePath();
-
+        System.out.println("Get hashmapDAO global " + packageDefault);
+        System.out.println(tableMetadata.size()+ " SIZEEEEE");
         Database database = tableMetadata.getFirst().getDatabase();
+
+        System.out.println("Get databaseee global ");
+
         String connectionString = database.getConnectionString().get(framework.getLanguageId());
         Map<String, Object> connectionStringMetadata = getCredentialsHashMap(database);
+        if(database.getId() == Constantes.Oracle_ID)
+        {
+            connectionStringMetadata.put("database",database.getSid().toLowerCase());
+        }
         connectionString = engine.render(connectionString, connectionStringMetadata);
+        System.out.println("Renderedeee");
 
         Map<String, Object> metadata = new HashMap<>(Map.of(
                 "projectName", projectName,
@@ -395,8 +619,25 @@ public class FrameworkMetadataProvider {
             fields.add(tableMetadatum.getClassName());
         }
 
+        // Generate imports for models/__init__.py
+        Map<String, Object> entitiesMetadata = generateEntitiesImportsAndAll(tableMetadata);
+        metadata.putAll(entitiesMetadata);
         metadata.put("entities", fields);
         metadata.put("allEntities", getTableMetadataList(tableMetadata));
+        return metadata;
+    }
+
+    public static Map<String, Object> generateEntitiesImportsAndAll(List<TableMetadata> tableMetadata) {
+        List<String> entitiesImports = new ArrayList<>();
+        List<String> entitiesAll = new ArrayList<>();
+        for (TableMetadata tableMetadatum : tableMetadata) {
+            String className = tableMetadatum.getClassName();
+            entitiesImports.add("from ." + className + " import " + className);
+            entitiesAll.add("'" + className + "'");
+        }
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("entitiesImports", String.join("\n", entitiesImports));
+        metadata.put("entitiesAll", String.join(", ", entitiesAll));
         return metadata;
     }
 
@@ -526,9 +767,23 @@ public class FrameworkMetadataProvider {
 
     private static List<Map<String, Object>> getTableMetadataList(List<TableMetadata> tableMetadata) {
         List<Map<String, Object>> tms = new ArrayList<>();
+
+        // Liste des tables Django par défaut à exclure
+        Set<String> djangoDefaultTables = Set.of(
+            "auth_group", "auth_group_permissions", "auth_permission",
+            "auth_user", "auth_user_groups", "auth_user_user_permissions",
+            "django_admin_log", "django_content_type", "django_migrations",
+            "django_session", "authgroup", "authgrouppermission", "authpermission",
+            "authuser", "authusergroup", "authuseruserpermission",
+            "djangoadminlog", "djangocontenttype", "djangomigration", "djangosession"
+        );
+
         for (TableMetadata field : tableMetadata) {
-            Map<String, Object> tmMap = getTableMetadataHashMap(field);
-            tms.add(tmMap);
+            // Exclure les tables Django par défaut
+            if (!djangoDefaultTables.contains(field.getTableName().toLowerCase())) {
+                Map<String, Object> tmMap = getTableMetadataHashMap(field);
+                tms.add(tmMap);
+            }
         }
         return tms;
     }
@@ -562,6 +817,9 @@ public class FrameworkMetadataProvider {
 
     private static HashMap<String, Object> getFrameworkSecurityTrueBooleanHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
         HashMap<String, Object> frameworkSecurityBooleanMetadata = new HashMap<>();
+        // Defaults values:
+        frameworkSecurityBooleanMetadata.put("useJWT", false);
+
         String securityType = (String) frameworkConfiguration.get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
         selectedSecurityOption.ifPresent(security -> {
@@ -575,6 +833,17 @@ public class FrameworkMetadataProvider {
     private static HashMap<String, Object> getFrontendLanguageMetadata(FrontendLanguage frontendLanguage, Map<String, Object> frontendConfiguration) {
         HashMap<String, Object> frontendLanguageMetadata = new HashMap<>();
         return  frontendLanguageMetadata;
+    }
+    private static HashMap<String, Object> getFrameworkCachingTrueBooleanHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
+        HashMap<String, Object> frameworkSelectedCacheProviderBooleanMetadata = new HashMap<>();
+        String cacheProvider = (String) frameworkConfiguration.get("cacheProvider");
+        Optional<FrameworkCaching> selectedSelectedCacheProviderOption = framework.getSelectedCacheProviderByName(cacheProvider);
+        selectedSelectedCacheProviderOption.ifPresent(frameworkCaching -> {
+            for(String key : frameworkCaching.getMetadataBooleanTrueKeys()){
+                frameworkSelectedCacheProviderBooleanMetadata.put(key, true);
+            }
+        });
+        return frameworkSelectedCacheProviderBooleanMetadata;
     }
 
     public static HashMap<String, Object> getAltViewMainLayoutHashMap (FrameworkMVC frameworkMVC) {

@@ -100,6 +100,7 @@ public class ProjectGeneratorHandler {
         Database database;
         Connection connection;
         List<String> entityNames;
+        List<String> viewNames;
         String groupLink;
 
         int databaseId = getDatabaseId(scanner);
@@ -115,6 +116,11 @@ public class ProjectGeneratorHandler {
         List<String> allTableNames = fetchEntityNames(database, connection);
         entityNames = handleEntitySelection(scanner, allTableNames);
         context.setEntityNames(entityNames);
+        // context.setViewNames(viewNames);
+
+        List<String> allViewNames = fetchViewNames(database, connection);
+        viewNames = handleEntitySelection(scanner, allViewNames);
+        context.setViewNames(viewNames);
 
         if (context.getFramework().getWithGroupId()) {
             groupLink = getNonEmptyInput(scanner, "Enter the group link");
@@ -417,7 +423,7 @@ public class ProjectGeneratorHandler {
 
     private String createSQLFile(String sqlFilePath, String scriptContent) {
         try {
-            String filename = "generated_script_" + LocalDateTime.now();
+            String filename = "generated_script_" + LocalDateTime.now().toString().replace(":", "-");
             String fullFilePath = sqlFilePath + "/" + filename + ".sql";
 
             FileUtils.createSimpleFile(sqlFilePath, filename, "sql", scriptContent);
@@ -466,6 +472,25 @@ public class ProjectGeneratorHandler {
             System.out.println("An error occurred while fetching table names: " + e.getMessage());
         }
         return allTableNames;
+    }
+
+    private List<String> fetchViewNames(Database database, Connection connection) {
+        List<String> allViewNames = new ArrayList<>();
+        try {
+            allViewNames = database.getAllViewNames(connection);
+            if (allViewNames.isEmpty()) {
+                System.out.println("No views found in the database.");
+            } else {
+                System.out.println("\nAvailable views in the database:");
+                for (int i = 0; i < allViewNames.size(); i++) {
+                    System.out.println((i + 1) + ") " + allViewNames.get(i));
+                }
+                System.out.println("*  Select all views");
+            }
+        } catch (SQLException e) {
+            System.out.println("An error occurred while fetching view names: " + e.getMessage());
+        }
+        return allViewNames;
     }
 
     private List<String> handleEntitySelection(Scanner scanner, List<String> allTableNames) {

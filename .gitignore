@@ -42,5 +42,9 @@ bin/
 
 ### macOS ###
 .DS_Store
-.intellijPlatform/
-_log-fix/
+/tmp/
+/output/
+/.intellijPlatform/
+
+### Ny Antema logfix
+/_log-fix/

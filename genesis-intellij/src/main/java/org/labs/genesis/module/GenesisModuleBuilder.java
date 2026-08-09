@@ -12,9 +12,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.labs.genesis.config.ProjectGenerationContext;
 
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class GenesisModuleBuilder extends ModuleBuilder {
     private final static GenesisModuleType moduleType = new GenesisModuleType();
     public static ProjectGenerationContext projectGenerationContext = new ProjectGenerationContext();
+    public static List<ProjectGenerationContext> listProjectGenerationContexts = new ArrayList<>();
+
+
     public WizardContext wizardContext;
 
     @Override

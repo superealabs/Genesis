@@ -32,7 +32,7 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.repositories;
-  
+        
         import ${groupLink}.${lowerCase(projectName)}.models.RoleEntity;
         import org.springframework.data.jpa.repository.JpaRepository;
         import java.util.Optional;
@@ -234,15 +234,15 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config.security.enums;
-  
+        
         import lombok.Getter;
         
         @Getter
         public enum UserRole {
           ADMIN("ROLE_ADMIN");
-          
+        
           private final String authority;
-          
+        
           UserRole(String authority) {
             this.authority = authority;
           }
@@ -254,7 +254,7 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config.security.models;
-  
+        
         import ${groupLink}.${lowerCase(projectName)}.models.UserEntity;
         import org.springframework.security.core.GrantedAuthority;
         import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -271,7 +271,7 @@
           private final String password;
           private final String email;
           private final List<GrantedAuthority> authorities;
-          
+        
           public UserInfoDetails(UserEntity user) {
             this.username = user.getName(); // Assuming 'name' is used as 'username'
             this.password = user.getPassword();
@@ -280,42 +280,42 @@
             .map(SimpleGrantedAuthority::new)
             .collect(Collectors.toList());
           }
-          
+        
           @Override
           public Collection<? extends GrantedAuthority> getAuthorities() {
             return authorities;
           }
-          
+        
           @Override
           public String getPassword() {
             return password;
           }
-          
+        
           @Override
           public String getUsername() {
             return username;
           }
-          
+        
           @Override
           public boolean isAccountNonExpired() {
             return true; // Implement your logic if you need this
           }
-          
+        
           @Override
           public boolean isAccountNonLocked() {
             return true; // Implement your logic if you need this
           }
-          
+        
           @Override
           public boolean isCredentialsNonExpired() {
             return true; // Implement your logic if you need this
           }
-          
+        
           @Override
           public boolean isEnabled() {
             return true; // Implement your logic if you need this
           }
-          
+        
           public String getEmail() {
             return email;
           }
@@ -395,7 +395,7 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config.security.services;
-  
+        
         import io.jsonwebtoken.Claims;
         import io.jsonwebtoken.Jwts;
         import io.jsonwebtoken.SignatureAlgorithm;
@@ -420,7 +420,7 @@
           private String secret;
           @Value("$[jwt.expiration]")
           private long expirationTime;
-          
+        
           // Get the signing key for JWT token
           private static Key getSignKey() {
             byte[] keyBytes = Decoders.BASE64.decode(SECRET);
@@ -494,7 +494,7 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config.security.services;
-  
+        
         import org.springframework.scheduling.annotation.Scheduled;
         import org.springframework.stereotype.Service;
         
@@ -503,24 +503,24 @@
         @Service
         public class TokenBlacklistService {
           private final ConcurrentHashMap<String, Long> invalidatedTokens = new ConcurrentHashMap<>();
-          
+        
           public void invalidateToken(String token) {
             // Ajoute le token dans la blacklist avec une durée d'expiration correspondant à sa validité
             long expirationTime = extractExpiration(token);
             invalidatedTokens.put(token, expirationTime);
           }
-          
+        
           public boolean isTokenInvalidated(String token) {
             // Vérifie si le token est dans la blacklist
             Long expirationTime = invalidatedTokens.get(token);
             return expirationTime != null && expirationTime > System.currentTimeMillis();
           }
-          
+        
           private long extractExpiration(String token) {
             // Méthode pour extraire la date d'expiration du JWT (à implémenter avec JwtService)
             return JwtService.extractExpiration(token).getTime();
           }
-          
+        
           // Pour nettoyage automatique (facultatif)
           @Scheduled(fixedRate = 60000) // Chaque minute
           public void cleanExpiredTokens() {
@@ -535,7 +535,7 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config.security.services;
-  
+        
         import ${groupLink}.${lowerCase(projectName)}.config.security.models.AuthRequest;
         import ${groupLink}.${lowerCase(projectName)}.config.security.models.UserInfoDetails;
         import ${groupLink}.${lowerCase(projectName)}.config.security.models.UserUpdateRequest;
@@ -560,18 +560,18 @@
           private final UserEntityRepository repository;
           private final JwtService jwtService;
           private final AuthenticationManager authenticationManager;
-          
+        
           @Autowired
           public UserInfoService(UserEntityRepository repository, JwtService jwtService, @Lazy AuthenticationManager authenticationManager) {
             this.repository = repository;
             this.jwtService = jwtService;
             this.authenticationManager = authenticationManager;
           }
-          
+        
           @Override
           public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
             Optional<UserEntity> userDetail = repository.findAllByName(username); // Assuming 'email' is used as username
-          
+        
             // Converting UserInfo to UserDetails
             return userDetail.map(UserInfoDetails::new)
               .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
@@ -583,11 +583,11 @@
               repository.save(user);
               return "User Added Successfully";
           }
-          
+        
           public String authenticateAndGetToken(AuthRequest authRequest) {
             System.out.println("Received username: " + authRequest.username());
             System.out.println("Received password: " + authRequest.password());
-    
+        
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authRequest.username(), authRequest.password())
             );
@@ -602,32 +602,32 @@
               // 1. extrait l’identité
               String username = jwtService.extractUsername(oldToken);
               if (username == null) throw new IllegalArgumentException("Invalid token");
-          
+        
               // 2. charge l’utilisateur
               UserDetails user = loadUserByUsername(username);
-          
+        
               // 3. valide encore la signature / expiration
               if (!jwtService.validateToken(oldToken, user))
               throw new IllegalArgumentException("Token validation failed");
-          
+        
               // 5. génère un nouveau
               return jwtService.generateToken(username);
           }
-          
+        
           // Ajoutez ces méthodes dans UserInfoService
           public void updateUser(String username, UserUpdateRequest updateRequest) {
             UserEntity user = repository.findUserByName(username);
             if (user == null) {
               throw new UsernameNotFoundException("User not found: " + username);
             }
-            
+        
             if (updateRequest.getName() != null) {
                 user.setName(updateRequest.getName());
             }
             if (updateRequest.getEmail() != null) {
                 user.setEmail(updateRequest.getEmail());
             }
-                
+        
             repository.save(user);
           }
         
@@ -636,21 +636,21 @@
                   String oldPassword, 
                   String newPassword, 
                   String confirmPassword) {
-            
+        
             if (!newPassword.equals(confirmPassword)) {
                 throw new IllegalArgumentException("New password and confirmation do not match");
             }
-          
+        
             UserEntity user = repository.findUserByName(username);
             if (user == null) {
               throw new UsernameNotFoundException("User not found: " + username);
             }
-                
+        
             // Vérifier l'ancien mot de passe
             if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
               throw new IllegalArgumentException("Old password is incorrect");
             }
-          
+        
             user.setPassword(passwordEncoder.encode(newPassword));
             repository.save(user);
           }
@@ -767,7 +767,7 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config.security.filters;
-  
+        
         import jakarta.servlet.FilterChain;
         import jakarta.servlet.ServletException;
         import jakarta.servlet.http.HttpServletRequest;
@@ -797,9 +797,9 @@
           private final JwtService jwtService;
           private final TokenBlacklistService tokenBlacklistService;
           private final UserInfoService userInfoService;
-          
+        
           private final ObjectMapper objectMapper;
-          
+        
           @Autowired
           public JwtAuthenticationFilter(JwtService jwtService, TokenBlacklistService tokenBlacklistService, @Lazy UserInfoService userInfoService,
           ObjectMapper objectMapper) {
@@ -812,14 +812,14 @@
           @Override
           protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
           throws ServletException, IOException {
-    
+        
             String authHeader = request.getHeader("Authorization");
             String username = null;
             String jwt = null;
-    
+        
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
               jwt = authHeader.substring(7);
-    
+        
               // Vérification blacklist
               if (tokenBlacklistService.isTokenInvalidated(jwt)) {
                 sendErrorResponse(response,
@@ -827,7 +827,7 @@
                 "Token has been invalidated");
                 return;
               }
-    
+        
               try {
                 username = jwtService.extractUsername(jwt);
               } catch (Exception e) {
@@ -840,7 +840,7 @@
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userInfoService.loadUserByUsername(username);
-                
+        
                 try {
                     if (jwtService.validateToken(jwt, userDetails)) {
                         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -866,7 +866,7 @@
                   message,
                   null
               );
-              
+        
               response.setStatus(status.value());
               response.setContentType(MediaType.APPLICATION_JSON_VALUE);
               response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
@@ -879,7 +879,7 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config.security.filters;
-  
+        
         import ${groupLink}.${lowerCase(projectName)}.config.security.handlers.JwtAccessDeniedHandler;
         import ${groupLink}.${lowerCase(projectName)}.config.security.handlers.JwtAuthEntryPoint;
         import org.springframework.beans.factory.annotation.Autowired;
@@ -906,7 +906,7 @@
         
         import java.util.Arrays;
         import java.util.List;
-  
+        
         @Configuration
         @EnableWebSecurity
         @EnableMethodSecurity
@@ -914,18 +914,18 @@
           public static final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(); // Password encoding
           public final UserDetailsService userDetailsService;
           private final JwtAuthenticationFilter authFilter;
-          
+        
           //NEW
           private final JwtAuthEntryPoint authenticationEntryPoint;
           private final JwtAccessDeniedHandler accessDeniedHandler;
-          
+        
           @Autowired
           public SecurityConfig(JwtAuthenticationFilter authFilter, UserDetailsService userDetailsService,
             JwtAuthEntryPoint authenticationEntryPoint,
             JwtAccessDeniedHandler accessDeniedHandler) {
             this.authFilter = authFilter;
             this.userDetailsService = userDetailsService;
-            
+        
             this.authenticationEntryPoint = authenticationEntryPoint;
             this.accessDeniedHandler = accessDeniedHandler;
           }
@@ -963,19 +963,19 @@
                     .accessDeniedHandler(accessDeniedHandler);
             return http.build();
           }
-      
+        
           @Bean
           public CorsConfigurationSource corsConfigurationSource() {
             CorsConfiguration configuration = new CorsConfiguration();
             configuration.setAllowedOrigins(List.of("*")); // Spécifiez explicitement l'origine
             return getCorsConfigurationSource(configuration);
           }
-    
+        
           @Bean
             public PasswordEncoder passwordEncoder() {
             return passwordEncoder; // Password encoding
           }
-    
+        
           @Bean
           public AuthenticationProvider authenticationProvider() {
             DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
@@ -983,7 +983,7 @@
             authenticationProvider.setPasswordEncoder(passwordEncoder);
             return authenticationProvider;
           }
-    
+        
           @Bean
           public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
             return config.getAuthenticationManager();
@@ -1034,14 +1034,14 @@
           private final TokenBlacklistService tokenBlacklistService;
           @Autowired
           private RoleEntityRepository roleEntityRepository;
-          
+        
           @Autowired
           public UserAuthController(JwtService jwtService, UserInfoService userInfoService, TokenBlacklistService tokenBlacklistService) {
             this.jwtService = jwtService;
             this.userInfoService = userInfoService;
             this.tokenBlacklistService = tokenBlacklistService;
           }
-          
+        
           @Operation(
                 summary = "Get all available roles",
                 description = "Retrieve the complete list of roles available in the system. This endpoint is public and does not require authentication."
@@ -1060,7 +1060,7 @@
             var roles = roleEntityRepository.findAll();
             return ResponseEntity.ok(RestResponse.buildSuccessResponse(HttpStatus.OK, "Roles", roles));
           }
-          
+        
           @Operation(
             security = { @SecurityRequirement(name = "bearerAuth") },
             summary = "Logout user",
@@ -1218,7 +1218,7 @@
                   );
               }
           }
-          
+        
           @Operation(
               summary = "Refresh access token",
               description = "Provide the current access-token to obtain a new one; the old one is invalidated."
@@ -1268,13 +1268,13 @@
           public ResponseEntity<RestResponse<String>> updateUser(
           @RequestHeader("Authorization") String authHeader,
           @Valid @RequestBody UserUpdateRequest updateRequest) {
-          
+        
             try {
               if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
                 String username = jwtService.extractUsername(token);
                 userInfoService.updateUser(username, updateRequest);
-          
+        
                 return ResponseEntity.ok(
                   RestResponse.buildSuccessResponse(
                     HttpStatus.OK,
@@ -1322,7 +1322,7 @@
           public ResponseEntity<RestResponse<String>> changePassword(
           @RequestHeader("Authorization") String authHeader,
           @Valid @RequestBody PasswordChangeRequest passwordChangeRequest) {
-          
+        
             try {
               if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7); 
@@ -1333,7 +1333,7 @@
                   passwordChangeRequest.getNewPassword(),
                   passwordChangeRequest.getConfirmPassword()
                 );
-            
+        
                 return ResponseEntity.ok(
                   RestResponse.buildSuccessResponse(
                     HttpStatus.OK,
@@ -1390,436 +1390,450 @@
       fileName: "identity_schema"
       extension: "sql"
       content: |
+        {{#if databaseType = PostgreSQL}}
         --Default login
         --Username: admin
         --Password: Pwd@123
-        {{#if databaseType = PostgreSQL}}
-          CREATE TABLE IF NOT EXISTS "AspNetRoles" (
-            "Id" TEXT NOT NULL,
-            "Name" VARCHAR(256),
-            "NormalizedName" VARCHAR(256),
-            "ConcurrencyStamp" TEXT,
-            CONSTRAINT "PK_AspNetRoles" PRIMARY KEY ("Id"),
-            CONSTRAINT "RoleNameIndex" UNIQUE ("NormalizedName")
-          );
-          
-          CREATE TABLE IF NOT EXISTS "AspNetUsers" (
-            "Id" TEXT NOT NULL,
-            "UserName" VARCHAR(256),
-            "NormalizedUserName" VARCHAR(256),
-            "Email" VARCHAR(256),
-            "NormalizedEmail" VARCHAR(256),
-            "EmailConfirmed" BOOLEAN NOT NULL DEFAULT FALSE,
-            "PasswordHash" TEXT,
-            "SecurityStamp" TEXT,
-            "ConcurrencyStamp" TEXT,
-            "PhoneNumber" TEXT,
-            "PhoneNumberConfirmed" BOOLEAN NOT NULL DEFAULT FALSE,
-            "TwoFactorEnabled" BOOLEAN NOT NULL DEFAULT FALSE,
-            "LockoutEnd" TIMESTAMPTZ,
-            "LockoutEnabled" BOOLEAN NOT NULL DEFAULT FALSE,
-            "AccessFailedCount" INTEGER NOT NULL DEFAULT 0,
-            CONSTRAINT "PK_AspNetUsers" PRIMARY KEY ("Id"),
-            CONSTRAINT "UserNameIndex" UNIQUE ("NormalizedUserName")
-          );
-          
-          CREATE TABLE IF NOT EXISTS "AspNetRoleClaims" (
-            "Id" SERIAL NOT NULL,
-            "RoleId" TEXT NOT NULL,
-            "ClaimType" TEXT,
-            "ClaimValue" TEXT,
-            CONSTRAINT "PK_AspNetRoleClaims" PRIMARY KEY ("Id"),
-            CONSTRAINT "FK_AspNetRoleClaims_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles"("Id") ON DELETE CASCADE
-          );
-          
-          CREATE TABLE IF NOT EXISTS "AspNetUserClaims" (
-            "Id" SERIAL NOT NULL,
-            "UserId" TEXT NOT NULL,
-            "ClaimType" TEXT,
-            "ClaimValue" TEXT,
-            CONSTRAINT "PK_AspNetUserClaims" PRIMARY KEY ("Id"),
-            CONSTRAINT "FK_AspNetUserClaims_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
-          );
-          
-          CREATE TABLE IF NOT EXISTS "AspNetUserLogins" (
-            "LoginProvider" TEXT NOT NULL,
-            "ProviderKey" TEXT NOT NULL,
-            "ProviderDisplayName" TEXT,
-            "UserId" TEXT NOT NULL,
-            CONSTRAINT "PK_AspNetUserLogins" PRIMARY KEY ("LoginProvider", "ProviderKey"),
-            CONSTRAINT "FK_AspNetUserLogins_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
-          );
-          
-          CREATE TABLE IF NOT EXISTS "AspNetUserRoles" (
-            "UserId" TEXT NOT NULL,
-            "RoleId" TEXT NOT NULL,
-            CONSTRAINT "PK_AspNetUserRoles" PRIMARY KEY ("UserId", "RoleId"),
-            CONSTRAINT "FK_AspNetUserRoles_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE,
-            CONSTRAINT "FK_AspNetUserRoles_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles"("Id") ON DELETE CASCADE
-          );
-          
-          CREATE TABLE IF NOT EXISTS "AspNetUserTokens" (
-            "UserId" TEXT NOT NULL,
-            "LoginProvider" TEXT NOT NULL,
-            "Name" TEXT NOT NULL,
-            "Value" TEXT,
-            CONSTRAINT "PK_AspNetUserTokens" PRIMARY KEY ("UserId", "LoginProvider", "Name"),
-            CONSTRAINT "FK_AspNetUserTokens_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
-          );
-          
-          -- Seed data
-          INSERT INTO "AspNetRoles" ("Id", "Name", "NormalizedName", "ConcurrencyStamp")
-          VALUES ('1', 'ROLE_ADMIN', 'ROLE_ADMIN', gen_random_uuid())
-          ON CONFLICT ("Id") DO NOTHING;
-          
-          INSERT INTO "AspNetUsers" ("Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail", "EmailConfirmed", "PasswordHash", "SecurityStamp", "ConcurrencyStamp", "LockoutEnabled", "AccessFailedCount")
-          VALUES ('1', 'admin', 'ADMIN', 'admin@user.com', 'ADMIN@USER.COM', TRUE, 'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==', gen_random_uuid(), gen_random_uuid(), FALSE, 0)
-          ON CONFLICT ("Id") DO NOTHING;
-          
-          INSERT INTO "AspNetUserRoles" ("UserId", "RoleId")
-          VALUES ('1', '1')
-          ON CONFLICT ("UserId", "RoleId") DO NOTHING;
-          {{else}}{{removeLine}}{{/if}}
 
-        {{#if databaseType = MySQL}}
-          CREATE TABLE IF NOT EXISTS AspNetRoles (
-            Id VARCHAR(255) NOT NULL,
-            Name VARCHAR(256),
-            NormalizedName VARCHAR(256),
-            ConcurrencyStamp TEXT,
-            PRIMARY KEY (Id),
-            UNIQUE INDEX RoleNameIndex (NormalizedName)
-          ) ENGINE=InnoDB;
-          
-          CREATE TABLE IF NOT EXISTS AspNetUsers (
-            Id VARCHAR(255) NOT NULL,
-            UserName VARCHAR(256),
-            NormalizedUserName VARCHAR(256),
-            Email VARCHAR(256),
-            NormalizedEmail VARCHAR(256),
-            EmailConfirmed BOOLEAN NOT NULL DEFAULT FALSE,
-            PasswordHash TEXT,
-            SecurityStamp TEXT,
-            ConcurrencyStamp TEXT,
-            PhoneNumber TEXT,
-            PhoneNumberConfirmed BOOLEAN NOT NULL DEFAULT FALSE,
-            TwoFactorEnabled BOOLEAN NOT NULL DEFAULT FALSE,
-            LockoutEnd DATETIME,
-            LockoutEnabled BOOLEAN NOT NULL DEFAULT FALSE,
-            AccessFailedCount INT NOT NULL DEFAULT 0,
-            PRIMARY KEY (Id),
-            UNIQUE INDEX UserNameIndex (NormalizedUserName),
-            INDEX EmailIndex (NormalizedEmail)
-          ) ENGINE=InnoDB;
-          
-          CREATE TABLE IF NOT EXISTS AspNetRoleClaims (
-            Id INT AUTO_INCREMENT NOT NULL,
-            RoleId VARCHAR(255) NOT NULL,
-            ClaimType TEXT,
-            ClaimValue TEXT,
-            PRIMARY KEY (Id),
-            FOREIGN KEY (RoleId) REFERENCES AspNetRoles(Id) ON DELETE CASCADE,
-            INDEX IX_AspNetRoleClaims_RoleId (RoleId)
-          ) ENGINE=InnoDB;
-          
-          CREATE TABLE IF NOT EXISTS AspNetUserClaims (
-            Id INT AUTO_INCREMENT NOT NULL,
-            UserId VARCHAR(255) NOT NULL,
-            ClaimType TEXT,
-            ClaimValue TEXT,
-            PRIMARY KEY (Id),
-            FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE,
-            INDEX IX_AspNetUserClaims_UserId (UserId)
-          ) ENGINE=InnoDB;
-          
-          CREATE TABLE IF NOT EXISTS AspNetUserLogins (
-            LoginProvider VARCHAR(255) NOT NULL,
-            ProviderKey VARCHAR(255) NOT NULL,
-            ProviderDisplayName TEXT,
-            UserId VARCHAR(255) NOT NULL,
-            PRIMARY KEY (LoginProvider, ProviderKey),
-            FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE,
-            INDEX IX_AspNetUserLogins_UserId (UserId)
-          ) ENGINE=InnoDB;
-          
-          CREATE TABLE IF NOT EXISTS AspNetUserRoles (
-            UserId VARCHAR(255) NOT NULL,
-            RoleId VARCHAR(255) NOT NULL,
-            PRIMARY KEY (UserId, RoleId),
-            FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE,
-            FOREIGN KEY (RoleId) REFERENCES AspNetRoles(Id) ON DELETE CASCADE,
-            INDEX IX_AspNetUserRoles_RoleId (RoleId)
-          ) ENGINE=InnoDB;
-          
-          CREATE TABLE IF NOT EXISTS AspNetUserTokens (
-            UserId VARCHAR(255) NOT NULL,
-            LoginProvider VARCHAR(255) NOT NULL,
-            Name VARCHAR(255) NOT NULL,
-            Value TEXT,
-            PRIMARY KEY (UserId, LoginProvider, Name),
-            FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE
-          ) ENGINE=InnoDB;
-          
-          -- Seed data
-          INSERT INTO AspNetRoles (Id, Name, NormalizedName, ConcurrencyStamp)
-          VALUES ('1', 'ROLE_ADMIN', 'ROLE_ADMIN', UUID())
-          ON DUPLICATE KEY UPDATE Id = Id;
-          
-          INSERT INTO AspNetUsers (Id, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp, LockoutEnabled, AccessFailedCount)
-          VALUES ('1', 'admin', 'ADMIN', 'admin@user.com', 'ADMIN@USER.COM', TRUE, 'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==', UUID(), UUID(), FALSE, 0)
-          ON DUPLICATE KEY UPDATE Id = Id;
-          
-          INSERT INTO AspNetUserRoles (UserId, RoleId)
-          VALUES ('1', '1')
-          ON DUPLICATE KEY UPDATE UserId = UserId, RoleId = RoleId;
-          {{else}}{{removeLine}}{{/if}}
-        
-        {{#if databaseType = SQL Server}}
-          CREATE TABLE [dbo].[AspNetRoles] (
-            [Id] NVARCHAR(450) NOT NULL,
-            [Name] NVARCHAR(256),
-            [NormalizedName] NVARCHAR(256),
-            [ConcurrencyStamp] NVARCHAR(MAX),
-            CONSTRAINT [PK_AspNetRoles] PRIMARY KEY ([Id]),
-            UNIQUE NONCLUSTERED ([NormalizedName])
-          );
-          
-          CREATE TABLE [dbo].[AspNetUsers] (
-          [Id] NVARCHAR(450) NOT NULL,
-          [UserName] NVARCHAR(256),
-          [NormalizedUserName] NVARCHAR(256),
-          [Email] NVARCHAR(256),
-          [NormalizedEmail] NVARCHAR(256),
-          [EmailConfirmed] BIT NOT NULL DEFAULT 0,
-          [PasswordHash] NVARCHAR(MAX),
-          [SecurityStamp] NVARCHAR(MAX),
-          [ConcurrencyStamp] NVARCHAR(MAX),
-          [PhoneNumber] NVARCHAR(MAX),
-          [PhoneNumberConfirmed] BIT NOT NULL DEFAULT 0,
-          [TwoFactorEnabled] BIT NOT NULL DEFAULT 0,
-          [LockoutEnd] DATETIMEOFFSET,
-          [LockoutEnabled] BIT NOT NULL DEFAULT 0,
-          [AccessFailedCount] INT NOT NULL DEFAULT 0,
-          CONSTRAINT [PK_AspNetUsers] PRIMARY KEY ([Id]),
-          UNIQUE NONCLUSTERED ([NormalizedUserName]),
-          INDEX [EmailIndex] NONCLUSTERED ([NormalizedEmail])
-          );
-          
-          CREATE TABLE [dbo].[AspNetRoleClaims] (
-          [Id] INT IDENTITY(1,1) NOT NULL,
-          [RoleId] NVARCHAR(450) NOT NULL,
-          [ClaimType] NVARCHAR(MAX),
-          [ClaimValue] NVARCHAR(MAX),
-          CONSTRAINT [PK_AspNetRoleClaims] PRIMARY KEY ([Id]),
-          CONSTRAINT [FK_AspNetRoleClaims_AspNetRoles_RoleId] FOREIGN KEY ([RoleId]) REFERENCES [dbo].[AspNetRoles]([Id]) ON DELETE CASCADE,
-          INDEX [IX_AspNetRoleClaims_RoleId] NONCLUSTERED ([RoleId])
-          );
-          
-          CREATE TABLE [dbo].[AspNetUserClaims] (
-          [Id] INT IDENTITY(1,1) NOT NULL,
-          [UserId] NVARCHAR(450) NOT NULL,
-          [ClaimType] NVARCHAR(MAX),
-          [ClaimValue] NVARCHAR(MAX),
-          CONSTRAINT [PK_AspNetUserClaims] PRIMARY KEY ([Id]),
-          CONSTRAINT [FK_AspNetUserClaims_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [dbo].[AspNetUsers]([Id]) ON DELETE CASCADE,
-          INDEX [IX_AspNetUserClaims_UserId] NONCLUSTERED ([UserId])
-          );
-          
-          CREATE TABLE [dbo].[AspNetUserLogins] (
-          [LoginProvider] NVARCHAR(450) NOT NULL,
-          [ProviderKey] NVARCHAR(450) NOT NULL,
-          [ProviderDisplayName] NVARCHAR(MAX),
-          [UserId] NVARCHAR(450) NOT NULL,
-          CONSTRAINT [PK_AspNetUserLogins] PRIMARY KEY ([LoginProvider], [ProviderKey]),
-          CONSTRAINT [FK_AspNetUserLogins_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [dbo].[AspNetUsers]([Id]) ON DELETE CASCADE,
-          INDEX [IX_AspNetUserLogins_UserId] NONCLUSTERED ([UserId])
-          );
-          
-          CREATE TABLE [dbo].[AspNetUserRoles] (
-          [UserId] NVARCHAR(450) NOT NULL,
-          [RoleId] NVARCHAR(450) NOT NULL,
-          CONSTRAINT [PK_AspNetUserRoles] PRIMARY KEY ([UserId], [RoleId]),
-          CONSTRAINT [FK_AspNetUserRoles_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [dbo].[AspNetUsers]([Id]) ON DELETE CASCADE,
-          CONSTRAINT [FK_AspNetUserRoles_AspNetRoles_RoleId] FOREIGN KEY ([RoleId]) REFERENCES [dbo].[AspNetRoles]([Id]) ON DELETE CASCADE,
-          INDEX [IX_AspNetUserRoles_RoleId] NONCLUSTERED ([RoleId])
-          );
-          
-          CREATE TABLE [dbo].[AspNetUserTokens] (
-          [UserId] NVARCHAR(450) NOT NULL,
-          [LoginProvider] NVARCHAR(450) NOT NULL,
-          [Name] NVARCHAR(450) NOT NULL,
-          [Value] NVARCHAR(MAX),
-          CONSTRAINT [PK_AspNetUserTokens] PRIMARY KEY ([UserId], [LoginProvider], [Name]),
-          CONSTRAINT [FK_AspNetUserTokens_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [dbo].[AspNetUsers]([Id]) ON DELETE CASCADE
-          );
-          
-          -- Seed data
-          IF NOT EXISTS (SELECT 1 FROM [dbo].[AspNetRoles] WHERE [Id] = '1')
-          INSERT INTO [dbo].[AspNetRoles] ([Id], [Name], [NormalizedName], [ConcurrencyStamp])
-          VALUES ('1', 'ROLE_ADMIN', 'ROLE_ADMIN', NEWID());
-          
-          IF NOT EXISTS (SELECT 1 FROM [dbo].[AspNetUsers] WHERE [Id] = '1')
-          INSERT INTO [dbo].[AspNetUsers] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [LockoutEnabled], [AccessFailedCount])
-          VALUES ('1', 'admin', 'ADMIN', 'admin@user.com', 'ADMIN@USER.COM', 1, 'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==', NEWID(), NEWID(), 0, 0);
-          
-          IF NOT EXISTS (SELECT 1 FROM [dbo].[AspNetUserRoles] WHERE [UserId] = '1' AND [RoleId] = '1')
-          INSERT INTO [dbo].[AspNetUserRoles] ([UserId], [RoleId])
-          VALUES ('1', '1');
-          {{else}}{{removeLine}}{{/if}}
-        
-        {{#if databaseType = Oracle}}
-          
-          CREATE TABLE "AspNetRoles" (
-          "Id" VARCHAR2(255) NOT NULL,
-          "Name" VARCHAR2(256),
-          "NormalizedName" VARCHAR2(256),
-          "ConcurrencyStamp" VARCHAR2(4000),
+        CREATE TABLE IF NOT EXISTS "AspNetRoles" (
+          "Id" TEXT NOT NULL,
+          "Name" VARCHAR(256),
+          "NormalizedName" VARCHAR(256),
+          "ConcurrencyStamp" TEXT,
           CONSTRAINT "PK_AspNetRoles" PRIMARY KEY ("Id"),
           CONSTRAINT "RoleNameIndex" UNIQUE ("NormalizedName")
-          );
-          
-          CREATE TABLE "AspNetUsers" (
-          "Id" VARCHAR2(255) NOT NULL,
-          "UserName" VARCHAR2(256),
-          "NormalizedUserName" VARCHAR2(256),
-          "Email" VARCHAR2(256),
-          "NormalizedEmail" VARCHAR2(256),
-          "EmailConfirmed" NUMBER(1) NOT NULL,
-          "PasswordHash" VARCHAR2(4000),
-          "SecurityStamp" VARCHAR2(4000),
-          "ConcurrencyStamp" VARCHAR2(4000),
-          "PhoneNumber" VARCHAR2(4000),
-          "PhoneNumberConfirmed" NUMBER(1) NOT NULL,
-          "TwoFactorEnabled" NUMBER(1) NOT NULL,
-          "LockoutEnd" TIMESTAMP,
-          "LockoutEnabled" NUMBER(1) NOT NULL,
-          "AccessFailedCount" NUMBER(10) NOT NULL,
+        );
+        
+        CREATE TABLE IF NOT EXISTS "AspNetUsers" (
+          "Id" TEXT NOT NULL,
+          "UserName" VARCHAR(256),
+          "NormalizedUserName" VARCHAR(256),
+          "Email" VARCHAR(256),
+          "NormalizedEmail" VARCHAR(256),
+          "EmailConfirmed" BOOLEAN NOT NULL DEFAULT FALSE,
+          "PasswordHash" TEXT,
+          "SecurityStamp" TEXT,
+          "ConcurrencyStamp" TEXT,
+          "PhoneNumber" TEXT,
+          "PhoneNumberConfirmed" BOOLEAN NOT NULL DEFAULT FALSE,
+          "TwoFactorEnabled" BOOLEAN NOT NULL DEFAULT FALSE,
+          "LockoutEnd" TIMESTAMPTZ,
+          "LockoutEnabled" BOOLEAN NOT NULL DEFAULT FALSE,
+          "AccessFailedCount" INTEGER NOT NULL DEFAULT 0,
           CONSTRAINT "PK_AspNetUsers" PRIMARY KEY ("Id"),
           CONSTRAINT "UserNameIndex" UNIQUE ("NormalizedUserName")
-          );
-          
-          CREATE INDEX "EmailIndex" ON "AspNetUsers"("NormalizedEmail");
-          
-          CREATE TABLE "AspNetRoleClaims" (
-          "Id" NUMBER(10) NOT NULL,
-          "RoleId" VARCHAR2(255) NOT NULL,
-          "ClaimType" VARCHAR2(4000),
-          "ClaimValue" VARCHAR2(4000),
+        );
+        
+        CREATE TABLE IF NOT EXISTS "AspNetRoleClaims" (
+          "Id" SERIAL NOT NULL,
+          "RoleId" TEXT NOT NULL,
+          "ClaimType" TEXT,
+          "ClaimValue" TEXT,
           CONSTRAINT "PK_AspNetRoleClaims" PRIMARY KEY ("Id"),
           CONSTRAINT "FK_AspNetRoleClaims_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles"("Id") ON DELETE CASCADE
-          );
-          
-          CREATE SEQUENCE "AspNetRoleClaims_seq" START WITH 1 INCREMENT BY 1;
-          
-          CREATE OR REPLACE TRIGGER "AspNetRoleClaims_trigger"
-          BEFORE INSERT ON "AspNetRoleClaims"
-          FOR EACH ROW
-          BEGIN
-          SELECT "AspNetRoleClaims_seq".NEXTVAL INTO :new."Id" FROM dual;
-          END;
-          /
-          
-          CREATE INDEX "IX_AspNetRoleClaims_RoleId" ON "AspNetRoleClaims"("RoleId");
-          
-          CREATE TABLE "AspNetUserClaims" (
-          "Id" NUMBER(10) NOT NULL,
-          "UserId" VARCHAR2(255) NOT NULL,
-          "ClaimType" VARCHAR2(4000),
-          "ClaimValue" VARCHAR2(4000),
+        );
+        
+        CREATE TABLE IF NOT EXISTS "AspNetUserClaims" (
+          "Id" SERIAL NOT NULL,
+          "UserId" TEXT NOT NULL,
+          "ClaimType" TEXT,
+          "ClaimValue" TEXT,
           CONSTRAINT "PK_AspNetUserClaims" PRIMARY KEY ("Id"),
           CONSTRAINT "FK_AspNetUserClaims_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
-          );
-          
-          CREATE SEQUENCE "AspNetUserClaims_seq" START WITH 1 INCREMENT BY 1;
-          
-          CREATE OR REPLACE TRIGGER "AspNetUserClaims_trigger"
-          BEFORE INSERT ON "AspNetUserClaims"
-          FOR EACH ROW
-          BEGIN
-          SELECT "AspNetUserClaims_seq".NEXTVAL INTO :new."Id" FROM dual;
-          END;
-          /
-          
-          CREATE INDEX "IX_AspNetUserClaims_UserId" ON "AspNetUserClaims"("UserId");
-          
-          CREATE TABLE "AspNetUserLogins" (
-          "LoginProvider" VARCHAR2(255) NOT NULL,
-          "ProviderKey" VARCHAR2(255) NOT NULL,
-          "ProviderDisplayName" VARCHAR2(4000),
-          "UserId" VARCHAR2(255) NOT NULL,
+        );
+        
+        CREATE TABLE IF NOT EXISTS "AspNetUserLogins" (
+          "LoginProvider" TEXT NOT NULL,
+          "ProviderKey" TEXT NOT NULL,
+          "ProviderDisplayName" TEXT,
+          "UserId" TEXT NOT NULL,
           CONSTRAINT "PK_AspNetUserLogins" PRIMARY KEY ("LoginProvider", "ProviderKey"),
           CONSTRAINT "FK_AspNetUserLogins_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
-          );
-          
-          CREATE INDEX "IX_AspNetUserLogins_UserId" ON "AspNetUserLogins"("UserId");
-          
-          CREATE TABLE "AspNetUserRoles" (
-          "UserId" VARCHAR2(255) NOT NULL,
-          "RoleId" VARCHAR2(255) NOT NULL,
+        );
+        
+        CREATE TABLE IF NOT EXISTS "AspNetUserRoles" (
+          "UserId" TEXT NOT NULL,
+          "RoleId" TEXT NOT NULL,
           CONSTRAINT "PK_AspNetUserRoles" PRIMARY KEY ("UserId", "RoleId"),
           CONSTRAINT "FK_AspNetUserRoles_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE,
           CONSTRAINT "FK_AspNetUserRoles_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles"("Id") ON DELETE CASCADE
-          );
-          
-          CREATE INDEX "IX_AspNetUserRoles_RoleId" ON "AspNetUserRoles"("RoleId");
-          
-          CREATE TABLE "AspNetUserTokens" (
-          "UserId" VARCHAR2(255) NOT NULL,
-          "LoginProvider" VARCHAR2(255) NOT NULL,
-          "Name" VARCHAR2(255) NOT NULL,
-          "Value" VARCHAR2(4000),
+        );
+        
+        CREATE TABLE IF NOT EXISTS "AspNetUserTokens" (
+          "UserId" TEXT NOT NULL,
+          "LoginProvider" TEXT NOT NULL,
+          "Name" TEXT NOT NULL,
+          "Value" TEXT,
           CONSTRAINT "PK_AspNetUserTokens" PRIMARY KEY ("UserId", "LoginProvider", "Name"),
           CONSTRAINT "FK_AspNetUserTokens_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
-          );
-          
-          -- Données initiales
-          MERGE INTO "AspNetRoles" r
-          USING (SELECT '1' AS "Id", 'ROLE_ADMIN' AS "Name", 'ROLE_ADMIN' AS "NormalizedName", SYS_GUID() AS "ConcurrencyStamp" FROM dual) s
-          ON (r."Id" = s."Id")
-          WHEN NOT MATCHED THEN
-          INSERT ("Id", "Name", "NormalizedName", "ConcurrencyStamp")
-          VALUES (s."Id", s."Name", s."NormalizedName", s."ConcurrencyStamp");
-          
-          MERGE INTO "AspNetUsers" u
-          USING (
-          SELECT
-          '1' AS "Id",
-          'admin' AS "UserName",
-          'ADMIN' AS "NormalizedUserName",
-          'admin@user.com' AS "Email",
-          'ADMIN@USER.COM' AS "NormalizedEmail",
-          1 AS "EmailConfirmed",
-          'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==' AS "PasswordHash",
-          SYS_GUID() AS "SecurityStamp",
-          SYS_GUID() AS "ConcurrencyStamp",
-          0 AS "LockoutEnabled",
-          0 AS "AccessFailedCount",
-          0 AS "PhoneNumberConfirmed",
-          0 AS "TwoFactorEnabled",
-          NULL AS "PhoneNumber",
-          NULL AS "LockoutEnd"
-          FROM dual
-          ) s
-          ON (u."Id" = s."Id")
-          WHEN NOT MATCHED THEN
-          INSERT (
-          "Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail", "EmailConfirmed",
-          "PasswordHash", "SecurityStamp", "ConcurrencyStamp", "LockoutEnabled", "AccessFailedCount",
-          "PhoneNumberConfirmed", "TwoFactorEnabled", "PhoneNumber", "LockoutEnd"
-          )
-          VALUES (
-          s."Id", s."UserName", s."NormalizedUserName", s."Email", s."NormalizedEmail", s."EmailConfirmed",
-          s."PasswordHash", s."SecurityStamp", s."ConcurrencyStamp", s."LockoutEnabled", s."AccessFailedCount",
-          s."PhoneNumberConfirmed", s."TwoFactorEnabled", s."PhoneNumber", s."LockoutEnd"
-          );
-          
-          MERGE INTO "AspNetUserRoles" ur
-          USING (SELECT '1' AS "UserId", '1' AS "RoleId" FROM dual) s
-          ON (ur."UserId" = s."UserId" AND ur."RoleId" = s."RoleId")
-          WHEN NOT MATCHED THEN
-          INSERT ("UserId", "RoleId")
-          VALUES (s."UserId", s."RoleId");
-          {{else}}{{removeLine}}{{/if}}
+        );
+        
+        -- Seed data
+        INSERT INTO "AspNetRoles" ("Id", "Name", "NormalizedName", "ConcurrencyStamp")
+        VALUES ('1', 'ROLE_ADMIN', 'ROLE_ADMIN', gen_random_uuid())
+        ON CONFLICT ("Id") DO NOTHING;
+        
+        INSERT INTO "AspNetUsers" ("Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail", "EmailConfirmed", "PasswordHash", "SecurityStamp", "ConcurrencyStamp", "LockoutEnabled", "AccessFailedCount")
+        VALUES ('1', 'admin', 'ADMIN', 'admin@user.com', 'ADMIN@USER.COM', TRUE, 'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==', gen_random_uuid(), gen_random_uuid(), FALSE, 0)
+        ON CONFLICT ("Id") DO NOTHING;
+        
+        INSERT INTO "AspNetUserRoles" ("UserId", "RoleId")
+        VALUES ('1', '1')
+        ON CONFLICT ("UserId", "RoleId") DO NOTHING;
+        {{else}}{{removeLine}}{{/if}}
+
+        {{#if databaseType = MySQL}}
+        /*
+        Default login
+        Username: admin
+        Password: Pwd@123
+        */
+
+        CREATE TABLE IF NOT EXISTS AspNetRoles (
+          Id VARCHAR(255) NOT NULL,
+          Name VARCHAR(256),
+          NormalizedName VARCHAR(256),
+          ConcurrencyStamp TEXT,
+          PRIMARY KEY (Id),
+          UNIQUE INDEX RoleNameIndex (NormalizedName)
+        ) ENGINE=InnoDB;
+        
+        CREATE TABLE IF NOT EXISTS AspNetUsers (
+          Id VARCHAR(255) NOT NULL,
+          UserName VARCHAR(256),
+          NormalizedUserName VARCHAR(256),
+          Email VARCHAR(256),
+          NormalizedEmail VARCHAR(256),
+          EmailConfirmed BOOLEAN NOT NULL DEFAULT FALSE,
+          PasswordHash TEXT,
+          SecurityStamp TEXT,
+          ConcurrencyStamp TEXT,
+          PhoneNumber TEXT,
+          PhoneNumberConfirmed BOOLEAN NOT NULL DEFAULT FALSE,
+          TwoFactorEnabled BOOLEAN NOT NULL DEFAULT FALSE,
+          LockoutEnd DATETIME,
+          LockoutEnabled BOOLEAN NOT NULL DEFAULT FALSE,
+          AccessFailedCount INT NOT NULL DEFAULT 0,
+          PRIMARY KEY (Id),
+          UNIQUE INDEX UserNameIndex (NormalizedUserName),
+          INDEX EmailIndex (NormalizedEmail)
+        ) ENGINE=InnoDB;
+        
+        CREATE TABLE IF NOT EXISTS AspNetRoleClaims (
+          Id INT AUTO_INCREMENT NOT NULL,
+          RoleId VARCHAR(255) NOT NULL,
+          ClaimType TEXT,
+          ClaimValue TEXT,
+          PRIMARY KEY (Id),
+          FOREIGN KEY (RoleId) REFERENCES AspNetRoles(Id) ON DELETE CASCADE,
+          INDEX IX_AspNetRoleClaims_RoleId (RoleId)
+        ) ENGINE=InnoDB;
+        
+        CREATE TABLE IF NOT EXISTS AspNetUserClaims (
+          Id INT AUTO_INCREMENT NOT NULL,
+          UserId VARCHAR(255) NOT NULL,
+          ClaimType TEXT,
+          ClaimValue TEXT,
+          PRIMARY KEY (Id),
+          FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE,
+          INDEX IX_AspNetUserClaims_UserId (UserId)
+        ) ENGINE=InnoDB;
+        
+        CREATE TABLE IF NOT EXISTS AspNetUserLogins (
+          LoginProvider VARCHAR(255) NOT NULL,
+          ProviderKey VARCHAR(255) NOT NULL,
+          ProviderDisplayName TEXT,
+          UserId VARCHAR(255) NOT NULL,
+          PRIMARY KEY (LoginProvider, ProviderKey),
+          FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE,
+          INDEX IX_AspNetUserLogins_UserId (UserId)
+        ) ENGINE=InnoDB;
+        
+        CREATE TABLE IF NOT EXISTS AspNetUserRoles (
+          UserId VARCHAR(255) NOT NULL,
+          RoleId VARCHAR(255) NOT NULL,
+          PRIMARY KEY (UserId, RoleId),
+          FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE,
+          FOREIGN KEY (RoleId) REFERENCES AspNetRoles(Id) ON DELETE CASCADE,
+          INDEX IX_AspNetUserRoles_RoleId (RoleId)
+        ) ENGINE=InnoDB;
+        
+        CREATE TABLE IF NOT EXISTS AspNetUserTokens (
+          UserId VARCHAR(255) NOT NULL,
+          LoginProvider VARCHAR(255) NOT NULL,
+          Name VARCHAR(255) NOT NULL,
+          Value TEXT,
+          PRIMARY KEY (UserId, LoginProvider, Name),
+          FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id) ON DELETE CASCADE
+        ) ENGINE=InnoDB;
+        
+        -- Seed data
+        INSERT INTO AspNetRoles (Id, Name, NormalizedName, ConcurrencyStamp)
+        VALUES ('1', 'ROLE_ADMIN', 'ROLE_ADMIN', UUID())
+        ON DUPLICATE KEY UPDATE Id = Id;
+        
+        INSERT INTO AspNetUsers (Id, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp, LockoutEnabled, AccessFailedCount)
+        VALUES ('1', 'admin', 'ADMIN', 'admin@user.com', 'ADMIN@USER.COM', TRUE, 'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==', UUID(), UUID(), FALSE, 0)
+        ON DUPLICATE KEY UPDATE Id = Id;
+        
+        INSERT INTO AspNetUserRoles (UserId, RoleId)
+        VALUES ('1', '1')
+        ON DUPLICATE KEY UPDATE UserId = UserId, RoleId = RoleId;
+        {{else}}{{removeLine}}{{/if}}
+        
+        {{#if databaseType = SQL Server}}
+        --Default login
+        --Username: admin
+        --Password: Pwd@123
+
+        CREATE TABLE [dbo].[AspNetRoles] (
+          [Id] NVARCHAR(450) NOT NULL,
+          [Name] NVARCHAR(256),
+          [NormalizedName] NVARCHAR(256),
+          [ConcurrencyStamp] NVARCHAR(MAX),
+          CONSTRAINT [PK_AspNetRoles] PRIMARY KEY ([Id]),
+          UNIQUE NONCLUSTERED ([NormalizedName])
+        );
+        
+        CREATE TABLE [dbo].[AspNetUsers] (
+        [Id] NVARCHAR(450) NOT NULL,
+        [UserName] NVARCHAR(256),
+        [NormalizedUserName] NVARCHAR(256),
+        [Email] NVARCHAR(256),
+        [NormalizedEmail] NVARCHAR(256),
+        [EmailConfirmed] BIT NOT NULL DEFAULT 0,
+        [PasswordHash] NVARCHAR(MAX),
+        [SecurityStamp] NVARCHAR(MAX),
+        [ConcurrencyStamp] NVARCHAR(MAX),
+        [PhoneNumber] NVARCHAR(MAX),
+        [PhoneNumberConfirmed] BIT NOT NULL DEFAULT 0,
+        [TwoFactorEnabled] BIT NOT NULL DEFAULT 0,
+        [LockoutEnd] DATETIMEOFFSET,
+        [LockoutEnabled] BIT NOT NULL DEFAULT 0,
+        [AccessFailedCount] INT NOT NULL DEFAULT 0,
+        CONSTRAINT [PK_AspNetUsers] PRIMARY KEY ([Id]),
+        UNIQUE NONCLUSTERED ([NormalizedUserName]),
+        INDEX [EmailIndex] NONCLUSTERED ([NormalizedEmail])
+        );
+        
+        CREATE TABLE [dbo].[AspNetRoleClaims] (
+        [Id] INT IDENTITY(1,1) NOT NULL,
+        [RoleId] NVARCHAR(450) NOT NULL,
+        [ClaimType] NVARCHAR(MAX),
+        [ClaimValue] NVARCHAR(MAX),
+        CONSTRAINT [PK_AspNetRoleClaims] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_AspNetRoleClaims_AspNetRoles_RoleId] FOREIGN KEY ([RoleId]) REFERENCES [dbo].[AspNetRoles]([Id]) ON DELETE CASCADE,
+        INDEX [IX_AspNetRoleClaims_RoleId] NONCLUSTERED ([RoleId])
+        );
+        
+        CREATE TABLE [dbo].[AspNetUserClaims] (
+        [Id] INT IDENTITY(1,1) NOT NULL,
+        [UserId] NVARCHAR(450) NOT NULL,
+        [ClaimType] NVARCHAR(MAX),
+        [ClaimValue] NVARCHAR(MAX),
+        CONSTRAINT [PK_AspNetUserClaims] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_AspNetUserClaims_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [dbo].[AspNetUsers]([Id]) ON DELETE CASCADE,
+        INDEX [IX_AspNetUserClaims_UserId] NONCLUSTERED ([UserId])
+        );
+        
+        CREATE TABLE [dbo].[AspNetUserLogins] (
+        [LoginProvider] NVARCHAR(450) NOT NULL,
+        [ProviderKey] NVARCHAR(450) NOT NULL,
+        [ProviderDisplayName] NVARCHAR(MAX),
+        [UserId] NVARCHAR(450) NOT NULL,
+        CONSTRAINT [PK_AspNetUserLogins] PRIMARY KEY ([LoginProvider], [ProviderKey]),
+        CONSTRAINT [FK_AspNetUserLogins_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [dbo].[AspNetUsers]([Id]) ON DELETE CASCADE,
+        INDEX [IX_AspNetUserLogins_UserId] NONCLUSTERED ([UserId])
+        );
+        
+        CREATE TABLE [dbo].[AspNetUserRoles] (
+        [UserId] NVARCHAR(450) NOT NULL,
+        [RoleId] NVARCHAR(450) NOT NULL,
+        CONSTRAINT [PK_AspNetUserRoles] PRIMARY KEY ([UserId], [RoleId]),
+        CONSTRAINT [FK_AspNetUserRoles_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [dbo].[AspNetUsers]([Id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_AspNetUserRoles_AspNetRoles_RoleId] FOREIGN KEY ([RoleId]) REFERENCES [dbo].[AspNetRoles]([Id]) ON DELETE CASCADE,
+        INDEX [IX_AspNetUserRoles_RoleId] NONCLUSTERED ([RoleId])
+        );
+        
+        CREATE TABLE [dbo].[AspNetUserTokens] (
+        [UserId] NVARCHAR(450) NOT NULL,
+        [LoginProvider] NVARCHAR(450) NOT NULL,
+        [Name] NVARCHAR(450) NOT NULL,
+        [Value] NVARCHAR(MAX),
+        CONSTRAINT [PK_AspNetUserTokens] PRIMARY KEY ([UserId], [LoginProvider], [Name]),
+        CONSTRAINT [FK_AspNetUserTokens_AspNetUsers_UserId] FOREIGN KEY ([UserId]) REFERENCES [dbo].[AspNetUsers]([Id]) ON DELETE CASCADE
+        );
+        
+        -- Seed data
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[AspNetRoles] WHERE [Id] = '1')
+        INSERT INTO [dbo].[AspNetRoles] ([Id], [Name], [NormalizedName], [ConcurrencyStamp])
+        VALUES ('1', 'ROLE_ADMIN', 'ROLE_ADMIN', NEWID());
+        
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[AspNetUsers] WHERE [Id] = '1')
+        INSERT INTO [dbo].[AspNetUsers] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [LockoutEnabled], [AccessFailedCount])
+        VALUES ('1', 'admin', 'ADMIN', 'admin@user.com', 'ADMIN@USER.COM', 1, 'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==', NEWID(), NEWID(), 0, 0);
+        
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[AspNetUserRoles] WHERE [UserId] = '1' AND [RoleId] = '1')
+        INSERT INTO [dbo].[AspNetUserRoles] ([UserId], [RoleId])
+        VALUES ('1', '1');
+        {{else}}{{removeLine}}{{/if}}
+
+        {{#if databaseType = Oracle}}
+        --Default login
+        --Username: admin
+        --Password: Pwd@123
+
+        CREATE TABLE "AspNetRoles" (
+        "Id" VARCHAR2(255) NOT NULL,
+        "Name" VARCHAR2(256),
+        "NormalizedName" VARCHAR2(256),
+        "ConcurrencyStamp" VARCHAR2(4000),
+        CONSTRAINT "PK_AspNetRoles" PRIMARY KEY ("Id"),
+        CONSTRAINT "RoleNameIndex" UNIQUE ("NormalizedName")
+        );
+        
+        CREATE TABLE "AspNetUsers" (
+        "Id" VARCHAR2(255) NOT NULL,
+        "UserName" VARCHAR2(256),
+        "NormalizedUserName" VARCHAR2(256),
+        "Email" VARCHAR2(256),
+        "NormalizedEmail" VARCHAR2(256),
+        "EmailConfirmed" NUMBER(1) NOT NULL,
+        "PasswordHash" VARCHAR2(4000),
+        "SecurityStamp" VARCHAR2(4000),
+        "ConcurrencyStamp" VARCHAR2(4000),
+        "PhoneNumber" VARCHAR2(4000),
+        "PhoneNumberConfirmed" NUMBER(1) NOT NULL,
+        "TwoFactorEnabled" NUMBER(1) NOT NULL,
+        "LockoutEnd" TIMESTAMP,
+        "LockoutEnabled" NUMBER(1) NOT NULL,
+        "AccessFailedCount" NUMBER(10) NOT NULL,
+        CONSTRAINT "PK_AspNetUsers" PRIMARY KEY ("Id"),
+        CONSTRAINT "UserNameIndex" UNIQUE ("NormalizedUserName")
+        );
+        
+        CREATE INDEX "EmailIndex" ON "AspNetUsers"("NormalizedEmail");
+        
+        CREATE TABLE "AspNetRoleClaims" (
+        "Id" NUMBER(10) NOT NULL,
+        "RoleId" VARCHAR2(255) NOT NULL,
+        "ClaimType" VARCHAR2(4000),
+        "ClaimValue" VARCHAR2(4000),
+        CONSTRAINT "PK_AspNetRoleClaims" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_AspNetRoleClaims_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles"("Id") ON DELETE CASCADE
+        );
+        
+        CREATE SEQUENCE "AspNetRoleClaims_seq" START WITH 1 INCREMENT BY 1;
+        
+        CREATE OR REPLACE TRIGGER "AspNetRoleClaims_trigger"
+        BEFORE INSERT ON "AspNetRoleClaims"
+        FOR EACH ROW
+        BEGIN
+        SELECT "AspNetRoleClaims_seq".NEXTVAL INTO :new."Id" FROM dual;
+        END;
+        /
+        
+        CREATE INDEX "IX_AspNetRoleClaims_RoleId" ON "AspNetRoleClaims"("RoleId");
+        
+        CREATE TABLE "AspNetUserClaims" (
+        "Id" NUMBER(10) NOT NULL,
+        "UserId" VARCHAR2(255) NOT NULL,
+        "ClaimType" VARCHAR2(4000),
+        "ClaimValue" VARCHAR2(4000),
+        CONSTRAINT "PK_AspNetUserClaims" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_AspNetUserClaims_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
+        );
+        
+        CREATE SEQUENCE "AspNetUserClaims_seq" START WITH 1 INCREMENT BY 1;
+        
+        CREATE OR REPLACE TRIGGER "AspNetUserClaims_trigger"
+        BEFORE INSERT ON "AspNetUserClaims"
+        FOR EACH ROW
+        BEGIN
+        SELECT "AspNetUserClaims_seq".NEXTVAL INTO :new."Id" FROM dual;
+        END;
+        /
+        
+        CREATE INDEX "IX_AspNetUserClaims_UserId" ON "AspNetUserClaims"("UserId");
+        
+        CREATE TABLE "AspNetUserLogins" (
+        "LoginProvider" VARCHAR2(255) NOT NULL,
+        "ProviderKey" VARCHAR2(255) NOT NULL,
+        "ProviderDisplayName" VARCHAR2(4000),
+        "UserId" VARCHAR2(255) NOT NULL,
+        CONSTRAINT "PK_AspNetUserLogins" PRIMARY KEY ("LoginProvider", "ProviderKey"),
+        CONSTRAINT "FK_AspNetUserLogins_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
+        );
+        
+        CREATE INDEX "IX_AspNetUserLogins_UserId" ON "AspNetUserLogins"("UserId");
+        
+        CREATE TABLE "AspNetUserRoles" (
+        "UserId" VARCHAR2(255) NOT NULL,
+        "RoleId" VARCHAR2(255) NOT NULL,
+        CONSTRAINT "PK_AspNetUserRoles" PRIMARY KEY ("UserId", "RoleId"),
+        CONSTRAINT "FK_AspNetUserRoles_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_AspNetUserRoles_AspNetRoles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "AspNetRoles"("Id") ON DELETE CASCADE
+        );
+        
+        CREATE INDEX "IX_AspNetUserRoles_RoleId" ON "AspNetUserRoles"("RoleId");
+        
+        CREATE TABLE "AspNetUserTokens" (
+        "UserId" VARCHAR2(255) NOT NULL,
+        "LoginProvider" VARCHAR2(255) NOT NULL,
+        "Name" VARCHAR2(255) NOT NULL,
+        "Value" VARCHAR2(4000),
+        CONSTRAINT "PK_AspNetUserTokens" PRIMARY KEY ("UserId", "LoginProvider", "Name"),
+        CONSTRAINT "FK_AspNetUserTokens_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES "AspNetUsers"("Id") ON DELETE CASCADE
+        );
+        
+        -- Données initiales
+        MERGE INTO "AspNetRoles" r
+        USING (SELECT '1' AS "Id", 'ROLE_ADMIN' AS "Name", 'ROLE_ADMIN' AS "NormalizedName", SYS_GUID() AS "ConcurrencyStamp" FROM dual) s
+        ON (r."Id" = s."Id")
+        WHEN NOT MATCHED THEN
+        INSERT ("Id", "Name", "NormalizedName", "ConcurrencyStamp")
+        VALUES (s."Id", s."Name", s."NormalizedName", s."ConcurrencyStamp");
+        
+        MERGE INTO "AspNetUsers" u
+        USING (
+        SELECT
+        '1' AS "Id",
+        'admin' AS "UserName",
+        'ADMIN' AS "NormalizedUserName",
+        'admin@user.com' AS "Email",
+        'ADMIN@USER.COM' AS "NormalizedEmail",
+        1 AS "EmailConfirmed",
+        'AQAAAAIAAYagAAAAEI66CZE19cG5eCJ/Dcm/OF8zaVr89u8YZVsZdDYvVfLX/uN/GLqJKqNkmaQD9Cth4g==' AS "PasswordHash",
+        SYS_GUID() AS "SecurityStamp",
+        SYS_GUID() AS "ConcurrencyStamp",
+        0 AS "LockoutEnabled",
+        0 AS "AccessFailedCount",
+        0 AS "PhoneNumberConfirmed",
+        0 AS "TwoFactorEnabled",
+        NULL AS "PhoneNumber",
+        NULL AS "LockoutEnd"
+        FROM dual
+        ) s
+        ON (u."Id" = s."Id")
+        WHEN NOT MATCHED THEN
+        INSERT (
+        "Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail", "EmailConfirmed",
+        "PasswordHash", "SecurityStamp", "ConcurrencyStamp", "LockoutEnabled", "AccessFailedCount",
+        "PhoneNumberConfirmed", "TwoFactorEnabled", "PhoneNumber", "LockoutEnd"
+        )
+        VALUES (
+        s."Id", s."UserName", s."NormalizedUserName", s."Email", s."NormalizedEmail", s."EmailConfirmed",
+        s."PasswordHash", s."SecurityStamp", s."ConcurrencyStamp", s."LockoutEnabled", s."AccessFailedCount",
+        s."PhoneNumberConfirmed", s."TwoFactorEnabled", s."PhoneNumber", s."LockoutEnd"
+        );
+        
+        MERGE INTO "AspNetUserRoles" ur
+        USING (SELECT '1' AS "UserId", '1' AS "RoleId" FROM dual) s
+        ON (ur."UserId" = s."UserId" AND ur."RoleId" = s."RoleId")
+        WHEN NOT MATCHED THEN
+        INSERT ("UserId", "RoleId")
+        VALUES (s."UserId", s."RoleId");
+        {{else}}{{removeLine}}{{/if}}
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Data"
 
     - fileType: "User Roles Static Class"
@@ -1851,57 +1865,99 @@
       fileName: "AuthRequest"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}.DTOs;
+        namespace ${majStart(projectName)}.Models.Dto;
         public class AuthRequest
         {
             public string Username { get; set; }
             public string Password { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
 
     - fileType: "Register Request DTO"
       fileName: "RegisterRequest"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}.DTOs;
+        namespace ${majStart(projectName)}.Models.Dto;
         public class RegisterRequest
         {
             public string Username { get; set; }
             public string Email { get; set; }
             public string Password { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
+
+    - fileType: "Refresh Request DTO"
+      fileName: "RefreshRequest"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Models.Dto;
+        
+        using System.ComponentModel.DataAnnotations;
+
+        public record RefreshRequest(
+            [Required]
+            [MaxLength(500)]
+            string RefreshToken
+        );
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
 
     - fileType: "Password Change Request DTO"
       fileName: "PasswordChangeRequest"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}.DTOs;
+        namespace ${majStart(projectName)}.Models.Dto;
         public class PasswordChangeRequest
         {
             public string OldPassword { get; set; }
             public string NewPassword { get; set; }
             public string ConfirmPassword { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
 
     - fileType: "User Update Request DTO"
       fileName: "UserUpdateRequest"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}.DTOs;
+        namespace ${majStart(projectName)}.Models.Dto;
         public class UserUpdateRequest
         {
             public string Name { get; set; }
             public string Email { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/DTOs"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
+
+    - fileType: "User Response DTO"
+      fileName: "UserResponseDto"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Models.Dto;
+
+        public class UserResponseDto
+        {
+          public string Id { get; set; }
+          public string Username { get; set; }
+          public string Email { get; set; }
+          public bool Enabled { get; set; }
+          public bool AccountNonExpired { get; set; } = true;
+          public bool AccountNonLocked { get; set; }
+          public bool CredentialsNonExpired { get; set; } = true;
+          
+          public IEnumerable<AuthorityDto> Authorities { get; set; } = new List<AuthorityDto>();
+        }
+        
+        public class AuthorityDto
+        {
+          public string Authority { get; set; }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Models/Dto"
 
     - fileType: "JWT Service"
       fileName: "JwtService"
       extension: "cs"
       content: |
         namespace ${majStart(projectName)}.Services.Implementation;
+        
+        using ${majStart(projectName)}.Models;
         using System.IdentityModel.Tokens.Jwt;
         using System.Security.Claims;
         using System.Text;
@@ -1910,41 +1966,81 @@
         
         public class JwtService
         {
-          private readonly IConfiguration _config;
-          public JwtService(IConfiguration config) => _config = config;
-      
-          public string GenerateToken(string username)
-          {
-            var claims = new[]
+            private readonly IConfiguration _config;
+            private readonly SymmetricSecurityKey _signingKey;
+            private readonly TokenValidationParameters _validationParameters;
+
+            public JwtService(IConfiguration config)
             {
-              new Claim(JwtRegisteredClaimNames.Sub, username),
-              new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-            
-            var key = new SymmetricSecurityKey(Convert.FromBase64String(_config["Jwt:SecretKey"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            
-            var token = new JwtSecurityToken(
-              claims: claims,
-              expires: DateTime.UtcNow.AddMinutes(30),
-              signingCredentials: creds
-            );
-            return new JwtSecurityTokenHandler().WriteToken(token);
-          }
-      
-          public string ExtractUsername(string token)
-          {
-            var principal = new JwtSecurityTokenHandler()
-            .ValidateToken(token, new TokenValidationParameters
+                _config = config;
+                var keyBytes = Convert.FromBase64String(_config["Jwt:SecretKey"]!);
+                _signingKey = new SymmetricSecurityKey(keyBytes);
+
+                _validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = _signingKey,
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ClockSkew = TimeSpan.Zero // Pour une expiration stricte
+                };
+            }
+
+            public string GenerateToken( ApplicationUser user)
             {
-              ValidateIssuerSigningKey = true,
-              IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(_config["Jwt:SecretKey"])),
-              ValidateIssuer = false,
-              ValidateAudience = false,
-              ClockSkew = TimeSpan.Zero
-            }, out _);
-            return principal.Identity.Name;
-          }
+                var claims = new[]
+                {
+                    new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name", user.UserName),
+                    new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                };
+
+                var credentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256);
+                var tokenExpiration = _config["Jwt:ExpirationMinutes"] ?? "10";
+                var token = new JwtSecurityToken(
+                    claims: claims,
+                    expires: DateTime.UtcNow.AddMinutes(Int64.Parse((tokenExpiration))),
+                    signingCredentials: credentials
+                );
+                return new JwtSecurityTokenHandler().WriteToken(token);
+            }
+
+            public ClaimsPrincipal ValidateToken(string token)
+            {
+                try
+                {
+                    return new JwtSecurityTokenHandler().ValidateToken(token, _validationParameters, out _);
+                }
+                catch (SecurityTokenException)
+                {
+                    throw new UnauthorizedAccessException("Invalid or expired token.");
+                }
+            }
+
+            public string ExtractUsername(string token)
+            {
+                var principal = ValidateToken(token);
+                return principal.Identity?.Name ?? throw new UnauthorizedAccessException("Username not found in token.");
+            }
+
+            public DateTime? ExtractExpirationDate(string token)
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                if (!tokenHandler.CanReadToken(token)) return null;
+
+                var jwtToken = tokenHandler.ReadJwtToken(token);
+                // Le temps d'expiration est en format Unix Time Stamp
+                var exp = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Exp)?.Value;
+
+                if (exp != null && long.TryParse(exp, out long expTime))
+                {
+                    // Convertir le timestamp UNIX en DateTime UTC
+                    DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+                    dtDateTime = dtDateTime.AddSeconds(expTime);
+                    return dtDateTime;
+                }
+                return null;
+            }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
 
@@ -1953,26 +2049,47 @@
       extension: "cs"
       content: |
         namespace ${majStart(projectName)}.Services.Implementation;
+        
         public class TokenBlacklistService
         {
-            private readonly Dictionary<string, DateTime> _invalidatedTokens = new();
+            private static readonly Dictionary<string, DateTime> InvalidatedTokens = new Dictionary<string, DateTime>();
+            private readonly JwtService _jwtService;
 
-            public void InvalidateToken(string token, DateTime expiration)
+            public TokenBlacklistService(JwtService jwtService)
             {
-                _invalidatedTokens[token] = expiration;
+                _jwtService = jwtService;
+            }
+
+            public void InvalidateToken(string token)
+            {
+                var expiration = _jwtService.ExtractExpirationDate(token);
+                if (expiration.HasValue)
+                {
+                    InvalidatedTokens[token] = expiration.Value;
+                }
+                else
+                {
+                    InvalidatedTokens[token] = DateTime.UtcNow.AddMinutes(1);
+                }
             }
 
             public bool IsTokenInvalidated(string token)
             {
-                return _invalidatedTokens.TryGetValue(token, out var exp) && exp > DateTime.UtcNow;
+                if (InvalidatedTokens.TryGetValue(token, out DateTime expirationTime))
+                {
+                    return expirationTime > DateTime.UtcNow;
+                }
+                return false;
             }
 
             public void CleanExpiredTokens()
             {
                 var now = DateTime.UtcNow;
-                foreach (var key in _invalidatedTokens.Where(x => x.Value < now).Select(x => x.Key).ToList())
+                var tokensToRemove = InvalidatedTokens.Where(kvp => kvp.Value <= now).Select(kvp => kvp.Key).ToList();
+
+                foreach (var token in tokensToRemove)
                 {
-                    _invalidatedTokens.Remove(key);
+                    InvalidatedTokens.Remove(token);
                 }
             }
         }
@@ -1984,27 +2101,22 @@
       content: |
         namespace ${majStart(projectName)}.Services.Implementation;
 
-        using ${majStart(projectName)}.DTOs;
+        using ${majStart(projectName)}.Models.Dto;
         using Microsoft.AspNetCore.Identity;      
         using ${majStart(projectName)}.Models;
 
-        public class UserService
+        public class UserService(
+            UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            JwtService jwtService,
+            TokenBlacklistService blacklistService)
         {
-            private readonly UserManager<ApplicationUser> _userManager;
-            private readonly JwtService _jwtService;
-
-            public UserService(UserManager<ApplicationUser> userManager, JwtService jwtService)
-            {
-                _userManager = userManager;
-                _jwtService = jwtService;
-            }
-
             public async Task<string> Authenticate(AuthRequest request)
             {
-                var user = await _userManager.FindByNameAsync(request.Username);
-                if (user != null && await _userManager.CheckPasswordAsync(user, request.Password))
+                var user = await userManager.FindByNameAsync(request.Username);
+                if (user != null && await userManager.CheckPasswordAsync(user, request.Password))
                 {
-                    return _jwtService.GenerateToken(user.UserName);
+                    return jwtService.GenerateToken(user);
                 }
                 throw new UnauthorizedAccessException("Invalid credentials");
             }
@@ -2017,7 +2129,7 @@
                     Email = request.Email
                 };
 
-                var result = await _userManager.CreateAsync(user, request.Password);
+                var result = await userManager.CreateAsync(user, request.Password);
                 if (!result.Succeeded)
                     throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
                 return user.Id;
@@ -2026,23 +2138,64 @@
 
             public async Task ChangePassword(string username, PasswordChangeRequest model)
             {
-                var user = await _userManager.FindByNameAsync(username);
-                if (user == null || !await _userManager.CheckPasswordAsync(user, model.OldPassword))
+                var user = await userManager.FindByNameAsync(username);
+                if (user == null || !await userManager.CheckPasswordAsync(user, model.OldPassword))
                     throw new Exception("Invalid current password");
 
                 if (model.NewPassword != model.ConfirmPassword)
                     throw new Exception("Passwords do not match");
 
-                await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
+                await userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
             }
 
             public async Task UpdateUser(string username, UserUpdateRequest update)
             {
-                var user = await _userManager.FindByNameAsync(username);
+                var user = await userManager.FindByNameAsync(username);
                 if (user == null) throw new Exception("User not found");
                 user.Email = update.Email;
                 user.UserName = update.Name;
-                await _userManager.UpdateAsync(user);
+                await userManager.UpdateAsync(user);
+            }
+
+            public async Task<string> RefreshAccessToken(string oldToken)
+            {
+                var username = jwtService.ExtractUsername(oldToken);
+
+                var user = await userManager.FindByNameAsync(username);
+                if (user == null)
+                    throw new UnauthorizedAccessException("User not found.");
+
+                blacklistService.InvalidateToken(oldToken); 
+                return jwtService.GenerateToken(user);
+            }
+
+            public void Logout(string token)
+            {
+                blacklistService.InvalidateToken(token);
+            }
+
+            public async Task<UserResponseDto> GetCurrentUser(string username)
+            {
+                var user = await userManager.FindByNameAsync(username);
+                if (user == null)
+                    throw new Exception("User not found.");
+
+                var userRoles = await userManager.GetRolesAsync(user);
+
+                return new UserResponseDto
+                {
+                    Id = user.Id,
+                    Username = user.UserName,
+                    Email = user.Email,
+                    Enabled = user.EmailConfirmed,
+                    AccountNonLocked = !user.LockoutEnabled,
+                    Authorities = userRoles.Select(role => new AuthorityDto { Authority = role })
+                };
+            }
+
+            public IEnumerable<IdentityRole> GetAllRoles()
+            {
+                return roleManager.Roles.ToList();
             }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Implementation"
@@ -2051,15 +2204,15 @@
       fileName: "AuthController"
       extension: "cs"
       content: |
-        namespace ${majStart(projectName)}.Controllers;
-
-        using Microsoft.AspNetCore.Authorization;
-        using Microsoft.AspNetCore.Mvc;
-        using Microsoft.AspNetCore.Http;
-        using ${majStart(projectName)}.DTOs;
-        using ${majStart(projectName)}.Utils;
+        using ${majStart(projectName)}.Models.Dto;
         using ${majStart(projectName)}.Services.Implementation;
+        using ${majStart(projectName)}.Utils;
+        using Microsoft.AspNetCore.Authorization;
+        using Microsoft.AspNetCore.Identity;
+        using Microsoft.AspNetCore.Mvc;
         using Swashbuckle.AspNetCore.Annotations;
+  
+        namespace ${majStart(projectName)}.Controllers;
 
         [ApiController]
         [Route("auth")]
@@ -2067,42 +2220,29 @@
         [Consumes("application/json")]
         [ApiExplorerSettings(GroupName = "v1")]
         [SwaggerTag("Authentication APIs")]
-        public class AuthController : ControllerBase
+        public class AuthController(UserService userService) : ControllerBase
         {
-            private readonly UserService _userService;
-
-            public AuthController(UserService userService)
-            {
-                _userService = userService;
-            }
 
             [HttpPost("login")]
             [AllowAnonymous]
             [SwaggerOperation(Summary = "Login", Description = "Authenticate user and return a JWT token")]
             [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
-            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status401Unauthorized)]
             public async Task<IActionResult> Login([FromBody] AuthRequest request)
             {
                 try
                 {
-                    var token = await _userService.Authenticate(request);
-                    return Ok(new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status200OK,
-                        Message = "You are logged in",
-                        ReturnCode = 1,
-                        Data = token
-                    });
+                    var token = await userService.Authenticate(request);
+                    return Ok(ApiResponse<string>.Success(StatusCodes.Status200OK, "Authentication successful", token));
+                }
+                catch (UnauthorizedAccessException e) // Attrapez l'exception spécifique de UserService
+                {
+                    return Unauthorized(ApiResponse<string>.Error(StatusCodes.Status401Unauthorized, e.Message));
                 }
                 catch (Exception e)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status500InternalServerError,
-                        Message = e.Message,
-                        ReturnCode = 0,
-                        Data = null
-                    });
+                    // Erreur de serveur ou autre erreur non attendue
+                    return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse<string>.Error(StatusCodes.Status500InternalServerError, $"Internal Server Error: {e.Message}"));
                 }
             }
 
@@ -2110,29 +2250,18 @@
             [AllowAnonymous]
             [SwaggerOperation(Summary = "Register", Description = "Register a new user")]
             [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status201Created)]
-            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)] // 400 pour erreur de validation ou user déjà existant
             public async Task<IActionResult> Register([FromBody] RegisterRequest request)
             {
                 try
                 {
-                    var id = await _userService.Register(request);
-                    return StatusCode(StatusCodes.Status201Created, new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status201Created,
-                        Message = "User created successfully",
-                        ReturnCode = 1,
-                        Data = id
-                    });
+                    var id = await userService.Register(request);
+                    return StatusCode(StatusCodes.Status201Created, ApiResponse<string>.Success(StatusCodes.Status201Created, "User registered successfully", id));
                 }
                 catch (Exception e)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status500InternalServerError,
-                        Message = e.Message,
-                        ReturnCode = 0,
-                        Data = null
-                    });
+                    // L'exception contient les erreurs d'Identity (ex: mot de passe faible, username déjà pris)
+                    return BadRequest(ApiResponse<string>.Error(StatusCodes.Status400BadRequest, $"Registration failed: {e.Message}"));
                 }
             }
 
@@ -2140,28 +2269,19 @@
             [Authorize]
             [SwaggerOperation(Summary = "Change Password", Description = "Change the password of the logged-in user")]
             [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
-            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)] // Utilisation de 400
             public async Task<IActionResult> ChangePassword([FromBody] PasswordChangeRequest model)
             {
                 try
                 {
-                    var username = User.Identity?.Name;
-                    await _userService.ChangePassword(username, model);
-                    return Ok(new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status200OK,
-                        Message = "Password changed successfully",
-                        ReturnCode = 1
-                    });
+                    var username = User.Identity?.Name ?? throw new UnauthorizedAccessException("User not authenticated.");
+                    await userService.ChangePassword(username, model);
+                    return Ok(ApiResponse<string>.Success(StatusCodes.Status200OK, "Password changed successfully"));
                 }
                 catch (Exception e)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status500InternalServerError,
-                        Message = e.Message,
-                        ReturnCode = 0
-                    });
+                    // Peut être une mauvaise validation ou un ancien mot de passe invalide
+                    return BadRequest(ApiResponse<string>.Error(StatusCodes.Status400BadRequest, $"Password change failed: {e.Message}"));
                 }
             }
 
@@ -2169,32 +2289,102 @@
             [Authorize]
             [SwaggerOperation(Summary = "Update User", Description = "Update user information of the logged-in user")]
             [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
-            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status500InternalServerError)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)] // Utilisation de 400
             public async Task<IActionResult> Update([FromBody] UserUpdateRequest model)
             {
                 try
                 {
-                    var username = User.Identity?.Name;
-                    await _userService.UpdateUser(username, model);
-                    return Ok(new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status200OK,
-                        Message = "User updated successfully",
-                        ReturnCode = 1
-                    });
+                    var username = User.Identity?.Name ?? throw new UnauthorizedAccessException("User not authenticated.");
+                    await userService.UpdateUser(username, model);
+                    return Ok(ApiResponse<string>.Success(StatusCodes.Status200OK, "User updated successfully"));
                 }
                 catch (Exception e)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse<string>
-                    {
-                        Status = StatusCodes.Status500InternalServerError,
-                        Message = e.Message,
-                        ReturnCode = 0
-                    });
+                    // Peut être un utilisateur non trouvé ou un problème de mise à jour des données
+                    return BadRequest(ApiResponse<string>.Error(StatusCodes.Status400BadRequest, $"Update failed: {e.Message}"));
+                }
+            }
+
+            [HttpGet("roles")]
+            [AllowAnonymous]
+            [SwaggerOperation(Summary = "Get all available roles", Description = "Retrieve the complete list of roles available in the system.")]
+            [ProducesResponseType(typeof(ApiResponse<IEnumerable<IdentityRole>>), StatusCodes.Status200OK)]
+            public IActionResult ListRoles()
+            {
+                var roles = userService.GetAllRoles();
+                return Ok(ApiResponse<IEnumerable<IdentityRole>>.Success(StatusCodes.Status200OK, "Roles retrieved", roles));
+            }
+
+            [HttpPost("logout")]
+            [Authorize]
+            [SwaggerOperation(Summary = "Logout user", Description = "Invalidate the user's JWT token")]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+            public IActionResult Logout([FromHeader(Name = "Authorization")] string authHeader)
+            {
+                var token = authHeader?.StartsWith("Bearer ") == true ? authHeader.Substring("Bearer ".Length) : null;
+
+                if (string.IsNullOrEmpty(token))
+                {
+                    return BadRequest(ApiResponse<string>.Error(StatusCodes.Status400BadRequest, "Invalid Authorization Header"));
+                }
+
+                try
+                {
+                    userService.Logout(token);
+                    return Ok(ApiResponse<string>.Success(StatusCodes.Status200OK, "Logged out successfully", null));
+                }
+                catch (Exception e)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse<string>.Error(StatusCodes.Status500InternalServerError, e.Message));
+                }
+            }
+
+            [HttpGet("current")]
+            [Authorize]
+            [SwaggerOperation(Summary = "Get current user", Description = "Retrieve details of the currently authenticated user")]
+            [ProducesResponseType(typeof(ApiResponse<UserResponseDto>), StatusCodes.Status200OK)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+            public async Task<IActionResult> CurrentUser()
+            {
+                var username = User.Identity?.Name;
+                if (string.IsNullOrEmpty(username))
+                {
+                    return BadRequest(ApiResponse<string>.Error(StatusCodes.Status400BadRequest, "No valid user session"));
+                }
+                try
+                {
+                    var userDto = await userService.GetCurrentUser(username);
+                    return Ok(ApiResponse<UserResponseDto>.Success(StatusCodes.Status200OK, "User details retrieved", userDto));
+                }
+                catch (Exception e)
+                {
+                    return BadRequest(ApiResponse<string>.Error(StatusCodes.Status400BadRequest, $"Error retrieving user: {e.Message}"));
+                }
+            }
+
+            [HttpPost("refresh")]
+            [AllowAnonymous]
+            [SwaggerOperation(Summary = "Refresh access token", Description = "Provide the current access-token to obtain a new one; the old one is invalidated.")]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+            [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status401Unauthorized)]
+            public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
+            {
+                try
+                {
+                    var newToken = await userService.RefreshAccessToken(request.RefreshToken); 
+                    return Ok(ApiResponse<string>.Success(StatusCodes.Status200OK, "Token refreshed", newToken));
+                }
+                catch (UnauthorizedAccessException e)
+                {
+                    return Unauthorized(ApiResponse<string>.Error(StatusCodes.Status401Unauthorized, e.Message));
+                }
+                catch (Exception e)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse<string>.Error(StatusCodes.Status500InternalServerError, $"Refresh failed: {e.Message}"));
                 }
             }
         }
-
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
 
     - fileType: "SQL Schema Bootstrapper Service"
@@ -2207,12 +2397,13 @@
         using Microsoft.Extensions.DependencyInjection;
         using Microsoft.EntityFrameworkCore;
         using System.Data.Common;
+        using System.Text.RegularExpressions;
         using ${majStart(projectName)}.Data;
     
         public class SqlSchemaBootstrapper : IHostedService
         {
             private readonly IServiceProvider _provider;
-            private const string SchemaFilePath = "Data/identity_schema.sql"; // chemin du script SQL
+            private const string SchemaFilePath = "Data/identity_schema.sql";
 
             public SqlSchemaBootstrapper(IServiceProvider provider)
             {
@@ -2232,12 +2423,24 @@
 
                     if (!await TableExistsAsync(conn, "AspNetUsers"))
                     {
-                        var sql = await File.ReadAllTextAsync(SchemaFilePath, cancellationToken);
-                        using var command = conn.CreateCommand();
-                        command.CommandText = sql;
-                        await command.ExecuteNonQueryAsync(cancellationToken);
+                        var sqlContent = await File.ReadAllTextAsync(SchemaFilePath, cancellationToken);
+                        var commands = Regex.Split(sqlContent, @"^\s*;\s*$", RegexOptions.Multiline)
+                                            .Where(s => !string.IsNullOrWhiteSpace(s))
+                                            .ToList();
 
-                        Console.WriteLine("[Identity Schema] Tables créées automatiquement.");
+                        using var transaction = await conn.BeginTransactionAsync(cancellationToken);
+
+                        foreach (var sql in commands)
+                        {
+                            using var command = conn.CreateCommand();
+                            command.CommandText = sql.Trim();
+                            command.Transaction = transaction;
+                            await command.ExecuteNonQueryAsync(cancellationToken);
+                        }
+
+                        await transaction.CommitAsync(cancellationToken);
+
+                        Console.WriteLine("[Identity Schema] Tables créées et données 'seedées' automatiquement.");
                     }
                     else
                     {
@@ -2246,7 +2449,7 @@
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[Identity Schema] ERREUR : {ex.Message}");
+                    Console.WriteLine($"[Identity Schema] ERREUR : Échec de l'exécution du script SQL. {ex.Message}");
                 }
                 finally
                 {
@@ -2272,7 +2475,6 @@
                 var result = await cmd.ExecuteScalarAsync();
                 return Convert.ToInt32(result) > 0;
             }
-        
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Services/Startup"
 
@@ -2280,6 +2482,687 @@
   metadataBooleanTrueKeys:
     - "useJWT"
 - id: 3
+  frameworkId: 8
+  name: "Nest Security - JWT"
+  securityFiles:
+    - fileType: "Roles Entity"
+      fileName: "role-entity.entity"
+      extension: "ts"
+      content: |
+        import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+  
+        @Entity({ name: 'roles' })
+        export class RoleEntity {
+          @PrimaryGeneratedColumn({ type: 'bigint', name: 'id' })
+          id!: number;
+  
+          @Column({ name: 'name', type: 'varchar', length: 100, nullable: false })
+          name!: string;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/role-entity"
+    - fileType: "Role Module"
+      fileName: "role-entity.module"
+      extension: "ts"
+      content: |
+        import { Module } from "@nestjs/common";
+        import { TypeOrmModule } from "@nestjs/typeorm";
+        import { RoleEntity } from "./role-entity.entity";
+        
+        @Module({
+          imports: [TypeOrmModule.forFeature([RoleEntity])],
+          providers: [],
+          controllers: [],
+          exports: [],
+        })
+        export class RoleEntityModule {}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/role-entity"
+    - fileType: "User Entity"
+      fileName: "user-entity.entity"
+      extension: "ts"
+      content: |
+        import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, BeforeInsert } from 'typeorm';
+        import { RoleEntity } from '../role-entity/role-entity.entity';
+        import * as bcrypt from 'bcryptjs';
+        @Entity({ name: 'users' })
+        export class UserEntity {
+          @PrimaryGeneratedColumn({ type: 'bigint', name: 'id' })
+          id!: number;
+  
+          @Column({ name: 'name', type: 'varchar', length: 100, nullable: true })
+          name!: string;
+  
+          @Column({ name: 'email', type: 'varchar', length: 100, nullable: true })
+          email!: string;
+  
+          @Column({ name: 'password', type: 'varchar', length: 255, nullable: true })
+          password!: string;
+  
+          @ManyToOne(() => RoleEntity, { nullable: true, eager: true })
+          @JoinColumn({ name: 'role_id' })
+          roleidRoleEntity!: RoleEntity;
+        
+          @BeforeInsert()
+            async hashPassword() {
+            if (this.password) {
+              this.password = await bcrypt.hash(this.password, 10);
+            }
+          }
+          
+          async comparePassword(plain: string) {
+            return bcrypt.compare(plain, this.password);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/user-entity"
+    - fileType: "User Module"
+      fileName: "user-entity.module"
+      extension: "ts"
+      content: |
+        import { Module } from '@nestjs/common';
+        import { TypeOrmModule } from '@nestjs/typeorm';
+        import { UserEntity } from './user-entity.entity';
+        import { UserEntityService } from './user-entity.service';
+        
+        @Module({
+          imports: [TypeOrmModule.forFeature([UserEntity])],
+          providers: [UserEntityService],
+          controllers: [],
+          exports: [UserEntityService],
+          })
+        export class UserEntityModule {}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/user-entity"
+    - fileType: "User Service"
+      fileName: "user-entity.service"
+      extension: "ts"
+      content: |
+        import { Injectable, NotFoundException } from '@nestjs/common';
+        import { InjectRepository } from '@nestjs/typeorm';
+        import { Repository } from 'typeorm';
+        import { UserEntity } from './user-entity.entity';
+        
+        @Injectable()
+        export class UserEntityService {
+          constructor(
+          @InjectRepository(UserEntity)
+            private readonly userRepo: Repository<UserEntity>,
+          ) {}
+      
+          async findByEmail(email: string): Promise<UserEntity | null> {
+            return this.userRepo.findOne({ where: { email } });
+          }
+      
+          async findById(id: number): Promise<UserEntity | null> {
+            return this.userRepo.findOne({ where: { id } });
+          }
+      
+          async create(data: Partial<UserEntity>): Promise<UserEntity> {
+           const user = this.userRepo.create(data);
+           return this.userRepo.save(user);
+          }
+      
+          async findAll(): Promise<UserEntity[]> {
+            return this.userRepo.find();
+          }
+      
+          async update(id: number, data: Partial<UserEntity>): Promise<UserEntity> {
+           const user = await this.findById(id);
+           if (!user) throw new NotFoundException('User not found');
+           Object.assign(user, data);
+           return this.userRepo.save(user);
+          }
+      
+          async delete(id: number): Promise<void> {
+            await this.userRepo.delete(id);
+          }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/user-entity"
+    - fileType: "Database service"
+      fileName: "sql-init.service"
+      extension: "ts"
+      content: |
+        import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+        import { DataSource } from 'typeorm';
+        import * as fs from 'fs';
+        import * as path from 'path';
+  
+        @Injectable()
+        export class SqlInitService implements OnApplicationBootstrap {
+          constructor(private readonly dataSource: DataSource) {}
+  
+          async onApplicationBootstrap() {
+            const sqlPath = path.join(__dirname, '../../db/init.sql');
+            if (!fs.existsSync(sqlPath)) {
+              console.log('No sql file found for database initialization');
+              return;
+            }
+            const sql = fs.readFileSync(sqlPath, 'utf8');
+            await this.dataSource.query(sql);
+            console.log('init.sql executed');
+          }
+        }
+      destinationPath: "${ destinationFolder }/${ majStart(projectName) }/src/database"
+    - fileType: "User table and data init script"
+      fileName: "init"
+      extension: "sql"
+      content: |
+        --Default login
+        --Username: admin
+        --Password: admin123
+        {{#if databaseType = PostgreSQL}}
+        CREATE TABLE IF NOT EXISTS roles
+        (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE
+        );
+
+        CREATE TABLE IF NOT EXISTS users
+        (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) UNIQUE NOT NULL,
+          email VARCHAR(100) UNIQUE NOT NULL CHECK (email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+          password VARCHAR(100) NOT NULL,
+          role_id INTEGER NOT NULL REFERENCES roles(id)
+        );
+
+        INSERT INTO roles (name) VALUES ('ROLE_ADMIN')
+        ON CONFLICT (name) DO NOTHING;
+
+        INSERT INTO users (name, email, password, role_id)
+        VALUES ('admin', 'admin@user.com', '$2b$10$7qRz1zFQG2F7dL57V97dRuG5I8YFqCnnAHLW7q9m0PpSbsroGQ5aG', 1)
+        ON CONFLICT (email) DO NOTHING;
+        {{else}}{{removeLine}}{{/if}}
+
+        {{#if databaseType = MySQL}}
+        CREATE TABLE IF NOT EXISTS roles (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE
+        );
+
+        CREATE TABLE IF NOT EXISTS users (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE,
+          email VARCHAR(100) NOT NULL UNIQUE,
+          password VARCHAR(100) NOT NULL,
+          role_id INT NOT NULL,
+          CONSTRAINT fk_type_user FOREIGN KEY (role_id) REFERENCES roles(id),
+          CONSTRAINT chk_email CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
+        );
+
+        INSERT INTO roles (name) VALUES ('ROLE_ADMIN')
+        ON DUPLICATE KEY UPDATE id=id;
+
+        INSERT INTO users (name, email, password, role_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1)
+        ON DUPLICATE KEY UPDATE id=id;
+        {{else}}{{removeLine}}{{/if}}
+
+        {{#if databaseType = SQL Server}}
+        CREATE TABLE IF NOT EXISTS roles (
+          id INT IDENTITY(1,1) PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE
+        );
+
+        CREATE TABLE IF NOT EXISTS [users] (
+          id INT IDENTITY(1,1) PRIMARY KEY,
+          name VARCHAR(100) NOT NULL UNIQUE,
+          email VARCHAR(100) NOT NULL UNIQUE,
+          password VARCHAR(100) NOT NULL,
+          role_id INT NOT NULL,
+          CONSTRAINT FK_user_type_user FOREIGN KEY (role_id) REFERENCES roles(id),
+          CONSTRAINT CHK_email CHECK (email LIKE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}')
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_ADMIN')
+        INSERT INTO roles (name) VALUES ('ROLE_ADMIN');
+
+        IF NOT EXISTS (SELECT 1 FROM [users] WHERE name = 'admin' OR email = 'admin@user.com')
+        INSERT INTO [users] (name, email, password, role_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1);
+        {{else}}{{removeLine}}{{/if}}
+
+        {{#if databaseType = Oracle}}
+        CREATE TABLE roles (
+          id NUMBER PRIMARY KEY,
+          name VARCHAR2(100) NOT NULL UNIQUE
+        ) TABLESPACE users;
+
+        CREATE SEQUENCE type_user_seq START WITH 1 INCREMENT BY 1;
+
+        CREATE OR REPLACE TRIGGER type_user_trigger
+        BEFORE INSERT ON roles
+        FOR EACH ROW
+        BEGIN
+        SELECT type_user_seq.NEXTVAL INTO :new.id FROM dual;
+        END;
+
+        CREATE TABLE users (
+          id NUMBER PRIMARY KEY,
+          name VARCHAR2(100) NOT NULL UNIQUE,
+          email VARCHAR2(100) NOT NULL UNIQUE,
+          password VARCHAR2(100) NOT NULL,
+          role_id NUMBER NOT NULL,
+          CONSTRAINT fk_user_type_user FOREIGN KEY (role_id) REFERENCES roles(id),
+          CONSTRAINT chk_email CHECK (REGEXP_LIKE(email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'))
+        ) TABLESPACE users;
+
+        CREATE SEQUENCE user_seq START WITH 1 INCREMENT BY 1;
+
+        CREATE OR REPLACE TRIGGER user_trigger
+        BEFORE INSERT ON users
+        FOR EACH ROW
+        BEGIN
+        SELECT user_seq.NEXTVAL INTO :new.id FROM dual;
+        END;
+
+        MERGE INTO roles tu
+        USING (SELECT 1 FROM dual) d
+        ON (tu.name = 'ROLE_ADMIN')
+        WHEN NOT MATCHED THEN
+        INSERT (name) VALUES ('ROLE_ADMIN');
+
+        MERGE INTO users u
+        USING (SELECT 1 FROM dual) d
+        ON (u.name = 'admin' OR u.email = 'admin@user.com')
+        WHEN NOT MATCHED THEN
+        INSERT (name, email, password, role_id)
+        VALUES ('admin', 'admin@user.com', '$2a$10$GBvWdFZht2UZ8eOEXnLv.e/txUqjTUVnyotHTEtA.V9SAwVs6sgTS', 1);
+        {{else}}{{removeLine}}{{/if}}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/db"
+    - fileType: "DTO"
+      fileName: "login.dto"
+      extension: "ts"
+      content: |
+        import { ApiProperty } from '@nestjs/swagger';
+        import { IsString, MinLength } from 'class-validator';
+        
+        export class LoginDto {
+          @ApiProperty({ example: 'john_doe', description: 'Username' })
+          @IsString()
+          @MinLength(2)
+          name!: string;
+        
+          @ApiProperty({ example: 'password123', description: 'Password' })
+          @IsString()
+          @MinLength(6)
+          password!: string;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/dto"
+    - fileType: "DTO"
+      fileName: "register.dto"
+      extension: "ts"
+      content: |
+        import { ApiProperty } from '@nestjs/swagger';
+        import { IsString, MinLength, IsOptional, IsEmail } from 'class-validator';
+          
+        export class RegisterDto {
+          @ApiProperty({ example: 'John_Doe', description: 'Nom utilisateur' })
+          @IsString()
+          @MinLength(2)
+          name!: string;
+        
+          @ApiProperty({ example: 'john@mail.com', description: 'Email' })
+          @IsEmail()
+          email?: string;
+        
+          @ApiProperty({ example: 'password123', description: 'Mot de passe' })
+          @IsString()
+          @MinLength(6)
+          password!: string;
+        
+          @IsOptional()
+          roleId?: number;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/dto"
+    - fileType: "Guard"
+      fileName: "jwt-auth.guard"
+      extension: "ts"
+      content: |
+        import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+        import { AuthGuard } from '@nestjs/passport';
+        import { BlacklistService } from '../blacklist.service';
+          
+        @Injectable()
+        export class JwtAuthGuard extends AuthGuard('jwt') {
+          constructor(private blacklistService: BlacklistService) {
+            super();
+          }
+          
+          handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+             const request = context.switchToHttp().getRequest();
+             const token = this.extractToken(request);
+             
+             if (token && this.blacklistService?.isBlacklisted(token)) {
+               throw new UnauthorizedException('Token invalidated');
+             }
+               
+             if (err || !user) {
+               throw err || new UnauthorizedException((info as any)?.message || 'Unauthorized');
+             }
+             
+             return user;
+          }
+          
+          private extractToken(request: any): string | null {
+              const authHeader = request.headers.authorization;
+              return authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+          }
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/guards"
+    - fileType: "Interface"
+      fileName: "jwt-payload.interface"
+      extension: "ts"
+      content: |
+        export interface JwtPayload {
+          sub: number;
+          name: string;
+          role?: string;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/interfaces"
+    - fileType: "Strategy"
+      fileName: "jwt.strategy"
+      extension: "ts"
+      content: |
+        import { ExtractJwt, Strategy } from 'passport-jwt';
+        import { PassportStrategy } from '@nestjs/passport';
+        import { Injectable } from '@nestjs/common';
+        import { JwtPayload } from '../interfaces/jwt-payload.interface';
+        import { ConfigService } from '@nestjs/config';
+        
+        @Injectable()
+        export class JwtStrategy extends PassportStrategy(Strategy) {
+          constructor(private readonly config: ConfigService) {
+            super({
+              jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+              ignoreExpiration: false,
+              secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
+            });
+          }
+          
+          async validate(payload: JwtPayload) {
+            return {
+              userId: payload.sub,
+              name: payload.name,
+              role: payload.role,
+            };
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth/strategies"
+    - fileType: "Controller"
+      fileName: "auth.controller"
+      extension: "ts"
+      content: |
+        import { Controller, Post, Body, UseGuards, HttpStatus, Get, Headers, Request } from '@nestjs/common';
+        import { AuthService } from './auth.service';
+        import { LoginDto } from './dto/login.dto';
+        import { RegisterDto } from './dto/register.dto';
+        import { ApiOperation, ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+        import { RestResponse } from '../../common/dto/RestResponse';
+        import { AuthGuard } from '@nestjs/passport';
+        import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
+        @ApiTags('auth')
+        @Controller('auth')
+        export class AuthController {
+          constructor(private readonly authService: AuthService) {}
+
+          @ApiOperation({ summary: 'User login', description: "Authenticate user and generate JWT token" })
+          @ApiResponse({ status: 201, description: 'Authentication successful' })
+          @ApiResponse({ status: 401, description: 'Invalid credentials' })
+          @Post('login')
+          async login(@Body() loginDto: LoginDto) {
+            try {
+              return RestResponse.buildSuccessResponse(
+                201,
+                "Authentication successful",
+                await this.authService.login(loginDto)
+              );
+
+            } catch (error) {
+              return RestResponse.buildErrorResponse(
+                400,
+                "Registration failed: "+ error,
+                null
+              );
+            }
+          }
+
+         @ApiOperation({ summary: 'Register new user', description: "Create a new user account"}) 
+         @ApiResponse({ status: 201, description: 'User created successfully' })
+         @ApiResponse({ status: 400, description: 'Invalid user data' })
+         @Post('register')
+          async register(@Body() registerDto: RegisterDto) {
+             try {
+              return RestResponse.buildSuccessResponse(
+                201,
+                "User registered successfully",
+                await this.authService.register(registerDto)
+              );
+
+            } catch (error) {
+              return RestResponse.buildErrorResponse(
+                400,
+                "Registration failed: "+ error,
+                null
+              );
+            }
+          }
+          @ApiBearerAuth('jwt')
+          @UseGuards(JwtAuthGuard)
+          @ApiOperation({
+            summary: 'Get current user',
+            description: 'Retrieve details of the currently authenticated user',
+          })
+          @ApiResponse({ status: 200, description: 'Successfully retrieved user details', })
+          @ApiResponse({ status: 400, description: 'No valid user session' })
+          @Get('current')
+          async currentUser(@Request() req: any) {
+            try {
+              const userConnected = (req as any).user;
+              if (userConnected) {
+                return RestResponse.buildSuccessResponse(
+                  HttpStatus.OK,
+                  "User details retrieved",
+                  userConnected
+                );
+              }
+            } catch (e) {
+              return RestResponse.buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Error retrieving user: " + (e),
+                null
+              );
+            }
+            return RestResponse.buildErrorResponse(
+              HttpStatus.BAD_REQUEST,
+              "No user connected",
+              null
+            );
+          }
+          @ApiBearerAuth('jwt')
+          @UseGuards(JwtAuthGuard)
+          @ApiOperation({
+            summary: 'Logout',
+            description: 'Invalidate the provided JWT token (if supported)',
+          })
+          @ApiResponse({ status: 200, description: 'Logged out successfully' })
+          @ApiResponse({ status: 400, description: 'Invalid Authorization Header' })
+          @Post('logout')
+          async logout(@Headers('authorization') authHeader: string) {
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+              const token = authHeader.substring(7);
+              await this.authService.invalidateToken(token);
+
+              return RestResponse.buildSuccessResponse(
+                HttpStatus.OK,
+                "Logged out successfully",
+                null
+              );
+            }
+            return RestResponse.buildErrorResponse(
+              HttpStatus.BAD_REQUEST,
+              "Invalid Authorization Header",
+              null
+            );
+          }
+
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth"
+    - fileType: "Service"
+      fileName: "auth.service"
+      extension: "ts"
+      content: |
+        import { Injectable, UnauthorizedException } from '@nestjs/common';
+        import { JwtService } from '@nestjs/jwt';
+        import { InjectRepository } from '@nestjs/typeorm';
+        import { Repository } from 'typeorm';
+        import { UserEntity } from '../user-entity/user-entity.entity';
+        import { JwtPayload } from './interfaces/jwt-payload.interface';
+        import { LoginDto } from './dto/login.dto';
+        import { RegisterDto } from './dto/register.dto';
+        import { RoleEntity } from '../role-entity/role-entity.entity';
+        import { BlacklistService } from './blacklist.service';
+        @Injectable()
+        export class AuthService {
+          constructor(
+            @InjectRepository(UserEntity)
+            private usersRepository: Repository<UserEntity>,
+              @InjectRepository(RoleEntity)
+            private roleRepository: Repository<RoleEntity>,
+            private jwtService: JwtService,
+            private blacklistService: BlacklistService,
+          ) {}
+        
+          async validateUser(loginDto: LoginDto): Promise<UserEntity | null> {
+             const user = await this.usersRepository.findOne({
+             // Authenticate using username (UserEntity.name)
+               where: { name: loginDto.name },
+               relations: ['roleidRoleEntity'],
+             });
+             
+             if (user && await user.comparePassword(loginDto.password)) {
+              return user;
+             }
+             return null;
+          }
+          async invalidateToken(token: string): Promise<{ message: string }> {
+              this.blacklistService.addToBlacklist(token);
+              return { message: 'User logged out successfully' };
+          }
+          async login(loginDto: LoginDto) {
+            const user = await this.validateUser(loginDto);
+            if (!user) {
+            throw new UnauthorizedException('Invalid credentials');
+            }
+            
+            const payload: JwtPayload = {
+              sub: user.id,
+              name: user.name,
+              role: user.roleidRoleEntity?.name,
+            };
+            
+            return {
+            access_token: this.jwtService.sign(payload),
+            user: {
+                id: user.id,
+                name: user.name,
+                role: user.roleidRoleEntity?.name,
+              },
+            };
+          }
+          
+          async register(registerDto: RegisterDto) {
+            const existingUser = await this.usersRepository.findOne({
+              where: { name: registerDto.name },
+            });
+            
+            if (existingUser) {
+              throw new UnauthorizedException('Username already used');
+            }
+            const user = this.usersRepository.create(registerDto);
+            const role = await this.roleRepository.findOne({ where: { id: registerDto.roleId } });
+            if (!role) {
+              throw new UnauthorizedException('The specified role does not exist');
+            }
+            user.roleidRoleEntity = role
+            console.log(JSON.stringify(user)+" USEEEER")
+            
+            const savedUser = await this.usersRepository.save(user);
+            
+            const { password, ...result } = savedUser;
+            return result;
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth"
+    - fileType: "Module"
+      fileName: "auth.module"
+      extension: "ts"
+      content: |
+        import { Module } from '@nestjs/common';
+        import { JwtModule, JwtSignOptions } from '@nestjs/jwt';
+        import { PassportModule } from '@nestjs/passport';
+        import { TypeOrmModule } from '@nestjs/typeorm';
+        import { AuthService } from './auth.service';
+        import { AuthController } from './auth.controller';
+        import { JwtStrategy } from './strategies/jwt.strategy';
+        import { UserEntity } from '../user-entity/user-entity.entity';
+        import { RoleEntity } from '../role-entity/role-entity.entity';
+        import { ConfigModule, ConfigService } from '@nestjs/config';
+        import { BlacklistService } from './blacklist.service';
+        @Module({
+          imports: [
+            TypeOrmModule.forFeature([UserEntity, RoleEntity]),
+            PassportModule,
+            PassportModule,
+            ConfigModule,
+            JwtModule.registerAsync({
+              imports: [ConfigModule],
+              inject: [ConfigService],
+              useFactory: (cfg: ConfigService) => {
+                const secret = cfg.getOrThrow<string>('JWT_SECRET');
+                const exp = cfg.get<string>('JWT_EXPIRES_IN') ?? '1h';
+                const expiresIn = exp as unknown as JwtSignOptions['expiresIn'];
+                return {
+                  secret,
+                  signOptions: { expiresIn },
+                };
+              },
+            }),
+          ],
+          providers: [AuthService, JwtStrategy, BlacklistService],
+          controllers: [AuthController],
+          exports: [AuthService, BlacklistService],
+          })
+          export class AuthModule {}
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth"
+
+    - fileType: "Service"
+      fileName: "blacklist.service"
+      extension: "ts"
+      content: |
+        import { Injectable } from '@nestjs/common';
+
+        @Injectable()
+        export class BlacklistService {
+          private blacklistedTokens = new Set<string>();
+
+          addToBlacklist(token: string): void {
+            this.blacklistedTokens.add(token);
+          }
+
+          isBlacklisted(token: string): boolean {
+            return this.blacklistedTokens.has(token);
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/modules/auth"
+  additionalDependencies: [ ]
+  metadataBooleanTrueKeys:
+    - "useJWT"
+
+
+
+- id: 4
   frameworkId: 5
   name: ".NET Security - Cookie Authentication"
   securityFiles:

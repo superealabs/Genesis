@@ -6,8 +6,10 @@ import lombok.Setter;
 import lombok.ToString;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.Language;
+import org.labs.genesis.config.langage.generator.sync.models.TableGenerationModel;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.exceptions.InvalipRelationParameter;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.utils.StringUtils;
 
@@ -31,6 +33,13 @@ public class TableMetadata {
     private ColumnMetadata primaryColumn;
     private String className;
     private Boolean isView;
+    private Boolean hasFk = false;
+
+    // relation mere fille
+    private Boolean isParent = false;
+    private Boolean isChild = false;
+    private List<ChildTableMetadata> childTables = new ArrayList<>();
+    private List<ParentTableMetadata> parentTables = new ArrayList<>();
 
 
     public void setColumnsFrontendTypes(FrontendLanguage frontendLanguage,Database database)
@@ -58,6 +67,7 @@ public class TableMetadata {
 
             database.setDriverName(driverName);
             database.setDriverVersion(driverVersion);
+            database.setDatabaseMajorVersion(metaData.getDatabaseMajorVersion());
 
             setDatabase(database);
             String tableName = getTableName();
@@ -139,12 +149,11 @@ public class TableMetadata {
         return initializeTableType(viewNames, connex, credentials, database, language, true,framework);
     }
 
-    private void fetchPrimaryKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> columns, Connection connection) throws SQLException {
-        String schema = (database.getName().equals("Oracle"))
-                ? database.getCredentials().getUser()
-                : (database.getCredentials().getSchemaName() != null && !database.getCredentials().getSchemaName().isEmpty())
-                ? database.getCredentials().getSchemaName()
-                : connection.getCatalog();
+    private void fetchPrimaryKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> columns) throws SQLException {
+        // Résolution intelligente du schéma selon le type de base de données
+        String schema = (database.getName() != null && database.getName().equalsIgnoreCase("Oracle"))
+                ? resolveOracleSchema()
+                : database.getCredentials().getSchemaName();
 
         try (ResultSet primaryKeys = metaData.getPrimaryKeys(null, schema, tableName)) {
             while (primaryKeys.next()) {
@@ -178,12 +187,11 @@ public class TableMetadata {
         }
     }
 
-    private void fetchForeignKeys(DatabaseMetaData metaData, String tableName, Language language, List<ColumnMetadata> listeCols, Connection connection) throws SQLException {
-        String schema = (database.getName().equals("Oracle"))
-                ? database.getCredentials().getUser()
-                : (database.getCredentials().getSchemaName() != null && !database.getCredentials().getSchemaName().isEmpty())
-                ? database.getCredentials().getSchemaName()
-                : connection.getCatalog();
+    private void fetchForeignKeys(DatabaseMetaData metaData, String tableName, Language language, List<ColumnMetadata> listeCols) throws SQLException {
+        // Résolution intelligente du schéma selon le type de base de données
+        String schema = (database.getName() != null && database.getName().equalsIgnoreCase("Oracle"))
+                ? resolveOracleSchema()
+                : database.getCredentials().getSchemaName();
 
         try (ResultSet foreignKeys = metaData.getImportedKeys(null, schema, tableName)) {
 
@@ -191,13 +199,16 @@ public class TableMetadata {
                 String fkColumnName = foreignKeys.getString("FKCOLUMN_NAME");
                 String pkTableName = foreignKeys.getString("PKTABLE_NAME");
                 String pkColumnName = foreignKeys.getString("PKCOLUMN_NAME");
+                
                 for (ColumnMetadata field : listeCols) {
                     if (field.getReferencedColumn().equalsIgnoreCase(fkColumnName)) {
+                        setHasFk(true);
                         field.setForeign(true);
 
                         field.setReferencedColumn(field.getReferencedColumn());
                         field.setReferencedColumnType(field.getReferencedColumnType());
                         field.setReferencedPrimaryKeyColumn(pkColumnName.transform(StringUtils::toCamelCase));
+                        field.setColumnType(StringUtils.toCamelCase(field.getType()));
                         field.setName(
                                 field.getName()
                                         .transform(StringUtils::toCamelCase)
@@ -205,30 +216,112 @@ public class TableMetadata {
                                         ));
                         field.setReferencedTable(pkTableName.transform(StringUtils::toCamelCase));
 
+                        // IMPORTANT : On réutilise le même schéma résolu pour la sous-requête getColumns
                         try (ResultSet pkColumn = metaData.getColumns(null, schema, pkTableName, pkColumnName)) {
                             if (pkColumn.next()) {
-                                String pkColumnType = pkColumn.getString("TYPE_NAME");
-                                field.setDatabaseColumnType(pkColumnType);
-
-                                if (language.getTypes().get(database.getTypes().get(pkColumnType)) == null)
-                                    throw new RuntimeException("Database type not supported yet : " + pkColumnType +" ["+tableName+"("+fkColumnName+")]");
-                                else
-                                    field.setReferencedColumnType(language.getTypes().get(database.getTypes().get(pkColumnType)));
+                                String databaseType = database.getDatabaseType(pkColumn);
+                                String languageType = language.getTypes().get(databaseType);
+                                field.setDatabaseColumnType(databaseType);
+                                field.setReferencedColumnType(languageType);
                             }
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
                         }
 
-                        field.setType(Stream.of(pkTableName)
-                                .map(String::toLowerCase)
-                                .map(StringUtils::toCamelCase)
-                                .map(StringUtils::majStart)
-                                .map(StringUtils::removeLastS)
-                                .findFirst()
-                                .orElse("")
+                        field.setType(pkTableName
+                                .transform(StringUtils::toCamelCase)
+                                .transform(StringUtils::removeLastS)
+                                .transform(StringUtils::majStart)
                         );
-
                     }
                 }
             }
         }
+    }
+
+    public List<ColumnMetadata> getForeignKeysColumns() {
+        List<ColumnMetadata> foreignKeys = new ArrayList<>();
+        for (ColumnMetadata column : columns) {
+            if (column.isForeign()) {
+                foreignKeys.add(column);
+            }
+        }
+        return foreignKeys;
+    }
+
+    public ColumnMetadata findForeingKeyColumnByClassName(String className) {
+        for (ColumnMetadata column : columns) {
+            if (column.isForeign() && column.getType().equalsIgnoreCase(className)) {
+                return column;
+            }
+        }
+        return null;
+    }
+
+    public void addChild(TableMetadata child, Boolean mandatory, Boolean hasForm) throws InvalipRelationParameter {
+        if (childTables == null) { setChildTables(new ArrayList<>());}
+        if (child == null)  throw new InvalipRelationParameter("Parameter cannot be set on parent with null child");
+        ColumnMetadata fkColumn = child.findForeingKeyColumnByClassName(this.getClassName());
+        if (fkColumn == null) {
+            throw new InvalipRelationParameter("Parameter cannot be set with invalid columns");
+        }
+        ChildTableMetadata childTableMetadata = new ChildTableMetadata(child, mandatory, hasForm, fkColumn);
+        if (childTables.contains(childTableMetadata)) {
+            return;
+        }
+        fkColumn.setIsParentForeignKey(true);
+        this.childTables.add(childTableMetadata);
+        this.setIsParent(true);
+    }
+
+    public void addParentTable(TableMetadata parentTable) throws InvalipRelationParameter{
+        if (parentTables == null) { setParentTables(new ArrayList<>());}
+        if (parentTable == null)  throw new InvalipRelationParameter("Parameter cannot be set on child with null parent");;
+        ColumnMetadata fkColumn = this.findForeingKeyColumnByClassName(parentTable.getClassName());
+        if (fkColumn == null) {
+            throw new InvalipRelationParameter("Parameter cannot be set with invalid columns");
+        }
+        ParentTableMetadata parentTableMetadata = new ParentTableMetadata(parentTable, fkColumn);
+        if (parentTables.contains(parentTableMetadata)) {
+            return;
+        }
+        fkColumn.setIsParentForeignKey(true);
+        this.parentTables.add(parentTableMetadata);
+        this.setIsChild(true);
+    }
+
+    public TableGenerationModel generateGenerationModel(
+    ) {
+        return new TableGenerationModel(this);
+    }
+
+
+
+    /**
+     * Résout le nom du schéma pour les appels JDBC Oracle.
+     * Oracle stocke les identifiants non-quotés en MAJUSCULES.
+     * Les identifiants quotés ("...") conservent leur casse exacte.
+     */
+    private String resolveOracleSchema() {
+        String schema = database.getCredentials().getSchemaName();
+        
+        // Si le schéma est vide ou null, on utilise l'utilisateur connecté comme schéma par défaut
+        if (schema == null || schema.isEmpty()) {
+            schema = database.getCredentials().getUser();
+        }
+        
+        // Sécurité anti-null
+        if (schema == null) {
+            return null;
+        }
+
+        // Si le schéma contient déjà des minuscules, cela signifie 
+        // qu'il a été créé avec des guillemets doubles ("MonSchema") → on respecte la casse exacte
+        if (!schema.equals(schema.toUpperCase())) {
+            return schema; 
+        }
+        
+        // Sinon, c'est un identifiant standard Oracle → majuscules obligatoires pour JDBC
+        return schema.toUpperCase();
     }
 }

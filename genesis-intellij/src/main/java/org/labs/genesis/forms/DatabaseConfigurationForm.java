@@ -5,6 +5,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkLabel;
 import lombok.Getter;
 import lombok.Setter;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -13,10 +14,15 @@ import org.labs.genesis.wizards.fieldHandler.*;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.labs.genesis.Utils.formatErrorMessage;
-import static org.labs.genesis.Utils.formatErrorMessageHtml;
+import static org.labs.genesis.Utils.formatErrorMessageHtml;import java.awt.Window;
+import com.intellij.util.ui.UIUtil;
+
 
 @Getter
 public class DatabaseConfigurationForm {
@@ -50,12 +56,19 @@ public class DatabaseConfigurationForm {
 
     private LinkLabel<String> testConnectionButton;
     private JLabel connectionStatusLabel;
+
+    private JComboBox<String> comboBoxProjectList;
+    private JComboBox<ProjectGenerationContext> contextList ;
+    private JLabel labelListProject;
+    private JButton addDatabaseButton;
+    private final List<ProjectGenerationContext> listProjectGenerationContexts ;
+
     private boolean isUpdating = false;
 
     @Setter
     private boolean connectionSuccessful = false;
 
-    public DatabaseConfigurationForm() {
+    public DatabaseConfigurationForm(List<ProjectGenerationContext> listProjectGenerationContexts ) {
         populateDmsOptions();
         initializeDefaultValues();
         addListeners();
@@ -64,54 +77,94 @@ public class DatabaseConfigurationForm {
         if (dmsOptions.getItemCount() > 0) {
             dmsOptions.setSelectedIndex(0);
         }
-
+        contextList = new JComboBox<>();
+        this.listProjectGenerationContexts = listProjectGenerationContexts;
         addTestConnectionButtonListener();
     }
+    public void refreshUI(boolean isMultiProject) {
+        if (isMultiProject) {
+            addListProject();
+            comboBoxProjectList.setVisible(true);
+            labelListProject.setVisible(true);
+            addDatabaseButton.setVisible(true);
+        } else {
+            comboBoxProjectList.setVisible(false);
+            labelListProject.setVisible(false);
+            addDatabaseButton.setVisible(false);
+        }
+    }
+
+
+    public void addListProject() {
+        DefaultComboBoxModel<String> nameModel = new DefaultComboBoxModel<>();
+        DefaultComboBoxModel<ProjectGenerationContext> contextModel = new DefaultComboBoxModel<>();
+
+        for (ProjectGenerationContext context : listProjectGenerationContexts) {
+            nameModel.addElement(context.getProjectName() + " " + context.getFramework().getName());
+            contextModel.addElement(context);
+        }
+        comboBoxProjectList.setModel(nameModel);
+        comboBoxProjectList.setVisible(true);
+        comboBoxProjectList.revalidate();
+        comboBoxProjectList.repaint();
+
+        contextList.setModel(contextModel);
+        contextList.setVisible(true);
+        contextList.revalidate();
+        contextList.repaint();
+
+        comboBoxProjectList.addActionListener(e -> {
+            int index = comboBoxProjectList.getSelectedIndex();
+            if (index >= 0 && index < contextList.getModel().getSize()) {
+                contextList.setSelectedIndex(index);
+            }
+        });
+    }
+
 
     private void addTestConnectionButtonListener() {
         testConnectionButton.setListener((LinkLabel<String> source, String data) -> {
-            // Retrieve the selected database
             Database selectedDatabase = (Database) dmsOptions.getSelectedItem();
             if (selectedDatabase != null) {
-                // Build Credentials based on user input
+                boolean isOracle = "Oracle".equalsIgnoreCase(selectedDatabase.getName());
+
+                // Même normalisation que dans updateJdbcUrl
+                String effectiveDriverType = isOracle
+                        ? "thin"
+                        : driverNameField.getText().trim();
+
+                String effectiveUsername = isOracle
+                        ? normalizeOracleIdentifier(usernameField.getText())
+                        : usernameField.getText().trim();
+
+                String effectiveSchema = isOracle
+                        ? normalizeOracleIdentifier(schemaField.getText())
+                        : schemaField.getText().trim();
+
                 Credentials credentials = new Credentials(
                         databaseField.getText().trim(),
-                        schemaField.getText().trim(),
-                        usernameField.getText().trim(),
+                        effectiveSchema,
+                        effectiveUsername,
                         new String(passwordField.getPassword()),
                         hostField.getText().trim(),
                         portField.getText().trim(),
-                        driverNameField.getText().trim(),
+                        effectiveDriverType,
                         sidField.getText().trim(),
                         useSSLCheckBox.isSelected(),
                         allowKeyRetrievalCheckBox.isSelected(),
                         trustCertificateCheckBox.isSelected()
                 );
 
-                // Attempt to establish the connection
                 try {
                     selectedDatabase.getConnection(credentials).close();
-
-                    Messages.showInfoMessage(
-                            mainPanel,
-                            "Connection successful!",
-                            "Success"
-                    );
+                    Messages.showInfoMessage(mainPanel, "Connection successful!", "Success");
                     connectionStatusLabel.setText("<html>Connection successful!</html>");
                     connectionStatusLabel.setForeground(JBColor.GREEN);
                     connectionSuccessful = true;
                 } catch (Exception ex) {
                     String formattedMessage = formatErrorMessage(ex.getMessage());
                     String formattedMessageHtml = formatErrorMessageHtml(ex.getMessage());
-
-                    // Display the formatted error message in a popup
-                    Messages.showErrorDialog(
-                            mainPanel,
-                            "Connection failed:\n" + formattedMessage,
-                            "Error"
-                    );
-
-                    // Update the connection status label with the formatted HTML message
+                    Messages.showErrorDialog(mainPanel, "Connection failed:\n" + formattedMessage, "Error");
                     connectionStatusLabel.setText("<html>Connection failed:<br>" + formattedMessageHtml + "</html>");
                     connectionStatusLabel.setForeground(JBColor.RED);
                     connectionSuccessful = false;
@@ -286,6 +339,14 @@ public class DatabaseConfigurationForm {
         sidField.setEnabled(isOracle);
         databaseField.setEnabled(!isOracle);
 
+        boolean isSqlServer = "SQL Server".equalsIgnoreCase(database.getName());
+        if (isSqlServer && usernameField.getText().trim().isEmpty()) {
+            usernameField.setText("sa");
+        }
+        if (isSqlServer && schemaField.getText().trim().isEmpty()) {
+            schemaField.setText("dbo");
+        }
+
         // Specific default values
         portField.setText(database.getPort());
         if (isOracle) {
@@ -300,31 +361,63 @@ public class DatabaseConfigurationForm {
     private void updateJdbcUrl(Database database) {
         if (database == null) return;
         isUpdating = true;
-        // Build Credentials based on user input
+
+        boolean isOracle = "Oracle".equalsIgnoreCase(database.getName());
+
+        // Pour Oracle, l'URL JDBC attend le driver TYPE ("thin"), pas le driver NAME
+        String effectiveDriverType = isOracle
+                ? "thin"
+                : driverNameField.getText().trim();
+
+        // Normalisation Oracle : username et schema en majuscules (sauf si quotés)
+        String effectiveUsername = isOracle
+                ? normalizeOracleIdentifier(usernameField.getText())
+                : usernameField.getText().trim();
+
+        String effectiveSchema = isOracle
+                ? normalizeOracleIdentifier(schemaField.getText())
+                : schemaField.getText().trim();
+
         Credentials credentials = new Credentials(
                 databaseField.getText().trim(),          // databaseName
-                schemaField.getText().trim(),           // schemaName
-                usernameField.getText().trim(),         // user
-                new String(passwordField.getPassword()),// pwd
-                hostField.getText().trim(),             // host
-                portField.getText().trim(),             // port
-                driverNameField.getText().trim(),       // driverType
-                sidField.getText().trim(),              // SID
-                useSSLCheckBox.isSelected(),            // useSSL
-                allowKeyRetrievalCheckBox.isSelected(), // allowPublicKeyRetrieval
-                trustCertificateCheckBox.isSelected()   // trustCertificate
+                effectiveSchema,                         // schemaName normalisé pour Oracle
+                effectiveUsername,                       // user normalisé pour Oracle
+                new String(passwordField.getPassword()), // pwd
+                hostField.getText().trim(),              // host
+                portField.getText().trim(),              // port
+                effectiveDriverType,                     // driverType adapté selon le SGBD
+                sidField.getText().trim(),               // SID
+                useSSLCheckBox.isSelected(),             // useSSL
+                allowKeyRetrievalCheckBox.isSelected(),  // allowPublicKeyRetrieval
+                trustCertificateCheckBox.isSelected()    // trustCertificate
         );
 
         database.setCredentials(credentials);
 
-        // Generate the dynamic JDBC URL using the Credentials and the selected database
         String jdbcUrl = database.getJdbcUrl(credentials);
 
-        // Update the URL field
         SwingUtilities.invokeLater(() -> {
             URLField.setText(jdbcUrl);
             isUpdating = false;
         });
+    }
+
+
+        /**
+     * Normalise un identifiant Oracle en majuscules, sauf s'il est protégé par des guillemets doubles.
+     * Les identifiants quotés ("MonUser") conservent leur casse exacte.
+     */
+    private String normalizeOracleIdentifier(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return value;
+        }
+        String trimmed = value.trim();
+        // Si entouré de guillemets doubles → identifiant quoté, on respecte la casse exacte
+        if (trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
+            return trimmed;
+        }
+        // Sinon → identifiant standard Oracle, forcer en majuscules
+        return trimmed.toUpperCase();
     }
 
 }

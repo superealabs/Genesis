@@ -1,16 +1,37 @@
 <div class="detail-grid">
   <div class="detail-item" *ngFor="let item of entries">
-    <label>{{ item[0] }}</label>
-    <input type="text" [value]="item[1]" readonly>
+    <label>{{ this.langService.makeItReadable(item[0])}}</label>
+    <ng-container *ngIf="isFileField(item[0]); else normalValue">
+      <img
+        *ngIf="item[1] && isImageContent(item[1]); else unavailableFile"
+        class="file-preview"
+        [src]="buildFileSource(item[1])"
+        [alt]="getGeneratedFileName(item[1])"
+      />
+      <ng-template #unavailableFile>
+        <input
+          type="text"
+          [value]="item[1] ? 'Fichier non prévisualisable' : 'Aucun fichier'"
+          readonly
+        />
+      </ng-template>
+    </ng-container>
+    <ng-template #normalValue>
+      <input
+        type="text"
+        [value]="langService.formatValue(item[1])"
+        readonly
+      />
+    </ng-template>
   </div>
 
   <div class="action-buttons">
     <button class="update-btn" (click)="onUpdateClick()" >
-      <i class="bi bi-pencil-fill"></i> Update
+      <i class="bi bi-pencil-fill"></i> {{ this.content.common.update}}
     </button>
 
     <button class="delete-btn" *ngIf="deletfn" (click)="onDeleteClick()">
-      <i class="bi bi-trash-fill"></i> Delete
+      <i class="bi bi-trash-fill"></i> {{ this.content.common.delete}}
     </button>
   </div>
 

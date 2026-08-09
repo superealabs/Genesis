@@ -12,7 +12,8 @@ extra["versions"] = mapOf(
     "lombok" to "1.18.36",
     "kotlin" to "1.9.24",
     "jackson" to "2.18.1",
-    "intellijPlugin" to "1.17.3"
+    "intellijPlugin" to "1.17.4",
+    "javaparser" to "3.25.4"
 )
 
 subprojects {
@@ -37,15 +38,17 @@ subprojects {
         annotationProcessor("org.projectlombok:lombok:${versions["lombok"]}")
 
         implementation("org.jetbrains:annotations:24.0.1")
+        implementation("com.github.javaparser:javaparser-core:${versions["javaparser"]}")
 
 
         // Testing
         testImplementation(platform("org.junit:junit-bom:${versions["junit"]}"))
-
         testImplementation("org.junit.jupiter:junit-jupiter")
         testImplementation("org.mockito:mockito-core:5.11.0")
         testImplementation("org.assertj:assertj-core:3.25.3")
         testImplementation("org.jetbrains.kotlin:kotlin-test:${versions["kotlin"]}")
+        // JUnit Platform has its own version scheme; let the JUnit BOM align it with Jupiter.
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     }
 
     tasks {

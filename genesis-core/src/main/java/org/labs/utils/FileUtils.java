@@ -5,20 +5,34 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.config.Constantes;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.adapter.DatabaseDeserializer;
+import org.labs.genesis.merge.FileMergeInput;
+import org.labs.genesis.merge.MergeOutcome;
+import org.labs.genesis.merge.MergeTool;
+import org.labs.utils.enums.FilesUtilsMode;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Stream;
 
 public class FileUtils {
+    public static FilesUtilsMode mode = FilesUtilsMode.GENERATION;
+    public static List<File> CONFLICT_FILES = new ArrayList<File>();
+
+    public static void setMode(FilesUtilsMode mode) {
+        FileUtils.mode = mode;
+    }
 
     public static String getFileContent(String resourcePath) throws IOException {
         StringBuilder content = new StringBuilder();
@@ -79,20 +93,21 @@ public class FileUtils {
         }
     }
 
-    public static void createFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
+    public static File createFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
         // creation de la structure du projet
         createFileStructure(filePath);
 
         // creation du fichier et son contenu
-        createSimpleFile(filePath, fileName, fileExtension, fileContent);
+        return createSimpleFile(filePath, fileName, fileExtension, fileContent);
     }
 
-    public static void createSimpleFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
+    public static File createSimpleFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
         File file = new File(filePath + "/" + fileName + "." + fileExtension);
         if (file.exists()) {
             file.delete();
         }
         Files.write(file.toPath(), fileContent.getBytes());
+        return  file;
     }
 
     public static void copyFile(String sourceFilePath, String destinationFilePath, String fileName) throws IOException {
@@ -157,7 +172,6 @@ public class FileUtils {
         }
     }
 
-
     private static @NotNull URI getResourceUri(String sourceDir) throws IOException {
         // Obtenir le class loader actuel
         ClassLoader classLoader = FileUtils.class.getClassLoader();
@@ -203,6 +217,51 @@ public class FileUtils {
         }
     }
 
+    private static void applyGeneratedMergeOutcome(MergeOutcome mergeOutcome) throws IOException {
+        FileMergeInput mergeInput = mergeOutcome.input;
+        if (mergeOutcome.hasConflict && mergeOutcome.mergedContent != null) {
+            CONFLICT_FILES.add(mergeOutcome.conflictFile);
+            Files.write(mergeOutcome.conflictFile.toPath(), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
+        } else if (mergeOutcome.mergedContent != null) {
+            // merge content into current file
+            Files.write(mergeInput.currentFile.toPath(), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
+        }
+        // generated file into baseFile
+        Files.write(mergeInput.baseFile.toPath(), Files.readAllBytes(mergeInput.newFile.toPath()));
+        deleteFile(mergeInput.newFile.getPath());
+    }
+    public static void createOrMergeFile(String destinationFolder, String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
+        if (mode.equals(FilesUtilsMode.MERGE)) {
+            File generatedFile = createGenerationTempFile(filePath, fileName, fileExtension, fileContent);
+            File existingFile = new File(filePath + "/" + fileName + "." + fileExtension);
+            File baseDirectory = generateBaseDirectoryIfAbsent(destinationFolder);
+            File baseFile = new File(baseDirectory.getPath() + "/" + fileName + "." + fileExtension);
+            FileMergeInput mergeInput = new FileMergeInput(baseFile, existingFile, generatedFile);
+            MergeOutcome mergeOutcome = MergeTool.merge(mergeInput,true);
+            applyGeneratedMergeOutcome(mergeOutcome);
+        }
+        else if (mode.equals(FilesUtilsMode.GENERATION)) {
+            createFile(filePath, fileName, fileExtension, fileContent);
+        }
+
+    }
+
+
+    public static File generateBaseDirectoryIfAbsent(String destinationFolder){
+        if (destinationFolder != null && destinationFolder.contains("Webapp")){
+            destinationFolder = destinationFolder.substring(0, destinationFolder.lastIndexOf('/'));
+        }
+        File baseDirectory = new File(destinationFolder+"/"+ Constantes.GENESIS_BASE_FILES_HIDDEN_DIRECTORY_NAME);
+        if (!baseDirectory.exists()){
+            createFileStructure(baseDirectory.getPath());
+        }
+        return baseDirectory;
+    }
+
+    public static File createGenerationTempFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
+         File tempFile = createFile(filePath , fileName, fileExtension+"."+Constantes.GENESIS_GENERATION_TEMP_FILE_EXTENSION, fileContent);
+         return  tempFile;
+    }
 
     public static void createDirectory(String filePath) {
         String filename = "";
@@ -223,7 +282,7 @@ public class FileUtils {
         file.mkdir();
     }
 
-    public static <T> T fromJson(Class<T> clazz, String resourcePath) throws IOException {
+    public static <T> T fromJson(Class<T> clazz, String path) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
@@ -231,13 +290,22 @@ public class FileUtils {
         module.addDeserializer(Database.class, new DatabaseDeserializer());
         objectMapper.registerModule(module);
 
-        // Charger le fichier depuis le classpath
-        InputStream inputStream = FileUtils.class.getClassLoader().getResourceAsStream(resourcePath);
-        if (inputStream == null) {
-            throw new FileNotFoundException("File not found : " + resourcePath);
+        // Vérifier si c'est un chemin absolu (commence par / ou contient :)
+        if (path.startsWith("/") || path.contains(":")) {
+            // Chemin absolu sur le système de fichiers
+            File file = new File(path);
+            if (!file.exists()) {
+                throw new FileNotFoundException("File not found : " + path);
+            }
+            return objectMapper.readValue(file, clazz);
+        } else {
+            // Chemin relatif depuis le classpath
+            InputStream inputStream = FileUtils.class.getClassLoader().getResourceAsStream(path);
+            if (inputStream == null) {
+                throw new FileNotFoundException("File not found in classpath : " + path);
+            }
+            return objectMapper.readValue(inputStream, clazz);
         }
-
-        return objectMapper.readValue(inputStream, clazz);
     }
 
 
@@ -258,5 +326,59 @@ public class FileUtils {
         return objectMapper.readValue(inputStream, clazz);
     }
 
+    public static <T> void toJson(T object, String filePath) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        File file = new File(filePath);
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, object);
+    }
 
+    public static <T> void toYaml(T object, String yamlFilePath) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+        File file = new File(yamlFilePath);
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
+        }
+        objectMapper.writeValue(file, object);
+    }
+
+    public static <T> String toJsonString(T object) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+    }
+
+    public static <T> String toYamlString(T object) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+        return objectMapper.writeValueAsString(object);
+    }
+
+    public static void deleteDirectory(File directory) {
+        if (directory.exists()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectory(file);
+                    } else {
+                        file.delete();
+                    }
+                }
+            }
+            directory.delete();
+        }
+    }
+
+    public static void deleteFile(String filePath) {
+        File file = new File(filePath);
+        if (file.exists() && file.isFile()) {
+            file.delete();
+        }
+    }
+    public static void deleteFile(String filePath, String fileName, String fileExtension) {
+        deleteFile(filePath + "/" + fileName + "." + fileExtension);
+    }
 }

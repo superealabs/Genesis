@@ -27,6 +27,7 @@ public class GenesisTemplateEngine {
     private static final String VARIABLE_PLACEHOLDER_SUFFIX_ALT = "]";
     private static final String NEWLINE_TAG = "{{newline}}";
     private static final String TAB_TAG = "{{tab}}";
+    private static final String SPACE_TAG = "{{space}}";
     private static final String REMOVE_LINE_TAG = "{{removeLine}}";
     private static final String BLOCK_END = "}}";
     private static final String FUNCTION_OPEN_PARENTHESIS = "(";
@@ -50,6 +51,7 @@ public class GenesisTemplateEngine {
         FUNCTIONS_MAP.put("lowerCase", str -> str == null ? "" : str.toLowerCase());
         FUNCTIONS_MAP.put("majStart", StringUtils::majStart);
         FUNCTIONS_MAP.put("minStart", StringUtils::minStart);
+        FUNCTIONS_MAP.put("removeLastS", StringUtils::removeLastS);
         FUNCTIONS_MAP.put("toCamelCase", StringUtils::toCamelCase);
         FUNCTIONS_MAP.put("toKebabCase", StringUtils::toKebabCase);
         FUNCTIONS_MAP.put("formatReadable", StringUtils::formatReadable);
@@ -60,8 +62,6 @@ public class GenesisTemplateEngine {
         FUNCTIONS_MAP.put("majPluralize", StringUtils::majPluralize);
         FUNCTIONS_MAP.put("toPascalCase", StringUtils::toPascalCase);
     }
-
-    private final Map<String, String> commentMap = new HashMap<>();
 
     public String simpleRender(String template, Map<String, Object> variables) {
         if (template == null || template.isEmpty()) {
@@ -135,13 +135,15 @@ public class GenesisTemplateEngine {
             throw new IllegalArgumentException("The template must not be empty.");
         }
 
-        if (variables == null || variables.isEmpty()) {
-            return template;
-        }
-
         StringBuilder result = new StringBuilder(template);
+        Map<String, String> protectedComments = new HashMap<>();
 
-        protectComments(result);
+        protectComments(result, protectedComments);
+
+        if (variables == null || variables.isEmpty()) {
+            restoreComments(result, protectedComments);
+            return result.toString();
+        }
 
         evaluateLoops(result, variables);
         evaluateConditionals(result, variables);
@@ -149,39 +151,34 @@ public class GenesisTemplateEngine {
         replaceVariables(result, variables);
         processSpecialTags(result);
 
-        restoreComments(result);
+        restoreComments(result, protectedComments);
 
         return result.toString();
     }
 
-    private void protectComments(StringBuilder template) {
+    private void protectComments(StringBuilder template, Map<String, String> protectedComments) {
         int startIndex = 0;
         while ((startIndex = template.indexOf(START_COMMENTARY_TAG, startIndex)) != -1) {
             int endIndex = template.indexOf(END_COMMENTARY_TAG, startIndex);
             if (endIndex == -1) break;
 
-            endIndex += END_COMMENTARY_TAG.length();
-
-            String comment = template.substring(startIndex, endIndex);
+            String commentContent = template.substring(startIndex + START_COMMENTARY_TAG.length(), endIndex);
+            int commentEndIndex = endIndex + END_COMMENTARY_TAG.length();
             String marker = generateUniqueMarker(startIndex);
-            commentMap.put(marker, comment);
+            protectedComments.put(marker, commentContent);
 
-            template.replace(startIndex, endIndex, marker);
+            template.replace(startIndex, commentEndIndex, marker);
             startIndex += marker.length();
         }
     }
 
-    private void restoreComments(StringBuilder template) {
-        for (Map.Entry<String, String> entry : commentMap.entrySet()) {
+    private void restoreComments(StringBuilder template, Map<String, String> protectedComments) {
+        for (Map.Entry<String, String> entry : protectedComments.entrySet()) {
             String marker = entry.getKey();
-            String comment = entry.getValue();
+            String commentContent = entry.getValue();
 
-            int index = template.indexOf(marker);
-            if (index != -1) {
-                template.replace(index, index + marker.length(), comment);
-            }
+            replaceAllOccurrences(template, marker, commentContent);
         }
-        commentMap.clear();
     }
 
     private String generateUniqueMarker(int position) {
@@ -699,6 +696,7 @@ public class GenesisTemplateEngine {
     private void processSpecialTags(StringBuilder template) {
         replaceAllOccurrences(template, NEWLINE_TAG, "\n");
         replaceAllOccurrences(template, TAB_TAG, "\t");
+        replaceAllOccurrences(template, SPACE_TAG, "    "); // 4 spaces for PEP 8
 
         // Supprimer les lignes contenant le tag {{removeLine}}
         int start;

@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.Nullable;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.wizards.*;
+import org.labs.genesis.wizards.conditionals.FrontendConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.GenConfigConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.InitConditionalWizardStep;
 
@@ -20,23 +22,41 @@ public class GenesisWizardDialog extends AbstractWizard<ModuleWizardStep> {
     public GenesisWizardDialog(@Nullable Project project) {
         super("Genesis Project Generator", project);
 
-        // Instanciate a fresh context so isolated calls don't leak logic.
         ProjectGenerationContext context = new ProjectGenerationContext();
+        List<ProjectGenerationContext> listContexts = new ArrayList<>();
+        GenerationContextManager manager = new GenerationContextManager(context);
 
-        SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(context);
-        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(context);
-        InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(context, databaseConfigurationWizardStep);
-        SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(context);
-        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(context);
-        GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(context, generationOptionWizardStep);
-        FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(context);
+        SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(manager, listContexts);
+        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(manager, listContexts);
+        InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(manager, databaseConfigurationWizardStep);
+        SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(manager);
+        RelationshipConfigurationWizardStep relationshipConfigurationWizardStep = new RelationshipConfigurationWizardStep(manager);
+        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(manager, listContexts, specificConfigurationWizardStep, relationshipConfigurationWizardStep);
+        GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(manager, generationOptionWizardStep);
 
-        stepsList.add(new InitializationWizardStep(context, specificConfigurationWizardStep, frontendConfigurationWizardStep));
+        FirstWizardStep firstWizardStep = new FirstWizardStep(manager);
+        RuleToCodeWizardStep ruleToCodeWizardStep = new RuleToCodeWizardStep(manager, firstWizardStep);
+        RuleToCodeWizardAIStep ruleToCodeWizardAIStep = new RuleToCodeWizardAIStep(manager, firstWizardStep);
+
+        SynchGenerationWizardStep syncGenerationWizardStep = new SynchGenerationWizardStep(manager);
+        SyncProjectLoaderWizardStep syncProjectLoaderWizardStep = new SyncProjectLoaderWizardStep(manager, relationshipConfigurationWizardStep, syncGenerationWizardStep);
+
+        FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(manager, listContexts);
+        FrontendConditionalWizardStep frontendConditionalWizardStep = new FrontendConditionalWizardStep(manager, frontendConfigurationWizardStep);
+        InitializationWizardStep initializationWizardStep = new InitializationWizardStep(manager, listContexts, specificConfigurationWizardStep, frontendConfigurationWizardStep);
+
+        stepsList.add(firstWizardStep);
+        stepsList.add(ruleToCodeWizardStep);
+        stepsList.add(ruleToCodeWizardAIStep);
+        stepsList.add(syncProjectLoaderWizardStep);
+        stepsList.add(initializationWizardStep);
         stepsList.add(initConditionalWizardStep);
         stepsList.add(sqlRunnerWizardStep);
         stepsList.add(genConfigConditionalWizardStep);
-        stepsList.add(frontendConfigurationWizardStep);
+        stepsList.add(relationshipConfigurationWizardStep);
+        stepsList.add(frontendConditionalWizardStep);
         stepsList.add(specificConfigurationWizardStep);
+        stepsList.add(syncGenerationWizardStep);
 
         for (ModuleWizardStep step : stepsList) {
             addStep(step);
@@ -63,7 +83,7 @@ public class GenesisWizardDialog extends AbstractWizard<ModuleWizardStep> {
         ModuleWizardStep currentStep = stepsList.get(getCurrentStep());
         try {
             if (!currentStep.validate()) return;
-            currentStep.updateDataModel(); // This will trigger the actual code generation in SpecificConfigurationWizardStep
+            currentStep.updateDataModel();
         } catch (ConfigurationException e) {
             Messages.showErrorDialog(getContentPane(), e.getMessage(), "Validation Error");
             return;

@@ -5,14 +5,20 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.icon.SdkIcons;
 import org.labs.genesis.wizards.*;
+import org.labs.genesis.wizards.conditionals.FrontendConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.GenConfigConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.InitConditionalWizardStep;
+import org.labs.genesis.wizards.FirstWizardStep ;
+import org.labs.genesis.wizards.RuleToCodeWizardAIStep ;
+import org.labs.genesis.wizards.RuleToCodeWizardStep ;
 
 import javax.swing.*;
 
 import static org.labs.genesis.module.GenesisModuleBuilder.projectGenerationContext;
+import static org.labs.genesis.module.GenesisModuleBuilder.listProjectGenerationContexts;
 
 final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
     private static final String ID = "GENESIS_MODULE_TYPE";
@@ -26,20 +32,40 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
                                                           @NotNull GenesisModuleBuilder moduleBuilder,
                                                           @NotNull ModulesProvider modulesProvider) {
 
-        SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(projectGenerationContext);
-        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(projectGenerationContext);
-        InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(projectGenerationContext, databaseConfigurationWizardStep);
-        SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(projectGenerationContext);
-        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(projectGenerationContext);
-        GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(projectGenerationContext, generationOptionWizardStep);
-        FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(projectGenerationContext );
+        GenerationContextManager generationContextManager = new GenerationContextManager(projectGenerationContext);
+        SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(generationContextManager,listProjectGenerationContexts);
+        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(generationContextManager,listProjectGenerationContexts);
+        InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(generationContextManager, databaseConfigurationWizardStep);
+        SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(generationContextManager);
+        RelationshipConfigurationWizardStep relationshipConfigurationWizardStep = new RelationshipConfigurationWizardStep(generationContextManager);
+        GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(generationContextManager,listProjectGenerationContexts,specificConfigurationWizardStep, relationshipConfigurationWizardStep);
+        GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(generationContextManager, generationOptionWizardStep);
+
+        //Rule to code
+        FirstWizardStep firstWizardStep = new FirstWizardStep(generationContextManager);
+        RuleToCodeWizardStep ruleToCodeWizardStep = new RuleToCodeWizardStep(generationContextManager , firstWizardStep );
+        RuleToCodeWizardAIStep ruleToCodeWizardAIStep =  new RuleToCodeWizardAIStep(generationContextManager , firstWizardStep );
+
+        // Sync Generation
+        SynchGenerationWizardStep syncGenerationWizardStep = new SynchGenerationWizardStep(generationContextManager);
+        SyncProjectLoaderWizardStep syncProjectLoaderWizardStep = new SyncProjectLoaderWizardStep(generationContextManager, relationshipConfigurationWizardStep, syncGenerationWizardStep);
+
+        FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(generationContextManager,listProjectGenerationContexts );
+        FrontendConditionalWizardStep frontendConditionalWizardStep = new FrontendConditionalWizardStep(generationContextManager, frontendConfigurationWizardStep);
+        InitializationWizardStep initializationWizardStep = new InitializationWizardStep(generationContextManager,listProjectGenerationContexts,specificConfigurationWizardStep,frontendConfigurationWizardStep);
         return new ModuleWizardStep[]{
-                new InitializationWizardStep(projectGenerationContext, specificConfigurationWizardStep, frontendConfigurationWizardStep),
+                firstWizardStep,
+                ruleToCodeWizardStep,
+                ruleToCodeWizardAIStep ,
+                syncProjectLoaderWizardStep,
+                initializationWizardStep,
                 initConditionalWizardStep,
                 sqlRunnerWizardStep,
                 genConfigConditionalWizardStep,
-                frontendConfigurationWizardStep,
+                relationshipConfigurationWizardStep,
+                frontendConditionalWizardStep,
                 specificConfigurationWizardStep,
+                syncGenerationWizardStep,
         };
     }
 

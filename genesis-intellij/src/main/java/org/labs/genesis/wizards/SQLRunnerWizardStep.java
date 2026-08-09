@@ -2,19 +2,19 @@ package org.labs.genesis.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import org.labs.genesis.config.ProjectGenerationContext;
-import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.SQLRunnerForm;
-import org.labs.genesis.wizards.conditionals.InitConditionalWizardStep;
 
+import javax.naming.ConfigurationException;
 import javax.swing.*;
 
 public class SQLRunnerWizardStep extends ModuleWizardStep {
     private final SQLRunnerForm newProjectPanel;
-    private final ProjectGenerationContext projectGenerationContext;
+    private final GenerationContextManager generationContextManager;
 
-    public SQLRunnerWizardStep(ProjectGenerationContext projectGenerationContext) {
-        newProjectPanel = new SQLRunnerForm(projectGenerationContext);
-        this.projectGenerationContext = projectGenerationContext;
+    public SQLRunnerWizardStep(GenerationContextManager generationContextManager) {
+        this.generationContextManager = generationContextManager;
+        newProjectPanel = new SQLRunnerForm(generationContextManager.getContext());
     }
 
 
@@ -26,13 +26,8 @@ public class SQLRunnerWizardStep extends ModuleWizardStep {
     @Override
     public void updateDataModel() {}
 
-    //@Override
-    //public boolean validate() throws ConfigurationException {}
-
     @Override
     public boolean isStepVisible() {
-        Framework framework = projectGenerationContext.getFramework();
-        return framework != null
-                && framework.getUseDB();
+        return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess();
     }
 }

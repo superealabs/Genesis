@@ -30,7 +30,7 @@ public class SQLRunnerForm {
     private JPanel mainPanel;
     private TextFieldWithBrowseButton locationField;
     private LinkLabel<String> executeLinkLabel;
-    private JTextField tokenApiField;
+    private JPasswordField tokenApiField;
     private JLabel nameLabel;
     private JCheckBox usePersonalAccessTokenCheckBox;
     private JCheckBox useLLMCheckBox;
@@ -102,10 +102,19 @@ public class SQLRunnerForm {
 
         try {
             String content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-            sqlTextArea.setText(content);
+            SwingUtilities.invokeLater(() -> {
+                sqlTextArea.setText(content);
+                sqlTextArea.setCaretPosition(0);
+
+                rTextScrollPane.revalidate();
+                rTextScrollPane.repaint();
+
+                mainPanel.revalidate();
+                mainPanel.repaint();
+            });
         } catch (IOException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(mainPanel, "Error reading file: " + ex.getMessage());
+            SwingUtilities.invokeLater(() ->JOptionPane.showMessageDialog(mainPanel, "Error reading file: " + ex.getMessage()));
         }
     }
 

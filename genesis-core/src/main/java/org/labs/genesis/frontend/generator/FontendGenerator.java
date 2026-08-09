@@ -9,6 +9,8 @@ import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMetadataProvider;
 import org.labs.genesis.frontend.generator.model.*;
+import org.labs.genesis.frontend.generator.resources.BrandingGenerator;
+import org.labs.genesis.frontend.generator.resources.LangGenerator;
 import org.labs.utils.FileUtils;
 import org.labs.utils.StringUtils;
 
@@ -29,7 +31,7 @@ public class FontendGenerator implements IFrontendGenerator{
     }
 
     @Override
-    public String generateComponent(Database database, FrontendLanguage language, FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception {
+    public String generateComponent(String securityType, Database database, FrontendLanguage language, FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception {
         if(language.getId()!=frontendFramework.getLanguageId()){
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the frontend framework '" +
@@ -37,7 +39,7 @@ public class FontendGenerator implements IFrontendGenerator{
         }
         String templateArchitecture = loadTemplate(frontendFramework);
         HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
-
+        metadataForFinalRender.putAll(FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType));
         for(Component component:frontendFramework.getComponents()) {
             if(tableMetadata.getIsView() && !component.getGenerateForView())
             {
@@ -50,15 +52,8 @@ public class FontendGenerator implements IFrontendGenerator{
             finalStringForComponent=engine.simpleRenderAlt(finalStringForComponent,metadataForFinalRender);
 
             String fileSavePath;
-            if (generateComponentOnly) {
-                // simplified path : destinationFolder/projectName/models
-                fileSavePath = destinationFolder + "/" + projectName + "/models";
-            } else {
-                //using the configured path in the frontendframework
-                fileSavePath = component.getDestinationPath();
-                fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
-            }
-            // ensure that the folder exists
+            fileSavePath = component.getDestinationPath();
+            fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
             FileUtils.createDirectory(fileSavePath);
 
             String componentName=component.getComponentName();
@@ -66,7 +61,7 @@ public class FontendGenerator implements IFrontendGenerator{
 
             // creating matching file
             String fileName = componentName;
-            FileUtils.createFile(fileSavePath, fileName, frontendFramework.getComponentExtension(), finalStringForComponent);
+            FileUtils.createOrMergeFile(destinationFolder, fileSavePath, fileName, frontendFramework.getComponentExtension(), finalStringForComponent);
 
             ProjectGenerator.renderFilesEdits(component.getComponentAdditionalFiles(), metadataForFinalRender);
 
@@ -99,47 +94,42 @@ public class FontendGenerator implements IFrontendGenerator{
     }
 
     @Override
-    public String generateService(Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception {
+    public String generateService(String securityType, Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception {
         if(language.getId()!=frontendFramework.getLanguageId()){
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the frontend framework '" +
                     frontendFramework.getName() + "' (required language ID: '" + frontendFramework.getLanguageId() + "').");
         }
 
-        ServiceComponent serviceComponent= frontendFramework.getServiceComponent();
 
+        ServiceComponent serviceComponent= frontendFramework.getServiceComponent();
         String templateArchitecture = loadTemplateForServices(frontendFramework);
         HashMap<String,Object> metadataPrimary = FrameworkFrontendMetadataProvider.getServiceHashMap(serviceComponent, language, tableMetadata);
+
         String structure = engine.simpleRender(templateArchitecture, metadataPrimary);
 
         HashMap<String,Object> metadataForFinalRender= FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
+        metadataForFinalRender.putAll(FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType));
         String finalStringForService = engine.render(structure,metadataForFinalRender);
         finalStringForService=engine.simpleRenderAlt(finalStringForService,metadataForFinalRender);
 
 
         String fileSavePath;
-        if (generateComponentOnly) {
-            // simplified path : destinationFolder/projectName/models
-            fileSavePath = destinationFolder + "/" + projectName + "/models";
-        } else {
-            //using the configured path in the frontendframework
-            fileSavePath = serviceComponent.getDestinationPath();
-            fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
-        }
-
+        fileSavePath = serviceComponent.getDestinationPath();
+        fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
 
         String serviceName=serviceComponent.getName();
         serviceName=engine.render(serviceName, metadataForFinalRender);
 
         // Creating matching file
         String fileName = serviceName;
-        FileUtils.createFile(fileSavePath, fileName, language.getExtension(), finalStringForService);
+        FileUtils.createOrMergeFile(destinationFolder, fileSavePath, fileName, language.getExtension(), finalStringForService);
 
         return "";
     }
 
     @Override
-    public String generateModel(Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly) throws Exception{
+    public String generateModel(String securityType, Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly) throws Exception{
 
         if(language.getId()!=frontendFramework.getLanguageId()){
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
@@ -154,18 +144,15 @@ public class FontendGenerator implements IFrontendGenerator{
         HashMap<String, Object> metadataPrimary = FrameworkFrontendMetadataProvider.getModelHashMap(modelComponent, language, tableMetadata);
         structure = engine.simpleRender(structure,metadataPrimary);
         HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
+        metadataForFinalRender.putAll(FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType));
+
         String finalStringForModel = engine.render(structure,metadataForFinalRender);
         finalStringForModel=engine.simpleRenderAlt(finalStringForModel,metadataForFinalRender);
 
         String fileSavePath;
-        if (generateComponentOnly) {
-            // simplified path : destinationFolder/projectName/models
-            fileSavePath = destinationFolder + "/" + projectName + "/models";
-        } else {
-            //using the configured path in the frontendframework
-            fileSavePath = modelComponent.getDestinationPath();
-            fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
-        }
+        fileSavePath = modelComponent.getDestinationPath();
+        fileSavePath = engine.simpleRender(fileSavePath, metadataForFinalRender);
+
         // ensure that the folder exists
 
         String modelName=modelComponent.getName();
@@ -175,51 +162,22 @@ public class FontendGenerator implements IFrontendGenerator{
 
         String fileName = modelName;
 
-        FileUtils.createFile(fileSavePath,fileName, language.getExtension(), finalStringForModel);
+        FileUtils.createOrMergeFile(destinationFolder, fileSavePath,fileName, language.getExtension(), finalStringForModel);
 
         return "";
     }
 
     @Override
-    public  String generateRessources(ProjectGenerationContext context) throws  Exception{
+    public  String generateRessources(ProjectGenerationContext context, List<TableMetadata> allEntities) throws  Exception{
         FrontendFramework frontendFramework = context.getFrontendFramework();
-        HashMap<String, Object> metadata = FrameworkFrontendMetadataProvider.getWebappHashMap(context);
-        // Generate logo
-        String logoPath = frontendFramework.getFrontendPaths().getLogoPath();
-        logoPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(logoPath, metadata));
-        if (!frontendFramework.getProjectBranding().useLogoLink() && frontendFramework.getProjectBranding().hasLogo()){
-            File logoFile = frontendFramework.getProjectBranding().getLogoFile();
-            try{
-                Path targetPath = Paths.get(logoPath, frontendFramework.getProjectBranding().getLogoUrl());
-                Files.createDirectories(targetPath.getParent());
-                Files.copy(logoFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-            }
-            catch (IOException e){
-                throw new Exception("Unable to upload the logo file at "+logoPath+" : "+e.getMessage(),e);
-            }
+        if (frontendFramework == null) {
+            return "";
         }
-
-        // Generate favicon
-        String faviconPath = frontendFramework.getFrontendPaths().getFaviconPath();
-        faviconPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(faviconPath, metadata));
-        if (!frontendFramework.getProjectBranding().useFaviconLink() && frontendFramework.getProjectBranding().hasFavicon()){
-            File faviconFile = frontendFramework.getProjectBranding().getFaviconFile();
-            try{
-                Path targetPath = Paths.get(faviconPath,frontendFramework.getProjectBranding().getFaviconUrl());
-                Files.copy(faviconFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-            }
-            catch (IOException e){
-                throw new Exception("Unable to updload the favicon at "+faviconPath+" : "+e.getMessage(),e);
-            }
-        }
-        // Generate lang files
-        List<InterfaceLang> langs = frontendFramework.getFrontendLayout().getLangs();
-        String langPath = FrontendDestinationPaths.normalizePath(engine.simpleRender(frontendFramework.getFrontendPaths().langsPath, metadata));
-        for (InterfaceLang lang : langs) {
-            String content = engine.simpleRender(lang.getContent(),metadata);
-
-            FileUtils.createFile(langPath,lang.getName().toLowerCase(), context.getFrontendLanguage().getExtension(), content);
-        }
+        HashMap<String, Object> metadata = FrameworkFrontendMetadataProvider.getLangsHashMap(context, allEntities);
+        BrandingGenerator brandingGenerator = new BrandingGenerator(engine);
+        brandingGenerator.generateRessources(context, metadata);
+        LangGenerator langGenerator = new LangGenerator(engine);
+        langGenerator.generateRessources(context, metadata);
         return "";
     }
 

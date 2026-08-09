@@ -41,10 +41,10 @@ public class ProjectBranding {
 
     public String getLogoUrl(){
         if (useLogoLink()){
-            return  "/"+this.getLogoLink();
+            return  this.getLogoLink();
         }
         else if (hasLogo()){
-            return  "/"+getFileFullName();
+            return  getFileFullName();
         }
         return  null;
     }
