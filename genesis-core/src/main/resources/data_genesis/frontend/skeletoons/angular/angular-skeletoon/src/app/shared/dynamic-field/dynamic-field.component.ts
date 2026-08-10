@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common'; // pour *ngIf et *ngFor
 import { fileToBase64 } from '../file-utils';
 
 export interface FieldConfig {
-  type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'file'| 'hidden' | 'datetime-local' | 'time';
+  type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'file'| 'hidden' | 'datetime-local' | 'time' | 'checkbox';
   name: string;
   label: string;
   options?: { value: any; label: string }[];
