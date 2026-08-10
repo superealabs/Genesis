@@ -16,6 +16,32 @@
     faviconPath: "${destinationFolder}/${majStart(projectName)}/wwwroot"
     logoPath: "${destinationFolder}/${majStart(projectName)}/wwwroot/images"
     langsPath: "{{removeLine}}"
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        bin/
+        obj/
+        .vs/
+        .vscode/
+        .idea/
+
+        *.user
+        *.suo
+        *.userosscache
+        *.sln.docstates
+
+        packages/
+        TestResults/
+
+        appsettings.Development.json
+        appsettings.Local.json
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
   additionalFiles:
     - fileType: "ProgramFile"
       fileName: "Program"
@@ -3093,6 +3119,54 @@
     faviconPath: "${destinationFolder}/${majStart(projectName)}/wwwroot"
     logoPath: "${destinationFolder}/${majStart(projectName)}/wwwroot/images"
     langsPath: "{{removeLine}}"
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        # Python
+        __pycache__/
+        *.py[cod]
+        *$py.class
+
+        # Virtual environments
+        .venv/
+        venv/
+        env/
+        ENV/
+
+        # Django
+        *.log
+        db.sqlite3
+        db.sqlite3-journal
+
+        # Static / media
+        staticfiles/
+        media/
+
+        # Environment variables
+        .env
+        .env.*
+
+        # Coverage
+        .coverage
+        htmlcov/
+        .pytest_cache/
+        .tox/
+
+        # IDE
+        .vscode/
+        .idea/
+        *.iml
+
+        # Jupyter
+        .ipynb_checkpoints/
+
+        # OS
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
   additionalFiles:
     - fileType: "settings"
       fileName: "settings"

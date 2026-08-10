@@ -52,6 +52,8 @@ public class Constantes {
     public  static  final   int ANGULAR_ID = 1;
     public  static  final   int VUE_JS_ID = 2;
     public  static  final   int REACT_ID = 3;
+    public static final String GITIGNORE_FRONTEND = "data_genesis/git/frontend/.gitignore";
+    public static final String GITIGNORE_BACKEND = "data_genesis/git/backend/.gitignore";
     public  static  final   String FRONTEND_SKELLETTON_DIRECTORY = "data_genesis/frontend/skeletoons/";
     public  static  final   String WEBAPP_DIR_TEMPLATE = "${destinationFolder}/${majStart(projectName)}${majStart(webappFolder)}";
     public  static  final   String FRONTEND_TEMPLATE_DIRECTORY = DATA_PATH+"/frontend/template";

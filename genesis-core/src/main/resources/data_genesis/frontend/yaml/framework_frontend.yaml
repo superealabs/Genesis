@@ -528,6 +528,35 @@
 
             {{else}}no css{{/if}}
       destinationPath: "${destinationFolder}/src/app/features/authentication/login"
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        node_modules/
+        dist/
+        .angular/
+        .cache/
+
+        .env
+        .env.local
+        .env.development.local
+        .env.test.local
+        .env.production.local
+
+        npm-debug.log*
+        yarn-debug.log*
+        yarn-error.log*
+        pnpm-debug.log*
+
+        .idea/
+        .vscode/
+        *.iml
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/"
+
   additionalFiles:
     - fileType: "Language file"
       fileName: "language.service"
@@ -1950,6 +1979,34 @@
   initPath: "vue/vue-3-ts-skeletoon"
   componentExtension: "vue"
   defaultPort: "5173"
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        node_modules/
+        dist/
+        build/
+        .vite/
+
+        .env
+        .env.local
+        .env.development.local
+        .env.test.local
+        .env.production.local
+
+        npm-debug.log*
+        yarn-debug.log*
+        yarn-error.log*
+        pnpm-debug.log*
+
+        .idea/
+        .vscode/
+        *.iml
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/"
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/src/assets/images"
@@ -7336,6 +7393,33 @@
   initPath: "react/react-ts-skeletoon"
   componentExtension: "tsx"
   defaultPort: "3000"
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        node_modules/
+        dist/
+
+        .env
+        .env.*
+        !.env.example
+
+        npm-debug.log*
+        yarn-debug.log*
+        yarn-error.log*
+        pnpm-debug.log*
+
+        coverage/
+        .nyc_output/
+
+        .idea/
+        .vscode/
+        *.iml
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/"
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/public"
