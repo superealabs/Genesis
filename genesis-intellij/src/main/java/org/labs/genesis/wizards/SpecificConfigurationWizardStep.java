@@ -431,9 +431,24 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
     }
 
     private void validateCache() throws ConfigurationException {
-        if (!specificConfigurationForm.getCacheProviderOptions().getSelectedItem().equals("NONE") &&
-                specificConfigurationForm.getSelectedTableAndViewNamesList().getSelectedValuesList().isEmpty()) {
-            throw new ConfigurationException("Please select at least one table or view to cache.");
+        JComboBox<?> cacheProviderOptions =
+                specificConfigurationForm.getCacheProviderOptions();
+
+        if (cacheProviderOptions == null
+                || cacheProviderOptions.getItemCount() == 0
+                || cacheProviderOptions.getSelectedItem() == null) {
+            return;
+        }
+
+        if (!"NONE".equals(cacheProviderOptions.getSelectedItem())
+                && specificConfigurationForm
+                    .getSelectedTableAndViewNamesList()
+                    .getSelectedValuesList()
+                    .isEmpty()) {
+
+            throw new ConfigurationException(
+                    "Please select at least one table or view to cache."
+            );
         }
     }
 
