@@ -244,7 +244,9 @@ public class ViewsGenerator implements IViewsGenerator {
         FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
         
         // Générer la page d'accueil
-        generateHomePage(framework, frameworkOptions, language, viewsTemplate, Arrays.stream(tableMetadata).toList(), destinationFolder, projectName, groupLink);
+        if (framework.getId() == Constantes.Django_ID) {
+            generateHomePage(framework, frameworkOptions, language, viewsTemplate, Arrays.stream(tableMetadata).toList(), destinationFolder, projectName, groupLink);
+        }
 
         return "";
     }

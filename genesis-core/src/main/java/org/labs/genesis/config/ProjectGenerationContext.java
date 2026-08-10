@@ -282,10 +282,6 @@ public class ProjectGenerationContext {
         return allTables;
     }
 
-    public String getDestinationFolder() {
-        return destinationFolder+"/"+ StringUtils.toPascalCase(projectName);
-    }
-
     public void applyTableRelations(){
         if (getRelationParameters() == null ){
             return;

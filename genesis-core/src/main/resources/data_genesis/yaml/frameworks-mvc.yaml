@@ -2583,7 +2583,7 @@
       using System.Text;
       {{#if useAuthCookie}}using Microsoft.AspNetCore.Authorization;{{/if}}
 
-    controllerAnnotations: "{{removeLine}}"
+    controllerAnnotations: ""
     controllerExtends: " : Controller"
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |

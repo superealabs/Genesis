@@ -358,8 +358,6 @@ public class ProjectGenerator {
         indicator.setText2("renderinng project files");
         indicator.setFraction(0.62);
         renderAndCopyFiles(context.getProject().getProjectFiles(), projectFilesEditsHashMap);
-        indicator.setFraction(0.63);
-        renderAndCopyFiles(context.getProject().getProjectFiles(), initializeHashMap);
         indicator.setFraction(0.64);
         renderAndCopyFolders(context.getProject().getProjectFolders(), initializeHashMap);
         indicator.setFraction(0.65);
