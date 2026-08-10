@@ -4745,11 +4745,11 @@
       {{elseIf this.isForeignKey}}
       {{tab}}
       {{tab}}[Column("${this.columnName}")]
-      {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
-      {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
+      {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
+      {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
       {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
       {{elseIf this.isTimeTz}}
       {{tab}}[Column("${this.columnName}")]
@@ -5070,7 +5070,7 @@
               ?? throw new ArgumentNullException(nameof(${majStart(this.name)}))
           
               {{elseIf this.isForeignKey}}
-              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
+              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)} ?? ${majStart(this.columnNameField)}
               
               {{elseIf this.isDateTime}}
               {{tab}}${majStart(this.name)} = ${majStart(this.name)}.HasValue ? DateTime.SpecifyKind(${majStart(this.name)}.Value, DateTimeKind.Utc) : null
@@ -5088,7 +5088,7 @@
               {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
               {{tab}}${majStart(this.name)} = id
               {{elseIf this.isForeignKey}}
-              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
+              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)} ?? ${majStart(this.columnNameField)}
               
               {{elseIf this.isDateTime}}
               {{tab}}${majStart(this.name)} = ${majStart(this.name)}.HasValue ? DateTime.SpecifyKind(${majStart(this.name)}.Value, DateTimeKind.Utc) : null
