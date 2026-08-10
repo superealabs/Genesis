@@ -4221,7 +4221,7 @@
         using Xunit;
   
         [assembly: CollectionBehavior(DisableTestParallelization = true)]
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}.Tests/"
 
     - fileType: "Response Helper"
       fileName: "ApiResponse"

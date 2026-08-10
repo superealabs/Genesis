@@ -386,7 +386,7 @@
           </ItemGroup>
 
         </Project>
-      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}.Tests/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/{{/if}}"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}.Tests/"
 
   projectFiles:
     - fileType: "appSettingsDeveloppement"
