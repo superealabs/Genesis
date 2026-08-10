@@ -2,6 +2,7 @@ package org.labs.genesis.config.langage.generator.project;
 
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.git.GitConfiguration;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.framework.APIGenerator;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
@@ -24,6 +25,8 @@ import org.labs.genesis.frontend.generator.IViewsGenerator;
 import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMetadataProvider;
 import org.labs.genesis.frontend.generator.model.InterfaceLang;
 import org.labs.utils.FileUtils;
+import org.labs.utils.GitUtils;
+import org.labs.utils.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -642,6 +645,64 @@ public class ProjectGenerator {
         generateProject(context, new NoOpProgressReporter());
     }
 
+    public void initGit(String path, boolean isCreateRemote, String repoName, String userName, String token) throws Exception {
+        GitUtils.gitInit(path);
+        GitUtils.gitAdd(path);
+        GitUtils.gitCommit(path, "Initialisation du projet");
+
+        if(repoName != null && !repoName.isBlank() && userName != null && !userName.isBlank()) {
+            GitUtils.gitRemote(path, userName, repoName);
+        }
+
+        if(isCreateRemote) {
+            try {
+                GitUtils.createRemoteRepo(token, repoName, false);
+            } catch (Exception e) {}
+            GitUtils.gitPush(path, userName, token);
+        }
+    }
+
+    public void initGit(ProjectGenerationContext context) throws Exception {
+        GitConfiguration config = context.getGitConfiguration();
+        if(!config.isUseGit()) return;
+
+        Framework framework = context.getFramework();
+        FrontendFramework frontendFramework = context.getFrontendFramework();
+        if (framework == null) {
+            return;
+        }
+
+        String projectPath = engine.simpleRender(context.getDestinationFolder(), Map.of("projectName", context.getProjectName()));
+        String frontendPath = FrameworkFrontendMetadataProvider.getWebappFolder(context);
+
+        FilesEdit backendGitIgnoreFile = GitUtils.getGitIgnore(framework.getConditionalFiles());
+        String backendPath = backendGitIgnoreFile != null ? engine.simpleRender(backendGitIgnoreFile.getDestinationPath(),
+                Map.of("projectName", context.getProjectName(), "destinationFolder", context.getDestinationFolder()))
+            : projectPath + "/" + StringUtils.majStart(context.getProjectName());
+
+        GitUtils.generateGitIgnoreIfNeeded(backendGitIgnoreFile, backendPath);
+
+        if(context.isGenerateProjectStructure()) {
+            if (frontendFramework == null) {
+                return;
+            }
+            FilesEdit frontendGitIgnoreFile = GitUtils.getGitIgnore(frontendFramework.getConditionalFiles());
+            GitUtils.generateGitIgnoreIfNeeded(frontendGitIgnoreFile, frontendPath);
+        }
+
+        if(config.isSeparateRepositories()) {
+            initGit(backendPath, config.isCreateRemoteRepository(), config.getBackendRepositoryName(),
+                        config.getGithubUsername(), config.getGithubToken());
+            if(context.isGenerateProjectStructure()) {
+                initGit(frontendPath, config.isCreateRemoteRepository(), config.getFrontendRepositoryName(),
+                        config.getGithubUsername(), config.getGithubToken());
+            }
+        } else {
+            initGit(projectPath, config.isCreateRemoteRepository(), config.getRepositoryName(),
+                    config.getGithubUsername(), config.getGithubToken());
+        }
+    }
+
     public void generateProject(ProjectGenerationContext context, ProgressReporter indicator) throws Exception {
         if (context.isGenerateProjectStructure()) {
             generateFullProject(context, indicator);
@@ -649,6 +710,7 @@ public class ProjectGenerator {
         } else {
             generateComponentsOnly(context, indicator);
         }
+        initGit(context);
     }
     private  void generateFullBackendProject(ProjectGenerationContext context, List<TableMetadata> entities, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
         GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);

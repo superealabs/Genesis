@@ -16,6 +16,16 @@
     [attr.pattern]="field.constraints?.pattern"
   />
 
+  <!-- Checkbox -->
+  <div *ngIf="field.type === 'checkbox'" class="checkbox-container">
+    <input
+      type="checkbox"
+      class="checkbox-control"
+      [id]="field.name"
+      [formControl]="getControl()"
+    />
+  </div>
+
   <!-- Textarea -->
   <textarea
     *ngIf="field.type === 'textarea'"

@@ -26,6 +26,7 @@ public class GenesisWizardDialog extends AbstractWizard<ModuleWizardStep> {
         List<ProjectGenerationContext> listContexts = new ArrayList<>();
         GenerationContextManager manager = new GenerationContextManager(context);
 
+        GitConfigurationWizardStep gitConfigurationWizardStep = new GitConfigurationWizardStep(manager);
         SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(manager, listContexts);
         DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(manager, listContexts);
         InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(manager, databaseConfigurationWizardStep);
@@ -55,6 +56,7 @@ public class GenesisWizardDialog extends AbstractWizard<ModuleWizardStep> {
         stepsList.add(genConfigConditionalWizardStep);
         stepsList.add(relationshipConfigurationWizardStep);
         stepsList.add(frontendConditionalWizardStep);
+        stepsList.add(gitConfigurationWizardStep);
         stepsList.add(specificConfigurationWizardStep);
         stepsList.add(syncGenerationWizardStep);
 

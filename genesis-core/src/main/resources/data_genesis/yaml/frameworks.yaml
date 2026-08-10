@@ -3,12 +3,47 @@
   coreFramework: "Spring Boot"
   name: "Spring Boot - WEB API REST"
   template: "Template"
+  isProd: true
   useDB: true
   withGroupId: true
   useCloud: false
   useEurekaServer: false
   isGateway: false
   useGatewaySecurity: false
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        target/
+        !.mvn/wrapper/maven-wrapper.jar
+
+        .gradle/
+        build/
+        !gradle/wrapper/gradle-wrapper.jar
+
+        .classpath
+        .project
+        .settings/
+        .factorypath
+
+        .idea/
+        .vscode/
+        *.iml
+
+        *.class
+        *.log
+        hs_err_pid*
+
+        .env
+        application-local.yml
+        application-local.yaml
+        application-local.properties
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -2459,12 +2494,46 @@
   coreFramework: ".NET"
   name: "ASP.NET Core - WEB API REST"
   template: "Template"
+  isProd: false
   useDB: true
   withGroupId: false
   useCloud: false
   useEurekaServer: false
   isGateway: false
   useGatewaySecurity: false
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        bin/
+        obj/
+
+        .vs/
+        .idea/
+        .vscode/
+
+        *.user
+        *.userosscache
+        *.suo
+        *.userprefs
+
+        TestResults/
+        BenchmarkDotNet.Artifacts/
+
+        *.nupkg
+        *.snupkg
+        packages/
+
+        *.log
+
+        .env
+        appsettings.Local.json
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
   additionalFiles:
     - fileType: "ProgramFile"
       fileName: "Program"
@@ -4743,11 +4812,11 @@
       {{elseIf this.isForeignKey}}
       {{tab}}
       {{tab}}[Column("${this.columnName}")]
-      {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
-      {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
+      {{tab}}public ${this.referencedColumnType}? ${majStart(this.columnNameField)} { get; set; }
+      {{tab}}[ForeignKey(nameof(${majStart(this.columnNameField)}))]
       {{tab}}public virtual ${this.type}? ${majStart(this.name)} { get; set; }
       {{elseIf this.isTimeTz}}
       {{tab}}[Column("${this.columnName}")]
@@ -5068,7 +5137,7 @@
               ?? throw new ArgumentNullException(nameof(${majStart(this.name)}))
           
               {{elseIf this.isForeignKey}}
-              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
+              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)} ?? ${majStart(this.columnNameField)}
               
               {{elseIf this.isDateTime}}
               {{tab}}${majStart(this.name)} = ${majStart(this.name)}.HasValue ? DateTime.SpecifyKind(${majStart(this.name)}.Value, DateTimeKind.Utc) : null
@@ -5086,7 +5155,7 @@
               {{tab}}{{#each fields}}{{#if this.isPrimaryKey}}
               {{tab}}${majStart(this.name)} = id
               {{elseIf this.isForeignKey}}
-              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)}
+              {{tab}}${majStart(this.columnNameField)} = ${majStart(this.name)}?.${toPascalCase(this.referencedPrimaryKeyColumn)} ?? ${majStart(this.columnNameField)}
               
               {{elseIf this.isDateTime}}
               {{tab}}${majStart(this.name)} = ${majStart(this.name)}.HasValue ? DateTime.SpecifyKind(${majStart(this.name)}.Value, DateTimeKind.Utc) : null
@@ -6016,6 +6085,7 @@
   coreFramework: "Spring Boot"
   name: "Spring Boot - Eureka Server"
   template: "Template"
+  isProd: false
   useDB: false
   useCloud: true
   useEurekaServer: false
@@ -6023,6 +6093,40 @@
   useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        target/
+        !.mvn/wrapper/maven-wrapper.jar
+
+        .gradle/
+        build/
+        !gradle/wrapper/gradle-wrapper.jar
+
+        .classpath
+        .project
+        .settings/
+        .factorypath
+
+        .idea/
+        .vscode/
+        *.iml
+
+        *.class
+        *.log
+        hs_err_pid*
+
+        .env
+        application-local.yml
+        application-local.yaml
+        application-local.properties
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -6163,6 +6267,7 @@
   coreFramework: "Spring Boot"
   name: "Spring Boot - API Gateway"
   template: "Template"
+  isProd: false
   useDB: false
   useCloud: true
   useEurekaServer: false
@@ -6170,6 +6275,40 @@
   useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        target/
+        !.mvn/wrapper/maven-wrapper.jar
+
+        .gradle/
+        build/
+        !gradle/wrapper/gradle-wrapper.jar
+
+        .classpath
+        .project
+        .settings/
+        .factorypath
+
+        .idea/
+        .vscode/
+        *.iml
+
+        *.class
+        *.log
+        hs_err_pid*
+
+        .env
+        application-local.yml
+        application-local.yaml
+        application-local.properties
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -6442,12 +6581,41 @@
   coreFramework: "NestJS"
   name: "NestJS-WEB API"
   template: "Template"
+  isProd: false
   useDB: true
   withGroupId: false
   useCloud: false
   useEurekaServer: false
   isGateway: false
   useGatewaySecurity: false
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        node_modules/
+        dist/
+
+        .env
+        .env.*
+        !.env.example
+
+        npm-debug.log*
+        yarn-debug.log*
+        yarn-error.log*
+        pnpm-debug.log*
+
+        coverage/
+        .nyc_output/
+
+        .idea/
+        .vscode/
+        *.iml
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/"
+
   additionalFiles:
     - fileType: "Exception"
       fileName: "ResourceNotFoundException"
@@ -8165,12 +8333,73 @@
   coreFramework: "Django"
   name: "Django API"
   template: "Template"
+  isProd: false
   useDB: true
   withGroupId: true
   useCloud: false
   useEurekaServer: false
   isGateway: false
   useGatewaySecurity: false
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        __pycache__/
+        *.py[cod]
+        *$py.class
+
+        *.so
+
+        .Python
+        build/
+        develop-eggs/
+        dist/
+        downloads/
+        eggs/
+        .eggs/
+        lib64/
+        parts/
+        sdist/
+        var/
+        wheels/
+        pip-wheel-metadata/
+        share/python-wheels/
+        *.egg-info/
+        .installed.cfg
+        *.egg
+        MANIFEST
+
+        venv/
+        .venv/
+        env/
+        ENV/
+
+        .pytest_cache/
+        .coverage
+        .coverage.*
+        htmlcov/
+        .tox/
+        .nox/
+
+        *.log
+
+        db.sqlite3
+        db.sqlite3-journal
+
+        media/
+        staticfiles/
+
+        .env
+        .env.*
+
+        .idea/
+        .vscode/
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
   additionalFiles:
     - fileType: "settings"
       fileName: "settings"

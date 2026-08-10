@@ -18,6 +18,7 @@ public class Framework {
     private String coreFramework;
     private String name;
     private String template;
+    private Boolean isProd = false;
     private Boolean useDB;
     private Boolean useCloud;
     private Boolean useEurekaServer;
@@ -26,6 +27,7 @@ public class Framework {
     private Boolean useFrontendApp = true;
     private Boolean withGroupId;
     private List<FilesEdit> additionalFiles;
+    private List<FilesEdit> conditionalFiles;
     private List<ConfigurationMetadata> configurations;
     private List<ConfigurationMetadata> eurekaClientConfigurations;
     private List<Dependency> dependencies;

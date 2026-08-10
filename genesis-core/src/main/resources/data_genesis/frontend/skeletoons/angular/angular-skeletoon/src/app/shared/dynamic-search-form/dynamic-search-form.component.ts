@@ -6,7 +6,7 @@ import { MotherComponent } from '../mother-component/mother.component';
 export interface SearchField {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'date' | 'select' | 'datetime-local' | 'time';
+  type: 'text' | 'number' | 'date' | 'select' | 'datetime-local' | 'time' | 'checkbox';
   options?: { value: any; label: any }[];
 }
 

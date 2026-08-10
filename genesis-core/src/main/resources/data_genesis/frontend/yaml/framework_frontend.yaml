@@ -149,7 +149,7 @@
               if (!status) {
               const currentUrl = this.router.url;
               if (currentUrl !== '') {
-              this.router.navigate(['']);
+              this.router.navigate(['/login']);
               }
             }
             });
@@ -252,7 +252,7 @@
               catchError((error: HttpErrorResponse) => {
                 if (error.status === 401) {
                   console.warn('forbidden, redirecting to login');
-                  this.router.navigate(['']);
+                  this.router.navigate(['/login']);
                 } else if (error.status === 403) {
                   console.warn('access denied');
                 }
@@ -271,7 +271,7 @@
         import { Routes } from '@angular/router';
         export const loginRoutes: Routes = [
           {
-            path: '',
+            path: 'login',
             loadComponent: () => import('./login/login.component').then(m => m.LoginComponent)
           }
         ];
@@ -346,7 +346,7 @@
             private clearAndRedirect() {
               localStorage.removeItem('authToken');
               this.loggedIn.next(false);
-              this.router.navigate(['/']);
+              this.router.navigate(['/login']);
             }
         }
         {{else}}no ts{{/if}}
@@ -528,6 +528,35 @@
 
             {{else}}no css{{/if}}
       destinationPath: "${destinationFolder}/src/app/features/authentication/login"
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        node_modules/
+        dist/
+        .angular/
+        .cache/
+
+        .env
+        .env.local
+        .env.development.local
+        .env.test.local
+        .env.production.local
+
+        npm-debug.log*
+        yarn-debug.log*
+        yarn-error.log*
+        pnpm-debug.log*
+
+        .idea/
+        .vscode/
+        *.iml
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/"
+
   additionalFiles:
     - fileType: "Language file"
       fileName: "language.service"
@@ -760,12 +789,14 @@
         {{#each entities}}{{removeLine}}
         import { ${minStart(this.className)}Routes } from './features/${toKebabCase(this.className)}/${toKebabCase(this.className)}.routes'
         {{/each}}{{removeLine}}
+        {{#if useJWT}}import { loginRoutes } from './features/authentication/authentication.route'{{/if}}
 
         export const routes: Routes = [
           {
                 path: '',
                 component: WelcomeComponent,
           },
+          {{#if useJWT}}...loginRoutes{{/if}}
           {{#each entities}}{{removeLine}}
           ...${minStart(this.className)}Routes
           {{#if !@last}},{{/if}}{{/each}}{{removeLine}}
@@ -1948,6 +1979,34 @@
   initPath: "vue/vue-3-ts-skeletoon"
   componentExtension: "vue"
   defaultPort: "5173"
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        node_modules/
+        dist/
+        build/
+        .vite/
+
+        .env
+        .env.local
+        .env.development.local
+        .env.test.local
+        .env.production.local
+
+        npm-debug.log*
+        yarn-debug.log*
+        yarn-error.log*
+        pnpm-debug.log*
+
+        .idea/
+        .vscode/
+        *.iml
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/"
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/src/assets/images"
@@ -7334,6 +7393,33 @@
   initPath: "react/react-ts-skeletoon"
   componentExtension: "tsx"
   defaultPort: "3000"
+  conditionalFiles:
+    - fileType: "Git Ignore"
+      fileName: ".gitignore"
+      extension: ""
+      content: |
+        node_modules/
+        dist/
+
+        .env
+        .env.*
+        !.env.example
+
+        npm-debug.log*
+        yarn-debug.log*
+        yarn-error.log*
+        pnpm-debug.log*
+
+        coverage/
+        .nyc_output/
+
+        .idea/
+        .vscode/
+        *.iml
+
+        .DS_Store
+        Thumbs.db
+      destinationPath: "${destinationFolder}/"
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/public"
