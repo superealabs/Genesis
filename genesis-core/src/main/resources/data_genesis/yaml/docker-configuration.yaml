@@ -1,0 +1,25 @@
+- fileType: "Docker compose"
+  fileName: "docker-compose"
+  extension: "yml"
+  content : |
+    services:
+      {{#if isStructure}}
+      frontend:
+        build:
+          context: ./${frontendDir}
+          dockerfile: Dockerfile
+        container_name: frontend
+        ports:
+          - "${frontendPort}:${frontendPort}"
+        depends_on:
+          - backend
+      {{/if}}
+      backend:
+        build:
+          context: ./${backendDir}
+          dockerfile: Dockerfile
+        container_name: backend
+        ports:
+          - "${backendPort}:${backendPort}"
+
+  destinationPath: "${destinationFolder}/${majStart(projectName)}"
