@@ -3595,7 +3595,7 @@
           END;
           /
           {{else}}{{removeLine}}{{/if}}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Data"
+      destinationPath: "${destinationFolder}/Data"
 
     - fileType: "User Roles Static Class"
       fileName: "UserRoles"
@@ -3608,7 +3608,7 @@
             public const string User = "User";
             // Add another roles if necessary
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Models"
+      destinationPath: "${destinationFolder}/Models"
 
     - fileType: "Application User Entity"
       fileName: "ApplicationUser"
@@ -3620,7 +3620,7 @@
         public class ApplicationUser : IdentityUser
         {
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Models"
+      destinationPath: "${destinationFolder}/Models"
 
     - fileType: "Auth Request DTO"
       fileName: "AuthRequest"
@@ -3632,7 +3632,7 @@
             public string Username { get; set; }
             public string Password { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Models/Dto"
+      destinationPath: "${destinationFolder}/Models/Dto"
 
     - fileType: "Register Request DTO"
       fileName: "RegisterRequest"
@@ -3645,7 +3645,7 @@
             public string Email { get; set; }
             public string Password { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Models/Dto"
+      destinationPath: "${destinationFolder}/Models/Dto"
 
     - fileType: "Password Change Request DTO"
       fileName: "PasswordChangeRequest"
@@ -3658,7 +3658,7 @@
             public string NewPassword { get; set; }
             public string ConfirmPassword { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Models/Dto"
+      destinationPath: "${destinationFolder}/Models/Dto"
 
     - fileType: "User Update Request DTO"
       fileName: "UserUpdateRequest"
@@ -3670,7 +3670,7 @@
             public string Name { get; set; }
             public string Email { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Models/Dto"
+      destinationPath: "${destinationFolder}/Models/Dto"
 
     - fileType: "User Service"
       fileName: "ApplicationUserService"
@@ -3739,7 +3739,7 @@
         {{tab}}}
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Services/Implementation"
+      destinationPath: "${destinationFolder}/Services/Implementation"
 
     - fileType: "Authentication Controller"
       fileName: "AuthController"
@@ -3823,7 +3823,7 @@
         {{tab}}}
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Controllers"
+      destinationPath: "${destinationFolder}/Controllers"
 
     - fileType: "Login Page"
       fileName: "Login"
@@ -4058,7 +4058,7 @@
         </body>
         </html>
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Auth"
+      destinationPath: "${destinationFolder}/Views/Auth"
 
     - fileType: "SQL Schema Bootstrapper Service"
       fileName: "SqlSchemaBootstrapper"
@@ -4137,7 +4137,7 @@
             }
         
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Services/Startup"
+      destinationPath: "${destinationFolder}/Services/Startup"
 
   additionalDependencies: [ ]
   metadataBooleanTrueKeys:

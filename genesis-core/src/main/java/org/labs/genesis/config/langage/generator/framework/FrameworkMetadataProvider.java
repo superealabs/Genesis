@@ -208,6 +208,7 @@ public class FrameworkMetadataProvider {
     private static void addGeneralMetadata(HashMap<String, Object> metadata, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkOptions, String destinationFolder, String projectName, String groupLink) {
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName", projectName);
+        metadata.put("isMvcProject", framework.getId() == Constantes.DOTNET_MVC_ID);
         metadata.put("groupLink", groupLink);
         metadata.put("groupLinkPath", groupLink.replace(".", "/"));
 

@@ -287,6 +287,7 @@ public class ProjectGenerator {
         frontendHashMap.putAll(FrameworkMetadataProvider.getGeneralViewHashMap(frameworkMVC));
 
         frontendHashMap.putAll(initializeHashMap);
+        frontendHashMap.put("isMvcProject", frameworkMVC.getId() == Constantes.DOTNET_MVC_ID);
 
         renderAndCopyFolders(frameworkMVC.getView().getTemplateEngineFolders(), frontendHashMap);
         renderAndCopyFiles(viewsTemplate.getTemplateFiles(), frontendHashMap);

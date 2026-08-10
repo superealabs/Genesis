@@ -13,8 +13,8 @@
     - "TestProjectFile"
     - "HttpFile"
   frontendPaths:
-    faviconPath: "${destinationFolder}/${majStart(projectName)}/wwwroot"
-    logoPath: "${destinationFolder}/${majStart(projectName)}/wwwroot/images"
+    faviconPath: "${destinationFolder}/wwwroot"
+    logoPath: "${destinationFolder}/wwwroot/images"
     langsPath: "{{removeLine}}"
   additionalFiles:
     - fileType: "ProgramFile"
@@ -111,7 +111,7 @@
         {{/each}}
         app.Run();
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: "${destinationFolder}/"
 
     - fileType: "ReadmeFile"
       fileName: "README"
@@ -166,7 +166,7 @@
             - Email/Username: admin
             - Password : Pwd@123
         {{else}}{{removeLine}}{{/if}}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: "${destinationFolder}/"
 
     - fileType: "DbContextFile"
       fileName: "${majStart(projectName)}Context"
@@ -204,7 +204,7 @@
             {{/if}}{{/each}}
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Data/"
+      destinationPath: "${destinationFolder}/Data/"
 
     - fileType: "Exception"
       fileName: "ResourceNotFoundException"
@@ -219,8 +219,7 @@
           public ResourceNotFoundException(string message) : base(message) {}
           public ResourceNotFoundException(string message, Exception cause) : base(message, cause) {}
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Exceptions/"
-
+      destinationPath: "${destinationFolder}/Exceptions/"
     - fileType: "Exception"
       fileName: "InternalServerErrorException"
       extension: "cs"
@@ -234,7 +233,7 @@
           public InternalServerErrorException(string message) : base(message) {}
           public InternalServerErrorException(string message, Exception cause) : base(message, cause) {}
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Exceptions/"
+      destinationPath: "${destinationFolder}/Exceptions/"
 
     - fileType: "ExceptionFilter"
       fileName: "GlobalExceptionFilter"
@@ -320,7 +319,7 @@
             }
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Filters/"
+      destinationPath: "${destinationFolder}/Filters/"
 
     - fileType: "WebUtils"
       fileName: "WebUtils"
@@ -458,7 +457,7 @@
               return string.Join(";", sorts);
             }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/Utils"
 
     - fileType: "Generic  file"
       fileName: "IRepository"
@@ -485,7 +484,7 @@
             Task<bool> ExistsAsync(TKey id);
             Task<long> GetTotalCountAsync();
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Repositories/Generic/"
+      destinationPath: "${destinationFolder}/Repositories/Generic/"
 
     - fileType: "Error Controller"
       fileName: "ErrorController"
@@ -512,7 +511,7 @@
                 return View("Error");
             }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Controllers/"
+      destinationPath: "${destinationFolder}/Controllers/"
 
     - fileType: "Generic Repository file"
       fileName: "Repository"
@@ -646,7 +645,7 @@
             }
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Repositories/Generic/"
+      destinationPath: "${destinationFolder}/Repositories/Generic/"
 
     - fileType: "Generic file"
       fileName: "IService"
@@ -671,7 +670,7 @@
             Task DeleteAsync(TKey id);
             Task<bool> ExistsAsync(TKey id);
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Services/Generic/"
+      destinationPath: "${destinationFolder}/Services/Generic/"
 
     - fileType: "GenericMapper"
       fileName: "GenericMapper"
@@ -719,7 +718,7 @@
             return target;
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/Utils"
 
     - fileType: "ConstraintDisabler"
       fileName: "ConstraintDisabler"
@@ -1673,7 +1672,7 @@
           {{else}}{{removeLine}}{{/if}}
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/Utils"
 
     - fileType: "Response Helper"
       fileName: "PageInfo"
@@ -1688,7 +1687,7 @@
             public long TotalElements { get; set; }
             public int TotalPages { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/Utils"
 
     - fileType: "Response Helper"
       fileName: "PaginationHelper"
@@ -1717,7 +1716,7 @@
               };
             }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/Utils"
 
     - fileType: "Response Helper"
       fileName: "PagedResponse"
@@ -1730,7 +1729,7 @@
           public List<T> Content { get; set; }
           public PageInfo Page { get; set; }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/Utils"
 
     - fileType: "Entity Utils"
       fileName: "EntityUtils"
@@ -1839,7 +1838,7 @@
         {{tab}}{{tab}}return primaryKey.Properties.First().Name;
         {{tab}}}
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/Utils"
 
     - fileType: "Export Util"
       fileName: "ExportUtil"
@@ -1900,7 +1899,7 @@
             }
         }
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/Utils"
 
     - fileType: "Filter Builder Util"
       fileName: "FilterBuilder"
@@ -2059,7 +2058,7 @@
             }
           }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/Utils"
 
     - fileType: "Predicate Builder Util"
       fileName: "PredicateBuilder"
@@ -2084,7 +2083,7 @@
                 return Expression.Lambda<Func<T, bool>>(body, p);
             }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Utils"
+      destinationPath: "${destinationFolder}/Utils"
 
   configurations:
     - name: "Logging Level"
@@ -2204,7 +2203,7 @@
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
-    modelSavePath: "${destinationFolder}/${majStart(projectName)}/Models/"
+    modelSavePath: "${destinationFolder}/Models/"
     modelPackage: "${majStart(projectName)}.Models"
     modelAdditionalFiles:
       - fileType: "DTO search model class"
@@ -2259,7 +2258,7 @@
               {{tab}}{{/each}}
             };
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/Models/Dto/"
+        destinationPath: "${destinationFolder}/Models/Dto/"
       - fileType: "Specification File"
         fileName: "${majStart(className)}FilterBuilder"
         extension: "cs"
@@ -2295,7 +2294,7 @@
                   return this;
               }
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/Specification/"
+        destinationPath: "${destinationFolder}/Specification/"
       - fileType: "View Model File"
         fileName: "${majStart(className)}ViewModel"
         extension: "cs"
@@ -2361,7 +2360,7 @@
                   }
               }
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/ViewModels/"
+        destinationPath: "${destinationFolder}/ViewModels/"
     validationAnnotations:
       notNull: '[Required(ErrorMessage = "${majStart(name)} cannot be null")]'
       maxSize: "[StringLength(${columnSize})]"
@@ -2389,7 +2388,7 @@
     modelDaoFieldContent: "{{removeLine}}"
     modelDaoMethodContent: "{{removeLine}}"
     modelDaoConstructors: "{{removeLine}}"
-    modelDaoSavePath: "${destinationFolder}/${majStart(projectName)}/Repositories/Interface/"
+    modelDaoSavePath: "${destinationFolder}/Repositories/Interface/"
     modelDaoPackage: "${majStart(projectName)}.Repositories.Interface"
     modelDaoAdditionalFiles:
       - fileType: "Repository inherited from Generic Repository"
@@ -2408,7 +2407,7 @@
               {
               }
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/Repositories/Implementation/"
+        destinationPath: "${destinationFolder}/Repositories/Implementation/"
 
   service:
     toGenerate: true
@@ -2425,7 +2424,7 @@
     serviceFieldContent: "{{removeLine}}"
     serviceMethodContent: "{{removeLine}}"
     serviceConstructors: "{{removeLine}}"
-    serviceSavePath: "${destinationFolder}/${majStart(projectName)}/Services/Interface"
+    serviceSavePath: "${destinationFolder}/Services/Interface"
     servicePackage: "${majStart(projectName)}.Services.Interface"
     serviceAdditionalFiles:
       - fileType: "Service inherited from Service Interface"
@@ -2566,7 +2565,7 @@
                 }
               }
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/Services/Implementation/"
+        destinationPath: "${destinationFolder}/Services/Implementation/"
 
   controller:
     toGenerate: true
@@ -2858,7 +2857,7 @@
       {{tab}}        {{/each}}{{removeLine}}
       {{tab}}    };
       {{tab}}}{{else}}{{removeLine}}{{/if}}
-    controllerSavePath: "${destinationFolder}/${majStart(projectName)}/Controllers"
+    controllerSavePath: "${destinationFolder}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"
     controllerAdditionalFiles: [ ]
 
@@ -2867,7 +2866,7 @@
     viewTemplateEngine: "Razor"
     viewExtension: "cshtml"
     staticFilesPath: "/wwwroot"
-    viewSavePath: "${destinationFolder}/${majStart(projectName)}/Views/${majStart(className)}"
+    viewSavePath: "${destinationFolder}/Views/${majStart(className)}"
     rootPath: "~"
     backLink: "@Url.Action(\"Index\")"
     previousLink: "@previousUrl"
@@ -2887,7 +2886,7 @@
         @RenderSection("Scripts", required: false)
         @await Html.PartialAsync("_PopupError")
       logoutLink: "asp-controller=\"Auth\" asp-action=\"Logout\""
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
+      destinationPath: "${destinationFolder}/Views/Shared/"
     list:
       name: "Index"
       viewAnnotations: |
@@ -3038,7 +3037,7 @@
             }
         }
       errorMessage: "@ViewData[\"ErrorMessage\"]"
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
+      destinationPath: "${destinationFolder}/Views/Shared/"
 
     templateEngineFilesEdits:
       - fileType: "ViewImports"
@@ -3050,7 +3049,7 @@
           @using ${majStart(projectName)}.Utils
           @using ${majStart(projectName)}.ViewModels
           @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/"
+        destinationPath: "${destinationFolder}/Views/"
       - fileType: "ViewStart"
         fileName: "_ViewStart"
         extension: "cshtml"
@@ -3058,14 +3057,14 @@
           @{
               Layout = "_Layout";
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/"
+        destinationPath: "${destinationFolder}/Views/"
       - fileType: "Validation Scripts Partial"
         fileName: "_ValidationScriptsPartial"
         extension: "cshtml"
         content: |
           <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
           <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
+        destinationPath: "${destinationFolder}/Views/Shared/"
       - fileType: "Popup Error"
         fileName: "_PopupError"
         extension: "cshtml"
@@ -3078,7 +3077,7 @@
                   };  
               </script>
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
+        destinationPath: "${destinationFolder}/Views/Shared/"
       - fileType: "Form Validation"
         fileName: "_ValidationScriptsPartial"
         extension: "cshtml"
@@ -3105,7 +3104,7 @@
           <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
           <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
           <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/Views/Shared/"
+        destinationPath: "${destinationFolder}/Views/Shared/"
 
     templateEngineFiles: [ ]
     templateEngineFolders: [ ]

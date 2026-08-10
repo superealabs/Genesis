@@ -124,7 +124,7 @@
         
         ###{{#if !@last}}{{newline}}{{/if}}{{/each}}
 
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
+      destinationPath: "{{#if isMvcProject}}${destinationFolder}/{{else}}${destinationFolder}/${majStart(projectName)}/{{/if}}"
 
     - fileType: "AppSettings"
       fileName: "appsettings"
@@ -199,7 +199,7 @@
         
         }
 
-      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/{{/if}}"
+      destinationPath: "{{#if isMvcProject}}${destinationFolder}/{{else}}${destinationFolder}/${majStart(projectName)}/{{/if}}"
 
     - fileType: "ProjectFile"
       fileName: "${majStart(projectName)}"
@@ -238,7 +238,7 @@
             </ItemGroup>
         </Project>
 
-      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/{{/if}}"
+      destinationPath: "{{#if isMvcProject}}${destinationFolder}/{{else}}${destinationFolder}/${majStart(projectName)}/{{/if}}"
 
     - fileType: "SolutionFile"
       fileName: "${majStart(projectName)}"
@@ -260,7 +260,7 @@
                 {B06BF436-528B-4DF7-9F86-6F86B6A77E84}.Release|Any CPU.Build.0 = Release|Any CPU
             EndGlobalSection
         EndGlobal
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: "${destinationFolder}/"
 
     - fileType: "LaunchSettingsFile"
       fileName: "launchSettings"
@@ -350,7 +350,7 @@
             {{/if}}
           }
         }
-      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}/Properties/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Properties/{{/if}}"
+      destinationPath: "{{#if isMvcProject}}${destinationFolder}/Properties/{{else}}${destinationFolder}/${majStart(projectName)}/Properties/{{/if}}"
 
     - fileType: "TestProjectFile"
       fileName: "${majStart(projectName)}.Tests"
@@ -382,17 +382,17 @@
           </ItemGroup>
 
           <ItemGroup>
-            <ProjectReference Include="..\${majStart(projectName)}\${majStart(projectName)}.csproj" />
+            <ProjectReference Include="{{#if isMvcProject}}..\${majStart(projectName)}.csproj{{else}}..\${majStart(projectName)}\${majStart(projectName)}.csproj{{/if}}" />
           </ItemGroup>
 
         </Project>
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/"
+      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}.Tests/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}.Tests/{{/if}}"
 
   projectFiles:
     - fileType: "appSettingsDeveloppement"
       fileName: "appsettings.Development.json"
       sourcePath: "data_genesis/csharp/"
-      destinationPath: "{{#if isMvcProject}}${destinationFolder}/${majStart(projectName)}/{{else}}${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/{{/if}}"
+      destinationPath: "{{#if isMvcProject}}${destinationFolder}/{{else}}${destinationFolder}/${majStart(projectName)}/{{/if}}"
   projectFolders: [ ]
 - id: 3
   name: "NodeJS"
