@@ -13,6 +13,9 @@ import org.labs.genesis.wizards.conditionals.FrontendConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.GenConfigConditionalWizardStep;
 import org.labs.genesis.wizards.conditionals.InitConditionalWizardStep;
 
+import org.labs.genesis.wizards.router.GenesisWizardRouter;
+import org.labs.genesis.wizards.router.WizardMode;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,6 +68,20 @@ public class GenesisWizardDialog extends AbstractWizard<ModuleWizardStep> {
         }
 
         init();
+    }
+
+    @Override
+    protected int getNextStep(int step) {
+        FirstWizardStep firstStep = (FirstWizardStep) stepsList.getFirst();
+        WizardMode mode = GenesisWizardRouter.getMode(firstStep.getFirstForm());
+        return GenesisWizardRouter.getNextStepIndex(step, mode, stepsList);
+    }
+
+    @Override
+    protected int getPreviousStep(int step) {
+        FirstWizardStep firstStep = (FirstWizardStep) stepsList.getFirst();
+        WizardMode mode = GenesisWizardRouter.getMode(firstStep.getFirstForm());
+        return GenesisWizardRouter.getPreviousStepIndex(step, mode, stepsList);
     }
 
     @Override
