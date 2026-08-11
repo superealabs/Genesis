@@ -263,17 +263,23 @@ public class DatabaseConfigurationForm {
         URLField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                updateFieldsFromUrl(URLField.getText().trim());
+                if (!isUpdating) {
+                    updateFieldsFromUrl(URLField.getText().trim());
+                }
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                updateFieldsFromUrl(URLField.getText().trim());
+                if (!isUpdating) {
+                    updateFieldsFromUrl(URLField.getText().trim());
+                }
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                updateFieldsFromUrl(URLField.getText().trim());
+                if (!isUpdating) {
+                    updateFieldsFromUrl(URLField.getText().trim());
+                }
             }
         });
     }
@@ -303,7 +309,12 @@ public class DatabaseConfigurationForm {
                 driverNameField.setText(databaseFields.getDriverName());
                 driverTypeField.setText(databaseFields.getDriverType());
                 if (!jdbcUrl.startsWith("jdbc:oracle:")) usernameField.setText(databaseFields.getUser());
-                if (!jdbcUrl.startsWith("jdbc:oracle:")) passwordField.setText(databaseFields.getPassword());
+                if (!jdbcUrl.startsWith("jdbc:oracle:")) {
+                    String parsedPassword = databaseFields.getPassword();
+                    if (parsedPassword != null && !parsedPassword.isEmpty() && !parsedPassword.contains("*")) {
+                        passwordField.setText(parsedPassword);
+                    }
+                }
                 sidField.setText(databaseFields.getSid());
 
 //                if (databaseFields.getDriverType().equalsIgnoreCase("oracle")) {
@@ -378,11 +389,12 @@ public class DatabaseConfigurationForm {
                 ? normalizeOracleIdentifier(schemaField.getText())
                 : schemaField.getText().trim();
 
+        String realPassword = new String(passwordField.getPassword());
         Credentials credentials = new Credentials(
                 databaseField.getText().trim(),          // databaseName
                 effectiveSchema,                         // schemaName normalisé pour Oracle
                 effectiveUsername,                       // user normalisé pour Oracle
-                new String(passwordField.getPassword()), // pwd
+                realPassword,                            // pwd réel pour la connexion
                 hostField.getText().trim(),              // host
                 portField.getText().trim(),              // port
                 effectiveDriverType,                     // driverType adapté selon le SGBD
@@ -395,11 +407,21 @@ public class DatabaseConfigurationForm {
         database.setCredentials(credentials);
 
         String jdbcUrl = database.getJdbcUrl(credentials);
+        String displayJdbcUrl = maskPasswordInUrl(jdbcUrl, realPassword);
 
         SwingUtilities.invokeLater(() -> {
-            URLField.setText(jdbcUrl);
+            isUpdating = true;
+            URLField.setText(displayJdbcUrl);
             isUpdating = false;
         });
+    }
+
+    private String maskPasswordInUrl(String url, String password) {
+        if (url == null || url.isEmpty()) return url;
+        if (password != null && !password.isEmpty()) {
+            return url.replace("password=" + password, "password=******");
+        }
+        return url;
     }
 
 
