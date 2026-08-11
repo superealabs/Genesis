@@ -1,4 +1,5 @@
 ${viewAnnotations}
+@using ${majStart(projectName)}.Utils
 <div class="header">
     <h1 class="page-title">${className} / <span class="page-type"><span class="page-action"
                 data-i18n="details"></span></span></h1>
@@ -15,7 +16,35 @@ ${viewAnnotations}
     <div class="form-group">
         <label for="${this.name}">${this.name}</label>
         <div class="info">
-            <p>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</p>
+
+            {{#if this.type = byte[]}}
+            @{
+                   var fileContent = ${dataValue};
+            }
+
+            @if (fileContent != null && fileContent.Length > 0)
+            {
+                if (FileUtils.IsImage(fileContent))
+                {
+                    <img src="@FileUtils.BuildFileSource(fileContent)"
+                         alt="${this.name}"
+                         class="file-preview-detail" />
+                }
+                else
+                {
+                    <p>Fichier non prévisualisable</p>
+                }
+            }
+            else
+            {
+                <p>Aucun fichier</p>
+            }
+            {{elseIf this.isForeignKey}}
+            <p>${dataForeignValue}</p>
+            {{else}}
+            <p>${dataValue}</p>
+            {{/if}}
+
         </div>
     </div>
     {{/each}}{{removeLine}}

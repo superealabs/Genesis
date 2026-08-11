@@ -2293,3 +2293,19 @@ th:hover .sort-icons {
     border-radius: var(--border-radius-lg);
     border: 1px solid var(--error-color);
 }
+
+.file-preview {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+}
+
+.file-preview-detail {
+    max-width: 350px;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 6px;
+    display: block;
+}

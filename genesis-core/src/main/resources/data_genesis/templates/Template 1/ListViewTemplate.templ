@@ -205,7 +205,42 @@ ${viewAnnotations}
             ${blockLoopStatementStart}
             <tr>
                 {{#each fields}}
-                <td>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</td>
+                <td>
+                    {{#if this.type = byte[]}}
+
+                    @{
+                        var fileContent = ${dataRawValue};
+                    }
+
+                    @if (fileContent != null && fileContent.Length > 0)
+                    {
+                        if (FileUtils.IsImage(fileContent))
+                        {
+                            <img
+                                src="@FileUtils.BuildFileSource(fileContent)"
+                                alt="${this.name}"
+                                class="file-preview" />
+                        }
+                        else
+                        {
+                            <span>Fichier non prévisualisable</span>
+                        }
+                    }
+                    else
+                    {
+                        <span>Aucun fichier</span>
+                    }
+
+                    {{elseIf this.isForeignKey}}
+
+                        ${dataForeignValue}
+
+                    {{else}}
+
+                        ${dataValue}
+
+                    {{/if}}
+                </td>
                 {{/each}}{{removeLine}}
                 <td>
                     <div class="actions-group">

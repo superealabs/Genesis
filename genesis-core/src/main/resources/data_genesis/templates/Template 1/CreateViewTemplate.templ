@@ -17,7 +17,7 @@ ${validationSection}
 <link rel="stylesheet" href="${rootPath}/css/select2.min.css">
 <script src="${rootPath}/js/select2.min.js"></script>
 
-<form class="form" method="post" ${createLink}>
+<form class="form" method="post" enctype="multipart/form-data" ${createLink}>
     {{#each inputs}}
     <div class="form-group">
         <label for="${this.name}">${this.name}
@@ -34,10 +34,12 @@ ${validationSection}
                 <span class="radio-label">False</span>
             </label>
         </div>
+        {{elseIf this.type = file}}{{removeLine}}
+        <input type="file" name="${majStart(this.name)}File" id="${majStart(this.name)}File">
         {{else}}{{removeLine}}
         <input type="${this.type}" ${inputTagHelper} placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>
-        {{/if}}{{removeLine}}
         <span ${validationTagHelper} class="field-validation-error"></span>
+        {{/if}}{{removeLine}}
     </div>
     {{/each}}{{removeLine}}
 

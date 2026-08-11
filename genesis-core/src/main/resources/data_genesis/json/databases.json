@@ -217,7 +217,7 @@
       "int identity": "int",
       "bigint": "long",
       "smallint": "int",
-      "tinyint": "int",
+      "tinyint": "byte",
       "bit": "boolean",
       "float": "float",
       "real": "float",
