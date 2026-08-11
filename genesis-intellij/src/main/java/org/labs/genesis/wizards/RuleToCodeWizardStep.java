@@ -13,16 +13,14 @@ public class RuleToCodeWizardStep extends ModuleWizardStep {
 
     private final GenerationContextManager generationContextManager;
     private final RuleToCodeForm form;
-    private final FirstWizardStep initStep ;
 
-    private String pathProject ;
-    private Framework framework ;
-    private String yamlContent ;
+    private String pathProject;
+    private Framework framework;
+    private String yamlContent;
 
-    public RuleToCodeWizardStep(GenerationContextManager generationContextManager , FirstWizardStep initStep) {
+    public RuleToCodeWizardStep(GenerationContextManager generationContextManager) {
         this.form = new RuleToCodeForm();
         this.generationContextManager = generationContextManager;
-        this.initStep = initStep;
     }
     private void initializeAttributes(String pathProject , Framework framework , String yamlContent ) {
        this.pathProject = pathProject ;

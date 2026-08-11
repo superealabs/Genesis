@@ -52,7 +52,8 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
     @Override
     public boolean isStepVisible() {
         Framework framework = generationContextManager.getContext().getFramework();
-        return framework != null && framework.getUseDB() && this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess();
+        return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess()
+                && framework != null && framework.getUseDB();
     }
     @Override
     public JComponent getComponent() {

@@ -265,6 +265,8 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess();
+        Framework framework = generationContextManager.getContext().getFramework();
+        return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess()
+                && framework != null && framework.getUseDB();
     }
 }

@@ -97,7 +97,12 @@
             <children>
               <component id="1acb6" class="javax.swing.JTable" binding="relationTable">
                 <constraints/>
-                <properties/>
+                <properties>
+                  <intercellSpacing width="15" height="8"/>
+                  <rowHeight value="30"/>
+                  <rowMargin value="8"/>
+                  <rowSelectionAllowed value="false"/>
+                </properties>
               </component>
             </children>
           </scrollpane>

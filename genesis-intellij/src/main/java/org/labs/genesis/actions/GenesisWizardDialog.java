@@ -9,10 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.wizards.*;
-import org.labs.genesis.wizards.conditionals.FrontendConditionalWizardStep;
-import org.labs.genesis.wizards.conditionals.GenConfigConditionalWizardStep;
-import org.labs.genesis.wizards.conditionals.InitConditionalWizardStep;
-
 import org.labs.genesis.wizards.router.GenesisWizardRouter;
 import org.labs.genesis.wizards.router.WizardMode;
 
@@ -32,21 +28,18 @@ public class GenesisWizardDialog extends AbstractWizard<ModuleWizardStep> {
         GitConfigurationWizardStep gitConfigurationWizardStep = new GitConfigurationWizardStep(manager);
         SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(manager, listContexts);
         DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(manager, listContexts);
-        InitConditionalWizardStep initConditionalWizardStep = new InitConditionalWizardStep(manager, databaseConfigurationWizardStep);
         SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(manager);
         RelationshipConfigurationWizardStep relationshipConfigurationWizardStep = new RelationshipConfigurationWizardStep(manager);
         GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(manager, listContexts, specificConfigurationWizardStep, relationshipConfigurationWizardStep);
-        GenConfigConditionalWizardStep genConfigConditionalWizardStep = new GenConfigConditionalWizardStep(manager, generationOptionWizardStep);
 
         FirstWizardStep firstWizardStep = new FirstWizardStep(manager);
-        RuleToCodeWizardStep ruleToCodeWizardStep = new RuleToCodeWizardStep(manager, firstWizardStep);
-        RuleToCodeWizardAIStep ruleToCodeWizardAIStep = new RuleToCodeWizardAIStep(manager, firstWizardStep);
+        RuleToCodeWizardStep ruleToCodeWizardStep = new RuleToCodeWizardStep(manager);
+        RuleToCodeWizardAIStep ruleToCodeWizardAIStep = new RuleToCodeWizardAIStep(manager);
 
         SynchGenerationWizardStep syncGenerationWizardStep = new SynchGenerationWizardStep(manager);
         SyncProjectLoaderWizardStep syncProjectLoaderWizardStep = new SyncProjectLoaderWizardStep(manager, relationshipConfigurationWizardStep, syncGenerationWizardStep);
 
         FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(manager, listContexts);
-        FrontendConditionalWizardStep frontendConditionalWizardStep = new FrontendConditionalWizardStep(manager, frontendConfigurationWizardStep);
         InitializationWizardStep initializationWizardStep = new InitializationWizardStep(manager, listContexts, specificConfigurationWizardStep, frontendConfigurationWizardStep);
 
         stepsList.add(firstWizardStep);
@@ -54,11 +47,11 @@ public class GenesisWizardDialog extends AbstractWizard<ModuleWizardStep> {
         stepsList.add(ruleToCodeWizardAIStep);
         stepsList.add(syncProjectLoaderWizardStep);
         stepsList.add(initializationWizardStep);
-        stepsList.add(initConditionalWizardStep);
+        stepsList.add(databaseConfigurationWizardStep);
         stepsList.add(sqlRunnerWizardStep);
-        stepsList.add(genConfigConditionalWizardStep);
+        stepsList.add(generationOptionWizardStep);
         stepsList.add(relationshipConfigurationWizardStep);
-        stepsList.add(frontendConditionalWizardStep);
+        stepsList.add(frontendConfigurationWizardStep);
         stepsList.add(gitConfigurationWizardStep);
         stepsList.add(specificConfigurationWizardStep);
         stepsList.add(syncGenerationWizardStep);

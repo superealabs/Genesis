@@ -245,6 +245,7 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess();
+        return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess()
+                && this.generationContextManager.getContext().isGenerateFrontendApp();
     }
 }

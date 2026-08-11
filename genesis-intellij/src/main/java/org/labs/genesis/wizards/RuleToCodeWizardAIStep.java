@@ -12,13 +12,10 @@ public class RuleToCodeWizardAIStep extends ModuleWizardStep {
 
     private final GenerationContextManager generationContextManager;
     private final RuleToCodeAIForm form;
-    private final  FirstWizardStep initStep ;
 
-
-    public RuleToCodeWizardAIStep(GenerationContextManager generationContextManager , FirstWizardStep initStep) {
+    public RuleToCodeWizardAIStep(GenerationContextManager generationContextManager) {
         this.generationContextManager = generationContextManager;
-        this.form = new RuleToCodeAIForm( generationContextManager.getContext() );
-        this.initStep = initStep;
+        this.form = new RuleToCodeAIForm(generationContextManager.getContext());
     }
     @Override
     public void updateDataModel() {
