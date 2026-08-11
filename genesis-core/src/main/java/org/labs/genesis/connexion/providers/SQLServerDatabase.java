@@ -10,10 +10,18 @@ import org.labs.utils.StringUtils;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
 public class SQLServerDatabase extends Database {
+    @Override
+    public String resolveSchema(Connection connection) throws SQLException {
+        if (getCredentials() != null && getCredentials().getSchemaName() != null && !getCredentials().getSchemaName().isEmpty()) {
+            return getCredentials().getSchemaName();
+        }
+        return "dbo";
+    }
     @Override
     public String getJdbcUrl(Credentials credentials) {
         String port;

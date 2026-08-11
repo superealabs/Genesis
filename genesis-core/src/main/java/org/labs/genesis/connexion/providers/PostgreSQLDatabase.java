@@ -14,6 +14,13 @@ import java.util.Map;
 
 public class PostgreSQLDatabase extends Database {
     @Override
+    public String resolveSchema(Connection connection) throws SQLException {
+        if (getCredentials() != null && getCredentials().getSchemaName() != null && !getCredentials().getSchemaName().isEmpty()) {
+            return getCredentials().getSchemaName();
+        }
+        return "public";
+    }
+    @Override
     public String getJdbcUrl(Credentials credentials) {
         String port;
         if (credentials.getPort() != null)

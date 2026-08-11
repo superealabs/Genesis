@@ -107,10 +107,17 @@ public abstract class Database {
         return tableMetadataList;
     }
 
+    public String resolveSchema(Connection connection) throws SQLException {
+        if (credentials != null && credentials.getSchemaName() != null && !credentials.getSchemaName().isEmpty()) {
+            return credentials.getSchemaName();
+        }
+        return connection != null ? connection.getCatalog() : null;
+    }
+
     public List<String> getAllTableTypeNames(Connection connection, String tableType) throws SQLException {
         List<String> tableNames = new ArrayList<>();
         DatabaseMetaData metaData = connection.getMetaData();
-        String schema = (credentials.getSchemaName() != null && !credentials.getSchemaName().isEmpty()) ? credentials.getSchemaName() : connection.getCatalog();
+        String schema = resolveSchema(connection);
 
         try (ResultSet tables = metaData.getTables(null, schema, "%", new String[]{tableType})) {
             while (tables.next()) {
@@ -159,7 +166,7 @@ public abstract class Database {
 
         
         DatabaseMetaData metaData = connection.getMetaData();
-        String schema = (credentials.getSchemaName() != null && !credentials.getSchemaName().isEmpty()) ? credentials.getSchemaName() : connection.getCatalog();
+        String schema = resolveSchema(connection);
 
         int tempIndex = 0;
         try (ResultSet tables = metaData.getTables(null, schema, "%", new String[]{"TABLE"})) {
@@ -180,7 +187,7 @@ public abstract class Database {
     public List<String> getPaginatedViewNames(Connection connection, int index, int size) throws SQLException {
         List<String> viewNames = new ArrayList<>();
         DatabaseMetaData metaData = connection.getMetaData();
-        String schema = (credentials.getSchemaName() != null && !credentials.getSchemaName().isEmpty()) ? credentials.getSchemaName() : connection.getCatalog();
+        String schema = resolveSchema(connection);
 
         int tempIndex = 0;
         try (ResultSet views = metaData.getTables(null, schema, "%", new String[]{"VIEW"})) {
@@ -207,7 +214,7 @@ public abstract class Database {
 
     public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language, Connection connex, Framework framework) throws SQLException {
         List<ColumnMetadata> listeCols = new ArrayList<>();
-        String schema = (getCredentials().getSchemaName() != null && !getCredentials().getSchemaName().isEmpty()) ? getCredentials().getSchemaName() : connex.getCatalog();
+        String schema = resolveSchema(connex);
         try (ResultSet columns = metaData.getColumns(null, schema, tableName, null)) {
             Map<String, Object> frameworkValidationAnnotations = framework.getModel().getValidationAnnotations();
             while (columns.next()) {
@@ -495,7 +502,7 @@ public abstract class Database {
     }
 
     protected void checkUnique(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> listeCols, Framework framework, Connection connection) throws SQLException {
-        String schema = (getCredentials().getSchemaName() != null && !getCredentials().getSchemaName().isEmpty()) ? getCredentials().getSchemaName() : connection.getCatalog();
+        String schema = resolveSchema(connection);
         try (ResultSet indexes = metaData.getIndexInfo(null, schema, tableName, false, true)) {
             while (indexes.next()) {
                 String columnNameInIndex = indexes.getString("COLUMN_NAME");

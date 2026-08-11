@@ -18,6 +18,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class OracleDatabase extends Database {
+    @Override
+    public String resolveSchema(Connection connection) throws SQLException {
+        return resolveOracleSchema();
+    }
 
 
 
