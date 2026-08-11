@@ -42,6 +42,10 @@ public class RelationshipConfigurationWizardStep extends ModuleWizardStep {
 
     public void updateTableSelects(Dictionary<String,List<TableMetadata>> relations) {
         this.relationshipConfigurationForm.populateSelect(relations);
+        if (generationContextManager != null && generationContextManager.getContext() != null) {
+            List<RelationParameter> autoRelations = generationContextManager.getContext().autoDetectRelationParameters();
+            this.relationshipConfigurationForm.setTableData(autoRelations);
+        }
     }
     public void updateTableSelects() {
         updateTableSelects(generationContextManager.getContext());
@@ -49,7 +53,8 @@ public class RelationshipConfigurationWizardStep extends ModuleWizardStep {
 
     public void updateTableSelects(ProjectGenerationContext context) {
         this.relationshipConfigurationForm.populateSelect(context.splitTableByRelations());
-        this.relationshipConfigurationForm.setTableData(context.getRelationParameters());
+        List<RelationParameter> autoRelations = context.autoDetectRelationParameters();
+        this.relationshipConfigurationForm.setTableData(autoRelations);
     }
 
     @Override
