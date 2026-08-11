@@ -198,7 +198,7 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
             return true;
         }
         catch (Exception e) {
-            throw new ConfigurationException(e.getMessage());
+            throw new ConfigurationException(e.getLocalizedMessage());
         }
     }
     public boolean multivalidate() throws ConfigurationException {
@@ -222,7 +222,7 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
             return true;
         }
         catch (Exception e) {
-            throw new ConfigurationException(e.getMessage());
+            throw new ConfigurationException(e.getLocalizedMessage());
         }
     }
 
