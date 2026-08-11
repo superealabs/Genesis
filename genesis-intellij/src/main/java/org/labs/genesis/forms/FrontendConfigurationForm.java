@@ -126,7 +126,7 @@ public class FrontendConfigurationForm {
             }
         });
 
-        FileChooserDescriptor faviconChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
+        FileChooserDescriptor faviconChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
                 .withTitle("Select favicon file")
                 .withDescription("Choose a .ico file to load into the editor")
                 .withFileFilter(file -> {
@@ -140,7 +140,7 @@ public class FrontendConfigurationForm {
                     );
                 });
 
-        FileChooserDescriptor logoChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
+        FileChooserDescriptor logoChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
                 .withTitle("Select logo file")
                 .withDescription("Choose image or icon file to load into the editor")
                 .withFileFilter(file -> {

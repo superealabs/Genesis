@@ -63,7 +63,7 @@ public class SQLRunnerForm {
 
     private void addLocationFieldListener() {
         // Crée le FileChooserDescriptor pour sélectionner un seul fichier .sql
-        FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
+        FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
                 .withTitle("Select SQL File")
                 .withDescription("Choose a .sql file to load into the editor")
                 .withFileFilter(file -> {
@@ -212,7 +212,7 @@ public class SQLRunnerForm {
             this.llmApiClient.setDefaultModel(llmApiConfig.getModel());
             this.llmApiClient.setApiUrl(llmApiConfig.getApiUrl());
             if(this.llmApiClient.getUseCustomApiKey()) {
-                this.llmApiClient.setApiKey(this.tokenApiField.getText().trim());
+                this.llmApiClient.setApiKey(new String(this.tokenApiField.getPassword()).trim());
             } else {
                 this.llmApiClient.setApiKeyFromFile();
             }

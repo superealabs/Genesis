@@ -49,7 +49,7 @@ public class SyncProjectLoaderWizardStep extends ModuleWizardStep {
                 throw new ConfigurationException("Genesis context file not found. Please select a valid project directory");
             }
         } catch (Exception e) {
-            throw new ConfigurationException(e.getMessage());
+            throw new ConfigurationException(e.getLocalizedMessage());
         }
         return true;
     }

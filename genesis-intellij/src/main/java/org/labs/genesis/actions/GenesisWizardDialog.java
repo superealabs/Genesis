@@ -74,7 +74,7 @@ public class GenesisWizardDialog extends AbstractWizard<ModuleWizardStep> {
             if (!currentStep.validate()) return;
             currentStep.updateDataModel();
         } catch (ConfigurationException e) {
-            Messages.showErrorDialog(getContentPane(), e.getMessage(), "Validation Error");
+            Messages.showErrorDialog(getContentPane(), e.getLocalizedMessage(), "Validation Error");
             return;
         }
         super.doNextAction();
@@ -87,14 +87,9 @@ public class GenesisWizardDialog extends AbstractWizard<ModuleWizardStep> {
             if (!currentStep.validate()) return;
             currentStep.updateDataModel();
         } catch (ConfigurationException e) {
-            Messages.showErrorDialog(getContentPane(), e.getMessage(), "Validation Error");
+            Messages.showErrorDialog(getContentPane(), e.getLocalizedMessage(), "Validation Error");
             return;
         }
         super.doOKAction();
-    }
-
-    @Override
-    protected @Nullable String getHelpID() {
-        return null;
     }
 }
