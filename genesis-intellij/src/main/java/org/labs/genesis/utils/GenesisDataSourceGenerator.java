@@ -39,7 +39,8 @@ public class GenesisDataSourceGenerator {
         DriverConfig driverConfig = IdeConfigurationLoader.findDriverConfig(ideConfig, dbName);
 
         String host = credentials.getHost() != null && !credentials.getHost().isEmpty() ? credentials.getHost() : "localhost";
-        String port = credentials.getPort() != null && !credentials.getPort().isEmpty() ? credentials.getPort() : "5432";
+        String defaultPort = database.getPort() != null && !database.getPort().isEmpty() ? database.getPort() : "5432";
+        String port = credentials.getPort() != null && !credentials.getPort().isEmpty() ? credentials.getPort() : defaultPort;
         String databaseName = credentials.getDatabaseName() != null ? credentials.getDatabaseName() : "";
         String username = credentials.getUser() != null ? credentials.getUser() : "";
         String sid = credentials.getSID() != null ? credentials.getSID() : "xe";

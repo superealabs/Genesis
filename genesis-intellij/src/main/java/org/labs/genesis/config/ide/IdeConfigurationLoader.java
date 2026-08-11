@@ -30,9 +30,10 @@ public class IdeConfigurationLoader {
         if (ideConfig == null || ideConfig.getDataSourceTemplate() == null || ideConfig.getDataSourceTemplate().getDrivers() == null) {
             return null;
         }
-        String targetSgbd = sgbdName != null ? sgbdName.toLowerCase() : "";
+        String targetSgbd = sgbdName != null ? sgbdName.toLowerCase().replaceAll("[\\s_\\-]", "") : "";
         for (DriverConfig driver : ideConfig.getDataSourceTemplate().getDrivers()) {
-            if (targetSgbd.contains(driver.getSgbd().toLowerCase())) {
+            String driverSgbd = driver.getSgbd() != null ? driver.getSgbd().toLowerCase().replaceAll("[\\s_\\-]", "") : "";
+            if (!targetSgbd.isEmpty() && (targetSgbd.contains(driverSgbd) || driverSgbd.contains(targetSgbd))) {
                 return driver;
             }
         }
