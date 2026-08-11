@@ -2695,13 +2695,12 @@
       {{tab}}    // 3. On aplatit les données dans une liste de dictionnaires
       {{tab}}    var exportData = (results.Content ?? new List<${majStart(className)}>()).Select(item => new Dictionary<string, object>
       {{tab}}    {
-      {{#each fields}}
-      {{#if this.isForeignKey}}
+      {{#each fields}}{{#if this.isForeignKey}}
       {{tab}}        { "${this.type}", item.${majStart(this.name)}?.GetType().GetProperty(${minStart(this.type)}DisplayColumn)?.GetValue(item.${majStart(this.name)}) },
       {{else}}
       {{tab}}        { "${majStart(this.name)}", item.${majStart(this.name)} },
-      {{/if}}
-      {{/each}}
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
       {{tab}}    }).ToList();
 
       {{tab}}    var csvContent = await _service.ExportToCsvAsync(exportData);
