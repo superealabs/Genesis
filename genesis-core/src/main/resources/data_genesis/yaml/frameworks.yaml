@@ -2494,7 +2494,7 @@
   coreFramework: ".NET"
   name: "ASP.NET Core - WEB API REST"
   template: "Template"
-  isProd: false
+  isProd: true
   useDB: true
   withGroupId: false
   useCloud: false
@@ -4760,6 +4760,7 @@
     - name: "Framework Version"
       variableName: "frameworkVersion"
       options:
+        - "9.0"
         - "8.0"
         - "7.0"
         - "6.0"
