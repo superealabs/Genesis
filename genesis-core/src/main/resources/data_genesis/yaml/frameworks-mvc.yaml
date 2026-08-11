@@ -3,6 +3,7 @@
   coreFramework: ".NET"
   name: "ASP.NET Core - MVC"
   template: "Template"
+  isProd: true
   useDB: true
   withGroupId: false
   useCloud: false
@@ -2625,9 +2626,11 @@
     controllerMethodContent: |
       {{tab}}{{#if useAuthCookie}}[Authorize]{{else}}{{removeLine}}{{/if}}
       {{tab}}// POST: /${majStart(className)}/ExportToCsv
-      {{tab}}public async Task<IActionResult> ExportToCsvAsync(int page = 0, int pageSize = 10, string? sortOrder = null)
+      {{tab}}[HttpPost]
+      {{tab}}[ValidateAntiForgeryToken]
+      {{tab}}public async Task<IActionResult> ExportToCsvAsync(${majStart(className)}Dto dto, int page = 0, int pageSize = 10, string? sortOrder = null)
       {{tab}}{
-      {{tab}}    var results = await _service.GetAllAsync(page, pageSize, sortOrder);
+      {{tab}}    var results = await _service.SearchAsync(dto, page, pageSize, sortOrder);
 
       {{tab}}	var csvContent = await _service.ExportToCsvAsync(results.Content);
       {{tab}}	var bytes = Encoding.UTF8.GetBytes(csvContent);
@@ -4716,6 +4719,7 @@
   coreFramework: "Django"
   name: "Django - MVT"
   template: "Template"
+  isProd: false
   useDB: true
   withGroupId: true
   useCloud: false

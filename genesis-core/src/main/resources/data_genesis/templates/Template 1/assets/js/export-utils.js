@@ -6,6 +6,7 @@ class ExportManager {
         this.exportCancelBtn = document.getElementById('exportCancelBtn');
         this.exportConfirmBtn = document.getElementById('exportConfirmBtn');
         this.form = this.exportModal?.querySelector('form');
+        this.filtersForm = document.getElementById('filtersForm');
         this.init();
     }
 
@@ -29,7 +30,34 @@ class ExportManager {
             });
 
         if (this.form) {
-            this.form.addEventListener('submit', () => this.showLoadingState());
+            this.form.addEventListener('submit', () => {
+                this.copyFiltersToExportForm();
+                this.showLoadingState();
+            });
+        }
+    }
+
+    copyFiltersToExportForm() {
+        if (!this.form || !this.filtersForm) {
+            return;
+        }
+
+        this.form.querySelectorAll('[data-export-filter="true"]').forEach(input => input.remove());
+
+        const formData = new FormData(this.filtersForm);
+
+        for (const [name, value] of formData.entries()) {
+            if (name === '__RequestVerificationToken') {
+                continue;
+            }
+
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = name;
+            hiddenInput.value = value;
+            hiddenInput.dataset.exportFilter = 'true';
+
+            this.form.appendChild(hiddenInput);
         }
     }
 
