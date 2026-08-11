@@ -1,0 +1,137 @@
+- id: 1
+  ideName: "IntelliJ"
+  dataSourceTemplate:
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project version="4">
+        <component name="DataSourceManagerImpl" format="xml" hash="123456789">
+          <data-source source="LOCAL" name="${databaseName}@${host}" uuid="${uuid}">
+            <driver-ref>${driverRef}</driver-ref>
+            <synchronize>true</synchronize>
+            <jdbc-driver>${jdbcDriver}</jdbc-driver>
+            <jdbc-url>${jdbcUrl}</jdbc-url>
+            <user-name>${username}</user-name>
+            <working-dir>$ProjectFileDir$</working-dir>
+          </data-source>
+        </component>
+      </project>
+    drivers:
+      - sgbd: "postgresql"
+        driverRef: "postgresql"
+        jdbcDriver: "org.postgresql.Driver"
+        urlPattern: "jdbc:postgresql://${host}:${port}/${databaseName}"
+      - sgbd: "mysql"
+        driverRef: "mysql.8"
+        jdbcDriver: "com.mysql.cj.jdbc.Driver"
+        urlPattern: "jdbc:mysql://${host}:${port}/${databaseName}"
+      - sgbd: "oracle"
+        driverRef: "oracle"
+        jdbcDriver: "oracle.jdbc.OracleDriver"
+        urlPattern: "jdbc:oracle:thin:@${host}:${port}:${sid}"
+      - sgbd: "sqlserver"
+        driverRef: "sqlserver.ms"
+        jdbcDriver: "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+        urlPattern: "jdbc:sqlserver://${host}:${port};databaseName=${databaseName}"
+
+  miscTemplate:
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project version="4">
+        {{#if isMaven}}
+        <component name="MavenProjectsManager">
+          <option name="originalFiles">
+            <list>
+              <option value="$PROJECT_DIR$/${backendModuleName}/pom.xml" />
+            </list>
+          </option>
+        </component>
+        {{/if}}
+        {{#if isDotNet}}
+        <component name="SolutionManager">
+          <option name="solutionFile" value="$PROJECT_DIR$/${backendModuleName}/${backendModuleName}.sln" />
+        </component>
+        {{/if}}
+        <component name="ProjectRootManager" version="2" languageLevel="JDK_${javaVersion}" default="true" project-jdk-name="${javaVersion}" project-jdk-type="JavaSDK">
+          <output url="file://$PROJECT_DIR$/out" />
+        </component>
+      </project>
+
+  modulesTemplate:
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project version="4">
+        <component name="ProjectModuleManager">
+          <modules>
+            {{#if hasFrontend}}<module fileurl="file://$PROJECT_DIR$/${rootModuleName}.iml" filepath="$PROJECT_DIR$/${rootModuleName}.iml" />{{/if}}
+            <module fileurl="file://$PROJECT_DIR$/${backendModuleName}/${backendModuleName}.iml" filepath="$PROJECT_DIR$/${backendModuleName}/${backendModuleName}.iml" />
+            {{#if hasFrontend}}<module fileurl="file://$PROJECT_DIR$/${frontendModuleName}/${frontendModuleName}.iml" filepath="$PROJECT_DIR$/${frontendModuleName}/${frontendModuleName}.iml" />{{/if}}
+          </modules>
+        </component>
+      </project>
+
+  imlTemplates:
+    - type: "JAVA_MODULE"
+      content: |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+          <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_${javaVersion}">
+            <output url="file://$MODULE_DIR$/target/classes" />
+            <output-test url="file://$MODULE_DIR$/target/test-classes" />
+            <content url="file://$MODULE_DIR$">
+              <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+              <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+              <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+              <excludeFolder url="file://$MODULE_DIR$/target" />
+            </content>
+            <orderEntry type="inheritedJdk" />
+            <orderEntry type="sourceFolder" forTests="false" />
+          </component>
+        </module>
+
+    - type: "CSHARP_MODULE"
+      content: |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <module type="CSHARP_MODULE" version="4">
+          <component name="NewModuleRootManager" inherit-compiler-output="true">
+            <exclude-output />
+            <content url="file://$MODULE_DIR$">
+              <excludeFolder url="file://$MODULE_DIR$/bin" />
+              <excludeFolder url="file://$MODULE_DIR$/obj" />
+            </content>
+            <orderEntry type="sourceFolder" forTests="false" />
+          </component>
+        </module>
+
+    - type: "WEB_MODULE"
+      content: |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <module type="WEB_MODULE" version="4">
+          <component name="NewModuleRootManager" inherit-compiler-output="true">
+            <exclude-output />
+            <content url="file://$MODULE_DIR$">
+              <excludeFolder url="file://$MODULE_DIR$/node_modules" />
+              <excludeFolder url="file://$MODULE_DIR$/dist" />
+              <excludeFolder url="file://$MODULE_DIR$/.angular" />
+              <excludeFolder url="file://$MODULE_DIR$/.next" />
+              <excludeFolder url="file://$MODULE_DIR$/coverage" />
+            </content>
+            <orderEntry type="inheritedJdk" />
+            <orderEntry type="sourceFolder" forTests="false" />
+          </component>
+        </module>
+
+    - type: "PYTHON_MODULE"
+      content: |
+        <?xml version="1.0" encoding="UTF-8"?>
+        <module type="PYTHON_MODULE" version="4">
+          <component name="NewModuleRootManager" inherit-compiler-output="true">
+            <exclude-output />
+            <content url="file://$MODULE_DIR$">
+              <excludeFolder url="file://$MODULE_DIR$/venv" />
+              <excludeFolder url="file://$MODULE_DIR$/.venv" />
+              <excludeFolder url="file://$MODULE_DIR$/__pycache__" />
+            </content>
+            <orderEntry type="inheritedJdk" />
+            <orderEntry type="sourceFolder" forTests="false" />
+          </component>
+        </module>
