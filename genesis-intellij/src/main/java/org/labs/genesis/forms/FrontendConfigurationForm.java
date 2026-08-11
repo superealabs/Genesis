@@ -261,6 +261,7 @@ public class FrontendConfigurationForm {
         frontendLanguageOptions.setVisible(true);
         frontendFrameworkOptions.setVisible(true);
         portInput.setVisible(true);
+        portLabel.setVisible(true);
 
         templateEngine.setVisible(false);
         viewsTemplateEngineOptions.setVisible(false);
@@ -333,6 +334,7 @@ public class FrontendConfigurationForm {
         frontendLanguageOptions.setVisible(false);
         frontendFrameworkOptions.setVisible(false);
         portInput.setVisible(false);
+        portLabel.setVisible(false);
 
         viewsTemplateEngineOptions.removeAllItems();
         viewsTemplateEngineOptions.addItem(frameworkMVC.getView().getViewTemplateEngine());
