@@ -72,7 +72,7 @@ public class SQLServerDatabase extends Database {
     private void checkDateConstraint(Connection conn, String tableName, List<ColumnMetadata> columns, Framework framework, String key, String sql) throws Exception {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, tableName);
-            stmt.setString(2, "dbo");
+            stmt.setString(2, resolveSchema(conn));
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     String colName = rs.getString("column_name");
@@ -97,7 +97,7 @@ public class SQLServerDatabase extends Database {
     protected void checkNotBlankConstraint(Connection conn, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         try (PreparedStatement stmt = conn.prepareStatement(this.getConstraintQueries().getCheckNotBlankConstraintQuery())) {
             stmt.setString(1, tableName);
-            stmt.setString(2, "dbo");
+            stmt.setString(2, resolveSchema(conn));
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     String colName = rs.getString("column_name");
@@ -120,7 +120,7 @@ public class SQLServerDatabase extends Database {
     protected void checkMinLengthConstraint(Connection conn, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         try (PreparedStatement stmt = conn.prepareStatement(this.getConstraintQueries().getCheckMinimumLengthConstraintQuery())) {
             stmt.setString(1, tableName);
-            stmt.setString(2, "dbo");
+            stmt.setString(2, resolveSchema(conn));
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     String colName = rs.getString("column_name");
@@ -144,7 +144,7 @@ public class SQLServerDatabase extends Database {
     protected void checkRegexConstraint(Connection conn, String tableName, List<ColumnMetadata> columns, Framework framework) throws Exception {
         try (PreparedStatement stmt = conn.prepareStatement(this.getConstraintQueries().getCheckRegexConstraintQuery())) {
             stmt.setString(1, tableName);
-            stmt.setString(2, "dbo");
+            stmt.setString(2, resolveSchema(conn));
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     String colName = rs.getString("column_name");
@@ -170,7 +170,7 @@ public class SQLServerDatabase extends Database {
     private void checkNumericConstraint(Connection conn, String tableName, List<ColumnMetadata> columns, Framework framework, String annotationKey, String dataKey, String sql, boolean isMin) throws Exception {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, tableName);
-            stmt.setString(2, "dbo");
+            stmt.setString(2, resolveSchema(conn));
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     String colName = rs.getString("column_name");
