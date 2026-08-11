@@ -90,6 +90,7 @@ public class FrameworkMVC extends Framework {
         private String deleteDataTagHelper;
         private String pageSizeTagHelper;
         private String dataValue;
+        private String dataRawValue;
         private String orderSortsTagHelper;
         private String dataForeignValue;
         private String inlineLoopStatement;
@@ -128,6 +129,7 @@ public class FrameworkMVC extends Framework {
         private String name;
         private String viewAnnotations;
         private String dataValue;
+        private String dataRawValue;
         private String dataForeignValue;
         private String deleteDataTagHelper;
         private String updateLink;

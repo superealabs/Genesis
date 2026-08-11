@@ -17,7 +17,7 @@ ${validationSection}
 <link rel="stylesheet" href="${rootPath}/css/select2.min.css">
 <script src="${rootPath}/js/select2.min.js"></script>
 
-<form class="form" method="post" ${updateLink}>
+<form class="form" method="post" enctype="multipart/form-data" ${updateLink}>
     {{#each fields}}
     {{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}<!-- Hidden field for ${this.name} -->
     <input type="hidden" ${inputTagHelper}/>{{/if}}{{else}}{{removeLine}}{{/if}}
@@ -39,6 +39,8 @@ ${validationSection}
                 <span class="radio-label">False</span>
             </label>
         </div>
+        {{elseIf this.type = file}}{{removeLine}}
+        <input type="file" name="${majStart(this.name)}File" id="${majStart(this.name)}File">
         {{else}}{{removeLine}}
         <input type="${this.type}" ${inputTagHelper} placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>
         {{/if}}{{removeLine}}
