@@ -8,6 +8,7 @@
       "double": "number",
       "float": "number",
       "string": "text",
+      "DateOnly": "date",
       "DateTime": "datetime-local",
       "DateTimeOffset": "datetime-local",
       "TimeSpan": "time",

@@ -681,11 +681,12 @@
         namespace ${majStart(projectName)}.Services.Generic;
         
         using System.Linq.Expressions;
+        using System.Collections.Generic;
         using ${majStart(projectName)}.Utils;
         
         public interface IService<T, in TKey, in TSearch> where T : class
         {
-            Task<string> ExportToCsvAsync(List<T> entity);
+            Task<string> ExportToCsvAsync(IEnumerable<IDictionary<string, object>> data);
             Task<PagedResponse<T>> GetAllAsync(
                 int page, int pageSize, string? sorting,
                 params Expression<Func<T, object?>>[]? includeProperties);
@@ -696,6 +697,37 @@
             Task UpdateAsync(T entity);
             Task DeleteAsync(TKey id);
             Task<bool> ExistsAsync(TKey id);
+        }
+      destinationPath: "${destinationFolder}/Services/Generic/"
+
+    - fileType: "Generic file"
+      fileName: "BaseService"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Services.Generic;
+
+        using System.Collections.Generic;
+        using System.Linq.Expressions;
+        using System.Threading.Tasks;
+        using ${majStart(projectName)}.Utils;
+
+        public abstract class BaseService<T, TKey, TSearch> : IService<T, TKey, TSearch> where T : class
+        {
+            // Implémentation générique de l'export CSV
+            public virtual Task<string> ExportToCsvAsync(IEnumerable<IDictionary<string, object>> data)
+            {
+                var csv = ExportUtil.GenerateCsv(data);
+                return Task.FromResult(csv);
+            }
+            
+            // Déclaration abstraite des autres méthodes qui devront être implémentées par les services enfants
+            public abstract Task<PagedResponse<T>> GetAllAsync(int page, int pageSize, string? sorting, params Expression<Func<T, object?>>[]? includeProperties);
+            public abstract Task<PagedResponse<T>> SearchAsync(TSearch searchDto, int page, int pageSize, string? sorting);
+            public abstract Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties);
+            public abstract Task AddAsync(T entity);
+            public abstract Task UpdateAsync(T entity);
+            public abstract Task DeleteAsync(TKey id);
+            public abstract Task<bool> ExistsAsync(TKey id);
         }
       destinationPath: "${destinationFolder}/Services/Generic/"
 
@@ -1873,8 +1905,8 @@
       content: |
         namespace ${majStart(projectName)}.Utils;
 
-        using System.Reflection;
-        using System.Text;
+        using System.Collections.Generic;
+        using System.Linq;
         using System.Reflection;
         using System.Text;
 
@@ -1924,7 +1956,33 @@
 
                 return escaped;
             }
+
+                    // Generate CSV from a list of dictionaries (pour gérer les FK aplaties)
+            public static string GenerateCsv(IEnumerable<IDictionary<string, object>> data)
+            {
+                if (data == null || !data.Any()) return string.Empty;
+
+                var stringBuilder = new StringBuilder();
+                var firstRow = data.First();
+
+                // Header
+                stringBuilder.AppendLine(string.Join(",", firstRow.Keys.Select(EscapeCsv)));
+
+                // Data rows
+                foreach (var row in data)
+                {
+                    var line = firstRow.Keys.Select(key => 
+                        row.TryGetValue(key, out var value) && value != null ? EscapeCsv(value.ToString()) : string.Empty
+                    );
+                    stringBuilder.AppendLine(string.Join(",", line));
+                }
+
+                return stringBuilder.ToString();
+            }
         }
+
+
+        
 
       destinationPath: "${destinationFolder}/Utils"
 
@@ -2555,19 +2613,21 @@
         fileName: "${majStart(className)}Service"
         extension: "cs"
         content: |
+          using System.Collections.Generic;
           using System.Linq.Expressions;
           using ${majStart(projectName)}.Exceptions;
           using ${majStart(projectName)}.Models;
           using ${majStart(projectName)}.Repositories.Interface;
           using ${majStart(projectName)}.Repositories.Implementation;
           using ${majStart(projectName)}.Services.Interface;
+          using ${majStart(projectName)}.Services.Generic;
           using ${majStart(projectName)}.Specification;
           using ${majStart(projectName)}.Models.Dto;
           using ${majStart(projectName)}.Utils;
           
           namespace ${majStart(projectName)}.Services.Implementation;
           
-          public class ${majStart(className)}Service : I${majStart(className)}Service
+          public class ${majStart(className)}Service : BaseService<${majStart(className)}, ${pkColumnType}, ${majStart(className)}Dto>, I${majStart(className)}Service
           {
               private readonly I${majStart(className)}Repository _repository;
           
@@ -2575,14 +2635,8 @@
               {
                   _repository = repository;
               }
-
-              public Task<string> ExportToCsvAsync(List<${majStart(className)}> ${minStart(className)})
-              {
-                  var csv = ExportUtil.GenerateCsv(${minStart(className)});
-                  return Task.FromResult(csv);
-              }
           
-              public async Task<PagedResponse<${majStart(className)}>> GetAllAsync(
+              public override async Task<PagedResponse<${majStart(className)}>> GetAllAsync(
                   int page, int pageSize, string? sorting,
                   params Expression<Func<${majStart(className)}, object?>>[]? includes)
               {
@@ -2597,7 +2651,7 @@
                   }
               }
           
-              public async Task<PagedResponse<${majStart(className)}>> SearchAsync(
+              public override async Task<PagedResponse<${majStart(className)}>> SearchAsync(
                   ${majStart(className)}Dto searchDto,
                   int page, int pageSize, string? sorting)
               {
@@ -2612,7 +2666,7 @@
                   }
               }  
           
-              public async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
+              public override async Task<${majStart(className)}?> GetByIdAsync(${pkColumnType} id, params Expression<Func<${majStart(className)}, object?>>[]? includeProperties)
               {
                   try
                   {
@@ -2624,7 +2678,7 @@
                   }
               }
               {{#if !isView}}  
-              public async Task AddAsync(${majStart(className)} ${minStart(className)})
+              public override async Task AddAsync(${majStart(className)} ${minStart(className)})
               {
                   try
                   {
@@ -2635,14 +2689,14 @@
                     throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
                   }
               }{{else}}
-              public async Task AddAsync(${majStart(className)} ${minStart(className)})
+              public override async Task AddAsync(${majStart(className)} ${minStart(className)})
               {
                   throw new NotSupportedException("Operation not supported for view-based entity.");
               }
               {{/if}}
           
               {{#if !isView}} 
-              public async Task UpdateAsync(${majStart(className)} ${minStart(className)})
+              public override async Task UpdateAsync(${majStart(className)} ${minStart(className)})
               {
                   try
                   {
@@ -2653,14 +2707,14 @@
                     throw new InternalServerErrorException("Error while updating ${formatReadableLowerCase(className)}", ex);
                   }
               }{{else}}
-              public async Task UpdateAsync(${majStart(className)} ${minStart(className)})
+              public override async Task UpdateAsync(${majStart(className)} ${minStart(className)})
               {
                   throw new NotSupportedException("Operation not supported for view-based entity.");
               }
               {{/if}}
           
               {{#if !isView}} 
-              public async Task DeleteAsync(${pkColumnType} id)
+              public override async Task DeleteAsync(${pkColumnType} id)
               {
                 try 
                 {
@@ -2671,13 +2725,13 @@
                   throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
                 }
               }{{else}}
-              public async Task DeleteAsync(${pkColumnType} id)
+              public override async Task DeleteAsync(${pkColumnType} id)
               {
                   throw new NotSupportedException("Operation not supported for view-based entity.");
               }
               {{/if}}
           
-              public async Task<bool> ExistsAsync(${pkColumnType} id)
+              public override async Task<bool> ExistsAsync(${pkColumnType} id)
               {
                 try 
                 {
@@ -2702,6 +2756,8 @@
       using ${majStart(projectName)}.Utils;
       using ${majStart(projectName)}.Filters;
       using ${majStart(projectName)}.ViewModels;
+      using System.Collections.Generic;
+      using System.Linq;
       using System.Text.Json;
       using System.Text;
       using System.IO;
@@ -2730,13 +2786,32 @@
       {{tab}}{
       {{tab}}    var results = await _service.SearchAsync(dto, page, pageSize, sortOrder);
 
-      {{tab}}	var csvContent = await _service.ExportToCsvAsync(results.Content);
-      {{tab}}	var bytes = Encoding.UTF8.GetBytes(csvContent);
-      
-      {{tab}}	Response.Headers.Add("Content-Disposition", "attachment; filename=${majStart(className)}.csv");
-      
-      {{tab}}	return File(bytes, "text/csv; charset=utf-8");
+      {{tab}}    {{#each fieldsFK}}
+      {{tab}}    // 2. On détecte la colonne d'affichage pour la FK
+      {{tab}}    string ${minStart(this.type)}DisplayColumn = await _detector.DetectBestDisplayColumnAsync<${this.type}>();
+      {{tab}}    {{/each}}{{removeLine}}
+
+      {{tab}}    // 3. On aplatit les données dans une liste de dictionnaires
+      {{tab}}    var exportData = (results.Content ?? new List<${majStart(className)}>()).Select(item => new Dictionary<string, object>
+      {{tab}}    {
+      {{#each fields}}{{#if this.isForeignKey}}
+      {{tab}}        { "${this.type}", item.${majStart(this.name)}?.GetType().GetProperty(${minStart(this.type)}DisplayColumn)?.GetValue(item.${majStart(this.name)}) },
+      {{else}}
+      {{tab}}        { "${majStart(this.name)}", item.${majStart(this.name)} },
+      {{/if}}{{removeLine}}
+      {{/each}}{{removeLine}}
+      {{tab}}    }).ToList();
+
+      {{tab}}    var csvContent = await _service.ExportToCsvAsync(exportData);
+      {{tab}}    var bytes = Encoding.UTF8.GetBytes(csvContent);
+
+      {{tab}}    Response.Headers["Content-Disposition"] = "attachment; filename=${majStart(className)}.csv";
+
+      {{tab}}    return File(bytes, "text/csv; charset=utf-8");
       {{tab}}}
+      
+      {{tab}}{{#if useAuthCookie}}[Authorize]{{else}}{{removeLine}}{{/if}}
+      {{tab}}// GET: /${majStart(className)}
       
       {{tab}}{{#if useAuthCookie}}[Authorize]{{else}}{{removeLine}}{{/if}}
       {{tab}}// GET: /${majStart(className)}
