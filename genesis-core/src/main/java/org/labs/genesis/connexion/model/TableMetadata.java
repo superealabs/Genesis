@@ -150,10 +150,7 @@ public class TableMetadata {
     }
 
     private void fetchPrimaryKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> columns) throws SQLException {
-        // Résolution intelligente du schéma selon le type de base de données
-        String schema = (database.getName() != null && database.getName().equalsIgnoreCase("Oracle"))
-                ? resolveOracleSchema()
-                : database.getCredentials().getSchemaName();
+        String schema = database.resolveSchema(metaData.getConnection());
 
         try (ResultSet primaryKeys = metaData.getPrimaryKeys(null, schema, tableName)) {
             while (primaryKeys.next()) {
@@ -188,10 +185,7 @@ public class TableMetadata {
     }
 
     private void fetchForeignKeys(DatabaseMetaData metaData, String tableName, Language language, List<ColumnMetadata> listeCols) throws SQLException {
-        // Résolution intelligente du schéma selon le type de base de données
-        String schema = (database.getName() != null && database.getName().equalsIgnoreCase("Oracle"))
-                ? resolveOracleSchema()
-                : database.getCredentials().getSchemaName();
+        String schema = database.resolveSchema(metaData.getConnection());
 
         try (ResultSet foreignKeys = metaData.getImportedKeys(null, schema, tableName)) {
 
