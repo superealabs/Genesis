@@ -586,7 +586,7 @@
             public async Task<T?> GetByIdAsync(TKey id, params Expression<Func<T, object?>>[]? includeProperties)
             {
                 var keyPropertyName = GetKeyPropertyName();
-                var query = GetQuery(_dbSet, includeProperties);
+                var query = GetQuery(_dbSet, includeProperties).AsNoTracking();;
                 return await query.FirstOrDefaultAsync(e => EF.Property<TKey>(e, keyPropertyName)!.Equals(id));
             }
         
@@ -2110,6 +2110,99 @@
             }
         }
       destinationPath: "${destinationFolder}/Utils"
+    - fileType: "FileUtils"
+      fileName: "FileUtils"
+      extension: "cs"
+      content: |
+        namespace ${majStart(projectName)}.Utils;
+
+        public static class FileUtils
+        {
+            public static string DetectMimeType(byte[]? content)
+            {
+                if (content == null || content.Length == 0)
+                    return "application/octet-stream";
+        
+                // PNG
+                if (content.Length >= 4 &&
+                    content[0] == 0x89 &&
+                    content[1] == 0x50 &&
+                    content[2] == 0x4E &&
+                    content[3] == 0x47)
+                {
+                    return "image/png";
+                }
+
+                // JPEG
+                if (content.Length >= 3 &&
+                    content[0] == 0xFF &&
+                    content[1] == 0xD8 &&
+                    content[2] == 0xFF)
+                {
+                    return "image/jpeg";
+                }
+
+                // GIF
+                if (content.Length >= 3 &&
+                    content[0] == 0x47 &&
+                    content[1] == 0x49 &&
+                    content[2] == 0x46)
+                {
+                    return "image/gif";
+                }
+
+                // PDF
+                if (content.Length >= 4 &&
+                    content[0] == 0x25 &&
+                    content[1] == 0x50 &&
+                    content[2] == 0x44 &&
+                    content[3] == 0x46)
+                {
+                    return "application/pdf";
+                }
+
+                // BMP
+                if (content.Length >= 2 &&
+                    content[0] == 0x42 &&
+                    content[1] == 0x4D)
+                {
+                    return "image/bmp";
+                }
+
+                // WEBP
+                if (content.Length >= 12 &&
+                    content[0] == 0x52 &&
+                    content[1] == 0x49 &&
+                    content[2] == 0x46 &&
+                    content[3] == 0x46 &&
+                    content[8] == 0x57 &&
+                    content[9] == 0x45 &&
+                    content[10] == 0x42 &&
+                    content[11] == 0x50)
+                {
+                    return "image/webp";
+                }
+
+                return "application/octet-stream";
+            }
+
+            public static bool IsImage(byte[]? content)
+            {
+                return DetectMimeType(content).StartsWith("image/");
+            }
+
+            public static string BuildFileSource(byte[]? content)
+            {
+                if (content == null || content.Length == 0)
+                    return string.Empty;
+
+                var mimeType = DetectMimeType(content);
+                var base64 = Convert.ToBase64String(content);
+
+                return $"data:{mimeType};base64,{base64}";
+            }
+        }
+      destinationPath: "${destinationFolder}/Utils/"
 
   configurations:
     - name: "Logging Level"
@@ -2332,10 +2425,14 @@
           using Models.Dto;
           using ${majStart(projectName)}.Utils;
           using Microsoft.AspNetCore.Mvc.Rendering;
+          using Microsoft.AspNetCore.Http;
 
           public class ${majStart(className)}ViewModel
           {
               public ${majStart(className)}? ${majStart(className)} { get; set; }
+            {{#each fields}}{{#if this.type = byte[]}}
+            public IFormFile? ${majStart(this.name)}File { get; set; }
+            {{else}}{{removeLine}}{{/if}}{{/each}}
               public ${majStart(className)}Dto? Search${majStart(className)}Criteria { get; set; }
 
               {{#each fieldsFK}}public string ${majStart(this.type)}DisplayColumn { get; set; } = string.Empty;
@@ -2606,6 +2703,7 @@
       using ${majStart(projectName)}.ViewModels;
       using System.Text.Json;
       using System.Text;
+      using System.IO;
       {{#if useAuthCookie}}using Microsoft.AspNetCore.Authorization;{{/if}}
 
     controllerAnnotations: ""
@@ -2771,6 +2869,16 @@
       {{tab}}            }
       {{tab}}            {{else}}{{removeLine}}{{/if}}
       {{tab}}            {{/each}}{{removeLine}}
+      {{tab}}            {{#each fields}}
+      {{tab}}            {{#if this.type = byte[]}}
+      {{tab}}            if (vm.${majStart(this.name)}File != null && vm.${majStart(this.name)}File.Length > 0)
+      {{tab}}            {
+      {{tab}}                using var memoryStream = new MemoryStream();
+      {{tab}}                await vm.${majStart(this.name)}File.CopyToAsync(memoryStream);
+      {{tab}}                vm.${majStart(className)}.${majStart(this.name)} = memoryStream.ToArray();
+      {{tab}}            }
+      {{tab}}            {{else}}{{removeLine}}{{/if}}
+      {{tab}}            {{/each}}{{removeLine}}
       {{tab}}            await _service.AddAsync(vm.${majStart(className)});
       {{tab}}            return RedirectToAction(nameof(Index));
       {{tab}}        }
@@ -2835,6 +2943,26 @@
       {{tab}}                    ModelState.AddModelError("${majStart(this.name)}Json", "The JSON format is invalid.");
       {{tab}}                    return View(vm);
       {{tab}}                }
+      {{tab}}            }
+      {{tab}}            {{else}}{{removeLine}}{{/if}}
+      {{tab}}            {{/each}}{{removeLine}}
+      {{tab}}            {{#each fields}}
+      {{tab}}            {{#if this.type = byte[]}}
+      {{tab}}            if (vm.${majStart(this.name)}File != null && vm.${majStart(this.name)}File.Length > 0)
+      {{tab}}            {
+      {{tab}}               using var memoryStream = new MemoryStream();
+      {{tab}}               await vm.${majStart(this.name)}File.CopyToAsync(memoryStream);
+      {{tab}}               vm.${majStart(className)}.${majStart(this.name)} = memoryStream.ToArray();
+      {{tab}}            }
+      {{tab}}            else
+      {{tab}}             {
+      {{tab}}               var existingEntity = await _service.GetByIdAsync(
+      {{tab}}                   vm.${majStart(className)}.${majStart(pkColumn)}
+      {{tab}}               );
+      {{tab}}               if (existingEntity != null)
+      {{tab}}               {
+      {{tab}}                   vm.${majStart(className)}.${majStart(this.name)} = existingEntity.${majStart(this.name)};
+      {{tab}}               }
       {{tab}}            }
       {{tab}}            {{else}}{{removeLine}}{{/if}}
       {{tab}}            {{/each}}{{removeLine}}
@@ -2928,6 +3056,7 @@
       deleteDataTagHelper: "data-id=\"@${minStart(className)}.${majStart(pkColumn)}\""
       pageSizeTagHelper: "selected=\"@(Model.Page.Size == ${this})\""
       dataValue: "@${minStart(className)}.${majStart(this.name)}"
+      dataRawValue: "${minStart(className)}.${majStart(this.name)}"
       dataForeignValue: "@${minStart(className)}.${majStart(this.name)}?.GetType().GetProperty((string)Model.${majStart(this.type)}DisplayColumn)?.GetValue(@${minStart(className)}.${majStart(this.name)})"
       inlineLoopStatement:
       inlineDataValue:
@@ -2989,6 +3118,7 @@
             }
         }
       dataValue: "@Model.${majStart(className)}.${majStart(this.name)}"
+      dataRawValue: "@Model.${majStart(className)}.${majStart(this.name)}"
       dataForeignValue: "@Model.${majStart(className)}.${majStart(this.name)}?.GetType().GetProperty((string)Model.${majStart(this.type)}DisplayColumn)?.GetValue(@Model.${majStart(className)}.${majStart(this.name)})"
       deleteDataTagHelper: "data-id=\"@Model.${majStart(className)}.${majStart(pkColumn)}\""
       deleteLink: "asp-action=\"Delete\""
