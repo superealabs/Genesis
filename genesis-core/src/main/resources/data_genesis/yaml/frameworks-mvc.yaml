@@ -3107,6 +3107,7 @@
       name: "_Layout"
       additionalPageLink: ""
       assetsImportLink: "~/css/style.css\" asp-append-version=\"true"
+      baseHref: "{{removeLine}}"
       viewAnnotations: |
         @{
             var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
@@ -4819,13 +4820,14 @@
     viewExtension: "html"
     staticFilesPath: "/src/main/resources/static"
     viewSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/${minStart(className)}"
-    rootPath: "{{removeLine}}"
+    rootPath: "."
     backLink: "{{removeLine}}"
     previousLink: "{{removeLine}}"
     antiForgeryTokenTagHelper: "{{removeLine}}"
     layout:
       name: "base"
       additionalPageLink: "xmlns:th=\"http://www.thymeleaf.org\" xmlns:layout=\"http://www.ultraq.net.nz/thymeleaf/layout\""
+      baseHref: "<base th:href=\"@{/}\">"
       assetsImportLink: "th:href=\"@{/css/style.css}\""
       viewAnnotations: "{{removeLine}}"
       pageName:
