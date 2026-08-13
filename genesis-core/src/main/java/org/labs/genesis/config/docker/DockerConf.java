@@ -7,7 +7,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class DockerConfiguration {
+public class DockerConf {
 
     private List<Volume> volumes;
     private List<Environment> environments;

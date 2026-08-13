@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.labs.genesis.config.Constantes;
-import org.labs.genesis.config.docker.DockerConfiguration;
+import org.labs.genesis.config.docker.DockerConf;
 import org.labs.utils.FileUtils;
 
 import java.io.IOException;
@@ -24,7 +24,7 @@ public class Framework {
     private Boolean useCloud;
     private Boolean useEurekaServer;
     private Boolean isGateway;
-    private DockerConfiguration docker;
+    private DockerConf docker;
     private Boolean useGatewaySecurity;
     private Boolean useFrontendApp = true;
     private Boolean withGroupId;

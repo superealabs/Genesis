@@ -3,7 +3,7 @@
   extension: "yml"
   content : |
     services:
-      {{#if isStructure}}frontend:
+      {{#if isFrontendDockerized}}${frontendContainer}:
         build:
           context: ./${frontendDir}
           dockerfile: Dockerfile
@@ -17,7 +17,7 @@
           - ${this.name}${this.separator}${this.value}{{/each}}{{/if}}
         depends_on:
           - backend{{/if}}
-      backend:
+      {{#if isBackendDockerized}}${backendContainer}:
         build:
           context: ./${backendDir}
           dockerfile: Dockerfile
@@ -30,8 +30,8 @@
         {{#if hadEnvironments}}environment:{{#each environments}}
           - ${this.name}${this.separator}${this.value}{{/each}}{{/if}}
         extra_hosts:
-          - "host.docker.internal:host-gateway"
-    {{#if hadVolumes}}volumes:
-      {{#each volumes}}${this.name}:{{/each}}
-      {{#each frontendVolumes}}${this.name}:{{/each}}{{/if}}
+          - "host.docker.internal:host-gateway"{{/if}}
+    {{#if hadVolumes}}volumes:{{/if}}
+      {{#if isBackendDockerized}}{{#each volumes}}${this.name}:{{/each}}{{/if}}
+      {{#if isFrontendDockerized}}{{#each frontendVolumes}}${this.name}:{{/each}}{{/if}}
   destinationPath: ""

@@ -101,7 +101,7 @@
  import lombok.Setter;[m
  import lombok.ToString;[m
  import org.labs.genesis.config.Constantes;[m
-[32m+[m[32mimport org.labs.genesis.config.docker.DockerConfiguration;[m
+[32m+[m[32mimport org.labs.genesis.config.docker.DockerConf;[m
  import org.labs.utils.FileUtils;[m
  [m
  import java.io.IOException;[m
@@ -309,7 +309,7 @@
  [m
  import lombok.Getter;[m
  import lombok.Setter;[m
-[32m+[m[32mimport org.labs.genesis.config.docker.DockerConfiguration;[m
+[32m+[m[32mimport org.labs.genesis.config.docker.DockerConf;[m
  import org.labs.genesis.config.langage.FilesEdit;[m
  import org.labs.genesis.frontend.generator.model.*;[m
  [m
@@ -331,8 +331,8 @@
  [m
  import org.labs.genesis.config.Constantes;[m
 [32m+[m[32mimport org.labs.genesis.config.ProjectGenerationContext;[m
-[32m+[m[32mimport org.labs.genesis.config.docker.DockerConfiguration;[m
-[32m+[m[32mimport org.labs.genesis.config.git.GitConfiguration;[m
+[32m+[m[32mimport org.labs.genesis.config.docker.DockerConf;[m
+[32m+[m[32mimport org.labs.genesis.config.tools.GitConfiguration;[m
  import org.labs.genesis.config.langage.FilesEdit;[m
 [32m+[m[32mimport org.labs.genesis.config.langage.Framework;[m
 [32m+[m[32mimport org.labs.genesis.frontend.generator.FrontendFramework;[m

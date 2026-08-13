@@ -1,9 +1,8 @@
 package org.labs.utils;
 
-import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
-import org.labs.genesis.config.docker.DockerConfiguration;
-import org.labs.genesis.config.git.GitConfiguration;
+import org.labs.genesis.config.docker.DockerConf;
+import org.labs.genesis.config.tools.DockerConfiguration;
 import org.labs.genesis.config.langage.FilesEdit;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.frontend.generator.FrontendFramework;
@@ -19,7 +18,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class GitUtils {
 
@@ -182,11 +180,11 @@ public class GitUtils {
 
     public static Map<String, Object> getVariables(
             ProjectGenerationContext context,
-            GitConfiguration config,
+            DockerConfiguration config,
             Framework framework,
             FrontendFramework frontendFramework) {
 
-        String nodeVersion = config.getNodeVersion();
+        String nodeVersion = config.getLangVersion();
 
         String langVersion = String.valueOf(
                 context.getLanguageConfiguration()
@@ -196,22 +194,28 @@ public class GitUtils {
         String backendPort = context.getProjectPort();
         String frontendPort = context.getFrontendPort();
 
-        DockerConfiguration backendDocker =
+        boolean isBackendDockerized = config.isBackendDockerized();
+        boolean isFrontendDockerized = config.isFrontendDockerized();
+
+        String backendContainer = config.getBackendContainer();
+        String frontendContainer = config.getFrontendContainer();
+
+        DockerConf backendDocker =
                 framework != null ? framework.getDocker() : null;
 
-        DockerConfiguration frontendDocker =
+        DockerConf frontendDocker =
                 frontendFramework != null ? frontendFramework.getDocker() : null;
 
-        List<DockerConfiguration.Volume> volumes =
+        List<DockerConf.Volume> volumes =
                 getVolumes(backendDocker);
 
-        List<DockerConfiguration.Volume> frontendVolumes =
+        List<DockerConf.Volume> frontendVolumes =
                 getVolumes(frontendDocker);
 
-        List<DockerConfiguration.Environment> environments =
+        List<DockerConf.Environment> environments =
                 getEnvironments(backendDocker);
 
-        List<DockerConfiguration.Environment> frontendEnvironments =
+        List<DockerConf.Environment> frontendEnvironments =
                 getEnvironments(frontendDocker);
 
         Map<String, Object> variables = new HashMap<>();
@@ -223,39 +227,23 @@ public class GitUtils {
         variables.put("backendPort", backendPort != null ? backendPort : 8080);
         variables.put("frontendPort", frontendPort != null ? frontendPort : 4200);
         variables.put("isStructure", context.isGenerateFrontendApp());
-
-        variables.put(
-                "backendDir",
-                StringUtils.majStart(context.getProjectName())
-        );
-
-        variables.put(
-                "frontendDir",
-                StringUtils.majStart(context.getProjectName())
-                        + StringUtils.majStart(context.getWebappFolder())
-        );
-
-        variables.put(
-                "hadFrontendEnvironments",
-                !frontendEnvironments.isEmpty()
-        );
-
-        variables.put(
-                "hadEnvironments",
-                !environments.isEmpty()
-        );
-
+        variables.put("backendDir", StringUtils.majStart(context.getProjectName()));
+        variables.put( "frontendDir", StringUtils.majStart(context.getProjectName())
+                        + StringUtils.majStart(context.getWebappFolder()));
+        variables.put("hadFrontendEnvironments", !frontendEnvironments.isEmpty());
+        variables.put("hadEnvironments", !environments.isEmpty());
         variables.put("volumes", toVolumeMaps(volumes));
         variables.put("frontendVolumes", toVolumeMaps(frontendVolumes));
-        variables.put(
-                "hadVolumes",
-                !volumes.isEmpty() && !frontendVolumes.isEmpty()
-        );
+        variables.put("hadVolumes", (!volumes.isEmpty() && isBackendDockerized)
+                        || (!frontendVolumes.isEmpty() && isFrontendDockerized));
         variables.put("environments", toEnvironmentMaps(environments));
-        variables.put(
-                "frontendEnvironments",
-                toEnvironmentMaps(frontendEnvironments)
-        );
+        variables.put("frontendEnvironments", toEnvironmentMaps(frontendEnvironments));
+        variables.put("isBackendDockerized", isBackendDockerized);
+        variables.put("isFrontendDockerized", isFrontendDockerized);
+        variables.put("frontendContainer", frontendContainer != null ?
+                        frontendContainer : "frontend");
+        variables.put("backendContainer", backendContainer != null ?
+                        backendContainer : "backend");
 
         System.out.println("- @ -" + variables);
 
@@ -263,8 +251,8 @@ public class GitUtils {
     }
 
 
-    private static List<DockerConfiguration.Volume> getVolumes(
-            DockerConfiguration docker) {
+    private static List<DockerConf.Volume> getVolumes(
+            DockerConf docker) {
 
         if (docker == null || docker.getVolumes() == null) {
             return List.of();
@@ -274,8 +262,7 @@ public class GitUtils {
     }
 
 
-    private static List<DockerConfiguration.Environment> getEnvironments(
-            DockerConfiguration docker) {
+    private static List<DockerConf.Environment> getEnvironments(DockerConf docker) {
 
         if (docker == null || docker.getEnvironments() == null) {
             return List.of();
@@ -286,7 +273,7 @@ public class GitUtils {
 
 
     private static List<Map<String, Object>> toVolumeMaps(
-            List<DockerConfiguration.Volume> volumes) {
+            List<DockerConf.Volume> volumes) {
 
         return volumes.stream()
                 .map(volume -> {
@@ -302,7 +289,7 @@ public class GitUtils {
 
 
     private static List<Map<String, Object>> toEnvironmentMaps(
-            List<DockerConfiguration.Environment> environments) {
+            List<DockerConf.Environment> environments) {
 
         return environments.stream()
                 .map(environment -> {

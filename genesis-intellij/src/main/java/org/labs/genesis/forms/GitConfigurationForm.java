@@ -24,16 +24,15 @@ public class GitConfigurationForm {
     private JLabel frontendRepositoryNameLabel;
     private JTextField frontendRepositoryNameField;
 
-    private JCheckBox createRemoteRepositoryCheckBox;
-
     private JLabel githubUsernameLabel;
     private JTextField githubUsernameField;
+
+    private JCheckBox createRemoteRepositoryCheckBox;
 
     private JLabel githubTokenLabel;
     private JPasswordField githubTokenField;
 
-    // Docker
-    private JCheckBox configureDockerCheckBox;
+    private JCheckBox privateRepositoryCheckBox;
 
 
     public GitConfigurationForm() {
@@ -79,7 +78,7 @@ public class GitConfigurationForm {
 
         createRemoteRepositoryCheckBox.setSelected(false);
 
-        configureDockerCheckBox.setSelected(false);
+        privateRepositoryCheckBox.setSelected(false);
 
 
         // ---------------------------------------------------------
@@ -97,7 +96,7 @@ public class GitConfigurationForm {
 
 
         // =========================================================
-        // GIT CONFIGURATION
+        // REPOSITORY MODE
         // =========================================================
 
         repositoryModeLabel.setVisible(useGit);
@@ -107,17 +106,13 @@ public class GitConfigurationForm {
         separateRepositoriesRadioButton.setVisible(useGit);
 
 
-        // =========================================================
-        // REPOSITORY MODE
-        // =========================================================
-
         boolean separate =
                 separateRepositoriesRadioButton.isSelected();
 
 
-        // ---------------------------------------------------------
-        // Single repository
-        // ---------------------------------------------------------
+        // =========================================================
+        // SINGLE REPOSITORY
+        // =========================================================
 
         repositoryNameLabel.setVisible(
                 useGit && !separate
@@ -128,9 +123,9 @@ public class GitConfigurationForm {
         );
 
 
-        // ---------------------------------------------------------
-        // Separate repositories
-        // ---------------------------------------------------------
+        // =========================================================
+        // SEPARATE REPOSITORIES
+        // =========================================================
 
         backendRepositoryNameLabel.setVisible(
                 useGit && separate
@@ -150,28 +145,30 @@ public class GitConfigurationForm {
 
 
         // =========================================================
-        // REMOTE CONFIGURATION
-        // =========================================================
-
-        createRemoteRepositoryCheckBox.setVisible(useGit);
-
-
-        // =========================================================
         // GITHUB USERNAME
         // =========================================================
 
+        // Le username est demandé dès qu'un repository est configuré.
         githubUsernameLabel.setVisible(useGit);
 
         githubUsernameField.setVisible(useGit);
 
 
         // =========================================================
-        // GITHUB PAT
+        // REMOTE REPOSITORY
         // =========================================================
+
+        createRemoteRepositoryCheckBox.setVisible(useGit);
+
 
         boolean createRemote =
                 useGit &&
                         createRemoteRepositoryCheckBox.isSelected();
+
+
+        // =========================================================
+        // TOKEN
+        // =========================================================
 
         githubTokenLabel.setVisible(createRemote);
 
@@ -179,14 +176,14 @@ public class GitConfigurationForm {
 
 
         // =========================================================
-        // DOCKER CONFIGURATION
+        // PRIVATE REPOSITORY
         // =========================================================
 
-        configureDockerCheckBox.setVisible(true);
+        privateRepositoryCheckBox.setVisible(createRemote);
 
 
         // =========================================================
-        // REFRESH UI
+        // REFRESH
         // =========================================================
 
         mainPanel.revalidate();

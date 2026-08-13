@@ -1,84 +1,117 @@
-    package org.labs.genesis.wizards;
+package org.labs.genesis.wizards;
 
-    import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-    import com.intellij.openapi.options.ConfigurationException;
-    import org.labs.genesis.config.git.GitConfiguration;
-    import org.labs.genesis.context.GenerationContextManager;
-    import org.labs.genesis.forms.GitConfigurationForm;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.openapi.options.ConfigurationException;
+import org.labs.genesis.config.tools.GitConfiguration;
+import org.labs.genesis.context.GenerationContextManager;
+import org.labs.genesis.forms.GitConfigurationForm;
 
-    import javax.swing.*;
+import javax.swing.*;
 
-    public class GitConfigurationWizardStep extends ModuleWizardStep {
+public class GitConfigurationWizardStep extends ModuleWizardStep {
 
-        private final GitConfigurationForm form;
-        private final GenerationContextManager generationContextManager;
+    private final GitConfigurationForm form;
+    private final GenerationContextManager generationContextManager;
 
-        public GitConfigurationWizardStep(
-                GenerationContextManager generationContextManager
-        ) {
-            this.generationContextManager = generationContextManager;
-            this.form = new GitConfigurationForm();
+    public GitConfigurationWizardStep(
+            GenerationContextManager generationContextManager
+    ) {
+        this.generationContextManager = generationContextManager;
+        this.form = new GitConfigurationForm();
+    }
+
+    @Override
+    public JComponent getComponent() {
+        return form.getMainPanel();
+    }
+
+    @Override
+    public boolean isStepVisible() {
+        return generationContextManager
+                .getContext()
+                .getGenerationProcess()
+                .isGenerateProjectProcess();
+    }
+
+    @Override
+    public void updateDataModel() {
+
+        GitConfiguration config = new GitConfiguration();
+
+        // =========================================================
+        // GIT
+        // =========================================================
+
+        boolean useGit =
+                form.getUseGitCheckBox().isSelected();
+
+        config.setUseGit(useGit);
+
+        if (!useGit) {
+
+            generationContextManager
+                    .getContext()
+                    .setGitConfiguration(config);
+
+            return;
         }
 
-        @Override
-        public JComponent getComponent() {
-            return form.getMainPanel();
-        }
 
-        @Override
-        public boolean isStepVisible() {
-            return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess();
-        }
+        // =========================================================
+        // REPOSITORY STRUCTURE
+        // =========================================================
 
-        @Override
-        public void updateDataModel() {
+        boolean separate =
+                form.getSeparateRepositoriesRadioButton()
+                        .isSelected();
 
-            GitConfiguration config = new GitConfiguration();
+        config.setSeparateRepositories(separate);
 
-            config.setUseGit(
-                    form.getUseGitCheckBox().isSelected()
+
+        // =========================================================
+        // REPOSITORY NAMES
+        // =========================================================
+
+        if (separate) {
+
+            config.setBackendRepositoryName(
+                    form.getBackendRepositoryNameField()
+                            .getText()
+                            .trim()
             );
 
-            config.setUseDocker(
-                    form.getConfigureDockerCheckBox().isSelected()
+            config.setFrontendRepositoryName(
+                    form.getFrontendRepositoryNameField()
+                            .getText()
+                            .trim()
             );
 
-            if (!config.isUseGit()) {
-                generationContextManager
-                        .getContext()
-                        .setGitConfiguration(config);
+        } else {
 
-                return;
-            }
+            config.setRepositoryName(
+                    form.getRepositoryNameField()
+                            .getText()
+                            .trim()
+            );
+        }
 
-            boolean separate =
-                    form.getSeparateRepositoriesRadioButton()
-                            .isSelected();
 
-            config.setSeparateRepositories(separate);
+        // =========================================================
+        // REMOTE REPOSITORY
+        // =========================================================
 
-            if (separate) {
+        boolean createRemote =
+                form.getCreateRemoteRepositoryCheckBox()
+                        .isSelected();
 
-                config.setBackendRepositoryName(
-                        form.getBackendRepositoryNameField()
-                                .getText()
-                                .trim()
-                );
+        config.setCreateRemoteRepository(createRemote);
 
-                config.setFrontendRepositoryName(
-                        form.getFrontendRepositoryNameField()
-                                .getText()
-                                .trim()
-                );
 
-            } else {
+        if (createRemote) {
 
-                config.setRepositoryName(
-                        form.getRepositoryNameField()
-                                .getText()
-                                .trim()
-                );
-            }
+            // -----------------------------------------------------
+            // GitHub username
+            // -----------------------------------------------------
 
             config.setGithubUsername(
                     form.getGithubUsernameField()
@@ -86,143 +119,165 @@
                             .trim()
             );
 
-            boolean createRemote =
-                    form.getCreateRemoteRepositoryCheckBox()
-                            .isSelected();
 
-            config.setCreateRemoteRepository(createRemote);
+            // -----------------------------------------------------
+            // Private repository
+            // -----------------------------------------------------
 
-            if (createRemote) {
-                config.setGithubToken(
-                        new String(
-                                form.getGithubTokenField()
-                                        .getPassword()
-                        ).trim()
-                );
-            }
+            config.setRepositoryPrivate(
+                    form.getPrivateRepositoryCheckBox()
+                            .isSelected()
+            );
 
-            generationContextManager
-                    .getContext()
-                    .setGitConfiguration(config);
+
+            // -----------------------------------------------------
+            // GitHub token
+            // -----------------------------------------------------
+
+            config.setGithubToken(
+                    new String(
+                            form.getGithubTokenField()
+                                    .getPassword()
+                    ).trim()
+            );
         }
 
-        @Override
-        public boolean validate() throws ConfigurationException {
 
-            if (!form.getUseGitCheckBox().isSelected()) {
-                return true;
-            }
+        // =========================================================
+        // SAVE
+        // =========================================================
 
-            boolean separate =
-                    form.getSeparateRepositoriesRadioButton()
-                            .isSelected();
+        generationContextManager
+                .getContext()
+                .setGitConfiguration(config);
+    }
 
-            boolean createRemote =
-                    form.getCreateRemoteRepositoryCheckBox()
-                            .isSelected();
 
-            // ---------------------------------------------------------
-            // Vérification des noms de repositories
-            // ---------------------------------------------------------
+    @Override
+    public boolean validate() throws ConfigurationException {
 
-            boolean repositoryConfigured = false;
+        if (!form.getUseGitCheckBox().isSelected()) {
+            return true;
+        }
 
-            if (separate) {
 
-                String backend =
-                        form.getBackendRepositoryNameField()
-                                .getText()
-                                .trim();
+        boolean separate =
+                form.getSeparateRepositoriesRadioButton()
+                        .isSelected();
 
-                String frontend =
-                        form.getFrontendRepositoryNameField()
-                                .getText()
-                                .trim();
+        boolean createRemote =
+                form.getCreateRemoteRepositoryCheckBox()
+                        .isSelected();
 
-                // Si l'un des deux est renseigné, on considère
-                // que la configuration du repository a commencé.
-                repositoryConfigured =
-                        !backend.isEmpty() || !frontend.isEmpty();
 
-                // Si le remote est activé, les deux sont obligatoires.
-                if (createRemote) {
+        // =========================================================
+        // REPOSITORY NAMES
+        // =========================================================
 
-                    if (backend.isEmpty()) {
-                        throw new ConfigurationException(
-                                "Backend repository name cannot be empty."
-                        );
-                    }
+        boolean repositoryConfigured = false;
 
-                    if (frontend.isEmpty()) {
-                        throw new ConfigurationException(
-                                "Frontend repository name cannot be empty."
-                        );
-                    }
-                }
 
-            } else {
+        if (separate) {
 
-                String repository =
-                        form.getRepositoryNameField()
-                                .getText()
-                                .trim();
-
-                repositoryConfigured =
-                        !repository.isEmpty();
-
-                // Si le remote est activé, le repository est obligatoire.
-                if (createRemote && repository.isEmpty()) {
-
-                    throw new ConfigurationException(
-                            "Repository name cannot be empty."
-                    );
-                }
-            }
-
-            // ---------------------------------------------------------
-            // GitHub username
-            // ---------------------------------------------------------
-
-            String username =
-                    form.getGithubUsernameField()
+            String backend =
+                    form.getBackendRepositoryNameField()
                             .getText()
                             .trim();
 
-            /*
-             * Le username devient obligatoire :
-             *
-             * 1. si le remote est activé
-             * OU
-             * 2. si un repository a été renseigné.
-             */
-            if ((createRemote || repositoryConfigured)
-                    && username.isEmpty()) {
+            String frontend =
+                    form.getFrontendRepositoryNameField()
+                            .getText()
+                            .trim();
 
-                throw new ConfigurationException(
-                        "GitHub username cannot be empty."
-                );
-            }
 
-            // ---------------------------------------------------------
-            // GitHub PAT
-            // ---------------------------------------------------------
+            repositoryConfigured =
+                    !backend.isEmpty()
+                            || !frontend.isEmpty();
 
-            /*
-             * Le PAT est obligatoire uniquement lorsque
-             * le remote est activé.
-             */
+
+            // Remote => les deux sont obligatoires
             if (createRemote) {
 
-                if (form.getGithubTokenField()
-                        .getPassword()
-                        .length == 0) {
+                if (backend.isEmpty()) {
 
                     throw new ConfigurationException(
-                            "GitHub Personal Access Token cannot be empty."
+                            "Backend repository name cannot be empty."
+                    );
+                }
+
+                if (frontend.isEmpty()) {
+
+                    throw new ConfigurationException(
+                            "Frontend repository name cannot be empty."
                     );
                 }
             }
 
-            return true;
+        } else {
+
+            String repository =
+                    form.getRepositoryNameField()
+                            .getText()
+                            .trim();
+
+
+            repositoryConfigured =
+                    !repository.isEmpty();
+
+
+            if (createRemote && repository.isEmpty()) {
+
+                throw new ConfigurationException(
+                        "Repository name cannot be empty."
+                );
+            }
         }
+
+
+        // =========================================================
+        // GITHUB USERNAME
+        // =========================================================
+
+        String username =
+                form.getGithubUsernameField()
+                        .getText()
+                        .trim();
+
+
+        /*
+         * Le username est obligatoire si :
+         *
+         * - un repository est configuré
+         * OU
+         * - le remote est activé
+         */
+
+        if ((createRemote || repositoryConfigured)
+                && username.isEmpty()) {
+
+            throw new ConfigurationException(
+                    "GitHub username cannot be empty."
+            );
+        }
+
+
+        // =========================================================
+        // GITHUB TOKEN
+        // =========================================================
+
+        if (createRemote) {
+
+            if (form.getGithubTokenField()
+                    .getPassword()
+                    .length == 0) {
+
+                throw new ConfigurationException(
+                        "GitHub Personal Access Token cannot be empty."
+                );
+            }
+        }
+
+
+        return true;
     }
+}

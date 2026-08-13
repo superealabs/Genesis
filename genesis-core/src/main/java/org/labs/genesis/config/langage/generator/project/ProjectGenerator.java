@@ -2,7 +2,8 @@ package org.labs.genesis.config.langage.generator.project;
 
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
-import org.labs.genesis.config.git.GitConfiguration;
+import org.labs.genesis.config.tools.DockerConfiguration;
+import org.labs.genesis.config.tools.GitConfiguration;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.framework.APIGenerator;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
@@ -11,7 +12,6 @@ import org.labs.genesis.config.langage.generator.indicator.NoOpProgressReporter;
 import org.labs.genesis.config.langage.generator.indicator.ProgressReporter;
 import org.labs.genesis.config.langage.generator.sync.builder.GenesisContextBuilder;
 import org.labs.genesis.config.langage.generator.sync.models.GenesisContextModel;
-import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.frontend.generator.ViewsGenerator;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -330,7 +330,7 @@ public class ProjectGenerator {
                 context.getFrameworkConfiguration()
         );
         System.out.println("Generating PROJECT FILESSS 2");
-        boolean useDocker = context != null && context.getGitConfiguration() != null ? context.getGitConfiguration().isUseDocker() : false;
+        boolean useDocker = context != null && context.getDockerConfiguration() != null ? context.getDockerConfiguration().isUseDocker() : false;
         if (context.getFramework().getUseDB()) {
             if (context.getFramework().getModelDao() != null) {
                 var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName(), useDocker);
@@ -652,7 +652,7 @@ public class ProjectGenerator {
         generateProject(context, new NoOpProgressReporter());
     }
 
-    public void initGit(String path, boolean isCreateRemote, String repoName, String userName, String token) throws Exception {
+    public void initGit(String path, boolean isCreateRemote, String repoName, String userName, String token, boolean isPrivate) throws Exception {
         GitUtils.gitInit(path);
         GitUtils.gitAdd(path);
         GitUtils.gitCommit(path, "chore: Initialize project setup");
@@ -662,7 +662,7 @@ public class ProjectGenerator {
         }
 
         if(isCreateRemote) {
-            GitUtils.createRemoteRepo(token, repoName, false);
+            GitUtils.createRemoteRepo(token, repoName, isPrivate);
             GitUtils.gitPush(path, userName, token);
         }
     }
@@ -684,7 +684,7 @@ public class ProjectGenerator {
         FilesEdit backendGitIgnoreFile = GitUtils.get(framework.getConditionalFiles(), ".gitignore");
 
         GitUtils.generateGitIgnoreIfNeeded(backendGitIgnoreFile, backendPath);
-        if(context.isGenerateProjectStructure()) {
+        if(context.isGenerateFrontendApp()) {
             if (frontendFramework == null) return;
             FilesEdit frontendGitIgnoreFile = GitUtils.get(frontendFramework.getConditionalFiles(), ".gitignore");
             GitUtils.generateGitIgnoreIfNeeded(frontendGitIgnoreFile, frontendPath);
@@ -692,19 +692,19 @@ public class ProjectGenerator {
 
         if(config.isSeparateRepositories()) {
             initGit(backendPath, config.isCreateRemoteRepository(), config.getBackendRepositoryName(),
-                        config.getGithubUsername(), config.getGithubToken());
+                        config.getGithubUsername(), config.getGithubToken(), config.isRepositoryPrivate());
             if(context.isGenerateFrontendApp()) {
                 initGit(frontendPath, config.isCreateRemoteRepository(), config.getFrontendRepositoryName(),
-                        config.getGithubUsername(), config.getGithubToken());
+                        config.getGithubUsername(), config.getGithubToken(), config.isRepositoryPrivate());
             }
         } else {
             initGit(projectPath, config.isCreateRemoteRepository(), config.getRepositoryName(),
-                    config.getGithubUsername(), config.getGithubToken());
+                    config.getGithubUsername(), config.getGithubToken(), config.isRepositoryPrivate());
         }
     }
 
     public void addDockerConfiguration(ProjectGenerationContext context) throws Exception {
-        GitConfiguration config = context.getGitConfiguration();
+        DockerConfiguration config = context.getDockerConfiguration();
         if(!config.isUseDocker()) return;
 
         Framework framework = context.getFramework();
