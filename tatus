@@ -1,0 +1,1164 @@
+[1mdiff --git a/genesis-core/src/main/java/org/labs/genesis/config/Constantes.java b/genesis-core/src/main/java/org/labs/genesis/config/Constantes.java[m
+[1mindex eb7595ec..f0beb57e 100644[m
+[1m--- a/genesis-core/src/main/java/org/labs/genesis/config/Constantes.java[m
+[1m+++ b/genesis-core/src/main/java/org/labs/genesis/config/Constantes.java[m
+[36m@@ -5,6 +5,7 @@[m [mpublic class Constantes {[m
+     public static final String LANGUAGE_JSON = "data_genesis/json/languages.json";[m
+     public static final String INPUT_TYPE_MAPPING_JSON = "data_genesis/json/input-type-mapping.json";[m
+     public static final String LLM_API_CONFIG_JSON = "data_genesis/json/llm-api-config.json";[m
+[32m+[m[32m    public static final String DOCKER_CONF_YAML = "data_genesis/yaml/docker-configuration.yaml";[m
+     public static final String FRAMEWORK_YAML = "data_genesis/yaml/frameworks.yaml";[m
+     public static final String FRAMEWORK_MVC_YAML = "data_genesis/yaml/frameworks-mvc.yaml";[m
+     public static final String PROJECT_YAML = "data_genesis/yaml/projects.yaml";[m
+[1mdiff --git a/genesis-core/src/main/java/org/labs/genesis/config/docker/DockerConfiguration.java b/genesis-core/src/main/java/org/labs/genesis/config/docker/DockerConfiguration.java[m
+[1mindex d3d18c93..93d7800b 100644[m
+[1m--- a/genesis-core/src/main/java/org/labs/genesis/config/docker/DockerConfiguration.java[m
+[1m+++ b/genesis-core/src/main/java/org/labs/genesis/config/docker/DockerConfiguration.java[m
+[36m@@ -5,19 +5,50 @@[m [mimport lombok.Setter;[m
+ [m
+ import java.util.List;[m
+ [m
+[31m-@Setter[m
+ @Getter[m
+[32m+[m[32m@Setter[m
+ public class DockerConfiguration {[m
+[31m-    String fileType;[m
+[31m-    String fileName;[m
+[31m-    String extension;[m
+[31m-    String content;[m
+[31m-    String destinationPath;[m
+[31m-[m
+[31m-    static DockerConfiguration get(List<DockerConfiguration> config, String fileType) {[m
+[31m-        return config.stream()[m
+[31m-                .filter(docker -> fileType.equals(docker.getFileType()))[m
+[31m-                .findFirst()[m
+[31m-                .orElse(null);[m
+[32m+[m
+[32m+[m[32m    private List<Volume> volumes;[m
+[32m+[m[32m    private List<Environment> environments;[m
+[32m+[m
+[32m+[m[32m    @Getter[m
+[32m+[m[32m    @Setter[m
+[32m+[m[32m    public static class Volume {[m
+[32m+[m[32m        private String name;[m
+[32m+[m[32m        private String dir;[m
+[32m+[m
+[32m+[m[32m        @Override[m
+[32m+[m[32m        public String toString() {[m
+[32m+[m[32m            return "Volume{" +[m
+[32m+[m[32m                    "name='" + name + '\'' +[m
+[32m+[m[32m                    ", dir='" + dir + '\'' +[m
+[32m+[m[32m                    '}';[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Getter[m
+[32m+[m[32m    @Setter[m
+[32m+[m[32m    public static class Environment {[m
+[32m+[m[32m        private String name;[m
+[32m+[m[32m        private String separator;[m
+[32m+[m[32m        private String value;[m
+[32m+[m
+[32m+[m[32m        @Override[m
+[32m+[m[32m        public String toString() {[m
+[32m+[m[32m            return "Environment{" +[m
+[32m+[m[32m                    "name='" + name + '\'' +[m
+[32m+[m[32m                    ", separator='" + separator + '\'' +[m
+[32m+[m[32m                    ", value='" + value + '\'' +[m
+[32m+[m[32m                    '}';[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public String toString() {[m
+[32m+[m[32m        return "DockerConfiguration{" +[m
+[32m+[m[32m                "volumes=" + volumes +[m
+[32m+[m[32m                ", environments=" + environments +[m
+[32m+[m[32m                '}';[m
+     }[m
+[31m-}[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/genesis-core/src/main/java/org/labs/genesis/config/git/GitConfiguration.java b/genesis-core/src/main/java/org/labs/genesis/config/git/GitConfiguration.java[m
+[1mindex 40a16823..f5d52473 100644[m
+[1m--- a/genesis-core/src/main/java/org/labs/genesis/config/git/GitConfiguration.java[m
+[1m+++ b/genesis-core/src/main/java/org/labs/genesis/config/git/GitConfiguration.java[m
+[36m@@ -22,4 +22,8 @@[m [mpublic class GitConfiguration {[m
+     private String githubUsername;[m
+ [m
+     private String githubToken;[m
+[32m+[m
+[32m+[m[32m    private String nodeVersion;[m
+[32m+[m
+[32m+[m[32m    private boolean useDocker;[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/genesis-core/src/main/java/org/labs/genesis/config/langage/Framework.java b/genesis-core/src/main/java/org/labs/genesis/config/langage/Framework.java[m
+[1mindex 1b720847..6fa0a8f2 100644[m
+[1m--- a/genesis-core/src/main/java/org/labs/genesis/config/langage/Framework.java[m
+[1m+++ b/genesis-core/src/main/java/org/labs/genesis/config/langage/Framework.java[m
+[36m@@ -4,6 +4,7 @@[m [mimport lombok.Getter;[m
+ import lombok.Setter;[m
+ import lombok.ToString;[m
+ import org.labs.genesis.config.Constantes;[m
+[32m+[m[32mimport org.labs.genesis.config.docker.DockerConfiguration;[m
+ import org.labs.utils.FileUtils;[m
+ [m
+ import java.io.IOException;[m
+[36m@@ -22,6 +23,7 @@[m [mpublic class Framework {[m
+     private Boolean useCloud;[m
+     private Boolean useEurekaServer;[m
+     private Boolean isGateway;[m
+[32m+[m[32m    private DockerConfiguration docker;[m
+     private Boolean useGatewaySecurity;[m
+     private Boolean useFrontendApp = true;[m
+     private Boolean withGroupId;[m
+[1mdiff --git a/genesis-core/src/main/java/org/labs/genesis/config/langage/generator/framework/FrameworkMetadataProvider.java b/genesis-core/src/main/java/org/labs/genesis/config/langage/generator/framework/FrameworkMetadataProvider.java[m
+[1mindex 1d0088de..0c3a5bb7 100644[m
+[1m--- a/genesis-core/src/main/java/org/labs/genesis/config/langage/generator/framework/FrameworkMetadataProvider.java[m
+[1m+++ b/genesis-core/src/main/java/org/labs/genesis/config/langage/generator/framework/FrameworkMetadataProvider.java[m
+[36m@@ -24,6 +24,7 @@[m [mpublic class FrameworkMetadataProvider {[m
+         Credentials credentials = database.getCredentials();[m
+ [m
+         Map<String, Object> map = new HashMap<>();[m
+[32m+[m
+         map.put("host", credentials.getHost());[m
+         map.put("port", credentials.getPort());[m
+         map.put("database", credentials.getDatabaseName());[m
+[36m@@ -585,7 +586,7 @@[m [mpublic class FrameworkMetadataProvider {[m
+         return fieldMap;[m
+     }[m
+ [m
+[31m-    public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName) throws Exception {[m
+[32m+[m[32m    public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName, boolean useDocker) throws Exception {[m
+         String packageDefault = "";[m
+         if (framework.getModelDao() == null) {[m
+             throw new RuntimeException("ModelDao is not configured for framework: " + framework.getName());[m
+[36m@@ -599,10 +600,12 @@[m [mpublic class FrameworkMetadataProvider {[m
+ [m
+         String connectionString = database.getConnectionString().get(framework.getLanguageId());[m
+         Map<String, Object> connectionStringMetadata = getCredentialsHashMap(database);[m
+[31m-        if(database.getId() == Constantes.Oracle_ID)[m
+[31m-        {[m
+[32m+[m[32m        if(database.getId() == Constantes.Oracle_ID) {[m
+             connectionStringMetadata.put("database",database.getSid().toLowerCase());[m
+         }[m
+[32m+[m[32m        if(useDocker && "localhost".equalsIgnoreCase(String.valueOf(connectionStringMetadata.get("host")))) {[m
+[32m+[m[32m            connectionStringMetadata.put("host", "host.docker.internal");[m
+[32m+[m[32m        }[m
+         connectionString = engine.render(connectionString, connectionStringMetadata);[m
+         System.out.println("Renderedeee");[m
+ [m
+[1mdiff --git a/genesis-core/src/main/java/org/labs/genesis/config/langage/generator/project/ProjectGenerator.java b/genesis-core/src/main/java/org/labs/genesis/config/langage/generator/project/ProjectGenerator.java[m
+[1mindex 6c109541..98da24ab 100644[m
+[1m--- a/genesis-core/src/main/java/org/labs/genesis/config/langage/generator/project/ProjectGenerator.java[m
+[1m+++ b/genesis-core/src/main/java/org/labs/genesis/config/langage/generator/project/ProjectGenerator.java[m
+[36m@@ -30,6 +30,9 @@[m [mimport org.labs.utils.StringUtils;[m
+ [m
+ import java.io.File;[m
+ import java.io.IOException;[m
+[32m+[m[32mimport java.nio.file.Files;[m
+[32m+[m[32mimport java.nio.file.Path;[m
+[32m+[m[32mimport java.nio.file.Paths;[m
+ import java.sql.Connection;[m
+ import java.util.*;[m
+ import java.util.stream.Collectors;[m
+[36m@@ -50,6 +53,7 @@[m [mpublic class ProjectGenerator {[m
+     public static final Map<Integer, FrontendLanguage> frontendLanguage;[m
+     public static final Map<Integer, FrontendFramework> frontendFrameworks;[m
+     public static final Map<Integer, InterfaceLang> langs;[m
+[32m+[m[32m    public static final Map<String, FilesEdit> dockerConfs;[m
+ [m
+     static {[m
+         try {[m
+[36m@@ -64,6 +68,9 @@[m [mpublic class ProjectGenerator {[m
+             projects = Arrays.stream(FileUtils.fromYaml(Project[].class, Constantes.PROJECT_YAML))[m
+                     .collect(Collectors.toMap(Project::getId, project -> project));[m
+ [m
+[32m+[m[32m            dockerConfs = Arrays.stream(FileUtils.fromYaml(FilesEdit[].class, Constantes.DOCKER_CONF_YAML))[m
+[32m+[m[32m                    .collect(Collectors.toMap(FilesEdit::getFileName, dockerConf -> dockerConf));[m
+[32m+[m
+             frameworks = Arrays.stream(FileUtils.fromYaml(Framework[].class, Constantes.FRAMEWORK_YAML))[m
+                     .peek(framework -> {[m
+                         try {[m
+[36m@@ -322,10 +329,10 @@[m [mpublic class ProjectGenerator {[m
+                 context.getFrameworkConfiguration()[m
+         );[m
+         System.out.println("Generating PROJECT FILESSS 2");[m
+[31m-[m
+[32m+[m[32m        boolean useDocker = context != null && context.getGitConfiguration() != null ? context.getGitConfiguration().isUseDocker() : false;[m
+         if (context.getFramework().getUseDB()) {[m
+             if (context.getFramework().getModelDao() != null) {[m
+[31m-                var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());[m
+[32m+[m[32m                var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName(), useDocker);[m
+                 projectFilesEditsHashMap.putAll(mapDaoGlobal);[m
+             } else {[m
+                 // For frameworks without ModelDao (like Django), still generate entitiesImports and entitiesAll[m
+[36m@@ -656,9 +663,7 @@[m [mpublic class ProjectGenerator {[m
+         }[m
+ [m
+         if(isCreateRemote) {[m
+[31m-            try {[m
+[31m-                GitUtils.createRemoteRepo(token, repoName, false);[m
+[31m-            } catch (Exception e) {}[m
+[32m+[m[32m            GitUtils.createRemoteRepo(token, repoName, false);[m
+             GitUtils.gitPush(path, userName, token);[m
+         }[m
+     }[m
+[36m@@ -669,32 +674,27 @@[m [mpublic class ProjectGenerator {[m
+ [m
+         Framework framework = context.getFramework();[m
+         FrontendFramework frontendFramework = context.getFrontendFramework();[m
+[31m-        if (framework == null) {[m
+[31m-            return;[m
+[31m-        }[m
+[32m+[m[32m        if (framework == null) return;[m
+[32m+[m
+[32m+[m[32m        Map<String, Object> variables = Map.of("projectName", context.getProjectName(), "destinationFolder", context.getDestinationFolder());[m
+ [m
+[31m-        String projectPath = engine.simpleRender(context.getDestinationFolder(), Map.of("projectName", context.getProjectName()));[m
+[32m+[m[32m        String projectPath = engine.simpleRender(context.getDestinationFolder(), variables);[m
+[32m+[m[32m        String backendPath = projectPath + "/" + StringUtils.majStart(context.getProjectName());[m
+         String frontendPath = FrameworkFrontendMetadataProvider.getWebappFolder(context);[m
+ [m
+[31m-        FilesEdit backendGitIgnoreFile = GitUtils.getGitIgnore(framework.getConditionalFiles());[m
+[31m-        String backendPath = backendGitIgnoreFile != null ? engine.simpleRender(backendGitIgnoreFile.getDestinationPath(),[m
+[31m-                Map.of("projectName", context.getProjectName(), "destinationFolder", context.getDestinationFolder()))[m
+[31m-            : projectPath + "/" + StringUtils.majStart(context.getProjectName());[m
+[32m+[m[32m        FilesEdit backendGitIgnoreFile = GitUtils.get(framework.getConditionalFiles(), ".gitignore");[m
+ [m
+         GitUtils.generateGitIgnoreIfNeeded(backendGitIgnoreFile, backendPath);[m
+[31m-[m
+         if(context.isGenerateProjectStructure()) {[m
+[31m-            if (frontendFramework == null) {[m
+[31m-                return;[m
+[31m-            }[m
+[31m-            FilesEdit frontendGitIgnoreFile = GitUtils.getGitIgnore(frontendFramework.getConditionalFiles());[m
+[32m+[m[32m            if (frontendFramework == null) return;[m
+[32m+[m[32m            FilesEdit frontendGitIgnoreFile = GitUtils.get(frontendFramework.getConditionalFiles(), ".gitignore");[m
+             GitUtils.generateGitIgnoreIfNeeded(frontendGitIgnoreFile, frontendPath);[m
+         }[m
+ [m
+         if(config.isSeparateRepositories()) {[m
+             initGit(backendPath, config.isCreateRemoteRepository(), config.getBackendRepositoryName(),[m
+                         config.getGithubUsername(), config.getGithubToken());[m
+[31m-            if(context.isGenerateProjectStructure()) {[m
+[32m+[m[32m            if(context.isGenerateFrontendApp()) {[m
+                 initGit(frontendPath, config.isCreateRemoteRepository(), config.getFrontendRepositoryName(),[m
+                         config.getGithubUsername(), config.getGithubToken());[m
+             }[m
+[36m@@ -704,6 +704,45 @@[m [mpublic class ProjectGenerator {[m
+         }[m
+     }[m
+ [m
+[32m+[m[32m    public void addDockerConfiguration(ProjectGenerationContext context) throws Exception {[m
+[32m+[m[32m        GitConfiguration config = context.getGitConfiguration();[m
+[32m+[m[32m        if(!config.isUseDocker()) return;[m
+[32m+[m
+[32m+[m[32m        Framework framework = context.getFramework();[m
+[32m+[m[32m        FrontendFramework frontendFramework = context.getFrontendFramework();[m
+[32m+[m[32m        if (framework == null) return;[m
+[32m+[m
+[32m+[m[32m        Map<String, Object> variables = GitUtils.getVariables(context, config, framework, frontendFramework);[m
+[32m+[m
+[32m+[m[32m        String projectPath = engine.simpleRender(context.getDestinationFolder(), variables);[m
+[32m+[m[32m        String backendPath = projectPath + "/" + StringUtils.majStart(context.getProjectName());[m
+[32m+[m[32m        String frontendPath = FrameworkFrontendMetadataProvider.getWebappFolder(context);[m
+[32m+[m
+[32m+[m[32m        FilesEdit dockerCompose = dockerConfs.get("docker-compose");[m
+[32m+[m[32m        String dockerComposeContent = engine.render(dockerCompose.getContent(), variables);[m
+[32m+[m[32m        Path dockerComposePath = Paths.get(projectPath,[m
+[32m+[m[32m                dockerCompose.getFileName() + "." + dockerCompose.getExtension());[m
+[32m+[m[32m        Files.writeString(dockerComposePath, dockerComposeContent);[m
+[32m+[m
+[32m+[m[32m        FilesEdit backendDockerFile = GitUtils.get([m
+[32m+[m[32m                framework.getConditionalFiles(), "DockerFile");[m
+[32m+[m[32m        String backendDockerFileContent = engine.simpleRender([m
+[32m+[m[32m                backendDockerFile != null ? backendDockerFile.getContent() : "", variables);[m
+[32m+[m[32m        Path backendDockerFilePath = Paths.get(backendPath, backendDockerFile != null ? backendDockerFile.getFileName() : "");[m
+[32m+[m[32m        Files.writeString(backendDockerFilePath, backendDockerFileContent);[m
+[32m+[m
+[32m+[m[32m        if(context.isGenerateFrontendApp()) {[m
+[32m+[m[32m            if(frontendFramework == null) return;[m
+[32m+[m[32m            FilesEdit frontendDockerFile = GitUtils.get([m
+[32m+[m[32m                    frontendFramework.getConditionalFiles(), "DockerFile");[m
+[32m+[m[32m            String frontendDockerFileContent = engine.simpleRender([m
+[32m+[m[32m                    frontendDockerFile != null ? frontendDockerFile.getContent() : "", variables);[m
+[32m+[m[32m            Path frontendDockerFilePath = Paths.get([m
+[32m+[m[32m                    frontendPath, frontendDockerFile.getFileName());[m
+[32m+[m[32m            Files.writeString(frontendDockerFilePath, frontendDockerFileContent);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+     public void generateProject(ProjectGenerationContext context, ProgressReporter indicator) throws Exception {[m
+         if (context.isGenerateProjectStructure()) {[m
+             generateFullProject(context, indicator);[m
+[36m@@ -712,6 +751,7 @@[m [mpublic class ProjectGenerator {[m
+             generateComponentsOnly(context, indicator);[m
+         }[m
+         initGit(context);[m
+[32m+[m[32m        addDockerConfiguration(context);[m
+     }[m
+     private  void generateFullBackendProject(ProjectGenerationContext context, List<TableMetadata> entities, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {[m
+         GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);[m
+[1mdiff --git a/genesis-core/src/main/java/org/labs/genesis/frontend/generator/FrontendFramework.java b/genesis-core/src/main/java/org/labs/genesis/frontend/generator/FrontendFramework.java[m
+[1mindex 9ad94ead..78f293e8 100644[m
+[1m--- a/genesis-core/src/main/java/org/labs/genesis/frontend/generator/FrontendFramework.java[m
+[1m+++ b/genesis-core/src/main/java/org/labs/genesis/frontend/generator/FrontendFramework.java[m
+[36m@@ -2,6 +2,7 @@[m [mpackage org.labs.genesis.frontend.generator;[m
+ [m
+ import lombok.Getter;[m
+ import lombok.Setter;[m
+[32m+[m[32mimport org.labs.genesis.config.docker.DockerConfiguration;[m
+ import org.labs.genesis.config.langage.FilesEdit;[m
+ import org.labs.genesis.frontend.generator.model.*;[m
+ [m
+[36m@@ -34,7 +35,7 @@[m [mpublic class FrontendFramework[m
+     private List<FilesEdit> mereFiles = new ArrayList<>();[m
+     private List<FilesEdit> filleFiles = new ArrayList<>();[m
+     private String defaultPort = "9000" ;[m
+[31m-[m
+[32m+[m[32m    private DockerConfiguration docker;[m
+ [m
+     public  FrontendFramework(){[m
+         setProjectBranding(new ProjectBranding());[m
+[1mdiff --git a/genesis-core/src/main/java/org/labs/utils/GitUtils.java b/genesis-core/src/main/java/org/labs/utils/GitUtils.java[m
+[1mindex 7ae7990e..761dfa42 100644[m
+[1m--- a/genesis-core/src/main/java/org/labs/utils/GitUtils.java[m
+[1m+++ b/genesis-core/src/main/java/org/labs/utils/GitUtils.java[m
+[36m@@ -1,7 +1,12 @@[m
+ package org.labs.utils;[m
+ [m
+ import org.labs.genesis.config.Constantes;[m
+[32m+[m[32mimport org.labs.genesis.config.ProjectGenerationContext;[m
+[32m+[m[32mimport org.labs.genesis.config.docker.DockerConfiguration;[m
+[32m+[m[32mimport org.labs.genesis.config.git.GitConfiguration;[m
+ import org.labs.genesis.config.langage.FilesEdit;[m
+[32m+[m[32mimport org.labs.genesis.config.langage.Framework;[m
+[32m+[m[32mimport org.labs.genesis.frontend.generator.FrontendFramework;[m
+ [m
+ import java.io.IOException;[m
+ import java.net.URI;[m
+[36m@@ -11,7 +16,9 @@[m [mimport java.net.http.HttpResponse;[m
+ import java.nio.file.Files;[m
+ import java.nio.file.Path;[m
+ import java.nio.file.Paths;[m
+[32m+[m[32mimport java.util.HashMap;[m
+ import java.util.List;[m
+[32m+[m[32mimport java.util.Map;[m
+ import java.util.Optional;[m
+ [m
+ public class GitUtils {[m
+[36m@@ -168,24 +175,153 @@[m [mpublic class GitUtils {[m
+     ) throws IOException {[m
+         if (gitIgnoreFile != null) {[m
+             String content = gitIgnoreFile.getContent() == null ? "" : gitIgnoreFile.getContent();[m
+[31m-            Path gitIgnoreTarget = Paths.get(destinationPath, ".gitignore");[m
+[31m-            FileUtils.createFileStructure(destinationPath);[m
+[32m+[m[32m            Path gitIgnoreTarget = Paths.get(destinationPath, gitIgnoreFile.getFileName());[m
+             Files.writeString(gitIgnoreTarget, content);[m
+         }[m
+     }[m
+ [m
+[31m-    public static  FilesEdit getGitIgnore(List<FilesEdit> conditionalFiles) {[m
+[31m-        Optional<FilesEdit> gitIgnoreFile = conditionalFiles != null[m
+[31m-                ? conditionalFiles.stream()[m
+[31m-                .filter(file -> file != null && file.getFileName() != null)[m
+[31m-                .filter(file -> file.getFileName().equalsIgnoreCase(".gitignore") || file.getFileName().equalsIgnoreCase("gitignore"))[m
+[31m-                .findFirst()[m
+[31m-                : null;[m
+[32m+[m[32m    public static Map<String, Object> getVariables([m
+[32m+[m[32m            ProjectGenerationContext context,[m
+[32m+[m[32m            GitConfiguration config,[m
+[32m+[m[32m            Framework framework,[m
+[32m+[m[32m            FrontendFramework frontendFramework) {[m
+[32m+[m
+[32m+[m[32m        String nodeVersion = config.getNodeVersion();[m
+[32m+[m
+[32m+[m[32m        String langVersion = String.valueOf([m
+[32m+[m[32m                context.getLanguageConfiguration()[m
+[32m+[m[32m                        .getOrDefault("languageVersion", 21)[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        String backendPort = context.getProjectPort();[m
+[32m+[m[32m        String frontendPort = context.getFrontendPort();[m
+[32m+[m
+[32m+[m[32m        DockerConfiguration backendDocker =[m
+[32m+[m[32m                framework != null ? framework.getDocker() : null;[m
+[32m+[m
+[32m+[m[32m        DockerConfiguration frontendDocker =[m
+[32m+[m[32m                frontendFramework != null ? frontendFramework.getDocker() : null;[m
+[32m+[m
+[32m+[m[32m        List<DockerConfiguration.Volume> volumes =[m
+[32m+[m[32m                getVolumes(backendDocker);[m
+[32m+[m
+[32m+[m[32m        List<DockerConfiguration.Volume> frontendVolumes =[m
+[32m+[m[32m                getVolumes(frontendDocker);[m
+[32m+[m
+[32m+[m[32m        List<DockerConfiguration.Environment> environments =[m
+[32m+[m[32m                getEnvironments(backendDocker);[m
+[32m+[m
+[32m+[m[32m        List<DockerConfiguration.Environment> frontendEnvironments =[m
+[32m+[m[32m                getEnvironments(frontendDocker);[m
+[32m+[m
+[32m+[m[32m        Map<String, Object> variables = new HashMap<>();[m
+[32m+[m
+[32m+[m[32m        variables.put("projectName", context.getProjectName());[m
+[32m+[m[32m        variables.put("destinationFolder", context.getDestinationFolder());[m
+[32m+[m[32m        variables.put("versionNode", nodeVersion != null ? nodeVersion : 22);[m
+[32m+[m[32m        variables.put("versionLanguage", langVersion);[m
+[32m+[m[32m        variables.put("backendPort", backendPort != null ? backendPort : 8080);[m
+[32m+[m[32m        variables.put("frontendPort", frontendPort != null ? frontendPort : 4200);[m
+[32m+[m[32m        variables.put("isStructure", context.isGenerateFrontendApp());[m
+ [m
+[31m-        if(gitIgnoreFile != null && gitIgnoreFile.isPresent())[m
+[31m-            return  gitIgnoreFile.get();[m
+[32m+[m[32m        variables.put([m
+[32m+[m[32m                "backendDir",[m
+[32m+[m[32m                StringUtils.majStart(context.getProjectName())[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        variables.put([m
+[32m+[m[32m                "frontendDir",[m
+[32m+[m[32m                StringUtils.majStart(context.getProjectName())[m
+[32m+[m[32m                        + StringUtils.majStart(context.getWebappFolder())[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        variables.put([m
+[32m+[m[32m                "hadFrontendEnvironments",[m
+[32m+[m[32m                !frontendEnvironments.isEmpty()[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        variables.put([m
+[32m+[m[32m                "hadEnvironments",[m
+[32m+[m[32m                !environments.isEmpty()[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        variables.put("volumes", toVolumeMaps(volumes));[m
+[32m+[m[32m        variables.put("frontendVolumes", toVolumeMaps(frontendVolumes));[m
+[32m+[m[32m        variables.put([m
+[32m+[m[32m                "hadVolumes",[m
+[32m+[m[32m                !volumes.isEmpty() && !frontendVolumes.isEmpty()[m
+[32m+[m[32m        );[m
+[32m+[m[32m        variables.put("environments", toEnvironmentMaps(environments));[m
+[32m+[m[32m        variables.put([m
+[32m+[m[32m                "frontendEnvironments",[m
+[32m+[m[32m                toEnvironmentMaps(frontendEnvironments)[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        System.out.println("- @ -" + variables);[m
+[32m+[m
+[32m+[m[32m        return variables;[m
+[32m+[m[32m    }[m
+ [m
+[31m-        return null;[m
+[32m+[m
+[32m+[m[32m    private static List<DockerConfiguration.Volume> getVolumes([m
+[32m+[m[32m            DockerConfiguration docker) {[m
+[32m+[m
+[32m+[m[32m        if (docker == null || docker.getVolumes() == null) {[m
+[32m+[m[32m            return List.of();[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        return docker.getVolumes();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    private static List<DockerConfiguration.Environment> getEnvironments([m
+[32m+[m[32m            DockerConfiguration docker) {[m
+[32m+[m
+[32m+[m[32m        if (docker == null || docker.getEnvironments() == null) {[m
+[32m+[m[32m            return List.of();[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        return docker.getEnvironments();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    private static List<Map<String, Object>> toVolumeMaps([m
+[32m+[m[32m            List<DockerConfiguration.Volume> volumes) {[m
+[32m+[m
+[32m+[m[32m        return volumes.stream()[m
+[32m+[m[32m                .map(volume -> {[m
+[32m+[m[32m                    Map<String, Object> map = new HashMap<>();[m
+[32m+[m
+[32m+[m[32m                    map.put("name", volume.getName());[m
+[32m+[m[32m                    map.put("dir", volume.getDir());[m
+[32m+[m
+[32m+[m[32m                    return map;[m
+[32m+[m[32m                })[m
+[32m+[m[32m                .toList();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    private static List<Map<String, Object>> toEnvironmentMaps([m
+[32m+[m[32m            List<DockerConfiguration.Environment> environments) {[m
+[32m+[m
+[32m+[m[32m        return environments.stream()[m
+[32m+[m[32m                .map(environment -> {[m
+[32m+[m[32m                    Map<String, Object> map = new HashMap<>();[m
+[32m+[m
+[32m+[m[32m                    map.put("name", environment.getName());[m
+[32m+[m[32m                    map.put("separator", environment.getSeparator());[m
+[32m+[m[32m                    map.put("value", environment.getValue());[m
+[32m+[m
+[32m+[m[32m                    return map;[m
+[32m+[m[32m                })[m
+[32m+[m[32m                .toList();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    public static  FilesEdit get(List<FilesEdit> conditionalFiles, String fileName) {[m
+[32m+[m[32m        return conditionalFiles != null ? conditionalFiles.stream()[m
+[32m+[m[32m                .filter(file -> file != null && file.getFileName() != null)[m
+[32m+[m[32m                .filter(file -> file.getFileName().equalsIgnoreCase(fileName))[m
+[32m+[m[32m                .findFirst().orElse(null) : null;[m
+     }[m
+ [m
+     /**[m
+[1mdiff --git a/genesis-core/src/main/resources/data_genesis/frontend/yaml/framework_frontend.yaml b/genesis-core/src/main/resources/data_genesis/frontend/yaml/framework_frontend.yaml[m
+[1mindex 3a59d32a..486bfd5f 100644[m
+[1m--- a/genesis-core/src/main/resources/data_genesis/frontend/yaml/framework_frontend.yaml[m
+[1m+++ b/genesis-core/src/main/resources/data_genesis/frontend/yaml/framework_frontend.yaml[m
+[36m@@ -6,6 +6,11 @@[m
+   initPath: "angular/angular-skeletoon"[m
+   componentExtension: "ts"[m
+   defaultPort: "4200"[m
+[32m+[m[32m  docker:[m
+[32m+[m[32m    volumes:[m
+[32m+[m[32m      - name: "angular_node_modules"[m
+[32m+[m[32m        dir: "/app/node_modules"[m
+[32m+[m[32m    environments: [][m
+   frontendPaths:[m
+     faviconPath: "${destinationFolder}/src"[m
+     logoPath: "${destinationFolder}/src/assets/icon"[m
+[36m@@ -81,7 +86,7 @@[m
+                 }[m
+ [m
+ [m
+[31m-                onLogoError() {[m
+[32m+[m[32m                onLogoError() {Docker[m
+                   this.logoAvailable = false;[m
+                 }[m
+ [m
+[36m@@ -555,12 +560,12 @@[m
+ [m
+         .DS_Store[m
+         Thumbs.db[m
+[31m-      destinationPath: "${destinationFolder}/"[m
+[32m+[m[32m      destinationPath: ""[m
+     - fileType: "Docker File"[m
+[31m-      fileName: ""[m
+[32m+[m[32m      fileName: "Dockerfile"[m
+       extension: ""[m
+       content: |[m
+[31m-        FROM node:22-alpine[m
+[32m+[m[32m        FROM node:${versionNode}-alpine[m
+   [m
+         WORKDIR /app[m
+         [m
+[36m@@ -568,8 +573,6 @@[m
+         [m
+         RUN npm ci[m
+         [m
+[31m-        COPY . .[m
+[31m-        [m
+         EXPOSE ${frontendPort}[m
+         [m
+         CMD ["npm", "start", "--", "--host", "0.0.0.0"][m
+[36m@@ -1994,6 +1997,11 @@[m
+   initPath: "vue/vue-3-ts-skeletoon"[m
+   componentExtension: "vue"[m
+   defaultPort: "5173"[m
+[32m+[m[32m  docker:[m
+[32m+[m[32m    volumes:[m
+[32m+[m[32m      - name: "vue_node_modules"[m
+[32m+[m[32m        dir: "/app/node_modules"[m
+[32m+[m[32m    environments: [][m
+   conditionalFiles:[m
+     - fileType: "Git Ignore"[m
+       fileName: ".gitignore"[m
+[36m@@ -2021,7 +2029,24 @@[m
+ [m
+         .DS_Store[m
+         Thumbs.db[m
+[31m-      destinationPath: "${destinationFolder}/"[m
+[32m+[m[32m      destinationPath: ""[m
+[32m+[m[32m    - fileType: "Docker"[m
+[32m+[m[32m      fileName: "Dockerfile"[m
+[32m+[m[32m      extension: ""[m
+[32m+[m[32m      content: |[m
+[32m+[m[32m        FROM node:${versionNode}[m
+[32m+[m[41m  [m
+[32m+[m[32m        WORKDIR /app[m
+[32m+[m[41m        [m
+[32m+[m[32m        COPY package*.json ./[m
+[32m+[m[41m        [m
+[32m+[m[32m        RUN npm install[m
+[32m+[m[41m        [m
+[32m+[m[32m        EXPOSE ${frontendPort}[m
+[32m+[m[41m        [m
+[32m+[m[32m        CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"][m
+[32m+[m[32m      destinationPath: ""[m
+[32m+[m
+   frontendPaths:[m
+     faviconPath: "${destinationFolder}/public"[m
+     logoPath: "${destinationFolder}/src/assets/images"[m
+[36m@@ -7408,6 +7433,11 @@[m
+   initPath: "react/react-ts-skeletoon"[m
+   componentExtension: "tsx"[m
+   defaultPort: "3000"[m
+[32m+[m[32m  docker:[m
+[32m+[m[32m    volumes:[m
+[32m+[m[32m      - name: "react_node_modules"[m
+[32m+[m[32m        dir: "/app/node_modules"[m
+[32m+[m[32m    environments: [][m
+   conditionalFiles:[m
+     - fileType: "Git Ignore"[m
+       fileName: ".gitignore"[m
+[36m@@ -7434,7 +7464,24 @@[m
+ [m
+         .DS_Store[m
+         Thumbs.db[m
+[31m-      destinationPath: "${destinationFolder}/"[m
+[32m+[m[32m      destinationPath: ""[m
+[32m+[m[32m    - fileType: "Docker"[m
+[32m+[m[32m      fileName: "Dockerfile"[m
+[32m+[m[32m      extension: ""[m
+[32m+[m[32m      content: |[m
+[32m+[m[32m        FROM node:${versionNode}[m
+[32m+[m[41m  [m
+[32m+[m[32m        WORKDIR /app[m
+[32m+[m[41m        [m
+[32m+[m[32m        COPY package*.json ./[m
+[32m+[m[41m        [m
+[32m+[m[32m        RUN npm install[m
+[32m+[m[41m        [m
+[32m+[m[32m        EXPOSE ${frontendPort}[m
+[32m+[m[41m        [m
+[32m+[m[32m        CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"][m
+[32m+[m[32m      destinationPath: ""[m
+[32m+[m[41m      [m
+   frontendPaths:[m
+     faviconPath: "${destinationFolder}/public"[m
+     logoPath: "${destinationFolder}/public"[m
+[1mdiff --git a/genesis-core/src/main/resources/data_genesis/yaml/docker-configuration.yaml b/genesis-core/src/main/resources/data_genesis/yaml/docker-configuration.yaml[m
+[1mindex bd240bef..75360296 100644[m
+[1m--- a/genesis-core/src/main/resources/data_genesis/yaml/docker-configuration.yaml[m
+[1m+++ b/genesis-core/src/main/resources/data_genesis/yaml/docker-configuration.yaml[m
+[36m@@ -3,17 +3,20 @@[m
+   extension: "yml"[m
+   content : |[m
+     services:[m
+[31m-      {{#if isStructure}}[m
+[31m-      frontend:[m
+[32m+[m[32m      {{#if isStructure}}frontend:[m
+         build:[m
+           context: ./${frontendDir}[m
+           dockerfile: Dockerfile[m
+         container_name: frontend[m
+         ports:[m
+           - "${frontendPort}:${frontendPort}"[m
+[32m+[m[32m        volumes:[m
+[32m+[m[32m          - ./${frontendDir}:/app[m
+[32m+[m[32m          {{#each frontendVolumes}}- ${this.name}:${this.dir}{{/each}}[m
+[32m+[m[32m        {{#if hadFrontendEnvironments}}environment:{{#each frontendEnvironments}}[m
+[32m+[m[32m          - ${this.name}${this.separator}${this.value}{{/each}}{{/if}}[m
+         depends_on:[m
+[31m-          - backend[m
+[31m-      {{/if}}[m
+[32m+[m[32m          - backend{{/if}}[m
+       backend:[m
+         build:[m
+           context: ./${backendDir}[m
+[36m@@ -21,5 +24,14 @@[m
+         container_name: backend[m
+         ports:[m
+           - "${backendPort}:${backendPort}"[m
+[31m-[m
+[31m-  destinationPath: "${destinationFolder}/${majStart(projectName)}"[m
+[32m+[m[32m        volumes:[m
+[32m+[m[32m          - ./${backendDir}:/app[m
+[32m+[m[32m          {{#each volumes}}- ${this.name}:${this.dir}{{/each}}[m
+[32m+[m[32m        {{#if hadEnvironments}}environment:{{#each environments}}[m
+[32m+[m[32m          - ${this.name}${this.separator}${this.value}{{/each}}{{/if}}[m
+[32m+[m[32m        extra_hosts:[m
+[32m+[m[32m          - "host.docker.internal:host-gateway"[m
+[32m+[m[32m    {{#if hadVolumes}}volumes:[m
+[32m+[m[32m      {{#each volumes}}${this.name}:{{/each}}[m
+[32m+[m[32m      {{#each frontendVolumes}}${this.name}:{{/each}}{{/if}}[m
+[32m+[m[32m  destinationPath: ""[m
+[1mdiff --git a/genesis-core/src/main/resources/data_genesis/yaml/frameworks-mvc.yaml b/genesis-core/src/main/resources/data_genesis/yaml/frameworks-mvc.yaml[m
+[1mindex ccc7f7c7..496e8c1a 100644[m
+[1m--- a/genesis-core/src/main/resources/data_genesis/yaml/frameworks-mvc.yaml[m
+[1m+++ b/genesis-core/src/main/resources/data_genesis/yaml/frameworks-mvc.yaml[m
+[36m@@ -8,6 +8,12 @@[m
+   useCloud: false[m
+   useEurekaServer: false[m
+   isGateway: false[m
+[32m+[m[32m  docker:[m
+[32m+[m[32m    volumes: [][m
+[32m+[m[32m    environments:[m
+[32m+[m[32m      - name: "ASPNETCORE_URLS"[m
+[32m+[m[32m        separator: "="[m
+[32m+[m[32m        value: "http://+:${backendPort}"[m
+   excludeProjectFilesEdits:[m
+     - "SolutionFile"[m
+     - "TestProjectFile"[m
+[36m@@ -40,7 +46,25 @@[m
+ [m
+         .DS_Store[m
+         Thumbs.db[m
+[31m-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"[m
+[32m+[m[32m      destinationPath: ""[m
+[32m+[m[32m    - fileType: "Docker"[m
+[32m+[m[32m      fileName: "Dockerfile"[m
+[32m+[m[32m      extension: ""[m
+[32m+[m[32m      content: |[m
+[32m+[m[32m        FROM mcr.microsoft.com/dotnet/sdk:8.0[m
+[32m+[m[41m  [m
+[32m+[m[32m        WORKDIR /app[m
+[32m+[m[41m        [m
+[32m+[m[32m        COPY *.csproj ./[m
+[32m+[m[41m        [m
+[32m+[m[32m        RUN dotnet restore[m
+[32m+[m[41m        [m
+[32m+[m[32m        EXPOSE ${backendPort}[m
+[32m+[m[41m        [m
+[32m+[m[32m        ENV ASPNETCORE_URLS=http://+:${backendPort}[m
+[32m+[m[41m        [m
+[32m+[m[32m        CMD ["dotnet", "watch", "run", "--no-launch-profile", "--urls", "http://0.0.0.0:${backendPort}"][m
+[32m+[m[32m      destinationPath: ""[m
+ [m
+   additionalFiles:[m
+     - fileType: "ProgramFile"[m
+[36m@@ -137,7 +161,7 @@[m
+         {{/each}}[m
+         app.Run();[m
+ [m
+[31m-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"[m
+[32m+[m[32m      destinationPath: "${destinationFolder}/${majStart(projectName)}"[m
+ [m
+     - fileType: "ReadmeFile"[m
+       fileName: "README"[m
+[36m@@ -190,7 +214,7 @@[m
+             - Email/Username: admin[m
+             - Password : Pwd@123[m
+         {{else}}{{removeLine}}{{/if}}[m
+[31m-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"[m
+[32m+[m[32m      destinationPath: "${destinationFolder}/${majStart(projectName)}"[m
+ [m
+     - fileType: "DbContextFile"[m
+       fileName: "${majStart(projectName)}Context"[m
+[36m@@ -3114,6 +3138,9 @@[m
+   useCloud: false[m
+   useEurekaServer: false[m
+   isGateway: false[m
+[32m+[m[32m  docker:[m
+[32m+[m[32m    volumes: [][m
+[32m+[m[32m    environments: [][m
+   excludeProjectFilesEdits: [][m
+   frontendPaths:[m
+     faviconPath: "${destinationFolder}/${majStart(projectName)}/wwwroot"[m
+[36m@@ -3165,8 +3192,26 @@[m
+         # OS[m
+         .DS_Store[m
+         Thumbs.db[m
+[31m-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"[m
+[31m-[m
+[32m+[m[32m      destinationPath: ""[m
+[32m+[m[32m    - fileType: "Docker"[m
+[32m+[m[32m      fileName: "Dockerfile"[m
+[32m+[m[32m      extension: ""[m
+[32m+[m[32m      content: |[m
+[32m+[m[32m        FROM python:${versionLanguage}-slim[m
+[32m+[m[41m  [m
+[32m+[m[32m        WORKDIR /app[m
+[32m+[m[41m        [m
+[32m+[m[32m        ENV PYTHONDONTWRITEBYTECODE=1[m
+[32m+[m[32m        ENV PYTHONUNBUFFERED=1[m
+[32m+[m[41m        [m
+[32m+[m[32m        COPY requirements.txt .[m
+[32m+[m[41m        [m
+[32m+[m[32m        RUN pip install --no-cache-dir -r requirements.txt[m
+[32m+[m[41m        [m
+[32m+[m[32m        EXPOSE ${backendPort}[m
+[32m+[m[41m        [m
+[32m+[m[32m        CMD ["python", "manage.py", "runserver", "0.0.0.0:${backendPort}"][m
+[32m+[m[32m      destinationPath: ""[m
+   additionalFiles:[m
+     - fileType: "settings"[m
+       fileName: "settings"[m
+[1mdiff --git a/genesis-core/src/main/resources/data_genesis/yaml/frameworks.yaml b/genesis-core/src/main/resources/data_genesis/yaml/frameworks.yaml[m
+[1mindex 9bb518fe..672866cc 100644[m
+[1m--- a/genesis-core/src/main/resources/data_genesis/yaml/frameworks.yaml[m
+[1m+++ b/genesis-core/src/main/resources/data_genesis/yaml/frameworks.yaml[m
+[36m@@ -8,6 +8,11 @@[m
+   useCloud: false[m
+   useEurekaServer: false[m
+   isGateway: false[m
+[32m+[m[32m  docker:[m
+[32m+[m[32m    volumes:[m
+[32m+[m[32m      - name: "maven_cache"[m
+[32m+[m[32m        dir: "/root/.m2"[m
+[32m+[m[32m    environments: [][m
+   useGatewaySecurity: false[m
+   conditionalFiles:[m
+     - fileType: "Git Ignore"[m
+[36m@@ -41,8 +46,24 @@[m
+ [m
+         .DS_Store[m
+         Thumbs.db[m
+[31m-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"[m
+[32m+[m[32m      destinationPath: ""[m
+ [m
+[32m+[m[32m    - fileType: "Docker"[m
+[32m+[m[32m      fileName: "Dockerfile"[m
+[32m+[m[32m      extension: ""[m
+[32m+[m[32m      content: |[m
+[32m+[m[32m        FROM maven:3.9-eclipse-temurin-${versionLanguage}[m
+[32m+[m
+[32m+[m[32m        WORKDIR /app[m
+[32m+[m[41m        [m
+[32m+[m[32m        COPY pom.xml .[m
+[32m+[m[41m        [m
+[32m+[m[32m        RUN mvn dependency:go-offline[m
+[32m+[m[41m        [m
+[32m+[m[32m        EXPOSE ${backendPort}[m
+[32m+[m[41m        [m
+[32m+[m[32m        CMD ["mvn", "spring-boot:run"][m
+[32m+[m[32m      destinationPath: ""[m
+   additionalFiles:[m
+     - fileType: "MainFile"[m
+       fileName: "${majStart(projectName)}Application"[m
+[36m@@ -2498,6 +2519,14 @@[m
+   useCloud: false[m
+   useEurekaServer: false[m
+   isGateway: false[m
+[32m+[m[32m  docker:[m
+[32m+[m[32m    volumes:[m
+[32m+[m[32m      - name: "dotnet_nuget"[m
+[32m+[m[32m        dir: "/root/.nuget"[m
+[32m+[m[32m    environments:[m
+[32m+[m[32m      - name: "ASPNETCORE_URLS"[m
+[32m+[m[32m        separator: "="[m
+[32m+[m[32m        value: "http://+:${backendPort}"[m
+   useGatewaySecurity: false[m
+   conditionalFiles:[m
+     - fileType: "Git Ignore"[m
+[36m@@ -2530,7 +2559,26 @@[m
+ [m
+         .DS_Store[m
+         Thumbs.db[m
+[31m-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"[m
+[32m+[m[32m      destinationPath: ""[m
+[32m+[m
+[32m+[m[32m    - fileType: "Docker"[m
+[32m+[m[32m      fileName: "Dockerfile"[m
+[32m+[m[32m      extension: ""[m
+[32m+[m[32m      content: |[m
+[32m+[m[32m        FROM mcr.microsoft.com/dotnet/sdk:8.0[m
+[32m+[m[41m  [m
+[32m+[m[32m        WORKDIR /app[m
+[32m+[m[41m        [m
+[32m+[m[32m        COPY *.csproj ./[m
+[32m+[m[41m        [m
+[32m+[m[32m        RUN dotnet restore[m
+[32m+[m[41m        [m
+[32m+[m[32m        EXPOSE ${backendPort}[m
+[32m+[m[41m        [m
+[32m+[m[32m        ENV ASPNETCORE_URLS=http://+:${backendPort}[m
+[32m+[m[41m        [m
+[32m+[m[32m        CMD ["dotnet", "watch", "run", "--no-launch-profile", "--urls", "http://0.0.0.0:${backendPort}"][m
+[32m+[m[32m      destinationPath: ""[m
+ [m
+   additionalFiles:[m
+     - fileType: "ProgramFile"[m
+[36m@@ -6087,6 +6135,11 @@[m
+   useCloud: true[m
+   useEurekaServer: false[m
+   isGateway: false[m
+[32m+[m[32m  docker:[m
+[32m+[m[32m    volumes:[m
+[32m+[m[32m      - name: "maven_cache"[m
+[32m+[m[32m        dir: "/root/.m2"[m
+[32m+[m[32m    environments: [][m
+   useGatewaySecurity: false[m
+   withGroupId: true[m
+   useFrontendApp: false[m
+[36m@@ -6122,8 +6175,23 @@[m
+ [m
+         .DS_Store[m
+         Thumbs.db[m
+[31m-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"[m
+[31m-[m
+[32m+[m[32m      destinationPath: ""[m
+[32m+[m[32m    - fileType: "Docker"[m
+[32m+[m[32m      fileName: "Dockerfile"[m
+[32m+[m[32m      extension: ""[m
+[32m+[m[32m      content: |[m
+[32m+[m[32m        FROM maven:3.9-eclipse-temurin-${versionLanguage}[m
+[32m+[m[41m  [m
+[32m+[m[32m        WORKDIR /app[m
+[32m+[m[41m        [m
+[32m+[m[32m        COPY pom.xml .[m
+[32m+[m[41m        [m
+[32m+[m[32m        RUN mvn dependency:go-offline[m
+[32m+[m[41m        [m
+[32m+[m[32m        EXPOSE ${backendPort}[m
+[32m+[m[41m        [m
+[32m+[m[32m        CMD ["mvn", "spring-boot:run"][m
+[32m+[m[32m      destinationPath: ""[m
+   additionalFiles:[m
+     - fileType: "MainFile"[m
+       fileName: "${majStart(projectName)}Application"[m
+[36m@@ -6268,6 +6336,11 @@[m
+   useCloud: true[m
+   useEurekaServer: false[m
+   isGateway: true[m
+[32m+[m[32m  docker:[m
+[32m+[m[32m    volumes:[m
+[32m+[m[32m      - name: "maven_cache"[m
+[32m+[m[32m        dir: "/root/.m2"[m
+[32m+[m[32m    environments: [][m
+   useGatewaySecurity: false[m
+   withGroupId: true[m
+   useFrontendApp: false[m
+[36m@@ -6303,7 +6376,23 @@[m
+ [m
+         .DS_Store[m
+         Thumbs.db[m
+[31m-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"[m
+[32m+[m[32m      destinationPath: ""[m
+[32m+[m[32m    - fileType: "Docker"[m
+[32m+[m[32m      fileName: "Dockerfile"[m
+[32m+[m[32m      extension: ""[m
+[32m+[m[32m      content: |[m
+[32m+[m[32m        FROM maven:3.9-eclipse-temurin-${versionLanguage}[m
+[32m+[m[41m  [m
+[32m+[m[32m        WORKDIR /app[m
+[32m+[m[41m        [m
+[32m+[m[32m        COPY pom.xml .[m
+[32m+[m[41m        [m
+[32m+[m[32m        RUN mvn dependency:go-offline[m
+[32m+[m[41m        [m
+[32m+[m[32m        EXPOSE ${backendPort}[m
+[32m+[m[41m        [m
+[32m+[m[32m        CMD ["mvn", "spring-boot:run"][m
+[32m+[m[32m      destinationPath: ""[m
+ [m
+   additionalFiles:[m
+     - fileType: "MainFile"[m
+[36m@@ -6582,6 +6671,11 @@[m
+   useCloud: false[m
+   useEurekaServer: false[m
+   isGateway: false[m
+[32m+[m[32m  docker:[m
+[32m+[m[32m    volumes:[m
+[32m+[m[32m      - name: "nestjs_node_modules"[m
+[32m+[m[32m        dir: "/app/node_modules"[m
+[32m+[m[32m    environments: [][m
+   useGatewaySecurity: false[m
+   conditionalFiles:[m
+     - fileType: "Git Ignore"[m
+[36m@@ -6609,7 +6703,24 @@[m
+ [m
+         .DS_Store[m
+         Thumbs.db[m
+[31m-      destinationPath: "${destinationFolder}/"[m
+[32m+[m[32m      destinationPath: ""[m
+[32m+[m
+[32m+[m[32m    - fileType: "Docker"[m
+[32m+[m[32m      fileName: "Dockerfile"[m
+[32m+[m[32m      extension: ""[m
+[32m+[m[32m      content: |[m
+[32m+[m[32m        FROM node:${versionNode}-alpine[m
+[32m+[m[41m  [m
+[32m+[m[32m        WORKDIR /app[m
+[32m+[m[41m        [m
+[32m+[m[32m        COPY package*.json ./[m
+[32m+[m[41m        [m
+[32m+[m[32m        RUN npm ci[m
+[32m+[m[41m        [m
+[32m+[m[32m        EXPOSE ${backendPort}[m
+[32m+[m[41m        [m
+[32m+[m[32m        CMD ["npm", "run", "start:dev"][m
+[32m+[m[32m      destinationPath: ""[m
+ [m
+   additionalFiles:[m
+     - fileType: "Exception"[m
+[36m@@ -8333,6 +8444,9 @@[m
+   useCloud: false[m
+   useEurekaServer: false[m
+   isGateway: false[m
+[32m+[m[32m  docker:[m
+[32m+[m[32m    volumes: [][m
+[32m+[m[32m    environments: [][m
+   useGatewaySecurity: false[m
+   conditionalFiles:[m
+     - fileType: "Git Ignore"[m
+[36m@@ -8392,7 +8506,27 @@[m
+ [m
+         .DS_Store[m
+         Thumbs.db[m
+[31m-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"[m
+[32m+[m[32m      destinationPath: ""[m
+[32m+[m
+[32m+[m[32m    - fileType: "Docker"[m
+[32m+[m[32m      fileName: "Dockerfile"[m
+[32m+[m[32m      extension: ""[m
+[32m+[m[32m      content: |[m
+[32m+[m[32m        FROM python:${versionLanguage}-slim[m
+[32m+[m[41m  [m
+[32m+[m[32m        WORKDIR /app[m
+[32m+[m[41m        [m
+[32m+[m[32m        ENV PYTHONDONTWRITEBYTECODE=1[m
+[32m+[m[32m        ENV PYTHONUNBUFFERED=1[m
+[32m+[m[41m        [m
+[32m+[m[32m        COPY requirements.txt .[m
+[32m+[m[41m        [m
+[32m+[m[32m        RUN pip install --no-cache-dir -r requirements.txt[m
+[32m+[m[41m        [m
+[32m+[m[32m        EXPOSE ${backendPort}[m
+[32m+[m[41m        [m
+[32m+[m[32m        CMD ["python", "manage.py", "runserver", "0.0.0.0:${backendPort}"][m
+[32m+[m[32m      destinationPath: ""[m
+ [m
+   additionalFiles:[m
+     - fileType: "settings"[m
+[1mdiff --git a/genesis-intellij/src/main/java/org/labs/genesis/forms/GitConfigurationForm.form b/genesis-intellij/src/main/java/org/labs/genesis/forms/GitConfigurationForm.form[m
+[1mindex e15b2f65..1ddb746c 100644[m
+[1m--- a/genesis-intellij/src/main/java/org/labs/genesis/forms/GitConfigurationForm.form[m
+[1m+++ b/genesis-intellij/src/main/java/org/labs/genesis/forms/GitConfigurationForm.form[m
+[36m@@ -492,6 +492,35 @@[m
+ [m
+       </component>[m
+ [m
+[32m+[m[32m      <!-- ===================================================== -->[m
+[32m+[m[32m      <!-- DOCKER CONFIGURATION -->[m
+[32m+[m[32m      <!-- ===================================================== -->[m
+[32m+[m
+[32m+[m[32m      <component id="configureDocker"[m
+[32m+[m[32m                 class="javax.swing.JCheckBox"[m
+[32m+[m[32m                 binding="configureDockerCheckBox"[m
+[32m+[m[32m                 default-binding="true">[m
+[32m+[m
+[32m+[m[32m        <constraints>[m
+[32m+[m[32m          <grid row="10"[m
+[32m+[m[32m                column="0"[m
+[32m+[m[32m                row-span="1"[m
+[32m+[m[32m                col-span="4"[m
+[32m+[m[32m                vsize-policy="0"[m
+[32m+[m[32m                hsize-policy="3"[m
+[32m+[m[32m                anchor="8"[m
+[32m+[m[32m                fill="0"[m
+[32m+[m[32m                indent="0"[m
+[32m+[m[32m                use-parent-layout="false"/>[m
+[32m+[m[32m        </constraints>[m
+[32m+[m
+[32m+[m[32m        <properties>[m
+[32m+[m[32m          <text value="Configure Docker"/>[m
+[32m+[m[32m          <selected value="false"/>[m
+[32m+[m[32m        </properties>[m
+[32m+[m
+[32m+[m[32m      </component>[m
+[32m+[m
+ [m
+       <!-- ===================================================== -->[m
+       <!-- SPACER -->[m
+[36m@@ -499,7 +528,7 @@[m
+ [m
+       <vspacer id="spacer">[m
+         <constraints>[m
+[31m-          <grid row="10"[m
+[32m+[m[32m          <grid row="11"[m
+                 column="0"[m
+                 row-span="1"[m
+                 col-span="4"[m
+[1mdiff --git a/genesis-intellij/src/main/java/org/labs/genesis/forms/GitConfigurationForm.java b/genesis-intellij/src/main/java/org/labs/genesis/forms/GitConfigurationForm.java[m
+[1mindex 46edfc9e..9b3caf3c 100644[m
+[1m--- a/genesis-intellij/src/main/java/org/labs/genesis/forms/GitConfigurationForm.java[m
+[1m+++ b/genesis-intellij/src/main/java/org/labs/genesis/forms/GitConfigurationForm.java[m
+[36m@@ -32,6 +32,9 @@[m [mpublic class GitConfigurationForm {[m
+     private JLabel githubTokenLabel;[m
+     private JPasswordField githubTokenField;[m
+ [m
+[32m+[m[32m    // Docker[m
+[32m+[m[32m    private JCheckBox configureDockerCheckBox;[m
+[32m+[m
+ [m
+     public GitConfigurationForm() {[m
+ [m
+[36m@@ -76,6 +79,8 @@[m [mpublic class GitConfigurationForm {[m
+ [m
+         createRemoteRepositoryCheckBox.setSelected(false);[m
+ [m
+[32m+[m[32m        configureDockerCheckBox.setSelected(false);[m
+[32m+[m
+ [m
+         // ---------------------------------------------------------[m
+         // Initial visibility[m
+[36m@@ -148,10 +153,6 @@[m [mpublic class GitConfigurationForm {[m
+         // REMOTE CONFIGURATION[m
+         // =========================================================[m
+ [m
+[31m-        /*[m
+[31m-         * Le checkbox de configuration du remote est disponible[m
+[31m-         * dès que Git est activé.[m
+[31m-         */[m
+         createRemoteRepositoryCheckBox.setVisible(useGit);[m
+ [m
+ [m
+[36m@@ -159,11 +160,6 @@[m [mpublic class GitConfigurationForm {[m
+         // GITHUB USERNAME[m
+         // =========================================================[m
+ [m
+[31m-        /*[m
+[31m-         * Le username GitHub est visible dès que Git est activé.[m
+[31m-         *[m
+[31m-         * Il ne dépend PAS du checkbox "Configure remote repository".[m
+[31m-         */[m
+         githubUsernameLabel.setVisible(useGit);[m
+ [m
+         githubUsernameField.setVisible(useGit);[m
+[36m@@ -173,12 +169,6 @@[m [mpublic class GitConfigurationForm {[m
+         // GITHUB PAT[m
+         // =========================================================[m
+ [m
+[31m-        /*[m
+[31m-         * Le PAT est visible uniquement si :[m
+[31m-         *[m
+[31m-         * 1. Git est activé[m
+[31m-         * 2. Le remote est configuré[m
+[31m-         */[m
+         boolean createRemote =[m
+                 useGit &&[m
+                         createRemoteRepositoryCheckBox.isSelected();[m
+[36m@@ -188,6 +178,13 @@[m [mpublic class GitConfigurationForm {[m
+         githubTokenField.setVisible(createRemote);[m
+ [m
+ [m
+[32m+[m[32m        // =========================================================[m
+[32m+[m[32m        // DOCKER CONFIGURATION[m
+[32m+[m[32m        // =========================================================[m
+[32m+[m
+[32m+[m[32m        configureDockerCheckBox.setVisible(true);[m
+[32m+[m
+[32m+[m
+         // =========================================================[m
+         // REFRESH UI[m
+         // =========================================================[m
+[1mdiff --git a/genesis-intellij/src/main/java/org/labs/genesis/wizards/GitConfigurationWizardStep.java b/genesis-intellij/src/main/java/org/labs/genesis/wizards/GitConfigurationWizardStep.java[m
+[1mindex 5aea1268..99e85554 100644[m
+[1m--- a/genesis-intellij/src/main/java/org/labs/genesis/wizards/GitConfigurationWizardStep.java[m
+[1m+++ b/genesis-intellij/src/main/java/org/labs/genesis/wizards/GitConfigurationWizardStep.java[m
+[36m@@ -39,6 +39,10 @@[m
+                     form.getUseGitCheckBox().isSelected()[m
+             );[m
+ [m
+[32m+[m[32m            config.setUseDocker([m
+[32m+[m[32m                    form.getConfigureDockerCheckBox().isSelected()[m
+[32m+[m[32m            );[m
+[32m+[m
+             if (!config.isUseGit()) {[m
+                 generationContextManager[m
+                         .getContext()[m

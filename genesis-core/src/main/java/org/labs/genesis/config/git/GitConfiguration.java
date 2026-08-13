@@ -22,4 +22,8 @@ public class GitConfiguration {
     private String githubUsername;
 
     private String githubToken;
+
+    private String nodeVersion;
+
+    private boolean useDocker;
 }
