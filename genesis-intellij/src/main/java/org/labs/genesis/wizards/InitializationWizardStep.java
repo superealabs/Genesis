@@ -141,23 +141,26 @@ public class InitializationWizardStep extends ModuleWizardStep {
         return true;
     }
 
-    private void checkDuplicateProjectName(String projectName) {
+    private boolean isDuplicateProjectName(String projectName) {
         for (ProjectGenerationContext ctx : listProjectGenerationContext) {
-            if (ctx.getProjectName().equals(projectName)) {
+            if (ctx.getProjectName() != null && ctx.getProjectName().equalsIgnoreCase(projectName)) {
                 Messages.showErrorDialog(
                         newProjectPanel.getMainPanel(),
                         "Duplicate project name detected: " + projectName,
                         "Error"
                 );
-                throw new IllegalArgumentException("Error: Duplicate project name detected: " + projectName);
+                return true;
             }
         }
+        return false;
     }
 
     private void initFormActions() {
         newProjectPanel.getValidateButton().addActionListener(e -> {
-            String newName = newProjectPanel.getProjectNameField().getText();
-            checkDuplicateProjectName(newName);
+            String newName = newProjectPanel.getProjectNameField().getText().trim();
+            if (isDuplicateProjectName(newName)) {
+                return;
+            }
             validateAndAddProject();
         });
         newProjectPanel.getResetButton().addActionListener(e -> {

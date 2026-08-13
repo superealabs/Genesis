@@ -12,6 +12,7 @@ import org.labs.genesis.config.langage.generator.sync.report.FrontendChangeRepor
 import org.labs.genesis.config.langage.generator.sync.report.WebApiChangeReport;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.exceptions.InvalipRelationParameter;
@@ -204,6 +205,39 @@ public class ProjectGenerationContext {
         splitTables.put("PARENTS", this.entityTables);
         splitTables.put("CHILDS", childTables);
         return splitTables;
+    }
+
+    public List<RelationParameter> autoDetectRelationParameters() {
+        if (this.relationParameters == null) {
+            this.relationParameters = new ArrayList<>();
+        }
+        if (this.entityTables == null || this.entityTables.isEmpty()) {
+            return this.relationParameters;
+        }
+
+        for (TableMetadata childTable : this.entityTables) {
+            if (childTable == null || childTable.getColumns() == null) continue;
+            for (ColumnMetadata col : childTable.getColumns()) {
+                if (col != null && col.isForeign() && col.getReferencedTable() != null) {
+                    String refTableName = col.getReferencedTable();
+                    TableMetadata parentTable = findTableByName(refTableName, this.entityTables);
+                    if (parentTable != null && !parentTable.equals(childTable)) {
+                        boolean isMandatory = !col.isNullable();
+                        boolean hasForm = true;
+                        RelationParameter autoRelation = new RelationParameter(
+                                parentTable.getTableName(),
+                                childTable.getTableName(),
+                                isMandatory,
+                                hasForm
+                        );
+                        if (!this.relationParameters.contains(autoRelation)) {
+                            this.relationParameters.add(autoRelation);
+                        }
+                    }
+                }
+            }
+        }
+        return this.relationParameters;
     }
 
     public void applyWebApiChangeReport(WebApiChangeReport webApiChangeReport){

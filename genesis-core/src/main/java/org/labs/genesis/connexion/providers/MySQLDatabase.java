@@ -19,6 +19,13 @@ import java.util.Objects;
 import static org.labs.utils.StringUtils.toCamelCase;
 
 public class MySQLDatabase extends Database {
+    @Override
+    public String resolveSchema(Connection connection) throws SQLException {
+        if (getCredentials() != null && getCredentials().getSchemaName() != null && !getCredentials().getSchemaName().isEmpty()) {
+            return getCredentials().getSchemaName();
+        }
+        return null;
+    }
 
     @Override
     public String getJdbcUrl(Credentials credentials) {

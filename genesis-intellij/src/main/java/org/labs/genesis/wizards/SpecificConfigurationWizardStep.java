@@ -21,6 +21,7 @@ import org.labs.utils.StringUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.ide.impl.ProjectUtil;
 
+import org.labs.genesis.utils.GenesisProjectOpener;
 import javax.swing.*;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -210,11 +211,7 @@ public class SpecificConfigurationWizardStep extends ModuleWizardStep {
                     }
             );
 
-            Messages.showInfoMessage(
-                    project,
-                    "Project generation completed successfully",
-                    "Success"
-            );
+            GenesisProjectOpener.openGeneratedProject(project, generationContextManager.getContext());
 
         } catch (Exception e) {
 
