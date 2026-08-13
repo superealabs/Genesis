@@ -6057,7 +6057,7 @@
       {{tab}}{{tab}}{{/each}}
       {{tab}}{{tab}}
       {{tab}}{{tab}}var ${minStart(className)}Validations = EntityValidator.ValidateEntity(${minStart(className)});
-      {{tab}}{{tab}}{{#each  children}}// Validate ${formatReadableLowerCase(this.className)}s
+      {{tab}}{{tab}}{{#each  childrenWithForm}}// Validate ${formatReadableLowerCase(this.className)}s
       {{tab}}{{tab}}var ${minStart(this.className)}sValidations = new ValidationCheckManager();
       {{tab}}{{tab}}foreach (var ${minStart(this.className)}Validation in ${minStart(this.className)}s.Select(EntityValidator.ValidateEntity))
       {{tab}}{{tab}}{
