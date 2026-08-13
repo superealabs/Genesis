@@ -3106,7 +3106,7 @@
     layout:
       name: "_Layout"
       additionalPageLink: ""
-      assetsImportLink: "~/css/style.css\" asp-append-version=\"true"
+      assetsImportLink: "href=\"~/css/style.css\" asp-append-version=\"true\""
       baseHref: "{{removeLine}}"
       viewAnnotations: |
         @{
