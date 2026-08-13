@@ -2,6 +2,7 @@ package org.labs.genesis.frontend.generator;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.labs.genesis.config.docker.DockerConfiguration;
 import org.labs.genesis.config.langage.FilesEdit;
 import org.labs.genesis.frontend.generator.model.*;
 
@@ -34,7 +35,7 @@ public class FrontendFramework
     private List<FilesEdit> mereFiles = new ArrayList<>();
     private List<FilesEdit> filleFiles = new ArrayList<>();
     private String defaultPort = "9000" ;
-
+    private DockerConfiguration docker;
 
     public  FrontendFramework(){
         setProjectBranding(new ProjectBranding());
