@@ -4826,7 +4826,7 @@
     layout:
       name: "base"
       additionalPageLink: "xmlns:th=\"http://www.thymeleaf.org\" xmlns:layout=\"http://www.ultraq.net.nz/thymeleaf/layout\""
-      assetsImportLink: "/css/style.css"
+      assetsImportLink: "th:href=\"@{/css/style.css}\""
       viewAnnotations: "{{removeLine}}"
       pageName:
 #      navLink: "th:classappend=\"${#httpServletRequest.requestURI == '/${this.entityName}'} ? 'active'\" th:href=\"@{/${this.entityName}}\""
