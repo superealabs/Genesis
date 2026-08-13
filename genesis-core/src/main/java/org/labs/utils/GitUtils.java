@@ -1,7 +1,12 @@
 package org.labs.utils;
 
 import org.labs.genesis.config.Constantes;
+import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.docker.DockerConfiguration;
+import org.labs.genesis.config.git.GitConfiguration;
 import org.labs.genesis.config.langage.FilesEdit;
+import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.frontend.generator.FrontendFramework;
 
 import java.io.IOException;
 import java.net.URI;
@@ -11,7 +16,9 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class GitUtils {
@@ -168,24 +175,153 @@ public class GitUtils {
     ) throws IOException {
         if (gitIgnoreFile != null) {
             String content = gitIgnoreFile.getContent() == null ? "" : gitIgnoreFile.getContent();
-            Path gitIgnoreTarget = Paths.get(destinationPath, ".gitignore");
-            FileUtils.createFileStructure(destinationPath);
+            Path gitIgnoreTarget = Paths.get(destinationPath, gitIgnoreFile.getFileName());
             Files.writeString(gitIgnoreTarget, content);
         }
     }
 
-    public static  FilesEdit getGitIgnore(List<FilesEdit> conditionalFiles) {
-        Optional<FilesEdit> gitIgnoreFile = conditionalFiles != null
-                ? conditionalFiles.stream()
+    public static Map<String, Object> getVariables(
+            ProjectGenerationContext context,
+            GitConfiguration config,
+            Framework framework,
+            FrontendFramework frontendFramework) {
+
+        String nodeVersion = config.getNodeVersion();
+
+        String langVersion = String.valueOf(
+                context.getLanguageConfiguration()
+                        .getOrDefault("languageVersion", 21)
+        );
+
+        String backendPort = context.getProjectPort();
+        String frontendPort = context.getFrontendPort();
+
+        DockerConfiguration backendDocker =
+                framework != null ? framework.getDocker() : null;
+
+        DockerConfiguration frontendDocker =
+                frontendFramework != null ? frontendFramework.getDocker() : null;
+
+        List<DockerConfiguration.Volume> volumes =
+                getVolumes(backendDocker);
+
+        List<DockerConfiguration.Volume> frontendVolumes =
+                getVolumes(frontendDocker);
+
+        List<DockerConfiguration.Environment> environments =
+                getEnvironments(backendDocker);
+
+        List<DockerConfiguration.Environment> frontendEnvironments =
+                getEnvironments(frontendDocker);
+
+        Map<String, Object> variables = new HashMap<>();
+
+        variables.put("projectName", context.getProjectName());
+        variables.put("destinationFolder", context.getDestinationFolder());
+        variables.put("versionNode", nodeVersion != null ? nodeVersion : 22);
+        variables.put("versionLanguage", langVersion);
+        variables.put("backendPort", backendPort != null ? backendPort : 8080);
+        variables.put("frontendPort", frontendPort != null ? frontendPort : 4200);
+        variables.put("isStructure", context.isGenerateFrontendApp());
+
+        variables.put(
+                "backendDir",
+                StringUtils.majStart(context.getProjectName())
+        );
+
+        variables.put(
+                "frontendDir",
+                StringUtils.majStart(context.getProjectName())
+                        + StringUtils.majStart(context.getWebappFolder())
+        );
+
+        variables.put(
+                "hadFrontendEnvironments",
+                !frontendEnvironments.isEmpty()
+        );
+
+        variables.put(
+                "hadEnvironments",
+                !environments.isEmpty()
+        );
+
+        variables.put("volumes", toVolumeMaps(volumes));
+        variables.put("frontendVolumes", toVolumeMaps(frontendVolumes));
+        variables.put(
+                "hadVolumes",
+                !volumes.isEmpty() && !frontendVolumes.isEmpty()
+        );
+        variables.put("environments", toEnvironmentMaps(environments));
+        variables.put(
+                "frontendEnvironments",
+                toEnvironmentMaps(frontendEnvironments)
+        );
+
+        System.out.println("- @ -" + variables);
+
+        return variables;
+    }
+
+
+    private static List<DockerConfiguration.Volume> getVolumes(
+            DockerConfiguration docker) {
+
+        if (docker == null || docker.getVolumes() == null) {
+            return List.of();
+        }
+
+        return docker.getVolumes();
+    }
+
+
+    private static List<DockerConfiguration.Environment> getEnvironments(
+            DockerConfiguration docker) {
+
+        if (docker == null || docker.getEnvironments() == null) {
+            return List.of();
+        }
+
+        return docker.getEnvironments();
+    }
+
+
+    private static List<Map<String, Object>> toVolumeMaps(
+            List<DockerConfiguration.Volume> volumes) {
+
+        return volumes.stream()
+                .map(volume -> {
+                    Map<String, Object> map = new HashMap<>();
+
+                    map.put("name", volume.getName());
+                    map.put("dir", volume.getDir());
+
+                    return map;
+                })
+                .toList();
+    }
+
+
+    private static List<Map<String, Object>> toEnvironmentMaps(
+            List<DockerConfiguration.Environment> environments) {
+
+        return environments.stream()
+                .map(environment -> {
+                    Map<String, Object> map = new HashMap<>();
+
+                    map.put("name", environment.getName());
+                    map.put("separator", environment.getSeparator());
+                    map.put("value", environment.getValue());
+
+                    return map;
+                })
+                .toList();
+    }
+
+    public static  FilesEdit get(List<FilesEdit> conditionalFiles, String fileName) {
+        return conditionalFiles != null ? conditionalFiles.stream()
                 .filter(file -> file != null && file.getFileName() != null)
-                .filter(file -> file.getFileName().equalsIgnoreCase(".gitignore") || file.getFileName().equalsIgnoreCase("gitignore"))
-                .findFirst()
-                : null;
-
-        if(gitIgnoreFile != null && gitIgnoreFile.isPresent())
-            return  gitIgnoreFile.get();
-
-        return null;
+                .filter(file -> file.getFileName().equalsIgnoreCase(fileName))
+                .findFirst().orElse(null) : null;
     }
 
     /**
