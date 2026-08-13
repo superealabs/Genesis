@@ -9,6 +9,11 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes:
+      - name: "maven_cache"
+        dir: "/root/.m2"
+    environments: []
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -42,8 +47,24 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: ""
 
+    - fileType: "Docker"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM maven:3.9-eclipse-temurin-${versionLanguage}
+
+        WORKDIR /app
+        
+        COPY pom.xml .
+        
+        RUN mvn dependency:go-offline
+        
+        EXPOSE ${backendPort}
+        
+        CMD ["mvn", "spring-boot:run"]
+      destinationPath: ""
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -2758,6 +2779,14 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes:
+      - name: "dotnet_nuget"
+        dir: "/root/.nuget"
+    environments:
+      - name: "ASPNETCORE_URLS"
+        separator: "="
+        value: "http://+:${backendPort}"
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -2790,7 +2819,26 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: ""
+
+    - fileType: "Docker"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM mcr.microsoft.com/dotnet/sdk:8.0
+  
+        WORKDIR /app
+        
+        COPY *.csproj ./
+        
+        RUN dotnet restore
+        
+        EXPOSE ${backendPort}
+        
+        ENV ASPNETCORE_URLS=http://+:${backendPort}
+        
+        CMD ["dotnet", "watch", "run", "--no-launch-profile", "--urls", "http://0.0.0.0:${backendPort}"]
+      destinationPath: ""
 
   additionalFiles:
     - fileType: "ProgramFile"
@@ -6349,6 +6397,11 @@
   useCloud: true
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes:
+      - name: "maven_cache"
+        dir: "/root/.m2"
+    environments: []
   useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
@@ -6384,8 +6437,23 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
-
+      destinationPath: ""
+    - fileType: "Docker"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM maven:3.9-eclipse-temurin-${versionLanguage}
+  
+        WORKDIR /app
+        
+        COPY pom.xml .
+        
+        RUN mvn dependency:go-offline
+        
+        EXPOSE ${backendPort}
+        
+        CMD ["mvn", "spring-boot:run"]
+      destinationPath: ""
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -6531,6 +6599,11 @@
   useCloud: true
   useEurekaServer: false
   isGateway: true
+  docker:
+    volumes:
+      - name: "maven_cache"
+        dir: "/root/.m2"
+    environments: []
   useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
@@ -6566,7 +6639,23 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: ""
+    - fileType: "Docker"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM maven:3.9-eclipse-temurin-${versionLanguage}
+  
+        WORKDIR /app
+        
+        COPY pom.xml .
+        
+        RUN mvn dependency:go-offline
+        
+        EXPOSE ${backendPort}
+        
+        CMD ["mvn", "spring-boot:run"]
+      destinationPath: ""
 
   additionalFiles:
     - fileType: "MainFile"
@@ -6846,6 +6935,11 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes:
+      - name: "nestjs_node_modules"
+        dir: "/app/node_modules"
+    environments: []
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -6873,7 +6967,24 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/"
+      destinationPath: ""
+
+    - fileType: "Docker"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM node:${versionNode}-alpine
+  
+        WORKDIR /app
+        
+        COPY package*.json ./
+        
+        RUN npm ci
+        
+        EXPOSE ${backendPort}
+        
+        CMD ["npm", "run", "start:dev"]
+      destinationPath: ""
 
   additionalFiles:
     - fileType: "Exception"
@@ -8598,6 +8709,9 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes: []
+    environments: []
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -8657,7 +8771,27 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: ""
+
+    - fileType: "Docker"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM python:${versionLanguage}-slim
+  
+        WORKDIR /app
+        
+        ENV PYTHONDONTWRITEBYTECODE=1
+        ENV PYTHONUNBUFFERED=1
+        
+        COPY requirements.txt .
+        
+        RUN pip install --no-cache-dir -r requirements.txt
+        
+        EXPOSE ${backendPort}
+        
+        CMD ["python", "manage.py", "runserver", "0.0.0.0:${backendPort}"]
+      destinationPath: ""
 
   additionalFiles:
     - fileType: "settings"

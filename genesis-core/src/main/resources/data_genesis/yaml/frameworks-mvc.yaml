@@ -9,6 +9,12 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes: []
+    environments:
+      - name: "ASPNETCORE_URLS"
+        separator: "="
+        value: "http://+:${backendPort}"
   excludeProjectFilesEdits:
     - "SolutionFile"
     - "TestProjectFile"
@@ -41,7 +47,25 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: ""
+    - fileType: "Docker"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM mcr.microsoft.com/dotnet/sdk:8.0
+  
+        WORKDIR /app
+        
+        COPY *.csproj ./
+        
+        RUN dotnet restore
+        
+        EXPOSE ${backendPort}
+        
+        ENV ASPNETCORE_URLS=http://+:${backendPort}
+        
+        CMD ["dotnet", "watch", "run", "--no-launch-profile", "--urls", "http://0.0.0.0:${backendPort}"]
+      destinationPath: ""
 
   additionalFiles:
     - fileType: "ProgramFile"
@@ -4930,6 +4954,9 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes: []
+    environments: []
   excludeProjectFilesEdits: []
   frontendPaths:
     faviconPath: "${destinationFolder}/${majStart(projectName)}/wwwroot"
@@ -4981,8 +5008,26 @@
         # OS
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
-
+      destinationPath: ""
+    - fileType: "Docker"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM python:${versionLanguage}-slim
+  
+        WORKDIR /app
+        
+        ENV PYTHONDONTWRITEBYTECODE=1
+        ENV PYTHONUNBUFFERED=1
+        
+        COPY requirements.txt .
+        
+        RUN pip install --no-cache-dir -r requirements.txt
+        
+        EXPOSE ${backendPort}
+        
+        CMD ["python", "manage.py", "runserver", "0.0.0.0:${backendPort}"]
+      destinationPath: ""
   additionalFiles:
     - fileType: "settings"
       fileName: "settings"

@@ -6,6 +6,11 @@
   initPath: "angular/angular-skeletoon"
   componentExtension: "ts"
   defaultPort: "4200"
+  docker:
+    volumes:
+      - name: "angular_node_modules"
+        dir: "/app/node_modules"
+    environments: []
   frontendPaths:
     faviconPath: "${destinationFolder}/src"
     logoPath: "${destinationFolder}/src/assets/icon"
@@ -81,7 +86,7 @@
                 }
 
 
-                onLogoError() {
+                onLogoError() {Docker
                   this.logoAvailable = false;
                 }
 
@@ -555,20 +560,18 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/"
+      destinationPath: ""
     - fileType: "Docker File"
-      fileName: ""
+      fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM node:22-alpine
+        FROM node:${versionNode}-alpine
   
         WORKDIR /app
         
         COPY package*.json ./
         
         RUN npm ci
-        
-        COPY . .
         
         EXPOSE ${frontendPort}
         
@@ -1996,6 +1999,11 @@
   initPath: "vue/vue-3-ts-skeletoon"
   componentExtension: "vue"
   defaultPort: "5173"
+  docker:
+    volumes:
+      - name: "vue_node_modules"
+        dir: "/app/node_modules"
+    environments: []
   conditionalFiles:
     - fileType: "Git Ignore"
       fileName: ".gitignore"
@@ -2023,7 +2031,24 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/"
+      destinationPath: ""
+    - fileType: "Docker"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM node:${versionNode}
+  
+        WORKDIR /app
+        
+        COPY package*.json ./
+        
+        RUN npm install
+        
+        EXPOSE ${frontendPort}
+        
+        CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+      destinationPath: ""
+
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/src/assets/images"
@@ -7483,6 +7508,11 @@
   initPath: "react/react-ts-skeletoon"
   componentExtension: "tsx"
   defaultPort: "3000"
+  docker:
+    volumes:
+      - name: "react_node_modules"
+        dir: "/app/node_modules"
+    environments: []
   conditionalFiles:
     - fileType: "Git Ignore"
       fileName: ".gitignore"
@@ -7509,7 +7539,24 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/"
+      destinationPath: ""
+    - fileType: "Docker"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM node:${versionNode}
+  
+        WORKDIR /app
+        
+        COPY package*.json ./
+        
+        RUN npm install
+        
+        EXPOSE ${frontendPort}
+        
+        CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+      destinationPath: ""
+      
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/public"

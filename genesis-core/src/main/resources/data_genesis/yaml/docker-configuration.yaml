@@ -3,17 +3,20 @@
   extension: "yml"
   content : |
     services:
-      {{#if isStructure}}
-      frontend:
+      {{#if isStructure}}frontend:
         build:
           context: ./${frontendDir}
           dockerfile: Dockerfile
         container_name: frontend
         ports:
           - "${frontendPort}:${frontendPort}"
+        volumes:
+          - ./${frontendDir}:/app
+          {{#each frontendVolumes}}- ${this.name}:${this.dir}{{/each}}
+        {{#if hadFrontendEnvironments}}environment:{{#each frontendEnvironments}}
+          - ${this.name}${this.separator}${this.value}{{/each}}{{/if}}
         depends_on:
-          - backend
-      {{/if}}
+          - backend{{/if}}
       backend:
         build:
           context: ./${backendDir}
@@ -21,5 +24,14 @@
         container_name: backend
         ports:
           - "${backendPort}:${backendPort}"
-
-  destinationPath: "${destinationFolder}/${majStart(projectName)}"
+        volumes:
+          - ./${backendDir}:/app
+          {{#each volumes}}- ${this.name}:${this.dir}{{/each}}
+        {{#if hadEnvironments}}environment:{{#each environments}}
+          - ${this.name}${this.separator}${this.value}{{/each}}{{/if}}
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+    {{#if hadVolumes}}volumes:
+      {{#each volumes}}${this.name}:{{/each}}
+      {{#each frontendVolumes}}${this.name}:{{/each}}{{/if}}
+  destinationPath: ""
