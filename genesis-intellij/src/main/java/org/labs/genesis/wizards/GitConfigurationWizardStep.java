@@ -39,6 +39,10 @@
                     form.getUseGitCheckBox().isSelected()
             );
 
+            config.setUseDocker(
+                    form.getConfigureDockerCheckBox().isSelected()
+            );
+
             if (!config.isUseGit()) {
                 generationContextManager
                         .getContext()

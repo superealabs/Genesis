@@ -492,6 +492,35 @@
 
       </component>
 
+      <!-- ===================================================== -->
+      <!-- DOCKER CONFIGURATION -->
+      <!-- ===================================================== -->
+
+      <component id="configureDocker"
+                 class="javax.swing.JCheckBox"
+                 binding="configureDockerCheckBox"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="10"
+                column="0"
+                row-span="1"
+                col-span="4"
+                vsize-policy="0"
+                hsize-policy="3"
+                anchor="8"
+                fill="0"
+                indent="0"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Configure Docker"/>
+          <selected value="false"/>
+        </properties>
+
+      </component>
+
 
       <!-- ===================================================== -->
       <!-- SPACER -->
@@ -499,7 +528,7 @@
 
       <vspacer id="spacer">
         <constraints>
-          <grid row="10"
+          <grid row="11"
                 column="0"
                 row-span="1"
                 col-span="4"

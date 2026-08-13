@@ -32,6 +32,9 @@ public class GitConfigurationForm {
     private JLabel githubTokenLabel;
     private JPasswordField githubTokenField;
 
+    // Docker
+    private JCheckBox configureDockerCheckBox;
+
 
     public GitConfigurationForm() {
 
@@ -75,6 +78,8 @@ public class GitConfigurationForm {
         singleRepositoryRadioButton.setSelected(true);
 
         createRemoteRepositoryCheckBox.setSelected(false);
+
+        configureDockerCheckBox.setSelected(false);
 
 
         // ---------------------------------------------------------
@@ -148,10 +153,6 @@ public class GitConfigurationForm {
         // REMOTE CONFIGURATION
         // =========================================================
 
-        /*
-         * Le checkbox de configuration du remote est disponible
-         * dès que Git est activé.
-         */
         createRemoteRepositoryCheckBox.setVisible(useGit);
 
 
@@ -159,11 +160,6 @@ public class GitConfigurationForm {
         // GITHUB USERNAME
         // =========================================================
 
-        /*
-         * Le username GitHub est visible dès que Git est activé.
-         *
-         * Il ne dépend PAS du checkbox "Configure remote repository".
-         */
         githubUsernameLabel.setVisible(useGit);
 
         githubUsernameField.setVisible(useGit);
@@ -173,12 +169,6 @@ public class GitConfigurationForm {
         // GITHUB PAT
         // =========================================================
 
-        /*
-         * Le PAT est visible uniquement si :
-         *
-         * 1. Git est activé
-         * 2. Le remote est configuré
-         */
         boolean createRemote =
                 useGit &&
                         createRemoteRepositoryCheckBox.isSelected();
@@ -186,6 +176,13 @@ public class GitConfigurationForm {
         githubTokenLabel.setVisible(createRemote);
 
         githubTokenField.setVisible(createRemote);
+
+
+        // =========================================================
+        // DOCKER CONFIGURATION
+        // =========================================================
+
+        configureDockerCheckBox.setVisible(true);
 
 
         // =========================================================
