@@ -1,6 +1,13 @@
 package org.labs.genesis.forms;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.ui.Messages;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
+import org.labs.utils.DockerInstallerUtils;
+import org.labs.utils.DockerUtils;
+import org.labs.utils.GitInstallerUtils;
 
 import javax.swing.*;
 
@@ -41,9 +48,10 @@ public class DockerConfigurationForm {
         // Listeners
         // ---------------------------------------------------------
 
-        configureDockerCheckBox.addActionListener(e ->
-                refreshVisibility()
-        );
+        configureDockerCheckBox.addActionListener(e -> {
+            refreshVisibility();
+            if(configureDockerCheckBox.isSelected()) checkDocker();
+        });
 
         dockerFrontendRadioButton.addActionListener(e ->
                 refreshVisibility()
@@ -76,6 +84,112 @@ public class DockerConfigurationForm {
         // ---------------------------------------------------------
 
         refreshVisibility();
+    }
+
+    private void checkDocker() {
+
+        // Docker est déjà installé
+        if (DockerUtils.isDockerAvailable()) {
+            return;
+        }
+
+        // ---------------------------------------------------------
+        // Docker absent
+        // ---------------------------------------------------------
+        int result = Messages.showYesNoDialog(
+                mainPanel,
+                "Docker n'est pas installé sur cette machine.\n"
+                        + "Voulez-vous installer Docker maintenant ?",
+                "Installation de Docker",
+                Messages.getQuestionIcon()
+        );
+
+        // ---------------------------------------------------------
+        // L'utilisateur refuse
+        // ---------------------------------------------------------
+        if (result != Messages.YES) {
+            return;
+        }
+
+        // ---------------------------------------------------------
+        // Demander le mot de passe AVANT le Background Task
+        // ---------------------------------------------------------
+        String password = null;
+
+        if (GitInstallerUtils.isLinux()) {
+            password = GitConfigurationForm.askSudoPassword(mainPanel);
+
+            // L'utilisateur a annulé
+            if (password == null) {
+                return;
+            }
+        }
+
+        final String finalPassword = password;
+
+        // ---------------------------------------------------------
+        // Installation dans une tâche de fond
+        // ---------------------------------------------------------
+        new Task.Backgroundable(
+                null,
+                "Installation de Docker",
+                true
+        ) {
+
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+                try {
+                    indicator.setIndeterminate(true);
+                    indicator.setText("Installation de Docker...");
+
+                    DockerInstallerUtils.installDocker(finalPassword);
+
+                    indicator.setText("Vérification de l'installation...");
+
+                    if (!DockerUtils.isDockerAvailable()) {
+                        throw new RuntimeException(
+                                "Docker semble avoir été installé, "
+                                        + "mais la commande 'docker' reste introuvable."
+                        );
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+
+                    throw new RuntimeException(
+                            "Erreur lors de l'installation de Docker : "
+                                    + e.getMessage(),
+                            e
+                    );
+                }
+            }
+
+            @Override
+            public void onSuccess() {
+                Messages.showInfoMessage(
+                        mainPanel,
+                        "Docker a été installé avec succès.",
+                        "Docker installé"
+                );
+            }
+
+            @Override
+            public void onThrowable(Throwable error) {
+
+                String message = error.getMessage();
+
+                if (message == null || message.isBlank()) {
+                    message = error.toString();
+                }
+
+                Messages.showErrorDialog(
+                        mainPanel,
+                        message,
+                        "Erreur lors de l'installation de Docker"
+                );
+            }
+
+        }.queue();
     }
 
 

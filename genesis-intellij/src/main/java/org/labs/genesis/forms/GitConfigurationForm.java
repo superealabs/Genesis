@@ -145,7 +145,7 @@ public class GitConfigurationForm {
         // 1. Demander le mot de passe AVANT de lancer la tâche de fond (sur le thread principal)
         String sudoPassword = null;
         if (GitInstallerUtils.isLinux()) {
-            sudoPassword = askSudoPassword();
+            sudoPassword = askSudoPassword(mainPanel);
 
             // Si l'utilisateur a annulé la saisie du mot de passe
             if (sudoPassword == null) {
@@ -223,14 +223,14 @@ public class GitConfigurationForm {
         }.queue();
     }
 
-    private String askSudoPassword() {
+    public static String askSudoPassword(JPanel mainPanel) {
         // Comme nous sommes déjà sur le thread principal (EDT), plus besoin de invokeAndWait !
         JPasswordField passwordField = new JPasswordField();
 
         int result = JOptionPane.showConfirmDialog(
                 mainPanel, // Utilisez mainPanel au lieu de null pour bien centrer la modale
                 passwordField,
-                "Mot de passe Sudo requis",
+                "Mot de passe requis",
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE
         );
@@ -240,14 +240,6 @@ public class GitConfigurationForm {
         }
 
         return null;
-    }
-
-    private static class InstallationCancelledException
-            extends RuntimeException {
-
-        public InstallationCancelledException() {
-            super("Installation annulée.");
-        }
     }
 
 

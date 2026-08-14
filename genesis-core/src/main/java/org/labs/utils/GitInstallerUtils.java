@@ -188,7 +188,7 @@ public class GitInstallerUtils {
         }
     }
 
-    private static void run(String... command) throws IOException, InterruptedException {
+    public static void run(String... command) throws IOException, InterruptedException {
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         processBuilder.redirectErrorStream(true);
 

@@ -9,7 +9,7 @@ public class DockerInstallerUtils {
             throws IOException, InterruptedException {
 
         // Docker déjà installé
-        if (commandExists("docker")) {
+        if (GitInstallerUtils.commandExists("docker")) {
             return;
         }
 
@@ -31,6 +31,11 @@ public class DockerInstallerUtils {
                             + System.getProperty("os.name")
             );
         }
+        if (!GitInstallerUtils.commandExists("docker")) {
+            throw new RuntimeException(
+                    "Git semble avoir été installé, mais la commande 'git' reste introuvable."
+            );
+        }
     }
 
     /**
@@ -39,7 +44,7 @@ public class DockerInstallerUtils {
     private static void installWindows()
             throws IOException, InterruptedException {
 
-        run(
+        GitInstallerUtils.run(
                 "winget",
                 "install",
                 "--id", "Docker.DockerDesktop",
@@ -57,13 +62,13 @@ public class DockerInstallerUtils {
     private static void installMacOS()
             throws IOException, InterruptedException {
 
-        if (!commandExists("brew")) {
+        if (!GitInstallerUtils.commandExists("brew")) {
             throw new IllegalStateException(
                     "Homebrew n'est pas installé."
             );
         }
 
-        run(
+        GitInstallerUtils.run(
                 "brew",
                 "install",
                 "--cask",
@@ -77,25 +82,27 @@ public class DockerInstallerUtils {
     private static void installLinux(String password)
             throws IOException, InterruptedException {
 
-        if (commandExists("apt-get")) {
-
+        if (GitInstallerUtils.commandExists("apt-get")) {
             installDebianUbuntu(password);
 
-        } else if (commandExists("dnf")) {
-
+        } else if (GitInstallerUtils.commandExists("dnf")) {
             installFedora(password);
 
-        } else if (commandExists("yum")) {
-
+        } else if (GitInstallerUtils.commandExists("yum")) {
             installRhel(password);
 
-        } else if (commandExists("pacman")) {
-
+        } else if (GitInstallerUtils.commandExists("pacman")) {
             installArch(password);
 
         } else {
             throw new UnsupportedOperationException(
                     "Gestionnaire de paquets Linux non supporté."
+            );
+        }
+        // Vérification après installation
+        if (!GitInstallerUtils.commandExists("docker")) {
+            throw new RuntimeException(
+                    "Git semble avoir été installé, mais la commande 'git' reste introuvable."
             );
         }
     }
@@ -199,48 +206,5 @@ public class DockerInstallerUtils {
                 "--now",
                 "docker"
         );
-    }
-
-    private static boolean commandExists(String command) {
-
-        try {
-            Process process = new ProcessBuilder(
-                    command,
-                    "--version"
-            )
-                    .redirectErrorStream(true)
-                    .start();
-
-            return process.waitFor() == 0;
-
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private static void run(String... command)
-            throws IOException, InterruptedException {
-
-        Process process = new ProcessBuilder(command)
-                .inheritIO()
-                .start();
-
-        int exitCode = process.waitFor();
-
-        if (exitCode != 0) {
-            throw new RuntimeException(
-                    "Échec de la commande : "
-                            + String.join(" ", command)
-            );
-        }
-    }
-
-    public static void main(String[] args) throws Exception {
-
-        String password = args.length > 0
-                ? args[0]
-                : null;
-
-        installDocker(password);
     }
 }
