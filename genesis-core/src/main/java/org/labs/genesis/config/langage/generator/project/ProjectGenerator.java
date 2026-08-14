@@ -24,6 +24,7 @@ import org.labs.genesis.frontend.generator.IFrontendGenerator;
 import org.labs.genesis.frontend.generator.IViewsGenerator;
 import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMetadataProvider;
 import org.labs.genesis.frontend.generator.model.InterfaceLang;
+import org.labs.utils.DockerUtils;
 import org.labs.utils.FileUtils;
 import org.labs.utils.GitUtils;
 import org.labs.utils.StringUtils;
@@ -711,7 +712,7 @@ public class ProjectGenerator {
         FrontendFramework frontendFramework = context.getFrontendFramework();
         if (framework == null) return;
 
-        Map<String, Object> variables = GitUtils.getVariables(context, config, framework, frontendFramework);
+        Map<String, Object> variables = DockerUtils.getVariables(context, config, framework, frontendFramework);
 
         String projectPath = engine.simpleRender(context.getDestinationFolder(), variables);
         String backendPath = projectPath + "/" + StringUtils.majStart(context.getProjectName());
