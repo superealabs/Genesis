@@ -874,6 +874,7 @@ public class FrameworkMetadataProvider {
     public static HashMap<String, Object> getAltViewListHashMap (FrameworkMVC frameworkMVC) {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getList().getViewAnnotations());
+        altMap.put("viewEnd", frameworkMVC.getView().getList().getViewEnd());
         altMap.put("inputTagHelper", frameworkMVC.getView().getList().getInputTagHelper());
         altMap.put("inputRadioTagHelper", frameworkMVC.getView().getList().getInputRadioTagHelper());
         altMap.put("inputDateTagHelper", frameworkMVC.getView().getList().getInputDateTagHelper());
@@ -911,6 +912,10 @@ public class FrameworkMetadataProvider {
         altMap.put("activeSortDescCondition", frameworkMVC.getView().getList().getActiveSortDescCondition());
         altMap.put("onGoingPagesLoop", frameworkMVC.getView().getList().getOnGoingPagesLoop());
         altMap.put("scriptSection", frameworkMVC.getView().getList().getScriptSection());
+        altMap.put("pageSizeParamName", frameworkMVC.getView().getList().getPageSizeParamName());
+        altMap.put("sortParamName", frameworkMVC.getView().getList().getSortParamName());
+        altMap.put("fileDataValue", frameworkMVC.getView().getList().getFileDataValue());
+        altMap.put("filterMethod", frameworkMVC.getView().getList().getFilterMethod());
         return altMap;
     }
 

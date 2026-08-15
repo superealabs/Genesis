@@ -3,7 +3,7 @@ ${viewAnnotations}
     <h1 class="page-title">${className} / <span class="page-type"><span class="page-action"
                 data-i18n="list"></span></span>
     </h1>
-    {{#if !isView}}<a href="${createLink}" class="btn btn-primary btn-md">
+    {{#if !isView}}<a ${createLink} class="btn btn-primary btn-md">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 5v14M5 12h14" />
         </svg>
@@ -13,7 +13,7 @@ ${viewAnnotations}
 
 <div class="filters" id="filters-container">
     <div class="filters-header">
-        <form method="post" ${filterLink} id="filtersForm">
+        <form method="${filterMethod}" ${filterLink} id="filtersForm">
             <div class="active-filters">
                 <p data-i18n="filter"></p>
 
@@ -104,9 +104,9 @@ ${viewAnnotations}
 
 <div class="modal" id="exportModal">
     <form class="modal-content" method="post" ${exportLink}>
-        <input type="hidden" name="page" value="{pageNumberValue}" />
-        <input type="hidden" name="pageSize" value="${pageSizeValue}" />
-        <input type="hidden" name="sortOrder" value="${currentSortValue}" />
+        <input type="hidden" name="page" value="${pageNumberValue}" />
+        <input type="hidden" name="${pageSizeParamName}" value="${pageSizeValue}" />
+        <input type="hidden" name="${sortParamName}" value="${currentSortValue}" />
         ${antiForgeryTokenTagHelper}
 
         <div class="modal-header">
@@ -138,7 +138,7 @@ ${viewAnnotations}
                         </thead>
                         <tbody>
                             ${blockLoopStatementStart}
-                                <tr>
+                                <tr ${inlineLoopStatement}>
                                     {{#each fields}}
                                     <td>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</td>
                                     {{/each}}{{removeLine}}
@@ -203,33 +203,12 @@ ${viewAnnotations}
         </thead>
         <tbody>
             ${blockLoopStatementStart}
-            <tr>
+            <tr ${inlineLoopStatement}>
                 {{#each fields}}
                 <td>
                     {{#if this.type = byte[]}}
 
-                    @{
-                        var fileContent = ${dataRawValue};
-                    }
-
-                    @if (fileContent != null && fileContent.Length > 0)
-                    {
-                        if (FileUtils.IsImage(fileContent))
-                        {
-                            <img
-                                src="@FileUtils.BuildFileSource(fileContent)"
-                                alt="${this.name}"
-                                class="file-preview" />
-                        }
-                        else
-                        {
-                            <span>Fichier non prévisualisable</span>
-                        }
-                    }
-                    else
-                    {
-                        <span>Aucun fichier</span>
-                    }
+                        ${fileDataValue}
 
                     {{elseIf this.isForeignKey}}
 
@@ -244,7 +223,7 @@ ${viewAnnotations}
                 {{/each}}{{removeLine}}
                 <td>
                     <div class="actions-group">
-                        <a href="${detailsLink}" class="action-button">
+                        <a ${detailsLink} class="action-button">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 59">
                                 <title data-i18n="details"></title>
                                 <g id="Layer_2" data-name="Layer 2">
@@ -264,7 +243,7 @@ ${viewAnnotations}
                                 </g>
                             </svg>
                         </a>
-                        {{#if !isView}}<a href="${updateLink}" class="action-button">
+                        {{#if !isView}}<a ${updateLink} class="action-button">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 59">
                                 <title data-i18n="edit"></title>
                                 <g id="Layer_2" data-name="Layer 2">
@@ -368,7 +347,7 @@ ${viewAnnotations}
 
 <div class="content-footer">
     <div class="pagination">
-        <a href="${previousPageLink}" class="prev ${previousClassCondition}">
+        <a ${previousPageLink} ${previousClassCondition}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
                 <title data-i18n="previous_page"></title>
                 <g id="Layer_2" data-name="Layer 2">
@@ -385,7 +364,7 @@ ${viewAnnotations}
 
         ${pagesListLoop}
 
-        <a href="${nextPageLink}" class="next ${nextClassCondition}">
+        <a ${nextPageLink} ${nextClassCondition}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
                 <title data-i18n="next_page"></title>
                 <g id="Layer_2" data-name="Layer 2">
@@ -406,15 +385,16 @@ ${viewAnnotations}
             <label for="total_items" data-i18n="total_items"></label>
             <p>${totalElementsTagHelper}</p>
         </div>
-        <form method="get" class="ongoing-page" action="${onGoingPageLink}">
+        <form method="get" class="ongoing-page" ${onGoingPageLink}>
             <p data-i18n="ongoing_page"></p>
             <select class="dropdown-select btn-sm" name="page" id="page">
                 ${onGoingPagesLoop}
             </select>
-            <input type="hidden" name="pageSize" value="${pageSizeValue}" />
-            <input type="hidden" name="sortOrder" value="${currentSortValue}" />
+            <input type="hidden" name="${pageSizeParamName}" value="${pageSizeValue}" />
+            <input type="hidden" name="${sortParamName}" value="${currentSortValue}" />
             <button type="submit" class="btn btn-tertiary btn-sm"><span data-i18n="go"></span></button>
         </form>
     </div>
 </div>
 ${scriptSection}
+${viewEnd}

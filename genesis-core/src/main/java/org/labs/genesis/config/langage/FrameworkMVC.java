@@ -84,6 +84,7 @@ public class FrameworkMVC extends Framework {
     public static class List {
         private String name;
         private String viewAnnotations;
+        private String viewEnd;
         private String inputTagHelper;
         private String inputRadioTagHelper;
         private String inputDateTagHelper;
@@ -121,6 +122,10 @@ public class FrameworkMVC extends Framework {
         private String activeSortDescCondition;
         private String onGoingPagesLoop;
         private String scriptSection;
+        private String pageSizeParamName;
+        private String sortParamName;
+        private String fileDataValue;
+        private String filterMethod;
     }
 
     @Getter

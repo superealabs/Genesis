@@ -3128,6 +3128,7 @@
             ViewData["Title"] = "${majStart(className)}s";
             var searchCriteria = Model?.Search${majStart(className)}Criteria;
         }
+      viewEnd: "{{removeLine}}"
       inputTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}\""
       inputRadioTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}\" asp-for=\"Search${majStart(className)}Criteria.${majStart(this.name)}\""
       inputDateTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}?.ToString(\"yyyy-MM-ddTHH:mm\")\""
@@ -3146,14 +3147,14 @@
         }
       filterLink: "asp-action=\"Search\" asp-controller=\"${majStart(className)}\""
       sortLink: "asp-action=\"Index\" asp-route-page=\"@Model.Page.Number\" asp-route-pageSize=\"@Model.Page.Size\" asp-route-sortOrder=\"@Model.CurrentSort\" asp-route-sortBy=\"${this.name},asc\""
-      detailsLink: "@Url.Action(\"Details\", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"
-      createLink: "@Url.Action(\"Create\")"
-      updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"
+      detailsLink: 'href="@Url.Action("Details", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"'
+      createLink: 'href="@Url.Action("Create")"'
+      updateLink: 'href="@Url.Action("Edit", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"'
       deleteLink: "asp-action=\"Delete\""
       exportLink: "asp-action=\"ExportToCsv\""
       pageSizeChangeLink: "'@Url.Action(\"Index\")?page=0&pageSize='+this.value"
-      previousPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"
-      previousClassCondition: " @(Model.Page.Number == 0 ? \"disabled\" : \"\")"
+      previousPageLink: 'href="@Url.Action("Index", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"'
+      previousClassCondition: 'class="prev @(Model.Page.Number == 0 ? "disabled" : "")"'
       pagesListLoop: |
         @for (int i = 0; i < Model.Page.TotalPages; i++)
         {{tab}}{{tab}}{{tab}}{
@@ -3162,11 +3163,14 @@
         {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}@i
         {{tab}}{{tab}}{{tab}}{{tab}}</a>
         {{tab}}{{tab}}{{tab}}}
-      nextPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number + 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"
-      nextClassCondition: " @(Model.Page.Number == Model.Page.TotalPages - 1 ? \"disabled\" : \"\")"
-      onGoingPageLink: "@Url.Action(\"Index\")"
+      nextPageLink: 'href="@Url.Action("Index", new { page = Model.Page.Number + 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"'
+      nextClassCondition: 'class="next @(Model.Page.Number == Model.Page.TotalPages - 1 ? "disabled" : "")"'
+      onGoingPageLink: 'action="@Url.Action("Index")"'
       pageNumberValue: "@Model.Page.Number"
       pageSizeValue: "@Model.Page.Size"
+      pageSizeParamName: "pageSize"
+      sortParamName: "sortOrder"
+      filterMethod: "post"
       orderSortsTagHelper: "@Model.CurrentSortDisplay"
       currentSortValue: "@Model.CurrentSort"
       totalElementsTagHelper: "@Model.Page.TotalElements"
@@ -3183,6 +3187,29 @@
         @section Scripts {
             <script src="~/js/filter-utils.js"></script>
             <script src="~/js/export-utils.js"></script>
+        }
+      fileDataValue: |
+        @{
+            var fileContent = ${minStart(className)}.${majStart(this.name)};
+        }
+
+        @if (fileContent != null && fileContent.Length > 0)
+        {
+            if (FileUtils.IsImage(fileContent))
+            {
+                <img
+                    src="@FileUtils.BuildFileSource(fileContent)"
+                    alt="${this.name}"
+                    class="file-preview" />
+            }
+            else
+            {
+                <span>Fichier non prévisualisable</span>
+            }
+        }
+        else
+        {
+            <span>Aucun fichier</span>
         }
     detail:
       name: "Details"
@@ -3349,6 +3376,7 @@
   coreFramework: "Spring Boot"
   name: "Spring - MVC"
   template: "Template"
+  isProd: true
   useDB: true
   withGroupId: false
   useCloud: false
@@ -4839,42 +4867,72 @@
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/layout"
     list:
       name: "list"
-      viewAnnotations:
-      inputTagHelper:
-      inputRadioTagHelper:
-      inputDateTagHelper:
-      selectTagHelper:
-      deleteDataTagHelper:
-      pageSizeTagHelper:
-      dataValue:
-      dataForeignValue:
-      inlineDataValue: "th:text=\"${minStart(className)}.${minStart(this.name)}\""
-      inlineDataForeignValue: "th:text=\"${minStart(className)}.${minStart(this.name)}\""
-      inlineLoopStatement: "th:each=\"${minStart(className)} : ${minStart(className)}s}\""
-      blockLoopStatementStart:
-      blockLoopStatementEnd:
-      filterLink:
-      sortLink:
-      detailsLink:
-      createLink:
-      updateLink:
-      deleteLink:
-      exportLink:
-      pageSizeChangeLink:
-      previousPageLink:
-      previousClassCondition:
-      pagesListLoop:
-      nextPageLink:
-      nextClassCondition:
-      onGoingPageLink:
-      pageNumberValue:
-      pageSizeValue:
-      currentSortValue:
-      totalElementsTagHelper:
-      activeSortAscCondition:
-      activeSortDescCondition:
-      onGoingPagesLoop:
-      scriptSection:
+      viewAnnotations: |
+        <div xmlns:th="http://www.thymeleaf.org"
+             xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+             layout:decorate="~{layout/base}">
+            <main layout:fragment="content">
+      viewEnd: |
+        </main>
+        </div>
+      inputTagHelper: "name=\"${minStart(this.name)}\""
+      inputRadioTagHelper: "name=\"${minStart(this.name)}\""
+      inputDateTagHelper: "name=\"${minStart(this.name)}\""
+      selectTagHelper: "name=\"${minStart(this.columnNameField)}\""
+      deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
+      pageSizeTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Page.size == ${this}}\""
+      dataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      inlineDataValue: "{{removeLine}}"
+      inlineDataForeignValue: "{{removeLine}}"
+      inlineLoopStatement: "th:each=\"${minStart(className)} : $[thymeleafDollar]{${minStart(className)}s}\""
+      blockLoopStatementStart: "{{removeLine}}"
+      blockLoopStatementEnd: "{{removeLine}}"
+      filterLink: "th:action=\"@{/${minStart(className)}}\""
+      sortLink: "th:href=\"@{/${minStart(className)}(page=0,size=$[thymeleafDollar]{${minStart(className)}Page.size},sortParam='${this.name},asc')}\""
+      detailsLink: "th:href=\"@{/${minStart(className)}/{id}(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
+      createLink: "th:href=\"@{/${minStart(className)}/create}\""
+      updateLink: "th:href=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
+      deleteLink: "th:action=\"@{/${minStart(className)}/delete}\""
+      exportLink: "th:action=\"@{/${minStart(className)}/export}\""
+      pageSizeChangeLink: "'?page=0&size=' + this.value"
+      previousPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number - 1},size=$[thymeleafDollar]{${minStart(className)}Page.size},sortParam=$[thymeleafDollar]{param.sortParam})}\""
+      previousClassCondition: "class=\"prev\" th:classappend=\"$[thymeleafDollar]{${minStart(className)}Page.first} ? 'disabled' : ''\""
+      pagesListLoop: |
+        <a th:each="pageNumber : $[thymeleafDollar]{#numbers.sequence(0, ${minStart(className)}Page.totalPages - 1)}"
+           th:href="@{/${minStart(className)}(page=$[thymeleafDollar]{pageNumber},size=$[thymeleafDollar]{${minStart(className)}Page.size})}"
+           th:text="$[thymeleafDollar]{pageNumber}"
+           th:classappend="$[thymeleafDollar]{pageNumber == ${minStart(className)}Page.number} ? 'active' : ''">
+        </a>
+      nextPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number + 1},size=$[thymeleafDollar]{${minStart(className)}Page.size},sortParam=$[thymeleafDollar]{param.sortParam})}\""
+      nextClassCondition: "class=\"next\" th:classappend=\"$[thymeleafDollar]{${minStart(className)}Page.last} ? 'disabled' : ''\""
+      onGoingPageLink: "th:action=\"@{/${minStart(className)}}\""
+      pageNumberValue: "0"
+      pageSizeValue: "10"
+      pageSizeParamName: "size"
+      sortParamName: "sortParam"
+      filterMethod: "get"
+      orderSortsTagHelper: "{{removeLine}}"
+      currentSortValue: ""
+      totalElementsTagHelper: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}Page.totalElements}\"></span>"
+      activeSortAscCondition: ""
+      activeSortDescCondition: ""
+      onGoingPagesLoop: |
+        <option th:each="pageNumber : $[thymeleafDollar]{#numbers.sequence(0, ${minStart(className)}Page.totalPages - 1)}"
+                th:value="$[thymeleafDollar]{pageNumber}"
+                th:text="$[thymeleafDollar]{pageNumber}"
+                th:selected="$[thymeleafDollar]{pageNumber == ${minStart(className)}Page.number}">
+        </option>
+      scriptSection: |
+        <script src="./js/filter-utils.js"></script>
+        <script src="./js/export-utils.js"></script>
+      fileDataValue: |
+        <span th:if="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
+            Fichier disponible
+        </span>
+        <span th:unless="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
+            Aucun fichier
+        </span>
     detail:
       name: "view"
       viewAnnotations: "{{removeLine}}"
