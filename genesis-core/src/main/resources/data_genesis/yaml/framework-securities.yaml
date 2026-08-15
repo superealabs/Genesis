@@ -4142,3 +4142,299 @@
   additionalDependencies: [ ]
   metadataBooleanTrueKeys:
     - "useAuthCookie"
+
+- id: 5
+  frameworkId: 6
+  name: "Spring Security - Session Authentication"
+  securityFiles:
+    - fileType: "Login Page"
+      fileName: "login"
+      extension: "html"
+      content: |
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${majStart(projectName)} | Log in</title>
+            <link rel="stylesheet" th:href="@{/css/style.css}" />
+
+            <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                background-color: var(--bg-color);
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 20px;
+            }
+
+            .app-name {
+                color: var(--primary-color);
+            }
+
+            .project-logo {
+                width: 100%;
+                height: 50px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                padding: 5px;
+                box-sizing: border-box;
+            }
+
+            .project-logo img {
+                max-width: 90%;
+                max-height: 90%;
+                width: auto;
+                height: auto;
+                object-fit: contain;
+                object-position: center;
+                display: block;
+            }
+
+            .login-container {
+                background-color: var(--bg-secondary);
+                border-radius: var(--border-radius);
+                box-shadow: var(--shadow-lg);
+                width: 100%;
+                max-width: 400px;
+                overflow: hidden;
+            }
+
+            .login-header {
+                padding: 30px 20px;
+                text-align: center;
+                color: var(--text-primary);
+            }
+
+            .login-header h1 {
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 10px;
+            }
+
+            .login-header p {
+                font-size: 14px;
+                opacity: 0.9;
+            }
+
+            .login-form {
+                padding: 0px 30px 30px 30px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+                position: relative;
+            }
+
+            .form-group label {
+                display: block;
+                font-size: 14px;
+                margin-bottom: 8px;
+                color: var(--text-primary);
+                font-weight: 500;
+            }
+
+            .form-group input {
+                width: 100%;
+                padding: 0.65rem 3rem 0.65rem 1rem;
+                border: 1px solid var(--border-color);
+                border-radius: var(--border-radius);
+                font-size: 14px;
+                transition: border-color 0.3s;
+            }
+
+            .form-group input:focus {
+                border-color: var(--primary-color);
+                outline: none;
+                box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+            }
+
+            .input-icon {
+                position: absolute;
+                right: 1rem;
+                top: 72%;
+                transform: translateY(-50%);
+                color: var(--text-secondary);
+            }
+
+            .login-form .btn-primary {
+                width: 100%;
+            }
+
+            .error-message {
+                margin: 25px;
+                color: #e74c3c;
+                font-size: 14px;
+            }
+
+            .success-message {
+                margin: 25px;
+                color: var(--primary-color);
+                font-size: 14px;
+            }
+
+            .password-toggle {
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 0;
+            }
+
+            .password-toggle svg {
+                display: none;
+            }
+
+            .password-toggle svg.active {
+                display: block;
+            }
+            </style>
+        </head>
+
+        <body>
+            <div class="login-container">
+                <div class="login-header">
+
+                    {{#if useLogoLink or hasLogo}}
+                    <div class="project-logo">
+                        <img th:src="@{/images${logoUrl}}" alt="">
+                    </div>
+                    {{else}}
+                    <h1 class="app-name">${majStart(projectName)}</h1>
+                    {{/if}}
+
+                </div>
+
+                <div class="error-message"
+                     th:if="*{param.error}">
+                    <p>Invalid username or password</p>
+                </div>
+
+                <div class="success-message"
+                      th:if="*{param.logout}">
+                    <p>You have been logged out successfully</p>
+                </div>
+
+                <form class="login-form"
+                      th:action="@{/login}"
+                      method="post">
+
+                    <div class="form-group">
+                        <label for="username" data-i18n="username"></label>
+
+                        <input type="text"
+                               id="username"
+                               name="username"
+                               required>
+
+                        <div class="input-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 width="20"
+                                 height="20"
+                                 fill="none"
+                                 viewBox="0 0 24 24">
+                                <path fill="currentColor"
+                                      fill-rule="evenodd"
+                                      d="M8 11a4 4 0 0 1 4-4h1a4 4 0 0 1 4 4v2a4 4 0 0 1-4 4h-1a4 4 0 0 1-4-4v-2Zm4-2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-1Z"
+                                      clip-rule="evenodd">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password-input" data-i18n="password"></label>
+
+                        <input type="password"
+                               id="password-input"
+                               name="password"
+                               required>
+
+                        <button type="button"
+                                class="input-icon password-toggle"
+                                id="password-toggle">
+
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 width="20"
+                                 height="20"
+                                 viewBox="0 0 24 24"
+                                 id="eye-open"
+                                 class="active">
+                                <g fill="none"
+                                   fill-rule="evenodd"
+                                   stroke="currentColor"
+                                   stroke-linecap="round"
+                                   stroke-linejoin="round"
+                                   stroke-width="2"
+                                   transform="translate(1 1)">
+                                    <path d="M0 8s4-8 11-8 11 8 11 8-4 8-11 8S0 8 0 8z"></path>
+                                    <circle cx="11" cy="8" r="3"></circle>
+                                </g>
+                            </svg>
+
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 width="20"
+                                 height="20"
+                                 viewBox="0 0 24 24"
+                                 id="eye-closed">
+                                <g fill="none"
+                                   fill-rule="evenodd"
+                                   stroke="currentColor"
+                                   stroke-linecap="round"
+                                   stroke-linejoin="round"
+                                   stroke-width="2">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"></path>
+                                </g>
+                            </svg>
+
+                        </button>
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-primary btn-md btn-login"
+                            data-i18n="login">
+                    </button>
+
+                </form>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const passwordToggle = document.getElementById('password-toggle');
+                    const passwordInput = document.getElementById('password-input');
+                    const eyeOpen = document.getElementById('eye-open');
+                    const eyeClosed = document.getElementById('eye-closed');
+
+                    passwordToggle.addEventListener('click', function() {
+                        if (passwordInput.type === 'password') {
+                            passwordInput.type = 'text';
+                            eyeOpen.classList.remove('active');
+                            eyeClosed.classList.add('active');
+                        } else {
+                            passwordInput.type = 'password';
+                            eyeClosed.classList.remove('active');
+                            eyeOpen.classList.add('active');
+                        }
+                    });
+                });
+            </script>
+
+            <script th:src="@{/js/index.js}"></script>
+            <script th:src="@{/js/lang.js}"></script>
+        </body>
+        </html>
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/auth"
+
+  additionalDependencies: [ ]
+
+  metadataBooleanTrueKeys:
+    - "useAuthSession"

@@ -4322,6 +4322,7 @@
       variableName: "securityType"
       options:
         - "NONE"
+        - "Spring Security - Session Authentication"
       defaultOption: "NONE"
 
   dependencies:
