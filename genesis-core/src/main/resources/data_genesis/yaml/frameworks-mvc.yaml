@@ -3325,7 +3325,9 @@
                 previousUrl = "/";
             }
         }
+      previousLink: 'href="@previousUrl"'
       errorMessage: "@ViewData[\"ErrorMessage\"]"
+      viewEnd: "{{removeLine}}"
       destinationPath: "${destinationFolder}/Views/Shared/"
 
     templateEngineFilesEdits:
@@ -5039,8 +5041,16 @@
       scriptSection: "{{removeLine}}"
     error:
       name: "error"
-      viewAnnotations: "{{removeLine}}"
-      errorMessage: "{{removeLine}}"
+      viewAnnotations: |
+        <div xmlns:th="http://www.thymeleaf.org"
+             xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+             layout:decorate="~{layout/base}">
+            <main layout:fragment="content">
+      previousLink: 'th:href="@{/}"'
+      errorMessage: '<span th:text="*{errorMessage}"></span>'
+      viewEnd: |
+        </main>
+        </div>
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/error"
 
     templateEngineFilesEdits: [ ]

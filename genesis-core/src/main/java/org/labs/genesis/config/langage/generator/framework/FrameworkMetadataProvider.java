@@ -867,7 +867,9 @@ public class FrameworkMetadataProvider {
     public static HashMap<String, Object> getAltViewErrorHashMap (FrameworkMVC frameworkMVC) {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getError().getViewAnnotations());
+        altMap.put("previousLink", frameworkMVC.getView().getError().getPreviousLink());
         altMap.put("errorMessage", frameworkMVC.getView().getError().getErrorMessage());
+        altMap.put("viewEnd", frameworkMVC.getView().getError().getViewEnd());
         return altMap;
     }
 

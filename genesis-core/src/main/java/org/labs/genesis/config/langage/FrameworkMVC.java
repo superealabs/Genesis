@@ -190,7 +190,9 @@ public class FrameworkMVC extends Framework {
     public static class Error {
         private String name;
         private String viewAnnotations;
+        private String previousLink;
         private String errorMessage;
+        private String viewEnd;
         private String destinationPath;
     }
 }
