@@ -807,6 +807,9 @@ public class FrameworkMetadataProvider {
 
         tmMap.put("isView", tm.getIsView());
 
+        // à corriger quand l'utilisateur choisira les champs à afficher ou non dans le future
+        tmMap.put("fields", getFieldsList(tm)); 
+
         return tmMap;
     }
 
