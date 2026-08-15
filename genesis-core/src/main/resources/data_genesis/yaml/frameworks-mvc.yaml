@@ -3413,9 +3413,9 @@
   isGateway: false
   excludeProjectFilesEdits: [ ]
   frontendPaths:
-    faviconPath: "{{removeLine}}"
-    logoPath: "{{removeLine}}"
-    langsPath: "{{removeLine}}"
+    faviconPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static"
+    logoPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/images"
+    langsPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/i18n"
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"

@@ -458,6 +458,7 @@ public class ViewsGenerator implements IViewsGenerator {
             File faviconFile = framework.getProjectBranding().getFaviconFile();
             try{
                 Path targetPath = Paths.get(faviconPath,framework.getProjectBranding().getFaviconUrl());
+                Files.createDirectories(targetPath.getParent());
                 Files.copy(faviconFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
             }
             catch (IOException e){
