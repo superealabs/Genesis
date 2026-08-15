@@ -1,9 +1,9 @@
 ${viewAnnotations}
-@using ${majStart(projectName)}.Utils
+${additionalImports}
 <div class="header">
     <h1 class="page-title">${className} / <span class="page-type"><span class="page-action"
                 data-i18n="details"></span></span></h1>
-    <a href="${previousLink}" class="btn btn-primary btn-md">
+    <a ${previousLink} class="btn btn-primary btn-md">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
@@ -18,27 +18,7 @@ ${viewAnnotations}
         <div class="info">
 
             {{#if this.type = byte[]}}
-            @{
-                   var fileContent = ${dataValue};
-            }
-
-            @if (fileContent != null && fileContent.Length > 0)
-            {
-                if (FileUtils.IsImage(fileContent))
-                {
-                    <img src="@FileUtils.BuildFileSource(fileContent)"
-                         alt="${this.name}"
-                         class="file-preview-detail" />
-                }
-                else
-                {
-                    <p>Fichier non prévisualisable</p>
-                }
-            }
-            else
-            {
-                <p>Aucun fichier</p>
-            }
+            ${fileDataValue}
             {{elseIf this.isForeignKey}}
             <p>${dataForeignValue}</p>
             {{else}}
@@ -51,7 +31,7 @@ ${viewAnnotations}
 
     {{#if !isView}}<div class="form-actions">
         <div class="form-actions-left">
-            <button class="btn btn-danger btn-sm" type="button" ${deleteDataTagHelper}>
+            <button class="btn btn-danger btn-sm btn-delete" type="button" ${deleteDataTagHelper}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2">
                     <path
@@ -62,7 +42,7 @@ ${viewAnnotations}
         </div>
 
         <div class="form-actions-right">
-            <a href="${updateLink}" class="btn btn-secondary btn-sm">
+            <a ${updateLink} class="btn btn-secondary btn-sm">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
                     <path d="M17 21v-8H7v8M7 3v5h8" />
@@ -73,7 +53,7 @@ ${viewAnnotations}
     </div>{{/if}}
 </form>
 
-{{#if !isView}}<div id="customModal" class="modal" data-trigger=".btn-danger" data-input="${className}Id"
+{{#if !isView}}<div id="customModal" class="modal" data-trigger=".btn-delete" data-input="${className}Id"
     data-text="${className}IdText">
     <div class="modal-content">
         <div class="modal-header">
@@ -115,7 +95,7 @@ ${viewAnnotations}
             <form id="deleteForm" style="margin: 0;" method="post" ${deleteLink}>
                 ${antiForgeryTokenTagHelper}
                 {{#each fields}}{{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}
-                <input type="hidden" name="${this.name}" value="${dataValue}"/>{{/if}}{{else}}{{removeLine}}{{/if}}
+                <input type="hidden" name="${this.name}" ${hiddenPkValue}/>{{/if}}{{else}}{{removeLine}}{{/if}}
                 {{/each}}{{removeLine}}
                 <button type="submit" class="btn btn-danger btn-sm">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -129,3 +109,4 @@ ${viewAnnotations}
         </div>
     </div>
 </div>{{else}}{{removeLine}}{{/if}}
+${viewEnd}

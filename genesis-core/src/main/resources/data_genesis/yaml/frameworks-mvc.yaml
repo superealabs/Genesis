@@ -3101,7 +3101,7 @@
     viewSavePath: "${destinationFolder}/Views/${majStart(className)}"
     rootPath: "~"
     backLink: "@Url.Action(\"Index\")"
-    previousLink: "@previousUrl"
+    previousLink: 'href="@previousUrl"'
     antiForgeryTokenTagHelper: "@Html.AntiForgeryToken()"
     layout:
       name: "_Layout"
@@ -3228,7 +3228,31 @@
       dataForeignValue: "@Model.${majStart(className)}.${majStart(this.name)}?.GetType().GetProperty((string)Model.${majStart(this.type)}DisplayColumn)?.GetValue(@Model.${majStart(className)}.${majStart(this.name)})"
       deleteDataTagHelper: "data-id=\"@Model.${majStart(className)}.${majStart(pkColumn)}\""
       deleteLink: "asp-action=\"Delete\""
-      updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @Model.${majStart(className)}.${majStart(pkColumn)} })"
+      updateLink: 'href="@Url.Action("Edit", new { ${pkColumn} = @Model.${majStart(className)}.${majStart(pkColumn)} })"'
+      fileDataValue: |
+        @{
+            var fileContent = @Model.${majStart(className)}.${majStart(this.name)};
+        }
+
+        @if (fileContent != null && fileContent.Length > 0)
+        {
+            if (FileUtils.IsImage(fileContent))
+            {
+                <img src="@FileUtils.BuildFileSource(fileContent)"
+                     alt="${this.name}"
+                     class="file-preview-detail" />
+            }
+            else
+            {
+                <p>Fichier non prévisualisable</p>
+            }
+        }
+        else
+        {
+            <p>Aucun fichier</p>
+        }
+      additionalImports: "@using ${majStart(projectName)}.Utils"
+      hiddenPkValue: "value=\"@Model.${majStart(className)}.${majStart(this.name)}\""
     create:
       name: "Create"
       viewAnnotations: |
@@ -4850,7 +4874,7 @@
     viewSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/${minStart(className)}"
     rootPath: "."
     backLink: "{{removeLine}}"
-    previousLink: "{{removeLine}}"
+    previousLink: "th:href=\"@{/${minStart(className)}}\""
     antiForgeryTokenTagHelper: "{{removeLine}}"
     layout:
       name: "base"
@@ -4935,12 +4959,28 @@
         </span>
     detail:
       name: "view"
-      viewAnnotations: "{{removeLine}}"
-      dataValue: "{{removeLine}}"
-      dataForeignValue: "{{removeLine}}"
-      deleteDataTagHelper: "{{removeLine}}"
-      deleteLink: "{{removeLine}}"
-      updateLink: "{{removeLine}}"
+      viewAnnotations: |
+        <div xmlns:th="http://www.thymeleaf.org"
+             xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+             layout:decorate="~{layout/base}">
+            <main layout:fragment="content">
+      viewEnd: |
+        </main>
+        </div>
+      dataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
+      deleteLink: "th:action=\"@{/${minStart(className)}/delete}\""
+      updateLink: "th:href=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
+      fileDataValue: |
+        <p th:if="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
+            Fichier disponible
+        </p>
+        <p th:unless="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
+            Aucun fichier
+        </p>
+      hiddenPkValue: "th:value=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\""
+      additionalImports: "{{removeLine}}"
     create:
       name: "create"
       viewAnnotations: "{{removeLine}}"

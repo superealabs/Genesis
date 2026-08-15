@@ -923,11 +923,15 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getDetail().getViewAnnotations());
         altMap.put("dataValue", frameworkMVC.getView().getDetail().getDataValue());
-        altMap.put("dataRawValue", frameworkMVC.getView().getList().getDataRawValue());
+        altMap.put("dataRawValue", frameworkMVC.getView().getDetail().getDataRawValue());
         altMap.put("dataForeignValue", frameworkMVC.getView().getDetail().getDataForeignValue());
         altMap.put("deleteDataTagHelper", frameworkMVC.getView().getDetail().getDeleteDataTagHelper());
         altMap.put("updateLink", frameworkMVC.getView().getDetail().getUpdateLink());
         altMap.put("deleteLink", frameworkMVC.getView().getDetail().getDeleteLink());
+        altMap.put("additionalImports", frameworkMVC.getView().getDetail().getAdditionalImports());
+        altMap.put("viewEnd", frameworkMVC.getView().getDetail().getViewEnd());
+        altMap.put("fileDataValue", frameworkMVC.getView().getDetail().getFileDataValue());
+        altMap.put("hiddenPkValue", frameworkMVC.getView().getDetail().getHiddenPkValue());
         return altMap;
     }
 

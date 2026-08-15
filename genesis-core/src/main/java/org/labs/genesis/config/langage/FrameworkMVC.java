@@ -140,6 +140,10 @@ public class FrameworkMVC extends Framework {
         private String deleteDataTagHelper;
         private String updateLink;
         private String deleteLink;
+        private String additionalImports;
+        private String viewEnd;
+        private String fileDataValue;
+        private String hiddenPkValue;
     }
 
     @Getter
