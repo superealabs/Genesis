@@ -2,7 +2,7 @@ ${viewAnnotations}
 <div class="header">
     <h1 class="page-title">${className} / <span class="page-type"><span class="page-action"
                 data-i18n="create"></span></span></h1>
-    <a href="${backLink}" class="btn btn-primary btn-md">
+    <a ${backLink} class="btn btn-secondary btn-sm">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
@@ -10,14 +10,14 @@ ${viewAnnotations}
     </a>
 </div>
 
-${validationSection}
-
 <!-- Include Select2 utils scripts -->
 <script src="${rootPath}/js/jquery-3.7.1.min.js"></script>
 <link rel="stylesheet" href="${rootPath}/css/select2.min.css">
 <script src="${rootPath}/js/select2.min.js"></script>
 
 <form class="form" method="post" enctype="multipart/form-data" ${createLink}>
+    ${antiForgeryTokenTagHelper}
+    ${validationSection}
     {{#each inputs}}
     <div class="form-group">
         <label for="${this.name}">${this.name}
@@ -83,7 +83,7 @@ ${validationSection}
         </div>
 
         <div class="form-actions-right">
-            <a href="${previousLink}" type="button" class="btn btn-secondary btn-sm">
+            <a ${previousLink} class="btn btn-primary btn-md">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 6L6 18M6 6l12 12" />
                 </svg>

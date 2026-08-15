@@ -948,6 +948,7 @@ public class FrameworkMetadataProvider {
         altMap.put("selectTagHelper", frameworkMVC.getView().getCreate().getSelectTagHelper());
         altMap.put("createLink", frameworkMVC.getView().getCreate().getCreateLink());
         altMap.put("scriptSection", frameworkMVC.getView().getCreate().getScriptSection());
+        altMap.put("viewEnd", frameworkMVC.getView().getCreate().getViewEnd());
         return altMap;
     }
 
@@ -955,14 +956,16 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getEdit().getViewAnnotations());
         altMap.put("validationSection", frameworkMVC.getView().getEdit().getValidationSection());
-        altMap.put("validationTagHelper", frameworkMVC.getView().getCreate().getValidationTagHelper());
-        altMap.put("selectValidationTagHelper", frameworkMVC.getView().getCreate().getSelectValidationTagHelper());
+        altMap.put("validationTagHelper", frameworkMVC.getView().getEdit().getValidationTagHelper());
+        altMap.put("selectValidationTagHelper", frameworkMVC.getView().getEdit().getSelectValidationTagHelper());
         altMap.put("inputTagHelper", frameworkMVC.getView().getEdit().getInputTagHelper());
         altMap.put("textAreaTagHelper", frameworkMVC.getView().getEdit().getTextAreaTagHelper());
         altMap.put("textAreaValidationTagHelper", frameworkMVC.getView().getEdit().getTextAreaValidationTagHelper());
+        altMap.put("checkedRadioTagHelper", frameworkMVC.getView().getEdit().getCheckedRadioTagHelper());
         altMap.put("selectTagHelper", frameworkMVC.getView().getEdit().getSelectTagHelper());
         altMap.put("updateLink", frameworkMVC.getView().getEdit().getUpdateLink());
         altMap.put("scriptSection", frameworkMVC.getView().getEdit().getScriptSection());
+        altMap.put("viewEnd", frameworkMVC.getView().getCreate().getViewEnd());
         return altMap;
     }
 }

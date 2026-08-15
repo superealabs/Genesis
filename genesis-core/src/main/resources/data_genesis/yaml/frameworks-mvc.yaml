@@ -3100,7 +3100,7 @@
     staticFilesPath: "/wwwroot"
     viewSavePath: "${destinationFolder}/Views/${majStart(className)}"
     rootPath: "~"
-    backLink: "@Url.Action(\"Index\")"
+    backLink: 'href="@Url.Action("Index")"'
     previousLink: 'href="@previousUrl"'
     antiForgeryTokenTagHelper: "@Html.AntiForgeryToken()"
     layout:
@@ -3265,6 +3265,7 @@
                 previousUrl = "/";
             }
         }
+      viewEnd: "{{removeLine}}"
       validationSection: |
         @if (!ViewData.ModelState.IsValid)
         {
@@ -3294,6 +3295,7 @@
                 previousUrl = "/";
             }
         }
+      viewEnd: "{{removeLine}}"
       validationSection: |
         @if (!ViewData.ModelState.IsValid)
         {{tab}}{
@@ -3305,6 +3307,7 @@
       inputTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.name)}\""
       textAreaTagHelper: "asp-for=\"${majStart(this.name)}\""
       textAreaValidationTagHelper: " asp-validation-for=\"${majStart(this.name)}\""
+      checkedRadioTagHelper: "checked=\"@(Model?.${majStart(className)}.${majStart(this.name)} != false ? \"checked\" : null)\""
       selectTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.columnNameField)}\" asp-items=\"Model.${majStart(this.type)}sSelectList\""
       updateLink: "asp-action=\"Edit\" asp-controller=\"${className}\""
       scriptSection: |
@@ -4873,7 +4876,7 @@
     staticFilesPath: "/src/main/resources/static"
     viewSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/${minStart(className)}"
     rootPath: "."
-    backLink: "{{removeLine}}"
+    backLink: "th:href=\"@{/${minStart(className)}}\""
     previousLink: "th:href=\"@{/${minStart(className)}}\""
     antiForgeryTokenTagHelper: "{{removeLine}}"
     layout:
@@ -4983,28 +4986,55 @@
       additionalImports: "{{removeLine}}"
     create:
       name: "create"
-      viewAnnotations: "{{removeLine}}"
-      validationSection: "{{removeLine}}"
-      validationTagHelper: "{{removeLine}}"
-      selectValidationTagHelper: "{{removeLine}}"
-      inputTagHelper: "{{removeLine}}"
-      textAreaTagHelper: "{{removeLine}}"
-      textAreaValidationTagHelper: "{{removeLine}}"
+      viewAnnotations: |
+        <div xmlns:th="http://www.thymeleaf.org"
+             xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+             layout:decorate="~{layout/base}">
+            <main layout:fragment="content">
+      viewEnd: |
+        </main>
+        </div>
+      validationSection: |
+        <div class="error-message"
+             th:if="$[thymeleafDollar]{#fields.hasErrors('*')}">
+            <p th:each="error : $[thymeleafDollar]{#fields.errors('*')}"
+               th:text="$[thymeleafDollar]{error}">
+            </p>
+        </div>
+      validationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
+      selectValidationTagHelper: "th:errors=\"*{${minStart(this.columnNameField)}}\""
+      inputTagHelper: "th:field=\"*{${minStart(this.name)}}\""
+      textAreaTagHelper: "th:field=\"*{${minStart(this.name)}}\""
+      textAreaValidationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
       checkedRadioTagHelper: "{{removeLine}}"
-      selectTagHelper: "{{removeLine}}"
-      createLink: "{{removeLine}}"
+      selectTagHelper: "th:field=\"*{${minStart(this.columnNameField)}}\""
+      createLink: "th:action=\"@{/${minStart(className)}/create}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
     edit:
       name: "edit"
-      viewAnnotations: "{{removeLine}}"
-      validationSection: "{{removeLine}}"
-      validationTagHelper: "{{removeLine}}"
-      selectValidationTagHelper: "{{removeLine}}"
-      inputTagHelper: "{{removeLine}}"
-      textAreaTagHelper: "{{removeLine}}"
-      textAreaValidationTagHelper: "{{removeLine}}"
-      selectTagHelper: "{{removeLine}}"
-      updateLink: "{{removeLine}}"
+      viewAnnotations: |
+        <div xmlns:th="http://www.thymeleaf.org"
+             xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+             layout:decorate="~{layout/base}">
+            <main layout:fragment="content">
+      viewEnd: |
+        </main>
+        </div>
+      validationSection: |
+        <div class="error-message"
+             th:if="$[thymeleafDollar]{#fields.hasErrors('*')}">
+            <p th:each="error : $[thymeleafDollar]{#fields.errors('*')}"
+               th:text="$[thymeleafDollar]{error}">
+            </p>
+        </div>
+      validationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
+      selectValidationTagHelper: "th:errors=\"*{${minStart(this.columnNameField)}}\""
+      inputTagHelper: "th:field=\"*{${minStart(this.name)}}\""
+      textAreaTagHelper: "th:field=\"*{${minStart(this.name)}}\""
+      textAreaValidationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
+      checkedRadioTagHelper: "{{removeLine}}"
+      selectTagHelper: "th:field=\"*{${minStart(this.columnNameField)}}\""
+      updateLink: "th:action=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
     error:
       name: "error"

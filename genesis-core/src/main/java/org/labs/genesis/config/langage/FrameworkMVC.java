@@ -162,6 +162,7 @@ public class FrameworkMVC extends Framework {
         private String selectTagHelper;
         private String createLink;
         private String scriptSection;
+        private String viewEnd;
     }
 
     @Getter
@@ -176,9 +177,11 @@ public class FrameworkMVC extends Framework {
         private String inputTagHelper;
         private String textAreaTagHelper;
         private String textAreaValidationTagHelper;
+        private String checkedRadioTagHelper;
         private String selectTagHelper;
         private String updateLink;
         private String scriptSection;
+        private String viewEnd;
     }
 
     @Getter

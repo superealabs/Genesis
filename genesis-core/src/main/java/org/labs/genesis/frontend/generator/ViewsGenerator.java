@@ -176,6 +176,7 @@ public class ViewsGenerator implements IViewsGenerator {
         fileName = engine.simpleRender(fileName, metadataFinally);
 
         String result = engine.render(primaryResult, metadataFinally);
+        result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$"));
         FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
     }
 
@@ -208,6 +209,7 @@ public class ViewsGenerator implements IViewsGenerator {
         fileName = engine.simpleRender(fileName, metadataFinally);
 
         String result = engine.render(primaryResult, metadataFinally);
+        result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$"));
         FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
     }
 
