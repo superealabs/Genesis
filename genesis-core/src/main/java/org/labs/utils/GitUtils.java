@@ -30,7 +30,7 @@ public class GitUtils {
             String token,
             String repoName,
             boolean isPrivate
-    ) throws IOException, InterruptedException {
+    ) throws Exception {
 
         try (HttpClient client = HttpClient.newHttpClient()) {
 
@@ -74,17 +74,19 @@ public class GitUtils {
      * Initialise un repository Git local.
      */
     public static void gitInit(String projectPath)
-            throws IOException, InterruptedException {
+            throws Exception {
 
-        executeGitCommand(
+        EnvironmentUtils.run(
                 projectPath,
-                "git",
+                null,
+                EnvironmentUtils.getCommand("git"),
                 "init"
         );
 
-        executeGitCommand(
+        EnvironmentUtils.run(
                 projectPath,
-                "git",
+                null,
+                EnvironmentUtils.getCommand("git"),
                 "branch",
                 "-M",
                 "main"
@@ -95,11 +97,12 @@ public class GitUtils {
      * Force la branche principale à être "main".
      */
     public static void gitSetMainBranch(String projectPath)
-            throws IOException, InterruptedException {
+            throws Exception {
 
-        executeGitCommand(
+        EnvironmentUtils.run(
                 projectPath,
-                "git",
+                null,
+                EnvironmentUtils.getCommand("git"),
                 "branch",
                 "-M",
                 "main"
@@ -110,11 +113,12 @@ public class GitUtils {
      * Ajoute tous les fichiers du projet.
      */
     public static void gitAdd(String projectPath)
-            throws IOException, InterruptedException {
+            throws Exception {
 
-        executeGitCommand(
+        EnvironmentUtils.run(
                 projectPath,
-                "git",
+                null,
+                EnvironmentUtils.getCommand("git"),
                 "add",
                 "."
         );
@@ -126,11 +130,12 @@ public class GitUtils {
     public static void gitCommit(
             String projectPath,
             String message
-    ) throws IOException, InterruptedException {
+    ) throws Exception {
 
-        executeGitCommand(
+        EnvironmentUtils.run(
                 projectPath,
-                "git",
+                null,
+                EnvironmentUtils.getCommand("git"),
                 "commit",
                 "-m",
                 message
@@ -144,7 +149,7 @@ public class GitUtils {
             String projectPath,
             String username,
             String repoName
-    ) throws IOException, InterruptedException {
+    ) throws Exception {
 
         String remoteUrl =
                 "https://github.com/" +
@@ -153,9 +158,10 @@ public class GitUtils {
                         repoName +
                         ".git";
 
-        executeGitCommand(
+        EnvironmentUtils.run(
                 projectPath,
-                "git",
+                null,
+                EnvironmentUtils.getCommand("git"),
                 "remote",
                 "add",
                 "origin",
@@ -192,20 +198,7 @@ public class GitUtils {
             String projectPath,
             String username,
             String token
-    ) throws IOException, InterruptedException {
-
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                "git",
-                "push",
-                "-u",
-                "origin",
-                "main"
-        );
-
-        processBuilder
-                .directory(Paths.get(projectPath).toFile())
-                .redirectErrorStream(true);
-
+    ) throws Exception {
         /*
          * Git utilise ce script pour récupérer
          * automatiquement le username et le token.
@@ -227,62 +220,30 @@ public class GitUtils {
         );
 
         askPassScript.toFile().setExecutable(true);
-
-        processBuilder.environment().put(
+        
+        Map<String, String> envs = new HashMap<>();
+        envs.put(
                 "GIT_ASKPASS",
                 askPassScript.toAbsolutePath().toString()
         );
 
-        processBuilder.environment().put(
+        envs.put(
                 "GIT_TERMINAL_PROMPT",
                 "0"
         );
 
         try {
 
-            Process process = processBuilder.start();
-
-            int exitCode = process.waitFor();
-
-            if (exitCode != 0) {
-                throw new RuntimeException(
-                        "Git push échoué (code " +
-                                exitCode +
-                                ")"
-                );
-            }
+            EnvironmentUtils.run(projectPath, envs,
+                    EnvironmentUtils.getCommand("git"),
+                    "push",
+                    "-u",
+                    "origin",
+                    "main");
 
         } finally {
 
             Files.deleteIfExists(askPassScript);
-        }
-    }
-
-    /**
-     * Exécute une commande Git.
-     */
-    private static void executeGitCommand(
-            String projectPath,
-            String... command
-    ) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder(command);
-        if(GitInstallerUtils.isWindows()) {
-            String freshPath = EnvironmentUtils.getFreshWindowsPath();
-            pb.environment().put("PATH", freshPath);
-        }
-        Process process = pb.directory(Paths.get(projectPath)
-                        .toFile())
-                        .inheritIO()
-                        .start();
-
-        int exitCode = process.waitFor();
-
-        if (exitCode != 0) {
-
-            throw new RuntimeException(
-                    "Commande Git échouée : " +
-                            String.join(" ", command)
-            );
         }
     }
 }

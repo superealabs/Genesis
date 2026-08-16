@@ -13,7 +13,7 @@ import java.util.Map;
 public class DockerUtils {
     public static boolean isDockerAvailable() {
         try {
-            Process process = new ProcessBuilder("docker", "info")
+            Process process = new ProcessBuilder(EnvironmentUtils.getCommand("docker"), "info")
                     .redirectErrorStream(true)
                     .start();
 

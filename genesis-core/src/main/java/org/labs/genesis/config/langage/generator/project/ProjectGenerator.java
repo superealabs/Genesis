@@ -656,6 +656,7 @@ public class ProjectGenerator {
     public void initGit(String path, boolean isCreateRemote, String repoName, String userName, String token, boolean isPrivate) throws Exception {
         GitUtils.gitInit(path);
         GitUtils.gitAdd(path);
+        GitUtils.gitSetMainBranch(path);
         GitUtils.gitCommit(path, "chore: Initialize project setup");
 
         if(repoName != null && !repoName.isBlank() && userName != null && !userName.isBlank()) {

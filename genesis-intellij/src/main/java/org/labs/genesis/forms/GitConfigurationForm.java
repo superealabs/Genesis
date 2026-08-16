@@ -4,6 +4,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
+import org.labs.utils.EnvironmentUtils;
 import org.labs.utils.GitInstallerUtils;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.application.ApplicationManager;
@@ -103,7 +104,7 @@ public class GitConfigurationForm {
     private void checkGit() {
 
         // Git est déjà installé
-        if (GitInstallerUtils.commandExists("git")) {
+        if (EnvironmentUtils.commandExists("git")) {
             refreshVisibility();
             return;
         }
@@ -144,7 +145,7 @@ public class GitConfigurationForm {
     private void installGit() {
         // 1. Demander le mot de passe AVANT de lancer la tâche de fond (sur le thread principal)
         String sudoPassword = null;
-        if (GitInstallerUtils.isLinux()) {
+        if (EnvironmentUtils.isLinux()) {
             sudoPassword = askSudoPassword(mainPanel);
 
             // Si l'utilisateur a annulé la saisie du mot de passe
@@ -175,7 +176,7 @@ public class GitConfigurationForm {
 
                     indicator.setText("Vérification de l'installation...");
 
-                    if (!GitInstallerUtils.commandExists("git")) {
+                    if (!EnvironmentUtils.commandExists("git")) {
                         throw new RuntimeException(
                                 "Git semble avoir été installé, mais la commande 'git' reste introuvable."
                         );

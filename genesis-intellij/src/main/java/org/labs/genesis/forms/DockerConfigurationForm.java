@@ -7,7 +7,7 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.labs.utils.DockerInstallerUtils;
 import org.labs.utils.DockerUtils;
-import org.labs.utils.GitInstallerUtils;
+import org.labs.utils.EnvironmentUtils;
 
 import javax.swing.*;
 
@@ -112,11 +112,33 @@ public class DockerConfigurationForm {
         }
 
         // ---------------------------------------------------------
+        // Choisir Docker Desktop ou Docker Engine
+        // ---------------------------------------------------------
+        String[] options = {
+                "Docker Desktop",
+                "Docker Engine"
+        };
+
+        int dockerType = Messages.showDialog(
+                mainPanel,
+                "Choisissez le type d'installation de Docker :",
+                "Type d'installation",
+                options,
+                0,
+                Messages.getQuestionIcon()
+        );
+
+        // L'utilisateur ferme/annule la boîte de dialogue
+        if (dockerType < 0) {
+            return;
+        }
+
+        // ---------------------------------------------------------
         // Demander le mot de passe AVANT le Background Task
         // ---------------------------------------------------------
         String password = null;
 
-        if (GitInstallerUtils.isLinux()) {
+        if (EnvironmentUtils.isLinux()) {
             password = GitConfigurationForm.askSudoPassword(mainPanel);
 
             // L'utilisateur a annulé
@@ -126,6 +148,7 @@ public class DockerConfigurationForm {
         }
 
         final String finalPassword = password;
+        final int finalDockerType = dockerType;
 
         // ---------------------------------------------------------
         // Installation dans une tâche de fond
@@ -140,11 +163,29 @@ public class DockerConfigurationForm {
             public void run(@NotNull ProgressIndicator indicator) {
                 try {
                     indicator.setIndeterminate(true);
-                    indicator.setText("Installation de Docker...");
 
-                    DockerInstallerUtils.installDocker(finalPassword);
+                    if (finalDockerType == 0) {
 
-                    indicator.setText("Vérification de l'installation...");
+                        indicator.setText(
+                                "Installation de Docker Desktop..."
+                        );
+
+                        DockerInstallerUtils.installDockerDesktop(finalPassword);
+
+                    } else {
+
+                        indicator.setText(
+                                "Installation de Docker Engine..."
+                        );
+
+                        DockerInstallerUtils.installDockerEngine(
+                                finalPassword
+                        );
+                    }
+
+                    indicator.setText(
+                            "Vérification de l'installation..."
+                    );
 
                     if (!DockerUtils.isDockerAvailable()) {
                         throw new RuntimeException(
