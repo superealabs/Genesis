@@ -12,6 +12,12 @@
         <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
             <modelVersion>4.0.0</modelVersion>
+            {{#if isSpringMvc}}
+            <groupId>${groupLink}</groupId>
+            <artifactId>${projectName}</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <packaging>war</packaging>
+            {{else}}
             <parent>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-parent</artifactId>
@@ -21,24 +27,18 @@
             <groupId>${groupLink}</groupId>
             <artifactId>${projectName}</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            {{/if}}
             <name>${projectName}</name>
             <description>${projectDescription}</description>
-            <url/>
-            <licenses>
-                <license/>
-            </licenses>
-            <developers>
-                <developer/>
-            </developers>
-            <scm>
-                <connection/>
-                <developerConnection/>
-                <tag/>
-                <url/>
-            </scm>
             <properties>
                 <java.version>${languageVersion}</java.version>
-                {{#if useCloud}}<spring-cloud.version>2023.0.3</spring-cloud.version>{{/if}}
+                {{#if isSpringMvc}}
+                <maven.compiler.release>${languageVersion}</maven.compiler.release>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                {{/if}}
+                {{#if useCloud}}
+                <spring-cloud.version>2023.0.3</spring-cloud.version>
+                {{/if}}
             </properties>
             <dependencies>
                 {{#each dependencies}}
@@ -83,10 +83,30 @@
         
             <build>
                 <plugins>
+                    {{#if isSpringMvc}}
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.13.0</version>
+                        <configuration>
+                            <release>${languageVersion}</release>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <version>3.5.1</version>
+                        <configuration>
+                            <failOnMissingWebXml>false</failOnMissingWebXml>
+                            <warName>${projectName}</warName>
+                        </configuration>
+                    </plugin>
+                    {{else}}
                     <plugin>
                         <groupId>org.springframework.boot</groupId>
                         <artifactId>spring-boot-maven-plugin</artifactId>
                     </plugin>
+                    {{/if}}
                 </plugins>
             </build>
         </project>
