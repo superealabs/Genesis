@@ -3402,12 +3402,12 @@
 
 - id: 6
   languageId: 1
-  coreFramework: "Spring Boot"
-  name: "Spring - MVC"
+  coreFramework: "Spring MVC"
+  name: "Spring MVC - Thymeleaf"
   template: "Template"
   isProd: true
   useDB: true
-  withGroupId: false
+  withGroupId: true
   useCloud: false
   useEurekaServer: false
   isGateway: false

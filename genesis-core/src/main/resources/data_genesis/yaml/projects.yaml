@@ -2,6 +2,7 @@
   name: "Maven"
   coreFrameworks:
     - "Spring Boot"
+    - "Spring MVC"
   projectFilesEdits:
     - fileType: "Xml"
       fileName: "pom"
