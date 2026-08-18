@@ -3474,6 +3474,7 @@
                 config.setJdbcUrl(environment.getRequiredProperty("database.url"));
                 config.setUsername(environment.getRequiredProperty("database.username"));
                 config.setPassword(environment.getRequiredProperty("database.password"));
+                config.setDriverClassName(environment.getRequiredProperty("database.driverClassName"));
                 config.setMaximumPoolSize(environment.getProperty("database.pool.maximumPoolSize", Integer.class, 10));
                 config.setConnectionTimeout(environment.getProperty("database.pool.connectionTimeout", Long.class, 30000L));
                 config.setPoolName("${projectName}Pool");
@@ -3493,6 +3494,7 @@
 
             private Properties jpaProperties() {
                 Properties properties = new Properties();
+                properties.setProperty("hibernate.dialect",environment.getRequiredProperty("hibernate.dialect"));
                 properties.setProperty("hibernate.hbm2ddl.auto", environment.getProperty("hibernate.ddlAuto", "none"));
                 properties.setProperty("hibernate.show_sql", environment.getProperty("hibernate.showSql", "false"));
                 properties.setProperty("hibernate.format_sql", environment.getProperty("hibernate.formatSql", "true"));
@@ -4451,9 +4453,23 @@
         database.username=${databaseUsername}
         database.password=${databasePassword}
 
+        {{#if databaseType = PostgreSQL}}
+        database.driverClassName=org.postgresql.Driver
+        {{/if}}
+        {{#if databaseType = MySQL}}
+        database.driverClassName=com.mysql.cj.jdbc.Driver
+        {{/if}}
+        {{#if databaseType = SQL Server}}
+        database.driverClassName=com.microsoft.sqlserver.jdbc.SQLServerDriver
+        {{/if}}
+        {{#if databaseType = Oracle}}
+        database.driverClassName=oracle.jdbc.OracleDriver
+        {{/if}}
+
         database.pool.maximumPoolSize=10
         database.pool.connectionTimeout=30000
 
+        hibernate.dialect=${hibernateDialect}
         hibernate.ddlAuto=${hibernateDdlAuto}
         hibernate.showSql=false
         hibernate.formatSql=true
