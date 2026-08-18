@@ -3417,56 +3417,50 @@
     logoPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/images"
     langsPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/i18n"
   additionalFiles:
-    - fileType: "MainFile"
-      fileName: "${majStart(projectName)}Application"
+    - fileType: "WebAppInitializer"
+      fileName: "WebAppInitializer"
       extension: "java"
       content: |
-        package ${groupLink}.${lowerCase(projectName)};
-        
-        import org.springframework.boot.SpringApplication;
-        import org.springframework.boot.autoconfigure.SpringBootApplication;
-        
-        @SpringBootApplication
-        public class ${majStart(projectName)}Application {
-        {{tab}}public static void main(String[] args) {
-        {{tab}}{{tab}}SpringApplication.run(${majStart(projectName)}Application.class, args);
-        {{tab}}}
-        }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}"
+        package ${groupLink}.${lowerCase(projectName)}.config;
 
-    - fileType: "ApplicationYml"
-      fileName: "application"
-      extension: "yml"
+        import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
+
+        public class WebAppInitializer
+                extends AbstractAnnotationConfigDispatcherServletInitializer {
+
+            @Override
+            protected Class<?>[] getRootConfigClasses() {
+                return new Class<?>[] { RootConfig.class };
+            }
+
+            @Override
+            protected Class<?>[] getServletConfigClasses() {
+                return new Class<?>[] { WebConfig.class };
+            }
+
+            @Override
+            protected String[] getServletMappings() {
+                return new String[] { "/" };
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+
+    - fileType: "RootConfig"
+      fileName: "RootConfig"
+      extension: "java"
       content: |
-        spring:
-          application:
-            name: ${toKebabCase(projectName)}
+        package ${groupLink}.${lowerCase(projectName)}.config;
         
-        {{#if useDB}}
-          datasource:
-            url: ${connectionString}
-            username: ${databaseUsername}
-            password: ${databasePassword}
-          jpa:
-            database-platform : org.hibernate.dialect.${skipEscape(databaseType)}Dialect
-            hibernate:
-              ddl-auto: ${hibernateDdlAuto}
-            properties:
-              hibernate.format_sql: true
-        {{/if}}
-        eureka:
-          client:
-            register-with-eureka: ${useEurekaServer}
-            fetch-registry: ${useEurekaServer}
+        import org.springframework.context.annotation.ComponentScan;
+        import org.springframework.context.annotation.Configuration;
         
-        server:
-          port: ${projectPort}
-        
-        logging:
-          level:
-            eureka: ${loggingLevel}
-            root: ${loggingLevel}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
+        @Configuration
+        @ComponentScan(
+            basePackages = "${groupLink}.${lowerCase(projectName)}.services"
+        )
+        public class RootConfig {
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
 
     - fileType: "WebConfig"
       fileName: "WebConfig"
@@ -3474,14 +3468,16 @@
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config;
 
+        import org.springframework.context.annotation.ComponentScan;
         import org.springframework.context.annotation.Configuration;
-        import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
-        import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-        import org.springframework.web.servlet.config.annotation.CorsRegistry;
         import org.springframework.data.web.config.EnableSpringDataWebSupport;
-
-        @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
+        import org.springframework.web.servlet.config.annotation.CorsRegistry;
+        import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+        import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
         @Configuration
+        @EnableWebMvc
+        @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
+        @ComponentScan(basePackages = "${groupLink}.${lowerCase(projectName)}.controllers")
         public class WebConfig implements WebMvcConfigurer {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
