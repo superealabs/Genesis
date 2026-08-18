@@ -3434,39 +3434,77 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}"
 
-    - fileType: "ApplicationYml"
-      fileName: "application"
-      extension: "yml"
+    - fileType: "RootConfig"
+      fileName: "RootConfig"
+      extension: "java"
       content: |
-        spring:
-          application:
-            name: ${toKebabCase(projectName)}
-        
-        {{#if useDB}}
-          datasource:
-            url: ${connectionString}
-            username: ${databaseUsername}
-            password: ${databasePassword}
-          jpa:
-            database-platform : org.hibernate.dialect.${skipEscape(databaseType)}Dialect
-            hibernate:
-              ddl-auto: ${hibernateDdlAuto}
-            properties:
-              hibernate.format_sql: true
-        {{/if}}
-        eureka:
-          client:
-            register-with-eureka: ${useEurekaServer}
-            fetch-registry: ${useEurekaServer}
-        
-        server:
-          port: ${projectPort}
-        
-        logging:
-          level:
-            eureka: ${loggingLevel}
-            root: ${loggingLevel}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
+        package ${groupLink}.${lowerCase(projectName)}.config;
+        import java.util.Properties;
+        import javax.sql.DataSource;
+        import com.zaxxer.hikari.HikariConfig;
+        import com.zaxxer.hikari.HikariDataSource;
+        import jakarta.persistence.EntityManagerFactory;
+        import org.springframework.context.annotation.Bean;
+        import org.springframework.context.annotation.ComponentScan;
+        import org.springframework.context.annotation.Configuration;
+        import org.springframework.context.annotation.PropertySource;
+        import org.springframework.core.env.Environment;
+        import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+        import org.springframework.orm.jpa.JpaTransactionManager;
+        import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+        import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+        import org.springframework.transaction.PlatformTransactionManager;
+        import org.springframework.transaction.annotation.EnableTransactionManagement;
+        @Configuration
+        @EnableTransactionManagement
+        @EnableJpaRepositories(basePackages = "${groupLink}.${lowerCase(projectName)}.repositories")
+        @ComponentScan(basePackages = "${groupLink}.${lowerCase(projectName)}.services")
+        @PropertySource("classpath:database.properties")
+        public class RootConfig {
+
+            private final Environment environment;
+
+            public RootConfig(Environment environment) {
+                this.environment = environment;
+            }
+
+            @Bean(destroyMethod = "close")
+            public DataSource dataSource() {
+                HikariConfig config = new HikariConfig();
+                config.setJdbcUrl(environment.getRequiredProperty("database.url"));
+                config.setUsername(environment.getRequiredProperty("database.username"));
+                config.setPassword(environment.getRequiredProperty("database.password"));
+                config.setMaximumPoolSize(environment.getProperty("database.pool.maximumPoolSize", Integer.class, 10));
+                config.setConnectionTimeout(environment.getProperty("database.pool.connectionTimeout", Long.class, 30000L));
+                config.setPoolName("${projectName}Pool");
+                return new HikariDataSource(config);
+            }
+
+            @Bean
+            public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
+                HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+                LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
+                factory.setDataSource(dataSource);
+                factory.setPackagesToScan("${groupLink}.${lowerCase(projectName)}.models");
+                factory.setJpaVendorAdapter(vendorAdapter);
+                factory.setJpaProperties(jpaProperties());
+                return factory;
+            }
+
+            private Properties jpaProperties() {
+                Properties properties = new Properties();
+                properties.setProperty("hibernate.hbm2ddl.auto", environment.getProperty("hibernate.ddlAuto", "none"));
+                properties.setProperty("hibernate.show_sql", environment.getProperty("hibernate.showSql", "false"));
+                properties.setProperty("hibernate.format_sql", environment.getProperty("hibernate.formatSql", "true"));
+                return properties;
+            }
+
+            @Bean
+            public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
+                return new JpaTransactionManager(entityManagerFactory);
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
 
     - fileType: "WebConfig"
       fileName: "WebConfig"
@@ -3498,7 +3536,12 @@
         @Configuration
         @EnableWebMvc
         @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
-        @ComponentScan(basePackages = "${groupLink}.${lowerCase(projectName)}.controllers")
+        @ComponentScan(
+          basePackages = {
+          "${groupLink}.${lowerCase(projectName)}.controllers",
+          "${groupLink}.${lowerCase(projectName)}.exception.handler"
+        }
+        )
         public class WebConfig implements WebMvcConfigurer, ApplicationContextAware {
             private ApplicationContext applicationContext;
             @Override
@@ -4400,6 +4443,22 @@
         error.internal=Une erreur interne est survenue.
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
 
+    - fileType: "Database Properties"
+      fileName: "database"
+      extension: "properties"
+      content: |
+        database.url=${databaseUrl}
+        database.username=${databaseUsername}
+        database.password=${databasePassword}
+
+        database.pool.maximumPoolSize=10
+        database.pool.connectionTimeout=30000
+
+        hibernate.ddlAuto=${hibernateDdlAuto}
+        hibernate.showSql=false
+        hibernate.formatSql=true
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
@@ -4434,9 +4493,49 @@
       defaultOption: "NONE"
 
   dependencies:
-    - groupId: "org.projectlombok"
-      artifactId: "lombok"
-      version: "1.18.36"
+    - groupId: "org.springframework"
+      artifactId: "spring-webmvc"
+      version: "${frameworkVersion}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework"
+      artifactId: "spring-jdbc"
+      version: "${frameworkVersion}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework"
+      artifactId: "spring-orm"
+      version: "${frameworkVersion}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.data"
+      artifactId: "spring-data-jpa"
+      version: "3.4.13"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.hibernate.orm"
+      artifactId: "hibernate-core"
+      version: "6.6.52.Final"
+      scope: "{{removeLine}}"
+
+    - groupId: "jakarta.persistence"
+      artifactId: "jakarta.persistence-api"
+      version: "3.1.0"
+      scope: "{{removeLine}}"
+
+    - groupId: "jakarta.validation"
+      artifactId: "jakarta.validation-api"
+      version: "3.0.2"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.hibernate.validator"
+      artifactId: "hibernate-validator"
+      version: "8.0.2.Final"
+      scope: "{{removeLine}}"
+
+    - groupId: "jakarta.servlet"
+      artifactId: "jakarta.servlet-api"
+      version: "6.0.0"
       scope: "provided"
 
     - groupId: "org.thymeleaf"
@@ -4467,6 +4566,11 @@
     - groupId: "nz.net.ultraq.thymeleaf"
       artifactId: "thymeleaf-layout-dialect"
       version: "3.3.0"
+      scope: "{{removeLine}}"
+
+    - groupId: "com.zaxxer"
+      artifactId: "HikariCP"
+      version: "7.1.0"
       scope: "{{removeLine}}"
 
   model:
