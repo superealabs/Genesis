@@ -6004,7 +6004,7 @@
           fileName: "use${majPluralize(className)}"
           extension: "ts"
           content: |
-            import { ref } from 'vue'
+            import { ref, watch } from 'vue'
             import { ${majStart(className)}, {{#if !isView}}${majStart(className)}FormDTO{{/if}} } from '@/models/${majStart(className)}Model'
             import * as ${minStart(className)}Service from '@/services/${majStart(className)}Service'
             import * as columnConfigService from '@/services/ColumnConfigService'
@@ -6041,12 +6041,20 @@
 
               const visibleListFields = ref<string[]>([...DEFAULT_LIST_VIEW_FIELDS])
 
+              // On utilise une clé spécifique à l'entité pour plus de flexibilité future
+              const savedLayoutMode = localStorage.getItem('layoutMode_${minStart(className)}') as 'list' | 'card' | null
+              const layoutMode = ref<'list' | 'card'>(savedLayoutMode || 'list')
+
+              watch(layoutMode, (newValue) => {
+                localStorage.setItem('layoutMode_${minStart(className)}', newValue)
+              })
+
               /**
-                * Handles API response by updating the ${minStart(className)}s and pagination
-                * @param data Array of ${majStart(className)} returned by the API
-                * @param err Optional error message
-                * @param pagination Optional pagination data
-              */
+               * Handles API response by updating the ${minStart(className)}s and pagination
+               * @param data Array of ${majStart(className)} returned by the API
+               * @param err Optional error message
+               * @param pagination Optional pagination data
+               */
               const handleResponse = (
                 data: ${majStart(className)}[],
                 err: string | undefined,
@@ -6068,8 +6076,7 @@
 
               const loadColumnConfig = async () => {
                 try {
-                  // ${EntityName} contient le nom de la table en minuscule (ex: 'personne')
-                  const response = await columnConfigService.getVisibleFields('${minStart(EntityName)}', 'list')
+                  const response = await columnConfigService.getVisibleFields('${minStart(className)}', 'list')
                   if (response.returnCode === 1 && response.data && response.data.length > 0) {
                     visibleListFields.value = response.data
                   }
@@ -6081,7 +6088,7 @@
               /** Sauvegarde la nouvelle configuration vers le serveur */
               const saveColumnConfig = async (fields: string[]) => {
                 try {
-                  const response = await columnConfigService.updateVisibleFields('${minStart(EntityName)}', 'list', fields)
+                  const response = await columnConfigService.updateVisibleFields('${minStart(className)}', 'list', fields)
                   if (response.returnCode === 1) {
                     visibleListFields.value = fields
                     return { success: true, error: null }
@@ -6330,8 +6337,9 @@
                 loading,
                 message,
                 paginationData,
+                layoutMode,
 
-                // State & function of column configuration configuration
+                // State & function of column configuration
                 visibleListFields,
                 loadColumnConfig,
                 saveColumnConfig,
