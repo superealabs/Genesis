@@ -5537,6 +5537,122 @@
       componentName: "${majStart(className)}Row"
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
       componentAdditionalFiles: [ ]
+      
+    - componentType: "Entity Card"
+      generateForView: true
+      router:
+        label: "{{removeLine}}"
+        link: ""
+      importFile: |
+        import { computed, type PropType } from 'vue'
+        import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
+        import EntityRowActions from '@/components/table/EntityRowActions.vue'
+        import { useDateFormat } from '@/composables/useDateFormat'
+        {{#if containsFile=true}}import { getUrl } from '@/composables/useImage'{{/if}}
+      selector: "${majStart(className)}Card"
+      standalone: true
+      importComponent: "{{removeLine}}"
+      template: |
+        <template>
+          <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-lg transition-shadow duration-200">
+            <div class="card-body p-4">
+              <!-- Titre de la carte -->
+              <h2 class="card-title text-base font-bold text-primary mb-2 truncate">
+                <span> #{{ ${minStart(className)}Data['id'] }} - ${majStart(className)} </span>
+              </h2>
+
+              <!-- Corps de la carte : affiche UNIQUEMENT les champs visibles -->
+              <div class="space-y-1 text-sm flex-1">
+                <template v-for="field in ${majStart(className)}.getAllSearchFieldsMetadata()" :key="field.key">
+                  <div
+                    v-if="field.showInTable && visibleFields.includes(field.key)"
+                    class="flex justify-between gap-2 border-b border-base-200 py-1 last:border-0"
+                  >
+                    <span class="font-semibold text-base-content/70 text-xs uppercase tracking-wide">
+                      {{ field.label }}
+                    </span>
+                    <span class="text-right text-base-content truncate max-w-[60%]">
+                      <template v-if="field.type === 'date'">
+                        {{ formatDate(${minStart(className)}Data[field.key]) }}
+                      </template>
+                      <template v-else-if="field.type === 'number'">
+                        {{ ${minStart(className)}Data[field.key] != null ? $n(${minStart(className)}Data[field.key], 'decimal') : '--' }}
+                      </template>
+                      <template v-else-if="field.type === 'select'">
+                        {{ ${minStart(className)}Data[field.key] != null ? ${minStart(className)}Data[field.key].getKeyValue() : '--' }}
+                      </template>
+                      <template v-else-if="field.type === 'file'">
+                        <img
+                          v-if="${minStart(className)}Data[field.key]"
+                          :src="getUrl(${minStart(className)}Data[field.key])"
+                          :alt="field.key"
+                          class="max-h-10 max-w-10"
+                        />
+                      </template>
+                      <template v-else>
+                        {{ ${minStart(className)}Data[field.key] ?? '--' }}
+                      </template>
+                    </span>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Actions en bas de carte -->
+              <div class="card-actions justify-end mt-3 pt-2 border-t border-base-200">
+                <EntityRowActions
+                  :view="viewAction"
+                  :remove="removeAction"
+                  :edit="editAction"
+                  @delete-row="deleteRow"
+                  @view-row="viewRow"
+                  @edit-row="updateRow"
+                />
+              </div>
+            </div>
+          </div>
+        </template>
+      style: "<style scoped></style>"
+      export: |
+        const props = defineProps({
+          ${minStart(className)}: {
+            type: Object as PropType<${majStart(className)}>,
+            required: true,
+          },
+          viewAction: {
+            type: Boolean,
+            default: true,
+          },
+          editAction: {
+            type: Boolean,
+            default: true,
+          },
+          removeAction: {
+            type: Boolean,
+            default: true,
+          },
+          visibleFields: {
+            type: Array as PropType<string[]>,
+            default: () => []
+          }
+        })
+
+        const ${minStart(className)}Data = computed(() => {
+          return props.${minStart(className)} as Record<string, any>
+        })
+
+        const emit = defineEmits<{
+          (e: 'request-delete', ${minStart(className)}: ${majStart(className)}): void
+          (e: 'request-view', ${minStart(className)}: ${majStart(className)}): void
+          (e: 'request-update', ${minStart(className)}: ${majStart(className)}): void
+        }>()
+
+        const deleteRow = () => emit('request-delete', props.${minStart(className)})
+        const viewRow = () => emit('request-view', props.${minStart(className)})
+        const updateRow = () => emit('request-update', props.${minStart(className)})
+        const { formatDate } = useDateFormat()
+      componentName: "${majStart(className)}Card"
+      destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
+      componentAdditionalFiles: [ ]
 
     - componentType: "List Component"
       generateForView: true
