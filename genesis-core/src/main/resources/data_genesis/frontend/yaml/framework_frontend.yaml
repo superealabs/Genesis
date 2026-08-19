@@ -5927,6 +5927,7 @@
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import ${majStart(className)}List from '@/entities/${minStart(className)}/${majStart(className)}List.vue'
         import EntityTable from '@/components/table/EntityTable.vue'
+        import LayoutSwitcher from '@/components/button/LayoutSwitcher.vue'
         import { use${majPluralize(className)} } from '@/composables/use${majPluralize(className)}'{{#if !isView}}
         import GenesisButton from '@/components/button/GenesisButton.vue'
         import PlusIcon from '@/components/icons/PlusIcon.vue'{{/if}}
@@ -5941,11 +5942,17 @@
               <h3 class="text-xl font-semibold text-base-content">
                 {{ $t('entity.nav', { entity: '${majStart(className)}' }) }}
                 <span class="text-base-content/50 font-normal"> {{ $t('entity.list.nav') }}</span>
-              </h3>{{#if !isView}}
-              <GenesisButton title="Create new ${minStart(className)}" @click="goToCreateFormView" class="btn-secondary">
-                <PlusIcon />
-                {{ $t('button.addEntity', { entity: '${majStart(className)}' }) }}
-              </GenesisButton>{{/if}}
+              </h3>
+              <div class="flex items-center gap-3">
+                <!-- 🎯 Composant réutilisable pour le basculement de vue -->
+                <LayoutSwitcher v-model="layoutMode" />
+        {{#if !isView}}
+                <GenesisButton title="Create new ${minStart(className)}" @click="goToCreateFormView" class="btn-secondary">
+                  <PlusIcon />
+                  {{ $t('button.addEntity', { entity: '${majStart(className)}' }) }}
+                </GenesisButton>
+        {{/if}}
+              </div>
             </div>
         
             <!-- Table -->
@@ -5958,6 +5965,7 @@
               :entities="${minPluralize(className)}"
               :message="message"
               :visible-fields="visibleListFields"
+              :layout-mode="layoutMode"
               @update:visible-fields="handleUpdateVisibleFields"{{#if isView}}
               :remove-action="false"
               :edit-action="false"{{/if}}
@@ -5977,13 +5985,12 @@
           export${majStart(className)}sToCsv,
           visibleListFields,
           loadColumnConfig,
-          saveColumnConfig
+          saveColumnConfig,
+          layoutMode
         } = use${majPluralize(className)}()
 
-        // Reactive search fields
         const searchFields = ref<EntitySearchField[]>(${majStart(className)}.getAllSearchFieldsMetadata())
 
-        // Gestion de la mise à jour des champs visibles (onClick appliquer)
         const handleUpdateVisibleFields = async (newFields: string[]) => {
           const result = await saveColumnConfig(newFields)
           if (!result.success) {
@@ -5995,10 +6002,10 @@
           await export${majStart(className)}sToCsv(${minPluralize(className)}.value)
         }
 
-        // Chargement de la configuration au montage du composant
         onMounted(() => {
           loadColumnConfig()
         })
+
       componentAdditionalFiles:
         - fileType: "Entity Composable"
           fileName: "use${majPluralize(className)}"
