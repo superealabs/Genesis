@@ -5944,7 +5944,7 @@
                 <span class="text-base-content/50 font-normal"> {{ $t('entity.list.nav') }}</span>
               </h3>
               <div class="flex items-center gap-3">
-                <!-- 🎯 Composant réutilisable pour le basculement de vue -->
+                <!-- Composant réutilisable pour le basculement de vue -->
                 <LayoutSwitcher v-model="layoutMode" />
         {{#if !isView}}
                 <GenesisButton title="Create new ${minStart(className)}" @click="goToCreateFormView" class="btn-secondary">
