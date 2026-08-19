@@ -5537,7 +5537,7 @@
       componentName: "${majStart(className)}Row"
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
       componentAdditionalFiles: [ ]
-      
+
     - componentType: "Entity Card"
       generateForView: true
       router:
@@ -5651,6 +5651,66 @@
         const updateRow = () => emit('request-update', props.${minStart(className)})
         const { formatDate } = useDateFormat()
       componentName: "${majStart(className)}Card"
+      destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
+      componentAdditionalFiles: [ ]
+      
+    - componentType: "Entity Grid"
+      generateForView: true
+      router:
+        label: "{{removeLine}}"
+        link: ""
+      importFile: |
+        import ${majStart(className)}Card from './${majStart(className)}Card.vue'
+        import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
+        import { computed, type PropType } from 'vue'
+      selector: "${majStart(className)}Grid"
+      standalone: true
+      importComponent: "{{removeLine}}"
+      template: |
+        <template>
+          <div class="p-4">
+            <div v-if="!loading && message" class="text-center py-10 text-gray-500">
+              {{ message }}
+            </div>
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <component
+                v-for="${minStart(className)} in data"
+                :key="${minStart(className)}.getKeyValue()"
+                :is="${majStart(className)}Card"
+                :${minStart(className)}="${minStart(className)}"
+                v-bind="itemProps"
+                @request-view="$emit('request-view', $event)"
+                @request-delete="$emit('request-delete', $event)"
+                @request-update="$emit('request-update', $event)"
+              />
+            </div>
+          </div>
+        </template>
+      style: "<style scoped></style>"
+      export: |
+        const props = defineProps({
+          data: { type: Array as PropType<${majStart(className)}[]>, required: true },
+          message: String,
+          loading: { type: Boolean, default: false },
+          viewAction: { type: Boolean, default: true },
+          editAction: { type: Boolean, default: true },
+          removeAction: { type: Boolean, default: true },
+          visibleFields: { type: Array as PropType<string[]>, default: () => [] },
+        })
+
+        defineEmits<{
+          (e: 'request-view', ${minStart(className)}: ${majStart(className)}): void
+          (e: 'request-delete', ${minStart(className)}: ${majStart(className)}): void
+          (e: 'request-update', ${minStart(className)}: ${majStart(className)}): void
+        }>()
+
+        const itemProps = computed(() => ({
+          visibleFields: props.visibleFields,
+          viewAction: props.viewAction,
+          editAction: props.editAction,
+          removeAction: props.removeAction,
+        }))
+      componentName: "${majStart(className)}Grid"
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
       componentAdditionalFiles: [ ]
 
