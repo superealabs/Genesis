@@ -5811,7 +5811,7 @@
       componentName: "${majStart(className)}Table"
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
       componentAdditionalFiles: [ ]
-      
+
     - componentType: "List Component"
       generateForView: true
       router:
@@ -5819,68 +5819,37 @@
         link: ""
       componentName: "${majStart(className)}List"
       importFile: |
-        import ${majStart(className)}Row from './${majStart(className)}Row.vue'
-        import { use${majStart(className)}s } from '@/composables/use${majStart(className)}s'
+        import ${majStart(className)}Table from './${majStart(className)}Table.vue'
+        import ${majStart(className)}Grid from './${majStart(className)}Grid.vue'
+        import { use${majPluralize(className)} } from '@/composables/use${majPluralize(className)}'
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'{{#if !isView}}
         import { usePopup } from '@/composables/usePopup'
-        import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
-        import { ref, type PropType } from 'vue'{{/if}}
+        import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'{{/if}}
+        import { ref, computed, type PropType, type Component } from 'vue'
         import { SortFieldParameter } from '@/models/api/RequestModel'
-        import SortButton from '@/components/button/SortButton.vue'
       selector: "${majStart(className)}List"
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
         <template>
-          <table class="table table-auto relative">
-            <thead>
-              <tr>
-                <template v-for="field in ${majStart(className)}.getAllSearchFieldsMetadata()" :key="field.key">
-                  <th
-                    v-show="field.showInTable && visibleFields.includes(field.key)"
-                    class="sticky top-0 bg-primary text-primary-content px-3 py-2 font-bold min-w-35 z-1"
-                    :class="{ 'left-0 z-2': field.identifier }"
-                  >
-                    <div class="flex items-center justify-between gap-1">
-                      <span>{{ field.label }}</span>
-        
-                      <!-- Sort Buttons -->
-                      <SortButton v-show="field.sortable" :field-key="field.key" @sort="sortBy" />
-                    </div>
-                  </th>
-                </template>
-                <!-- Right sticky column -->
-                <th
-                  class="sticky top-0 right-0 bg-primary text-primary-content px-3 py-2 font-bold min-w-35 z-2"
-                >{{ message }}</th>
-              </tr>
-            </thead>
-            <tbody class="bg-base-100">
-              <!-- Empty message -->
-              <tr v-if="!loading && message">
-                <td
-                  :colspan="visibleFields.filter(f => ${majStart(className)}.getAllSearchFieldsMetadata().some(m => m.key === f && m.showInTable)).length + 1"
-                  class="text-center py-4 text-gray-500"
-                >
-              </tr>
+          <!-- View Switcher : Affiche dynamiquement le composant selon le mode -->
+          <component
+            :is="currentLayoutComponent"
+            :data="data"
+            :message="message"
+            :loading="loading"
+            :visible-fields="visibleFields"
+            :view-action="viewAction"
+            :edit-action="editAction"
+            :remove-action="removeAction"
+            @request:refresh="$emit('request:refresh')"
+            @sortby="$emit('sortby', $event)"
+            @request-view="view${majStart(className)}"{{#if !isView}}
+            @request-delete="openDeletePopup"
+            @request-update="goToUpdateFormView"{{/if}}
+          />
 
-              <!-- Entity rows -->
-              <${majStart(className)}Row
-                v-else
-                v-for="${minStart(className)} in data"
-                :key="${minStart(className)}.getKeyValue()"
-                :${minStart(className)}="${minStart(className)}"
-                :visible-fields="visibleFields"
-                :view-action="viewAction"
-                :edit-action="editAction"
-                :remove-action="removeAction"
-                @request-view="view${majStart(className)}"{{#if !isView}}
-                @request-delete="openDeletePopup"
-                @request-update="goToUpdateFormView"{{/if}}
-              />
-            </tbody>
-          </table>{{#if !isView}}
-          <!-- Delete confirmation popup -->
+          <!-- Delete confirmation popup (Partagé) -->{{#if !isView}}
           <DeleteConfirmationPopup
             :visible="deletePopup"
             :message="$t('confirmation.delete')"
@@ -5890,58 +5859,51 @@
         </template>
       style: "<style scoped></style>"
       export: |
-        defineProps({
-          data: {
-            type: Array as PropType<${majStart(className)}[]>,
-            required: true,
-          },
+        const props = defineProps({
+          data: { type: Array as PropType<${majStart(className)}[]>, required: true },
           message: String,
-          loading: {
-            type: Boolean,
-            default: false,
-          },
-          viewAction: {
-            type: Boolean,
-            default: true,
-          },
-          editAction: {
-            type: Boolean,
-            default: true,
-          },
-          removeAction: {
-            type: Boolean,
-            default: true,
-          },
-          visibleFields: {
-            type: Array as PropType<string[]>,
-            default: () => []
-          }
+          loading: { type: Boolean, default: false },
+          viewAction: { type: Boolean, default: true },
+          editAction: { type: Boolean, default: true },
+          removeAction: { type: Boolean, default: true },
+          visibleFields: { type: Array as PropType<string[]>, default: () => [] },
+          layoutMode: { type: String as PropType<'list' | 'card'>, default: 'list' },
         })
+
         const emit = defineEmits<{
           (e: 'request:refresh'): void
           (e: 'sortby', sortData: SortFieldParameter): void
         }>()
-        
-        function sortBy(sortData: SortFieldParameter): void {
-          emit('sortby', sortData)
+
+        // Ajouter un nouveau mode = ajouter une seule ligne ici
+        const layoutComponents: Record<string, Component> = {
+          list: ${majStart(className)}Table,
+          card: ${majStart(className)}Grid,
+          // Exemples futurs :
+          // kanban: ${majStart(className)}Kanban,
+          // timeline: ${majStart(className)}Timeline,
         }
 
+        // Fallback sur ${majStart(className)}Table si le mode n'existe pas (sécurité)
+        const currentLayoutComponent = computed<Component>(
+          () => layoutComponents[props.layoutMode] ?? ${majStart(className)}Table,
+        )
+
         {{#if isView}}
-        const { view${majStart(className)} } = use${majStart(className)}s()
+        const { view${majStart(className)} } = use${majPluralize(className)}()
         {{else}}
-        const selectedEntity = ref()
-
+        const selectedEntity = ref<${majStart(className)}>()
         const { visible: deletePopup, closePopup } = usePopup(false)
-        const { delete${majStart(className)}, view${majStart(className)}, goToUpdateFormView } = use${majStart(className)}s()
+        const { delete${majStart(className)}, view${majStart(className)}, goToUpdateFormView } = use${majPluralize(className)}()
 
-        function openDeletePopup(entity: ${majStart(className)}) {
+        const openDeletePopup = (entity: ${majStart(className)}) => {
           if (!entity) return
           selectedEntity.value = entity
           deletePopup.value = true
         }
 
-        async function confirmDelete() {
-          const { success, error } = await delete${majStart(className)}(selectedEntity.value)
+        const confirmDelete = async () => {
+          const { success, error } = await delete${majStart(className)}(selectedEntity.value!)
           if (success) {
             deletePopup.value = false
             emit('request:refresh')
