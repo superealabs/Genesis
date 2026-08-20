@@ -1,0 +1,234 @@
+@import 'tailwindcss';
+
+/* ═══════════════════════════════════════════════════════════
+   FONTS — Polices variables
+   ═══════════════════════════════════════════════════════════ */
+
+@font-face {
+    font-family: 'Chillax';
+    src: url('../FONTS/Chillax/Chillax-Variable.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Outfit';
+    src: url('../FONTS/Outfit/Outfit-Variable.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('../FONTS/Poppins/Poppins-Variable.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NIVEAU 1 — THÈME GENESIS
+   ═══════════════════════════════════════════════════════════ */
+
+@theme {
+    --color-bg-light:    hsl(0, 0%, 15%);
+    --color-bg:          hsl(0, 0%, 10%);
+    --color-bg-dark:     hsl(0, 0%, 5%);
+
+    --color-text:        hsl(0, 0%, 95%);
+    --color-text-muted:  hsl(0, 0%, 65%);
+
+    --color-accent:      hsl(250, 60%, 60%);
+    --color-secondary:   hsl(0, 0%, 30%);
+
+    /* Overlay de hover pour les boutons "ghost" */
+    --color-hover-ghost: rgba(255, 255, 255, 0.1);
+
+    /* ═══ FONTS ═══ */
+    --font-display: 'Chillax', system-ui, sans-serif;    /* H1 */
+    --font-heading: 'Outfit', system-ui, sans-serif;     /* H2, H3, H4 */
+    --font-ui:      'Outfit', system-ui, sans-serif;     /* Éléments UI */
+    --font-body:    'Poppins', system-ui, sans-serif;    /* Texte courant */
+    --font-sans:    'Outfit', system-ui, sans-serif;     /* Défaut global */
+    --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NIVEAU 1 — THÈME GENESIS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Genesis SOMBRE (auto ET forcé) */
+body.theme-genesis.vscode-dark,
+body.theme-genesis.genesis-dark {
+    --color-bg-light:    hsl(0, 0%, 15%);
+    --color-bg:          hsl(0, 0%, 10%);
+    --color-bg-dark:     hsl(0, 0%, 5%);
+
+    --color-text:        hsl(0, 0%, 95%);
+    --color-text-muted:  hsl(0, 0%, 65%);
+
+    --color-accent:      hsl(250, 60%, 60%);
+    --color-secondary:   hsl(0, 0%, 30%);
+
+    --color-hover-ghost: rgba(255, 255, 255, 0.1);
+}
+
+/* Genesis CLAIR (auto ET forcé) */
+body.theme-genesis.vscode-light,
+body.theme-genesis.genesis-light {
+    --color-bg-light:    hsl(0, 0%, 98%);
+    --color-bg:          hsl(0, 0%, 95%);
+    --color-bg-dark:     hsl(0, 0%, 90%);
+
+    --color-text:        hsl(0, 0%, 10%);
+    --color-text-muted:  hsl(0, 0%, 40%);
+
+    --color-accent:      hsl(250, 60%, 50%);
+    --color-secondary:   hsl(0, 0%, 70%);
+
+    --color-hover-ghost: rgba(0, 0, 0, 0.05);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   NIVEAU 2 — THÈME VSCODE
+   ═══════════════════════════════════════════════════════════ */
+
+/* VS Code Auto : accent = bouton VS Code natif */
+body.theme-vscode {
+    --color-bg-light:    var(--vscode-sideBar-background);
+    --color-bg:          var(--vscode-editor-background);
+    --color-bg-dark:     var(--vscode-statusBar-background);
+
+    --color-text:        var(--vscode-editor-foreground);
+    --color-text-muted:  var(--vscode-descriptionForeground);
+
+    --color-accent:      var(--vscode-button-background);
+    --color-secondary:   var(--vscode-button-secondaryBackground, var(--vscode-sideBar-background));
+
+    --color-hover-ghost: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.15));
+}
+
+/* VS Code + forçage compatible : mêmes variables */
+body.theme-vscode.vscode-dark.genesis-dark,
+body.theme-vscode.vscode-light.genesis-light {
+    --color-bg-light:    var(--vscode-sideBar-background);
+    --color-bg:          var(--vscode-editor-background);
+    --color-bg-dark:     var(--vscode-statusBar-background);
+
+    --color-text:        var(--vscode-editor-foreground);
+    --color-text-muted:  var(--vscode-descriptionForeground);
+
+    --color-accent:      var(--vscode-button-background);
+    --color-secondary:   var(--vscode-button-secondaryBackground, var(--vscode-sideBar-background));
+
+    --color-hover-ghost: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.15));
+}
+
+/* VS Code + forçage CONTRADICTOIRE */
+body.theme-vscode.vscode-dark.genesis-light {
+    --color-bg-light:    hsl(0, 0%, 98%);
+    --color-bg:          hsl(0, 0%, 95%);
+    --color-bg-dark:     hsl(0, 0%, 90%);
+
+    --color-text:        hsl(0, 0%, 10%);
+    --color-text-muted:  hsl(0, 0%, 40%);
+
+    --color-accent:      var(--vscode-button-background);
+    --color-secondary:   var(--vscode-button-secondaryBackground, var(--vscode-sideBar-background));
+
+    --color-hover-ghost: rgba(0, 0, 0, 0.05);
+}
+
+body.theme-vscode.vscode-light.genesis-dark {
+    --color-bg-light:    hsl(0, 0%, 15%);
+    --color-bg:          hsl(0, 0%, 10%);
+    --color-bg-dark:     hsl(0, 0%, 5%);
+
+    --color-text:        hsl(0, 0%, 95%);
+    --color-text-muted:  hsl(0, 0%, 65%);
+
+    --color-accent:      var(--vscode-button-background);
+    --color-secondary:   var(--vscode-button-secondaryBackground, var(--vscode-sideBar-background));
+
+    --color-hover-ghost: rgba(255, 255, 255, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NIVEAU 3 — THÈME MONOCHROME
+   ═══════════════════════════════════════════════════════════ */
+
+/* Mono SOMBRE (auto ET forcé) */
+body.theme-mono.vscode-dark,
+body.theme-mono.genesis-dark {
+    --color-bg-light:    hsl(0, 0%, 15%);
+    --color-bg:          hsl(0, 0%, 10%);
+    --color-bg-dark:     hsl(0, 0%, 5%);
+
+    --color-text:        hsl(0, 0%, 100%);
+    --color-text-muted:  hsl(0, 0%, 70%);
+
+    --color-accent:      hsl(0, 0%, 100%);
+    --color-secondary:   hsl(0, 0%, 50%);
+
+    --color-hover-ghost: rgba(255, 255, 255, 0.1);
+}
+
+/* Mono CLAIR (auto ET forcé) */
+body.theme-mono.vscode-light,
+body.theme-mono.genesis-light {
+    --color-bg-light:    hsl(0, 0%, 100%);
+    --color-bg:          hsl(0, 0%, 95%);
+    --color-bg-dark:     hsl(0, 0%, 85%);
+
+    --color-text:        hsl(0, 0%, 0%);
+    --color-text-muted:  hsl(0, 0%, 30%);
+
+    --color-accent:      hsl(0, 0%, 0%);
+    --color-secondary:   hsl(0, 0%, 50%);
+
+    --color-hover-ghost: rgba(0, 0, 0, 0.05);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════════════ */
+
+@layer base {
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: var(--font-body);
+        font-size: 13px;
+        background-color: var(--color-bg);
+        color: var(--color-text);
+    }
+
+    /* ═══ TYPOGRAPHIE ═══ */
+    
+    h1 {
+        font-family: var(--font-display);
+        font-weight: 600;
+    }
+
+    h2, h3, h4, h5, h6 {
+        font-family: var(--font-heading);
+        font-weight: 600;
+    }
+
+    /* Éléments UI : boutons, inputs, labels */
+    button,
+    input,
+    select,
+    textarea,
+    label {
+        font-family: var(--font-ui);
+    }
+}
