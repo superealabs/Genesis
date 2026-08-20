@@ -46,25 +46,6 @@ public class EnvironmentUtils {
         return os.contains("nux") || os.contains("nix");
     }
 
-    private static String getRegistryValue(String key, String value) {
-        try {
-            Process process = new ProcessBuilder("reg", "query", key, "/v", value).start();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (line.contains(value)) {
-                        String[] tokens = line.split("REG_SZ|REG_EXPAND_SZ");
-                        if (tokens.length > 1) {
-                            return tokens[1].trim();
-                        }
-                    }
-                }
-            }
-        } catch (Exception ignored) {}
-        return "";
-    }
-
-
     public static void runWithSudo(String password, String... command) throws IOException, InterruptedException {
 
         List<String> fullCommand = new ArrayList<>();
