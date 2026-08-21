@@ -232,3 +232,11 @@ body.theme-mono.genesis-light {
         font-family: var(--font-ui);
     }
 }
+
+body.is-resizing,
+body.is-resizing * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+}
