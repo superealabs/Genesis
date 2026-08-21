@@ -17,7 +17,7 @@
         <!-- Un seul composant pour les deux modes -->
         <FrameworkList
             :frameworks="filtered"
-            :selectedId="mode === 'selection' ? selectedItem?.id : undefined"
+            :selectedId="currentSelectedId"
             :display="displayMode"
             :frameworkSlots="frameworkSlots"
             @select="handleSelect"
@@ -27,9 +27,11 @@
 
     <!-- Popup de remplacement quand tous les slots sont pleins -->
     <SimpleSelectionPopup
-        v-if="showReplacePopup"
-        title="Remplacer un slot"
+        :show="showReplacePopup"
+        :mouseX="mouseX"
+        :mouseY="mouseY"
         :options="replaceOptions"
+        position="bottom-right"
         @select="handleReplace"
         @close="cancelReplace"
     />
@@ -98,7 +100,7 @@ const { mode, slots, selectedItem } = compare;
 // Map des framework.id → slot (A, B, C, D)
 const frameworkSlots = computed(() => {
     if (mode.value !== 'compare') {
-        return new Map<number, string>(); // Map vide = pas de badge en mode sélection
+        return new Map<number, string>();
     }
     
     const map = new Map<number, string>();
@@ -113,6 +115,8 @@ const frameworkSlots = computed(() => {
 // État pour le popup de remplacement
 const showReplacePopup = ref(false);
 const pendingFramework = ref<Framework | null>(null);
+const mouseX = ref<number | null>(null);
+const mouseY = ref<number | null>(null);
 
 const replaceOptions = computed<SelectionOption[]>(() => {
     return Object.entries(slots.value)
@@ -148,11 +152,22 @@ const filtered = computed(() => {
     return result;
 });
 
-function handleSelect(framework: Framework) {
+function handleSelect(framework: Framework, event?: MouseEvent) {
     const result = compare.handleSelect(framework);
 
     if (result.action === 'replace-needed') {
         pendingFramework.value = framework;
+        
+        // Capturer les coordonnées de la souris si disponibles
+        if (event) {
+            mouseX.value = event.clientX;
+            mouseY.value = event.clientY;
+        } else {
+            // Fallback : centre de l'écran
+            mouseX.value = window.innerWidth / 2;
+            mouseY.value = window.innerHeight / 2;
+        }
+        
         showReplacePopup.value = true;
     } else if (result.action === 'select' && mode.value === 'selection') {
         emit('select', framework);
@@ -169,6 +184,8 @@ function handleReplace(slotId: string | number) {
 function cancelReplace() {
     showReplacePopup.value = false;
     pendingFramework.value = null;
+    mouseX.value = null;
+    mouseY.value = null;
 }
 
 function handleModeChange(newMode: 'selection' | 'compare') {
@@ -182,4 +199,9 @@ function handleBack() {
 function openFilter() {
     // Le dropdown gère lui-même l'ouverture
 }
+
+const currentSelectedId = computed(() => {
+    // On ne met en surbrillance (focus) que si on est explicitement en mode 'selection'
+    return mode.value === 'selection' ? selectedItem.value?.id : undefined;
+});
 </script>

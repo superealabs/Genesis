@@ -7,6 +7,11 @@ export type PopupPosition =
     | 'left' | 'right'
     | 'bottom-left' | 'bottom' | 'bottom-right';
 
+export type PopupAnchorPosition =
+    | 'top-left' | 'top' | 'top-right'
+    | 'bottom-left' | 'bottom' | 'bottom-right'
+    | 'left' | 'right';
+
 /**
  * Tailles disponibles pour les popups
  */

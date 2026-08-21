@@ -116,8 +116,11 @@ export function useCompareSlots<T>(config: CompareSlotsConfig<T>): UseCompareSlo
         
         if (newMode === 'compare') {
             // Selection → Compare : l'élément sélectionné devient le premier slot (s'il est libre)
-            if (selectedItem.value && slots.value[slotKeys[0]] === null) {
+            if (selectedItem.value) {
                 slots.value[slotKeys[0]] = selectedItem.value;
+            } else {
+                // Si aucune sélection, on vide le Slot A pour rester cohérent
+                slots.value[slotKeys[0]] = null;
             }
         } else {
             // Compare → Selection : le premier slot devient l'élément sélectionné (focus)

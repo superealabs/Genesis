@@ -8,7 +8,7 @@
                 'bg-bg-light hover:border-accent/50': !selected
             }
         ]"
-        @click="$emit('click')"
+        @click="$emit('click', $event)"
     >
         <!-- Badge de sélection (top-right) -->
         <div
@@ -21,12 +21,10 @@
 
         <!-- Mode Card : layout vertical centré -->
         <template v-if="layoutMode === 'card'">
-            <!-- Logo SVG ou placeholder -->
             <div class="flex items-center justify-center w-10 h-10 rounded bg-secondary text-text-muted text-xs font-mono">
                 <slot name="logo">{{ initials }}</slot>
             </div>
 
-            <!-- Nom + sous-titre -->
             <div class="flex flex-col items-center gap-0.5 text-center">
                 <span class="text-xs font-semibold text-text leading-tight">{{ label }}</span>
                 <span v-if="sublabel" class="text-text-muted truncate" style="font-size: 10px;">{{ sublabel }}</span>
@@ -35,24 +33,20 @@
 
         <!-- Mode List : layout horizontal -->
         <template v-else>
-            <!-- Logo SVG ou placeholder -->
             <div class="flex items-center justify-center w-8 h-8 rounded bg-secondary text-text-muted text-xs font-mono flex-shrink-0">
                 <slot name="logo">{{ initials }}</slot>
             </div>
 
-            <!-- Nom + sous-titre -->
             <div class="flex flex-col gap-0.5 min-w-0 flex-1">
                 <span class="text-sm font-semibold text-text leading-tight truncate">{{ label }}</span>
                 <span v-if="sublabel" class="text-xs text-text-muted truncate">{{ sublabel }}</span>
             </div>
 
-            <!-- Informations complémentaires (slot) -->
             <div v-if="$slots.complementary" class="flex items-center gap-2 flex-shrink-0">
                 <slot name="complementary" />
             </div>
         </template>
 
-        <!-- Bouton info (bottom-right en card, right en list) -->
         <GenesisButtonIcon
             v-if="showInfoButton"
             size="xs"
@@ -75,19 +69,8 @@ const props = withDefaults(defineProps<{
     label: string;
     sublabel?: string;
     selected?: boolean;
-    /**
-     * Mode d'affichage : card (grille) ou list (ligne)
-     * @default 'card'
-     */
     layoutMode?: 'card' | 'list';
-    /**
-     * Badge de sélection affiché en top-right (ex: 'A', 'B', 'C', 'D')
-     */
     slot?: string | null;
-    /**
-     * Affiche un bouton "?" pour ouvrir un panneau d'informations
-     * @default false
-     */
     showInfoButton?: boolean;
 }>(), {
     selected: false,
@@ -97,7 +80,7 @@ const props = withDefaults(defineProps<{
 });
 
 defineEmits<{
-    click: [];
+    click: [event: MouseEvent];
     info: [];
 }>();
 
@@ -110,7 +93,6 @@ const initials = computed(() => {
         .slice(0, 3);
 });
 
-// Classes de layout selon le mode
 const layoutClasses = computed(() => {
     if (props.layoutMode === 'card') {
         return 'aspect-square flex flex-col items-center justify-center gap-2';
@@ -118,7 +100,6 @@ const layoutClasses = computed(() => {
     return 'aspect-auto flex flex-row items-center gap-3';
 });
 
-// Position du bouton info selon le mode
 const infoButtonClasses = computed(() => {
     if (props.layoutMode === 'card') {
         return 'absolute bottom-1 right-1 opacity-60 hover:opacity-100';

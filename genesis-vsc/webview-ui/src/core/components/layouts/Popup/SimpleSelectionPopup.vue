@@ -1,12 +1,14 @@
 <template>
-    <BaseFormPopup
-        :title="title"
-        :size="size"
-        :isClosable="isClosable"
-        :draggable="draggable"
+    <BasePopup
+        :show="show"
+        :anchor="anchor"
+        :mouseX="mouseX"
+        :mouseY="mouseY"
+        :position="position"
+        :offset="offset"
         @close="$emit('close')"
     >
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1 p-1 min-w-[150px]">
             <button
                 v-for="option in options"
                 :key="String(option.id)"
@@ -33,11 +35,12 @@
                 </span>
             </button>
         </div>
-    </BaseFormPopup>
+    </BasePopup>
 </template>
 
 <script setup lang="ts">
-import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
+import BasePopup from '@/core/components/layouts/Popup/BasePopup.vue';
+import type { PopupAnchorPosition } from './popup.types';
 
 export interface SelectionOption {
     /** Identifiant unique du choix (retourné au clic) */
@@ -51,25 +54,31 @@ export interface SelectionOption {
 }
 
 interface Props {
-    /** Titre du popup */
-    title?: string;
+    /** Contrôle la visibilité du popup */
+    show?: boolean;
     /** Liste des choix disponibles */
     options: SelectionOption[];
     /** Id du choix actuellement sélectionné (pour le mettre en évidence) */
     selectedId?: string | number;
-    /** Taille du popup */
-    size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full';
-    /** Affiche le bouton de fermeture */
-    isClosable?: boolean;
-    /** Permet de déplacer le popup */
-    draggable?: boolean;
+    /** Élément de référence pour le positionnement */
+    anchor?: HTMLElement | null;
+    /** Coordonnée X de la souris */
+    mouseX?: number | null;
+    /** Coordonnée Y de la souris */
+    mouseY?: number | null;
+    /** Position par rapport à l'ancre ou à la souris */
+    position?: PopupAnchorPosition;
+    /** Espace en pixels entre la cible et le popup */
+    offset?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    title: 'Sélectionner',
-    size: 'sm',
-    isClosable: true,
-    draggable: true
+    show: true,
+    anchor: null,
+    mouseX: null,
+    mouseY: null,
+    position: 'bottom-left',
+    offset: 4
 });
 
 defineEmits<{
