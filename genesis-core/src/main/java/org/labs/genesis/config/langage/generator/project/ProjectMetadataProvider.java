@@ -5,6 +5,7 @@ import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.engine.GenesisTemplateEngine;
+import org.labs.genesis.config.Constantes;
 
 import java.util.*;
 
@@ -126,6 +127,8 @@ public class ProjectMetadataProvider {
         if (framework instanceof FrameworkMVC) {
             dependencyFileMap.put("isMvcProject", true);
         }
+
+        dependencyFileMap.put("isSpringMvc", framework.getId() == Constantes.Spring_MVC_ID);
 
         return dependencyFileMap;
     }

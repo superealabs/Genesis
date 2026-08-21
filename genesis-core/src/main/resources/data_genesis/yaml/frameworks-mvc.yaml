@@ -3402,12 +3402,12 @@
 
 - id: 6
   languageId: 1
-  coreFramework: "Spring Boot"
-  name: "Spring - MVC"
+  coreFramework: "Spring MVC"
+  name: "Spring MVC - Thymeleaf"
   template: "Template"
   isProd: true
   useDB: true
-  withGroupId: false
+  withGroupId: true
   useCloud: false
   useEurekaServer: false
   isGateway: false
@@ -3417,22 +3417,33 @@
     logoPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/images"
     langsPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/i18n"
   additionalFiles:
-    - fileType: "MainFile"
-      fileName: "${majStart(projectName)}Application"
+    - fileType: "WebAppInitializer"
+      fileName: "WebAppInitializer"
       extension: "java"
       content: |
-        package ${groupLink}.${lowerCase(projectName)};
-        
-        import org.springframework.boot.SpringApplication;
-        import org.springframework.boot.autoconfigure.SpringBootApplication;
-        
-        @SpringBootApplication
-        public class ${majStart(projectName)}Application {
-        {{tab}}public static void main(String[] args) {
-        {{tab}}{{tab}}SpringApplication.run(${majStart(projectName)}Application.class, args);
-        {{tab}}}
+        package ${groupLink}.${lowerCase(projectName)}.config;
+
+        import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
+
+        public class WebAppInitializer
+                extends AbstractAnnotationConfigDispatcherServletInitializer {
+
+            @Override
+            protected Class<?>[] getRootConfigClasses() {
+                return new Class<?>[] { RootConfig.class };
+            }
+
+            @Override
+            protected Class<?>[] getServletConfigClasses() {
+                return new Class<?>[] { WebConfig.class };
+            }
+
+            @Override
+            protected String[] getServletMappings() {
+                return new String[] { "/" };
+            }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
 
     - fileType: "RootConfig"
       fileName: "RootConfig"
@@ -3616,10 +3627,6 @@
                     .allowedHeaders("*")
                     .allowCredentials(true)
                     .maxAge(3600);
-            }
-            @Override
-            public void addViewControllers(ViewControllerRegistry registry) {
-                registry.addRedirectViewController("/", "/swagger-ui/index.html");
             }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
@@ -4490,9 +4497,8 @@
     - name: "Framework Version"
       variableName: "frameworkVersion"
       options:
-        - "3.3.6"
-        - "3.2.12"
-      defaultOption: "3.3.6"
+        - "6.2.19"
+      defaultOption: "6.2.19"
     - name: "Hibernate Ddl Auto"
       variableName: "hibernateDdlAuto"
       options:
@@ -4569,20 +4575,15 @@
       version: "1.11.0"
       scope: "{{removeLine}}"
 
-    - groupId: "org.springframework.boot"
-      artifactId: "spring-boot-starter-web"
-      version: "{{removeLine}}"
+    - groupId: "org.slf4j"
+      artifactId: "slf4j-api"
+      version: "2.0.17"
       scope: "{{removeLine}}"
 
-    - groupId: "org.springframework.boot"
-      artifactId: "spring-boot-starter-thymeleaf"
-      version: "{{removeLine}}"
-      scope: "{{removeLine}}"
-
-    - groupId: "nz.net.ultraq.thymeleaf"
-      artifactId: "thymeleaf-layout-dialect"
-      version: "3.3.0"
-      scope: "{{removeLine}}"
+    - groupId: "org.projectlombok"
+      artifactId: "lombok"
+      version: "1.18.36"
+      scope: "provided"
 
     - groupId: "com.zaxxer"
       artifactId: "HikariCP"
@@ -4693,143 +4694,7 @@
               }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/specification"
-      - fileType: "Unit Test File"
-        fileName: "${majStart(className)}ApplicationTests"
-        extension: "java"
-        content: |
-          package ${groupLink}.${lowerCase(projectName)};
-          
-          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-          
-          import java.nio.charset.StandardCharsets;
-          import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
-          import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
-          import org.junit.jupiter.api.AfterEach;
-          import org.junit.jupiter.api.BeforeEach;
-          import org.junit.jupiter.api.Tag;
-          import org.junit.jupiter.api.Test;
-          import org.junit.jupiter.api.TestInfo;
-          import org.junit.jupiter.api.TestInstance;
-          import org.junit.jupiter.api.TestInstance.Lifecycle;
-          import org.springframework.beans.factory.annotation.Autowired;
-          import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-          import org.springframework.boot.test.context.SpringBootTest;
-          import org.springframework.http.MediaType;
-          import org.springframework.mock.web.MockHttpServletResponse;
-          import org.springframework.test.web.servlet.MockMvc;
-          import org.springframework.test.context.ActiveProfiles;
-          import org.springframework.jdbc.core.JdbcTemplate;
-          import ${groupLink}.${lowerCase(projectName)}.utils.ConstraintDisabler;
-          
-          import com.fasterxml.jackson.databind.ObjectMapper;
-          import com.fasterxml.jackson.databind.ObjectWriter;
-          import com.fasterxml.jackson.databind.SerializationFeature;
-          
-          @SpringBootTest
-          @AutoConfigureMockMvc
-          @TestInstance(Lifecycle.PER_CLASS)
-          @ActiveProfiles("test")
-          class ${majStart(className)}ApplicationTests {
-          
-            private MockMvc mockMvc;
-            private ${majStart(className)}Service service;
-            private ${majStart(className)} mockData=new ${majStart(className)}();
-            private final JdbcTemplate jdbcTemplate;
-            private ConstraintDisabler constraintDisabler;
-          
-            @Autowired
-            public ${majStart(className)}ApplicationTests(MockMvc mockMvc, ${majStart(className)}Service service, JdbcTemplate jdbcTemplate) throws Exception {
-              this.mockMvc=mockMvc;
-              this.service=service;
-              this.jdbcTemplate = jdbcTemplate;
-              constraintDisabler = new ConstraintDisabler(jdbcTemplate);
-            }
-          
-            private final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(),
-            MediaType.APPLICATION_JSON.getSubtype(),
-            StandardCharsets.UTF_8);
-          
-            {{#if !isView}} 
-            @BeforeEach
-            void seedingTheDatabase(){
-              constraintDisabler.disableConstraintsForTable("${tableName}");
-              mockData = new ${majStart(className)}();
-              {{#each fields}}
-              {{#if this.isPrimaryKey}}{{removeLine}}
-              {{elseIf this.isForeignKey}}{{removeLine}}
-              {{else}}mockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
-              {{/each}}
-              service.create${majStart(className)}(mockData);
-            }
-            @AfterEach
-            void removingMockdatas(TestInfo testInfo){
-              if(testInfo.getTags().contains("skipAfter")){
-                return;
-              }
-              service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
-              constraintDisabler.restoreConstraints();
-            }
-            {{else}}{{removeLine}}{{/if}}
-          
-            @Test
-            void testSearch${majStart(className)}() throws Exception{
-              ObjectMapper mapper=new ObjectMapper();
-              mapper.findAndRegisterModules();
-              mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
-              ObjectWriter writer=mapper.writer().withDefaultPrettyPrinter();
-              String requestJson=writer.writeValueAsString(mockData);
-              MockHttpServletResponse resp=mockMvc.perform(post("/${lowerCase(classNameLink)}/search").contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
-            }
-          
-            @Test
-            void testGetAll${majStart(className)}() throws Exception{
-              MockHttpServletResponse resp=mockMvc.perform(get("/${lowerCase(classNameLink)}")).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
-            }
-          
-            {{#if !isView}} 
-            @Test
-            void testCreate${majStart(className)}() throws Exception{
-              ${majStart(className)} otherMockData=new ${majStart(className)}();
-              {{#each fields}}
-              {{#if this.isPrimaryKey}}{{removeLine}}
-              {{elseIf this.isForeignKey}}{{removeLine}}
-              {{else}}otherMockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
-              {{/each}}
-              service.create${majStart(className)}(otherMockData);
-              MockHttpServletResponse resp=mockMvc.perform(get("/${lowerCase(classNameLink)}")).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
-              service.delete${majStart(className)}(otherMockData.get${majStart(pkColumn)}());
-            }
-            {{else}}{{removeLine}}{{/if}}
-          
-            {{#if !isView}} 
-            @Test
-            void testModify${majStart(className)}() throws Exception{
-              ObjectMapper mapper=new ObjectMapper();
-              mapper.findAndRegisterModules();
-              mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
-              ObjectWriter writer=mapper.writer().withDefaultPrettyPrinter();
-              String requestJson=writer.writeValueAsString(mockData);
-              String requestUrl="/${lowerCase(classNameLink)}/%s";
-              requestUrl=String.format(requestUrl, mockData.get${majStart(pkColumn)}());
-              MockHttpServletResponse resp=mockMvc.perform(put(requestUrl).contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
-            }
-          
-            @Test
-            @Tag("skipAfter")
-            void testDelete${majStart(className)}() throws Exception{
-              service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
-              constraintDisabler.restoreConstraints();
-            }
-            {{else}}{{removeLine}}{{/if}}
-          }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
+
       - fileType: "DTO Search Model class"
         fileName: "${className}Search"
         extension: "java"
