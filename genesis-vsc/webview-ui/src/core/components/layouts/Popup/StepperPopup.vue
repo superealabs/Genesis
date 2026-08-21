@@ -5,6 +5,7 @@
         :isClosable="isClosable"
         :draggable="draggable"
         @close="$emit('close')"
+        :position="position"
     >
         <!-- Contenu de l'étape -->
         <div class="flex-1">
@@ -46,18 +47,21 @@
 <script setup lang="ts">
 import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
 import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
+import type { PopupSize, PopupPosition } from './popup.types';
 
 withDefaults(defineProps<{
     title?: string;
     currentStep: number;
     totalSteps: number;
-    size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full';
+    size?: PopupSize;
+    position?: PopupPosition;
     isClosable?: boolean;
     draggable?: boolean;
 }>(), {
     size: 'md',
     isClosable: true,
-    draggable: true
+    draggable: true,
+    position: 'center'
 });
 
 defineEmits<{

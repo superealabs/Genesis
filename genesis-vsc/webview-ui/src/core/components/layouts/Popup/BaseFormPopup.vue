@@ -1,15 +1,16 @@
 <template>
     <div 
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-100 p-4"
+        class="fixed inset-0 bg-black/50 flex z-100 p-4"
+        :class="[positionClasses, overlayClasses]"
         @click.self="handleOverlayClick()"
     >
-        <div
-            class="bg-bg text-text border border-secondary rounded-lg w-full flex flex-col relative"
-            :class="sizeClasses"
-            :style="[draggableStyle, resizeStyle]"
-        >
+    <div
+        class="bg-bg text-text border border-secondary rounded-lg w-full flex flex-col relative"
+        :class="[sizeClasses, { 'pointer-events-auto': !showOverlay }]"
+        :style="[draggableStyle, resizeStyle]"
+    >
 
-    <!-- Resize handle bas (remplace top) -->
+    <!-- Resize handle bas -->
     <div
         v-if="resizableY"
         class="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize z-10 flex items-center justify-center"
@@ -85,6 +86,7 @@ import { useDraggable } from '@/core/composables/ux/useDraggable.ts';
 import { useResizable } from '@/core/composables/ux/useResizable.ts';
 import IconX from '@/core/components/ui/icons/IconX.vue';
 import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
+import type { PopupPosition, PopupSize } from './popup.types';
 
 const props = withDefaults(defineProps<{
     title?: string;
@@ -92,13 +94,23 @@ const props = withDefaults(defineProps<{
     draggable?: boolean;
     resizableX?: boolean;
     resizableY?: boolean;
-    size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full';
+    size?: PopupSize;
+    position?: PopupPosition;
+    /**
+     * Affiche un overlay sombre derrière le popup.
+     * - true : overlay noir semi-transparent (défaut)
+     * - false : pas d'overlay, clics extérieurs passent à travers
+     * @default true
+     */
+    showOverlay?: boolean;
 }>(), {
     isClosable: true,
     draggable: true,
     resizableX: false,
     resizableY: false,
-    size: 'md'
+    size: 'md',
+    position: 'center',
+    showOverlay: true
 });
 
 const emit = defineEmits<{ close: [] }>();
@@ -117,6 +129,28 @@ function handleOverlayClick() {
     if (isResizing.value) return;
     if (props.isClosable) emit('close');
 }
+
+const positionClasses = computed(() => {
+    const positionMap: Record<PopupPosition, string> = {
+        'center': 'items-center justify-center',
+        'top-left': 'items-start justify-start',
+        'top': 'items-start justify-center',
+        'top-right': 'items-start justify-end',
+        'left': 'items-center justify-start',
+        'right': 'items-center justify-end',
+        'bottom-left': 'items-end justify-start',
+        'bottom': 'items-end justify-center',
+        'bottom-right': 'items-end justify-end'
+    };
+    return positionMap[props.position];
+});
+
+const overlayClasses = computed(() => {
+    if (props.showOverlay) {
+        return 'bg-black/50';
+    }
+    return 'bg-transparent pointer-events-none';
+});
 
 const sizeClasses = computed(() => ({
     'max-w-[min(400px,90vw)] min-h-[200px] max-h-[90vh]':   props.size === 'sm',
