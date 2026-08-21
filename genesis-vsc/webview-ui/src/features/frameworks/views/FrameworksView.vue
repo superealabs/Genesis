@@ -18,6 +18,7 @@
             :frameworks="filtered"
             :selectedId="selectedFramework?.id"
             @select="handleSelect"
+            @info="detailFramework = $event"
         />
 
         <FrameworkList
@@ -27,6 +28,12 @@
             @select="handleSelect"
         />
     </GenesisCollectionLayout>
+    <!-- Ajoute dans le template -->
+    <FrameworkDetail
+        v-if="detailFramework"
+        :framework="detailFramework"
+        @close="detailFramework = null"
+    />
 </template>
 
 <script setup lang="ts">
@@ -37,6 +44,8 @@ import FrameworkList from '@/features/frameworks/components/FrameworkList.vue';
 import FrameworkFilter from '@/features/frameworks/components/FrameworkFilter.vue';
 import GenesisCollectionLayout from '@/core/components/layouts/GenesisCollectionLayout.vue';
 import type { Framework } from '../types/framework.types';
+import FrameworkDetail from '../components/FrameworkDetail.vue';
+const detailFramework = ref<Framework | null>(null);
 
 interface FrameworkFilters {
     language?: string;

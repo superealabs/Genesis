@@ -34,7 +34,7 @@
   - Template Engine (viewTemplateEngine) ← MVC uniquement
   - View Extension (viewExtension) ← MVC uniquement
 
-* Panneau détail (apparaît à droite au clic) :
+* Panneau détail (apparaît d'en bas au clic) :
   Commun :
   - Nom
   - Core Framework

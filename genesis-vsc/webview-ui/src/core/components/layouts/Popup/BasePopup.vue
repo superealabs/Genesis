@@ -4,11 +4,37 @@
         @click.self="isClosable ? $emit('close') : null"
     >
         <div
-            class="bg-bg text-text border border-secondary rounded-lg w-full flex flex-col"
+            class="bg-bg text-text border border-secondary rounded-lg w-full flex flex-col relative"
             :class="sizeClasses"
-            :style="draggableStyle"
+            :style="[draggableStyle, resizeStyle]"
         >
-            
+    <!-- Resize handle haut -->
+    <div
+        v-if="resizableY"
+        class="absolute top-0 left-0 right-0 h-3 cursor-ns-resize z-10 flex items-center justify-center"
+        @mousedown="startResizeTop"
+    >
+        <div class="w-8 h-1 rounded-full bg-secondary hover:bg-accent/50 transition-colors" />
+    </div>
+
+    <!-- Resize handle gauche -->
+    <div
+        v-if="resizableX"
+        class="absolute top-0 left-0 bottom-0 w-3 cursor-ew-resize z-10 flex items-center justify-center"
+        @mousedown="startResizeLeft"
+    >
+        <div class="w-1 h-8 rounded-full bg-secondary hover:bg-accent/50 transition-colors" />
+    </div>
+
+    <!-- Resize handle droite -->
+    <div
+        v-if="resizableX"
+        class="absolute top-0 right-0 bottom-0 w-3 cursor-ew-resize z-10 flex items-center justify-center"
+        @mousedown="startResizeRight"
+    >
+        <div class="w-1 h-8 rounded-full bg-secondary hover:bg-accent/50 transition-colors" />
+    </div>
+
             <!-- Header avec titre -->
             <div 
                 v-if="title" 
@@ -48,14 +74,12 @@
             <div class="p-4 flex flex-col flex-1 overflow-auto">
                 <slot />
             </div>
-
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-
+import { computed, ref } from 'vue';
 import { useDraggable } from '@/core/composables/ux/useDraggable.ts';
 import IconX from '@/core/components/ui/icons/IconX.vue';
 import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
@@ -64,28 +88,87 @@ const props = withDefaults(defineProps<{
     title?: string;
     isClosable?: boolean;
     draggable?: boolean;
+    resizableX?: boolean;
+    resizableY?: boolean;
     size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full';
 }>(), {
     isClosable: true,
     draggable: true,
+    resizableX: false,
+    resizableY: false,
     size: 'md'
 });
 
-defineEmits<{
-    close: [];
-}>();
+defineEmits<{ close: [] }>();
 
-// ═══ Computed pour savoir si le drag est activé ═══
-const isDraggable = computed(() => 
-    props.draggable
-);
-
-// ═══ Composable de drag ═══
+const isDraggable = computed(() => props.draggable);
 const { startDrag, draggableStyle } = useDraggable({
     disabled: computed(() => !isDraggable.value)
 });
 
-// ═══ Classes de taille ═══
+// ═══ Resize state ═══
+const resizeWidth = ref<number | null>(null);
+const resizeHeight = ref<number | null>(null);
+
+const resizeStyle = computed(() => ({
+    ...(resizeWidth.value ? { width: `${resizeWidth.value}px` } : {}),
+    ...(resizeHeight.value ? { height: `${resizeHeight.value}px` } : {}),
+}));
+
+// ═══ Resize top ═══
+function startResizeTop(e: MouseEvent) {
+    const el = (e.currentTarget as HTMLElement).parentElement!;
+    const startY = e.clientY;
+    const startH = el.offsetHeight;
+
+    const onMove = (e: MouseEvent) => {
+        const delta = startY - e.clientY;
+        resizeHeight.value = Math.max(150, Math.min(window.innerHeight * 0.9, startH + delta));
+    };
+    const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+}
+
+// ═══ Resize left ═══
+function startResizeLeft(e: MouseEvent) {
+    const el = (e.currentTarget as HTMLElement).parentElement!;
+    const startX = e.clientX;
+    const startW = el.offsetWidth;
+
+    const onMove = (e: MouseEvent) => {
+        const delta = startX - e.clientX;
+        resizeWidth.value = Math.max(250, Math.min(window.innerWidth * 0.9, startW + delta));
+    };
+    const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+}
+
+// ═══ Resize right ═══
+function startResizeRight(e: MouseEvent) {
+    const el = (e.currentTarget as HTMLElement).parentElement!;
+    const startX = e.clientX;
+    const startW = el.offsetWidth;
+
+    const onMove = (e: MouseEvent) => {
+        const delta = e.clientX - startX;
+        resizeWidth.value = Math.max(250, Math.min(window.innerWidth * 0.9, startW + delta));
+    };
+    const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+}
+
 const sizeClasses = computed(() => ({
     'max-w-[min(400px,90vw)] min-h-[200px] max-h-[90vh]':   props.size === 'sm',
     'max-w-[min(600px,90vw)] min-h-[300px] max-h-[90vh]':   props.size === 'md',
