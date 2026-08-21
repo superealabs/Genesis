@@ -4,16 +4,27 @@
         <GenesisBackButton v-if="showBackButton" @click="$emit('back')" />
 
         <!-- Header -->
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-text font-heading text-6xl">
+        <div class="flex items-center justify-between gap-4">
+            <h2 class="font-semibold text-text font-heading text-6xl shrink-0">
                 <slot name="title">{{ title }}</slot>
             </h2>
 
-            <!-- Toggle mode -->
-            <LayoutSwitcher 
-                v-model="internalDisplayMode" 
-                :align="align" 
-            />
+            <!-- Contrôles à droite : Mode + Layout -->
+            <div class="flex items-center gap-2">
+                <GenesisSegmentedControl
+                    v-model="internalMode"
+                    :options="[
+                        { label: 'Selection', value: 'selection', icon: IconCursor },
+                        { label: 'Compare', value: 'compare', icon: IconGitCompare }
+                    ]"
+                    size="sm"
+                />
+                
+                <LayoutSwitcher 
+                    v-model="internalDisplayMode" 
+                    :align="align" 
+                />
+            </div>
         </div>
 
         <!-- Barre de recherche + filtre -->
@@ -30,14 +41,14 @@
             
             <!-- Slot pour filtre custom -->
             <slot name="filter">
-                <span 
+                <GenesisButtonIcon
                     v-if="showFilter"
-                    variant="secondary" 
-                    size="sm" 
+                    variant="secondary"
+                    size="md"
                     @click="$emit('openFilter')"
                 >
-                    Filtres
-                </span>
+                    <IconFilter />
+                </GenesisButtonIcon>
             </slot>
         </div>
 
@@ -50,12 +61,20 @@
 import { computed } from 'vue';
 import GenesisBackButton from '@/core/components/ui/actions/GenesisBackButton.vue';
 import LayoutSwitcher from '@/core/components/ui/dropdown/LayoutSwitcher.vue';
+import GenesisSegmentedControl from '@/core/components/ui/actions/GenesisSegmentedControl.vue';
+import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
+import IconCursor from '@/core/components/ui/icons/IconCursor.vue';
+import IconGitCompare from '@/core/components/ui/icons/IconGitCompare.vue';
+import IconFilter from '@/core/components/ui/icons/IconFilter.vue';
+
+export type CollectionMode = 'selection' | 'compare';
 
 interface Props {
     title?: string;
     searchValue?: string;
     searchPlaceholder?: string;
-    displayMode: 'grid' | 'list';  // ← Requis maintenant
+    displayMode: 'grid' | 'list';
+    mode?: CollectionMode;              // ← AJOUTÉ
     align?: 'left' | 'right';
     showBackButton?: boolean;
     showFilter?: boolean;
@@ -64,7 +83,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     title: 'Collection',
     searchPlaceholder: 'Rechercher...',
-    displayMode: 'grid',  // ← Valeur par défaut
+    displayMode: 'grid',
+    mode: 'selection',                  // ← AJOUTÉ
     align: 'right',
     showBackButton: false,
     showFilter: true
@@ -73,13 +93,20 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
     'update:searchValue': [value: string];
     'update:displayMode': [value: 'grid' | 'list'];
+    'update:mode': [value: CollectionMode];  // ← AJOUTÉ
     'openFilter': [];
     'back': [];
 }>();
 
-// Support v-model pour displayMode (plus simple maintenant)
+// Support v-model pour displayMode
 const internalDisplayMode = computed({
     get: () => props.displayMode,
     set: (value) => emit('update:displayMode', value)
+});
+
+// Support v-model pour mode
+const internalMode = computed({
+    get: () => props.mode,
+    set: (value) => emit('update:mode', value as CollectionMode)
 });
 </script>

@@ -1,34 +1,40 @@
-<!-- webview-ui/src/features/frameworks/views/FrameworksView.vue -->
 <template>
     <GenesisCollectionLayout
         title="Frameworks"
         v-model:searchValue="search"
         v-model:displayMode="displayMode"
+        v-model:mode="mode"
         searchPlaceholder="Rechercher par nom, core, type..."
         :showBackButton="showBackButton"
         @back="handleBack"
         @openFilter="openFilter"
+        @update:mode="handleModeChange"
     >
         <template #filter>
             <FrameworkFilter v-model:filters="filters" />
         </template>
 
-        <FrameworkGrid
-            v-if="displayMode === 'grid'"
+        <!-- Un seul composant pour les deux modes -->
+        <FrameworkList
             :frameworks="filtered"
-            :selectedId="selectedFramework?.id"
+            :selectedId="mode === 'selection' ? selectedItem?.id : undefined"
+            :display="displayMode"
+            :frameworkSlots="frameworkSlots"
             @select="handleSelect"
             @info="detailFramework = $event"
         />
-
-        <FrameworkList
-            v-else
-            :frameworks="filtered"
-            :selectedId="selectedFramework?.id"
-            @select="handleSelect"
-        />
     </GenesisCollectionLayout>
-    <!-- Ajoute dans le template -->
+
+    <!-- Popup de remplacement quand tous les slots sont pleins -->
+    <SimpleSelectionPopup
+        v-if="showReplacePopup"
+        title="Remplacer un slot"
+        :options="replaceOptions"
+        @select="handleReplace"
+        @close="cancelReplace"
+    />
+
+    <!-- Panneau de détails -->
     <FrameworkDetail
         v-if="detailFramework"
         :framework="detailFramework"
@@ -39,12 +45,15 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useFrameworks } from '@/features/frameworks/composables/useFrameworks';
-import FrameworkGrid from '@/features/frameworks/components/FrameworkGrid.vue';
+import { useCompareSlots } from '@/core/composables/ux/useCompareSlots';
 import FrameworkList from '@/features/frameworks/components/FrameworkList.vue';
 import FrameworkFilter from '@/features/frameworks/components/FrameworkFilter.vue';
 import GenesisCollectionLayout from '@/core/components/layouts/GenesisCollectionLayout.vue';
-import type { Framework } from '../types/framework.types';
+import SimpleSelectionPopup from '@/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+import type { SelectionOption } from '@/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 import FrameworkDetail from '../components/FrameworkDetail.vue';
+import type { Framework } from '../types/framework.types';
+
 const detailFramework = ref<Framework | null>(null);
 
 interface FrameworkFilters {
@@ -61,10 +70,9 @@ interface FrameworkFilters {
     viewExtension?: string;
 }
 
-// Nouveaux props pour contrôler le comportement
 const props = withDefaults(defineProps<{
     showBackButton?: boolean;
-    autoSelect?: boolean; // Si true, sélectionne et émet immédiatement
+    autoSelect?: boolean;
 }>(), {
     showBackButton: true,
     autoSelect: false
@@ -76,9 +84,41 @@ const emit = defineEmits<{
 }>();
 
 const { list, displayMode } = useFrameworks();
-const selectedFramework = ref<Framework | null>(null);
 const search = ref('');
 const filters = ref<FrameworkFilters>({});
+
+// Initialiser le système de comparaison avec 4 slots (A, B, C, D)
+const compare = useCompareSlots<Framework>({
+    slots: ['A', 'B', 'C', 'D'],
+    getId: (f) => f.id
+});
+
+const { mode, slots, selectedItem } = compare;
+
+// Map des framework.id → slot (A, B, C, D)
+const frameworkSlots = computed(() => {
+    const map = new Map<number, string>();
+    for (const [key, framework] of Object.entries(slots.value)) {
+        if (framework) {
+            map.set(framework.id, key);
+        }
+    }
+    return map;
+});
+
+// État pour le popup de remplacement
+const showReplacePopup = ref(false);
+const pendingFramework = ref<Framework | null>(null);
+
+const replaceOptions = computed<SelectionOption[]>(() => {
+    return Object.entries(slots.value)
+        .filter(([, framework]) => framework !== null)
+        .map(([slot, framework]) => ({
+            id: slot,
+            label: `Slot ${slot}`,
+            description: (framework as Framework).name
+        }));
+});
 
 const filtered = computed(() => {
     let result = list.value;
@@ -92,37 +132,43 @@ const filtered = computed(() => {
         );
     }
 
-    if (filters.value.type) {
-        result = result.filter(f => f.type === filters.value.type);
-    }
-    if (filters.value.coreFramework) {
-        result = result.filter(f => f.coreFramework === filters.value.coreFramework);
-    }
-    if (filters.value.isProd) {
-        result = result.filter(f => f.isProd);
-    }
-    if (filters.value.useDB) {
-        result = result.filter(f => f.useDB);
-    }
-    if (filters.value.useCloud) {
-        result = result.filter(f => f.useCloud);
-    }
-    if (filters.value.useEurekaServer) {
-        result = result.filter(f => f.useEurekaServer);
-    }
-    if (filters.value.isGateway) {
-        result = result.filter(f => f.isGateway);
-    }
-    if (filters.value.useFrontendApp) {
-        result = result.filter(f => f.useFrontendApp);
-    }
+    if (filters.value.type) result = result.filter(f => f.type === filters.value.type);
+    if (filters.value.coreFramework) result = result.filter(f => f.coreFramework === filters.value.coreFramework);
+    if (filters.value.isProd) result = result.filter(f => f.isProd);
+    if (filters.value.useDB) result = result.filter(f => f.useDB);
+    if (filters.value.useCloud) result = result.filter(f => f.useCloud);
+    if (filters.value.useEurekaServer) result = result.filter(f => f.useEurekaServer);
+    if (filters.value.isGateway) result = result.filter(f => f.isGateway);
+    if (filters.value.useFrontendApp) result = result.filter(f => f.useFrontendApp);
 
     return result;
 });
 
 function handleSelect(framework: Framework) {
-    selectedFramework.value = framework;
-    emit('select', framework);
+    const result = compare.handleSelect(framework);
+
+    if (result.action === 'replace-needed') {
+        pendingFramework.value = framework;
+        showReplacePopup.value = true;
+    } else if (result.action === 'select' && mode.value === 'selection') {
+        emit('select', framework);
+    }
+}
+
+function handleReplace(slotId: string | number) {
+    if (pendingFramework.value) {
+        compare.replaceSlot(slotId, pendingFramework.value);
+    }
+    cancelReplace();
+}
+
+function cancelReplace() {
+    showReplacePopup.value = false;
+    pendingFramework.value = null;
+}
+
+function handleModeChange(newMode: 'selection' | 'compare') {
+    compare.switchMode(newMode);
 }
 
 function handleBack() {

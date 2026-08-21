@@ -5,6 +5,7 @@
             :key="framework.id"
             :framework="framework"
             :selected="selectedId === framework.id"
+            :slot="frameworkSlots?.get(framework.id) ?? null"
             @select="$emit('select', $event)"
             @info="$emit('info', $event)"
         />
@@ -19,6 +20,11 @@ import GenesisGrid from '@/core/components/layouts/display/GenesisGrid.vue';
 defineProps<{
     frameworks: Framework[];
     selectedId?: number;
+    /**
+     * Map des framework.id → slot de comparaison (A, B, C, D)
+     * Utilisé pour afficher les badges sur les cartes en mode comparaison
+     */
+    frameworkSlots?: Map<number, string>;
 }>();
 
 defineEmits<{
