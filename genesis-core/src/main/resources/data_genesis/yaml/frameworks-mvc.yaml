@@ -3450,15 +3450,72 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config;
-        
+        import java.util.Properties;
+        import javax.sql.DataSource;
+        import com.zaxxer.hikari.HikariConfig;
+        import com.zaxxer.hikari.HikariDataSource;
+        import jakarta.persistence.EntityManagerFactory;
+        import org.springframework.context.annotation.Bean;
         import org.springframework.context.annotation.ComponentScan;
         import org.springframework.context.annotation.Configuration;
-        
+        import org.springframework.context.annotation.PropertySource;
+        import org.springframework.core.env.Environment;
+        import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+        import org.springframework.orm.jpa.JpaTransactionManager;
+        import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+        import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+        import org.springframework.transaction.PlatformTransactionManager;
+        import org.springframework.transaction.annotation.EnableTransactionManagement;
         @Configuration
-        @ComponentScan(
-            basePackages = "${groupLink}.${lowerCase(projectName)}.services"
-        )
+        @EnableTransactionManagement
+        @EnableJpaRepositories(basePackages = "${groupLink}.${lowerCase(projectName)}.repositories")
+        @ComponentScan(basePackages = "${groupLink}.${lowerCase(projectName)}.services")
+        @PropertySource("classpath:database.properties")
         public class RootConfig {
+
+            private final Environment environment;
+
+            public RootConfig(Environment environment) {
+                this.environment = environment;
+            }
+
+            @Bean(destroyMethod = "close")
+            public DataSource dataSource() {
+                HikariConfig config = new HikariConfig();
+                config.setJdbcUrl(environment.getRequiredProperty("database.url"));
+                config.setUsername(environment.getRequiredProperty("database.username"));
+                config.setPassword(environment.getRequiredProperty("database.password"));
+                config.setDriverClassName(environment.getRequiredProperty("database.driverClassName"));
+                config.setMaximumPoolSize(environment.getProperty("database.pool.maximumPoolSize", Integer.class, 10));
+                config.setConnectionTimeout(environment.getProperty("database.pool.connectionTimeout", Long.class, 30000L));
+                config.setPoolName("${projectName}Pool");
+                return new HikariDataSource(config);
+            }
+
+            @Bean
+            public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
+                HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+                LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
+                factory.setDataSource(dataSource);
+                factory.setPackagesToScan("${groupLink}.${lowerCase(projectName)}.models");
+                factory.setJpaVendorAdapter(vendorAdapter);
+                factory.setJpaProperties(jpaProperties());
+                return factory;
+            }
+
+            private Properties jpaProperties() {
+                Properties properties = new Properties();
+                properties.setProperty("hibernate.dialect",environment.getRequiredProperty("hibernate.dialect"));
+                properties.setProperty("hibernate.hbm2ddl.auto", environment.getProperty("hibernate.ddlAuto", "none"));
+                properties.setProperty("hibernate.show_sql", environment.getProperty("hibernate.showSql", "false"));
+                properties.setProperty("hibernate.format_sql", environment.getProperty("hibernate.formatSql", "true"));
+                return properties;
+            }
+
+            @Bean
+            public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
+                return new JpaTransactionManager(entityManagerFactory);
+            }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
 
@@ -3468,17 +3525,100 @@
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config;
 
+        import java.nio.charset.StandardCharsets;
+
+        import org.springframework.context.ApplicationContext;
+        import org.springframework.context.ApplicationContextAware;
+        import org.springframework.context.MessageSource;
+        import org.springframework.context.annotation.Bean;
         import org.springframework.context.annotation.ComponentScan;
         import org.springframework.context.annotation.Configuration;
+        import org.springframework.context.support.ResourceBundleMessageSource;
         import org.springframework.data.web.config.EnableSpringDataWebSupport;
+        import org.springframework.format.FormatterRegistry;
+        import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
         import org.springframework.web.servlet.config.annotation.CorsRegistry;
         import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+        import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
         import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+        import org.thymeleaf.spring6.SpringTemplateEngine;
+        import org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver;
+        import org.thymeleaf.spring6.view.ThymeleafViewResolver;
+        import org.thymeleaf.templatemode.TemplateMode;
+        import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
         @Configuration
         @EnableWebMvc
         @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
-        @ComponentScan(basePackages = "${groupLink}.${lowerCase(projectName)}.controllers")
-        public class WebConfig implements WebMvcConfigurer {
+        @ComponentScan(
+          basePackages = {
+          "${groupLink}.${lowerCase(projectName)}.controllers",
+          "${groupLink}.${lowerCase(projectName)}.exception.handler"
+        }
+        )
+        public class WebConfig implements WebMvcConfigurer, ApplicationContextAware {
+            private ApplicationContext applicationContext;
+            @Override
+            public void setApplicationContext(ApplicationContext applicationContext) {
+                this.applicationContext = applicationContext;
+            }
+            @Bean
+            public SpringResourceTemplateResolver templateResolver() {
+                SpringResourceTemplateResolver resolver = new SpringResourceTemplateResolver();
+                resolver.setApplicationContext(applicationContext);
+                resolver.setPrefix("classpath:/templates/");
+                resolver.setSuffix(".html");
+                resolver.setTemplateMode(TemplateMode.HTML);
+                resolver.setCharacterEncoding(StandardCharsets.UTF_8.name());
+                resolver.setCacheable(true);
+
+                return resolver;
+            }
+            @Bean
+            public SpringTemplateEngine templateEngine() {
+                SpringTemplateEngine engine = new SpringTemplateEngine();
+                engine.setTemplateResolver(templateResolver());
+                engine.setEnableSpringELCompiler(true);
+                engine.addDialect(new LayoutDialect());
+
+                return engine;
+            }
+            @Bean
+              public ThymeleafViewResolver thymeleafViewResolver(SpringTemplateEngine templateEngine) {
+              ThymeleafViewResolver resolver = new ThymeleafViewResolver();
+              resolver.setTemplateEngine(templateEngine);
+              resolver.setCharacterEncoding(StandardCharsets.UTF_8.name());
+              resolver.setContentType("text/html;charset=UTF-8");
+              resolver.setOrder(1);
+              
+              return resolver;
+            }
+            @Bean
+            public MessageSource messageSource() {
+                ResourceBundleMessageSource messageSource =
+                    new ResourceBundleMessageSource();
+
+                messageSource.setBasename("messages");
+                messageSource.setDefaultEncoding(
+                    StandardCharsets.UTF_8.name()
+                );
+                messageSource.setFallbackToSystemLocale(false);
+
+                return messageSource;
+            }
+            @Override
+            public void addResourceHandlers(ResourceHandlerRegistry registry) {
+                registry.addResourceHandler("/css/**").addResourceLocations("classpath:/static/css/");
+                registry.addResourceHandler("/js/**").addResourceLocations("classpath:/static/js/");
+                registry.addResourceHandler("/images/**").addResourceLocations("classpath:/static/images/");
+                registry.addResourceHandler("/fonts/**").addResourceLocations("classpath:/static/fonts/");
+                registry.addResourceHandler("/favicon.ico").addResourceLocations("classpath:/static/");
+            }
+            @Override
+            public void addFormatters(FormatterRegistry registry) {
+                DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
+                registrar.setUseIsoFormat(true);
+                registrar.registerFormatters(registry);
+            }
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
@@ -4240,51 +4380,107 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.exception.handler;
-        
         import lombok.extern.slf4j.Slf4j;
-        import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
         import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
         import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
         import org.springframework.http.HttpStatus;
-        import org.springframework.http.ResponseEntity;
+        import org.springframework.ui.Model;
+        import org.springframework.web.bind.annotation.ControllerAdvice;
         import org.springframework.web.bind.annotation.ExceptionHandler;
-        import org.springframework.web.bind.annotation.RestControllerAdvice;
-        
+        import org.springframework.web.bind.annotation.ResponseStatus;
         @Slf4j
-        @RestControllerAdvice
+        @ControllerAdvice
         public class GlobalExceptionHandler {
         
             @ExceptionHandler(ResourceNotFoundException.class)
-            public ResponseEntity<RestResponse<Void>> handleEntityNotFoundException(ResourceNotFoundException ex) {
-                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
-                log.info("Resource not found : {}", ex.getMessage(), ex);        
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            @ResponseStatus(HttpStatus.NOT_FOUND)
+            public String handleResourceNotFoundException(ResourceNotFoundException ex,Model model) {
+                log.info("Resource not found: {}", ex.getMessage());
+                model.addAttribute("errorMessage", ex.getMessage());
+                return "error/error";
             }
-        
-            @ExceptionHandler(InternalServerErrorException.class)
-            public ResponseEntity<RestResponse<Void>> handleInternalServerErrorException(InternalServerErrorException ex) {
-                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), null);
-                log.error("An internal error occurred : {}", ex.getMessage(), ex);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-            }
-        
             @ExceptionHandler(IllegalArgumentException.class)
-            public ResponseEntity<RestResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
-                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
-                log.error("Illegal argument provided : {}", ex.getMessage(), ex);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            @ResponseStatus(HttpStatus.BAD_REQUEST)
+            public String handleIllegalArgumentException(IllegalArgumentException ex, Model model) {
+                log.warn("Illegal argument provided: {}", ex.getMessage());
+                model.addAttribute("errorMessage", ex.getMessage());
+                return "error/error";
             }
-        
+
+            @ExceptionHandler(InternalServerErrorException.class)
+            @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+            public String handleInternalServerErrorException(InternalServerErrorException ex,Model model) {
+                log.error("An internal error occurred", ex);
+                model.addAttribute("errorMessage", ex.getMessage());
+                return "error/error";
+            }
             @ExceptionHandler(Exception.class)
-            public ResponseEntity<RestResponse<Void>> handleGenericException(Exception ex) {
-                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", null);
-                log.error("An unexpected error occurred : {}", ex.getMessage(), ex);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+            public String handleGenericException(Exception ex, Model model) {
+                log.error("An unexpected error occurred", ex);
+                model.addAttribute("errorMessage", "Une erreur inattendue est survenue.");
+                return "error/error";
             }
-        
+      
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/exception/handler"
+
+    - fileType: "Messages"
+      fileName: "messages"
+      extension: "properties"
+      content: |
+        app.name=${projectName}
+
+        common.actions=Actions
+        common.create=Créer
+        common.edit=Modifier
+        common.delete=Supprimer
+        common.save=Enregistrer
+        common.cancel=Annuler
+        common.back=Retour
+        common.search=Rechercher
+        common.details=Détails
+
+        pagination.previous=Précédent
+        pagination.next=Suivant
+
+        message.noData=Aucune donnée disponible.
+        message.confirmDelete=Voulez-vous vraiment supprimer cet élément ?
+
+        error.notFound=Ressource introuvable.
+        error.internal=Une erreur interne est survenue.
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
+
+    - fileType: "Database Properties"
+      fileName: "database"
+      extension: "properties"
+      content: |
+        database.url=${databaseUrl}
+        database.username=${databaseUsername}
+        database.password=${databasePassword}
+
+        {{#if databaseType = PostgreSQL}}
+        database.driverClassName=org.postgresql.Driver
+        {{/if}}
+        {{#if databaseType = MySQL}}
+        database.driverClassName=com.mysql.cj.jdbc.Driver
+        {{/if}}
+        {{#if databaseType = SQL Server}}
+        database.driverClassName=com.microsoft.sqlserver.jdbc.SQLServerDriver
+        {{/if}}
+        {{#if databaseType = Oracle}}
+        database.driverClassName=oracle.jdbc.OracleDriver
+        {{/if}}
+
+        database.pool.maximumPoolSize=10
+        database.pool.connectionTimeout=30000
+
+        hibernate.dialect=${hibernateDialect}
+        hibernate.ddlAuto=${hibernateDdlAuto}
+        hibernate.showSql=false
+        hibernate.formatSql=true
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
 
   configurations:
     - name: "Logging Level"
@@ -4329,6 +4525,11 @@
       version: "${frameworkVersion}"
       scope: "{{removeLine}}"
 
+    - groupId: "org.springframework"
+      artifactId: "spring-orm"
+      version: "${frameworkVersion}"
+      scope: "{{removeLine}}"
+
     - groupId: "org.springframework.data"
       artifactId: "spring-data-jpa"
       version: "3.4.13"
@@ -4361,12 +4562,12 @@
 
     - groupId: "org.thymeleaf"
       artifactId: "thymeleaf-spring6"
-      version: "3.1.3.RELEASE"
+      version: "3.1.5.RELEASE"
       scope: "{{removeLine}}"
 
     - groupId: "nz.net.ultraq.thymeleaf"
       artifactId: "thymeleaf-layout-dialect"
-      version: "3.3.0"
+      version: "4.0.1"
       scope: "{{removeLine}}"
 
     - groupId: "org.apache.commons"
@@ -4383,6 +4584,11 @@
       artifactId: "lombok"
       version: "1.18.36"
       scope: "provided"
+
+    - groupId: "com.zaxxer"
+      artifactId: "HikariCP"
+      version: "7.1.0"
+      scope: "{{removeLine}}"
 
   model:
     toGenerate: true
@@ -4912,7 +5118,7 @@
              layout:decorate="~{layout/base}">
             <main layout:fragment="content">
       previousLink: 'th:href="@{/}"'
-      errorMessage: '<span th:text="*{errorMessage}"></span>'
+      errorMessage: '<span th:text="$[thymeleafDollar]{errorMessage}"></span>'
       viewEnd: |
         </main>
         </div>
