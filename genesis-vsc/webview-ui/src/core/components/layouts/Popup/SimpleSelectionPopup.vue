@@ -1,5 +1,5 @@
 <template>
-    <BasePopup
+    <BaseFormPopup
         :title="title"
         :size="size"
         :isClosable="isClosable"
@@ -33,11 +33,11 @@
                 </span>
             </button>
         </div>
-    </BasePopup>
+    </BaseFormPopup>
 </template>
 
 <script setup lang="ts">
-import BasePopup from '@/core/components/layouts/Popup/BasePopup.vue';
+import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
 
 export interface SelectionOption {
     /** Identifiant unique du choix (retourné au clic) */

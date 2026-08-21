@@ -1,5 +1,5 @@
 <template>
-    <BasePopup
+    <BaseFormPopup
         :title="title"
         :isClosable="true"
         :draggable="true"
@@ -9,11 +9,11 @@
         @close="$emit('close')"
     >
         <slot />
-    </BasePopup>
+    </BaseFormPopup>
 </template>
 
 <script setup lang="ts">
-import BasePopup from '@/core/components/layouts/Popup/BasePopup.vue';
+import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
 
 defineProps<{
     title?: string;

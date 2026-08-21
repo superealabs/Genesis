@@ -1,5 +1,5 @@
 <template>
-    <BasePopup
+    <BaseFormPopup
         :title="title"
         :size="size"
         :isClosable="isClosable"
@@ -40,11 +40,11 @@
             </GenesisButton>
         </div>
 
-    </BasePopup>
+    </BaseFormPopup>
 </template>
 
 <script setup lang="ts">
-import BasePopup from '@/core/components/layouts/Popup/BasePopup.vue';
+import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
 import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
 
 withDefaults(defineProps<{

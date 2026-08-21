@@ -13,7 +13,7 @@
             </GenesisButton>
         </div>
 
-        <BasePopup
+        <BaseFormPopup
             v-if="activeSize"
             :size="activeSize"
             :title="`Popup — ${activeSize}`"
@@ -25,13 +25,13 @@
                     Dimension : {{ dimension.width }} x {{ dimension.height }}
                 </p>
             </div>
-        </BasePopup>
+        </BaseFormPopup>
     </ShowcaseLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue';
-import BasePopup from '@/core/components/layouts/Popup/BasePopup.vue';
+import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
 import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
 import ShowcaseLayout from '@/features/designSystem/components/layouts/ShowcaseLayout.vue';
 

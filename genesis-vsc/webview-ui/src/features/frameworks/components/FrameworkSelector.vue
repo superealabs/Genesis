@@ -1,6 +1,6 @@
 <!-- webview-ui/src/features/frameworks/components/FrameworkSelector.vue -->
 <template>
-    <BasePopup
+    <BaseFormPopup
         v-if="isOpen"
         title="Sélectionner un framework"
         :isClosable="true"
@@ -13,11 +13,11 @@
             :autoSelect="true"
             @select="handleSelect"
         />
-    </BasePopup>
+    </BaseFormPopup>
 </template>
 
 <script setup lang="ts">
-import BasePopup from '@/core/components/layouts/Popup/BasePopup.vue';
+import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
 import FrameworksView from '@/features/frameworks/views/FrameworksView.vue';
 import type { Framework } from '@/features/frameworks/types/framework.types';
 

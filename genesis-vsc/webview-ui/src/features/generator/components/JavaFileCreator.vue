@@ -1,5 +1,5 @@
 <template>
-    <BasePopup title="créer un fichier java" @close="$emit('close')">
+    <BaseFormPopup title="créer un fichier java" @close="$emit('close')">
         <div class="p-4 flex flex-col gap-4">
             <h2 class="text-sm font-semibold text-text">Créer un fichier Java</h2>
 
@@ -51,14 +51,14 @@
                 {{ isLoading ? 'Création en cours...' : 'Créer le fichier .java' }}
             </GenesisButton>
         </div>
-    </BasePopup>
+    </BaseFormPopup>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useVsCode } from '@/core/composables/useVsCode';
 import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
-import BasePopup from '@/core/components/layouts/Popup/BasePopup.vue';
+import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
 // import IconFolderOpen from '@/core/components/ui/icons/IconFolderOpen.vue';
 // import IconPlus from '@/core/components/ui/icons/IconPlus.vue';
 
