@@ -3,7 +3,7 @@
         title="Frameworks"
         v-model:searchValue="search"
         v-model:displayMode="displayMode"
-        v-model:mode="mode"
+        :mode="mode"
         searchPlaceholder="Rechercher par nom, core, type..."
         :showBackButton="showBackButton"
         @back="handleBack"
@@ -97,6 +97,10 @@ const { mode, slots, selectedItem } = compare;
 
 // Map des framework.id → slot (A, B, C, D)
 const frameworkSlots = computed(() => {
+    if (mode.value !== 'compare') {
+        return new Map<number, string>(); // Map vide = pas de badge en mode sélection
+    }
+    
     const map = new Map<number, string>();
     for (const [key, framework] of Object.entries(slots.value)) {
         if (framework) {
