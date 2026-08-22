@@ -14,6 +14,7 @@ public final class DashboardTheme {
     public static final Color SURFACE_ACTIVE = new Color(58, 61, 68);
     public static final Color BORDER = new Color(70, 72, 78);
     public static final Color TEXT = new Color(220, 223, 228);
+    public static final Color TEXT_DARK = new Color(48, 47, 47);
     public static final Color TEXT_SECONDARY = new Color(150, 154, 162);
     public static final Color TEXT_DISABLED = new Color(100, 103, 110);
     public static final Color SURFACE_HOVER = new Color(43, 45, 50);
@@ -21,7 +22,7 @@ public final class DashboardTheme {
     public static final Color BORDER_SUBTLE = new Color(54, 56, 62);
     // Couleurs Canvas (pour les zones de dessin)
     public static final Color CANVAS_BG = new Color(245, 246, 248);
-    public static final Color CANVAS_BORDER = new Color(210, 213, 218);
+    public static final Color CANVAS_BORDER = new Color(171, 171, 175);
     public static final Color GRID_COLOR = new Color(225, 228, 232);
     public static final Color TEXT_MUTED = new Color(160, 160, 160);
 

@@ -32,6 +32,7 @@ public class DashboardConfigurationForm {
     private JPanel canvasPanel;
 
     private JPanel tabsPanel;
+    private GridCanvas gridCanvas;
     private JScrollPane tabsScrollPane;
     private JButton addTabButton;
 
@@ -513,7 +514,7 @@ public class DashboardConfigurationForm {
 
         canvasPanel.removeAll();
 
-        GridCanvas gridCanvas =
+        gridCanvas =
                 new GridCanvas();
 
         canvasPanel.setLayout(new BorderLayout());
@@ -681,6 +682,22 @@ public class DashboardConfigurationForm {
 
         VisualizationPanel vizPanel =
                 new VisualizationPanel();
+
+        vizPanel.addSelectionListener(
+                item -> {
+
+                    DashboardVisualComponent component =
+                            new DashboardVisualComponent(
+                                    item.name,
+                                    4,
+                                    4
+                            );
+
+                    gridCanvas.addVisualComponent(
+                            component
+                    );
+                }
+        );
 
         panel.add(
                 vizPanel,
