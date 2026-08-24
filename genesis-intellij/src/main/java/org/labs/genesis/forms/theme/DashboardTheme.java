@@ -15,6 +15,7 @@ public final class DashboardTheme {
     public static final Color BORDER = new Color(70, 72, 78);
     public static final Color TEXT = new Color(220, 223, 228);
     public static final Color TEXT_DARK = new Color(48, 47, 47);
+    public static final Color TEXT_DARK_SECONDARY = new Color(90, 90, 96);
     public static final Color TEXT_SECONDARY = new Color(150, 154, 162);
     public static final Color TEXT_DISABLED = new Color(100, 103, 110);
     public static final Color SURFACE_HOVER = new Color(43, 45, 50);
@@ -66,5 +67,9 @@ public final class DashboardTheme {
         label.setForeground(TEXT);
         label.setFont(boldFont(18));
         label.setBorder(new EmptyBorder(5, 0, 5, 0));
+    }
+
+    public static Font regularFont(int size) {
+        return new Font(Font.SANS_SERIF, Font.PLAIN, size);
     }
 }

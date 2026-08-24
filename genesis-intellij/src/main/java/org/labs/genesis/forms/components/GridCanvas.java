@@ -7,64 +7,30 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GridCanvas extends JPanel {
 
-    private static final int GRID_COLUMNS = 12;
+    private static final int GRID_COLUMNS = 30;
     private static final int RADIUS = 12;
     private static final int BORDER_WIDTH = 1;
 
-    private final java.util.List<DashboardVisualComponent> visualComponents =
-            new java.util.ArrayList<>();
-
+    private final List<DashboardVisualComponent> visualComponents = new ArrayList<>();
     private DashboardVisualComponent selectedVisual;
 
-    // ============================================================
-    // REDIMENSIONNEMENT
-    // ============================================================
-
+    // Resize state
     private DashboardVisualComponent resizingComponent;
-
-    private DashboardVisualComponent.ResizeDirection resizeDirection =
-            DashboardVisualComponent.ResizeDirection.NONE;
-
-    private int resizeStartGridX;
-    private int resizeStartGridY;
-    private int resizeStartWidth;
-    private int resizeStartHeight;
-
-    /**
-     * Toujours dans les coordonnées de GridCanvas.
-     */
+    private DashboardVisualComponent.ResizeDirection resizeDirection = DashboardVisualComponent.ResizeDirection.NONE;
+    private int resizeStartGridX, resizeStartGridY, resizeStartWidth, resizeStartHeight;
     private Point resizeStartMouse;
-
-    /**
-     * Taille de cellule figée pendant le resize.
-     */
     private int resizeCellSize;
 
-    // ============================================================
-    // DÉPLACEMENT
-    // ============================================================
-
+    // Drag state
     private DashboardVisualComponent draggingComponent;
-
-    /**
-     * Toujours dans les coordonnées de GridCanvas.
-     */
     private Point dragStartMouse;
-
-    private int dragStartGridX;
-    private int dragStartGridY;
-
-    /**
-     * Taille de cellule figée pendant le drag.
-     */
+    private int dragStartGridX, dragStartGridY;
     private int dragCellSize;
-
-    // ============================================================
-    // ÉTAT
-    // ============================================================
 
     private boolean isDraggingOrResizing = false;
 
@@ -74,26 +40,16 @@ public class GridCanvas extends JPanel {
         setMinimumSize(new Dimension(0, 0));
         setLayout(null);
 
-        // ========================================================
-        // ÉVÉNEMENTS DU CANVAS
-        // ========================================================
-
-        addMouseListener(new MouseAdapter() {
-
+        MouseAdapter canvasAdapter = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                Component component = getComponentAt(e.getPoint());
-
-                if (component == GridCanvas.this) {
+                Component comp = getComponentAt(e.getPoint());
+                if (comp == GridCanvas.this) {
                     selectVisual(null);
                     return;
                 }
-
-                DashboardVisualComponent visual = findVisualParent(component);
-
-                if (visual != null) {
-                    handleMousePressed(visual, e);
-                }
+                DashboardVisualComponent visual = findVisualParent(comp);
+                if (visual != null) handleMousePressed(visual, e);
             }
 
             @Override
@@ -101,117 +57,51 @@ public class GridCanvas extends JPanel {
                 stopResize();
                 stopDrag();
             }
-        });
-
+        };
+        addMouseListener(canvasAdapter);
         addMouseMotionListener(new MouseAdapter() {
-
             @Override
             public void mouseDragged(MouseEvent e) {
-
-                if (resizingComponent != null) {
-                    resizeComponent(e.getPoint());
-
-                } else if (draggingComponent != null) {
-                    dragComponent(e.getPoint());
-                }
+                if (resizingComponent != null) resizeComponent(e.getPoint());
+                else if (draggingComponent != null) dragComponent(e.getPoint());
             }
         });
     }
 
-    // ============================================================
-    // GESTION DES ÉVÉNEMENTS
-    // ============================================================
-
-    private void handleMousePressed(
-            DashboardVisualComponent visual,
-            MouseEvent e) {
-
-        if (isDraggingOrResizing) {
-            return;
-        }
-
+    private void handleMousePressed(DashboardVisualComponent visual, MouseEvent e) {
+        if (isDraggingOrResizing) return;
         selectVisual(visual);
 
-        /*
-         * IMPORTANT :
-         *
-         * e.getPoint() appartient au composant qui a reçu
-         * l'événement.
-         *
-         * On convertit donc explicitement vers :
-         *
-         * 1. visual       -> pour savoir si on est sur un handle
-         * 2. GridCanvas   -> pour mémoriser la position de départ
-         */
+        Point visualPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), visual);
+        Point canvasPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), GridCanvas.this);
 
-        Point visualPoint = SwingUtilities.convertPoint(
-                e.getComponent(),
-                e.getPoint(),
-                visual
-        );
-
-        Point canvasPoint = SwingUtilities.convertPoint(
-                e.getComponent(),
-                e.getPoint(),
-                GridCanvas.this
-        );
-
-        DashboardVisualComponent.ResizeDirection direction =
-                visual.getResizeDirection(visualPoint);
-
-        if (direction != DashboardVisualComponent.ResizeDirection.NONE) {
-
-            startResize(
-                    visual,
-                    direction,
-                    canvasPoint
-            );
-
-        } else {
-
-            startDrag(
-                    visual,
-                    canvasPoint
-            );
+        DashboardVisualComponent.ResizeDirection dir = visual.getResizeDirection(visualPoint);
+        if (dir != DashboardVisualComponent.ResizeDirection.NONE) {
+            startResize(visual, dir, canvasPoint);
+        } else if (visual.isInHeaderArea(visualPoint)) {
+            // Seul un clic sur l'en-tête déclenche le déplacement
+            startDrag(visual, canvasPoint);
         }
+        // Sinon, on ne fait que sélectionner
     }
 
-    /**
-     * Retourne le DashboardVisualComponent parent d'un composant.
-     */
-    private DashboardVisualComponent findVisualParent(Component component) {
-
-        Component current = component;
-
+    private DashboardVisualComponent findVisualParent(Component comp) {
+        Component current = comp;
         while (current != null) {
-
-            if (current instanceof DashboardVisualComponent visual) {
-                return visual;
-            }
-
+            if (current instanceof DashboardVisualComponent visual) return visual;
             current = current.getParent();
         }
-
         return null;
     }
 
-    // ============================================================
-    // PROPAGATION DES ÉVÉNEMENTS
-    // ============================================================
+    // ---- Mouse forwarding to children ----
 
     private void installMouseForwarding(Component component) {
-
         MouseAdapter adapter = new MouseAdapter() {
-
             @Override
             public void mousePressed(MouseEvent e) {
-
-                DashboardVisualComponent visual =
-                        findVisualParent(component);
-
-                if (visual != null) {
-                    handleMousePressed(visual, e);
-                }
+                DashboardVisualComponent visual = findVisualParent(component);
+                if (visual != null) handleMousePressed(visual, e);
             }
 
             @Override
@@ -222,786 +112,273 @@ public class GridCanvas extends JPanel {
 
             @Override
             public void mouseDragged(MouseEvent e) {
-
-                if (resizingComponent != null) {
-
-                    Point point = SwingUtilities.convertPoint(
-                            component,
-                            e.getPoint(),
-                            GridCanvas.this
-                    );
-
-                    resizeComponent(point);
-
-                } else if (draggingComponent != null) {
-
-                    Point point = SwingUtilities.convertPoint(
-                            component,
-                            e.getPoint(),
-                            GridCanvas.this
-                    );
-
-                    dragComponent(point);
-                }
+                Point p = SwingUtilities.convertPoint(component, e.getPoint(), GridCanvas.this);
+                if (resizingComponent != null) resizeComponent(p);
+                else if (draggingComponent != null) dragComponent(p);
             }
 
             @Override
             public void mouseMoved(MouseEvent e) {
-
-                if (isDraggingOrResizing) {
-                    return;
-                }
-
-                DashboardVisualComponent visual =
-                        findVisualParent(e.getComponent());
-
+                if (isDraggingOrResizing) return;
+                DashboardVisualComponent visual = findVisualParent(e.getComponent());
                 if (visual != null) {
-
-                    Point point = SwingUtilities.convertPoint(
-                            e.getComponent(),
-                            e.getPoint(),
-                            visual
-                    );
-
-                    visual.handleMouseMoved(point);
+                    Point p = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), visual);
+                    visual.handleMouseMoved(p);
                 }
             }
         };
-
         component.addMouseListener(adapter);
         component.addMouseMotionListener(adapter);
-
-        if (component instanceof Container container) {
-
-            for (Component child : container.getComponents()) {
+        if (component instanceof Container cont) {
+            for (Component child : cont.getComponents()) {
                 installMouseForwarding(child);
             }
         }
     }
 
-    // ============================================================
-    // REDIMENSIONNEMENT
-    // ============================================================
+    // ---- Resize ----
 
-    private void startResize(
-            DashboardVisualComponent component,
-            DashboardVisualComponent.ResizeDirection direction,
-            Point mousePoint) {
-
+    private void startResize(DashboardVisualComponent comp,
+                             DashboardVisualComponent.ResizeDirection dir,
+                             Point mousePoint) {
         isDraggingOrResizing = true;
-
-        resizingComponent = component;
-        resizeDirection = direction;
-
-        /*
-         * mousePoint est déjà dans GridCanvas.
-         */
+        resizingComponent = comp;
+        resizeDirection = dir;
         resizeStartMouse = new Point(mousePoint);
-
-        resizeStartGridX = component.getGridX();
-        resizeStartGridY = component.getGridY();
-
-        resizeStartWidth = component.getGridWidth();
-        resizeStartHeight = component.getGridHeight();
-
-        /*
-         * On fige la taille de cellule pendant tout le resize.
-         */
+        resizeStartGridX = comp.getGridX();
+        resizeStartGridY = comp.getGridY();
+        resizeStartWidth = comp.getGridWidth();
+        resizeStartHeight = comp.getGridHeight();
         resizeCellSize = getCellSize();
-
-        component.setResizing(true);
-        component.setActiveResizeDirection(direction);
-
-        setCursor(getResizeCursorForDirection(direction));
+        comp.setResizing(true);
+        comp.setActiveResizeDirection(dir);
+        setCursor(getResizeCursorForDirection(dir));
     }
 
-    private Cursor getResizeCursorForDirection(
-            DashboardVisualComponent.ResizeDirection dir) {
-
-        int cursorType;
-
-        switch (dir) {
-
-            case NORTH:
-            case SOUTH:
-                cursorType = Cursor.N_RESIZE_CURSOR;
-                break;
-
-            case EAST:
-            case WEST:
-                cursorType = Cursor.E_RESIZE_CURSOR;
-                break;
-
-            case NORTH_EAST:
-            case SOUTH_WEST:
-                cursorType = Cursor.NE_RESIZE_CURSOR;
-                break;
-
-            case NORTH_WEST:
-            case SOUTH_EAST:
-                cursorType = Cursor.NW_RESIZE_CURSOR;
-                break;
-
-            default:
-                cursorType = Cursor.DEFAULT_CURSOR;
-                break;
-        }
-
-        return Cursor.getPredefinedCursor(cursorType);
+    private Cursor getResizeCursorForDirection(DashboardVisualComponent.ResizeDirection dir) {
+        int type = switch (dir) {
+            case NORTH, SOUTH -> Cursor.N_RESIZE_CURSOR;
+            case EAST, WEST -> Cursor.E_RESIZE_CURSOR;
+            case NORTH_EAST, SOUTH_WEST -> Cursor.NE_RESIZE_CURSOR;
+            case NORTH_WEST, SOUTH_EAST -> Cursor.NW_RESIZE_CURSOR;
+            default -> Cursor.DEFAULT_CURSOR;
+        };
+        return Cursor.getPredefinedCursor(type);
     }
 
     private void resizeComponent(Point mousePoint) {
-
-        if (resizingComponent == null ||
-                resizeStartMouse == null) {
-            return;
-        }
-
+        if (resizingComponent == null || resizeStartMouse == null) return;
         int cellSize = resizeCellSize;
+        if (cellSize <= 0) return;
 
-        if (cellSize <= 0) {
-            return;
-        }
+        int deltaX = mousePoint.x - resizeStartMouse.x;
+        int deltaY = mousePoint.y - resizeStartMouse.y;
+        int gridDeltaX = Math.round(deltaX / (float) cellSize);
+        int gridDeltaY = Math.round(deltaY / (float) cellSize);
 
-        /*
-         * Les deux points sont maintenant dans le même système
-         * de coordonnées : GridCanvas.
-         */
-        int deltaX =
-                mousePoint.x - resizeStartMouse.x;
-
-        int deltaY =
-                mousePoint.y - resizeStartMouse.y;
-
-        int gridDeltaX =
-                Math.round(deltaX / (float) cellSize);
-
-        int gridDeltaY =
-                Math.round(deltaY / (float) cellSize);
-
-        int newX = resizeStartGridX;
-        int newY = resizeStartGridY;
-
-        int newWidth = resizeStartWidth;
-        int newHeight = resizeStartHeight;
+        int newX = resizeStartGridX, newY = resizeStartGridY;
+        int newWidth = resizeStartWidth, newHeight = resizeStartHeight;
 
         switch (resizeDirection) {
-
-            case EAST:
-
-                newWidth =
-                        resizeStartWidth + gridDeltaX;
-
-                break;
-
-            case WEST:
-
-                newX =
-                        resizeStartGridX + gridDeltaX;
-
-                newWidth =
-                        resizeStartWidth - gridDeltaX;
-
-                break;
-
-            case SOUTH:
-
-                newHeight =
-                        resizeStartHeight + gridDeltaY;
-
-                break;
-
-            case NORTH:
-
-                newY =
-                        resizeStartGridY + gridDeltaY;
-
-                newHeight =
-                        resizeStartHeight - gridDeltaY;
-
-                break;
-
-            case NORTH_EAST:
-
-                newY =
-                        resizeStartGridY + gridDeltaY;
-
-                newHeight =
-                        resizeStartHeight - gridDeltaY;
-
-                newWidth =
-                        resizeStartWidth + gridDeltaX;
-
-                break;
-
-            case NORTH_WEST:
-
-                newX =
-                        resizeStartGridX + gridDeltaX;
-
-                newWidth =
-                        resizeStartWidth - gridDeltaX;
-
-                newY =
-                        resizeStartGridY + gridDeltaY;
-
-                newHeight =
-                        resizeStartHeight - gridDeltaY;
-
-                break;
-
-            case SOUTH_EAST:
-
-                newWidth =
-                        resizeStartWidth + gridDeltaX;
-
-                newHeight =
-                        resizeStartHeight + gridDeltaY;
-
-                break;
-
-            case SOUTH_WEST:
-
-                newX =
-                        resizeStartGridX + gridDeltaX;
-
-                newWidth =
-                        resizeStartWidth - gridDeltaX;
-
-                newHeight =
-                        resizeStartHeight + gridDeltaY;
-
-                break;
-
-            default:
-                return;
+            case EAST -> newWidth = resizeStartWidth + gridDeltaX;
+            case WEST -> { newX = resizeStartGridX + gridDeltaX; newWidth = resizeStartWidth - gridDeltaX; }
+            case SOUTH -> newHeight = resizeStartHeight + gridDeltaY;
+            case NORTH -> { newY = resizeStartGridY + gridDeltaY; newHeight = resizeStartHeight - gridDeltaY; }
+            case NORTH_EAST -> { newY = resizeStartGridY + gridDeltaY; newHeight = resizeStartHeight - gridDeltaY; newWidth = resizeStartWidth + gridDeltaX; }
+            case NORTH_WEST -> { newX = resizeStartGridX + gridDeltaX; newWidth = resizeStartWidth - gridDeltaX; newY = resizeStartGridY + gridDeltaY; newHeight = resizeStartHeight - gridDeltaY; }
+            case SOUTH_EAST -> { newWidth = resizeStartWidth + gridDeltaX; newHeight = resizeStartHeight + gridDeltaY; }
+            case SOUTH_WEST -> { newX = resizeStartGridX + gridDeltaX; newWidth = resizeStartWidth - gridDeltaX; newHeight = resizeStartHeight + gridDeltaY; }
+            default -> { return; }
         }
 
-        // ========================================================
-        // CONTRAINTES
-        // ========================================================
-
+        // Contraintes
         if (newWidth < 1) {
-
             newWidth = 1;
-
-            if (resizeDirection ==
-                    DashboardVisualComponent.ResizeDirection.WEST
-                    || resizeDirection ==
-                    DashboardVisualComponent.ResizeDirection.NORTH_WEST
-                    || resizeDirection ==
-                    DashboardVisualComponent.ResizeDirection.SOUTH_WEST) {
-
-                newX =
-                        resizeStartGridX +
-                                resizeStartWidth -
-                                1;
+            if (resizeDirection == DashboardVisualComponent.ResizeDirection.WEST ||
+                    resizeDirection == DashboardVisualComponent.ResizeDirection.NORTH_WEST ||
+                    resizeDirection == DashboardVisualComponent.ResizeDirection.SOUTH_WEST) {
+                newX = resizeStartGridX + resizeStartWidth - 1;
             }
         }
-
         if (newHeight < 1) {
-
             newHeight = 1;
-
-            if (resizeDirection ==
-                    DashboardVisualComponent.ResizeDirection.NORTH
-                    || resizeDirection ==
-                    DashboardVisualComponent.ResizeDirection.NORTH_WEST
-                    || resizeDirection ==
-                    DashboardVisualComponent.ResizeDirection.NORTH_EAST) {
-
-                newY =
-                        resizeStartGridY +
-                                resizeStartHeight -
-                                1;
+            if (resizeDirection == DashboardVisualComponent.ResizeDirection.NORTH ||
+                    resizeDirection == DashboardVisualComponent.ResizeDirection.NORTH_WEST ||
+                    resizeDirection == DashboardVisualComponent.ResizeDirection.NORTH_EAST) {
+                newY = resizeStartGridY + resizeStartHeight - 1;
             }
         }
-
-        // Limite gauche
-        if (newX < 0) {
-
-            newWidth += newX;
-            newX = 0;
-        }
-
-        // Limite haute
-        if (newY < 0) {
-
-            newHeight += newY;
-            newY = 0;
-        }
-
-        // Limite droite
-        if (newX + newWidth > GRID_COLUMNS) {
-
-            newWidth =
-                    GRID_COLUMNS - newX;
-        }
-
+        if (newX < 0) { newWidth += newX; newX = 0; }
+        if (newY < 0) { newHeight += newY; newY = 0; }
+        if (newX + newWidth > GRID_COLUMNS) newWidth = GRID_COLUMNS - newX;
         newWidth = Math.max(1, newWidth);
         newHeight = Math.max(1, newHeight);
 
-        // ========================================================
-        // APPLICATION
-        // ========================================================
-
         resizingComponent.setGridX(newX);
         resizingComponent.setGridY(newY);
-
-        resizingComponent.setGridSize(
-                newWidth,
-                newHeight
-        );
-
+        resizingComponent.setGridSize(newWidth, newHeight);
         updateCanvasSize();
-
         revalidate();
         repaint();
     }
 
     private void stopResize() {
-
         if (resizingComponent != null) {
-
             resizingComponent.setResizing(false);
-
-            resizingComponent.setActiveResizeDirection(
-                    DashboardVisualComponent.ResizeDirection.NONE
-            );
+            resizingComponent.setActiveResizeDirection(DashboardVisualComponent.ResizeDirection.NONE);
         }
-
         resizingComponent = null;
-
-        resizeDirection =
-                DashboardVisualComponent.ResizeDirection.NONE;
-
+        resizeDirection = DashboardVisualComponent.ResizeDirection.NONE;
         resizeStartMouse = null;
-
         resizeCellSize = 0;
-
         isDraggingOrResizing = false;
     }
 
-    // ============================================================
-    // DÉPLACEMENT
-    // ============================================================
+    // ---- Drag ----
 
-    private void startDrag(
-            DashboardVisualComponent component,
-            Point mousePoint) {
-
+    private void startDrag(DashboardVisualComponent comp, Point mousePoint) {
         isDraggingOrResizing = true;
-
-        draggingComponent = component;
-
-        /*
-         * mousePoint est TOUJOURS dans GridCanvas.
-         *
-         * C'est la correction principale du bug de saut.
-         */
+        draggingComponent = comp;
         dragStartMouse = new Point(mousePoint);
-
-        dragStartGridX = component.getGridX();
-        dragStartGridY = component.getGridY();
-
-        /*
-         * Figer la taille de cellule pendant le drag.
-         */
+        dragStartGridX = comp.getGridX();
+        dragStartGridY = comp.getGridY();
         dragCellSize = getCellSize();
-
-        component.setDragging(true);
-
-        setCursor(
-                Cursor.getPredefinedCursor(
-                        Cursor.MOVE_CURSOR
-                )
-        );
+        comp.setDragging(true);
+        setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
     }
 
     private void dragComponent(Point mousePoint) {
-
-        if (draggingComponent == null ||
-                dragStartMouse == null) {
-            return;
-        }
-
+        if (draggingComponent == null || dragStartMouse == null) return;
         int cellSize = dragCellSize;
+        if (cellSize <= 0) return;
 
-        if (cellSize <= 0) {
-            return;
-        }
+        int deltaX = mousePoint.x - dragStartMouse.x;
+        int deltaY = mousePoint.y - dragStartMouse.y;
+        int gridDeltaX = Math.round(deltaX / (float) cellSize);
+        int gridDeltaY = Math.round(deltaY / (float) cellSize);
 
-        /*
-         * Les deux points sont dans GridCanvas.
-         */
-        int deltaX =
-                mousePoint.x - dragStartMouse.x;
+        int newX = Math.max(0, Math.min(GRID_COLUMNS - draggingComponent.getGridWidth(),
+                dragStartGridX + gridDeltaX));
+        int newY = Math.max(0, dragStartGridY + gridDeltaY);
 
-        int deltaY =
-                mousePoint.y - dragStartMouse.y;
-
-        int gridDeltaX =
-                Math.round(deltaX / (float) cellSize);
-
-        int gridDeltaY =
-                Math.round(deltaY / (float) cellSize);
-
-        int newX =
-                dragStartGridX + gridDeltaX;
-
-        int newY =
-                dragStartGridY + gridDeltaY;
-
-        int compWidth =
-                draggingComponent.getGridWidth();
-
-        int compHeight =
-                draggingComponent.getGridHeight();
-
-        // ========================================================
-        // LIMITES
-        // ========================================================
-
-        newX = Math.max(
-                0,
-                Math.min(
-                        GRID_COLUMNS - compWidth,
-                        newX
-                )
-        );
-
-        newY = Math.max(
-                0,
-                newY
-        );
-
-        // ========================================================
-        // COLLISIONS
-        // ========================================================
-
-        if (isAreaAvailableExcluding(
-                newX,
-                newY,
-                compWidth,
-                compHeight,
-                draggingComponent
-        )) {
-
+        if (isAreaAvailableExcluding(newX, newY,
+                draggingComponent.getGridWidth(),
+                draggingComponent.getGridHeight(),
+                draggingComponent)) {
             draggingComponent.setGridX(newX);
             draggingComponent.setGridY(newY);
-
             updateCanvasSize();
-
             revalidate();
             repaint();
         }
     }
 
     private void stopDrag() {
-
         if (draggingComponent != null) {
-
             draggingComponent.setDragging(false);
-
-            /*
-             * Restaurer le curseur correspondant à la position
-             * actuelle de la souris.
-             */
-            Point mousePos =
-                    draggingComponent.getMousePosition();
-
-            if (mousePos != null) {
-                draggingComponent.handleMouseMoved(mousePos);
-            }
+            Point mousePos = draggingComponent.getMousePosition();
+            if (mousePos != null) draggingComponent.handleMouseMoved(mousePos);
         }
-
         draggingComponent = null;
-
         dragStartMouse = null;
-
         dragCellSize = 0;
-
         isDraggingOrResizing = false;
     }
 
-    // ============================================================
-    // POSITIONNEMENT
-    // ============================================================
+    // ---- Utilities ----
 
     private int getCellSize() {
-
-        int availableWidth =
-                getWidth() - 2 * BORDER_WIDTH;
-
-        return Math.max(
-                1,
-                availableWidth / GRID_COLUMNS
-        );
+        int available = getWidth() - 2 * BORDER_WIDTH;
+        return Math.max(1, available / GRID_COLUMNS);
     }
 
-    private boolean isAreaAvailableExcluding(
-            int x,
-            int y,
-            int width,
-            int height,
-            DashboardVisualComponent exclude) {
-
-        for (DashboardVisualComponent existing :
-                visualComponents) {
-
-            if (existing == exclude) {
-                continue;
-            }
-
-            if (rectanglesIntersect(
-                    x,
-                    y,
-                    width,
-                    height,
-                    existing.getGridX(),
-                    existing.getGridY(),
-                    existing.getGridWidth(),
-                    existing.getGridHeight()
-            )) {
+    private boolean isAreaAvailableExcluding(int x, int y, int w, int h,
+                                             DashboardVisualComponent exclude) {
+        for (DashboardVisualComponent existing : visualComponents) {
+            if (existing == exclude) continue;
+            if (rectanglesIntersect(x, y, w, h,
+                    existing.getGridX(), existing.getGridY(),
+                    existing.getGridWidth(), existing.getGridHeight())) {
                 return false;
             }
         }
-
         return true;
     }
 
-    private boolean rectanglesIntersect(
-            int x1,
-            int y1,
-            int w1,
-            int h1,
-            int x2,
-            int y2,
-            int w2,
-            int h2) {
-
-        return x1 < x2 + w2
-                && x1 + w1 > x2
-                && y1 < y2 + h2
-                && y1 + h1 > y2;
+    private boolean rectanglesIntersect(int x1, int y1, int w1, int h1,
+                                        int x2, int y2, int w2, int h2) {
+        return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
     }
 
-    // ============================================================
-    // SÉLECTION
-    // ============================================================
-
-    public void selectVisual(
-            DashboardVisualComponent component) {
-
+    public void selectVisual(DashboardVisualComponent comp) {
+        if (selectedVisual != null) selectedVisual.setSelected(false);
+        selectedVisual = comp;
         if (selectedVisual != null) {
-            selectedVisual.setSelected(false);
-        }
-
-        selectedVisual = component;
-
-        if (selectedVisual != null) {
-
             selectedVisual.setSelected(true);
-
-            Point mousePos =
-                    selectedVisual.getMousePosition();
-
-            if (mousePos != null) {
-                selectedVisual.handleMouseMoved(mousePos);
-            }
+            Point mousePos = selectedVisual.getMousePosition();
+            if (mousePos != null) selectedVisual.handleMouseMoved(mousePos);
         }
-
         repaint();
     }
 
-    // ============================================================
-    // AJOUT
-    // ============================================================
-
-    public void addVisualComponent(String title) {
-
-        DashboardVisualComponent component =
-                new DashboardVisualComponent(title);
-
-        addVisualComponent(component);
-    }
-
-    public void addVisualComponent(
-            DashboardVisualComponent component) {
-
-        Point position =
-                findAvailablePosition(
-                        component.getGridWidth(),
-                        component.getGridHeight()
-                );
-
-        component.setGridX(position.x);
-        component.setGridY(position.y);
+    public void addVisualComponent(DashboardVisualComponent component) {
+        Point pos = findAvailablePosition(component.getGridWidth(), component.getGridHeight());
+        component.setGridX(pos.x);
+        component.setGridY(pos.y);
 
         visualComponents.add(component);
-
         add(component);
-
         installMouseForwarding(component);
-
         selectVisual(component);
 
         updateCanvasSize();
         updateVisualComponents();
-
         revalidate();
         repaint();
 
-        SwingUtilities.invokeLater(() ->
-                scrollRectToVisible(
-                        component.getBounds()
-                )
-        );
+        SwingUtilities.invokeLater(() -> scrollRectToVisible(component.getBounds()));
     }
 
-    private Point findAvailablePosition(
-            int componentWidth,
-            int componentHeight) {
-
+    private Point findAvailablePosition(int compW, int compH) {
         for (int y = 0; ; y++) {
-
-            for (
-                    int x = 0;
-                    x <= GRID_COLUMNS - componentWidth;
-                    x++
-            ) {
-
-                if (isAreaAvailable(
-                        x,
-                        y,
-                        componentWidth,
-                        componentHeight
-                )) {
-
-                    return new Point(x, y);
-                }
+            for (int x = 0; x <= GRID_COLUMNS - compW; x++) {
+                if (isAreaAvailable(x, y, compW, compH)) return new Point(x, y);
             }
         }
     }
 
-    private boolean isAreaAvailable(
-            int x,
-            int y,
-            int width,
-            int height) {
-
-        for (DashboardVisualComponent existing :
-                visualComponents) {
-
-            if (rectanglesIntersect(
-                    x,
-                    y,
-                    width,
-                    height,
-                    existing.getGridX(),
-                    existing.getGridY(),
-                    existing.getGridWidth(),
-                    existing.getGridHeight()
-            )) {
+    private boolean isAreaAvailable(int x, int y, int w, int h) {
+        for (DashboardVisualComponent existing : visualComponents) {
+            if (rectanglesIntersect(x, y, w, h,
+                    existing.getGridX(), existing.getGridY(),
+                    existing.getGridWidth(), existing.getGridHeight())) {
                 return false;
             }
         }
-
         return true;
     }
 
-    // ============================================================
-    // CANVAS
-    // ============================================================
+    // ---- Layout ----
 
     private void updateCanvasSize() {
-
-        int width =
-                getParent() != null
-                        ? getParent().getWidth()
-                        : getWidth();
-
-        if (width <= 0) {
-            return;
-        }
-
-        int cellSize =
-                Math.max(
-                        1,
-                        width / GRID_COLUMNS
-                );
-
+        int width = getParent() != null ? getParent().getWidth() : getWidth();
+        if (width <= 0) return;
+        int cellSize = Math.max(1, width / GRID_COLUMNS);
         int requiredRows = 8;
-
-        for (DashboardVisualComponent component :
-                visualComponents) {
-
-            int bottom =
-                    component.getGridY()
-                            + component.getGridHeight();
-
-            requiredRows =
-                    Math.max(
-                            requiredRows,
-                            bottom
-                    );
+        for (DashboardVisualComponent comp : visualComponents) {
+            requiredRows = Math.max(requiredRows, comp.getGridY() + comp.getGridHeight());
         }
-
-        int requiredHeight =
-                requiredRows * cellSize;
-
-        setPreferredSize(
-                new Dimension(
-                        width,
-                        requiredHeight
-                )
-        );
+        setPreferredSize(new Dimension(width, requiredRows * cellSize));
     }
 
     private void updateVisualComponents() {
-
         int width = getWidth();
-
-        if (width <= 0) {
-            return;
-        }
-
-        int availableWidth =
-                width - 2 * BORDER_WIDTH;
-
-        int cellSize =
-                Math.max(
-                        1,
-                        availableWidth / GRID_COLUMNS
-                );
-
-        for (DashboardVisualComponent component :
-                visualComponents) {
-
-            int x =
-                    BORDER_WIDTH
-                            + component.getGridX()
-                            * cellSize;
-
-            int y =
-                    BORDER_WIDTH
-                            + component.getGridY()
-                            * cellSize;
-
-            int compWidth =
-                    component.getGridWidth()
-                            * cellSize;
-
-            int compHeight =
-                    component.getGridHeight()
-                            * cellSize;
-
-            component.setBounds(
-                    x,
-                    y,
-                    compWidth,
-                    compHeight
-            );
+        if (width <= 0) return;
+        int cellSize = Math.max(1, (width - 2 * BORDER_WIDTH) / GRID_COLUMNS);
+        for (DashboardVisualComponent comp : visualComponents) {
+            int x = BORDER_WIDTH + comp.getGridX() * cellSize;
+            int y = BORDER_WIDTH + comp.getGridY() * cellSize;
+            comp.setBounds(x, y, comp.getGridWidth() * cellSize, comp.getGridHeight() * cellSize);
         }
     }
 
@@ -1010,218 +387,63 @@ public class GridCanvas extends JPanel {
         updateVisualComponents();
     }
 
-    // ============================================================
-    // PAINT
-    // ============================================================
+    // ---- Painting ----
 
     @Override
     protected void paintComponent(Graphics g) {
-
         super.paintComponent(g);
+        int w = getWidth(), h = getHeight();
+        if (w <= 0 || h <= 0) return;
 
-        int width = getWidth();
-        int height = getHeight();
-
-        if (width <= 0 || height <= 0) {
-            return;
-        }
-
-        Graphics2D graphics =
-                (Graphics2D) g.create();
-
+        Graphics2D g2 = (Graphics2D) g.create();
         try {
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 
-            graphics.setRenderingHint(
-                    RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON
-            );
+            RoundRectangle2D shape = new RoundRectangle2D.Double(0.5, 0.5, w - 1, h - 1, RADIUS, RADIUS);
+            g2.setColor(DashboardTheme.CANVAS_BG);
+            g2.fill(shape);
 
-            graphics.setRenderingHint(
-                    RenderingHints.KEY_STROKE_CONTROL,
-                    RenderingHints.VALUE_STROKE_PURE
-            );
+            Shape oldClip = g2.getClip();
+            g2.clip(shape);
 
-            double canvasX = 0.5;
-            double canvasY = 0.5;
-
-            double canvasWidth =
-                    width - 1.0;
-
-            double canvasHeight =
-                    height - 1.0;
-
-            RoundRectangle2D canvasShape =
-                    new RoundRectangle2D.Double(
-                            canvasX,
-                            canvasY,
-                            canvasWidth,
-                            canvasHeight,
-                            RADIUS,
-                            RADIUS
-                    );
-
-            graphics.setColor(
-                    DashboardTheme.CANVAS_BG
-            );
-
-            graphics.fill(canvasShape);
-
-            Shape oldClip =
-                    graphics.getClip();
-
-            graphics.clip(canvasShape);
-
-            int availableWidth =
-                    width - 2 * BORDER_WIDTH;
-
-            int availableHeight =
-                    height - 2 * BORDER_WIDTH;
-
-            int cellSize =
-                    Math.max(
-                            1,
-                            availableWidth / GRID_COLUMNS
-                    );
-
-            int gridRows =
-                    Math.max(
-                            1,
-                            (int) Math.ceil(
-                                    availableHeight
-                                            / (double) cellSize
-                            )
-                    );
-
-            int gridWidth =
-                    GRID_COLUMNS * cellSize;
-
-            int gridHeight =
-                    gridRows * cellSize;
-
-            int offsetX =
-                    Math.max(
-                            0,
-                            (width - gridWidth) / 2
-                    );
-
+            int cellSize = Math.max(1, (w - 2 * BORDER_WIDTH) / GRID_COLUMNS);
+            int gridRows = Math.max(1, (int) Math.ceil((h - 2 * BORDER_WIDTH) / (double) cellSize));
+            int gridWidth = GRID_COLUMNS * cellSize;
+            int gridHeight = gridRows * cellSize;
+            int offsetX = Math.max(0, (w - gridWidth) / 2);
             int offsetY = 0;
 
-            graphics.setColor(
-                    DashboardTheme.GRID_COLOR
-            );
-
-            for (
-                    int col = 0;
-                    col <= GRID_COLUMNS;
-                    col++
-            ) {
-
-                int x =
-                        offsetX
-                                + col * cellSize;
-
-                graphics.drawLine(
-                        x,
-                        offsetY,
-                        x,
-                        Math.min(
-                                height,
-                                offsetY + gridHeight
-                        )
-                );
+            g2.setColor(DashboardTheme.GRID_COLOR);
+            for (int col = 0; col <= GRID_COLUMNS; col++) {
+                int x = offsetX + col * cellSize;
+                g2.drawLine(x, offsetY, x, Math.min(h, offsetY + gridHeight));
+            }
+            for (int row = 0; row <= gridRows; row++) {
+                int y = offsetY + row * cellSize;
+                g2.drawLine(offsetX, y, Math.min(w, offsetX + gridWidth), y);
             }
 
-            for (
-                    int row = 0;
-                    row <= gridRows;
-                    row++
-            ) {
+            g2.setClip(oldClip);
+            g2.setColor(DashboardTheme.CANVAS_BORDER);
+            g2.setStroke(new BasicStroke(BORDER_WIDTH));
+            g2.draw(shape);
 
-                int y =
-                        offsetY
-                                + row * cellSize;
-
-                graphics.drawLine(
-                        offsetX,
-                        y,
-                        Math.min(
-                                width,
-                                offsetX + gridWidth
-                        ),
-                        y
-                );
-            }
-
-            graphics.setClip(oldClip);
-
-            graphics.setColor(
-                    DashboardTheme.CANVAS_BORDER
-            );
-
-            graphics.setStroke(
-                    new BasicStroke(
-                            BORDER_WIDTH
-                    )
-            );
-
-            graphics.draw(canvasShape);
-
-            graphics.setColor(
-                    DashboardTheme.TEXT_SECONDARY
-            );
-
-            graphics.setFont(
-                    getFont().deriveFont(
-                            Font.BOLD,
-                            16f
-                    )
-            );
-
+            g2.setColor(DashboardTheme.TEXT_SECONDARY);
+            g2.setFont(getFont().deriveFont(Font.BOLD, 16f));
             String title = "CANVAS";
-
-            FontMetrics metrics =
-                    graphics.getFontMetrics();
-
-            int titleX =
-                    (width
-                            - metrics.stringWidth(title))
-                            / 2;
-
-            int titleY =
-                    (height
-                            - metrics.getHeight())
-                            / 2;
-
-            graphics.drawString(
-                    title,
-                    titleX,
-                    titleY
-            );
+            FontMetrics fm = g2.getFontMetrics();
+            g2.drawString(title, (w - fm.stringWidth(title)) / 2, (h - fm.getHeight()) / 2 + fm.getAscent());
 
         } finally {
-
-            graphics.dispose();
+            g2.dispose();
         }
     }
 
     @Override
     public Dimension getPreferredSize() {
-
-        int width =
-                DashboardTheme.MAX_WIDTH;
-
-        if (getParent() != null) {
-
-            width =
-                    Math.max(
-                            DashboardTheme.MAX_WIDTH,
-                            getParent().getWidth()
-                    );
-        }
-
-        return new Dimension(
-                width,
-                super.getPreferredSize().height
-        );
+        int width = DashboardTheme.MAX_WIDTH;
+        if (getParent() != null) width = Math.max(DashboardTheme.MAX_WIDTH, getParent().getWidth());
+        return new Dimension(width, super.getPreferredSize().height);
     }
 }

@@ -1,9 +1,12 @@
 package org.labs.genesis.forms.components;
 
+import lombok.Getter;
+
 import javax.swing.border.AbstractBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
+@Getter
 public class RoundedBackgroundBorder extends AbstractBorder {
 
     private final Color backgroundColor;
@@ -12,11 +15,7 @@ public class RoundedBackgroundBorder extends AbstractBorder {
     private final int thickness;
     private final boolean active;
 
-    public RoundedBackgroundBorder(Color backgroundColor,
-                                   Color borderColor,
-                                   int radius,
-                                   int thickness,
-                                   boolean active) {
+    public RoundedBackgroundBorder(Color backgroundColor, Color borderColor, int radius, int thickness, boolean active) {
         this.backgroundColor = backgroundColor;
         this.borderColor = borderColor;
         this.radius = radius;
@@ -24,58 +23,33 @@ public class RoundedBackgroundBorder extends AbstractBorder {
         this.active = active;
     }
 
-    public boolean isActive() {
-        return active;
-    }
-
     @Override
-    public Insets getBorderInsets(Component component) {
+    public Insets getBorderInsets(Component c) {
         return new Insets(thickness, thickness, thickness, thickness);
     }
 
     @Override
-    public Insets getBorderInsets(Component component, Insets insets) {
-        insets.top = thickness;
-        insets.left = thickness;
-        insets.bottom = thickness;
-        insets.right = thickness;
+    public Insets getBorderInsets(Component c, Insets insets) {
+        insets.top = insets.left = insets.bottom = insets.right = thickness;
         return insets;
     }
 
     @Override
-    public void paintBorder(Component component,
-                            Graphics graphics,
-                            int x,
-                            int y,
-                            int width,
-                            int height) {
-        Graphics2D g = (Graphics2D) graphics.create();
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        Graphics2D g2 = (Graphics2D) g.create();
         try {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
-
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             float inset = thickness / 2.0f;
             float w = width - thickness;
             float h = height - thickness;
-
-            RoundRectangle2D rounded = new RoundRectangle2D.Double(
-                    x + inset,
-                    y + inset,
-                    w - inset,
-                    h - inset,
-                    radius,
-                    radius
-            );
-
-            g.setColor(backgroundColor);
-            g.fill(rounded);
-
-            g.setColor(borderColor);
-            g.setStroke(new BasicStroke(thickness));
-            g.draw(rounded);
-
+            RoundRectangle2D rect = new RoundRectangle2D.Double(x + inset, y + inset, w - inset, h - inset, radius, radius);
+            g2.setColor(backgroundColor);
+            g2.fill(rect);
+            g2.setColor(borderColor);
+            g2.setStroke(new BasicStroke(thickness));
+            g2.draw(rect);
         } finally {
-            g.dispose();
+            g2.dispose();
         }
     }
 }
