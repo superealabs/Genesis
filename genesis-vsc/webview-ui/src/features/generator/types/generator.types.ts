@@ -1,20 +1,27 @@
-export type Language = 'Java' | 'Python' | 'Node.js' | 'PHP';
-export type Framework = 'Spring Boot' | 'Django' | 'Express' | 'Laravel';
-export type Database = 'PostgreSQL' | 'MySQL' | 'MongoDB' | 'Oracle';
-export type Frontend = 'Vue' | 'React' | 'Angular' | 'None';
+import type { Framework } from '@/features/frameworks/types/framework.types';
 
-export type DatabaseConfig = {
-    host: string;
-    port: string;
-    name: string;
-    username: string;
-    password: string;
+export interface ProjectConfig {
+    projectName: string;
+    projectLocation: string;
+    languageVersion: string;
+    buildTool: 'maven' | 'gradle' | 'npm' | 'yarn' | 'pip';
+    groupId: string;
+    frameworkVersion: string;
 }
 
-export type GeneratorForm = {
-    language: Language | null;
+export interface GeneratorData {
     framework: Framework | null;
-    database: Database | null;
-    databaseConfig: DatabaseConfig;
-    frontend: Frontend | null;
+    config: ProjectConfig;
 }
+
+// Valeurs statiques pour le mock (à remplacer par des appels API plus tard)
+export const MOCK_BUILD_TOOLS = [
+    { label: 'Maven', value: 'maven' },
+    { label: 'Gradle', value: 'gradle' },
+    { label: 'npm', value: 'npm' },
+    { label: 'yarn', value: 'yarn' }
+];
+
+export const MOCK_JAVA_VERSIONS = ['8', '11', '17', '21'];
+export const MOCK_NODE_VERSIONS = ['18', '20', '22'];
+export const MOCK_PYTHON_VERSIONS = ['3.9', '3.10', '3.11', '3.12'];

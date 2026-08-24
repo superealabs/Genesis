@@ -1,7 +1,7 @@
 // webview-ui/src/core/composables/useApp.ts
 import { useAppStore } from '@/core/store/useApp.store';
 import { useThemeStore } from '@/core/store/useTheme.store';
-import { appService } from '@/core/services/AppService';
+import { appService } from '@/core/services/app.service';
 
 export function useApp() {
     const appStore = useAppStore();

@@ -33,7 +33,7 @@ export abstract class VscodeService {
         };
     }
 
-    // ✅ Méthode protégée pour simuler une réponse mock sans casser l'encapsulation
+    // Méthode protégée pour simuler une réponse mock sans casser l'encapsulation
     protected simulateMessage<T = any>(command: string, payload: T): void {
         const handlers = this.handlers.get(command);
         if (handlers) {

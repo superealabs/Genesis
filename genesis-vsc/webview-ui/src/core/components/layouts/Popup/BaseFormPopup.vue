@@ -48,7 +48,7 @@
                 <span class="font-semibold text-sm">{{ title }}</span>
                 <GenesisButtonIcon
                     v-if="isClosable"
-                    :visibleBackground="false"
+                    :variant="'tertiary'"
                     size="md"
                     @click.stop="$emit('close')"
                 >
@@ -65,7 +65,7 @@
             >
                 <GenesisButtonIcon
                     v-if="isClosable"
-                    :visibleBackground="false"
+                    :variant="'tertiary'"
                     size="md"
                     @click.stop="$emit('close')"
                 >

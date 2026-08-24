@@ -1,4 +1,4 @@
-import { VscodeService } from '@/core/services/VscodeService';
+import { VscodeService } from '@/core/services/vscode.service';
 import { useFrameworkStore } from '@/features/frameworks/store/useFramework.store';
 import type { Framework } from '@/features/frameworks/types/framework.types';
 
@@ -10,7 +10,7 @@ export class FrameworkService extends VscodeService {
             this._store = useFrameworkStore();
         }
         return this._store;
-        }
+    }
 
     /**
      * Initialisation des écouteurs (OUTPUT : Extension Host → Webview)

@@ -4,7 +4,7 @@
         :anchor="anchor"
         :mouseX="mouseX"
         :mouseY="mouseY"
-        :position="position"
+        :position="position"    
         :offset="offset"
         @close="$emit('close')"
     >
@@ -13,7 +13,7 @@
                 v-for="option in options"
                 :key="String(option.id)"
                 type="button"
-                class="w-full text-left px-3 py-2 rounded-md transition-all duration-150
+                class="w-full text-left px-3 py-1 rounded-md transition-all duration-150
                        flex flex-col gap-0.5 cursor-pointer
                        focus:outline-none focus:ring-2 focus:ring-accent/50"
                 :class="[

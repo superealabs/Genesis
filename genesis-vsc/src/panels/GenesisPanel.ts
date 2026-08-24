@@ -2,11 +2,15 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { GenesisApiService } from '../services/GenesisApiService';
-import { FrameworkHandler } from '../services/Framework/FrameworkHandler';
+import { WebviewMessageRouter } from '../services/WebviewMessageRouter';
 
 export class GenesisPanel {
     private static instance: GenesisPanel | undefined;
     private panel: vscode.WebviewPanel;
+    private shutdownTimer: NodeJS.Timeout | null = null;
+    
+    // ✅ Le routeur qui s'occupe de tous les messages métier
+    private messageRouter: WebviewMessageRouter;
 
     private constructor(
         panel: vscode.WebviewPanel,
@@ -14,16 +18,26 @@ export class GenesisPanel {
         private readonly genesisApi: GenesisApiService
     ) {
         this.panel = panel;
+        
+        // 1. Initialisation du routeur de messages
+        this.messageRouter = new WebviewMessageRouter(this.panel, this.genesisApi, this.context);
+        
+        // 2. Chargement de l'interface et du thème
         this.loadHtml();
-        this.registerMessageHandler();
+        this.watchConfiguration();
+        
+        // 3. Enregistrement des événements de la webview
         this.panel.onDidDispose(() => {
             GenesisPanel.instance = undefined;
+            this.scheduleShutdown();
         });
-        this.watchConfiguration();
+
+        this.registerMessageHandler();
     }
 
     static show(context: vscode.ExtensionContext, genesisApi: GenesisApiService): void {
         if (GenesisPanel.instance) {
+            GenesisPanel.instance.cancelShutdown();
             GenesisPanel.instance.panel.reveal();
             return;
         }
@@ -67,99 +81,52 @@ export class GenesisPanel {
         });
     }
 
+    private scheduleShutdown(): void {
+        if (this.shutdownTimer) clearTimeout(this.shutdownTimer);
+        console.log('[Genesis] Arrêt de l\'API programmé dans 10 minutes...');
+        this.shutdownTimer = setTimeout(() => {
+            console.log('[Genesis] Arrêt effectif de l\'API après 10 min d\'inactivité.');
+            this.genesisApi.stop();
+        }, 10 * 60 * 1000);
+    }
+
+    private cancelShutdown(): void {
+        if (this.shutdownTimer) {
+            clearTimeout(this.shutdownTimer);
+            this.shutdownTimer = null;
+            console.log('[Genesis] Arrêt de l\'API annulé (réouverture de la webview).');
+        }
+    }
+
     private registerMessageHandler(): void {
         this.panel.webview.onDidReceiveMessage(async (message) => {
             
-            // ── 1. Messages Système ───────────────────────────────────────
+            // ── 1. Message de Cycle de Vie (Géré UNIQUEMENT par le Panel) ──
             if (message.type === 'ready') {
-                const status = this.genesisApi.getStatus();
+                this.cancelShutdown();
 
-                if (status.error) {
-                    this.panel.webview.postMessage({ type: 'apiError', payload: { message: status.error } });
-                    return;
+                if (!this.genesisApi.isRunning()) {
+                    console.log('[Genesis] Démarrage de l\'API à la demande...');
+                    try {
+                        await this.genesisApi.start(this.context);
+                    } catch (err) {
+                        console.error('[Genesis] Échec du démarrage de l\'API, passage en mode dégradé (Mock).', err);
+                    }
                 }
 
-                const sendInit = () => {
-                    this.panel.webview.postMessage({
-                        type: 'init',
-                        payload: { port: this.genesisApi.getPort(), theme: this.getThemeConfig() }
-                    });
-                };
-
-                if (!status.ready) {
-                    this.waitForApi().then(sendInit).catch((err) => {
-                        this.panel.webview.postMessage({ type: 'apiError', payload: { message: err.message } });
-                    });
-                    return;
-                }
-                
-                sendInit();
-                return;
-            }
-
-            if (message.type === 'browseFolder') {
-                const folders = await vscode.window.showOpenDialog({
-                    canSelectFolders: true, canSelectFiles: false, canSelectMany: false, openLabel: 'Sélectionner un dossier'
-                });
-                if (folders && folders.length > 0) {
-                    this.panel.webview.postMessage({ type: 'folderSelected', payload: folders[0].fsPath });
-                }
-                return;
-            }
-
-            // ── 2. Messages Métier ────────────────────────────────────────
-            const status = this.genesisApi.getStatus();
-            if (!status.ready) {
-                this.panel.webview.postMessage({ type: 'API_NOT_READY', payload: { command: message.type } });
-                return;
-            }
-
-            try {
-                switch (message.type) {
-                    // Feature-based (Nouveau)
-                    case 'GET_FRAMEWORKS':
-                        await new FrameworkHandler().getAll(message.payload, this.panel);
-                        break;
-                    case 'SELECT_FRAMEWORK':
-                        await new FrameworkHandler().select(message.payload, this.panel);
-                        break;
-                    
-                    // Action ponctuelle (Existant, conservé tel quel)
-                    case 'generateJavaFile':
-                        const { className, destinationPath } = message.payload;
-                        const result = await this.genesisApi.generateJavaFile(className, destinationPath);
-                        this.panel.webview.postMessage({ type: 'generateResult', payload: result });
-                        break;
-
-                    default:
-                        console.warn(`[GenesisPanel] Message non géré : ${message.type}`);
-                }
-            } catch (err) {
                 this.panel.webview.postMessage({
-                    type: 'apiError',
-                    payload: { message: (err as Error).message }
+                    type: 'init',
+                    payload: {
+                        port: this.genesisApi.getPort(),
+                        theme: this.getThemeConfig(),
+                        isOffline: !this.genesisApi.getStatus().ready
+                    }
                 });
+                return; // ⚠️ IMPORTANT : on s'arrête ici, on ne passe pas au routeur
             }
-        });
-    }
 
-    private waitForApi(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            let attempts = 0;
-            const interval = setInterval(() => {
-                const status = this.genesisApi.getStatus();
-                if (status.ready) {
-                    clearInterval(interval);
-                    resolve();
-                } else if (status.error) {
-                    clearInterval(interval);
-                    reject(new Error(status.error));
-                } else if (attempts >= 30) {
-                    clearInterval(interval);
-                    reject(new Error('Timeout : Genesis API trop longue à démarrer'));
-                }
-                attempts++;
-            }, 500);
+            // ── 2. Messages Métier (Délégués au Routeur) ────────────────────
+            await this.messageRouter.route(message);
         });
     }
 }

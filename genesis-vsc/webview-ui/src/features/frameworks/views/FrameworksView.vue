@@ -62,7 +62,10 @@ const props = withDefaults(defineProps<{
     showBackButton: true
 });
 
-const emit = defineEmits<{ 'back': [] }>();
+const emit = defineEmits<{ 
+    'back': [],
+    'select': [framework: Framework]; 
+}>();
 
 // ═══ Injection du composable (seule source de vérité) ═══
 const { 
@@ -98,6 +101,9 @@ function handleSelectWrapper(framework: Framework, event?: MouseEvent) {
         mouseX.value = result.event ? result.event.clientX : window.innerWidth / 2;
         mouseY.value = result.event ? result.event.clientY : window.innerHeight / 2;
         showReplacePopup.value = true;
+    } else {
+        // AJOUT CRUCIAL : Émettre l'événement pour que GeneratorStepper puisse le sauvegarder
+        emit('select', framework);
     }
 }
 

@@ -52,10 +52,15 @@
   la mascoot se pose sur l'élément sléctionnée
 
 # step 3
-configuration du framework
-- build tool
-- groupe ID
-- Framework Version
+configuration du Projet :
+  - nom
+  - localisation du projet
+
+configuration du framework :
+  - version du language
+  - build tool
+  - groupe ID(s'affiche selon le framework choisit)
+  - Framework Version
 
 # step 4
 connexion à la base de donnée

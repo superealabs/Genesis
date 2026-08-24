@@ -14,8 +14,7 @@
             :active="modelValue === 'grid'"
             @click="$emit('update:modelValue', 'grid')"
             size="lg"
-            variant="secondary"
-            :visibleBackground="false"
+            :variant="'tertiary'"
             :fillWidth="true"
         >
             <template #leftIcon>
@@ -28,8 +27,7 @@
             :active="modelValue === 'list'"
             @click="$emit('update:modelValue', 'list')"
             size="lg"
-            variant="secondary"
-            :visibleBackground="false"
+            :variant="'tertiary'"
             :fillWidth="true"
         >
             <template #leftIcon>

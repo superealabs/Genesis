@@ -50,7 +50,7 @@
         <GenesisButtonIcon
             v-if="showInfoButton"
             size="xs"
-            :visibleBackground="false"
+            :variant="'tertiary'"
             :class="infoButtonClasses"
             @click.stop="$emit('info')"
             :hover-himself="true"
