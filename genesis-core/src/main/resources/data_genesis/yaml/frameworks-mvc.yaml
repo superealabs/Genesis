@@ -4722,18 +4722,20 @@
       import ${groupLink}.${lowerCase(projectName)}.models.dto.${majStart(className)}Search;
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
       import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
-      import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
-      import org.springframework.stereotype.Controller;
-      import org.springframework.ui.Model;
       import org.springframework.data.domain.Page;
       import org.springframework.data.domain.PageRequest;
       import org.springframework.data.domain.Pageable;
       import org.springframework.data.domain.Sort;
-      import org.springframework.web.bind.annotation.*;
-      import java.util.HashMap;
+      import org.springframework.stereotype.Controller;
+      import org.springframework.ui.Model;
+      import org.springframework.web.bind.annotation.GetMapping;
+      import org.springframework.web.bind.annotation.ModelAttribute;
+      import org.springframework.web.bind.annotation.PathVariable;
+      import org.springframework.web.bind.annotation.RequestMapping;
+      import org.springframework.web.bind.annotation.RequestParam;
     controllerAnnotations: |
       @Controller
-      @RequestMapping("/${lowerCase(classNameLink)}")
+      @RequestMapping("/${minStart(className)}")
     controllerExtends: ""
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
@@ -4743,32 +4745,37 @@
       {{tab}}   this.${lowerCase(className)}Service = ${lowerCase(className)}Service;
       {{tab}}}
     controllerMethodContent: |
-      @GetMapping
-      public String list${majStart(classNameLink)}(
-           @RequestParam(defaultValue = "0") int page,
-           @RequestParam(defaultValue = "10") int size,
-           @RequestParam(defaultValue = "${pkColumn},asc") String sortParam,
-           Model model) {
-
-              Sort sort = WebUtils.createSortObject(sortParam);
-
-              Pageable pageable = PageRequest.of(page, size, sort);
-
-              Page<${majStart(className)}> ${minStart(className)}Page = ${minStart(className)}Service.getAll${majStart(className)}(pageable);
-
-              model.addAttribute("${minStart(className)}s", ${minStart(className)}Page.getContent()); 
-              model.addAttribute("${minStart(className)}Page", ${minStart(className)}Page);
-
-              model.addAttribute("currentPage", page);
-
-              model.addAttribute("pageTitle", "Liste des ${minStart(className)}s");
-
-              if (!${minStart(className)}Page.hasContent()) {
-                  model.addAttribute("noDataMessage", "Aucun ${minStart(className)} trouvé.");
-              }
-
-              return "${minStart(className)}/list"; 
-          }
+      {{tab}}@GetMapping
+      {{tab}}public String list${majStart(classNameLink)}(
+      {{tab}}        @ModelAttribute("${minStart(className)}Search") ${majStart(className)}Search search,
+      {{tab}}        @RequestParam(defaultValue = "0") int page,
+      {{tab}}        @RequestParam(defaultValue = "10") int size,
+      {{tab}}        @RequestParam(defaultValue = "${pkColumn},asc") String sortParam,
+      {{tab}}        Model model) {
+      {{tab}}    Sort sort = WebUtils.createSortObject(sortParam);
+      {{tab}}    Pageable pageable = PageRequest.of(page, size, sort);
+      {{tab}}    Page<${majStart(className)}> ${minStart(className)}Page =
+      {{tab}}            ${minStart(className)}Service.getAll${majStart(className)}(pageable, search);
+      {{tab}}    model.addAttribute("${minStart(className)}s", ${minStart(className)}Page.getContent());
+      {{tab}}    model.addAttribute("${minStart(className)}Page", ${minStart(className)}Page);
+      {{tab}}    model.addAttribute("${minStart(className)}Search", search);
+      {{tab}}    model.addAttribute("currentPage", page);
+      {{tab}}    model.addAttribute("sortParam", sortParam);
+      {{tab}}    model.addAttribute("pageTitle", "Liste des ${minStart(className)}s");
+      {{tab}}
+      {{tab}}    if (!${minStart(className)}Page.hasContent()) {
+      {{tab}}        model.addAttribute("noDataMessage", "Aucun ${minStart(className)} trouvé.");
+      {{tab}}    }
+      {{tab}}    return "${minStart(className)}/list";
+      {{tab}}}
+      {{tab}}
+      {{tab}}@GetMapping("/{id}")
+      {{tab}}public String view${majStart(className)}(@PathVariable("id") ${pkColumnType} ${pkColumn}, Model model) {
+      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
+      {{tab}}    model.addAttribute("pageTitle", "Détail ${minStart(className)}");
+      {{tab}}    return "${minStart(className)}/view";
+      {{tab}}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
     controllerAdditionalFiles: [ ]
