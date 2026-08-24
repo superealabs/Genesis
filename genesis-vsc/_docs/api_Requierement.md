@@ -50,3 +50,32 @@
   - View Extension
 
   la mascoot se pose sur l'élément sléctionnée
+
+# step 3
+configuration du framework
+- build tool
+- groupe ID
+- Framework Version
+
+# step 4
+connexion à la base de donnée
+
+# step 5
+import your own data script
+use LLM to edit it
+
+# step 6
+table, Views & component selection
+preview mode
+
+# step 7
+configuration relation
+
+# step 8
+frontEnd selection(can be ignored)
+
+# step 9
+Git initializer
+
+# step 10
+configuration Project Backend

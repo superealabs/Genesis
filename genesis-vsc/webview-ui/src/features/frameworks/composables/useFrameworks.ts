@@ -1,81 +1,79 @@
-import { ref } from 'vue';
-import type { Framework } from '../types/framework.types';
-
-const frameworks: Framework[] = [
-    {
-        id: 1,
-        languageId: 1,
-        name: 'Spring Boot REST',
-        coreFramework: 'Spring',
-        type: 'REST_API',
-        isProd: true,
-        useDB: true,
-        useCloud: false,
-        useEurekaServer: false,
-        isGateway: false,
-        useFrontendApp: false,
-    },
-    {
-        id: 2,
-        languageId: 1,
-        name: 'Spring MVC',
-        coreFramework: 'Spring',
-        type: 'MVC',
-        isProd: true,
-        useDB: true,
-        useCloud: false,
-        useEurekaServer: false,
-        isGateway: false,
-        useFrontendApp: true,
-    },
-    {
-        id: 3,
-        languageId: 2,
-        name: 'Django REST',
-        coreFramework: 'Django',
-        type: 'REST_API',
-        isProd: true,
-        useDB: true,
-        useCloud: false,
-        useEurekaServer: false,
-        isGateway: false,
-        useFrontendApp: false,
-    },
-    {
-        id: 4,
-        languageId: 3,
-        name: 'Laravel MVC',
-        coreFramework: 'Laravel',
-        type: 'MVC',
-        isProd: true,
-        useDB: true,
-        useCloud: false,
-        useEurekaServer: false,
-        isGateway: false,
-        useFrontendApp: true,
-    },
-    {
-        id: 5,
-        languageId: 4,
-        name: 'Express REST',
-        coreFramework: 'Express',
-        type: 'REST_API',
-        isProd: false,
-        useDB: false,
-        useCloud: false,
-        useEurekaServer: false,
-        isGateway: false,
-        useFrontendApp: false,
-    },
-];
+import { storeToRefs } from 'pinia';
+import { computed } from 'vue';
+import { useFrameworkStore } from '../store/useFramework.store';
+import { frameworkService } from '../services/framework.service';
+import { useCompareSlots } from '@/core/composables/ux/useCompareSlots';
+import type { Framework, FrameworkFilters } from '../types/framework.types';
 
 export function useFrameworks() {
-    const list = ref<Framework[]>(frameworks);
-    const displayMode = ref<'grid' | 'list'>('grid');
+    const store = useFrameworkStore();
+    
+    // ✅ EXPOSITION DE TOUS LES ÉTATS NÉCESSAIRES
+    const { filteredFrameworks, displayMode, filters, searchQuery } = storeToRefs(store);
 
-    function toggleMode() {
-        displayMode.value = displayMode.value === 'grid' ? 'list' : 'grid';
+    const compare = useCompareSlots<Framework>({
+        slots: ['A', 'B', 'C', 'D'],
+        getId: (f) => f.id
+    });
+
+    const { mode: compareMode, slots: compareSlots, selectedItem } = compare;
+
+    const currentSelectedId = computed(() => {
+        return compareMode.value === 'selection' ? selectedItem.value?.id : undefined;
+    });
+
+    const frameworkSlotsMap = computed(() => {
+        if (compareMode.value !== 'compare') return new Map<number, string>();
+        const map = new Map<number, string>();
+        for (const [slot, framework] of Object.entries(compareSlots.value)) {
+            if (framework) map.set(framework.id, slot);
+        }
+        return map;
+    });
+
+    function initialize() {
+        frameworkService.init();
+        frameworkService.fetchFrameworks();
     }
 
-    return { list, displayMode, toggleMode };
+    function setSearch(query: string) { store.setSearch(query); }
+    function setFilters(newFilters: FrameworkFilters) { store.setFilters(newFilters); }
+    function toggleDisplayMode() { store.setDisplayMode(displayMode.value === 'grid' ? 'grid' : 'list'); }
+    
+    function handleModeChange(newMode: 'selection' | 'compare') {
+        compare.switchMode(newMode);
+    }
+
+    function handleSelect(framework: Framework, event?: MouseEvent) {
+        const result = compare.handleSelect(framework);
+        frameworkService.selectFramework(framework.id);
+        return { action: result.action, event, framework };
+    }
+
+    function handleReplace(slotId: string | number, framework: Framework) {
+        compare.replaceSlot(slotId, framework);
+        frameworkService.selectFramework(framework.id);
+    }
+
+    return {
+        // État (readonly)
+        frameworks: filteredFrameworks,
+        selectedId: currentSelectedId,
+        displayMode,
+        frameworkSlots: frameworkSlotsMap,
+        compareMode,
+        compare,
+        
+        filters,
+        searchQuery,
+        
+        // Actions
+        initialize,
+        setSearch,
+        setFilters,
+        toggleDisplayMode,
+        handleModeChange,
+        handleSelect,
+        handleReplace
+    };
 }
