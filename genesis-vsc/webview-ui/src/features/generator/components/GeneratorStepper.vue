@@ -15,12 +15,15 @@
             @select="handleFrameworkSelect"
         />
 
-        <!-- Étape 2 : Configuration du projet et du framework -->
+        <!-- Étape 2 : Configuration du projet -->
         <ProjectConfigView v-else-if="currentStep === 2" />
 
-        <!-- Étape 3 : Validation (à venir) -->
-        <div v-else-if="currentStep === 3" class="p-8 text-center text-text-muted">
-            <p>Étape 3 : Récapitulatif et Validation (à venir)</p>
+        <!-- Étape 3 : Configuration de la base de données -->
+        <DatabaseConfigView v-else-if="currentStep === 3" />
+
+        <!-- Étape 4 : Récapitulatif et Validation (à venir) -->
+        <div v-else-if="currentStep === 4" class="p-8 text-center text-text-muted">
+            <p>Étape 4 : Récapitulatif et Validation (à venir)</p>
         </div>
     </StepperPopup>
 </template>
@@ -29,6 +32,7 @@
 import StepperPopup from '@/core/components/layouts/Popup/StepperPopup.vue';
 import FrameworksView from '@/features/frameworks/views/FrameworksView.vue';
 import ProjectConfigView from './ProjectConfigView.vue'; // <-- Nouveau composant
+import DatabaseConfigView from './DatabaseConfigView.vue';
 import { useGenerator } from '../composables/useGenerator';
 
 const emit = defineEmits<{

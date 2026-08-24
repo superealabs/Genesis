@@ -12,73 +12,88 @@
             {{ label }}<span v-if="isMandatory" class="text-accent ml-0.5">*</span>
         </label>
 
-        <!-- ═══ Wrapper input ═══ -->
-        <div class="inline-flex items-center gap-1" :class="inputWrapperClasses">
+        <!-- ═══ CAS BOOLEAN (Checkbox / Toggle) ═══ -->
+        <template v-if="type === 'boolean'">
+            <div class="inline-flex items-center gap-2 h-8">
+                <input
+                    type="checkbox"
+                    class="w-4 h-4 rounded border-secondary bg-transparent text-accent focus:ring-accent cursor-pointer disabled:cursor-not-allowed"
+                    :checked="Boolean(modelValue)"
+                    :disabled="disabled"
+                    v-bind="$attrs"
+                    @change="$emit('update:modelValue', ($event.target as HTMLInputElement).checked)"
+                />
+            </div>
+        </template>
 
-            <!-- ═══ Slot gauche extérieur ═══ -->
-            <span v-if="hasOuterLeftSlot" class="flex items-center flex-shrink-0">
-                <slot name="outer-left" />
-            </span>
+        <!-- ═══ CAS STANDARD (text, number, date, password, etc.) ═══ -->
+        <template v-else>
+            <div class="inline-flex items-center gap-1" :class="inputWrapperClasses">
 
-            <!-- ═══ Container input ═══ -->
-            <div
-                class="inline-flex items-center flex-1
-                       border transition-all duration-200
-                       focus-within:ring-1 focus-within:ring-accent"
-                :class="[
-                    containerSizeClasses,
-                    containerShapeClasses,
-                    containerVariantClasses,
-                    { 'opacity-50': disabled }
-                ]"
-            >
-                <!-- ═══ Slot gauche intérieur ═══ -->
-                <span
-                    v-if="hasLeftSlot"
-                    class="flex items-center flex-shrink-0 text-muted"
-                    :class="slotPaddingClasses"
-                >
-                    <slot name="left" />
+                <!-- Slot gauche extérieur -->
+                <span v-if="hasOuterLeftSlot" class="flex items-center flex-shrink-0">
+                    <slot name="outer-left" />
                 </span>
 
-                <!-- ═══ Input natif ═══ -->
-                <input
-                    class="flex-1 min-w-0 bg-transparent outline-none text-text placeholder:text-muted
-                           disabled:cursor-not-allowed"
-                    :class="[inputSizeClasses, inputPaddingClasses]"
-                    :disabled="disabled"
-                    :placeholder="placeholder"
-                    :type="type"
-                    :value="modelValue"
-                    v-bind="$attrs"
-                    @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-                />
-
-                <!-- ═══ Slot droit intérieur ═══ -->
-                <span
-                    v-if="hasRightSlot"
-                    class="flex items-center flex-shrink-0 text-muted"
-                    :class="slotPaddingClasses"
+                <!-- Container input -->
+                <div
+                    class="inline-flex items-center flex-1 border transition-all duration-200 focus-within:ring-1 focus-within:ring-accent py-4"
+                    :class="[
+                        containerSizeClasses,
+                        containerShapeClasses,
+                        containerVariantClasses,
+                        { 'opacity-50': disabled }
+                    ]"
                 >
-                    <slot name="right" />
+                    <!-- Slot gauche intérieur -->
+                    <span
+                        v-if="hasLeftSlot"
+                        class="flex items-center flex-shrink-0 text-muted"
+                        :class="slotPaddingClasses"
+                    >
+                        <slot name="left" />
+                    </span>
+
+                    <!-- Input natif -->
+                    <input
+                        class="flex-1 min-w-0 bg-transparent outline-none text-text placeholder:text-muted disabled:cursor-not-allowed"
+                        :class="[inputSizeClasses, inputPaddingClasses]"
+                        :disabled="disabled"
+                        :placeholder="placeholder"
+                        :type="type"
+                        :value="modelValue"
+                        v-bind="$attrs"
+                        @input="handleInput"
+                    />
+
+                    <!-- Slot droit intérieur -->
+                    <span
+                        v-if="hasRightSlot"
+                        class="flex items-center flex-shrink-0 text-muted"
+                        :class="slotPaddingClasses"
+                    >
+                        <slot name="right" />
+                    </span>
+                </div>
+
+                <!-- Slot droit extérieur -->
+                <span v-if="hasOuterRightSlot" class="flex items-center flex-shrink-0">
+                    <slot name="outer-right" />
                 </span>
             </div>
-
-            <!-- ═══ Slot droit extérieur ═══ -->
-            <span v-if="hasOuterRightSlot" class="flex items-center flex-shrink-0">
-                <slot name="outer-right" />
-            </span>
-        </div>
+        </template>
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, useSlots } from 'vue';
 
+export type InputType = 'text' | 'password' | 'number' | 'date' | 'boolean';
+
 interface Props {
-    modelValue?: string;
+    modelValue?: string | number | boolean;
     placeholder?: string;
-    type?: string;
+    type?: InputType;
     disabled?: boolean;
     variant?: 'primary' | 'secondary';
     shape?: 'rectangle' | 'pill';
@@ -103,7 +118,10 @@ const props = withDefaults(defineProps<Props>(), {
     oneLine: false
 });
 
-defineEmits<{ (e: 'update:modelValue', value: string): void }>();
+const emit = defineEmits<{
+    (e: 'update:modelValue', value: string | number | boolean): void;
+}>();
+
 defineOptions({ inheritAttrs: false });
 
 const slots = useSlots();
@@ -111,6 +129,15 @@ const hasLeftSlot       = computed(() => !!slots.left);
 const hasRightSlot      = computed(() => !!slots.right);
 const hasOuterLeftSlot  = computed(() => !!slots['outer-left']);
 const hasOuterRightSlot = computed(() => !!slots['outer-right']);
+
+function handleInput(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (props.type === 'number') {
+        emit('update:modelValue', target.value !== '' ? Number(target.value) : '');
+    } else {
+        emit('update:modelValue', target.value);
+    }
+}
 
 const inputSizeClasses = computed(() => ({
     xs:   'text-[10px] [&_svg]:!w-3.5 [&_svg]:!h-3.5',
@@ -176,12 +203,10 @@ const layoutClasses = computed(() => {
 });
 
 const labelClasses = computed(() => {
-    // whitespace-nowrap empêche le label de se casser sur deux lignes en mode oneLine
     return props.oneLine ? 'mr-2 whitespace-nowrap' : 'mb-1';
 });
 
 const inputWrapperClasses = computed(() => {
-    // En mode oneLine + fillWidth, le wrapper de l'input doit prendre tout l'espace restant
     if (props.fillWidth && props.oneLine) return 'flex-1';
     return props.fillWidth ? 'w-full' : 'w-fit';
 });

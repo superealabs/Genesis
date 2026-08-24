@@ -18,6 +18,7 @@
                     label="Localisation"
                     :one-line="true"
                     :fill-width="true"
+                    :size="'lg'"
                 >
                     <template #right>
                         <GenesisButtonIcon :variant="'tertiary'" @click="selectFolderPath">

@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Framework } from '@/features/frameworks/types/framework.types';
-import type { GeneratorData, ProjectConfig } from '../types/generator.types';
+import type { GeneratorData, ProjectConfig, DatabaseConfig } from '../types/generator.types';
 
 export const useGeneratorStore = defineStore('generator', () => {
     // ═══ État ═══
     const currentStep = ref(1);
-    const totalSteps = 3;
+    const totalSteps = 4;
     
     const stepperData = ref<GeneratorData>({
         framework: null,
@@ -17,6 +17,20 @@ export const useGeneratorStore = defineStore('generator', () => {
             buildTool: 'maven',
             groupId: 'com.example',
             frameworkVersion: ''
+        },
+        database: { // <-- AJOUT : État initial
+            engine: 'postgre',
+            host: 'localhost',
+            port: 5432,
+            databaseName: '',
+            schema: 'public',
+            username: '',
+            password: '',
+            driverType: 'org.postgresql.Driver',
+            driverName: 'PostgreSQL JDBC Driver',
+            sid: '',
+            trustCertificate: false,
+            allowPublicKeyRetrieval: false,
         }
     });
 
@@ -37,8 +51,12 @@ export const useGeneratorStore = defineStore('generator', () => {
         }
     }
 
-    function updateConfig(key: keyof ProjectConfig, value: any) {
-        stepperData.value.config[key] = value;
+    function updateConfig<K extends keyof ProjectConfig>(key: K, value: ProjectConfig[K]) {
+        (stepperData.value.config as any)[key] = value;
+    }
+
+    function updateDatabase<K extends keyof DatabaseConfig>(key: K, value: DatabaseConfig[K]) {
+        (stepperData.value.database as any)[key] = value;
     }
 
     function goToNextStep() {
@@ -64,6 +82,20 @@ export const useGeneratorStore = defineStore('generator', () => {
                 buildTool: 'maven',
                 groupId: 'com.example',
                 frameworkVersion: ''
+            },
+            database: {
+                engine: 'postgre',
+                host: 'localhost',
+                port: 5432,
+                databaseName: '',
+                schema: 'public',
+                username: '',
+                password: '',
+                driverType: 'org.postgresql.Driver',
+                driverName: 'PostgreSQL JDBC Driver',
+                sid: '',
+                trustCertificate: false,
+                allowPublicKeyRetrieval: false,                
             }
         };
     }
@@ -76,6 +108,7 @@ export const useGeneratorStore = defineStore('generator', () => {
         isLastStep,
         setFramework,
         updateConfig,
+        updateDatabase,
         goToNextStep,
         goToPreviousStep,
         reset

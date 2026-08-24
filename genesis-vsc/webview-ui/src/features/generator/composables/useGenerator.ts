@@ -34,6 +34,9 @@ export function useGenerator() {
             case 3:
                 return true;
 
+            case 4:
+                return true;
+
             default:
                 return true;
         }
@@ -63,6 +66,10 @@ export function useGenerator() {
         store.updateConfig(key, value);
     }
 
+    function updateDatabase(key: any, value: any) {
+        store.updateDatabase(key, value)
+    }
+
     function handleComplete() {
         console.log('Données finales prêtes pour la génération:', stepperData.value);
         // Ici, plus tard, on appellera le generator.service.ts
@@ -86,6 +93,7 @@ export function useGenerator() {
         goToPreviousStep,
         handleFrameworkSelect,
         updateConfig,
+        updateDatabase,
         handleComplete,
         reset,
         selectFolderPath
