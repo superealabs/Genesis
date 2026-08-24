@@ -3402,7 +3402,7 @@
 
 - id: 6
   languageId: 1
-  coreFramework: "Spring MVC"
+  coreFramework: "Spring Boot"
   name: "Spring MVC - Thymeleaf"
   template: "Template"
   isProd: true
@@ -3417,201 +3417,38 @@
     logoPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/images"
     langsPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/i18n"
   additionalFiles:
-    - fileType: "WebAppInitializer"
-      fileName: "WebAppInitializer"
+    - fileType: "MainFile"
+      fileName: "${majStart(projectName)}Application"
       extension: "java"
       content: |
-        package ${groupLink}.${lowerCase(projectName)}.config;
-
-        import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
-
-        public class WebAppInitializer
-                extends AbstractAnnotationConfigDispatcherServletInitializer {
-
-            @Override
-            protected Class<?>[] getRootConfigClasses() {
-                return new Class<?>[] { RootConfig.class };
-            }
-
-            @Override
-            protected Class<?>[] getServletConfigClasses() {
-                return new Class<?>[] { WebConfig.class };
-            }
-
-            @Override
-            protected String[] getServletMappings() {
-                return new String[] { "/" };
+        package ${groupLink}.${lowerCase(projectName)};
+        import org.springframework.boot.SpringApplication;
+        import org.springframework.boot.autoconfigure.SpringBootApplication;
+        @SpringBootApplication
+        public class ${majStart(projectName)}Application {
+            public static void main(String[] args) {
+                SpringApplication.run(${majStart(projectName)}Application.class,args);
             }
         }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
-
-    - fileType: "RootConfig"
-      fileName: "RootConfig"
-      extension: "java"
-      content: |
-        package ${groupLink}.${lowerCase(projectName)}.config;
-        import java.util.Properties;
-        import javax.sql.DataSource;
-        import com.zaxxer.hikari.HikariConfig;
-        import com.zaxxer.hikari.HikariDataSource;
-        import jakarta.persistence.EntityManagerFactory;
-        import org.springframework.context.annotation.Bean;
-        import org.springframework.context.annotation.ComponentScan;
-        import org.springframework.context.annotation.Configuration;
-        import org.springframework.context.annotation.PropertySource;
-        import org.springframework.core.env.Environment;
-        import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-        import org.springframework.orm.jpa.JpaTransactionManager;
-        import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-        import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
-        import org.springframework.transaction.PlatformTransactionManager;
-        import org.springframework.transaction.annotation.EnableTransactionManagement;
-        @Configuration
-        @EnableTransactionManagement
-        @EnableJpaRepositories(basePackages = "${groupLink}.${lowerCase(projectName)}.repositories")
-        @ComponentScan(basePackages = "${groupLink}.${lowerCase(projectName)}.services")
-        @PropertySource("classpath:database.properties")
-        public class RootConfig {
-
-            private final Environment environment;
-
-            public RootConfig(Environment environment) {
-                this.environment = environment;
-            }
-
-            @Bean(destroyMethod = "close")
-            public DataSource dataSource() {
-                HikariConfig config = new HikariConfig();
-                config.setJdbcUrl(environment.getRequiredProperty("database.url"));
-                config.setUsername(environment.getRequiredProperty("database.username"));
-                config.setPassword(environment.getRequiredProperty("database.password"));
-                config.setDriverClassName(environment.getRequiredProperty("database.driverClassName"));
-                config.setMaximumPoolSize(environment.getProperty("database.pool.maximumPoolSize", Integer.class, 10));
-                config.setConnectionTimeout(environment.getProperty("database.pool.connectionTimeout", Long.class, 30000L));
-                config.setPoolName("${projectName}Pool");
-                return new HikariDataSource(config);
-            }
-
-            @Bean
-            public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
-                HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
-                LocalContainerEntityManagerFactoryBean factory = new LocalContainerEntityManagerFactoryBean();
-                factory.setDataSource(dataSource);
-                factory.setPackagesToScan("${groupLink}.${lowerCase(projectName)}.models");
-                factory.setJpaVendorAdapter(vendorAdapter);
-                factory.setJpaProperties(jpaProperties());
-                return factory;
-            }
-
-            private Properties jpaProperties() {
-                Properties properties = new Properties();
-                properties.setProperty("hibernate.dialect",environment.getRequiredProperty("hibernate.dialect"));
-                properties.setProperty("hibernate.hbm2ddl.auto", environment.getProperty("hibernate.ddlAuto", "none"));
-                properties.setProperty("hibernate.show_sql", environment.getProperty("hibernate.showSql", "false"));
-                properties.setProperty("hibernate.format_sql", environment.getProperty("hibernate.formatSql", "true"));
-                return properties;
-            }
-
-            @Bean
-            public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
-                return new JpaTransactionManager(entityManagerFactory);
-            }
-        }
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}"
 
     - fileType: "WebConfig"
       fileName: "WebConfig"
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config;
-
-        import java.nio.charset.StandardCharsets;
-
-        import org.springframework.context.ApplicationContext;
-        import org.springframework.context.ApplicationContextAware;
-        import org.springframework.context.MessageSource;
         import org.springframework.context.annotation.Bean;
-        import org.springframework.context.annotation.ComponentScan;
         import org.springframework.context.annotation.Configuration;
-        import org.springframework.context.support.ResourceBundleMessageSource;
-        import org.springframework.data.web.config.EnableSpringDataWebSupport;
         import org.springframework.format.FormatterRegistry;
         import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
         import org.springframework.web.servlet.config.annotation.CorsRegistry;
-        import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-        import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
         import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-        import org.thymeleaf.spring6.SpringTemplateEngine;
-        import org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver;
-        import org.thymeleaf.spring6.view.ThymeleafViewResolver;
-        import org.thymeleaf.templatemode.TemplateMode;
         import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
         @Configuration
-        @EnableWebMvc
-        @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
-        @ComponentScan(
-          basePackages = {
-          "${groupLink}.${lowerCase(projectName)}.controllers",
-          "${groupLink}.${lowerCase(projectName)}.exception.handler"
-        }
-        )
-        public class WebConfig implements WebMvcConfigurer, ApplicationContextAware {
-            private ApplicationContext applicationContext;
-            @Override
-            public void setApplicationContext(ApplicationContext applicationContext) {
-                this.applicationContext = applicationContext;
-            }
+        public class WebConfig implements WebMvcConfigurer {
             @Bean
-            public SpringResourceTemplateResolver templateResolver() {
-                SpringResourceTemplateResolver resolver = new SpringResourceTemplateResolver();
-                resolver.setApplicationContext(applicationContext);
-                resolver.setPrefix("classpath:/templates/");
-                resolver.setSuffix(".html");
-                resolver.setTemplateMode(TemplateMode.HTML);
-                resolver.setCharacterEncoding(StandardCharsets.UTF_8.name());
-                resolver.setCacheable(true);
-
-                return resolver;
-            }
-            @Bean
-            public SpringTemplateEngine templateEngine() {
-                SpringTemplateEngine engine = new SpringTemplateEngine();
-                engine.setTemplateResolver(templateResolver());
-                engine.setEnableSpringELCompiler(true);
-                engine.addDialect(new LayoutDialect());
-
-                return engine;
-            }
-            @Bean
-              public ThymeleafViewResolver thymeleafViewResolver(SpringTemplateEngine templateEngine) {
-              ThymeleafViewResolver resolver = new ThymeleafViewResolver();
-              resolver.setTemplateEngine(templateEngine);
-              resolver.setCharacterEncoding(StandardCharsets.UTF_8.name());
-              resolver.setContentType("text/html;charset=UTF-8");
-              resolver.setOrder(1);
-              
-              return resolver;
-            }
-            @Bean
-            public MessageSource messageSource() {
-                ResourceBundleMessageSource messageSource =
-                    new ResourceBundleMessageSource();
-
-                messageSource.setBasename("messages");
-                messageSource.setDefaultEncoding(
-                    StandardCharsets.UTF_8.name()
-                );
-                messageSource.setFallbackToSystemLocale(false);
-
-                return messageSource;
-            }
-            @Override
-            public void addResourceHandlers(ResourceHandlerRegistry registry) {
-                registry.addResourceHandler("/css/**").addResourceLocations("classpath:/static/css/");
-                registry.addResourceHandler("/js/**").addResourceLocations("classpath:/static/js/");
-                registry.addResourceHandler("/images/**").addResourceLocations("classpath:/static/images/");
-                registry.addResourceHandler("/fonts/**").addResourceLocations("classpath:/static/fonts/");
-                registry.addResourceHandler("/favicon.ico").addResourceLocations("classpath:/static/");
+            public LayoutDialect layoutDialect() {
+                return new LayoutDialect();
             }
             @Override
             public void addFormatters(FormatterRegistry registry) {
@@ -4452,35 +4289,62 @@
         error.internal=Une erreur interne est survenue.
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
 
-    - fileType: "Database Properties"
-      fileName: "database"
-      extension: "properties"
+    - fileType: "ApplicationYml"
+      fileName: "application"
+      extension: "yml"
       content: |
-        database.url=${databaseUrl}
-        database.username=${databaseUsername}
-        database.password=${databasePassword}
+        spring:
+          application:
+            name: ${toKebabCase(projectName)}
 
-        {{#if databaseType = PostgreSQL}}
-        database.driverClassName=org.postgresql.Driver
-        {{/if}}
-        {{#if databaseType = MySQL}}
-        database.driverClassName=com.mysql.cj.jdbc.Driver
-        {{/if}}
-        {{#if databaseType = SQL Server}}
-        database.driverClassName=com.microsoft.sqlserver.jdbc.SQLServerDriver
-        {{/if}}
-        {{#if databaseType = Oracle}}
-        database.driverClassName=oracle.jdbc.OracleDriver
-        {{/if}}
+          datasource:
+            url: ${databaseUrl}
+            username: ${databaseUsername}
+            password: ${databasePassword}
+            hikari:
+              maximum-pool-size: 10
+              connection-timeout: 30000
 
-        database.pool.maximumPoolSize=10
-        database.pool.connectionTimeout=30000
+          jpa:
+            database-platform: ${hibernateDialect}
+            hibernate:
+              ddl-auto: ${hibernateDdlAuto}
+            properties:
+              hibernate:
+                format_sql: true
 
-        hibernate.dialect=${hibernateDialect}
-        hibernate.ddlAuto=${hibernateDdlAuto}
-        hibernate.showSql=false
-        hibernate.formatSql=true
+          thymeleaf:
+            prefix: classpath:/templates/
+            suffix: .html
+            encoding: UTF-8
+            cache: true
+
+          messages:
+            basename: messages
+            encoding: UTF-8
+
+        server:
+          port: ${projectPort}
+
+        logging:
+          level:
+            root: ${loggingLevel}
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
+
+    - fileType: "TestFile"
+      fileName: "${majStart(projectName)}ApplicationTests"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+        import org.junit.jupiter.api.Test;
+        import org.springframework.boot.test.context.SpringBootTest;
+        @SpringBootTest
+        class ${majStart(projectName)}ApplicationTests {
+            @Test
+            void contextLoads() {
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
 
   configurations:
     - name: "Logging Level"
@@ -4497,8 +4361,9 @@
     - name: "Framework Version"
       variableName: "frameworkVersion"
       options:
-        - "6.2.19"
-      defaultOption: "6.2.19"
+        - "3.3.6"
+        - "3.2.12"
+      defaultOption: "3.3.6"
     - name: "Hibernate Ddl Auto"
       variableName: "hibernateDdlAuto"
       options:
@@ -4515,55 +4380,30 @@
       defaultOption: "NONE"
 
   dependencies:
-    - groupId: "org.springframework"
-      artifactId: "spring-webmvc"
-      version: "${frameworkVersion}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-web"
+      version: "{{removeLine}}"
       scope: "{{removeLine}}"
 
-    - groupId: "org.springframework"
-      artifactId: "spring-jdbc"
-      version: "${frameworkVersion}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-thymeleaf"
+      version: "{{removeLine}}"
       scope: "{{removeLine}}"
 
-    - groupId: "org.springframework"
-      artifactId: "spring-orm"
-      version: "${frameworkVersion}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-data-jpa"
+      version: "{{removeLine}}"
       scope: "{{removeLine}}"
 
-    - groupId: "org.springframework.data"
-      artifactId: "spring-data-jpa"
-      version: "3.4.13"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-validation"
+      version: "{{removeLine}}"
       scope: "{{removeLine}}"
 
-    - groupId: "org.hibernate.orm"
-      artifactId: "hibernate-core"
-      version: "6.6.52.Final"
-      scope: "{{removeLine}}"
-
-    - groupId: "jakarta.persistence"
-      artifactId: "jakarta.persistence-api"
-      version: "3.1.0"
-      scope: "{{removeLine}}"
-
-    - groupId: "jakarta.validation"
-      artifactId: "jakarta.validation-api"
-      version: "3.0.2"
-      scope: "{{removeLine}}"
-
-    - groupId: "org.hibernate.validator"
-      artifactId: "hibernate-validator"
-      version: "8.0.2.Final"
-      scope: "{{removeLine}}"
-
-    - groupId: "jakarta.servlet"
-      artifactId: "jakarta.servlet-api"
-      version: "6.0.0"
-      scope: "provided"
-
-    - groupId: "org.thymeleaf"
-      artifactId: "thymeleaf-spring6"
-      version: "3.1.5.RELEASE"
-      scope: "{{removeLine}}"
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-test"
+      version: "{{removeLine}}"
+      scope: "test"
 
     - groupId: "nz.net.ultraq.thymeleaf"
       artifactId: "thymeleaf-layout-dialect"
@@ -4575,20 +4415,10 @@
       version: "1.11.0"
       scope: "{{removeLine}}"
 
-    - groupId: "org.slf4j"
-      artifactId: "slf4j-api"
-      version: "2.0.17"
-      scope: "{{removeLine}}"
-
     - groupId: "org.projectlombok"
       artifactId: "lombok"
       version: "1.18.36"
       scope: "provided"
-
-    - groupId: "com.zaxxer"
-      artifactId: "HikariCP"
-      version: "7.1.0"
-      scope: "{{removeLine}}"
 
   model:
     toGenerate: true
