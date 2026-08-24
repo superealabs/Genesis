@@ -144,7 +144,8 @@ public abstract class Database {
 
         databaseMetadata.put("host", credentials.getHost());
         databaseMetadata.put("port", credentials.getPort());
-        databaseMetadata.put("database", credentials.getSchemaName());
+        databaseMetadata.put("database", credentials.getDatabaseName());
+        databaseMetadata.put("schema", credentials.getSchemaName());
         databaseMetadata.put("username", credentials.getUser());
         databaseMetadata.put("password", credentials.getPwd());
         databaseMetadata.put("useSSL", String.valueOf(credentials.isUseSSL()));
