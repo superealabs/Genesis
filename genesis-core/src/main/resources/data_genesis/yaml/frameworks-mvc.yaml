@@ -3168,6 +3168,7 @@
       onGoingPageLink: 'action="@Url.Action("Index")"'
       pageNumberValue: "@Model.Page.Number"
       pageSizeValue: "@Model.Page.Size"
+      pageSizeValueTagHelper: "{{removeLine}}"
       pageSizeParamName: "pageSize"
       sortParamName: "sortOrder"
       filterMethod: "post"
@@ -4225,6 +4226,8 @@
         import org.springframework.web.bind.annotation.ControllerAdvice;
         import org.springframework.web.bind.annotation.ExceptionHandler;
         import org.springframework.web.bind.annotation.ResponseStatus;
+        import org.springframework.http.ResponseEntity;
+        import org.springframework.web.servlet.resource.NoResourceFoundException;
         @Slf4j
         @ControllerAdvice
         public class GlobalExceptionHandler {
@@ -4250,6 +4253,10 @@
                 log.error("An internal error occurred", ex);
                 model.addAttribute("errorMessage", ex.getMessage());
                 return "error/error";
+            }
+            @ExceptionHandler(NoResourceFoundException.class)
+            public ResponseEntity<Void> handleNoResourceFoundException(NoResourceFoundException ex) {
+                return ResponseEntity.notFound().build();
             }
             @ExceptionHandler(Exception.class)
             @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -4749,18 +4756,19 @@
       {{tab}}public String list${majStart(classNameLink)}(
       {{tab}}        @ModelAttribute("${minStart(className)}Search") ${majStart(className)}Search search,
       {{tab}}        @RequestParam(defaultValue = "0") int page,
-      {{tab}}        @RequestParam(defaultValue = "10") int size,
-      {{tab}}        @RequestParam(defaultValue = "${pkColumn},asc") String sortParam,
+      {{tab}}        @RequestParam(defaultValue = "10") int pageSize,
+      {{tab}}        @RequestParam(defaultValue = "${pkColumn},asc") String sortOrder,
       {{tab}}        Model model) {
-      {{tab}}    Sort sort = WebUtils.createSortObject(sortParam);
-      {{tab}}    Pageable pageable = PageRequest.of(page, size, sort);
+      {{tab}}    Sort sort = WebUtils.createSortObject(sortOrder);
+      {{tab}}    Pageable pageable = PageRequest.of(page, pageSize, sort);
       {{tab}}    Page<${majStart(className)}> ${minStart(className)}Page =
       {{tab}}            ${minStart(className)}Service.getAll${majStart(className)}(pageable, search);
       {{tab}}    model.addAttribute("${minStart(className)}s", ${minStart(className)}Page.getContent());
       {{tab}}    model.addAttribute("${minStart(className)}Page", ${minStart(className)}Page);
       {{tab}}    model.addAttribute("${minStart(className)}Search", search);
       {{tab}}    model.addAttribute("currentPage", page);
-      {{tab}}    model.addAttribute("sortParam", sortParam);
+      {{tab}}    model.addAttribute("pageSize", pageSize);
+      {{tab}}    model.addAttribute("sortOrder", sortOrder);
       {{tab}}    model.addAttribute("pageTitle", "Liste des ${minStart(className)}s");
       {{tab}}
       {{tab}}    if (!${minStart(className)}Page.hasContent()) {
@@ -4827,38 +4835,40 @@
       blockLoopStatementStart: "{{removeLine}}"
       blockLoopStatementEnd: "{{removeLine}}"
       filterLink: "th:action=\"@{/${minStart(className)}}\""
-      sortLink: "th:href=\"@{/${minStart(className)}(page=0,size=$[thymeleafDollar]{${minStart(className)}Page.size},sortParam='${this.name},asc')}\""
+      sortLink: "th:href=\"@{/${minStart(className)}(page=0,pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder == '${this.name},asc' ? '${this.name},desc' : '${this.name},asc'})}\""
       detailsLink: "th:href=\"@{/${minStart(className)}/{id}(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
       createLink: "th:href=\"@{/${minStart(className)}/create}\""
       updateLink: "th:href=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
       deleteLink: "th:action=\"@{/${minStart(className)}/delete}\""
       exportLink: "th:action=\"@{/${minStart(className)}/export}\""
-      pageSizeChangeLink: "'?page=0&size=' + this.value"
-      previousPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number - 1},size=$[thymeleafDollar]{${minStart(className)}Page.size},sortParam=$[thymeleafDollar]{param.sortParam})}\""
+      pageSizeChangeLink: "(u => { u.searchParams.set('page', '0'); u.searchParams.set('size', this.value); return u.toString(); })(new URL(window.location.href))"
+      previousPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number - 1},pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder})}\""
       previousClassCondition: "class=\"prev\" th:classappend=\"$[thymeleafDollar]{${minStart(className)}Page.first} ? 'disabled' : ''\""
       pagesListLoop: |
         <a th:each="pageNumber : $[thymeleafDollar]{#numbers.sequence(0, ${minStart(className)}Page.totalPages - 1)}"
-           th:href="@{/${minStart(className)}(page=$[thymeleafDollar]{pageNumber},size=$[thymeleafDollar]{${minStart(className)}Page.size})}"
-           th:text="$[thymeleafDollar]{pageNumber}"
+           th:href="@{/${minStart(className)}(page=$[thymeleafDollar]{pageNumber},pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder})}"
+           th:text="$[thymeleafDollar]{pageNumber + 1}"
            th:classappend="$[thymeleafDollar]{pageNumber == ${minStart(className)}Page.number} ? 'active' : ''">
         </a>
-      nextPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number + 1},size=$[thymeleafDollar]{${minStart(className)}Page.size},sortParam=$[thymeleafDollar]{param.sortParam})}\""
+      nextPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number + 1},pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder})}\""
       nextClassCondition: "class=\"next\" th:classappend=\"$[thymeleafDollar]{${minStart(className)}Page.last} ? 'disabled' : ''\""
       onGoingPageLink: "th:action=\"@{/${minStart(className)}}\""
       pageNumberValue: "0"
       pageSizeValue: "10"
+      pageSizeValueTagHelper: "th:value=\"$[thymeleafDollar]{${minStart(className)}Page.size}\""
       pageSizeParamName: "size"
       sortParamName: "sortParam"
       filterMethod: "get"
       orderSortsTagHelper: "{{removeLine}}"
       currentSortValue: ""
+      currentSortValueTagHelper: "th:value=\"$[thymeleafDollar]{sortOrder}\""
       totalElementsTagHelper: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}Page.totalElements}\"></span>"
-      activeSortAscCondition: ""
-      activeSortDescCondition: ""
+      activeSortAscCondition: "th:classappend=\"$[thymeleafDollar]{sortParam == '${this.name},asc'} ? 'active' : ''\""
+      activeSortDescCondition: "th:classappend=\"$[thymeleafDollar]{sortParam == '${this.name},desc'} ? 'active' : ''\""
       onGoingPagesLoop: |
         <option th:each="pageNumber : $[thymeleafDollar]{#numbers.sequence(0, ${minStart(className)}Page.totalPages - 1)}"
                 th:value="$[thymeleafDollar]{pageNumber}"
-                th:text="$[thymeleafDollar]{pageNumber}"
+                th:text="$[thymeleafDollar]{pageNumber + 1}"
                 th:selected="$[thymeleafDollar]{pageNumber == ${minStart(className)}Page.number}">
         </option>
       scriptSection: |
@@ -4955,7 +4965,7 @@
              layout:decorate="~{layout/base}">
             <main layout:fragment="content">
       previousLink: 'th:href="@{/}"'
-      errorMessage: '<span th:text="$[thymeleafDollar]{errorMessage}"></span>'
+      errorMessage: '<span th:text="*{errorMessage}"></span>'
       viewEnd: |
         </main>
         </div>

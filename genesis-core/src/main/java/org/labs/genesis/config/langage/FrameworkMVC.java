@@ -116,7 +116,9 @@ public class FrameworkMVC extends Framework {
         private String onGoingPageLink;
         private String pageNumberValue;
         private String pageSizeValue;
+        private String pageSizeValueTagHelper;
         private String currentSortValue;
+        private String currentSortValueTagHelper;
         private String totalElementsTagHelper;
         private String activeSortAscCondition;
         private String activeSortDescCondition;
