@@ -2,61 +2,52 @@ import { VscodeService } from '@/core/services/VscodeService';
 import { useFrameworkStore } from '@/features/frameworks/store/useFramework.store';
 import type { Framework } from '@/features/frameworks/types/framework.types';
 
-// ═══ DONNÉES STATIQUES (MOCK) ═══
-const MOCK_FRAMEWORKS: Framework[] = [
-    { id: 1, languageId: 1, name: 'Spring Boot REST', coreFramework: 'Spring', type: 'REST API', isProd: true, useDB: true, useCloud: false, useEurekaServer: false, isGateway: false, useFrontendApp: false },
-    { id: 2, languageId: 1, name: 'Spring MVC', coreFramework: 'Spring', type: 'MVC', isProd: true, useDB: true, useCloud: false, useEurekaServer: false, isGateway: false, useFrontendApp: true },
-    { id: 3, languageId: 2, name: 'Django REST', coreFramework: 'Django', type: 'REST API', isProd: true, useDB: true, useCloud: false, useEurekaServer: false, isGateway: false, useFrontendApp: false },
-    { id: 4, languageId: 3, name: 'Laravel MVC', coreFramework: 'Laravel', type: 'MVC', isProd: true, useDB: true, useCloud: false, useEurekaServer: false, isGateway: false, useFrontendApp: true },
-    { id: 5, languageId: 4, name: 'Express REST', coreFramework: 'Express', type: 'REST API', isProd: false, useDB: false, useCloud: false, useEurekaServer: false, isGateway: false, useFrontendApp: false },
-];
-
 export class FrameworkService extends VscodeService {
     private _store: ReturnType<typeof useFrameworkStore> | null = null;
-
 
     private get store() {
         if (!this._store) {
             this._store = useFrameworkStore();
         }
         return this._store;
-    }
+        }
 
     /**
-     * Initialisation des écouteurs (OUTPUT)
+     * Initialisation des écouteurs (OUTPUT : Extension Host → Webview)
      */
     init(): void {
+        // 1. Réception de la liste des frameworks
         this.onMessage<Framework[]>('FRAMEWORKS_LOADED', (data) => {
             this.store.setFrameworks(data);
         });
 
+        // 2. Réception de la confirmation de sélection
         this.onMessage<{ success: boolean; framework: Framework }>('FRAMEWORK_SELECTED', (data) => {
             if (data.success) {
-                // Logique de confirmation de sélection si nécessaire
                 console.log('Framework sélectionné avec succès:', data.framework.name);
+                // Optionnel : this.store.setSelectedFramework(data.framework);
             }
+        });
+
+        // 3. Gestion des erreurs provenant du Handler
+        this.onMessage<{ command: string; message: string }>('API_ERROR', (data) => {
+            console.error(`[FrameworkService] Erreur pour la commande ${data.command}:`, data.message);
         });
     }
 
     /**
-     * Demande la liste des frameworks (INPUT)
-     * Pour le moment, on simule la réponse du backend directement.
+     * Demande la liste des frameworks (INPUT : Webview → Extension Host)
      */
     fetchFrameworks(): void {
-        setTimeout(() => {
-            // ✅ Plus de cast sauvage, simulateMessage est typé et encapsulé
-            this.simulateMessage('FRAMEWORKS_LOADED', MOCK_FRAMEWORKS);
-        }, 300);
+        this.sendMessage('GET_FRAMEWORKS');
     }
 
+    /**
+     * Demande la sélection d'un framework
+     */
     selectFramework(id: number): void {
         if (!id) return;
-        setTimeout(() => {
-            const selected = MOCK_FRAMEWORKS.find(f => f.id === id);
-            if (selected) {
-                this.simulateMessage('FRAMEWORK_SELECTED', { success: true, framework: selected });
-            }
-        }, 100);
+        this.sendMessage('SELECT_FRAMEWORK', { id });
     }
 }
 

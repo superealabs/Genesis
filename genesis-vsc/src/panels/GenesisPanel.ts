@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { GenesisApiService } from '../services/GenesisApiService';
+import { FrameworkHandler } from '../services/Framework/FrameworkHandler';
 
 export class GenesisPanel {
-
     private static instance: GenesisPanel | undefined;
     private panel: vscode.WebviewPanel;
 
@@ -22,7 +22,6 @@ export class GenesisPanel {
         this.watchConfiguration();
     }
 
-    // ═══ Singleton — une seule instance à la fois ═══
     static show(context: vscode.ExtensionContext, genesisApi: GenesisApiService): void {
         if (GenesisPanel.instance) {
             GenesisPanel.instance.panel.reveal();
@@ -35,9 +34,7 @@ export class GenesisPanel {
             vscode.ViewColumn.Active,
             {
                 enableScripts: true,
-                localResourceRoots: [
-                    vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview')
-                ],
+                localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview')],
                 retainContextWhenHidden: true
             }
         );
@@ -45,7 +42,6 @@ export class GenesisPanel {
         GenesisPanel.instance = new GenesisPanel(panel, context, genesisApi);
     }
 
-    // ═══ Chargement du HTML ═══
     private loadHtml(): void {
         const webviewDist = vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview');
         const htmlPath = path.join(webviewDist.fsPath, 'index.html');
@@ -65,11 +61,83 @@ export class GenesisPanel {
 
     private watchConfiguration(): void {
         vscode.workspace.onDidChangeConfiguration((event) => {
-            if (event.affectsConfiguration('genesis.theme') || 
-                event.affectsConfiguration('genesis.colorMode')) {
+            if (event.affectsConfiguration('genesis.theme') || event.affectsConfiguration('genesis.colorMode')) {
+                this.panel.webview.postMessage({ type: 'themeChanged', payload: this.getThemeConfig() });
+            }
+        });
+    }
+
+    private registerMessageHandler(): void {
+        this.panel.webview.onDidReceiveMessage(async (message) => {
+            
+            // ── 1. Messages Système ───────────────────────────────────────
+            if (message.type === 'ready') {
+                const status = this.genesisApi.getStatus();
+
+                if (status.error) {
+                    this.panel.webview.postMessage({ type: 'apiError', payload: { message: status.error } });
+                    return;
+                }
+
+                const sendInit = () => {
+                    this.panel.webview.postMessage({
+                        type: 'init',
+                        payload: { port: this.genesisApi.getPort(), theme: this.getThemeConfig() }
+                    });
+                };
+
+                if (!status.ready) {
+                    this.waitForApi().then(sendInit).catch((err) => {
+                        this.panel.webview.postMessage({ type: 'apiError', payload: { message: err.message } });
+                    });
+                    return;
+                }
+                
+                sendInit();
+                return;
+            }
+
+            if (message.type === 'browseFolder') {
+                const folders = await vscode.window.showOpenDialog({
+                    canSelectFolders: true, canSelectFiles: false, canSelectMany: false, openLabel: 'Sélectionner un dossier'
+                });
+                if (folders && folders.length > 0) {
+                    this.panel.webview.postMessage({ type: 'folderSelected', payload: folders[0].fsPath });
+                }
+                return;
+            }
+
+            // ── 2. Messages Métier ────────────────────────────────────────
+            const status = this.genesisApi.getStatus();
+            if (!status.ready) {
+                this.panel.webview.postMessage({ type: 'API_NOT_READY', payload: { command: message.type } });
+                return;
+            }
+
+            try {
+                switch (message.type) {
+                    // Feature-based (Nouveau)
+                    case 'GET_FRAMEWORKS':
+                        await new FrameworkHandler().getAll(message.payload, this.panel);
+                        break;
+                    case 'SELECT_FRAMEWORK':
+                        await new FrameworkHandler().select(message.payload, this.panel);
+                        break;
+                    
+                    // Action ponctuelle (Existant, conservé tel quel)
+                    case 'generateJavaFile':
+                        const { className, destinationPath } = message.payload;
+                        const result = await this.genesisApi.generateJavaFile(className, destinationPath);
+                        this.panel.webview.postMessage({ type: 'generateResult', payload: result });
+                        break;
+
+                    default:
+                        console.warn(`[GenesisPanel] Message non géré : ${message.type}`);
+                }
+            } catch (err) {
                 this.panel.webview.postMessage({
-                    type: 'themeChanged',
-                    payload: this.getThemeConfig()
+                    type: 'apiError',
+                    payload: { message: (err as Error).message }
                 });
             }
         });
@@ -92,83 +160,6 @@ export class GenesisPanel {
                 }
                 attempts++;
             }, 500);
-        });
-    }
-
-    // ═══ Gestion des messages Webview ↔ Extension ═══
-    private registerMessageHandler(): void {
-        this.panel.webview.onDidReceiveMessage(async (message) => {
-
-            if (message.type === 'ready') {
-                this.panel.webview.postMessage({
-                    type: 'init',
-                    payload: { port: this.genesisApi.getPort() }
-                });
-            }
-
-            if (message.type === 'generateJavaFile') {
-                const { className, destinationPath } = message.payload;
-                const result = await this.genesisApi.generateJavaFile(className, destinationPath);
-                this.panel.webview.postMessage({
-                    type: 'generateResult',
-                    payload: result
-                });
-            }
-
-            if (message.type === 'browseFolder') {
-                const folders = await vscode.window.showOpenDialog({
-                    canSelectFolders: true,
-                    canSelectFiles: false,
-                    canSelectMany: false,
-                    openLabel: 'Sélectionner un dossier'
-                });
-
-                if (folders && folders.length > 0) {
-                    this.panel.webview.postMessage({
-                        type: 'folderSelected',
-                        payload: folders[0].fsPath
-                    });
-                }
-            }
-
-            if (message.type === 'ready') {
-                const status = this.genesisApi.getStatus();
-
-                if (status.error) {
-                    this.panel.webview.postMessage({
-                        type: 'apiError',
-                        payload: { message: status.error }
-                    });
-                    return;
-                }
-
-                if (!status.ready) {
-                    // JAR encore en cours de démarrage — attendre
-                    this.waitForApi().then(() => {
-                        this.panel.webview.postMessage({
-                            type: 'init',
-                            payload: {
-                                port: this.genesisApi.getPort(),
-                                theme: this.getThemeConfig()
-                            }
-                        });
-                    }).catch((err) => {
-                        this.panel.webview.postMessage({
-                            type: 'apiError',
-                            payload: { message: err.message }
-                        });
-                    });
-                    return;
-                }
-
-                this.panel.webview.postMessage({
-                    type: 'init',
-                    payload: {
-                        port: this.genesisApi.getPort(),
-                        theme: this.getThemeConfig()
-                    }
-                });
-            }
         });
     }
 }
