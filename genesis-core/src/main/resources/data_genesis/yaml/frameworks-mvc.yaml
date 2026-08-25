@@ -4353,6 +4353,26 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
 
+    - fileType: "Home Controller"
+      fileName: "HomeController"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.controllers;
+        import org.springframework.stereotype.Controller;
+        import org.springframework.web.bind.annotation.GetMapping;
+        @Controller
+        public class HomeController {
+            @GetMapping("/")
+            public String home() {
+        {{#each allEntities}}
+        {{#if @first}}
+                return "redirect:/${minStart(this.className)}";
+        {{/if}}
+        {{/each}}
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
@@ -4744,6 +4764,8 @@
       import org.springframework.web.bind.annotation.PostMapping;
       import org.springframework.web.servlet.mvc.support.RedirectAttributes;
       {{else}}{{removeLine}}{{/if}}
+      import jakarta.validation.Valid;
+      import org.springframework.validation.BindingResult;
     controllerAnnotations: |
       @Controller
       @RequestMapping("/${minStart(className)}")
@@ -4799,14 +4821,18 @@
       {{tab}}
       {{tab}}@PostMapping("/create")
       {{tab}}public String create${majStart(className)}(
-      {{tab}}        @ModelAttribute("${minStart(className)}")
-      {{tab}}        ${majStart(className)} ${minStart(className)},
+      {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
+      {{tab}}        BindingResult bindingResult,
+      {{tab}}        Model model,
       {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}    if (bindingResult.hasErrors()) {
+      {{tab}}        model.addAttribute("pageTitle", "Créer ${minStart(className)}");
+      {{tab}}        return "${minStart(className)}/create";
+      {{tab}}    }
       {{tab}}    ${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
       {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} créé avec succès.");
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
-      {{tab}}
       {{tab}}@GetMapping("/{id}/edit")
       {{tab}}public String showEditForm(
       {{tab}}        @PathVariable("id") ${pkColumnType} ${pkColumn},
@@ -4819,15 +4845,19 @@
       {{tab}}
       {{tab}}@PostMapping("/{id}/edit")
       {{tab}}public String update${majStart(className)}(
-      {{tab}}        @PathVariable("id") ${pkColumnType} ${pkColumn},
-      {{tab}}        @ModelAttribute("${minStart(className)}")
-      {{tab}}        ${majStart(className)} ${minStart(className)},
+      {{tab}}        @PathVariable("${pkColumn}") ${pkColumnType} ${pkColumn},
+      {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
+      {{tab}}        BindingResult bindingResult,
+      {{tab}}        Model model,
       {{tab}}        RedirectAttributes redirectAttributes) {
-      {{tab}}    ${minStart(className)}Service.update${majStart(className)}(${pkColumn}, ${minStart(className)});
-      {{tab}}    redirectAttributes.addFlashAttribute("successMessage","${majStart(className)} modifié avec succès.");
+      {{tab}}    if (bindingResult.hasErrors()) {
+      {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
+      {{tab}}        return "${minStart(className)}/edit";
+      {{tab}}    }
+      {{tab}}    ${minStart(className)}Service.update${majStart(className)}(${pkColumn},${minStart(className)});
+      {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} modifié avec succès.");
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
-      {{tab}}
       {{tab}}@PostMapping("/delete")
       {{tab}}public String delete${majStart(className)}(
       {{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn},
