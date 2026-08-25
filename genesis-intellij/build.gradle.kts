@@ -15,7 +15,6 @@ repositories {
 dependencies {
     implementation(project(":genesis-core"))
     implementation("com.fifesoft:rsyntaxtextarea:3.3.3")
-    implementation("org.jfree:jfreechart:1.5.4")
 
     intellijPlatform {
         intellijIdeaUltimate("2026.1.3")

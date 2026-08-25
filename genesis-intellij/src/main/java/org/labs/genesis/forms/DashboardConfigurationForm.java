@@ -10,6 +10,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 public class DashboardConfigurationForm {
@@ -39,6 +41,16 @@ public class DashboardConfigurationForm {
     private JLabel rightHorizontalTitle;
     private JPanel leftCollapsedContent;
     private JPanel rightCollapsedContent;
+
+    // Panneau de visualisation (liste des graphiques)
+    private VisualizationPanel visualizationPanel;
+    private JPanel rightContentCardPanel;
+    private CardLayout rightContentCardLayout;
+
+    // ===== GESTION MULTIPAGE =====
+    private final List<GridCanvas> pageCanvases = new ArrayList<>();
+    private CardLayout canvasCardLayout;
+    private int pageCounter = 0;
 
     public DashboardConfigurationForm() {
         configureMainPanel();
@@ -138,15 +150,66 @@ public class DashboardConfigurationForm {
         rightCollapsedContent.setBorder(new EmptyBorder(0, 0, 0, 0));
         rightCollapsedContent.add(rightSidebarTitle, BorderLayout.NORTH);
 
-        JPanel vizWrapper = new JPanel(new BorderLayout());
-        vizWrapper.setOpaque(false);
-        vizWrapper.setBorder(new EmptyBorder(8, 4, 8, 4));
-        vizWrapper.add(createVisualizationPanelContent(), BorderLayout.CENTER);
-        vizWrapper.setName("visualizationPanelWrapper");
-        rightCollapsedContent.add(vizWrapper, BorderLayout.CENTER);
+        // Conteneur avec CardLayout pour basculer entre liste et configuration
+        rightContentCardLayout = new CardLayout();
+        rightContentCardPanel = new JPanel(rightContentCardLayout);
+        rightContentCardPanel.setOpaque(false);
+        rightContentCardPanel.setBorder(new EmptyBorder(8, 4, 8, 4));
 
+        // Créer le VisualizationPanel et stocker la référence
+        visualizationPanel = new VisualizationPanel();
+        visualizationPanel.addSelectionListener(item -> {
+            DashboardVisualComponent component = new DashboardVisualComponent(item, 4, 4);
+            // Utilise le canvas actif (gridCanvas) pour ajouter le composant
+            gridCanvas.addVisualComponent(component);
+        });
+
+        rightContentCardPanel.add(visualizationPanel, "list");
+
+        // Carte "config" vide (remplie plus tard)
+        JPanel emptyConfig = new JPanel();
+        emptyConfig.setOpaque(false);
+        rightContentCardPanel.add(emptyConfig, "config");
+
+        rightCollapsedContent.add(rightContentCardPanel, BorderLayout.CENTER);
         rightSidebar.add(rightTopBar, BorderLayout.NORTH);
         rightSidebar.add(rightCollapsedContent, BorderLayout.CENTER);
+
+        // Afficher la liste par défaut
+        rightContentCardLayout.show(rightContentCardPanel, "list");
+    }
+
+    private void showVisualizationConfiguration(DashboardVisualComponent component) {
+        if (component == null) return;
+
+        VisualizationConfigurationPanel configPanel = new VisualizationConfigurationPanel(
+                component,   // <- AJOUT : composant cible
+                component.getVisualizationItem(),
+                () -> gridCanvas.selectVisual(null),
+                () -> {
+                    DashboardVisualComponent selected = gridCanvas.getSelectedVisual();
+                    if (selected != null) {
+                        gridCanvas.removeVisualComponent(selected);
+                        showVisualizationList();
+                    }
+                }
+        );
+
+        // Remplacer l'ancienne carte "config"
+        Component old = rightContentCardPanel.getComponent(1);
+        if (old != null) rightContentCardPanel.remove(old);
+        rightContentCardPanel.add(configPanel, "config");
+        rightContentCardLayout.show(rightContentCardPanel, "config");
+        rightContentCardPanel.revalidate();
+        rightContentCardPanel.repaint();
+    }
+
+    private void showVisualizationList() {
+        // Forcer le panneau interne à revenir à la vue liste
+        visualizationPanel.showVisualizations();
+        rightContentCardLayout.show(rightContentCardPanel, "list");
+        rightContentCardPanel.revalidate();
+        rightContentCardPanel.repaint();
     }
 
     private JPanel createTopBar(boolean left, JButton button, JLabel title) {
@@ -203,10 +266,27 @@ public class DashboardConfigurationForm {
         canvasPanel.setBackground(DashboardTheme.CANVAS_BG);
         canvasPanel.removeAll();
 
-        gridCanvas = new GridCanvas();
-        canvasPanel.setLayout(new BorderLayout());
+        // === MODIFICATION MULTIPAGE : CardLayout au lieu de BorderLayout ===
+        canvasCardLayout = new CardLayout();
+        canvasPanel.setLayout(canvasCardLayout);
+        // Le premier GridCanvas sera créé dans initializeTabs()
+    }
 
-        JScrollPane canvasScrollPane = new JScrollPane(gridCanvas,
+    // === NOUVELLE MÉTHODE : crée un GridCanvas et l'ajoute au canvasPanel ===
+    private GridCanvas createNewGridCanvas() {
+        GridCanvas canvas = new GridCanvas();
+
+        // Callback de sélection pour ce canvas
+        canvas.setOnSelectionChanged(comp -> {
+            if (comp != null) {
+                showVisualizationConfiguration(comp);
+            } else {
+                showVisualizationList();
+            }
+        });
+
+        // Envelopper dans un JScrollPane
+        JScrollPane canvasScrollPane = new JScrollPane(canvas,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         canvasScrollPane.setBorder(null);
@@ -214,9 +294,14 @@ public class DashboardConfigurationForm {
         canvasScrollPane.getViewport().setOpaque(false);
         canvasScrollPane.getVerticalScrollBar().setUnitIncrement(20);
 
-        canvasPanel.add(canvasScrollPane, BorderLayout.CENTER);
-        canvasPanel.revalidate();
-        canvasPanel.repaint();
+        // Identifiant unique pour le CardLayout
+        String pageId = "page_" + (pageCounter++);
+        canvasPanel.add(canvasScrollPane, pageId);
+
+        // Ajouter à la liste
+        pageCanvases.add(canvas);
+
+        return canvas;
     }
 
     private void configureTabs() {
@@ -237,8 +322,15 @@ public class DashboardConfigurationForm {
 
     private void initializeTabs() {
         tabsPanel.removeAll();
-        addTab("Page 1");
+        pageCanvases.clear();
+        pageCounter = 0;
+
+        // Créer le premier canvas et le premier onglet
+        GridCanvas firstCanvas = createNewGridCanvas();
+        JPanel firstTab = createTab("Page 1", firstCanvas);
+        tabsPanel.add(firstTab);
         tabsPanel.add(createAddButton());
+        selectTab(firstTab);
         tabsPanel.revalidate();
         tabsPanel.repaint();
     }
@@ -261,22 +353,10 @@ public class DashboardConfigurationForm {
         return button;
     }
 
-    private JPanel createVisualizationPanelContent() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setOpaque(false);
-        panel.setBorder(new EmptyBorder(8, 8, 8, 8));
-
-        VisualizationPanel vizPanel = new VisualizationPanel();
-        vizPanel.addSelectionListener(item -> {
-            DashboardVisualComponent component = new DashboardVisualComponent(item, 4, 4);
-            gridCanvas.addVisualComponent(component);
-        });
-        panel.add(vizPanel, BorderLayout.CENTER);
-        return panel;
-    }
-
     private void addTab(String title) {
-        JPanel tab = createTab(title);
+        // Créer un nouveau canvas pour ce nouvel onglet
+        GridCanvas newCanvas = createNewGridCanvas();
+        JPanel tab = createTab(title, newCanvas);
         int addIndex = Math.max(0, tabsPanel.getComponentCount() - 1);
         tabsPanel.add(tab, addIndex);
         tabsPanel.revalidate();
@@ -291,7 +371,7 @@ public class DashboardConfigurationForm {
         });
     }
 
-    private JPanel createTab(String title) {
+    private JPanel createTab(String title, GridCanvas canvas) {
         JPanel tab = new JPanel(new BorderLayout(4, 0));
         tab.setOpaque(false);
         tab.setBorder(new RoundedBackgroundBorder(DashboardTheme.SURFACE_2, DashboardTheme.BORDER, 8, 1, false));
@@ -315,6 +395,10 @@ public class DashboardConfigurationForm {
         tab.add(label, BorderLayout.CENTER);
         tab.add(closeButton, BorderLayout.EAST);
 
+        // === MODIFICATION MULTIPAGE : stocker le canvas et l'ID de page ===
+        tab.putClientProperty("gridCanvas", canvas);
+        tab.putClientProperty("pageId", getPageIdForCanvas(canvas));
+
         MouseAdapter clickListener = new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -327,10 +411,31 @@ public class DashboardConfigurationForm {
         return tab;
     }
 
+    private String getPageIdForCanvas(GridCanvas canvas) {
+        int index = pageCanvases.indexOf(canvas);
+        if (index >= 0) {
+            return "page_" + index;
+        }
+        return "page_unknown";
+    }
+
     private void closeTab(JPanel tab) {
         if (getTabCount() <= 1) return;
         boolean wasSelected = isSelectedTab(tab);
         int index = getTabIndex(tab);
+
+        // Récupérer le canvas associé et le retirer
+        GridCanvas canvas = (GridCanvas) tab.getClientProperty("gridCanvas");
+        String pageId = (String) tab.getClientProperty("pageId");
+        if (canvas != null) {
+            pageCanvases.remove(canvas);
+            // Retirer le scrollpane parent du canvasPanel
+            Component scrollPane = canvas.getParent();
+            if (scrollPane != null) {
+                canvasPanel.remove(scrollPane);
+            }
+        }
+
         tabsPanel.remove(tab);
         if (wasSelected) {
             int newIndex = Math.min(index, getTabCount() - 1);
@@ -351,6 +456,17 @@ public class DashboardConfigurationForm {
                 ));
             }
         }
+
+        // Mettre à jour gridCanvas et afficher le bon panneau
+        GridCanvas canvas = (GridCanvas) selected.getClientProperty("gridCanvas");
+        String pageId = (String) selected.getClientProperty("pageId");
+        if (canvas != null && pageId != null) {
+            gridCanvas = canvas;
+            canvasCardLayout.show(canvasPanel, pageId);
+
+            gridCanvas.selectVisual(null);
+        }
+
         tabsPanel.repaint();
     }
 
@@ -419,7 +535,6 @@ public class DashboardConfigurationForm {
         } else {
             leftCollapseButton.setText("‹");
         }
-        // Show/hide data panel wrapper (index 1)
         if (leftCollapsedContent.getComponentCount() > 1) {
             leftCollapsedContent.getComponent(1).setVisible(!collapsed);
         }

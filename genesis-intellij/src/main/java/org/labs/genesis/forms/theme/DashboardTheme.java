@@ -37,7 +37,7 @@ public final class DashboardTheme {
 
     // Dimensions
     public static final int EXPANDED_WIDTH = 210;
-    public static final int EXPANDED_WIDTH_EXTEND = 250;
+    public static final int EXPANDED_WIDTH_EXTEND = 260;
     public static final int COLLAPSED_WIDTH = 48;
     public static final int MIN_WIDTH = 160;
     public static final int MAX_WIDTH = 300;
