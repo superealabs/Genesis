@@ -4740,16 +4740,20 @@
       import org.springframework.web.bind.annotation.PathVariable;
       import org.springframework.web.bind.annotation.RequestMapping;
       import org.springframework.web.bind.annotation.RequestParam;
+      {{#if !isView}}
+      import org.springframework.web.bind.annotation.PostMapping;
+      import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+      {{else}}{{removeLine}}{{/if}}
     controllerAnnotations: |
       @Controller
       @RequestMapping("/${minStart(className)}")
     controllerExtends: ""
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
-      {{tab}}private final ${majStart(className)}Service ${lowerCase(className)}Service;
+      {{tab}}private final ${majStart(className)}Service ${minStart(className)}Service;
     controllerConstructors: |
-      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${lowerCase(className)}Service) {
-      {{tab}}   this.${lowerCase(className)}Service = ${lowerCase(className)}Service;
+      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${minStart(className)}Service) {
+      {{tab}}   this.${minStart(className)}Service = ${minStart(className)}Service;
       {{tab}}}
     controllerMethodContent: |
       {{tab}}@GetMapping
@@ -4784,6 +4788,55 @@
       {{tab}}    model.addAttribute("pageTitle", "Détail ${minStart(className)}");
       {{tab}}    return "${minStart(className)}/view";
       {{tab}}}
+      {{tab}}
+      {{#if !isView}}
+      {{tab}}@GetMapping("/create")
+      {{tab}}public String showCreateForm(Model model) {
+      {{tab}}    model.addAttribute("${minStart(className)}", new ${majStart(className)}());
+      {{tab}}    model.addAttribute("pageTitle", "Créer ${minStart(className)}");
+      {{tab}}    return "${minStart(className)}/create";
+      {{tab}}}
+      {{tab}}
+      {{tab}}@PostMapping("/create")
+      {{tab}}public String create${majStart(className)}(
+      {{tab}}        @ModelAttribute("${minStart(className)}")
+      {{tab}}        ${majStart(className)} ${minStart(className)},
+      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}    ${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
+      {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} créé avec succès.");
+      {{tab}}    return "redirect:/${minStart(className)}";
+      {{tab}}}
+      {{tab}}
+      {{tab}}@GetMapping("/{id}/edit")
+      {{tab}}public String showEditForm(
+      {{tab}}        @PathVariable("id") ${pkColumnType} ${pkColumn},
+      {{tab}}        Model model) {
+      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
+      {{tab}}    model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
+      {{tab}}    return "${minStart(className)}/edit";
+      {{tab}}}
+      {{tab}}
+      {{tab}}@PostMapping("/{id}/edit")
+      {{tab}}public String update${majStart(className)}(
+      {{tab}}        @PathVariable("id") ${pkColumnType} ${pkColumn},
+      {{tab}}        @ModelAttribute("${minStart(className)}")
+      {{tab}}        ${majStart(className)} ${minStart(className)},
+      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}    ${minStart(className)}Service.update${majStart(className)}(${pkColumn}, ${minStart(className)});
+      {{tab}}    redirectAttributes.addFlashAttribute("successMessage","${majStart(className)} modifié avec succès.");
+      {{tab}}    return "redirect:/${minStart(className)}";
+      {{tab}}}
+      {{tab}}
+      {{tab}}@PostMapping("/delete")
+      {{tab}}public String delete${majStart(className)}(
+      {{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn},
+      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}    ${minStart(className)}Service.delete${majStart(className)}(${pkColumn});
+      {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
+      {{tab}}    return "redirect:/${minStart(className)}";
+      {{tab}}}
+      {{else}}{{removeLine}}{{/if}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
     controllerAdditionalFiles: [ ]
@@ -4822,7 +4875,7 @@
         </main>
         </div>
       inputTagHelper: "name=\"${minStart(this.name)}\""
-      inputRadioTagHelper: "name=\"${minStart(this.name)}\""
+      inputRadioTagHelper: ""
       inputDateTagHelper: "name=\"${minStart(this.name)}\""
       selectTagHelper: "name=\"${minStart(this.columnNameField)}\""
       deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
@@ -4841,7 +4894,7 @@
       updateLink: "th:href=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
       deleteLink: "th:action=\"@{/${minStart(className)}/delete}\""
       exportLink: "th:action=\"@{/${minStart(className)}/export}\""
-      pageSizeChangeLink: "(u => { u.searchParams.set('page', '0'); u.searchParams.set('size', this.value); return u.toString(); })(new URL(window.location.href))"
+      pageSizeChangeLink: "(u => { u.searchParams.set('page', '0'); u.searchParams.set('pageSize', this.value); return u.toString(); })(new URL(window.location.href))"
       previousPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number - 1},pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder})}\""
       previousClassCondition: "class=\"prev\" th:classappend=\"$[thymeleafDollar]{${minStart(className)}Page.first} ? 'disabled' : ''\""
       pagesListLoop: |
@@ -4856,15 +4909,15 @@
       pageNumberValue: "0"
       pageSizeValue: "10"
       pageSizeValueTagHelper: "th:value=\"$[thymeleafDollar]{${minStart(className)}Page.size}\""
-      pageSizeParamName: "size"
-      sortParamName: "sortParam"
+      pageSizeParamName: "pageSize"
+      sortParamName: "sortOrder"
       filterMethod: "get"
       orderSortsTagHelper: "{{removeLine}}"
       currentSortValue: ""
       currentSortValueTagHelper: "th:value=\"$[thymeleafDollar]{sortOrder}\""
       totalElementsTagHelper: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}Page.totalElements}\"></span>"
-      activeSortAscCondition: "th:classappend=\"$[thymeleafDollar]{sortParam == '${this.name},asc'} ? 'active' : ''\""
-      activeSortDescCondition: "th:classappend=\"$[thymeleafDollar]{sortParam == '${this.name},desc'} ? 'active' : ''\""
+      activeSortAscCondition: "th:classappend=\"$[thymeleafDollar]{sortOrder == '${this.name},asc'} ? 'active' : ''\""
+      activeSortDescCondition: "th:classappend=\"$[thymeleafDollar]{sortOrder == '${this.name},desc'} ? 'active' : ''\""
       onGoingPagesLoop: |
         <option th:each="pageNumber : $[thymeleafDollar]{#numbers.sequence(0, ${minStart(className)}Page.totalPages - 1)}"
                 th:value="$[thymeleafDollar]{pageNumber}"
@@ -4927,7 +4980,7 @@
       inputTagHelper: "th:field=\"*{${minStart(this.name)}}\""
       textAreaTagHelper: "th:field=\"*{${minStart(this.name)}}\""
       textAreaValidationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
-      checkedRadioTagHelper: "{{removeLine}}"
+      checkedRadioTagHelper: ""
       selectTagHelper: "th:field=\"*{${minStart(this.columnNameField)}}\""
       createLink: "th:action=\"@{/${minStart(className)}/create}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
@@ -4953,7 +5006,7 @@
       inputTagHelper: "th:field=\"*{${minStart(this.name)}}\""
       textAreaTagHelper: "th:field=\"*{${minStart(this.name)}}\""
       textAreaValidationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
-      checkedRadioTagHelper: "{{removeLine}}"
+      checkedRadioTagHelper: ""
       selectTagHelper: "th:field=\"*{${minStart(this.columnNameField)}}\""
       updateLink: "th:action=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
