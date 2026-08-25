@@ -2,6 +2,7 @@ package org.labs.genesis.forms.components;
 
 import com.intellij.icons.AllIcons;
 import org.labs.genesis.forms.data.VisualizationParameter;
+import org.labs.genesis.forms.data.VisualizationParameterType;
 import org.labs.genesis.forms.theme.DashboardTheme;
 
 import javax.swing.*;
@@ -9,6 +10,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 public class VisualizationConfigurationPanel extends JPanel {
 
@@ -18,10 +21,11 @@ public class VisualizationConfigurationPanel extends JPanel {
     private final VisualizationPanel.VisualizationItem item;
     private final DashboardVisualComponent targetComponent;
     private final Runnable onBack;
-    private final Runnable onDelete; // peut être null
+    private final Runnable onDelete;
     private final ScrollableContentPanel contentPanel;
+    private final Map<String, JComponent> editorMap = new HashMap<>();
+    private final Map<String, JPanel> rowMap = new HashMap<>();
 
-    // Constructeur : onDelete peut être null
     public VisualizationConfigurationPanel(
             DashboardVisualComponent targetComponent,
             VisualizationPanel.VisualizationItem item,
@@ -50,14 +54,140 @@ public class VisualizationConfigurationPanel extends JPanel {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         add(scrollPane, BorderLayout.CENTER);
+
+        // Appliquer la visibilité initiale
+        updateConditionalVisibility();
     }
 
-    // ============================================================
-    // SCROLLABLE CONTENT PANEL
-    //
-    // Empêche le contenu de dépasser la largeur du viewport
-    // (fix de l'overflow horizontal caché).
-    // ============================================================
+    private void buildParameters() {
+        for (VisualizationParameter parameter : item.parameters) {
+            JComponent editor = createEditor(parameter);
+            editorMap.put(parameter.getKey(), editor);
+
+            // Liaison dynamique pour tous les types de champs
+            bindEditorToConfig(parameter.getKey(), editor);
+
+            JPanel row = createParameterRow(parameter, editor);
+            rowMap.put(parameter.getKey(), row);
+            contentPanel.add(row);
+            contentPanel.add(Box.createVerticalStrut(10));
+        }
+        contentPanel.add(Box.createVerticalGlue());
+    }
+
+    /**
+     * Met à jour la visibilité conditionnelle des champs.
+     */
+    private void updateConditionalVisibility() {
+        // Gérer le cas de la Map : valueColumn visible seulement si markerType est "buffer"
+        JComponent markerTypeEditor = editorMap.get("markerType");
+        JPanel valueColumnRow = rowMap.get("valueColumn");
+
+        if (markerTypeEditor instanceof JComboBox<?> markerTypeCombo && valueColumnRow != null) {
+            String selectedType = (String) markerTypeCombo.getSelectedItem();
+            boolean isBuffer = "buffer".equalsIgnoreCase(selectedType);
+            valueColumnRow.setVisible(isBuffer);
+
+            // Mettre à jour le conteneur parent
+            contentPanel.revalidate();
+            contentPanel.repaint();
+        }
+    }
+
+    /**
+     * Lie un éditeur à la configuration du composant cible.
+     */
+    private void bindEditorToConfig(String key, JComponent editor) {
+        if (targetComponent == null) return;
+
+        // Gestion du titre spécial
+        if ("title".equals(key) && editor instanceof JTextField titleField) {
+            titleField.setText(targetComponent.getTitle());
+            titleField.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent e) { updateTitle(); }
+                @Override
+                public void removeUpdate(DocumentEvent e) { updateTitle(); }
+                @Override
+                public void changedUpdate(DocumentEvent e) { updateTitle(); }
+
+                private void updateTitle() {
+                    targetComponent.setTitle(titleField.getText());
+                }
+            });
+            return;
+        }
+
+        // Gestion du type de marqueur pour la Map
+        if ("markerType".equals(key) && editor instanceof JComboBox<?> markerTypeCombo) {
+            markerTypeCombo.addActionListener(e -> {
+                if (targetComponent != null) {
+                    targetComponent.updateConfig(key, markerTypeCombo.getSelectedItem());
+                }
+                updateConditionalVisibility();
+            });
+            return;
+        }
+
+        // Gestion des éditeurs de colonnes multiples
+        if ("columns".equals(key) && editor instanceof ColumnsEditorPanel columnsPanel) {
+            columnsPanel.setColumnsChangeListener(() -> {
+                if (targetComponent != null) {
+                    targetComponent.updateConfig(key, columnsPanel.getColumns());
+                }
+            });
+            return;
+        }
+
+        // Gestion du nombre optionnel (limit)
+        if ("limit".equals(key) && editor instanceof OptionalNumberEditor optionalNumberEditor) {
+            optionalNumberEditor.setValueChangeListener(value -> {
+                if (targetComponent != null) {
+                    targetComponent.updateConfig(key, value);
+                }
+            });
+            return;
+        }
+
+        // Gestion des champs texte génériques
+        if (editor instanceof JTextField textField) {
+            String existingValue = targetComponent.getConfigValue(key);
+            if (existingValue != null) {
+                textField.setText(existingValue);
+            }
+
+            textField.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent e) { updateValue(); }
+                @Override
+                public void removeUpdate(DocumentEvent e) { updateValue(); }
+                @Override
+                public void changedUpdate(DocumentEvent e) { updateValue(); }
+
+                private void updateValue() {
+                    if (targetComponent != null) {
+                        targetComponent.updateConfig(key, textField.getText());
+                    }
+                }
+            });
+        }
+        // Gestion des combos
+        else if (editor instanceof JComboBox<?> comboBox) {
+            comboBox.addActionListener(e -> {
+                if (targetComponent != null) {
+                    targetComponent.updateConfig(key, comboBox.getSelectedItem());
+                }
+            });
+        }
+        // Gestion des spinners
+        else if (editor instanceof JSpinner spinner) {
+            spinner.addChangeListener(e -> {
+                if (targetComponent != null) {
+                    targetComponent.updateConfig(key, spinner.getValue());
+                }
+            });
+        }
+    }
 
     private static class ScrollableContentPanel extends JPanel implements Scrollable {
 
@@ -82,8 +212,6 @@ public class VisualizationConfigurationPanel extends JPanel {
 
         @Override
         public boolean getScrollableTracksViewportWidth() {
-            // Clé du fix : le panel ne dépasse jamais la largeur du viewport,
-            // ses enfants doivent donc s'y adapter au lieu de déborder.
             return true;
         }
 
@@ -99,29 +227,13 @@ public class VisualizationConfigurationPanel extends JPanel {
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
         header.setBorder(new EmptyBorder(8, 10, 10, 10));
 
-        // ============================================================
-        // TOP : retour + titre
-        // ============================================================
-
         JPanel titleRow = new JPanel(new BorderLayout(8, 0));
         titleRow.setOpaque(false);
         titleRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton backButton = new JButton(AllIcons.Actions.Back);
-        backButton.setBorderPainted(false);
-        backButton.setContentAreaFilled(false);
-        backButton.setFocusPainted(false);
-        backButton.setFocusable(false);
-        backButton.setCursor(
-                Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-        );
-        backButton.setToolTipText("Back");
-        backButton.addActionListener(e -> onBack.run());
-
+        JButton backButton = createBackButton();
         JLabel title = new JLabel(item.name);
-        title.setFont(
-                title.getFont().deriveFont(Font.BOLD, 13f)
-        );
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 13f));
         title.setForeground(DashboardTheme.TEXT);
 
         titleRow.add(backButton, BorderLayout.WEST);
@@ -129,178 +241,70 @@ public class VisualizationConfigurationPanel extends JPanel {
 
         header.add(titleRow);
 
-        // ============================================================
-        // DELETE : nouvelle ligne
-        // ============================================================
-
         if (onDelete != null) {
-
-            header.add(
-                    Box.createVerticalStrut(8)
-            );
-
-            JButton deleteButton = createDeleteButton();
-
-            header.add(deleteButton);
+            header.add(Box.createVerticalStrut(8));
+            header.add(createDeleteButton());
         }
 
         return header;
     }
 
+    private JButton createBackButton() {
+        JButton backButton = new JButton(AllIcons.Actions.Back);
+        backButton.setBorderPainted(false);
+        backButton.setContentAreaFilled(false);
+        backButton.setFocusPainted(false);
+        backButton.setFocusable(false);
+        backButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        backButton.setToolTipText("Back");
+        backButton.addActionListener(e -> onBack.run());
+        return backButton;
+    }
+
     private JButton createDeleteButton() {
-
         JButton button = new JButton();
-
         button.setLayout(new BorderLayout(6, 0));
 
-        // Icône native IntelliJ
         JLabel icon = new JLabel(AllIcons.Actions.Cancel);
-
-        // Texte
         JLabel text = new JLabel("Delete");
-
-        text.setForeground(
-                DashboardTheme.TEXT_SECONDARY
-        );
-
-        text.setFont(
-                text.getFont().deriveFont(Font.PLAIN, 11f)
-        );
+        text.setForeground(DashboardTheme.TEXT_SECONDARY);
+        text.setFont(text.getFont().deriveFont(Font.PLAIN, 11f));
 
         button.add(icon, BorderLayout.WEST);
         button.add(text, BorderLayout.CENTER);
-
         button.setHorizontalAlignment(SwingConstants.LEFT);
-
-        button.setBorder(
-                BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(
-                                DashboardTheme.BORDER_SUBTLE,
-                                1
-                        ),
-                        new EmptyBorder(
-                                5,
-                                8,
-                                5,
-                                8
-                        )
-                )
-        );
-
-        button.setBackground(
-                DashboardTheme.SURFACE_2
-        );
-
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DashboardTheme.BORDER_SUBTLE, 1),
+                new EmptyBorder(5, 8, 5, 8)
+        ));
+        button.setBackground(DashboardTheme.SURFACE_2);
         button.setContentAreaFilled(true);
         button.setOpaque(true);
         button.setFocusPainted(false);
         button.setFocusable(false);
-
-        button.setCursor(
-                Cursor.getPredefinedCursor(
-                        Cursor.HAND_CURSOR
-                )
-        );
-
-        button.setToolTipText(
-                "Delete this visualization from the canvas"
-        );
-
-        button.addActionListener(
-                e -> onDelete.run()
-        );
-
-        // ============================================================
-        // FIT CONTENT : on calcule la taille préférée réelle
-        // (icône + texte + bordures/insets) au lieu de forcer
-        // une largeur MAX_VALUE qui étire le bouton sur toute la ligne.
-        // ============================================================
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setToolTipText("Delete this visualization from the canvas");
+        button.addActionListener(e -> onDelete.run());
 
         Dimension preferred = button.getPreferredSize();
         Dimension fitSize = new Dimension(preferred.width, 32);
-
         button.setPreferredSize(fitSize);
         button.setMinimumSize(fitSize);
-        button.setMaximumSize(fitSize); // <-- plus de Integer.MAX_VALUE ici
-
-        button.setAlignmentX(
-                Component.LEFT_ALIGNMENT
-        );
+        button.setMaximumSize(fitSize);
+        button.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         return button;
     }
 
-    // ============================================================
-    // PARAMETERS
-    // ============================================================
-
-    private void buildParameters() {
-        for (VisualizationParameter parameter : item.parameters) {
-            JComponent editor = createEditor(parameter);
-
-            // === NOUVEAU : liaison du champ titre ===
-            if ("title".equals(parameter.getKey()) && targetComponent != null && editor instanceof JTextField) {
-                JTextField titleField = (JTextField) editor;
-                titleField.setText(targetComponent.getTitle());
-                titleField.getDocument().addDocumentListener(new DocumentListener() {
-                    @Override
-                    public void insertUpdate(DocumentEvent e) { updateTitle(); }
-                    @Override
-                    public void removeUpdate(DocumentEvent e) { updateTitle(); }
-                    @Override
-                    public void changedUpdate(DocumentEvent e) { updateTitle(); }
-
-                    private void updateTitle() {
-                        targetComponent.setTitle(titleField.getText());
-                    }
-                });
-            }
-
-            JPanel row = createParameterRow(parameter, editor);
-            contentPanel.add(row);
-            contentPanel.add(Box.createVerticalStrut(10));
-        }
-        contentPanel.add(Box.createVerticalGlue());
-    }
-
-    private JPanel createParameterRow(
-            VisualizationParameter parameter,
-            JComponent editor
-    ) {
-
-        // BoxLayout vertical au lieu de BorderLayout : la hauteur
-        // s'adapte au contenu de l'éditeur (utile pour les éditeurs
-        // empilés comme COLUMN_OR_FORMULA / SORT), et surtout tout
-        // reste contraint en largeur au lieu de forcer un minimum.
+    private JPanel createParameterRow(VisualizationParameter parameter, JComponent editor) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(false);
+        panel.setBorder(new EmptyBorder(0, 10, 0, 10));
 
-        panel.setBorder(
-                new EmptyBorder(
-                        0,
-                        10,
-                        0,
-                        10
-                )
-        );
-
-        JLabel label =
-                new JLabel(
-                        parameter.getLabel()
-                );
-
-        label.setForeground(
-                DashboardTheme.TEXT
-        );
-
-        label.setFont(
-                label.getFont()
-                        .deriveFont(
-                                11f
-                        )
-        );
-
+        JLabel label = new JLabel(parameter.getLabel());
+        label.setForeground(DashboardTheme.TEXT);
+        label.setFont(label.getFont().deriveFont(11f));
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         editor.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -308,247 +312,83 @@ public class VisualizationConfigurationPanel extends JPanel {
         panel.add(Box.createVerticalStrut(5));
         panel.add(editor);
 
-        // Largeur extensible (bornée par le viewport grâce à
-        // ScrollableContentPanel), hauteur fixée au préféré.
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.setMaximumSize(
-                new Dimension(
-                        Integer.MAX_VALUE,
-                        panel.getPreferredSize().height
-                )
-        );
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height));
 
         return panel;
     }
 
-    // ============================================================
-    // EDITOR FACTORY
-    // ============================================================
+    private JComponent createEditor(VisualizationParameter parameter) {
+        // Cas spécial pour le type de marqueur de la carte
+        if ("markerType".equals(parameter.getKey()) && parameter.getType() == VisualizationParameterType.TEXT) {
+            return createMarkerTypeEditor();
+        }
 
-    private JComponent createEditor(
-            VisualizationParameter parameter
-    ) {
-
-        return switch (
-                parameter.getType()
-                ) {
-
-            case TEXT ->
-                    createTextEditor();
-
-            case NUMBER ->
-                    createNumberEditor();
-
-            case DB_COLUMN ->
-                    createColumnEditor();
-
-            case FORMULA ->
-                    createFormulaEditor();
-
-            case DB_COLUMN_OR_FORMULA ->
-                    createColumnOrFormulaEditor();
-
-            case SORT ->
-                    createSortEditor();
-
-            case COLUMNS ->
-                    createColumnsEditor();
+        return switch (parameter.getType()) {
+            case TEXT -> createTextEditor();
+            case NUMBER -> createNumberEditor(parameter.getKey());
+            case DB_COLUMN -> createColumnEditor();
+            case FORMULA -> createFormulaEditor();
+            case DB_COLUMN_OR_FORMULA -> createColumnOrFormulaEditor();
+            case SORT -> createSortEditor();
+            case COLUMNS -> createColumnsEditor();
+            case CONDITION -> createConditionEditor();
         };
     }
 
-    // ============================================================
-    // TEXT
-    // ============================================================
-
-    private JComponent createTextEditor() {
-
-        JTextField field =
-                new JTextField();
-
-        styleField(field);
-
-        return field;
-    }
-
-    // ============================================================
-    // NUMBER
-    // ============================================================
-
-    private JComponent createNumberEditor() {
-
-        JSpinner spinner =
-                new JSpinner(
-                        new SpinnerNumberModel(
-                                10,
-                                0,
-                                Integer.MAX_VALUE,
-                                1
-                        )
-                );
-
-        setFixedHeight(
-                spinner,
-                EDITOR_HEIGHT
-        );
-
-        return spinner;
-    }
-
-    // ============================================================
-    // DATABASE COLUMN
-    // ============================================================
-
-    private JComponent createColumnEditor() {
-
-        JComboBox<String> combo =
-                new JComboBox<>();
-
-        combo.addItem(
-                "Select column..."
-        );
-
-        /*
-         * Plus tard :
-         *
-         * combo.addItem("customers.name");
-         * combo.addItem("orders.amount");
-         * combo.addItem("orders.created_at");
-         */
-
-        styleCombo(combo);
-
+    private JComponent createMarkerTypeEditor() {
+        JComboBox<String> combo = new JComboBox<>(new String[]{"pin", "buffer"});
+        combo.setSelectedItem("pin"); // Par défaut : pin
+        combo.setForeground(DashboardTheme.TEXT);
+        combo.setBackground(DashboardTheme.SURFACE_2);
+        setFixedHeight(combo, EDITOR_HEIGHT);
         return combo;
     }
 
-    // ============================================================
-    // FORMULA
-    // ============================================================
-
-    private JComponent createFormulaEditor() {
-
-        JTextField field =
-                new JTextField();
-
-        field.putClientProperty(
-                "JTextField.placeholderText",
-                "Enter formula..."
-        );
-
+    private JComponent createTextEditor() {
+        JTextField field = new JTextField();
         styleField(field);
-
         return field;
     }
 
-    // ============================================================
-    // COLUMN OR FORMULA
-    //
-    // MODIFIE : empilé verticalement (mode au-dessus, champ en
-    // dessous) au lieu de côte à côte, pour éviter que deux combos
-    // dépassent la largeur de la sidebar.
-    // ============================================================
+    private JComponent createNumberEditor(String key) {
+        if ("limit".equals(key)) {
+            return new OptionalNumberEditor();
+        }
 
-    private JComponent createColumnOrFormulaEditor() {
-
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setOpaque(false);
-        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JComboBox<String> mode =
-                new JComboBox<>(
-                        new String[]{
-                                "Database Column",
-                                "Formula"
-                        }
-                );
-
-        styleCombo(mode);
-        mode.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mode.setMaximumSize(new Dimension(Integer.MAX_VALUE, EDITOR_HEIGHT));
-
-        JComboBox<String> column =
-                new JComboBox<>();
-
-        column.addItem(
-                "Select column..."
-        );
-
-        styleCombo(column);
-        column.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JTextField formula =
-                new JTextField();
-
-        formula.putClientProperty(
-                "JTextField.placeholderText",
-                "Enter formula..."
-        );
-
-        styleField(formula);
-        formula.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        panel.add(mode);
-        panel.add(Box.createVerticalStrut(6));
-        panel.add(column);
-
-        mode.addActionListener(
-                e -> {
-
-                    boolean isFormula =
-                            mode.getSelectedIndex() == 1;
-
-                    // L'éditeur actif (column ou formula) est
-                    // toujours à l'index 2 du panel.
-                    panel.remove(2);
-
-                    JComponent toAdd = isFormula ? formula : column;
-                    panel.add(toAdd, 2);
-
-                    panel.revalidate();
-                    panel.repaint();
-
-                    // Le conteneur parent doit relayouter aussi
-                    // (la hauteur préférée du panel change).
-                    contentPanel.revalidate();
-                    contentPanel.repaint();
-                }
-        );
-
-        panel.setMaximumSize(
-                new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height)
-        );
-
-        return panel;
+        JSpinner spinner = new JSpinner(new SpinnerNumberModel(10, 0, Integer.MAX_VALUE, 1));
+        setFixedHeight(spinner, EDITOR_HEIGHT);
+        return spinner;
     }
 
-    // ============================================================
-    // SORT
-    //
-    // MODIFIE : empilé verticalement (colonne au-dessus,
-    // direction en dessous) au lieu de GridLayout côte à côte.
-    // ============================================================
+    private JComponent createColumnEditor() {
+        JComboBox<String> combo = new JComboBox<>();
+        combo.addItem("Select column...");
+        styleCombo(combo);
+        return combo;
+    }
+
+    private JComponent createFormulaEditor() {
+        JTextField field = new JTextField();
+        field.putClientProperty("JTextField.placeholderText", "Enter formula...");
+        styleField(field);
+        return field;
+    }
+
+    private JComponent createColumnOrFormulaEditor() {
+        return new ColumnOrFormulaRow();
+    }
 
     private JComponent createSortEditor() {
-
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(false);
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JComboBox<String> column =
-                new JComboBox<>();
+        JComboBox<String> column = new JComboBox<>();
+        column.addItem("Select column...");
 
-        column.addItem(
-                "Select column..."
-        );
-
-        JComboBox<String> direction =
-                new JComboBox<>(
-                        new String[]{
-                                "Ascending",
-                                "Descending"
-                        }
-                );
+        JComboBox<String> direction = new JComboBox<>(new String[]{"Ascending", "Descending"});
 
         styleCombo(column);
         styleCombo(direction);
@@ -563,187 +403,280 @@ public class VisualizationConfigurationPanel extends JPanel {
         panel.add(Box.createVerticalStrut(6));
         panel.add(direction);
 
-        panel.setMaximumSize(
-                new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height)
-        );
-
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height));
         return panel;
     }
-
-    // ============================================================
-    // COLUMNS
-    // ============================================================
 
     private JComponent createColumnsEditor() {
+        return new ColumnsEditorPanel();
+    }
 
-        JPanel panel =
-                new JPanel();
+    private JComponent createConditionEditor() {
+        JTextField field = new JTextField();
+        field.putClientProperty("JTextField.placeholderText", "Ex: total > 100 AND status = 'active'");
+        styleField(field);
+        return field;
+    }
 
-        panel.setOpaque(false);
+    private void styleField(JTextField field) {
+        field.setForeground(DashboardTheme.TEXT);
+        field.setCaretColor(DashboardTheme.TEXT);
+        field.setBackground(DashboardTheme.SURFACE_2);
+        setFixedHeight(field, EDITOR_HEIGHT);
+        field.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DashboardTheme.BORDER_SUBTLE, 1),
+                new EmptyBorder(0, 8, 0, 8)
+        ));
+    }
 
-        panel.setLayout(
-                new BoxLayout(
-                        panel,
-                        BoxLayout.Y_AXIS
-                )
-        );
+    private void styleCombo(JComboBox<?> combo) {
+        combo.setForeground(DashboardTheme.TEXT);
+        combo.setBackground(DashboardTheme.SURFACE_2);
+        setFixedHeight(combo, EDITOR_HEIGHT);
+    }
 
-        panel.setAlignmentX(
-                Component.LEFT_ALIGNMENT
-        );
+    private void setFixedHeight(JComponent component, int height) {
+        Dimension preferred = component.getPreferredSize();
+        component.setPreferredSize(new Dimension(preferred.width, height));
+        component.setMinimumSize(new Dimension(0, height));
+        component.setMaximumSize(new Dimension(Integer.MAX_VALUE, height));
+    }
 
-        JButton addButton =
-                new JButton(
-                        "+ Add column"
-                );
+    // ============================================================
+    // INNER CLASSES
+    // ============================================================
 
-        addButton.setAlignmentX(
-                Component.LEFT_ALIGNMENT
-        );
+    /**
+     * Éditeur de nombre optionnel (peut être vide).
+     */
+    private class OptionalNumberEditor extends JPanel {
+        private final JTextField numberField;
+        private final JLabel hintLabel;
+        private java.util.function.Consumer<Object> valueChangeListener;
 
-        addButton.addActionListener(
-                e -> {
+        public OptionalNumberEditor() {
+            setLayout(new BorderLayout());
+            setOpaque(false);
+            setAlignmentX(Component.LEFT_ALIGNMENT);
 
-                    JTextField field =
-                            new JTextField();
+            numberField = new JTextField();
+            numberField.putClientProperty("JTextField.placeholderText", "No limit");
+            styleField(numberField);
+            numberField.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-                    field.putClientProperty(
-                            "JTextField.placeholderText",
-                            "Column name..."
-                    );
+            hintLabel = new JLabel("Leave empty for no limit");
+            hintLabel.setForeground(DashboardTheme.TEXT_SECONDARY);
+            hintLabel.setFont(DashboardTheme.getFont(9));
+            hintLabel.setBorder(new EmptyBorder(2, 2, 0, 0));
 
-                    styleField(field);
+            numberField.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent e) { notifyChange(); }
+                @Override
+                public void removeUpdate(DocumentEvent e) { notifyChange(); }
+                @Override
+                public void changedUpdate(DocumentEvent e) { notifyChange(); }
+            });
 
-                    field.setAlignmentX(
-                            Component.LEFT_ALIGNMENT
-                    );
+            add(numberField, BorderLayout.NORTH);
+            add(hintLabel, BorderLayout.SOUTH);
+        }
 
-                    field.setMaximumSize(
-                            new Dimension(Integer.MAX_VALUE, EDITOR_HEIGHT)
-                    );
+        public void setValueChangeListener(java.util.function.Consumer<Object> listener) {
+            this.valueChangeListener = listener;
+        }
 
-                    panel.add(
-                            field,
-                            panel.getComponentCount() - 1
-                    );
-
-                    panel.add(
-                            Box.createVerticalStrut(5),
-                            panel.getComponentCount() - 1
-                    );
-
-                    panel.revalidate();
-                    panel.repaint();
-
-                    contentPanel.revalidate();
-                    contentPanel.repaint();
+        private void notifyChange() {
+            if (valueChangeListener != null) {
+                String text = numberField.getText().trim();
+                if (text.isEmpty()) {
+                    valueChangeListener.accept(null);
+                } else {
+                    try {
+                        int value = Integer.parseInt(text);
+                        if (value >= 0) {
+                            valueChangeListener.accept(value);
+                        } else {
+                            valueChangeListener.accept(null);
+                        }
+                    } catch (NumberFormatException e) {
+                        valueChangeListener.accept(null);
+                    }
                 }
-        );
-
-        panel.add(
-                addButton
-        );
-
-        panel.setMaximumSize(
-                new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height)
-        );
-
-        return panel;
-    }
-
-    // ============================================================
-    // STYLE
-    // ============================================================
-
-    private void styleField(
-            JTextField field
-    ) {
-
-        field.setForeground(
-                DashboardTheme.TEXT
-        );
-
-        field.setCaretColor(
-                DashboardTheme.TEXT
-        );
-
-        field.setBackground(
-                DashboardTheme.SURFACE_2
-        );
-
-        setFixedHeight(
-                field,
-                EDITOR_HEIGHT
-        );
-
-        field.setBorder(
-                BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(
-                                DashboardTheme.BORDER_SUBTLE,
-                                1
-                        ),
-                        new EmptyBorder(
-                                0,
-                                8,
-                                0,
-                                8
-                        )
-                )
-        );
-    }
-
-    private void styleCombo(
-            JComboBox<?> combo
-    ) {
-
-        combo.setForeground(
-                DashboardTheme.TEXT
-        );
-
-        combo.setBackground(
-                DashboardTheme.SURFACE_2
-        );
-
-        setFixedHeight(
-                combo,
-                EDITOR_HEIGHT
-        );
+            }
+        }
     }
 
     /**
-     * Fixe uniquement la hauteur.
-     *
-     * La largeur est laissée au LayoutManager, mais on cappe
-     * aussi maximumSize en largeur pour éviter qu'un composant
-     * ne pousse le conteneur au-delà du viewport.
+     * Ligne pour un éditeur column-or-formula.
      */
-    private void setFixedHeight(
-            JComponent component,
-            int height
-    ) {
+    private class ColumnOrFormulaRow extends JPanel {
+        private final JComboBox<String> mode;
+        private final JComboBox<String> column;
+        private final JTextField formula;
+        private final JPanel dynamicPanel;
 
-        Dimension preferred =
-                component.getPreferredSize();
+        public ColumnOrFormulaRow() {
+            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+            setOpaque(false);
+            setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        component.setPreferredSize(
-                new Dimension(
-                        preferred.width,
-                        height
-                )
-        );
+            mode = new JComboBox<>(new String[]{"Database Column", "Formula"});
+            styleCombo(mode);
+            mode.setAlignmentX(Component.LEFT_ALIGNMENT);
+            mode.setMaximumSize(new Dimension(Integer.MAX_VALUE, EDITOR_HEIGHT));
 
-        component.setMinimumSize(
-                new Dimension(
-                        0,
-                        height
-                )
-        );
+            column = new JComboBox<>();
+            column.addItem("Select column...");
+            styleCombo(column);
+            column.setAlignmentX(Component.LEFT_ALIGNMENT);
+            column.setMaximumSize(new Dimension(Integer.MAX_VALUE, EDITOR_HEIGHT));
 
-        component.setMaximumSize(
-                new Dimension(
-                        Integer.MAX_VALUE,
-                        height
-                )
-        );
+            formula = new JTextField();
+            formula.putClientProperty("JTextField.placeholderText", "Enter formula...");
+            styleField(formula);
+            formula.setAlignmentX(Component.LEFT_ALIGNMENT);
+            formula.setMaximumSize(new Dimension(Integer.MAX_VALUE, EDITOR_HEIGHT));
+
+            dynamicPanel = new JPanel(new BorderLayout());
+            dynamicPanel.setOpaque(false);
+            dynamicPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            add(mode);
+            add(Box.createVerticalStrut(6));
+            add(dynamicPanel);
+
+            updateDynamicPanel(false);
+
+            mode.addActionListener(e -> {
+                boolean isFormula = mode.getSelectedIndex() == 1;
+                updateDynamicPanel(isFormula);
+                revalidate();
+                repaint();
+                if (getParent() != null) {
+                    getParent().revalidate();
+                    getParent().repaint();
+                }
+            });
+        }
+
+        private void updateDynamicPanel(boolean isFormula) {
+            dynamicPanel.removeAll();
+            if (isFormula) {
+                dynamicPanel.add(formula, BorderLayout.CENTER);
+            } else {
+                dynamicPanel.add(column, BorderLayout.CENTER);
+            }
+            dynamicPanel.revalidate();
+            dynamicPanel.repaint();
+        }
+
+        public String getValue() {
+            if (mode.getSelectedIndex() == 1) {
+                return formula.getText();
+            } else {
+                return (String) column.getSelectedItem();
+            }
+        }
+    }
+
+    /**
+     * Panneau d'édition de colonnes multiples.
+     */
+    private class ColumnsEditorPanel extends JPanel {
+        private final JPanel columnsContainer;
+        private Runnable columnsChangeListener;
+
+        public ColumnsEditorPanel() {
+            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+            setOpaque(false);
+            setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            columnsContainer = new JPanel();
+            columnsContainer.setLayout(new BoxLayout(columnsContainer, BoxLayout.Y_AXIS));
+            columnsContainer.setOpaque(false);
+            columnsContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            JButton addButton = new JButton("+ Add column");
+            addButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+            addButton.setFocusable(false);
+            addButton.setBorderPainted(false);
+            addButton.setContentAreaFilled(false);
+            addButton.setOpaque(false);
+            addButton.setForeground(DashboardTheme.ACCENT);
+            addButton.setFont(DashboardTheme.boldFont(11));
+            addButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            addButton.addActionListener(e -> addColumnRow());
+
+            add(columnsContainer);
+            add(Box.createVerticalStrut(4));
+            add(addButton);
+
+            addColumnRow();
+            addColumnRow();
+        }
+
+        public void setColumnsChangeListener(Runnable listener) {
+            this.columnsChangeListener = listener;
+        }
+
+        private void addColumnRow() {
+            ColumnOrFormulaRow row = new ColumnOrFormulaRow();
+
+            JPanel rowWrapper = new JPanel(new BorderLayout(4, 0));
+            rowWrapper.setOpaque(false);
+            rowWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
+            rowWrapper.setBorder(new EmptyBorder(0, 0, 6, 0));
+
+            JButton removeButton = new JButton("×");
+            removeButton.setPreferredSize(new Dimension(24, 24));
+            removeButton.setFocusable(false);
+            removeButton.setBorderPainted(false);
+            removeButton.setContentAreaFilled(false);
+            removeButton.setOpaque(false);
+            removeButton.setForeground(DashboardTheme.TEXT_SECONDARY);
+            removeButton.setFont(removeButton.getFont().deriveFont(Font.PLAIN, 14f));
+            removeButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            removeButton.setToolTipText("Remove column");
+            removeButton.addActionListener(e -> {
+                if (columnsContainer.getComponentCount() > 1) {
+                    columnsContainer.remove(rowWrapper);
+                    columnsContainer.revalidate();
+                    columnsContainer.repaint();
+                    notifyChange();
+                }
+            });
+
+            rowWrapper.add(row, BorderLayout.CENTER);
+            rowWrapper.add(removeButton, BorderLayout.EAST);
+
+            columnsContainer.add(rowWrapper);
+            columnsContainer.revalidate();
+            columnsContainer.repaint();
+            notifyChange();
+        }
+
+        private void notifyChange() {
+            if (columnsChangeListener != null) {
+                columnsChangeListener.run();
+            }
+        }
+
+        public List<String> getColumns() {
+            List<String> columns = new ArrayList<>();
+            for (Component comp : columnsContainer.getComponents()) {
+                if (comp instanceof JPanel wrapper) {
+                    for (Component inner : wrapper.getComponents()) {
+                        if (inner instanceof ColumnOrFormulaRow row) {
+                            String value = row.getValue();
+                            if (value != null && !value.isEmpty() && !"Select column...".equals(value)) {
+                                columns.add(value);
+                            }
+                        }
+                    }
+                }
+            }
+            return columns;
+        }
     }
 }

@@ -1,5 +1,7 @@
 package org.labs.genesis.forms.visuals;
 
+import org.labs.genesis.forms.data.VisualizationConfig;
+
 import javax.swing.*;
 
 /**
@@ -14,6 +16,20 @@ public interface VisualizationRenderer {
      * Crée le composant principal du visuel.
      */
     JComponent createComponent();
+
+    /**
+     * Crée le composant principal du visuel avec une configuration.
+     */
+    default JComponent createComponent(VisualizationConfig config) {
+        return createComponent();
+    }
+
+    /**
+     * Met à jour la configuration du renderer.
+     */
+    default void updateConfig(VisualizationConfig config) {
+        // Par défaut, ne fait rien
+    }
 
     /**
      * Nom optionnel utilisé comme fallback.

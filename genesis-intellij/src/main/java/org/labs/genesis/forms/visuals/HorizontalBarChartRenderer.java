@@ -11,8 +11,8 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
     private static final int[] VALUES = {140, 110, 95, 70};
 
     // ============================== CONFIGURATION ==============================
-    private static final String AXIS_LABEL = "Ventes (en k€)";
-    private static final String COMPACT_AXIS_LABEL = "Ventes";
+    private static final String DEFAULT_AXIS_LABEL = "";
+    private static final String COMPACT_AXIS_LABEL = "";
     private static final int GRID_ALPHA = 90;
     private static final float SECONDARY_SATURATION_CUT = 0.22f;
     private static final float SECONDARY_BRIGHTNESS_BOOST = 0.18f;
@@ -44,6 +44,14 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
     // ============================== MAIN CHART ==============================
     private void drawHorizontalBarChart(Graphics2D g, int width, int height,
                                         boolean tiny, boolean compact, boolean medium) {
+        // Récupérer les légendes depuis la configuration
+        String legendX = getConfigString("legendX", compact ? COMPACT_AXIS_LABEL : DEFAULT_AXIS_LABEL);
+        String legendY = getConfigString("legendY", "");
+
+        // Vérifier si les légendes doivent être affichées
+        boolean showXLegend = !tiny && legendX != null && !legendX.trim().isEmpty();
+        boolean showYLegend = !tiny && legendY != null && !legendY.trim().isEmpty();
+
         Padding padding = getPadding(tiny, compact, medium);
         FontSizes fonts = getFontSizes(tiny, compact, medium);
 
@@ -51,7 +59,7 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
         Font numberFont = g.getFont().deriveFont(Font.PLAIN, fonts.numberSize);
         Font axisFont = g.getFont().deriveFont(Font.PLAIN, fonts.axisSize);
 
-        // Zone des catégories
+        // Zone des catégories (plus large si légende Y présente)
         FontMetrics categoryMetrics = g.getFontMetrics(categoryFont);
         int maxCategoryWidth = 0;
         if (!tiny) {
@@ -61,8 +69,17 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
         }
         int categoryAreaWidth = tiny ? Math.max(26, width / 6) : Math.max(42, maxCategoryWidth + 12);
 
-        // Espace sous l'axe
+        // Espace additionnel pour la légende Y
+        if (showYLegend) {
+            FontMetrics axisMetrics = g.getFontMetrics(axisFont);
+            categoryAreaWidth += axisMetrics.getHeight() + 8;
+        }
+
+        // Espace sous l'axe (plus grand si légende X présente)
         int bottomAxisSpace = tiny ? 6 : (compact ? 26 : 38);
+        if (showXLegend) {
+            bottomAxisSpace += (compact ? 14 : 20);
+        }
 
         // Zone de dessin
         int chartX = padding.horizontal + categoryAreaWidth;
@@ -88,10 +105,15 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
 
         drawXAxis(g, chartX, chartY, chartWidth, chartHeight, upperBound, tickUnit, numberFont, tiny);
 
-        if (!tiny) {
-            String axisLabel = compact ? COMPACT_AXIS_LABEL : AXIS_LABEL;
-            int labelY = chartY + chartHeight + (compact ? 24 : 30);
-            drawAxisLabel(g, axisLabel, chartX, labelY, chartWidth, axisFont);
+        // Dessiner la légende X si présente
+        if (showXLegend) {
+            int labelY = chartY + chartHeight + (compact ? 30 : 40);
+            drawAxisLabel(g, legendX, chartX, labelY, chartWidth, axisFont);
+        }
+
+        // Dessiner la légende Y si présente
+        if (showYLegend) {
+            drawYAxisLabel(g, legendY, padding.horizontal, chartY, chartHeight, axisFont);
         }
     }
 
@@ -193,6 +215,25 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
         int textX = x + (width - metrics.stringWidth(text)) / 2;
         g.setColor(DashboardTheme.TEXT_MUTED);
         g.drawString(text, textX, y);
+    }
+
+    /**
+     * Dessine la légende de l'axe Y (rotée à 90 degrés).
+     */
+    private void drawYAxisLabel(Graphics2D g, String text, int x, int y, int height, Font font) {
+        Graphics2D rotated = (Graphics2D) g.create();
+        try {
+            rotated.setFont(font);
+            rotated.setColor(DashboardTheme.TEXT_MUTED);
+            FontMetrics fm = rotated.getFontMetrics();
+            int centerY = y + height / 2;
+            rotated.rotate(-Math.PI / 2);
+            int textX = -centerY - fm.stringWidth(text) / 2;
+            int textY = x + fm.getAscent();
+            rotated.drawString(text, textX, textY);
+        } finally {
+            rotated.dispose();
+        }
     }
 
     // ============================== UTILITIES ==============================

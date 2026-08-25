@@ -57,11 +57,27 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
     // =========================== MAIN CHART ===========================
     private void drawChart(Graphics2D g, int width, int height,
                            boolean tiny, boolean compact, boolean medium) {
+        // Récupérer les légendes depuis la configuration
+        String legendX = getConfigString("legendX", "");
+        String legendY = getConfigString("legendY", "");
+
+        // Vérifier si les légendes doivent être affichées
+        boolean showXLegend = !tiny && !compact && legendX != null && !legendX.trim().isEmpty();
+        boolean showYLegend = !tiny && !compact && legendY != null && !legendY.trim().isEmpty();
+
         Padding pad = getPadding(tiny, compact, medium);
         FontSizes fonts = getFontSizes(compact, medium);
 
         int yAxisWidth = calculateYAxisWidth(g, tiny, compact, medium);
         int xAxisHeight = calculateXAxisHeight(tiny, compact, medium);
+
+        // Ajuster les espaces selon la présence des légendes
+        if (showXLegend) {
+            xAxisHeight += 20;
+        }
+        if (showYLegend) {
+            yAxisWidth += 16;
+        }
 
         int chartX = pad.left + yAxisWidth;
         int chartY = pad.top;
@@ -81,7 +97,8 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
         drawYAxisLabels(g, chartX, chartY, chartWidth, chartHeight, upperBound, tickUnit, tiny, compact, medium, fonts.yLabel);
 
         if (!tiny) {
-            drawAxisTitles(g, chartX, chartY, chartWidth, chartHeight, yAxisWidth, xAxisHeight, compact, medium, fonts.title);
+            drawAxisTitles(g, chartX, chartY, chartWidth, chartHeight, yAxisWidth, xAxisHeight,
+                    compact, medium, fonts.title, legendX, legendY, showXLegend, showYLegend);
         }
     }
 
@@ -186,32 +203,38 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
 
     // =========================== TITLES ===========================
     private void drawAxisTitles(Graphics2D g, int chartX, int chartY, int chartWidth, int chartHeight,
-                                int yAxisWidth, int xAxisHeight, boolean compact, boolean medium, float fontSize) {
-        if (compact) return; // JavaFX hides axis titles in compact mode
+                                int yAxisWidth, int xAxisHeight, boolean compact, boolean medium,
+                                float fontSize, String legendX, String legendY,
+                                boolean showXLegend, boolean showYLegend) {
+        if (compact) return; // Cache les titres en mode compact
 
         Font font = g.getFont().deriveFont(Font.PLAIN, fontSize);
         g.setFont(font);
         FontMetrics fm = g.getFontMetrics();
         g.setColor(LABEL_COLOR);
 
-        // X title
-        String xTitle = "Produits";
-        int xTw = fm.stringWidth(xTitle);
-        int xTx = chartX + (chartWidth - xTw) / 2;
-        int xTy = chartY + chartHeight + xAxisHeight - 4;
-        g.drawString(xTitle, xTx, xTy);
+        // X title (seulement si présent et non vide)
+        if (showXLegend) {
+            int xTw = fm.stringWidth(legendX);
+            int xTx = chartX + (chartWidth - xTw) / 2;
+            int xTy = chartY + chartHeight + xAxisHeight - 4;
+            g.drawString(legendX, xTx, xTy);
+        }
 
-        // Y title (rotated)
-        Graphics2D rotated = (Graphics2D) g.create();
-        try {
-            rotated.rotate(-Math.PI / 2);
-            String yTitle = "Ventes";
-            int tw = fm.stringWidth(yTitle);
-            int tx = -(chartY + chartHeight / 2 + tw / 2);
-            int ty = Math.max(12, yAxisWidth / 2);
-            rotated.drawString(yTitle, tx, ty);
-        } finally {
-            rotated.dispose();
+        // Y title (rotated, seulement si présent et non vide)
+        if (showYLegend) {
+            Graphics2D rotated = (Graphics2D) g.create();
+            try {
+                rotated.setFont(font);
+                rotated.setColor(LABEL_COLOR);
+                rotated.rotate(-Math.PI / 2);
+                int tw = fm.stringWidth(legendY);
+                int tx = -(chartY + chartHeight / 2 + tw / 2);
+                int ty = Math.max(12, yAxisWidth / 2);
+                rotated.drawString(legendY, tx, ty);
+            } finally {
+                rotated.dispose();
+            }
         }
     }
 

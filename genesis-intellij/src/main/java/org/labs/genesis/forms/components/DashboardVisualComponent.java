@@ -2,6 +2,7 @@ package org.labs.genesis.forms.components;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.labs.genesis.forms.data.VisualizationConfig;
 import org.labs.genesis.forms.theme.DashboardTheme;
 import org.labs.genesis.forms.visuals.VisualizationRenderer;
 import org.labs.genesis.forms.visuals.VisualizationRendererFactory;
@@ -32,13 +33,13 @@ public class DashboardVisualComponent extends JPanel {
 
     private final VisualizationRenderer renderer;
     private final JComponent visualComponent;
+    private final VisualizationConfig config;
 
     private int gridX;
     private int gridY;
     private int gridWidth;
     private int gridHeight;
 
-    // === NOUVEAU : référence au label du titre pour détection de la zone d'en-tête ===
     private JLabel titleLabel;
 
     public DashboardVisualComponent(VisualizationPanel.VisualizationItem visualizationItem) {
@@ -51,9 +52,10 @@ public class DashboardVisualComponent extends JPanel {
         this.visualizationItem = visualizationItem;
         this.gridWidth = Math.max(1, gridWidth);
         this.gridHeight = Math.max(1, gridHeight);
+        this.config = new VisualizationConfig();
 
         this.renderer = VisualizationRendererFactory.create(visualizationItem.rendererClass);
-        this.visualComponent = renderer.createComponent();
+        this.visualComponent = renderer.createComponent(config);
 
         configureComponent();
     }
@@ -63,7 +65,6 @@ public class DashboardVisualComponent extends JPanel {
         setOpaque(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // Création du label de titre
         titleLabel = new JLabel(visualizationItem.name);
         titleLabel.setForeground(DashboardTheme.TEXT_DARK);
         titleLabel.setFont(DashboardTheme.boldFont(11));
@@ -82,6 +83,43 @@ public class DashboardVisualComponent extends JPanel {
 
         contentContainer.add(visualComponent, BorderLayout.CENTER);
         add(contentContainer, BorderLayout.CENTER);
+    }
+
+    /**
+     * Met à jour la configuration et rafraîchit le composant.
+     */
+    public void updateConfig(String key, Object value) {
+        config.setValue(key, value);
+
+        // Mise à jour spéciale pour le titre
+        if ("title".equals(key)) {
+            String titleValue = value != null ? value.toString() : "";
+            if (titleValue.trim().isEmpty()) {
+                titleLabel.setText(visualizationItem.name);
+            } else {
+                titleLabel.setText(titleValue);
+            }
+            revalidate();
+            repaint();
+        }
+
+        // Mettre à jour le renderer
+        renderer.updateConfig(config);
+        visualComponent.repaint();
+    }
+
+    /**
+     * Récupère la valeur d'un paramètre de configuration.
+     */
+    public String getConfigValue(String key) {
+        return config.getString(key);
+    }
+
+    /**
+     * Récupère la valeur d'un paramètre de configuration avec valeur par défaut.
+     */
+    public String getConfigValue(String key, String defaultValue) {
+        return config.getString(key, defaultValue);
     }
 
     // =========================================================
@@ -111,19 +149,13 @@ public class DashboardVisualComponent extends JPanel {
         }
     }
 
-    /**
-     * Met à jour le curseur en fonction de la position de la souris.
-     * - Sur les bords : curseur de redimensionnement.
-     * - Sur l'en-tête (et sélectionné) : curseur de déplacement.
-     * - Sinon : curseur par défaut.
-     */
     public void handleMouseMoved(Point point) {
         if (resizing || dragging) {
             return;
         }
 
         if (activeResizeDirection != ResizeDirection.NONE) {
-            setResizeCursor(activeResizeDirection);
+            setCursor(CursorUtils.getCursorForDirection(activeResizeDirection));
             return;
         }
 
@@ -134,12 +166,10 @@ public class DashboardVisualComponent extends JPanel {
 
         ResizeDirection direction = getResizeDirection(point);
         if (direction != ResizeDirection.NONE) {
-            setResizeCursor(direction);
+            setCursor(CursorUtils.getCursorForDirection(direction));
         } else if (isInHeaderArea(point)) {
-            // Sur l'en-tête → curseur de déplacement
             setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
         } else {
-            // Sur le contenu → curseur par défaut (ou main selon votre choix)
             setCursor(Cursor.getDefaultCursor());
         }
     }
@@ -157,19 +187,8 @@ public class DashboardVisualComponent extends JPanel {
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             }
         } else {
-            setResizeCursor(direction);
+            setCursor(CursorUtils.getCursorForDirection(direction));
         }
-    }
-
-    private void setResizeCursor(ResizeDirection direction) {
-        int cursorType = switch (direction) {
-            case NORTH, SOUTH -> Cursor.N_RESIZE_CURSOR;
-            case EAST, WEST -> Cursor.E_RESIZE_CURSOR;
-            case NORTH_EAST, SOUTH_WEST -> Cursor.NE_RESIZE_CURSOR;
-            case NORTH_WEST, SOUTH_EAST -> Cursor.NW_RESIZE_CURSOR;
-            default -> Cursor.DEFAULT_CURSOR;
-        };
-        setCursor(Cursor.getPredefinedCursor(cursorType));
     }
 
     // =========================================================
@@ -202,10 +221,12 @@ public class DashboardVisualComponent extends JPanel {
 
     public void setTitle(String title) {
         if (title == null || title.trim().isEmpty()) {
-            titleLabel.setText(visualizationItem.name);  // retour au nom par défaut
+            titleLabel.setText(visualizationItem.name);
         } else {
             titleLabel.setText(title);
         }
+        // Mettre à jour aussi la configuration
+        config.setValue("title", title);
         revalidate();
         repaint();
     }
@@ -215,13 +236,9 @@ public class DashboardVisualComponent extends JPanel {
     }
 
     // =========================================================
-    // HEADER AREA DETECTION (NOUVEAU)
+    // HEADER AREA DETECTION
     // =========================================================
 
-    /**
-     * Teste si le point (en coordonnées locales du composant) se trouve
-     * dans la zone de l'en-tête (le label du titre).
-     */
     public boolean isInHeaderArea(Point p) {
         if (titleLabel == null) return false;
         return titleLabel.getBounds().contains(p);

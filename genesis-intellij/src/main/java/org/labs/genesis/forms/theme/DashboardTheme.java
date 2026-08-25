@@ -2,7 +2,6 @@ package org.labs.genesis.forms.theme;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 
 public final class DashboardTheme {
@@ -21,6 +20,7 @@ public final class DashboardTheme {
     public static final Color SURFACE_HOVER = new Color(43, 45, 50);
     public static final Color TAB_HOVER = new Color(48, 50, 56);
     public static final Color BORDER_SUBTLE = new Color(54, 56, 62);
+
     // Couleurs Canvas (pour les zones de dessin)
     public static final Color CANVAS_BG = new Color(245, 246, 248);
     public static final Color CANVAS_BORDER = new Color(171, 171, 175);
@@ -62,6 +62,10 @@ public final class DashboardTheme {
         return new Font("Segoe UI Light", Font.PLAIN, (int) size);
     }
 
+    public static Font regularFont(int size) {
+        return new Font(Font.SANS_SERIF, Font.PLAIN, size);
+    }
+
     // Méthodes utilitaires pour appliquer le thème à un composant
     public static void styleTitle(JLabel label) {
         label.setForeground(TEXT);
@@ -69,7 +73,8 @@ public final class DashboardTheme {
         label.setBorder(new EmptyBorder(5, 0, 5, 0));
     }
 
-    public static Font regularFont(int size) {
-        return new Font(Font.SANS_SERIF, Font.PLAIN, size);
+    // Nouvelle méthode utilitaire pour les couleurs avec alpha
+    public static Color withAlpha(Color color, int alpha) {
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
     }
 }
