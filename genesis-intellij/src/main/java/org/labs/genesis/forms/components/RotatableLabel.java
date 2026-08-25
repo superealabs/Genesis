@@ -9,6 +9,9 @@ public class RotatableLabel extends JComponent {
 
     private String text = "";
     private Rotation rotation = Rotation.NONE;
+    private Dimension cachedSize;
+    private String cachedText;
+    private Rotation cachedRotation;
 
     public RotatableLabel() {
         setOpaque(false);
@@ -21,22 +24,40 @@ public class RotatableLabel extends JComponent {
         this.text = text;
     }
 
-    public String getText() { return text; }
+    public String getText() {
+        return text;
+    }
+
     public void setText(String text) {
         this.text = text == null ? "" : text;
+        clearCache();
         revalidate();
         repaint();
     }
 
-    public Rotation getRotation() { return rotation; }
+    public Rotation getRotation() {
+        return rotation;
+    }
+
     public void setRotation(Rotation rotation) {
         this.rotation = rotation == null ? Rotation.NONE : rotation;
+        clearCache();
         revalidate();
         repaint();
     }
-    public boolean isRotated() { return rotation != Rotation.NONE; }
+
+    public boolean isRotated() {
+        return rotation != Rotation.NONE;
+    }
+
     public void setRotated(boolean rotated) {
         setRotation(rotated ? Rotation.COUNTER_CLOCKWISE : Rotation.NONE);
+    }
+
+    private void clearCache() {
+        cachedSize = null;
+        cachedText = null;
+        cachedRotation = null;
     }
 
     @Override
@@ -67,9 +88,17 @@ public class RotatableLabel extends JComponent {
 
     @Override
     public Dimension getPreferredSize() {
+        // Mise en cache de la taille préférée
+        if (cachedSize != null && text.equals(cachedText) && rotation == cachedRotation) {
+            return cachedSize;
+        }
+
         FontMetrics fm = getFontMetrics(getFont());
         int w = fm.stringWidth(text);
         int h = fm.getHeight();
-        return rotation == Rotation.NONE ? new Dimension(w, h) : new Dimension(h, w);
+        cachedSize = rotation == Rotation.NONE ? new Dimension(w, h) : new Dimension(h, w);
+        cachedText = text;
+        cachedRotation = rotation;
+        return cachedSize;
     }
 }

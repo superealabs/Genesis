@@ -9,6 +9,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -23,6 +24,10 @@ public class GridCanvas extends JPanel {
 
     private final List<DashboardVisualComponent> visualComponents = new ArrayList<>();
     private DashboardVisualComponent selectedVisual;
+
+    // Cache pour la grille
+    private BufferedImage gridCache;
+    private Dimension gridCacheSize;
 
     // Resize state
     private DashboardVisualComponent resizingComponent;
@@ -39,7 +44,6 @@ public class GridCanvas extends JPanel {
 
     private boolean isDraggingOrResizing = false;
 
-    // Callback pour notifier le parent de la sélection
     private Consumer<DashboardVisualComponent> onSelectionChanged;
 
     public GridCanvas() {
@@ -51,13 +55,12 @@ public class GridCanvas extends JPanel {
         MouseAdapter canvasAdapter = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                Component comp = getComponentAt(e.getPoint());
-                if (comp == GridCanvas.this) {
+                DashboardVisualComponent visual = findVisualAt(e.getPoint());
+                if (visual != null) {
+                    handleMousePressed(visual, e);
+                } else {
                     selectVisual(null);
-                    return;
                 }
-                DashboardVisualComponent visual = findVisualParent(comp);
-                if (visual != null) handleMousePressed(visual, e);
             }
 
             @Override
@@ -76,6 +79,19 @@ public class GridCanvas extends JPanel {
         });
     }
 
+    /**
+     * Trouve le composant visual à une position donnée en évitant getComponentAt.
+     */
+    private DashboardVisualComponent findVisualAt(Point p) {
+        for (int i = visualComponents.size() - 1; i >= 0; i--) {
+            DashboardVisualComponent comp = visualComponents.get(i);
+            if (comp.getBounds().contains(p)) {
+                return comp;
+            }
+        }
+        return null;
+    }
+
     private void handleMousePressed(DashboardVisualComponent visual, MouseEvent e) {
         if (isDraggingOrResizing) return;
         selectVisual(visual);
@@ -87,22 +103,9 @@ public class GridCanvas extends JPanel {
         if (dir != DashboardVisualComponent.ResizeDirection.NONE) {
             startResize(visual, dir, canvasPoint);
         } else if (visual.isInHeaderArea(visualPoint)) {
-            // Seul un clic sur l'en-tête déclenche le déplacement
             startDrag(visual, canvasPoint);
         }
-        // Sinon, on ne fait que sélectionner
     }
-
-    private DashboardVisualComponent findVisualParent(Component comp) {
-        Component current = comp;
-        while (current != null) {
-            if (current instanceof DashboardVisualComponent visual) return visual;
-            current = current.getParent();
-        }
-        return null;
-    }
-
-    // ---- Mouse forwarding to children ----
 
     private void installMouseForwarding(Component component) {
         MouseAdapter adapter = new MouseAdapter() {
@@ -144,7 +147,14 @@ public class GridCanvas extends JPanel {
         }
     }
 
-    // ---- Resize ----
+    private DashboardVisualComponent findVisualParent(Component comp) {
+        Component current = comp;
+        while (current != null) {
+            if (current instanceof DashboardVisualComponent visual) return visual;
+            current = current.getParent();
+        }
+        return null;
+    }
 
     private void startResize(DashboardVisualComponent comp,
                              DashboardVisualComponent.ResizeDirection dir,
@@ -160,18 +170,7 @@ public class GridCanvas extends JPanel {
         resizeCellSize = getCellSize();
         comp.setResizing(true);
         comp.setActiveResizeDirection(dir);
-        setCursor(getResizeCursorForDirection(dir));
-    }
-
-    private Cursor getResizeCursorForDirection(DashboardVisualComponent.ResizeDirection dir) {
-        int type = switch (dir) {
-            case NORTH, SOUTH -> Cursor.N_RESIZE_CURSOR;
-            case EAST, WEST -> Cursor.E_RESIZE_CURSOR;
-            case NORTH_EAST, SOUTH_WEST -> Cursor.NE_RESIZE_CURSOR;
-            case NORTH_WEST, SOUTH_EAST -> Cursor.NW_RESIZE_CURSOR;
-            default -> Cursor.DEFAULT_CURSOR;
-        };
-        return Cursor.getPredefinedCursor(type);
+        setCursor(CursorUtils.getCursorForDirection(dir));
     }
 
     public void removeVisualComponent(DashboardVisualComponent comp) {
@@ -181,7 +180,7 @@ public class GridCanvas extends JPanel {
         if (selectedVisual == comp) {
             selectedVisual = null;
             if (onSelectionChanged != null) {
-                onSelectionChanged.accept(null); // notifie que rien n'est sélectionné
+                onSelectionChanged.accept(null);
             }
         }
         updateCanvasSize();
@@ -258,8 +257,6 @@ public class GridCanvas extends JPanel {
         setCursor(Cursor.getDefaultCursor());
     }
 
-    // ---- Drag ----
-
     private void startDrag(DashboardVisualComponent comp, Point mousePoint) {
         isDraggingOrResizing = true;
         draggingComponent = comp;
@@ -269,8 +266,6 @@ public class GridCanvas extends JPanel {
         dragCellSize = getCellSize();
         comp.setDragging(true);
         setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
-
-        // Remonter le composant au premier plan
         setComponentZOrder(comp, 0);
     }
 
@@ -288,7 +283,6 @@ public class GridCanvas extends JPanel {
                 dragStartGridX + gridDeltaX));
         int newY = Math.max(0, dragStartGridY + gridDeltaY);
 
-        // PLUS DE VÉRIFICATION DE COLLISION → on applique directement
         draggingComponent.setGridX(newX);
         draggingComponent.setGridY(newY);
         updateCanvasSize();
@@ -308,8 +302,6 @@ public class GridCanvas extends JPanel {
         isDraggingOrResizing = false;
         setCursor(Cursor.getDefaultCursor());
     }
-
-    // ---- Utilities ----
 
     private int getCellSize() {
         int available = getWidth() - 2 * BORDER_WIDTH;
@@ -344,7 +336,7 @@ public class GridCanvas extends JPanel {
         }
         repaint();
         if (onSelectionChanged != null) {
-            onSelectionChanged.accept(comp);   // notification
+            onSelectionChanged.accept(comp);
         }
     }
 
@@ -385,8 +377,6 @@ public class GridCanvas extends JPanel {
         return true;
     }
 
-    // ---- Layout ----
-
     private void updateCanvasSize() {
         int width = getParent() != null ? getParent().getWidth() : getWidth();
         if (width <= 0) return;
@@ -396,6 +386,7 @@ public class GridCanvas extends JPanel {
             requiredRows = Math.max(requiredRows, comp.getGridY() + comp.getGridHeight());
         }
         setPreferredSize(new Dimension(width, requiredRows * cellSize));
+        invalidateGridCache();
     }
 
     private void updateVisualComponents() {
@@ -414,7 +405,14 @@ public class GridCanvas extends JPanel {
         updateVisualComponents();
     }
 
-    // ---- Painting ----
+    // =========================================================
+    // PAINTING WITH CACHE
+    // =========================================================
+
+    private void invalidateGridCache() {
+        gridCache = null;
+        gridCacheSize = null;
+    }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -427,6 +425,7 @@ public class GridCanvas extends JPanel {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 
+            // Fond
             RoundRectangle2D shape = new RoundRectangle2D.Double(0.5, 0.5, w - 1, h - 1, RADIUS, RADIUS);
             g2.setColor(DashboardTheme.CANVAS_BG);
             g2.fill(shape);
@@ -434,28 +433,15 @@ public class GridCanvas extends JPanel {
             Shape oldClip = g2.getClip();
             g2.clip(shape);
 
-            int cellSize = Math.max(1, (w - 2 * BORDER_WIDTH) / GRID_COLUMNS);
-            int gridRows = Math.max(1, (int) Math.ceil((h - 2 * BORDER_WIDTH) / (double) cellSize));
-            int gridWidth = GRID_COLUMNS * cellSize;
-            int gridHeight = gridRows * cellSize;
-            int offsetX = Math.max(0, (w - gridWidth) / 2);
-            int offsetY = 0;
-
-            g2.setColor(DashboardTheme.GRID_COLOR);
-            for (int col = 0; col <= GRID_COLUMNS; col++) {
-                int x = offsetX + col * cellSize;
-                g2.drawLine(x, offsetY, x, Math.min(h, offsetY + gridHeight));
-            }
-            for (int row = 0; row <= gridRows; row++) {
-                int y = offsetY + row * cellSize;
-                g2.drawLine(offsetX, y, Math.min(w, offsetX + gridWidth), y);
-            }
+            // Dessiner la grille (avec cache)
+            drawGrid(g2, w, h);
 
             g2.setClip(oldClip);
             g2.setColor(DashboardTheme.CANVAS_BORDER);
             g2.setStroke(new BasicStroke(BORDER_WIDTH));
             g2.draw(shape);
 
+            // Texte "CANVAS"
             g2.setColor(DashboardTheme.TEXT_SECONDARY);
             g2.setFont(getFont().deriveFont(Font.BOLD, 16f));
             String title = "CANVAS";
@@ -465,6 +451,49 @@ public class GridCanvas extends JPanel {
         } finally {
             g2.dispose();
         }
+    }
+
+    /**
+     * Dessine la grille avec mise en cache pour éviter de recalculer à chaque paint.
+     */
+    private void drawGrid(Graphics2D g2, int w, int h) {
+        // Vérifier si le cache est valide
+        if (gridCache != null && gridCacheSize != null &&
+                gridCacheSize.width == w && gridCacheSize.height == h) {
+            g2.drawImage(gridCache, 0, 0, null);
+            return;
+        }
+
+        // Créer le cache
+        gridCache = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D cacheG2 = gridCache.createGraphics();
+        try {
+            cacheG2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            cacheG2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+
+            int cellSize = Math.max(1, (w - 2 * BORDER_WIDTH) / GRID_COLUMNS);
+            int gridRows = Math.max(1, (int) Math.ceil((h - 2 * BORDER_WIDTH) / (double) cellSize));
+            int gridWidth = GRID_COLUMNS * cellSize;
+            int gridHeight = gridRows * cellSize;
+            int offsetX = Math.max(0, (w - gridWidth) / 2);
+            int offsetY = 0;
+
+            cacheG2.setColor(DashboardTheme.GRID_COLOR);
+            for (int col = 0; col <= GRID_COLUMNS; col++) {
+                int x = offsetX + col * cellSize;
+                cacheG2.drawLine(x, offsetY, x, Math.min(h, offsetY + gridHeight));
+            }
+            for (int row = 0; row <= gridRows; row++) {
+                int y = offsetY + row * cellSize;
+                cacheG2.drawLine(offsetX, y, Math.min(w, offsetX + gridWidth), y);
+            }
+
+            gridCacheSize = new Dimension(w, h);
+        } finally {
+            cacheG2.dispose();
+        }
+
+        g2.drawImage(gridCache, 0, 0, null);
     }
 
     @Override

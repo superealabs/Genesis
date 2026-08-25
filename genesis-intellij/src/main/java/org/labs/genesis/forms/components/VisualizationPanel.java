@@ -33,502 +33,150 @@ public class VisualizationPanel extends JPanel {
 
     private VisualizationSelectionListener selectionListener;
 
-    private final List<VisualizationItem> visualizations = List.of(
-
-            // ============================================================
-            // BAR CHART VERTICAL
-            // ============================================================
-
-            new VisualizationItem(
-                    "Bar Chart Vertical",
-                    "Vertical bar chart for comparing categories",
-                    "/data_genesis/img/barchart-vertical.png",
-                    VerticalBarChartRenderer.class,
-
-                    List.of(
-                            VisualizationParameter.text(
-                                    "title",
-                                    "Title"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "xAxis",
-                                    "X Axis"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "yAxis",
-                                    "Y Axis"
-                            ),
-
-                            VisualizationParameter.text(
-                                    "legendX",
-                                    "Legend X"
-                            ),
-
-                            VisualizationParameter.text(
-                                    "legendY",
-                                    "Legend Y"
-                            ),
-
-                            VisualizationParameter.number(
-                                    "limit",
-                                    "Limit"
-                            ),
-
-                            VisualizationParameter.sort(
-                                    "sort",
-                                    "Sort"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "filter",
-                                    "Filter"
-                            )
-                    )
-            ),
-
-            // ============================================================
-            // BAR CHART HORIZONTAL
-            // ============================================================
-
-            new VisualizationItem(
-                    "Bar Chart Horizontal",
-                    "Horizontal bar chart for ranking data",
-                    "/data_genesis/img/barchart-horizontal.png",
-                    HorizontalBarChartRenderer.class,
-
-                    List.of(
-                            VisualizationParameter.text(
-                                    "title",
-                                    "Title"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "xAxis",
-                                    "X Axis"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "yAxis",
-                                    "Y Axis"
-                            ),
-
-                            VisualizationParameter.text(
-                                    "legendX",
-                                    "Legend X"
-                            ),
-
-                            VisualizationParameter.text(
-                                    "legendY",
-                                    "Legend Y"
-                            ),
-
-                            VisualizationParameter.number(
-                                    "limit",
-                                    "Limit"
-                            ),
-
-                            VisualizationParameter.sort(
-                                    "sort",
-                                    "Sort"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "filter",
-                                    "Filter"
-                            )
-                    )
-            ),
-
-            // ============================================================
-            // PIE CHART
-            // ============================================================
-
-            new VisualizationItem(
-                    "Pie Chart",
-                    "Distribution of data in percentages",
-                    "/data_genesis/img/piechart.png",
-                    PieChartRenderer.class,
-
-                    List.of(
-                            VisualizationParameter.text(
-                                    "title",
-                                    "Title"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "value",
-                                    "Value"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "legend",
-                                    "Legend"
-                            ),
-
-                            VisualizationParameter.number(
-                                    "limit",
-                                    "Limit"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "filter",
-                                    "Filter"
-                            )
-                    )
-            ),
-
-            // ============================================================
-            // DONUT CHART
-            // ============================================================
-
-            new VisualizationItem(
-                    "Donut Chart",
-                    "Pie chart with a hole in the center",
-                    "/data_genesis/img/donutchart.png",
-                    DonutChartRenderer.class,
-
-                    List.of(
-                            VisualizationParameter.text(
-                                    "title",
-                                    "Title"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "value",
-                                    "Value"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "legend",
-                                    "Legend"
-                            ),
-
-                            VisualizationParameter.number(
-                                    "limit",
-                                    "Limit"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "filter",
-                                    "Filter"
-                            )
-                    )
-            ),
-
-            // ============================================================
-            // LINE CHART
-            // ============================================================
-
-            new VisualizationItem(
-                    "Line Chart",
-                    "Trends over time or continuous data",
-                    "/data_genesis/img/linechart.png",
-                    LineChartRenderer.class,
-
-                    List.of(
-                            VisualizationParameter.text(
-                                    "title",
-                                    "Title"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "xAxis",
-                                    "X Axis"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "yAxis",
-                                    "Y Axis"
-                            ),
-
-                            VisualizationParameter.text(
-                                    "legendX",
-                                    "Legend X"
-                            ),
-
-                            VisualizationParameter.text(
-                                    "legendY",
-                                    "Legend Y"
-                            ),
-
-                            VisualizationParameter.number(
-                                    "limit",
-                                    "Limit"
-                            ),
-
-                            VisualizationParameter.sort(
-                                    "sort",
-                                    "Sort"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "filter",
-                                    "Filter"
-                            )
-                    )
-            ),
-
-            // ============================================================
-            // GAUGE
-            // ============================================================
-
-            new VisualizationItem(
-                    "Gauge",
-                    "Single value with min/max range",
-                    "/data_genesis/img/jauge.png",
-                    GaugeRenderer.class,
-
-                    List.of(
-                            VisualizationParameter.text(
-                                    "title",
-                                    "Title"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "value",
-                                    "Value"
-                            )
-                    )
-            ),
-
-            // ============================================================
-            // KPI CARD
-            // ============================================================
-
-            new VisualizationItem(
-                    "KPI Card",
-                    "Key performance indicator with value and trend",
-                    "/data_genesis/img/kpi-card.png",
-                    KpiRenderer.class,
-
-                    List.of(
-                            VisualizationParameter.text(
-                                    "title",
-                                    "Title"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "value",
-                                    "Value"
-                            )
-                    )
-            ),
-
-            // ============================================================
-            // TABLE
-            // ============================================================
-
-            new VisualizationItem(
-                    "Table",
-                    "Structured data in rows and columns",
-                    "/data_genesis/img/table.png",
-                    TableRenderer.class,
-
-                    List.of(
-                            VisualizationParameter.text(
-                                    "title",
-                                    "Title"
-                            ),
-
-                            VisualizationParameter.columns(
-                                    "columns",
-                                    "Columns"
-                            ),
-
-                            VisualizationParameter.number(
-                                    "limit",
-                                    "Limit"
-                            ),
-
-                            VisualizationParameter.sort(
-                                    "sort",
-                                    "Sort"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "filter",
-                                    "Filter"
-                            )
-                    )
-            ),
-
-            // ============================================================
-            // MAP
-            // ============================================================
-
-            new VisualizationItem(
-                    "Map",
-                    "Geographical data visualization",
-                    "/data_genesis/img/map.png",
-                    MapRenderer.class,
-
-                    List.of(
-                            VisualizationParameter.text(
-                                    "title",
-                                    "Title"
-                            ),
-
-                            VisualizationParameter.dbColumn(
-                                    "longitude",
-                                    "Longitude"
-                            ),
-
-                            VisualizationParameter.dbColumn(
-                                    "latitude",
-                                    "Latitude"
-                            ),
-
-                            VisualizationParameter.number(
-                                    "limit",
-                                    "Limit"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "filter",
-                                    "Filter"
-                            )
-                    )
-            ),
-
-            // ============================================================
-            // SCATTER PLOT
-            // ============================================================
-
-            new VisualizationItem(
-                    "Scatter Plot",
-                    "Visualize relationships between two numerical variables",
-                    "/data_genesis/img/scatter-plot.png",
-                    ScatterPlotRenderer.class,
-
-                    List.of(
-                            VisualizationParameter.text(
-                                    "title",
-                                    "Title"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "xAxis",
-                                    "X Axis"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "yAxis",
-                                    "Y Axis"
-                            ),
-
-                            VisualizationParameter.text(
-                                    "legendX",
-                                    "Legend X"
-                            ),
-
-                            VisualizationParameter.text(
-                                    "legendY",
-                                    "Legend Y"
-                            ),
-
-                            VisualizationParameter.number(
-                                    "limit",
-                                    "Limit"
-                            ),
-
-                            VisualizationParameter.sort(
-                                    "sort",
-                                    "Sort"
-                            ),
-
-                            VisualizationParameter.columnOrFormula(
-                                    "filter",
-                                    "Filter"
-                            )
-                    )
-            )
-    );
+    private final List<VisualizationItem> visualizations;
 
     public VisualizationPanel() {
+        this(createDefaultVisualizations());
+    }
+
+    public VisualizationPanel(List<VisualizationItem> visualizations) {
+        this.visualizations = visualizations != null ? visualizations : createDefaultVisualizations();
 
         setLayout(new BorderLayout());
         setOpaque(false);
 
         cardLayout = new CardLayout();
-
-        contentPanel =
-                new JPanel(cardLayout);
-
+        contentPanel = new JPanel(cardLayout);
         contentPanel.setOpaque(false);
 
-        chartsGrid =
-                new JPanel(new GridBagLayout());
-
+        chartsGrid = new JPanel(new GridBagLayout());
         chartsGrid.setOpaque(false);
+        chartsGrid.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
 
-        chartsGrid.setBorder(
-                BorderFactory.createEmptyBorder(
-                        6,
-                        6,
-                        6,
-                        6
-                )
-        );
-
-        scrollPane =
-                new JScrollPane(chartsGrid);
-
+        scrollPane = new JScrollPane(chartsGrid);
         scrollPane.setOpaque(false);
         scrollPane.getViewport().setOpaque(false);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-        scrollPane.setBorder(
-                BorderFactory.createEmptyBorder()
-        );
-
-        scrollPane.setHorizontalScrollBarPolicy(
-                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-        );
-
-        scrollPane.setVerticalScrollBarPolicy(
-                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
-        );
-
-        JPanel listPanel =
-                new JPanel(new BorderLayout());
-
+        JPanel listPanel = new JPanel(new BorderLayout());
         listPanel.setOpaque(false);
 
-        JPanel searchBar =
-                createSearchBar(
-                        "Search visualizations..."
-                );
+        JPanel searchBar = createSearchBar("Search visualizations...");
+        listPanel.add(searchBar, BorderLayout.NORTH);
+        listPanel.add(scrollPane, BorderLayout.CENTER);
 
-        listPanel.add(
-                searchBar,
-                BorderLayout.NORTH
-        );
+        contentPanel.add(listPanel, LIST_VIEW);
+        add(contentPanel, BorderLayout.CENTER);
 
-        listPanel.add(
-                scrollPane,
-                BorderLayout.CENTER
-        );
-
-        contentPanel.add(
-                listPanel,
-                LIST_VIEW
-        );
-
-        add(
-                contentPanel,
-                BorderLayout.CENTER
-        );
-
-        rebuildChartsGrid(
-                visualizations
-        );
-
+        rebuildChartsGrid(visualizations);
         installSearchListener();
+        cardLayout.show(contentPanel, LIST_VIEW);
+    }
 
-        cardLayout.show(
-                contentPanel,
-                LIST_VIEW
+    private static List<VisualizationItem> createDefaultVisualizations() {
+        return List.of(
+                new VisualizationItem("Bar Chart Vertical", "Vertical bar chart for comparing categories",
+                        "/data_genesis/img/barchart-vertical.png", VerticalBarChartRenderer.class,
+                        List.of(
+                                VisualizationParameter.text("title", "Title"),
+                                VisualizationParameter.columnOrFormula("xAxis", "X Axis"),
+                                VisualizationParameter.columnOrFormula("yAxis", "Y Axis"),
+                                VisualizationParameter.text("legendX", "Legend X"),
+                                VisualizationParameter.text("legendY", "Legend Y"),
+                                VisualizationParameter.number("limit", "Limit"),
+                                VisualizationParameter.sort("sort", "Sort"),
+                                VisualizationParameter.condition("filter", "Filter")
+                        )),
+                new VisualizationItem("Bar Chart Horizontal", "Horizontal bar chart for ranking data",
+                        "/data_genesis/img/barchart-horizontal.png", HorizontalBarChartRenderer.class,
+                        List.of(
+                                VisualizationParameter.text("title", "Title"),
+                                VisualizationParameter.columnOrFormula("xAxis", "X Axis"),
+                                VisualizationParameter.columnOrFormula("yAxis", "Y Axis"),
+                                VisualizationParameter.text("legendX", "Legend X"),
+                                VisualizationParameter.text("legendY", "Legend Y"),
+                                VisualizationParameter.number("limit", "Limit"),
+                                VisualizationParameter.sort("sort", "Sort"),
+                                VisualizationParameter.condition("filter", "Filter")
+                        )),
+                new VisualizationItem("Pie Chart", "Distribution of data in percentages",
+                        "/data_genesis/img/piechart.png", PieChartRenderer.class,
+                        List.of(
+                                VisualizationParameter.text("title", "Title"),
+                                VisualizationParameter.columnOrFormula("value", "Value"),
+                                VisualizationParameter.columnOrFormula("legend", "Legend"),
+                                VisualizationParameter.number("limit", "Limit"),
+                                VisualizationParameter.condition("filter", "Filter")
+                        )),
+                new VisualizationItem("Donut Chart", "Pie chart with a hole in the center",
+                        "/data_genesis/img/donutchart.png", DonutChartRenderer.class,
+                        List.of(
+                                VisualizationParameter.text("title", "Title"),
+                                VisualizationParameter.columnOrFormula("value", "Value"),
+                                VisualizationParameter.columnOrFormula("legend", "Legend"),
+                                VisualizationParameter.number("limit", "Limit"),
+                                VisualizationParameter.condition("filter", "Filter")
+                        )),
+                new VisualizationItem("Line Chart", "Trends over time or continuous data",
+                        "/data_genesis/img/linechart.png", LineChartRenderer.class,
+                        List.of(
+                                VisualizationParameter.text("title", "Title"),
+                                VisualizationParameter.columnOrFormula("xAxis", "X Axis"),
+                                VisualizationParameter.columnOrFormula("yAxis", "Y Axis"),
+                                VisualizationParameter.text("legendX", "Legend X"),
+                                VisualizationParameter.text("legendY", "Legend Y"),
+                                VisualizationParameter.number("limit", "Limit"),
+                                VisualizationParameter.sort("sort", "Sort"),
+                                VisualizationParameter.condition("filter", "Filter")
+                        )),
+                new VisualizationItem("Gauge", "Single value with min/max range",
+                        "/data_genesis/img/jauge.png", GaugeRenderer.class,
+                        List.of(
+                                VisualizationParameter.text("title", "Title"),
+                                VisualizationParameter.columnOrFormula("value", "Value"),
+                                VisualizationParameter.condition("filter", "Filter")
+                        )),
+                new VisualizationItem("KPI Card", "Key performance indicator with value and trend",
+                        "/data_genesis/img/kpi-card.png", KpiRenderer.class,
+                        List.of(
+                                VisualizationParameter.text("title", "Title"),
+                                VisualizationParameter.columnOrFormula("value", "Value"),
+                                VisualizationParameter.condition("filter", "Filter")
+                        )),
+                new VisualizationItem("Table", "Structured data in rows and columns",
+                        "/data_genesis/img/table.png", TableRenderer.class,
+                        List.of(
+                                VisualizationParameter.text("title", "Title"),
+                                VisualizationParameter.columns("columns", "Columns"),
+                                VisualizationParameter.number("limit", "Limit"),
+                                VisualizationParameter.sort("sort", "Sort"),
+                                VisualizationParameter.condition("filter", "Filter")
+                        )),
+                new VisualizationItem("Map", "Geographical data visualization",
+                        "/data_genesis/img/map.png", MapRenderer.class,
+                        List.of(
+                                VisualizationParameter.text("title", "Title"),
+                                VisualizationParameter.text("markerType", "Marker Type"), // "pin" ou "buffer"
+                                VisualizationParameter.dbColumn("longitude", "Longitude"),
+                                VisualizationParameter.dbColumn("latitude", "Latitude"),
+                                VisualizationParameter.columnOrFormula("valueColumn", "Value Column"), // Pour le buffer
+                                VisualizationParameter.number("limit", "Limit"),
+                                VisualizationParameter.condition("filter", "Filter")
+                        )),
+                new VisualizationItem("Scatter Plot", "Visualize relationships between two numerical variables",
+                        "/data_genesis/img/scatter-plot.png", ScatterPlotRenderer.class,
+                        List.of(
+                                VisualizationParameter.text("title", "Title"),
+                                VisualizationParameter.columnOrFormula("xAxis", "X Axis"),
+                                VisualizationParameter.columnOrFormula("yAxis", "Y Axis"),
+                                VisualizationParameter.text("legendX", "Legend X"),
+                                VisualizationParameter.text("legendY", "Legend Y"),
+                                VisualizationParameter.number("limit", "Limit"),
+                                VisualizationParameter.sort("sort", "Sort"),
+                                VisualizationParameter.condition("filter", "Filter")
+                        ))
         );
     }
 
@@ -661,13 +309,8 @@ public class VisualizationPanel extends JPanel {
 
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-
-                if (!SwingUtilities.isLeftMouseButton(e)) {
-                    return;
-                }
-
+                if (!SwingUtilities.isLeftMouseButton(e)) return;
                 showConfiguration(item);
-
                 if (selectionListener != null) {
                     selectionListener.onVisualizationSelected(item);
                 }
@@ -687,7 +330,7 @@ public class VisualizationPanel extends JPanel {
         }
 
         configurationPanel = new VisualizationConfigurationPanel(
-                null,       // pas de composant cible (liste seule)
+                null,
                 item,
                 this::showVisualizations,
                 null
@@ -699,14 +342,8 @@ public class VisualizationPanel extends JPanel {
         contentPanel.repaint();
     }
 
-    // ============================================================
-    // MODIFIED : cette méthode devient publique
-    // ============================================================
     public void showVisualizations() {
-        cardLayout.show(
-                contentPanel,
-                LIST_VIEW
-        );
+        cardLayout.show(contentPanel, LIST_VIEW);
     }
 
     private Icon loadVisualizationIcon(String path, int width, int height) {
@@ -732,22 +369,15 @@ public class VisualizationPanel extends JPanel {
     }
 
     public static class VisualizationItem {
-
         public final String name;
         public final String description;
         public final String imagePath;
-
         public final Class<? extends VisualizationRenderer> rendererClass;
-
         public final List<VisualizationParameter> parameters;
 
-        public VisualizationItem(
-                String name,
-                String description,
-                String imagePath,
-                Class<? extends VisualizationRenderer> rendererClass,
-                List<VisualizationParameter> parameters
-        ) {
+        public VisualizationItem(String name, String description, String imagePath,
+                                 Class<? extends VisualizationRenderer> rendererClass,
+                                 List<VisualizationParameter> parameters) {
             this.name = name;
             this.description = description;
             this.imagePath = imagePath;

@@ -14,5 +14,7 @@ public enum VisualizationParameterType {
 
     SORT,
 
-    COLUMNS
+    COLUMNS,
+
+    CONDITION
 }

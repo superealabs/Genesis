@@ -42,6 +42,14 @@ public class LineChartRenderer extends AbstractChartRenderer {
     // =========================== MAIN CHART ===========================
     private void drawLineChart(Graphics2D g, int width, int height,
                                boolean tiny, boolean compact, boolean medium) {
+        // Récupérer les légendes depuis la configuration
+        String legendX = getConfigString("legendX", "");
+        String legendY = getConfigString("legendY", "");
+
+        // Vérifier si les légendes doivent être affichées
+        boolean showXLegend = legendX != null && !legendX.trim().isEmpty();
+        boolean showYLegend = legendY != null && !legendY.trim().isEmpty();
+
         Padding pad = getPadding(tiny, compact, medium);
         FontSizes fonts = getFontSizes(tiny, compact, medium);
 
@@ -58,8 +66,16 @@ public class LineChartRenderer extends AbstractChartRenderer {
         FontMetrics xMetrics = g.getFontMetrics(xFont);
         int xAxisHeight = tiny ? 5 : xMetrics.getHeight() + 8;
 
-        int bottomLabelSpace = fonts.axisLabelSize > 0 ? (medium ? 20 : 24) : 0;
-        int leftLabelSpace = fonts.axisLabelSize > 0 ? (medium ? 16 : 22) : 0;
+        // Ajuster les espaces selon la présence des légendes
+        int bottomLabelSpace = 0;
+        if (showXLegend && fonts.axisLabelSize > 0) {
+            bottomLabelSpace = medium ? 20 : 24;
+        }
+
+        int leftLabelSpace = 0;
+        if (showYLegend && fonts.axisLabelSize > 0) {
+            leftLabelSpace = medium ? 16 : 22;
+        }
 
         int plotX = pad.horizontal + yAxisWidth + leftLabelSpace;
         int plotY = pad.vertical;
@@ -68,9 +84,9 @@ public class LineChartRenderer extends AbstractChartRenderer {
 
         if (plotWidth <= 10 || plotHeight <= 10) return;
 
-        // Y axis label
-        if (fonts.axisLabelSize > 0) {
-            drawYAxisLabel(g, "Valeur", pad.horizontal, plotY, plotHeight, axisLabelFont);
+        // Y axis label (seulement si présent et non vide)
+        if (showYLegend && fonts.axisLabelSize > 0) {
+            drawYAxisLabel(g, legendY, pad.horizontal, plotY, plotHeight, axisLabelFont);
         }
 
         // Grid
@@ -95,10 +111,10 @@ public class LineChartRenderer extends AbstractChartRenderer {
         drawArea(g, plotX, plotY, plotWidth, plotHeight, upperBound);
         drawLine(g, plotX, plotY, plotWidth, plotHeight, upperBound, tiny, compact, medium);
 
-        // X axis label
-        if (fonts.axisLabelSize > 0) {
+        // X axis label (seulement si présent et non vide)
+        if (showXLegend && fonts.axisLabelSize > 0) {
             int labelY = plotY + plotHeight + xAxisHeight + (medium ? 8 : 10);
-            drawXAxisLabel(g, "Mois", plotX, labelY, plotWidth, axisLabelFont);
+            drawXAxisLabel(g, legendX, plotX, labelY, plotWidth, axisLabelFont);
         }
     }
 

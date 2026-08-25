@@ -13,10 +13,10 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
             {18, 50}, {20, 58}, {22, 54}, {25, 68}, {28, 72}
     };
 
-    private static final String AXIS_X_LABEL = "Budget Pub (k€)";
-    private static final String COMPACT_AXIS_X_LABEL = "Budget";
-    private static final String AXIS_Y_LABEL = "Ventes (k€)";
-    private static final String COMPACT_AXIS_Y_LABEL = "Ventes";
+    private static final String DEFAULT_AXIS_X_LABEL = "";
+    private static final String COMPACT_AXIS_X_LABEL = "";
+    private static final String DEFAULT_AXIS_Y_LABEL = "";
+    private static final String COMPACT_AXIS_Y_LABEL = "";
 
     private static final int GRID_ALPHA = 90;
     private static final int POINT_ALPHA = 220;
@@ -88,6 +88,14 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
     // =========================== MAIN CHART ===========================
     private void drawScatterPlot(Graphics2D g, int width, int height,
                                  boolean tiny, boolean compact, boolean medium) {
+        // Récupérer les légendes depuis la configuration
+        String legendX = getConfigString("legendX", compact ? COMPACT_AXIS_X_LABEL : DEFAULT_AXIS_X_LABEL);
+        String legendY = getConfigString("legendY", compact ? COMPACT_AXIS_Y_LABEL : DEFAULT_AXIS_Y_LABEL);
+
+        // Vérifier si les légendes doivent être affichées
+        boolean showXLegend = !tiny && legendX != null && !legendX.trim().isEmpty();
+        boolean showYLegend = !tiny && legendY != null && !legendY.trim().isEmpty();
+
         Padding pad = getPadding(tiny, compact, medium);
         FontSizes fonts = getFontSizes(tiny, compact, medium);
 
@@ -106,8 +114,16 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
         FontMetrics xMetrics = g.getFontMetrics(xFont);
         int xAxisHeight = tiny ? 6 : xMetrics.getHeight() + 8;
 
+        // Ajuster les espaces selon la présence des légendes
         int bottomLabelSpace = getBottomLabelSpace(tiny, compact);
+        if (showXLegend) {
+            bottomLabelSpace += (compact ? 14 : 20);
+        }
+
         int leftLabelSpace = getLeftLabelSpace(tiny, compact, medium);
+        if (showYLegend) {
+            leftLabelSpace += (compact ? 10 : 16);
+        }
 
         int plotX = pad.horizontal + yAxisWidth + leftLabelSpace;
         int plotY = pad.vertical;
@@ -132,11 +148,14 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
             drawYAxisTicks(g, plotX, plotY, plotHeight, yUpper, yTickUnit, yFont);
             drawXAxisTicks(g, plotX, plotY, plotWidth, plotHeight, xUpper, xTickUnit, xFont);
 
-            String xLabel = compact ? COMPACT_AXIS_X_LABEL : AXIS_X_LABEL;
-            String yLabel = compact ? COMPACT_AXIS_Y_LABEL : AXIS_Y_LABEL;
-            drawYAxisLabel(g, yLabel, pad.horizontal, plotY, plotHeight, axisFont);
-            int labelY = plotY + plotHeight + xAxisHeight + (compact ? 12 : 18);
-            drawXAxisLabel(g, xLabel, plotX, labelY, plotWidth, axisFont);
+            // Dessiner les légendes si présentes
+            if (showYLegend) {
+                drawYAxisLabel(g, legendY, pad.horizontal, plotY, plotHeight, axisFont);
+            }
+            if (showXLegend) {
+                int labelY = plotY + plotHeight + xAxisHeight + (compact ? 12 : 18);
+                drawXAxisLabel(g, legendX, plotX, labelY, plotWidth, axisFont);
+            }
         }
 
         drawPoints(g, plotX, plotY, plotWidth, plotHeight, xUpper, yUpper,

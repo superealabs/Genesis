@@ -95,4 +95,15 @@ public class VisualizationParameter {
                 VisualizationParameterType.COLUMNS
         );
     }
+
+    public static VisualizationParameter condition(
+            String key,
+            String label
+    ) {
+        return new VisualizationParameter(
+                key,
+                label,
+                VisualizationParameterType.CONDITION
+        );
+    }
 }

@@ -25,26 +25,15 @@ public class DataPanelTree extends JPanel {
     private JButton refreshButton;
     private final JScrollPane scrollPane;
 
-    private final List<TableData> tables = List.of(
-            new TableData("users", List.of(
-                    new ColumnData("id", "INT", true, false),
-                    new ColumnData("name", "VARCHAR", false, true),
-                    new ColumnData("email", "VARCHAR", false, true),
-                    new ColumnData("role_id", "BIGINT", false, false)
-            )),
-            new TableData("roles", List.of(
-                    new ColumnData("id", "INT", true, false),
-                    new ColumnData("name", "VARCHAR", false, true)
-            )),
-            new TableData("orders", List.of(
-                    new ColumnData("id", "INT", true, false),
-                    new ColumnData("user_id", "BIGINT", false, false),
-                    new ColumnData("total", "DECIMAL", false, true),
-                    new ColumnData("status", "VARCHAR", false, true)
-            ))
-    );
+    private List<TableData> tables;
 
     public DataPanelTree() {
+        this(createDefaultTables());
+    }
+
+    public DataPanelTree(List<TableData> tables) {
+        this.tables = tables != null ? tables : createDefaultTables();
+
         setLayout(new BorderLayout(0, 8));
         setOpaque(false);
 
@@ -52,6 +41,32 @@ public class DataPanelTree extends JPanel {
         tree = createTree();
         scrollPane = createScrollPane();
         add(scrollPane, BorderLayout.CENTER);
+        populateTree();
+    }
+
+    private static List<TableData> createDefaultTables() {
+        return List.of(
+                new TableData("users", List.of(
+                        new ColumnData("id", "INT", true, false),
+                        new ColumnData("name", "VARCHAR", false, true),
+                        new ColumnData("email", "VARCHAR", false, true),
+                        new ColumnData("role_id", "BIGINT", false, false)
+                )),
+                new TableData("roles", List.of(
+                        new ColumnData("id", "INT", true, false),
+                        new ColumnData("name", "VARCHAR", false, true)
+                )),
+                new TableData("orders", List.of(
+                        new ColumnData("id", "INT", true, false),
+                        new ColumnData("user_id", "BIGINT", false, false),
+                        new ColumnData("total", "DECIMAL", false, true),
+                        new ColumnData("status", "VARCHAR", false, true)
+                ))
+        );
+    }
+
+    public void setTables(List<TableData> tables) {
+        this.tables = tables != null ? tables : createDefaultTables();
         populateTree();
     }
 
@@ -84,7 +99,7 @@ public class DataPanelTree extends JPanel {
         resetButton.setVisible(false);
         fieldPanel.add(resetButton, BorderLayout.EAST);
 
-        JButton refreshButton = createIconButton(AllIcons.Actions.Refresh, "Refresh tables and columns");
+        refreshButton = createIconButton(AllIcons.Actions.Refresh, "Refresh tables and columns");
         container.add(fieldPanel, BorderLayout.CENTER);
         container.add(refreshButton, BorderLayout.EAST);
 
@@ -124,7 +139,7 @@ public class DataPanelTree extends JPanel {
                 if (path == null) return;
                 Object last = path.getLastPathComponent();
                 if (last instanceof DefaultMutableTreeNode node && node.getUserObject() instanceof TableData table) {
-                    System.out.println("Double click table: " + table.name); // future action
+                    System.out.println("Double click table: " + table.name);
                 }
             }
         });
