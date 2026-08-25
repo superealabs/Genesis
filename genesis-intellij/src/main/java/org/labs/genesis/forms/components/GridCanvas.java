@@ -1,5 +1,7 @@
 package org.labs.genesis.forms.components;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.labs.genesis.forms.theme.DashboardTheme;
 
 import javax.swing.*;
@@ -9,7 +11,10 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
+@Setter
+@Getter
 public class GridCanvas extends JPanel {
 
     private static final int GRID_COLUMNS = 30;
@@ -33,6 +38,9 @@ public class GridCanvas extends JPanel {
     private int dragCellSize;
 
     private boolean isDraggingOrResizing = false;
+
+    // Callback pour notifier le parent de la sélection
+    private Consumer<DashboardVisualComponent> onSelectionChanged;
 
     public GridCanvas() {
         setOpaque(false);
@@ -166,6 +174,21 @@ public class GridCanvas extends JPanel {
         return Cursor.getPredefinedCursor(type);
     }
 
+    public void removeVisualComponent(DashboardVisualComponent comp) {
+        if (comp == null) return;
+        visualComponents.remove(comp);
+        remove(comp);
+        if (selectedVisual == comp) {
+            selectedVisual = null;
+            if (onSelectionChanged != null) {
+                onSelectionChanged.accept(null); // notifie que rien n'est sélectionné
+            }
+        }
+        updateCanvasSize();
+        revalidate();
+        repaint();
+    }
+
     private void resizeComponent(Point mousePoint) {
         if (resizingComponent == null || resizeStartMouse == null) return;
         int cellSize = resizeCellSize;
@@ -232,6 +255,7 @@ public class GridCanvas extends JPanel {
         resizeStartMouse = null;
         resizeCellSize = 0;
         isDraggingOrResizing = false;
+        setCursor(Cursor.getDefaultCursor());
     }
 
     // ---- Drag ----
@@ -245,6 +269,9 @@ public class GridCanvas extends JPanel {
         dragCellSize = getCellSize();
         comp.setDragging(true);
         setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+
+        // Remonter le composant au premier plan
+        setComponentZOrder(comp, 0);
     }
 
     private void dragComponent(Point mousePoint) {
@@ -261,16 +288,12 @@ public class GridCanvas extends JPanel {
                 dragStartGridX + gridDeltaX));
         int newY = Math.max(0, dragStartGridY + gridDeltaY);
 
-        if (isAreaAvailableExcluding(newX, newY,
-                draggingComponent.getGridWidth(),
-                draggingComponent.getGridHeight(),
-                draggingComponent)) {
-            draggingComponent.setGridX(newX);
-            draggingComponent.setGridY(newY);
-            updateCanvasSize();
-            revalidate();
-            repaint();
-        }
+        // PLUS DE VÉRIFICATION DE COLLISION → on applique directement
+        draggingComponent.setGridX(newX);
+        draggingComponent.setGridY(newY);
+        updateCanvasSize();
+        revalidate();
+        repaint();
     }
 
     private void stopDrag() {
@@ -283,6 +306,7 @@ public class GridCanvas extends JPanel {
         dragStartMouse = null;
         dragCellSize = 0;
         isDraggingOrResizing = false;
+        setCursor(Cursor.getDefaultCursor());
     }
 
     // ---- Utilities ----
@@ -319,6 +343,9 @@ public class GridCanvas extends JPanel {
             if (mousePos != null) selectedVisual.handleMouseMoved(mousePos);
         }
         repaint();
+        if (onSelectionChanged != null) {
+            onSelectionChanged.accept(comp);   // notification
+        }
     }
 
     public void addVisualComponent(DashboardVisualComponent component) {

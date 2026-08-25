@@ -200,6 +200,20 @@ public class DashboardVisualComponent extends JPanel {
         return ResizeDirection.NONE;
     }
 
+    public void setTitle(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            titleLabel.setText(visualizationItem.name);  // retour au nom par défaut
+        } else {
+            titleLabel.setText(title);
+        }
+        revalidate();
+        repaint();
+    }
+
+    public String getTitle() {
+        return titleLabel.getText();
+    }
+
     // =========================================================
     // HEADER AREA DETECTION (NOUVEAU)
     // =========================================================
