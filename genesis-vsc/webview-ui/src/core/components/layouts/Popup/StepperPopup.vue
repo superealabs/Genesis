@@ -8,7 +8,7 @@
         :position="position"
     >
         <!-- Contenu de l'étape -->
-        <div class="flex-1">
+        <div class="flex-1 min-h-0 overflow-hidden">
             <slot />
         </div>
 

@@ -92,14 +92,14 @@ const variantClasses = computed(() => {
 
     if (props.variant === 'primary') {
         return hover
-            ? 'bg-accent text-bg border-none hover:bg-accent/80 hover:shadow-lg disabled:hover:bg-accent disabled:hover:shadow-none'
+            ? 'bg-accent text-bg border border-accent hover:bg-accent/80 hover:shadow-lg disabled:hover:bg-accent disabled:hover:shadow-none'
             : 'bg-accent text-bg border-none';
     }
 
     if (props.variant === 'secondary') {
         return hover
-            ? 'bg-transparent text-text border border-secondary hover:bg-secondary disabled:hover:bg-transparent'
-            : 'bg-transparent text-text border border-secondary';
+            ? 'bg-bg-light border border-bg-light text-text hover:bg-[var(--color-hover-ghost)] disabled:hover:bg-transparent'
+            : 'bg-secondary text-text';
     }
 
     // tertiary : pas de bg, pas de border — juste texte/icône + ghost hover optionnel

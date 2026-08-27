@@ -31,14 +31,14 @@ export class WebviewMessageRouter {
                     await this.frameworkHandler.select(message.payload, this.panel);
                     break;
 
-                case 'REQUEST_FOLDER_PATH': // ✅ Nom harmonisé avec le frontend
+                case 'REQUEST_FOLDER_PATH': // Nom harmonisé avec le frontend
                     await this.generatorHandler.handleRequestFolderPath();
                     break;
 
-                case 'GENERATE_JAVA_FILE':
-                    await this.generatorHandler.handleGenerateJavaFile(message.payload);
+                case 'REQUEST_FILE_PATH':
+                    await this.generatorHandler.handleRequestFilePath(message.payload?.extensions);
                     break;
-
+                    
                 default:
                     console.warn(`[WebviewMessageRouter] Message non géré : ${message.type}`);
             }

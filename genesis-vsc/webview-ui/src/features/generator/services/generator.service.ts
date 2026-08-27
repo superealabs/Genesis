@@ -22,6 +22,13 @@ export class GeneratorService extends VscodeService {
                 this.store.updateConfig('projectLocation', path);
             }
         });
+
+        this.onMessage<{ path: string; content: string }>('FILE_PATH_SELECTED', ({ path, content }) => {
+            if (path) {
+                this.store.updateScript('path', path);
+                this.store.updateScript('content', content);
+            }
+        });
     }
 
     /**
@@ -29,6 +36,26 @@ export class GeneratorService extends VscodeService {
      */
     requestFolderPath(): void {
         this.sendMessage('REQUEST_FOLDER_PATH');
+    }
+
+
+    /**
+     * Générique : demande un fichier avec filtre d'extensions optionnel
+     */
+
+    requestFilePath(extensions?: string[]): void {
+        this.sendMessage('REQUEST_FILE_PATH', { extensions });
+    }
+
+    /**
+     * Encapsulation : restreint au fichiers SQL uniquement
+     */
+    requestScriptPath(): void {
+        this.requestFilePath(['sql']);
+    }
+
+    fetchTablesMetadata(): void {
+        this.sendMessage('GET_TABLES_METADATA');
     }
 }
 

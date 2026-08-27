@@ -50,65 +50,222 @@ JAR → Extension Service → Extension Host → VscodeService → Service → S
 
 ```
 webview-ui/src/
-├── core/                          # 🌍 GLOBAL / TRANSVERSAL
-│   ├── services/
-│   │   ├── vscode.service.ts      # Classe abstraite mère
-│   │   └── app.service.ts         # Service applicatif
-│   ├── stores/
-│   │   ├── useApp.store.ts
-│   │   └── useTheme.store.ts
-│   ├── composables/
-│   │   └── useApp.ts
-│   └── components/
-│       ├── ui/                    # Design System
-│       │   ├── actions/           # GenesisButton, GenesisButtonIcon
-│       │   ├── inputs/            # GenesisInput, GenesisSelect
-│       │   ├── feedback/          # GenesisLoader, GenesisError
-│       │   ├── icons/             # IconFolder, IconHelpCircle
-│       │   └── layouts/           # GenesisList, GenesisItem, GenesisCollectionLayout, Popup/*
-│       └── layouts/
-│
-└── features/                      # 🧩 MÉTIER / SPÉCIFIQUE
-    ├── frameworks/
-    │   ├── services/
-    │   │   └── framework.service.ts
-    │   ├── store/
-    │   │   └── useFramework.store.ts
-    │   ├── composables/
-    │   │   └── useFrameworks.ts
-    │   ├── views/
-    │   │   └── FrameworksView.vue
-    │   ├── components/
-    │   │   ├── FrameworkList.vue
-    │   │   ├── FrameworkFilter.vue
-    │   │   └── FrameworkDetail.vue
-    │   └── types/
-    │       └── framework.types.ts
-    │
-    └── generator/
-        ├── services/
-        │   └── generator.service.ts
-        ├── store/
-        │   └── useGenerator.store.ts
-        ├── composables/
-        │   └── useGenerator.ts
-        ├── components/
-        │   ├── GeneratorStepper.vue
-        │   └── ProjectConfigView.vue
-        └── types/
-            └── generator.types.ts
+│   App.vue
+│   main.ts
+│   tree.txt
+│   
+├───assets
+│   ├───CSS
+│   │       main.css
+│   │       
+│   ├───FONTS
+│   │   │   Chillax_Complete.zip
+│   │   │   Outfit_Complete.zip
+│   │   │   Poppins_Complete.zip
+│   │   │   
+│   │   ├───Chillax
+│   │   │       Chillax-Variable.woff2
+│   │   │       
+│   │   ├───Outfit
+│   │   │       Outfit-Variable.woff2
+│   │   │       
+│   │   └───Poppins
+│   │           Poppins-Variable.woff2
+│   │           
+│   └───ICONS
+│           caret-right.svg
+│           chevron-down.svg
+│           chevron-left.svg
+│           chevron-right.svg
+│           chevron-up.svg
+│           cursor.svg
+│           filter.svg
+│           folder-plus.svg
+│           folder.svg
+│           git-compare.svg
+│           grid.svg
+│           help-circle.svg
+│           help.svg
+│           home.svg
+│           list-ul.svg
+│           x.svg
+│           
+├───core
+│   ├───components
+│   │   ├───layouts
+│   │   │   │   GenesisCollectionLayout.vue
+│   │   │   │   
+│   │   │   ├───display
+│   │   │   │       GenesisItem.vue
+│   │   │   │       GenesisList.vue
+│   │   │   │       
+│   │   │   └───Popup
+│   │   │           BaseFormPopup.vue
+│   │   │           BasePopup.vue
+│   │   │           BottomPanel.vue
+│   │   │           ErrorPopup.vue
+│   │   │           LoadingPopup.vue
+│   │   │           popup.types.ts
+│   │   │           ProgressPopup.vue
+│   │   │           SimpleSelectionPopup.vue
+│   │   │           StepperPopup.vue
+│   │   │           
+│   │   └───ui
+│   │       │   readme.md
+│   │       │   
+│   │       ├───actions
+│   │       │       GenesisBackButton.vue
+│   │       │       GenesisButton.vue
+│   │       │       GenesisButtonIcon.vue
+│   │       │       GenesisSegmentedControl.vue
+│   │       │       
+│   │       ├───dropdown
+│   │       │       GenesisDropdown.vue
+│   │       │       GenesisDropdownList.vue
+│   │       │       LayoutSwitcher.vue
+│   │       │       
+│   │       ├───feedback
+│   │       │       GenesisError.vue
+│   │       │       GenesisLoader.vue
+│   │       │       GenesisProgressBar.vue
+│   │       │       
+│   │       ├───icons
+│   │       │       IconCaretRight.vue
+│   │       │       IconChevronDown.vue
+│   │       │       IconChevronLeft.vue
+│   │       │       IconChevronRight.vue
+│   │       │       IconChevronUp.vue
+│   │       │       IconCursor.vue
+│   │       │       IconFilter.vue
+│   │       │       IconFolder.vue
+│   │       │       IconFolderPlus.vue
+│   │       │       IconGitCompare.vue
+│   │       │       IconGrid.vue
+│   │       │       IconHelp.vue
+│   │       │       IconHelpCircle.vue
+│   │       │       IconHome.vue
+│   │       │       IconListUl.vue
+│   │       │       IconX.vue
+│   │       │       
+│   │       └───inputs
+│   │               GenesisInput.vue
+│   │               
+│   ├───composables
+│   │   │   useApp.ts
+│   │   │   
+│   │   └───ux
+│   │           useCompareSlots.ts
+│   │           useDraggable.ts
+│   │           useResizable.ts
+│   │           
+│   ├───services
+│   │       app.service.ts
+│   │       vscode.service.ts
+│   │       
+│   ├───store
+│   │       useApp.store.ts
+│   │       useTheme.store.ts
+│   │       
+│   └───types
+│           messages.ts
+│           
+├───features
+│   ├───designSystem
+│   │   │   index.vue
+│   │   │   
+│   │   └───components
+│   │       │   ButtonShowcase.vue
+│   │       │   ColorShowcase.vue
+│   │       │   DesignSystemView.vue
+│   │       │   ErrorShowcase.vue
+│   │       │   LoaderShowcase.vue
+│   │       │   PopupShowcase.vue
+│   │       │   ProgressShowcase.vue
+│   │       │   
+│   │       └───layouts
+│   │               ShowcaseLayout.vue
+│   │               
+│   ├───frameworks
+│   │   │   index.ts
+│   │   │   
+│   │   ├───components
+│   │   │       FilterCheckbox.vue
+│   │   │       FilterSelect.vue
+│   │   │       FrameworkDetail.vue
+│   │   │       FrameworkFilter.vue
+│   │   │       FrameworkList.vue
+│   │   │       FrameworkSelector.vue
+│   │   │       
+│   │   ├───composables
+│   │   │       useFrameworks.ts
+│   │   │       
+│   │   ├───services
+│   │   │       framework.service.ts
+│   │   │       
+│   │   ├───store
+│   │   │       useFramework.store.ts
+│   │   │       
+│   │   ├───types
+│   │   │       framework.types.ts
+│   │   │       
+│   │   └───views
+│   │           FrameworksView.vue
+│   │           
+│   ├───generator
+│   │   │   index.ts
+│   │   │   
+│   │   ├───components
+│   │   │       DatabaseConfigView.vue
+│   │   │       GeneratorStepper.vue
+│   │   │       ProjectConfigView.vue
+│   │   │       
+│   │   ├───composables
+│   │   │       useGenerator.ts
+│   │   │       
+│   │   ├───services
+│   │   │       generator.service.ts
+│   │   │       
+│   │   ├───store
+│   │   │       useGenerator.store.ts
+│   │   │       
+│   │   └───types
+│   │           generator.types.ts
+│   │           
+│   └───home
+│       └───components
+│               HomeView.vue
+│               
+└───router
+        index.ts
 
 src/                                 # EXTENSION HOST (Node.js)
-├── extension.ts
-├── panels/
-│   └── GenesisPanel.ts            # Cycle de vie UI uniquement
-└── services/
-    ├── WebviewMessageRouter.ts    # Dispatch des messages
-    ├── GenesisApiService.ts       # Communication avec le JAR
-    ├── Framework/
-    │   └── FrameworkHandler.ts
-    └── Generator/
-        └── GeneratorHandler.ts
+ª   extension.ts
+ª   text.txt
+ª   
++---commands
+ª       registerCommands.ts
+ª       
++---panels
+ª       GenesisPanel.ts
+ª       
++---services
+ª   ª   GenesisApiService.ts
+ª   ª   WebviewMessageRouter.ts
+ª   ª   
+ª   +---Framework
+ª   ª       FrameworkHandler.ts
+ª   ª       
+ª   +---Generator
+ª   ª       GeneratorHandler.ts
+ª   ª       
+ª   +---http
+ª           genesisAxiosInstance.ts
+ª           
++---test
+ª       extension.test.ts
+ª       
++---types
+        framework.types.ts
 ```
 
 ---
@@ -243,7 +400,7 @@ Quand un problème survient, vérifier dans l'ordre :
 - **Valide les choix d'architecture** avant de coder si le besoin est ambigu.
 - **Utilise les emojis avec parcimonie** pour structurer visuellement tes réponse.
 - **N'Utilise jamais des emojis dans le code**
-- **Avant d'accéder à la demande de l'utilisateur si il s'agit d'une toute nouvelle fonctionnalité, demande toujours si il y a un élément que tu pourrais exploiter ou que tu penses pouvoir exploiter dans le projet actuellement afin d'éviter les redondances**
+- **Si l'utilisateur cherche à intégrer une nouvelle fonctionnalité complexe nécessitant la création de plus de 50 lignes de code, ne code pas immédiatement,si il s'agit d'une toute nouvelle fonctionnalité, demande si il y a un élément que tu pourrais exploiter ou que tu penses pouvoir exploiter dans le projet actuellement afin d'éviter les redondances**
 
 ## OBLIGATION PAR DESSUS LE RESTE
 - **à la fin de chaque prompt, préviens toujours l'utilisateur de l'état actuel de son utilisation sur toi, donne un chiffre exacte et dit lui ce qui a vraiment consommer en limite d'utilisation par rapport à la tâche qu'il t'a donnée et dit lui ce qu'il faut faire pour éviter que cela recommence**

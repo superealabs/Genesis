@@ -33,18 +33,17 @@
    ═══════════════════════════════════════════════════════════ */
 
 @theme {
-    --color-bg-light:    hsl(0, 0%, 15%);
-    --color-bg:          hsl(0, 0%, 10%);
-    --color-bg-dark:     hsl(0, 0%, 5%);
+    --color-bg-light:    hsl(145, 100%, 96%);
+    --color-bg:          hsl(145, 100%, 94%); /* */
+    --color-bg-dark:     hsl(145, 100%, 92%); /* for background only */
 
-    --color-text:        hsl(0, 0%, 95%);
-    --color-text-muted:  hsl(0, 0%, 65%);
+    --color-text:        hsl(160, 100%, 40%);
+    --color-text-muted:  hsl(175, 100%, 15%);
 
-    --color-accent:      hsl(250, 60%, 60%);
-    --color-secondary:   hsl(0, 0%, 30%);
+    --color-accent:      hsl(145, 100%, 44%);
+    --color-secondary:   hsl(160, 100%, 40%);
 
-    /* Overlay de hover pour les boutons "ghost" */
-    --color-hover-ghost: rgba(255, 255, 255, 0.1);
+    --color-hover-ghost: rgba(0, 0, 0, 0.05);
 
     /* ═══ FONTS ═══ */
     --font-display: 'Chillax', system-ui, sans-serif;    /* H1 */
@@ -62,15 +61,15 @@
 /* Genesis SOMBRE (auto ET forcé) */
 body.theme-genesis.vscode-dark,
 body.theme-genesis.genesis-dark {
-    --color-bg-light:    hsl(0, 0%, 15%);
-    --color-bg:          hsl(0, 0%, 10%);
-    --color-bg-dark:     hsl(0, 0%, 5%);
+    --color-bg-light:    hsl(175, 100%, 8%);
+    --color-bg:          hsl(175, 100%, 6%);
+    --color-bg-dark:     hsl(175, 100%, 4%);
 
-    --color-text:        hsl(0, 0%, 95%);
-    --color-text-muted:  hsl(0, 0%, 65%);
+    --color-text:        hsl(145, 100%, 94%);
+    --color-text-muted:  hsl(145, 100%, 88%);
 
-    --color-accent:      hsl(250, 60%, 60%);
-    --color-secondary:   hsl(0, 0%, 30%);
+    --color-accent:      hsl(145, 100%, 44%);
+    --color-secondary:   hsl(160, 100%, 40%);
 
     --color-hover-ghost: rgba(255, 255, 255, 0.1);
 }
@@ -78,15 +77,15 @@ body.theme-genesis.genesis-dark {
 /* Genesis CLAIR (auto ET forcé) */
 body.theme-genesis.vscode-light,
 body.theme-genesis.genesis-light {
-    --color-bg-light:    hsl(0, 0%, 98%);
-    --color-bg:          hsl(0, 0%, 95%);
-    --color-bg-dark:     hsl(0, 0%, 90%);
+    --color-bg-light:    hsl(145, 100%, 96%);
+    --color-bg:          hsl(145, 100%, 92%);
+    --color-bg-dark:     hsl(145, 100%, 88%);
 
-    --color-text:        hsl(0, 0%, 10%);
-    --color-text-muted:  hsl(0, 0%, 40%);
+    --color-text:        hsl(175, 100%, 4%);
+    --color-text-muted:  hsl(175, 100%, 15%);
 
-    --color-accent:      hsl(250, 60%, 50%);
-    --color-secondary:   hsl(0, 0%, 70%);
+    --color-accent:      hsl(145, 100%, 44%);
+    --color-secondary:   hsl(160, 100%, 40%);
 
     --color-hover-ghost: rgba(0, 0, 0, 0.05);
 }

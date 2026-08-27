@@ -1,7 +1,9 @@
+// webview-ui/src/features/generator/composables/useGenerator.ts
 import { storeToRefs } from 'pinia';
 import { useGeneratorStore } from '../store/useGenerator.store';
 import { generatorService } from '../services/generator.service';
 import type { Framework } from '@/features/frameworks/types/framework.types';
+import type { ScriptConfig, ComponentType, GeneratorData } from '../types/generator.types';
 
 export function useGenerator() {
     const store = useGeneratorStore();
@@ -10,31 +12,49 @@ export function useGenerator() {
     generatorService.init();
 
     function validateCurrentStep(): boolean {
-        console.log(`current step : ${currentStep}`);
         switch (currentStep.value) {
             case 1:
                 if (!stepperData.value.framework) {
-                    console.error('Veuillez sélectionner un framework');
+                    console.warn('Veuillez sélectionner un framework');
                     return false;
                 }
                 return true;
 
             case 2:
-                // Validation de l'étape 2 : Le nom du projet est obligatoire
                 if (!stepperData.value.config.projectName.trim()) {
-                    console.error('Le nom du projet est obligatoire');
+                    console.warn('Le nom du projet est obligatoire');
                     return false;
                 }
                 if (!stepperData.value.config.languageVersion) {
-                    console.error('Veuillez sélectionner une version du language');
+                    console.warn('Veuillez sélectionner une version du language');
                     return false;
                 }
                 return true;
 
             case 3:
+                if (!stepperData.value.database.databaseName.trim()) {
+                    console.warn('Le nom de la base de données est obligatoire');
+                    return false;
+                }
+                if (!stepperData.value.database.username.trim()) {
+                    console.warn('Le nom d\'utilisateur est obligatoire');
+                    return false;
+                }
                 return true;
 
             case 4:
+                return true;
+
+            case 5:
+                const { selectedTables, selectedComponents } = stepperData.value.tableSelection;
+                if (selectedTables.length === 0) {
+                    console.warn('Veuillez sélectionner au moins une table.');
+                    return false;
+                }
+                if (selectedComponents.length === 0) {
+                    console.warn('Veuillez sélectionner au moins un type de composant.');
+                    return false;
+                }
                 return true;
 
             default:
@@ -42,15 +62,15 @@ export function useGenerator() {
         }
     }
 
-    function goToNextStep() {
-        console.log("Bonjour 1")
-        if (!validateCurrentStep()) return;
-        console.log("Bonjour 2")
+    // ✅ MODIFICATION : Retourne les données si c'est la dernière étape, sinon null
+    function goToNextStep(): GeneratorData | null {
+        if (!validateCurrentStep()) return null;
 
         if (!isLastStep.value) {
             store.goToNextStep();
+            return null;
         } else {
-            handleComplete();
+            return handleComplete();
         }
     }
 
@@ -67,12 +87,32 @@ export function useGenerator() {
     }
 
     function updateDatabase(key: any, value: any) {
-        store.updateDatabase(key, value)
+        store.updateDatabase(key, value);
     }
 
-    function handleComplete() {
+    function updateScript(key: keyof ScriptConfig, value: string) {
+        store.updateScript(key, value);
+    }
+
+    function selectScriptPath() {
+        generatorService.requestScriptPath();
+    }
+
+    function toggleTable(tableName: string) {
+        store.toggleTable(tableName);
+    }
+
+    function toggleView(viewName: string) {
+        store.toggleView(viewName);
+    }
+
+    function toggleComponent(component: ComponentType) {
+        store.toggleComponent(component);
+    }
+
+    function handleComplete(): GeneratorData {
         console.log('Données finales prêtes pour la génération:', stepperData.value);
-        // Ici, plus tard, on appellera le generator.service.ts
+        return stepperData.value;
     }
 
     function reset() {
@@ -81,6 +121,10 @@ export function useGenerator() {
 
     function selectFolderPath() {
         generatorService.requestFolderPath();
+    }
+
+    function fetchTablesMetadata() {
+        generatorService.fetchTablesMetadata();
     }
 
     return {
@@ -94,8 +138,14 @@ export function useGenerator() {
         handleFrameworkSelect,
         updateConfig,
         updateDatabase,
+        updateScript,
         handleComplete,
         reset,
-        selectFolderPath
+        selectFolderPath,
+        selectScriptPath,
+        fetchTablesMetadata,
+        toggleTable,
+        toggleView,
+        toggleComponent,
     };
 }

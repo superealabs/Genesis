@@ -1,22 +1,18 @@
-- trouver un moyen de faire en sorte que GenesisCard et GenesisRow affiche la même information et devient un seul et unique composant(OK)
 
+- faire en sorte que les données des vues proviennent de l'extension host
+    - TableSekectionView
+    - DatabaseSelection
+    - Script
 
-- comparer simple selection et dropdownList.
+- créer les étapes
+    # step 7
+    configuration relation
 
+    # step 8(new feature FrontEnd)
+    frontEnd selection(can be ignored)
 
-- DRY
-    - SimpleSelectionPopup
-    - BasePopup
-    - GenesisDropdownList
+    # step 9(environment)
+    Git initializer
 
-
-- modification de BasePopup(utilisé pour faire le choix des petites options)
-    - suppression du header
-    - suppression de la position fixe
-    - nécessite une position d'apparition
-    - fermable avec un clic extérieur
-    - n'est pas resizable
-- BasePopup devient -> BaseFormPopup(utilisé pour les formulaires, les popup importantes)
-    - une position fixe(center(default), left, top, right, bottom, etc) all 9 positions on the viewport
-    - rajout du header(titre + bouton de fermeture)(Facultatif)
-    - rajoute un overlay
+    # step 10(Security)
+    configuration Project Backend

@@ -17,26 +17,24 @@
                         { label: 'Selection', value: 'selection', icon: IconCursor },
                         { label: 'Compare', value: 'compare', icon: IconGitCompare }
                     ]"
-                    size="sm"
+                    size="md"
                 />
                 
-                <LayoutSwitcher 
-                    v-model="internalDisplayMode" 
-                    :align="align" 
-                />
+                <LayoutSwitcherAlt v-model="internalDisplayMode" />
             </div>
         </div>
 
         <!-- Barre de recherche + filtre -->
         <div class="flex items-center gap-2">
-            <input
-                :value="searchValue"
-                @input="$emit('update:searchValue', ($event.target as HTMLInputElement).value)"
+            <GenesisInput
+                :modelValue="searchValue"
+                @update:modelValue="$emit('update:searchValue', $event)"
                 type="text"
                 :placeholder="searchPlaceholder"
-                class="flex-1 bg-bg-light text-text border border-secondary rounded px-3 py-1.5 text-xs
-                       focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent
-                       placeholder:text-text-muted"
+                variant="primary"
+                shape="rectangle"
+                size="sm"
+                fill-width
             />
             
             <!-- Slot pour filtre custom -->
@@ -60,12 +58,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import GenesisBackButton from '@/core/components/ui/actions/GenesisBackButton.vue';
-import LayoutSwitcher from '@/core/components/ui/dropdown/LayoutSwitcher.vue';
 import GenesisSegmentedControl from '@/core/components/ui/actions/GenesisSegmentedControl.vue';
 import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconCursor from '@/core/components/ui/icons/IconCursor.vue';
 import IconGitCompare from '@/core/components/ui/icons/IconGitCompare.vue';
 import IconFilter from '@/core/components/ui/icons/IconFilter.vue';
+import LayoutSwitcherAlt from '../ui/dropdown/LayoutSwitcherAlt.vue';
+import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
 
 export type CollectionMode = 'selection' | 'compare';
 

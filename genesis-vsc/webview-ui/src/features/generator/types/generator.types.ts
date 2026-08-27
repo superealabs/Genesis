@@ -9,26 +9,6 @@ export interface ProjectConfig {
     frameworkVersion: string;
 }
 
-export interface GeneratorData {
-    framework: Framework | null;
-    config: ProjectConfig;
-}
-
-// Valeurs statiques pour le mock (à remplacer par des appels API plus tard)
-export const MOCK_BUILD_TOOLS = [
-    { label: 'Maven', value: 'maven' },
-    { label: 'Gradle', value: 'gradle' },
-    { label: 'npm', value: 'npm' },
-    { label: 'yarn', value: 'yarn' }
-];
-
-export const MOCK_JAVA_VERSIONS = ['8', '11', '17', '21'];
-export const MOCK_NODE_VERSIONS = ['18', '20', '22'];
-export const MOCK_PYTHON_VERSIONS = ['3.9', '3.10', '3.11', '3.12'];
-
-
-// webview-ui/src/features/generator/types/generator.types.ts
-
 export interface DatabaseConfig {
     engine: 'mysql' | 'postgre' | 'sqlserver' | 'oracle';
     host: string;
@@ -44,8 +24,48 @@ export interface DatabaseConfig {
     allowPublicKeyRetrieval: boolean;
 }
 
+export interface ScriptConfig {
+    path: string;
+    content: string;
+}
+
+export interface TableMetadataDto {
+    tableName: string;
+    className: string;
+    isView: boolean;
+}
+
+export type ComponentType = 'model' | 'dao' | 'service' | 'controller';
+
+export interface TableSelectionConfig {
+    selectedTables: string[];
+    selectedViews: string[];
+    selectedComponents: ComponentType[];
+}
+
+// ═══ Interface principale ═══
 export interface GeneratorData {
     framework: Framework | null;
     config: ProjectConfig;
-    database: DatabaseConfig; // <-- AJOUT
+    database: DatabaseConfig;
+    script: ScriptConfig;
+    tableSelection: TableSelectionConfig;
 }
+
+export const MOCK_BUILD_TOOLS = [
+    { label: 'Maven', value: 'maven' },
+    { label: 'Gradle', value: 'gradle' },
+    { label: 'npm', value: 'npm' },
+    { label: 'yarn', value: 'yarn' }
+];
+
+export const MOCK_JAVA_VERSIONS = ['8', '11', '17', '21'];
+export const MOCK_NODE_VERSIONS = ['18', '20', '22'];
+export const MOCK_PYTHON_VERSIONS = ['3.9', '3.10', '3.11', '3.12'];
+
+export const AVAILABLE_COMPONENTS: { label: string; value: ComponentType }[] = [
+    { label: 'Model', value: 'model' },
+    { label: 'DAO', value: 'dao' },
+    { label: 'Service', value: 'service' },
+    { label: 'Controller', value: 'controller' },
+];

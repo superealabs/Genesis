@@ -6,7 +6,7 @@
         @click.self="handleOverlayClick()"
     >
         <div
-            class="bg-bg text-text border border-secondary rounded-lg w-full flex flex-col relative"
+            class="bg-bg-dark text-text rounded-lg w-full flex flex-col relative"
             :class="[sizeClasses, { 'pointer-events-auto': !showOverlay }]"
             :style="[draggableStyle, resizeStyle]"
         >
@@ -41,7 +41,7 @@
             <!-- Header avec titre -->
             <div 
                 v-if="title" 
-                class="flex items-center justify-between border-secondary select-none"
+                class="flex items-center justify-between select-none"
                 :class="[paddingClasses.header, { 'cursor-move': isDraggable }]"
                 @mousedown="startDrag"
             >
@@ -59,7 +59,7 @@
             <!-- Header sans titre -->
             <div 
                 v-else 
-                class="flex justify-end border-secondary select-none"
+                class="flex justify-end select-none"
                 :class="[paddingClasses.header, { 'cursor-move': isDraggable }]"
                 @mousedown="startDrag"
             >

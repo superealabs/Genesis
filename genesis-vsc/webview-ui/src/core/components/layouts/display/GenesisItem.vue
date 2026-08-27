@@ -1,11 +1,11 @@
 <template>
     <div
-        class="relative border border-secondary rounded-lg p-3 cursor-pointer transition-all duration-200"
+        class="relative rounded-lg p-3 cursor-pointer transition-all duration-200"
         :class="[
             layoutClasses,
             {
                 'bg-accent/10 border-accent': selected,
-                'bg-bg-light hover:border-accent/50': !selected
+                'bg-bg hover:border-accent/50': !selected
             }
         ]"
         @click="$emit('click', $event)"

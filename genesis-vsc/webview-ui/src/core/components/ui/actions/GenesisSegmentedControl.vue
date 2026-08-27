@@ -1,92 +1,90 @@
 <template>
-    <div
-        class="inline-flex border border-secondary rounded-lg p-1 gap-1 bg-bg-light"
-        role="group"
-    >
-        <button
-            v-for="option in options"
-            :key="String(option.value)"
-            type="button"
-            :class="buttonClasses(option)"
-            :disabled="disabled || option.disabled"
-            @click="updateValue(option.value)"
+  <TabGroup
+    :selectedIndex="selectedIndex"
+    @change="handleChange"
+    as="div"
+    class="inline-flex flex-col gap-4"
+  >
+    <!-- Conteneur du Segmented Control -->
+    <TabList class="inline-flex rounded-md p-1 gap-1 bg-bg-light border border-bg-light" role="group">
+      <Tab
+        v-for="option in options"
+        :key="String(option.value)"
+        :disabled="disabled || option.disabled"
+        v-slot="{ selected }"
+        as="template"
+      >
+        <GenesisButton
+          :variant="selected ? 'primary' : 'tertiary'"
+          :size="size"
+          :disabled="disabled || option.disabled"
         >
-            <component 
-                v-if="option.icon" 
-                :is="option.icon" 
-                :class="iconSizeClasses"
-            />
-            <span v-if="option.label">{{ option.label }}</span>
-        </button>
-    </div>
+          <template v-if="option.icon" #leftIcon>
+            <component :is="option.icon" />
+          </template>
+          
+          <span v-if="option.label">{{ option.label }}</span>
+        </GenesisButton>
+      </Tab>
+    </TabList>
+
+    <!-- Panneaux de contenu (optionnel) -->
+    <TabPanels v-if="$slots.panels" class="w-full">
+      <TabPanel
+        v-for="option in options"
+        :key="String(option.value)"
+        v-slot="{ selected }"
+        as="template"
+      >
+        <div v-show="selected">
+          <slot name="panels" :option="option" :selected="selected" />
+        </div>
+      </TabPanel>
+    </TabPanels>
+  </TabGroup>
 </template>
 
 <script setup lang="ts">
 import { computed, type Component } from 'vue';
+import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
+// 👇 Import du composant source de vérité
+import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
 
 interface SegmentedOption {
-    label?: string;
-    value: string | number;
-    icon?: Component;
-    disabled?: boolean;
+  label?: string;
+  value: string | number;
+  icon?: Component;
+  disabled?: boolean;
 }
 
 interface Props {
-    modelValue: string | number;
-    options: SegmentedOption[];
-    size?: 'sm' | 'md' | 'lg';
-    disabled?: boolean;
+  modelValue: string | number;
+  options: SegmentedOption[];
+  // 👇 On reprend exactement les mêmes tailles que GenesisButton
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    size: 'md',
-    disabled: false
+  size: 'sm',
+  disabled: false
 });
 
 const emit = defineEmits<{
-    'update:modelValue': [value: string | number];
+  'update:modelValue': [value: string | number];
 }>();
 
-function updateValue(value: string | number) {
-    if (props.disabled) return;
-    emit('update:modelValue', value);
+// ═══ Logique Headless UI : Conversion valeur ↔ index ═══
+const selectedIndex = computed(() => {
+  const index = props.options.findIndex(opt => opt.value === props.modelValue);
+  return index >= 0 ? index : 0;
+});
+
+function handleChange(index: number) {
+  if (props.disabled) return;
+  const option = props.options[index];
+  if (option && !option.disabled) {
+    emit('update:modelValue', option.value);
+  }
 }
-
-function isActive(value: string | number): boolean {
-    return props.modelValue === value;
-}
-
-// ═══ Classes des boutons ═══
-const buttonClasses = (option: SegmentedOption) => {
-    const active = isActive(option.value);
-    
-    const base = [
-        'inline-flex items-center justify-center gap-1.5',
-        'font-medium transition-all duration-200 rounded-md',
-        'focus:outline-none focus:ring-2 focus:ring-accent/50',
-        'disabled:opacity-50 disabled:cursor-not-allowed'
-    ];
-
-    const sizeMap = {
-        sm: 'px-2.5 py-1 text-xs',
-        md: 'px-3 py-1.5 text-sm',
-        lg: 'px-4 py-2 text-base'
-    };
-
-    const stateClasses = active
-        ? 'bg-accent text-bg shadow-sm'
-        : 'text-text-muted hover:text-text hover:bg-white/5 dark:hover:bg-white/5';
-
-    return [
-        ...base,
-        sizeMap[props.size],
-        stateClasses
-    ];
-};
-
-const iconSizeClasses = computed(() => ({
-    'w-3.5 h-3.5': props.size === 'sm',
-    'w-4 h-4': props.size === 'md',
-    'w-5 h-5': props.size === 'lg'
-}));
 </script>

@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-bg text-text p-2 transition-colors duration-300">
+    <div class="min-h-screen bg-bg-dark text-text p-2 transition-colors duration-300">
         <GenesisLoader
             v-if="apiStatus === 'loading'"
             title="Démarrage de Genesis"
