@@ -9,7 +9,7 @@ import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameterType;
 import org.labs.genesis.forms.theme.DashboardTheme;
 import org.labs.genesis.forms.ui.common.ScrollableContentPanel;
-import org.labs.genesis.forms.ui.dashboard.DashboardVisualComponent;
+import org.labs.genesis.forms.ui.visualization.DashboardVisualComponent;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationItem;
 
 import javax.swing.*;
@@ -372,7 +372,7 @@ public class VisualizationConfigurationPanel extends JPanel {
     }
 
     private JComponent createColumnOrFormulaEditor(VisualizationParameter parameter) {
-        return new ColumnOrFormulaRow(parameter);
+        return new ColumnOrFormulaRow(parameter, targetComponent, parameter.getKey());
     }
 
     private JComponent createSortEditor() {
@@ -399,7 +399,24 @@ public class VisualizationConfigurationPanel extends JPanel {
     }
 
     private JComponent createColumnsEditor() {
-        return new ColumnsEditorPanel();
+        // Créer avec targetComponent et la clé
+        ColumnsEditorPanel panel = new ColumnsEditorPanel(targetComponent, "columns");
+
+        // Charger les valeurs existantes
+        Object existingColumns = targetComponent.getConfigValue("columns");
+        if (existingColumns instanceof List<?> columnsList) {
+            panel.setColumns((List<String>) columnsList);
+        }
+
+        panel.setColumnsChangeListener(() -> {
+            if (targetComponent != null) {
+                // La mise à jour est déjà faite dans notifyChange()
+                targetComponent.revalidate();
+                targetComponent.repaint();
+            }
+        });
+
+        return panel;
     }
 
     private JComponent createConditionEditor() {

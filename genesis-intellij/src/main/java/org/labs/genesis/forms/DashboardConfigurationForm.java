@@ -2,11 +2,17 @@ package org.labs.genesis.forms;
 
 import com.intellij.util.ui.JBUI;
 import lombok.Getter;
+import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.model.ColumnMetadata;
+import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.forms.theme.DashboardTheme;
 import org.labs.genesis.forms.ui.common.RotatableLabel;
 import org.labs.genesis.forms.ui.common.RoundedBorder;
-import org.labs.genesis.forms.ui.dashboard.DashboardVisualComponent;
-import org.labs.genesis.forms.ui.dashboard.GridCanvas;
+import org.labs.genesis.forms.ui.data.model.ColumnData;
+import org.labs.genesis.forms.ui.data.model.TableData;
+import org.labs.genesis.forms.ui.visualization.DashboardVisualComponent;
+import org.labs.genesis.forms.ui.visualization.GridCanvas;
 import org.labs.genesis.forms.ui.data.DataPanelTree;
 import org.labs.genesis.forms.ui.visualization.VisualizationPanel;
 import org.labs.genesis.forms.ui.visualization.configuration.VisualizationConfigurationPanel;
@@ -15,6 +21,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,9 +44,11 @@ public class DashboardConfigurationForm {
     private JScrollPane tabsScrollPane;
     private JButton addTabButton;
     private JLabel titleLabel;
+    private DataPanelTree dataPanelTree;
 
     private boolean leftSidebarCollapsed = false;
     private boolean rightSidebarCollapsed = false;
+    private ProjectGenerationContext projectGenerationContext;
 
     private JPanel leftTopBar;
     private JPanel rightTopBar;
@@ -61,7 +71,9 @@ public class DashboardConfigurationForm {
     private final String CONFIG_CARD = "config";
     private final String LIST_CARD = "list";
 
-    public DashboardConfigurationForm() {
+    public DashboardConfigurationForm(ProjectGenerationContext projectGenerationContext) {
+        this.projectGenerationContext = projectGenerationContext;
+
         configureMainPanel();
         configureCenterArea();
         configureSidebars();
@@ -72,10 +84,26 @@ public class DashboardConfigurationForm {
         refreshLayout();
     }
 
+    private void refreshDataPanel() {
+        if (projectGenerationContext == null) {
+            return;
+        }
+
+        if (dataPanelTree != null) {
+            dataPanelTree.refreshData();
+        }
+    }
+
     private void configureMainPanel() {
         mainPanel.setOpaque(true);
         mainPanel.setBackground(DashboardTheme.BACKGROUND);
         mainPanel.setBorder(JBUI.Borders.empty(16));
+        mainPanel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent e) {
+                refreshDataPanel();
+            }
+        });
         DashboardTheme.styleTitle(titleLabel);
         titleLabel.setFont(DashboardTheme.boldFont(18));
     }
@@ -136,7 +164,8 @@ public class DashboardConfigurationForm {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
         panel.setBorder(new EmptyBorder(8, 8, 8, 8));
-        panel.add(new DataPanelTree(), BorderLayout.CENTER);
+        dataPanelTree = new DataPanelTree(projectGenerationContext);
+        panel.add(dataPanelTree, BorderLayout.CENTER);
         return panel;
     }
 

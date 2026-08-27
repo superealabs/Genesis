@@ -18,115 +18,129 @@ public class VisualizationParameter {
     public VisualizationParameter(
             String key,
             String label,
-            VisualizationParameterType type
+            VisualizationParameterType type,
+            boolean required
     ) {
         this.key = key;
         this.label = label;
         this.type = type;
+        this.required = required;
     }
 
     public VisualizationParameter(
             String key,
             String label,
             VisualizationParameterType type,
-            String mode
+            String mode,
+            boolean required
     ) {
         this.key = key;
         this.label = label;
         this.type = type;
         this.mode = mode;
+        this.required = required;
     }
 
     // -------------------------------------------------------------------------
     // Factory methods
     // -------------------------------------------------------------------------
 
-    public static VisualizationParameter text(
-            String key,
-            String label
-    ) {
+    public static VisualizationParameter text(String key, String label,
+            boolean required) {
         return new VisualizationParameter(
                 key,
                 label,
-                VisualizationParameterType.TEXT
+                VisualizationParameterType.TEXT,
+                required
         );
     }
 
-    public static VisualizationParameter number(
-            String key,
-            String label
-    ) {
+    public static VisualizationParameter number(String key,
+            String label, boolean required) {
         return new VisualizationParameter(
                 key,
                 label,
-                VisualizationParameterType.NUMBER
+                VisualizationParameterType.NUMBER,
+                required
         );
     }
 
     public static VisualizationParameter dbColumn(
             String key,
-            String label
+            String label,
+            boolean required
     ) {
         return new VisualizationParameter(
                 key,
                 label,
-                VisualizationParameterType.DB_COLUMN
+                VisualizationParameterType.DB_COLUMN,
+                required
         );
     }
 
     public static VisualizationParameter formula(
             String key,
-            String label
+            String label,
+            boolean required
     ) {
         return new VisualizationParameter(
                 key,
                 label,
-                VisualizationParameterType.FORMULA
+                VisualizationParameterType.FORMULA,
+                required
         );
     }
 
     public static VisualizationParameter columnOrFormula(
             String key,
-            String label
+            String label,
+            boolean required
     ) {
         return new VisualizationParameter(
                 key,
                 label,
                 VisualizationParameterType.DB_COLUMN_OR_FORMULA,
-                "COLUMN"
+                "COLUMN",
+                required
         );
     }
 
     public static VisualizationParameter sort(
             String key,
-            String label
+            String label,
+            boolean required
     ) {
         return new VisualizationParameter(
                 key,
                 label,
-                VisualizationParameterType.SORT
+                VisualizationParameterType.SORT,
+                required
         );
     }
 
     public static VisualizationParameter columns(
             String key,
-            String label
+            String label,
+            boolean required
     ) {
         return new VisualizationParameter(
                 key,
                 label,
-                VisualizationParameterType.COLUMNS
+                VisualizationParameterType.COLUMNS,
+                required
         );
     }
 
     public static VisualizationParameter condition(
             String key,
-            String label
+            String label,
+            boolean required
     ) {
         return new VisualizationParameter(
                 key,
                 label,
-                VisualizationParameterType.CONDITION
+                VisualizationParameterType.CONDITION,
+                required
         );
     }
 

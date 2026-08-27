@@ -140,6 +140,22 @@ public class VisualizationItem {
         return name;
     }
 
+    public boolean hasAllRequiredParameters(VisualizationConfig config) {
+        if (parameters == null || parameters.isEmpty()) {
+            return true;
+        }
+
+        return parameters.stream()
+                .filter(VisualizationParameter::isRequired)
+                .allMatch(param -> {
+                    Object value = config.getValue(param.getKey());
+                    if (value == null) return false;
+                    if (value instanceof String && ((String) value).trim().isEmpty()) return false;
+                    if (value instanceof List && ((List<?>) value).isEmpty()) return false;
+                    return true;
+                });
+    }
+
     /**
      * Builder pour faciliter la création d'instances de VisualizationItem.
      */

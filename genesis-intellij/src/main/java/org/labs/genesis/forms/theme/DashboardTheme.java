@@ -36,7 +36,7 @@ public final class DashboardTheme {
     public static final Color ERROR = new Color(234, 67, 53);
 
     // Dimensions
-    public static final int EXPANDED_WIDTH = 210;
+    public static final int EXPANDED_WIDTH = 280;
     public static final int EXPANDED_WIDTH_EXTEND = 260;
     public static final int COLLAPSED_WIDTH = 48;
     public static final int MIN_WIDTH = 160;
