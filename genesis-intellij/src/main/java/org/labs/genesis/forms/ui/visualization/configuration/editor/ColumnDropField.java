@@ -1,8 +1,9 @@
 package org.labs.genesis.forms.ui.visualization.configuration.editor;
 
 import com.intellij.icons.AllIcons;
-import org.labs.genesis.forms.components.DataPanelTree;
 import org.labs.genesis.forms.theme.DashboardTheme;
+import org.labs.genesis.forms.ui.data.DataPanelTree;
+import org.labs.genesis.forms.ui.data.model.ColumnData;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -142,9 +143,10 @@ public class ColumnDropField extends JPanel {
                     String droppedColumn = null;
 
                     if (support.isDataFlavorSupported(DataPanelTree.COLUMN_DATA_FLAVOR)) {
-                        DataPanelTree.ColumnData columnData =
-                                (DataPanelTree.ColumnData) transferable.getTransferData(
+                        ColumnData columnData =
+                                (ColumnData) transferable.getTransferData(
                                         DataPanelTree.COLUMN_DATA_FLAVOR);
+                        // Le ColumnData contient maintenant le nom complet "table.column"
                         droppedColumn = columnData.name;
                     } else if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                         droppedColumn = (String) transferable.getTransferData(
@@ -214,6 +216,17 @@ public class ColumnDropField extends JPanel {
             placeholderLabel.setText("");
             valueLabel.setVisible(true);
             iconLabel.setVisible(true);
+
+            // Afficher le nom complet avec style
+            if (columnName.contains(".")) {
+                String[] parts = columnName.split("\\.");
+                // Afficher en format "table.column"
+                valueLabel.setText(columnName);
+                // Optionnel: mettre en valeur la table différemment
+                // valueLabel.setText(parts[0] + "." + parts[1]);
+            } else {
+                valueLabel.setText(columnName);
+            }
         } else {
             placeholderLabel.setForeground(DashboardTheme.TEXT_SECONDARY);
             placeholderLabel.setText("Drop column here...");
@@ -253,7 +266,20 @@ public class ColumnDropField extends JPanel {
 
         if (columnName != null && !columnName.trim().isEmpty()) {
             placeholderLabel.setVisible(false);
-            valueLabel.setText(columnName);
+
+            // Si le nom contient un point, on affiche en format table.column
+            if (columnName.contains(".")) {
+                String[] parts = columnName.split("\\.");
+                String table = parts[0];
+                String column = parts.length > 1 ? parts[1] : parts[0];
+                // Afficher en format "table.column"
+                valueLabel.setText(columnName);
+                valueLabel.setFont(DashboardTheme.boldFont(12));
+            } else {
+                valueLabel.setText(columnName);
+                valueLabel.setFont(DashboardTheme.boldFont(12));
+            }
+
             valueLabel.setVisible(true);
             iconLabel.setVisible(true);
             clearButton.setVisible(true);
@@ -294,6 +320,37 @@ public class ColumnDropField extends JPanel {
 
     public String getColumnName() {
         return columnName;
+    }
+
+    /**
+     * Extrait le nom de la table depuis un nom complet "table.column"
+     */
+    public String getTableName() {
+        if (columnName == null || !columnName.contains(".")) {
+            return null;
+        }
+        return columnName.split("\\.")[0];
+    }
+
+    /**
+     * Extrait le nom de la colonne depuis un nom complet "table.column"
+     */
+    public String getSimpleColumnName() {
+        if (columnName == null) {
+            return null;
+        }
+        if (columnName.contains(".")) {
+            String[] parts = columnName.split("\\.");
+            return parts.length > 1 ? parts[1] : parts[0];
+        }
+        return columnName;
+    }
+
+    /**
+     * Vérifie si la colonne a un nom complet avec table
+     */
+    public boolean hasTableName() {
+        return columnName != null && columnName.contains(".");
     }
 
     public void setColumnChangeListener(java.util.function.Consumer<String> listener) {

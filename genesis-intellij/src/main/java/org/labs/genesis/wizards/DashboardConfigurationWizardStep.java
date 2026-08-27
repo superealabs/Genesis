@@ -2,10 +2,12 @@ package org.labs.genesis.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.forms.DashboardConfigurationForm;
 import org.labs.genesis.context.GenerationContextManager;
 
 import javax.swing.*;
+import java.util.List;
 
 public class DashboardConfigurationWizardStep
         extends ModuleWizardStep {
@@ -18,11 +20,10 @@ public class DashboardConfigurationWizardStep
             GenerationContextManager generationContextManager
     ) {
 
-        this.generationContextManager =
-                generationContextManager;
+        this.generationContextManager = generationContextManager;
 
-        this.form =
-                new DashboardConfigurationForm();
+        ProjectGenerationContext context = generationContextManager.getContext();
+        this.form = new DashboardConfigurationForm(context);
     }
 
     // =========================================================

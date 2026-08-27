@@ -1,4 +1,4 @@
-package org.labs.genesis.forms.ui.dashboard;
+package org.labs.genesis.forms.ui.visualization;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 @Getter
 public class GridCanvas extends JPanel {
 
-    private static final int GRID_COLUMNS = 30;
+    private static final int GRID_COLUMNS = 24;
     private static final int RADIUS = 12;
     private static final int BORDER_WIDTH = 1;
 

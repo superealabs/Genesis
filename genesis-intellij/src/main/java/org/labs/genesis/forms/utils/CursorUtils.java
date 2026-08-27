@@ -1,6 +1,6 @@
 package org.labs.genesis.forms.utils;
 
-import org.labs.genesis.forms.ui.dashboard.DashboardVisualComponent;
+import org.labs.genesis.forms.ui.visualization.DashboardVisualComponent;
 
 import java.awt.*;
 

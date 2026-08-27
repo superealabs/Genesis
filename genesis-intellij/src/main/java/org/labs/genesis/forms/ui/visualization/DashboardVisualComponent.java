@@ -1,4 +1,4 @@
-package org.labs.genesis.forms.ui.dashboard;
+package org.labs.genesis.forms.ui.visualization;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -7,6 +7,7 @@ import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
 import org.labs.genesis.forms.theme.DashboardTheme;
 import org.labs.genesis.forms.renderer.VisualizationRenderer;
 import org.labs.genesis.forms.renderer.VisualizationRendererFactory;
+import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
 import org.labs.genesis.forms.utils.CursorUtils;
 
 import javax.swing.*;
@@ -44,9 +45,9 @@ public class DashboardVisualComponent extends JPanel {
 
     private JLabel titleLabel;
 
-    public DashboardVisualComponent(VisualizationItem visualizationItem) {
-        this(visualizationItem, DEFAULT_GRID_WIDTH, DEFAULT_GRID_HEIGHT);
-    }
+    private JComponent errorComponent;
+    private boolean showError = false;
+    private String missingParameters = "";
 
     public DashboardVisualComponent(VisualizationItem visualizationItem,
                                     int gridWidth,
@@ -60,6 +61,7 @@ public class DashboardVisualComponent extends JPanel {
         this.visualComponent = renderer.createComponent(config);
 
         configureComponent();
+        updateDisplayState();
     }
 
     private void configureComponent() {
@@ -74,21 +76,98 @@ public class DashboardVisualComponent extends JPanel {
 
         add(titleLabel, BorderLayout.NORTH);
 
+        // Conteneur pour le contenu (visualisation ou erreur)
         JPanel contentContainer = new JPanel(new BorderLayout());
         contentContainer.setOpaque(false);
         contentContainer.setMinimumSize(new Dimension(0, 0));
         contentContainer.setPreferredSize(new Dimension(0, 0));
+        contentContainer.setName("contentContainer");
 
-        visualComponent.setMinimumSize(new Dimension(0, 0));
-        visualComponent.setPreferredSize(new Dimension(0, 0));
-        visualComponent.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        // Ajouter le contenu initial
+        updateContentContainer(contentContainer);
 
-        contentContainer.add(visualComponent, BorderLayout.CENTER);
         add(contentContainer, BorderLayout.CENTER);
     }
 
     /**
+     * Met à jour le conteneur avec le composant approprié (visualisation ou erreur)
+     */
+    private void updateContentContainer(JPanel contentContainer) {
+        contentContainer.removeAll();
+
+        if (showError) {
+            // Afficher l'erreur
+            if (errorComponent == null) {
+                errorComponent = new ErrorVisualizationComponent(missingParameters);
+            }
+            errorComponent.setMinimumSize(new Dimension(0, 0));
+            errorComponent.setPreferredSize(new Dimension(0, 0));
+            errorComponent.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+            contentContainer.add(errorComponent, BorderLayout.CENTER);
+        } else {
+            // Afficher la visualisation
+            visualComponent.setMinimumSize(new Dimension(0, 0));
+            visualComponent.setPreferredSize(new Dimension(0, 0));
+            visualComponent.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+            contentContainer.add(visualComponent, BorderLayout.CENTER);
+        }
+
+        contentContainer.revalidate();
+        contentContainer.repaint();
+    }
+
+    /**
+     * Met à jour l'état d'affichage en fonction de la configuration
+     */
+    private void updateDisplayState() {
+        boolean hasAllRequired = visualizationItem.hasAllRequiredParameters(config);
+        boolean shouldShowError = !hasAllRequired;
+
+        if (shouldShowError != showError) {
+            showError = shouldShowError;
+            if (showError) {
+                // Construire la liste des paramètres manquants
+                StringBuilder missing = new StringBuilder();
+                for (VisualizationParameter param : visualizationItem.parameters) {
+                    if (param.isRequired()) {
+                        Object value = config.getValue(param.getKey());
+                        boolean isEmpty = value == null ||
+                                (value instanceof String && ((String) value).trim().isEmpty()) ||
+                                (value instanceof java.util.List && ((java.util.List<?>) value).isEmpty());
+                        if (isEmpty) {
+                            if (missing.length() > 0) missing.append(", ");
+                            missing.append(param.getLabel());
+                        }
+                    }
+                }
+                missingParameters = missing.toString();
+
+                // Mettre à jour le composant d'erreur
+                if (errorComponent != null) {
+                    Container parent = errorComponent.getParent();
+                    if (parent != null) {
+                        parent.remove(errorComponent);
+                    }
+                }
+                errorComponent = new ErrorVisualizationComponent(missingParameters);
+            }
+
+            // Mettre à jour le conteneur
+            for (Component comp : getComponents()) {
+                if ("contentContainer".equals(comp.getName()) && comp instanceof JPanel) {
+                    updateContentContainer((JPanel) comp);
+                    break;
+                }
+            }
+
+            revalidate();
+            repaint();
+        }
+    }
+
+    /**
      * Met à jour la configuration et rafraîchit le composant.
+     * Override de la méthode existante.
      */
     public void updateConfig(String key, Object value) {
         config.setValue(key, value);
@@ -108,6 +187,16 @@ public class DashboardVisualComponent extends JPanel {
         // Mettre à jour le renderer
         renderer.updateConfig(config);
         visualComponent.repaint();
+
+        // Vérifier si l'état d'affichage doit changer
+        updateDisplayState();
+    }
+
+    /**
+     * Vérifie si la visualisation est correctement configurée.
+     */
+    public boolean isProperlyConfigured() {
+        return visualizationItem.hasAllRequiredParameters(config);
     }
 
     /**
