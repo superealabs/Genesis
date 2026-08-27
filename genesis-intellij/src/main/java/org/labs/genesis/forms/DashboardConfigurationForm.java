@@ -2,8 +2,14 @@ package org.labs.genesis.forms;
 
 import com.intellij.util.ui.JBUI;
 import lombok.Getter;
-import org.labs.genesis.forms.components.*;
 import org.labs.genesis.forms.theme.DashboardTheme;
+import org.labs.genesis.forms.ui.common.RotatableLabel;
+import org.labs.genesis.forms.ui.common.RoundedBorder;
+import org.labs.genesis.forms.ui.dashboard.DashboardVisualComponent;
+import org.labs.genesis.forms.ui.dashboard.GridCanvas;
+import org.labs.genesis.forms.ui.data.DataPanelTree;
+import org.labs.genesis.forms.ui.visualization.VisualizationPanel;
+import org.labs.genesis.forms.ui.visualization.configuration.VisualizationConfigurationPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -48,6 +54,12 @@ public class DashboardConfigurationForm {
     private final List<GridCanvas> pageCanvases = new ArrayList<>();
     private CardLayout canvasCardLayout;
     private int pageCounter = 0;
+
+    // Gestion du panel de configuration
+    private VisualizationConfigurationPanel currentConfigPanel;
+    private DashboardVisualComponent currentConfigComponent;
+    private final String CONFIG_CARD = "config";
+    private final String LIST_CARD = "list";
 
     public DashboardConfigurationForm() {
         configureMainPanel();
@@ -150,46 +162,69 @@ public class DashboardConfigurationForm {
             gridCanvas.addVisualComponent(component);
         });
 
-        rightContentCardPanel.add(visualizationPanel, "list");
+        rightContentCardPanel.add(visualizationPanel, LIST_CARD);
 
+        // Panel vide pour la configuration (sera remplacé dynamiquement)
         JPanel emptyConfig = new JPanel();
         emptyConfig.setOpaque(false);
-        rightContentCardPanel.add(emptyConfig, "config");
+        rightContentCardPanel.add(emptyConfig, CONFIG_CARD);
 
         rightCollapsedContent.add(rightContentCardPanel, BorderLayout.CENTER);
         rightSidebar.add(rightTopBar, BorderLayout.NORTH);
         rightSidebar.add(rightCollapsedContent, BorderLayout.CENTER);
 
-        rightContentCardLayout.show(rightContentCardPanel, "list");
+        rightContentCardLayout.show(rightContentCardPanel, LIST_CARD);
     }
 
     private void showVisualizationConfiguration(DashboardVisualComponent component) {
-        if (component == null) return;
+        if (component == null) {
+            showVisualizationList();
+            return;
+        }
 
-        VisualizationConfigurationPanel configPanel = new VisualizationConfigurationPanel(
-                component,
-                component.getVisualizationItem(),
-                () -> gridCanvas.selectVisual(null),
-                () -> {
-                    DashboardVisualComponent selected = gridCanvas.getSelectedVisual();
-                    if (selected != null) {
-                        gridCanvas.removeVisualComponent(selected);
-                        showVisualizationList();
-                    }
-                }
-        );
+        // Si le composant a changé ou si le panel n'existe pas, recréer
+        if (currentConfigComponent != component || currentConfigPanel == null) {
+            // Supprimer l'ancien panel
+            if (currentConfigPanel != null) {
+                rightContentCardPanel.remove(currentConfigPanel);
+            }
 
-        Component old = rightContentCardPanel.getComponent(1);
-        if (old != null) rightContentCardPanel.remove(old);
-        rightContentCardPanel.add(configPanel, "config");
-        rightContentCardLayout.show(rightContentCardPanel, "config");
+            currentConfigComponent = component;
+            currentConfigPanel = new VisualizationConfigurationPanel(
+                    component,
+                    component.getVisualizationItem(),
+                    this::onConfigBack,
+                    this::onConfigDelete
+            );
+
+            // Ajouter le nouveau panel
+            rightContentCardPanel.add(currentConfigPanel, CONFIG_CARD);
+        }
+
+        // Afficher le panel
+        rightContentCardLayout.show(rightContentCardPanel, CONFIG_CARD);
         rightContentCardPanel.revalidate();
         rightContentCardPanel.repaint();
     }
 
+    private void onConfigBack() {
+        gridCanvas.selectVisual(null);
+        showVisualizationList();
+    }
+
+    private void onConfigDelete() {
+        DashboardVisualComponent selected = gridCanvas.getSelectedVisual();
+        if (selected != null) {
+            gridCanvas.removeVisualComponent(selected);
+            currentConfigComponent = null;
+            currentConfigPanel = null;
+            showVisualizationList();
+        }
+    }
+
     private void showVisualizationList() {
         visualizationPanel.showVisualizations();
-        rightContentCardLayout.show(rightContentCardPanel, "list");
+        rightContentCardLayout.show(rightContentCardPanel, LIST_CARD);
         rightContentCardPanel.revalidate();
         rightContentCardPanel.repaint();
     }
@@ -260,6 +295,11 @@ public class DashboardConfigurationForm {
                 showVisualizationConfiguration(comp);
             } else {
                 showVisualizationList();
+                // Nettoyer la référence si plus sélectionné
+                if (currentConfigComponent != null) {
+                    currentConfigComponent = null;
+                    currentConfigPanel = null;
+                }
             }
         });
 
@@ -553,6 +593,10 @@ public class DashboardConfigurationForm {
             canvasCardLayout.show(canvasPanel, pageId);
             gridCanvas.selectVisual(null);
         }
+
+        // Réinitialiser le panel de configuration lors du changement d'onglet
+        currentConfigComponent = null;
+        currentConfigPanel = null;
 
         tabsPanel.repaint();
     }
