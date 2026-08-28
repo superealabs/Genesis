@@ -1,6 +1,41 @@
 import * as vscode from 'vscode';
-
 import { getAxiosInstance } from '../http/genesisAxiosInstance';
+
+// ═══ TYPES ═══
+export interface TableMetadataDto {
+    tableName: string;
+    className: string;
+    isView: boolean;
+}
+
+export interface RelationParameter {
+    parentTable: string;
+    childTable: string;
+    mandatory: boolean;
+    hasForm: boolean;
+}
+
+// ═══ DONNÉES STATIQUES (FALLBACK) ═══
+const MOCK_PARENT_TABLES: TableMetadataDto[] = [
+    { tableName: 'utilisateur', className: 'Utilisateur', isView: false },
+    { tableName: 'produit', className: 'Produit', isView: false },
+    { tableName: 'categorie', className: 'Categorie', isView: false },
+    { tableName: 'vue_clients_actifs', className: 'VueClientsActifs', isView: true },
+];
+
+const MOCK_CHILD_TABLES: TableMetadataDto[] = [
+    { tableName: 'commande', className: 'Commande', isView: false },
+    { tableName: 'facture', className: 'Facture', isView: false },
+    { tableName: 'detail_commande', className: 'DetailCommande', isView: false },
+    { tableName: 'vue_ventes_mensuelles', className: 'VueVentesMensuelles', isView: true },
+];
+
+// 👇 NOUVELLES DONNÉES STATIQUES POUR LES RELATIONS
+const MOCK_RELATIONS: RelationParameter[] = [
+    { parentTable: 'Utilisateur', childTable: 'Commande', mandatory: true, hasForm: true },
+    { parentTable: 'Categorie', childTable: 'Produit', mandatory: true, hasForm: false },
+    { parentTable: 'Commande', childTable: 'DetailCommande', mandatory: true, hasForm: true },
+];
 
 export class GeneratorHandler {
     constructor(private panel: vscode.WebviewPanel) {}
@@ -47,30 +82,57 @@ export class GeneratorHandler {
     }
 
     async handleGetTablesMetadata(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
-        const mockTables = [
-            { tableName: 'utilisateur', className: 'Utilisateur', isView: false },
-            { tableName: 'produit', className: 'Produit', isView: false },
-            { tableName: 'commande', className: 'Commande', isView: false },
-            { tableName: 'categorie', className: 'Categorie', isView: false },
-            { tableName: 'facture', className: 'Facture', isView: false },
-        ];
-
-        const mockViews = [
-            { tableName: 'vue_commandes_clients', className: 'VueCommandesClients', isView: true },
-            { tableName: 'vue_stock_produits', className: 'VueStockProduits', isView: true },
-        ];
-
         try {
             const { data } = await getAxiosInstance().get('/tables_metadata_loaded');
-            panel.webview.postMessage({ type: 'FRAMEWORKS_LOADED', payload: data });
+            panel.webview.postMessage({ type: 'TABLES_METADATA_LOADED', payload: data });
         } catch (error) {
-            console.warn('[FrameworkHandler] API échouée, utilisation du fallback statique:', (error as Error).message);
+            console.warn('[GeneratorHandler] API échouée, utilisation du fallback statique:', (error as Error).message);
             this.panel.webview.postMessage({
                 type: 'TABLES_METADATA_LOADED',
                 payload: {
-                    tables: mockTables,
-                    views: mockViews
+                    tables: MOCK_PARENT_TABLES,
+                    views: [MOCK_PARENT_TABLES[3], MOCK_CHILD_TABLES[3]]
                 }
+            });
+        }
+    }
+
+    async handleGetTablesMetadataParents(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/tables_metadata/parents');
+            panel.webview.postMessage({ type: 'TABLES_METADATA_PARENTS_LOADED', payload: data });
+        } catch (error) {
+            console.warn('[GeneratorHandler] API Parents échouée, utilisation du fallback statique:', (error as Error).message);
+            panel.webview.postMessage({
+                type: 'TABLES_METADATA_PARENTS_LOADED',
+                payload: MOCK_PARENT_TABLES
+            });
+        }
+    }
+
+    async handleGetTablesMetadataChilds(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/tables_metadata/childs');
+            panel.webview.postMessage({ type: 'TABLES_METADATA_CHILDS_LOADED', payload: data });
+        } catch (error) {
+            console.warn('[GeneratorHandler] API Childs échouée, utilisation du fallback statique:', (error as Error).message);
+            panel.webview.postMessage({
+                type: 'TABLES_METADATA_CHILDS_LOADED',
+                payload: MOCK_CHILD_TABLES
+            });
+        }
+    }
+
+    // ═══ NOUVELLE FONCTION POUR LES RELATIONS ═══
+    async handleGetRelations(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const { data } = await getAxiosInstance().get<RelationParameter[]>('/relations');
+            panel.webview.postMessage({ type: 'RELATIONS_LOADED', payload: data });
+        } catch (error) {
+            console.warn('[GeneratorHandler] API Relations échouée, utilisation du fallback statique:', (error as Error).message);
+            panel.webview.postMessage({
+                type: 'RELATIONS_LOADED',
+                payload: MOCK_RELATIONS
             });
         }
     }

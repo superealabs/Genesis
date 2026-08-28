@@ -69,3 +69,12 @@ export const AVAILABLE_COMPONENTS: { label: string; value: ComponentType }[] = [
     { label: 'Service', value: 'service' },
     { label: 'Controller', value: 'controller' },
 ];
+
+
+export interface RelationParameter {
+    parentTable: string;
+    childTable: string;
+    mandatory: boolean;
+    hasForm: boolean;
+}
+

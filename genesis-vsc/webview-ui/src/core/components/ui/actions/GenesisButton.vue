@@ -92,7 +92,7 @@ const variantClasses = computed(() => {
 
     if (props.variant === 'primary') {
         return hover
-            ? 'bg-accent text-bg border border-accent hover:bg-accent/80 hover:shadow-lg disabled:hover:bg-accent disabled:hover:shadow-none'
+            ? 'bg-accent text-text border border-accent hover:bg-accent/80 hover:shadow-lg disabled:hover:bg-accent disabled:hover:shadow-none'
             : 'bg-accent text-bg border-none';
     }
 
@@ -104,7 +104,7 @@ const variantClasses = computed(() => {
 
     // tertiary : pas de bg, pas de border — juste texte/icône + ghost hover optionnel
     return hover
-        ? 'bg-transparent text-text border-none hover:bg-[var(--color-hover-ghost)]'
+        ? 'bg-transparent text-text border border-transparent hover:bg-[var(--color-hover-ghost)]'
         : 'bg-transparent text-text border-none';
 });
 

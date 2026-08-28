@@ -27,10 +27,8 @@
         <!-- Étape 5 : Sélection des tables et composants -->
         <TableSelectionView v-else-if="currentStep === 5" />
 
-        <!-- Étape 6 : (Placeholder) -->
-        <div v-else-if="currentStep === 6" class="p-8 text-center text-text-muted">
-            <p>Étape 6 : À définir</p>
-        </div>
+        <RelationConfigView v-else-if="currentStep === 6" />
+
 
         <!-- Étape 7 : (Placeholder) -->
         <div v-else-if="currentStep === 7" class="p-8 text-center text-text-muted">
@@ -42,10 +40,11 @@
 <script setup lang="ts">
 import StepperPopup from '@/core/components/layouts/Popup/StepperPopup.vue';
 import FrameworksView from '@/features/frameworks/views/FrameworksView.vue';
-import ProjectConfigView from './ProjectConfigView.vue';
-import DatabaseConfigView from './DatabaseConfigView.vue';
-import ScriptConfigView from './ScriptConfigView.vue';
-import TableSelectionView from './TableSelectionView.vue';
+import ProjectConfigView from './steps/ProjectConfigView.vue';
+import DatabaseConfigView from './steps/DatabaseConfigView.vue';
+import ScriptConfigView from './steps/ScriptConfigView.vue';
+import TableSelectionView from './steps/TableSelectionView.vue';
+import RelationConfigView from './steps/RelationConfigView.vue';
 import { useGenerator } from '../composables/useGenerator';
 
 // ✅ defineEmits est ICI, dans le fichier .vue, c'est son endroit légitime

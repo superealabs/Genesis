@@ -1,109 +1,194 @@
 <template>
+    <!-- ═══ MODE LIST ═══ -->
+    <tr
+        v-if="display === 'list'"
+        class="table-row transition-colors group cursor-pointer"
+        :class="{
+            'bg-accent/10': selected,
+            'bg-bg hover:bg-bg-light/50': !selected
+        }"
+        @click="$emit('click', $event)"
+    >
+        <!-- Parent fournit ses <td> via #default -->
+        <slot />
+
+        <!-- Colonne actions — injectée automatiquement en dernière position -->
+        <td
+            v-if="deletable || showInfoButton"
+            class="p-3 text-center"
+        >
+            <div class="flex items-center justify-center gap-1">
+                <GenesisButtonIcon
+                    v-if="showInfoButton"
+                    size="lg"
+                    variant="tertiary"
+                    :hover-himself="true"
+                    @click.stop="$emit('info')"
+                >
+                    <IconHelpCircle />
+                </GenesisButtonIcon>
+                <GenesisButtonIcon
+                    v-if="deletable"
+                    size="lg"
+                    variant="tertiary"
+                    @click.stop="$emit('close')"
+                >
+                    <IconTrashAlt/>
+                </GenesisButtonIcon>
+            </div>
+        </td>
+    </tr>
+
+    <!-- ═══ MODE GRID ═══ -->
     <div
-        class="relative rounded-lg p-3 cursor-pointer transition-all duration-200"
+        v-else
+        class="relative rounded-lg cursor-pointer transition-all duration-200"
         :class="[
             layoutClasses,
             {
                 'bg-accent/10 border-accent': selected,
-                'bg-bg hover:border-accent/50': !selected
+                'bg-bg-light hover:border-accent/50': !selected
             }
         ]"
         @click="$emit('click', $event)"
     >
-        <!-- Badge de sélection (top-right) -->
+        <!-- Badge + close -->
         <div
-            v-if="slot"
-            class="absolute top-1 right-1 w-5 h-5 rounded-full bg-accent text-bg text-xs font-bold
-                   flex items-center justify-center shadow-sm"
+            v-if="badge || deletable"
+            class="absolute top-2 right-2 flex items-center gap-1 z-10"
         >
-            {{ slot }}
+            <GenesisButtonIcon
+                v-if="deletable"
+                size="xs"
+                variant="tertiary"
+                class="opacity-60 hover:opacity-100"
+                @click.stop="$emit('close')"
+            >
+                <IconTrashAlt/>
+            </GenesisButtonIcon>
+            <div
+                v-if="badge"
+                class="w-5 h-5 rounded-full bg-accent text-bg text-xs font-bold flex items-center justify-center shadow-sm"
+            >
+                {{ badge }}
+            </div>
         </div>
 
-        <!-- Mode Card : layout vertical centré -->
-        <template v-if="layoutMode === 'card'">
-            <div class="flex items-center justify-center w-10 h-10 rounded bg-secondary text-text-muted text-xs font-mono">
-                <slot name="logo">{{ initials }}</slot>
-            </div>
+        <!-- Logo -->
+        <div v-if="showLogo" :class="logoClasses">
+            <slot name="logo">{{ initials }}</slot>
+        </div>
 
-            <div class="flex flex-col items-center gap-0.5 text-center">
-                <span class="text-xs font-semibold text-text leading-tight">{{ label }}</span>
-                <span v-if="sublabel" class="text-text-muted truncate" style="font-size: 10px;">{{ sublabel }}</span>
-            </div>
-        </template>
+        <!-- Zone texte : #header custom ou label/sublabel -->
+        <div :class="textClasses">
+            <template v-if="hasHeaderSlot">
+                <slot name="header" />
+            </template>
+            <template v-else>
+                <span v-if="label" :class="labelClasses">{{ label }}</span>
+                <span v-if="sublabel" :class="sublabelClasses">{{ sublabel }}</span>
+            </template>
+        </div>
 
-        <!-- Mode List : layout horizontal -->
-        <template v-else>
-            <div class="flex items-center justify-center w-8 h-8 rounded bg-secondary text-text-muted text-xs font-mono flex-shrink-0">
-                <slot name="logo">{{ initials }}</slot>
-            </div>
+        <!-- Contenu complémentaire -->
+        <div v-if="showComplementary && hasComplementary" :class="complementaryClasses">
+            <slot name="complementary" />
+        </div>
 
-            <div class="flex flex-col gap-0.5 min-w-0 flex-1">
-                <span class="text-sm font-semibold text-text leading-tight truncate">{{ label }}</span>
-                <span v-if="sublabel" class="text-xs text-text-muted truncate">{{ sublabel }}</span>
-            </div>
-
-            <div v-if="$slots.complementary" class="flex items-center gap-2 flex-shrink-0">
-                <slot name="complementary" />
-            </div>
-        </template>
-
+        <!-- Bouton info -->
         <GenesisButtonIcon
             v-if="showInfoButton"
             size="xs"
-            :variant="'tertiary'"
+            variant="tertiary"
             :class="infoButtonClasses"
-            @click.stop="$emit('info')"
             :hover-himself="true"
+            @click.stop="$emit('info')"
         >
-            <IconHelpCircle color="var(--color-text-muted)" />
+            <IconHelpCircle />
         </GenesisButtonIcon>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, inject, useSlots } from 'vue';
+import { GENESIS_LIST_CONTEXT, type GenesisListContext } from './GenesisItem.types';
 import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconHelpCircle from '@/core/components/ui/icons/IconHelpCircle.vue';
+import IconTrashAlt from '../../ui/icons/IconTrashAlt.vue';
 
 const props = withDefaults(defineProps<{
-    label: string;
+    label?: string;
     sublabel?: string;
     selected?: boolean;
-    layoutMode?: 'card' | 'list';
-    slot?: string | null;
+    badge?: string | null;
     showInfoButton?: boolean;
+    showComplementary?: boolean;
+    showLogo?: boolean;
 }>(), {
     selected: false,
-    layoutMode: 'card',
-    slot: null,
-    showInfoButton: false
+    badge: null,
+    showInfoButton: false,
+    showComplementary: true,
+    showLogo: true,
 });
 
-defineEmits<{
+const emit = defineEmits<{
     click: [event: MouseEvent];
     info: [];
+    close: [];
 }>();
 
+const context  = inject<GenesisListContext>(GENESIS_LIST_CONTEXT);
+const display  = computed(() => context?.display.value  ?? 'grid');
+const deletable = computed(() => context?.deletable.value ?? false);
+
+const slots = useSlots();
+const hasComplementary = computed(() => !!slots.complementary);
+const hasHeaderSlot    = computed(() => !!slots.header);
+
 const initials = computed(() => {
-    return props.label
-        .split(' ')
-        .map(word => word[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 3);
+    if (!props.label) return '';
+    return props.label.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3);
 });
 
+// ═══ Layout global ═══
 const layoutClasses = computed(() => {
-    if (props.layoutMode === 'card') {
-        return 'aspect-square flex flex-col items-center justify-center gap-2';
-    }
-    return 'aspect-auto flex flex-row items-center gap-3';
+    const hasComp = props.showComplementary && hasComplementary.value;
+    return hasComp
+        ? 'flex flex-col items-center gap-4 p-4'
+        : 'aspect-square flex flex-col items-center justify-center gap-4 p-4';
 });
 
-const infoButtonClasses = computed(() => {
-    if (props.layoutMode === 'card') {
-        return 'absolute bottom-1 right-1 opacity-60 hover:opacity-100';
+// ═══ Logo ═══
+const logoClasses = computed(() => {
+    return 'flex items-center justify-center w-10 h-10 rounded bg-secondary text-text-muted text-xs font-mono';
+});
+
+// ═══ Zone texte ═══
+const textClasses = computed(() => {
+    if (props.showLogo == true) {
+        return 'flex flex-col text-center gap-2 w-full';        
     }
-    return 'opacity-60 hover:opacity-100 flex-shrink-0';
+    return 'flex flex-col gap-2 w-full';
+});
+
+// ═══ Label ═══
+const labelClasses = computed(() => {
+    return 'text-xs font-semibold text-text leading-tight';
+});
+
+// ═══ Sublabel ═══
+const sublabelClasses = computed(() => {
+    return 'text-[10px] text-text-muted truncate';
+});
+
+// ═══ Contenu complémentaire ═══
+const complementaryClasses = computed(() => {
+    return 'w-full pt-2 mt-1 border-t border-secondary/50 flex flex-col items-center gap-2';
+});
+
+// ═══ Bouton info ═══
+const infoButtonClasses = computed(() => {
+    return 'absolute bottom-1 right-1 opacity-60 hover:opacity-100';
 });
 </script>

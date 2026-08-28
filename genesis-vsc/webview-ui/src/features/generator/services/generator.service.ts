@@ -1,5 +1,6 @@
 import { VscodeService } from '@/core/services/vscode.service';
 import { useGeneratorStore } from '../store/useGenerator.store';
+import type { TableMetadataDto, RelationParameter } from '../types/generator.types';
 
 export class GeneratorService extends VscodeService {
     private _store: ReturnType<typeof useGeneratorStore> | null = null;
@@ -29,6 +30,18 @@ export class GeneratorService extends VscodeService {
                 this.store.updateScript('content', content);
             }
         });
+
+        this.onMessage<TableMetadataDto[]>('TABLES_METADATA_PARENTS_LOADED', (data) => {
+            this.store.setTablesParents(data);
+        });
+
+        this.onMessage<TableMetadataDto[]>('TABLES_METADATA_CHILDS_LOADED', (data) => {
+            this.store.setTablesChilds(data);
+        })
+
+        this.onMessage<RelationParameter[]>('RELATIONS_LOADED', (data) => {
+            this.store.setRelations(data);
+        });
     }
 
     /**
@@ -57,6 +70,19 @@ export class GeneratorService extends VscodeService {
     fetchTablesMetadata(): void {
         this.sendMessage('GET_TABLES_METADATA');
     }
+
+    fetchTablesMetadataParents(): void {
+        this.sendMessage('GET_TABLES_METADATA_PARENTS');
+    }
+
+    fetchTablesMetadataChilds(): void {
+        this.sendMessage('GET_TABLES_METADATA_CHILDS');
+    }
+
+    fetchRelations(): void {
+        this.sendMessage('GET_RELATION_PARAMETERS');
+    }
+
 }
 
 export const generatorService = new GeneratorService();

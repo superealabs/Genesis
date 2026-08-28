@@ -7,54 +7,58 @@ import type { ScriptConfig, ComponentType, GeneratorData } from '../types/genera
 
 export function useGenerator() {
     const store = useGeneratorStore();
-    const { currentStep, totalSteps, stepperData, isFirstStep, isLastStep } = storeToRefs(store);
+    const { currentStep, totalSteps, stepperData, isFirstStep, isLastStep, getTablesChilds, getTablesParents, getRelations } = storeToRefs(store);
 
     generatorService.init();
 
     function validateCurrentStep(): boolean {
         switch (currentStep.value) {
             case 1:
-                if (!stepperData.value.framework) {
-                    console.warn('Veuillez sélectionner un framework');
-                    return false;
-                }
+                // if (!stepperData.value.framework) {
+                //     console.warn('Veuillez sélectionner un framework');
+                //     return false;
+                // }
                 return true;
 
             case 2:
-                if (!stepperData.value.config.projectName.trim()) {
-                    console.warn('Le nom du projet est obligatoire');
-                    return false;
-                }
-                if (!stepperData.value.config.languageVersion) {
-                    console.warn('Veuillez sélectionner une version du language');
-                    return false;
-                }
+                // if (!stepperData.value.config.projectName.trim()) {
+                //     console.warn('Le nom du projet est obligatoire');
+                //     return false;
+                // }
+                // if (!stepperData.value.config.languageVersion) {
+                //     console.warn('Veuillez sélectionner une version du language');
+                //     return false;
+                // }
                 return true;
 
             case 3:
-                if (!stepperData.value.database.databaseName.trim()) {
-                    console.warn('Le nom de la base de données est obligatoire');
-                    return false;
-                }
-                if (!stepperData.value.database.username.trim()) {
-                    console.warn('Le nom d\'utilisateur est obligatoire');
-                    return false;
-                }
+                // if (!stepperData.value.database.databaseName.trim()) {
+                //     console.warn('Le nom de la base de données est obligatoire');
+                //     return false;
+                // }
+                // if (!stepperData.value.database.username.trim()) {
+                //     console.warn('Le nom d\'utilisateur est obligatoire');
+                //     return false;
+                // }
                 return true;
 
             case 4:
                 return true;
 
             case 5:
-                const { selectedTables, selectedComponents } = stepperData.value.tableSelection;
-                if (selectedTables.length === 0) {
-                    console.warn('Veuillez sélectionner au moins une table.');
-                    return false;
-                }
-                if (selectedComponents.length === 0) {
-                    console.warn('Veuillez sélectionner au moins un type de composant.');
-                    return false;
-                }
+                // const { selectedTables, selectedComponents } = stepperData.value.tableSelection;
+                // if (selectedTables.length === 0) {
+                //     console.warn('Veuillez sélectionner au moins une table.');
+                //     return false;
+                // }
+                // if (selectedComponents.length === 0) {
+                //     console.warn('Veuillez sélectionner au moins un type de composant.');
+                //     return false;
+                // }
+                return true;
+
+            case 6:
+
                 return true;
 
             default:
@@ -62,7 +66,6 @@ export function useGenerator() {
         }
     }
 
-    // ✅ MODIFICATION : Retourne les données si c'est la dernière étape, sinon null
     function goToNextStep(): GeneratorData | null {
         if (!validateCurrentStep()) return null;
 
@@ -127,12 +130,31 @@ export function useGenerator() {
         generatorService.fetchTablesMetadata();
     }
 
+    function fetchTablesMetadataParents() {
+        generatorService.fetchTablesMetadataParents();
+    }
+
+    function fetchTablesMetadataChilds() {
+        generatorService.fetchTablesMetadataChilds();
+    }
+
+    function fetchRelations() {
+        generatorService.fetchRelations();
+    }
+
     return {
         currentStep,
         totalSteps,
         isFirstStep,
         isLastStep,
         stepperData,
+
+        getTablesParents,
+        getTablesChilds,
+        getRelations,
+        addRelation: store.addRelation,
+        removeRelation: store.removeRelation,
+
         goToNextStep,
         goToPreviousStep,
         handleFrameworkSelect,
@@ -144,6 +166,9 @@ export function useGenerator() {
         selectFolderPath,
         selectScriptPath,
         fetchTablesMetadata,
+        fetchRelations,
+        fetchTablesMetadataParents,
+        fetchTablesMetadataChilds,
         toggleTable,
         toggleView,
         toggleComponent,

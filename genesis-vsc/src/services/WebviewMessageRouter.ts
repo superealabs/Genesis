@@ -38,7 +38,19 @@ export class WebviewMessageRouter {
                 case 'REQUEST_FILE_PATH':
                     await this.generatorHandler.handleRequestFilePath(message.payload?.extensions);
                     break;
+
+                case 'GET_TABLES_METADATA_PARENTS':
+                    await this.generatorHandler.handleGetTablesMetadataParents(message.payload, this.panel);
+                    break;
+
+                case 'GET_TABLES_METADATA_CHILDS':
+                    await this.generatorHandler.handleGetTablesMetadataChilds(message.payload, this.panel);
+                    break;
                     
+                case 'GET_RELATION_PARAMETERS':
+                    await this.generatorHandler.handleGetRelations(message.payload, this.panel);
+                    break;
+
                 default:
                     console.warn(`[WebviewMessageRouter] Message non géré : ${message.type}`);
             }

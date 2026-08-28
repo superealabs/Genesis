@@ -88,13 +88,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useGenerator } from '../composables/useGenerator';
+import { useGenerator } from '../../composables/useGenerator';
 import { 
     AVAILABLE_COMPONENTS, 
     type ComponentType,
     // type DatabaseConfig,
     type TableMetadataDto 
-} from '../types/generator.types';
+} from '../../types/generator.types';
 
 const { stepperData, toggleTable, toggleView, toggleComponent } = useGenerator();
 const MOCK_TABLES: TableMetadataDto[] = [];

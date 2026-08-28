@@ -2,86 +2,96 @@
   <Menu
     v-slot="{ open, close }"
     as="div"
-    class="relative inline-block"
   >
-    <!-- ═══ Wrapper interne — accède à open/close du slot ═══ -->
     <div
+      class="inline-flex flex-col gap-1"
       @mouseenter="handleMouseEnter(open)"
       @mouseleave="handleMouseLeave(open, close)"
     >
-      <MenuButton as="template">
-
-        <GenesisButton
-          v-if="$slots.trigger"
-          ref="triggerRef"
-          :variant="triggerVariant"
-          :size="triggerSize"
-          :disabled="triggerDisabled"
-          :use-default-text="false"
-          :class="{ '!border !border-secondary': open }"
-        >
-          <template v-if="$slots.triggerIcon" #leftIcon>
-            <slot name="triggerIcon" />
-          </template>
-          <slot name="trigger" />
-          <template #rightIcon>
-            <IconChevronDown
-              v-if="!hideChevron"
-              class="transition-transform duration-200"
-              :class="{ 'rotate-180': open }"
-            />
-          </template>
-        </GenesisButton>
-
-        <GenesisButton
-          v-else-if="!hideChevron"
-          ref="triggerRef"
-          :variant="triggerVariant"
-          :size="triggerSize"
-          :disabled="triggerDisabled"
-          :use-default-text="false"
-          :class="{ '!border !border-secondary': open }"
-        >
-          <template v-if="$slots.triggerIcon" #leftIcon>
-            <slot name="triggerIcon" />
-          </template>
-          <template #rightIcon>
-            <IconChevronDown
-              class="transition-transform duration-200"
-              :class="{ 'rotate-180': open }"
-            />
-          </template>
-        </GenesisButton>
-
-        <GenesisButtonIcon
-          v-else
-          ref="triggerRef"
-          :variant="triggerVariant"
-          :size="triggerSize"
-          :disabled="triggerDisabled"
-          :class="{ '!border !border-secondary': open }"
-        >
-          <slot name="triggerIcon" />
-        </GenesisButtonIcon>
-
-      </MenuButton>
-
-      <transition
-        enter-active-class="transition duration-100 ease-out"
-        enter-from-class="transform scale-95 opacity-0"
-        enter-to-class="transform scale-100 opacity-100"
-        leave-active-class="transition duration-75 ease-in"
-        leave-from-class="transform scale-100 opacity-100"
-        leave-to-class="transform scale-95 opacity-0"
+      <!-- ═══ Label ═══ -->
+      <label
+        v-if="label"
+        class="text-sm font-medium text-muted"
       >
-        <MenuItems
-          :class="menuItemsClasses"
-          :style="dropdownStyle"
-          class="focus:outline-none"
+        {{ label }}<span v-if="isMandatory" class="text-accent ml-0.5">*</span>
+      </label>
+
+      <!-- ═══ Wrapper trigger + dropdown (le relative est ici) ═══ -->
+      <div class="relative inline-block">
+        <MenuButton as="template">
+
+          <GenesisButton
+            v-if="$slots.trigger"
+            ref="triggerRef"
+            :variant="triggerVariant"
+            :size="triggerSize"
+            :disabled="triggerDisabled"
+            :use-default-text="false"
+            :class="{ '!border !border-secondary': open }"
+          >
+            <template v-if="$slots.triggerIcon" #leftIcon>
+              <slot name="triggerIcon" />
+            </template>
+            <slot name="trigger" />
+            <template #rightIcon>
+              <IconChevronDown
+                v-if="!hideChevron"
+                class="transition-transform duration-200"
+                :class="{ 'rotate-180': open }"
+              />
+            </template>
+          </GenesisButton>
+
+          <GenesisButton
+            v-else-if="!hideChevron"
+            ref="triggerRef"
+            :variant="triggerVariant"
+            :size="triggerSize"
+            :disabled="triggerDisabled"
+            :use-default-text="false"
+            :class="{ '!border !border-secondary': open }"
+          >
+            <template v-if="$slots.triggerIcon" #leftIcon>
+              <slot name="triggerIcon" />
+            </template>
+            <template #rightIcon>
+              <IconChevronDown
+                class="transition-transform duration-200"
+                :class="{ 'rotate-180': open }"
+              />
+            </template>
+          </GenesisButton>
+
+          <GenesisButtonIcon
+            v-else
+            ref="triggerRef"
+            :variant="triggerVariant"
+            :size="triggerSize"
+            :disabled="triggerDisabled"
+            :class="{ '!border !border-secondary': open }"
+          >
+            <slot name="triggerIcon" />
+          </GenesisButtonIcon>
+
+        </MenuButton>
+
+        <transition
+          enter-active-class="transition duration-100 ease-out"
+          enter-from-class="transform scale-95 opacity-0"
+          enter-to-class="transform scale-100 opacity-100"
+          leave-active-class="transition duration-75 ease-in"
+          leave-from-class="transform scale-100 opacity-100"
+          leave-to-class="transform scale-95 opacity-0"
         >
-          <slot />
-        </MenuItems>
-      </transition>
+          <MenuItems
+            :class="menuItemsClasses"
+            :style="dropdownStyle"
+            class="focus:outline-none"
+          >
+            <slot />
+          </MenuItems>
+        </transition>
+      </div>
     </div>
   </Menu>
 </template>
@@ -104,6 +114,8 @@ const props = withDefaults(defineProps<{
     triggerSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
     triggerDisabled?: boolean;
     openAtHover?: boolean;
+    label?: string;
+    isMandatory?: boolean;
 }>(), {
     align: 'right',
     dropdownSize: 'md',
@@ -113,6 +125,8 @@ const props = withDefaults(defineProps<{
     triggerSize: 'md',
     triggerDisabled: false,
     openAtHover: false,
+    label: '',
+    isMandatory: false,
 });
 
 const emit = defineEmits<{ close: [] }>();
@@ -121,7 +135,6 @@ const triggerRef = ref<ComponentPublicInstance | HTMLElement | null>(null);
 const triggerWidth = ref<number | null>(null);
 let hoverTimeout: number | null = null;
 
-// ═══ Positionnement ═══
 const resolvedPosition = computed(() => {
     if (props.position) return props.position;
     const el = (triggerRef.value as ComponentPublicInstance)?.$el || triggerRef.value;

@@ -7,21 +7,20 @@
             <label class="text-sm font-medium text-muted">
                 SGBD <span class="text-accent ml-0.5">*</span>
             </label>
-            <GenesisDropdown :match-trigger-width="true" trigger-variant="secondary" fill-width>
+            <GenesisDropdown :match-trigger-width="true" trigger-variant="secondary" :align="'left'">
                 <template #trigger>
                     <span>{{ selectedDatabaseLabel }}</span>
                 </template>
                 <div class="py-1">
-                    <button
-                        v-for="db in databases"
-                        :key="db.value"
-                        type="button"
-                        class="w-full text-left px-3 py-1.5 text-sm text-text hover:bg-[var(--color-hover-ghost)] transition-colors flex items-center justify-between"
-                        @click="selectDatabase(db.value)"
-                    >
-                        <span>{{ db.label }}</span>
-                        <span v-if="database.engine === db.value" class="text-accent">✓</span>
-                    </button>
+                    <MenuItem v-for="db in databases" :key="db.value">
+                        <GenesisButton
+                            @click="selectDatabase(db.value)"
+                            :variant="'tertiary'"
+                            :fill-width="true"
+                        >
+                            {{ db.label }}
+                        </GenesisButton>
+                    </MenuItem>
                 </div>
             </GenesisDropdown>
         </div>
@@ -136,9 +135,11 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useGenerator } from '../composables/useGenerator';
+import { useGenerator } from '../../composables/useGenerator';
 import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
 import GenesisDropdown from '@/core/components/ui/dropdown/GenesisDropdown.vue'; // Assure-toi qu'il existe
+import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
+import { MenuItem } from '@headlessui/vue';
 
 type DatabaseEngine = 'mysql' | 'postgre' | 'sqlserver' | 'oracle';
 

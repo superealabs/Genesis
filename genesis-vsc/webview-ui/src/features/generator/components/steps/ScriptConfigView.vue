@@ -95,7 +95,7 @@ import IconFolder from '@/core/components/ui/icons/IconFolder.vue';
 import IconChevronRight from '@/core/components/ui/icons/IconChevronRight.vue';
 import IconX from '@/core/components/ui/icons/IconX.vue';
 import LlmAssistantPopup from '@/core/components/ux/LlmAssistantPopup.vue';
-import { useGenerator } from '../composables/useGenerator';
+import { useGenerator } from '../../composables/useGenerator';
 
 const { selectScriptPath, updateScript, stepperData } = useGenerator();
 

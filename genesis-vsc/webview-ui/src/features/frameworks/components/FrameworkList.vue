@@ -5,15 +5,13 @@
             :key="framework.id"
             :label="framework.name"
             :sublabel="framework.coreFramework"
-            :layoutMode="display === 'grid' ? 'card' : 'list'"
             :selected="selectedId === framework.id"
-            :slot="frameworkSlots?.get(framework.id) ?? null"
-            :showInfoButton="true"
+            :badge="frameworkSlots?.get(framework.id) ?? null"
+            :show-info-button="true"
             @click="$emit('select', framework, $event)"
             @info="$emit('info', framework)"
         >
-            <!-- Informations complémentaires (uniquement en mode list) -->
-            <template v-if="display === 'list'" #complementary>
+            <template #complementary>
                 <span
                     v-if="framework.isProd"
                     class="px-2 py-0.5 bg-green-500/10 text-green-500 text-xs rounded-full font-medium whitespace-nowrap"

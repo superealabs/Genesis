@@ -14,17 +14,14 @@
 
         <!-- ═══ CAS BOOLEAN ═══ -->
         <template v-if="type === 'boolean'">
-            <div class="inline-flex items-center gap-2" :class="containerSizeClasses">
-                <input
-                    type="checkbox"
-                    class="w-4 h-4 rounded border-secondary bg-transparent text-accent
-                           focus:ring-accent cursor-pointer disabled:cursor-not-allowed"
-                    :checked="Boolean(modelValue)"
-                    :disabled="disabled"
-                    v-bind="$attrs"
-                    @change="$emit('update:modelValue', ($event.target as HTMLInputElement).checked)"
-                />
-            </div>
+            <GenesisSwitch
+                :modelValue="Boolean(modelValue)"
+                @update:modelValue="$emit('update:modelValue', $event)"
+                :disabled="disabled"
+                :size="switchSize"
+                :label="oneLine ? label : ''"
+                v-bind="$attrs"
+            />
         </template>
 
         <!-- ═══ CAS STANDARD ═══ -->
@@ -85,6 +82,7 @@
 
 <script setup lang="ts">
 import { computed, useSlots } from 'vue';
+import GenesisSwitch from './GenesisSwitch.vue';
 
 export type InputType = 'text' | 'password' | 'number' | 'date' | 'boolean';
 
@@ -186,7 +184,7 @@ const containerShapeClasses = computed(() => ({
 
 const containerVariantClasses = computed(() => ({
     primary:   'bg-transparent border-secondary hover:border-accent',
-    secondary: 'bg-transparent border-secondary hover:border-secondary',
+    secondary: 'bg-transparent border-bg-light hover:border-secondary',
 }[props.variant]));
 
 const fillWidthClasses  = computed(() => props.fillWidth ? 'w-full' : 'w-fit');
@@ -202,5 +200,11 @@ const labelClasses = computed(() =>
 const inputWrapperClasses = computed(() => {
     if (props.fillWidth && props.oneLine) return 'flex-1 min-w-0';
     return props.fillWidth ? 'w-full' : 'w-fit';
+});
+
+const switchSize = computed(() => {
+    if (props.size === 'xs' || props.size === 'sm') return 'sm';
+    if (props.size === 'xl' || props.size === '2xl') return 'lg';
+    return 'md'; // Pour 'md' et 'lg'
 });
 </script>

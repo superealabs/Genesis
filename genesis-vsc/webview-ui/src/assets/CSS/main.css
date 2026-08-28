@@ -77,9 +77,9 @@ body.theme-genesis.genesis-dark {
 /* Genesis CLAIR (auto ET forcé) */
 body.theme-genesis.vscode-light,
 body.theme-genesis.genesis-light {
-    --color-bg-light:    hsl(145, 100%, 96%);
+    --color-bg-light:    hsl(145, 100%, 92%);
     --color-bg:          hsl(145, 100%, 92%);
-    --color-bg-dark:     hsl(145, 100%, 88%);
+    --color-bg-dark:     hsl(145, 100%, 96%);
 
     --color-text:        hsl(175, 100%, 4%);
     --color-text-muted:  hsl(175, 100%, 15%);

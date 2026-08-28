@@ -1,8 +1,12 @@
-
-- faire en sorte que les données des vues proviennent de l'extension host
-    - TableSekectionView
-    - DatabaseSelection
-    - Script
+- mode grid
+    - augmenter la taille du padding y
+    - augmenter la taille du gap entre le header et le logo
+    - rajouter le css flex-col pour le conteneur du header
+- mode list
+    - seulement en flex pour le conteneur du header
+    
+- mode table
+    - rajouter une colonne header action quand l'élément est closeable ou a un showButtonInfo
 
 - créer les étapes
     # step 7

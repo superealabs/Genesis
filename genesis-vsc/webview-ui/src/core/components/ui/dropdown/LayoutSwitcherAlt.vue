@@ -45,40 +45,6 @@
         </GenesisButton>
       </MenuItem>
     </div>
-
-
-    <div class="p-1">
-      <!-- 3. Le contenu du menu est injecté directement. On garde MenuItem pour l'état 'active' et l'accessibilité clavier -->
-      <MenuItem v-slot="{ active }" as="template">
-        <GenesisButton
-          :class="[active ? 'active' : '']"
-          variant="tertiary"
-          :fill-width="true"
-          size="lg"
-          @click="selectView('grid')"
-        >
-          <template #leftIcon>
-            <IconGrid aria-hidden="true" />
-          </template>
-          Grid
-        </GenesisButton>
-      </MenuItem>
-
-      <MenuItem v-slot="{ active }" as="template">
-        <GenesisButton
-          :class="[active ? 'active' : '']"
-          variant="tertiary"
-          :fill-width="true"
-          size="lg"
-          @click="selectView('list')"
-        >
-          <template #leftIcon>
-            <IconListUl aria-hidden="true" />
-          </template>
-          List
-        </GenesisButton>
-      </MenuItem>
-    </div>
   </GenesisDropdown>
 </template>
 
@@ -107,7 +73,8 @@ const emit = defineEmits<{
 }>();
 
 const currentIcon = computed(() => {
-    return props.modelValue === 'grid' ? IconGrid : IconListUl;
+    if (props.modelValue === 'grid') return IconGrid;
+    return IconListUl; // Par défaut pour 'list'
 });
 
 const selectView = (view: 'grid' | 'list') => {

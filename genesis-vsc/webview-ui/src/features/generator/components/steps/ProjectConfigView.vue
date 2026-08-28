@@ -85,9 +85,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
-import { useGenerator } from '../composables/useGenerator';
-import { generatorService } from '../services/generator.service';
-import { MOCK_BUILD_TOOLS, MOCK_JAVA_VERSIONS, MOCK_NODE_VERSIONS } from '../types/generator.types';
+import { useGenerator } from '../../composables/useGenerator';
+import { generatorService } from '../../services/generator.service';
+import { MOCK_BUILD_TOOLS, MOCK_JAVA_VERSIONS, MOCK_NODE_VERSIONS } from '../../types/generator.types';
 
 // Imports des composants
 import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';

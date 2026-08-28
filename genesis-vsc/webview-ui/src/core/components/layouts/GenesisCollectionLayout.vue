@@ -1,53 +1,59 @@
 <template>
-    <div class="flex flex-col gap-4 p-4">
+    <div class="flex flex-col gap-16 p-4">
         <!-- Back button (optionnel) -->
         <GenesisBackButton v-if="showBackButton" @click="$emit('back')" />
 
         <!-- Header -->
-        <div class="flex items-center justify-between gap-4">
-            <h2 class="font-semibold text-text font-heading text-6xl shrink-0">
-                <slot name="title">{{ title }}</slot>
-            </h2>
+        <div class="flex flex-col gap-4">
+            <div class="flex items-center justify-between gap-4">
+                <h2 class="font-semibold text-text font-heading text-6xl shrink-0">
+                    <slot name="title">{{ title }}</slot>
+                </h2>
 
-            <!-- Contrôles à droite : Mode + Layout -->
-            <div class="flex items-center gap-2">
-                <GenesisSegmentedControl
-                    v-model="internalMode"
-                    :options="[
-                        { label: 'Selection', value: 'selection', icon: IconCursor },
-                        { label: 'Compare', value: 'compare', icon: IconGitCompare }
-                    ]"
-                    size="md"
-                />
-                
-                <LayoutSwitcherAlt v-model="internalDisplayMode" />
+                <!-- Contrôles à droite : Mode + Layout -->
+                <div class="flex items-center gap-2">
+                    <GenesisSegmentedControl
+                        v-model="internalMode"
+                        :options="[
+                            { label: 'Selection', value: 'selection', icon: IconCursor },
+                            { label: 'Compare', value: 'compare', icon: IconGitCompare }
+                        ]"
+                        size="md"
+                    />
+                    
+                    <LayoutSwitcherAlt v-model="internalDisplayMode" />
+                </div>
             </div>
-        </div>
 
-        <!-- Barre de recherche + filtre -->
-        <div class="flex items-center gap-2">
-            <GenesisInput
-                :modelValue="searchValue"
-                @update:modelValue="$emit('update:searchValue', $event)"
-                type="text"
-                :placeholder="searchPlaceholder"
-                variant="primary"
-                shape="rectangle"
-                size="sm"
-                fill-width
-            />
-            
-            <!-- Slot pour filtre custom -->
-            <slot name="filter">
-                <GenesisButtonIcon
-                    v-if="showFilter"
-                    variant="secondary"
-                    size="md"
-                    @click="$emit('openFilter')"
+            <!-- Barre de recherche + filtre -->
+            <div class="flex items-center gap-2">
+                <GenesisInput
+                    :modelValue="searchValue"
+                    @update:modelValue="$emit('update:searchValue', $event as string)"
+                    type="text"
+                    :placeholder="searchPlaceholder"
+                    variant="primary"
+                    shape="rectangle"
+                    size="lg"
+                    fill-width
                 >
-                    <IconFilter />
-                </GenesisButtonIcon>
-            </slot>
+                    <template #left>
+                        <IconSearch :size="20" />
+                    </template>
+                </ GenesisInput>
+                
+                <!-- Slot pour filtre custom -->
+                <slot name="filter">
+                    <GenesisButtonIcon
+                        v-if="showFilter"
+                        variant="secondary"
+                        size="md"
+                        @click="$emit('openFilter')"
+                    >
+                        <IconFilter />
+                    </GenesisButtonIcon>
+                </slot>
+            </div>
         </div>
 
         <!-- Contenu (Grid ou List) -->
@@ -65,6 +71,7 @@ import IconGitCompare from '@/core/components/ui/icons/IconGitCompare.vue';
 import IconFilter from '@/core/components/ui/icons/IconFilter.vue';
 import LayoutSwitcherAlt from '../ui/dropdown/LayoutSwitcherAlt.vue';
 import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
+import IconSearch from '../ui/icons/IconSearch.vue';
 
 export type CollectionMode = 'selection' | 'compare';
 

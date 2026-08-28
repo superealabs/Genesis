@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Framework } from '@/features/frameworks/types/framework.types';
-import type { GeneratorData, ProjectConfig, DatabaseConfig, ScriptConfig, ComponentType, TableMetadataDto } from '../types/generator.types';
+import type { GeneratorData, ProjectConfig, DatabaseConfig, ScriptConfig, ComponentType, TableMetadataDto, RelationParameter } from '../types/generator.types';
 
 export const useGeneratorStore = defineStore('generator', () => {
     // ═══ État ═══
@@ -9,6 +9,9 @@ export const useGeneratorStore = defineStore('generator', () => {
     const totalSteps = 7;
     const availableTables = ref<TableMetadataDto[]>([]);
     const availableViews = ref<TableMetadataDto[]>([]);
+    const tablesParents = ref<TableMetadataDto[]>([]);
+    const tablesChilds = ref<TableMetadataDto[]>([]);
+    const relations = ref<RelationParameter[]>([]);
 
     function setAvailableTables(tables: TableMetadataDto[]) {
         availableTables.value = tables;
@@ -17,6 +20,24 @@ export const useGeneratorStore = defineStore('generator', () => {
     function setAvailableViews(views: TableMetadataDto[]) {
         availableViews.value = views;
     }
+
+    function setTablesParents(tables: TableMetadataDto[]) {
+        tablesParents.value = tables;
+    }
+
+    function setTablesChilds(tables: TableMetadataDto[]) {
+        tablesChilds.value = tables;
+    }
+
+    function setRelations(data: RelationParameter[]) {
+        relations.value = data;
+    }
+
+    // ═══ Getter Relations ═══
+    const getRelations = computed(() => relations.value);
+
+    const getTablesParents = computed(() => tablesParents.value);
+    const getTablesChilds = computed(() => tablesChilds.value);
 
     
     const stepperData = ref<GeneratorData>({
@@ -151,6 +172,27 @@ export const useGeneratorStore = defineStore('generator', () => {
         };
     }
 
+
+    function addRelation(relation: RelationParameter): boolean {
+        // Logique métier : vérification des doublons
+        const exists = relations.value.some(r => 
+            r.parentTable === relation.parentTable && 
+            r.childTable === relation.childTable
+        );
+        
+        if (exists) {
+            console.warn('Cette relation existe déjà.');
+            return false; // Échec
+        }
+        
+        relations.value.push(relation);
+        return true; // Succès
+    }
+
+    function removeRelation(index: number) {
+        relations.value.splice(index, 1);
+    }
+
     return {
         currentStep,
         totalSteps,
@@ -161,7 +203,15 @@ export const useGeneratorStore = defineStore('generator', () => {
         availableViews,
         setAvailableTables,
         setAvailableViews,
+        setTablesChilds,
+        setTablesParents,
+        getTablesParents,
+        getTablesChilds,
         setFramework,
+        setRelations,
+        getRelations,
+        addRelation,
+        removeRelation,
         updateConfig,
         updateDatabase,
         updateScript,
