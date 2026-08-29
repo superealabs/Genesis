@@ -571,7 +571,7 @@ public class GenesisCoreTest {
             String logLevel = "INFO";
             String hibernateDdlAuto = "none";
             String projectDescription = "test";
-            String frameworkVersion = "6.2.19";
+            String frameworkVersion = "3.3.6";
             String languageVersion = "21";
             String destinationFolder =
                     "C:\\Users\\Marina\\Documents\\SpringMVC";
