@@ -105,8 +105,8 @@ ${viewAnnotations}
 <div class="modal" id="exportModal">
     <form class="modal-content" method="post" ${exportLink}>
         <input type="hidden" name="page" value="${pageNumberValue}" />
-        <input type="hidden" name="${pageSizeParamName}" value="${pageSizeValue}" />
-        <input type="hidden" name="${sortParamName}" value="${currentSortValue}" />
+        <input type="hidden" name="${pageSizeParamName}" value="${pageSizeValue}" ${pageSizeValueTagHelper} />
+        <input type="hidden" name="${sortParamName}" value="${currentSortValue}" ${currentSortValueTagHelper} />
         ${antiForgeryTokenTagHelper}
 
         <div class="modal-header">
@@ -181,11 +181,11 @@ ${viewAnnotations}
                         {{else}}
                         <a ${sortLink} class="sort-link">
                             <div class="sort-icons">
-                                <svg class="sort-asc ${activeSortAscCondition}" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                                <svg class="sort-asc" ${activeSortAscCondition} width="10" height="10" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2">
                                     <path d="M7 15l5-5 5 5" />
                                 </svg>
-                                <svg class="sort-desc ${activeSortDescCondition}" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                                <svg class="sort-desc" ${activeSortDescCondition} width="10" height="10" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2">
                                     <path d="M7 10l5 5 5-5" />
                                 </svg>
@@ -390,8 +390,8 @@ ${viewAnnotations}
             <select class="dropdown-select btn-sm" name="page" id="page">
                 ${onGoingPagesLoop}
             </select>
-            <input type="hidden" name="${pageSizeParamName}" value="${pageSizeValue}" />
-            <input type="hidden" name="${sortParamName}" value="${currentSortValue}" />
+            <input type="hidden" name="${pageSizeParamName}" value="${pageSizeValue}" ${pageSizeValueTagHelper} />
+            <input type="hidden" name="${sortParamName}" value="${currentSortValue}" ${currentSortValueTagHelper} />
             <button type="submit" class="btn btn-tertiary btn-sm"><span data-i18n="go"></span></button>
         </form>
     </div>

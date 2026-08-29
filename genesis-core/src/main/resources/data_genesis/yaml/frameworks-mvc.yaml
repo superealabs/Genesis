@@ -3168,6 +3168,7 @@
       onGoingPageLink: 'action="@Url.Action("Index")"'
       pageNumberValue: "@Model.Page.Number"
       pageSizeValue: "@Model.Page.Size"
+      pageSizeValueTagHelper: "{{removeLine}}"
       pageSizeParamName: "pageSize"
       sortParamName: "sortOrder"
       filterMethod: "post"
@@ -4225,6 +4226,8 @@
         import org.springframework.web.bind.annotation.ControllerAdvice;
         import org.springframework.web.bind.annotation.ExceptionHandler;
         import org.springframework.web.bind.annotation.ResponseStatus;
+        import org.springframework.http.ResponseEntity;
+        import org.springframework.web.servlet.resource.NoResourceFoundException;
         @Slf4j
         @ControllerAdvice
         public class GlobalExceptionHandler {
@@ -4250,6 +4253,10 @@
                 log.error("An internal error occurred", ex);
                 model.addAttribute("errorMessage", ex.getMessage());
                 return "error/error";
+            }
+            @ExceptionHandler(NoResourceFoundException.class)
+            public ResponseEntity<Void> handleNoResourceFoundException(NoResourceFoundException ex) {
+                return ResponseEntity.notFound().build();
             }
             @ExceptionHandler(Exception.class)
             @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -4345,6 +4352,26 @@
             }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
+
+    - fileType: "Home Controller"
+      fileName: "HomeController"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.controllers;
+        import org.springframework.stereotype.Controller;
+        import org.springframework.web.bind.annotation.GetMapping;
+        @Controller
+        public class HomeController {
+            @GetMapping("/")
+            public String home() {
+        {{#each allEntities}}
+        {{#if @first}}
+                return "redirect:/${minStart(this.className)}";
+        {{/if}}
+        {{/each}}
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
 
   configurations:
     - name: "Logging Level"
@@ -4722,53 +4749,124 @@
       import ${groupLink}.${lowerCase(projectName)}.models.dto.${majStart(className)}Search;
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
       import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
-      import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
-      import org.springframework.stereotype.Controller;
-      import org.springframework.ui.Model;
       import org.springframework.data.domain.Page;
       import org.springframework.data.domain.PageRequest;
       import org.springframework.data.domain.Pageable;
       import org.springframework.data.domain.Sort;
-      import org.springframework.web.bind.annotation.*;
-      import java.util.HashMap;
+      import org.springframework.stereotype.Controller;
+      import org.springframework.ui.Model;
+      import org.springframework.web.bind.annotation.GetMapping;
+      import org.springframework.web.bind.annotation.ModelAttribute;
+      import org.springframework.web.bind.annotation.PathVariable;
+      import org.springframework.web.bind.annotation.RequestMapping;
+      import org.springframework.web.bind.annotation.RequestParam;
+      {{#if !isView}}
+      import org.springframework.web.bind.annotation.PostMapping;
+      import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+      {{else}}{{removeLine}}{{/if}}
+      import jakarta.validation.Valid;
+      import org.springframework.validation.BindingResult;
     controllerAnnotations: |
       @Controller
-      @RequestMapping("/${lowerCase(classNameLink)}")
+      @RequestMapping("/${minStart(className)}")
     controllerExtends: ""
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
-      {{tab}}private final ${majStart(className)}Service ${lowerCase(className)}Service;
+      {{tab}}private final ${majStart(className)}Service ${minStart(className)}Service;
     controllerConstructors: |
-      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${lowerCase(className)}Service) {
-      {{tab}}   this.${lowerCase(className)}Service = ${lowerCase(className)}Service;
+      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${minStart(className)}Service) {
+      {{tab}}   this.${minStart(className)}Service = ${minStart(className)}Service;
       {{tab}}}
     controllerMethodContent: |
-      @GetMapping
-      public String list${majStart(classNameLink)}(
-           @RequestParam(defaultValue = "0") int page,
-           @RequestParam(defaultValue = "10") int size,
-           @RequestParam(defaultValue = "${pkColumn},asc") String sortParam,
-           Model model) {
-
-              Sort sort = WebUtils.createSortObject(sortParam);
-
-              Pageable pageable = PageRequest.of(page, size, sort);
-
-              Page<${majStart(className)}> ${minStart(className)}Page = ${minStart(className)}Service.getAll${majStart(className)}(pageable);
-
-              model.addAttribute("${minStart(className)}s", ${minStart(className)}Page.getContent()); 
-              model.addAttribute("${minStart(className)}Page", ${minStart(className)}Page);
-
-              model.addAttribute("currentPage", page);
-
-              model.addAttribute("pageTitle", "Liste des ${minStart(className)}s");
-
-              if (!${minStart(className)}Page.hasContent()) {
-                  model.addAttribute("noDataMessage", "Aucun ${minStart(className)} trouvé.");
-              }
-
-              return "${minStart(className)}/list"; 
-          }
+      {{tab}}@GetMapping
+      {{tab}}public String list${majStart(classNameLink)}(
+      {{tab}}        @ModelAttribute("${minStart(className)}Search") ${majStart(className)}Search search,
+      {{tab}}        @RequestParam(defaultValue = "0") int page,
+      {{tab}}        @RequestParam(defaultValue = "10") int pageSize,
+      {{tab}}        @RequestParam(defaultValue = "${pkColumn},asc") String sortOrder,
+      {{tab}}        Model model) {
+      {{tab}}    Sort sort = WebUtils.createSortObject(sortOrder);
+      {{tab}}    Pageable pageable = PageRequest.of(page, pageSize, sort);
+      {{tab}}    Page<${majStart(className)}> ${minStart(className)}Page =
+      {{tab}}            ${minStart(className)}Service.getAll${majStart(className)}(pageable, search);
+      {{tab}}    model.addAttribute("${minStart(className)}s", ${minStart(className)}Page.getContent());
+      {{tab}}    model.addAttribute("${minStart(className)}Page", ${minStart(className)}Page);
+      {{tab}}    model.addAttribute("${minStart(className)}Search", search);
+      {{tab}}    model.addAttribute("currentPage", page);
+      {{tab}}    model.addAttribute("pageSize", pageSize);
+      {{tab}}    model.addAttribute("sortOrder", sortOrder);
+      {{tab}}    model.addAttribute("pageTitle", "Liste des ${minStart(className)}s");
+      {{tab}}
+      {{tab}}    if (!${minStart(className)}Page.hasContent()) {
+      {{tab}}        model.addAttribute("noDataMessage", "Aucun ${minStart(className)} trouvé.");
+      {{tab}}    }
+      {{tab}}    return "${minStart(className)}/list";
+      {{tab}}}
+      {{tab}}
+      {{tab}}@GetMapping("/{id}")
+      {{tab}}public String view${majStart(className)}(@PathVariable("id") ${pkColumnType} ${pkColumn}, Model model) {
+      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
+      {{tab}}    model.addAttribute("pageTitle", "Détail ${minStart(className)}");
+      {{tab}}    return "${minStart(className)}/view";
+      {{tab}}}
+      {{tab}}
+      {{#if !isView}}
+      {{tab}}@GetMapping("/create")
+      {{tab}}public String showCreateForm(Model model) {
+      {{tab}}    model.addAttribute("${minStart(className)}", new ${majStart(className)}());
+      {{tab}}    model.addAttribute("pageTitle", "Créer ${minStart(className)}");
+      {{tab}}    return "${minStart(className)}/create";
+      {{tab}}}
+      {{tab}}
+      {{tab}}@PostMapping("/create")
+      {{tab}}public String create${majStart(className)}(
+      {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
+      {{tab}}        BindingResult bindingResult,
+      {{tab}}        Model model,
+      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}    if (bindingResult.hasErrors()) {
+      {{tab}}        model.addAttribute("pageTitle", "Créer ${minStart(className)}");
+      {{tab}}        return "${minStart(className)}/create";
+      {{tab}}    }
+      {{tab}}    ${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
+      {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} créé avec succès.");
+      {{tab}}    return "redirect:/${minStart(className)}";
+      {{tab}}}
+      {{tab}}@GetMapping("/{id}/edit")
+      {{tab}}public String showEditForm(
+      {{tab}}        @PathVariable("id") ${pkColumnType} ${pkColumn},
+      {{tab}}        Model model) {
+      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
+      {{tab}}    model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
+      {{tab}}    return "${minStart(className)}/edit";
+      {{tab}}}
+      {{tab}}
+      {{tab}}@PostMapping("/{id}/edit")
+      {{tab}}public String update${majStart(className)}(
+      {{tab}}        @PathVariable("${pkColumn}") ${pkColumnType} ${pkColumn},
+      {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
+      {{tab}}        BindingResult bindingResult,
+      {{tab}}        Model model,
+      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}    if (bindingResult.hasErrors()) {
+      {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
+      {{tab}}        return "${minStart(className)}/edit";
+      {{tab}}    }
+      {{tab}}    ${minStart(className)}Service.update${majStart(className)}(${pkColumn},${minStart(className)});
+      {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} modifié avec succès.");
+      {{tab}}    return "redirect:/${minStart(className)}";
+      {{tab}}}
+      {{tab}}@PostMapping("/delete")
+      {{tab}}public String delete${majStart(className)}(
+      {{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn},
+      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}    ${minStart(className)}Service.delete${majStart(className)}(${pkColumn});
+      {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
+      {{tab}}    return "redirect:/${minStart(className)}";
+      {{tab}}}
+      {{else}}{{removeLine}}{{/if}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
     controllerAdditionalFiles: [ ]
@@ -4807,7 +4905,7 @@
         </main>
         </div>
       inputTagHelper: "name=\"${minStart(this.name)}\""
-      inputRadioTagHelper: "name=\"${minStart(this.name)}\""
+      inputRadioTagHelper: ""
       inputDateTagHelper: "name=\"${minStart(this.name)}\""
       selectTagHelper: "name=\"${minStart(this.columnNameField)}\""
       deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
@@ -4820,38 +4918,40 @@
       blockLoopStatementStart: "{{removeLine}}"
       blockLoopStatementEnd: "{{removeLine}}"
       filterLink: "th:action=\"@{/${minStart(className)}}\""
-      sortLink: "th:href=\"@{/${minStart(className)}(page=0,size=$[thymeleafDollar]{${minStart(className)}Page.size},sortParam='${this.name},asc')}\""
+      sortLink: "th:href=\"@{/${minStart(className)}(page=0,pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder == '${this.name},asc' ? '${this.name},desc' : '${this.name},asc'})}\""
       detailsLink: "th:href=\"@{/${minStart(className)}/{id}(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
       createLink: "th:href=\"@{/${minStart(className)}/create}\""
       updateLink: "th:href=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
       deleteLink: "th:action=\"@{/${minStart(className)}/delete}\""
       exportLink: "th:action=\"@{/${minStart(className)}/export}\""
-      pageSizeChangeLink: "'?page=0&size=' + this.value"
-      previousPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number - 1},size=$[thymeleafDollar]{${minStart(className)}Page.size},sortParam=$[thymeleafDollar]{param.sortParam})}\""
+      pageSizeChangeLink: "(u => { u.searchParams.set('page', '0'); u.searchParams.set('pageSize', this.value); return u.toString(); })(new URL(window.location.href))"
+      previousPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number - 1},pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder})}\""
       previousClassCondition: "class=\"prev\" th:classappend=\"$[thymeleafDollar]{${minStart(className)}Page.first} ? 'disabled' : ''\""
       pagesListLoop: |
         <a th:each="pageNumber : $[thymeleafDollar]{#numbers.sequence(0, ${minStart(className)}Page.totalPages - 1)}"
-           th:href="@{/${minStart(className)}(page=$[thymeleafDollar]{pageNumber},size=$[thymeleafDollar]{${minStart(className)}Page.size})}"
-           th:text="$[thymeleafDollar]{pageNumber}"
+           th:href="@{/${minStart(className)}(page=$[thymeleafDollar]{pageNumber},pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder})}"
+           th:text="$[thymeleafDollar]{pageNumber + 1}"
            th:classappend="$[thymeleafDollar]{pageNumber == ${minStart(className)}Page.number} ? 'active' : ''">
         </a>
-      nextPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number + 1},size=$[thymeleafDollar]{${minStart(className)}Page.size},sortParam=$[thymeleafDollar]{param.sortParam})}\""
+      nextPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number + 1},pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder})}\""
       nextClassCondition: "class=\"next\" th:classappend=\"$[thymeleafDollar]{${minStart(className)}Page.last} ? 'disabled' : ''\""
       onGoingPageLink: "th:action=\"@{/${minStart(className)}}\""
       pageNumberValue: "0"
       pageSizeValue: "10"
-      pageSizeParamName: "size"
-      sortParamName: "sortParam"
+      pageSizeValueTagHelper: "th:value=\"$[thymeleafDollar]{${minStart(className)}Page.size}\""
+      pageSizeParamName: "pageSize"
+      sortParamName: "sortOrder"
       filterMethod: "get"
       orderSortsTagHelper: "{{removeLine}}"
       currentSortValue: ""
+      currentSortValueTagHelper: "th:value=\"$[thymeleafDollar]{sortOrder}\""
       totalElementsTagHelper: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}Page.totalElements}\"></span>"
-      activeSortAscCondition: ""
-      activeSortDescCondition: ""
+      activeSortAscCondition: "th:classappend=\"$[thymeleafDollar]{sortOrder == '${this.name},asc'} ? 'active' : ''\""
+      activeSortDescCondition: "th:classappend=\"$[thymeleafDollar]{sortOrder == '${this.name},desc'} ? 'active' : ''\""
       onGoingPagesLoop: |
         <option th:each="pageNumber : $[thymeleafDollar]{#numbers.sequence(0, ${minStart(className)}Page.totalPages - 1)}"
                 th:value="$[thymeleafDollar]{pageNumber}"
-                th:text="$[thymeleafDollar]{pageNumber}"
+                th:text="$[thymeleafDollar]{pageNumber + 1}"
                 th:selected="$[thymeleafDollar]{pageNumber == ${minStart(className)}Page.number}">
         </option>
       scriptSection: |
@@ -4910,7 +5010,7 @@
       inputTagHelper: "th:field=\"*{${minStart(this.name)}}\""
       textAreaTagHelper: "th:field=\"*{${minStart(this.name)}}\""
       textAreaValidationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
-      checkedRadioTagHelper: "{{removeLine}}"
+      checkedRadioTagHelper: ""
       selectTagHelper: "th:field=\"*{${minStart(this.columnNameField)}}\""
       createLink: "th:action=\"@{/${minStart(className)}/create}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
@@ -4936,7 +5036,7 @@
       inputTagHelper: "th:field=\"*{${minStart(this.name)}}\""
       textAreaTagHelper: "th:field=\"*{${minStart(this.name)}}\""
       textAreaValidationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
-      checkedRadioTagHelper: "{{removeLine}}"
+      checkedRadioTagHelper: ""
       selectTagHelper: "th:field=\"*{${minStart(this.columnNameField)}}\""
       updateLink: "th:action=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
@@ -4948,7 +5048,7 @@
              layout:decorate="~{layout/base}">
             <main layout:fragment="content">
       previousLink: 'th:href="@{/}"'
-      errorMessage: '<span th:text="$[thymeleafDollar]{errorMessage}"></span>'
+      errorMessage: '<span th:text="*{errorMessage}"></span>'
       viewEnd: |
         </main>
         </div>

@@ -908,7 +908,9 @@ public class FrameworkMetadataProvider {
         altMap.put("onGoingPageLink", frameworkMVC.getView().getList().getOnGoingPageLink());
         altMap.put("pageNumberValue", frameworkMVC.getView().getList().getPageNumberValue());
         altMap.put("pageSizeValue", frameworkMVC.getView().getList().getPageSizeValue());
+        altMap.put("pageSizeValueTagHelper", frameworkMVC.getView().getList().getPageSizeValueTagHelper());
         altMap.put("currentSortValue", frameworkMVC.getView().getList().getCurrentSortValue());
+        altMap.put("currentSortValueTagHelper", frameworkMVC.getView().getList().getCurrentSortValueTagHelper());
         altMap.put("totalElementsTagHelper", frameworkMVC.getView().getList().getTotalElementsTagHelper());
         altMap.put("activeSortAscCondition", frameworkMVC.getView().getList().getActiveSortAscCondition());
         altMap.put("activeSortDescCondition", frameworkMVC.getView().getList().getActiveSortDescCondition());
