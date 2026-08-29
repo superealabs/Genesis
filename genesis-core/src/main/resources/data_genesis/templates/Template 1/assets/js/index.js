@@ -11,6 +11,15 @@ document.getElementById('menuToggle')?.addEventListener('click', function () {
 });
 
 const navItems = document.querySelectorAll('.nav-item');
+const currentPath = window.location.pathname;
+
+navItems.forEach(item => {
+    const href = item.getAttribute('href');
+
+    if (href && (currentPath === href || currentPath.startsWith(href + '/'))) {
+        item.classList.add('active');
+    }
+});
 
 navItems.forEach(item => {
     item.addEventListener('click', function () {

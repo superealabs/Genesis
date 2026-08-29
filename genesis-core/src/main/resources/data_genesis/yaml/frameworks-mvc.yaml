@@ -4887,7 +4887,7 @@
       baseHref: "<base th:href=\"@{/}\">"
       assetsImportLink: "th:href=\"@{/css/style.css}\""
       viewAnnotations: "{{removeLine}}"
-      pageName:
+      pageName: "[[$[thymeleafDollar]{pageTitle}]]"
 #      navLink: "th:classappend=\"${#httpServletRequest.requestURI == '/${this.entityName}'} ? 'active'\" th:href=\"@{/${this.entityName}}\""
       navLink: "class=\"nav-item\" th:href=\"@{/${minStart(this.entityName)}}\""
       callContent: |
