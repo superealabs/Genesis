@@ -3113,6 +3113,7 @@
             var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
         }
       pageName: "@ViewData[\"Title\"]"
+      pageNameTagHelper: ""
       navLink: "class=\"nav-item @(currentController == \"${majStart(this.entityName)}\" ? \"active\" : \"\")\" asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
       callContent: |
         @RenderBody()
@@ -4887,7 +4888,8 @@
       baseHref: "<base th:href=\"@{/}\">"
       assetsImportLink: "th:href=\"@{/css/style.css}\""
       viewAnnotations: "{{removeLine}}"
-      pageName: "[[$[thymeleafDollar]{pageTitle}]]"
+      pageName: ""
+      pageNameTagHelper: "th:text=\"|${projectName} - $[thymeleafDollar]{pageTitle}|\""
 #      navLink: "th:classappend=\"${#httpServletRequest.requestURI == '/${this.entityName}'} ? 'active'\" th:href=\"@{/${this.entityName}}\""
       navLink: "class=\"nav-item\" th:href=\"@{/${minStart(this.entityName)}}\""
       callContent: |
@@ -4911,7 +4913,7 @@
       deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
       pageSizeTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Page.size == ${this}}\""
       dataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
-      dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? ${minStart(className)}.${minStart(this.name)}.${minStart(this.displayColumn)} : ''}\"></span>"
       inlineDataValue: "{{removeLine}}"
       inlineDataForeignValue: "{{removeLine}}"
       inlineLoopStatement: "th:each=\"${minStart(className)} : $[thymeleafDollar]{${minStart(className)}s}\""
@@ -4975,7 +4977,7 @@
         </main>
         </div>
       dataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
-      dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? ${minStart(className)}.${minStart(this.name)}.${minStart(this.displayColumn)} : ''}\"></span>"
       deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
       deleteLink: "th:action=\"@{/${minStart(className)}/delete}\""
       updateLink: "th:href=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
@@ -5805,6 +5807,7 @@
       viewAnnotations: |
         ${DjangoBaseTemplate}
       pageName:
+      pageNameTagHelper: ""
       navLink: "class=\"nav-item \" href=\"{% url '${lowerCase(this.entityName)}_list' %}\""
       callContent: |
         {% block content %}{% endblock %}

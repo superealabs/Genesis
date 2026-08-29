@@ -72,6 +72,7 @@ public class FrameworkMVC extends Framework {
         private String baseHref;
         private String viewAnnotations;
         private String pageName;
+        private String pageNameTagHelper;
         private String navLink;
         private String callContent;
         private String logoutLink;

@@ -6,7 +6,7 @@ ${viewAnnotations}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     ${baseHref}
-    <title>${projectName} | ${pageName}</title>
+    <title ${pageNameTagHelper}>${projectName} | ${pageName}</title>
     <link rel="stylesheet" ${assetsImportLink}>
     {{#if useFaviconLink}}
     <link rel="shortcut icon"
