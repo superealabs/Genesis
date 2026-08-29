@@ -69,7 +69,7 @@ body.theme-genesis.genesis-dark {
     --color-text-muted:  hsl(145, 100%, 88%);
 
     --color-accent:      hsl(145, 100%, 44%);
-    --color-secondary:   hsl(160, 100%, 40%);
+    --color-secondary:   hsl(175, 100%, 10%);
 
     --color-hover-ghost: rgba(255, 255, 255, 0.1);
 }
@@ -78,8 +78,8 @@ body.theme-genesis.genesis-dark {
 body.theme-genesis.vscode-light,
 body.theme-genesis.genesis-light {
     --color-bg-light:    hsl(145, 100%, 92%);
-    --color-bg:          hsl(145, 100%, 92%);
-    --color-bg-dark:     hsl(145, 100%, 96%);
+    --color-bg:          hsl(145, 100%, 94%);
+    --color-bg-dark:     hsl(145, 100%, 98%);
 
     --color-text:        hsl(175, 100%, 4%);
     --color-text-muted:  hsl(175, 100%, 15%);
