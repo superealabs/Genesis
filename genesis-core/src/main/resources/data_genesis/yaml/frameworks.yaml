@@ -56,11 +56,12 @@
         import org.springframework.context.annotation.Bean;
         import org.springframework.boot.SpringApplication;
         import org.springframework.boot.autoconfigure.SpringBootApplication;
+        import org.springframework.scheduling.annotation.EnableScheduling;
         {{#if useEurekaServer}}import org.springframework.cloud.client.discovery.EnableDiscoveryClient;{{/if}}
         {{#if useEhcache}}import org.springframework.cache.annotation.EnableCaching;{{/if}}
-
         {{#if useEurekaServer}}@EnableDiscoveryClient{{/if}}
         {{#if useEhcache}}@EnableCaching{{/if}}
+        @EnableScheduling
         @SpringBootApplication
         public class ${majStart(projectName)}Application {
             public static void main(String[] args) {
@@ -1130,6 +1131,11 @@
           expiration: 36000
         {{/if}}
 
+        app:
+          config:
+            column-visibility:
+              file: <#${user.dir}/#>/config/column-visibility.json
+
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
 
     - fileType: "Configuration file for test classes"
@@ -1142,6 +1148,20 @@
         spring.jpa.properties.hibernate.validator.apply_to_ddl=false
         spring.jpa.properties.hibernate.validator.autoregister_listeners=false
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/resources/"
+    
+    - fileType: "ConfigFile"
+      fileName: "column-visibility"
+      extension: "json"
+      content: |
+        {
+        {{#each allEntities}}
+          "${this.tableName}": {
+            "list": [{{#each this.fields}}"${this.name}"{{#if !@last}}, {{/if}}{{/each}}],
+            "detail": [{{#each this.fields}}"${this.name}"{{#if !@last}}, {{/if}}{{/each}}]
+          }{{#if !@last}},{{/if}}
+        {{/each}}
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/config"
 
   configurations:
     - name: "Logging Level"
@@ -1797,6 +1817,7 @@
 
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
     servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
+    
     serviceAdditionalFiles:
       - fileType: "Interface service"
         fileName: "${majStart(className)}Service"
@@ -1838,7 +1859,244 @@
           }
 
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services/interfaces"
+      - fileType: "GlobalServiceInterface"
+        fileName: "ColumnVisibilityService"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.services.interfaces;
 
+          import java.util.List;
+
+          public interface ColumnVisibilityService {
+
+              /**
+              * Récupère les champs visibles pour une entité et un type de vue
+              * 
+              * @param entityName    Nom de l'entité (ex: "personne")
+              * @param componentType Type de vue (ex: "list", "detail")
+              * @return Liste des champs visibles
+              */
+              List<String> getVisibleFields(String entityName, String componentType);
+
+              /**
+              * Met à jour les champs visibles pour une entité et un type de vue
+              * 
+              * @param entityName    Nom de l'entité (ex: "personne")
+              * @param componentType Type de vue (ex: "list", "detail")
+              * @param fields        Liste des champs à afficher
+              */
+              void updateVisibleFields(String entityName, String componentType, List<String> fields);
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services/interfaces"
+      - fileType: "GlobalService"
+        fileName: "DefaultColumnVisibilityService"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.services;
+
+          import com.fasterxml.jackson.core.type.TypeReference;
+          import com.fasterxml.jackson.databind.ObjectMapper;
+          import com.fasterxml.jackson.databind.SerializationFeature;
+          import ${groupLink}.${lowerCase(projectName)}.services.interfaces.ColumnVisibilityService;
+          import org.springframework.beans.factory.annotation.Value;
+          import org.springframework.scheduling.annotation.Scheduled;
+          import org.springframework.stereotype.Service;
+
+          import jakarta.annotation.PostConstruct;
+          import java.io.File;
+          import java.io.IOException;
+          import java.util.Collections;
+          import java.util.List;
+          import java.util.Map;
+          import java.util.concurrent.ConcurrentHashMap;
+
+          @Service
+          public class DefaultColumnVisibilityService implements ColumnVisibilityService {
+
+              @Value("<#${app.config.column-visibility.file}/#>")
+              private String configFilePath;
+
+              private final ObjectMapper objectMapper;
+              private final Map<String, Map<String, List<String>>> visibilityConfig = new ConcurrentHashMap<>();
+              
+              private long lastModifiedTime = 0L;
+
+              public DefaultColumnVisibilityService() {
+                  this.objectMapper = new ObjectMapper();
+                  this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+              }
+
+              @PostConstruct
+              public void loadConfig() {
+                  reloadIfChanged();
+              }
+
+              @Scheduled(fixedDelay = 2000) 
+              public void checkForChanges() {
+                  reloadIfChanged();
+              }
+
+              private synchronized void reloadIfChanged() {
+                  File file = new File(configFilePath);
+                  if (!file.exists()) {
+                      return;
+                  }
+
+                  long currentLastModified = file.lastModified();
+                  
+                  if (currentLastModified > this.lastModifiedTime) {
+                      try {
+                          Map<String, Map<String, List<String>>> loadedConfig = objectMapper.readValue(
+                              file, 
+                              new TypeReference<Map<String, Map<String, List<String>>>>() {}
+                          );
+                          
+                          visibilityConfig.clear();
+                          visibilityConfig.putAll(loadedConfig);
+                          
+                          this.lastModifiedTime = currentLastModified;
+                          System.out.println("Configuration des colonnes rechargée (modification du fichier détectée)");
+                          
+                      } catch (IOException e) {
+                          System.err.println("Erreur lors du rechargement du fichier de configuration : " + e.getMessage());
+              }
+                  }
+              }
+
+              @Override
+              public List<String> getVisibleFields(String entityName, String componentType) {
+                  Map<String, List<String>> entityConfig = visibilityConfig.get(entityName.toLowerCase());
+                  if (entityConfig == null) {
+                      return Collections.emptyList();
+                  }
+                  return entityConfig.getOrDefault(componentType.toLowerCase(), Collections.emptyList());
+              }
+
+              @Override
+              public synchronized void updateVisibleFields(String entityName, String componentType, List<String> fields) {
+                  visibilityConfig
+                      .computeIfAbsent(entityName.toLowerCase(), k -> new ConcurrentHashMap<>())
+                      .put(componentType.toLowerCase(), fields);
+                  saveConfig();
+              }
+
+              private synchronized void saveConfig() {
+                  try {
+                      File file = new File(configFilePath);
+                      file.getParentFile().mkdirs();
+                      objectMapper.writeValue(file, visibilityConfig);
+                      
+                      this.lastModifiedTime = file.lastModified();
+                      
+                      System.out.println("Configuration sauvegardée avec succès dans : " + configFilePath);
+                  } catch (IOException e) {
+                      throw new RuntimeException("Erreur lors de la sauvegarde du fichier de configuration", e);
+                  }
+              }
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
+
+      - fileType: "GlobalController"
+        fileName: "ColumnVisibilityController"
+        extension: "java"
+        content: |
+          package ${groupLink}.${lowerCase(projectName)}.controllers;
+
+          import io.swagger.v3.oas.annotations.Operation;
+          import io.swagger.v3.oas.annotations.Parameter;
+          import io.swagger.v3.oas.annotations.responses.ApiResponse;
+          import io.swagger.v3.oas.annotations.responses.ApiResponses;
+          import io.swagger.v3.oas.annotations.tags.Tag;
+
+          import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
+          import ${groupLink}.${lowerCase(projectName)}.services.interfaces.ColumnVisibilityService;
+          import org.springframework.http.HttpStatus;
+          import org.springframework.http.ResponseEntity;
+          import org.springframework.web.bind.annotation.*;
+
+          import java.util.List;
+
+          @RestController
+          @RequestMapping("/api/config/columns")
+          @Tag(name = "Column Visibility", description = "APIs for managing global column visibility configurations")
+          public class ColumnVisibilityController {
+
+              private final ColumnVisibilityService columnVisibilityService;
+
+              public ColumnVisibilityController(ColumnVisibilityService columnVisibilityService) {
+                  this.columnVisibilityService = columnVisibilityService;
+              }
+
+              @Operation(
+                  summary = "Get visible fields for an entity and view type",
+                  description = "Retrieve the list of fields that should be visible for a specific entity and component type."
+              )
+              @ApiResponses({
+                  @ApiResponse(responseCode = "200", description = "Successfully retrieved the field list")
+              })
+              @GetMapping("/{entity}/{componentType}")
+              public ResponseEntity<RestResponse<List<String>>> getVisibleFields(
+                      @Parameter(description = "Name of the entity", example = "personne")
+                      @PathVariable String entity,
+                      
+                      @Parameter(description = "Type of view", example = "list")
+                      @PathVariable String componentType) {
+                  
+                  List<String> fields = columnVisibilityService.getVisibleFields(entity, componentType);
+                  
+                  // On enveloppe la liste dans un RestResponse pour que le frontend le reconnaisse
+                  RestResponse<List<String>> response = RestResponse.buildSuccessResponse(
+                      HttpStatus.OK,
+                      fields.isEmpty() ? "No configuration found, frontend should use defaults" : "Configuration retrieved successfully",
+                      fields
+                  );
+                  
+                  return ResponseEntity.ok(response);
+              }
+
+              @Operation(
+                  summary = "Update visible fields for an entity and view type",
+                  description = "Save a new configuration of visible fields for a specific entity and component type."
+              )
+              @ApiResponses({
+                  @ApiResponse(responseCode = "200", description = "Configuration successfully saved"),
+                  @ApiResponse(responseCode = "400", description = "Invalid request body")
+              })
+              @PutMapping("/{entity}/{componentType}")
+              public ResponseEntity<RestResponse<Void>> updateVisibleFields(
+                      @Parameter(description = "Name of the entity (e.g., 'personne')", example = "personne")
+                      @PathVariable String entity,
+                      
+                      @Parameter(description = "Type of view (e.g., 'list', 'detail')", example = "list")
+                      @PathVariable String componentType,
+                      
+                      @Parameter(description = "List of field keys to display", required = true)
+                      @RequestBody List<String> fields) {
+                  
+                  if (fields == null || fields.isEmpty()) {
+                      // Retourner une erreur formatée proprement
+                      RestResponse<Void> errorResponse = RestResponse.buildErrorResponse(
+                          HttpStatus.BAD_REQUEST, 
+                          "La liste des champs ne peut pas être vide", 
+                          null
+                      );
+                      return ResponseEntity.badRequest().body(errorResponse);
+                  }
+
+                  // Sauvegarde effective
+                  columnVisibilityService.updateVisibleFields(entity, componentType, fields);
+                  
+                  // On renvoie un RestResponse de succès avec un corps valide
+                  RestResponse<Void> successResponse = RestResponse.buildSuccessResponse(
+                      HttpStatus.OK,
+                      "Configuration des colonnes mise à jour avec succès",
+                      null
+                  );
+                  
+                  return ResponseEntity.ok(successResponse);
+              }
+          }
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
   controller:
     toGenerate: true
     controllerImports: |
@@ -5799,7 +6057,7 @@
       {{tab}}{{tab}}{{/each}}
       {{tab}}{{tab}}
       {{tab}}{{tab}}var ${minStart(className)}Validations = EntityValidator.ValidateEntity(${minStart(className)});
-      {{tab}}{{tab}}{{#each  children}}// Validate ${formatReadableLowerCase(this.className)}s
+      {{tab}}{{tab}}{{#each  childrenWithForm}}// Validate ${formatReadableLowerCase(this.className)}s
       {{tab}}{{tab}}var ${minStart(this.className)}sValidations = new ValidationCheckManager();
       {{tab}}{{tab}}foreach (var ${minStart(this.className)}Validation in ${minStart(this.className)}s.Select(EntityValidator.ValidateEntity))
       {{tab}}{{tab}}{
