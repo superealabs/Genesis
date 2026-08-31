@@ -4762,6 +4762,7 @@
       {{else}}{{removeLine}}{{/if}}
       import jakarta.validation.Valid;
       import org.springframework.validation.BindingResult;
+      import org.springframework.dao.DataIntegrityViolationException;
       {{#each fieldsFK}}
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(this.type)}Service;
       {{/each}}{{removeLine}}
@@ -4870,8 +4871,12 @@
       {{tab}}public String delete${majStart(className)}(
       {{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn},
       {{tab}}        RedirectAttributes redirectAttributes) {
-      {{tab}}    ${minStart(className)}Service.delete${majStart(className)}(${pkColumn});
-      {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
+      {{tab}}    try {
+      {{tab}}       ${minStart(className)}Service.delete${majStart(className)}(${pkColumn});
+      {{tab}}       redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}       redirectAttributes.addFlashAttribute("errorMessage", "Impossible de supprimer cet élément car il est utilisé par d'autres données.");
+      {{tab}}    }
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
       {{else}}{{removeLine}}{{/if}}
@@ -4981,6 +4986,16 @@
                 th:text="$[thymeleafDollar]{${minStart(this.type)}.${minStart(this.displayColumn)}}"
                 th:selected="$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.columnNameField)} == ${minStart(this.type)}.${minStart(this.referencedPrimaryKeyColumn)}}">
         </option>
+      flashMessageSection: |
+        <div class="success-message"
+             th:if="$[thymeleafDollar]{successMessage}">
+            <span th:text="$[thymeleafDollar]{successMessage}"></span>
+        </div>
+
+        <div class="error-message"
+             th:if="$[thymeleafDollar]{errorMessage}">
+            <span th:text="$[thymeleafDollar]{errorMessage}"></span>
+        </div>
     detail:
       name: "view"
       viewAnnotations: |
@@ -5061,10 +5076,10 @@
       toGenerate: true
       name: "_form"
       viewAnnotations: |
-        \<div xmlns:th="[http://www.thymeleaf.org](http://www.thymeleaf.org)"
+        <div xmlns:th="[http://www.thymeleaf.org](http://www.thymeleaf.org)"
              th:fragment="fields">
       viewEnd: |
-        \</div>
+        </div>
       includeTagHelper: "th:replace=\"~{${minStart(className)}/_form :: fields}\""
     error:
       name: "error"

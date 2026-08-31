@@ -1010,6 +1010,7 @@ public class FrameworkMetadataProvider {
         altMap.put("filterTrueSelectedTagHelper", frameworkMVC.getView().getList().getFilterTrueSelectedTagHelper());
         altMap.put("filterFalseSelectedTagHelper", frameworkMVC.getView().getList().getFilterFalseSelectedTagHelper());
         altMap.put("foreignOptionsLoop", frameworkMVC.getView().getList().getForeignOptionsLoop());
+        altMap.put("flashMessageSection", frameworkMVC.getView().getList().getFlashMessageSection());
         return altMap;
     }
 
