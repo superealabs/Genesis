@@ -14,6 +14,10 @@
         <GenesisButton variant="secondary" @click="router.push({ name: 'frameworks' })">
             Frameworks
         </GenesisButton>
+
+        <GenesisButton variant="secondary" @click="router.push({ name: 'frontend' })">
+            Frontend
+        </GenesisButton>
     </div>
 </template>
 

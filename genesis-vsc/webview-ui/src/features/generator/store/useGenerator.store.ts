@@ -1,17 +1,19 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Framework } from '@/features/frameworks/types/framework.types';
+import type { FrontendFramework } from '@/features/frontend/types/frontend.types';
 import type { GeneratorData, ProjectConfig, DatabaseConfig, ScriptConfig, ComponentType, TableMetadataDto, RelationParameter } from '../types/generator.types';
 
 export const useGeneratorStore = defineStore('generator', () => {
     // ═══ État ═══
     const currentStep = ref(1);
-    const totalSteps = 7;
+    const totalSteps = 9;
     const availableTables = ref<TableMetadataDto[]>([]);
     const availableViews = ref<TableMetadataDto[]>([]);
     const tablesParents = ref<TableMetadataDto[]>([]);
     const tablesChilds = ref<TableMetadataDto[]>([]);
     const relations = ref<RelationParameter[]>([]);
+    const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
 
     function setAvailableTables(tables: TableMetadataDto[]) {
         availableTables.value = tables;
@@ -31,6 +33,14 @@ export const useGeneratorStore = defineStore('generator', () => {
 
     function setRelations(data: RelationParameter[]) {
         relations.value = data;
+    }
+
+    function setAvailableFrontendFrameworks(frameworks: FrontendFramework[]) {
+        availableFrontendFrameworks.value = frameworks;
+    }
+
+    function setSelectedFrontendFramework(framework: FrontendFramework | null) {
+        stepperData.value.frontend = framework;
     }
 
     // ═══ Getter Relations ═══
@@ -72,8 +82,10 @@ export const useGeneratorStore = defineStore('generator', () => {
             selectedTables: [],
             selectedViews: [],
             selectedComponents: [],
-        }
-    });
+        },
+        frontend: null
+    }
+);
 
     // ═══ Getters ═══
     const isFirstStep = computed(() => currentStep.value === 1);
@@ -168,8 +180,10 @@ export const useGeneratorStore = defineStore('generator', () => {
                 selectedTables: [],
                 selectedViews: [],
                 selectedComponents: [],
-            }
-        };
+            },
+            frontend: null
+        },
+        availableFrontendFrameworks.value = [];
     }
 
 
@@ -205,6 +219,9 @@ export const useGeneratorStore = defineStore('generator', () => {
         setAvailableViews,
         setTablesChilds,
         setTablesParents,
+        availableFrontendFrameworks, // ✅ AJOUT
+        setAvailableFrontendFrameworks, // ✅ AJOUT
+        setSelectedFrontendFramework, 
         getTablesParents,
         getTablesChilds,
         setFramework,

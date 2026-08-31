@@ -27,13 +27,25 @@
         <!-- Étape 5 : Sélection des tables et composants -->
         <TableSelectionView v-else-if="currentStep === 5" />
 
+        <!-- Étape 6 : gestion des relations mères fille -->        
         <RelationConfigView v-else-if="currentStep === 6" />
 
+        <!-- Étape 7 : Séléction du Framework frontEnd -->
+        <FrontEndSelectionView 
+            v-else-if="currentStep === 7" 
+            @select="handleFrontendSelect"
+            :showBackButton="false" 
+        />
 
-        <!-- Étape 7 : (Placeholder) -->
+        <!-- Étape 8 : configuration du layout frontEnd -->   
         <div v-else-if="currentStep === 7" class="p-8 text-center text-text-muted">
-            <p>Étape 7 : À définir</p>
+            <p>Étape 8 : À définir</p>
         </div>
+
+        <div v-else-if="currentStep === 9" class="p-8 text-center text-text-muted">
+            <p>Étape 9 : À définir</p>
+        </div>
+
     </StepperPopup>
 </template>
 
@@ -46,8 +58,10 @@ import ScriptConfigView from './steps/ScriptConfigView.vue';
 import TableSelectionView from './steps/TableSelectionView.vue';
 import RelationConfigView from './steps/RelationConfigView.vue';
 import { useGenerator } from '../composables/useGenerator';
+import type { FrontendFramework } from '../types/generator.types.ts';
+import FrontEndSelectionView from '@/features/frontend/views/FrontEndSelectionView.vue';
 
-// ✅ defineEmits est ICI, dans le fichier .vue, c'est son endroit légitime
+
 const emit = defineEmits<{
     close: [];
     complete: [data: any];
@@ -58,7 +72,8 @@ const {
     totalSteps,
     goToPreviousStep,
     goToNextStep,
-    handleFrameworkSelect
+    handleFrameworkSelect,
+    setSelectedFrontendFramework
 } = useGenerator();
 
 function handleClose() {
@@ -72,5 +87,9 @@ function handleNextStep() {
         // Si goToNextStep retourne des données, c'est qu'on est à la dernière étape
         emit('complete', finalData);
     }
+}
+
+function handleFrontendSelect(framework: FrontendFramework) {
+    setSelectedFrontendFramework(framework);
 }
 </script>

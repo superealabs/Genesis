@@ -3,11 +3,11 @@ import { storeToRefs } from 'pinia';
 import { useGeneratorStore } from '../store/useGenerator.store';
 import { generatorService } from '../services/generator.service';
 import type { Framework } from '@/features/frameworks/types/framework.types';
-import type { ScriptConfig, ComponentType, GeneratorData } from '../types/generator.types';
+import type { ScriptConfig, ComponentType, GeneratorData, FrontendFramework } from '../types/generator.types';
 
 export function useGenerator() {
     const store = useGeneratorStore();
-    const { currentStep, totalSteps, stepperData, isFirstStep, isLastStep, getTablesChilds, getTablesParents, getRelations } = storeToRefs(store);
+    const { currentStep, totalSteps, stepperData, isFirstStep, isLastStep, getTablesChilds, getTablesParents, getRelations, availableFrontendFrameworks } = storeToRefs(store);
 
     generatorService.init();
 
@@ -61,6 +61,18 @@ export function useGenerator() {
 
                 return true;
 
+            case 7:
+
+                return true;
+
+            case 8:
+
+                return true;
+
+            case 9:
+
+                return true;
+
             default:
                 return true;
         }
@@ -99,6 +111,10 @@ export function useGenerator() {
 
     function selectScriptPath() {
         generatorService.requestScriptPath();
+    }
+
+    function setSelectedFrontendFramework(framework: FrontendFramework | null) {
+        store.setSelectedFrontendFramework(framework);
     }
 
     function toggleTable(tableName: string) {
@@ -154,6 +170,9 @@ export function useGenerator() {
         getRelations,
         addRelation: store.addRelation,
         removeRelation: store.removeRelation,
+
+        availableFrontendFrameworks,
+        setSelectedFrontendFramework,
 
         goToNextStep,
         goToPreviousStep,

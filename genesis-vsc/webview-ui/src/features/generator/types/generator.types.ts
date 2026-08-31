@@ -50,6 +50,7 @@ export interface GeneratorData {
     database: DatabaseConfig;
     script: ScriptConfig;
     tableSelection: TableSelectionConfig;
+    frontend: FrontendFramework | null;
 }
 
 export const MOCK_BUILD_TOOLS = [
@@ -77,4 +78,14 @@ export interface RelationParameter {
     mandatory: boolean;
     hasForm: boolean;
 }
+
+export interface FrontendFramework {
+    id: number;
+    languageId: number;
+    name: string;
+    coreFramework: string;
+    componentExtension: string;
+    defaultPort: string;
+}
+
 

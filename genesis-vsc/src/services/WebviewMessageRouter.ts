@@ -2,10 +2,12 @@ import * as vscode from 'vscode';
 import { GenesisApiService } from './GenesisApiService';
 import { FrameworkHandler } from './Framework/FrameworkHandler';
 import { GeneratorHandler } from './Generator/GeneratorHandler';
+import { FrontendHandler } from './FrontEnd/FrontendFrameworkHandler';
 
 export class WebviewMessageRouter {
     private frameworkHandler: FrameworkHandler;
     private generatorHandler: GeneratorHandler;
+    private frontendHandler: FrontendHandler;
 
     constructor(
         private panel: vscode.WebviewPanel,
@@ -15,6 +17,7 @@ export class WebviewMessageRouter {
         // Initialisation des handlers (adapte les constructeurs si nécessaire)
         this.frameworkHandler = new FrameworkHandler(); 
         this.generatorHandler = new GeneratorHandler(this.panel);
+        this.frontendHandler = new FrontendHandler(this.panel);
     }
 
     /**
@@ -49,6 +52,10 @@ export class WebviewMessageRouter {
                     
                 case 'GET_RELATION_PARAMETERS':
                     await this.generatorHandler.handleGetRelations(message.payload, this.panel);
+                    break;
+
+                case 'GET_FRONTEND_FRAMEWORKS':
+                    await this.frontendHandler.handleGetFrontendFrameworks(message.payload);
                     break;
 
                 default:
