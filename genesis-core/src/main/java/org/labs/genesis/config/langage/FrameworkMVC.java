@@ -130,6 +130,9 @@ public class FrameworkMVC extends Framework {
         private String sortParamName;
         private String fileDataValue;
         private String filterMethod;
+        private String filterTrueSelectedTagHelper;
+        private String filterFalseSelectedTagHelper;
+        private String foreignOptionsLoop;
     }
 
     @Getter

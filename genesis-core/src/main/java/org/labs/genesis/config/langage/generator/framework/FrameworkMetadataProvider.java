@@ -290,7 +290,7 @@ public class FrameworkMetadataProvider {
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field);
-
+                addForeignKeyDisplayColumn(fieldMap, field, tableMetadata);
                 String fieldType = field.getType();
 
                 boolean exists = fieldsFK.stream()
@@ -522,6 +522,7 @@ public class FrameworkMetadataProvider {
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field, language,tableMetadata.getDatabase().getId());
+                addForeignKeyDisplayColumn(fieldMap, field, tableMetadata);
 
                 String fieldType = field.getType();
 
@@ -1006,6 +1007,9 @@ public class FrameworkMetadataProvider {
         altMap.put("sortParamName", frameworkMVC.getView().getList().getSortParamName());
         altMap.put("fileDataValue", frameworkMVC.getView().getList().getFileDataValue());
         altMap.put("filterMethod", frameworkMVC.getView().getList().getFilterMethod());
+        altMap.put("filterTrueSelectedTagHelper", frameworkMVC.getView().getList().getFilterTrueSelectedTagHelper());
+        altMap.put("filterFalseSelectedTagHelper", frameworkMVC.getView().getList().getFilterFalseSelectedTagHelper());
+        altMap.put("foreignOptionsLoop", frameworkMVC.getView().getList().getForeignOptionsLoop());
         return altMap;
     }
 
