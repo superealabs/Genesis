@@ -54,6 +54,7 @@ public class FrameworkMVC extends Framework {
         private List list;
         private Create create;
         private Edit edit;
+        private Form form;
         private Detail detail;
         private Error error;
         private java.util.List<FilesEdit> templateEngineFilesEdits;
@@ -185,6 +186,17 @@ public class FrameworkMVC extends Framework {
         private String updateLink;
         private String scriptSection;
         private String viewEnd;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Form {
+        private Boolean toGenerate;
+        private String name;
+        private String viewAnnotations;
+        private String viewEnd;
+        private String includeTagHelper;
     }
 
     @Getter

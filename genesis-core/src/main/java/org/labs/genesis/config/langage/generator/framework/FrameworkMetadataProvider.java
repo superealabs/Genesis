@@ -727,6 +727,12 @@ public class FrameworkMetadataProvider {
         metadata.put("textAreas", getTextAreasList(tableMetadata, language));
         metadata.put("inputsFilter", getFilterInputsList(tableMetadata, language));
 
+        if (framework instanceof FrameworkMVC frameworkMVC) {
+            boolean useReusableForm = frameworkMVC.getView().getForm() != null && Boolean.TRUE.equals(frameworkMVC.getView().getForm().getToGenerate());
+            metadata.put("useReusableForm", useReusableForm);
+            metadata.put("formIncludeTagHelper", useReusableForm ? frameworkMVC.getView().getForm().getIncludeTagHelper() : "");
+        }
+
         List<Integer> pageSizesList = Arrays.asList(5, 10, 50, 100, 200, 300, 500, 1000);
         metadata.put("pageSizesList", pageSizesList);
 
@@ -1050,6 +1056,13 @@ public class FrameworkMetadataProvider {
         altMap.put("updateLink", frameworkMVC.getView().getEdit().getUpdateLink());
         altMap.put("scriptSection", frameworkMVC.getView().getEdit().getScriptSection());
         altMap.put("viewEnd", frameworkMVC.getView().getCreate().getViewEnd());
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewFormHashMap(FrameworkMVC frameworkMVC) {
+        HashMap<String, Object> altMap = new HashMap<>(getAltViewCreateHashMap(frameworkMVC));
+        altMap.put("viewAnnotations", frameworkMVC.getView().getForm().getViewAnnotations());
+        altMap.put("viewEnd", frameworkMVC.getView().getForm().getViewEnd());
         return altMap;
     }
 }

@@ -5042,6 +5042,15 @@
       selectTagHelper: "th:field=\"*{${minStart(this.columnNameField)}}\""
       updateLink: "th:action=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
+    form:
+      toGenerate: true
+      name: "_form"
+      viewAnnotations: |
+        \<div xmlns:th="[http://www.thymeleaf.org](http://www.thymeleaf.org)"
+             th:fragment="fields">
+      viewEnd: |
+        \</div>
+      includeTagHelper: "th:replace=\"~{${minStart(className)}/_form :: fields}\""
     error:
       name: "error"
       viewAnnotations: |

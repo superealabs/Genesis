@@ -17,6 +17,9 @@ ${viewAnnotations}
 
 <form class="form" method="post" enctype="multipart/form-data" ${createLink}>
     ${antiForgeryTokenTagHelper}
+    {{#if useReusableForm}}
+        <div ${formIncludeTagHelper}></div>
+        {{else}}
     ${validationSection}
     {{#each inputs}}
     <div class="form-group">
@@ -74,6 +77,7 @@ ${viewAnnotations}
     </div>
     <span ${textAreaValidationTagHelper} class="field-validation-error"></span>
     {{/each}}{{removeLine}}
+    {{/if}}
 
     <div class="form-actions">
         <div class="form-actions-left">

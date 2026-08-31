@@ -6,6 +6,7 @@
   listTemplate: "ListViewTemplate"
   createTemplate: "CreateViewTemplate"
   editTemplate: "EditViewTemplate"
+  formTemplate: "FormViewTemplate"
   detailTemplate: "DetailViewTemplate"
   errorTemplate: "ErrorViewTemplate"
 
