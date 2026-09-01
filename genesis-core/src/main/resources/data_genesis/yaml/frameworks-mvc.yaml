@@ -4228,10 +4228,19 @@
         import org.springframework.web.bind.annotation.ExceptionHandler;
         import org.springframework.web.bind.annotation.ResponseStatus;
         import org.springframework.http.ResponseEntity;
+        import org.springframework.dao.DataIntegrityViolationException;
         import org.springframework.web.servlet.resource.NoResourceFoundException;
         @Slf4j
         @ControllerAdvice
         public class GlobalExceptionHandler {
+            @ExceptionHandler(DataIntegrityViolationException.class)
+            @ResponseStatus(HttpStatus.CONFLICT)
+            public String handleDataIntegrityViolationException(DataIntegrityViolationException ex, Model model) {
+              log.warn("Data integrity violation: {}", ex.getMessage());
+                  model.addAttribute("errorMessage", "Impossible d'effectuer cette opération car cet élément est encore référencé par d'autres données."
+                );
+                return "error/error";
+            }
         
             @ExceptionHandler(ResourceNotFoundException.class)
             @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -4627,6 +4636,7 @@
       import ${groupLink}.${lowerCase(projectName)}.specification.${majStart(className)}Specification;
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
       import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
+      import org.springframework.dao.DataIntegrityViolationException;
 
     serviceAnnotations: |
       @Service
@@ -4699,6 +4709,8 @@
       {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
       {{tab}}    try {
       {{tab}}        ${minStart(className)}Repository.deleteById(${pkColumn});
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}        throw ex;
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
