@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Framework } from '@/features/frameworks/types/framework.types';
 import type { FrontendFramework } from '@/features/frontend/types/frontend.types';
-import type { GeneratorData, ProjectConfig, DatabaseConfig, ScriptConfig, ComponentType, TableMetadataDto, RelationParameter } from '../types/generator.types';
+import type { GeneratorData, ProjectConfig, DatabaseConfig, ScriptConfig, ComponentType, TableMetadataDto, RelationParameter, LanguageDto, FrontendLayoutConfig, GitConfiguration } from '../types/generator.types';
 
 export const useGeneratorStore = defineStore('generator', () => {
     // ═══ État ═══
@@ -14,7 +14,80 @@ export const useGeneratorStore = defineStore('generator', () => {
     const tablesChilds = ref<TableMetadataDto[]>([]);
     const relations = ref<RelationParameter[]>([]);
     const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
+    const availableLanguages = ref<LanguageDto[]>([]);
 
+    const stepperData = ref<GeneratorData>({
+        framework: null,
+        config: {
+            projectName: '',
+            projectLocation: '/home/user/projects/',
+            languageVersion: '',
+            buildTool: 'maven',
+            groupId: 'com.example',
+            frameworkVersion: '',
+            projectDescription: '',
+            projectPort: '',
+            loggingLevel: '',
+            securityType: '',
+            cacheProvider: ''
+        },
+        database: { // <-- AJOUT : État initial
+            engine: 'postgre',
+            host: 'localhost',
+            port: 5432,
+            databaseName: '',
+            schema: 'public',
+            username: '',
+            password: '',
+            driverType: 'org.postgresql.Driver',
+            driverName: 'PostgreSQL JDBC Driver',
+            sid: '',
+            trustCertificate: false,
+            allowPublicKeyRetrieval: false,
+        },
+        script: {
+            path: '',
+            content: '',
+        },
+        tableSelection: {
+            selectedTables: [],
+            selectedViews: [],
+            selectedComponents: [],
+        },
+        frontend: null,
+        frontendLayout: {
+            selectedLanguages: [],
+            navbarType: '',
+            primaryColor: '#3B82F6', // Valeur par défaut exemple
+            secondaryColor: '#64748B',
+            logoPath: '',
+            faviconPath: '',
+            port: ''
+        },
+        git: {
+            useGit: false,
+            separateRepositories: false,
+            useRemoteRepo: false,
+            isNewRemoteRepo: true, // Par défaut on crée un nouveau repo
+            repositoryName: '',
+            backendRepositoryName: '',
+            frontendRepositoryName: '',
+            githubUsername: '',
+            githubToken: ''
+        }
+    }
+);
+
+    // ═══ Getters ═══
+    const isFirstStep = computed(() => currentStep.value === 1);
+    const isLastStep = computed(() => currentStep.value === totalSteps);
+
+    // ═══ Getter Relations ═══
+    const getRelations = computed(() => relations.value);
+    const getTablesParents = computed(() => tablesParents.value);
+    const getTablesChilds = computed(() => tablesChilds.value);
+
+    // ═══ Actions ═══
     function setAvailableTables(tables: TableMetadataDto[]) {
         availableTables.value = tables;
     }
@@ -41,57 +114,25 @@ export const useGeneratorStore = defineStore('generator', () => {
 
     function setSelectedFrontendFramework(framework: FrontendFramework | null) {
         stepperData.value.frontend = framework;
+        if (framework !== null) {
+            stepperData.value.frontendLayout.port = framework.defaultPort;
+        }
     }
 
-    // ═══ Getter Relations ═══
-    const getRelations = computed(() => relations.value);
-
-    const getTablesParents = computed(() => tablesParents.value);
-    const getTablesChilds = computed(() => tablesChilds.value);
-
-    
-    const stepperData = ref<GeneratorData>({
-        framework: null,
-        config: {
-            projectName: '',
-            projectLocation: '/home/user/projects/',
-            languageVersion: '',
-            buildTool: 'maven',
-            groupId: 'com.example',
-            frameworkVersion: ''
-        },
-        database: { // <-- AJOUT : État initial
-            engine: 'postgre',
-            host: 'localhost',
-            port: 5432,
-            databaseName: '',
-            schema: 'public',
-            username: '',
-            password: '',
-            driverType: 'org.postgresql.Driver',
-            driverName: 'PostgreSQL JDBC Driver',
-            sid: '',
-            trustCertificate: false,
-            allowPublicKeyRetrieval: false,
-        },
-        script: {
-            path: '',
-            content: '',
-        },
-        tableSelection: {
-            selectedTables: [],
-            selectedViews: [],
-            selectedComponents: [],
-        },
-        frontend: null
+    function setAvailableLanguages(languages: LanguageDto[]) {
+        availableLanguages.value = languages;
     }
-);
 
-    // ═══ Getters ═══
-    const isFirstStep = computed(() => currentStep.value === 1);
-    const isLastStep = computed(() => currentStep.value === totalSteps);
+    function updateFrontendLayout<K extends keyof FrontendLayoutConfig>(key: K, value: FrontendLayoutConfig[K]) {
+        (stepperData.value.frontendLayout as any)[key] = value;
+    }
 
-    // ═══ Actions ═══
+    function toggleLanguage(code: string) {
+        const list = stepperData.value.frontendLayout.selectedLanguages;
+        const idx = list.indexOf(code);
+        idx === -1 ? list.push(code) : list.splice(idx, 1);
+    }
+
     function setFramework(framework: Framework) {
         stepperData.value.framework = framework;
         // Pré-remplissage intelligent basé sur le framework (mock)
@@ -156,7 +197,12 @@ export const useGeneratorStore = defineStore('generator', () => {
                 languageVersion: '',
                 buildTool: 'maven',
                 groupId: 'com.example',
-                frameworkVersion: ''
+                frameworkVersion: '',
+                projectDescription: '',
+                projectPort: '',
+                loggingLevel: '',
+                securityType: '',
+                cacheProvider: ''
             },
             database: {
                 engine: 'postgre',
@@ -181,11 +227,31 @@ export const useGeneratorStore = defineStore('generator', () => {
                 selectedViews: [],
                 selectedComponents: [],
             },
-            frontend: null
+            frontend: null,
+            frontendLayout: {
+                selectedLanguages: [],
+                navbarType: '',
+                primaryColor: '',
+                secondaryColor: '',
+                logoPath: '',
+                faviconPath: '',
+                port: ''
+            },
+            git: {
+                useGit: false,
+                separateRepositories: false,
+                useRemoteRepo: false,
+                isNewRemoteRepo: true, // Par défaut on crée un nouveau repo
+                repositoryName: '',
+                backendRepositoryName: '',
+                frontendRepositoryName: '',
+                githubUsername: '',
+                githubToken: ''
+            }
         },
         availableFrontendFrameworks.value = [];
+        availableLanguages.value = [];
     }
-
 
     function addRelation(relation: RelationParameter): boolean {
         // Logique métier : vérification des doublons
@@ -207,6 +273,31 @@ export const useGeneratorStore = defineStore('generator', () => {
         relations.value.splice(index, 1);
     }
 
+    function updateGitConfig<K extends keyof GitConfiguration>(key: K, value: GitConfiguration[K]) {
+        (stepperData.value.git as any)[key] = value;
+        
+        // Nettoyage automatique
+        if (key === 'useGit' && value === false) {
+            // Reset tout si Git désactivé
+            stepperData.value.git = {
+                useGit: false,
+                separateRepositories: false,
+                useRemoteRepo: false,
+                isNewRemoteRepo: true,
+                repositoryName: '',
+                backendRepositoryName: '',
+                frontendRepositoryName: '',
+                githubUsername: '',
+                githubToken: ''
+            };
+        } else if (key === 'useRemoteRepo' && value === false) {
+            // Reset les champs remote si on désactive le remote
+            stepperData.value.git.isNewRemoteRepo = true;
+            stepperData.value.git.githubUsername = '';
+            stepperData.value.git.githubToken = '';
+        }
+    }
+
     return {
         currentStep,
         totalSteps,
@@ -219,8 +310,8 @@ export const useGeneratorStore = defineStore('generator', () => {
         setAvailableViews,
         setTablesChilds,
         setTablesParents,
-        availableFrontendFrameworks, // ✅ AJOUT
-        setAvailableFrontendFrameworks, // ✅ AJOUT
+        availableFrontendFrameworks,
+        setAvailableFrontendFrameworks,
         setSelectedFrontendFramework, 
         getTablesParents,
         getTablesChilds,
@@ -237,6 +328,11 @@ export const useGeneratorStore = defineStore('generator', () => {
         toggleView,
         goToNextStep,
         goToPreviousStep,
-        reset
+        reset,
+        availableLanguages,
+        setAvailableLanguages,
+        updateFrontendLayout,
+        toggleLanguage,
+        updateGitConfig
     };
 });

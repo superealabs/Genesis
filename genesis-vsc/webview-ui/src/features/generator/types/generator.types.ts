@@ -1,5 +1,7 @@
 import type { Framework } from '@/features/frameworks/types/framework.types';
 
+// ═══ Interfaces et Types ═══
+
 export interface ProjectConfig {
     projectName: string;
     projectLocation: string;
@@ -7,6 +9,11 @@ export interface ProjectConfig {
     buildTool: 'maven' | 'gradle' | 'npm' | 'yarn' | 'pip';
     groupId: string;
     frameworkVersion: string;
+    projectDescription: string;
+    projectPort: string;
+    loggingLevel: string;
+    securityType: string;
+    cacheProvider: string;
 }
 
 export interface DatabaseConfig {
@@ -43,6 +50,54 @@ export interface TableSelectionConfig {
     selectedComponents: ComponentType[];
 }
 
+export interface RelationParameter {
+    parentTable: string;
+    childTable: string;
+    mandatory: boolean;
+    hasForm: boolean;
+}
+
+export interface FrontendFramework {
+    id: number;
+    languageId: number;
+    name: string;
+    coreFramework: string;
+    componentExtension: string;
+    defaultPort: string;
+}
+
+export interface LanguageDto {
+    code: string; // ex: 'fr', 'en'
+    name: string; // ex: 'Français', 'English'
+}
+
+export interface FrontendLayoutConfig {
+    selectedLanguages: string[]; // Tableau des codes de langues sélectionnées (ex: ['fr', 'en'])
+    navbarType: 'side' | 'top' | '';
+    primaryColor: string;
+    secondaryColor: string;
+    logoPath: string;
+    port: string;
+    faviconPath: string;
+}
+
+// NOUVEAU : Configuration Git (mise à jour)
+export interface GitConfiguration {
+    useGit: boolean;
+    separateRepositories: boolean;
+    
+    // Nouveau : Gestion du remote
+    useRemoteRepo: boolean;
+    isNewRemoteRepo: boolean; // true = créer nouveau, false = utiliser existant
+    
+    // Champs conditionnels
+    repositoryName: string;
+    backendRepositoryName: string;
+    frontendRepositoryName: string;
+    githubUsername: string;
+    githubToken: string; // Uniquement si isNewRemoteRepo = true
+}
+
 // ═══ Interface principale ═══
 export interface GeneratorData {
     framework: Framework | null;
@@ -51,7 +106,11 @@ export interface GeneratorData {
     script: ScriptConfig;
     tableSelection: TableSelectionConfig;
     frontend: FrontendFramework | null;
+    frontendLayout: FrontendLayoutConfig;
+    git: GitConfiguration;
 }
+
+// ═══ Constantes ═══
 
 export const MOCK_BUILD_TOOLS = [
     { label: 'Maven', value: 'maven' },
@@ -70,22 +129,3 @@ export const AVAILABLE_COMPONENTS: { label: string; value: ComponentType }[] = [
     { label: 'Service', value: 'service' },
     { label: 'Controller', value: 'controller' },
 ];
-
-
-export interface RelationParameter {
-    parentTable: string;
-    childTable: string;
-    mandatory: boolean;
-    hasForm: boolean;
-}
-
-export interface FrontendFramework {
-    id: number;
-    languageId: number;
-    name: string;
-    coreFramework: string;
-    componentExtension: string;
-    defaultPort: string;
-}
-
-

@@ -27,25 +27,22 @@
         <!-- Étape 5 : Sélection des tables et composants -->
         <TableSelectionView v-else-if="currentStep === 5" />
 
-        <!-- Étape 6 : gestion des relations mères fille -->        
+        <!-- Étape 6 : Gestion des relations mère-fille -->        
         <RelationConfigView v-else-if="currentStep === 6" />
 
-        <!-- Étape 7 : Séléction du Framework frontEnd -->
+        <!-- Étape 7 : Sélection du Framework frontEnd -->
         <FrontEndSelectionView 
             v-else-if="currentStep === 7" 
             @select="handleFrontendSelect"
             :showBackButton="false" 
         />
 
-        <!-- Étape 8 : configuration du layout frontEnd -->   
-        <div v-else-if="currentStep === 7" class="p-8 text-center text-text-muted">
-            <p>Étape 8 : À définir</p>
-        </div>
+        <!-- ✅ Étape 8 : Configuration du layout frontEnd -->   
+        <FrontendLayoutConfigView v-else-if="currentStep === 8" />
 
-        <div v-else-if="currentStep === 9" class="p-8 text-center text-text-muted">
-            <p>Étape 9 : À définir</p>
-        </div>
+        <GitConfigView v-else-if="currentStep === 9" />
 
+        
     </StepperPopup>
 </template>
 
@@ -57,10 +54,12 @@ import DatabaseConfigView from './steps/DatabaseConfigView.vue';
 import ScriptConfigView from './steps/ScriptConfigView.vue';
 import TableSelectionView from './steps/TableSelectionView.vue';
 import RelationConfigView from './steps/RelationConfigView.vue';
-import { useGenerator } from '../composables/useGenerator';
-import type { FrontendFramework } from '../types/generator.types.ts';
 import FrontEndSelectionView from '@/features/frontend/views/FrontEndSelectionView.vue';
+import FrontendLayoutConfigView from './steps/FrontendLayoutConfigView.vue';
+import GitConfigView from './steps/GitConfigView.vue';
 
+import { useGenerator } from '../composables/useGenerator';
+import type { FrontendFramework } from '../types/generator.types';
 
 const emit = defineEmits<{
     close: [];

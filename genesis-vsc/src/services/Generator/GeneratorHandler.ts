@@ -15,6 +15,7 @@ export interface RelationParameter {
     hasForm: boolean;
 }
 
+
 // ═══ DONNÉES STATIQUES (FALLBACK) ═══
 const MOCK_PARENT_TABLES: TableMetadataDto[] = [
     { tableName: 'utilisateur', className: 'Utilisateur', isView: false },

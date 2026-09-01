@@ -9,7 +9,7 @@ export class GenesisPanel {
     private panel: vscode.WebviewPanel;
     private shutdownTimer: NodeJS.Timeout | null = null;
     
-    // ✅ Le routeur qui s'occupe de tous les messages métier
+    // Le routeur qui s'occupe de tous les messages métier
     private messageRouter: WebviewMessageRouter;
 
     private constructor(
@@ -122,7 +122,7 @@ export class GenesisPanel {
                         isOffline: !this.genesisApi.getStatus().ready
                     }
                 });
-                return; // ⚠️ IMPORTANT : on s'arrête ici, on ne passe pas au routeur
+                return; // IMPORTANT : on s'arrête ici, on ne passe pas au routeur
             }
 
             // ── 2. Messages Métier (Délégués au Routeur) ────────────────────

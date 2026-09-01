@@ -1,6 +1,6 @@
 import { VscodeService } from '@/core/services/vscode.service';
 import { useGeneratorStore } from '../store/useGenerator.store';
-import type { TableMetadataDto, RelationParameter } from '../types/generator.types';
+import type { TableMetadataDto, RelationParameter, LanguageDto } from '../types/generator.types';
 
 export class GeneratorService extends VscodeService {
     private _store: ReturnType<typeof useGeneratorStore> | null = null;
@@ -42,6 +42,10 @@ export class GeneratorService extends VscodeService {
         this.onMessage<RelationParameter[]>('RELATIONS_LOADED', (data) => {
             this.store.setRelations(data);
         });
+
+        this.onMessage<LanguageDto[]>('AVAILABLE_LANGUAGES_LOADED', (languages) => {
+            this.store.setAvailableLanguages(languages);
+        });
     }
 
     /**
@@ -81,6 +85,10 @@ export class GeneratorService extends VscodeService {
 
     fetchRelations(): void {
         this.sendMessage('GET_RELATION_PARAMETERS');
+    }
+
+    fetchAvailableLanguages(): void {
+        this.sendMessage('GET_AVAILABLE_LANGUAGES');
     }
 
 }

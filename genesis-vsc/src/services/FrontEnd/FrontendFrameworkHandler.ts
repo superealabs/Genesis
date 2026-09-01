@@ -11,6 +11,11 @@ export interface FrontendFrameworkDto {
     defaultPort: string;
 }
 
+export interface LanguageDto {
+    code: string;   // ex: 'fr', 'en'
+    name: string;   // ex: 'Français', 'English'
+}
+
 // ═══ DONNÉES STATIQUES (FALLBACK) ═══
 const MOCK_FRONTEND_FRAMEWORKS: FrontendFrameworkDto[] = [
     {
@@ -47,6 +52,17 @@ const MOCK_FRONTEND_FRAMEWORKS: FrontendFrameworkDto[] = [
     }
 ];
 
+const MOCK_LANGUAGES: LanguageDto[] = [
+    { code: 'fr', name: 'Français' },
+    { code: 'en', name: 'English' },
+    { code: 'es', name: 'Español' },
+    { code: 'de', name: 'Deutsch' },
+    { code: 'it', name: 'Italiano' },
+    { code: 'pt', name: 'Português' },
+    { code: 'ar', name: 'العربية' },
+    { code: 'zh', name: '中文' }
+];
+
 export class FrontendHandler {
     constructor(private panel: vscode.WebviewPanel) {}
 
@@ -62,6 +78,25 @@ export class FrontendHandler {
             this.panel.webview.postMessage({
                 type: 'FRONTEND_FRAMEWORKS_LOADED',
                 payload: MOCK_FRONTEND_FRAMEWORKS
+            });
+        }
+    }
+
+
+    // NOUVELLE MÉTHODE : Récupération des langues
+    async handleGetAvailableLanguages(_payload: any): Promise<void> {
+        try {
+            // Tentative d'appel à l'API Java (à adapter selon ton endpoint réel)
+            const { data } = await getAxiosInstance().get<LanguageDto[]>('/frontend/languages');
+            this.panel.webview.postMessage({ 
+                type: 'AVAILABLE_LANGUAGES_LOADED', 
+                payload: data 
+            });
+        } catch (error) {
+            console.warn('[FrontendHandler] API Languages échouée, utilisation du fallback statique:', (error as Error).message);
+            this.panel.webview.postMessage({
+                type: 'AVAILABLE_LANGUAGES_LOADED',
+                payload: MOCK_LANGUAGES
             });
         }
     }

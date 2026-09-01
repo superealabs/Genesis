@@ -7,7 +7,7 @@ import type { ScriptConfig, ComponentType, GeneratorData, FrontendFramework } fr
 
 export function useGenerator() {
     const store = useGeneratorStore();
-    const { currentStep, totalSteps, stepperData, isFirstStep, isLastStep, getTablesChilds, getTablesParents, getRelations, availableFrontendFrameworks } = storeToRefs(store);
+    const { currentStep, totalSteps, stepperData, isFirstStep, isLastStep, getTablesChilds, getTablesParents, getRelations, availableFrontendFrameworks, availableLanguages } = storeToRefs(store);
 
     generatorService.init();
 
@@ -78,6 +78,11 @@ export function useGenerator() {
         }
     }
 
+    function handleComplete(): GeneratorData {
+        console.log('Données finales prêtes pour la génération:', stepperData.value);
+        return stepperData.value;
+    }
+
     function goToNextStep(): GeneratorData | null {
         if (!validateCurrentStep()) return null;
 
@@ -129,11 +134,6 @@ export function useGenerator() {
         store.toggleComponent(component);
     }
 
-    function handleComplete(): GeneratorData {
-        console.log('Données finales prêtes pour la génération:', stepperData.value);
-        return stepperData.value;
-    }
-
     function reset() {
         store.reset();
     }
@@ -156,6 +156,22 @@ export function useGenerator() {
 
     function fetchRelations() {
         generatorService.fetchRelations();
+    }
+
+    function fetchAvailableLanguages() {
+        generatorService.fetchAvailableLanguages();
+    }
+
+    function updateFrontendLayout(key: any, value: any) {
+        store.updateFrontendLayout(key, value);
+    }
+
+    function toggleLanguage(code: string) {
+        store.toggleLanguage(code);
+    }
+
+    function updateGitConfig(key: any, value: any) {
+        store.updateGitConfig(key, value);
     }
 
     return {
@@ -191,5 +207,11 @@ export function useGenerator() {
         toggleTable,
         toggleView,
         toggleComponent,
+        availableLanguages,
+        fetchAvailableLanguages,
+        updateFrontendLayout,
+        toggleLanguage,
+        updateGitConfig
+
     };
 }

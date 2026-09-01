@@ -58,6 +58,10 @@ export class WebviewMessageRouter {
                     await this.frontendHandler.handleGetFrontendFrameworks(message.payload);
                     break;
 
+                case 'GET_AVAILABLE_LANGUAGES':
+                    await this.frontendHandler.handleGetAvailableLanguages(message.payload);
+                    break;
+
                 default:
                     console.warn(`[WebviewMessageRouter] Message non géré : ${message.type}`);
             }
