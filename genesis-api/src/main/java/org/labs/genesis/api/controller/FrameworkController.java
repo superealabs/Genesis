@@ -1,7 +1,7 @@
 package org.labs.genesis.api.controller;
 
-import org.labs.genesis.api.dto.FrameworkResponse;
-import org.labs.genesis.api.dto.FrameworkSelectionResponse;
+import org.labs.genesis.api.dto.framework.FrameworkResponse;
+import org.labs.genesis.api.dto.framework.FrameworkSelectionResponse;
 import org.labs.genesis.api.service.FrameworkService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
