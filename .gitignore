@@ -17,6 +17,7 @@ generated
 *.ipr
 out/
 **/out/
+*.log
 
 ### Eclipse ###
 .apt_generated
