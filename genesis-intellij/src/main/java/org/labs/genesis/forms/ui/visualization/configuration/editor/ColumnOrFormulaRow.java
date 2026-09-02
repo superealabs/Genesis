@@ -363,42 +363,6 @@ public class ColumnOrFormulaRow extends JPanel {
     }
 
     /**
-     * Définit une valeur de colonne.
-     */
-    public void setColumn(String value) {
-        if (value != null && !value.isBlank()) {
-            columnField.setColumn(value);
-            parameter.setValue(value);
-            parameter.setMode("COLUMN", true);
-            if (modeCombo.getSelectedIndex() != 0) {
-                switchToColumn();
-            }
-            // Mettre à jour la configuration
-            if (targetComponent != null && configKey != null) {
-                targetComponent.updateConfig(configKey, "COLUMN:" + value);
-            }
-        }
-    }
-
-    /**
-     * Définit une valeur de formule.
-     */
-    public void setFormula(String value) {
-        if (value != null && !value.isBlank()) {
-            formulaField.setText(value);
-            parameter.setValue(value);
-            parameter.setMode("FORMULA", true);
-            if (modeCombo.getSelectedIndex() != 1) {
-                switchToFormula();
-            }
-            // Mettre à jour la configuration
-            if (targetComponent != null && configKey != null) {
-                targetComponent.updateConfig(configKey, "FORMULA:" + value);
-            }
-        }
-    }
-
-    /**
      * Vérifie si une valeur est définie.
      */
     public boolean hasValue() {

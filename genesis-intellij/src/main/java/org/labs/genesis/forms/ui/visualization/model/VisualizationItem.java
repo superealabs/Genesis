@@ -152,6 +152,7 @@ public class VisualizationItem {
                     if (value == null) return false;
                     if (value instanceof String && ((String) value).trim().isEmpty()) return false;
                     if (value instanceof List && ((List<?>) value).isEmpty()) return false;
+                    System.out.println("--> " + value + "-> " + param.getKey());
                     return true;
                 });
     }

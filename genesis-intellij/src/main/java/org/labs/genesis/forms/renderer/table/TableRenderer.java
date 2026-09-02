@@ -1,41 +1,588 @@
 package org.labs.genesis.forms.renderer.table;
 
 import org.labs.genesis.forms.renderer.VisualizationRenderer;
+import org.labs.genesis.forms.renderer.chart.ChartData;
 import org.labs.genesis.forms.theme.DashboardTheme;
+import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumnModel;
+import java.awt.*;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class TableRenderer implements VisualizationRenderer {
 
+    private static final int MAX_DISPLAY_ROWS = 100;
+
+    private static final NumberFormat NUMBER_FORMAT =
+            NumberFormat.getInstance(Locale.US);
+
+    static {
+        NUMBER_FORMAT.setGroupingUsed(true);
+        NUMBER_FORMAT.setMaximumFractionDigits(2);
+        NUMBER_FORMAT.setMinimumFractionDigits(0);
+    }
+
+    private ChartData chartData;
+    private List<String> columns = new ArrayList<>();
+    private String title;
+
+    private JPanel rootPanel;
+    private JTable table;
+    private JScrollPane scrollPane;
+
     @Override
     public JComponent createComponent() {
-        String[] columns = {"Date", "Commande", "Client", "Produit", "Montant"};
-        Object[][] data = {
-                {"2026-08-22 14:32", "CMD-1042", "Rakoto J.", "Produit A", "194,00 €"},
-                {"2026-08-22 13:15", "CMD-1043", "Rasoa M.", "Produit B", "159,00 €"},
-                {"2026-08-22 11:08", "CMD-1044", "Andry R.", "Produit C", "312,00 €"},
-                {"2026-08-21 18:45", "CMD-1045", "Fara N.", "Produit D", "206,00 €"}
-        };
+        rootPanel = new JPanel(new BorderLayout());
+        rootPanel.setBackground(DashboardTheme.CANVAS_BG);
+        rootPanel.setOpaque(true);
+        rootPanel.setBorder(
+                BorderFactory.createLineBorder(
+                        DashboardTheme.BORDER_SUBTLE,
+                        1
+                )
+        );
 
-        DefaultTableModel model = new DefaultTableModel(data, columns) {
+        table = new JTable();
+        configureTable(table);
+
+        scrollPane = createScrollPane(table);
+        rootPanel.add(scrollPane, BorderLayout.CENTER);
+
+        refreshTable();
+
+        return rootPanel;
+    }
+
+    @Override
+    public JComponent createComponent(VisualizationConfig config) {
+        updateConfig(config);
+
+        return createComponent();
+    }
+
+    @Override
+    public void updateConfig(VisualizationConfig config) {
+
+        Object dataObj = config.getValue(ChartData.CONFIG_KEY);
+
+        if (dataObj instanceof ChartData data) {
+            chartData = data;
+        } else {
+            chartData = null;
+        }
+
+        Object columnsObj = config.getValue("columns");
+
+        if (columnsObj instanceof List<?> list) {
+            columns = new ArrayList<>();
+
+            for (Object value : list) {
+                if (value != null) {
+                    String stringValue = value.toString().trim();
+
+                    if (!stringValue.isEmpty()) {
+                        columns.add(stringValue);
+                    }
+                }
+            }
+        } else {
+            columns = new ArrayList<>();
+        }
+
+        title = config.getString("title");
+
+        if (table != null) {
+            SwingUtilities.invokeLater(this::refreshTable);
+        }
+    }
+
+    private void refreshTable() {
+
+        if (table == null) {
+            return;
+        }
+
+        String[] columnNames = buildColumnNames();
+
+        Object[][] data = buildTableData(columnNames);
+
+        DefaultTableModel model = new DefaultTableModel(
+                data,
+                columnNames
+        ) {
             @Override
-            public boolean isCellEditable(int row, int column) { return false; }
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
         };
 
-        JTable table = new JTable(model);
-        table.setRowHeight(28);
+        table.setModel(model);
+
+        configureHeader();
+
+        if (columnNames.length > 0) {
+            adjustColumnWidths();
+        }
+
+        updateTitle();
+
+        table.revalidate();
+        table.repaint();
+
+        if (scrollPane != null) {
+            scrollPane.revalidate();
+            scrollPane.repaint();
+        }
+
+        if (rootPanel != null) {
+            rootPanel.revalidate();
+            rootPanel.repaint();
+        }
+    }
+
+    private String[] buildColumnNames() {
+
+        if (columns == null || columns.isEmpty()) {
+            return new String[]{"Message"};
+        }
+
+        String[] result = new String[columns.size()];
+
+        for (int i = 0; i < columns.size(); i++) {
+            result[i] = cleanColumnName(columns.get(i));
+        }
+
+        return result;
+    }
+
+    private Object[][] buildTableData(String[] columnNames) {
+
+        if (columns == null || columns.isEmpty()) {
+            return new Object[][]{
+                    {"Aucune colonne configurée"}
+            };
+        }
+
+        if (chartData == null ||
+                !chartData.hasSeries() ||
+                chartData.values() == null ||
+                chartData.values().length == 0) {
+
+            return new Object[][]{
+                    {"Aucune donnée à afficher"}
+            };
+        }
+
+        double[] values = chartData.values();
+        List<String> labels = chartData.labels();
+
+        int rowCount = Math.min(
+                values.length,
+                MAX_DISPLAY_ROWS
+        );
+
+        int columnCount = columnNames.length;
+
+        Object[][] data =
+                new Object[rowCount][columnCount];
+
+        boolean hasLabels =
+                labels != null &&
+                        !labels.isEmpty();
+
+        for (int row = 0; row < rowCount; row++) {
+
+            for (int column = 0;
+                 column < columnCount;
+                 column++) {
+
+                String configuredColumn =
+                        columns.get(column);
+
+                data[row][column] =
+                        resolveValue(
+                                configuredColumn,
+                                column,
+                                row,
+                                values,
+                                labels,
+                                hasLabels,
+                                columnCount
+                        );
+            }
+        }
+
+        return data;
+    }
+
+    private Object resolveValue(
+            String configuredColumn,
+            int columnIndex,
+            int rowIndex,
+            double[] values,
+            List<String> labels,
+            boolean hasLabels,
+            int columnCount
+    ) {
+
+        String column =
+                cleanColumnName(configuredColumn)
+                        .toLowerCase(Locale.ROOT);
+
+        if (column.equals("#") ||
+                column.equals("index") ||
+                column.equals("row")) {
+
+            return rowIndex + 1;
+        }
+
+        if (column.equals("label") ||
+                column.equals("category") ||
+                column.equals("name")) {
+
+            if (hasLabels && rowIndex < labels.size()) {
+                return labels.get(rowIndex);
+            }
+
+            return "";
+        }
+
+        if (column.equals("value") ||
+                column.equals("amount") ||
+                column.equals("count") ||
+                column.equals("total")) {
+
+            return formatValue(values[rowIndex]);
+        }
+
+        /*
+         * Pour l'instant ChartData ne contient qu'une série.
+         *
+         * On garde donc un fallback intelligent :
+         *
+         * première colonne -> label
+         * dernière colonne -> value
+         */
+        if (hasLabels && columnIndex == 0) {
+            return rowIndex < labels.size()
+                    ? labels.get(rowIndex)
+                    : "";
+        }
+
+        if (columnIndex == columnCount - 1) {
+            return formatValue(values[rowIndex]);
+        }
+
+        return "";
+    }
+
+    private String cleanColumnName(String column) {
+
+        if (column == null) {
+            return "";
+        }
+
+        column = column.trim();
+
+        if (column.startsWith("COLUMN:")) {
+            column = column.substring("COLUMN:".length());
+        }
+
+        if (column.startsWith("FORMULA:")) {
+            column = column.substring("FORMULA:".length());
+        }
+
+        int lastDot = column.lastIndexOf('.');
+
+        if (lastDot >= 0 &&
+                lastDot < column.length() - 1) {
+
+            column =
+                    column.substring(lastDot + 1);
+        }
+
+        if (!column.isEmpty()) {
+
+            column =
+                    Character.toUpperCase(column.charAt(0))
+                            + column.substring(1);
+        }
+
+        return column;
+    }
+
+    private void configureTable(JTable table) {
+
+        table.setRowHeight(30);
         table.setShowGrid(false);
+        table.setIntercellSpacing(new Dimension(0, 0));
+
         table.setBackground(DashboardTheme.ACCENT_LIGHT);
         table.setForeground(DashboardTheme.TEXT_DARK);
-        table.getTableHeader().setReorderingAllowed(false);
-        table.getTableHeader().setForeground(DashboardTheme.TEXT_SECONDARY);
 
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(null);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.setOpaque(false);
+        table.setFont(
+                table.getFont().deriveFont(
+                        Font.PLAIN,
+                        13f
+                )
+        );
 
-        return scrollPane;
+        table.setSelectionBackground(
+                new Color(99, 102, 241, 50)
+        );
+
+        table.setSelectionForeground(
+                DashboardTheme.TEXT_DARK
+        );
+
+        table.setDefaultRenderer(
+                Object.class,
+                new DefaultTableCellRenderer() {
+
+                    @Override
+                    public Component getTableCellRendererComponent(
+                            JTable table,
+                            Object value,
+                            boolean selected,
+                            boolean focused,
+                            int row,
+                            int column
+                    ) {
+
+                        Component component =
+                                super.getTableCellRendererComponent(
+                                        table,
+                                        value,
+                                        selected,
+                                        focused,
+                                        row,
+                                        column
+                                );
+
+                        if (!selected) {
+
+                            component.setBackground(
+                                    row % 2 == 0
+                                            ? DashboardTheme.ACCENT_LIGHT
+                                            : DashboardTheme.SURFACE
+                            );
+                        }
+
+                        setForeground(
+                                DashboardTheme.TEXT_DARK
+                        );
+
+                        setBorder(
+                                BorderFactory.createEmptyBorder(
+                                        2,
+                                        8,
+                                        2,
+                                        8
+                                )
+                        );
+
+                        return component;
+                    }
+                }
+        );
+
+        configureHeader();
+    }
+
+    private void configureHeader() {
+
+        if (table == null) {
+            return;
+        }
+
+        JTableHeader header =
+                table.getTableHeader();
+
+        header.setReorderingAllowed(false);
+        header.setResizingAllowed(true);
+
+        header.setBackground(
+                DashboardTheme.SURFACE_2
+        );
+
+        header.setForeground(
+                DashboardTheme.TEXT_SECONDARY
+        );
+
+        header.setFont(
+                header.getFont().deriveFont(
+                        Font.BOLD,
+                        12f
+                )
+        );
+
+        header.setBorder(
+                BorderFactory.createMatteBorder(
+                        0,
+                        0,
+                        1,
+                        0,
+                        DashboardTheme.BORDER_SUBTLE
+                )
+        );
+    }
+
+    private JScrollPane createScrollPane(JTable table) {
+
+        JScrollPane pane =
+                new JScrollPane(table);
+
+        pane.setBorder(null);
+        pane.setOpaque(false);
+
+        pane.getViewport().setOpaque(false);
+        pane.getViewport().setBackground(
+                DashboardTheme.CANVAS_BG
+        );
+
+        pane.getVerticalScrollBar()
+                .setUnitIncrement(16);
+
+        return pane;
+    }
+
+    private void adjustColumnWidths() {
+
+        if (table == null) {
+            return;
+        }
+
+        TableColumnModel model =
+                table.getColumnModel();
+
+        int count =
+                model.getColumnCount();
+
+        if (count == 0) {
+            return;
+        }
+
+        int width =
+                Math.max(
+                        80,
+                        table.getWidth() / count
+                );
+
+        for (int i = 0; i < count; i++) {
+
+            model.getColumn(i)
+                    .setPreferredWidth(width);
+
+            model.getColumn(i)
+                    .setMinWidth(60);
+        }
+    }
+
+    private void updateTitle() {
+
+        if (rootPanel == null) {
+            return;
+        }
+
+        Component north =
+                ((BorderLayout) rootPanel.getLayout())
+                        .getLayoutComponent(
+                                BorderLayout.NORTH
+                        );
+
+        if (north != null) {
+            rootPanel.remove(north);
+        }
+
+        if (title != null &&
+                !title.isBlank()) {
+
+            JLabel titleLabel =
+                    new JLabel(title);
+
+            titleLabel.setForeground(
+                    DashboardTheme.TEXT_DARK
+            );
+
+            titleLabel.setFont(
+                    DashboardTheme.boldFont(13)
+            );
+
+            titleLabel.setBorder(
+                    BorderFactory.createEmptyBorder(
+                            8,
+                            12,
+                            6,
+                            12
+                    )
+            );
+
+            titleLabel.setOpaque(true);
+            titleLabel.setBackground(
+                    DashboardTheme.SURFACE_2
+            );
+
+            rootPanel.add(
+                    titleLabel,
+                    BorderLayout.NORTH
+            );
+        }
+
+        rootPanel.revalidate();
+    }
+
+    private String formatValue(double value) {
+
+        if (!Double.isFinite(value)) {
+            return "N/A";
+        }
+
+        if (value == (long) value) {
+            return NUMBER_FORMAT.format(
+                    (long) value
+            );
+        }
+
+        return NUMBER_FORMAT.format(value);
+    }
+
+    public ChartData getChartData() {
+        return chartData;
+    }
+
+    public void setChartData(ChartData chartData) {
+        this.chartData = chartData;
+        refreshTable();
+    }
+
+    public List<String> getColumns() {
+        return columns;
+    }
+
+    public void setColumns(List<String> columns) {
+
+        this.columns =
+                columns != null
+                        ? new ArrayList<>(columns)
+                        : new ArrayList<>();
+
+        refreshTable();
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+        updateTitle();
     }
 }

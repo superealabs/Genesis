@@ -6,12 +6,9 @@ import org.labs.genesis.forms.theme.DashboardTheme;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
+import java.util.List;
 
 public class LineChartRenderer extends AbstractChartRenderer {
-
-    // =========================== DATA ===========================
-    private static final String[] MONTHS = {"Jan", "Fév", "Mar", "Avr", "Mai", "Juin"};
-    private static final double[] VALUES = {32, 45, 38, 52, 60, 58};
 
     private static final int GRID_ALPHA = 90;
     private static final int AREA_TOP_ALPHA = 70;
@@ -57,9 +54,30 @@ public class LineChartRenderer extends AbstractChartRenderer {
         Font xFont = g.getFont().deriveFont(Font.PLAIN, fonts.xSize);
         Font yFont = g.getFont().deriveFont(Font.PLAIN, fonts.ySize);
         Font axisLabelFont = g.getFont().deriveFont(Font.PLAIN, fonts.axisLabelSize);
+        ChartData data = getChartData();
+        if (isChartDataLoading()) {
+            drawEmptyMessage(g, width, height, "Chargement...");
+            return;
+        }
+        String error = getChartDataError();
+        if (error != null && !error.isBlank()) {
+            drawEmptyMessage(g, width, height, error);
+            return;
+        }
+        if (data == null || !data.hasSeries()) {
+            drawEmptyMessage(g, width, height, "Aucune donnée");
+            return;
+        }
+        List<String> labels = data.labels();
+        double[] values = data.values();
 
-        double upperBound = calculateUpperBound(tiny);
-        double tickUnit = calculateTickUnit(tiny, compact);
+        // Calcul du max pour déterminer les ticks de manière intelligente
+        double maxValue = calculateMaxValue(values);
+
+        // Calcul de l'upperBound avec une logique adaptative
+        int plotWidthForCalculation = width - pad.horizontal * 2 - 60; // Estimation de la largeur du graphique
+        double upperBound = calculateUpperBound(maxValue, plotWidthForCalculation);
+        double tickUnit = calculateTickUnit(upperBound, plotWidthForCalculation);
 
         FontMetrics yMetrics = g.getFontMetrics(yFont);
         int yAxisWidth = tiny ? 4 : computeYAxisWidth(yMetrics, upperBound, tickUnit);
@@ -105,12 +123,12 @@ public class LineChartRenderer extends AbstractChartRenderer {
 
         // X labels
         if (!tiny) {
-            drawXLabels(g, plotX, plotY, plotWidth, plotHeight, xFont);
+            drawXLabels(g, labels, plotX, plotY, plotWidth, plotHeight, xFont);
         }
 
         // Area & Line
-        drawArea(g, plotX, plotY, plotWidth, plotHeight, upperBound);
-        drawLine(g, plotX, plotY, plotWidth, plotHeight, upperBound, tiny, compact, medium);
+        drawArea(g, values, plotX, plotY, plotWidth, plotHeight, upperBound);
+        drawLine(g, values, plotX, plotY, plotWidth, plotHeight, upperBound, tiny, compact, medium);
 
         // X axis label (seulement si présent et non vide)
         if (showXLegend && fonts.axisLabelSize > 0) {
@@ -200,16 +218,16 @@ public class LineChartRenderer extends AbstractChartRenderer {
         }
     }
 
-    private void drawXLabels(Graphics2D g, int plotX, int plotY, int plotWidth, int plotHeight, Font font) {
+    private void drawXLabels(Graphics2D g, List<String> labels, int plotX, int plotY, int plotWidth, int plotHeight, Font font) {
         g.setFont(font);
         FontMetrics fm = g.getFontMetrics();
-        int count = MONTHS.length;
+        int count = labels.size();
         if (count == 0) return;
 
         for (int i = 0; i < count; i++) {
             double ratio = (count == 1) ? 0.5 : i / (double) (count - 1);
             int x = plotX + (int) Math.round(plotWidth * ratio);
-            String text = MONTHS[i];
+            String text = labels.get(i);
             int textX = x - fm.stringWidth(text) / 2;
             int textY = plotY + plotHeight + fm.getAscent() + 6;
             g.setColor(DashboardTheme.TEXT_MUTED);
@@ -217,15 +235,15 @@ public class LineChartRenderer extends AbstractChartRenderer {
         }
     }
 
-    private void drawArea(Graphics2D g, int plotX, int plotY, int plotWidth, int plotHeight, double upperBound) {
-        if (VALUES.length == 0) return;
+    private void drawArea(Graphics2D g, double[] values, int plotX, int plotY, int plotWidth, int plotHeight, double upperBound) {
+        if (values.length == 0) return;
 
         Path2D area = new Path2D.Double();
         double baselineY = plotY + plotHeight;
 
-        for (int i = 0; i < VALUES.length; i++) {
-            double xRatio = (VALUES.length == 1) ? 0.5 : i / (double) (VALUES.length - 1);
-            double yRatio = VALUES[i] / upperBound;
+        for (int i = 0; i < values.length; i++) {
+            double xRatio = (values.length == 1) ? 0.5 : i / (double) (values.length - 1);
+            double yRatio = values[i] / upperBound;
             double x = plotX + plotWidth * xRatio;
             double y = plotY + plotHeight - plotHeight * yRatio;
 
@@ -248,14 +266,14 @@ public class LineChartRenderer extends AbstractChartRenderer {
         g.setPaint(null);
     }
 
-    private void drawLine(Graphics2D g, int plotX, int plotY, int plotWidth, int plotHeight,
+    private void drawLine(Graphics2D g, double[] values, int plotX, int plotY, int plotWidth, int plotHeight,
                           double upperBound, boolean tiny, boolean compact, boolean medium) {
-        if (VALUES.length == 0) return;
+        if (values.length == 0) return;
 
         Path2D path = new Path2D.Double();
-        for (int i = 0; i < VALUES.length; i++) {
-            double xRatio = (VALUES.length == 1) ? 0.5 : i / (double) (VALUES.length - 1);
-            double yRatio = VALUES[i] / upperBound;
+        for (int i = 0; i < values.length; i++) {
+            double xRatio = (values.length == 1) ? 0.5 : i / (double) (values.length - 1);
+            double yRatio = values[i] / upperBound;
             double x = plotX + plotWidth * xRatio;
             double y = plotY + plotHeight - plotHeight * yRatio;
 
@@ -283,20 +301,20 @@ public class LineChartRenderer extends AbstractChartRenderer {
 
         // Data points
         if (!tiny) {
-            drawDataPoints(g, plotX, plotY, plotWidth, plotHeight, upperBound, compact, medium);
+            drawDataPoints(g, values, plotX, plotY, plotWidth, plotHeight, upperBound, compact, medium);
         }
     }
 
-    private void drawDataPoints(Graphics2D g, int plotX, int plotY, int plotWidth, int plotHeight,
+    private void drawDataPoints(Graphics2D g, double[] values, int plotX, int plotY, int plotWidth, int plotHeight,
                                 double upperBound, boolean compact, boolean medium) {
         int size = getDataPointSize(false, compact, medium);
         if (size == 0) return;
         int innerSize = Math.max(2, size - 4);
-        int lastIndex = VALUES.length - 1;
+        int lastIndex = values.length - 1;
 
-        for (int i = 0; i < VALUES.length; i++) {
-            double xRatio = (VALUES.length == 1) ? 0.5 : i / (double) (VALUES.length - 1);
-            double yRatio = VALUES[i] / upperBound;
+        for (int i = 0; i < values.length; i++) {
+            double xRatio = (values.length == 1) ? 0.5 : i / (double) (values.length - 1);
+            double yRatio = values[i] / upperBound;
             double centerX = plotX + plotWidth * xRatio;
             double centerY = plotY + plotHeight - plotHeight * yRatio;
 
@@ -347,18 +365,118 @@ public class LineChartRenderer extends AbstractChartRenderer {
         return new Color(base.getRed(), base.getGreen(), base.getBlue(), alpha);
     }
 
-    private double calculateUpperBound(boolean tiny) {
-        double max = 0;
-        for (double v : VALUES) max = Math.max(max, v);
-        return tiny ? Math.ceil(max / 20.0) * 20 : Math.ceil((max + 10) / 20.0) * 20;
+    /**
+     * Calcule la valeur maximale parmi les données.
+     */
+    private double calculateMaxValue(double[] values) {
+        double max = 0.0;
+        for (double v : values) {
+            if (Double.isFinite(v)) {
+                max = Math.max(max, v);
+            }
+        }
+        return Math.max(max, 1.0);
     }
 
-    private double calculateTickUnit(boolean tiny, boolean compact) {
-        return (tiny || compact) ? 20 : 10;
+    /**
+     * Calcule la borne supérieure avec une logique adaptative.
+     * Le nombre de ticks est limité pour éviter la lenteur.
+     */
+    private double calculateUpperBound(double maxValue, int chartWidth) {
+        if (!Double.isFinite(maxValue) || maxValue <= 0) {
+            return 1.0;
+        }
+
+        // Déterminer le nombre de ticks cible en fonction de la largeur
+        int targetTicks;
+        if (chartWidth < 180) {
+            targetTicks = 4;
+        } else if (chartWidth < 280) {
+            targetTicks = 5;
+        } else if (chartWidth < 430) {
+            targetTicks = 6;
+        } else {
+            targetTicks = 8;
+        }
+
+        double rawStep = maxValue / targetTicks;
+
+        // Arrondir à une valeur "sympa" (1, 2, 5, 10, 20, 50, 100, etc.)
+        double magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        double normalized = rawStep / magnitude;
+
+        double niceStep;
+        if (normalized <= 1.0) {
+            niceStep = 1.0;
+        } else if (normalized <= 2.0) {
+            niceStep = 2.0;
+        } else if (normalized <= 5.0) {
+            niceStep = 5.0;
+        } else {
+            niceStep = 10.0;
+        }
+
+        double tickUnit = niceStep * magnitude;
+
+        // Arrondir la borne supérieure au multiple du tickUnit
+        return Math.ceil(maxValue / tickUnit) * tickUnit;
     }
 
+    /**
+     * Calcule l'unité de tick avec une logique adaptative.
+     */
+    private double calculateTickUnit(double upperBound, int chartWidth) {
+        if (upperBound <= 0 || !Double.isFinite(upperBound)) {
+            return 1.0;
+        }
+
+        // Déterminer le nombre de ticks cible en fonction de la largeur
+        int targetTicks;
+        if (chartWidth < 180) {
+            targetTicks = 4;
+        } else if (chartWidth < 280) {
+            targetTicks = 5;
+        } else if (chartWidth < 430) {
+            targetTicks = 6;
+        } else {
+            targetTicks = 8;
+        }
+
+        double rawStep = upperBound / targetTicks;
+
+        // Arrondir à une valeur "sympa" (1, 2, 5, 10, 20, 50, 100, etc.)
+        double magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        double normalized = rawStep / magnitude;
+
+        double niceStep;
+        if (normalized <= 1.0) {
+            niceStep = 1.0;
+        } else if (normalized <= 2.0) {
+            niceStep = 2.0;
+        } else if (normalized <= 5.0) {
+            niceStep = 5.0;
+        } else {
+            niceStep = 10.0;
+        }
+
+        return niceStep * magnitude;
+    }
+
+    /**
+     * Formate une valeur pour l'affichage.
+     * Gère les grands nombres avec des séparateurs.
+     */
     private String formatValue(double value) {
-        return Math.floor(value) == value ? String.valueOf((int) value) : String.format("%.1f", value);
+        if (Math.floor(value) == value) {
+            long longValue = Math.round(value);
+            if (longValue >= 1_000_000) {
+                return String.format("%.1fM", longValue / 1_000_000.0);
+            } else if (longValue >= 1_000) {
+                return String.format("%.1fK", longValue / 1_000.0);
+            }
+            return String.valueOf(longValue);
+        }
+        return String.format("%.1f", value);
     }
 
     // =========================== INNER CLASSES ===========================

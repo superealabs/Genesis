@@ -8,17 +8,6 @@ import java.awt.geom.Ellipse2D;
 
 public class ScatterPlotRenderer extends AbstractChartRenderer {
 
-    // =========================== DATA ===========================
-    private static final double[][] POINTS = {
-            {5, 18}, {8, 25}, {10, 32}, {12, 28}, {15, 45},
-            {18, 50}, {20, 58}, {22, 54}, {25, 68}, {28, 72}
-    };
-
-    private static final String DEFAULT_AXIS_X_LABEL = "";
-    private static final String COMPACT_AXIS_X_LABEL = "";
-    private static final String DEFAULT_AXIS_Y_LABEL = "";
-    private static final String COMPACT_AXIS_Y_LABEL = "";
-
     private static final int GRID_ALPHA = 90;
     private static final int POINT_ALPHA = 220;
     private static final int POINT_BORDER_ALPHA = 120;
@@ -36,13 +25,43 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
         Graphics2D g = (Graphics2D) g2.create();
         try {
             setupRendering(g);
+
+            ChartData data = getChartData();
+            if (isChartDataLoading()) {
+                drawEmptyMessage(g, width, height, "Chargement...");
+                return;
+            }
+            String error = getChartDataError();
+            if (error != null && !error.isBlank()) {
+                drawEmptyMessage(g, width, height, error);
+                return;
+            }
+            if (data == null || !data.hasPoints() || data.points().length == 0) {
+                drawEmptyMessage(g, width, height, "Aucune donnée");
+                return;
+            }
+
+            double[][] points = data.points();
+            if (!hasValidPoints(points)) {
+                drawEmptyMessage(g, width, height, "Points invalides");
+                return;
+            }
+
             boolean tiny = width < 180 || height < 130;
             boolean compact = !tiny && (width < 280 || height < 190);
             boolean medium = !tiny && !compact && (width < 420 || height < 280);
-            drawScatterPlot(g, width, height, tiny, compact, medium);
+            drawScatterPlot(g, width, height, tiny, compact, medium, points);
         } finally {
             g.dispose();
         }
+    }
+
+    private boolean hasValidPoints(double[][] points) {
+        for (double[] p : points) {
+            if (p == null || p.length < 2) return false;
+            if (!Double.isFinite(p[0]) || !Double.isFinite(p[1])) return false;
+        }
+        return true;
     }
 
     private void setupRendering(Graphics2D g) {
@@ -88,12 +107,11 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
 
     // =========================== MAIN CHART ===========================
     private void drawScatterPlot(Graphics2D g, int width, int height,
-                                 boolean tiny, boolean compact, boolean medium) {
-        // Récupérer les légendes depuis la configuration
-        String legendX = getConfigString("legendX", compact ? COMPACT_AXIS_X_LABEL : DEFAULT_AXIS_X_LABEL);
-        String legendY = getConfigString("legendY", compact ? COMPACT_AXIS_Y_LABEL : DEFAULT_AXIS_Y_LABEL);
+                                 boolean tiny, boolean compact, boolean medium,
+                                 double[][] points) {
+        String legendX = getConfigString("legendX", "");
+        String legendY = getConfigString("legendY", "");
 
-        // Vérifier si les légendes doivent être affichées
         boolean showXLegend = !tiny && legendX != null && !legendX.trim().isEmpty();
         boolean showYLegend = !tiny && legendY != null && !legendY.trim().isEmpty();
 
@@ -104,10 +122,17 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
         Font yFont = g.getFont().deriveFont(Font.PLAIN, fonts.ySize);
         Font axisFont = g.getFont().deriveFont(Font.PLAIN, fonts.axisSize);
 
-        double xUpper = calculateXUpperBound(tiny, compact);
-        double yUpper = calculateYUpperBound(tiny, compact);
-        double xTickUnit = calculateXTickUnit(tiny, compact);
-        double yTickUnit = calculateYTickUnit(tiny, compact);
+        // Calcul des bornes avec logique adaptative
+        double[] bounds = calculateBounds(points);
+        double xMin = bounds[0], xMax = bounds[1], yMin = bounds[2], yMax = bounds[3];
+
+        int plotWidthForCalc = width - pad.horizontal * 2 - 60;
+        int plotHeightForCalc = height - pad.vertical * 2 - 60;
+
+        double xUpper = calculateUpperBound(xMax, plotWidthForCalc);
+        double yUpper = calculateUpperBound(yMax, plotHeightForCalc);
+        double xTickUnit = calculateTickUnit(xUpper, plotWidthForCalc);
+        double yTickUnit = calculateTickUnit(yUpper, plotHeightForCalc);
 
         FontMetrics yMetrics = g.getFontMetrics(yFont);
         int yAxisWidth = tiny ? 3 : computeYAxisWidth(yMetrics, yUpper, yTickUnit);
@@ -115,7 +140,6 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
         FontMetrics xMetrics = g.getFontMetrics(xFont);
         int xAxisHeight = tiny ? 6 : xMetrics.getHeight() + 8;
 
-        // Ajuster les espaces selon la présence des légendes
         int bottomLabelSpace = getBottomLabelSpace(tiny, compact);
         if (showXLegend) {
             bottomLabelSpace += (compact ? 14 : 20);
@@ -149,7 +173,6 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
             drawYAxisTicks(g, plotX, plotY, plotHeight, yUpper, yTickUnit, yFont);
             drawXAxisTicks(g, plotX, plotY, plotWidth, plotHeight, xUpper, xTickUnit, xFont);
 
-            // Dessiner les légendes si présentes
             if (showYLegend) {
                 drawYAxisLabel(g, legendY, pad.horizontal, plotY, plotHeight, axisFont);
             }
@@ -159,8 +182,34 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
             }
         }
 
-        drawPoints(g, plotX, plotY, plotWidth, plotHeight, xUpper, yUpper,
-                tiny, compact, medium);
+        drawPoints(g, points, plotX, plotY, plotWidth, plotHeight, xUpper, yUpper,
+                xMin, yMin, tiny, compact, medium);
+    }
+
+    // =========================== BOUNDS CALCULATION ===========================
+    private double[] calculateBounds(double[][] points) {
+        double xMin = Double.POSITIVE_INFINITY;
+        double xMax = Double.NEGATIVE_INFINITY;
+        double yMin = Double.POSITIVE_INFINITY;
+        double yMax = Double.NEGATIVE_INFINITY;
+
+        for (double[] p : points) {
+            if (p[0] < xMin) xMin = p[0];
+            if (p[0] > xMax) xMax = p[0];
+            if (p[1] < yMin) yMin = p[1];
+            if (p[1] > yMax) yMax = p[1];
+        }
+
+        // Ajouter une marge de 10%
+        double xMargin = (xMax - xMin) * 0.1;
+        double yMargin = (yMax - yMin) * 0.1;
+
+        xMin = Math.max(0, xMin - xMargin);
+        xMax = xMax + xMargin;
+        yMin = Math.max(0, yMin - yMargin);
+        yMax = yMax + yMargin;
+
+        return new double[]{xMin, xMax, yMin, yMax};
     }
 
     // =========================== COMPUTATIONS ===========================
@@ -173,28 +222,53 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
         return Math.max(26, maxW + 10);
     }
 
-    private double calculateXUpperBound(boolean tiny, boolean compact) {
-        double max = 0;
-        for (double[] p : POINTS) max = Math.max(max, p[0]);
-        if (tiny) return Math.ceil(max / 10.0) * 10;
-        if (compact) return Math.ceil(max / 10.0) * 10 + 5;
-        return Math.ceil((max + 2) / 5.0) * 5;
+    private double calculateUpperBound(double maxValue, int chartSize) {
+        if (!Double.isFinite(maxValue) || maxValue <= 0) {
+            return 1.0;
+        }
+
+        int targetTicks;
+        if (chartSize < 180) targetTicks = 4;
+        else if (chartSize < 280) targetTicks = 5;
+        else if (chartSize < 420) targetTicks = 6;
+        else targetTicks = 8;
+
+        double rawStep = maxValue / targetTicks;
+        double magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        double normalized = rawStep / magnitude;
+
+        double niceStep;
+        if (normalized <= 1.0) niceStep = 1.0;
+        else if (normalized <= 2.0) niceStep = 2.0;
+        else if (normalized <= 5.0) niceStep = 5.0;
+        else niceStep = 10.0;
+
+        double tickUnit = niceStep * magnitude;
+        return Math.ceil(maxValue / tickUnit) * tickUnit;
     }
 
-    private double calculateYUpperBound(boolean tiny, boolean compact) {
-        double max = 0;
-        for (double[] p : POINTS) max = Math.max(max, p[1]);
-        if (tiny) return Math.ceil(max / 20.0) * 20;
-        if (compact) return Math.ceil(max / 20.0) * 20;
-        return Math.ceil((max + 5) / 10.0) * 10;
-    }
+    private double calculateTickUnit(double upperBound, int chartSize) {
+        if (upperBound <= 0 || !Double.isFinite(upperBound)) {
+            return 1.0;
+        }
 
-    private double calculateXTickUnit(boolean tiny, boolean compact) {
-        return (tiny || compact) ? 10 : 5;
-    }
+        int targetTicks;
+        if (chartSize < 180) targetTicks = 4;
+        else if (chartSize < 280) targetTicks = 5;
+        else if (chartSize < 420) targetTicks = 6;
+        else targetTicks = 8;
 
-    private double calculateYTickUnit(boolean tiny, boolean compact) {
-        return (tiny || compact) ? 20 : 10;
+        double rawStep = upperBound / targetTicks;
+        double magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        double normalized = rawStep / magnitude;
+
+        double niceStep;
+        if (normalized <= 1.0) niceStep = 1.0;
+        else if (normalized <= 2.0) niceStep = 2.0;
+        else if (normalized <= 5.0) niceStep = 5.0;
+        else niceStep = 10.0;
+
+        return niceStep * magnitude;
     }
 
     // =========================== GRID & AXES ===========================
@@ -295,16 +369,26 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
     }
 
     // =========================== POINTS ===========================
-    private void drawPoints(Graphics2D g, int plotX, int plotY, int plotWidth, int plotHeight,
+    private void drawPoints(Graphics2D g, double[][] points, int plotX, int plotY,
+                            int plotWidth, int plotHeight,
                             double xUpper, double yUpper,
+                            double xMin, double yMin,
                             boolean tiny, boolean compact, boolean medium) {
         int size = getPointSize(tiny, compact, medium);
         Color pointColor = withAlpha(DashboardTheme.ACCENT, POINT_ALPHA);
         Color borderColor = withAlpha(DashboardTheme.ACCENT, POINT_BORDER_ALPHA);
 
-        for (double[] p : POINTS) {
-            double xRatio = p[0] / xUpper;
-            double yRatio = p[1] / yUpper;
+        double xRange = xUpper - xMin;
+        double yRange = yUpper - yMin;
+
+        for (double[] p : points) {
+            double xRatio = (p[0] - xMin) / xRange;
+            double yRatio = (p[1] - yMin) / yRange;
+
+            // Clamp values to stay within bounds
+            xRatio = Math.max(0, Math.min(1, xRatio));
+            yRatio = Math.max(0, Math.min(1, yRatio));
+
             double cx = plotX + plotWidth * xRatio;
             double cy = plotY + plotHeight - plotHeight * yRatio;
             double px = cx - size / 2.0;
@@ -330,14 +414,25 @@ public class ScatterPlotRenderer extends AbstractChartRenderer {
     }
 
     private String formatValue(double value) {
-        return Math.floor(value) == value ? String.valueOf((int) value) : String.format("%.1f", value);
+        if (value == (long) value) {
+            long longValue = (long) value;
+            if (longValue >= 1_000_000_000) {
+                return String.format("%.1fB", longValue / 1_000_000_000.0);
+            } else if (longValue >= 1_000_000) {
+                return String.format("%.1fM", longValue / 1_000_000.0);
+            } else if (longValue >= 1_000) {
+                return String.format("%.1fK", longValue / 1_000.0);
+            }
+            return Long.toString(longValue);
+        }
+        return String.format("%.1f", value);
     }
 
     protected void drawEmptyMessage(Graphics2D g, int width, int height, String msg) {
         g.setColor(DashboardTheme.TEXT_MUTED);
         g.setFont(g.getFont().deriveFont(Font.PLAIN, 14f));
         FontMetrics fm = g.getFontMetrics();
-        String text = "Données insuffisantes";
+        String text = msg == null || msg.isBlank() ? "Données insuffisantes" : msg;
         int x = (width - fm.stringWidth(text)) / 2;
         int y = (height - fm.getHeight()) / 2 + fm.getAscent();
         g.drawString(text, x, y);
