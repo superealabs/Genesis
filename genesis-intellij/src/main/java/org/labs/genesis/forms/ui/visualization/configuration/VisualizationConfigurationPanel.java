@@ -1,16 +1,16 @@
 package org.labs.genesis.forms.ui.visualization.configuration;
 
 import com.intellij.icons.AllIcons;
+import org.labs.genesis.forms.theme.DashboardTheme;
+import org.labs.genesis.forms.ui.common.ScrollableContentPanel;
+import org.labs.genesis.forms.ui.visualization.DashboardVisualComponent;
 import org.labs.genesis.forms.ui.visualization.configuration.editor.ColumnDropField;
 import org.labs.genesis.forms.ui.visualization.configuration.editor.ColumnOrFormulaRow;
 import org.labs.genesis.forms.ui.visualization.configuration.editor.ColumnsEditorPanel;
 import org.labs.genesis.forms.ui.visualization.configuration.editor.OptionalNumberEditor;
+import org.labs.genesis.forms.ui.visualization.model.VisualizationItem;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameterType;
-import org.labs.genesis.forms.theme.DashboardTheme;
-import org.labs.genesis.forms.ui.common.ScrollableContentPanel;
-import org.labs.genesis.forms.ui.visualization.DashboardVisualComponent;
-import org.labs.genesis.forms.ui.visualization.model.VisualizationItem;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -40,6 +40,7 @@ public class VisualizationConfigurationPanel extends JPanel {
             Runnable onDelete
     ) {
         this.item = item;
+
         this.targetComponent = targetComponent;
         this.onBack = onBack;
         this.onDelete = onDelete;
@@ -399,20 +400,42 @@ public class VisualizationConfigurationPanel extends JPanel {
     }
 
     private JComponent createColumnsEditor() {
-        // Créer avec targetComponent et la clé
+        // Vérifier si targetComponent est null
+        if (targetComponent == null) {
+            JPanel fallbackPanel = new JPanel();
+            fallbackPanel.setOpaque(false);
+            fallbackPanel.add(new JLabel("No component available"));
+            return fallbackPanel;
+        }
+
+        // Créer avec targetComponent et la clé "columns"
         ColumnsEditorPanel panel = new ColumnsEditorPanel(targetComponent, "columns");
 
         // Charger les valeurs existantes
-        Object existingColumns = targetComponent.getConfigValue("columns");
-        if (existingColumns instanceof List<?> columnsList) {
-            panel.setColumns((List<String>) columnsList);
+        try {
+            Object existingColumns = targetComponent.getConfigValue("columns");
+            if (existingColumns instanceof List<?> columnsList) {
+                // Convertir en List<String> si nécessaire
+                List<String> stringList = new ArrayList<>();
+                for (Object obj : columnsList) {
+                    if (obj instanceof String) {
+                        stringList.add((String) obj);
+                    }
+                }
+                panel.setColumns(stringList);
+            }
+        } catch (Exception e) {
+            // Ignorer l'erreur et utiliser les valeurs par défaut
         }
 
         panel.setColumnsChangeListener(() -> {
             if (targetComponent != null) {
-                // La mise à jour est déjà faite dans notifyChange()
                 targetComponent.revalidate();
                 targetComponent.repaint();
+
+                // Forcer la mise à jour du rendu
+                targetComponent.getParent().revalidate();
+                targetComponent.getParent().repaint();
             }
         });
 

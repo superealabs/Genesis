@@ -1,12 +1,16 @@
 package org.labs.genesis.forms.ui.visualization;
 
+import com.intellij.openapi.application.ApplicationManager;
 import lombok.Getter;
 import lombok.Setter;
-import org.labs.genesis.forms.ui.visualization.model.VisualizationItem;
-import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
-import org.labs.genesis.forms.theme.DashboardTheme;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.forms.renderer.VisualizationRenderer;
 import org.labs.genesis.forms.renderer.VisualizationRendererFactory;
+import org.labs.genesis.forms.renderer.chart.ChartData;
+import org.labs.genesis.forms.renderer.chart.provider.DataProvider;
+import org.labs.genesis.forms.theme.DashboardTheme;
+import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
+import org.labs.genesis.forms.ui.visualization.model.VisualizationItem;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
 import org.labs.genesis.forms.utils.CursorUtils;
 
@@ -14,6 +18,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.sql.Connection;
+import java.util.List;
 
 @Getter
 @Setter
@@ -28,15 +34,15 @@ public class DashboardVisualComponent extends JPanel {
 
     private boolean selected;
     private ResizeDirection activeResizeDirection = ResizeDirection.NONE;
-
     private boolean resizing;
     private boolean dragging;
 
     private final VisualizationItem visualizationItem;
-
     private final VisualizationRenderer renderer;
     private final JComponent visualComponent;
     private final VisualizationConfig config;
+    private final ProjectGenerationContext context;
+    private final DataProvider dataProvider;
 
     private int gridX;
     private int gridY;
@@ -44,19 +50,23 @@ public class DashboardVisualComponent extends JPanel {
     private int gridHeight;
 
     private JLabel titleLabel;
-
     private JComponent errorComponent;
     private boolean showError = false;
     private String missingParameters = "";
+    private int dataLoadVersion = 0;
 
-    public DashboardVisualComponent(VisualizationItem visualizationItem,
-                                    int gridWidth,
-                                    int gridHeight) {
+    public DashboardVisualComponent(VisualizationItem visualizationItem, int gridWidth, int gridHeight) {
+        this(visualizationItem, gridWidth, gridHeight, null);
+    }
+
+    public DashboardVisualComponent(VisualizationItem visualizationItem, int gridWidth, int gridHeight,
+                                    ProjectGenerationContext context) {
         this.visualizationItem = visualizationItem;
         this.gridWidth = Math.max(1, gridWidth);
         this.gridHeight = Math.max(1, gridHeight);
         this.config = new VisualizationConfig();
-
+        this.context = context;
+        this.dataProvider = new DataProvider();
         this.renderer = VisualizationRendererFactory.create(visualizationItem.rendererClass);
         this.visualComponent = renderer.createComponent(config);
 
@@ -73,30 +83,22 @@ public class DashboardVisualComponent extends JPanel {
         titleLabel.setForeground(DashboardTheme.TEXT_DARK);
         titleLabel.setFont(DashboardTheme.boldFont(11));
         titleLabel.setBorder(new EmptyBorder(6, 8, 4, 8));
-
         add(titleLabel, BorderLayout.NORTH);
 
-        // Conteneur pour le contenu (visualisation ou erreur)
         JPanel contentContainer = new JPanel(new BorderLayout());
         contentContainer.setOpaque(false);
         contentContainer.setMinimumSize(new Dimension(0, 0));
         contentContainer.setPreferredSize(new Dimension(0, 0));
         contentContainer.setName("contentContainer");
 
-        // Ajouter le contenu initial
         updateContentContainer(contentContainer);
-
         add(contentContainer, BorderLayout.CENTER);
     }
 
-    /**
-     * Met à jour le conteneur avec le composant approprié (visualisation ou erreur)
-     */
     private void updateContentContainer(JPanel contentContainer) {
         contentContainer.removeAll();
 
         if (showError) {
-            // Afficher l'erreur
             if (errorComponent == null) {
                 errorComponent = new ErrorVisualizationComponent(missingParameters);
             }
@@ -105,7 +107,6 @@ public class DashboardVisualComponent extends JPanel {
             errorComponent.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
             contentContainer.add(errorComponent, BorderLayout.CENTER);
         } else {
-            // Afficher la visualisation
             visualComponent.setMinimumSize(new Dimension(0, 0));
             visualComponent.setPreferredSize(new Dimension(0, 0));
             visualComponent.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
@@ -116,119 +117,165 @@ public class DashboardVisualComponent extends JPanel {
         contentContainer.repaint();
     }
 
-    /**
-     * Met à jour l'état d'affichage en fonction de la configuration
-     */
-    private void updateDisplayState() {
-        boolean hasAllRequired = visualizationItem.hasAllRequiredParameters(config);
-        boolean shouldShowError = !hasAllRequired;
-
-        if (shouldShowError != showError) {
-            showError = shouldShowError;
-            if (showError) {
-                // Construire la liste des paramètres manquants
-                StringBuilder missing = new StringBuilder();
-                for (VisualizationParameter param : visualizationItem.parameters) {
-                    if (param.isRequired()) {
-                        Object value = config.getValue(param.getKey());
-                        boolean isEmpty = value == null ||
-                                (value instanceof String && ((String) value).trim().isEmpty()) ||
-                                (value instanceof java.util.List && ((java.util.List<?>) value).isEmpty());
-                        if (isEmpty) {
-                            if (missing.length() > 0) missing.append(", ");
-                            missing.append(param.getLabel());
-                        }
-                    }
-                }
-                missingParameters = missing.toString();
-
-                // Mettre à jour le composant d'erreur
-                if (errorComponent != null) {
-                    Container parent = errorComponent.getParent();
-                    if (parent != null) {
-                        parent.remove(errorComponent);
-                    }
-                }
-                errorComponent = new ErrorVisualizationComponent(missingParameters);
-            }
-
-            // Mettre à jour le conteneur
-            for (Component comp : getComponents()) {
-                if ("contentContainer".equals(comp.getName()) && comp instanceof JPanel) {
-                    updateContentContainer((JPanel) comp);
-                    break;
-                }
-            }
-
-            revalidate();
-            repaint();
-        }
-    }
-
-    /**
-     * Met à jour la configuration et rafraîchit le composant.
-     * Override de la méthode existante.
-     */
     public void updateConfig(String key, Object value) {
         config.setValue(key, value);
 
-        // Mise à jour spéciale pour le titre
         if ("title".equals(key)) {
             String titleValue = value != null ? value.toString() : "";
-            if (titleValue.trim().isEmpty()) {
-                titleLabel.setText(visualizationItem.name);
-            } else {
-                titleLabel.setText(titleValue);
-            }
+            titleLabel.setText(titleValue.trim().isEmpty() ? visualizationItem.name : titleValue);
             revalidate();
             repaint();
         }
 
-        // Mettre à jour le renderer
         renderer.updateConfig(config);
-        visualComponent.repaint();
-
-        // Vérifier si l'état d'affichage doit changer
+        refreshChartDataIfNeeded();
         updateDisplayState();
     }
 
-    /**
-     * Vérifie si la visualisation est correctement configurée.
-     */
+    private void refreshChartDataIfNeeded() {
+        if (context == null || context.getConnection() == null) return;
+        if (!isProperlyConfigured()) return;
+
+        String tableName = getTableName();
+        if (tableName == null || tableName.isBlank()) return;
+
+        int version = ++dataLoadVersion;
+
+        config.setValue(ChartData.LOADING_KEY, true);
+        config.setValue(ChartData.ERROR_KEY, null);
+        config.setValue(ChartData.CONFIG_KEY, null);
+        renderer.updateConfig(config);
+        visualComponent.repaint();
+
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+                ChartData data = dataProvider.load(context.getConnection(), tableName, config, visualizationItem);
+                SwingUtilities.invokeLater(() -> {
+                    if (version == dataLoadVersion) {
+                        config.setValue(ChartData.CONFIG_KEY, data);
+                        config.setValue(ChartData.ERROR_KEY, null);
+                        config.setValue(ChartData.LOADING_KEY, false);
+                        renderer.updateConfig(config);
+                        visualComponent.revalidate();
+                        visualComponent.repaint();
+                    }
+                });
+            } catch (Exception e) {
+                SwingUtilities.invokeLater(() -> {
+                    if (version == dataLoadVersion) {
+                        config.setValue(ChartData.CONFIG_KEY, null);
+                        config.setValue(ChartData.ERROR_KEY, getErrorMessage(e));
+                        config.setValue(ChartData.LOADING_KEY, false);
+                        renderer.updateConfig(config);
+                        visualComponent.revalidate();
+                        visualComponent.repaint();
+                    }
+                });
+            }
+        });
+    }
+
+    private String getTableName() {
+        Object table = config.getValue("table");
+        if (table != null && !table.toString().trim().isEmpty()) {
+            return table.toString().trim();
+        }
+
+        for (VisualizationParameter param : visualizationItem.parameters) {
+            if (!param.hasQueryRole()) continue;
+            Object value = config.getValue(param.getKey());
+            if (value == null) continue;
+            String stringValue = value.toString().trim();
+            if (stringValue.isEmpty()) continue;
+
+            String tableName = DataProvider.extractTableNameStatic(stringValue);
+            if (tableName != null) return tableName;
+        }
+
+        Object dataSource = config.getValue("dataSource");
+        if (dataSource != null && !dataSource.toString().trim().isEmpty()) {
+            return dataSource.toString().trim();
+        }
+
+        return null;
+    }
+
+    private String getErrorMessage(Exception e) {
+        if (e == null) return "Unknown error";
+        String message = e.getMessage();
+        return (message == null || message.isBlank()) ? e.getClass().getSimpleName() : message;
+    }
+
+    private void updateDisplayState() {
+        boolean shouldShowError = !visualizationItem.hasAllRequiredParameters(config);
+        if (shouldShowError == showError) return;
+
+        showError = shouldShowError;
+
+        if (showError) {
+            StringBuilder missing = new StringBuilder();
+            for (VisualizationParameter param : visualizationItem.parameters) {
+                if (!param.isRequired()) continue;
+                Object value = config.getValue(param.getKey());
+                boolean isEmpty = value == null ||
+                        (value instanceof String && ((String) value).trim().isEmpty()) ||
+                        (value instanceof List && ((List<?>) value).isEmpty());
+                if (isEmpty) {
+                    if (missing.length() > 0) missing.append(", ");
+                    missing.append(param.getLabel());
+                }
+            }
+            missingParameters = missing.toString();
+
+            if (errorComponent != null) {
+                Container parent = errorComponent.getParent();
+                if (parent != null) parent.remove(errorComponent);
+            }
+            errorComponent = new ErrorVisualizationComponent(missingParameters);
+        }
+
+        for (Component component : getComponents()) {
+            if ("contentContainer".equals(component.getName()) && component instanceof JPanel panel) {
+                updateContentContainer(panel);
+                break;
+            }
+        }
+
+        revalidate();
+        repaint();
+    }
+
     public boolean isProperlyConfigured() {
         return visualizationItem.hasAllRequiredParameters(config);
     }
 
-    /**
-     * Récupère la valeur d'un paramètre de configuration.
-     */
     public String getConfigValue(String key) {
         return config.getString(key);
     }
 
-    /**
-     * Récupère la valeur d'un paramètre de configuration avec valeur par défaut.
-     */
     public String getConfigValue(String key, String defaultValue) {
         return config.getString(key, defaultValue);
     }
 
-    // =========================================================
-    // CURSOR MANAGEMENT
-    // =========================================================
+    public void setTitle(String title) {
+        titleLabel.setText(title == null || title.trim().isEmpty() ? visualizationItem.name : title);
+        config.setValue("title", title);
+        revalidate();
+        repaint();
+    }
+
+    public String getTitle() {
+        return titleLabel.getText();
+    }
 
     public void setResizing(boolean resizing) {
         this.resizing = resizing;
-        if (!resizing) {
-            restoreCursor();
-        }
+        if (!resizing) restoreCursor();
     }
 
     public void setDragging(boolean dragging) {
         this.dragging = dragging;
-        if (!dragging) {
-            restoreCursor();
-        }
+        if (!dragging) restoreCursor();
     }
 
     private void restoreCursor() {
@@ -241,9 +288,7 @@ public class DashboardVisualComponent extends JPanel {
     }
 
     public void handleMouseMoved(Point point) {
-        if (resizing || dragging) {
-            return;
-        }
+        if (resizing || dragging) return;
 
         if (activeResizeDirection != ResizeDirection.NONE) {
             setCursor(CursorUtils.getCursorForDirection(activeResizeDirection));
@@ -267,9 +312,8 @@ public class DashboardVisualComponent extends JPanel {
 
     public void setActiveResizeDirection(ResizeDirection direction) {
         this.activeResizeDirection = direction;
-        if (resizing || dragging) {
-            return;
-        }
+        if (resizing || dragging) return;
+
         if (direction == ResizeDirection.NONE) {
             Point mousePos = getMousePosition();
             if (mousePos != null) {
@@ -281,10 +325,6 @@ public class DashboardVisualComponent extends JPanel {
             setCursor(CursorUtils.getCursorForDirection(direction));
         }
     }
-
-    // =========================================================
-    // RESIZE DETECTION
-    // =========================================================
 
     public ResizeDirection getResizeDirection(Point point) {
         if (!selected) return ResizeDirection.NONE;
@@ -306,38 +346,12 @@ public class DashboardVisualComponent extends JPanel {
         if (bottom) return ResizeDirection.SOUTH;
         if (left) return ResizeDirection.WEST;
         if (right) return ResizeDirection.EAST;
-
         return ResizeDirection.NONE;
     }
 
-    public void setTitle(String title) {
-        if (title == null || title.trim().isEmpty()) {
-            titleLabel.setText(visualizationItem.name);
-        } else {
-            titleLabel.setText(title);
-        }
-        // Mettre à jour aussi la configuration
-        config.setValue("title", title);
-        revalidate();
-        repaint();
-    }
-
-    public String getTitle() {
-        return titleLabel.getText();
-    }
-
-    // =========================================================
-    // HEADER AREA DETECTION
-    // =========================================================
-
     public boolean isInHeaderArea(Point p) {
-        if (titleLabel == null) return false;
-        return titleLabel.getBounds().contains(p);
+        return titleLabel != null && titleLabel.getBounds().contains(p);
     }
-
-    // =========================================================
-    // PAINTING
-    // =========================================================
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -350,6 +364,7 @@ public class DashboardVisualComponent extends JPanel {
             if (w <= 0 || h <= 0) return;
 
             RoundRectangle2D shape = new RoundRectangle2D.Double(0.5, 0.5, w - 1, h - 1, RADIUS, RADIUS);
+
             g2.setColor(DashboardTheme.ACCENT_LIGHT);
             g2.fill(shape);
             g2.setColor(DashboardTheme.CANVAS_BORDER);
@@ -370,55 +385,33 @@ public class DashboardVisualComponent extends JPanel {
         int w = getWidth();
         int h = getHeight();
         int half = HANDLE_SIZE / 2;
+
         Point[] points = {
                 new Point(0, 0), new Point(w / 2, 0), new Point(w, 0),
-                new Point(w, h / 2),
-                new Point(w, h),
-                new Point(w / 2, h),
-                new Point(0, h),
-                new Point(0, h / 2)
+                new Point(w, h / 2), new Point(w, h), new Point(w / 2, h),
+                new Point(0, h), new Point(0, h / 2)
         };
+
         g2.setColor(DashboardTheme.ACCENT);
         for (Point point : points) {
             g2.fillRect(point.x - half, point.y - half, HANDLE_SIZE, HANDLE_SIZE);
         }
     }
 
-    // =========================================================
-    // GRID
-    // =========================================================
-
-    public void setGridX(int gridX) {
-        this.gridX = Math.max(0, gridX);
-    }
-
-    public void setGridY(int gridY) {
-        this.gridY = Math.max(0, gridY);
-    }
-
-    public void setGridWidth(int gridWidth) {
-        this.gridWidth = Math.max(1, gridWidth);
-    }
-
-    public void setGridHeight(int gridHeight) {
-        this.gridHeight = Math.max(1, gridHeight);
-    }
-
+    public void setGridX(int gridX) { this.gridX = Math.max(0, gridX); }
+    public void setGridY(int gridY) { this.gridY = Math.max(0, gridY); }
+    public void setGridWidth(int gridWidth) { this.gridWidth = Math.max(1, gridWidth); }
+    public void setGridHeight(int gridHeight) { this.gridHeight = Math.max(1, gridHeight); }
     public void setGridSize(int width, int height) {
         this.gridWidth = Math.max(1, width);
         this.gridHeight = Math.max(1, height);
     }
-
     public void setSelected(boolean selected) {
         this.selected = selected;
         repaint();
     }
 
     public enum ResizeDirection {
-        NONE,
-        NORTH, SOUTH,
-        WEST, EAST,
-        NORTH_WEST, NORTH_EAST,
-        SOUTH_WEST, SOUTH_EAST
+        NONE, NORTH, SOUTH, WEST, EAST, NORTH_WEST, NORTH_EAST, SOUTH_WEST, SOUTH_EAST
     }
 }

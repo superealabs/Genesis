@@ -5,11 +5,9 @@ import org.labs.genesis.forms.theme.DashboardTheme;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.util.List;
 
 public class VerticalBarChartRenderer extends AbstractChartRenderer {
-
-    private static final String[] LABELS = {"Prod A", "Prod B", "Prod C", "Prod D"};
-    private static final double[] VALUES = {420, 380, 310, 260};
 
     private static final Color BAR_COLOR = DashboardTheme.ACCENT;
     private static final Color GRID_COLOR = new Color(203, 213, 225);
@@ -58,27 +56,44 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
     // =========================== MAIN CHART ===========================
     private void drawChart(Graphics2D g, int width, int height,
                            boolean tiny, boolean compact, boolean medium) {
-        // Récupérer les légendes depuis la configuration
         String legendX = getConfigString("legendX", "");
         String legendY = getConfigString("legendY", "");
 
-        // Vérifier si les légendes doivent être affichées
         boolean showXLegend = !tiny && !compact && legendX != null && !legendX.trim().isEmpty();
         boolean showYLegend = !tiny && !compact && legendY != null && !legendY.trim().isEmpty();
 
         Padding pad = getPadding(tiny, compact, medium);
+
+        ChartData data = getChartData();
+        if (isChartDataLoading()) {
+            drawEmptyMessage(g, width, height, "Chargement...");
+            return;
+        }
+        String error = getChartDataError();
+        if (error != null && !error.isBlank()) {
+            drawEmptyMessage(g, width, height, error);
+            return;
+        }
+
+        if (data == null || !data.hasSeries()) {
+            drawEmptyMessage(g, width, height, "Aucune donnée");
+            return;
+        }
+
+        double[] values = data.values();
+        double maxValue = calculateMaxValue(values);
+
+        int estimatedChartWidth = width - pad.left - pad.right - 50;
+        double upperBound = calculateUpperBound(maxValue, estimatedChartWidth);
+        double tickUnit = calculateTickUnit(upperBound, estimatedChartWidth);
+
         FontSizes fonts = getFontSizes(compact, medium);
 
-        int yAxisWidth = calculateYAxisWidth(g, tiny, compact, medium);
+        int yAxisWidth = calculateYAxisWidth(g, tiny, compact, medium, upperBound, tickUnit);
         int xAxisHeight = calculateXAxisHeight(tiny, compact, medium);
 
-        // Ajuster les espaces selon la présence des légendes
-        if (showXLegend) {
-            xAxisHeight += 20;
-        }
-        if (showYLegend) {
-            yAxisWidth += 16;
-        }
+        if (showXLegend) xAxisHeight += 20;
+        if (showYLegend) yAxisWidth += 16;
 
         int chartX = pad.left + yAxisWidth;
         int chartY = pad.top;
@@ -87,14 +102,11 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
 
         if (chartWidth <= 1 || chartHeight <= 1) return;
 
-        double upperBound = calculateUpperBound(tiny, compact);
-        double tickUnit = 100;
-
         drawGrid(g, chartX, chartY, chartWidth, chartHeight, upperBound, tickUnit, tiny, compact);
         drawAxes(g, chartX, chartY, chartWidth, chartHeight, tiny);
-        drawBars(g, chartX, chartY, chartWidth, chartHeight, upperBound, width, tiny, compact, medium);
+        drawBars(g, data, chartX, chartY, chartWidth, chartHeight, upperBound, width, tiny, compact, medium);
 
-        drawXAxisLabels(g, chartX, chartY + chartHeight, chartWidth, xAxisHeight, tiny, compact, medium, fonts.xLabel);
+        drawXAxisLabels(g, data, chartX, chartY + chartHeight, chartWidth, xAxisHeight, tiny, compact, medium, fonts.xLabel);
         drawYAxisLabels(g, chartX, chartY, chartWidth, chartHeight, upperBound, tickUnit, tiny, compact, medium, fonts.yLabel);
 
         if (!tiny) {
@@ -112,7 +124,7 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
         g.setStroke(new BasicStroke(compact ? 0.7f : 0.8f,
                 BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[]{4f, 4f}, 0f));
 
-        for (double v = 0; v <= upperBound; v += tickUnit) {
+        for (double v = 0; v <= upperBound + 0.001; v += tickUnit) {
             double ratio = v / upperBound;
             int lineY = y + height - (int) Math.round(ratio * height);
             if (lineY == y + height) continue;
@@ -130,9 +142,10 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
     }
 
     // =========================== BARS ===========================
-    private void drawBars(Graphics2D g, int chartX, int chartY, int chartWidth, int chartHeight,
+    private void drawBars(Graphics2D g, ChartData data, int chartX, int chartY, int chartWidth, int chartHeight,
                           double upperBound, double width, boolean tiny, boolean compact, boolean medium) {
-        int count = LABELS.length;
+        double[] values = data.values();
+        int count = values.length;
         if (count == 0) return;
 
         double categoryGap;
@@ -148,7 +161,7 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
         double spacing = (chartWidth - barWidth * count) / (count + 1);
 
         for (int i = 0; i < count; i++) {
-            double value = VALUES[i];
+            double value = values[i];
             double ratio = Math.max(0, Math.min(1, value / upperBound));
             int barHeight = (int) Math.round(ratio * chartHeight);
             if (barHeight <= 0) continue;
@@ -161,25 +174,64 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
     }
 
     // =========================== LABELS ===========================
-    private void drawXAxisLabels(Graphics2D g, int chartX, int axisY, int chartWidth, int axisHeight,
+    private void drawXAxisLabels(Graphics2D g, ChartData data, int chartX, int axisY, int chartWidth, int axisHeight,
                                  boolean tiny, boolean compact, boolean medium, float fontSize) {
         if (tiny) return;
 
         Font font = g.getFont().deriveFont(Font.PLAIN, fontSize);
         g.setFont(font);
         FontMetrics fm = g.getFontMetrics();
-        int count = LABELS.length;
+        List<String> labels = data.labels();
+        int count = labels.size();
         double catWidth = chartWidth / (double) count;
 
+        // Calculer la largeur maximale disponible pour chaque label
+        int maxLabelWidth = (int) (catWidth * 0.9);
+        int labelY = axisY + fm.getAscent() + Math.max(5, axisHeight / 5);
+
         for (int i = 0; i < count; i++) {
-            String label = LABELS[i];
-            int tw = fm.stringWidth(label);
+            String label = labels.get(i);
+
+            // Tronquer le label si nécessaire
+            String truncatedLabel = truncateText(label, fm, maxLabelWidth);
+
+            int tw = fm.stringWidth(truncatedLabel);
             int cx = chartX + (int) Math.round(catWidth * i + catWidth / 2);
             int tx = Math.max(chartX, Math.min(cx - tw / 2, chartX + chartWidth - tw));
-            int baseline = axisY + fm.getAscent() + Math.max(5, axisHeight / 5);
+
             g.setColor(LABEL_COLOR);
-            g.drawString(label, tx, baseline);
+            g.drawString(truncatedLabel, tx, labelY);
         }
+    }
+
+    /**
+     * Tronque un texte avec des points de suspension si nécessaire.
+     */
+    private String truncateText(String text, FontMetrics fm, int maxWidth) {
+        if (fm.stringWidth(text) <= maxWidth) {
+            return text;
+        }
+
+        String ellipsis = "...";
+        int ellipsisWidth = fm.stringWidth(ellipsis);
+        int availableWidth = maxWidth - ellipsisWidth;
+
+        if (availableWidth <= 0) {
+            return ellipsis;
+        }
+
+        // Réduire progressivement le texte
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            int newWidth = fm.stringWidth(sb.toString() + c);
+            if (newWidth > availableWidth) {
+                break;
+            }
+            sb.append(c);
+        }
+
+        return sb.toString() + ellipsis;
     }
 
     private void drawYAxisLabels(Graphics2D g, int chartX, int chartY, int chartWidth, int chartHeight,
@@ -191,7 +243,7 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
         g.setFont(font);
         FontMetrics fm = g.getFontMetrics();
 
-        for (double v = 0; v <= upperBound; v += tickUnit) {
+        for (double v = 0; v <= upperBound + 0.001; v += tickUnit) {
             double ratio = v / upperBound;
             int y = chartY + chartHeight - (int) Math.round(ratio * chartHeight);
             String label = formatNumber(v);
@@ -207,14 +259,13 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
                                 int yAxisWidth, int xAxisHeight, boolean compact, boolean medium,
                                 float fontSize, String legendX, String legendY,
                                 boolean showXLegend, boolean showYLegend) {
-        if (compact) return; // Cache les titres en mode compact
+        if (compact) return;
 
         Font font = g.getFont().deriveFont(Font.PLAIN, fontSize);
         g.setFont(font);
         FontMetrics fm = g.getFontMetrics();
         g.setColor(LABEL_COLOR);
 
-        // X title (seulement si présent et non vide)
         if (showXLegend) {
             int xTw = fm.stringWidth(legendX);
             int xTx = chartX + (chartWidth - xTw) / 2;
@@ -222,7 +273,6 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
             g.drawString(legendX, xTx, xTy);
         }
 
-        // Y title (rotated, seulement si présent et non vide)
         if (showYLegend) {
             Graphics2D rotated = (Graphics2D) g.create();
             try {
@@ -240,12 +290,19 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
     }
 
     // =========================== DIMENSIONS ===========================
-    private int calculateYAxisWidth(Graphics2D g, boolean tiny, boolean compact, boolean medium) {
+    private int calculateYAxisWidth(Graphics2D g, boolean tiny, boolean compact, boolean medium,
+                                    double upperBound, double tickUnit) {
         if (tiny) return 0;
         float fontSize = compact ? 8f : (medium ? 9f : 10f);
         Font font = g.getFont().deriveFont(Font.PLAIN, fontSize);
         FontMetrics fm = g.getFontMetrics(font);
-        return fm.stringWidth("500") + 12;
+
+        int maxWidth = 0;
+        for (double v = 0; v <= upperBound + 0.001; v += tickUnit) {
+            String text = formatNumber(v);
+            maxWidth = Math.max(maxWidth, fm.stringWidth(text));
+        }
+        return maxWidth + 12;
     }
 
     private int calculateXAxisHeight(boolean tiny, boolean compact, boolean medium) {
@@ -256,16 +313,78 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
     }
 
     // =========================== UTILITY ===========================
-    private double calculateUpperBound(boolean tiny, boolean compact) {
-        double max = 0;
-        for (double v : VALUES) max = Math.max(max, v);
-        if (tiny) return Math.ceil(max / 100.0) * 100;
-        if (compact) return Math.ceil((max + 30) / 100.0) * 100;
-        return Math.ceil((max + 50) / 100.0) * 100;
+    private double calculateMaxValue(double[] values) {
+        double max = 0.0;
+        for (double v : values) {
+            if (Double.isFinite(v)) {
+                max = Math.max(max, v);
+            }
+        }
+        return Math.max(max, 1.0);
+    }
+
+    private double calculateUpperBound(double maxValue, int chartWidth) {
+        if (!Double.isFinite(maxValue) || maxValue <= 0) {
+            return 1.0;
+        }
+
+        int targetTicks;
+        if (chartWidth < 180) targetTicks = 4;
+        else if (chartWidth < 280) targetTicks = 5;
+        else if (chartWidth < 430) targetTicks = 6;
+        else targetTicks = 8;
+
+        double rawStep = maxValue / targetTicks;
+        double magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        double normalized = rawStep / magnitude;
+
+        double niceStep;
+        if (normalized <= 1.0) niceStep = 1.0;
+        else if (normalized <= 2.0) niceStep = 2.0;
+        else if (normalized <= 5.0) niceStep = 5.0;
+        else niceStep = 10.0;
+
+        double tickUnit = niceStep * magnitude;
+        return Math.ceil(maxValue / tickUnit) * tickUnit;
+    }
+
+    private double calculateTickUnit(double upperBound, int chartWidth) {
+        if (upperBound <= 0 || !Double.isFinite(upperBound)) {
+            return 1.0;
+        }
+
+        int targetTicks;
+        if (chartWidth < 180) targetTicks = 4;
+        else if (chartWidth < 280) targetTicks = 5;
+        else if (chartWidth < 430) targetTicks = 6;
+        else targetTicks = 8;
+
+        double rawStep = upperBound / targetTicks;
+        double magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        double normalized = rawStep / magnitude;
+
+        double niceStep;
+        if (normalized <= 1.0) niceStep = 1.0;
+        else if (normalized <= 2.0) niceStep = 2.0;
+        else if (normalized <= 5.0) niceStep = 5.0;
+        else niceStep = 10.0;
+
+        return niceStep * magnitude;
     }
 
     private String formatNumber(double value) {
-        return value == (long) value ? Long.toString((long) value) : String.format(java.util.Locale.US, "%.1f", value);
+        if (value == (long) value) {
+            long longValue = (long) value;
+            if (longValue >= 1_000_000_000) {
+                return String.format("%.1fB", longValue / 1_000_000_000.0);
+            } else if (longValue >= 1_000_000) {
+                return String.format("%.1fM", longValue / 1_000_000.0);
+            } else if (longValue >= 1_000) {
+                return String.format("%.1fK", longValue / 1_000.0);
+            }
+            return Long.toString(longValue);
+        }
+        return String.format(java.util.Locale.US, "%.1f", value);
     }
 
     // =========================== INNER CLASSES ===========================

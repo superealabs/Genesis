@@ -2,6 +2,7 @@ package org.labs.genesis.forms.renderer;
 
 import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
 import org.labs.genesis.forms.theme.DashboardTheme;
+import org.labs.genesis.forms.renderer.chart.ChartData;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,6 +63,26 @@ public abstract class AbstractChartRenderer implements VisualizationRenderer {
      */
     protected boolean hasConfigValue(String key) {
         return config != null && config.isNotEmpty(key);
+    }
+
+    protected ChartData getChartData() {
+        if (config == null) {
+            return null;
+        }
+        Object value = config.getValue(ChartData.CONFIG_KEY);
+        return value instanceof ChartData chartData ? chartData : null;
+    }
+
+    protected boolean isChartDataLoading() {
+        return config != null && Boolean.TRUE.equals(config.getValue(ChartData.LOADING_KEY));
+    }
+
+    protected String getChartDataError() {
+        if (config == null) {
+            return null;
+        }
+        Object value = config.getValue(ChartData.ERROR_KEY);
+        return value != null ? value.toString() : null;
     }
 
     protected void drawEmptyMessage(Graphics2D g2, int width, int height, String message) {

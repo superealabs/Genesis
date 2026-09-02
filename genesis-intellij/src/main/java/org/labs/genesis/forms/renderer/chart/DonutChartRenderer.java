@@ -6,36 +6,16 @@ import org.labs.genesis.forms.theme.DashboardTheme;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
+import java.util.List;
 import java.util.Locale;
 
-/**
- * Rendu d'un donut chart avec légende adaptable (droite ou bas).
- * Les données (labels, valeurs, couleurs) sont fixes pour l'exemple.
- */
 public class DonutChartRenderer extends AbstractChartRenderer {
 
-    // Données du graphique
-    private static final String[] LABELS = { "Desktop", "Mobile", "Tablette" };
-    private static final int[] VALUES = { 45, 35, 20 };
-    private static final int TOTAL = 100;
-
-    // Couleurs de base (le renderer génère automatiquement les dégradés)
-    private static final Color[] BASE_COLORS = {
-            DashboardTheme.ACCENT,
-            new Color(34, 197, 94),
-            new Color(245, 158, 11)
-    };
-
-    // Couleur des séparations (volontairement différente du thème)
     private static final Color GAP_COLOR = new Color(255, 255, 255, 225);
 
-    // Disposition de la légende
     private enum LegendLayout { BOTTOM_ROW, RIGHT_COLUMN, HIDDEN }
 
-    // ------------------------------------------------------------
-    // Point d'entrée du rendu
-    // ------------------------------------------------------------
-
+    // =========================== PAINT ===========================
     @Override
     protected void paintChart(Graphics2D g2, int width, int height) {
         if (width <= 0 || height <= 0) return;
@@ -43,16 +23,44 @@ public class DonutChartRenderer extends AbstractChartRenderer {
         Graphics2D g = (Graphics2D) g2.create();
         try {
             applyRenderingHints(g);
+
+            ChartData data = getChartData();
+            if (isChartDataLoading()) {
+                drawEmptyMessage(g, width, height, "Chargement...");
+                return;
+            }
+            String error = getChartDataError();
+            if (error != null && !error.isBlank()) {
+                drawEmptyMessage(g, width, height, error);
+                return;
+            }
+            if (data == null || !data.hasSeries() || data.values().length == 0) {
+                drawEmptyMessage(g, width, height, "Aucune donnée");
+                return;
+            }
+
+            double[] values = data.values();
+            List<String> labels = data.labels();
+
+            // Vérifier que les données sont valides
+            if (!hasValidPositiveValues(values)) {
+                drawEmptyMessage(g, width, height, "Données invalides");
+                return;
+            }
+
             LegendLayout layout = chooseLegendLayout(width, height);
-            drawChart(g, width, height, layout);
+            drawChart(g, width, height, layout, labels, values);
         } finally {
             g.dispose();
         }
     }
 
-    // ------------------------------------------------------------
-    // Configuration du rendu
-    // ------------------------------------------------------------
+    private boolean hasValidPositiveValues(double[] values) {
+        for (double v : values) {
+            if (v > 0) return true;
+        }
+        return false;
+    }
 
     private void applyRenderingHints(Graphics2D g) {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -61,43 +69,28 @@ public class DonutChartRenderer extends AbstractChartRenderer {
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
     }
 
-    // ------------------------------------------------------------
-    // Choix de la disposition de la légende (OPTIMISÉ)
-    // ------------------------------------------------------------
-
     private LegendLayout chooseLegendLayout(int w, int h) {
-        // Seuil minimal pour afficher ne serait-ce qu'une légende
         if (w < 160 || h < 140) return LegendLayout.HIDDEN;
-
-        // Si le graphique est significativement plus large que haut → légende à droite
-        // Sinon, en bas (plus naturel sur les écrans carrés ou portrait)
         return (w > h * 1.4) ? LegendLayout.RIGHT_COLUMN : LegendLayout.BOTTOM_ROW;
     }
 
-    // ------------------------------------------------------------
-    // Dessin global du graphique + légende
-    // ------------------------------------------------------------
-
-    private void drawChart(Graphics2D g, int w, int h, LegendLayout layout) {
+    private void drawChart(Graphics2D g, int w, int h, LegendLayout layout,
+                           List<String> labels, double[] values) {
         int padding = computePadding(w, h);
         Rectangle chartArea = computeChartArea(w, h, padding, layout);
 
-        drawDonut(g, chartArea);
+        drawDonut(g, chartArea, values);
 
         if (layout == LegendLayout.RIGHT_COLUMN) {
             int legendWidth = computeLegendWidth(w);
             int legendX = chartArea.x + chartArea.width + padding / 2;
-            drawRightLegend(g, legendX, padding, legendWidth, h - padding * 2);
+            drawRightLegend(g, legendX, padding, legendWidth, h - padding * 2, labels, values);
         } else if (layout == LegendLayout.BOTTOM_ROW) {
             int legendHeight = computeLegendHeight(h);
             int legendY = h - legendHeight;
-            drawBottomLegend(g, padding, legendY, w - padding * 2, legendHeight);
+            drawBottomLegend(g, padding, legendY, w - padding * 2, legendHeight, labels, values);
         }
     }
-
-    // ------------------------------------------------------------
-    // Calcul des zones
-    // ------------------------------------------------------------
 
     private int computePadding(int w, int h) {
         int minDim = Math.min(w, h);
@@ -115,7 +108,7 @@ public class DonutChartRenderer extends AbstractChartRenderer {
             case BOTTOM_ROW:
                 bottom -= computeLegendHeight(h);
                 break;
-            default: // HIDDEN
+            default:
                 break;
         }
         return new Rectangle(left, top, Math.max(1, right - left), Math.max(1, bottom - top));
@@ -131,11 +124,8 @@ public class DonutChartRenderer extends AbstractChartRenderer {
         return Math.max(115, Math.min(190, (int) (w * 0.34)));
     }
 
-    // ------------------------------------------------------------
-    // Dessin du donut (cœur du graphique)
-    // ------------------------------------------------------------
-
-    private void drawDonut(Graphics2D g, Rectangle area) {
+    // =========================== DONUT ===========================
+    private void drawDonut(Graphics2D g, Rectangle area, double[] values) {
         int size = Math.min(area.width, area.height);
         int internalPadding = Math.max(5, size / 18);
         size -= internalPadding * 2;
@@ -144,19 +134,20 @@ public class DonutChartRenderer extends AbstractChartRenderer {
         int x = area.x + (area.width - size) / 2;
         int y = area.y + (area.height - size) / 2;
 
-        // Ombres
+        double total = calculateTotal(values);
+        int[] colors = generateColors(values.length);
+
         drawDropShadow(g, x, y, size);
 
-        // Calcul des angles une fois
-        int[] angles = computeSliceAngles();
-
-        // Tranchées
         int startAngle = 90;
-        for (int i = 0; i < VALUES.length; i++) {
+        int[] angles = computeSliceAngles(values, total);
+
+        for (int i = 0; i < values.length; i++) {
             int angle = angles[i];
             if (angle <= 0) continue;
 
-            Paint gradient = createSliceGradient(BASE_COLORS[i], x, y, size);
+            Color baseColor = getColorForIndex(i, colors);
+            Paint gradient = createSliceGradient(baseColor, x, y, size);
             g.setPaint(gradient);
             g.fillArc(x, y, size, size, startAngle, -angle);
 
@@ -165,35 +156,62 @@ public class DonutChartRenderer extends AbstractChartRenderer {
             startAngle -= angle;
         }
 
-        // Séparations (gaps)
         drawSliceGaps(g, x, y, size, angles);
-
-        // Bordure externe
         drawOuterRing(g, x, y, size);
 
-        // Trou central
         double holeRatio = (size < 100) ? 0.58 : (size < 180 ? 0.55 : 0.52);
         int holeSize = (int) (size * holeRatio);
         int holeX = x + (size - holeSize) / 2;
         int holeY = y + (size - holeSize) / 2;
         drawCenterHole(g, holeX, holeY, holeSize);
 
-        // Texte central
-        drawCenterText(g, x, y, size);
+        drawCenterText(g, x, y, size, total);
     }
 
-    private int[] computeSliceAngles() {
-        int[] angles = new int[VALUES.length];
-        for (int i = 0; i < VALUES.length; i++) {
-            angles[i] = (int) Math.round(VALUES[i] * 360.0 / TOTAL);
+    private double calculateTotal(double[] values) {
+        double total = 0;
+        for (double v : values) {
+            if (v > 0) total += v;
+        }
+        return total;
+    }
+
+    private int[] computeSliceAngles(double[] values, double total) {
+        int[] angles = new int[values.length];
+        for (int i = 0; i < values.length; i++) {
+            angles[i] = (int) Math.round(values[i] / total * 360);
+            if (angles[i] < 1 && values[i] > 0) angles[i] = 1;
         }
         return angles;
     }
 
-    // ------------------------------------------------------------
-    // Ombres portées
-    // ------------------------------------------------------------
+    private int[] generateColors(int count) {
+        int[] colors = new int[count];
+        for (int i = 0; i < count; i++) {
+            float hue = (float) i / count;
+            float saturation = 0.7f + (i % 3) * 0.1f;
+            float brightness = 0.6f + (i % 2) * 0.2f;
+            colors[i] = Color.HSBtoRGB(hue, Math.min(1f, saturation), Math.min(1f, brightness));
+        }
+        return colors;
+    }
 
+    private Color getColorForIndex(int index, int[] colors) {
+        if (index < colors.length) {
+            return new Color(colors[index]);
+        }
+        // Fallback: utiliser des couleurs prédéfinies
+        Color[] fallback = {
+                DashboardTheme.ACCENT,
+                new Color(34, 197, 94),
+                new Color(245, 158, 11),
+                new Color(239, 68, 68),
+                new Color(168, 85, 247)
+        };
+        return fallback[index % fallback.length];
+    }
+
+    // =========================== SHADOW ===========================
     private void drawDropShadow(Graphics2D g, int x, int y, int size) {
         g.setColor(new Color(15, 23, 42, 12));
         g.fillOval(x + 1, y + Math.max(5, size / 28), size, size);
@@ -203,26 +221,19 @@ public class DonutChartRenderer extends AbstractChartRenderer {
         g.fillOval(x, y + 2, size, size);
     }
 
-    // ------------------------------------------------------------
-    // Dégradé pour une tranche
-    // ------------------------------------------------------------
-
+    // =========================== GRADIENT ===========================
     private Paint createSliceGradient(Color base, int x, int y, int size) {
         Color highlight = tint(base, 0.32f);
-        Color light    = tint(base, 0.12f);
-        Color dark     = shade(base, 0.18f);
+        Color light = tint(base, 0.12f);
+        Color dark = shade(base, 0.18f);
 
         return new LinearGradientPaint(
                 new Point2D.Double(x + size * 0.18, y + size * 0.05),
                 new Point2D.Double(x + size * 0.88, y + size * 0.92),
-                new float[] { 0f, 0.22f, 0.58f, 1f },
-                new Color[] { highlight, light, base, dark }
+                new float[]{0f, 0.22f, 0.58f, 1f},
+                new Color[]{highlight, light, base, dark}
         );
     }
-
-    // ------------------------------------------------------------
-    // Surbrillance en haut de la tranche
-    // ------------------------------------------------------------
 
     private void drawSliceHighlight(Graphics2D g, int x, int y, int size, int startAngle, int angle) {
         if (size < 80 || angle < 12) return;
@@ -239,10 +250,7 @@ public class DonutChartRenderer extends AbstractChartRenderer {
         }
     }
 
-    // ------------------------------------------------------------
-    // Séparations (gaps)
-    // ------------------------------------------------------------
-
+    // =========================== GAPS ===========================
     private void drawSliceGaps(Graphics2D g, int x, int y, int size, int[] angles) {
         Stroke old = g.getStroke();
         try {
@@ -278,10 +286,7 @@ public class DonutChartRenderer extends AbstractChartRenderer {
                 (int) Math.round(x2), (int) Math.round(y2));
     }
 
-    // ------------------------------------------------------------
-    // Bordure externe
-    // ------------------------------------------------------------
-
+    // =========================== OUTER RING ===========================
     private void drawOuterRing(Graphics2D g, int x, int y, int size) {
         Stroke old = g.getStroke();
         try {
@@ -293,18 +298,15 @@ public class DonutChartRenderer extends AbstractChartRenderer {
         }
     }
 
-    // ------------------------------------------------------------
-    // Trou central
-    // ------------------------------------------------------------
-
+    // =========================== CENTER HOLE ===========================
     private void drawCenterHole(Graphics2D g, int x, int y, int size) {
         g.setColor(new Color(15, 23, 42, 22));
         g.fillOval(x + 1, y + 2, size, size);
 
         Paint gradient = new LinearGradientPaint(
                 x, y, x + size, y + size,
-                new float[] { 0f, 0.5f, 1f },
-                new Color[] {
+                new float[]{0f, 0.5f, 1f},
+                new Color[]{
                         tint(DashboardTheme.ACCENT_LIGHT, 0.025f),
                         DashboardTheme.ACCENT_LIGHT,
                         shade(DashboardTheme.ACCENT_LIGHT, 0.025f)
@@ -318,24 +320,21 @@ public class DonutChartRenderer extends AbstractChartRenderer {
         g.drawOval(x, y, size - 1, size - 1);
     }
 
-    // ------------------------------------------------------------
-    // Texte central
-    // ------------------------------------------------------------
-
-    private void drawCenterText(Graphics2D g, int x, int y, int size) {
+    // =========================== CENTER TEXT ===========================
+    private void drawCenterText(Graphics2D g, int x, int y, int size, double total) {
         if (size < 80) return;
 
         float mainSize = Math.max(13f, Math.min(28f, size * 0.16f));
-        float subSize  = Math.max(8f, Math.min(12f, size * 0.065f));
+        float subSize = Math.max(8f, Math.min(12f, size * 0.065f));
 
         Font mainFont = g.getFont().deriveFont(Font.BOLD, mainSize);
-        Font subFont  = g.getFont().deriveFont(Font.PLAIN, subSize);
+        Font subFont = g.getFont().deriveFont(Font.PLAIN, subSize);
 
-        String mainText = "100%";
+        String mainText = formatNumber(total);
         String subText = "Total";
 
         FontMetrics mainMetrics = g.getFontMetrics(mainFont);
-        FontMetrics subMetrics  = g.getFontMetrics(subFont);
+        FontMetrics subMetrics = g.getFontMetrics(subFont);
 
         int cx = x + size / 2;
         int cy = y + size / 2;
@@ -356,105 +355,100 @@ public class DonutChartRenderer extends AbstractChartRenderer {
         g.drawString(subText, subX, subY);
     }
 
-    // ============================================================
-    // LÉGENDES (NOUVELLE VERSION OPTIMISÉE)
-    // ============================================================
-
-    // ------------------------------------------------------------
-    // Légende en bas (avec répartition dynamique des colonnes)
-    // ------------------------------------------------------------
-
-    private void drawBottomLegend(Graphics2D g, int x, int y, int width, int height) {
+    // =========================== LEGENDS ===========================
+    private void drawBottomLegend(Graphics2D g, int x, int y, int width, int height,
+                                  List<String> labels, double[] values) {
         if (height < 20 || width < 50) return;
 
-        // Calcul de la taille de police en fonction de la hauteur dispo
         float fontSize = Math.max(9f, Math.min(13f, height * 0.36f));
         Font font = g.getFont().deriveFont(Font.PLAIN, fontSize);
         FontMetrics fm = g.getFontMetrics(font);
 
-        // On estime la largeur nécessaire pour chaque élément (indicateur + label + pourcentage + marges)
         int indicatorSize = Math.max(9, Math.min(14, height / 3));
         int gapBetweenItems = 24;
         int maxItemWidth = 0;
-        for (int i = 0; i < LABELS.length; i++) {
-            String text = LABELS[i] + " " + VALUES[i] + "%";
+        double total = calculateTotal(values);
+
+        for (int i = 0; i < labels.size(); i++) {
+            String text = labels.get(i) + " " + formatPercent(values[i], total);
             int w = fm.stringWidth(text) + indicatorSize + gapBetweenItems;
             maxItemWidth = Math.max(maxItemWidth, w);
         }
 
-        // Calcul du nombre de colonnes possible
-        int columns = Math.max(1, Math.min(LABELS.length, width / maxItemWidth));
-        int rows = (int) Math.ceil(LABELS.length / (double) columns);
-
-        // Ajustement de l'espacement horizontal pour centrer le bloc
-        int totalItemsWidth = 0;
-        for (int i = 0; i < columns && i < LABELS.length; i++) {
-            // On prend la largeur max sur la colonne (simplifié)
-        }
-        // On utilise une largeur de colonne uniforme répartie sur toute la largeur
+        int columns = Math.max(1, Math.min(labels.size(), width / maxItemWidth));
         int colWidth = width / columns;
-        int rowHeight = Math.max(22, height / Math.max(1, rows));
+        int rowHeight = Math.max(22, height / Math.max(1, (int) Math.ceil(labels.size() / (double) columns)));
 
-        // Dessin de chaque élément
-        for (int i = 0; i < LABELS.length; i++) {
+        int[] colors = generateColors(labels.size());
+
+        for (int i = 0; i < labels.size(); i++) {
+            if (values[i] <= 0) continue;
             int col = i % columns;
             int row = i / columns;
             int itemX = x + col * colWidth;
             int itemY = y + row * rowHeight;
-            // En bas : on centre le texte dans la colonne (pas d'alignement à droite)
-            drawLegendItem(g, itemX, itemY, colWidth, rowHeight, i, false);
+            drawLegendItem(g, itemX, itemY, colWidth, rowHeight, i, false, labels, values, colors);
         }
     }
 
-    // ------------------------------------------------------------
-    // Légende à droite (avec pourcentage aligné à droite)
-    // ------------------------------------------------------------
-
-    private void drawRightLegend(Graphics2D g, int x, int y, int width, int height) {
+    private void drawRightLegend(Graphics2D g, int x, int y, int width, int height,
+                                 List<String> labels, double[] values) {
         if (width < 90 || height < 30) return;
 
-        int rowHeight = Math.max(30, Math.min(50, height / LABELS.length));
-        int totalHeight = rowHeight * LABELS.length;
+        int validCount = countPositiveValues(values);
+        if (validCount == 0) return;
+
+        int rowHeight = Math.max(30, Math.min(50, height / validCount));
+        int totalHeight = rowHeight * validCount;
         int startY = y + Math.max(0, (height - totalHeight) / 2);
 
-        for (int i = 0; i < LABELS.length; i++) {
-            // En colonne de droite : le pourcentage est aligné à droite
-            drawLegendItem(g, x, startY + i * rowHeight, width, rowHeight, i, true);
+        int[] colors = generateColors(labels.size());
+
+        int validIndex = 0;
+        for (int i = 0; i < labels.size(); i++) {
+            if (values[i] <= 0) continue;
+            drawLegendItem(g, x, startY + validIndex * rowHeight, width, rowHeight, i, true, labels, values, colors);
+            validIndex++;
         }
     }
 
-    // ------------------------------------------------------------
-    // Élément de légende unifié (avec option d'alignement à droite)
-    // ------------------------------------------------------------
+    private int countPositiveValues(double[] values) {
+        int count = 0;
+        for (double v : values) {
+            if (v > 0) count++;
+        }
+        return count;
+    }
 
-    private void drawLegendItem(Graphics2D g, int x, int y, int width, int height, int index, boolean alignPercentRight) {
+    private void drawLegendItem(Graphics2D g, int x, int y, int width, int height, int index,
+                                boolean alignPercentRight, List<String> labels,
+                                double[] values, int[] colors) {
         int indicatorSize = Math.max(9, Math.min(13, height / 3));
         int cy = y + height / 2;
 
-        // --- 1. Cercle indicateur (avec le même dégradé que la tranche) ---
+        Color baseColor = getColorForIndex(index, colors);
+
         int indicatorX = x + 2;
         int indicatorY = cy - indicatorSize / 2;
-        Paint gradient = createSliceGradient(BASE_COLORS[index], indicatorX, indicatorY, indicatorSize);
+        Paint gradient = createSliceGradient(baseColor, indicatorX, indicatorY, indicatorSize);
         g.setPaint(gradient);
         g.fill(new Ellipse2D.Double(indicatorX, indicatorY, indicatorSize, indicatorSize));
 
-        // Mini-highlight
         g.setColor(new Color(255, 255, 255, 70));
         g.fillOval(indicatorX + 2, indicatorY + 1,
                 Math.max(2, indicatorSize / 3), Math.max(2, indicatorSize / 4));
 
-        // Bordure
         g.setColor(new Color(15, 23, 42, 25));
         g.setStroke(new BasicStroke(0.8f));
         g.draw(new Ellipse2D.Double(indicatorX, indicatorY, indicatorSize, indicatorSize));
 
-        // --- 2. Textes ---
         float fontSize = Math.max(9f, Math.min(12f, height * 0.34f));
         Font labelFont = g.getFont().deriveFont(Font.PLAIN, fontSize);
         Font percentFont = g.getFont().deriveFont(Font.BOLD, fontSize);
 
-        String label = LABELS[index];
-        String percent = String.format(Locale.US, "%d%%", VALUES[index]);
+        String label = labels.get(index);
+        double total = calculateTotal(values);
+        String percent = formatPercent(values[index], total);
 
         FontMetrics labelMetrics = g.getFontMetrics(labelFont);
         FontMetrics percentMetrics = g.getFontMetrics(percentFont);
@@ -462,15 +456,11 @@ public class DonutChartRenderer extends AbstractChartRenderer {
         int textX = indicatorX + indicatorSize + 6;
         int baseline = cy - (labelMetrics.getAscent() + labelMetrics.getDescent()) / 2 + labelMetrics.getAscent();
 
-        // Cas particulier : alignement à droite (pour la colonne de droite)
         if (alignPercentRight) {
-            // On calcule la position du pourcentage à droite
             int percentX = x + width - percentMetrics.stringWidth(percent) - 4;
             int labelMaxWidth = percentX - textX - 4;
 
-            // On vérifie si le label tient dans l'espace restant
             if (labelMetrics.stringWidth(label) > labelMaxWidth) {
-                // Si le label est trop long, on le réduit avec "..."
                 String fittedLabel = fitText(label, labelMetrics, Math.max(10, labelMaxWidth));
                 g.setFont(labelFont);
                 g.setColor(DashboardTheme.TEXT_DARK);
@@ -481,18 +471,15 @@ public class DonutChartRenderer extends AbstractChartRenderer {
                 g.drawString(label, textX, baseline);
             }
 
-            // Pourcentage aligné à droite
             g.setFont(percentFont);
             g.setColor(DashboardTheme.TEXT_MUTED);
             g.drawString(percent, percentX, baseline);
             return;
         }
 
-        // --- Cas standard (légende du bas) : label + pourcentage collés ---
         int gap = 6;
         int percentX = textX + labelMetrics.stringWidth(label) + gap;
 
-        // Si les deux ne tiennent pas sur une ligne, on les fusionne en une seule chaîne
         if (percentX + percentMetrics.stringWidth(percent) > x + width - 2) {
             String compact = label + " " + percent;
             g.setFont(labelFont);
@@ -503,20 +490,38 @@ public class DonutChartRenderer extends AbstractChartRenderer {
             return;
         }
 
-        // Label
         g.setFont(labelFont);
         g.setColor(DashboardTheme.TEXT_DARK);
         g.drawString(label, textX, baseline);
 
-        // Pourcentage
         g.setFont(percentFont);
         g.setColor(DashboardTheme.TEXT_MUTED);
         g.drawString(percent, percentX, baseline);
     }
 
-    // ------------------------------------------------------------
-    // Ajustement du texte avec ellipsis
-    // ------------------------------------------------------------
+    // =========================== UTILITY ===========================
+    private String formatPercent(double value, double total) {
+        double percent = value / total * 100;
+        if (percent < 0.1 && percent > 0) {
+            return String.format(Locale.US, "%.1f%%", percent);
+        }
+        return String.format(Locale.US, "%.0f%%", percent);
+    }
+
+    private String formatNumber(double value) {
+        if (value == (long) value) {
+            long longValue = (long) value;
+            if (longValue >= 1_000_000_000) {
+                return String.format("%.1fB", longValue / 1_000_000_000.0);
+            } else if (longValue >= 1_000_000) {
+                return String.format("%.1fM", longValue / 1_000_000.0);
+            } else if (longValue >= 1_000) {
+                return String.format("%.1fK", longValue / 1_000.0);
+            }
+            return Long.toString(longValue);
+        }
+        return String.format(Locale.US, "%.1f", value);
+    }
 
     private String fitText(String text, FontMetrics metrics, int maxWidth) {
         if (metrics.stringWidth(text) <= maxWidth) return text;
@@ -533,21 +538,27 @@ public class DonutChartRenderer extends AbstractChartRenderer {
         return sb + ellipsis;
     }
 
-    // ------------------------------------------------------------
-    // Utilitaires de couleurs
-    // ------------------------------------------------------------
-
     private Color tint(Color c, float factor) {
-        int r = (int) Math.min(255, c.getRed()   + (255 - c.getRed())   * factor);
+        int r = (int) Math.min(255, c.getRed() + (255 - c.getRed()) * factor);
         int g = (int) Math.min(255, c.getGreen() + (255 - c.getGreen()) * factor);
-        int b = (int) Math.min(255, c.getBlue()  + (255 - c.getBlue())  * factor);
+        int b = (int) Math.min(255, c.getBlue() + (255 - c.getBlue()) * factor);
         return new Color(r, g, b, c.getAlpha());
     }
 
     private Color shade(Color c, float factor) {
-        int r = (int) Math.max(0, c.getRed()   * (1 - factor));
+        int r = (int) Math.max(0, c.getRed() * (1 - factor));
         int g = (int) Math.max(0, c.getGreen() * (1 - factor));
-        int b = (int) Math.max(0, c.getBlue()  * (1 - factor));
+        int b = (int) Math.max(0, c.getBlue() * (1 - factor));
         return new Color(r, g, b, c.getAlpha());
+    }
+
+    protected void drawEmptyMessage(Graphics2D g, int width, int height, String msg) {
+        g.setColor(DashboardTheme.TEXT_MUTED);
+        g.setFont(g.getFont().deriveFont(Font.PLAIN, 14f));
+        FontMetrics fm = g.getFontMetrics();
+        String text = msg == null || msg.isBlank() ? "Données insuffisantes" : msg;
+        int x = (width - fm.stringWidth(text)) / 2;
+        int y = (height - fm.getHeight()) / 2 + fm.getAscent();
+        g.drawString(text, x, y);
     }
 }

@@ -19,10 +19,11 @@ public class ColumnsEditorPanel extends JPanel {
 
     private final JPanel columnsContainer;
     private final JButton addButton;
-    private final List<ColumnOrFormulaRow> rows = new ArrayList<>();
+    private final List<ColumnOrFormulaRow> rows; // Initialisé directement
     private final String configKey;
     private final DashboardVisualComponent targetComponent;
     private Runnable changeListener;
+    private int rowCounter = 0;
 
     /**
      * Constructeur par défaut (pour compatibilité)
@@ -38,8 +39,10 @@ public class ColumnsEditorPanel extends JPanel {
      * @param configKey       La clé de configuration
      */
     public ColumnsEditorPanel(DashboardVisualComponent targetComponent, String configKey) {
+        System.out.println("targetComponent: " + targetComponent);
         this.targetComponent = targetComponent;
         this.configKey = configKey;
+        this.rows = new ArrayList<>(); // Initialisation ici
 
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setOpaque(false);
@@ -80,8 +83,8 @@ public class ColumnsEditorPanel extends JPanel {
      */
     private void addColumnRow(String initialValue) {
         // Créer un paramètre pour cette colonne
-        VisualizationParameter param = VisualizationParameter.columnOrFormula(
-                "column_" + System.currentTimeMillis(),
+        VisualizationParameter param = VisualizationParameter.measureOrFormula(
+                "column_" + (++rowCounter),
                 "Column",
                 true
         );
@@ -126,13 +129,14 @@ public class ColumnsEditorPanel extends JPanel {
         removeButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         removeButton.setToolTipText("Remove column");
         removeButton.addActionListener(e -> {
-            if (columnsContainer.getComponentCount() > 1) {
-                columnsContainer.remove(rowWrapper);
-                rows.remove(row);
-                columnsContainer.revalidate();
-                columnsContainer.repaint();
-                notifyChange();
+            if (rows.size() <= 1) {
+                return;
             }
+            columnsContainer.remove(rowWrapper);
+            rows.remove(row);
+            columnsContainer.revalidate();
+            columnsContainer.repaint();
+            notifyChange();
         });
 
         // Connecter le changement de la ligne à la notification
@@ -224,6 +228,9 @@ public class ColumnsEditorPanel extends JPanel {
      * @return true si toutes les colonnes ont une valeur, false sinon
      */
     public boolean isValid() {
+        if (rows == null) {
+            return false;
+        }
         for (ColumnOrFormulaRow row : rows) {
             if (!row.hasValue()) {
                 return false;
@@ -235,8 +242,10 @@ public class ColumnsEditorPanel extends JPanel {
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        for (ColumnOrFormulaRow row : rows) {
-            row.setEnabled(enabled);
+        if (rows != null) {
+            for (ColumnOrFormulaRow row : rows) {
+                row.setEnabled(enabled);
+            }
         }
         addButton.setEnabled(enabled);
     }
@@ -245,6 +254,6 @@ public class ColumnsEditorPanel extends JPanel {
      * Récupère le nombre de colonnes.
      */
     public int getColumnCount() {
-        return rows.size();
+        return rows != null ? rows.size() : 0;
     }
 }

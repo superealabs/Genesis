@@ -4,12 +4,9 @@ import org.labs.genesis.forms.renderer.AbstractChartRenderer;
 import org.labs.genesis.forms.theme.DashboardTheme;
 
 import java.awt.*;
+import java.util.List;
 
 public class HorizontalBarChartRenderer extends AbstractChartRenderer {
-
-    // ============================== DONNÉES ==============================
-    private static final String[] CATEGORIES = {"Nord", "Sud", "Est", "Ouest"};
-    private static final int[] VALUES = {140, 110, 95, 70};
 
     // ============================== CONFIGURATION ==============================
     private static final String DEFAULT_AXIS_LABEL = "";
@@ -60,27 +57,31 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
         Font numberFont = g.getFont().deriveFont(Font.PLAIN, fonts.numberSize);
         Font axisFont = g.getFont().deriveFont(Font.PLAIN, fonts.axisSize);
 
-        // Zone des catégories (plus large si légende Y présente)
-        FontMetrics categoryMetrics = g.getFontMetrics(categoryFont);
-        int maxCategoryWidth = 0;
-        if (!tiny) {
-            for (String cat : CATEGORIES) {
-                maxCategoryWidth = Math.max(maxCategoryWidth, categoryMetrics.stringWidth(cat));
-            }
+        ChartData data = getChartData();
+        if (isChartDataLoading()) {
+            drawEmptyMessage(g, width, height, "Chargement...");
+            return;
         }
-        int categoryAreaWidth = tiny ? Math.max(26, width / 6) : Math.max(42, maxCategoryWidth + 12);
+        String error = getChartDataError();
+        if (error != null && !error.isBlank()) {
+            drawEmptyMessage(g, width, height, error);
+            return;
+        }
+        if (data == null || !data.hasSeries()) {
+            drawEmptyMessage(g, width, height, "Aucune donnée");
+            return;
+        }
 
-        // Espace additionnel pour la légende Y
-        if (showYLegend) {
-            FontMetrics axisMetrics = g.getFontMetrics(axisFont);
-            categoryAreaWidth += axisMetrics.getHeight() + 8;
-        }
+        List<String> categories = data.labels();
+        double[] values = data.values();
 
-        // Espace sous l'axe (plus grand si légende X présente)
-        int bottomAxisSpace = tiny ? 6 : (compact ? 26 : 38);
-        if (showXLegend) {
-            bottomAxisSpace += (compact ? 14 : 20);
-        }
+        // Calcul des dimensions
+        CategoryAreaInfo categoryInfo = calculateCategoryArea(g, categories, categoryFont, axisFont,
+                tiny, compact, medium, showYLegend);
+        int categoryAreaWidth = categoryInfo.width;
+
+        // Calcul des marges pour l'axe X
+        int bottomAxisSpace = calculateBottomAxisSpace(tiny, compact, showXLegend);
 
         // Zone de dessin
         int chartX = padding.horizontal + categoryAreaWidth;
@@ -93,38 +94,81 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
             return;
         }
 
-        int maxValue = calculateMaxValue();
-        int upperBound = calculateUpperBound(maxValue, tiny, compact);
-        int tickUnit = calculateTickUnit(tiny, compact);
+        // Calcul des bornes avec une logique adaptative
+        double maxValue = calculateMaxValue(values);
+        double upperBound = calculateUpperBound(maxValue, chartWidth);
+        double tickUnit = calculateTickUnit(upperBound, chartWidth);
 
+        // Dessin du graphique
         if (!tiny) {
             drawVerticalGrid(g, chartX, chartY, chartWidth, chartHeight, upperBound, tickUnit, numberFont);
         }
 
-        drawBars(g, chartX, chartY, chartWidth, chartHeight, upperBound, categoryFont,
+        drawBars(g, categories, values, chartX, chartY, chartWidth, chartHeight, upperBound, categoryFont,
                 tiny, compact, medium, padding.horizontal);
 
         drawXAxis(g, chartX, chartY, chartWidth, chartHeight, upperBound, tickUnit, numberFont, tiny);
 
-        // Dessiner la légende X si présente
+        // Dessiner les légendes si présentes
         if (showXLegend) {
             int labelY = chartY + chartHeight + (compact ? 30 : 40);
             drawAxisLabel(g, legendX, chartX, labelY, chartWidth, axisFont);
         }
 
-        // Dessiner la légende Y si présente
         if (showYLegend) {
             drawYAxisLabel(g, legendY, padding.horizontal, chartY, chartHeight, axisFont);
         }
     }
 
+    // ============================== DIMENSION CALCULATIONS ==============================
+
+    /**
+     * Calcule la largeur de la zone des catégories.
+     */
+    private CategoryAreaInfo calculateCategoryArea(Graphics2D g, List<String> categories,
+                                                   Font categoryFont, Font axisFont,
+                                                   boolean tiny, boolean compact,
+                                                   boolean medium, boolean showYLegend) {
+        FontMetrics categoryMetrics = g.getFontMetrics(categoryFont);
+        int maxCategoryWidth = 0;
+
+        if (!tiny) {
+            for (String cat : categories) {
+                maxCategoryWidth = Math.max(maxCategoryWidth, categoryMetrics.stringWidth(cat));
+            }
+        }
+
+        int width = tiny ? Math.max(26, 100 / 6) : Math.max(42, maxCategoryWidth + 12);
+
+        // Espace additionnel pour la légende Y
+        if (showYLegend) {
+            FontMetrics axisMetrics = g.getFontMetrics(axisFont);
+            width += axisMetrics.getHeight() + 8;
+        }
+
+        return new CategoryAreaInfo(width);
+    }
+
+    /**
+     * Calcule l'espace sous l'axe X.
+     */
+    private int calculateBottomAxisSpace(boolean tiny, boolean compact, boolean showXLegend) {
+        int bottomAxisSpace = tiny ? 6 : (compact ? 26 : 38);
+        if (showXLegend) {
+            bottomAxisSpace += (compact ? 14 : 20);
+        }
+        return bottomAxisSpace;
+    }
+
     // ============================== BARS ==============================
-    private void drawBars(Graphics2D g, int chartX, int chartY, int chartWidth, int chartHeight,
-                          int upperBound, Font categoryFont, boolean tiny, boolean compact,
+    private void drawBars(Graphics2D g, List<String> categories, double[] values,
+                          int chartX, int chartY, int chartWidth, int chartHeight,
+                          double upperBound, Font categoryFont, boolean tiny, boolean compact,
                           boolean medium, int horizontalPadding) {
-        int count = VALUES.length;
+        int count = values.length;
         if (count == 0) return;
 
+        // Calcul de la hauteur des barres
         int categoryGap = getCategoryGap(tiny, compact, medium);
         int totalGap = categoryGap * Math.max(0, count - 1);
         int availableHeight = chartHeight - totalGap;
@@ -136,57 +180,94 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
         int startY = chartY + Math.max(0, (chartHeight - usedHeight) / 2);
 
         FontMetrics categoryMetrics = g.getFontMetrics(categoryFont);
-        int leaderIndex = indexOfMax();
+        int leaderIndex = indexOfMax(values);
 
         for (int i = 0; i < count; i++) {
             int y = startY + i * (barHeight + categoryGap);
 
-            // Catégorie
+            // Dessiner la catégorie
             if (!tiny) {
-                String category = CATEGORIES[i];
-                int textWidth = categoryMetrics.stringWidth(category);
-                int textX = chartX - horizontalPadding - textWidth;
-                int textY = y + (barHeight - categoryMetrics.getHeight()) / 2 + categoryMetrics.getAscent();
-                g.setFont(i == leaderIndex ? categoryFont.deriveFont(Font.BOLD) : categoryFont);
-                g.setColor(DashboardTheme.TEXT_DARK);
-                g.drawString(category, textX, textY);
+                drawCategoryLabel(g, categories.get(i), chartX, y, barHeight,
+                        horizontalPadding, categoryMetrics, categoryFont,
+                        i == leaderIndex);
             }
 
-            // Barre
-            double ratio = VALUES[i] / (double) upperBound;
-            int barWidth = (int) Math.round(chartWidth * ratio);
-            if (VALUES[i] > 0) barWidth = Math.max(2, barWidth);
+            // Dessiner la barre
+            drawSingleBar(g, values[i], chartX, y, chartWidth, barHeight, upperBound,
+                    i == leaderIndex);
+        }
+    }
 
-            if (barWidth > 0) {
-                Color baseColor = i == leaderIndex
-                        ? DashboardTheme.ACCENT
-                        : tint(DashboardTheme.ACCENT, SECONDARY_SATURATION_CUT, SECONDARY_BRIGHTNESS_BOOST);
-                Color lightColor = tint(baseColor, 0.05f, 0.10f);
+    /**
+     * Dessine le label d'une catégorie.
+     */
+    private void drawCategoryLabel(Graphics2D g, String category, int chartX, int y,
+                                   int barHeight, int horizontalPadding,
+                                   FontMetrics metrics, Font font, boolean isLeader) {
+        int textWidth = metrics.stringWidth(category);
+        int textX = chartX - horizontalPadding - textWidth;
+        int textY = y + (barHeight - metrics.getHeight()) / 2 + metrics.getAscent();
+        g.setFont(isLeader ? font.deriveFont(Font.BOLD) : font);
+        g.setColor(DashboardTheme.TEXT_DARK);
+        g.drawString(category, textX, textY);
+    }
 
-                g.setPaint(new GradientPaint(chartX, y, lightColor, chartX + barWidth, y, baseColor));
-                g.fillRect(chartX, y, barWidth, barHeight);
-                g.setPaint(null);
-            }
+    /**
+     * Dessine une barre individuelle.
+     */
+    private void drawSingleBar(Graphics2D g, double value, int chartX, int y,
+                               int chartWidth, int barHeight, double upperBound,
+                               boolean isLeader) {
+        double ratio = value / upperBound;
+        int barWidth = (int) Math.round(chartWidth * ratio);
+        if (value > 0) barWidth = Math.max(2, barWidth);
+
+        if (barWidth > 0) {
+            Color baseColor = isLeader
+                    ? DashboardTheme.ACCENT
+                    : tint(DashboardTheme.ACCENT, SECONDARY_SATURATION_CUT, SECONDARY_BRIGHTNESS_BOOST);
+            Color lightColor = tint(baseColor, 0.05f, 0.10f);
+
+            g.setPaint(new GradientPaint(chartX, y, lightColor, chartX + barWidth, y, baseColor));
+            g.fillRect(chartX, y, barWidth, barHeight);
+            g.setPaint(null);
         }
     }
 
     // ============================== GRID & AXES ==============================
-    private void drawVerticalGrid(Graphics2D g, int x, int y, int width, int height,
-                                  int upperBound, int tickUnit, Font font) {
+    private void drawVerticalGrid(
+            Graphics2D g,
+            int x,
+            int y,
+            int width,
+            int height,
+            double upperBound,
+            double tickUnit,
+            Font font
+    ) {
         Stroke oldStroke = g.getStroke();
         g.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1f, new float[]{3f, 3f}, 0f));
         g.setColor(withAlpha(DashboardTheme.BORDER, GRID_ALPHA));
 
-        for (int value = 0; value <= upperBound; value += tickUnit) {
-            double ratio = value / (double) upperBound;
+        for (double value = 0; value <= upperBound + 0.001; value += tickUnit) {
+            double ratio = value / upperBound;
             int gridX = x + (int) Math.round(width * ratio);
             g.drawLine(gridX, y, gridX, y + height);
         }
         g.setStroke(oldStroke);
     }
 
-    private void drawXAxis(Graphics2D g, int x, int y, int width, int height,
-                           int upperBound, int tickUnit, Font font, boolean tiny) {
+    private void drawXAxis(
+            Graphics2D g,
+            int x,
+            int y,
+            int width,
+            int height,
+            double upperBound,
+            double tickUnit,
+            Font font,
+            boolean tiny
+    ) {
         int axisY = y + height;
         g.setColor(DashboardTheme.BORDER);
         g.drawLine(x, axisY, x + width, axisY);
@@ -195,14 +276,14 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
 
         g.setFont(font);
         FontMetrics metrics = g.getFontMetrics();
-        for (int value = 0; value <= upperBound; value += tickUnit) {
-            double ratio = value / (double) upperBound;
+        for (double value = 0; value <= upperBound + 0.001; value += tickUnit) {
+            double ratio = value / upperBound;
             int tickX = x + (int) Math.round(width * ratio);
 
             g.setColor(DashboardTheme.BORDER);
             g.drawLine(tickX, axisY, tickX, axisY + 4);
 
-            String text = String.valueOf(value);
+            String text = formatNumber(value);
             int textX = tickX - metrics.stringWidth(text) / 2;
             int textY = axisY + metrics.getAscent() + 6;
             g.setColor(DashboardTheme.TEXT_MUTED);
@@ -249,27 +330,113 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
         return new Color(base.getRed(), base.getGreen(), base.getBlue(), alpha);
     }
 
-    private int indexOfMax() {
+    private int indexOfMax(double[] values) {
         int leader = 0;
-        for (int i = 1; i < VALUES.length; i++) {
-            if (VALUES[i] > VALUES[leader]) leader = i;
+        for (int i = 1; i < values.length; i++) {
+            if (values[i] > values[leader]) leader = i;
         }
         return leader;
     }
 
-    private int calculateMaxValue() {
-        int max = 0;
-        for (int v : VALUES) max = Math.max(max, v);
-        return max;
+    private double calculateMaxValue(double[] values) {
+        double max = 0.0;
+        for (double value : values) {
+            if (Double.isFinite(value)) {
+                max = Math.max(max, value);
+            }
+        }
+        return Math.max(max, 1.0);
     }
 
-    private int calculateUpperBound(int maxValue, boolean tiny, boolean compact) {
-        int base = (int) Math.ceil(maxValue / 20.0) * 20;
-        return tiny ? base : base + 20;
+    /**
+     * Calcule la borne supérieure avec une logique adaptative.
+     * Le nombre de ticks est limité pour éviter la lenteur.
+     */
+    private double calculateUpperBound(double maxValue, int chartWidth) {
+        if (!Double.isFinite(maxValue) || maxValue <= 0) {
+            return 1.0;
+        }
+
+        // Déterminer le nombre de ticks cible en fonction de la largeur
+        int targetTicks = getTargetTickCount(chartWidth);
+
+        double rawStep = maxValue / targetTicks;
+        double niceStep = getNiceStep(rawStep);
+        double tickUnit = niceStep * getMagnitude(rawStep);
+
+        return Math.ceil(maxValue / tickUnit) * tickUnit;
     }
 
-    private int calculateTickUnit(boolean tiny, boolean compact) {
-        return (tiny || compact) ? 50 : 20;
+    /**
+     * Calcule l'unité de tick avec une logique adaptative.
+     */
+    private double calculateTickUnit(double upperBound, int chartWidth) {
+        if (upperBound <= 0 || !Double.isFinite(upperBound)) {
+            return 1.0;
+        }
+
+        int targetTicks = getTargetTickCount(chartWidth);
+        double rawStep = upperBound / targetTicks;
+
+        return getNiceStep(rawStep) * getMagnitude(rawStep);
+    }
+
+    /**
+     * Détermine le nombre de ticks cible en fonction de la largeur disponible.
+     */
+    private int getTargetTickCount(int chartWidth) {
+        if (chartWidth < 180) {
+            return 4;
+        } else if (chartWidth < 280) {
+            return 5;
+        } else if (chartWidth < 420) {
+            return 6;
+        } else {
+            return 8;
+        }
+    }
+
+    /**
+     * Calcule la magnitude (puissance de 10) d'une valeur.
+     */
+    private double getMagnitude(double value) {
+        return Math.pow(10, Math.floor(Math.log10(value)));
+    }
+
+    /**
+     * Arrondit une valeur à un nombre "sympa" (1, 2, 5, 10, 20, 50, etc.).
+     */
+    private double getNiceStep(double rawStep) {
+        double magnitude = getMagnitude(rawStep);
+        double normalized = rawStep / magnitude;
+
+        if (normalized <= 1.0) {
+            return 1.0;
+        } else if (normalized <= 2.0) {
+            return 2.0;
+        } else if (normalized <= 5.0) {
+            return 5.0;
+        } else {
+            return 10.0;
+        }
+    }
+
+    /**
+     * Formate un nombre pour l'affichage avec des suffixes (K, M, B).
+     */
+    private String formatNumber(double value) {
+        if (value == (long) value) {
+            long longValue = (long) value;
+            if (longValue >= 1_000_000_000) {
+                return String.format("%.1fB", longValue / 1_000_000_000.0);
+            } else if (longValue >= 1_000_000) {
+                return String.format("%.1fM", longValue / 1_000_000.0);
+            } else if (longValue >= 1_000) {
+                return String.format("%.1fK", longValue / 1_000.0);
+            }
+            return Long.toString(longValue);
+        }
+        return String.format(java.util.Locale.US, "%.1f", value);
     }
 
     // ============================== HELPER DATA CLASSES ==============================
@@ -298,7 +465,7 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
         g.setColor(DashboardTheme.TEXT_MUTED);
         g.setFont(g.getFont().deriveFont(Font.PLAIN, 14f));
         FontMetrics fm = g.getFontMetrics();
-        String text = "Données insuffisantes";
+        String text = msg == null || msg.isBlank() ? "Données insuffisantes" : msg;
         int x = (width - fm.stringWidth(text)) / 2;
         int y = (height - fm.getHeight()) / 2 + fm.getAscent();
         g.drawString(text, x, y);
@@ -313,5 +480,10 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
     private static class FontSizes {
         final float categorySize, numberSize, axisSize;
         FontSizes(float c, float n, float a) { categorySize = c; numberSize = n; axisSize = a; }
+    }
+
+    private static class CategoryAreaInfo {
+        final int width;
+        CategoryAreaInfo(int width) { this.width = width; }
     }
 }

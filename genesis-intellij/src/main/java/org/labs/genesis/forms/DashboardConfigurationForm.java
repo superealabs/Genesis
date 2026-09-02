@@ -169,6 +169,7 @@ public class DashboardConfigurationForm {
         return panel;
     }
 
+    // MODIFICATION: Seule cette méthode est modifiée
     private void rebuildRightSidebar() {
         rightSidebar.removeAll();
         rightHorizontalTitle = createHorizontalTitle("VISUALISATIONS");
@@ -187,9 +188,13 @@ public class DashboardConfigurationForm {
 
         visualizationPanel = new VisualizationPanel();
         visualizationPanel.addSelectionListener(item -> {
-            DashboardVisualComponent component = new DashboardVisualComponent(item, 4, 4);
+            DashboardVisualComponent component = new DashboardVisualComponent(item, 4, 4, projectGenerationContext);
             gridCanvas.addVisualComponent(component);
         });
+
+        // AJOUT: Définir le targetComponent sur le visualizationPanel
+        // pour qu'il puisse l'utiliser lors de l'affichage de la configuration
+        visualizationPanel.setTargetComponent(gridCanvas != null ? gridCanvas.getSelectedVisual() : null);
 
         rightContentCardPanel.add(visualizationPanel, LIST_CARD);
 
@@ -225,6 +230,11 @@ public class DashboardConfigurationForm {
                     this::onConfigBack,
                     this::onConfigDelete
             );
+
+            // AJOUT: Mettre à jour le targetComponent dans le visualizationPanel
+            if (visualizationPanel != null) {
+                visualizationPanel.setTargetComponent(component);
+            }
 
             // Ajouter le nouveau panel
             rightContentCardPanel.add(currentConfigPanel, CONFIG_CARD);
