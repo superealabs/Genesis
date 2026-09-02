@@ -73,6 +73,10 @@ public class ViewsGenerator implements IViewsGenerator {
         generateDetailsView(framework, frameworkOptions, language, viewsTemplate, tableMetadata, destinationFolder, projectName, groupLink);
 
         if (Boolean.FALSE.equals(tableMetadata.getIsView())) {
+            if (framework.getView().getForm() != null && Boolean.TRUE.equals(framework.getView().getForm().getToGenerate()
+            )) {
+                generateFormView(framework, frameworkOptions, language, viewsTemplate, tableMetadata, destinationFolder, projectName, groupLink);
+            }
             generateCreateView(framework, frameworkOptions, language, viewsTemplate, tableMetadata, destinationFolder, projectName, groupLink);
             generateEditView(framework, frameworkOptions, language, viewsTemplate, tableMetadata, destinationFolder, projectName, groupLink);
         }
@@ -207,6 +211,33 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String fileName = framework.getView().getEdit().getName();
         fileName = engine.simpleRender(fileName, metadataFinally);
+
+        String result = engine.render(primaryResult, metadataFinally);
+        result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$"));
+        FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
+    }
+
+    private void generateFormView(
+            FrameworkMVC framework,
+            Map<String, Object> frameworkOptions,
+            Language language,
+            ViewsTemplate viewsTemplate,
+            TableMetadata tableMetadata,
+            String destinationFolder,
+            String projectName,
+            String groupLink) throws Exception {
+
+        String templateContent = loadViewFormTemplate(viewsTemplate);
+        HashMap<String, Object> metadataPrimary = getAltViewFormHashMap(framework);
+        String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
+        HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
+
+        String fileSavePath = engine.simpleRender(framework.getView().getViewSavePath(),metadataFinally
+        );
+        FileUtils.createDirectory(fileSavePath);
+
+        String fileName = engine.simpleRender(framework.getView().getForm().getName(), metadataFinally
+        );
 
         String result = engine.render(primaryResult, metadataFinally);
         result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$"));
@@ -466,6 +497,10 @@ public class ViewsGenerator implements IViewsGenerator {
             }
         }
         return "";
+    }
+
+    private String loadViewFormTemplate(ViewsTemplate viewsTemplate) throws IOException {
+        return FileUtils.getFileContent(Constantes.TEMPLATES_PATH + "/" + viewsTemplate.getTemplate() + "/" + viewsTemplate.getFormTemplate() + "." + Constantes.TEMPLATE_EXT);
     }
 
     private String loadViewMainLayoutTemplate(ViewsTemplate viewsTemplate) throws IOException {

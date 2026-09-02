@@ -17,6 +17,9 @@ ${viewAnnotations}
 
 <form class="form" method="post" enctype="multipart/form-data" ${updateLink}>
     ${antiForgeryTokenTagHelper}
+    {{#if useReusableForm}}
+    <div ${formIncludeTagHelper}></div>
+    {{else}}
     ${validationSection}
     {{#each fields}}
     {{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}<!-- Hidden field for ${this.name} -->
@@ -79,6 +82,7 @@ ${viewAnnotations}
     </div>
     <span ${textAreaValidationTagHelper} class="field-validation-error"></span>
     {{/each}}{{removeLine}}
+    {{/if}}
 
     <div class="form-actions">
         <div class="form-actions-left">

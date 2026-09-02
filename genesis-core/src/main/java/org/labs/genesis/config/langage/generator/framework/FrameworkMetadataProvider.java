@@ -264,6 +264,7 @@ public class FrameworkMetadataProvider {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             Map<String, Object> fieldMap = getFieldHashMap(field);
+            addForeignKeyDisplayColumn(fieldMap, field, tableMetadata);
             // Enrich with Django-specific arguments to support constraints in templates
             String djangoArgs = buildDjangoArgs(field);
             fieldMap.put("djangoArgs", djangoArgs);
@@ -289,7 +290,7 @@ public class FrameworkMetadataProvider {
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field);
-
+                addForeignKeyDisplayColumn(fieldMap, field, tableMetadata);
                 String fieldType = field.getType();
 
                 boolean exists = fieldsFK.stream()
@@ -338,10 +339,88 @@ public class FrameworkMetadataProvider {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             Map<String, Object> fieldMap = getFieldHashMap(field, language, tableMetadata.getDatabase().getId());
+            addForeignKeyDisplayColumn(fieldMap, field, tableMetadata);
             fieldMap.put("djangoArgs", buildDjangoArgs(field));
             fields.add(fieldMap);
         }
         return fields;
+    }
+
+    private static void addForeignKeyDisplayColumn(Map<String, Object> fieldMap,  ColumnMetadata field, TableMetadata tableMetadata) {
+        if (!field.isForeign() || tableMetadata.getParentTables() == null) {
+            return;
+        }
+        tableMetadata.getParentTables().stream()
+                .filter(parent ->
+                        parent.getColumn() == field || parent.getColumn().equals(field))
+                .map(parent -> detectBestDisplayColumn(parent.getTable()))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .ifPresent(displayColumn ->
+                        fieldMap.put("displayColumn", displayColumn)
+                );
+    }
+
+    private static String detectBestDisplayColumn(TableMetadata tableMetadata){
+        if (tableMetadata == null || tableMetadata.getColumns() == null || tableMetadata.getColumns().length == 0) {
+            return null;
+        }
+        List<ColumnMetadata> nonNullableColumns =
+                Arrays.stream(tableMetadata.getColumns())
+                        .filter(column ->
+                                !column.isPrimary() && !column.isNullable()
+                        )
+                        .toList();
+        if (!nonNullableColumns.isEmpty()) {
+            return findBestDisplayColumn(nonNullableColumns, true);
+        }
+        List<ColumnMetadata> nullableColumns =
+                Arrays.stream(tableMetadata.getColumns())
+                        .filter(column -> !column.isPrimary())
+                        .toList();
+        if (!nullableColumns.isEmpty()) {
+            return findBestDisplayColumn(nullableColumns, false);
+        }
+        return tableMetadata.getColumns()[0].getName();
+    }
+
+    private static String findBestDisplayColumn(List<ColumnMetadata> columns, boolean prioritizeStructuredText) {
+        if (prioritizeStructuredText) {
+            Optional<ColumnMetadata> structuredText =
+                    columns.stream()
+                            .filter(FrameworkMetadataProvider::isTextColumn)
+                            .filter(column -> {
+                                String columnType = column.getColumnType();
+                                if (columnType == null) {
+                                    return false;
+                                }
+                                String type = columnType.toLowerCase();
+                                return type.contains("json") || type.contains("xml") || type.contains("inet");
+                            })
+                            .findFirst();
+            if (structuredText.isPresent()) {
+                return structuredText.get().getName();
+            }
+        }
+        return columns.stream()
+                .filter(FrameworkMetadataProvider::isTextColumn)
+                .findFirst()
+                .or(() -> columns.stream()
+                        .filter(FrameworkMetadataProvider::isDateColumn)
+                        .findFirst())
+                .or(() -> columns.stream()
+                        .filter(ColumnMetadata::isNumeric)
+                        .findFirst())
+                .orElse(columns.get(0))
+                .getName();
+    }
+
+    private static boolean isTextColumn(ColumnMetadata column) {
+        return "String".equals(column.getType()) || column.isText();
+    }
+
+    private static boolean isDateColumn(ColumnMetadata column) {
+        return column.isDate() || column.isDateTime() || column.isDateTimeTz();
     }
 
     // Build Django field arguments string (excluding verbose_name and db_column which are in template)
@@ -443,6 +522,7 @@ public class FrameworkMetadataProvider {
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field, language,tableMetadata.getDatabase().getId());
+                addForeignKeyDisplayColumn(fieldMap, field, tableMetadata);
 
                 String fieldType = field.getType();
 
@@ -647,6 +727,12 @@ public class FrameworkMetadataProvider {
         metadata.put("inputs", getInputsList(tableMetadata, language));
         metadata.put("textAreas", getTextAreasList(tableMetadata, language));
         metadata.put("inputsFilter", getFilterInputsList(tableMetadata, language));
+
+        if (framework instanceof FrameworkMVC frameworkMVC) {
+            boolean useReusableForm = frameworkMVC.getView().getForm() != null && Boolean.TRUE.equals(frameworkMVC.getView().getForm().getToGenerate());
+            metadata.put("useReusableForm", useReusableForm);
+            metadata.put("formIncludeTagHelper", useReusableForm ? frameworkMVC.getView().getForm().getIncludeTagHelper() : "");
+        }
 
         List<Integer> pageSizesList = Arrays.asList(5, 10, 50, 100, 200, 300, 500, 1000);
         metadata.put("pageSizesList", pageSizesList);
@@ -858,6 +944,7 @@ public class FrameworkMetadataProvider {
         altMap.put("baseHref", frameworkMVC.getView().getLayout().getBaseHref());
         altMap.put("viewAnnotations", frameworkMVC.getView().getLayout().getViewAnnotations());
         altMap.put("pageName", frameworkMVC.getView().getLayout().getPageName());
+        altMap.put("pageNameTagHelper", frameworkMVC.getView().getLayout().getPageNameTagHelper());
         altMap.put("navLink", frameworkMVC.getView().getLayout().getNavLink());
         altMap.put("callContent", frameworkMVC.getView().getLayout().getCallContent());
         altMap.put("logoutLink", frameworkMVC.getView().getLayout().getLogoutLink());
@@ -920,6 +1007,10 @@ public class FrameworkMetadataProvider {
         altMap.put("sortParamName", frameworkMVC.getView().getList().getSortParamName());
         altMap.put("fileDataValue", frameworkMVC.getView().getList().getFileDataValue());
         altMap.put("filterMethod", frameworkMVC.getView().getList().getFilterMethod());
+        altMap.put("filterTrueSelectedTagHelper", frameworkMVC.getView().getList().getFilterTrueSelectedTagHelper());
+        altMap.put("filterFalseSelectedTagHelper", frameworkMVC.getView().getList().getFilterFalseSelectedTagHelper());
+        altMap.put("foreignOptionsLoop", frameworkMVC.getView().getList().getForeignOptionsLoop());
+        altMap.put("flashMessageSection", frameworkMVC.getView().getList().getFlashMessageSection());
         return altMap;
     }
 
@@ -970,6 +1061,13 @@ public class FrameworkMetadataProvider {
         altMap.put("updateLink", frameworkMVC.getView().getEdit().getUpdateLink());
         altMap.put("scriptSection", frameworkMVC.getView().getEdit().getScriptSection());
         altMap.put("viewEnd", frameworkMVC.getView().getCreate().getViewEnd());
+        return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewFormHashMap(FrameworkMVC frameworkMVC) {
+        HashMap<String, Object> altMap = new HashMap<>(getAltViewCreateHashMap(frameworkMVC));
+        altMap.put("viewAnnotations", frameworkMVC.getView().getForm().getViewAnnotations());
+        altMap.put("viewEnd", frameworkMVC.getView().getForm().getViewEnd());
         return altMap;
     }
 }

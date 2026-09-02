@@ -1,0 +1,68 @@
+${viewAnnotations}
+${validationSection}
+
+{{#each inputs}}
+<div class="form-group">
+    <label for="${this.name}">${this.name}
+        {{#if this.isRequired}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
+    </label>
+
+    {{#if this.type = radio}}{{removeLine}}
+    <div class="boolean-radio-group">
+        <label class="radio-option">
+            <input type="radio" ${inputTagHelper} ${checkedRadioTagHelper} value="true">
+            <span class="radio-label">True</span>
+        </label>
+        <label class="radio-option">
+            <input type="radio" ${inputTagHelper} ${checkedRadioTagHelper} value="false">
+            <span class="radio-label">False</span>
+        </label>
+    </div>
+
+    {{elseIf this.type = file}}{{removeLine}}
+    <input type="file" name="${majStart(this.name)}File" id="${majStart(this.name)}File">
+
+    {{else}}{{removeLine}}
+    <input type="${this.type}" ${inputTagHelper} placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>
+    {{/if}}{{removeLine}}
+
+    <span ${validationTagHelper} class="field-validation-error"></span>
+</div>
+{{/each}}{{removeLine}}
+
+{{#each fieldsFK}}
+<div class="form-group">
+    <label for="${this.columnNameField}">${this.columnNameField}
+        {{#if this.isRequired}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
+    </label>
+
+    <select id="${this.columnNameField}" ${selectTagHelper}>
+        <option></option>
+    </select>
+
+    <span ${selectValidationTagHelper}
+          class="field-validation-error"></span>
+
+    <script>
+        $('#${this.columnNameField}').select2({
+            placeholder: "${this.columnNameField}",
+            allowClear: true,
+            width: '100%'
+        });
+    </script>
+</div>
+{{/each}}{{removeLine}}
+
+{{#each textAreas}}
+<div class="form-group full-width">
+    <label for="${this.name}">${this.name}
+        {{#if this.isRequired}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
+    </label>
+
+    <textarea ${textAreaTagHelper} rows="4" placeholder="${this.placeholder}" class="${this.class}"></textarea>
+
+    <span ${textAreaValidationTagHelper} class="field-validation-error"></span>
+</div>
+{{/each}}{{removeLine}}
+
+${viewEnd}

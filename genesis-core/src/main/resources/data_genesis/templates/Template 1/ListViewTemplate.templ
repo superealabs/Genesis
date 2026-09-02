@@ -11,6 +11,8 @@ ${viewAnnotations}
     </a>{{/if}}
 </div>
 
+${flashMessageSection}
+
 <div class="filters" id="filters-container">
     <div class="filters-header">
         <form method="${filterMethod}" ${filterLink} id="filtersForm">
@@ -80,8 +82,8 @@ ${viewAnnotations}
             {{#if this.type = radio}}{{removeLine}}
             <select class="filter-select" name="${this.name}" id="${this.name}" ${inputRadioTagHelper}>
                 <option value=""><span data-i18n="choose_option"></span></option>
-                <option value="true">True</option>
-                <option value="false">False</option>
+                <<option value="true" ${filterTrueSelectedTagHelper}>True</option>
+                 <option value="false" ${filterFalseSelectedTagHelper}>False</option>
             </select>
             {{elseIf this.type = datetime-local}}{{removeLine}}
             <input class="filter-input" type="${this.type}" id="${this.name}" ${inputDateTagHelper}>
@@ -96,6 +98,7 @@ ${viewAnnotations}
             <label for="">${this.name} :</label>
             <select class="filter-select" ${selectTagHelper}>
                 <option value="">-- <span data-i18n="select"></span> ${this.type} --</option>
+                ${foreignOptionsLoop}
             </select>
         </div>
         {{/each}}{{removeLine}}
@@ -392,7 +395,6 @@ ${viewAnnotations}
             </select>
             <input type="hidden" name="${pageSizeParamName}" value="${pageSizeValue}" ${pageSizeValueTagHelper} />
             <input type="hidden" name="${sortParamName}" value="${currentSortValue}" ${currentSortValueTagHelper} />
-            <button type="submit" class="btn btn-tertiary btn-sm"><span data-i18n="go"></span></button>
         </form>
     </div>
 </div>

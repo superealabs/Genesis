@@ -54,6 +54,7 @@ public class FrameworkMVC extends Framework {
         private List list;
         private Create create;
         private Edit edit;
+        private Form form;
         private Detail detail;
         private Error error;
         private java.util.List<FilesEdit> templateEngineFilesEdits;
@@ -72,6 +73,7 @@ public class FrameworkMVC extends Framework {
         private String baseHref;
         private String viewAnnotations;
         private String pageName;
+        private String pageNameTagHelper;
         private String navLink;
         private String callContent;
         private String logoutLink;
@@ -128,6 +130,10 @@ public class FrameworkMVC extends Framework {
         private String sortParamName;
         private String fileDataValue;
         private String filterMethod;
+        private String filterTrueSelectedTagHelper;
+        private String filterFalseSelectedTagHelper;
+        private String foreignOptionsLoop;
+        private String flashMessageSection;
     }
 
     @Getter
@@ -184,6 +190,17 @@ public class FrameworkMVC extends Framework {
         private String updateLink;
         private String scriptSection;
         private String viewEnd;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Form {
+        private Boolean toGenerate;
+        private String name;
+        private String viewAnnotations;
+        private String viewEnd;
+        private String includeTagHelper;
     }
 
     @Getter

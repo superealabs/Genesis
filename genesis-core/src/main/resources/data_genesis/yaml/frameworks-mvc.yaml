@@ -3113,6 +3113,7 @@
             var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
         }
       pageName: "@ViewData[\"Title\"]"
+      pageNameTagHelper: ""
       navLink: "class=\"nav-item @(currentController == \"${majStart(this.entityName)}\" ? \"active\" : \"\")\" asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
       callContent: |
         @RenderBody()
@@ -3528,7 +3529,7 @@
                                          String value,
                                          List<Predicate> predicates) {
                   if (value != null && !value.isBlank()) {
-                      predicates.add(cb.like(cb.lower(field), "%" + value.toLowerCase() + "%"));
+                      predicates.add(cb.like(cb.lower(field), value.toLowerCase() + "%"));
                   }
             }
 
@@ -4227,10 +4228,19 @@
         import org.springframework.web.bind.annotation.ExceptionHandler;
         import org.springframework.web.bind.annotation.ResponseStatus;
         import org.springframework.http.ResponseEntity;
+        import org.springframework.dao.DataIntegrityViolationException;
         import org.springframework.web.servlet.resource.NoResourceFoundException;
         @Slf4j
         @ControllerAdvice
         public class GlobalExceptionHandler {
+            @ExceptionHandler(DataIntegrityViolationException.class)
+            @ResponseStatus(HttpStatus.CONFLICT)
+            public String handleDataIntegrityViolationException(DataIntegrityViolationException ex, Model model) {
+              log.warn("Data integrity violation: {}", ex.getMessage());
+                  model.addAttribute("errorMessage", "Impossible d'effectuer cette opération car cet élément est encore référencé par d'autres données."
+                );
+                return "error/error";
+            }
         
             @ExceptionHandler(ResourceNotFoundException.class)
             @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -4518,12 +4528,12 @@
                           );
                       }
                       {{elseIf this.isForeignKey}}
-                      if(object.get${majStart(this.name)}()!=null){
-                          predicates.add(
-                              criteriaBuilder.equal(
-                                  ${this.criteriaBuildSnippet}
-                              )
-                          );
+                        if(object.get${majStart(this.columnNameField)}() != null){
+                        predicates.add(
+                          criteriaBuilder.equal(
+                            root.get("${this.name}").get("${minStart(this.referencedPrimaryKeyColumn)}"), object.get${majStart(this.columnNameField)}()
+                          )
+                        );
                       }
                       {{elseIf this.isText}}
                       WebUtils.addLikeIfPresent(criteriaBuilder, ${this.criteriaBuildSnippet}, predicates);
@@ -4560,11 +4570,6 @@
 
           import lombok.Getter;
           import lombok.Setter;
-          {{#each fields}}
-          {{#if this.isForeignKey}}
-          import ${groupLink}.${lowerCase(projectName)}.models.${this.type};
-          {{else}}{{removeLine}}{{/if}}
-          {{/each}}
 
           @Getter @Setter
           public class ${className}Search {
@@ -4573,7 +4578,7 @@
           {{#if this.isPrimaryKey}}
           {{tab}}private ${this.type} ${this.name};
           {{elseIf this.isForeignKey}}{{removeLine}}
-          {{tab}}private ${this.type} ${this.name};
+          {{tab}}private ${this.referencedColumnType} ${minStart(this.columnNameField)};
           {{tab}}{{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
           {{tab}}private ${this.type} ${this.name};
           {{tab}}private ${this.type} ${this.name}Min;
@@ -4631,6 +4636,7 @@
       import ${groupLink}.${lowerCase(projectName)}.specification.${majStart(className)}Specification;
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
       import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
+      import org.springframework.dao.DataIntegrityViolationException;
 
     serviceAnnotations: |
       @Service
@@ -4703,6 +4709,8 @@
       {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
       {{tab}}    try {
       {{tab}}        ${minStart(className)}Repository.deleteById(${pkColumn});
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}        throw ex;
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
@@ -4766,6 +4774,10 @@
       {{else}}{{removeLine}}{{/if}}
       import jakarta.validation.Valid;
       import org.springframework.validation.BindingResult;
+      import org.springframework.dao.DataIntegrityViolationException;
+      {{#each fieldsFK}}
+      import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(this.type)}Service;
+      {{/each}}{{removeLine}}
     controllerAnnotations: |
       @Controller
       @RequestMapping("/${minStart(className)}")
@@ -4773,9 +4785,15 @@
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
       {{tab}}private final ${majStart(className)}Service ${minStart(className)}Service;
+      {{tab}}{{#each fieldsFK}}
+      {{tab}}private final ${majStart(this.type)}Service ${minStart(this.type)}Service;
+      {{tab}}{{/each}}{{removeLine}}
     controllerConstructors: |
-      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${minStart(className)}Service) {
-      {{tab}}   this.${minStart(className)}Service = ${minStart(className)}Service;
+      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${minStart(className)}Service{{#each fieldsFK}}, ${majStart(this.type)}Service ${minStart(this.type)}Service{{/each}}) {
+      {{tab}}    this.${minStart(className)}Service = ${minStart(className)}Service;
+      {{tab}}    {{#each fieldsFK}}
+      {{tab}}    this.${minStart(this.type)}Service = ${minStart(this.type)}Service;
+      {{tab}}    {{/each}}{{removeLine}}
       {{tab}}}
     controllerMethodContent: |
       {{tab}}@GetMapping
@@ -4792,6 +4810,9 @@
       {{tab}}    model.addAttribute("${minStart(className)}s", ${minStart(className)}Page.getContent());
       {{tab}}    model.addAttribute("${minStart(className)}Page", ${minStart(className)}Page);
       {{tab}}    model.addAttribute("${minStart(className)}Search", search);
+      {{tab}}    {{#each fieldsFK}}
+      {{tab}}    model.addAttribute("${minStart(this.type)}s", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{tab}}    {{/each}}{{removeLine}}
       {{tab}}    model.addAttribute("currentPage", page);
       {{tab}}    model.addAttribute("pageSize", pageSize);
       {{tab}}    model.addAttribute("sortOrder", sortOrder);
@@ -4862,8 +4883,12 @@
       {{tab}}public String delete${majStart(className)}(
       {{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn},
       {{tab}}        RedirectAttributes redirectAttributes) {
-      {{tab}}    ${minStart(className)}Service.delete${majStart(className)}(${pkColumn});
-      {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
+      {{tab}}    try {
+      {{tab}}       ${minStart(className)}Service.delete${majStart(className)}(${pkColumn});
+      {{tab}}       redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}       redirectAttributes.addFlashAttribute("errorMessage", "Impossible de supprimer cet élément car il est utilisé par d'autres données.");
+      {{tab}}    }
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
       {{else}}{{removeLine}}{{/if}}
@@ -4887,7 +4912,8 @@
       baseHref: "<base th:href=\"@{/}\">"
       assetsImportLink: "th:href=\"@{/css/style.css}\""
       viewAnnotations: "{{removeLine}}"
-      pageName:
+      pageName: ""
+      pageNameTagHelper: "th:text=\"|${projectName} - $[thymeleafDollar]{pageTitle}|\""
 #      navLink: "th:classappend=\"${#httpServletRequest.requestURI == '/${this.entityName}'} ? 'active'\" th:href=\"@{/${this.entityName}}\""
       navLink: "class=\"nav-item\" th:href=\"@{/${minStart(this.entityName)}}\""
       callContent: |
@@ -4904,14 +4930,14 @@
       viewEnd: |
         </main>
         </div>
-      inputTagHelper: "name=\"${minStart(this.name)}\""
+      inputTagHelper: "name=\"${minStart(this.name)}\" th:value=\"$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.name)}}\""
       inputRadioTagHelper: ""
-      inputDateTagHelper: "name=\"${minStart(this.name)}\""
+      inputDateTagHelper: "name=\"${minStart(this.name)}\" th:value=\"$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.name)}}\""
       selectTagHelper: "name=\"${minStart(this.columnNameField)}\""
       deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
       pageSizeTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Page.size == ${this}}\""
       dataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
-      dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? ${minStart(className)}.${minStart(this.name)}.${minStart(this.displayColumn)} : ''}\"></span>"
       inlineDataValue: "{{removeLine}}"
       inlineDataForeignValue: "{{removeLine}}"
       inlineLoopStatement: "th:each=\"${minStart(className)} : $[thymeleafDollar]{${minStart(className)}s}\""
@@ -4964,6 +4990,24 @@
         <span th:unless="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
             Aucun fichier
         </span>
+      filterTrueSelectedTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.name)} == true}\""
+      filterFalseSelectedTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.name)} == false}\""
+      foreignOptionsLoop: |
+        <option th:each="${minStart(this.type)} : $[thymeleafDollar]{${minStart(this.type)}s}"
+                th:value="$[thymeleafDollar]{${minStart(this.type)}.${minStart(this.referencedPrimaryKeyColumn)}}"
+                th:text="$[thymeleafDollar]{${minStart(this.type)}.${minStart(this.displayColumn)}}"
+                th:selected="$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.columnNameField)} == ${minStart(this.type)}.${minStart(this.referencedPrimaryKeyColumn)}}">
+        </option>
+      flashMessageSection: |
+        <div class="success-message"
+             th:if="$[thymeleafDollar]{successMessage}">
+            <span th:text="$[thymeleafDollar]{successMessage}"></span>
+        </div>
+
+        <div class="error-message"
+             th:if="$[thymeleafDollar]{errorMessage}">
+            <span th:text="$[thymeleafDollar]{errorMessage}"></span>
+        </div>
     detail:
       name: "view"
       viewAnnotations: |
@@ -4975,7 +5019,7 @@
         </main>
         </div>
       dataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
-      dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? ${minStart(className)}.${minStart(this.name)}.${minStart(this.displayColumn)} : ''}\"></span>"
       deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
       deleteLink: "th:action=\"@{/${minStart(className)}/delete}\""
       updateLink: "th:href=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
@@ -5040,6 +5084,15 @@
       selectTagHelper: "th:field=\"*{${minStart(this.columnNameField)}}\""
       updateLink: "th:action=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
+    form:
+      toGenerate: true
+      name: "_form"
+      viewAnnotations: |
+        <div xmlns:th="[http://www.thymeleaf.org](http://www.thymeleaf.org)"
+             th:fragment="fields">
+      viewEnd: |
+        </div>
+      includeTagHelper: "th:replace=\"~{${minStart(className)}/_form :: fields}\""
     error:
       name: "error"
       viewAnnotations: |
@@ -5805,6 +5858,7 @@
       viewAnnotations: |
         ${DjangoBaseTemplate}
       pageName:
+      pageNameTagHelper: ""
       navLink: "class=\"nav-item \" href=\"{% url '${lowerCase(this.entityName)}_list' %}\""
       callContent: |
         {% block content %}{% endblock %}
