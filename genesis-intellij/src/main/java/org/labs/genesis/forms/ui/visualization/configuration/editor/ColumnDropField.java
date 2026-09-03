@@ -1,6 +1,8 @@
 package org.labs.genesis.forms.ui.visualization.configuration.editor;
 
 import com.intellij.icons.AllIcons;
+import lombok.Getter;
+import lombok.Setter;
 import org.labs.genesis.forms.theme.DashboardTheme;
 import org.labs.genesis.forms.ui.data.DataPanelTree;
 import org.labs.genesis.forms.ui.data.model.ColumnData;
@@ -13,12 +15,19 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.dnd.*;
 
 public class ColumnDropField extends JPanel {
 
+    @Getter
     private String columnName;
 
     private final JLabel iconLabel;
+    private final JPanel textPanel;
+    private final CardLayout textLayout;
+
+    private static final String PLACEHOLDER_CARD = "PLACEHOLDER";
+    private static final String VALUE_CARD = "VALUE";
     private final JLabel placeholderLabel;
     private final JLabel valueLabel;
     private final JButton clearButton;
@@ -27,9 +36,10 @@ public class ColumnDropField extends JPanel {
     private boolean dropSuccess = false;
     private float dropSuccessAlpha = 0f;
 
-    private static final int HEIGHT = 32;
+    public static final int HEIGHT = 32;
     private static final int RADIUS = 8;
 
+    @Setter
     private java.util.function.Consumer<String> columnChangeListener;
 
     public ColumnDropField() {
@@ -42,6 +52,7 @@ public class ColumnDropField extends JPanel {
 
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         setAlignmentX(Component.LEFT_ALIGNMENT);
+        setToolTipText("Drag a column here");
 
         iconLabel = new JLabel(AllIcons.Nodes.C_plocal);
         iconLabel.setOpaque(false);
@@ -60,11 +71,16 @@ public class ColumnDropField extends JPanel {
 
         clearButton = createClearButton();
 
+        textLayout = new CardLayout();
+        textPanel = new JPanel(textLayout);
+        textPanel.setOpaque(false);
+        textPanel.add(placeholderLabel, PLACEHOLDER_CARD);
+        textPanel.add(valueLabel, VALUE_CARD);
+
         JPanel labelPanel = new JPanel(new BorderLayout(6, 0));
         labelPanel.setOpaque(false);
         labelPanel.add(iconLabel, BorderLayout.WEST);
-        labelPanel.add(placeholderLabel, BorderLayout.CENTER);
-        labelPanel.add(valueLabel, BorderLayout.CENTER);
+        labelPanel.add(textPanel, BorderLayout.CENTER);
 
         add(labelPanel, BorderLayout.CENTER);
         add(clearButton, BorderLayout.EAST);
@@ -75,9 +91,6 @@ public class ColumnDropField extends JPanel {
         updateVisualState();
     }
 
-    /**
-     * Restaure une valeur sauvegardée (utilisé lors du rechargement du panel)
-     */
     public void restoreValue(String value) {
         if (value != null && !value.trim().isEmpty()) {
             setColumn(value);
@@ -116,78 +129,118 @@ public class ColumnDropField extends JPanel {
         });
 
         button.addActionListener(e -> clearColumn());
-
         return button;
     }
 
     private void installDropTarget() {
-        setTransferHandler(new TransferHandler() {
-            @Override
-            public boolean canImport(TransferSupport support) {
-                boolean supported =
-                        support.isDataFlavorSupported(DataPanelTree.COLUMN_DATA_FLAVOR)
-                                || support.isDataFlavorSupported(DataFlavor.stringFlavor);
+        new DropTarget(this, DnDConstants.ACTION_COPY, new DropTargetAdapter() {
 
-                setDragOver(supported);
-                return supported;
+            @Override
+            public void dragEnter(DropTargetDragEvent dtde) {
+                boolean supported =
+                        dtde.isDataFlavorSupported(DataPanelTree.COLUMN_DATA_FLAVOR)
+                                || dtde.isDataFlavorSupported(DataFlavor.stringFlavor);
+
+                if (supported) {
+                    dtde.acceptDrag(DnDConstants.ACTION_COPY);
+                    setDragOver(true);
+                } else {
+                    dtde.rejectDrag();
+                    setDragOver(false);
+                }
             }
 
             @Override
-            public boolean importData(TransferSupport support) {
-                if (!canImport(support)) {
-                    return false;
-                }
+            public void dragExit(DropTargetEvent dte) {
+                // IMPORTANT :
+                // Si l'utilisateur quitte le champ sans drop,
+                // on remet immédiatement l'état normal.
+                setDragOver(false);
+            }
+
+            @Override
+            public void drop(DropTargetDropEvent dtde) {
+                setDragOver(false);
 
                 try {
-                    Transferable transferable = support.getTransferable();
+                    boolean supported =
+                            dtde.isDataFlavorSupported(DataPanelTree.COLUMN_DATA_FLAVOR)
+                                    || dtde.isDataFlavorSupported(DataFlavor.stringFlavor);
+
+                    if (!supported) {
+                        dtde.rejectDrop();
+                        return;
+                    }
+
+                    dtde.acceptDrop(DnDConstants.ACTION_COPY);
+
+                    Transferable transferable = dtde.getTransferable();
                     String droppedColumn = null;
 
-                    if (support.isDataFlavorSupported(DataPanelTree.COLUMN_DATA_FLAVOR)) {
+                    if (dtde.isDataFlavorSupported(
+                            DataPanelTree.COLUMN_DATA_FLAVOR)) {
+
                         ColumnData columnData =
                                 (ColumnData) transferable.getTransferData(
-                                        DataPanelTree.COLUMN_DATA_FLAVOR);
-                        // Le ColumnData contient maintenant le nom complet "table.column"
+                                        DataPanelTree.COLUMN_DATA_FLAVOR
+                                );
+
                         droppedColumn = columnData.name;
-                    } else if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+
+                    } else if (dtde.isDataFlavorSupported(
+                            DataFlavor.stringFlavor)) {
+
                         droppedColumn = (String) transferable.getTransferData(
-                                DataFlavor.stringFlavor);
+                                DataFlavor.stringFlavor
+                        );
                     }
 
-                    if (droppedColumn != null && !droppedColumn.trim().isEmpty()) {
+                    if (droppedColumn != null && !droppedColumn.isBlank()) {
                         setColumn(droppedColumn);
                         showDropSuccess();
-                        return true;
+                        dtde.dropComplete(true);
+                    } else {
+                        dtde.dropComplete(false);
                     }
+
                 } catch (Exception e) {
                     e.printStackTrace();
+                    dtde.dropComplete(false);
+
                 } finally {
                     setDragOver(false);
                 }
-
-                return false;
             }
 
-            @Override
-            public void exportDone(JComponent source, Transferable data, int action) {
-                setDragOver(false);
-            }
-        });
+        }, true);
+    }
+
+    private String extractColumnName(TransferHandler.TransferSupport support) throws Exception {
+        Transferable transferable = support.getTransferable();
+
+        if (support.isDataFlavorSupported(DataPanelTree.COLUMN_DATA_FLAVOR)) {
+            ColumnData columnData = (ColumnData) transferable.getTransferData(DataPanelTree.COLUMN_DATA_FLAVOR);
+            return columnData.name;
+        }
+
+        if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+            return (String) transferable.getTransferData(DataFlavor.stringFlavor);
+        }
+
+        return null;
     }
 
     private void setDragOver(boolean value) {
         if (dragOver == value) {
             return;
         }
-
         dragOver = value;
         updateVisualState();
-        repaint();
     }
 
     private void showDropSuccess() {
         dropSuccess = true;
         dropSuccessAlpha = 1f;
-        updateVisualState();
         repaint();
 
         Timer fadeTimer = new Timer(50, null);
@@ -198,41 +251,41 @@ public class ColumnDropField extends JPanel {
                 dropSuccessAlpha = 0f;
                 fadeTimer.stop();
             }
-            updateVisualState();
             repaint();
         });
         fadeTimer.start();
     }
 
     private void updateVisualState() {
-        if (dropSuccess) {
-            placeholderLabel.setForeground(DashboardTheme.ACCENT);
-            placeholderLabel.setText("Column added!");
-        } else if (dragOver) {
+        boolean hasColumn = columnName != null && !columnName.isBlank();
+
+        if (dragOver) {
+            iconLabel.setVisible(false);
             placeholderLabel.setForeground(DashboardTheme.ACCENT);
             placeholderLabel.setText("Release to assign");
-        } else if (columnName != null && !columnName.isBlank()) {
-            placeholderLabel.setForeground(DashboardTheme.TEXT_SECONDARY);
-            placeholderLabel.setText("");
-            valueLabel.setVisible(true);
+            clearButton.setVisible(false);
+            textLayout.show(textPanel, PLACEHOLDER_CARD);
+        } else if (hasColumn) {
             iconLabel.setVisible(true);
-
-            // Afficher le nom complet avec style
-            if (columnName.contains(".")) {
-                String[] parts = columnName.split("\\.");
-                // Afficher en format "table.column"
-                valueLabel.setText(columnName);
-                // Optionnel: mettre en valeur la table différemment
-                // valueLabel.setText(parts[0] + "." + parts[1]);
-            } else {
-                valueLabel.setText(columnName);
-            }
+            valueLabel.setText(columnName);
+            valueLabel.setForeground(DashboardTheme.TEXT);
+            clearButton.setVisible(true);
+            textLayout.show(textPanel, VALUE_CARD);
+            setToolTipText("Click to clear: " + columnName);
         } else {
+            iconLabel.setVisible(false);
             placeholderLabel.setForeground(DashboardTheme.TEXT_SECONDARY);
             placeholderLabel.setText("Drop column here...");
-            valueLabel.setVisible(false);
-            iconLabel.setVisible(false);
+            clearButton.setVisible(false);
+            textLayout.show(textPanel, PLACEHOLDER_CARD);
+            setToolTipText("Drag a column here");
         }
+
+        // Un seul revalidate/repaint : revalidate() remonte de lui-même jusqu'à la
+        // racine de validation correcte (JViewport le cas échéant). Pas besoin de
+        // boucler manuellement sur getParent() ni de doubler avec invokeLater.
+        revalidate();
+        repaint();
     }
 
     private void installClickToClear() {
@@ -246,85 +299,35 @@ public class ColumnDropField extends JPanel {
                     clearColumn();
                 }
             }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                if (columnName != null && !columnName.isEmpty()) {
-                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                }
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            }
         });
     }
 
     public void setColumn(String columnName) {
-        this.columnName = columnName;
-
-        if (columnName != null && !columnName.trim().isEmpty()) {
-            placeholderLabel.setVisible(false);
-
-            // Si le nom contient un point, on affiche en format table.column
-            if (columnName.contains(".")) {
-                String[] parts = columnName.split("\\.");
-                String table = parts[0];
-                String column = parts.length > 1 ? parts[1] : parts[0];
-                // Afficher en format "table.column"
-                valueLabel.setText(columnName);
-                valueLabel.setFont(DashboardTheme.boldFont(12));
-            } else {
-                valueLabel.setText(columnName);
-                valueLabel.setFont(DashboardTheme.boldFont(12));
-            }
-
-            valueLabel.setVisible(true);
-            iconLabel.setVisible(true);
-            clearButton.setVisible(true);
-        } else {
+        if (columnName == null || columnName.isBlank()) {
             clearColumn();
             return;
         }
 
+        this.columnName = columnName.trim();
         updateVisualState();
 
+        // Notifié en dernier : tout effet de bord externe (persistance, mise à jour
+        // d'un autre composant) se produit APRÈS que notre propre état visuel est
+        // déjà finalisé et sa validation programmée.
         if (columnChangeListener != null) {
-            columnChangeListener.accept(columnName);
+            columnChangeListener.accept(this.columnName);
         }
-
-        revalidate();
-        repaint();
     }
 
     public void clearColumn() {
         this.columnName = null;
-
-        placeholderLabel.setVisible(true);
-        placeholderLabel.setText("Drop column here...");
-        valueLabel.setVisible(false);
-        valueLabel.setText("");
-        iconLabel.setVisible(false);
-        clearButton.setVisible(false);
-
         updateVisualState();
 
         if (columnChangeListener != null) {
             columnChangeListener.accept(null);
         }
-
-        revalidate();
-        repaint();
     }
 
-    public String getColumnName() {
-        return columnName;
-    }
-
-    /**
-     * Extrait le nom de la table depuis un nom complet "table.column"
-     */
     public String getTableName() {
         if (columnName == null || !columnName.contains(".")) {
             return null;
@@ -332,9 +335,6 @@ public class ColumnDropField extends JPanel {
         return columnName.split("\\.")[0];
     }
 
-    /**
-     * Extrait le nom de la colonne depuis un nom complet "table.column"
-     */
     public String getSimpleColumnName() {
         if (columnName == null) {
             return null;
@@ -346,15 +346,8 @@ public class ColumnDropField extends JPanel {
         return columnName;
     }
 
-    /**
-     * Vérifie si la colonne a un nom complet avec table
-     */
     public boolean hasTableName() {
         return columnName != null && columnName.contains(".");
-    }
-
-    public void setColumnChangeListener(java.util.function.Consumer<String> listener) {
-        this.columnChangeListener = listener;
     }
 
     @Override
@@ -373,8 +366,8 @@ public class ColumnDropField extends JPanel {
             float[] dashPattern = null;
 
             if (dropSuccess) {
-                backgroundColor = withAlpha(DashboardTheme.SURFACE_2, (int)(200 * dropSuccessAlpha));
-                borderColor = withAlpha(DashboardTheme.ACCENT, (int)(255 * dropSuccessAlpha));
+                backgroundColor = withAlpha(DashboardTheme.SURFACE_2, (int) (200 * dropSuccessAlpha));
+                borderColor = withAlpha(DashboardTheme.ACCENT, (int) (255 * dropSuccessAlpha));
                 borderWidth = 2f;
             } else if (dragOver) {
                 backgroundColor = DashboardTheme.SURFACE_2;
@@ -396,8 +389,7 @@ public class ColumnDropField extends JPanel {
             g2.fill(shape);
 
             if (dashPattern != null) {
-                g2.setStroke(new BasicStroke(borderWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
-                        10f, dashPattern, 0f));
+                g2.setStroke(new BasicStroke(borderWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, dashPattern, 0f));
             } else {
                 g2.setStroke(new BasicStroke(borderWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             }
@@ -419,6 +411,6 @@ public class ColumnDropField extends JPanel {
     }
 
     private Color withAlpha(Color color, int alpha) {
-        return new Color(color.getRed(), color.getGreen(), color.getBlue(), Math.max(0, Math.min(255, alpha)));
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), Math.clamp(alpha, 0, 255));
     }
 }

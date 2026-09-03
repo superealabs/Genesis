@@ -1,12 +1,12 @@
 package org.labs.genesis.forms.renderer.table;
 
+import lombok.Getter;
 import org.labs.genesis.forms.renderer.VisualizationRenderer;
-import org.labs.genesis.forms.renderer.chart.ChartData;
+import org.labs.genesis.forms.renderer.provider.TableData;
 import org.labs.genesis.forms.theme.DashboardTheme;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -14,6 +14,7 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -30,8 +31,11 @@ public class TableRenderer implements VisualizationRenderer {
         NUMBER_FORMAT.setMinimumFractionDigits(0);
     }
 
-    private ChartData chartData;
+    @Getter
+    private TableData tableData;
+    @Getter
     private List<String> columns = new ArrayList<>();
+    @Getter
     private String title;
 
     private JPanel rootPanel;
@@ -71,28 +75,36 @@ public class TableRenderer implements VisualizationRenderer {
     @Override
     public void updateConfig(VisualizationConfig config) {
 
-        Object dataObj = config.getValue(ChartData.CONFIG_KEY);
+        Object dataObj =
+                config.getValue(TableData.CONFIG_KEY);
 
-        if (dataObj instanceof ChartData data) {
-            chartData = data;
+        if (dataObj instanceof TableData data) {
+            tableData = data;
         } else {
-            chartData = null;
+            tableData = null;
         }
 
-        Object columnsObj = config.getValue("columns");
+        Object columnsObj =
+                config.getValue("columns");
 
         if (columnsObj instanceof List<?> list) {
+
             columns = new ArrayList<>();
 
             for (Object value : list) {
-                if (value != null) {
-                    String stringValue = value.toString().trim();
 
-                    if (!stringValue.isEmpty()) {
-                        columns.add(stringValue);
-                    }
+                if (value == null) {
+                    continue;
+                }
+
+                String stringValue =
+                        value.toString().trim();
+
+                if (!stringValue.isEmpty()) {
+                    columns.add(stringValue);
                 }
             }
+
         } else {
             columns = new ArrayList<>();
         }
@@ -100,7 +112,9 @@ public class TableRenderer implements VisualizationRenderer {
         title = config.getString("title");
 
         if (table != null) {
-            SwingUtilities.invokeLater(this::refreshTable);
+            SwingUtilities.invokeLater(
+                    this::refreshTable
+            );
         }
     }
 
@@ -154,10 +168,13 @@ public class TableRenderer implements VisualizationRenderer {
             return new String[]{"Message"};
         }
 
-        String[] result = new String[columns.size()];
+        String[] result =
+                new String[columns.size()];
 
         for (int i = 0; i < columns.size(); i++) {
-            result[i] = cleanColumnName(columns.get(i));
+
+            result[i] =
+                    cleanColumnName(columns.get(i));
         }
 
         return result;
@@ -166,37 +183,31 @@ public class TableRenderer implements VisualizationRenderer {
     private Object[][] buildTableData(String[] columnNames) {
 
         if (columns == null || columns.isEmpty()) {
+
             return new Object[][]{
                     {"Aucune colonne configurée"}
             };
         }
 
-        if (chartData == null ||
-                !chartData.hasSeries() ||
-                chartData.values() == null ||
-                chartData.values().length == 0) {
+        if (tableData == null ||
+                tableData.isEmpty()) {
 
             return new Object[][]{
                     {"Aucune donnée à afficher"}
             };
         }
 
-        double[] values = chartData.values();
-        List<String> labels = chartData.labels();
+        int rowCount =
+                Math.min(
+                        tableData.rowCount(),
+                        MAX_DISPLAY_ROWS
+                );
 
-        int rowCount = Math.min(
-                values.length,
-                MAX_DISPLAY_ROWS
-        );
-
-        int columnCount = columnNames.length;
+        int columnCount =
+                columnNames.length;
 
         Object[][] data =
                 new Object[rowCount][columnCount];
-
-        boolean hasLabels =
-                labels != null &&
-                        !labels.isEmpty();
 
         for (int row = 0; row < rowCount; row++) {
 
@@ -204,84 +215,47 @@ public class TableRenderer implements VisualizationRenderer {
                  column < columnCount;
                  column++) {
 
-                String configuredColumn =
-                        columns.get(column);
+                Object value =
+                        tableData.valueAt(
+                                row,
+                                column
+                        );
 
                 data[row][column] =
-                        resolveValue(
-                                configuredColumn,
-                                column,
-                                row,
-                                values,
-                                labels,
-                                hasLabels,
-                                columnCount
-                        );
+                        formatTableValue(value);
             }
         }
 
         return data;
     }
 
-    private Object resolveValue(
-            String configuredColumn,
-            int columnIndex,
-            int rowIndex,
-            double[] values,
-            List<String> labels,
-            boolean hasLabels,
-            int columnCount
-    ) {
+    private Object formatTableValue(Object value) {
 
-        String column =
-                cleanColumnName(configuredColumn)
-                        .toLowerCase(Locale.ROOT);
-
-        if (column.equals("#") ||
-                column.equals("index") ||
-                column.equals("row")) {
-
-            return rowIndex + 1;
-        }
-
-        if (column.equals("label") ||
-                column.equals("category") ||
-                column.equals("name")) {
-
-            if (hasLabels && rowIndex < labels.size()) {
-                return labels.get(rowIndex);
-            }
-
+        if (value == null) {
             return "";
         }
 
-        if (column.equals("value") ||
-                column.equals("amount") ||
-                column.equals("count") ||
-                column.equals("total")) {
+        if (value instanceof Number number) {
 
-            return formatValue(values[rowIndex]);
+            double doubleValue =
+                    number.doubleValue();
+
+            if (!Double.isFinite(doubleValue)) {
+                return "N/A";
+            }
+
+            if (doubleValue == (long) doubleValue) {
+                return NUMBER_FORMAT.format(
+                        (long) doubleValue
+                );
+            }
+
+            return NUMBER_FORMAT.format(
+                    doubleValue
+            );
         }
 
-        /*
-         * Pour l'instant ChartData ne contient qu'une série.
-         *
-         * On garde donc un fallback intelligent :
-         *
-         * première colonne -> label
-         * dernière colonne -> value
-         */
-        if (hasLabels && columnIndex == 0) {
-            return rowIndex < labels.size()
-                    ? labels.get(rowIndex)
-                    : "";
-        }
-
-        if (columnIndex == columnCount - 1) {
-            return formatValue(values[rowIndex]);
-        }
-
-        return "";
+        return value.toString();
     }
 
     private String cleanColumnName(String column) {
@@ -554,19 +528,6 @@ public class TableRenderer implements VisualizationRenderer {
         return NUMBER_FORMAT.format(value);
     }
 
-    public ChartData getChartData() {
-        return chartData;
-    }
-
-    public void setChartData(ChartData chartData) {
-        this.chartData = chartData;
-        refreshTable();
-    }
-
-    public List<String> getColumns() {
-        return columns;
-    }
-
     public void setColumns(List<String> columns) {
 
         this.columns =
@@ -575,10 +536,6 @@ public class TableRenderer implements VisualizationRenderer {
                         : new ArrayList<>();
 
         refreshTable();
-    }
-
-    public String getTitle() {
-        return title;
     }
 
     public void setTitle(String title) {

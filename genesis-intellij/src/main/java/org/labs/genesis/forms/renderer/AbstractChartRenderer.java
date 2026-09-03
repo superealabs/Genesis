@@ -2,7 +2,7 @@ package org.labs.genesis.forms.renderer;
 
 import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
 import org.labs.genesis.forms.theme.DashboardTheme;
-import org.labs.genesis.forms.renderer.chart.ChartData;
+import org.labs.genesis.forms.renderer.provider.ChartData;
 
 import javax.swing.*;
 import java.awt.*;
