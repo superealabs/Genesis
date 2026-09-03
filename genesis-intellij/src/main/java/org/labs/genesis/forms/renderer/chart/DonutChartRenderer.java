@@ -1,6 +1,7 @@
 package org.labs.genesis.forms.renderer.chart;
 
 import org.labs.genesis.forms.renderer.AbstractChartRenderer;
+import org.labs.genesis.forms.renderer.provider.ChartData;
 import org.labs.genesis.forms.theme.DashboardTheme;
 
 import java.awt.*;

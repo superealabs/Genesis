@@ -97,128 +97,98 @@ public class VisualizationConfigurationPanel extends JPanel {
     private void bindEditorToConfig(String key, JComponent editor) {
         if (targetComponent == null) return;
 
-        // Gestion du titre
         if ("title".equals(key) && editor instanceof JTextField titleField) {
             titleField.setText(targetComponent.getTitle());
             titleField.getDocument().addDocumentListener(new DocumentListener() {
-                @Override
-                public void insertUpdate(DocumentEvent e) { updateTitle(); }
-                @Override
-                public void removeUpdate(DocumentEvent e) { updateTitle(); }
-                @Override
-                public void changedUpdate(DocumentEvent e) { updateTitle(); }
-
-                private void updateTitle() {
-                    targetComponent.setTitle(titleField.getText());
-                }
+                @Override public void insertUpdate(DocumentEvent e) { updateTitle(); }
+                @Override public void removeUpdate(DocumentEvent e) { updateTitle(); }
+                @Override public void changedUpdate(DocumentEvent e) { updateTitle(); }
+                private void updateTitle() { targetComponent.setTitle(titleField.getText()); }
             });
             return;
         }
 
-        // Gestion du type de marqueur pour la Map
         if ("markerType".equals(key) && editor instanceof JComboBox<?> markerTypeCombo) {
             String existingMarkerType = targetComponent.getConfigValue(key);
             if (existingMarkerType != null) {
                 markerTypeCombo.setSelectedItem(existingMarkerType);
             }
-
             markerTypeCombo.addActionListener(e -> {
-                if (targetComponent != null) {
-                    targetComponent.updateConfig(key, markerTypeCombo.getSelectedItem());
-                }
+                targetComponent.updateConfig(key, markerTypeCombo.getSelectedItem());
                 updateConditionalVisibility();
             });
             return;
         }
 
-        // Gestion des colonnes multiples
         if ("columns".equals(key) && editor instanceof ColumnsEditorPanel columnsPanel) {
-            // Récupérer les colonnes existantes
-            Object existingColumns = targetComponent.getConfigValue(key);
+            Object existingColumns = targetComponent.getConfigObject(key);
             if (existingColumns instanceof List<?> columnsList) {
-                columnsPanel.setColumns((List<String>) columnsList);
-            }
-
-            columnsPanel.setColumnsChangeListener(() -> {
-                if (targetComponent != null) {
-                    targetComponent.updateConfig(key, columnsPanel.getColumns());
+                List<String> restoredColumns = new ArrayList<>();
+                for (Object column : columnsList) {
+                    if (column instanceof String value) {
+                        restoredColumns.add(value);
+                    }
                 }
-            });
+                if (!restoredColumns.isEmpty()) {
+                    columnsPanel.setColumns(restoredColumns);
+                }
+            }
+            // Seul endroit qui persiste "columns" : ColumnsEditorPanel ne le fait plus lui-même.
+            columnsPanel.setColumnsChangeListener(() ->
+                    targetComponent.updateConfig(key, columnsPanel.getColumns())
+            );
             return;
         }
 
-        // Gestion du nombre optionnel (limit)
+        // Gestion de l'éditeur "colonne ou formule" utilisé SEUL (hors ColumnsEditorPanel).
+        // C'est ici, et ici seulement, que ColumnOrFormulaRow est relié à targetComponent :
+        // le composant lui-même reste totalement ignorant de cette notion.
+        if (editor instanceof ColumnOrFormulaRow row) {
+            String existingValue = targetComponent.getConfigValue(key);
+            if (existingValue != null && !existingValue.isEmpty()) {
+                row.restoreValue(existingValue);
+            }
+            row.setChangeListener(() -> targetComponent.updateConfig(key, row.getStorageValue()));
+            return;
+        }
+
         if ("limit".equals(key) && editor instanceof OptionalNumberEditor optionalNumberEditor) {
             Object existingLimit = targetComponent.getConfigValue(key);
             if (existingLimit != null) {
                 optionalNumberEditor.setValue(existingLimit);
             }
-
-            optionalNumberEditor.setValueChangeListener(value -> {
-                if (targetComponent != null) {
-                    targetComponent.updateConfig(key, value);
-                }
-            });
+            optionalNumberEditor.setValueChangeListener(value -> targetComponent.updateConfig(key, value));
             return;
         }
 
-        // Gestion des champs de drop de colonnes
         if (editor instanceof ColumnDropField columnDropField) {
             String existingColumn = targetComponent.getConfigValue(key);
             if (existingColumn != null && !existingColumn.isEmpty()) {
                 columnDropField.setColumn(existingColumn);
             }
-
-            columnDropField.setColumnChangeListener(value -> {
-                if (targetComponent != null) {
-                    targetComponent.updateConfig(key, value);
-                }
-            });
+            columnDropField.setColumnChangeListener(value -> targetComponent.updateConfig(key, value));
             return;
         }
 
-        // Gestion des champs texte
         if (editor instanceof JTextField textField) {
             String existingValue = targetComponent.getConfigValue(key);
             if (existingValue != null) {
                 textField.setText(existingValue);
             }
-
             textField.getDocument().addDocumentListener(new DocumentListener() {
-                @Override
-                public void insertUpdate(DocumentEvent e) { updateValue(); }
-                @Override
-                public void removeUpdate(DocumentEvent e) { updateValue(); }
-                @Override
-                public void changedUpdate(DocumentEvent e) { updateValue(); }
-
-                private void updateValue() {
-                    if (targetComponent != null) {
-                        targetComponent.updateConfig(key, textField.getText());
-                    }
-                }
+                @Override public void insertUpdate(DocumentEvent e) { updateValue(); }
+                @Override public void removeUpdate(DocumentEvent e) { updateValue(); }
+                @Override public void changedUpdate(DocumentEvent e) { updateValue(); }
+                private void updateValue() { targetComponent.updateConfig(key, textField.getText()); }
             });
-        }
-        // Gestion des combos
-        else if (editor instanceof JComboBox<?> comboBox) {
+        } else if (editor instanceof JComboBox<?> comboBox) {
             String existingValue = targetComponent.getConfigValue(key);
             if (existingValue != null) {
                 comboBox.setSelectedItem(existingValue);
             }
-
-            comboBox.addActionListener(e -> {
-                if (targetComponent != null) {
-                    targetComponent.updateConfig(key, comboBox.getSelectedItem());
-                }
-            });
-        }
-        // Gestion des spinners
-        else if (editor instanceof JSpinner spinner) {
-            spinner.addChangeListener(e -> {
-                if (targetComponent != null) {
-                    targetComponent.updateConfig(key, spinner.getValue());
-                }
-            });
+            comboBox.addActionListener(e -> targetComponent.updateConfig(key, comboBox.getSelectedItem()));
+        } else if (editor instanceof JSpinner spinner) {
+            spinner.addChangeListener(e -> targetComponent.updateConfig(key, spinner.getValue()));
         }
     }
 
@@ -314,7 +284,6 @@ public class VisualizationConfigurationPanel extends JPanel {
         panel.add(editor);
 
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, panel.getPreferredSize().height));
 
         return panel;
     }
@@ -373,7 +342,7 @@ public class VisualizationConfigurationPanel extends JPanel {
     }
 
     private JComponent createColumnOrFormulaEditor(VisualizationParameter parameter) {
-        return new ColumnOrFormulaRow(parameter, targetComponent, parameter.getKey());
+        return new ColumnOrFormulaRow(parameter);
     }
 
     private JComponent createSortEditor() {
@@ -400,46 +369,7 @@ public class VisualizationConfigurationPanel extends JPanel {
     }
 
     private JComponent createColumnsEditor() {
-        // Vérifier si targetComponent est null
-        if (targetComponent == null) {
-            JPanel fallbackPanel = new JPanel();
-            fallbackPanel.setOpaque(false);
-            fallbackPanel.add(new JLabel("No component available"));
-            return fallbackPanel;
-        }
-
-        // Créer avec targetComponent et la clé "columns"
-        ColumnsEditorPanel panel = new ColumnsEditorPanel(targetComponent, "columns");
-
-        // Charger les valeurs existantes
-        try {
-            Object existingColumns = targetComponent.getConfigValue("columns");
-            if (existingColumns instanceof List<?> columnsList) {
-                // Convertir en List<String> si nécessaire
-                List<String> stringList = new ArrayList<>();
-                for (Object obj : columnsList) {
-                    if (obj instanceof String) {
-                        stringList.add((String) obj);
-                    }
-                }
-                panel.setColumns(stringList);
-            }
-        } catch (Exception e) {
-            // Ignorer l'erreur et utiliser les valeurs par défaut
-        }
-
-        panel.setColumnsChangeListener(() -> {
-            if (targetComponent != null) {
-                targetComponent.revalidate();
-                targetComponent.repaint();
-
-                // Forcer la mise à jour du rendu
-                targetComponent.getParent().revalidate();
-                targetComponent.getParent().repaint();
-            }
-        });
-
-        return panel;
+        return new ColumnsEditorPanel();
     }
 
     private JComponent createConditionEditor() {

@@ -1,4 +1,4 @@
-package org.labs.genesis.forms.renderer.chart;
+package org.labs.genesis.forms.renderer.provider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,9 +10,9 @@ public record ChartData(
         double[][] points
 ) {
 
-    public static final String CONFIG_KEY = "__chartData";
-    public static final String ERROR_KEY = "__chartDataError";
-    public static final String LOADING_KEY = "__chartDataLoading";
+    public static final String CONFIG_KEY = "__ChartData";
+    public static final String ERROR_KEY = "__chartError";
+    public static final String LOADING_KEY = "__chartLoading";
 
     public ChartData {
         labels = labels != null ? Collections.unmodifiableList(new ArrayList<>(labels)) : Collections.emptyList();

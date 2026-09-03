@@ -1,236 +1,229 @@
 package org.labs.genesis.forms.ui.visualization.configuration.editor;
 
+import com.intellij.icons.AllIcons;
 import org.labs.genesis.forms.theme.DashboardTheme;
-import org.labs.genesis.forms.ui.visualization.DashboardVisualComponent;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
-import org.labs.genesis.forms.ui.visualization.model.VisualizationParameterType;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Panneau d'édition pour les colonnes multiples (ColumnsEditorPanel)
- * Gère une liste de colonnes/formules avec possibilité d'ajouter/supprimer
+ * Éditeur d'une liste de colonnes/formules.
+ *
+ * Ce panel ne connaît PAS DashboardVisualComponent : il expose une liste de
+ * valeurs ("COLUMN:x"/"FORMULA:x") et un listener de changement. La persistance
+ * est de la seule responsabilité de l'appelant (VisualizationConfigurationPanel),
+ * comme pour tout autre éditeur — plus de double écriture de configuration.
  */
 public class ColumnsEditorPanel extends JPanel {
 
     private final JPanel columnsContainer;
-    private final JButton addButton;
-    private final List<ColumnOrFormulaRow> rows; // Initialisé directement
-    private final String configKey;
-    private final DashboardVisualComponent targetComponent;
+    private final JLabel countLabel;
+    private final List<ColumnOrFormulaRow> rows = new ArrayList<>();
     private Runnable changeListener;
     private int rowCounter = 0;
 
-    /**
-     * Constructeur par défaut (pour compatibilité)
-     */
     public ColumnsEditorPanel() {
-        this(null, null);
-    }
-
-    /**
-     * Constructeur principal.
-     *
-     * @param targetComponent Le composant cible pour la configuration
-     * @param configKey       La clé de configuration
-     */
-    public ColumnsEditorPanel(DashboardVisualComponent targetComponent, String configKey) {
-        System.out.println("targetComponent: " + targetComponent);
-        this.targetComponent = targetComponent;
-        this.configKey = configKey;
-        this.rows = new ArrayList<>(); // Initialisation ici
-
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        setLayout(new BorderLayout());
         setOpaque(false);
-        setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Conteneur pour les lignes de colonnes
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setOpaque(false);
+
         columnsContainer = new JPanel();
         columnsContainer.setLayout(new BoxLayout(columnsContainer, BoxLayout.Y_AXIS));
         columnsContainer.setOpaque(false);
-        columnsContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Bouton pour ajouter une colonne
-        addButton = new JButton("+ Add Column");
-        addButton.setForeground(DashboardTheme.TEXT);
-        addButton.setBackground(DashboardTheme.SURFACE_2);
-        addButton.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(DashboardTheme.BORDER_SUBTLE, 1),
-                new EmptyBorder(4, 10, 4, 10)
-        ));
-        addButton.setFocusPainted(false);
-        addButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        addButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        addButton.addActionListener(e -> addColumnRow(null));
+        countLabel = new JLabel();
+        countLabel.setForeground(DashboardTheme.TEXT_SECONDARY);
+        countLabel.setFont(countLabel.getFont().deriveFont(10f));
+        countLabel.setBorder(new EmptyBorder(0, 2, 4, 0));
+        countLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        add(columnsContainer);
-        add(Box.createVerticalStrut(4));
-        add(addButton);
-        add(Box.createVerticalGlue());
+        JButton addButton = createAddButton();
 
-        // Ajouter une ligne par défaut
+        mainPanel.add(countLabel);
+        mainPanel.add(columnsContainer);
+        mainPanel.add(Box.createVerticalStrut(6));
+        mainPanel.add(addButton);
+
+        add(mainPanel, BorderLayout.CENTER);
+
         addColumnRow(null);
+        updateCountLabel();
     }
 
-    /**
-     * Ajoute une nouvelle ligne de colonne.
-     *
-     * @param initialValue La valeur initiale (peut être null)
-     */
-    private void addColumnRow(String initialValue) {
-        // Créer un paramètre pour cette colonne
-        VisualizationParameter param = VisualizationParameter.measureOrFormula(
-                "column_" + (++rowCounter),
-                "Column",
-                true
-        );
+    private JButton createAddButton() {
+        JButton button = new JButton("+ Add Column");
+        button.setHorizontalAlignment(SwingConstants.LEFT);
+        button.setForeground(DashboardTheme.TEXT);
+        button.setBackground(DashboardTheme.SURFACE_2);
+        button.setFont(button.getFont().deriveFont(Font.PLAIN, 11f));
+        button.setFocusPainted(false);
+        button.setFocusable(false);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setContentAreaFilled(true);
+        button.setOpaque(true);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(DashboardTheme.BORDER_SUBTLE, 1),
+                new EmptyBorder(5, 8, 5, 8)
+        ));
+        button.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        if (initialValue != null) {
-            // Déterminer si c'est une colonne ou une formule
-            if (initialValue.startsWith("FORMULA:")) {
-                param.setMode("FORMULA");
-                param.setValue(initialValue.substring(8));
-            } else if (initialValue.startsWith("COLUMN:")) {
-                param.setMode("COLUMN");
-                param.setValue(initialValue.substring(7));
-            } else {
-                // Par défaut, considérer comme une colonne
-                param.setMode("COLUMN");
-                param.setValue(initialValue);
+        button.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) {
+                button.setBackground(DashboardTheme.SURFACE_ACTIVE);
             }
-        }
-
-        // Créer la ligne avec targetComponent et configKey
-        ColumnOrFormulaRow row = new ColumnOrFormulaRow(
-                param,
-                targetComponent,
-                configKey != null ? configKey : param.getKey()
-        );
-        rows.add(row);
-
-        // Créer un wrapper pour la ligne avec le bouton de suppression
-        JPanel rowWrapper = new JPanel(new BorderLayout(4, 0));
-        rowWrapper.setOpaque(false);
-        rowWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
-        rowWrapper.setBorder(new EmptyBorder(0, 0, 6, 0));
-
-        JButton removeButton = new JButton("×");
-        removeButton.setPreferredSize(new Dimension(24, 24));
-        removeButton.setFocusable(false);
-        removeButton.setBorderPainted(false);
-        removeButton.setContentAreaFilled(false);
-        removeButton.setOpaque(false);
-        removeButton.setForeground(DashboardTheme.TEXT_SECONDARY);
-        removeButton.setFont(removeButton.getFont().deriveFont(Font.PLAIN, 14f));
-        removeButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        removeButton.setToolTipText("Remove column");
-        removeButton.addActionListener(e -> {
-            if (rows.size() <= 1) {
-                return;
+            @Override public void mouseExited(MouseEvent e) {
+                button.setBackground(DashboardTheme.SURFACE_2);
             }
-            columnsContainer.remove(rowWrapper);
-            rows.remove(row);
-            columnsContainer.revalidate();
-            columnsContainer.repaint();
+        });
+
+        button.addActionListener(e -> {
+            addColumnRow(null);
+            revalidate();
+            repaint();
             notifyChange();
         });
 
-        // Connecter le changement de la ligne à la notification
+        return button;
+    }
+
+    private void addColumnRow(String initialValue) {
+        VisualizationParameter param = VisualizationParameter.measureOrFormula(
+                "column_" + (++rowCounter), "Column", true
+        );
+
+        ColumnOrFormulaRow row = new ColumnOrFormulaRow(param);
+
+        // Restauration AVANT l'attache du listener : aucune notification "fantôme"
+        // pendant l'initialisation, plus besoin d'un flag "loading" de sécurité.
+        if (initialValue != null && !initialValue.isBlank()) {
+            row.restoreValue(initialValue);
+        }
         row.setChangeListener(this::notifyChange);
+
+        rows.add(row);
+        columnsContainer.add(createRowWrapper(row));
+        updateCountLabel();
+    }
+
+    private JPanel createRowWrapper(ColumnOrFormulaRow row) {
+        JPanel rowWrapper = new JPanel(new BorderLayout(6, 0));
+        rowWrapper.setOpaque(false);
+        rowWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
+        rowWrapper.setBorder(new EmptyBorder(0, 0, 8, 0));
+
+        JButton removeButton = createRemoveButton(row);
 
         rowWrapper.add(row, BorderLayout.CENTER);
         rowWrapper.add(removeButton, BorderLayout.EAST);
 
-        columnsContainer.add(rowWrapper);
-        columnsContainer.revalidate();
-        columnsContainer.repaint();
-        notifyChange();
+        // Hauteur bornée à ce dont la ligne a réellement besoin (calculée à chaque
+        // (re)création, jamais figée) : plus de clipping possible si le contenu grandit.
+        int preferredHeight = rowWrapper.getPreferredSize().height;
+        rowWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, preferredHeight));
+
+        return rowWrapper;
     }
 
-    /**
-     * Définit les colonnes initiales.
-     *
-     * @param columns La liste des colonnes/formules
-     */
-    public void setColumns(List<String> columns) {
-        // Vider le conteneur
-        columnsContainer.removeAll();
-        rows.clear();
+    private JButton createRemoveButton(ColumnOrFormulaRow row) {
+        JButton removeButton = new JButton(AllIcons.Actions.Close);
+        removeButton.setToolTipText("Remove column");
+        removeButton.setFocusPainted(false);
+        removeButton.setFocusable(false);
+        removeButton.setBorderPainted(false);
+        removeButton.setContentAreaFilled(false);
+        removeButton.setForeground(DashboardTheme.TEXT_SECONDARY);
+        removeButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        if (columns == null || columns.isEmpty()) {
-            // Ajouter une ligne vide par défaut
-            addColumnRow(null);
+        Dimension btnSize = new Dimension(28, ColumnDropField.HEIGHT);
+        removeButton.setPreferredSize(btnSize);
+        removeButton.setMinimumSize(btnSize);
+        removeButton.setMaximumSize(btnSize);
+
+        removeButton.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) {
+                removeButton.setForeground(DashboardTheme.ERROR);
+            }
+            @Override public void mouseExited(MouseEvent e) {
+                removeButton.setForeground(DashboardTheme.TEXT_SECONDARY);
+            }
+        });
+
+        removeButton.addActionListener(e -> removeColumn(row));
+        return removeButton;
+    }
+
+    private void removeColumn(ColumnOrFormulaRow row) {
+        if (rows.size() <= 1) {
             return;
         }
+        rows.remove(row);
+        refreshRows();
+        notifyChange();
+    }
 
-        // Ajouter chaque colonne
-        for (String column : columns) {
-            addColumnRow(column);
+    public void setColumns(List<String> columns) {
+        columnsContainer.removeAll();
+        rows.clear();
+        rowCounter = 0;
+
+        if (columns == null || columns.isEmpty()) {
+            addColumnRow(null);
+        } else {
+            for (String column : columns) {
+                addColumnRow(column);
+            }
         }
 
         columnsContainer.revalidate();
         columnsContainer.repaint();
-        notifyChange();
     }
 
-    /**
-     * Récupère la liste des colonnes/formules.
-     *
-     * @return La liste des valeurs
-     */
     public List<String> getColumns() {
         List<String> result = new ArrayList<>();
         for (ColumnOrFormulaRow row : rows) {
-            String value = row.getValue();
-            String mode = row.getMode();
-
-            if (value != null && !value.isBlank()) {
-                // Stocker avec le préfixe approprié
-                if ("FORMULA".equals(mode)) {
-                    result.add("FORMULA:" + value);
-                } else {
-                    result.add("COLUMN:" + value);
-                }
+            String storageValue = row.getStorageValue();
+            if (storageValue != null) {
+                result.add(storageValue);
             }
         }
         return result;
     }
 
-    /**
-     * Définit l'écouteur de changement.
-     */
     public void setColumnsChangeListener(Runnable listener) {
         this.changeListener = listener;
     }
 
-    /**
-     * Notifie les écouteurs des changements.
-     */
     private void notifyChange() {
-        // Mettre à jour la configuration du composant cible
-        if (targetComponent != null && configKey != null) {
-            List<String> columns = getColumns();
-            targetComponent.updateConfig(configKey, columns);
-        }
-
+        updateCountLabel();
         if (changeListener != null) {
             changeListener.run();
         }
     }
 
-    /**
-     * Vérifie si toutes les colonnes sont valides.
-     *
-     * @return true si toutes les colonnes ont une valeur, false sinon
-     */
-    public boolean isValid() {
-        if (rows == null) {
-            return false;
+    private void updateCountLabel() {
+        int count = rows.size();
+        countLabel.setText(count + (count > 1 ? " columns" : " column"));
+    }
+
+    private void refreshRows() {
+        columnsContainer.removeAll();
+        for (ColumnOrFormulaRow row : rows) {
+            columnsContainer.add(createRowWrapper(row));
         }
+        columnsContainer.revalidate();
+        columnsContainer.repaint();
+    }
+
+    public boolean hasCompleteSelection() {
         for (ColumnOrFormulaRow row : rows) {
             if (!row.hasValue()) {
                 return false;
@@ -242,18 +235,22 @@ public class ColumnsEditorPanel extends JPanel {
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        if (rows != null) {
-            for (ColumnOrFormulaRow row : rows) {
-                row.setEnabled(enabled);
-            }
+        for (ColumnOrFormulaRow row : rows) {
+            row.setEnabled(enabled);
         }
-        addButton.setEnabled(enabled);
     }
 
-    /**
-     * Récupère le nombre de colonnes.
-     */
     public int getColumnCount() {
-        return rows != null ? rows.size() : 0;
+        return rows.size();
+    }
+
+    public void clearAllColumns() {
+        columnsContainer.removeAll();
+        rows.clear();
+        rowCounter = 0;
+        addColumnRow(null);
+        columnsContainer.revalidate();
+        columnsContainer.repaint();
+        notifyChange();
     }
 }

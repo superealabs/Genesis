@@ -4,6 +4,7 @@ public enum QueryRole {
     DIMENSION,
     MEASURE,
     VALUE,
+    COLUMNS,
     LIMIT,
     SORT,
     FILTER,

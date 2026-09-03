@@ -180,8 +180,14 @@ public class VisualizationParameter {
                 key,
                 label,
                 VisualizationParameterType.COLUMNS,
-                required
+                null,
+                required,
+                QueryRole.COLUMNS
         );
+    }
+
+    public boolean isColumns() {
+        return role == QueryRole.COLUMNS;
     }
 
     public static VisualizationParameter condition(

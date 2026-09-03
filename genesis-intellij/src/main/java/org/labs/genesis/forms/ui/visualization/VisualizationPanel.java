@@ -419,14 +419,16 @@ public class VisualizationPanel extends JPanel {
         return card;
     }
 
-    // MODIFICATION: Ajout du paramètre targetComponent
     private void showConfiguration(VisualizationItem item, DashboardVisualComponent targetComponent) {
+        // Supprimer l'ancien panel de configuration s'il existe
         if (configurationPanel != null) {
             contentPanel.remove(configurationPanel);
+            configurationPanel = null;
         }
 
+        // Créer un nouveau panel de configuration
         configurationPanel = new VisualizationConfigurationPanel(
-                targetComponent,  // MODIFICATION: Utiliser le targetComponent passé en paramètre
+                targetComponent,
                 item,
                 this::showVisualizations,
                 null
