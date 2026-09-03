@@ -1,19 +1,16 @@
 package org.labs.genesis.forms.renderer.metric;
 
 import org.labs.genesis.forms.renderer.VisualizationRenderer;
+import org.labs.genesis.forms.renderer.provider.ChartData;
 import org.labs.genesis.forms.theme.DashboardTheme;
+import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Renderer pour une visualisation KPI.
- *
- * Le titre est géré par DashboardVisualComponent.
- * Ce renderer affiche uniquement la valeur et éventuellement
- * une information complémentaire.
- */
 public class KpiRenderer implements VisualizationRenderer {
+
+    private JLabel valueLabel;
 
     @Override
     public JComponent createComponent() {
@@ -31,30 +28,21 @@ public class KpiRenderer implements VisualizationRenderer {
                 )
         );
 
-        /*
-         * Valeur principale.
-         */
-        JLabel valueLabel =
-                new JLabel("27 351 €");
+        valueLabel = new JLabel("—");
 
         valueLabel.setFont(
                 DashboardTheme.boldFont(26)
         );
 
-        valueLabel.setForeground(DashboardTheme.TEXT_DARK_SECONDARY);
+        valueLabel.setForeground(
+                DashboardTheme.TEXT_DARK_SECONDARY
+        );
 
-        /*
-         * Permet au texte de rester correctement positionné
-         * lorsque le composant est redimensionné.
-         */
         valueLabel.setHorizontalAlignment(
                 SwingConstants.LEFT
         );
-        /*
-         * Conteneur vertical.
-         */
-        JPanel content =
-                new JPanel();
+
+        JPanel content = new JPanel();
 
         content.setOpaque(false);
 
@@ -73,6 +61,52 @@ public class KpiRenderer implements VisualizationRenderer {
         );
 
         return panel;
+    }
+
+    @Override
+    public void updateConfig(VisualizationConfig config) {
+
+        if (valueLabel == null) {
+            return;
+        }
+
+        Object dataObject =
+                config.getValue(ChartData.CONFIG_KEY);
+
+        if (!(dataObject instanceof ChartData)) {
+            valueLabel.setText("—");
+            return;
+        }
+
+        ChartData data = (ChartData) dataObject;
+
+        double[] values = data.values();
+
+        if (values == null || values.length == 0) {
+            valueLabel.setText("—");
+            return;
+        }
+
+        double value = values[0];
+
+        valueLabel.setText(
+                formatValue(value)
+        );
+    }
+
+    private String formatValue(double value) {
+
+        if (value == Math.rint(value)) {
+            return String.format(
+                    "%,.0f",
+                    value
+            );
+        }
+
+        return String.format(
+                "%,.2f",
+                value
+        );
     }
 
     @Override
