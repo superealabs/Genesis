@@ -102,7 +102,7 @@ public class VisualizationPanel extends JPanel {
                         VerticalBarChartRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.dimension("xAxis", "X Axis", true),
+                                VisualizationParameter.dimensionOrFormula("xAxis", "X Axis", true),
                                 VisualizationParameter.measureOrFormula("yAxis", "Y Axis", true),
                                 VisualizationParameter.text("legendX", "Legend X", false),
                                 VisualizationParameter.text("legendY", "Legend Y", false),
