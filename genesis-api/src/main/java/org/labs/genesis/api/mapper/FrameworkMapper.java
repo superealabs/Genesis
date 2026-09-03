@@ -1,6 +1,6 @@
 package org.labs.genesis.api.mapper;
 
-import org.labs.genesis.api.dto.framework.FrameworkResponse;
+import org.labs.genesis.api.dto.FrameworkDtos.FrameworkResponse;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkMVC;
 

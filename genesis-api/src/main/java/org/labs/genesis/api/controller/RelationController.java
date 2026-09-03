@@ -1,9 +1,9 @@
 package org.labs.genesis.api.controller;
 
-import org.labs.genesis.api.dto.metadata.TableMetadataResponse;
-import org.labs.genesis.api.dto.relation.RelationResponse;
-import org.labs.genesis.api.dto.relation.RelationUpdateRequest;
-import org.labs.genesis.api.dto.relation.RelationUpdateResponse;
+import org.labs.genesis.api.dto.MetadataDtos.TableMetadataResponse;
+import org.labs.genesis.api.dto.RelationDtos.RelationResponse;
+import org.labs.genesis.api.dto.RelationDtos.RelationUpdateRequest;
+import org.labs.genesis.api.dto.RelationDtos.RelationUpdateResponse;
 import org.labs.genesis.api.service.RelationService;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,7 +26,7 @@ public class RelationController {
 
     @GetMapping("/tables_metadata/childs")
     public List<TableMetadataResponse> getChilds() {
-        return relationService.getChilds();
+        return relationService.getChildren();
     }
 
     @GetMapping("/relations")

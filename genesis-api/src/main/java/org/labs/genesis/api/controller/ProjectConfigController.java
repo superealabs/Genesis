@@ -1,8 +1,8 @@
 package org.labs.genesis.api.controller;
 
-import org.labs.genesis.api.dto.project.ProjectConfigOptionsResponse;
-import org.labs.genesis.api.dto.project.ProjectConfigRequest;
-import org.labs.genesis.api.dto.project.ProjectConfigResponse;
+import org.labs.genesis.api.dto.ProjectDtos.ProjectConfigOptionsResponse;
+import org.labs.genesis.api.dto.ProjectDtos.ProjectConfigRequest;
+import org.labs.genesis.api.dto.ProjectDtos.ProjectConfigResponse;
 import org.labs.genesis.api.service.ProjectConfigService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;

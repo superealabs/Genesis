@@ -1,7 +1,7 @@
 package org.labs.genesis.api.controller;
 
-import org.labs.genesis.api.dto.metadata.TableSelectionRequest;
-import org.labs.genesis.api.dto.metadata.TableSelectionResponse;
+import org.labs.genesis.api.dto.MetadataDtos.TableSelectionRequest;
+import org.labs.genesis.api.dto.MetadataDtos.TableSelectionResponse;
 import org.labs.genesis.api.service.TableSelectionService;
 import org.springframework.web.bind.annotation.*;
 

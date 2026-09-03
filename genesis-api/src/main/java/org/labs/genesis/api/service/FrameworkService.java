@@ -1,8 +1,8 @@
 package org.labs.genesis.api.service;
 
 import org.labs.genesis.api.context.GenerationContextStore;
-import org.labs.genesis.api.dto.framework.FrameworkResponse;
-import org.labs.genesis.api.dto.framework.FrameworkSelectionResponse;
+import org.labs.genesis.api.dto.FrameworkDtos.FrameworkResponse;
+import org.labs.genesis.api.dto.FrameworkDtos.FrameworkSelectionResponse;
 import org.labs.genesis.api.exception.FrameworkNotFoundException;
 import org.labs.genesis.api.mapper.FrameworkMapper;
 import org.labs.genesis.config.langage.Framework;

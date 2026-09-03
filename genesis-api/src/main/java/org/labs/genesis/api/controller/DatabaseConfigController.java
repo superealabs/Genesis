@@ -1,8 +1,8 @@
 package org.labs.genesis.api.controller;
 
-import org.labs.genesis.api.dto.database.DatabaseConfigRequest;
-import org.labs.genesis.api.dto.database.DatabaseConfigResponse;
-import org.labs.genesis.api.dto.database.DatabaseResponse;
+import org.labs.genesis.api.dto.DatabaseDtos.DatabaseConfigRequest;
+import org.labs.genesis.api.dto.DatabaseDtos.DatabaseConfigResponse;
+import org.labs.genesis.api.dto.DatabaseDtos.DatabaseResponse;
 import org.labs.genesis.api.service.DatabaseConfigService;
 import org.springframework.web.bind.annotation.*;
 

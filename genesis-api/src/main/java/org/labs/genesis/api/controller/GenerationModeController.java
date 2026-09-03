@@ -1,8 +1,8 @@
 package org.labs.genesis.api.controller;
 
-import org.labs.genesis.api.dto.generation.GenerationModeResponse;
-import org.labs.genesis.api.dto.generation.GenerationModeSelectionRequest;
-import org.labs.genesis.api.dto.generation.GenerationModeSelectionResponse;
+import org.labs.genesis.api.dto.GenerationDtos.GenerationModeResponse;
+import org.labs.genesis.api.dto.GenerationDtos.GenerationModeSelectionRequest;
+import org.labs.genesis.api.dto.GenerationDtos.GenerationModeSelectionResponse;
 import org.labs.genesis.api.service.GenerationModeService;
 import org.springframework.web.bind.annotation.*;
 

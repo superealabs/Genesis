@@ -1,9 +1,9 @@
 package org.labs.genesis.api.service;
 
 import org.labs.genesis.api.context.GenerationContextStore;
-import org.labs.genesis.api.dto.project.ProjectConfigOptionsResponse;
-import org.labs.genesis.api.dto.project.ProjectConfigRequest;
-import org.labs.genesis.api.dto.project.ProjectConfigResponse;
+import org.labs.genesis.api.dto.ProjectDtos.ProjectConfigOptionsResponse;
+import org.labs.genesis.api.dto.ProjectDtos.ProjectConfigRequest;
+import org.labs.genesis.api.dto.ProjectDtos.ProjectConfigResponse;
 import org.labs.genesis.api.exception.ProjectConfigException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.ConfigurationMetadata;

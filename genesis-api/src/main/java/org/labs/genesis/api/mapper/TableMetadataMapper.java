@@ -1,6 +1,6 @@
 package org.labs.genesis.api.mapper;
 
-import org.labs.genesis.api.dto.metadata.TableMetadataResponse;
+import org.labs.genesis.api.dto.MetadataDtos.TableMetadataResponse;
 import org.labs.genesis.connexion.model.TableMetadata;
 
 public final class TableMetadataMapper {

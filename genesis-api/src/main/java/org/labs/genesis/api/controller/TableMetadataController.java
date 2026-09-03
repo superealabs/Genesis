@@ -1,6 +1,6 @@
 package org.labs.genesis.api.controller;
 
-import org.labs.genesis.api.dto.metadata.TablesMetadataResponse;
+import org.labs.genesis.api.dto.MetadataDtos.TablesMetadataResponse;
 import org.labs.genesis.api.service.TableMetadataService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -1,8 +1,8 @@
 package org.labs.genesis.api.service;
 
 import org.labs.genesis.api.context.GenerationContextStore;
-import org.labs.genesis.api.dto.metadata.TableSelectionRequest;
-import org.labs.genesis.api.dto.metadata.TableSelectionResponse;
+import org.labs.genesis.api.dto.MetadataDtos.TableSelectionRequest;
+import org.labs.genesis.api.dto.MetadataDtos.TableSelectionResponse;
 import org.labs.genesis.api.exception.TableSelectionException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.springframework.stereotype.Service;
@@ -37,6 +37,7 @@ public class TableSelectionService {
         context.setGenerationOptions(generationOptions);
         try {
             context.setTables();
+            context.autoDetectRelationParameters();
         } catch (RuntimeException exception) {
             throw new TableSelectionException("Impossible de charger les tables et vues sélectionnées : " + rootMessage(exception));
         }

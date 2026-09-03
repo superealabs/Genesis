@@ -1,8 +1,8 @@
 package org.labs.genesis.api.service;
 
 import org.labs.genesis.api.context.GenerationContextStore;
-import org.labs.genesis.api.dto.metadata.TableMetadataResponse;
-import org.labs.genesis.api.dto.metadata.TablesMetadataResponse;
+import org.labs.genesis.api.dto.MetadataDtos.TableMetadataResponse;
+import org.labs.genesis.api.dto.MetadataDtos.TablesMetadataResponse;
 import org.labs.genesis.api.exception.MetadataException;
 import org.labs.genesis.api.mapper.TableMetadataMapper;
 import org.labs.genesis.config.ProjectGenerationContext;

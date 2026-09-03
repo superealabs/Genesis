@@ -1,6 +1,6 @@
 package org.labs.genesis.api.mapper;
 
-import org.labs.genesis.api.dto.relation.RelationResponse;
+import org.labs.genesis.api.dto.RelationDtos.RelationResponse;
 import org.labs.genesis.connexion.model.RelationParameter;
 
 public final class RelationMapper {

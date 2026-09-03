@@ -1,9 +1,9 @@
 package org.labs.genesis.api.service;
 
 import org.labs.genesis.api.context.GenerationContextStore;
-import org.labs.genesis.api.dto.database.DatabaseConfigRequest;
-import org.labs.genesis.api.dto.database.DatabaseConfigResponse;
-import org.labs.genesis.api.dto.database.DatabaseResponse;
+import org.labs.genesis.api.dto.DatabaseDtos.DatabaseConfigRequest;
+import org.labs.genesis.api.dto.DatabaseDtos.DatabaseConfigResponse;
+import org.labs.genesis.api.dto.DatabaseDtos.DatabaseResponse;
 import org.labs.genesis.api.exception.DatabaseConfigException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.connexion.Credentials;

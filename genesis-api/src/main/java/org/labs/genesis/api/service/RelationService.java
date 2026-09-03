@@ -1,10 +1,10 @@
 package org.labs.genesis.api.service;
 
 import org.labs.genesis.api.context.GenerationContextStore;
-import org.labs.genesis.api.dto.metadata.TableMetadataResponse;
-import org.labs.genesis.api.dto.relation.RelationResponse;
-import org.labs.genesis.api.dto.relation.RelationUpdateRequest;
-import org.labs.genesis.api.dto.relation.RelationUpdateResponse;
+import org.labs.genesis.api.dto.MetadataDtos.TableMetadataResponse;
+import org.labs.genesis.api.dto.RelationDtos.RelationResponse;
+import org.labs.genesis.api.dto.RelationDtos.RelationUpdateRequest;
+import org.labs.genesis.api.dto.RelationDtos.RelationUpdateResponse;
 import org.labs.genesis.api.exception.RelationException;
 import org.labs.genesis.api.mapper.RelationMapper;
 import org.labs.genesis.api.mapper.TableMetadataMapper;
@@ -28,31 +28,30 @@ public class RelationService {
         this.generationContextStore = generationContextStore;
     }
 
-    public List<TableMetadataResponse> getParents() {
+    private List<TableMetadataResponse> getTablesByRelationType(String relationType) {
         ProjectGenerationContext context = requireSelectedTables();
         Dictionary<String, List<TableMetadata>> splitTables = context.splitTableByRelations();
-        List<TableMetadata> parents = splitTables.get(PARENTS);
-        if (parents == null) {
+        List<TableMetadata> tables = splitTables.get(relationType);
+        if (tables == null) {
             return List.of();
         }
-        return parents.stream().map(TableMetadataMapper::toResponse).toList();
+        return tables.stream()
+                .map(TableMetadataMapper::toResponse)
+                .toList();
     }
 
-    public List<TableMetadataResponse> getChilds() {
-        ProjectGenerationContext context = requireSelectedTables();
-        Dictionary<String, List<TableMetadata>> splitTables = context.splitTableByRelations();
-        List<TableMetadata> childs = splitTables.get(CHILDS);
+    public List<TableMetadataResponse> getParents() {
+        return getTablesByRelationType(PARENTS);
+    }
 
-        if (childs == null) {
-            return List.of();
-        }
-        return childs.stream().map(TableMetadataMapper::toResponse).toList();
+    public List<TableMetadataResponse> getChildren() {
+        return getTablesByRelationType(CHILDS);
     }
 
     public List<RelationResponse> getRelations() {
         ProjectGenerationContext context = requireSelectedTables();
         if (context.getRelationParameters() == null) {
-            context.autoDetectRelationParameters();
+            return List.of();
         }
         return context.autoDetectRelationParameters()
                 .stream()

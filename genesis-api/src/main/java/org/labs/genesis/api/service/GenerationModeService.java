@@ -2,9 +2,9 @@ package org.labs.genesis.api.service;
 
 import org.labs.genesis.api.context.GenerationContextStore;
 import org.labs.genesis.api.context.GenerationMode;
-import org.labs.genesis.api.dto.generation.GenerationModeResponse;
-import org.labs.genesis.api.dto.generation.GenerationModeSelectionRequest;
-import org.labs.genesis.api.dto.generation.GenerationModeSelectionResponse;
+import org.labs.genesis.api.dto.GenerationDtos.GenerationModeResponse;
+import org.labs.genesis.api.dto.GenerationDtos.GenerationModeSelectionRequest;
+import org.labs.genesis.api.dto.GenerationDtos.GenerationModeSelectionResponse;
 import org.labs.genesis.api.exception.GenerationModeException;
 import org.springframework.stereotype.Service;
 
