@@ -2,15 +2,14 @@ import * as net from 'net';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { spawn, ChildProcess } from 'child_process';
+import { createAxiosInstance } from './http/genesisAxiosInstance';
 
 export class GenesisApiService {
-
     private process: ChildProcess | null = null;
     private port: number | null = null;
     private startupError: string | null = null;
     private ready: boolean = false;
 
-    // ═══ Démarrage ═══
     async start(context: vscode.ExtensionContext): Promise<void> {
         try {
             this.port = await this.findFreePort();
@@ -23,40 +22,41 @@ export class GenesisApiService {
             ]);
 
             this.process.stderr?.on('data', (data) => {
-                console.error('[Genesis API]', data.toString());
+                console.error('[Genesis API STDERR]', data.toString());
             });
 
             this.process.on('exit', (code) => {
                 console.log(`[Genesis API] Processus terminé (code ${code})`);
                 this.process = null;
                 this.port = null;
+                this.ready = false;
             });
 
             await this.waitForApi();
+            
+            // ✅ Initialisation d'Axios pour les futures features (ex: Frameworks)
+            createAxiosInstance(this.port!);
             this.ready = true;
+
         } catch (err) {
             this.startupError = err instanceof Error ? err.message : 'Erreur inconnue';
             throw err;
         }
     }
 
-    getStatus(): { ready: boolean; error: string | null } {
-        return {
-            ready: this.ready,
-            error: this.startupError
-        };
-    }
-
-    // ═══ Arrêt ═══
     stop(): void {
         if (this.process) {
             this.process.kill();
             this.process = null;
             this.port = null;
+            this.ready = false;
         }
     }
 
-    // ═══ Getters ═══
+    getStatus(): { ready: boolean; error: string | null } {
+        return { ready: this.ready, error: this.startupError };
+    }
+
     getPort(): number | null {
         return this.port;
     }
@@ -65,7 +65,7 @@ export class GenesisApiService {
         return this.process !== null;
     }
 
-    // ═══ Appels API ═══
+    // ═══ Appels API (Conservé comme à l'origine) ═══
     async generateJavaFile(className: string, destinationPath: string): Promise<{ success: string; message: string }> {
         if (!this.port) {
             return { success: 'false', message: 'Genesis API non démarrée' };
@@ -93,23 +93,15 @@ export class GenesisApiService {
     private waitForApi(retries = 20): Promise<void> {
         return new Promise((resolve, reject) => {
             let attempts = 0;
-
             const check = () => {
-                const socket = net.createConnection(this.port!, '127.0.0.1');
-                socket.on('connect', () => {
-                    socket.destroy();
-                    resolve();
-                });
+                if (!this.port) return reject(new Error('Port non défini'));
+                const socket = net.createConnection(this.port, '127.0.0.1');
+                socket.on('connect', () => { socket.destroy(); resolve(); });
                 socket.on('error', () => {
-                    attempts++;
-                    if (attempts >= retries) {
-                        reject(new Error('Genesis API non disponible'));
-                    } else {
-                        setTimeout(check, 500);
-                    }
+                    if (++attempts >= retries) reject(new Error('Genesis API non disponible'));
+                    else setTimeout(check, 500);
                 });
             };
-
             check();
         });
     }

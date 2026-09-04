@@ -34,7 +34,7 @@
   - Template Engine (viewTemplateEngine) ← MVC uniquement
   - View Extension (viewExtension) ← MVC uniquement
 
-* Panneau détail (apparaît à droite au clic) :
+* Panneau détail (apparaît d'en bas au clic) :
   Commun :
   - Nom
   - Core Framework
@@ -50,3 +50,37 @@
   - View Extension
 
   la mascoot se pose sur l'élément sléctionnée
+
+# step 3
+configuration du Projet :
+  - nom
+  - localisation du projet
+
+configuration du framework :
+  - version du language
+  - build tool
+  - groupe ID(s'affiche selon le framework choisit)
+  - Framework Version
+
+# step 4
+connexion à la base de donnée
+
+# step 5
+import your own data script
+use LLM to edit it
+
+# step 6
+table, Views & component selection
+preview mode
+
+# step 7
+configuration relation
+
+# step 8
+frontEnd selection(can be ignored)
+
+# step 9
+Git initializer
+
+# step 10
+configuration Project Backend

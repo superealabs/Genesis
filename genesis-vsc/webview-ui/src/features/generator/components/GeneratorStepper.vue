@@ -6,7 +6,7 @@
         size="full"
         @close="handleClose"
         @previous="goToPreviousStep"
-        @next="goToNextStep"
+        @next="handleNextStep" 
     >
         <!-- Étape 1 : Choix du framework -->
         <FrameworksView
@@ -15,101 +15,80 @@
             @select="handleFrameworkSelect"
         />
 
-        <!-- Étape 2 : Configuration du projet (à venir) -->
-        <div v-else-if="currentStep === 2" class="p-8 text-center text-text-muted">
-            <p>Étape 2 : Configuration du projet (à venir)</p>
-        </div>
+        <!-- Étape 2 : Configuration du projet -->
+        <ProjectConfigView v-else-if="currentStep === 2" />
 
-        <!-- Étape 3 : Validation (à venir) -->
-        <div v-else-if="currentStep === 3" class="p-8 text-center text-text-muted">
-            <p>Étape 3 : Validation (à venir)</p>
-        </div>
+        <!-- Étape 3 : Configuration de la base de données -->
+        <DatabaseConfigView v-else-if="currentStep === 3" />
+
+        <!-- Étape 4 : Configuration du Script -->
+        <ScriptConfigView v-else-if="currentStep === 4" />
+
+        <!-- Étape 5 : Sélection des tables et composants -->
+        <TableSelectionView v-else-if="currentStep === 5" />
+
+        <!-- Étape 6 : Gestion des relations mère-fille -->        
+        <RelationConfigView v-else-if="currentStep === 6" />
+
+        <!-- Étape 7 : Sélection du Framework frontEnd -->
+        <FrontEndSelectionView 
+            v-else-if="currentStep === 7" 
+            @select="handleFrontendSelect"
+            :showBackButton="false" 
+        />
+
+        <!-- ✅ Étape 8 : Configuration du layout frontEnd -->   
+        <FrontendLayoutConfigView v-else-if="currentStep === 8" />
+
+        <GitConfigView v-else-if="currentStep === 9" />
+
+        
     </StepperPopup>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import StepperPopup from '@/core/components/layouts/Popup/StepperPopup.vue';
 import FrameworksView from '@/features/frameworks/views/FrameworksView.vue';
-import type { Framework } from '@/features/frameworks/types/framework.types';
+import ProjectConfigView from './steps/ProjectConfigView.vue';
+import DatabaseConfigView from './steps/DatabaseConfigView.vue';
+import ScriptConfigView from './steps/ScriptConfigView.vue';
+import TableSelectionView from './steps/TableSelectionView.vue';
+import RelationConfigView from './steps/RelationConfigView.vue';
+import FrontEndSelectionView from '@/features/frontend/views/FrontEndSelectionView.vue';
+import FrontendLayoutConfigView from './steps/FrontendLayoutConfigView.vue';
+import GitConfigView from './steps/GitConfigView.vue';
+
+import { useGenerator } from '../composables/useGenerator';
+import type { FrontendFramework } from '../types/generator.types';
 
 const emit = defineEmits<{
     close: [];
-    complete: [data: {
-        framework: Framework;
-        // Ajoute d'autres données d'étapes ici
-    }];
+    complete: [data: any];
 }>();
 
-// État du stepper
-const currentStep = ref(1);
-const totalSteps = 3;
-
-// Données collectées à chaque étape
-const stepperData = ref({
-    framework: null as Framework | null,
-    // Ajoute d'autres données ici
-});
-
-// ═══ Navigation ═══
-
-function goToPreviousStep() {
-    if (currentStep.value > 1) {
-        currentStep.value--;
-    }
-}
-
-function goToNextStep() {
-    // Validation de l'étape actuelle
-    if (!validateCurrentStep()) {
-        return;
-    }
-
-    if (currentStep.value < totalSteps) {
-        currentStep.value++;
-    } else {
-        // Dernière étape : compléter
-        handleComplete();
-    }
-}
-
-function validateCurrentStep(): boolean {
-    switch (currentStep.value) {
-        case 1:
-            // L'étape 1 nécessite un framework sélectionné
-            if (!stepperData.value.framework) {
-                alert('Veuillez sélectionner un framework');
-                return false;
-            }
-            return true;
-        
-        case 2:
-            // Validation étape 2 (à définir)
-            return true;
-        
-        case 3:
-            // Validation étape 3 (à définir)
-            return true;
-        
-        default:
-            return true;
-    }
-}
-
-// ═══ Handlers d'étapes ═══
-
-function handleFrameworkSelect(framework: Framework) {
-    stepperData.value.framework = framework;
-}
-
-function handleComplete() {
-    emit('complete', {
-        framework: stepperData.value.framework!,
-        // Ajoute d'autres données collectées
-    });
-}
+const { 
+    currentStep, 
+    totalSteps,
+    goToPreviousStep,
+    goToNextStep,
+    handleFrameworkSelect,
+    setSelectedFrontendFramework
+} = useGenerator();
 
 function handleClose() {
     emit('close');
+}
+
+// ✅ On intercepte le clic sur "Next" pour émettre 'complete' si c'est la dernière étape
+function handleNextStep() {
+    const finalData = goToNextStep();
+    if (finalData) {
+        // Si goToNextStep retourne des données, c'est qu'on est à la dernière étape
+        emit('complete', finalData);
+    }
+}
+
+function handleFrontendSelect(framework: FrontendFramework) {
+    setSelectedFrontendFramework(framework);
 }
 </script>

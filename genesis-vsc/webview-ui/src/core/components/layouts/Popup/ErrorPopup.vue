@@ -1,5 +1,5 @@
 <template>
-    <BasePopup :title="title" :size="size" @close="$emit('close')">
+    <BaseFormPopup :title="title" :size="size" :position="position" @close="$emit('close')">
         <div class="flex flex-col justify-center items-center gap-4 py-4 h-full flex-1">
             <GenesisError
                 :message="message"
@@ -7,21 +7,24 @@
                 :showStackTrace="showStackTrace"
             />
         </div>
-    </BasePopup>
+    </BaseFormPopup>
 </template>
 
 <script setup lang="ts">
-import BasePopup from '@/core/components/layouts/Popup/BasePopup.vue';
+import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
 import GenesisError from '@/core/components/ui/feedback/GenesisError.vue';
+import type { PopupPosition, PopupSize } from './popup.types';
 
 withDefaults(defineProps<{
     title?: string;
     message: string;
     stackTrace?: string;
     showStackTrace?: boolean;
-    size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full';
+    size?: PopupSize;
+    position?: PopupPosition;
 }>(), {
-    size: 'md'
+    size: 'md',
+    position: 'center'
 });
 
 defineEmits<{

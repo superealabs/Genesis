@@ -8,6 +8,7 @@ import ColorShowcase from '@/features/designSystem/components/ColorShowcase.vue'
 import ErrorShowcase from '@/features/designSystem/components/ErrorShowcase.vue';
 import ProgressShowcase from '@/features/designSystem/components/ProgressShowcase.vue';
 import FrameworksView from '@/features/frameworks/views/FrameworksView.vue';
+import FrontEndSelectionView from '@/features/frontend/views/FrontEndSelectionView.vue';
 
 export const router = createRouter({
     history: createWebHashHistory(),
@@ -56,6 +57,11 @@ export const router = createRouter({
             path: '/frameworks',
             name: 'frameworks',
             component: FrameworksView
-        }
+        },
+        {
+            path: '/frontend',
+            name: 'frontend',
+            component: FrontEndSelectionView
+        },
     ]
 });

@@ -1,119 +1,124 @@
-<!-- webview-ui/src/features/frameworks/views/FrameworksView.vue -->
 <template>
     <GenesisCollectionLayout
         title="Frameworks"
-        v-model:searchValue="search"
+        v-model:searchValue="searchQuery"
         v-model:displayMode="displayMode"
+        :mode="compareMode"
         searchPlaceholder="Rechercher par nom, core, type..."
         :showBackButton="showBackButton"
         @back="handleBack"
         @openFilter="openFilter"
+        @update:mode="handleModeChange"
+        @update:searchValue="setSearch"
+        @update:displayMode="toggleDisplayMode"
     >
         <template #filter>
-            <FrameworkFilter v-model:filters="filters" />
+            <FrameworkFilter v-model:filters="filters" @update:filters="setFilters" />
         </template>
 
-        <FrameworkGrid
-            v-if="displayMode === 'grid'"
-            :frameworks="filtered"
-            :selectedId="selectedFramework?.id"
-            @select="handleSelect"
-        />
-
         <FrameworkList
-            v-else
-            :frameworks="filtered"
-            :selectedId="selectedFramework?.id"
-            @select="handleSelect"
+            :frameworks="frameworks"
+            :selectedId="selectedId"
+            :display="displayMode"
+            :frameworkSlots="frameworkSlots"
+            @select="handleSelectWrapper"
+            @info="detailFramework = $event"
         />
     </GenesisCollectionLayout>
+
+    <!-- Popup de remplacement -->
+    <SimpleSelectionPopup
+        :show="showReplacePopup"
+        :mouseX="mouseX"
+        :mouseY="mouseY"
+        :options="replaceOptions"
+        position="bottom-right"
+        @select="handleReplaceSelection"
+        @close="cancelReplace"
+    />
+
+    <!-- Panneau de détails -->
+    <FrameworkDetail
+        v-if="detailFramework"
+        :framework="detailFramework"
+        @close="detailFramework = null"
+    />
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useFrameworks } from '@/features/frameworks/composables/useFrameworks';
-import FrameworkGrid from '@/features/frameworks/components/FrameworkGrid.vue';
 import FrameworkList from '@/features/frameworks/components/FrameworkList.vue';
 import FrameworkFilter from '@/features/frameworks/components/FrameworkFilter.vue';
 import GenesisCollectionLayout from '@/core/components/layouts/GenesisCollectionLayout.vue';
+import SimpleSelectionPopup from '@/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+import type { SelectionOption } from '@/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+import FrameworkDetail from '../components/FrameworkDetail.vue';
 import type { Framework } from '../types/framework.types';
 
-interface FrameworkFilters {
-    language?: string;
-    type?: 'MVC' | 'REST API';
-    coreFramework?: string;
-    isProd?: boolean;
-    useDB?: boolean;
-    useCloud?: boolean;
-    useEurekaServer?: boolean;
-    isGateway?: boolean;
-    useFrontendApp?: boolean;
-    viewTemplateEngine?: string;
-    viewExtension?: string;
-}
-
-// Nouveaux props pour contrôler le comportement
 const props = withDefaults(defineProps<{
     showBackButton?: boolean;
-    autoSelect?: boolean; // Si true, sélectionne et émet immédiatement
 }>(), {
-    showBackButton: true,
-    autoSelect: false
+    showBackButton: true
 });
 
-const emit = defineEmits<{
-    'select': [framework: Framework];
-    'back': [];
+const emit = defineEmits<{ 
+    'back': [],
+    'select': [framework: Framework]; 
 }>();
 
-const { list, displayMode } = useFrameworks();
-const selectedFramework = ref<Framework | null>(null);
-const search = ref('');
-const filters = ref<FrameworkFilters>({});
+// ═══ Injection du composable (seule source de vérité) ═══
+const { 
+    frameworks, selectedId, displayMode, compareMode, frameworkSlots, filters, searchQuery,
+    setSearch, setFilters, toggleDisplayMode, handleModeChange,
+    handleSelect, handleReplace, compare,
+    initialize
+} = useFrameworks();
 
-const filtered = computed(() => {
-    let result = list.value;
+// ═══ État local UI (uniquement pour la gestion du popup) ═══
+const detailFramework = ref<Framework | null>(null);
+const showReplacePopup = ref(false);
+const pendingFramework = ref<Framework | null>(null);
+const mouseX = ref<number | null>(null);
+const mouseY = ref<number | null>(null);
 
-    if (search.value.trim()) {
-        const q = search.value.toLowerCase();
-        result = result.filter(f =>
-            f.name.toLowerCase().includes(q) ||
-            f.coreFramework.toLowerCase().includes(q) ||
-            f.type.toLowerCase().includes(q)
-        );
-    }
-
-    if (filters.value.type) {
-        result = result.filter(f => f.type === filters.value.type);
-    }
-    if (filters.value.coreFramework) {
-        result = result.filter(f => f.coreFramework === filters.value.coreFramework);
-    }
-    if (filters.value.isProd) {
-        result = result.filter(f => f.isProd);
-    }
-    if (filters.value.useDB) {
-        result = result.filter(f => f.useDB);
-    }
-    if (filters.value.useCloud) {
-        result = result.filter(f => f.useCloud);
-    }
-    if (filters.value.useEurekaServer) {
-        result = result.filter(f => f.useEurekaServer);
-    }
-    if (filters.value.isGateway) {
-        result = result.filter(f => f.isGateway);
-    }
-    if (filters.value.useFrontendApp) {
-        result = result.filter(f => f.useFrontendApp);
-    }
-
-    return result;
+const replaceOptions = computed<SelectionOption[]>(() => {
+    return Object.entries(compare.slots.value)
+        .filter(([, framework]) => framework !== null)
+        .map(([slot, framework]) => ({
+            id: slot,
+            label: `Slot ${slot}`,
+            description: (framework as Framework).name
+        }));
 });
 
-function handleSelect(framework: Framework) {
-    selectedFramework.value = framework;
-    emit('select', framework);
+// ═══ Handlers ═══
+function handleSelectWrapper(framework: Framework, event?: MouseEvent) {
+    const result = handleSelect(framework, event);
+    
+    if (result.action === 'replace-needed') {
+        pendingFramework.value = result.framework;
+        mouseX.value = result.event ? result.event.clientX : window.innerWidth / 2;
+        mouseY.value = result.event ? result.event.clientY : window.innerHeight / 2;
+        showReplacePopup.value = true;
+    } else {
+        // AJOUT CRUCIAL : Émettre l'événement pour que GeneratorStepper puisse le sauvegarder
+        emit('select', framework);
+    }
+}
+
+function handleReplaceSelection(slotId: string | number) {
+    if (pendingFramework.value) {
+        handleReplace(slotId, pendingFramework.value);
+    }
+    cancelReplace();
+}
+
+function cancelReplace() {
+    showReplacePopup.value = false;
+    pendingFramework.value = null;
+    mouseX.value = null;
+    mouseY.value = null;
 }
 
 function handleBack() {
@@ -123,4 +128,9 @@ function handleBack() {
 function openFilter() {
     // Le dropdown gère lui-même l'ouverture
 }
+
+// Initialisation au montage
+onMounted(() => {
+    initialize();
+});
 </script>

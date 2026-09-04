@@ -1,13 +1,14 @@
 <template>
-    <BasePopup
+    <BaseFormPopup
         :title="title"
         :size="size"
         :isClosable="isClosable"
         :draggable="draggable"
         @close="$emit('close')"
+        :position="position"
     >
         <!-- Contenu de l'étape -->
-        <div class="flex-1">
+        <div class="flex-1 min-h-0 overflow-hidden">
             <slot />
         </div>
 
@@ -40,24 +41,27 @@
             </GenesisButton>
         </div>
 
-    </BasePopup>
+    </BaseFormPopup>
 </template>
 
 <script setup lang="ts">
-import BasePopup from '@/core/components/layouts/Popup/BasePopup.vue';
+import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
 import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
+import type { PopupSize, PopupPosition } from './popup.types';
 
 withDefaults(defineProps<{
     title?: string;
     currentStep: number;
     totalSteps: number;
-    size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full';
+    size?: PopupSize;
+    position?: PopupPosition;
     isClosable?: boolean;
     draggable?: boolean;
 }>(), {
     size: 'md',
     isClosable: true,
-    draggable: true
+    draggable: true,
+    position: 'center'
 });
 
 defineEmits<{

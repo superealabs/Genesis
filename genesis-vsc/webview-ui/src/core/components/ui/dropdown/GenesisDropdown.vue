@@ -1,248 +1,203 @@
 <template>
-    <div 
-        class="relative inline-block" 
-        ref="containerRef"
-        @mouseenter="handleMouseEnter"
-        @mouseleave="handleMouseLeave"
+  <Menu
+    v-slot="{ open, close }"
+    as="div"
+  >
+    <div
+      class="inline-flex flex-col gap-1"
+      @mouseenter="handleMouseEnter(open)"
+      @mouseleave="handleMouseLeave(open, close)"
     >
+      <!-- ═══ Label ═══ -->
+      <label
+        v-if="label"
+        class="text-sm font-medium text-muted"
+      >
+        {{ label }}<span v-if="isMandatory" class="text-accent ml-0.5">*</span>
+      </label>
 
-    <!-- Cas 1 : Slot trigger présent → GenesisButton avec texte + icônes -->
-    <template v-if="$slots.trigger">
-        <GenesisButton
+      <!-- ═══ Wrapper trigger + dropdown (le relative est ici) ═══ -->
+      <div class="relative inline-block">
+        <MenuButton as="template">
+
+          <GenesisButton
+            v-if="$slots.trigger"
+            ref="triggerRef"
             :variant="triggerVariant"
             :size="triggerSize"
-            :visibleBackground="triggerVisibleBackground"
             :disabled="triggerDisabled"
             :use-default-text="false"
-            @click="toggle"
-        >
+            :class="{ '!border !border-secondary': open }"
+          >
             <template v-if="$slots.triggerIcon" #leftIcon>
-                <slot name="triggerIcon" />
+              <slot name="triggerIcon" />
             </template>
-            
             <slot name="trigger" />
-            
             <template #rightIcon>
-                <IconChevronDown 
-                    v-if="!hideChevron"
-                    class="transition-transform duration-200"
-                    :class="{ 'rotate-180': isOpen }"
-                />
+              <IconChevronDown
+                v-if="!hideChevron"
+                class="transition-transform duration-200"
+                :class="{ 'rotate-180': open }"
+              />
             </template>
-        </GenesisButton>
-    </template>
+          </GenesisButton>
 
-    <!-- Cas 2 : Pas de texte mais chevron visible → GenesisButton avec icône + chevron -->
-    <template v-else-if="!hideChevron">
-        <GenesisButton
+          <GenesisButton
+            v-else-if="!hideChevron"
+            ref="triggerRef"
             :variant="triggerVariant"
             :size="triggerSize"
-            :visibleBackground="triggerVisibleBackground"
             :disabled="triggerDisabled"
             :use-default-text="false"
-            @click="toggle"
-        >
+            :class="{ '!border !border-secondary': open }"
+          >
             <template v-if="$slots.triggerIcon" #leftIcon>
-                <slot name="triggerIcon" />
+              <slot name="triggerIcon" />
             </template>
-            
             <template #rightIcon>
-                <IconChevronDown 
-                    class="transition-transform duration-200"
-                    :class="{ 'rotate-180': isOpen }"
-                />
+              <IconChevronDown
+                class="transition-transform duration-200"
+                :class="{ 'rotate-180': open }"
+              />
             </template>
-        </GenesisButton>
-    </template>
+          </GenesisButton>
 
-    <!-- Cas 3 : Pas de texte ET chevron masqué → GenesisButtonIcon (icône seule) -->
-    <template v-else>
-        <GenesisButtonIcon
+          <GenesisButtonIcon
+            v-else
+            ref="triggerRef"
             :variant="triggerVariant"
             :size="triggerSize"
-            :visibleBackground="triggerVisibleBackground"
             :disabled="triggerDisabled"
-            @click="toggle"
-        >
+            :class="{ '!border !border-secondary': open }"
+          >
             <slot name="triggerIcon" />
-        </GenesisButtonIcon>
-    </template>
+          </GenesisButtonIcon>
 
-        <!-- Liste -->
-        <GenesisDropdownList
-            v-if="isOpen"
-            :position="resolvedPosition"
-            :size="dropdownSize"
-            :style="dropdownStyle"
+        </MenuButton>
+
+        <transition
+          enter-active-class="transition duration-100 ease-out"
+          enter-from-class="transform scale-95 opacity-0"
+          enter-to-class="transform scale-100 opacity-100"
+          leave-active-class="transition duration-75 ease-in"
+          leave-from-class="transform scale-100 opacity-100"
+          leave-to-class="transform scale-95 opacity-0"
         >
-            <div @click="handleItemClick">
-                <slot />
-            </div>
-        </GenesisDropdownList>
-
+          <MenuItems
+            :class="menuItemsClasses"
+            :style="dropdownStyle"
+            class="focus:outline-none"
+          >
+            <slot />
+          </MenuItems>
+        </transition>
+      </div>
     </div>
+  </Menu>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, provide, nextTick } from 'vue';
-import GenesisDropdownList from '@/core/components/ui/dropdown/GenesisDropdownList.vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, type ComponentPublicInstance } from 'vue';
+import { Menu, MenuButton, MenuItems } from '@headlessui/vue';
 import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
 import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconChevronDown from '@/core/components/ui/icons/IconChevronDown.vue';
+import { MENU_SIZES, type MenuSize } from '@/core/config/ui.config';
 
 const props = withDefaults(defineProps<{
     position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
     align?: 'left' | 'right';
-    dropdownSize?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
-    closeOnSelect?: boolean;
-    openAtHover?: boolean;
+    dropdownSize?: MenuSize | '3xl';
     hideChevron?: boolean;
     matchTriggerWidth?: boolean;
-    triggerVariant?: 'primary' | 'secondary';
+    triggerVariant?: 'primary' | 'secondary' | 'tertiary';
     triggerSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-    triggerVisibleBackground?: boolean;
     triggerDisabled?: boolean;
+    openAtHover?: boolean;
+    label?: string;
+    isMandatory?: boolean;
 }>(), {
     align: 'right',
     dropdownSize: 'md',
-    closeOnSelect: true,
-    openAtHover: false,
     hideChevron: false,
     matchTriggerWidth: false,
     triggerVariant: 'secondary',
     triggerSize: 'md',
-    triggerVisibleBackground: true,
-    triggerDisabled: false
+    triggerDisabled: false,
+    openAtHover: false,
+    label: '',
+    isMandatory: false,
 });
 
-const emit = defineEmits<{
-    close: [];
-}>();
+const emit = defineEmits<{ close: [] }>();
 
-const isOpen = ref(false);
-const openedByHover = ref(false);
-const containerRef = ref<HTMLElement | null>(null);
+const triggerRef = ref<ComponentPublicInstance | HTMLElement | null>(null);
 const triggerWidth = ref<number | null>(null);
 let hoverTimeout: number | null = null;
 
 const resolvedPosition = computed(() => {
     if (props.position) return props.position;
-    if (!containerRef.value) return `bottom-${props.align}` as const;
-
-    const rect = containerRef.value.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    
-    const vertical = spaceBelow >= 150 ? 'bottom' : 'top';
-    
-    return `${vertical}-${props.align}` as 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+    const el = (triggerRef.value as ComponentPublicInstance)?.$el || triggerRef.value;
+    if (!el) return `bottom-${props.align}` as const;
+    const rect = (el as HTMLElement).getBoundingClientRect();
+    const vertical = (window.innerHeight - rect.bottom) >= 150 ? 'bottom' : 'top';
+    return `${vertical}-${props.align}` as const;
 });
 
-// ═══ Style dynamique pour forcer la largeur ═══
-const dropdownStyle = computed(() => {
-    if (!props.matchTriggerWidth || triggerWidth.value === null) {
-        return {};
-    }
-    
-    const widthPx = `${triggerWidth.value}px`;
-    return {
-        width: widthPx,
-        minWidth: widthPx,
-        maxWidth: widthPx
+const menuItemsClasses = computed(() => {
+    const base = 'absolute z-20 bg-bg-light border border-bg-light rounded-lg shadow-lg p-1 max-h-[40vh] overflow-y-auto divide-y divide-slate-400';
+    const size = (MENU_SIZES as Record<string, string>)[props.dropdownSize] || 'w-56';
+    const pos: Record<string, string> = {
+        'bottom-right': 'right-0 mt-2',
+        'bottom-left':  'left-0 mt-2',
+        'top-right':    'right-0 mb-2 bottom-full',
+        'top-left':     'left-0 mb-2 bottom-full',
     };
+    return `${base} ${size} ${pos[resolvedPosition.value]}`;
 });
+
+const dropdownStyle = computed(() => {
+    if (!props.matchTriggerWidth || triggerWidth.value === null) return {};
+    const w = `${triggerWidth.value}px`;
+    return { width: w, minWidth: w, maxWidth: w };
+});
+
+function getMenuButtonEl(): HTMLElement | null {
+    const el = (triggerRef.value as ComponentPublicInstance)?.$el || triggerRef.value;
+    return (el as HTMLElement) ?? null;
+}
 
 function measureTriggerWidth() {
-    if (containerRef.value) {
-        triggerWidth.value = containerRef.value.offsetWidth;
-    }
+    const el = getMenuButtonEl();
+    if (el) triggerWidth.value = el.offsetWidth;
 }
 
-function toggle() {
-    clearHoverTimeout();
-    
-    if (!isOpen.value && props.matchTriggerWidth) {
-        measureTriggerWidth();
-    }
-    
-    isOpen.value = !isOpen.value;
-    
-    if (isOpen.value) {
-        openedByHover.value = false;
-    } else {
-        emit('close');
-    }
-}
-
-function handleMouseEnter() {
+function handleMouseEnter(open: boolean) {
     if (!props.openAtHover) return;
-    
     clearHoverTimeout();
-    
-    if (!isOpen.value) {
-        if (props.matchTriggerWidth) {
-            measureTriggerWidth();
-        }
-        
-        isOpen.value = true;
-        openedByHover.value = true;
+    if (!open) {
+        if (props.matchTriggerWidth) measureTriggerWidth();
+        getMenuButtonEl()?.click();
     }
 }
 
-function handleMouseLeave() {
+function handleMouseLeave(open: boolean, close: () => void) {
     if (!props.openAtHover) return;
-    
-    if (openedByHover.value && isOpen.value) {
+    if (open) {
         hoverTimeout = window.setTimeout(() => {
-            isOpen.value = false;
-            openedByHover.value = false;
+            close();
             emit('close');
         }, 150);
     }
 }
 
 function clearHoverTimeout() {
-    if (hoverTimeout !== null) {
-        clearTimeout(hoverTimeout);
-        hoverTimeout = null;
-    }
+    if (hoverTimeout !== null) { clearTimeout(hoverTimeout); hoverTimeout = null; }
 }
-
-function handleItemClick() {
-    if (props.closeOnSelect) {
-        setTimeout(() => {
-            isOpen.value = false;
-            openedByHover.value = false;
-            emit('close');
-        }, 0);
-    }
-}
-
-function onClickOutside(event: MouseEvent) {
-    if (containerRef.value && !containerRef.value.contains(event.target as Node)) {
-        isOpen.value = false;
-        openedByHover.value = false;
-        emit('close');
-    }
-}
-
-function closeFromItem() {
-    isOpen.value = false;
-    openedByHover.value = false;
-    emit('close');
-}
-
-provide('closeDropdown', closeFromItem);
 
 onMounted(() => {
-    document.addEventListener('mousedown', onClickOutside);
-    
-    if (props.matchTriggerWidth) {
-        nextTick(() => measureTriggerWidth());
-    }
+    if (props.matchTriggerWidth) nextTick(measureTriggerWidth);
 });
 
-onUnmounted(() => {
-    document.removeEventListener('mousedown', onClickOutside);
-    clearHoverTimeout();
-});
+onUnmounted(clearHoverTimeout);
 </script>
