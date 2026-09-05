@@ -1,62 +1,40 @@
-// genesis-vsc/packages/webview/src/services/framework.service.ts
+import type { IFrameworkService, Framework } from '@genesis-labs/core/features/frameworks/manifest';
 
-import type { IFrameworkService } from '@genesis-labs/core/features/frameworks/types/framework.service.interface';
-import { useFrameworkStore } from '@genesis-labs/core/features/frameworks/store/useFramework.store';
-import type { Framework } from '@genesis-labs/core/features/frameworks/types/framework.types';
+// ✅ 1. Import de l'INSTANCE singleton (et non de la classe)
+import { vscodeService } from '../../../core/services/vscode.service';
 
-// ✅ Import du service spécifique à VS Code (local à ce dossier)
-import { VscodeService } from '../../../core/services/vscode.service'; 
+export class FrameworkServiceVsc implements IFrameworkService {
+    
+    // ✅ 2. Utilise l'instance singleton par défaut
+    constructor(private vscode = vscodeService) {}
 
-export class FrameworkService implements IFrameworkService {
-    private _store: ReturnType<typeof useFrameworkStore> | null = null;
-
-    // ✅ Injection de la dépendance via le constructeur (Composition au lieu d'héritage)
-    constructor(private vscode: VscodeService) {}
-
-    private get store() {
-        if (!this._store) {
-            this._store = useFrameworkStore();
-        }
-        return this._store;
-    }
-
-    /**
-     * Initialisation des écouteurs (OUTPUT : Extension Host → Webview)
-     */
-    init(): void {
-        // 1. Réception de la liste des frameworks
-        this.vscode.onMessage<Framework[]>('FRAMEWORKS_LOADED', (data) => {
-            this.store.setFrameworks(data);
-        });
-
-        // 2. Réception de la confirmation de sélection
-        this.vscode.onMessage<{ success: boolean; framework: Framework }>('FRAMEWORK_SELECTED', (data) => {
-            if (data.success) {
-                console.log('Framework sélectionné avec succès:', data.framework.name);
-            }
-        });
-
-        // 3. Gestion des erreurs provenant du Handler
-        this.vscode.onMessage<{ command: string; message: string }>('API_ERROR', (data) => {
-            console.error(`[FrameworkService] Erreur pour la commande ${data.command}:`, data.message);
+    fetchFrameworks(): Promise<Framework[]> {
+            console.log("démarrage de la récupération de framework")        
+        return new Promise((resolve) => {
+            this.vscode.sendMessage('GET_FRAMEWORKS');
+            console.log("récupération de framework")
+            // Écoute UNE SEULE FOIS, puis cleanup pour éviter les fuites mémoire
+            const cleanup = this.vscode.onMessage<Framework[]>('FRAMEWORKS_LOADED', (data) => {
+                cleanup();
+                resolve(data); // ✅ Retourne la donnée brute, NE TOUCHE PAS AU STORE
+            });
         });
     }
 
-    /**
-     * Demande la liste des frameworks (INPUT : Webview → Extension Host)
-     */
-    fetchFrameworks(): void {
-        this.vscode.sendMessage('GET_FRAMEWORKS');
-    }
-
-    /**
-     * Demande la sélection d'un framework
-     */
-    selectFramework(id: number): void {
-        if (!id) return;
-        this.vscode.sendMessage('SELECT_FRAMEWORK', { id });
+    selectFramework(id: number): Promise<void> {
+        return new Promise((resolve) => {
+            this.vscode.sendMessage('SELECT_FRAMEWORK', { id });
+            
+            const cleanup = this.vscode.onMessage<{ success: boolean }>('FRAMEWORK_SELECTED', (data) => {
+                cleanup();
+                if (data.success) {
+                    console.log('Framework sélectionné avec succès');
+                }
+                resolve();
+            });
+        });
     }
 }
 
-// ✅ Création de l'instance en lui fournissant l'outil de communication VS Code
-export const frameworkService = new FrameworkService(new VscodeService());
+// ✅ 3. Instanciation sans argument : elle utilisera automatiquement le singleton
+export const frameworkServiceVsc = new FrameworkServiceVsc();

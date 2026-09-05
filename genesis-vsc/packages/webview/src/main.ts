@@ -1,21 +1,33 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
-
-// ✅ CORRECTION : Importe le App.vue LOCAL (celui qui est dans le même dossier), pas celui du core
+import './assets/CSS/main.css';
 import App from './App.vue';
-
-// Import du router du core (si tu l'utilises)
-import { router } from '@genesis-labs/core/router';
-
-// Initialisation des services spécifiques à VSC (si ce n'est pas déjà fait dans App.vue)
+import { router } from './router';
 import { appService } from './core/services/app.service';
 
+// ✅ 1. Imports des Clés d'Injection (via les manifestes)
+import { FRAMEWORK_SERVICE_KEY } from '@genesis-labs/core/features/frameworks/manifest';
+import { FRONTEND_SERVICE_KEY } from '@genesis-labs/core/features/frontend/manifest';
+
+// ✅ 2. Imports des Services Concrets VSC
+import { frameworkServiceVsc } from './features/frameworks/services/framework.service';
+import { frontendServiceVsc } from './features/frontend/services/frontend.service';
+
+console.log('[Main] Router importé:', router);  
+console.log('[Main] Routes:', router.getRoutes());
+
 const app = createApp(App);
+const pinia = createPinia();
 
-app.use(createPinia());
-app.use(router);
+// ✅ 3. Fourniture de TOUS les services nécessaires au Core
+app.provide(FRAMEWORK_SERVICE_KEY, frameworkServiceVsc);
+app.provide(FRONTEND_SERVICE_KEY, frontendServiceVsc); // <-- C'était la ligne manquante !
 
-// Initialisation du service App au démarrage
+app
+    .use(pinia)
+    .use(router)
+    .mount('#app');
+
+console.log('[Main] Router installé dans l\'app');
+
 appService.init();
-
-app.mount('#app');

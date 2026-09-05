@@ -1,11 +1,12 @@
-// ✅ 1. Chemins relatifs corrigés (car ce fichier est dans le package VSC, pas le core)
+// ✅ 1. Import de l'INSTANCE singleton (et non de la classe)
 import { useAppStore } from '../store/useApp.store';
 import { useThemeStore } from '../store/useTheme.store';
-import { VscodeService } from './vscode.service';
+import { vscodeService } from './vscode.service'; 
 
 export class AppService {
-    // ✅ 2. Composition : on injecte VscodeService, on n'hérite plus de lui
-    constructor(private vscode: VscodeService) {}
+    // ✅ 2. Utilise l'instance singleton par défaut. 
+    // Cela garantit qu'aucune nouvelle instance de VscodeService n'est créée.
+    constructor(private vscode = vscodeService) {}
 
     private appStore = useAppStore();
     private themeStore = useThemeStore();
@@ -14,14 +15,13 @@ export class AppService {
 
     init(): void {
         // 1. OUTPUT : Écouter les réponses de l'extension
-        // ✅ 3. On appelle this.vscode.onMessage, qui retourne maintenant une () => void
         this.cleanups.push(
             this.vscode.onMessage('init', (payload: any) => {
                 this.themeStore.applyTheme(payload.theme.theme, payload.theme.colorMode);
                 
                 // RÈGLE DES 3 SECONDES :
                 const elapsed = Date.now() - this.loadingStartTime;
-                const minLoadingTime = 3000; // 3 secondes
+                const minLoadingTime = 3000;
                 const delay = Math.max(0, minLoadingTime - elapsed);
 
                 setTimeout(() => {
@@ -38,7 +38,6 @@ export class AppService {
 
         this.cleanups.push(
             this.vscode.onMessage('apiError', (payload: any) => {
-                // En cas d'erreur critique, on annule le délai et on affiche l'erreur immédiatement
                 this.appStore.setApiError(payload.message);
             })
         );
@@ -54,5 +53,5 @@ export class AppService {
     }
 }
 
-// ✅ 4. On instancie en passant la dépendance VscodeService
-export const appService = new AppService(new VscodeService());
+// ✅ 3. Instanciation sans argument : elle utilisera automatiquement le singleton
+export const appService = new AppService();

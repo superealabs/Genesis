@@ -1,16 +1,19 @@
-// ✅ Import du composable pur du Core
-import { useFrameworks } from '@genesis-labs/core/features/frameworks/composables/useFrameworks';
-
-// ✅ Import du service concret spécifique à VSC (qui implémente IFrameworkService)
-import { frameworkService } from '../services/framework.service';
+// ✅ Import via le manifeste
+import { useFrameworks } from '@genesis-labs/core/features/frameworks/manifest';
 
 /**
  * Composable spécifique à VS Code.
- * Il étend le composable du core en lui injectant le service de communication VSC.
- * Si tu as un jour besoin d'ajouter une logique VSC-only (ex: analytics VSC), 
- * tu peux l'ajouter ici avant de retourner le résultat.
+ * Le service est déjà injecté en interne par useFrameworks() via provide/inject.
  */
 export function useFrameworksVscode() {
-    // On passe simplement le service VSC au composable du core
-    return useFrameworks(frameworkService);
+    // ✅ Appel simple, sans passer le service en paramètre
+    const base = useFrameworks();
+
+    // Ici, tu peux ajouter de la logique VSC-specific si besoin
+    // const filteredForVsc = computed(() => base.frameworks.value.filter(...));
+
+    return {
+        ...base
+        // filteredForVsc
+    };
 }

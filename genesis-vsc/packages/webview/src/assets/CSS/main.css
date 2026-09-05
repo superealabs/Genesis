@@ -1,0 +1,17 @@
+/* 1. IMPORT DE TAILWIND (Toujours en premier) */
+@import "tailwindcss";
+
+/* 2. IMPORT DU CSS PERSONNALISÉ DU CORE 
+   (C'est ici que tes fonts, @theme et @layer base sont chargés) */
+@import "../../../../../../genesis-web-core/src/assets/CSS/main.css";
+
+/* 3. SOURCE POUR LE SCANNING DES CLASSES (Monorepo) */
+/* Indispensable pour que Tailwind génère les classes utilisées dans le core */
+@source "../../../../../../genesis-web-core/src/**/*.{vue,ts,tsx}";
+
+/* 4. (Optionnel) Sources locales au webview si tu en as */
+@source "./**/*.{vue,ts,tsx}";
+
+/* 5. TON CSS SPÉCIFIQUE AU VSC (S'il y en a, toujours à la fin pour écraser) */
+/* Exemple : */
+/* .vsc-specific-override { ... } */

@@ -1,41 +1,44 @@
-import type { IFrontendService } from '@genesis-labs/core/features/frontend/types/frontend.service.interface';
-import { useFrontendStore } from '@genesis-labs/core/features/frontend/store/useFrontend.store';
-import type { FrontendFramework } from '@genesis-labs/core/features/frontend/types/frontend.types';
+// ✅ 1. Import via le manifeste (meilleure pratique)
+import type { IFrontendService, FrontendFramework } from '@genesis-labs/core/features/frontend/manifest';
 
-// ✅ Import du service de communication local à VS Code
-import { VscodeService } from '../../../core/services/vscode.service';
+// ✅ 2. Import de l'INSTANCE singleton (et non de la classe)
+import { vscodeService } from '../../../core/services/vscode.service';
 
-export class FrontendService implements IFrontendService {
-    // ✅ Injection de la dépendance
-    constructor(private vscode: VscodeService) {}
-
-    private get store() {
-        return useFrontendStore();
-    }
+export class FrontendServiceVsc implements IFrontendService {
+    
+    // ✅ 3. Utilise l'instance singleton par défaut
+    constructor(private vscode = vscodeService) {}
 
     /**
-     * Initialisation des écouteurs (OUTPUT)
+     * Demande la liste des frameworks frontend à l'extension
+     * ✅ Retourne une Promise et ne touche PAS au store
      */
-    init(): void {
-        this.vscode.onMessage<FrontendFramework[]>('FRONTEND_FRAMEWORKS_LOADED', (frameworks) => {
-            this.store.setAvailableFrameworks(frameworks);
+    fetchFrontendFrameworks(): Promise<FrontendFramework[]> {
+        return new Promise((resolve) => {
+            this.vscode.sendMessage('GET_FRONTEND_FRAMEWORKS');
+            
+            // ✅ Écoute la réponse UNE SEULE FOIS, puis cleanup
+            const cleanup = this.vscode.onMessage<FrontendFramework[]>('FRONTEND_FRAMEWORKS_LOADED', (data) => {
+                cleanup(); // Nettoie le listener pour éviter les fuites mémoire
+                resolve(data); // Retourne la donnée brute au composable
+            });
         });
     }
 
     /**
-     * Demande la liste des frameworks frontend à l'extension (INPUT)
-     */
-    fetchFrontendFrameworks(): void {
-        this.vscode.sendMessage('GET_FRONTEND_FRAMEWORKS');
-    }
-
-    /**
      * Enregistre le choix de l'utilisateur
+     * ✅ Retourne une Promise
      */
-    selectFrontendFramework(framework: FrontendFramework): void {
-        this.store.selectFramework(framework);
+    selectFrontendFramework(framework: FrontendFramework): Promise<void> {
+        return new Promise((resolve) => {
+            // Envoie l'ID (ou l'objet complet) selon ce que ton Extension Host attend
+            this.vscode.sendMessage('SELECT_FRONTEND_FRAMEWORK', { id: framework.id });
+            
+            // Résout la promesse (fire-and-forget propre, ou écoute une confirmation si ton handler VSC en renvoie une)
+            resolve();
+        });
     }
 }
 
-// ✅ Export du singleton initialisé avec l'outil VS Code
-export const frontendService = new FrontendService(new VscodeService());
+// ✅ 4. Export de l'instance utilisant le singleton (plus de "new VscodeService()")
+export const frontendServiceVsc = new FrontendServiceVsc();

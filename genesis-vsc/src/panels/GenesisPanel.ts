@@ -6,6 +6,11 @@ import { WebviewMessageRouter } from '../services/WebviewMessageRouter';
 
 export class GenesisPanel {
     private static instance: GenesisPanel | undefined;
+    
+    // ✅ NOUVEAU : Chemin centralisé vers le dossier de build de la webview
+    // Si tu changes l'emplacement du build (ex: 'dist/webview'), modifie-le ICI uniquement.
+    private static readonly WEBVIEW_DIST_PATH = ['packages', 'webview', 'dist'];
+
     private panel: vscode.WebviewPanel;
     private shutdownTimer: NodeJS.Timeout | null = null;
     
@@ -48,7 +53,8 @@ export class GenesisPanel {
             vscode.ViewColumn.Active,
             {
                 enableScripts: true,
-                localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview')],
+                // UTILISATION DE LA VARIABLE CENTRALISÉE
+                localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, ...GenesisPanel.WEBVIEW_DIST_PATH)],
                 retainContextWhenHidden: true
             }
         );
@@ -57,11 +63,17 @@ export class GenesisPanel {
     }
 
     private loadHtml(): void {
-        const webviewDist = vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'webview');
+        // UTILISATION DE LA VARIABLE CENTRALISÉE
+        const webviewDist = vscode.Uri.joinPath(this.context.extensionUri, ...GenesisPanel.WEBVIEW_DIST_PATH);
+        
         const htmlPath = path.join(webviewDist.fsPath, 'index.html');
         let html = fs.readFileSync(htmlPath, 'utf8');
+        
         const baseUri = this.panel.webview.asWebviewUri(webviewDist);
-        html = html.replace(/\.\/assets\//g, `${baseUri}/assets/`);
+        
+        // Remplace les chemins relatifs ou absolus des assets par l'URI sécurisée de la webview
+        html = html.replace(/(?:\.\/|\/)assets\//g, `${baseUri}/assets/`);
+        
         this.panel.webview.html = html;
     }
 
