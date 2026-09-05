@@ -3,6 +3,9 @@
   "displayName": "genesis",
   "description": "Genesis Extension",
   "version": "0.0.1",
+  "workspaces": [
+    "packages/webview"
+  ],
   "engines": {
     "vscode": "^1.125.0"
   },
@@ -66,8 +69,8 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
-    "build:webview": "cd webview-ui && npm run build",
-    "watch:webview": "cd webview-ui && npm run build -- --watch",
+    "build:webview": "cd packages/webview && npm run build",
+    "watch:webview": "cd packages/webview && npm run dev -- --watch",
     "dev": "concurrently \"npm run watch:webview\" \"npm run watch\""
   },
   "devDependencies": {
@@ -76,6 +79,8 @@
     "@types/vscode": "^1.125.0",
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.0.0",
+    "@vue/tsconfig": "^0.9.1",
+    "concurrently": "^8.2.2",
     "eslint": "^10.5.0",
     "ts-loader": "^9.6.2",
     "typescript": "^6.0.3",

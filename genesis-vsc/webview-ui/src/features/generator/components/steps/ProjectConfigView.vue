@@ -226,7 +226,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import { useGenerator } from '../../composables/useGenerator';
-import { generatorService } from '../../services/generator.service';
 import { MOCK_BUILD_TOOLS, MOCK_JAVA_VERSIONS, MOCK_NODE_VERSIONS } from '../../types/generator.types';
 
 // Imports des composants
@@ -234,12 +233,13 @@ import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
 import GenesisDisclosure from '@/core/components/layouts/GenesisDisclosure.vue';
 import IconFolder from '@/core/components/ui/icons/IconFolder.vue';
 import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
+import { generatorService } from '../../services/generator.service';
 
 // ✅ Ajout de updateConfig pour gérer les clics dans les selects custom
-const { stepperData, selectFolderPath, updateConfig } = useGenerator();
+const { stepperData, selectFolderPath, updateConfig, initializeService } = useGenerator(generatorService);
 
 onMounted(() => {
-    generatorService.init();
+    initializeService(); // Initialise les écouteurs postMessage une seule fois
 });
 
 const config = computed(() => stepperData.value.config);
