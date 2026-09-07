@@ -2,12 +2,11 @@ package org.labs.genesis.forms.ui.visualization.configuration;
 
 import com.intellij.icons.AllIcons;
 import org.labs.genesis.forms.theme.DashboardTheme;
+import org.labs.genesis.forms.ui.common.RoundedBorder;
 import org.labs.genesis.forms.ui.common.ScrollableContentPanel;
 import org.labs.genesis.forms.ui.visualization.DashboardVisualComponent;
-import org.labs.genesis.forms.ui.visualization.configuration.editor.ColumnDropField;
-import org.labs.genesis.forms.ui.visualization.configuration.editor.ColumnOrFormulaRow;
-import org.labs.genesis.forms.ui.visualization.configuration.editor.ColumnsEditorPanel;
-import org.labs.genesis.forms.ui.visualization.configuration.editor.OptionalNumberEditor;
+import org.labs.genesis.forms.ui.visualization.configuration.editor.*;
+import org.labs.genesis.forms.ui.visualization.model.FieldQueryOptions;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationItem;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameterType;
@@ -133,10 +132,36 @@ public class VisualizationConfigurationPanel extends JPanel {
                     columnsPanel.setColumns(restoredColumns);
                 }
             }
-            // Seul endroit qui persiste "columns" : ColumnsEditorPanel ne le fait plus lui-même.
-            columnsPanel.setColumnsChangeListener(() ->
-                    targetComponent.updateConfig(key, columnsPanel.getColumns())
-            );
+
+            Object existingHeaders = targetComponent.getConfigObject("columnsHeaders");
+            if (existingHeaders instanceof Map<?, ?> headersMap) {
+
+                Map<String, String> restoredHeaders = new HashMap<>();
+
+                for (Map.Entry<?, ?> entry : headersMap.entrySet()) {
+
+                    Object headerKey = entry.getKey();
+                    Object value = entry.getValue();
+
+                    if (headerKey instanceof String hKey &&
+                            value instanceof String val) {
+
+                        restoredHeaders.put(hKey, val);
+                    }
+                }
+
+                columnsPanel.setHeaders(restoredHeaders);
+            }
+
+            // MODIFICATION ICI : Stocker à la fois les colonnes ET les en-têtes
+            columnsPanel.setColumnsChangeListener(() -> {
+                // Stocker les colonnes pour la requête SQL
+                targetComponent.updateConfig(key, columnsPanel.getColumns());
+
+                // Stocker les en-têtes séparément
+                Map<String, String> headersMap = columnsPanel.getColumnsWithHeaders();
+                targetComponent.updateConfig("columnsHeaders", headersMap);
+            });
             return;
         }
 
@@ -272,20 +297,110 @@ public class VisualizationConfigurationPanel extends JPanel {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(false);
         panel.setBorder(new EmptyBorder(0, 10, 0, 10));
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel labelRow = new JPanel(new BorderLayout());
+        labelRow.setOpaque(false);
+        labelRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        labelRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
 
         JLabel label = new JLabel(parameter.getLabel());
         label.setForeground(DashboardTheme.TEXT);
         label.setFont(label.getFont().deriveFont(11f));
-        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        labelRow.add(label, BorderLayout.WEST);
+
         editor.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        panel.add(label);
+        panel.add(labelRow);
         panel.add(Box.createVerticalStrut(5));
         panel.add(editor);
 
-        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        if (supportsFieldOptions(parameter)) {
+            FieldAdvancedOptionsPanel advancedPanel = new FieldAdvancedOptionsPanel();
+            advancedPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            restoreFieldOptions(parameter.getKey(), advancedPanel);
+            boolean hasActive = advancedPanel.hasActiveOptions();
+            advancedPanel.setVisible(hasActive);
+
+            JToggleButton optionsToggle = createFieldOptionsToggle();
+            optionsToggle.setSelected(hasActive);
+            updateToggleIndicator(optionsToggle, hasActive);
+            labelRow.add(optionsToggle, BorderLayout.EAST);
+
+            optionsToggle.addActionListener(e -> {
+                advancedPanel.setVisible(optionsToggle.isSelected());
+                contentPanel.revalidate();
+                contentPanel.repaint();
+            });
+
+            advancedPanel.setChangeListener(() -> {
+                FieldQueryOptions options = advancedPanel.getOptions();
+                persistFieldOptions(parameter.getKey(), options);
+                updateToggleIndicator(optionsToggle, !options.isEmpty());
+            });
+
+            panel.add(Box.createVerticalStrut(6));
+            panel.add(advancedPanel);
+        }
 
         return panel;
+    }
+
+    private boolean supportsFieldOptions(VisualizationParameter parameter) {
+        if (!parameter.hasQueryRole()) return false;
+        if (!(parameter.isDimension() || parameter.isMeasure() || parameter.isValue())) return false;
+        return switch (parameter.getType()) {
+            case DB_COLUMN, DB_COLUMN_OR_FORMULA -> true;
+            default -> false;
+        };
+    }
+
+    private JToggleButton createFieldOptionsToggle() {
+        JToggleButton button = new JToggleButton(AllIcons.General.Filter);
+        button.setToolTipText("Limit / Sort / Filter");
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setFocusPainted(false);
+        button.setFocusable(false);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setMargin(new Insets(0, 0, 0, 0));
+        Dimension size = new Dimension(20, 20);
+        button.setPreferredSize(size);
+        button.setMinimumSize(size);
+        button.setMaximumSize(size);
+        return button;
+    }
+
+    private void updateToggleIndicator(JToggleButton button, boolean active) {
+        button.setBorder(active
+                ? BorderFactory.createCompoundBorder(new RoundedBorder(DashboardTheme.ACCENT, 1, 6), new EmptyBorder(1, 1, 1, 1))
+                : BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        button.setContentAreaFilled(active);
+        button.setToolTipText(active ? "Limit / Sort / Filter (actif)" : "Limit / Sort / Filter");
+    }
+
+    private void restoreFieldOptions(String key, FieldAdvancedOptionsPanel panel) {
+        if (targetComponent == null) return;
+        FieldQueryOptions options = new FieldQueryOptions();
+
+        Object limit = targetComponent.getConfigValue(key + ".limit");
+        if (limit instanceof Number number) {
+            options.limit = number.intValue();
+        } else if (limit instanceof String s && !s.isBlank()) {
+            try { options.limit = Integer.parseInt(s.trim()); } catch (NumberFormatException ignored) { }
+        }
+        options.sortDirection = targetComponent.getConfigValue(key + ".sort");
+        options.filter = targetComponent.getConfigValue(key + ".filter");
+
+        panel.setOptions(options);
+    }
+
+    private void persistFieldOptions(String key, FieldQueryOptions options) {
+        if (targetComponent == null) return;
+        targetComponent.updateConfig(key + ".limit", options.limit);
+        targetComponent.updateConfig(key + ".sort", options.sortDirection);
+        targetComponent.updateConfig(key + ".filter", options.filter);
     }
 
     private JComponent createEditor(VisualizationParameter parameter) {

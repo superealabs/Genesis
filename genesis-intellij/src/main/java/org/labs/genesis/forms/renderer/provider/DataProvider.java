@@ -10,7 +10,9 @@ import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DataProvider {
 
@@ -300,7 +302,8 @@ public class DataProvider {
                 query.fetch();
 
         return convertTableResult(
-                result
+                result,
+                config
         );
     }
 
@@ -408,53 +411,58 @@ public class DataProvider {
      *     [2, "Paul", 3000]
      * ]
      */
+    // Dans DataProvider, modifiez la méthode convertTableResult()
     private TableData convertTableResult(
-            Result<?> result
+            Result<?> result,
+            VisualizationConfig config  // Ajout du paramètre config
     ) {
-
-        List<String> columns =
-                new ArrayList<>();
-
-        List<List<Object>> rows =
-                new ArrayList<>();
+        List<String> columns = new ArrayList<>();
+        List<List<Object>> rows = new ArrayList<>();
 
         // =====================================================================
-        // COLUMNS
+        // Récupérer les en-têtes configurés
         // =====================================================================
-
-        for (Field<?> field :
-                result.fields()) {
-
-            columns.add(
-                    field.getName()
-            );
+        Map<String, String> configuredHeaders = null;
+        Object headersObj = config.getValue("columnsHeaders");
+        if (headersObj instanceof Map<?, ?> map) {
+            configuredHeaders = new HashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (entry.getKey() instanceof String key && entry.getValue() instanceof String value) {
+                    if(key.contains(":")) key = key.substring(key.lastIndexOf(":") + 1);
+                    if(key.contains(".")) key = key.substring(key.lastIndexOf(".") + 1);
+                    configuredHeaders.put(key, value);
+                }
+            }
         }
 
         // =====================================================================
-        // ROWS
+        // COLUMNS - Utiliser les en-têtes configurés si disponibles
         // =====================================================================
+        for (Field<?> field : result.fields()) {
+            String fieldName = field.getName();
 
+
+            // Si un en-tête personnalisé existe pour cette colonne, l'utiliser
+            if (configuredHeaders != null && configuredHeaders.containsKey(fieldName)) {
+                columns.add(configuredHeaders.get(fieldName));
+            } else {
+                columns.add(fieldName);
+            }
+        }
+
+        // =====================================================================
+        // ROWS (inchangé)
+        // =====================================================================
         for (Record record : result) {
-
-            List<Object> row =
-                    new ArrayList<>();
-
-            for (Field<?> field :
-                    result.fields()) {
-
-                Object value =
-                        record.get(field);
-
+            List<Object> row = new ArrayList<>();
+            for (Field<?> field : result.fields()) {
+                Object value = record.get(field);
                 row.add(value);
             }
-
             rows.add(row);
         }
 
-        return new TableData(
-                columns,
-                rows
-        );
+        return new TableData(columns, rows);
     }
 
     // =========================================================================

@@ -61,6 +61,10 @@ public class OptionalNumberEditor extends JPanel {
         }
     }
 
+    public  String getValue() {
+        return  numberField != null ? numberField.getText() : null;
+    }
+
     private void styleField(JTextField field) {
         field.setForeground(DashboardTheme.TEXT);
         field.setCaretColor(DashboardTheme.TEXT);

@@ -102,13 +102,10 @@ public class VisualizationPanel extends JPanel {
                         VerticalBarChartRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.dimensionOrFormula("xAxis", "X Axis", true),
-                                VisualizationParameter.measureOrFormula("yAxis", "Y Axis", true),
+                                VisualizationParameter.dimension("xAxis", "X Axis", true),
+                                VisualizationParameter.measure("yAxis", "Y Axis", true),
                                 VisualizationParameter.text("legendX", "Legend X", false),
-                                VisualizationParameter.text("legendY", "Legend Y", false),
-                                VisualizationParameter.limit("limit", "Limit", false),
-                                VisualizationParameter.ordering("sort", "Sort", false),
-                                VisualizationParameter.filter("filter", "Filter", false)
+                                VisualizationParameter.text("legendY", "Legend Y", false)
                         )
                 ),
 
@@ -122,13 +119,10 @@ public class VisualizationPanel extends JPanel {
                         HorizontalBarChartRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.measureOrFormula("xAxis", "X Axis", true),
-                                VisualizationParameter.dimensionOrFormula("yAxis", "Y Axis", true),
+                                VisualizationParameter.measure("xAxis", "X Axis", true),
+                                VisualizationParameter.dimension("yAxis", "Y Axis", true),
                                 VisualizationParameter.text("legendX", "Legend X", false),
-                                VisualizationParameter.text("legendY", "Legend Y", false),
-                                VisualizationParameter.limit("limit", "Limit", false),
-                                VisualizationParameter.ordering("sort", "Sort", false),
-                                VisualizationParameter.filter("filter", "Filter", false)
+                                VisualizationParameter.text("legendY", "Legend Y", false)
                         )
                 ),
 
@@ -142,11 +136,8 @@ public class VisualizationPanel extends JPanel {
                         PieChartRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.measureOrFormula("value", "Value", true),
-                                VisualizationParameter.dimensionOrFormula("legend", "Legend", true),
-                                VisualizationParameter.limit("limit", "Limit", false),
-                                VisualizationParameter.ordering("sort", "Sort", false),
-                                VisualizationParameter.filter("filter", "Filter", false)
+                                VisualizationParameter.measure("value", "Value", true),
+                                VisualizationParameter.dimension("legend", "Legend", true)
                         )
                 ),
 
@@ -160,11 +151,8 @@ public class VisualizationPanel extends JPanel {
                         DonutChartRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.measureOrFormula("value", "Value", true),
-                                VisualizationParameter.dimensionOrFormula("legend", "Legend", true),
-                                VisualizationParameter.limit("limit", "Limit", false),
-                                VisualizationParameter.ordering("sort", "Sort", false),
-                                VisualizationParameter.filter("filter", "Filter", false)
+                                VisualizationParameter.measure("value", "Value", true),
+                                VisualizationParameter.dimension("legend", "Legend", true)
                         )
                 ),
 
@@ -178,13 +166,10 @@ public class VisualizationPanel extends JPanel {
                         LineChartRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.dimensionOrFormula("xAxis", "X Axis", true),
-                                VisualizationParameter.measureOrFormula("yAxis", "Y Axis", true),
+                                VisualizationParameter.dimension("xAxis", "X Axis", true),
+                                VisualizationParameter.measure("yAxis", "Y Axis", true),
                                 VisualizationParameter.text("legendX", "Legend X", false),
-                                VisualizationParameter.text("legendY", "Legend Y", false),
-                                VisualizationParameter.limit("limit", "Limit", false),
-                                VisualizationParameter.ordering("sort", "Sort", false),
-                                VisualizationParameter.filter("filter", "Filter", false)
+                                VisualizationParameter.text("legendY", "Legend Y", false)
                         )
                 ),
 
@@ -198,7 +183,7 @@ public class VisualizationPanel extends JPanel {
                         GaugeRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.measureOrFormula("value", "Value", true)
+                                VisualizationParameter.measure("value", "Value", true)
                         )
                 ),
 
@@ -212,7 +197,7 @@ public class VisualizationPanel extends JPanel {
                         KpiRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.measureOrFormula("value", "Value", true)
+                                VisualizationParameter.measure("value", "Value", true)
                         )
                 ),
 
@@ -226,10 +211,7 @@ public class VisualizationPanel extends JPanel {
                         TableRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.columns("columns", "Columns", false),
-                                VisualizationParameter.limit("limit", "Limit", false),
-                                VisualizationParameter.ordering("sort", "Sort", false),
-                                VisualizationParameter.filter("filter", "Filter", false)
+                                VisualizationParameter.columns("columns", "Columns", false)
                         )
                 ),
 
@@ -246,9 +228,7 @@ public class VisualizationPanel extends JPanel {
                                 VisualizationParameter.text("markerType", "Marker Type", false),
                                 VisualizationParameter.longitude("longitude", "Longitude", true),
                                 VisualizationParameter.latitude("latitude", "Latitude", true),
-                                VisualizationParameter.measureOrFormula("valueColumn", "Value Column", false),
-                                VisualizationParameter.limit("limit", "Limit", true),
-                                VisualizationParameter.filter("filter", "Filter", true)
+                                VisualizationParameter.measure("valueColumn", "Value Column", false)
                         )
                 ),
 
@@ -262,13 +242,10 @@ public class VisualizationPanel extends JPanel {
                         ScatterPlotRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.valueOrFormula("xAxis", "X Axis", true),
-                                VisualizationParameter.valueOrFormula("yAxis", "Y Axis", true),
+                                VisualizationParameter.value("xAxis", "X Axis", true),
+                                VisualizationParameter.value("yAxis", "Y Axis", true),
                                 VisualizationParameter.text("legendX", "Legend X", false),
-                                VisualizationParameter.text("legendY", "Legend Y", false),
-                                VisualizationParameter.limit("limit", "Limit", false),
-                                VisualizationParameter.ordering("sort", "Sort", false),
-                                VisualizationParameter.filter("filter", "Filter", false)
+                                VisualizationParameter.text("legendY", "Legend Y", false)
                         )
                 )
         );

@@ -84,7 +84,9 @@ public class TableRenderer implements VisualizationRenderer {
             tableData = null;
         }
 
-        Object columnsObj =
+        List<String> cols = tableData != null ? tableData.columns() : null;
+
+        Object columnsObj = cols != null ? cols :
                 config.getValue("columns");
 
         if (columnsObj instanceof List<?> list) {
@@ -165,7 +167,7 @@ public class TableRenderer implements VisualizationRenderer {
     private String[] buildColumnNames() {
 
         if (columns == null || columns.isEmpty()) {
-            return new String[]{"Message"};
+            return new String[]{""};
         }
 
         String[] result =
@@ -344,10 +346,8 @@ public class TableRenderer implements VisualizationRenderer {
                         if (!selected) {
 
                             component.setBackground(
-                                    row % 2 == 0
-                                            ? DashboardTheme.ACCENT_LIGHT
-                                            : DashboardTheme.SURFACE
-                            );
+                                    row % 2 == 0 ? DashboardTheme.ACCENT_LIGHT :
+                                    DashboardTheme.CANVAS_BG);
                         }
 
                         setForeground(

@@ -122,6 +122,46 @@ public class StringUtils {
         return newWord.toString().replaceAll("\\s+", " ").trim();
     }
 
+    public static String toReadableFormat(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+
+        // Remplacer les underscores par des espaces
+        String result = input.replace('_', ' ');
+
+        // Insérer un espace avant les majuscules (camelCase)
+        // Mais pas si la majuscule est en début de chaîne
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < result.length(); i++) {
+            char c = result.charAt(i);
+            if (i > 0 && Character.isUpperCase(c) &&
+                    !Character.isWhitespace(result.charAt(i - 1))) {
+                sb.append(' ');
+            }
+            sb.append(c);
+        }
+        result = sb.toString();
+
+        // Mettre en majuscule la première lettre de chaque mot
+        StringBuilder formatted = new StringBuilder();
+        boolean capitalizeNext = true;
+        for (int i = 0; i < result.length(); i++) {
+            char c = result.charAt(i);
+            if (Character.isWhitespace(c)) {
+                capitalizeNext = true;
+                formatted.append(c);
+            } else if (capitalizeNext) {
+                formatted.append(Character.toUpperCase(c));
+                capitalizeNext = false;
+            } else {
+                formatted.append(Character.toLowerCase(c));
+            }
+        }
+
+        return formatted.toString().trim();
+    }
+
     public static String formatReadable(String s) {
         return majStart(baseFormat(s));
     }
