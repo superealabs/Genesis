@@ -1,10 +1,10 @@
 import { vscodeService } from '../../../core/services/vscode.service';
 
 /**
- * Utilitaire VSC uniquement : Ouvre le sélecteur de dossier natif de VS Code.
- * Ne fait PAS partie du contrat IGeneratorService.
+ * 1. Sélection de dossier (inchangé)
  */
 export async function selectFolderPathVsc(): Promise<string> {
+    console.log("handle folder path from service of vsc ")
     return new Promise((resolve) => {
         vscodeService.sendMessage('REQUEST_FOLDER_PATH');
         const cleanup = vscodeService.onMessage<string>('FOLDER_PATH_SELECTED', (path) => {
@@ -15,14 +15,28 @@ export async function selectFolderPathVsc(): Promise<string> {
 }
 
 /**
- * Utilitaire VSC uniquement : Ouvre le sélecteur de fichier (filtré sur .sql).
+ * 2. Fonction GÉNÉRIQUE : Permet de lire n'importe quel fichier (avec ou sans filtre)
  */
-export async function selectScriptPathVsc(): Promise<{ path: string; content: string }> {
+export async function selectFilePathVsc(extensions?: string[]): Promise<{ path: string; content: string }> {
     return new Promise((resolve) => {
-        vscodeService.sendMessage('REQUEST_FILE_PATH', { extensions: ['sql'] });
+        vscodeService.sendMessage('REQUEST_FILE_PATH', { extensions });
         const cleanup = vscodeService.onMessage<{ path: string; content: string }>('FILE_PATH_SELECTED', (data) => {
             cleanup();
-            resolve(data);
+            resolve(data || { path: '', content: '' });
         });
     });
+}
+
+/**
+ * 3. Fonction CONTRAINTE : Utilise la générique en imposant une liste stricte
+ */
+export async function selectConstrainedFilePathVsc(allowedExtensions: string[]): Promise<{ path: string; content: string }> {
+    return selectFilePathVsc(allowedExtensions);
+}
+
+/**
+ * 4. Fonction SPÉCIFIQUE SQL : Utilise la contrainte avec le paramètre 'sql'
+ */
+export async function selectSqlFilePathVsc(): Promise<{ path: string; content: string }> {
+    return selectConstrainedFilePathVsc(['sql']);
 }

@@ -8,12 +8,19 @@ import { commonRoutes, designSystemRoutes } from '@genesis-labs/core/router/rout
 import FrameworksViewVsc from '../features/frameworks/views/FrameworksView.vue';
 import FrontendSelectionViewVsc from '../features/frontend/views/FrontendSelectionView.vue'; // Si tu en as une
 
-// ✅ 3. Définition des routes spécifiques à VSC
+// genesis-vsc/packages/webview/src/router/index.ts
+import HomeViewVsc from '../features/home/views/HomeViewVsc.vue';
+
 const vscodeSpecificRoutes: RouteRecordRaw[] = [
+    {
+        path: '/',
+        name: 'home',
+        component: HomeViewVsc  // ← wrapper VSC, pas le core
+    },
     {
         path: '/frameworks',
         name: 'frameworks',
-        component: FrameworksViewVsc // ← ✅ C'est ICI que la magie opère
+        component: FrameworksViewVsc
     },
     {
         path: '/frontend',
@@ -22,9 +29,13 @@ const vscodeSpecificRoutes: RouteRecordRaw[] = [
     }
 ];
 
-// ✅ 4. Assemblage final
+// Exclure aussi la route '/' des commonRoutes
 const routes: RouteRecordRaw[] = [
-    ...commonRoutes.filter(r => r.path !== '/frameworks' && r.path !== '/frontend'), // On exclut celles du core pour éviter les doublons
+    ...commonRoutes.filter(r =>
+        r.path !== '/frameworks' &&
+        r.path !== '/frontend' &&
+        r.path !== '/'          // ← ajouter
+    ),
     ...designSystemRoutes,
     ...vscodeSpecificRoutes
 ];
