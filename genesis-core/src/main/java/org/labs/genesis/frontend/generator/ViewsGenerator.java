@@ -1,3 +1,4 @@
+
 package org.labs.genesis.frontend.generator;
 
 import org.labs.genesis.config.Constantes;
@@ -277,6 +278,7 @@ public class ViewsGenerator implements IViewsGenerator {
         fileName = engine.simpleRender(fileName, metadataFinally);
 
         String result = engine.render(firstResult, metadataFinally);
+        result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$"));
         FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
         
         // Générer la page d'accueil

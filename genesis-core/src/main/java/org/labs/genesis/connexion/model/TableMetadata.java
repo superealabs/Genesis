@@ -31,6 +31,7 @@ public class TableMetadata {
     private String tableName;
     private ColumnMetadata[] columns;
     private ColumnMetadata primaryColumn;
+    private List<ColumnMetadata> primaryColumns = new ArrayList<>();
     private String className;
     private Boolean isView;
     private Boolean hasFk = false;
@@ -151,6 +152,7 @@ public class TableMetadata {
 
     private void fetchPrimaryKeys(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> columns) throws SQLException {
         String schema = database.resolveSchema(metaData.getConnection());
+        List<ColumnMetadata> detectedPrimaryColumns = new ArrayList<>();
 
         try (ResultSet primaryKeys = metaData.getPrimaryKeys(null, schema, tableName)) {
             while (primaryKeys.next()) {
@@ -160,27 +162,58 @@ public class TableMetadata {
                     if (column.getReferencedColumn().equalsIgnoreCase(pkColumnName)) {
                         column.setPrimary(true);
                         column.getValidationAnnotations().remove("notNull");
-                        setPrimaryColumn(column);
+                        detectedPrimaryColumns.add(column);
                         break;
                     }
                 }
             }
         }
+        setPrimaryColumns(detectedPrimaryColumns);
+        System.out.println(
+                "[Genesis] Table "
+                        + tableName
+                        + " - Primary keys : "
+                        + detectedPrimaryColumns.stream()
+                        .map(
+                                ColumnMetadata
+                                        ::getReferencedColumn
+                        )
+                        .toList()
+        );
+        if (detectedPrimaryColumns.size() == 1) {
+            setPrimaryColumn(detectedPrimaryColumns.get(0));
+        } else {
+            setPrimaryColumn(null);
+        }
+    }
+
+    public boolean hasPrimaryKey() {
+        return primaryColumns != null && !primaryColumns.isEmpty();
+    }
+
+    public boolean hasCompositePrimaryKey() {
+        return primaryColumns != null && primaryColumns.size() > 1;
+    }
+
+    public boolean hasSimplePrimaryKey() {
+        return primaryColumns != null && primaryColumns.size() == 1;
     }
 
     public void setPKForView()  {
         if(!isView) return;
-
+        setPrimaryColumns(new ArrayList<>());
         for (ColumnMetadata column : columns) {
             if (column.getReferencedColumn().equalsIgnoreCase("id")) {
                 column.setPrimary(true);
                 setPrimaryColumn(column);
+                getPrimaryColumns().add(column);
                 return;
             }
         }
         if(columns.length>0){
             columns[0].setPrimary(true);
             setPrimaryColumn(columns[0]);
+            getPrimaryColumns().add(columns[0]);
         }
     }
 

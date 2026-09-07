@@ -9,6 +9,8 @@ import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.utils.FileUtils;
 import java.util.HashMap;
 import java.util.Map;
+import org.labs.genesis.config.langage.FilesEdit;
+import java.util.List;
 
 import static org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider.*;
 
@@ -64,7 +66,16 @@ public class APIGenerator implements GenesisGenerator {
         result = engine.render(result, metadataFinally);
         FileUtils.createOrMergeFile(destinationFolder, fileSavePath, fileName, language.getExtension(), result);
 
-        ProjectGenerator.renderFilesEdits(framework.getModel().getModelAdditionalFiles(), metadataFinally);
+        List<FilesEdit> modelAdditionalFiles = framework.getModel().getModelAdditionalFiles();
+        if (modelAdditionalFiles != null) {
+            List<FilesEdit> filesToRender = modelAdditionalFiles.stream()
+                            .filter(file -> !"Composite Primary Key class".equals(file.getFileType()) || tableMetadata.hasCompositePrimaryKey())
+                            .toList();
+            ProjectGenerator.renderFilesEdits(
+                    filesToRender,
+                    metadataFinally
+            );
+        }
         //ProjectGenerator.renderFilesEdits(framework.getModel().getModelTestUnitFiles(), metadataFinally);
         return result;
     }
@@ -208,7 +219,6 @@ public class APIGenerator implements GenesisGenerator {
 
         // Rendu final
         HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
-
         // Ajustement du chemin de sauvegarde
         String fileSavePath;
         if (generateComponentOnly) {

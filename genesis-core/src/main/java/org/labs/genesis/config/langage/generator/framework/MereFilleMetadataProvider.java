@@ -3,6 +3,7 @@ package org.labs.genesis.config.langage.generator.framework;
 import org.labs.genesis.connexion.model.ChildTableMetadata;
 import org.labs.genesis.connexion.model.ParentTableMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.utils.StringUtils;
 
 import java.util.ArrayList;
@@ -18,7 +19,9 @@ public class MereFilleMetadataProvider {
         metadata.put("parents", null);
         if (tableMetadata.getIsParent()){
             metadata.put("isParentTable", true);
-            metadata.put("parentPk", tableMetadata.getPrimaryColumn().getName());
+            metadata.put("parentPk", getSimplePrimaryKeyName(tableMetadata));
+            metadata.put("parentPks", getPrimaryKeyNames(tableMetadata));
+            metadata.put("hasCompositePrimaryKey", tableMetadata.hasCompositePrimaryKey());
             List<HashMap<String, Object>> children = new ArrayList<>();
             List<HashMap<String, Object>> childrenWithForm = new ArrayList<>();
             for (ChildTableMetadata child : tableMetadata.getChildTables()) {
@@ -45,12 +48,15 @@ public class MereFilleMetadataProvider {
     }
     public static HashMap<String, Object> getChildHashMap(ChildTableMetadata tableMetadata){
         HashMap<String, Object> metadata = new HashMap<>();
+        TableMetadata childTable = tableMetadata.getTable();
         metadata.put("className", tableMetadata.getTable().getClassName());
         metadata.put("isRequired", tableMetadata.isMandatory());
         metadata.put("hasForm", tableMetadata.isHasForm());
         metadata.put("parentName",  tableMetadata.getColumn().getName());
         metadata.put("parentColumnNameFiled", StringUtils.toCamelCase(tableMetadata.getColumn().getReferencedColumn()));
-        metadata.put("childPk", tableMetadata.getTable().getPrimaryColumn().getName());
+        metadata.put("childPk", getSimplePrimaryKeyName(childTable));
+        metadata.put("childPks", getPrimaryKeyNames(childTable));
+        metadata.put("hasCompositePrimaryKey", childTable.hasCompositePrimaryKey());
         metadata.putAll(FrameworkMetadataProvider.getTableMetadataHashMap(tableMetadata.getTable()));
         return metadata;
     }
@@ -62,5 +68,19 @@ public class MereFilleMetadataProvider {
         metadata.put("parentColumnNameFiled", StringUtils.toCamelCase(tableMetadata.getColumn().getReferencedColumn()));
         metadata.putAll(FrameworkMetadataProvider.getTableMetadataHashMap(tableMetadata.getTable()));
         return metadata;
+    }
+
+    private static String getSimplePrimaryKeyName(TableMetadata tableMetadata) {
+        if (tableMetadata == null || !tableMetadata.hasSimplePrimaryKey() || tableMetadata.getPrimaryColumn() == null) {
+            return null;
+        }
+        return tableMetadata.getPrimaryColumn().getName();
+    }
+
+    private static List<String> getPrimaryKeyNames(TableMetadata tableMetadata) {
+        if (tableMetadata == null || tableMetadata.getPrimaryColumns() == null) {
+            return List.of();
+        }
+        return tableMetadata.getPrimaryColumns().stream().map(ColumnMetadata::getName).toList();
     }
 }
