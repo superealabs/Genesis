@@ -13,6 +13,9 @@ import { FRONTEND_SERVICE_KEY } from '@genesis-labs/core/features/frontend/manif
 import { frameworkServiceVsc } from './features/frameworks/services/framework.service';
 import { frontendServiceVsc } from './features/frontend/services/frontend.service';
 
+import { GENERATOR_SERVICE_KEY } from '@genesis-labs/core/features/generator/manifest';
+import { generatorServiceVsc } from './features/generator/services/generator.service';
+
 console.log('[Main] Router importé:', router);  
 console.log('[Main] Routes:', router.getRoutes());
 
@@ -22,6 +25,7 @@ const pinia = createPinia();
 // ✅ 3. Fourniture de TOUS les services nécessaires au Core
 app.provide(FRAMEWORK_SERVICE_KEY, frameworkServiceVsc);
 app.provide(FRONTEND_SERVICE_KEY, frontendServiceVsc); // <-- C'était la ligne manquante !
+app.provide(GENERATOR_SERVICE_KEY, generatorServiceVsc);
 
 app
     .use(pinia)

@@ -28,6 +28,6 @@
     "src/**/*.tsx",
     "src/**/*.vue",
     "src/vite-env.d.ts"
-  ],
+, "../../../genesis-web-core/src/features/generator/composables/useGenerator.ts"  ],
   "exclude": ["node_modules", "dist"]
 }
