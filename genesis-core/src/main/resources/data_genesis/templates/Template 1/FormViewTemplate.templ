@@ -37,7 +37,8 @@ ${validationSection}
     </label>
 
     <select id="${this.columnNameField}" ${selectTagHelper}>
-        <option></option>
+        <option value=""></option>
+        ${foreignOptionsLoop}
     </select>
 
     <span ${selectValidationTagHelper}

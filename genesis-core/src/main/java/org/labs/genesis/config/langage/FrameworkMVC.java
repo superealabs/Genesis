@@ -201,6 +201,7 @@ public class FrameworkMVC extends Framework {
         private String viewAnnotations;
         private String viewEnd;
         private String includeTagHelper;
+        private String foreignOptionsLoop;
     }
 
     @Getter

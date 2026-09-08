@@ -1165,6 +1165,7 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> altMap = new HashMap<>(getAltViewCreateHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getForm().getViewAnnotations());
         altMap.put("viewEnd", frameworkMVC.getView().getForm().getViewEnd());
+        altMap.put("foreignOptionsLoop", frameworkMVC.getView().getForm().getForeignOptionsLoop());
         return altMap;
     }
 
