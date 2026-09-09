@@ -99,7 +99,7 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String templateContent = loadViewListTemplate(viewsTemplate);
 
-        HashMap<String, Object> metadataPrimary = getAltViewListHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewListHashMap(framework, tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
@@ -132,7 +132,7 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String templateContent = loadViewDetailsTemplate(viewsTemplate);
 
-        HashMap<String, Object> metadataPrimary = getAltViewDetailHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewDetailHashMap(framework, tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
@@ -199,7 +199,7 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String templateContent = loadViewEditTemplate(viewsTemplate);
 
-        HashMap<String, Object> metadataPrimary = getAltViewEditHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewEditHashMap(framework, tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);

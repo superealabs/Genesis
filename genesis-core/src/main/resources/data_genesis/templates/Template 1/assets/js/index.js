@@ -407,6 +407,16 @@ function setupModal(modalId, triggerSelector, inputId, textId) {
     document.querySelectorAll(triggerSelector).forEach(btn => {
         btn.addEventListener('click', function () {
             const value = this.getAttribute('data-id');
+            const compositeInputs = modal.querySelectorAll(
+                'input[type="hidden"][data-composite-pk]'
+            );
+            compositeInputs.forEach(hiddenInput => {
+                const fieldName = hiddenInput.name;
+                const pkValue = this.getAttribute('data-pk-' + fieldName.toLowerCase());
+                if (pkValue !== null) {
+                    hiddenInput.value = pkValue;
+                }
+            });
 
             if (textSpan) {
                 textSpan.textContent = value;

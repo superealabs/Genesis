@@ -94,9 +94,19 @@ ${additionalImports}
             </button>
             <form id="deleteForm" style="margin: 0;" method="post" ${deleteLink}>
                 ${antiForgeryTokenTagHelper}
-                {{#each fields}}{{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}
-                <input type="hidden" name="${this.name}" ${hiddenPkValue}/>{{/if}}{{else}}{{removeLine}}{{/if}}
-                {{/each}}{{removeLine}}
+                {{#if hasCompositePrimaryKey}}
+                {{#each fields}}{{#if this.isPrimaryKey = true}}{{#if this.isForeignKey = true}}
+                <input type="hidden" name="${this.name}" th:value="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}}" />
+                {{else}}<input type="hidden" name="${this.name}" ${hiddenPkValue} />
+                {{/if}}{{else}}{{removeLine}}{{/if}}
+                {{/each}}
+                {{else}}
+                {{#each fields}}{{#if this.isPrimaryKey = true}}
+                <input type="hidden" name="${this.name}" ${hiddenPkValue} />
+                {{else}}{{removeLine}}{{/if}}
+                {{/each}}
+                {{/if}}
+                {{removeLine}}
                 <button type="submit" class="btn btn-danger btn-sm">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">

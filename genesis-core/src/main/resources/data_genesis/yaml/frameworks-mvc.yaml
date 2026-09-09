@@ -4859,7 +4859,7 @@
       {{tab}}    model.addAttribute("${minStart(className)}Page", ${minStart(className)}Page);
       {{tab}}    model.addAttribute("${minStart(className)}Search", search);
       {{tab}}    {{#each fieldsFK}}
-      {{tab}}    model.addAttribute("${minStart(this.type)}s", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{tab}}    {{/each}}{{removeLine}}
       {{tab}}    model.addAttribute("currentPage", page);
       {{tab}}    model.addAttribute("pageSize", pageSize);
@@ -4894,7 +4894,7 @@
       {{tab}}public String showCreateForm(Model model) {
       {{tab}}    model.addAttribute("${minStart(className)}", new ${majStart(className)}());
       {{#each fieldsFK}}
-      {{tab}}    model.addAttribute("${minStart(this.type)}s",${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{/each}}
       {{tab}}    model.addAttribute("pageTitle", "Créer ${minStart(className)}");
       {{tab}}    return "${minStart(className)}/create";
@@ -4909,7 +4909,7 @@
       {{tab}}    if (bindingResult.hasErrors()) {
       {{tab}}        model.addAttribute("pageTitle", "Créer ${minStart(className)}");
       {{#each fieldsFK}}
-      {{tab}}        model.addAttribute("${minStart(this.type)}s",${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{/each}}
       {{tab}}        return "${minStart(className)}/create";
       {{tab}}    }
@@ -4929,7 +4929,7 @@
       {{tab}}            ${minStart(className)}Service.get${majStart(className)}ById(id);
       {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
       {{#each fieldsFK}}
-      {{tab}}    model.addAttribute("${minStart(this.type)}s",${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{/each}}
       {{tab}}    model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
       {{tab}}    return "${minStart(className)}/edit";
@@ -4941,6 +4941,9 @@
       {{tab}}        Model model) {
       {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
       {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
+      {{#each fieldsFK}}
+      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{/each}}
       {{tab}}    model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
       {{tab}}    return "${minStart(className)}/edit";
       {{tab}}}
@@ -4958,7 +4961,7 @@
       {{tab}}    if (bindingResult.hasErrors()) {
       {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
       {{#each fieldsFK}}
-      {{tab}}        model.addAttribute("${minStart(this.type)}s",${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{/each}}
       {{tab}}        return "${minStart(className)}/edit";
       {{tab}}    }
@@ -5121,7 +5124,7 @@
       filterTrueSelectedTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.name)} == true}\""
       filterFalseSelectedTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.name)} == false}\""
       foreignOptionsLoop: |
-        <option th:each="${minStart(this.type)} : $[thymeleafDollar]{${minStart(this.type)}s}"
+        <option th:each="${minStart(this.type)} : $[thymeleafDollar]{${minStart(this.type)}Options}"
                 th:value="$[thymeleafDollar]{${minStart(this.type)}.${minStart(this.referencedPrimaryKeyColumn)}}"
                 th:text="$[thymeleafDollar]{${minStart(this.type)}.${minStart(this.displayColumn)}}"
                 th:selected="$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.columnNameField)} == ${minStart(this.type)}.${minStart(this.referencedPrimaryKeyColumn)}}">
@@ -5179,13 +5182,14 @@
         </div>
       validationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
       selectValidationTagHelper: "th:errors=\"*{${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}}\""
-      inputTagHelper: "th:field=\"*{${minStart(this.name)}}\""
+      inputTagHelper: "name=\"${minStart(this.name)}\" th:field=\"*{${minStart(this.name)}}\""
       textAreaTagHelper: "th:field=\"*{${minStart(this.name)}}\""
       textAreaValidationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
       checkedRadioTagHelper: ""
       selectTagHelper: "th:field=\"*{${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}}\""
       createLink: "th:action=\"@{/${minStart(className)}/create}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
+      includeTagHelper: "th:replace=\"~{${minStart(className)}/_form :: fields(false)}\""
     edit:
       name: "edit"
       viewAnnotations: |
@@ -5205,24 +5209,25 @@
         </div>
       validationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
       selectValidationTagHelper: "th:errors=\"*{${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}}\""
-      inputTagHelper: "th:field=\"*{${minStart(this.name)}}\""
+      inputTagHelper: "name=\"${minStart(this.name)}\" th:field=\"*{${minStart(this.name)}}\""
       textAreaTagHelper: "th:field=\"*{${minStart(this.name)}}\""
       textAreaValidationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
       checkedRadioTagHelper: ""
       selectTagHelper: "th:field=\"*{${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}}\""
       updateLink: "th:action=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
+      includeTagHelper: "th:replace=\"~{${minStart(className)}/_form :: fields(true)}\""
     form:
       toGenerate: true
       name: "_form"
       viewAnnotations: |
         <div xmlns:th="[http://www.thymeleaf.org](http://www.thymeleaf.org)"
-             th:fragment="fields">
+             th:fragment="fields(isEdit)">
       viewEnd: |
         </div>
       includeTagHelper: "th:replace=\"~{${minStart(className)}/_form :: fields}\""
       foreignOptionsLoop: |
-        <option th:each="${minStart(this.type)} : $[thymeleafDollar]{${minStart(this.type)}s}"
+        <option th:each="${minStart(this.type)} : $[thymeleafDollar]{${minStart(this.type)}Options}"
                 th:value="$[thymeleafDollar]{${minStart(this.type)}.${minStart(this.referencedPrimaryKeyColumn)}}"
                 th:text="$[thymeleafDollar]{${minStart(this.type)}.${minStart(this.displayColumn)}}">
         </option>

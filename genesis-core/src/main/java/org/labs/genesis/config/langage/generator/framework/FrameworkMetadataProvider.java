@@ -978,7 +978,13 @@ public class FrameworkMetadataProvider {
                         .map(column -> {
                             Map<String, Object> field = new HashMap<>();
                             field.put("name", column.getName());
-                            field.put("type", column.isForeign() ? column.getReferencedColumnType() : column.getType());
+                            field.put("type", column.isForeign()
+                                            ? column.getReferencedColumnType()
+                                            : column.getType());
+                            field.put("isForeignKey", column.isForeign());
+                            field.put("referencedPrimaryKeyColumn", column.isForeign()
+                                            ? column.getReferencedPrimaryKeyColumn()
+                                            : "");
                             return field;
                         })
                         .toList()
@@ -1057,7 +1063,7 @@ public class FrameworkMetadataProvider {
         return altMap;
     }
 
-    public static HashMap<String, Object> getAltViewListHashMap (FrameworkMVC frameworkMVC) {
+    public static HashMap<String, Object> getAltViewListHashMap (FrameworkMVC frameworkMVC, TableMetadata tableMetadata) {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getList().getViewAnnotations());
         altMap.put("viewEnd", frameworkMVC.getView().getList().getViewEnd());
@@ -1108,10 +1114,16 @@ public class FrameworkMetadataProvider {
         altMap.put("filterFalseSelectedTagHelper", frameworkMVC.getView().getList().getFilterFalseSelectedTagHelper());
         altMap.put("foreignOptionsLoop", frameworkMVC.getView().getList().getForeignOptionsLoop());
         altMap.put("flashMessageSection", frameworkMVC.getView().getList().getFlashMessageSection());
+        if (tableMetadata != null && tableMetadata.hasCompositePrimaryKey()) {
+            System.out.println("Metadata" + tableMetadata);
+            altMap.put("detailsLink", buildCompositeDetailsLink(tableMetadata));
+            altMap.put("updateLink", buildCompositeUpdateLink(tableMetadata));
+            altMap.put("deleteDataTagHelper", buildCompositeDeleteDataTagHelper(tableMetadata));
+        }
         return altMap;
     }
 
-    public static HashMap<String, Object> getAltViewDetailHashMap (FrameworkMVC frameworkMVC) {
+    public static HashMap<String, Object> getAltViewDetailHashMap (FrameworkMVC frameworkMVC, TableMetadata tableMetadata) {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getDetail().getViewAnnotations());
         altMap.put("dataValue", frameworkMVC.getView().getDetail().getDataValue());
@@ -1124,6 +1136,10 @@ public class FrameworkMetadataProvider {
         altMap.put("viewEnd", frameworkMVC.getView().getDetail().getViewEnd());
         altMap.put("fileDataValue", frameworkMVC.getView().getDetail().getFileDataValue());
         altMap.put("hiddenPkValue", frameworkMVC.getView().getDetail().getHiddenPkValue());
+        if (tableMetadata != null && tableMetadata.hasCompositePrimaryKey()) {
+            altMap.put("updateLink", buildCompositeUpdateLink(tableMetadata));
+            altMap.put("deleteDataTagHelper", buildCompositeDeleteDataTagHelper(tableMetadata));
+        }
         return altMap;
     }
 
@@ -1141,10 +1157,11 @@ public class FrameworkMetadataProvider {
         altMap.put("createLink", frameworkMVC.getView().getCreate().getCreateLink());
         altMap.put("scriptSection", frameworkMVC.getView().getCreate().getScriptSection());
         altMap.put("viewEnd", frameworkMVC.getView().getCreate().getViewEnd());
+        altMap.put("includeTagHelper", frameworkMVC.getView().getCreate().getIncludeTagHelper());
         return altMap;
     }
 
-    public static HashMap<String, Object> getAltViewEditHashMap (FrameworkMVC frameworkMVC) {
+    public static HashMap<String, Object> getAltViewEditHashMap (FrameworkMVC frameworkMVC, TableMetadata tableMetadata) {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getEdit().getViewAnnotations());
         altMap.put("validationSection", frameworkMVC.getView().getEdit().getValidationSection());
@@ -1158,6 +1175,10 @@ public class FrameworkMetadataProvider {
         altMap.put("updateLink", frameworkMVC.getView().getEdit().getUpdateLink());
         altMap.put("scriptSection", frameworkMVC.getView().getEdit().getScriptSection());
         altMap.put("viewEnd", frameworkMVC.getView().getCreate().getViewEnd());
+        if (tableMetadata != null && tableMetadata.hasCompositePrimaryKey()) {
+            altMap.put("updateLink", buildCompositeEditFormLink(tableMetadata));
+        }
+        altMap.put("includeTagHelper", frameworkMVC.getView().getEdit().getIncludeTagHelper());
         return altMap;
     }
 
@@ -1177,5 +1198,67 @@ public class FrameworkMetadataProvider {
             return tableMetadata.getPrimaryColumn().getName();
         }
         return "";
+    }
+
+    private static String getCompositePropertyExpression(TableMetadata tableMetadata, ColumnMetadata column) {
+        String entityName = StringUtils.minStart(tableMetadata.getClassName());
+        String fieldName = StringUtils.minStart(column.getName());
+        if (column.isForeign()) {
+            String referencedPk = StringUtils.minStart(column.getReferencedPrimaryKeyColumn());
+            return "$[thymeleafDollar]{" + entityName + "." + fieldName + "." + referencedPk + "}";
+        }
+        return "$[thymeleafDollar]{" + entityName + "." + fieldName + "}";
+    }
+
+    private static String buildCompositeDetailsLink(TableMetadata tableMetadata) {
+        String entityName = StringUtils.minStart(tableMetadata.getClassName());
+        String path = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> "/{" + StringUtils.minStart(column.getName()) + "}")
+                .collect(Collectors.joining());
+        String params = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> {
+                    String name = StringUtils.minStart(column.getName());
+                    return name + "=" + getCompositePropertyExpression(tableMetadata, column);
+                })
+                .collect(Collectors.joining(","));
+        return "th:href=\"@{/" + entityName + path + "(" + params + ")}\"";
+    }
+
+    private static String buildCompositeUpdateLink(TableMetadata tableMetadata) {
+        String entityName = StringUtils.minStart(tableMetadata.getClassName());
+        String path = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> "/{" + StringUtils.minStart(column.getName()) + "}")
+                .collect(Collectors.joining());
+        String params = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> {
+                    String name = StringUtils.minStart(column.getName());
+                    return name + "=" + getCompositePropertyExpression(tableMetadata, column);
+                })
+                .collect(Collectors.joining(","));
+        return "th:href=\"@{/" + entityName + path + "/edit(" + params + ")}\"";
+    }
+
+    private static String buildCompositeEditFormLink(TableMetadata tableMetadata) {
+        String entityName = StringUtils.minStart(tableMetadata.getClassName());
+        String path = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> "/{" + StringUtils.minStart(column.getName()) + "}")
+                .collect(Collectors.joining());
+        String params = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> {String name = StringUtils.minStart(column.getName());
+                    return name + "=" + getCompositePropertyExpression(tableMetadata,column);
+                })
+                .collect(Collectors.joining(","));
+
+        return "th:action=\"@{/" + entityName + path + "/edit(" + params + ")}\" " + "th:object=\"$[thymeleafDollar]{" + entityName + "}\"";
+    }
+
+    private static String buildCompositeDeleteDataTagHelper(TableMetadata tableMetadata) {
+        String attributes = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> {
+                    String name = StringUtils.minStart(column.getName());
+                    return "data-pk-" + name.toLowerCase() + "=" + getCompositePropertyExpression(tableMetadata, column);
+                })
+                .collect(Collectors.joining(","));
+        return "th:attr=\"" + attributes + "\"";
     }
 }

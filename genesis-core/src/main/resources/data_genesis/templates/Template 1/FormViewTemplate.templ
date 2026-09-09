@@ -22,9 +22,18 @@ ${validationSection}
     {{elseIf this.type = file}}{{removeLine}}
     <input type="file" name="${majStart(this.name)}File" id="${majStart(this.name)}File">
 
-    {{else}}{{removeLine}}
-    <input type="${this.type}" ${inputTagHelper} placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>
-    {{/if}}{{removeLine}}
+    {{{else}}{{removeLine}}
+     {{#if this.isPrimaryKey = true}}
+     <div th:if="$[thymeleafDollar]{isEdit}">
+         <input type="${this.type}" ${inputTagHelper} readonly placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>
+     </div>
+     <div th:unless="$[thymeleafDollar]{isEdit}">
+         <input type="${this.type}" ${inputTagHelper} placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>
+     </div>
+     {{else}}
+     <input type="${this.type}" ${inputTagHelper} placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>
+     {{/if}}
+     {{/if}}{{removeLine}}
 
     <span ${validationTagHelper} class="field-validation-error"></span>
 </div>
@@ -36,10 +45,26 @@ ${validationSection}
         {{#if this.isRequired}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
     </label>
 
+    {{#if this.isPrimaryKey = true}}
+    <div th:if="$[thymeleafDollar]{isEdit}">
+        <select id="${this.columnNameField}" ${selectTagHelper} disabled>
+            <option value=""></option>
+            ${foreignOptionsLoop}
+        </select>
+        <input type="hidden" name="${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}" th:value="*{${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}}" />
+    </div>
+    <div th:unless="$[thymeleafDollar]{isEdit}">
+        <select id="${this.columnNameField}" ${selectTagHelper}>
+            <option value=""></option>
+            ${foreignOptionsLoop}
+        </select>
+    </div>
+    {{else}}
     <select id="${this.columnNameField}" ${selectTagHelper}>
         <option value=""></option>
         ${foreignOptionsLoop}
     </select>
+    {{/if}}
 
     <span ${selectValidationTagHelper}
           class="field-validation-error"></span>
