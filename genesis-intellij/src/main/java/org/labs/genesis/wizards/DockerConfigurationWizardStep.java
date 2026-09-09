@@ -2,6 +2,7 @@ package org.labs.genesis.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
+import org.labs.genesis.config.docker.DockerConf;
 import org.labs.genesis.config.tools.DockerConfiguration;
 import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.DockerConfigurationForm;
@@ -17,7 +18,7 @@ public class DockerConfigurationWizardStep extends ModuleWizardStep {
             GenerationContextManager generationContextManager
     ) {
         this.generationContextManager = generationContextManager;
-        this.form = new DockerConfigurationForm();
+        this.form = new DockerConfigurationForm(generationContextManager.getContext());
     }
 
     @Override
@@ -89,6 +90,11 @@ public class DockerConfigurationWizardStep extends ModuleWizardStep {
 
         if (frontendDockerized) {
 
+            DockerConf.Command frontendSelectedCommand =
+                    (DockerConf.Command) form.getCommandFrontend().getSelectedItem();
+
+            config.setFrontendSelectedCommand(frontendSelectedCommand);
+
             config.setFrontendContainer(
                     form.getFrontendContainerNameField()
                             .getText()
@@ -102,6 +108,11 @@ public class DockerConfigurationWizardStep extends ModuleWizardStep {
         // =========================================================
 
         if (backendDockerized) {
+
+            DockerConf.Command selectedCommand =
+                    (DockerConf.Command) form.getCommand().getSelectedItem();
+
+            config.setSelectedCommand(selectedCommand);
 
             config.setBackendContainer(
                     form.getBackendContainerNameField()

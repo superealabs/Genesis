@@ -727,7 +727,7 @@ public class ProjectGenerator {
 
         FilesEdit backendDockerFile = GitUtils.get(
                 framework.getConditionalFiles(), "DockerFile");
-        String backendDockerFileContent = engine.simpleRender(
+        String backendDockerFileContent = engine.render(
                 backendDockerFile != null ? backendDockerFile.getContent() : "", variables);
         Path backendDockerFilePath = Paths.get(backendPath, backendDockerFile != null ? backendDockerFile.getFileName() : "");
         Files.writeString(backendDockerFilePath, backendDockerFileContent);
@@ -736,7 +736,7 @@ public class ProjectGenerator {
             if(frontendFramework == null) return;
             FilesEdit frontendDockerFile = GitUtils.get(
                     frontendFramework.getConditionalFiles(), "DockerFile");
-            String frontendDockerFileContent = engine.simpleRender(
+            String frontendDockerFileContent = engine.render(
                     frontendDockerFile != null ? frontendDockerFile.getContent() : "", variables);
             Path frontendDockerFilePath = Paths.get(
                     frontendPath, frontendDockerFile.getFileName());

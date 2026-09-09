@@ -6,7 +6,7 @@
   <grid id="27dc6"
         binding="mainPanel"
         layout-manager="GridLayoutManager"
-        row-count="10"
+        row-count="12"
         column-count="4"
         same-size-horizontally="false"
         same-size-vertically="false"
@@ -205,6 +205,122 @@
 
 
       <!-- ===================================================== -->
+      <!-- BACKEND COMMAND -->
+      <!-- ===================================================== -->
+
+      <component id="backendCommandLabel"
+                 class="javax.swing.JLabel"
+                 binding="commandLabel">
+
+        <constraints>
+          <grid row="6"
+                column="0"
+                row-span="1"
+                col-span="1"
+                vsize-policy="0"
+                hsize-policy="0"
+                anchor="8"
+                fill="0"
+                indent="2"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Backend execution command:"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <component id="backendCommand"
+                 class="javax.swing.JComboBox"
+                 binding="command"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="6"
+                column="1"
+                row-span="1"
+                col-span="3"
+                vsize-policy="0"
+                hsize-policy="6"
+                anchor="8"
+                fill="1"
+                indent="0"
+                use-parent-layout="false">
+
+            <preferred-size width="250" height="-1"/>
+
+          </grid>
+        </constraints>
+
+        <properties>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- FRONTEND COMMAND -->
+      <!-- ===================================================== -->
+
+      <component id="frontendCommandLabel"
+                 class="javax.swing.JLabel"
+                 binding="commandFrontendLabel">
+
+        <constraints>
+          <grid row="7"
+                column="0"
+                row-span="1"
+                col-span="1"
+                vsize-policy="0"
+                hsize-policy="0"
+                anchor="8"
+                fill="0"
+                indent="2"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Frontend execution command:"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <component id="frontendCommand"
+                 class="javax.swing.JComboBox"
+                 binding="commandFrontend"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="7"
+                column="1"
+                row-span="1"
+                col-span="3"
+                vsize-policy="0"
+                hsize-policy="6"
+                anchor="8"
+                fill="1"
+                indent="0"
+                use-parent-layout="false">
+
+            <preferred-size width="250" height="-1"/>
+
+          </grid>
+        </constraints>
+
+        <properties>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
       <!-- FRONTEND CONTAINER -->
       <!-- ===================================================== -->
 
@@ -213,7 +329,7 @@
                  binding="frontendContainerNameLabel">
 
         <constraints>
-          <grid row="6"
+          <grid row="8"
                 column="0"
                 row-span="1"
                 col-span="1"
@@ -239,7 +355,7 @@
                  default-binding="true">
 
         <constraints>
-          <grid row="6"
+          <grid row="8"
                 column="1"
                 row-span="1"
                 col-span="3"
@@ -272,7 +388,7 @@
                  binding="backendContainerNameLabel">
 
         <constraints>
-          <grid row="7"
+          <grid row="9"
                 column="0"
                 row-span="1"
                 col-span="1"
@@ -298,7 +414,7 @@
                  default-binding="true">
 
         <constraints>
-          <grid row="7"
+          <grid row="9"
                 column="1"
                 row-span="1"
                 col-span="3"
@@ -329,7 +445,7 @@
       <vspacer id="spacer">
 
         <constraints>
-          <grid row="8"
+          <grid row="10"
                 column="0"
                 row-span="2"
                 col-span="4"

@@ -2,6 +2,7 @@ package org.labs.genesis.config.tools;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.labs.genesis.config.docker.DockerConf;
 
 @Getter
 @Setter
@@ -19,4 +20,7 @@ public class DockerConfiguration {
 
     private String langVersion;
 
+    private DockerConf.Command selectedCommand;
+
+    private DockerConf.Command frontendSelectedCommand;
 }

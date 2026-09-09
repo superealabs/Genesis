@@ -15,6 +15,20 @@
       - name: "ASPNETCORE_URLS"
         separator: "="
         value: "http://+:${backendPort}"
+    commands:
+      - command: "dotnet run"
+        build:
+          - "dotnet restore"
+        needVolume: true
+      - command: "dotnet watch run"
+        build:
+          - "dotnet restore"
+        needVolume: true
+      - command: "dotnet ./bin/Release/net${versionLanguage}/${projectName}.dll"
+        build:
+          - "dotnet restore"
+          - "dotnet publish -c Release -o ./bin/Release/net${versionLanguage}"
+        needVolume: false
   excludeProjectFilesEdits:
     - "SolutionFile"
     - "TestProjectFile"
@@ -52,19 +66,17 @@
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM mcr.microsoft.com/dotnet/sdk:8.0
-  
+        FROM mcr.microsoft.com/dotnet/sdk:${versionLanguage}
+
         WORKDIR /app
-        
-        COPY *.csproj ./
-        
-        RUN dotnet restore
-        
+
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
         EXPOSE ${backendPort}
-        
-        ENV ASPNETCORE_URLS=http://+:${backendPort}
-        
-        CMD ["dotnet", "watch", "run", "--no-launch-profile", "--urls", "http://0.0.0.0:${backendPort}"]
+
+        CMD [${command}]
       destinationPath: ""
 
   additionalFiles:
@@ -4957,6 +4969,15 @@
   docker:
     volumes: []
     environments: []
+    commands:
+      - command: "python manage.py runserver 0.0.0.0:${backendPort}"
+        build:
+          - "pip install -r requirements.txt"
+        needVolume: true
+      - command: "gunicorn ${projectName}.wsgi:application --bind 0.0.0.0:${backendPort}"
+        build:
+          - "pip install -r requirements.txt"
+        needVolume: false
   excludeProjectFilesEdits: []
   frontendPaths:
     faviconPath: "${destinationFolder}/${majStart(projectName)}/wwwroot"
@@ -5013,20 +5034,20 @@
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM python:${versionLanguage}-slim
-  
+        FROM python:${versionLanguage}
+
         WORKDIR /app
         
         ENV PYTHONDONTWRITEBYTECODE=1
         ENV PYTHONUNBUFFERED=1
-        
-        COPY requirements.txt .
-        
-        RUN pip install --no-cache-dir -r requirements.txt
-        
+
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
         EXPOSE ${backendPort}
-        
-        CMD ["python", "manage.py", "runserver", "0.0.0.0:${backendPort}"]
+
+        CMD [${command}]
       destinationPath: ""
   additionalFiles:
     - fileType: "settings"

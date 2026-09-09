@@ -11,6 +11,7 @@ public class DockerConf {
 
     private List<Volume> volumes;
     private List<Environment> environments;
+    private List<Command> commands;
 
     @Getter
     @Setter
@@ -44,11 +45,29 @@ public class DockerConf {
         }
     }
 
+    @Getter
+    @Setter
+    public static class Command {
+        private String command;
+        private List<String> build;
+        private List<String> args;
+        private boolean needVolume;
+        @Override
+        public String toString() {
+            return "Command{" +
+                    "command='" + command + '\'' +
+                    ", build='" + build + '\'' +
+                    ", args='" + args + '\'' +
+                    ", needVolume='" + needVolume + '\'' +
+                    '}';
+        }
+    }
+
     @Override
     public String toString() {
         return "DockerConfiguration{" +
                 "volumes=" + volumes +
                 ", environments=" + environments +
-                '}';
+                ", commands=" + commands + '}';
     }
 }

@@ -11,6 +11,16 @@
       - name: "angular_node_modules"
         dir: "/app/node_modules"
     environments: []
+    commands:
+      - command: "npm start"
+        args: [ "--", "--host", "0.0.0.0" ]
+        needVolume: true
+      - command: "ng serve"
+        args: [ "--", "--host", "0.0.0.0" ]
+        needVolume: true
+      - command: "npm run build"
+        args: [ ]
+        needVolume: false
   frontendPaths:
     faviconPath: "${destinationFolder}/src"
     logoPath: "${destinationFolder}/src/assets/icon"
@@ -86,7 +96,7 @@
                 }
 
 
-                onLogoError() {Docker
+                onLogoError() {
                   this.logoAvailable = false;
                 }
 
@@ -575,7 +585,7 @@
         
         EXPOSE ${frontendPort}
         
-        CMD ["npm", "start", "--", "--host", "0.0.0.0"]
+        CMD [${commandFrontend}]
 
   additionalFiles:
     - fileType: "Language file"
@@ -2004,6 +2014,31 @@
       - name: "vue_node_modules"
         dir: "/app/node_modules"
     environments: []
+    commands:
+      - command: "npm run dev"
+        args: [ "--", "--host", "0.0.0.0" ]
+        needVolume: true
+      - command: "vite"
+        args: [ "--host", "0.0.0.0" ]
+        needVolume: true
+      - command: "vite dev"
+        args: [ "--host", "0.0.0.0" ]
+        needVolume: true
+      - command: "vite serve"
+        args: [ "--host", "0.0.0.0" ]
+        needVolume: true
+      - command: "npm run build"
+        args: [ ]
+        needVolume: false
+      - command: "vite build"
+        args: [ ]
+        needVolume: false
+      - command: "npm run preview"
+        args: [ "--", "--host", "0.0.0.0" ]
+        needVolume: false
+      - command: "vite preview"
+        args: [ "--host", "0.0.0.0" ]
+        needVolume: false
   conditionalFiles:
     - fileType: "Git Ignore"
       fileName: ".gitignore"
@@ -2032,7 +2067,7 @@
         .DS_Store
         Thumbs.db
       destinationPath: ""
-    - fileType: "Docker"
+    - fileType: "Docker File"
       fileName: "Dockerfile"
       extension: ""
       content: |
@@ -2046,7 +2081,7 @@
         
         EXPOSE ${frontendPort}
         
-        CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+        CMD [${commandFrontend}]
       destinationPath: ""
 
   frontendPaths:
@@ -3246,6 +3281,7 @@
           return response
         }
 
+        export async function currentUser() {
         export async function currentUser() {
           const request = new RequestModel(BASE_URL + '/current')
           const response = await userApi.GET(request.buildRequestUrl([], false))
@@ -7513,6 +7549,33 @@
       - name: "react_node_modules"
         dir: "/app/node_modules"
     environments: []
+    commands:
+      - command: "npm run dev"
+        args: [ "--", "--host", "0.0.0.0" ]
+        needVolume: true
+
+      - command: "vite"
+        args: [ "--host", "0.0.0.0" ]
+        needVolume: true
+
+      - command: "vite dev"
+        args: [ "--host", "0.0.0.0" ]
+        needVolume: true
+      - command: "vite serve"
+        args: [ "--host", "0.0.0.0" ]
+        needVolume: true
+      - command: "npm run build"
+        args: [ ]
+        needVolume: false
+      - command: "vite build"
+        args: [ ]
+        needVolume: false
+      - command: "npm run preview"
+        args: [ "--", "--host", "0.0.0.0" ]
+        needVolume: false
+      - command: "vite preview"
+        args: [ "--host", "0.0.0.0" ]
+        needVolume: false
   conditionalFiles:
     - fileType: "Git Ignore"
       fileName: ".gitignore"
@@ -7554,7 +7617,7 @@
         
         EXPOSE ${frontendPort}
         
-        CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+        CMD [${commandFrontend}]
       destinationPath: ""
       
   frontendPaths:

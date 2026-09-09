@@ -9,13 +9,17 @@
           dockerfile: Dockerfile
         container_name: frontend
         ports:
-          - "${frontendPort}:${frontendPort}"
-        volumes:
-          - ./${frontendDir}:/app
-          {{#each frontendVolumes}}- ${this.name}:${this.dir}{{/each}}
-        {{#if hadFrontendEnvironments}}environment:{{#each frontendEnvironments}}
-          - ${this.name}${this.separator}${this.value}{{/each}}{{/if}}
-        depends_on:
+          - "${frontendPort}:${frontendPort}"{{/if}}
+        {{#if isFrontendDockerized and hasFrontendVolume}}volumes:{{/if}}
+          {{#if isFrontendDockerized and frontendNeedVolume}}- ./${frontendDir}:/app
+          {{/if}}{{#if isFrontendDockerized}}{{#each frontendVolumes}}
+          - ${this.name}:${this.dir}
+          {{/each}}{{removeLine}}
+        {{/if}}{{#if isFrontendDockerized and hasFrontendEnvironments}}environment:
+          {{#each frontendEnvironments}}
+          - ${this.name}${this.separator}${this.value}
+        {{/each}}{{removeLine}}
+        {{/if}}{{#if isFrontendDockerized and isBackendDockerized}}depends_on:
           - backend{{/if}}
       {{#if isBackendDockerized}}${backendContainer}:
         build:
@@ -23,15 +27,22 @@
           dockerfile: Dockerfile
         container_name: backend
         ports:
-          - "${backendPort}:${backendPort}"
-        volumes:
-          - ./${backendDir}:/app
-          {{#each volumes}}- ${this.name}:${this.dir}{{/each}}
-        {{#if hadEnvironments}}environment:{{#each environments}}
-          - ${this.name}${this.separator}${this.value}{{/each}}{{/if}}
-        extra_hosts:
+          - "${backendPort}:${backendPort}"{{/if}}
+        {{#if isBackendDockerized and backendHasVolume}}volumes:{{/if}}
+          {{#if isBackendDockerized and backendNeedVolume}}- ./${backendDir}:/app
+          {{/if}}{{#if isBackendDockerized}}{{#each backendVolumes}}
+          - ${this.name}:${this.dir}
+          {{/each}}{{removeLine}}
+        {{/if}}{{#if isBackendDockerized and hasBackendEnvironments}}environment:
+          {{#each backendEnvironments}}
+          - ${this.name}${this.separator}${this.value}
+          {{/each}}{{removeLine}}
+        {{/if}}{{#if isBackendDockerized}}extra_hosts:
           - "host.docker.internal:host-gateway"{{/if}}
-    {{#if hadVolumes}}volumes:{{/if}}
-      {{#if isBackendDockerized}}{{#each volumes}}${this.name}:{{/each}}{{/if}}
-      {{#if isFrontendDockerized}}{{#each frontendVolumes}}${this.name}:{{/each}}{{/if}}
+    {{#if hasVolumes}}volumes:{{/if}}
+      {{#if isBackendDockerized and hasVolumes}}{{#each backendVolumes}}
+      ${this.name}:
+      {{/each}}{{/if}}{{#if isFrontendDockerized and hasVolumes}}{{#each frontendVolumes}}
+      ${this.name}:
+      {{/each}}{{/if}}
   destinationPath: ""

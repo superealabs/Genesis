@@ -1,14 +1,15 @@
 package org.labs.utils;
 
+import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.docker.DockerConf;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.tools.DockerConfiguration;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DockerUtils {
     public static boolean isDockerAvailable() {
@@ -24,6 +25,27 @@ public class DockerUtils {
         }
     }
 
+    public static String formatCommand(String command, List<String> args) {
+        Stream<String> commandParts = Arrays.stream(command.split("\\s+"));
+        Stream<String> argParts = args != null
+                ? args.stream()
+                : Stream.empty();
+
+        return Stream.concat(commandParts, argParts)
+                .map(part -> "\"" + part + "\"")
+                .collect(Collectors.joining(", "));
+    }
+
+    public static int getDefaultVersion(Framework framework) {
+        if(framework == null)
+            return 0;
+        if(framework.getLanguageId() == Constantes.Java_ID)
+          return 21;
+        if(framework.getLanguageId() == Constantes.NET_ID)
+            return 8;
+        return 21;
+    }
+
     public static Map<String, Object> getVariables(
             ProjectGenerationContext context,
             DockerConfiguration config,
@@ -34,7 +56,7 @@ public class DockerUtils {
 
         String langVersion = String.valueOf(
                 context.getLanguageConfiguration()
-                        .getOrDefault("languageVersion", 21)
+                        .getOrDefault("languageVersion", getDefaultVersion(framework))
         );
 
         String backendPort = context.getProjectPort();
@@ -64,7 +86,33 @@ public class DockerUtils {
         List<DockerConf.Environment> frontendEnvironments =
                 getEnvironments(frontendDocker);
 
+        DockerConf.Command command = config.getSelectedCommand();
+        DockerConf.Command frontendCommand = config.getFrontendSelectedCommand();
+
         Map<String, Object> variables = new HashMap<>();
+        boolean needVolume = false;
+        boolean needFrontendVolume = false;
+
+        if(command != null) {
+            List<String> build = build = command.getBuild();
+            variables.put("command", formatCommand(command.getCommand(), command.getArgs()));
+            variables.put("build", build != null ? build : List.of());
+            needVolume = command.isNeedVolume();
+        }
+
+        if(frontendCommand != null) {
+            needFrontendVolume = frontendCommand.isNeedVolume();
+            variables.put("commandFrontend", formatCommand(frontendCommand.getCommand(), frontendCommand.getArgs()));
+        }
+
+        variables.put("frontendNeedVolume", needFrontendVolume);
+        variables.put("backendNeedVolume", needVolume);
+
+
+        variables.put("hasFrontendVolume", needFrontendVolume
+                || (!frontendVolumes.isEmpty() && isFrontendDockerized));
+        variables.put("backendHasVolume", needVolume
+                || (!volumes.isEmpty() && isBackendDockerized));
 
         variables.put("projectName", context.getProjectName());
         variables.put("destinationFolder", context.getDestinationFolder());
@@ -76,13 +124,13 @@ public class DockerUtils {
         variables.put("backendDir", StringUtils.majStart(context.getProjectName()));
         variables.put( "frontendDir", StringUtils.majStart(context.getProjectName())
                 + StringUtils.majStart(context.getWebappFolder()));
-        variables.put("hadFrontendEnvironments", !frontendEnvironments.isEmpty());
-        variables.put("hadEnvironments", !environments.isEmpty());
-        variables.put("volumes", toVolumeMaps(volumes));
+        variables.put("hasFrontendEnvironments", !frontendEnvironments.isEmpty());
+        variables.put("hasBackendEnvironments", !environments.isEmpty());
+        variables.put("backendVolumes", toVolumeMaps(volumes));
         variables.put("frontendVolumes", toVolumeMaps(frontendVolumes));
-        variables.put("hadVolumes", (!volumes.isEmpty() && isBackendDockerized)
+        variables.put("hasVolumes", (!volumes.isEmpty() && isBackendDockerized)
                 || (!frontendVolumes.isEmpty() && isFrontendDockerized));
-        variables.put("environments", toEnvironmentMaps(environments));
+        variables.put("backendEnvironments", toEnvironmentMaps(environments));
         variables.put("frontendEnvironments", toEnvironmentMaps(frontendEnvironments));
         variables.put("isBackendDockerized", isBackendDockerized);
         variables.put("isFrontendDockerized", isFrontendDockerized);

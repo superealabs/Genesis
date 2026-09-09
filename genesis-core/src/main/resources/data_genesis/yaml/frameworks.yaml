@@ -13,7 +13,24 @@
     volumes:
       - name: "maven_cache"
         dir: "/root/.m2"
+      - name: "spring_boot_gradle_cache"
+        dir: "/root/.gradle"
     environments: []
+    commands:
+      - command: "./mvnw spring-boot:run"
+        build:
+          - "mvn dependency:go-offline"
+          - "chmod +x mvnw"
+        needVolume: false
+      - command: "mvn spring-boot:run"
+        build:
+          - "mvn dependency:go-offline"
+        needVolume: true
+      - command: "java -jar build/libs/app.jar"
+        build:
+          - "mvn dependency:go-offline"
+          - "mvn package -DskipTests"
+        needVolume: false
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -49,7 +66,7 @@
         Thumbs.db
       destinationPath: ""
 
-    - fileType: "Docker"
+    - fileType: "Docker File"
       fileName: "Dockerfile"
       extension: ""
       content: |
@@ -57,13 +74,13 @@
 
         WORKDIR /app
         
-        COPY pom.xml .
+        COPY . .
         
-        RUN mvn dependency:go-offline
-        
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}        
         EXPOSE ${backendPort}
         
-        CMD ["mvn", "spring-boot:run"]
+        CMD [${command}]
       destinationPath: ""
   additionalFiles:
     - fileType: "MainFile"
@@ -2787,6 +2804,20 @@
       - name: "ASPNETCORE_URLS"
         separator: "="
         value: "http://+:${backendPort}"
+    commands:
+      - command: "dotnet run"
+        build:
+          - "dotnet restore"
+        needVolume: true
+      - command: "dotnet watch run"
+        build:
+          - "dotnet restore"
+        needVolume: true
+      - command: "dotnet MyApi.dll"
+        build:
+          - "dotnet restore"
+          - "dotnet publish -c Release -o /app/publish"
+        needVolume: false
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -2825,19 +2856,19 @@
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM mcr.microsoft.com/dotnet/sdk:8.0
-  
+        FROM mcr.microsoft.com/dotnet/sdk:${versionLanguage}
+
         WORKDIR /app
-        
-        COPY *.csproj ./
-        
-        RUN dotnet restore
-        
+
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
         EXPOSE ${backendPort}
         
         ENV ASPNETCORE_URLS=http://+:${backendPort}
         
-        CMD ["dotnet", "watch", "run", "--no-launch-profile", "--urls", "http://0.0.0.0:${backendPort}"]
+        CMD [${command}]
       destinationPath: ""
 
   additionalFiles:
@@ -6402,6 +6433,21 @@
       - name: "maven_cache"
         dir: "/root/.m2"
     environments: []
+    commands:
+      - command: "./mvnw spring-boot:run"
+        build:
+          - "mvn dependency:go-offline"
+          - "chmod +x mvnw"
+        needVolume: false
+      - command: "mvn spring-boot:run"
+        build:
+          - "mvn dependency:go-offline"
+        needVolume: true
+      - command: "java -jar target/app.jar"
+        build:
+          - "mvn dependency:go-offline"
+          - "mvn package -DskipTests"
+        needVolume: false
   useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
@@ -6443,16 +6489,16 @@
       extension: ""
       content: |
         FROM maven:3.9-eclipse-temurin-${versionLanguage}
-  
+
         WORKDIR /app
-        
-        COPY pom.xml .
-        
-        RUN mvn dependency:go-offline
-        
+
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
         EXPOSE ${backendPort}
-        
-        CMD ["mvn", "spring-boot:run"]
+
+        CMD [${command}]
       destinationPath: ""
   additionalFiles:
     - fileType: "MainFile"
@@ -6604,6 +6650,21 @@
       - name: "maven_cache"
         dir: "/root/.m2"
     environments: []
+    commands:
+      - command: "./mvnw spring-boot:run"
+        build:
+          - "mvn dependency:go-offline"
+          - "chmod +x mvnw"
+        needVolume: false
+      - command: "mvn spring-boot:run"
+        build:
+          - "mvn dependency:go-offline"
+        needVolume: true
+      - command: "java -jar target/app.jar"
+        build:
+          - "mvn dependency:go-offline"
+          - "mvn package -DskipTests"
+        needVolume: false
   useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
@@ -6645,16 +6706,16 @@
       extension: ""
       content: |
         FROM maven:3.9-eclipse-temurin-${versionLanguage}
-  
+
         WORKDIR /app
-        
-        COPY pom.xml .
-        
-        RUN mvn dependency:go-offline
-        
+
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
         EXPOSE ${backendPort}
-        
-        CMD ["mvn", "spring-boot:run"]
+
+        CMD [${command}]
       destinationPath: ""
 
   additionalFiles:
@@ -6940,6 +7001,20 @@
       - name: "nestjs_node_modules"
         dir: "/app/node_modules"
     environments: []
+    commands:
+      - command: "npm run start:dev"
+        build:
+          - "npm install"
+        needVolume: true
+      - command: "npm run start"
+        build:
+          - "npm install"
+        needVolume: true
+      - command: "node dist/main.js"
+        build:
+          - "npm install"
+          - "npm run build"
+        needVolume: false
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -6973,17 +7048,17 @@
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM node:${versionNode}-alpine
-  
+        FROM node:${versionNode}
+
         WORKDIR /app
-        
-        COPY package*.json ./
-        
-        RUN npm ci
-        
+
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
         EXPOSE ${backendPort}
-        
-        CMD ["npm", "run", "start:dev"]
+
+        CMD [${command}]
       destinationPath: ""
 
   additionalFiles:
@@ -8712,6 +8787,15 @@
   docker:
     volumes: []
     environments: []
+    commands:
+      - command: "python manage.py runserver"
+        build:
+          - "pip install -r requirements.txt"
+        needVolume: true
+      - command: "gunicorn ${projectName}.wsgi:application"
+        build:
+          - "pip install -r requirements.txt"
+        needVolume: false
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -8777,20 +8861,20 @@
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM python:${versionLanguage}-slim
-  
+        FROM python:${versionLanguage}
+
         WORKDIR /app
         
         ENV PYTHONDONTWRITEBYTECODE=1
         ENV PYTHONUNBUFFERED=1
-        
-        COPY requirements.txt .
-        
-        RUN pip install --no-cache-dir -r requirements.txt
-        
+
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
         EXPOSE ${backendPort}
-        
-        CMD ["python", "manage.py", "runserver", "0.0.0.0:${backendPort}"]
+
+        CMD [${command}]
       destinationPath: ""
 
   additionalFiles:

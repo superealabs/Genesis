@@ -5,16 +5,23 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.docker.DockerConf;
 import org.labs.utils.DockerInstallerUtils;
 import org.labs.utils.DockerUtils;
 import org.labs.utils.EnvironmentUtils;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.util.List;
 
 @Getter
 public class DockerConfigurationForm {
 
     private JPanel mainPanel;
+    private final ProjectGenerationContext context;
 
     private JCheckBox configureDockerCheckBox;
 
@@ -24,14 +31,22 @@ public class DockerConfigurationForm {
     private JRadioButton dockerBackendRadioButton;
     private JRadioButton dockerBothRadioButton;
 
+    private JLabel commandLabel;
+    private JLabel commandFrontendLabel;
+    private JComboBox<DockerConf.Command> command;
+    private JComboBox<DockerConf.Command> commandFrontend;
+
     private JLabel frontendContainerNameLabel;
     private JTextField frontendContainerNameField;
 
     private JLabel backendContainerNameLabel;
     private JTextField backendContainerNameField;
+    private boolean initCombo = false;
 
 
-    public DockerConfigurationForm() {
+    public DockerConfigurationForm(ProjectGenerationContext context) {
+
+        this.context = context;
 
         // ---------------------------------------------------------
         // Docker mode
@@ -50,7 +65,13 @@ public class DockerConfigurationForm {
 
         configureDockerCheckBox.addActionListener(e -> {
             refreshVisibility();
-            if(configureDockerCheckBox.isSelected()) checkDocker();
+            if(configureDockerCheckBox.isSelected()) {
+                if(!initCombo) {
+                    configureCommands();
+                    initCombo = true;
+                }
+                checkDocker();
+            }
         });
 
         dockerFrontendRadioButton.addActionListener(e ->
@@ -84,6 +105,74 @@ public class DockerConfigurationForm {
         // ---------------------------------------------------------
 
         refreshVisibility();
+    }
+
+    private void configureCommands(List<DockerConf.Command> commands,
+                                   JComboBox<DockerConf.Command> command) {
+        if (commands == null || commands.isEmpty()) {
+            command.setEnabled(false);
+            return;
+        }
+
+        for (DockerConf.Command dockerCommand : commands) {
+
+            if (dockerCommand != null) {
+                command.addItem(dockerCommand);
+            }
+        }
+
+        command.setEnabled(command.getItemCount() > 0);
+
+        if (command.getItemCount() > 0) {
+            command.setSelectedIndex(0);
+        }
+
+        command.setRenderer(new DefaultListCellRenderer() {
+
+            @Override
+            public Component getListCellRendererComponent(
+                    JList<?> list,
+                    Object value,
+                    int index,
+                    boolean isSelected,
+                    boolean cellHasFocus
+            ) {
+
+                super.getListCellRendererComponent(
+                        list,
+                        value,
+                        index,
+                        isSelected,
+                        cellHasFocus
+                );
+
+                if (value instanceof DockerConf.Command dockerCommand) {
+                    setText(dockerCommand.getCommand());
+                }
+
+                return this;
+            }
+        });
+    }
+
+    private void configureCommands() {
+
+        if(context == null) return;
+
+        command.removeAllItems();
+        commandFrontend.removeAllItems();
+
+        if (context.getFramework() != null && context.getFramework().getDocker() != null) {
+            List<DockerConf.Command> commands = context.getFramework().getDocker().getCommands();
+
+            configureCommands(commands, command);
+        }
+
+        if (context.getFrontendFramework() != null && context.getFrontendFramework().getDocker() != null) {
+            List<DockerConf.Command> commandsFrontend = context.getFrontendFramework().getDocker().getCommands();
+
+            configureCommands(commandsFrontend, commandFrontend);
+        }
     }
 
     private void checkDocker() {
@@ -236,9 +325,7 @@ public class DockerConfigurationForm {
 
     private void refreshVisibility() {
 
-        boolean useDocker =
-                configureDockerCheckBox.isSelected();
-
+        boolean useDocker = configureDockerCheckBox.isSelected();
 
         // =========================================================
         // DOCKER GENERATION MODE
@@ -247,9 +334,7 @@ public class DockerConfigurationForm {
         dockerGenerationModeLabel.setVisible(useDocker);
 
         dockerFrontendRadioButton.setVisible(useDocker);
-
         dockerBackendRadioButton.setVisible(useDocker);
-
         dockerBothRadioButton.setVisible(useDocker);
 
 
@@ -273,29 +358,30 @@ public class DockerConfigurationForm {
 
 
         // =========================================================
+        // COMMANDS
+        // =========================================================
+
+        commandFrontendLabel.setVisible(frontendDockerized);
+        commandFrontend.setVisible(frontendDockerized);
+
+        commandLabel.setVisible(backendDockerized);
+        command.setVisible(backendDockerized);
+
+
+        // =========================================================
         // FRONTEND CONTAINER
         // =========================================================
 
-        frontendContainerNameLabel.setVisible(
-                frontendDockerized
-        );
-
-        frontendContainerNameField.setVisible(
-                frontendDockerized
-        );
+        frontendContainerNameLabel.setVisible(frontendDockerized);
+        frontendContainerNameField.setVisible(frontendDockerized);
 
 
         // =========================================================
         // BACKEND CONTAINER
         // =========================================================
 
-        backendContainerNameLabel.setVisible(
-                backendDockerized
-        );
-
-        backendContainerNameField.setVisible(
-                backendDockerized
-        );
+        backendContainerNameLabel.setVisible(backendDockerized);
+        backendContainerNameField.setVisible(backendDockerized);
 
 
         // =========================================================
