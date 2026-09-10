@@ -338,16 +338,9 @@ public class FrameworkMetadataProvider {
             if (field.isForeign()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field);
                 addForeignKeyDisplayColumn(fieldMap, field, tableMetadata);
-                String fieldType = field.getType();
-
-                boolean exists = fieldsFK.stream()
-                        .anyMatch(existing -> fieldType.equals(existing.get("type")));
-
-                if (!exists) {
-                    // Ajouter les données des options FK pour le template
-                    addForeignKeyOptions(fieldMap, field);
-                    fieldsFK.add(fieldMap);
-                }
+                // Ajouter les données des options FK pour le template
+                addForeignKeyOptions(fieldMap, field);
+                fieldsFK.add(fieldMap);
             }
         }
         return fieldsFK;
@@ -571,15 +564,7 @@ public class FrameworkMetadataProvider {
             if (field.isForeign()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field, language,tableMetadata.getDatabase().getId());
                 addForeignKeyDisplayColumn(fieldMap, field, tableMetadata);
-
-                String fieldType = field.getType();
-
-                boolean exists = fieldsFK.stream()
-                        .anyMatch(existing -> fieldType.equals(existing.get("type")));
-
-                if (!exists) {
-                    fieldsFK.add(fieldMap);
-                }
+                fieldsFK.add(fieldMap);
             }
         }
         return fieldsFK;
