@@ -171,7 +171,6 @@ public class FrameworkMVC extends Framework {
         private String createLink;
         private String scriptSection;
         private String viewEnd;
-        private String includeTagHelper;
     }
 
     @Getter
@@ -191,7 +190,6 @@ public class FrameworkMVC extends Framework {
         private String updateLink;
         private String scriptSection;
         private String viewEnd;
-        private String includeTagHelper;
     }
 
     @Getter

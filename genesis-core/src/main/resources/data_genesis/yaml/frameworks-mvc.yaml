@@ -5189,7 +5189,6 @@
       selectTagHelper: "th:field=\"*{${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}}\""
       createLink: "th:action=\"@{/${minStart(className)}/create}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
-      includeTagHelper: "th:replace=\"~{${minStart(className)}/_form :: fields(false)}\""
     edit:
       name: "edit"
       viewAnnotations: |
@@ -5216,7 +5215,6 @@
       selectTagHelper: "th:field=\"*{${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}}\""
       updateLink: "th:action=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
-      includeTagHelper: "th:replace=\"~{${minStart(className)}/_form :: fields(true)}\""
     form:
       toGenerate: true
       name: "_form"
@@ -5225,7 +5223,6 @@
              th:fragment="fields(isEdit)">
       viewEnd: |
         </div>
-      includeTagHelper: "th:replace=\"~{${minStart(className)}/_form :: fields}\""
       foreignOptionsLoop: |
         <option th:each="${minStart(this.type)} : $[thymeleafDollar]{${minStart(this.type)}Options}"
                 th:value="$[thymeleafDollar]{${minStart(this.type)}.${minStart(this.referencedPrimaryKeyColumn)}}"

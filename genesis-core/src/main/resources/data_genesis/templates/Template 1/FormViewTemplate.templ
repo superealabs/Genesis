@@ -22,7 +22,7 @@ ${validationSection}
     {{elseIf this.type = file}}{{removeLine}}
     <input type="file" name="${majStart(this.name)}File" id="${majStart(this.name)}File">
 
-    {{{else}}{{removeLine}}
+    {{else}}{{removeLine}}
      {{#if this.isPrimaryKey = true}}
      <div th:if="$[thymeleafDollar]{isEdit}">
          <input type="${this.type}" ${inputTagHelper} readonly placeholder="${this.placeholder}" {{#each this.validations}}${this} {{/each}}>

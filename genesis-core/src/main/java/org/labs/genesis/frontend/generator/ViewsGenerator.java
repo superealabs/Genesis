@@ -166,7 +166,7 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String templateContent = loadViewCreateTemplate(viewsTemplate);
 
-        HashMap<String, Object> metadataPrimary = getAltViewCreateHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewCreateHashMap(framework,tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
@@ -229,7 +229,7 @@ public class ViewsGenerator implements IViewsGenerator {
             String groupLink) throws Exception {
 
         String templateContent = loadViewFormTemplate(viewsTemplate);
-        HashMap<String, Object> metadataPrimary = getAltViewFormHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewFormHashMap(framework, tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
 
