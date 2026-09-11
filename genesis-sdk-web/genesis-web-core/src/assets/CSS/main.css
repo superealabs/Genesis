@@ -245,7 +245,14 @@ body.is-resizing * {
    PERSONNALISATION DES SCROLLBARS (Style VS Code / Dark)
    ═══════════════════════════════════════════════════════════ */
 
+body, html {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
 /* 1. Pour Firefox */
+
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-secondary, #374151) transparent;

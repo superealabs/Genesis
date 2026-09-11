@@ -81,11 +81,17 @@ const props = withDefaults(defineProps<{
     height?: string;
     autoPlay?: boolean;
     interval?: number;
+    currentSlide?: number;
 }>(), {
     height: '200px',
     autoPlay: true,
-    interval: 4000
+    interval: 4000,
+    currentSlide: 0
 });
+
+const emit = defineEmits<{
+    'update:currentSlide': [value: number] // Émission du changement
+}>();
 
 const currentSlide = ref(0);
 let autoPlayInterval: ReturnType<typeof setInterval> | null = null;
