@@ -1,3 +1,19 @@
+- Core
+
+    - création des classes
+    - unification des types entre extension host et webview
+    - components
+        - layout
+            - régler le problème de l'affichage des bages en mode line
+            - corriger l'animation de sortie des disclosures(slide topToBottom)
+
+        - ui
+            - créer un input pour les select trop long (headless UI)
+            - créer un input checkbox(two-state)(yes, no)
+            - créer un input checkbox(three-state)(both, include, not include)
+    - CSS
+        - corriger les couleurs pour correspondre à la charte graphique
+
 - Generator
     - configuration du script
         - corriger le bouton du mode éditeur
@@ -10,17 +26,3 @@
     - modifier l'interface si filtre avancé
         - inclure, ne pas inclure
     - faire marcher la fonctionnalité de comparaison
-
-- Core
-
-    - création des classes
-    - unification des types entre extension host et webview
-    - components
-        - layout
-            - régler le problème de l'affichage des bages en mode line
-            - corriger l'animation de sortie des disclosures(slide topToBottom)
-
-        - ui
-            - créer un input pour les select trop long (headless UI)
-    - CSS
-        - corriger les couleurs pour correspondre à la charte graphique

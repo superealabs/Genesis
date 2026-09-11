@@ -13,7 +13,8 @@ module.exports = {
         vscode: 'commonjs vscode'
     },
     resolve: {
-        extensions: ['.ts', '.js']
+        extensions: ['.ts', '.js'],
+        modules: ['node_modules', path.resolve(__dirname, '../genesis-web-types-shared/dist')]
     },
     module: {
         rules: [
