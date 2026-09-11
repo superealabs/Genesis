@@ -1,0 +1,99 @@
+{
+  "name": "genesis",
+  "displayName": "genesis",
+  "description": "Genesis Extension",
+  "version": "0.0.1",
+  "workspaces": [
+    "packages/webview"
+  ],
+  "engines": {
+    "vscode": "^1.125.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "genesis.helloWorld",
+        "title": "Hello World"
+      }
+    ],
+    "configuration": {
+      "title": "Genesis",
+      "properties": {
+        "genesis.theme": {
+          "type": "string",
+          "default": "genesis",
+          "enum": [
+            "genesis",
+            "vscode",
+            "mono"
+          ],
+          "enumDescriptions": [
+            "Thème Genesis (défaut)",
+            "Suit le thème VS Code",
+            "Monochrome noir et blanc"
+          ],
+          "description": "Thème de l'interface Genesis"
+        },
+        "genesis.colorMode": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "light",
+            "dark"
+          ],
+          "enumDescriptions": [
+            "Suit automatiquement VS Code",
+            "Forcer le mode clair",
+            "Forcer le mode sombre"
+          ],
+          "description": "Mode de couleur de l'interface Genesis"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run build:webview && webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "build:webview": "cd packages/webview && npm run build",
+    "watch:webview": "cd packages/webview && npm run dev -- --watch",
+    "dev": "concurrently \"npm run watch:webview\" \"npm run watch\""
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "24.x",
+    "@types/vscode": "^1.125.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.0.0",
+    "@vue/tsconfig": "^0.9.1",
+    "concurrently": "^8.2.2",
+    "eslint": "^10.5.0",
+    "ts-loader": "^9.6.2",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.61.1",
+    "webpack": "^5.107.2",
+    "webpack-cli": "^7.0.3"
+  },
+  "overrides": {
+    "diff": "^8.0.4",
+    "serialize-javascript": "^7.0.6"
+  },
+  "dependencies": {
+    "axios": "^1.19.0",
+    "@genesis-labs/shared-types": "file:../genesis-web-shared-types"
+  }
+}

@@ -1,0 +1,1 @@
+- possibilité de mettre que uniquement l'icône
