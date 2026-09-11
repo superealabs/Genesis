@@ -1,0 +1,282 @@
+@import 'tailwindcss';
+
+/* ═══════════════════════════════════════════════════════════
+   FONTS — Polices variables
+   ═══════════════════════════════════════════════════════════ */
+
+@font-face {
+    font-family: 'Chillax';
+    src: url('../FONTS/Chillax/Chillax-Variable.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Outfit';
+    src: url('../FONTS/Outfit/Outfit-Variable.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('../FONTS/Poppins/Poppins-Variable.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NIVEAU 1 — THÈME GENESIS
+   ═══════════════════════════════════════════════════════════ */
+
+@theme {
+    --color-bg-light:    hsl(145, 100%, 96%);
+    --color-bg:          hsl(145, 100%, 94%); /* */
+    --color-bg-dark:     hsl(145, 100%, 92%); /* for background only */
+
+    --color-text:        hsl(160, 100%, 40%);
+    --color-text-muted:  hsl(175, 100%, 15%);
+
+    --color-accent:      hsl(145, 100%, 44%);
+    --color-secondary:   hsl(160, 100%, 40%);
+
+    --color-hover-ghost: rgba(0, 0, 0, 0.05);
+
+    /* ═══ FONTS ═══ */
+    --font-display: 'Chillax', system-ui, sans-serif;    /* H1 */
+    --font-heading: 'Outfit', system-ui, sans-serif;     /* H2, H3, H4 */
+    --font-ui:      'Outfit', system-ui, sans-serif;     /* Éléments UI */
+    --font-body:    'Poppins', system-ui, sans-serif;    /* Texte courant */
+    --font-sans:    'Outfit', system-ui, sans-serif;     /* Défaut global */
+    --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NIVEAU 1 — THÈME GENESIS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Genesis SOMBRE (auto ET forcé) */
+body.theme-genesis.vscode-dark,
+body.theme-genesis.genesis-dark {
+    --color-bg-light:    hsl(175, 100%, 8%);
+    --color-bg:          hsl(175, 100%, 6%);
+    --color-bg-dark:     hsl(175, 100%, 4%);
+
+    --color-text:        hsl(145, 100%, 94%);
+    --color-text-muted:  hsl(145, 100%, 88%);
+
+    --color-accent:      hsl(145, 100%, 44%);
+    --color-secondary:   hsl(175, 100%, 10%);
+
+    --color-hover-ghost: rgba(255, 255, 255, 0.1);
+}
+
+/* Genesis CLAIR (auto ET forcé) */
+body.theme-genesis.vscode-light,
+body.theme-genesis.genesis-light {
+    --color-bg-light:    hsl(145, 100%, 92%);
+    --color-bg:          hsl(145, 100%, 94%);
+    --color-bg-dark:     hsl(145, 100%, 98%);
+
+    --color-text:        hsl(175, 100%, 4%);
+    --color-text-muted:  hsl(175, 100%, 15%);
+
+    --color-accent:      hsl(145, 100%, 44%);
+    --color-secondary:   hsl(160, 100%, 40%);
+
+    --color-hover-ghost: rgba(0, 0, 0, 0.05);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   NIVEAU 2 — THÈME VSCODE
+   ═══════════════════════════════════════════════════════════ */
+
+/* VS Code Auto : accent = bouton VS Code natif */
+body.theme-vscode {
+    --color-bg-light:    var(--vscode-sideBar-background);
+    --color-bg:          var(--vscode-editor-background);
+    --color-bg-dark:     var(--vscode-statusBar-background);
+
+    --color-text:        var(--vscode-editor-foreground);
+    --color-text-muted:  var(--vscode-descriptionForeground);
+
+    --color-accent:      var(--vscode-button-background);
+    --color-secondary:   var(--vscode-button-secondaryBackground, var(--vscode-sideBar-background));
+
+    --color-hover-ghost: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.15));
+}
+
+/* VS Code + forçage compatible : mêmes variables */
+body.theme-vscode.vscode-dark.genesis-dark,
+body.theme-vscode.vscode-light.genesis-light {
+    --color-bg-light:    var(--vscode-sideBar-background);
+    --color-bg:          var(--vscode-editor-background);
+    --color-bg-dark:     var(--vscode-statusBar-background);
+
+    --color-text:        var(--vscode-editor-foreground);
+    --color-text-muted:  var(--vscode-descriptionForeground);
+
+    --color-accent:      var(--vscode-button-background);
+    --color-secondary:   var(--vscode-button-secondaryBackground, var(--vscode-sideBar-background));
+
+    --color-hover-ghost: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.15));
+}
+
+/* VS Code + forçage CONTRADICTOIRE */
+body.theme-vscode.vscode-dark.genesis-light {
+    --color-bg-light:    hsl(0, 0%, 98%);
+    --color-bg:          hsl(0, 0%, 95%);
+    --color-bg-dark:     hsl(0, 0%, 90%);
+
+    --color-text:        hsl(0, 0%, 10%);
+    --color-text-muted:  hsl(0, 0%, 40%);
+
+    --color-accent:      var(--vscode-button-background);
+    --color-secondary:   var(--vscode-button-secondaryBackground, var(--vscode-sideBar-background));
+
+    --color-hover-ghost: rgba(0, 0, 0, 0.05);
+}
+
+body.theme-vscode.vscode-light.genesis-dark {
+    --color-bg-light:    hsl(0, 0%, 15%);
+    --color-bg:          hsl(0, 0%, 10%);
+    --color-bg-dark:     hsl(0, 0%, 5%);
+
+    --color-text:        hsl(0, 0%, 95%);
+    --color-text-muted:  hsl(0, 0%, 65%);
+
+    --color-accent:      var(--vscode-button-background);
+    --color-secondary:   var(--vscode-button-secondaryBackground, var(--vscode-sideBar-background));
+
+    --color-hover-ghost: rgba(255, 255, 255, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NIVEAU 3 — THÈME MONOCHROME
+   ═══════════════════════════════════════════════════════════ */
+
+/* Mono SOMBRE (auto ET forcé) */
+body.theme-mono.vscode-dark,
+body.theme-mono.genesis-dark {
+    --color-bg-light:    hsl(0, 0%, 15%);
+    --color-bg:          hsl(0, 0%, 10%);
+    --color-bg-dark:     hsl(0, 0%, 5%);
+
+    --color-text:        hsl(0, 0%, 100%);
+    --color-text-muted:  hsl(0, 0%, 70%);
+
+    --color-accent:      hsl(0, 0%, 100%);
+    --color-secondary:   hsl(0, 0%, 50%);
+
+    --color-hover-ghost: rgba(255, 255, 255, 0.1);
+}
+
+/* Mono CLAIR (auto ET forcé) */
+body.theme-mono.vscode-light,
+body.theme-mono.genesis-light {
+    --color-bg-light:    hsl(0, 0%, 100%);
+    --color-bg:          hsl(0, 0%, 95%);
+    --color-bg-dark:     hsl(0, 0%, 85%);
+
+    --color-text:        hsl(0, 0%, 0%);
+    --color-text-muted:  hsl(0, 0%, 30%);
+
+    --color-accent:      hsl(0, 0%, 0%);
+    --color-secondary:   hsl(0, 0%, 50%);
+
+    --color-hover-ghost: rgba(0, 0, 0, 0.05);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════════════ */
+
+@layer base {
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: var(--font-body);
+        font-size: 13px;
+        background-color: var(--color-bg);
+        color: var(--color-text);
+    }
+
+    /* ═══ TYPOGRAPHIE ═══ */
+    
+    h1 {
+        font-family: var(--font-display);
+        font-weight: 600;
+    }
+
+    h2, h3, h4, h5, h6 {
+        font-family: var(--font-heading);
+        font-weight: 600;
+    }
+
+    /* Éléments UI : boutons, inputs, labels */
+    button,
+    input,
+    select,
+    textarea,
+    label {
+        font-family: var(--font-ui);
+    }
+}
+
+body.is-resizing,
+body.is-resizing * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   PERSONNALISATION DES SCROLLBARS (Style VS Code / Dark)
+   ═══════════════════════════════════════════════════════════ */
+
+/* 1. Pour Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-secondary, #374151) transparent;
+}
+
+/* 2. Pour Chrome, Edge, Safari et VS Code Webview (WebKit) */
+::-webkit-scrollbar {
+  width: 8px;  /* Largeur pour le scroll vertical */
+  height: 8px; /* Hauteur pour le scroll horizontal */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; /* Fond transparent pour s'intégrer au design */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-secondary, #374151); /* Couleur de la barre */
+  border-radius: 9999px; /* Arrondi complet */
+  border: 2px solid transparent; /* Astuce pour créer un "padding" autour de la barre */
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-accent, #3B82F6); /* Couleur au survol */
+}
+
+/* 3. Optionnel : Masquer la scrollbar mais garder le scroll (pour un look ultra-clean) */
+.scrollbar-hidden {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
