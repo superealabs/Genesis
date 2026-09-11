@@ -2,7 +2,6 @@
     <div class="flex flex-col gap-16 p-4">
         <!-- Back button (optionnel) -->
         <GenesisBackButton v-if="showBackButton" @click="$emit('back')" />
-
         <!-- Header -->
         <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between gap-4">

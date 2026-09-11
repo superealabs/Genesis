@@ -33,12 +33,12 @@
    ═══════════════════════════════════════════════════════════ */
 
 @theme {
-    --color-bg-light:    hsl(145, 100%, 96%);
-    --color-bg:          hsl(145, 100%, 94%); /* */
-    --color-bg-dark:     hsl(145, 100%, 92%); /* for background only */
+    --color-bg-light:    hsl(140, 100%, 96%);
+    --color-bg:          hsl(140, 100%, 92%);
+    --color-bg-dark:     hsl(140, 100%, 88%);
 
-    --color-text:        hsl(160, 100%, 40%);
-    --color-text-muted:  hsl(175, 100%, 15%);
+    --color-text:        hsl(180, 100%, 6%);
+    --color-text-muted:  hsl(180, 100%, 15%);
 
     --color-accent:      hsl(145, 100%, 44%);
     --color-secondary:   hsl(160, 100%, 40%);
@@ -65,10 +65,10 @@ body.theme-genesis.genesis-dark {
     --color-bg:          hsl(175, 100%, 6%);
     --color-bg-dark:     hsl(175, 100%, 4%);
 
-    --color-text:        hsl(145, 100%, 94%);
-    --color-text-muted:  hsl(145, 100%, 88%);
+    --color-text:        hsl(180, 100%, 94%);
+    --color-text-muted:  hsl(180, 100%, 88%);
 
-    --color-accent:      hsl(145, 100%, 44%);
+    --color-accent:      hsl(130, 100%, 48%);
     --color-secondary:   hsl(175, 100%, 10%);
 
     --color-hover-ghost: rgba(255, 255, 255, 0.1);
@@ -77,15 +77,15 @@ body.theme-genesis.genesis-dark {
 /* Genesis CLAIR (auto ET forcé) */
 body.theme-genesis.vscode-light,
 body.theme-genesis.genesis-light {
-    --color-bg-light:    hsl(145, 100%, 92%);
-    --color-bg:          hsl(145, 100%, 94%);
-    --color-bg-dark:     hsl(145, 100%, 98%);
+    --color-bg-light:    hsl(140, 100%, 88%);
+    --color-bg:          hsl(140, 100%, 92%);
+    --color-bg-dark:     hsl(140, 100%, 96%);
 
-    --color-text:        hsl(175, 100%, 4%);
-    --color-text-muted:  hsl(175, 100%, 15%);
+    --color-text:        hsl(180, 100%, 6%);
+    --color-text-muted:  hsl(180, 100%, 15%);
 
-    --color-accent:      hsl(145, 100%, 44%);
-    --color-secondary:   hsl(160, 100%, 40%);
+    --color-accent:      hsl(130, 100%, 56%);
+    --color-secondary:   hsl(180, 100%, 12%);
 
     --color-hover-ghost: rgba(0, 0, 0, 0.05);
 }
