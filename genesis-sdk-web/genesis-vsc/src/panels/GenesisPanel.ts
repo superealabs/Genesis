@@ -7,8 +7,7 @@ import { WebviewMessageRouter } from '../services/WebviewMessageRouter';
 export class GenesisPanel {
     private static instance: GenesisPanel | undefined;
     
-    // ✅ NOUVEAU : Chemin centralisé vers le dossier de build de la webview
-    // Si tu changes l'emplacement du build (ex: 'dist/webview'), modifie-le ICI uniquement.
+
     private static readonly WEBVIEW_DIST_PATH = ['packages', 'webview', 'dist'];
 
     private panel: vscode.WebviewPanel;

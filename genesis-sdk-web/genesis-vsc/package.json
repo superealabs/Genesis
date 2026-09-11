@@ -93,6 +93,7 @@
     "serialize-javascript": "^7.0.6"
   },
   "dependencies": {
-    "axios": "^1.19.0"
+    "axios": "^1.19.0",
+    "@genesis-labs/shared-types": "file:../genesis-web-shared-types"
   }
 }

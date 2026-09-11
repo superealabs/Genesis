@@ -46,6 +46,10 @@ export class WebviewMessageRouter {
                     await this.generatorHandler.handleGetTablesMetadataParents(message.payload, this.panel);
                     break;
 
+                case 'GET_TABLES_METADATA':
+                    await this.generatorHandler.handleGetTablesMetadata(message.payload, this.panel);
+                    break;
+
                 case 'GET_TABLES_METADATA_CHILDS':
                     await this.generatorHandler.handleGetTablesMetadataChilds(message.payload, this.panel);
                     break;

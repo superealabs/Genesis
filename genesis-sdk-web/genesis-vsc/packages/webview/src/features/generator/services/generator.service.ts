@@ -5,12 +5,20 @@ import type {
     LanguageDto, 
     GeneratorData 
 } from '@genesis-labs/core/features/generator/manifest';
-import { vscodeService } from '../../../core/services/vscode.service'; // ✅ Singleton
+import { vscodeService } from '../../../core/services/vscode.service';
 
 export class GeneratorServiceVsc implements IGeneratorService {
     constructor(private vscode = vscodeService) {}
 
-    // ✅ Uniquement les méthodes du contrat IGeneratorService
+    async fetchTablesMetadata(): Promise<TableMetadataDto[]> {
+        return new Promise((resolve) => {
+            this.vscode.sendMessage('GET_TABLES_METADATA');
+            const cleanup = this.vscode.onMessage<TableMetadataDto[]>('TABLES_METADATA_LOADED', (data) => {
+                cleanup();
+                resolve(data);
+            });
+        });
+    }
 
     fetchTablesMetadataParents(): Promise<TableMetadataDto[]> {
         return new Promise((resolve) => {
