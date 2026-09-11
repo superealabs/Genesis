@@ -8,6 +8,7 @@ const genesisApi = new GenesisApiService();
 
 export async function activate(context: vscode.ExtensionContext) {
     // Enregistrer les commandes immédiatement
+        await new Promise(resolve => setTimeout(resolve, 3000));
     registerCommands(context, genesisApi);
 }
 

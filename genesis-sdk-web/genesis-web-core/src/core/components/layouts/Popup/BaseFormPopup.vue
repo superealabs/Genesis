@@ -36,14 +36,6 @@
                 </GenesisButtonIcon>
             </div>
 
-            <!-- ═══ CARROUSEL (Délégué au composant dédié) ═══ -->
-            <Carrousel 
-                v-if="showCarousel" 
-                :slides="carouselSlides" 
-                height="200px" 
-                :auto-play="true"
-            />
-
             <!-- Contenu -->
             <div :class="[paddingClasses.content, 'flex flex-col flex-1 overflow-hidden min-h-0']">
                 <slot />
@@ -53,13 +45,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRef, onMounted, onUnmounted, ref } from 'vue';
+import { computed, toRef, onMounted, onUnmounted } from 'vue';
 import { useDraggable } from '@/core/composables/ux/useDraggable.ts';
 import { useResizable } from '@/core/composables/ux/useResizable.ts';
 import IconX from '@/core/components/ui/icons/IconX.vue';
 import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
 // ✅ Import du nouveau composant
-import Carrousel, { type CarouselSlide } from '@/core/components/ui/carrousel/Carrousel.vue';
+
+
 import type { PopupPosition, PopupSize, PopupPadding } from './popup.types';
 import { Z_INDEX, PADDING_CLASSES } from './popup.types';
 
@@ -76,7 +69,6 @@ const props = withDefaults(defineProps<{
     closeOnOverlayClick?: boolean;
     zIndex?: number;
     padding?: PopupPadding;
-    showCarousel?: boolean;
 }>(), {
     isClosable: true,
     draggable: true,
@@ -88,20 +80,11 @@ const props = withDefaults(defineProps<{
     closeOnEscape: true,
     closeOnOverlayClick: true,
     zIndex: Z_INDEX.modal,
-    padding: 'md',
-    showCarousel: false
+    padding: 'md'
 });
 
 const emit = defineEmits<{ close: [] }>();
 
-// ✅ Données de démo pour le carrousel (facilement remplaçables par des images plus tard)
-const carouselSlides = ref<CarouselSlide[]>([
-    { color: '#3B82F6', label: 'Slide 1 - Bleu' },
-    { color: '#EF4444', label: 'Slide 2 - Rouge' },
-    { color: '#10B981', label: 'Slide 3 - Vert' },
-    { color: '#F59E0B', label: 'Slide 4 - Orange' },
-    { color: '#8B5CF6', label: 'Slide 5 - Violet' },
-]);
 
 const isDraggable = computed(() => props.draggable);
 const { startDrag, draggableStyle } = useDraggable({
