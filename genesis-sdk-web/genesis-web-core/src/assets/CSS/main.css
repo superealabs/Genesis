@@ -47,10 +47,10 @@
 
     /* ═══ FONTS ═══ */
     --font-display: 'Chillax', system-ui, sans-serif;    /* H1 */
-    --font-heading: 'Outfit', system-ui, sans-serif;     /* H2, H3, H4 */
-    --font-ui:      'Outfit', system-ui, sans-serif;     /* Éléments UI */
+    --font-heading: 'Poppins', system-ui, sans-serif;     /* H2, H3, H4 */
+    --font-ui:      'Poppins', system-ui, sans-serif;     /* Éléments UI */
     --font-body:    'Poppins', system-ui, sans-serif;    /* Texte courant */
-    --font-sans:    'Outfit', system-ui, sans-serif;     /* Défaut global */
+    --font-sans:    'Poppins', system-ui, sans-serif;     /* Défaut global */
     --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
 }
 
