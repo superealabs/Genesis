@@ -29,7 +29,7 @@
 
                             <!-- ✅ Polygon sur le bloc de droite (inversé) -->
                             <div 
-                                class="flex items-center gap-2 flex-1 min-w-0 pl-16 pr-6 py-3 bg-bg-dark"
+                                class="flex items-center gap-2 flex-1 min-w-0 pl-16 pr-6 py-4 bg-bg-dark"
                                 style="clip-path: polygon(3% 0, 100% 0, 100% 101%, 0 101%);"
                             >
                                 <GenesisInput
