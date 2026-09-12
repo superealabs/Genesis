@@ -17,7 +17,7 @@
                 <!-- ✅ Titre ancré dans le carrousel, couleur contrastée automatique -->
                 <template #bottom>
                     <div class="flex gap-4">
-                        <div class="flex items-center gap-3 px-8 pb-4 pt-2">
+                        <div class="flex items-center gap-4 px-8 pb-4 pt-2">
                             <GenesisBackButton v-if="showBackButton" @click="$emit('back')" class="shrink-0" />
                             <h2 class="font-semibold font-heading text-4xl text-white drop-shadow-md truncate">
                                 <slot name="title">{{ title }}</slot>
@@ -25,12 +25,12 @@
                         </div>
 
                         <!-- Barre de contrôles -->
-                        <div class="relative flex items-center gap-4 w-full">
+                        <div class="relative flex items-center w-full">
 
                             <!-- ✅ Polygon sur le bloc de droite (inversé) -->
                             <div 
                                 class="flex items-center gap-2 flex-1 min-w-0 pl-16 pr-6 py-3 bg-bg-dark"
-                                style="clip-path: polygon(3% 0, 100% 0, 100% 100%, 0 100%);"
+                                style="clip-path: polygon(3% 0, 100% 0, 100% 101%, 0 101%);"
                             >
                                 <GenesisInput
                                     :modelValue="searchValue"
@@ -48,6 +48,8 @@
                                     </template>
                                 </GenesisInput>
                                 
+                            </div>
+                            <div class="flex gap-4 items-center flex-shrink-0 pr-6 bg-bg-dark h-full">
                                 <slot name="filter">
                                     <GenesisButtonIcon
                                         v-if="showFilter"
@@ -80,8 +82,7 @@
                                     ]"
                                     size="md" 
                                 />
-                            </div>
-                            <div class="flex-shrink-0 pr-6">
+
                                 <LayoutSwitcherAlt v-model="internalDisplayMode" />
                             </div>
                         </div>
