@@ -1,106 +1,93 @@
 <template>
-    <div class="flex flex-col gap-6 w-full">
+    <div class="flex flex-col gap-16 w-full">
         
         <!-- ═══════════════════════════════════════════════════════════ -->
         <!-- PARTIE 1 : EN-TÊTE (Carrousel + Contrôles sur une ligne) -->
         <!-- ═══════════════════════════════════════════════════════════ -->
         
-        <!-- 1.1 Carrousel (Bannière visuelle en haut) -->
         <div class="flex flex-col w-full">
-            <Carrousel 
-                v-if="showCarousel" 
-                :slides="carouselSlides" 
-                height="300px" 
-                :auto-play="true"
-                class="rounded-t-lg rounded-br-lg overflow-hidden shadow-sm"
-            />
+        <Carrousel
+            v-if="showCarousel"
+            :slides="carouselSlides"
+            slide-height="300px"
+            slot-height="100px"
+            :auto-play="true"
+            class="rounded-t-lg overflow-hidden shadow-sm flex-shrink-0"
+        >
+                <!-- ✅ Titre ancré dans le carrousel, couleur contrastée automatique -->
+                <template #bottom>
+                    <div class="flex gap-4">
+                        <div class="flex items-center gap-3 px-8 pb-4 pt-2">
+                            <GenesisBackButton v-if="showBackButton" @click="$emit('back')" class="shrink-0" />
+                            <h2 class="font-semibold font-heading text-4xl text-white drop-shadow-md truncate">
+                                <slot name="title">{{ title }}</slot>
+                            </h2>
+                        </div>
 
-            <!-- 1.2 Barre de contrôles (Single Line Layout) -->
-            <div class="relative flex items-center gap-4 w-full bg-red-300">
-                
-                <!-- ═══ GROUPE 1 : Back + Title ═══ -->
-                <!-- 1. self-stretch force ce bloc à prendre toute la hauteur du parent (outrepasse items-center) -->
-                <div class="relative flex items-center flex-[1.2] min-w-0 self-stretch pr-4 pt-3 pb-2">
-                    
-                    <!-- 2. LE FOND TRAPÈZE : 
-                        - inset-0 le force à prendre 100% de la largeur et de la hauteur de son parent (le self-stretch)
-                        - clip-path est appliqué ICI, pas sur le conteneur de texte -->
-                    <div 
-                        class="absolute inset-0 bg-amber-700 z-0 transition-colors duration-500 rounded-b-lg"
-                        style="clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);"
-                    ></div>
+                        <!-- Barre de contrôles -->
+                        <div class="relative flex items-center gap-4 w-full">
 
-                    <!-- 3. LE CONTENU : 
-                        - relative et z-10 pour flotter au-dessus du fond trapèze -->
-                    <div class="relative z-10 flex items-center gap-3 min-w-0 w-full pl-8">
-                        <GenesisBackButton v-if="showBackButton" @click="$emit('back')" class="shrink-0" />
-                        
-                        <h2 class="font-semibold text-text font-heading text-3xl md:text-3xl truncate shrink-0" :title="title">
-                            <slot name="title">{{ title }}</slot>
-                        </h2>
+                            <!-- ✅ Polygon sur le bloc de droite (inversé) -->
+                            <div 
+                                class="flex items-center gap-2 flex-1 min-w-0 pl-16 pr-6 py-3 bg-bg-dark"
+                                style="clip-path: polygon(3% 0, 100% 0, 100% 100%, 0 100%);"
+                            >
+                                <GenesisInput
+                                    :modelValue="searchValue"
+                                    @update:modelValue="$emit('update:searchValue', $event as string)"
+                                    type="text"
+                                    :placeholder="searchPlaceholder"
+                                    variant="primary"
+                                    shape="rectangle"
+                                    size="lg" 
+                                    fill-width
+                                    class="min-w-0"
+                                >
+                                    <template #left>
+                                        <IconSearch :size="18" class="text-text-muted" />
+                                    </template>
+                                </GenesisInput>
+                                
+                                <slot name="filter">
+                                    <GenesisButtonIcon
+                                        v-if="showFilter"
+                                        variant="secondary"
+                                        size="md"
+                                        @click="$emit('openFilter')"
+                                        class="shrink-0"
+                                    >
+                                        <IconFilter />
+                                    </GenesisButtonIcon>
+                                </slot>
+
+                                <slot name="sort">
+                                    <GenesisButtonIcon
+                                        v-if="showSort"
+                                        variant="secondary"
+                                        size="md"
+                                        @click="$emit('openSort')"
+                                        class="shrink-0"
+                                    >
+                                        <IconSort />
+                                    </GenesisButtonIcon>
+                                </slot>
+
+                                <GenesisSegmentedControl
+                                    v-model="internalMode"
+                                    :options="[
+                                        { label: 'Selection', value: 'selection', icon: IconCursor },
+                                        { label: 'Compare', value: 'compare', icon: IconGitCompare }
+                                    ]"
+                                    size="md" 
+                                />
+                            </div>
+                            <div class="flex-shrink-0 pr-6">
+                                <LayoutSwitcherAlt v-model="internalDisplayMode" />
+                            </div>
+                        </div>
                     </div>
-                </div>
-
-                <!-- ═══ GROUPE 2 : Recherche + Filtre + Tri ═══ -->
-                <div class="relative z-10 flex items-center gap-2 flex-1 min-w-0">
-                    <GenesisInput
-                        :modelValue="searchValue"
-                        @update:modelValue="$emit('update:searchValue', $event as string)"
-                        type="text"
-                        :placeholder="searchPlaceholder"
-                        variant="primary"
-                        shape="rectangle"
-                        size="lg" 
-                        fill-width
-                        class="min-w-0"
-                    >
-                        <template #left>
-                            <IconSearch :size="18" class="text-text-muted" />
-                        </template>
-                    </GenesisInput>
-                    
-                    <slot name="filter">
-                        <GenesisButtonIcon
-                            v-if="showFilter"
-                            variant="secondary"
-                            size="md"
-                            @click="$emit('openFilter')"
-                            class="shrink-0"
-                            title="Filtrer"
-                        >
-                            <IconFilter />
-                        </GenesisButtonIcon>
-                    </slot>
-
-                    <slot name="sort">
-                        <GenesisButtonIcon
-                            v-if="showSort"
-                            variant="secondary"
-                            size="md"
-                            @click="$emit('openSort')"
-                            class="shrink-0"
-                            title="Trier"
-                        >
-                            <IconSort />
-                        </GenesisButtonIcon>
-                    </slot>
-                </div>
-
-                <!-- ═══ GROUPE 3 : Segmented Control + Layout Switcher ═══ -->
-                <div class="relative z-10 flex items-center justify-end gap-2 flex-1 shrink-0 pr-8">
-                    <GenesisSegmentedControl
-                        v-model="internalMode"
-                        :options="[
-                            { label: 'Selection', value: 'selection', icon: IconCursor },
-                            { label: 'Compare', value: 'compare', icon: IconGitCompare }
-                        ]"
-                        size="md" 
-                    />
-                    
-                    <LayoutSwitcherAlt v-model="internalDisplayMode" />
-                </div>
-
-            </div>
+                </template>
+            </Carrousel>
         </div>
 
         <!-- ═══════════════════════════════════════════════════════════ -->
@@ -173,6 +160,8 @@ const carouselSlides = ref<CarouselSlide[]>([
     { color: '#F59E0B', label: 'Slide 4 - Orange' },
     { color: '#8B5CF6', label: 'Slide 5 - Violet' },
 ]);
+
+
 
 // Support v-model pour displayMode
 const internalDisplayMode = computed({
