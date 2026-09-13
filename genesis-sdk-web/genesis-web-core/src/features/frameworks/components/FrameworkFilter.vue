@@ -1,188 +1,188 @@
 <template>
-    <GenesisDropdown
-        dropdownSize="lg"
-        :closeOnSelect="false"
-        triggerSize="2xl"
-        triggerVariant="secondary"
-        :hideChevron="true"
-    >
-        <template #triggerIcon>
-            <IconFilter />
-        </template>
+    <div class="space-y-4">
         
-        <!-- <template #trigger>
-            Filtres
-            <span 
-                v-if="activeFiltersCount > 0" 
-                class="ml-1 px-1.5 py-0.5 bg-accent text-bg text-[10px] rounded-full font-medium"
-            >
-                {{ activeFiltersCount }}
-            </span>
-        </template> -->
-
-        <div class="p-3 space-y-3">
-            <!-- Filtres niveau 1 -->
-            <div class="space-y-2">
-                <h4 class="text-xs font-semibold text-text-muted uppercase">Filtres de base</h4>
-                
-                <!-- Language -->
-                <FilterSelect
-                    label="Language"
-                    :options="languageOptions"
-                    v-model="filters.language"
-                />
-
-                <!-- Type -->
-                <FilterSelect
-                    label="Type"
-                    :options="typeOptions"
-                    v-model="filters.type"
-                />
-
-                <!-- Core Framework -->
-                <FilterSelect
-                    label="Core Framework"
-                    :options="coreOptions"
-                    v-model="filters.coreFramework"
-                />
-
-                <!-- Prod Ready -->
-                <FilterCheckbox
-                    label="Prod Ready uniquement"
-                    v-model="filters.isProd"
+        <!-- ═══ DISCLOSURE 1 : Langages ═══ -->
+        <GenesisDisclosure title="Langages" default-open variant="primary">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+                <GenesisInput
+                    v-for="(state, label) in filters.languages"
+                    :key="label"
+                    type="checkbox-3-state"
+                    :modelValue="state"
+                    :label="label"
+                    size="lg"
+                    @update:modelValue="filters.languages[label] = $event as CheckboxState"
                 />
             </div>
+        </GenesisDisclosure>
 
-            <!-- Séparateur -->
-            <div class="border-t border-secondary"></div>
-
-            <!-- Bouton pour filtres avancés -->
-            <button
-                @click.stop="showAdvanced = !showAdvanced"
-                class="w-full text-left text-xs text-accent hover:text-accent/80 flex items-center gap-1"
-            >
-                <span>{{ showAdvanced ? '▼' : '▶' }}</span>
-                Filtres avancés
-            </button>
-
-            <!-- Filtres niveau 2 (conditionnel) -->
-            <div v-if="showAdvanced" class="space-y-2 pl-2 border-l-2 border-secondary">
-                <h4 class="text-xs font-semibold text-text-muted uppercase">Options techniques</h4>
-
-                <FilterCheckbox label="Support DB" v-model="filters.useDB" />
-                <FilterCheckbox label="Support Cloud" v-model="filters.useCloud" />
-                <FilterCheckbox label="Eureka Server" v-model="filters.useEurekaServer" />
-                <FilterCheckbox label="Gateway" v-model="filters.isGateway" />
-                <FilterCheckbox label="Frontend App" v-model="filters.useFrontendApp" />
-
-                <!-- Filtres spécifiques MVC -->
-                <template v-if="filters.type === 'MVC' || !filters.type">
-                    <FilterSelect
-                        label="Template Engine"
-                        :options="templateEngineOptions"
-                        v-model="filters.viewTemplateEngine"
-                    />
-                    <FilterSelect
-                        label="View Extension"
-                        :options="viewExtensionOptions"
-                        v-model="filters.viewExtension"
-                    />
-                </template>
+        <GenesisDisclosure title="Architecture" variant="primary">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+                <GenesisInput
+                    v-for="(state, label) in filters.types"
+                    :key="label"
+                    type="checkbox-3-state"
+                    :modelValue="state"
+                    @update:modelValue="filters.types[label] = $event as CheckboxState"
+                    :label="label"
+                    size="lg"
+                />
             </div>
+        </GenesisDisclosure>
 
-            <!-- Actions -->
-            <div class="flex gap-2 pt-2 border-t border-secondary">
-                <GenesisButton
-                    variant="secondary"
-                    size="sm"
-                    :fillWidth="true"
-                    @click.stop="resetFilters"
-                >
-                    Réinitialiser
-                </GenesisButton>
+        <!-- ═══ DISCLOSURE 3 : Core Frameworks ═══ -->
+        <GenesisDisclosure title="Core Frameworks" variant="primary">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+                <GenesisInput
+                    v-for="(state, label) in filters.coreFrameworks"
+                    :key="label"
+                    type="checkbox-3-state"
+                    :modelValue="state"
+                    :label="label"
+                    size="lg"
+                    @update:modelValue="filters.coreFrameworks[label] = $event as CheckboxState"
+                />
             </div>
+        </GenesisDisclosure>
+
+        <!-- ═══ DISCLOSURE 4 : Options d'intégration ═══ -->
+        <GenesisDisclosure title="Options d'intégration" variant="primary">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+                <GenesisInput
+                    v-for="(state, label) in filters.integrations"
+                    :key="label"
+                    type="checkbox-3-state"
+                    :modelValue="state"
+                    :label="label"
+                    size="lg"
+                    @update:modelValue="filters.integrations[label] = $event as CheckboxState"
+                />
+            </div>
+        </GenesisDisclosure>
+
+        <!-- ═══ DISCLOSURE 5 : Options MVC (Conditionnel) ═══ -->
+        <GenesisDisclosure 
+            v-if="filters.types['MVC'] === 'checked' || filters.types['MVC'] === 'neutral'" 
+            title="Options MVC" 
+            variant="primary"
+        >
+            <div class="space-y-6 pt-2">
+                <!-- Template Engines -->
+                <div>
+                    <h4 class="text-xs font-semibold text-text-muted uppercase mb-3">Template Engine</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <GenesisInput
+                            v-for="(state, label) in filters.templateEngines"
+                            :key="label"
+                            type="checkbox-3-state"
+                            :modelValue="state"
+                            @update:modelValue="filters.templateEngines[label] = $event as CheckboxState"
+                            :label="label"
+                            size="lg"
+                        />
+                    </div>
+                </div>
+
+                <!-- View Extensions -->
+                <div>
+                    <h4 class="text-xs font-semibold text-text-muted uppercase mb-3">View Extension</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <GenesisInput
+                            v-for="(state, label) in filters.viewExtensions"
+                            :key="label"
+                            type="checkbox-3-state"
+                            :modelValue="state"
+                            @update:modelValue="filters.viewExtensions[label] = $event as CheckboxState"
+                            :label="label"
+                            size="lg"
+                        />
+                    </div>
+                </div>
+            </div>
+        </GenesisDisclosure>
+
+        <!-- ═══ Actions ═══ -->
+        <div class="flex gap-2 pt-4 border-t border-secondary">
+            <GenesisButton variant="secondary" size="md" :fillWidth="true" @click.stop="resetFilters">
+                Réinitialiser
+            </GenesisButton>
+            <GenesisButton variant="primary" size="md" :fillWidth="true" @click.stop="$emit('close')">
+                Appliquer
+            </GenesisButton>
         </div>
-    </GenesisDropdown>
+    </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import GenesisDropdown from '@/core/components/ui/dropdown/GenesisDropdown.vue';
+import type { CheckboxState } from '@/core/components/ui/inputs/GenesisCheckbox.vue';
+import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
-import IconFilter from '@/core/components/ui/icons/IconFilter.vue';
-import FilterSelect from './FilterSelect.vue';
-import FilterCheckbox from './FilterCheckbox.vue';
+import GenesisDisclosure from '@/core/components/layouts/GenesisDisclosure.vue';
 
+// ✅ Nouvelle structure : Record<string, CheckboxState> au lieu de string[]
 interface FrameworkFilters {
-    language?: string;
-    type?: 'MVC' | 'REST API';
-    coreFramework?: string;
-    isProd?: boolean;
-    useDB?: boolean;
-    useCloud?: boolean;
-    useEurekaServer?: boolean;
-    isGateway?: boolean;
-    useFrontendApp?: boolean;
-    viewTemplateEngine?: string;
-    viewExtension?: string;
+    languages: Record<string, CheckboxState>;
+    types: Record<string, CheckboxState>;
+    coreFrameworks: Record<string, CheckboxState>;
+    integrations: Record<string, CheckboxState>;
+    templateEngines: Record<string, CheckboxState>;
+    viewExtensions: Record<string, CheckboxState>;
 }
 
 const emit = defineEmits<{
     'update:filters': [filters: FrameworkFilters];
+    'close': [];
 }>();
 
-// État des filtres
-const filters = ref<FrameworkFilters>({});
-const showAdvanced = ref(false);
+// ═══ Initialisation des états (tous à 'neutral' par défaut) ═══
+const createNeutralState = (keys: string[]) => {
+    return keys.reduce((acc, key) => {
+        acc[key] = 'neutral';
+        return acc;
+    }, {} as Record<string, CheckboxState>);
+};
 
-// Options disponibles (à remplacer par des données réelles)
-const languageOptions = [
-    { label: 'Tous', value: '' },
-    { label: 'Java', value: 'Java' },
-    { label: 'C#', value: 'C#' },
-    { label: 'Node.js', value: 'Node.js' }
-];
+const filters = ref<FrameworkFilters>({
+    languages: createNeutralState(['Java', 'C#', 'Node.js', 'Python']),
+    types: createNeutralState(['MVC', 'REST API']),
+    coreFrameworks: createNeutralState(['Spring Boot', '.NET Core', 'Express', 'Django']),
+    integrations: createNeutralState(['Support DB', 'Support Cloud', 'Eureka Server', 'Gateway', 'Frontend App']),
+    templateEngines: createNeutralState(['Thymeleaf', 'JSP', 'Razor', 'Blade']),
+    viewExtensions: createNeutralState(['.html', '.jsp', '.cshtml', '.blade.php'])
+});
 
-const typeOptions = [
-    { label: 'Tous', value: '' },
-    { label: 'MVC', value: 'MVC' },
-    { label: 'REST API', value: 'REST API' }
-];
+// ═══ Helpers ═══
 
-const coreOptions = [
-    { label: 'Tous', value: '' },
-    { label: 'Spring Boot', value: 'Spring Boot' },
-    { label: '.NET Core', value: '.NET Core' },
-    { label: 'Express', value: 'Express' }
-];
-
-const templateEngineOptions = [
-    { label: 'Tous', value: '' },
-    { label: 'Thymeleaf', value: 'Thymeleaf' },
-    { label: 'JSP', value: 'JSP' },
-    { label: 'Razor', value: 'Razor' }
-];
-
-const viewExtensionOptions = [
-    { label: 'Tous', value: '' },
-    { label: '.html', value: '.html' },
-    { label: '.jsp', value: '.jsp' },
-    { label: '.cshtml', value: '.cshtml' }
-];
-
-// Compter les filtres actifs
-// const activeFiltersCount = computed(() => {
-//     return Object.values(filters.value).filter(v => v !== undefined && v !== '' && v !== false).length;
-// });
-
-// Émettre les changements
-watch(filters, (newFilters) => {
-    emit('update:filters', { ...newFilters });
-}, { deep: true });
-
-// Réinitialiser les filtres
-function resetFilters() {
-    filters.value = {};
-    showAdvanced.value = false;
+// Extrait uniquement les valeurs 'checked' pour la compatibilité avec l'API/Composable si nécessaire
+function getCheckedValues(stateRecord: Record<string, CheckboxState>): string[] {
+    return Object.entries(stateRecord)
+        .filter(([_, state]) => state === 'checked')
+        .map(([key]) => key);
 }
+
+function resetFilters() {
+    filters.value = {
+        languages: createNeutralState(['Java', 'C#', 'Node.js', 'Python']),
+        types: createNeutralState(['MVC', 'REST API']),
+        coreFrameworks: createNeutralState(['Spring Boot', '.NET Core', 'Express', 'Django']),
+        integrations: createNeutralState(['Support DB', 'Support Cloud', 'Eureka Server', 'Gateway', 'Frontend App']),
+        templateEngines: createNeutralState(['Thymeleaf', 'JSP', 'Razor', 'Blade']),
+        viewExtensions: createNeutralState(['.html', '.jsp', '.cshtml', '.blade.php'])
+    };
+}
+
+// ═══ Watcher ═══
+watch(filters, (newFilters) => {
+    // On émet l'état complet (riche). 
+    // Si ton composable a besoin de tableaux, tu peux mapper ici :
+    // const arrayFilters = {
+    //     languages: getCheckedValues(newFilters.languages),
+    //     types: getCheckedValues(newFilters.types),
+    //     // ...
+    // };
+    // emit('update:filters', arrayFilters as any);
+    
+    emit('update:filters', newFilters);
+}, { deep: true });
 </script>

@@ -18,7 +18,7 @@
 
       <!-- ═══ Wrapper trigger + dropdown (le relative est ici) ═══ -->
       <div class="relative inline-block">
-        <MenuButton as="template" @click="updateFixedPosition">
+        <MenuButton as="template" @click="onTriggerClick">
 
           <GenesisButton
             v-if="$slots.trigger"
@@ -136,6 +136,16 @@ const triggerWidth = ref<number | null>(null);
 const fixedPosition = ref({ top: 0, left: 0, right: 0 });
 let hoverTimeout: number | null = null; 
 
+
+async function onTriggerClick() {
+    // D'abord mettre à jour la position
+    updateFixedPosition();
+    // Puis attendre que Headless UI ait rendu le MenuItems
+    await nextTick();
+    // Recalculer au cas où le DOM a bougé
+    updateFixedPosition();
+}
+
 function updateFixedPosition() {
     const el = getMenuButtonEl();
     if (!el) return;
@@ -146,14 +156,6 @@ function updateFixedPosition() {
         right: window.innerWidth - rect.right,
     };
 }
-const resolvedPosition = computed(() => {
-    if (props.position) return props.position;
-    const el = (triggerRef.value as ComponentPublicInstance)?.$el || triggerRef.value;
-    if (!el) return `bottom-${props.align}` as const;
-    const rect = (el as HTMLElement).getBoundingClientRect();
-    const vertical = (window.innerHeight - rect.bottom) >= 150 ? 'bottom' : 'top';
-    return `${vertical}-${props.align}` as const;
-});
 
 // Remplacer menuItemsClasses
 const menuItemsClasses = computed(() => {
@@ -223,6 +225,8 @@ function clearHoverTimeout() {
 
 onMounted(() => {
     if (props.matchTriggerWidth) nextTick(measureTriggerWidth);
+    // ← Calculer la position initiale dès le montage
+    nextTick(() => updateFixedPosition());
 });
 
 onUnmounted(clearHoverTimeout);

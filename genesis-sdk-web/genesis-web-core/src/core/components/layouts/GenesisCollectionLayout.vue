@@ -1,20 +1,14 @@
 <template>
     <div class="flex flex-col gap-16 w-full">
-        
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- PARTIE 1 : EN-TÊTE (Carrousel + Contrôles sur une ligne) -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        
         <div class="flex flex-col w-full">
-        <Carrousel
-            v-if="showCarousel"
-            :slides="carouselSlides"
-            slide-height="300px"
-            slot-height="100px"
-            :auto-play="true"
-            class="rounded-t-lg overflow-hidden shadow-sm flex-shrink-0"
-        >
-                <!-- ✅ Titre ancré dans le carrousel, couleur contrastée automatique -->
+            <Carrousel
+                v-if="showCarousel"
+                :slides="carouselSlides"
+                slide-height="300px"
+                slot-height="100px"
+                :auto-play="true"
+                class="rounded-t-lg overflow-hidden shadow-sm flex-shrink-0"
+            >
                 <template #bottom>
                     <div class="flex gap-4">
                         <div class="flex items-center gap-4 px-8 pb-4 pt-2">
@@ -24,13 +18,10 @@
                             </h2>
                         </div>
 
-                        <!-- Barre de contrôles -->
                         <div class="relative flex items-center w-full">
-
-                            <!-- ✅ Polygon sur le bloc de droite (inversé) -->
                             <div 
-                                class="flex items-center gap-2 flex-1 min-w-0 pl-16 pr-6 py-4 bg-bg-dark"
-                                style="clip-path: polygon(3% 0, 100% 0, 100% 101%, 0 101%);"
+                                class="flex items-center gap-2 flex-1 min-w-0 pl-24 pr-6 py-4 bg-bg-dark"
+                                style="clip-path: polygon(10% 0, 101% 0, 100% 101%, 0 101%);"
                             >
                                 <GenesisInput
                                     :modelValue="searchValue"
@@ -47,33 +38,40 @@
                                         <IconSearch :size="18" class="text-text-muted" />
                                     </template>
                                 </GenesisInput>
-                                
                             </div>
-                            <div class="flex gap-4 items-center flex-shrink-0 pr-6 bg-bg-dark h-full">
-                                <slot name="filter">
-                                    <GenesisButtonIcon
-                                        v-if="showFilter"
-                                        variant="secondary"
-                                        size="md"
-                                        @click="$emit('openFilter')"
-                                        class="shrink-0"
-                                    >
-                                        <IconFilter />
-                                    </GenesisButtonIcon>
-                                </slot>
 
-                                <slot name="sort">
-                                    <GenesisButtonIcon
-                                        v-if="showSort"
-                                        variant="secondary"
-                                        size="md"
-                                        @click="$emit('openSort')"
-                                        class="shrink-0"
-                                    >
+                            <div class="flex gap-2 items-center flex-shrink-0 pr-6 bg-bg-dark h-full">
+                                <!-- ═══ BOUTON FILTRE (Émet un événement) ═══ -->
+                                <GenesisButtonIcon
+                                    v-if="showFilter"
+                                    variant="secondary"
+                                    size="xl"
+                                    :hide-chevron="true"
+                                    @click="$emit('openFilter')"
+                                    class="shrink-0"
+                                    title="Ouvrir les filtres"
+                                >
+                                    <IconFilter />
+                                </GenesisButtonIcon>
+
+                                <!-- ═══ DROPDOWN TRI ═══ -->
+                                <GenesisDropdown
+                                    v-if="showSort"
+                                    dropdownSize="lg"
+                                    :closeOnSelect="false"
+                                    triggerVariant="secondary"
+                                    trigger-size="xl"
+                                    :hide-chevron="true"
+                                >
+                                    <template #triggerIcon>
                                         <IconSort />
-                                    </GenesisButtonIcon>
-                                </slot>
+                                    </template>
+                                    <template #default>
+                                        <slot name="sort-content"></slot>
+                                    </template>
+                                </GenesisDropdown>
 
+                                <!-- ═══ CONTRÔLES D'AFFICHAGE ═══ -->
                                 <GenesisSegmentedControl
                                     v-model="internalMode"
                                     :options="[
@@ -82,7 +80,6 @@
                                     ]"
                                     size="md" 
                                 />
-
                                 <LayoutSwitcherAlt v-model="internalDisplayMode" />
                             </div>
                         </div>
@@ -91,13 +88,9 @@
             </Carrousel>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- PARTIE 2 : CONTENU (Grid ou List) -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
         <div class="flex-1 min-h-0">
             <slot />
         </div>
-
     </div>
 </template>
 
@@ -106,15 +99,14 @@ import { computed, ref } from 'vue';
 import GenesisBackButton from '@/core/components/ui/actions/GenesisBackButton.vue';
 import GenesisSegmentedControl from '@/core/components/ui/actions/GenesisSegmentedControl.vue';
 import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
+import GenesisDropdown from '@/core/components/ui/dropdown/GenesisDropdown.vue';
 import IconCursor from '@/core/components/ui/icons/IconCursor.vue';
 import IconGitCompare from '@/core/components/ui/icons/IconGitCompare.vue';
 import IconFilter from '@/core/components/ui/icons/IconFilter.vue';
-import IconSort from '@/core/components/ui/icons/IconSort.vue'; // ✅ Ajouté
+import IconSort from '@/core/components/ui/icons/IconSort.vue';
 import IconSearch from '@/core/components/ui/icons/IconSearch.vue';
 import LayoutSwitcherAlt from '../ui/dropdown/LayoutSwitcherAlt.vue';
 import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
-
-// ✅ Import du Carrousel
 import Carrousel, { type CarouselSlide } from '@/core/components/ui/carrousel/Carrousel.vue';
 
 export type CollectionMode = 'selection' | 'compare';
@@ -128,8 +120,8 @@ interface Props {
     align?: 'left' | 'right';
     showBackButton?: boolean;
     showFilter?: boolean;
-    showSort?: boolean;       // ✅ Ajouté
-    showCarousel?: boolean;   // ✅ Ajouté
+    showSort?: boolean;
+    showCarousel?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -148,12 +140,10 @@ const emit = defineEmits<{
     'update:searchValue': [value: string];
     'update:displayMode': [value: 'grid' | 'list'];
     'update:mode': [value: CollectionMode];
-    'openFilter': [];
-    'openSort': [];           // ✅ Ajouté
     'back': [];
+    'openFilter': []; // ✅ Réintégré pour ouvrir le popup
 }>();
 
-// ✅ Données de démo pour le carrousel
 const carouselSlides = ref<CarouselSlide[]>([
     { color: '#3B82F6', label: 'Slide 1 - Bleu' },
     { color: '#EF4444', label: 'Slide 2 - Rouge' },
@@ -162,15 +152,11 @@ const carouselSlides = ref<CarouselSlide[]>([
     { color: '#8B5CF6', label: 'Slide 5 - Violet' },
 ]);
 
-
-
-// Support v-model pour displayMode
 const internalDisplayMode = computed({
     get: () => props.displayMode,
     set: (value) => emit('update:displayMode', value)
 });
 
-// Support v-model pour mode
 const internalMode = computed({
     get: () => props.mode,
     set: (value) => emit('update:mode', value as CollectionMode)

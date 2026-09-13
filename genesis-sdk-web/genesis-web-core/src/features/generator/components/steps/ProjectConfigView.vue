@@ -34,18 +34,13 @@
                 <!-- Localisation -->
                 <GenesisInput
                     v-model="config.projectLocation"
+                    type="path"
                     variant="secondary"
                     label="Localisation"
                     fill-width
                     size="lg"
-                >
-                    <template #right>
-                        <!-- ✅ CORRECTION : Appel d'une fonction locale qui émet l'événement -->
-                        <GenesisButtonIcon variant="tertiary" @click="handleSelectFolderPath">
-                            <IconFolder />
-                        </GenesisButtonIcon>
-                    </template>
-                </GenesisInput>
+                    @request-folder-path="handleSelectFolderPath"
+                />
 
                 <!-- Port d'exécution -->
                 <GenesisInput

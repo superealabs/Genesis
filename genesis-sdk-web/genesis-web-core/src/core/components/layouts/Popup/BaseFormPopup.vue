@@ -37,7 +37,7 @@
             </div>
 
             <!-- Contenu -->
-            <div :class="[paddingClasses.content, 'flex flex-col flex-1 overflow-hidden min-h-0']">
+            <div :class="[paddingClasses.content, 'flex flex-col flex-1 overflow-y-auto min-h-0']">
                 <slot />
             </div>
         </div>
