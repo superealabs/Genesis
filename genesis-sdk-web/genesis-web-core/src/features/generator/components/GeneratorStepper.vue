@@ -62,18 +62,22 @@
 import StepperPopup from '@/core/components/layouts/Popup/StepperPopup.vue';
 import FrameworksView from '@/features/frameworks/views/FrameworksView.vue';
 import FrontEndSelectionView from '@/features/frontend/views/FrontEndSelectionView.vue';
-import ProjectConfigView from './steps/ProjectConfigView.vue';
-import DatabaseConfigView from './steps/DatabaseConfigView.vue';
-import ScriptConfigView from './steps/ScriptConfigView.vue';
-import TableSelectionView from './steps/TableSelectionView.vue';
-import RelationConfigView from './steps/RelationConfigView.vue';
-import FrontendLayoutConfigView from './steps/FrontendLayoutConfigView.vue';
-import GitConfigView from './steps/GitConfigView.vue';
+
+import { 
+    ProjectConfigView, 
+    DatabaseConfigView, 
+    ScriptConfigView, 
+    TableSelectionView, 
+    RelationConfigView, 
+    FrontendLayoutConfigView, 
+    GitConfigView 
+} from '@/features/generator/components/steps';
+
+
 import ErrorPopup from '@/core/components/layouts/Popup/ErrorPopup.vue';
 import DatabaseSelection from '@/features/database/views/DatabaseSelection.vue';
-import { DatabaseEngineDto } from '../types/generator.types';
+import { DatabaseEngineDto, FileRequestPayload } from '@genesis-labs/shared-types';
 
-import type { FileRequestPayload } from '../types/generator.types';
 import type { Framework } from '@/features/frameworks/types/framework.types';
 import type { FrontendFramework } from '@/features/frontend/types/frontend.types.ts';
 import { computed, ref } from 'vue';

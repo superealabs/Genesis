@@ -1,5 +1,5 @@
 // genesis-web-core/src/features/generator/store/generator.initial-state.ts
-import type { GeneratorData } from '../types/generator.types';
+import type { GeneratorData } from '@genesis-labs/shared-types';
 
 export const INITIAL_STATE: GeneratorData = {
     framework: null,

@@ -110,7 +110,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useGenerator } from '../../composables/useGenerator';
+import { useGenerator } from '@/features/generator/composables/useGenerator';
 import { MenuItem } from '@headlessui/vue';
 import GenesisDropdown from '@/core/components/ui/dropdown/GenesisDropdown.vue';
 import GenesisList from '@/core/components/layouts/display/GenesisList.vue';
@@ -119,7 +119,7 @@ import LayoutSwitcherAlt from '@/core/components/ui/dropdown/LayoutSwitcherAlt.v
 import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
 import GenesisSwitch from '@/core/components/ui/inputs/GenesisSwitch.vue';
 import IconPlus from '@/core/components/ui/icons/IconPlus.vue';
-import type { RelationParameter } from '../../types/generator.types';
+import type { RelationParameter } from '@genesis-labs/shared-types';
 import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
 
 // 1. On récupère TOUT, y compris les actions du store (pas de fonctions locales du même nom !)

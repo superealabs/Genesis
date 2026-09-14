@@ -171,8 +171,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { useGenerator } from '../../composables/useGenerator';
-import type { LanguageDto } from '../../types/generator.types';
+import { useGenerator } from '@/features/generator/composables/useGenerator';
+import type { LanguageDto } from '@genesis-labs/shared-types';
 
 import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
 import GenesisLabel from '@/core/components/ui/labels/GenesisLabel.vue';

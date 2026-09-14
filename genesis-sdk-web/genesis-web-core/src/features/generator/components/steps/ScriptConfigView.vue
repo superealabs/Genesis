@@ -106,8 +106,8 @@ import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vu
 import IconFolder from '@/core/components/ui/icons/IconFolder.vue';
 import IconX from '@/core/components/ui/icons/IconX.vue';
 import LlmAssistantPopup from '@/core/components/ux/LlmAssistantPopup.vue';
-import { useGenerator } from '../../composables/useGenerator';
-import { FileRequestPayload } from '../../manifest';
+import { useGenerator } from '@/features/generator/composables/useGenerator';
+import { FileRequestPayload } from '@genesis-labs/shared-types';
 // 1. Import du nouveau composable
 import { usePanelResizer } from '@/core/composables/ux/usePanelResizer';
 

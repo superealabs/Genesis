@@ -1,7 +1,7 @@
 // ═══ Types & Contrats (Shared - 100% Node.js & Browser safe) ═══
+// ✅ CORRECTION RÈGLE 1 : Tout ce qui vient du package partagé est importé via son nom, en un seul bloc.
 export type {
     ProjectConfig,
-    DatabaseConfig,
     ScriptConfig,
     TableMetadataDto,
     ComponentType,
@@ -13,19 +13,17 @@ export type {
     GeneratorData,
     FileRequestField,
     FileRequestPayload,
-} from '../../../../genesis-web-types-shared/src/generator.shared.ts';
+    Framework,
+    FrontendFramework,
+} from '@genesis-labs/shared-types';
 
-// On réexporte aussi les types des autres features pour faciliter la vie 
-// de l'Extension Host qui n'aura qu'un seul import à faire :
-export type { Framework } from '../../../../genesis-web-types-shared/src/framework.shared.ts';
-export type { FrontendFramework } from '../../../../genesis-web-types-shared/src/frontend.shared.ts';
+// ═══ Contrats & Clés d'injection spécifiques à la feature ═══
+export type { IGeneratorService } from '@/features/generator/types/generator.service.interface';
+export { GENERATOR_SERVICE_KEY } from '@/features/generator/types/generator.service.interface';
 
-export type { IGeneratorService } from './types/generator.service.interface';
-export { GENERATOR_SERVICE_KEY } from './types/generator.service.interface';
+// ═══ STORE & COMPOSABLES ═══
+export { useGeneratorStore } from '@/features/generator/store/useGenerator.store';
+export { useGenerator } from '@/features/generator/composables/useGenerator';
 
-// ═══ Store & Composables ═══
-export { useGeneratorStore } from './store/useGenerator.store';
-export { useGenerator } from './composables/useGenerator';
-
-// ═══ Vue ═══
-export { default as GeneratorStepper } from './components/GeneratorStepper.vue';
+// ═══ VUE ═══
+export { default as GeneratorStepper } from '@/features/generator/components/GeneratorStepper.vue';

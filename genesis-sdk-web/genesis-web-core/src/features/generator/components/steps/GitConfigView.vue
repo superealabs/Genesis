@@ -112,7 +112,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useGenerator } from '../../composables/useGenerator';
+import { useGenerator } from '@/features/generator/composables/useGenerator';
 import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
 
 const { stepperData } = useGenerator();

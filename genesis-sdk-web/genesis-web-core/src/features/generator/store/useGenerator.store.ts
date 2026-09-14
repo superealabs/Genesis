@@ -7,7 +7,7 @@ import type {
     ComponentType, TableMetadataDto, RelationParameter, LanguageDto, 
     FrontendLayoutConfig, GitConfiguration, 
     DatabaseEngineDto
-} from '../types/generator.types';
+} from '@genesis-labs/shared-types';
 
 import { INITIAL_STATE } from './generator.initial-state'
 

@@ -1,0 +1,10 @@
+// genesis-sdk-web/genesis-web-core/src/features/generator/components/steps/index.ts
+
+// RÈGLE 5 : Tous les chemins internes utilisent l'alias @/
+export { default as ProjectConfigView } from '@/features/generator/components/steps/ProjectConfigView.vue';
+export { default as DatabaseConfigView } from '@/features/generator/components/steps/DatabaseConfigView.vue';
+export { default as ScriptConfigView } from '@/features/generator/components/steps/ScriptConfigView.vue';
+export { default as TableSelectionView } from '@/features/generator/components/steps/TableSelectionView.vue';
+export { default as RelationConfigView } from '@/features/generator/components/steps/RelationConfigView.vue';
+export { default as FrontendLayoutConfigView } from '@/features/generator/components/steps/FrontendLayoutConfigView.vue';
+export { default as GitConfigView } from '@/features/generator/components/steps/GitConfigView.vue';

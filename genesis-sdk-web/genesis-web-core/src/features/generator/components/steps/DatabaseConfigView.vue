@@ -134,22 +134,22 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useGenerator } from '../../composables/useGenerator';
+import { useGenerator } from '@/features/generator/composables/useGenerator';
 import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
 
-// ✅ CORRECTION : Utiliser le store au lieu d'un ref local
-const { stepperData, updateDatabase, testDatabaseConnection } = useGenerator();
+// CORRECTION : Utiliser le store au lieu d'un ref local
+const { stepperData, /*updateDatabase,*/ testDatabaseConnection } = useGenerator();
 const database = computed(() => stepperData.value.database);
 
 const emit = defineEmits<{
     'test-connection-error': [message: string];
 }>();
 
-// ✅ NOUVEAU : État de chargement local pour le bouton
+// NOUVEAU : État de chargement local pour le bouton
 const isTesting = ref(false);
 
-// ✅ URL calculée dynamiquement en fonction du moteur choisi à l'étape précédente
+// URL calculée dynamiquement en fonction du moteur choisi à l'étape précédente
 const computedUrl = computed(() => {
     const { engine, host, port, databaseName, sid } = database.value;
     const hostStr = host || 'localhost';
@@ -170,7 +170,7 @@ const computedUrl = computed(() => {
     }
 });
 
-// ✅ Gestionnaire du test de connexion
+// Gestionnaire du test de connexion
 async function handleTestConnection() {
     isTesting.value = true;
     try {

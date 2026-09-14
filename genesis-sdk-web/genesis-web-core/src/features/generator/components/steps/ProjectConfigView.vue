@@ -223,22 +223,21 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useGenerator } from '../../composables/useGenerator';
-import type { ProjectConfig } from '../../types/generator.types'; // ✅ Import pour le typage
+import { useGenerator } from '@/features/generator/composables/useGenerator';
 import { MOCK_BUILD_TOOLS, MOCK_JAVA_VERSIONS, MOCK_NODE_VERSIONS } from '../../types/generator.types';
 
 // Imports des composants
 import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
 import GenesisDisclosure from '@/core/components/layouts/GenesisDisclosure.vue';
-import IconFolder from '@/core/components/ui/icons/IconFolder.vue';
-import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
+// import IconFolder from '@/core/components/ui/icons/IconFolder.vue';
+// import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
 
-// ✅ 1. Définition des événements (le Core demande au parent d'ouvrir le dossier)
+//  1. Définition des événements (le Core demande au parent d'ouvrir le dossier)
 const emit = defineEmits<{
     'request-folder-path': [];
 }>();
 
-// ✅ 2. Appel correct du composable (sans argument, via inject)
+//  2. Appel correct du composable (sans argument, via inject)
 const { 
     stepperData, 
     updateConfig 
@@ -258,11 +257,11 @@ const availableLanguageVersions = computed(() => {
     return ['Latest'];
 });
 
-// ✅ 3. Typage explicite pour résoudre l'erreur TS2345 sur 'buildTool'
-type BuildToolType = 'maven' | 'gradle' | 'npm' | 'yarn' | 'pip';
+//  3. Typage explicite pour résoudre l'erreur TS2345 sur 'buildTool'
+// type BuildToolType = 'maven' | 'gradle' | 'npm' | 'yarn' | 'pip';
 const availableBuildTools = computed(() => MOCK_BUILD_TOOLS);
 
-// ✅ Options pour les dropdowns avancés
+//  Options pour les dropdowns avancés
 const loggingOptions = [
     { label: 'DEBUG', value: 'DEBUG' },
     { label: 'INFO', value: 'INFO' },
@@ -284,7 +283,7 @@ const cacheOptions = [
     { label: 'Caffeine', value: 'caffeine' }
 ];
 
-// ✅ 4. Handler local qui émet l'événement au lieu d'appeler le service
+//  4. Handler local qui émet l'événement au lieu d'appeler le service
 function handleSelectFolderPath() {
     emit('request-folder-path');
 }

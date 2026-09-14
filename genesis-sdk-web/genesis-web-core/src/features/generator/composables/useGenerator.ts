@@ -1,8 +1,8 @@
 import { inject } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useGeneratorStore } from '../store/useGenerator.store';
-import { GENERATOR_SERVICE_KEY, type IGeneratorService } from '../types/generator.service.interface';
-import type { Framework } from '../../frameworks/types/framework.types';
+import { useGeneratorStore } from '@/features/generator/store/useGenerator.store';
+import { GENERATOR_SERVICE_KEY, type IGeneratorService } from '@/features/generator/types/generator.service.interface';
+import type { Framework } from '@genesis-labs/shared-types';
 import type { GeneratorData } from '@/features/generator/types/generator.types';
 import type { FrontendFramework  } from '@/features/frontend/types/frontend.types'
 
@@ -15,7 +15,7 @@ export function useGenerator() {
     const svc = service as IGeneratorService;
     const store = useGeneratorStore();
     
-    // ✅ CORRECTION : On inclut les getters dans storeToRefs pour garder la réactivité
+    //  CORRECTION : On inclut les getters dans storeToRefs pour garder la réactivité
     const { 
         currentStep, totalSteps, stepperData, isFirstStep, isLastStep, 
         getTablesParents, getTablesChilds, getRelations,
@@ -127,7 +127,7 @@ export function useGenerator() {
         isLastStep,
         stepperData,
 
-        // ✅ Getters (maintenant correctement réactifs grâce à storeToRefs)
+        //  Getters (maintenant correctement réactifs grâce à storeToRefs)
         getTablesParents,
         getTablesChilds,
         getRelations,
