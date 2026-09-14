@@ -27,9 +27,12 @@
 
     /* Alias de chemins (sans baseUrl) */
     "paths": {
-      "@/*": ["./src/*"],
-      "@genesis-labs/shared-types": ["../genesis-web-types-shared/src/index.ts"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "../genesis-web-types-shared/src/framework.shared.ts", "../genesis-web-types-shared/src/frontend.shared.ts", "../genesis-web-types-shared/src/generator.shared.ts"]
+  "include": [
+    "src/**/*.ts", 
+    "src/**/*.tsx", 
+    "src/**/*.vue"
+  ]
 }
