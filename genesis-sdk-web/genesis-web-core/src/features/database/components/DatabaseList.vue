@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import GenesisList from '@/core/components/layouts/display/GenesisList.vue';
 import GenesisItem from '@/core/components/layouts/display/GenesisItem.vue';
-import type { DatabaseEngineDto } from '../types/database.types';
+import type { DatabaseEngineDto } from '@/features/database/types/database.types';
 
 defineProps<{
     engines: DatabaseEngineDto[];

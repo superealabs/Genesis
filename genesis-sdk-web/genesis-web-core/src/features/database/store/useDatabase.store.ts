@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { DatabaseEngineDto, DatabaseConnectionTestResult } from '../types/database.types';
+import type { DatabaseEngineDto, DatabaseConnectionTestResult } from '@genesis-labs/shared-types';
 
 export const useDatabaseStore = defineStore('database', () => {
     // ═══ État ═══
