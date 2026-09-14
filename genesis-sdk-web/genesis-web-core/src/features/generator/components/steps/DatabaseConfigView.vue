@@ -1,39 +1,28 @@
 <template>
     <div class="flex flex-col gap-4 p-4 max-w-3xl mx-auto">
-        <h3 class="text-lg font-semibold text-text mb-2">Configuration de la Base de Données</h3>
+        <h3 class="text-lg font-semibold text-text mb-2">Configuration de la Connexion</h3>
 
-        <!-- Moteur de Base de Données -->
+        <!-- Moteur de Base de Données (Lecture seule, choisi à l'étape précédente) -->
         <div class="flex flex-col gap-1">
             <label class="text-sm font-medium text-muted">
-                SGBD <span class="text-accent ml-0.5">*</span>
+                SGBD Sélectionné <span class="text-accent ml-0.5">*</span>
             </label>
-            <GenesisDropdown :match-trigger-width="true" trigger-variant="secondary" :align="'left'">
-                <template #trigger>
-                    <span>{{ selectedDatabaseLabel }}</span>
-                </template>
-                <div class="py-1">
-                    <MenuItem v-for="db in databases" :key="db.value">
-                        <GenesisButton
-                            @click="selectDatabase(db.value)"
-                            :variant="'tertiary'"
-                            :fill-width="true"
-                        >
-                            {{ db.label }}
-                        </GenesisButton>
-                    </MenuItem>
-                </div>
-            </GenesisDropdown>
+            <GenesisInput
+                :model-value="database.engine"
+                disabled
+                fill-width
+                class="capitalize"
+            />
         </div>
 
         <!-- Hôte et Port -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <GenesisInput
                 v-model="database.host"
                 label="Host IP"
                 placeholder="127.0.0.1"
                 is-mandatory
                 fill-width
-                class="md:col-span-2"
             />
             <GenesisInput
                 v-model.number="database.port"
@@ -80,14 +69,27 @@
             />
         </div>
 
-        <!-- URL (Calculée) -->
-        <GenesisInput
-            :model-value="computedUrl"
-            label="URL (auto-complétée)"
-            placeholder="jdbc:postgresql://localhost:5432/my_database"
-            disabled
-            fill-width
-        />
+        <!-- URL (Calculée) et Bouton de Test -->
+        <div class="flex flex-col md:flex-row items-end gap-2">
+            <GenesisInput
+                :model-value="computedUrl"
+                label="URL (auto-complétée)"
+                placeholder="jdbc:postgresql://localhost:5432/my_database"
+                disabled
+                fill-width
+                class="flex-1"
+            />
+            <GenesisButton
+                :variant="'secondary'" 
+                content-align="center"
+                :disabled="isTesting"
+                @click="handleTestConnection"
+                class="w-full md:w-auto"
+            >
+                <span v-if="isTesting">Test en cours...</span>
+                <span v-else>Test Connexion</span>
+            </GenesisButton>
+        </div>
 
         <!-- Configurations avancées -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -114,7 +116,6 @@
 
         <!-- Options Booléennes -->
         <div class="flex flex-col gap-2 mt-2">
-            <!-- Note: pour les booléens, il vaut mieux utiliser type="checkbox" si ton GenesisInput le supporte, ou un composant GenesisCheckbox dédié -->
             <GenesisInput
                 v-model="database.trustCertificate"
                 label="Trust certificate"
@@ -128,54 +129,66 @@
                 one-line
             />
         </div>
-
-
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useGenerator } from '../../composables/useGenerator';
 import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
-import GenesisDropdown from '@/core/components/ui/dropdown/GenesisDropdown.vue'; // Assure-toi qu'il existe
 import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
-import { MenuItem } from '@headlessui/vue';
-
-type DatabaseEngine = 'mysql' | 'postgre' | 'sqlserver' | 'oracle';
-
-const databases: { label: string; value: DatabaseEngine; defaultPort: number }[] = [
-    { label: 'PostgreSQL', value: 'postgre', defaultPort: 5432 },
-    { label: 'MySQL', value: 'mysql', defaultPort: 3306 },
-    { label: 'SQL Server', value: 'sqlserver', defaultPort: 1433 },
-    { label: 'Oracle', value: 'oracle', defaultPort: 1521 },
-];
 
 // ✅ CORRECTION : Utiliser le store au lieu d'un ref local
-const { stepperData, updateDatabase } = useGenerator();
+const { stepperData, updateDatabase, testDatabaseConnection } = useGenerator();
 const database = computed(() => stepperData.value.database);
 
-const selectedDatabaseLabel = computed(() => {
-    return databases.find(db => db.value === database.value.engine)?.label || 'Sélectionner une base de données';
-});
+const emit = defineEmits<{
+    'test-connection-error': [message: string];
+}>();
 
-function selectDatabase(engine: DatabaseEngine) {
-    updateDatabase('engine', engine);
-    const db = databases.find(d => d.value === engine);
-    if (db) {
-        updateDatabase('port', db.defaultPort);
-    }
-}
+// ✅ NOUVEAU : État de chargement local pour le bouton
+const isTesting = ref(false);
 
+// ✅ URL calculée dynamiquement en fonction du moteur choisi à l'étape précédente
 const computedUrl = computed(() => {
     const { engine, host, port, databaseName, sid } = database.value;
     const hostStr = host || 'localhost';
+    const portStr = port || '';
+    const dbName = databaseName || '';
     
     switch (engine) {
-        case 'mysql': return `jdbc:mysql://${hostStr}:${port}/${databaseName}`;
-        case 'postgre': return `jdbc:postgresql://${hostStr}:${port}/${databaseName}`;
-        case 'sqlserver': return `jdbc:sqlserver://${hostStr}:${port};databaseName=${databaseName}`;
-        case 'oracle': return `jdbc:oracle:thin:@${hostStr}:${port}:${sid || databaseName}`;
-        default: return '';
+        case 'mysql': 
+            return `jdbc:mysql://${hostStr}:${portStr}/${dbName}`;
+        case 'postgre': 
+            return `jdbc:postgresql://${hostStr}:${portStr}/${dbName}`;
+        case 'sqlserver': 
+            return `jdbc:sqlserver://${hostStr}:${portStr};databaseName=${dbName}`;
+        case 'oracle': 
+            return `jdbc:oracle:thin:@${hostStr}:${portStr}:${sid || dbName}`;
+        default: 
+            return '';
     }
 });
+
+// ✅ Gestionnaire du test de connexion
+async function handleTestConnection() {
+    isTesting.value = true;
+    try {
+        const result = await testDatabaseConnection();
+        
+        if (!result.success) {
+            // On remonte l'erreur au parent (GeneratorStepper) pour qu'il affiche l'ErrorPopup
+            emit('test-connection-error', result.message);
+        }
+        // Si success === true, l'utilisateur voit juste que le chargement s'arrête. 
+        // (Tu pourras ajouter un toast de succès ici plus tard si besoin)
+        
+    } catch (error) {
+        // Fallback pour les erreurs inattendues (ex: problème réseau)
+        const msg = error instanceof Error ? error.message : 'Une erreur inconnue est survenue lors du test.';
+        emit('test-connection-error', msg);
+    } finally {
+        isTesting.value = false;
+    }
+}
 </script>

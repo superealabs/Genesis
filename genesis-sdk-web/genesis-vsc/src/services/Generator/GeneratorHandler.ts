@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { getAxiosInstance } from '../http/genesisAxiosInstance';
+import { DatabaseConfig } from '@genesis-labs/shared-types';
 
 // 1. Import des types directement depuis le Core (Single Source of Truth)
 import type { 
@@ -128,6 +129,40 @@ export class GeneratorHandler {
             panel.webview.postMessage({
                 type: 'RELATIONS_LOADED',
                 payload: MOCK_RELATIONS
+            });
+        }
+    }
+
+    async handleTestDatabaseConnection(payload: DatabaseConfig, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            // 🔄 SIMULATION : Remplace ceci par ton vrai appel API ou logique Node.js (ex: mysql2, pg, etc.)
+            // const { data } = await getAxiosInstance().post('/test-db-connection', payload);
+            
+            // Simulation d'un délai réseau pour le réalisme UX
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            // Validation basique pour la démo (à adapter selon ta logique réelle)
+            if (!payload.host || !payload.databaseName) {
+                throw new Error("L'hôte et le nom de la base de données sont requis.");
+            }
+
+            // Succès simulé
+            panel.webview.postMessage({
+                type: 'DATABASE_CONNECTION_TESTED',
+                payload: { 
+                    success: true, 
+                    message: `Connexion réussie à ${payload.engine} sur ${payload.host}:${payload.port} !` 
+                }
+            });
+
+        } catch (error) {
+            console.warn('[GeneratorHandler] Test de connexion échoué:', (error as Error).message);
+            panel.webview.postMessage({
+                type: 'DATABASE_CONNECTION_TESTED',
+                payload: { 
+                    success: false, 
+                    message: (error as Error).message || 'Échec de la connexion à la base de données.' 
+                }
             });
         }
     }

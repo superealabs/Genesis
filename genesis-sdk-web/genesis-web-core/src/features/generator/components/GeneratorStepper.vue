@@ -14,28 +14,48 @@
             :showBackButton="false"
             @select="handleFrameworkSelect"
         />
+
         <ProjectConfigView
             v-else-if="props.currentStep === 2"
             @request-folder-path="handleRequestFolderPath"
         />
-        <DatabaseConfigView v-else-if="props.currentStep === 3" />
-        <ScriptConfigView
+
+        <DatabaseSelection
+            v-else-if="props.currentStep === 3"
+            @select="handleDatabaseSelect"
+        />
+
+        <DatabaseConfigView
             v-else-if="props.currentStep === 4"
+            @test-connection-error="handleChildError"    
+        />
+        <ScriptConfigView
+            v-else-if="props.currentStep === 5"
             @request-file-path="handleRequestFilePath"
         />
-        <TableSelectionView v-else-if="props.currentStep === 5" />
-        <RelationConfigView v-else-if="props.currentStep === 6" />
+        <TableSelectionView v-else-if="props.currentStep === 6" />
+        <RelationConfigView v-else-if="props.currentStep === 7" />
         <FrontEndSelectionView
-            v-else-if="props.currentStep === 7"
+            v-else-if="props.currentStep === 8"
             @select="handleFrontendSelect"
             :showBackButton="false"
         />
         <FrontendLayoutConfigView
-            v-else-if="props.currentStep === 8"
+            v-else-if="props.currentStep === 9"
             @request-file-path="handleRequestFilePath"
         />
-        <GitConfigView v-else-if="props.currentStep === 9" />
+        <GitConfigView v-else-if="props.currentStep === 10" />
     </StepperPopup>
+
+    <ErrorPopup
+        v-if="showError"
+        title="Erreur de configuration"
+        :message="errorMessage"
+        :stack-trace="errorStackTrace"
+        :show-stack-trace="isDevMode"
+        size="md"
+        @close="clearError"
+    />
 </template>
 
 <script setup lang="ts">
@@ -49,11 +69,14 @@ import TableSelectionView from './steps/TableSelectionView.vue';
 import RelationConfigView from './steps/RelationConfigView.vue';
 import FrontendLayoutConfigView from './steps/FrontendLayoutConfigView.vue';
 import GitConfigView from './steps/GitConfigView.vue';
+import ErrorPopup from '@/core/components/layouts/Popup/ErrorPopup.vue';
+import DatabaseSelection from '@/features/database/views/DatabaseSelection.vue';
+import { DatabaseEngineDto } from '../types/generator.types';
 
 import type { FileRequestPayload } from '../types/generator.types';
 import type { Framework } from '@/features/frameworks/types/framework.types';
 import type { FrontendFramework } from '@/features/frontend/types/frontend.types.ts';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 // L'étape 4 (ScriptConfigView) gère son propre scroll interne
 const stepContentClass = computed(() =>
@@ -73,6 +96,7 @@ const emit = defineEmits<{
     'select-frontend': [framework: FrontendFramework];
     'request-folder-path': [];
     'request-file-path': [payload: FileRequestPayload];
+    'select-database': [engine: DatabaseEngineDto];
 }>();
 
 // ← handleClose manquait
@@ -94,5 +118,26 @@ function handleRequestFolderPath() {
 
 function handleRequestFilePath(payload: FileRequestPayload) {
     emit('request-file-path', payload);
+}
+
+function handleDatabaseSelect(result: { action: string; engine: DatabaseEngineDto; event?: MouseEvent }) {
+    emit('select-database', result.engine);
+}
+
+const showError = ref(false);
+const errorMessage = ref('');
+const errorStackTrace = ref('');
+const isDevMode = import.meta.env.DEV;
+
+function handleChildError(message: string) {
+    errorMessage.value = message;
+    errorStackTrace.value = ''; // Pas de stack trace pour les erreurs métier attendues
+    showError.value = true;
+}
+
+function clearError() {
+    showError.value = false;
+    errorMessage.value = '';
+    errorStackTrace.value = '';
 }
 </script>

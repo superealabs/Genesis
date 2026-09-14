@@ -90,6 +90,7 @@ export function useGenerator() {
         // goToNextStep();
     }
 
+
     function setSelectedFrontendFramework(framework: FrontendFramework | null) {
         store.setSelectedFrontendFramework(framework);
         // goToNextStep();
@@ -99,6 +100,22 @@ export function useGenerator() {
         store.reset();
     }
 
+    async function testDatabaseConnection(): Promise<{ success: boolean; message: string }> {
+        try {
+            // On récupère la config actuelle depuis le store
+            const dbConfig = stepperData.value.database;
+            
+            // On appelle le service
+            const result = await svc.testDatabaseConnection(dbConfig);
+            return result;
+        } catch (error) {
+            console.error('[useGenerator] Erreur lors du test de connexion:', error);
+            return { 
+                success: false, 
+                message: error instanceof Error ? error.message : 'Une erreur inconnue est survenue.' 
+            };
+        }
+    }
     // ═══════════════════════════════════════════════════════════
     // RETOUR FINAL
     // ═══════════════════════════════════════════════════════════
@@ -149,5 +166,7 @@ export function useGenerator() {
         toggleLanguage: store.toggleLanguage,
         addRelation: store.addRelation,
         removeRelation: store.removeRelation,
+        testDatabaseConnection,
+        setDatabaseEngine: store.setDatabaseEngine,
     };
 }

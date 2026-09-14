@@ -1,23 +1,23 @@
-// ✅ 1. Import via le manifeste (meilleure pratique)
+// 1. Import via le manifeste (meilleure pratique)
 import type { IFrontendService, FrontendFramework } from '@genesis-labs/core/features/frontend/manifest';
 
-// ✅ 2. Import de l'INSTANCE singleton (et non de la classe)
+//  2. Import de l'INSTANCE singleton (et non de la classe)
 import { vscodeService } from '../../../core/services/vscode.service';
 
 export class FrontendServiceVsc implements IFrontendService {
     
-    // ✅ 3. Utilise l'instance singleton par défaut
+    // 3. Utilise l'instance singleton par défaut
     constructor(private vscode = vscodeService) {}
 
     /**
      * Demande la liste des frameworks frontend à l'extension
-     * ✅ Retourne une Promise et ne touche PAS au store
+     * Retourne une Promise et ne touche PAS au store
      */
     fetchFrontendFrameworks(): Promise<FrontendFramework[]> {
         return new Promise((resolve) => {
             this.vscode.sendMessage('GET_FRONTEND_FRAMEWORKS');
             
-            // ✅ Écoute la réponse UNE SEULE FOIS, puis cleanup
+            //  Écoute la réponse UNE SEULE FOIS, puis cleanup
             const cleanup = this.vscode.onMessage<FrontendFramework[]>('FRONTEND_FRAMEWORKS_LOADED', (data) => {
                 cleanup(); // Nettoie le listener pour éviter les fuites mémoire
                 resolve(data); // Retourne la donnée brute au composable
@@ -27,7 +27,7 @@ export class FrontendServiceVsc implements IFrontendService {
 
     /**
      * Enregistre le choix de l'utilisateur
-     * ✅ Retourne une Promise
+     *  Retourne une Promise
      */
     selectFrontendFramework(framework: FrontendFramework): Promise<void> {
         return new Promise((resolve) => {

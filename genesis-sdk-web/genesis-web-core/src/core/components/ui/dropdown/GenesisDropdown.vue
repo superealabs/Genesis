@@ -18,7 +18,7 @@
 
       <!-- ═══ Wrapper trigger + dropdown (le relative est ici) ═══ -->
       <div class="relative inline-block">
-        <MenuButton as="template">
+        <MenuButton as="template" @click="onTriggerClick">
 
           <GenesisButton
             v-if="$slots.trigger"
@@ -133,33 +133,59 @@ const emit = defineEmits<{ close: [] }>();
 
 const triggerRef = ref<ComponentPublicInstance | HTMLElement | null>(null);
 const triggerWidth = ref<number | null>(null);
-let hoverTimeout: number | null = null;
+const fixedPosition = ref({ top: 0, left: 0, right: 0 });
+let hoverTimeout: number | null = null; 
 
-const resolvedPosition = computed(() => {
-    if (props.position) return props.position;
-    const el = (triggerRef.value as ComponentPublicInstance)?.$el || triggerRef.value;
-    if (!el) return `bottom-${props.align}` as const;
-    const rect = (el as HTMLElement).getBoundingClientRect();
-    const vertical = (window.innerHeight - rect.bottom) >= 150 ? 'bottom' : 'top';
-    return `${vertical}-${props.align}` as const;
-});
 
-const menuItemsClasses = computed(() => {
-    const base = 'absolute z-20 bg-bg-light border border-bg-light rounded-lg shadow-lg p-1 max-h-[40vh] overflow-y-auto divide-y divide-slate-400';
-    const size = (MENU_SIZES as Record<string, string>)[props.dropdownSize] || 'w-56';
-    const pos: Record<string, string> = {
-        'bottom-right': 'right-0 mt-2',
-        'bottom-left':  'left-0 mt-2',
-        'top-right':    'right-0 mb-2 bottom-full',
-        'top-left':     'left-0 mb-2 bottom-full',
+async function onTriggerClick() {
+    // D'abord mettre à jour la position
+    updateFixedPosition();
+    // Puis attendre que Headless UI ait rendu le MenuItems
+    await nextTick();
+    // Recalculer au cas où le DOM a bougé
+    updateFixedPosition();
+}
+
+function updateFixedPosition() {
+    const el = getMenuButtonEl();
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    fixedPosition.value = {
+        top: rect.bottom + 8,        // 8px sous le trigger
+        left: rect.left,
+        right: window.innerWidth - rect.right,
     };
-    return `${base} ${size} ${pos[resolvedPosition.value]}`;
+}
+
+// Remplacer menuItemsClasses
+const menuItemsClasses = computed(() => {
+    const base = 'fixed z-[9999] bg-bg-light border border-bg-light rounded-lg shadow-lg p-1 max-h-[40vh] overflow-y-auto divide-y divide-slate-400';
+    const size = (MENU_SIZES as Record<string, string>)[props.dropdownSize] || 'w-56';
+    return `${base} ${size}`;
 });
 
+// Remplacer dropdownStyle
 const dropdownStyle = computed(() => {
-    if (!props.matchTriggerWidth || triggerWidth.value === null) return {};
-    const w = `${triggerWidth.value}px`;
-    return { width: w, minWidth: w, maxWidth: w };
+    const el = getMenuButtonEl();
+    const rect = el?.getBoundingClientRect();
+    const goesUp = rect && (window.innerHeight - rect.bottom) < 150;
+
+    const style: Record<string, string> = goesUp
+        ? { bottom: `${window.innerHeight - (rect?.top ?? 0) + 8}px` }
+        : { top: `${fixedPosition.value.top}px` };
+
+    if (props.align === 'right') {
+        style.right = `${fixedPosition.value.right}px`;
+    } else {
+        style.left = `${fixedPosition.value.left}px`;
+    }
+
+    if (props.matchTriggerWidth && triggerWidth.value !== null) {
+        style.width = `${triggerWidth.value}px`;
+        style.minWidth = `${triggerWidth.value}px`;
+    }
+
+    return style;
 });
 
 function getMenuButtonEl(): HTMLElement | null {
@@ -172,10 +198,12 @@ function measureTriggerWidth() {
     if (el) triggerWidth.value = el.offsetWidth;
 }
 
+// Modifier handleMouseEnter et MenuButton pour appeler updateFixedPosition
 function handleMouseEnter(open: boolean) {
     if (!props.openAtHover) return;
     clearHoverTimeout();
     if (!open) {
+        updateFixedPosition();   // ← calculer avant d'ouvrir
         if (props.matchTriggerWidth) measureTriggerWidth();
         getMenuButtonEl()?.click();
     }
@@ -197,6 +225,8 @@ function clearHoverTimeout() {
 
 onMounted(() => {
     if (props.matchTriggerWidth) nextTick(measureTriggerWidth);
+    // ← Calculer la position initiale dès le montage
+    nextTick(() => updateFixedPosition());
 });
 
 onUnmounted(clearHoverTimeout);

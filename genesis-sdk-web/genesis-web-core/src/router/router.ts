@@ -9,6 +9,7 @@ import ErrorShowcase from '@/features/designSystem/components/ErrorShowcase.vue'
 import ProgressShowcase from '@/features/designSystem/components/ProgressShowcase.vue';
 import FrameworksView from '@/features/frameworks/views/FrameworksView.vue';
 import FrontEndSelectionView from '@/features/frontend/views/FrontEndSelectionView.vue';
+import DatabaseSelection from '@/features/database/views/DatabaseSelection.vue';
 
 // ✅ Routes communes à toutes les plateformes
 export const commonRoutes: RouteRecordRaw[] = [
@@ -26,10 +27,14 @@ export const commonRoutes: RouteRecordRaw[] = [
         path: '/frontend',
         name: 'frontend',
         component: FrontEndSelectionView
+    },
+    {
+        path: '/databases',
+        name: 'database',
+        component: DatabaseSelection
     }
 ];
 
-// ✅ Routes du Design System (communes, mais optionnelles selon la plateforme)
 export const designSystemRoutes: RouteRecordRaw[] = [
     {
         path: '/design-system',

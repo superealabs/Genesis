@@ -1,11 +1,11 @@
 <template>
     <div
         class="inline-flex flex-col gap-1"
-        :class="[layoutClasses, fillWidthClasses]"
+        :class="[layoutClasses, fillWidthClasses, $attrs.class]"
     >
         <!-- ═══ Label ═══ -->
         <label
-            v-if="label && type !== 'boolean'"
+            v-if="label && type !== 'boolean' && type !== 'checkbox-3-state'"
             class="text-sm font-medium text-muted"
             :class="labelClasses"
         >
@@ -21,6 +21,17 @@
                 :size="switchSize"
                 :label="label"
                 v-bind="$attrs"
+            />
+        </template>
+
+        <!-- ═══ CAS CHECKBOX 3 ÉTATS (Neutre, Checked, Refused) ═══ -->
+        <template v-else-if="type === 'checkbox-3-state'">
+            <GenesisCheckbox
+                :modelValue="(modelValue as CheckboxState) || 'neutral'"
+                @update:modelValue="$emit('update:modelValue', $event)"
+                :disabled="disabled"
+                :size="checkboxSize"
+                :label="label"
             />
         </template>
 
@@ -105,6 +116,12 @@
                                 </GenesisButtonIcon>
                             </template>
 
+                            <template v-else-if="type === 'path'">
+                                <GenesisButtonIcon size="xs" variant="tertiary" :disabled="disabled" @click.stop="$emit('request-folder-path')">
+                                    <IconFolder />
+                                </GenesisButtonIcon>
+                            </template>
+
                             <!-- Mode color : roue chromatique -->
                             <template v-else-if="type === 'color'">
                                 <input
@@ -161,16 +178,17 @@
 <script setup lang="ts">
 import { computed, useSlots } from 'vue';
 import GenesisSwitch from './GenesisSwitch.vue';
+import GenesisCheckbox, { type CheckboxState } from './GenesisCheckbox.vue';
 import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
 import GenesisDropdown from '@/core/components/ui/dropdown/GenesisDropdown.vue';
 import GenesisLabel from '@/core/components/ui/labels/GenesisLabel.vue';
 import IconPlus from '@/core/components/ui/icons/IconPlus.vue';
 import IconFolder from '@/core/components/ui/icons/IconFolder.vue';
 
-export type InputType = 'text' | 'password' | 'number' | 'date' | 'boolean' | 'color' | 'select' | 'file';
+export type InputType = 'text' | 'password' | 'number' | 'date' | 'boolean' | 'color' | 'select' | 'file' | 'checkbox-3-state' | 'path';
 
 interface Props {
-    modelValue?: string | number | boolean;
+    modelValue?: string | number | boolean | CheckboxState;
     placeholder?: string;
     type?: InputType;
     disabled?: boolean;
@@ -206,10 +224,11 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-    (e: 'update:modelValue', value: string | number | boolean): void;
+    (e: 'update:modelValue', value: string | number | boolean | CheckboxState): void;
     (e: 'add-choice', value: string): void;
     (e: 'remove-choice', value: string): void;
     (e: 'browse', accept: string): void;
+    (e: 'request-folder-path'): void;
 }>();
 
 defineOptions({ inheritAttrs: false });
@@ -244,7 +263,7 @@ function handleAddChoice() {
 // ═══ Classes ═══
 
 const hasRightContent = computed(() =>
-    hasRightSlot.value || props.multiChoice || props.type === 'color' || props.type === 'file'
+    hasRightSlot.value || props.multiChoice || props.type === 'color' || props.type === 'file' || props.type === 'path' // AJOUTÉ
 );
 
 const inputSizeClasses = computed(() => ({
@@ -312,6 +331,12 @@ const inputWrapperClasses = computed(() => {
 const switchSize = computed(() => {
     if (props.size === 'xs' || props.size === 'sm') return 'sm';
     if (props.size === 'xl' || props.size === '2xl') return 'lg';
+    return 'md';
+});
+
+const checkboxSize = computed(() => {
+    if (props.size === 'xs' || props.size === 'sm') return 'sm';
+    if (props.size === 'xl' || props.size === '2xl' || props.size === 'lg') return 'lg';
     return 'md';
 });
 </script>

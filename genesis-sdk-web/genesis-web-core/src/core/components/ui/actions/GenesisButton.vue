@@ -80,6 +80,8 @@ const hasLeftIcon  = computed(() => !!slots.leftIcon);
 const hasText      = computed(() => !!slots.default?.());
 const hasRightIcon = computed(() => !!slots.rightIcon);
 const isEmpty      = computed(() => !hasLeftIcon.value && !hasText.value && !hasRightIcon.value);
+// const isTextOnly = computed(() => hasText.value && !hasLeftIcon.value && !hasRightIcon.value);
+
 
 const shouldShowDefaultText = computed(() =>
     props.useDefaultText && isEmpty.value && props.shape === 'rectangle'
@@ -92,13 +94,13 @@ const variantClasses = computed(() => {
 
     if (props.variant === 'primary') {
         return hover
-            ? 'bg-accent text-text border border-accent hover:bg-accent/80 hover:shadow-lg disabled:hover:bg-accent disabled:hover:shadow-none'
+            ? 'bg-accent text-secondary font-medium border border-accent hover:bg-accent/80 disabled:hover:bg-accent disabled:hover:shadow-none'
             : 'bg-accent text-bg border-none';
     }
 
     if (props.variant === 'secondary') {
         return hover
-            ? 'bg-bg-light border border-bg-light text-text hover:bg-[var(--color-hover-ghost)] disabled:hover:bg-transparent'
+            ? 'bg-bg-light border border-bg-light text-text-muted font-medium hover:bg-[var(--color-hover-ghost)] disabled:hover:bg-transparent'
             : 'bg-secondary text-text';
     }
 
@@ -176,9 +178,12 @@ const fillWidthClasses = computed(() =>
     props.fillWidth && props.shape === 'rectangle' ? 'w-full' : ''
 );
 
-const layoutClasses = computed(() =>
-    props.shape === 'square' || props.shape === 'circle' ? 'justify-center' : ''
-);
+const layoutClasses = computed(() => {
+    if (props.shape === 'square' || props.shape === 'circle') return 'justify-center';
+    // Si c'est uniquement du texte, on centre le flex ET le texte lui-même
+    // if (isTextOnly.value) return 'justify-center text-center'; 
+    return '';
+});
 
 defineOptions({ inheritAttrs: false });
 </script>

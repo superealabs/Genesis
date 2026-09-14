@@ -1,7 +1,7 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import '@/assets/CSS/main.css';
-import App from '@/App.vue'; // App.vue de prévisualisation du core
+import App from './App.vue'; // App.vue de prévisualisation du core
 
 const app = createApp(App);
 const pinia = createPinia();

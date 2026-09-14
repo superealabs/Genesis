@@ -3,6 +3,13 @@
 import type { Framework } from './framework.shared';
 import type { FrontendFramework } from './frontend.shared';
 
+// ✅ NOUVEAU : Import des types Base de Données centralisés
+import type { 
+    DatabaseConfig, 
+    DatabaseEngineDto, 
+    DatabaseConnectionTestResult 
+} from './database.shared';
+
 // ═══ Interfaces et Types (Purs, sans dépendance UI) ═══
 
 export interface ProjectConfig {
@@ -19,20 +26,7 @@ export interface ProjectConfig {
     cacheProvider: string;
 }
 
-export interface DatabaseConfig {
-    engine: 'mysql' | 'postgre' | 'sqlserver' | 'oracle';
-    host: string;
-    port: number;
-    databaseName: string;
-    schema: string;
-    username: string;
-    password: string;
-    driverType: string;
-    driverName: string;
-    sid: string;
-    trustCertificate: boolean;
-    allowPublicKeyRetrieval: boolean;
-}
+// ✅ DatabaseConfig n'est plus défini ici, il est importé de ./database.shared
 
 export interface ScriptConfig {
     path: string;
@@ -91,10 +85,10 @@ export interface GitConfiguration {
 export interface GeneratorData {
     framework: Framework | null;
     config: ProjectConfig;
-    database: DatabaseConfig;
+    database: DatabaseConfig; // ✅ Utilise maintenant le type importé
     script: ScriptConfig;
     tableSelection: TableSelectionConfig;
-    frontend: FrontendFramework | null; // ✅ Utilise maintenant le type importé !
+    frontend: FrontendFramework | null;
     frontendLayout: FrontendLayoutConfig;
     git: GitConfiguration;
 }
@@ -105,6 +99,10 @@ export interface FileRequestPayload {
     field: FileRequestField;
     extensions?: string[];
 }
+
+// ═══ Ré-exports pour la commodité des autres modules ═══
+// Cela permet d'importer DatabaseConfig directement depuis generator.shared si besoin
+export type { DatabaseConfig, DatabaseEngineDto, DatabaseConnectionTestResult };
 
 // ═══ Constantes (Pures données, safe pour Node.js) ═══
 export const MOCK_BUILD_TOOLS = [

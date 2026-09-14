@@ -10,71 +10,34 @@
             :class="[sizeClasses, { 'pointer-events-auto': !showOverlay }]"
             :style="[draggableStyle, resizeStyle]"
         >
-
-        <!-- Resize handle bas -->
-        <div
-            v-if="resizableY"
-            class="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize z-10 flex items-center justify-center"
-            @mousedown="startResizeBottom"
-        >
-            <div class="w-8 h-1 rounded-full bg-secondary hover:bg-accent/50 transition-colors" />
-        </div>
-
-        <!-- Resize handle gauche -->
-        <div
-            v-if="resizableX"
-            class="absolute top-0 left-0 bottom-0 w-3 cursor-ew-resize z-10 flex items-center justify-center"
-            @mousedown="startResizeLeft"
-        >
-            <div class="w-1 h-8 rounded-full bg-secondary hover:bg-accent/50 transition-colors" />
-        </div>
-
-        <!-- Resize handle droite -->
-        <div
-            v-if="resizableX"
-            class="absolute top-0 right-0 bottom-0 w-3 cursor-ew-resize z-10 flex items-center justify-center"
-            @mousedown="startResizeRight"
-        >
-            <div class="w-1 h-8 rounded-full bg-secondary hover:bg-accent/50 transition-colors" />
-        </div>
+            <!-- Resize handles (inchangés) -->
+            <div v-if="resizableY" class="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize z-10 flex items-center justify-center" @mousedown="startResizeBottom">
+                <div class="w-8 h-1 rounded-full bg-secondary hover:bg-accent/50 transition-colors" />
+            </div>
+            <div v-if="resizableX" class="absolute top-0 left-0 bottom-0 w-3 cursor-ew-resize z-10 flex items-center justify-center" @mousedown="startResizeLeft">
+                <div class="w-1 h-8 rounded-full bg-secondary hover:bg-accent/50 transition-colors" />
+            </div>
+            <div v-if="resizableX" class="absolute top-0 right-0 bottom-0 w-3 cursor-ew-resize z-10 flex items-center justify-center" @mousedown="startResizeRight">
+                <div class="w-1 h-8 rounded-full bg-secondary hover:bg-accent/50 transition-colors" />
+            </div>
 
             <!-- Header avec titre -->
-            <div 
-                v-if="title" 
-                class="flex items-center justify-between select-none"
-                :class="[paddingClasses.header, { 'cursor-move': isDraggable }]"
-                @mousedown="startDrag"
-            >
+            <div v-if="title" class="flex items-center justify-between select-none" :class="[paddingClasses.header, { 'cursor-move': isDraggable }]" @mousedown="startDrag">
                 <span class="font-semibold text-sm">{{ title }}</span>
-                <GenesisButtonIcon
-                    v-if="isClosable"
-                    :variant="'tertiary'"
-                    size="md"
-                    @click.stop="$emit('close')"
-                >
+                <GenesisButtonIcon v-if="isClosable" :variant="'tertiary'" size="md" @click.stop="$emit('close')">
                     <IconX color="var(--color-text-muted)" />
                 </GenesisButtonIcon>
             </div>
 
             <!-- Header sans titre -->
-            <div 
-                v-else 
-                class="flex justify-end select-none"
-                :class="[paddingClasses.header, { 'cursor-move': isDraggable }]"
-                @mousedown="startDrag"
-            >
-                <GenesisButtonIcon
-                    v-if="isClosable"
-                    :variant="'tertiary'"
-                    size="md"
-                    @click.stop="$emit('close')"
-                >
+            <div v-else class="flex justify-end select-none" :class="[paddingClasses.header, { 'cursor-move': isDraggable }]" @mousedown="startDrag">
+                <GenesisButtonIcon v-if="isClosable" :variant="'tertiary'" size="md" @click.stop="$emit('close')">
                     <IconX color="var(--color-text-muted)" />
                 </GenesisButtonIcon>
             </div>
 
             <!-- Contenu -->
-            <div :class="[paddingClasses.content, 'flex flex-col flex-1 overflow-hidden min-h-0']">
+            <div :class="[paddingClasses.content, 'flex flex-col flex-1 overflow-y-auto min-h-0']">
                 <slot />
             </div>
         </div>
@@ -87,6 +50,9 @@ import { useDraggable } from '@/core/composables/ux/useDraggable.ts';
 import { useResizable } from '@/core/composables/ux/useResizable.ts';
 import IconX from '@/core/components/ui/icons/IconX.vue';
 import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
+// ✅ Import du nouveau composant
+
+
 import type { PopupPosition, PopupSize, PopupPadding } from './popup.types';
 import { Z_INDEX, PADDING_CLASSES } from './popup.types';
 
@@ -119,6 +85,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{ close: [] }>();
 
+
 const isDraggable = computed(() => props.draggable);
 const { startDrag, draggableStyle } = useDraggable({
     disabled: computed(() => !isDraggable.value)
@@ -150,14 +117,11 @@ const positionClasses = computed(() => {
 });
 
 const overlayClasses = computed(() => {
-    if (props.showOverlay) {
-        return 'bg-black/50';
-    }
+    if (props.showOverlay) return 'bg-black/50';
     return 'bg-transparent pointer-events-none';
 });
 
 const sizeClasses = computed(() => ({
-    // Format : largeur max adaptative + hauteur exacte fixe
     'max-w-[min(400px,90vw)] h-[50vh]':   props.size === 'sm',
     'max-w-[min(600px,90vw)] h-[60vh]':   props.size === 'md',
     'max-w-[min(800px,90vw)] h-[70vh]':   props.size === 'lg',
@@ -167,7 +131,6 @@ const sizeClasses = computed(() => ({
     'max-w-[90vw] h-[90vh]':              props.size === 'full',
 }));
 
-// ═══ Gestion de la touche ESC ═══
 function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape' && props.isClosable && props.closeOnEscape) {
         emit('close');

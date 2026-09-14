@@ -5,7 +5,7 @@
         class="table-row transition-colors group cursor-pointer"
         :class="{
             'bg-accent/10': selected,
-            'bg-bg hover:bg-bg-light/50': !selected
+            'bg-bg-light hover:bg-bg-light/50': !selected
         }"
         @click="$emit('click', $event)"
     >

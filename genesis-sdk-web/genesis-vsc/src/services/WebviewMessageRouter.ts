@@ -3,11 +3,13 @@ import { GenesisApiService } from './GenesisApiService';
 import { FrameworkHandler } from './Framework/FrameworkHandler';
 import { GeneratorHandler } from './Generator/GeneratorHandler';
 import { FrontendHandler } from './FrontEnd/FrontendFrameworkHandler';
+import { DatabaseHandler } from './database/DatabaseHandler';
 
 export class WebviewMessageRouter {
     private frameworkHandler: FrameworkHandler;
     private generatorHandler: GeneratorHandler;
     private frontendHandler: FrontendHandler;
+    private databaseHandler: DatabaseHandler;
 
     constructor(
         private panel: vscode.WebviewPanel,
@@ -18,6 +20,7 @@ export class WebviewMessageRouter {
         this.frameworkHandler = new FrameworkHandler(); 
         this.generatorHandler = new GeneratorHandler(this.panel);
         this.frontendHandler = new FrontendHandler(this.panel);
+        this.databaseHandler = new DatabaseHandler(this.panel);
     }
 
     /**
@@ -64,6 +67,14 @@ export class WebviewMessageRouter {
 
                 case 'GET_AVAILABLE_LANGUAGES':
                     await this.frontendHandler.handleGetAvailableLanguages(message.payload);
+                    break;
+
+                case 'GET_DATABASE_ENGINES':
+                    await this.databaseHandler.handleGetAvailableEngines(message.payload, this.panel);
+                    break;
+
+                case 'TEST_DATABASE_CONNECTION':
+                    await this.databaseHandler.handleTestDatabaseConnection(message.payload, this.panel);
                     break;
 
                 default:

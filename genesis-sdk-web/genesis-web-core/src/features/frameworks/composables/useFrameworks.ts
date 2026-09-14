@@ -42,7 +42,11 @@ export function useFrameworks() {
     async function initialize() {
         store.setLoading(true);
         try {
-            const data = await svc.fetchFrameworks(); 
+            const data = await svc.fetchFrameworks();
+            if (data != null) {
+                console.log("récupération reussi")
+            }
+            console.log(data)
             store.setFrameworks(data);                    
         } catch (error) {
             console.error('[useFrameworks] Erreur lors du chargement:', error);
