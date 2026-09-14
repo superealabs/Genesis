@@ -94,6 +94,6 @@
   },
   "dependencies": {
     "axios": "^1.19.0",
-    "@genesis-labs/shared-types": "file:../genesis-web-types-shared"
+    "@genesis-labs/shared-types": "*"
   }
 }

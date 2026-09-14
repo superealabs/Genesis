@@ -16,5 +16,8 @@
     "node_modules",
     "webview-ui",
     "dist"
-  ]
+  ],
+  "paths": {
+      "@genesis-labs/shared-types": ["../genesis-web-types-shared/dist/index.d.ts"]
+  }
 }
