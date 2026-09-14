@@ -11,7 +11,7 @@ import FrameworksView from '@/features/frameworks/views/FrameworksView.vue';
 import FrontEndSelectionView from '@/features/frontend/views/FrontEndSelectionView.vue';
 import DatabaseSelection from '@/features/database/views/DatabaseSelection.vue';
 
-// ✅ Routes communes à toutes les plateformes
+// Routes communes à toutes les plateformes
 export const commonRoutes: RouteRecordRaw[] = [
     {
         path: '/',
