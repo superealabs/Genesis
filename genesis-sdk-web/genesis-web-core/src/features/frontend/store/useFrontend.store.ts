@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { FrontendFramework } from '../types/frontend.types';
+import type { FrontendFramework } from '@genesis-labs/shared-types';
 
 export const useFrontendStore = defineStore('frontend', () => {
     // ═══ État Métier ═══

@@ -26,7 +26,7 @@
 <script setup lang="ts">
 import GenesisList from '@/core/components/layouts/display/GenesisList.vue';
 import GenesisItem from '@/core/components/layouts/display/GenesisItem.vue';
-import type { FrontendFramework } from '../types/frontend.types';
+import type { FrontendFramework } from '@genesis-labs/shared-types';
 
 defineProps<{
     frontends: FrontendFramework[];

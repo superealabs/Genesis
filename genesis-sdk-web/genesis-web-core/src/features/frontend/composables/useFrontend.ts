@@ -1,8 +1,8 @@
 import { inject } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useFrontendStore } from '../store/useFrontend.store';
-import { FRONTEND_SERVICE_KEY, type IFrontendService } from '../types/frontend.service.interface';
-import type { FrontendFramework } from '../types/frontend.types';
+import { useFrontendStore } from '@/features/frontend/store/useFrontend.store';
+import { FRONTEND_SERVICE_KEY, type IFrontendService } from '@/features/frontend/types/frontend.service.interface';
+import type { FrontendFramework } from '@genesis-labs/shared-types';
 
 export function useFrontend() {
     // 1. Récupération sécurisée du service via inject

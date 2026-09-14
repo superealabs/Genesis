@@ -1,5 +1,5 @@
 import type { InjectionKey } from 'vue';
-import type { FrontendFramework } from './frontend.types';
+import type { FrontendFramework } from '@genesis-labs/shared-types';
 
 export interface IFrontendService {
     fetchFrontendFrameworks(): Promise<FrontendFramework[]>;
@@ -7,5 +7,5 @@ export interface IFrontendService {
     selectFrontendFramework(framework: FrontendFramework): Promise<void>;
 }
 
-// ✅ Clé typée pour l'injection de dépendance (obligatoire)
+// Clé typée pour l'injection de dépendance (obligatoire)
 export const FRONTEND_SERVICE_KEY: InjectionKey<IFrontendService> = Symbol('FrontendService');
