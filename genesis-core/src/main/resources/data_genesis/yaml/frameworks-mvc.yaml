@@ -3446,6 +3446,11 @@
         import org.springframework.web.servlet.config.annotation.CorsRegistry;
         import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
         import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
+        import java.time.LocalDateTime;
+        import java.time.OffsetDateTime;
+        import java.time.ZoneId;
+        import java.net.InetAddress;
+        import java.net.UnknownHostException;
         @Configuration
         public class WebConfig implements WebMvcConfigurer {
             @Bean
@@ -3457,6 +3462,24 @@
                 DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
                 registrar.setUseIsoFormat(true);
                 registrar.registerFormatters(registry);
+                registry.addConverter(String.class, OffsetDateTime.class, source -> {
+                  if (source == null || source.isBlank()) {
+                    return null;
+                  }
+                  return LocalDateTime.parse(source)
+                  .atZone(ZoneId.systemDefault())
+                  .toOffsetDateTime();
+                });
+                registry.addConverter(String.class, InetAddress.class, source -> {
+                  if (source == null || source.isBlank()) {
+                    return null;
+                  }
+                  try {
+                    return InetAddress.getByName(source);
+                  } catch (UnknownHostException e) {
+                    throw new IllegalArgumentException("Invalid IP address: " + source, e);
+                  }
+                });
             }
             @Override
             public void addCorsMappings(CorsRegistry registry) {
@@ -4236,10 +4259,20 @@
             @ExceptionHandler(DataIntegrityViolationException.class)
             @ResponseStatus(HttpStatus.CONFLICT)
             public String handleDataIntegrityViolationException(DataIntegrityViolationException ex, Model model) {
-              log.warn("Data integrity violation: {}", ex.getMessage());
-                  model.addAttribute("errorMessage", "Impossible d'effectuer cette opération car cet élément est encore référencé par d'autres données."
-                );
-                return "error/error";
+              String message = "Une contrainte d'intégrité n'a pas été respectée.";
+              Throwable cause = ex.getMostSpecificCause();
+              
+              if (cause != null && cause.getMessage() != null) {
+                String databaseMessage = cause.getMessage();
+                
+                if (databaseMessage.contains("duplicate key") || databaseMessage.contains("unique constraint")) {
+                  message = "Une valeur existe déjà pour un champ qui doit être unique.";
+                } else if (databaseMessage.contains("foreign key") || databaseMessage.contains("still referenced")) {
+                  message = "Impossible d'effectuer cette opération car cet élément est encore référencé par d'autres données.";
+                }
+              }
+            model.addAttribute("errorMessage", message);
+            return "error/error";
             }
         
             @ExceptionHandler(ResourceNotFoundException.class)
@@ -4487,9 +4520,8 @@
       {{tab}}@JoinColumn(name="${this.columnName}", nullable = ${this.isNullable}){{elseIf this.isIntAndPrimaryKey}}
       {{tab}}@Id
       {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
-      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isPrimaryKey}}
+      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isManualPrimaryKey}}
       {{tab}}@Id
-      {{tab}}@org.hibernate.annotations.Generated(org.hibernate.annotations.GenerationTime.INSERT)
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
       {{tab}}@ManyToOne
       {{tab}}@JoinColumn(name="${this.columnName}", nullable = ${this.isNullable}){{else}}
@@ -4497,10 +4529,10 @@
       {{#if !this.isForeignKey}}{{removeLine}}
       {{tab}}{{#each this.attributeTypeAnnotations}}
       {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}{{/each}}{{removeLine}}{{/if}}
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}{{/if}}
+      {{tab}}{{/each}}{{removeLine}}
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
@@ -4727,6 +4759,8 @@
       {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}        throw ex;
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
@@ -4739,6 +4773,8 @@
       {{tab}}        ${pkUpdateSetter}
       {{tab}}        try {
       {{tab}}            return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}        } catch (DataIntegrityViolationException ex) {
+      {{tab}}            throw ex;
       {{tab}}        } catch (Exception ex) {
       {{tab}}            throw new InternalServerErrorException("Error while updating ${formatReadableLowerCase(className)}", ex);
       {{tab}}        }
@@ -4816,6 +4852,11 @@
       import org.springframework.web.bind.annotation.PathVariable;
       import org.springframework.web.bind.annotation.RequestMapping;
       import org.springframework.web.bind.annotation.RequestParam;
+      {{#if hasJsonFields}}
+      import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+      import org.springframework.web.bind.WebDataBinder;
+      import org.springframework.web.bind.annotation.InitBinder;
+      {{else}}{{removeLine}}{{/if}}
       {{#if !isView}}
       import org.springframework.web.bind.annotation.PostMapping;
       import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -4844,6 +4885,19 @@
       {{tab}}    {{/each}}{{removeLine}}
       {{tab}}}
     controllerMethodContent: |
+      {{#if hasJsonFields}}
+      {{tab}}@InitBinder
+      {{tab}}public void initBinder(WebDataBinder binder) {
+      {{#each jsonFields}}
+      {{tab}}    binder.registerCustomEditor(
+      {{tab}}            String.class,
+      {{tab}}            "${this.name}",
+      {{tab}}            new StringTrimmerEditor(true)
+      {{tab}}    );
+      {{/each}}
+      {{tab}}}
+      {{tab}}
+      {{else}}{{removeLine}}{{/if}}
       {{tab}}@GetMapping
       {{tab}}public String list${majStart(classNameLink)}(
       {{tab}}        @ModelAttribute("${minStart(className)}Search") ${majStart(className)}Search search,
@@ -4858,9 +4912,9 @@
       {{tab}}    model.addAttribute("${minStart(className)}s", ${minStart(className)}Page.getContent());
       {{tab}}    model.addAttribute("${minStart(className)}Page", ${minStart(className)}Page);
       {{tab}}    model.addAttribute("${minStart(className)}Search", search);
-      {{tab}}    {{#each fieldsFK}}
+      {{#each foreignOptionTypes}}
       {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
-      {{tab}}    {{/each}}{{removeLine}}
+      {{/each}}
       {{tab}}    model.addAttribute("currentPage", page);
       {{tab}}    model.addAttribute("pageSize", pageSize);
       {{tab}}    model.addAttribute("sortOrder", sortOrder);
@@ -4893,7 +4947,7 @@
       {{tab}}@GetMapping("/create")
       {{tab}}public String showCreateForm(Model model) {
       {{tab}}    model.addAttribute("${minStart(className)}", new ${majStart(className)}());
-      {{#each fieldsFK}}
+      {{#each foreignOptionTypes}}
       {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{/each}}
       {{tab}}    model.addAttribute("pageTitle", "Créer ${minStart(className)}");
@@ -4906,13 +4960,47 @@
       {{tab}}        BindingResult bindingResult,
       {{tab}}        Model model,
       {{tab}}        RedirectAttributes redirectAttributes) {
+      {{#each fieldsFK}}
+      {{#if this.isNullable}}
+        {{else}}
+      {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() == null
+      {{tab}}            || ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
+      {{tab}}        bindingResult.rejectValue(
+      {{tab}}                "${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}",
+      {{tab}}                "NotNull",
+      {{tab}}                "Ce champ est obligatoire."
+      {{tab}}        );
+      {{tab}}    }
+      {{/if}}
+      {{/each}}{{removeLine}}
       {{tab}}    if (bindingResult.hasErrors()) {
       {{tab}}        model.addAttribute("pageTitle", "Créer ${minStart(className)}");
-      {{#each fieldsFK}}
+      {{#each foreignOptionTypes}}
       {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{/each}}
       {{tab}}        return "${minStart(className)}/create";
       {{tab}}    }
+      {{#each fieldsFK}}
+      {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
+      {{#if this.isNullable}}
+      {{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
+      {{tab}}            ${minStart(className)}.set${majStart(this.name)}(null);
+      {{tab}}        } else {
+      {{tab}}            ${minStart(className)}.set${majStart(this.name)}(
+      {{tab}}                    ${minStart(this.type)}Service.get${majStart(this.type)}ById(
+      {{tab}}                            ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
+      {{tab}}                    )
+      {{tab}}            );
+      {{tab}}        }
+      {{else}}
+      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(
+      {{tab}}                ${minStart(this.type)}Service.get${majStart(this.type)}ById(
+      {{tab}}                        ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
+      {{tab}}                )
+      {{tab}}        );
+      {{/if}}
+      {{tab}}    }
+      {{/each}}{{removeLine}}
       {{tab}}    ${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
       {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} créé avec succès.");
       {{tab}}    return "redirect:/${minStart(className)}";
@@ -4928,7 +5016,7 @@
       {{tab}}    ${majStart(className)} ${minStart(className)} =
       {{tab}}            ${minStart(className)}Service.get${majStart(className)}ById(id);
       {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
-      {{#each fieldsFK}}
+      {{#each foreignOptionTypes}}
       {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{/each}}
       {{tab}}    model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
@@ -4941,7 +5029,7 @@
       {{tab}}        Model model) {
       {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
       {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
-      {{#each fieldsFK}}
+      {{#each foreignOptionTypes}}
       {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{/each}}
       {{tab}}    model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
@@ -4960,13 +5048,34 @@
       {{tab}}        RedirectAttributes redirectAttributes) {
       {{tab}}    if (bindingResult.hasErrors()) {
       {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
-      {{#each fieldsFK}}
+      {{#each foreignOptionTypes}}
       {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{/each}}
       {{tab}}        return "${minStart(className)}/edit";
       {{tab}}    }
       {{tab}}    ${majStart(className)}Id id =
       {{tab}}            new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
+      {{#each fieldsFK}}
+      {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
+      {{#if this.isNullable}}
+      {{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
+      {{tab}}            ${minStart(className)}.set${majStart(this.name)}(null);
+      {{tab}}        } else {
+      {{tab}}            ${minStart(className)}.set${majStart(this.name)}(
+      {{tab}}                    ${minStart(this.type)}Service.get${majStart(this.type)}ById(
+      {{tab}}                            ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
+      {{tab}}                    )
+      {{tab}}            );
+      {{tab}}        }
+      {{else}}
+      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(
+      {{tab}}                ${minStart(this.type)}Service.get${majStart(this.type)}ById(
+      {{tab}}                        ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
+      {{tab}}                )
+      {{tab}}        );
+      {{/if}}
+      {{tab}}    }
+      {{/each}}{{removeLine}}
       {{tab}}    ${minStart(className)}Service.update${majStart(className)}(id, ${minStart(className)});
       {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} modifié avec succès.");
       {{tab}}    return "redirect:/${minStart(className)}";
@@ -4980,12 +5089,32 @@
       {{tab}}        Model model,
       {{tab}}        RedirectAttributes redirectAttributes) {
       {{tab}}    if (bindingResult.hasErrors()) {
-      {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
-      {{#each fieldsFK}}
-      {{tab}}        model.addAttribute("${minStart(this.type)}s",${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");{{#each foreignOptionTypes}}
+      {{tab}}        model.addAttribute("${minStart(this.type)}Options",${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{/each}}
       {{tab}}        return "${minStart(className)}/edit";
       {{tab}}    }
+      {{#each fieldsFK}}
+      {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
+      {{#if this.isNullable}}
+        {{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
+      {{tab}}            ${minStart(className)}.set${majStart(this.name)}(null);
+      {{tab}}        } else {
+      {{tab}}            ${minStart(className)}.set${majStart(this.name)}(
+      {{tab}}                    ${minStart(this.type)}Service.get${majStart(this.type)}ById(
+      {{tab}}                            ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
+      {{tab}}                    )
+      {{tab}}            );
+      {{tab}}        }
+      {{else}}
+      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(
+      {{tab}}                ${minStart(this.type)}Service.get${majStart(this.type)}ById(
+      {{tab}}                        ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
+      {{tab}}                )
+      {{tab}}        );
+      {{/if}}
+      {{tab}}    }
+      {{/each}}{{removeLine}}
       {{tab}}    ${minStart(className)}Service.update${majStart(className)}(${pkColumn},${minStart(className)});
       {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} modifié avec succès.");
       {{tab}}    return "redirect:/${minStart(className)}";
@@ -5068,6 +5197,8 @@
       deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
       pageSizeTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Page.size == ${this}}\""
       dataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      arrayDataValue: |
+        <span th:text="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #strings.arrayJoin(${minStart(className)}.${minStart(this.name)}, ', ') : ''}"></span>
       dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? ${minStart(className)}.${minStart(this.name)}.${minStart(this.displayColumn)} : ''}\"></span>"
       inlineDataValue: "{{removeLine}}"
       inlineDataForeignValue: "{{removeLine}}"

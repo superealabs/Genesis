@@ -134,6 +134,7 @@ public class FrameworkMVC extends Framework {
         private String filterFalseSelectedTagHelper;
         private String foreignOptionsLoop;
         private String flashMessageSection;
+        private String arrayDataValue;
     }
 
     @Getter

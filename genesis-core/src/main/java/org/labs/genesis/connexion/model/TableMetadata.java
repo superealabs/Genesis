@@ -288,32 +288,37 @@ public class TableMetadata {
     public void addChild(TableMetadata child, Boolean mandatory, Boolean hasForm) throws InvalipRelationParameter {
         if (childTables == null) { setChildTables(new ArrayList<>());}
         if (child == null)  throw new InvalipRelationParameter("Parameter cannot be set on parent with null child");
-        ColumnMetadata fkColumn = child.findForeingKeyColumnByClassName(this.getClassName());
-        if (fkColumn == null) {
+        List<ColumnMetadata> fkColumns = child.findForeignKeyColumnsByClassName(this.getClassName());
+
+        if (fkColumns.isEmpty()) {
             throw new InvalipRelationParameter("Parameter cannot be set with invalid columns");
         }
-        ChildTableMetadata childTableMetadata = new ChildTableMetadata(child, mandatory, hasForm, fkColumn);
-        if (childTables.contains(childTableMetadata)) {
-            return;
+        for (ColumnMetadata fkColumn : fkColumns) {
+            ChildTableMetadata childTableMetadata = new ChildTableMetadata(child, mandatory, hasForm, fkColumn);
+            if (!childTables.contains(childTableMetadata)) {
+                fkColumn.setIsParentForeignKey(true);
+                this.childTables.add(childTableMetadata);
+            }
         }
-        fkColumn.setIsParentForeignKey(true);
-        this.childTables.add(childTableMetadata);
         this.setIsParent(true);
     }
 
     public void addParentTable(TableMetadata parentTable) throws InvalipRelationParameter{
         if (parentTables == null) { setParentTables(new ArrayList<>());}
-        if (parentTable == null)  throw new InvalipRelationParameter("Parameter cannot be set on child with null parent");;
-        ColumnMetadata fkColumn = this.findForeingKeyColumnByClassName(parentTable.getClassName());
-        if (fkColumn == null) {
+        if (parentTable == null)  throw new InvalipRelationParameter("Parameter cannot be set on child with null parent");
+        List<ColumnMetadata> fkColumns = this.findForeignKeyColumnsByClassName(parentTable.getClassName());
+
+        if (fkColumns.isEmpty()) {
             throw new InvalipRelationParameter("Parameter cannot be set with invalid columns");
         }
-        ParentTableMetadata parentTableMetadata = new ParentTableMetadata(parentTable, fkColumn);
-        if (parentTables.contains(parentTableMetadata)) {
-            return;
+        for (ColumnMetadata fkColumn : fkColumns) {
+            ParentTableMetadata parentTableMetadata = new ParentTableMetadata(parentTable, fkColumn);
+
+            if (!parentTables.contains(parentTableMetadata)) {
+                fkColumn.setIsParentForeignKey(true);
+                this.parentTables.add(parentTableMetadata);
+            }
         }
-        fkColumn.setIsParentForeignKey(true);
-        this.parentTables.add(parentTableMetadata);
         this.setIsChild(true);
     }
 
@@ -350,5 +355,15 @@ public class TableMetadata {
         
         // Sinon, c'est un identifiant standard Oracle → majuscules obligatoires pour JDBC
         return schema.toUpperCase();
+    }
+
+    public List<ColumnMetadata> findForeignKeyColumnsByClassName(String className) {
+        List<ColumnMetadata> foreignKeys = new ArrayList<>();
+        for (ColumnMetadata column : columns) {
+            if (column.isForeign() && column.getType() != null && column.getType().equalsIgnoreCase(className)) {
+                foreignKeys.add(column);
+            }
+        }
+        return foreignKeys;
     }
 }

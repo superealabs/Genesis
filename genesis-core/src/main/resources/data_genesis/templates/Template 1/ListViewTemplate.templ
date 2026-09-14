@@ -216,6 +216,9 @@ ${flashMessageSection}
                     {{elseIf this.isForeignKey}}
 
                         ${dataForeignValue}
+                    {{elseIf this.type = String[]}}
+
+                        ${arrayDataValue}
 
                     {{else}}
 
@@ -291,7 +294,8 @@ ${flashMessageSection}
     </table>
 </div>
 
-{{#if !isView}}<div id="customModal" class="modal" data-trigger=".btn-delete" data-input="${className}Id"
+{{#if !isView}}
+<div id="customModal" class="modal" data-trigger=".btn-delete" data-input="${className}Id"
     data-text="${className}IdText">
     <div class="modal-content">
         <div class="modal-header">
@@ -332,18 +336,7 @@ ${flashMessageSection}
             </button>
             <form id="deleteForm" style="margin: 0;" method="post" ${deleteLink}>
                 ${antiForgeryTokenTagHelper}
-                {{#if hasCompositePrimaryKey}}
-                {{#each fields}}{{#if this.isPrimaryKey = true}}
-                <input type="hidden" name="${this.name}" id="${className}_${this.name}" data-composite-pk />
-                {{else}}{{removeLine}}{{/if}}
-                {{/each}}
-                {{else}}
-                {{#each fields}}{{#if this.isPrimaryKey = true}}
-                <input type="hidden" name="${this.name}" id="${className}Id" />
-                {{else}}{{removeLine}}{{/if}}
-                {{/each}}
-                {{/if}}
-                {{removeLine}}
+                ${deletePkInputs}
                 <button type="submit" class="btn btn-danger btn-sm">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">
@@ -355,7 +348,8 @@ ${flashMessageSection}
             </form>
         </div>
     </div>
-</div>{{else}}{{removeLine}}{{/if}}
+</div>
+{{else}}{{removeLine}}{{/if}}
 
 <div class="content-footer">
     <div class="pagination">
