@@ -27,7 +27,8 @@
 
     /* Alias de chemins (sans baseUrl) */
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@genesis-labs/shared-types": ["../genesis-web-types-shared/src/index.ts"]
     }
   },
   "include": [

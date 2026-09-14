@@ -3,8 +3,7 @@ import type {
     DatabaseEngineDto, 
     DatabaseConfig, 
     DatabaseConnectionTestResult 
-} from './database.types';
-
+} from '@genesis-labs/shared-types';
 /**
  * Contrat du service de base de données.
  * Les méthodes retournent des Promises et ne mutent PAS le store directement.
