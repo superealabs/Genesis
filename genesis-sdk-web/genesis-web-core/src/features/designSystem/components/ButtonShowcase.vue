@@ -243,7 +243,7 @@
 </template>
 
 <script setup lang="ts">
-import ShowcaseLayout from './layouts/ShowcaseLayout.vue';
+import ShowcaseLayout from '@/features/designSystem/components/layouts/ShowcaseLayout.vue';
 import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
 import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconHome from '@/core/components/ui/icons/IconHome.vue';
