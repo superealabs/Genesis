@@ -3,7 +3,8 @@ import type {
     TableMetadataDto, 
     RelationParameter, 
     LanguageDto, 
-    GeneratorData 
+    GeneratorData,
+    DatabaseConfig
 } from '@genesis-labs/core/features/generator/manifest';
 import { vscodeService } from '../../../core/services/vscode.service';
 
@@ -56,6 +57,23 @@ export class GeneratorServiceVsc implements IGeneratorService {
             const cleanup = this.vscode.onMessage<LanguageDto[]>('AVAILABLE_LANGUAGES_LOADED', (data) => {
                 cleanup();
                 resolve(data);
+            });
+        });
+    }
+
+    async testDatabaseConnection(config: DatabaseConfig): Promise<{ success: boolean; message: string }> {
+        return new Promise((resolve) => {
+            // 1. On "déréalise" l'objet pour supprimer le Proxy de Vue/Pinia
+            // C'est la méthode la plus sûre pour éviter le DataCloneError
+            const cleanConfig = JSON.parse(JSON.stringify(config));
+            
+            // 2. On envoie l'objet pur
+            this.vscode.sendMessage('TEST_DATABASE_CONNECTION', cleanConfig);
+            
+            // 3. On attend la réponse
+            const cleanup = this.vscode.onMessage<{ success: boolean; message: string }>('DATABASE_CONNECTION_TESTED', (result) => {
+                cleanup();
+                resolve(result);
             });
         });
     }

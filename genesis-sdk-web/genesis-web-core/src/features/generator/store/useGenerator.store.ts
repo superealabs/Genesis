@@ -5,7 +5,8 @@ import type { FrontendFramework } from '../../frontend/types/frontend.types';
 import type { 
     GeneratorData, ProjectConfig, DatabaseConfig, ScriptConfig, 
     ComponentType, TableMetadataDto, RelationParameter, LanguageDto, 
-    FrontendLayoutConfig, GitConfiguration 
+    FrontendLayoutConfig, GitConfiguration, 
+    DatabaseEngineDto
 } from '../types/generator.types';
 
 import { INITIAL_STATE } from './generator.initial-state'
@@ -13,7 +14,7 @@ import { INITIAL_STATE } from './generator.initial-state'
 export const useGeneratorStore = defineStore('generator', () => {
     // ═══ État ═══
     const currentStep = ref(1);
-    const totalSteps = 9;
+    const totalSteps = 10;
     const isGenerating = ref(false);
     
     // Données externes
@@ -65,6 +66,22 @@ export const useGeneratorStore = defineStore('generator', () => {
         } else if (framework.coreFramework === 'Express') {
             stepperData.value.config.buildTool = 'npm';
             stepperData.value.config.languageVersion = '20';
+        }
+    }
+
+    function setDatabaseEngine(engine: DatabaseEngineDto) {
+        // Mapping sécurisé du nom vers la clé attendue par le type (ex: "PostgreSQL" -> "postgre")
+        let engineKey = engine.name.toLowerCase().replace(' ', '');
+        if (engineKey === 'postgresql') engineKey = 'postgre';
+        if (engineKey === 'sqlserver') engineKey = 'sqlserver'; // déjà bon, mais pour être explicite
+
+        stepperData.value.database.engine = engineKey as DatabaseConfig['engine'];
+        stepperData.value.database.port = Number(engine.port);
+        stepperData.value.database.driverName = engine.driverName;
+        stepperData.value.database.driverType = engine.driverType || 'jdbc';
+        
+        if (engine.sid) {
+            stepperData.value.database.sid = engine.sid;
         }
     }
 
@@ -192,6 +209,7 @@ export const useGeneratorStore = defineStore('generator', () => {
         getAvailableViews,
         getAvailableFrontendFrameworks,
         getAvailableLanguages,
+        setDatabaseEngine,
         
         // Navigation
         goToNextStep, 

@@ -1,7 +1,7 @@
 <template>
     <div
         class="inline-flex flex-col gap-1"
-        :class="[layoutClasses, fillWidthClasses]"
+        :class="[layoutClasses, fillWidthClasses, $attrs.class]"
     >
         <!-- ═══ Label ═══ -->
         <label
@@ -334,7 +334,7 @@ const switchSize = computed(() => {
     return 'md';
 });
 
-const checkboxSize = computed(() => { // ✅ AJOUTÉ
+const checkboxSize = computed(() => {
     if (props.size === 'xs' || props.size === 'sm') return 'sm';
     if (props.size === 'xl' || props.size === '2xl' || props.size === 'lg') return 'lg';
     return 'md';

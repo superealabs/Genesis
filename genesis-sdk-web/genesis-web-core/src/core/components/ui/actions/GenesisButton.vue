@@ -80,6 +80,8 @@ const hasLeftIcon  = computed(() => !!slots.leftIcon);
 const hasText      = computed(() => !!slots.default?.());
 const hasRightIcon = computed(() => !!slots.rightIcon);
 const isEmpty      = computed(() => !hasLeftIcon.value && !hasText.value && !hasRightIcon.value);
+// const isTextOnly = computed(() => hasText.value && !hasLeftIcon.value && !hasRightIcon.value);
+
 
 const shouldShowDefaultText = computed(() =>
     props.useDefaultText && isEmpty.value && props.shape === 'rectangle'
@@ -176,9 +178,12 @@ const fillWidthClasses = computed(() =>
     props.fillWidth && props.shape === 'rectangle' ? 'w-full' : ''
 );
 
-const layoutClasses = computed(() =>
-    props.shape === 'square' || props.shape === 'circle' ? 'justify-center' : ''
-);
+const layoutClasses = computed(() => {
+    if (props.shape === 'square' || props.shape === 'circle') return 'justify-center';
+    // Si c'est uniquement du texte, on centre le flex ET le texte lui-même
+    // if (isTextOnly.value) return 'justify-center text-center'; 
+    return '';
+});
 
 defineOptions({ inheritAttrs: false });
 </script>

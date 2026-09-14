@@ -16,6 +16,9 @@ import { frontendServiceVsc } from './features/frontend/services/frontend.servic
 import { GENERATOR_SERVICE_KEY } from '@genesis-labs/core/features/generator/manifest';
 import { generatorServiceVsc } from './features/generator/services/generator.service';
 
+import { DATABASE_SERVICE_KEY } from '@genesis-labs/core/features/database/manifest.ts';
+import { databaseServiceVsc } from './features/database/services/database.service.ts';
+
 console.log('[Main] Router importé:', router);  
 console.log('[Main] Routes:', router.getRoutes());
 
@@ -26,6 +29,7 @@ const pinia = createPinia();
 app.provide(FRAMEWORK_SERVICE_KEY, frameworkServiceVsc);
 app.provide(FRONTEND_SERVICE_KEY, frontendServiceVsc); // <-- C'était la ligne manquante !
 app.provide(GENERATOR_SERVICE_KEY, generatorServiceVsc);
+app.provide(DATABASE_SERVICE_KEY, databaseServiceVsc);
 
 app
     .use(pinia)
