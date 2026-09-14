@@ -1,5 +1,5 @@
 import type { InjectionKey } from 'vue';
-import type { Framework } from './framework.types';
+import type { Framework } from '@genesis-labs/shared-types';
 
 export interface IFrameworkService {
     // Retourne une Promise, ne touche pas au store

@@ -120,7 +120,7 @@ import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
 import GenesisDisclosure from '@/core/components/layouts/GenesisDisclosure.vue';
 
-// ✅ Nouvelle structure : Record<string, CheckboxState> au lieu de string[]
+// Nouvelle structure : Record<string, CheckboxState> au lieu de string[]
 interface FrameworkFilters {
     languages: Record<string, CheckboxState>;
     types: Record<string, CheckboxState>;
@@ -155,11 +155,11 @@ const filters = ref<FrameworkFilters>({
 // ═══ Helpers ═══
 
 // Extrait uniquement les valeurs 'checked' pour la compatibilité avec l'API/Composable si nécessaire
-function getCheckedValues(stateRecord: Record<string, CheckboxState>): string[] {
-    return Object.entries(stateRecord)
-        .filter(([_, state]) => state === 'checked')
-        .map(([key]) => key);
-}
+// function getCheckedValues(stateRecord: Record<string, CheckboxState>): string[] {
+//     return Object.entries(stateRecord)
+//         .filter(([_, state]) => state === 'checked')
+//         .map(([key]) => key);
+// }
 
 function resetFilters() {
     filters.value = {
