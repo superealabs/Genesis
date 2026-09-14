@@ -23,4 +23,8 @@ public class DockerConfiguration {
     private DockerConf.Command selectedCommand;
 
     private DockerConf.Command frontendSelectedCommand;
+
+    private DockerConf.Image selectedImage;
+
+    private DockerConf.Image frontendSelectedImage;
 }

@@ -5,6 +5,7 @@ import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.docker.DockerConf;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.tools.DockerConfiguration;
+import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 
 import java.util.*;
@@ -50,7 +51,8 @@ public class DockerUtils {
             ProjectGenerationContext context,
             DockerConfiguration config,
             Framework framework,
-            FrontendFramework frontendFramework) {
+            FrontendFramework frontendFramework,
+            GenesisTemplateEngine engine) {
 
         String nodeVersion = config.getLangVersion();
 
@@ -89,30 +91,11 @@ public class DockerUtils {
         DockerConf.Command command = config.getSelectedCommand();
         DockerConf.Command frontendCommand = config.getFrontendSelectedCommand();
 
+
+        DockerConf.Image image = config.getSelectedImage();
+        DockerConf.Image frontendImage = config.getFrontendSelectedImage();
+
         Map<String, Object> variables = new HashMap<>();
-        boolean needVolume = false;
-        boolean needFrontendVolume = false;
-
-        if(command != null) {
-            List<String> build = build = command.getBuild();
-            variables.put("command", formatCommand(command.getCommand(), command.getArgs()));
-            variables.put("build", build != null ? build : List.of());
-            needVolume = command.isNeedVolume();
-        }
-
-        if(frontendCommand != null) {
-            needFrontendVolume = frontendCommand.isNeedVolume();
-            variables.put("commandFrontend", formatCommand(frontendCommand.getCommand(), frontendCommand.getArgs()));
-        }
-
-        variables.put("frontendNeedVolume", needFrontendVolume);
-        variables.put("backendNeedVolume", needVolume);
-
-
-        variables.put("hasFrontendVolume", needFrontendVolume
-                || (!frontendVolumes.isEmpty() && isFrontendDockerized));
-        variables.put("backendHasVolume", needVolume
-                || (!volumes.isEmpty() && isBackendDockerized));
 
         variables.put("projectName", context.getProjectName());
         variables.put("destinationFolder", context.getDestinationFolder());
@@ -139,7 +122,42 @@ public class DockerUtils {
         variables.put("backendContainer", backendContainer != null ?
                 backendContainer : "backend");
 
-        System.out.println("- @ -" + variables);
+        boolean needVolume = false;
+        boolean needFrontendVolume = false;
+
+        if(command != null) {
+            List<String> build = build = command.getBuild();
+            String exec = formatCommand(command.getCommand(), command.getArgs());
+            variables.put("command", engine.simpleRender(exec, variables));
+            variables.put("build", build != null ? build : List.of());
+            needVolume = command.isNeedVolume();
+        }
+
+        if(frontendCommand != null) {
+            needFrontendVolume = frontendCommand.isNeedVolume();
+            String exec = formatCommand(frontendCommand.getCommand(), frontendCommand.getArgs());
+            variables.put("commandFrontend", engine.simpleRender(exec, variables));
+        }
+
+        variables.put("frontendNeedVolume", needFrontendVolume);
+        variables.put("backendNeedVolume", needVolume);
+
+        variables.put("hasFrontendVolume", needFrontendVolume
+                || (!frontendVolumes.isEmpty() && isFrontendDockerized));
+        variables.put("backendHasVolume", needVolume
+                || (!volumes.isEmpty() && isBackendDockerized));
+
+        if(image != null) {
+            String dockerImg = image.getImage();
+            variables.put("backendImage", engine.simpleRender(dockerImg, variables));
+            variables.put("backendSpecificBuild", image.getBuild());
+        }
+
+        if(frontendImage != null) {
+            String dockerImg = frontendImage.getImage();
+            variables.put("frontendImage", engine.simpleRender(dockerImg, variables));
+            variables.put("frontendSpecificBuild", frontendImage.getBuild());
+        }
 
         return variables;
     }

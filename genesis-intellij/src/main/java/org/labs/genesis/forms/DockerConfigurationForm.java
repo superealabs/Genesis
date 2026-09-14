@@ -36,6 +36,12 @@ public class DockerConfigurationForm {
     private JComboBox<DockerConf.Command> command;
     private JComboBox<DockerConf.Command> commandFrontend;
 
+    private JLabel imageLabel;
+    private JLabel imageFrontendLabel;
+
+    private JComboBox<DockerConf.Image> image;
+    private JComboBox<DockerConf.Image> imageFrontend;
+
     private JLabel frontendContainerNameLabel;
     private JTextField frontendContainerNameField;
 
@@ -67,7 +73,7 @@ public class DockerConfigurationForm {
             refreshVisibility();
             if(configureDockerCheckBox.isSelected()) {
                 if(!initCombo) {
-                    configureCommands();
+                    configureDockerOptions();
                     initCombo = true;
                 }
                 checkDocker();
@@ -155,23 +161,134 @@ public class DockerConfigurationForm {
         });
     }
 
-    private void configureCommands() {
+    private void configureImages(List<DockerConf.Image> images,
+                                 JComboBox<DockerConf.Image> image) {
 
-        if(context == null) return;
+        if (images == null || images.isEmpty()) {
+            image.setEnabled(false);
+            return;
+        }
+
+        for (DockerConf.Image dockerImage : images) {
+            if (dockerImage != null) {
+                image.addItem(dockerImage);
+            }
+        }
+
+        image.setEnabled(image.getItemCount() > 0);
+
+        if (image.getItemCount() > 0) {
+            image.setSelectedIndex(0);
+        }
+
+        image.setRenderer(new DefaultListCellRenderer() {
+
+            @Override
+            public Component getListCellRendererComponent(
+                    JList<?> list,
+                    Object value,
+                    int index,
+                    boolean isSelected,
+                    boolean cellHasFocus
+            ) {
+
+                super.getListCellRendererComponent(
+                        list,
+                        value,
+                        index,
+                        isSelected,
+                        cellHasFocus
+                );
+
+                if (value instanceof DockerConf.Image dockerImage) {
+                    String image = dockerImage.getImage().replaceAll("([^a-zA-Z0-9])\\$\\{[^}]+}", "")
+                            .replaceAll("\\$\\{[^}]+}", "");
+
+                    setText(image);
+                }
+                return this;
+            }
+        });
+    }
+
+    private String formatImageDisplayName(String image) {
+        if (image == null || image.isBlank()) {
+            return "";
+        }
+
+        if (image.startsWith("maven:")) {
+            if (image.contains("eclipse-temurin")) {
+                return "Maven / Eclipse Temurin";
+            }
+            if (image.contains("amazoncorretto")) {
+                return "Maven / Amazon Corretto";
+            }
+            return "Maven";
+        }
+
+        if (image.startsWith("node:")) {
+            if (image.contains("alpine")) {
+                return "Node.js / Alpine";
+            }
+            if (image.contains("bookworm")) {
+                return "Node.js / Bookworm";
+            }
+            return "Node.js";
+        }
+
+        if (image.startsWith("mcr.microsoft.com/dotnet/sdk:")) {
+            return ".NET SDK";
+        }
+
+        if (image.startsWith("python:")) {
+            if (image.contains("alpine")) {
+                return "Python / Alpine";
+            }
+            if (image.contains("slim")) {
+                return "Python / Slim";
+            }
+            return "Python";
+        }
+
+        return image;
+    }
+
+    private void configureDockerOptions() {
+
+        if (context == null) return;
 
         command.removeAllItems();
         commandFrontend.removeAllItems();
 
-        if (context.getFramework() != null && context.getFramework().getDocker() != null) {
-            List<DockerConf.Command> commands = context.getFramework().getDocker().getCommands();
+        image.removeAllItems();
+        imageFrontend.removeAllItems();
+
+        if (context.getFramework() != null
+                && context.getFramework().getDocker() != null) {
+
+            List<DockerConf.Command> commands =
+                    context.getFramework().getDocker().getCommands();
 
             configureCommands(commands, command);
+
+            List<DockerConf.Image> images =
+                    context.getFramework().getDocker().getImages();
+
+            configureImages(images, image);
         }
 
-        if (context.getFrontendFramework() != null && context.getFrontendFramework().getDocker() != null) {
-            List<DockerConf.Command> commandsFrontend = context.getFrontendFramework().getDocker().getCommands();
+        if (context.getFrontendFramework() != null
+                && context.getFrontendFramework().getDocker() != null) {
+
+            List<DockerConf.Command> commandsFrontend =
+                    context.getFrontendFramework().getDocker().getCommands();
 
             configureCommands(commandsFrontend, commandFrontend);
+
+            List<DockerConf.Image> imagesFrontend =
+                    context.getFrontendFramework().getDocker().getImages();
+
+            configureImages(imagesFrontend, imageFrontend);
         }
     }
 
@@ -366,6 +483,16 @@ public class DockerConfigurationForm {
 
         commandLabel.setVisible(backendDockerized);
         command.setVisible(backendDockerized);
+
+        // =========================================================
+        // IMAGES
+        // =========================================================
+
+        imageFrontendLabel.setVisible(frontendDockerized);
+        imageFrontend.setVisible(frontendDockerized);
+
+        imageLabel.setVisible(backendDockerized);
+        image.setVisible(backendDockerized);
 
 
         // =========================================================

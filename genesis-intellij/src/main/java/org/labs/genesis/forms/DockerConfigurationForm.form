@@ -6,7 +6,7 @@
   <grid id="27dc6"
         binding="mainPanel"
         layout-manager="GridLayoutManager"
-        row-count="12"
+        row-count="14"
         column-count="4"
         same-size-horizontally="false"
         same-size-vertically="false"
@@ -205,6 +205,122 @@
 
 
       <!-- ===================================================== -->
+      <!-- BACKEND IMAGE -->
+      <!-- ===================================================== -->
+
+      <component id="backendImageLabel"
+                 class="javax.swing.JLabel"
+                 binding="imageLabel">
+
+        <constraints>
+          <grid row="6"
+                column="0"
+                row-span="1"
+                col-span="1"
+                vsize-policy="0"
+                hsize-policy="0"
+                anchor="8"
+                fill="0"
+                indent="2"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Backend image:"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <component id="backendImage"
+                 class="javax.swing.JComboBox"
+                 binding="image"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="6"
+                column="1"
+                row-span="1"
+                col-span="3"
+                vsize-policy="0"
+                hsize-policy="6"
+                anchor="8"
+                fill="1"
+                indent="0"
+                use-parent-layout="false">
+
+            <preferred-size width="250" height="-1"/>
+
+          </grid>
+        </constraints>
+
+        <properties>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
+      <!-- FRONTEND IMAGE -->
+      <!-- ===================================================== -->
+
+      <component id="frontendImageLabel"
+                 class="javax.swing.JLabel"
+                 binding="imageFrontendLabel">
+
+        <constraints>
+          <grid row="7"
+                column="0"
+                row-span="1"
+                col-span="1"
+                vsize-policy="0"
+                hsize-policy="0"
+                anchor="8"
+                fill="0"
+                indent="2"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Frontend image:"/>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <component id="frontendImage"
+                 class="javax.swing.JComboBox"
+                 binding="imageFrontend"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="7"
+                column="1"
+                row-span="1"
+                col-span="3"
+                vsize-policy="0"
+                hsize-policy="6"
+                anchor="8"
+                fill="1"
+                indent="0"
+                use-parent-layout="false">
+
+            <preferred-size width="250" height="-1"/>
+
+          </grid>
+        </constraints>
+
+        <properties>
+          <visible value="false"/>
+        </properties>
+
+      </component>
+
+
+      <!-- ===================================================== -->
       <!-- BACKEND COMMAND -->
       <!-- ===================================================== -->
 
@@ -213,7 +329,7 @@
                  binding="commandLabel">
 
         <constraints>
-          <grid row="6"
+          <grid row="8"
                 column="0"
                 row-span="1"
                 col-span="1"
@@ -239,7 +355,7 @@
                  default-binding="true">
 
         <constraints>
-          <grid row="6"
+          <grid row="8"
                 column="1"
                 row-span="1"
                 col-span="3"
@@ -271,7 +387,7 @@
                  binding="commandFrontendLabel">
 
         <constraints>
-          <grid row="7"
+          <grid row="9"
                 column="0"
                 row-span="1"
                 col-span="1"
@@ -297,7 +413,7 @@
                  default-binding="true">
 
         <constraints>
-          <grid row="7"
+          <grid row="9"
                 column="1"
                 row-span="1"
                 col-span="3"
@@ -329,7 +445,7 @@
                  binding="frontendContainerNameLabel">
 
         <constraints>
-          <grid row="8"
+          <grid row="10"
                 column="0"
                 row-span="1"
                 col-span="1"
@@ -355,7 +471,7 @@
                  default-binding="true">
 
         <constraints>
-          <grid row="8"
+          <grid row="10"
                 column="1"
                 row-span="1"
                 col-span="3"
@@ -388,7 +504,7 @@
                  binding="backendContainerNameLabel">
 
         <constraints>
-          <grid row="9"
+          <grid row="11"
                 column="0"
                 row-span="1"
                 col-span="1"
@@ -414,7 +530,7 @@
                  default-binding="true">
 
         <constraints>
-          <grid row="9"
+          <grid row="11"
                 column="1"
                 row-span="1"
                 col-span="3"
@@ -445,7 +561,7 @@
       <vspacer id="spacer">
 
         <constraints>
-          <grid row="10"
+          <grid row="12"
                 column="0"
                 row-span="2"
                 col-span="4"

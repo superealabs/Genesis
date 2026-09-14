@@ -713,7 +713,7 @@ public class ProjectGenerator {
         FrontendFramework frontendFramework = context.getFrontendFramework();
         if (framework == null) return;
 
-        Map<String, Object> variables = DockerUtils.getVariables(context, config, framework, frontendFramework);
+        Map<String, Object> variables = DockerUtils.getVariables(context, config, framework, frontendFramework, engine);
 
         String projectPath = engine.simpleRender(context.getDestinationFolder(), variables);
         String backendPath = projectPath + "/" + StringUtils.majStart(context.getProjectName());

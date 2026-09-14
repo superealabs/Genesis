@@ -12,6 +12,7 @@ public class DockerConf {
     private List<Volume> volumes;
     private List<Environment> environments;
     private List<Command> commands;
+    private List<Image> images;
 
     @Getter
     @Setter
@@ -59,6 +60,20 @@ public class DockerConf {
                     ", build='" + build + '\'' +
                     ", args='" + args + '\'' +
                     ", needVolume='" + needVolume + '\'' +
+                    '}';
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class Image {
+        private String image;
+        private List<String> build;
+        @Override
+        public String toString() {
+            return "Image{" +
+                    "image='" + image + '\'' +
+                    ", build='" + build + '\'' +
                     '}';
         }
     }

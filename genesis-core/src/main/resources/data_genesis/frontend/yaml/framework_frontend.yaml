@@ -13,14 +13,27 @@
     environments: []
     commands:
       - command: "npm start"
-        args: [ "--", "--host", "0.0.0.0" ]
+        args: [ "--", "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: true
       - command: "ng serve"
-        args: [ "--", "--host", "0.0.0.0" ]
+        args: [ "--", "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: true
       - command: "npm run build"
         args: [ ]
         needVolume: false
+    images:
+      - image: "node:${versionNode}"
+        build: []
+      - image: "node:${versionNode}-alpine"
+        build: []
+      - image: "node:${versionNode}-bookworm"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
   frontendPaths:
     faviconPath: "${destinationFolder}/src"
     logoPath: "${destinationFolder}/src/assets/icon"
@@ -575,8 +588,10 @@
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM node:${versionNode}-alpine
-  
+        FROM ${frontendImage}  
+        
+        {{#each frontendSpecificBuild}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
         WORKDIR /app
         
         COPY package*.json ./
@@ -2016,16 +2031,16 @@
     environments: []
     commands:
       - command: "npm run dev"
-        args: [ "--", "--host", "0.0.0.0" ]
+        args: [ "--", "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: true
       - command: "vite"
-        args: [ "--host", "0.0.0.0" ]
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: true
       - command: "vite dev"
-        args: [ "--host", "0.0.0.0" ]
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: true
       - command: "vite serve"
-        args: [ "--host", "0.0.0.0" ]
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: true
       - command: "npm run build"
         args: [ ]
@@ -2034,11 +2049,24 @@
         args: [ ]
         needVolume: false
       - command: "npm run preview"
-        args: [ "--", "--host", "0.0.0.0" ]
+        args: [ "--", "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: false
       - command: "vite preview"
-        args: [ "--host", "0.0.0.0" ]
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: false
+    images:
+      - image: "node:${versionNode}"
+        build: []
+      - image: "node:${versionNode}-alpine"
+        build: []
+      - image: "node:${versionNode}-bookworm"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
   conditionalFiles:
     - fileType: "Git Ignore"
       fileName: ".gitignore"
@@ -2071,8 +2099,10 @@
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM node:${versionNode}
-  
+        FROM ${frontendImage} 
+        
+        {{#each frontendSpecificBuild}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
         WORKDIR /app
         
         COPY package*.json ./
@@ -7551,18 +7581,16 @@
     environments: []
     commands:
       - command: "npm run dev"
-        args: [ "--", "--host", "0.0.0.0" ]
+        args: [ "--", "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: true
-
       - command: "vite"
-        args: [ "--host", "0.0.0.0" ]
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: true
-
       - command: "vite dev"
-        args: [ "--host", "0.0.0.0" ]
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: true
       - command: "vite serve"
-        args: [ "--host", "0.0.0.0" ]
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: true
       - command: "npm run build"
         args: [ ]
@@ -7571,11 +7599,24 @@
         args: [ ]
         needVolume: false
       - command: "npm run preview"
-        args: [ "--", "--host", "0.0.0.0" ]
+        args: [ "--", "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: false
       - command: "vite preview"
-        args: [ "--host", "0.0.0.0" ]
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
         needVolume: false
+    images:
+      - image: "node:${versionNode}"
+        build: []
+      - image: "node:${versionNode}-alpine"
+        build: []
+      - image: "node:${versionNode}-bookworm"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
   conditionalFiles:
     - fileType: "Git Ignore"
       fileName: ".gitignore"
@@ -7603,12 +7644,14 @@
         .DS_Store
         Thumbs.db
       destinationPath: ""
-    - fileType: "Docker"
+    - fileType: "Docker File"
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM node:${versionNode}
-  
+        FROM ${frontendImage} 
+        
+        {{#each frontendSpecificBuild}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
         WORKDIR /app
         
         COPY package*.json ./

@@ -92,8 +92,11 @@ public class DockerConfigurationWizardStep extends ModuleWizardStep {
 
             DockerConf.Command frontendSelectedCommand =
                     (DockerConf.Command) form.getCommandFrontend().getSelectedItem();
+            DockerConf.Image frontendSelectedImage =
+                    (DockerConf.Image) form.getImageFrontend().getSelectedItem();
 
             config.setFrontendSelectedCommand(frontendSelectedCommand);
+            config.setFrontendSelectedImage(frontendSelectedImage);
 
             config.setFrontendContainer(
                     form.getFrontendContainerNameField()
@@ -111,8 +114,11 @@ public class DockerConfigurationWizardStep extends ModuleWizardStep {
 
             DockerConf.Command selectedCommand =
                     (DockerConf.Command) form.getCommand().getSelectedItem();
+            DockerConf.Image selectedImage =
+                    (DockerConf.Image) form.getImage().getSelectedItem();
 
             config.setSelectedCommand(selectedCommand);
+            config.setSelectedImage(selectedImage);
 
             config.setBackendContainer(
                     form.getBackendContainerNameField()

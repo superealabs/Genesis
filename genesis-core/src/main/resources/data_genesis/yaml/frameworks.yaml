@@ -31,6 +31,23 @@
           - "mvn dependency:go-offline"
           - "mvn package -DskipTests"
         needVolume: false
+    images:
+      - image: "maven:3.9-eclipse-temurin-${versionLanguage}"
+        build: []
+      - image: "maven:3.9-amazoncorretto-${versionLanguage}"
+        build: []
+      - image: "eclipse-temurin:${versionLanguage}"
+        build:
+          - "apt-get update && apt-get install -y maven"
+      - image: "amazoncorretto:${versionLanguage}"
+        build:
+          - "yum install -y maven"
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -70,8 +87,10 @@
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM maven:3.9-eclipse-temurin-${versionLanguage}
+        FROM ${backendImage}
 
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
         WORKDIR /app
         
         COPY . .
@@ -1186,7 +1205,7 @@
         spring.jpa.properties.hibernate.validator.apply_to_ddl=false
         spring.jpa.properties.hibernate.validator.autoregister_listeners=false
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/resources/"
-    
+
     - fileType: "ConfigFile"
       fileName: "column-visibility"
       extension: "json"
@@ -1302,7 +1321,7 @@
     #   artifactId: "flyway-database-postgresql"
     #   version: "10.19.0"
     #   scope: "{{removeLine}}"
-      
+
   model:
     toGenerate: true
     modelImports: |
@@ -1855,7 +1874,7 @@
 
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
     servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
-    
+
     serviceAdditionalFiles:
       - fileType: "Interface service"
         fileName: "${majStart(className)}Service"
@@ -2818,6 +2837,15 @@
           - "dotnet restore"
           - "dotnet publish -c Release -o /app/publish"
         needVolume: false
+    images:
+      - image: "mcr.microsoft.com/dotnet/sdk:${versionLanguage}"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y dotnet-sdk-${versionLanguage}"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y dotnet-sdk-${versionLanguage}"
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -2852,12 +2880,14 @@
         Thumbs.db
       destinationPath: ""
 
-    - fileType: "Docker"
+    - fileType: "Docker File"
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM mcr.microsoft.com/dotnet/sdk:${versionLanguage}
+        FROM ${backendImage}
 
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
         WORKDIR /app
 
         COPY . .
@@ -3088,7 +3118,7 @@
         
         app.Run();
         public partial class Program {}
-      
+
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
 
     - fileType: "DbContextFile"
@@ -6448,6 +6478,23 @@
           - "mvn dependency:go-offline"
           - "mvn package -DskipTests"
         needVolume: false
+    images:
+      - image: "maven:3.9-eclipse-temurin-${versionLanguage}"
+        build: []
+      - image: "maven:3.9-amazoncorretto-${versionLanguage}"
+        build: []
+      - image: "eclipse-temurin:${versionLanguage}"
+        build:
+          - "apt-get update && apt-get install -y maven"
+      - image: "amazoncorretto:${versionLanguage}"
+        build:
+          - "yum install -y maven"
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
   useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
@@ -6484,12 +6531,14 @@
         .DS_Store
         Thumbs.db
       destinationPath: ""
-    - fileType: "Docker"
+    - fileType: "Docker File"
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM maven:3.9-eclipse-temurin-${versionLanguage}
-
+        FROM ${backendImage}
+        
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}} 
+        {{removeLine}}
         WORKDIR /app
 
         COPY . .
@@ -6665,6 +6714,23 @@
           - "mvn dependency:go-offline"
           - "mvn package -DskipTests"
         needVolume: false
+    images:
+      - image: "maven:3.9-eclipse-temurin-${versionLanguage}"
+        build: []
+      - image: "maven:3.9-amazoncorretto-${versionLanguage}"
+        build: []
+      - image: "eclipse-temurin:${versionLanguage}"
+        build:
+          - "apt-get update && apt-get install -y maven"
+      - image: "amazoncorretto:${versionLanguage}"
+        build:
+          - "yum install -y maven"
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
   useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
@@ -6701,12 +6767,14 @@
         .DS_Store
         Thumbs.db
       destinationPath: ""
-    - fileType: "Docker"
+    - fileType: "Docker File"
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM maven:3.9-eclipse-temurin-${versionLanguage}
-
+        FROM ${backendImage} 
+        
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}} 
+        {{removeLine}}
         WORKDIR /app
 
         COPY . .
@@ -7015,6 +7083,19 @@
           - "npm install"
           - "npm run build"
         needVolume: false
+    images:
+      - image: "node:${versionLanguage}"
+        build: []
+      - image: "node:${versionLanguage}-alpine"
+        build: []
+      - image: "node:${versionLanguage}-bookworm"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -7044,12 +7125,14 @@
         Thumbs.db
       destinationPath: ""
 
-    - fileType: "Docker"
+    - fileType: "Docker File"
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM node:${versionNode}
-
+        FROM ${backendImage} 
+        
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}} 
+        {{removeLine}}
         WORKDIR /app
 
         COPY . .
@@ -8796,6 +8879,19 @@
         build:
           - "pip install -r requirements.txt"
         needVolume: false
+    images:
+      - image: "python:${versionLanguage}"
+        build: []
+      - image: "python:${versionLanguage}-slim"
+        build: []
+      - image: "python:${versionLanguage}-alpine"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y python3 python3-pip"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y python3 python3-pip"
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -8857,12 +8953,14 @@
         Thumbs.db
       destinationPath: ""
 
-    - fileType: "Docker"
+    - fileType: "Docker File"
       fileName: "Dockerfile"
       extension: ""
       content: |
-        FROM python:${versionLanguage}
-
+        FROM ${backendImage} 
+        
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}} 
+        {{removeLine}}
         WORKDIR /app
         
         ENV PYTHONDONTWRITEBYTECODE=1
