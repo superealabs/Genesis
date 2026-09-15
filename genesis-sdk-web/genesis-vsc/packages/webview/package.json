@@ -9,9 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@genesis-labs/core": "file:../../../genesis-web-core",
-    "pinia": "^2.3.0",
-    "vue-router": "^4.5.0"
+      "@genesis-labs/core": "*",
+      "@genesis-labs/shared-types": "*",
+      "pinia": "^2.3.0",
+      "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

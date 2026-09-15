@@ -18,16 +18,17 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["../../../genesis-web-core/src/*"],
-      "@genesis-labs/core/*": ["../../../genesis-web-core/src/*"]
+        "@/*":                  ["./src/*"],
+        "@genesis-labs/shared-types": ["../../../genesis-web-types-shared/src/index.ts"],
+        "@genesis-labs/core/*": ["../../../genesis-web-core/src/*"]
     },
     "types": ["vite/client", "node"]
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "src/vite-env.d.ts"
-, "../../../genesis-web-core/src/features/generator/composables/useGenerator.ts"  ],
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "src/**/*.vue",
+      "src/vite-env.d.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }
