@@ -1,25 +1,19 @@
-// ═══ EXPORTS PARTAGÉS (Types purs, utilisables côté Node.js & Browser) ═══
-// Chemin relatif vers le package de types partagés
+// ═══ EXPORTS PARTAGÉS (Types purs) ═══
 export type { 
     DatabaseConfig, 
     DatabaseEngineDto, 
     DatabaseConnectionTestResult 
-} from '../../../../genesis-web-types-shared/src/database.shared';
+} from '@genesis-labs/shared-types';
 
-// ═══ EXPORTS SPÉCIFIQUES À L'UI (Uniquement pour le Webview / Vite) ═══
+// ═══ EXPORTS SPÉCIFIQUES À L'UI ═══
 export type { 
-    // Tu pourras ajouter ici des types purement UI si besoin à l'avenir
-    // ex: DatabaseFormState, DbValidationRules
+    // Types UI si besoin
 } from './types/database.types';
 
-export type { IDatabaseService } from './types/database.service.interface';
-export { DATABASE_SERVICE_KEY } from './types/database.service.interface';
+export type { IDatabaseService } from '@genesis-labs/web-core/features/database/types/database.service.interface.ts';
+export { DATABASE_SERVICE_KEY } from '@genesis-labs/web-core/features/database/types/database.service.interface.ts';
 
-// ═══ STORE ═══
-export { useDatabaseStore } from './store/useDatabase.store';
-
-// ═══ COMPOSABLE ═══
-export { useDatabase } from './composables/useDatabase';
-
-// ═══ VUE ═══
-export { default as DatabaseSelection } from './views/DatabaseSelection.vue';
+// ═══ STORE, COMPOSABLE & VUE ═══
+export { useDatabaseStore } from '@genesis-labs/web-core/features/database/store/useDatabase.store.ts';
+export { useDatabase } from '@genesis-labs/web-core/features/database/composables/useDatabase.ts';
+export { default as DatabaseSelection } from '@genesis-labs/web-core/features/database/views/DatabaseSelection.vue';

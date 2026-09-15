@@ -23,10 +23,9 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
-import { useApp } from './core/composables/useApp';
-import GenesisLoader from '@/core/components/ui/feedback/GenesisLoader.vue';
-import GenesisError from '@/core/components/ui/feedback/GenesisError.vue';
-
+import { useApp } from '@/core/composables/useApp';
+import GenesisLoader from '@genesis-labs/core/core/components/ui/feedback/GenesisLoader.vue';
+import GenesisError from '@genesis-labs/core/core/components/ui/feedback/GenesisError.vue';
 // La View ne parle QU'AU composable
 const { apiStatus, apiError, resetApi, initialize, dispose } = useApp();
 

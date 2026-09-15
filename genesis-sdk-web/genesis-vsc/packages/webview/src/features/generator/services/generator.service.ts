@@ -3,9 +3,10 @@ import type {
     TableMetadataDto, 
     RelationParameter, 
     LanguageDto, 
-    GeneratorData,
-    DatabaseConfig
+    GeneratorData
 } from '@genesis-labs/core/features/generator/manifest';
+
+import type { DatabaseConfig } from '@genesis-labs/shared-types';
 import { vscodeService } from '../../../core/services/vscode.service';
 
 export class GeneratorServiceVsc implements IGeneratorService {

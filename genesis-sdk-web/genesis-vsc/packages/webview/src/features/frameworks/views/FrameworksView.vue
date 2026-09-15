@@ -17,7 +17,7 @@ import { ref } from 'vue';
 import { 
   FrameworksView as CoreFrameworksView, 
   type Framework 
-} from '@genesis-labs/core/features/frameworks/manifest';
+} from '@genesis-labs/web-core/features/frameworks/manifest';
 
 const props = withDefaults(defineProps<{
   showBackButton?: boolean;

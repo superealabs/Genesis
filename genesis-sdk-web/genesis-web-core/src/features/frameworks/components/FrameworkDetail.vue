@@ -44,8 +44,8 @@
 </template>
 
 <script setup lang="ts">
-import BottomPanel from '@/core/components/layouts/Popup/BottomPanel.vue';
-import type { Framework } from '../types/framework.types';
+import BottomPanel from '@genesis-labs/web-core/core/components/layouts/Popup/BottomPanel.vue';
+import type { Framework } from '@genesis-labs/shared-types';
 
 defineProps<{
     framework: Framework;

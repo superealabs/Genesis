@@ -1,8 +1,10 @@
 {
-  "name": "@genesis-labs/core",
+  "name": "@genesis-labs/web-core",
   "exports": {
-      ".":                        "./src/index.ts",
-      "./features/*/manifest":    "./src/features/*/manifest.ts"
+    ".": "./src/index.ts",
+    "./package.json": "./package.json",
+    "./features/*/manifest": "./src/features/*/manifest.ts",
+    "./core/*": "./src/core/*"
   },
   "private": true,
   "version": "0.0.0",
@@ -15,9 +17,7 @@
     "generate:icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
-    "@genesis-labs/shared-types": "file:../genesis-web-shared-types",
-
-
+    "@genesis-labs/shared-types": "*",
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/lang-sql": "^6.10.0",
     "@codemirror/theme-one-dark": "^6.1.3",

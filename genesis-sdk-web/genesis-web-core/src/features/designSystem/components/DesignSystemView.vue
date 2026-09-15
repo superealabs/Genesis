@@ -19,8 +19,8 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
-import GenesisBackButton from '@/core/components/ui/actions/GenesisBackButton.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import GenesisBackButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisBackButton.vue';
 
 const router = useRouter();
 

@@ -10,7 +10,7 @@
     @update:searchValue="setSearch"
     @update:displayMode="toggleDisplayMode"
   >
-    <!-- ✅ SLOT : Permet au VSC/Web d'injecter ses propres filtres si besoin -->
+    <!--  SLOT : Permet au VSC/Web d'injecter ses propres filtres si besoin -->
     <template #filter>
       <slot name="filter">
         <div class="p-4 text-sm text-text-muted">
@@ -41,20 +41,20 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 
-// ✅ 1. Le composant gère son propre état via le composable du Core
-import { useFrontend } from '../composables/useFrontend';
-import FrontendList from '../components/FrontendList.vue';
-import GenesisCollectionLayout from '@/core/components/layouts/GenesisCollectionLayout.vue';
-import type { FrontendFramework } from '../types/frontend.types';
+//  1. Le composant gère son propre état via le composable du Core
+import { useFrontend } from '@genesis-labs/web-core/features/frontend/composables/useFrontend.ts';
+import FrontendList from '@genesis-labs/web-core/features/frontend/components/FrontendList.vue';
+import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
+import type { FrontendFramework } from '@genesis-labs/shared-types';
 
-// ✅ 2. On ne demande que showBackButton en prop
-const props = withDefaults(defineProps<{
+//  2. On ne demande que showBackButton en prop
+withDefaults(defineProps<{
   showBackButton?: boolean;
 }>(), {
   showBackButton: true
 });
 
-// ✅ 3. On émet 'select' pour que le GeneratorStepper puisse avancer à l'étape suivante
+//  3. On émet 'select' pour que le GeneratorStepper puisse avancer à l'étape suivante
 const emit = defineEmits<{
   'back': [];
   'select': [framework: FrontendFramework, event?: MouseEvent];
@@ -62,7 +62,7 @@ const emit = defineEmits<{
   'openFilter': [];
 }>();
 
-// ✅ 4. Récupération de l'état et des actions du composable
+//  4. Récupération de l'état et des actions du composable
 const {
   availableFrameworks,
   selectedFramework,

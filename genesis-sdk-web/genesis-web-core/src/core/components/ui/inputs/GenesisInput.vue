@@ -179,11 +179,11 @@
 import { computed, useSlots } from 'vue';
 import GenesisSwitch from './GenesisSwitch.vue';
 import GenesisCheckbox, { type CheckboxState } from './GenesisCheckbox.vue';
-import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
-import GenesisDropdown from '@/core/components/ui/dropdown/GenesisDropdown.vue';
-import GenesisLabel from '@/core/components/ui/labels/GenesisLabel.vue';
-import IconPlus from '@/core/components/ui/icons/IconPlus.vue';
-import IconFolder from '@/core/components/ui/icons/IconFolder.vue';
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
+import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
+import GenesisLabel from '@genesis-labs/web-core/core/components/ui/labels/GenesisLabel.vue';
+import IconPlus from '@genesis-labs/web-core/core/components/ui/icons/IconPlus.vue';
+import IconFolder from '@genesis-labs/web-core/core/components/ui/icons/IconFolder.vue';
 
 export type InputType = 'text' | 'password' | 'number' | 'date' | 'boolean' | 'color' | 'select' | 'file' | 'checkbox-3-state' | 'path';
 

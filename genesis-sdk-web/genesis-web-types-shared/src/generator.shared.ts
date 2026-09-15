@@ -1,14 +1,10 @@
+// genesis-sdk-web/genesis-web-types-shared/src/generator.shared.ts
+
 // ═══ IMPORTS PARTAGÉS (Node.js & Browser safe) ═══
 // RÈGLE STRICTE : Chemins relatifs uniquement vers les fichiers .shared.ts
 import type { Framework } from './framework.shared';
 import type { FrontendFramework } from './frontend.shared';
-
-// ✅ NOUVEAU : Import des types Base de Données centralisés
-import type { 
-    DatabaseConfig, 
-    DatabaseEngineDto, 
-    DatabaseConnectionTestResult 
-} from './database.shared';
+import type { DatabaseConfig } from './database.shared';
 
 // ═══ Interfaces et Types (Purs, sans dépendance UI) ═══
 
@@ -25,8 +21,6 @@ export interface ProjectConfig {
     securityType: string;
     cacheProvider: string;
 }
-
-// ✅ DatabaseConfig n'est plus défini ici, il est importé de ./database.shared
 
 export interface ScriptConfig {
     path: string;
@@ -85,7 +79,7 @@ export interface GitConfiguration {
 export interface GeneratorData {
     framework: Framework | null;
     config: ProjectConfig;
-    database: DatabaseConfig; // ✅ Utilise maintenant le type importé
+    database: DatabaseConfig; // Utilise le type importé en interne
     script: ScriptConfig;
     tableSelection: TableSelectionConfig;
     frontend: FrontendFramework | null;
@@ -99,10 +93,6 @@ export interface FileRequestPayload {
     field: FileRequestField;
     extensions?: string[];
 }
-
-// ═══ Ré-exports pour la commodité des autres modules ═══
-// Cela permet d'importer DatabaseConfig directement depuis generator.shared si besoin
-export type { DatabaseConfig, DatabaseEngineDto, DatabaseConnectionTestResult };
 
 // ═══ Constantes (Pures données, safe pour Node.js) ═══
 export const MOCK_BUILD_TOOLS = [

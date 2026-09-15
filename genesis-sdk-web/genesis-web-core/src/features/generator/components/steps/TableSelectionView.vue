@@ -97,12 +97,12 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'; // ✅ Ajout de onMounted et ref
-import { useGenerator } from '../../composables/useGenerator';
+import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { 
     AVAILABLE_COMPONENTS, 
     type ComponentType,
     type TableMetadataDto 
-} from '../../types/generator.types';
+} from '@genesis-labs/shared-types';
 
 // ✅ 1. Récupération des vraies données et de la fonction de fetch
 const { 

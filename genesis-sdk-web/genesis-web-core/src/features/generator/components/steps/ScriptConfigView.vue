@@ -100,16 +100,16 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import GenesisIdeCm from '@/core/components/layouts/ide/GenesisIdeCm.vue';
-import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
-import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
-import IconFolder from '@/core/components/ui/icons/IconFolder.vue';
-import IconX from '@/core/components/ui/icons/IconX.vue';
-import LlmAssistantPopup from '@/core/components/ux/LlmAssistantPopup.vue';
-import { useGenerator } from '../../composables/useGenerator';
-import { FileRequestPayload } from '../../manifest';
+import GenesisIdeCm from '@genesis-labs/web-core/core/components/layouts/ide/GenesisIdeCm.vue';
+import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
+import IconFolder from '@genesis-labs/web-core/core/components/ui/icons/IconFolder.vue';
+import IconX from '@genesis-labs/web-core/core/components/ui/icons/IconX.vue';
+import LlmAssistantPopup from '@genesis-labs/web-core/core/components/ux/LlmAssistantPopup.vue';
+import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
+import { FileRequestPayload } from '@genesis-labs/shared-types';
 // 1. Import du nouveau composable
-import { usePanelResizer } from '@/core/composables/ux/usePanelResizer';
+import { usePanelResizer } from '@genesis-labs/web-core/core/composables/ux/usePanelResizer';
 
 const { updateScript, stepperData } = useGenerator();
 

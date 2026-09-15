@@ -1,0 +1,1 @@
+export { default as DesignSystemView } from '@genesis-labs/web-core/features/designSystem/components/DesignSystemView.vue';

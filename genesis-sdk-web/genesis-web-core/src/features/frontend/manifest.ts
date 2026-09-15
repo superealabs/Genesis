@@ -1,16 +1,15 @@
-// genesis-web-core/src/features/frontend/manifest.ts
-
 // ═══ Types & Contrats ═══
-export type { FrontendFramework } from '../../../../genesis-web-types-shared/src/frontend.shared.ts';
-export type { } from './types/frontend.types';
-export type { IFrontendService } from './types/frontend.service.interface';
-export { FRONTEND_SERVICE_KEY } from './types/frontend.service.interface';
+export type { FrontendFramework } from '@genesis-labs/shared-types';
 
-// ═══ Store ═══
-export { useFrontendStore } from './store/useFrontend.store';
+// ═══ EXPORTS SPÉCIFIQUES À L'UI ═══
+export type { 
+    // Types UI si besoin
+} from '@genesis-labs/web-core/features/frontend/types/frontend.types';
 
-// ═══ Composable ═══
-export { useFrontend } from './composables/useFrontend';
+export type { IFrontendService } from '@genesis-labs/web-core/features/frontend/types/frontend.service.interface';
+export { FRONTEND_SERVICE_KEY } from '@genesis-labs/web-core/features/frontend/types/frontend.service.interface';
 
-// ═══ Vue ═══
-export { default as FrontendSelectionView } from './views/FrontEndSelectionView.vue';
+// ═══ STORE, COMPOSABLE & VUE ═══
+export { useFrontendStore } from '@genesis-labs/web-core/features/frontend/store/useFrontend.store';
+export { useFrontend } from '@genesis-labs/web-core/features/frontend/composables/useFrontend';
+export { default as FrontendSelectionView } from '@genesis-labs/web-core/features/frontend/views/FrontEndSelectionView.vue';

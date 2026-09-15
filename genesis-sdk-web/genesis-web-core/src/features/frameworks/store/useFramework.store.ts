@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Framework, FrameworkFilters } from '../types/framework.types';
+import type { Framework, FrameworkFilters } from '@genesis-labs/shared-types';
 
 export const useFrameworkStore = defineStore('framework', () => {
     // ═══ État ═══

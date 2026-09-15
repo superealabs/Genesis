@@ -10,9 +10,7 @@ const require = createRequire(import.meta.url);
 
 // Résolution dynamique — trouve où npm a RÉELLEMENT installé ces packages
 // (fonctionne que vue soit hoisté ou local)
-const vuePath      = path.dirname(require.resolve('vue/package.json'));
-const vueRouterPath = path.dirname(require.resolve('vue-router/package.json'));
-const piniaPath    = path.dirname(require.resolve('pinia/package.json'));
+
 
 export default defineConfig({
   plugins: [
@@ -23,15 +21,10 @@ export default defineConfig({
   resolve: {
     dedupe: ['vue', 'vue-router', 'pinia'],
     alias: {
-      // ✅ Chemins réels résolus dynamiquement, pas codés en dur
-      'vue':        vuePath,
-      'vue-router': vueRouterPath,
-      'pinia':      piniaPath,
-
       // Alias projet
-      '@':                  path.resolve(__dirname, '../../../genesis-web-core/src'),
-      '@genesis-labs/core': path.resolve(__dirname, '../../../genesis-web-core/src'),
-      '@vsc':               path.resolve(__dirname, './src'),
+      '@':                  path.resolve(__dirname, './src'),
+      '@genesis-labs/shared-types': path.resolve(__dirname, '../../../genesis-web-types-shared/src/index.ts'),
+      '@genesis-labs/web-core': path.resolve(__dirname, '../../../genesis-web-core/src'),
     }
   },
   build: {

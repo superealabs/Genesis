@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue';
-import IconChevronDown from '@/core/components/ui/icons/IconChevronDown.vue';
+import IconChevronDown from '@genesis-labs/web-core/core/components/ui/icons/IconChevronDown.vue';
 
 interface Props {
     title: string;

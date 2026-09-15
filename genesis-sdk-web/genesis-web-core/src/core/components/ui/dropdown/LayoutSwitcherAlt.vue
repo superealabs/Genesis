@@ -54,10 +54,10 @@ import { computed } from 'vue';
 import { MenuItem } from '@headlessui/vue'; 
 
 // 5. On importe notre super-composant wrapper
-import GenesisDropdown from '@/core/components/ui/dropdown/GenesisDropdown.vue';
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
-import IconGrid from '@/core/components/ui/icons/IconGrid.vue';
-import IconListUl from '@/core/components/ui/icons/IconListUl.vue';
+import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import IconGrid from '@genesis-labs/web-core/core/components/ui/icons/IconGrid.vue';
+import IconListUl from '@genesis-labs/web-core/core/components/ui/icons/IconListUl.vue';
 
 const props = withDefaults(defineProps<{
     modelValue: 'grid' | 'list';

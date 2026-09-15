@@ -52,17 +52,19 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useFrameworks } from '../composables/useFrameworks';
-import FrameworkList from '../components/FrameworkList.vue';
-import FrameworkFilter from '../components/FrameworkFilter.vue';
-import FrameworkDetail from '../components/FrameworkDetail.vue';
-import GenesisCollectionLayout from '@/core/components/layouts/GenesisCollectionLayout.vue';
-import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue'; // ✅ Ajouté
-import SimpleSelectionPopup from '@/core/components/layouts/Popup/SimpleSelectionPopup.vue';
-import type { SelectionOption } from '@/core/components/layouts/Popup/SimpleSelectionPopup.vue';
-import type { Framework } from '../types/framework.types';
+import { useFrameworks } from '@genesis-labs/web-core/features/frameworks/composables/useFrameworks';
+import { 
+  FrameworkList, 
+  FrameworkFilter, 
+  FrameworkDetail 
+} from '@genesis-labs/web-core/features/frameworks/components';
+import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
+import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
+import SimpleSelectionPopup from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+import type { Framework } from '@genesis-labs/shared-types';
 
-const props = withDefaults(defineProps<{ showBackButton?: boolean }>(), { showBackButton: true });
+withDefaults(defineProps<{ showBackButton?: boolean }>(), { showBackButton: true });
 
 const emit = defineEmits<{
   'back': [];
@@ -71,7 +73,7 @@ const emit = defineEmits<{
 
 const {
   frameworks, selectedId, displayMode, compareMode, frameworkSlots, filters, searchQuery,
-  setSearch, setFilters, toggleDisplayMode, handleModeChange,
+  /*setSearch, setFilters, toggleDisplayMode,*/ handleModeChange,
   handleSelect, handleReplace, compare, initialize
 } = useFrameworks();
 

@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-// import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
+// import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import IconChevronLeft from '../icons/IconChevronLeft.vue';
 import GenesisButtonIcon from './GenesisButtonIcon.vue';
 

@@ -48,8 +48,8 @@
 </template>
 
 <script setup lang="ts">
-import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
+import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import type { PopupSize, PopupPosition } from './popup.types';
 
 withDefaults(defineProps<{

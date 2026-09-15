@@ -1,21 +1,19 @@
+// ═══ EXPORTS PARTAGÉS (Types purs) ═══
 export type { 
     FrameworkType, 
     Framework, 
     FrameworkFilters 
-} from '../../../../genesis-web-types-shared/src/framework.shared.ts';
+} from '@genesis-labs/shared-types';
 
-// ═══ EXPORTS SPÉCIFIQUES À L'UI (Uniquement pour le Webview / Vite) ═══
+// ═══ EXPORTS SPÉCIFIQUES À L'UI ═══
 export type { 
-    // Ajoute ici les types UI si nécessaire 
-} from './types/framework.types';
-export type { IFrameworkService } from './types/framework.service.interface';
-export { FRAMEWORK_SERVICE_KEY } from './types/framework.service.interface';
+    // Types UI si besoin
+} from '@genesis-labs/web-core/features/frameworks/types/framework.types';
 
-// Store
-export { useFrameworkStore } from './store/useFramework.store';
+export type { IFrameworkService } from '@genesis-labs/web-core/features/frameworks/types/framework.service.interface';
+export { FRAMEWORK_SERVICE_KEY } from '@genesis-labs/web-core/features/frameworks/types/framework.service.interface';
 
-// Composable
-export { useFrameworks } from './composables/useFrameworks';
-
-// Vue
-export { default as FrameworksView } from './views/FrameworksView.vue';
+// ═══ STORE, COMPOSABLE & VUE ═══
+export { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store';
+export { useFrameworks } from '@genesis-labs/web-core/features/frameworks/composables/useFrameworks';
+export { default as FrameworksView } from '@genesis-labs/web-core/features/frameworks/views/FrameworksView.vue';

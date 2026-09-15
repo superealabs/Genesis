@@ -59,9 +59,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import ShowcaseLayout from '@/features/designSystem/components/layouts/ShowcaseLayout.vue';
-import ErrorPopup from '@/core/components/layouts/Popup/ErrorPopup.vue';
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
+import ShowcaseLayout from '@genesis-labs/web-core/features/designSystem/components/layouts/ShowcaseLayout.vue';
+import ErrorPopup from '@genesis-labs/web-core/core/components/layouts/Popup/ErrorPopup.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 
 const sizes = ['sm', 'md', 'lg', 'xl', '2xl', '3xl', 'full'] as const;
 type Size = typeof sizes[number];

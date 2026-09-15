@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getAxiosInstance } from '../http/genesisAxiosInstance';
-import { logger } from '../LoggerService'; // ✅ Import du logger centralisé
-import type { Framework } from '../../types/framework.types'; 
+import { logger } from '../LoggerService';
+import type { Framework } from '@genesis-labs/shared-types'; 
 
 // ═══ DONNÉES STATIQUES (FALLBACK) ═══
 const MOCK_FRAMEWORKS: Framework[] = [

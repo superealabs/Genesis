@@ -11,8 +11,8 @@
 </template>
 
 <script setup lang="ts">
-import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
-import GenesisError from '@/core/components/ui/feedback/GenesisError.vue';
+import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
+import GenesisError from '@genesis-labs/web-core/core/components/ui/feedback/GenesisError.vue';
 import type { PopupPosition, PopupSize } from './popup.types';
 
 withDefaults(defineProps<{

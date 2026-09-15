@@ -15,7 +15,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { HomeView } from '@genesis-labs/core/features/home/manifest';
-import GeneratorViewVsc from '../../generator/views/GeneratorViewVsc.vue';
+import GeneratorViewVsc from '@/features/generator/views/GeneratorViewVsc.vue';
 
 const router = useRouter();
 const isOpen = ref(false);

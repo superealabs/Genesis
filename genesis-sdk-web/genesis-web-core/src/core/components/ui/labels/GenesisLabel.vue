@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 
 interface Props {
     /** Le texte à afficher dans le label */
@@ -34,7 +34,7 @@ interface Props {
     removable?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
     removable: true
 });
 

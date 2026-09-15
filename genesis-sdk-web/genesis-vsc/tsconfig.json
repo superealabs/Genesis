@@ -1,20 +1,27 @@
 {
   "compilerOptions": {
-    "module": "Node16",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0", 
     "target": "ES2022",
     "outDir": "out",
     "lib": ["ES2022"],
     "sourceMap": true,
     "rootDir": "src",
     "strict": true,
-    "types": ["node", "mocha"]
+    "types": ["node", "mocha"],
+    
+    "baseUrl": ".", 
+    "paths": {
+      "@genesis-labs/shared-types": ["../genesis-web-types-shared/dist/index.d.ts"]
+    }
   },
   "include": [
     "src"
   ],
   "exclude": [
     "node_modules",
-    "webview-ui",
+    "packages",
     "dist"
   ]
 }

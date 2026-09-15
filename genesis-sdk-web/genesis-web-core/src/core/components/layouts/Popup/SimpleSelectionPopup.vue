@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import BasePopup from '@/core/components/layouts/Popup/BasePopup.vue';
+import BasePopup from '@genesis-labs/web-core/core/components/layouts/Popup/BasePopup.vue';
 import type { PopupAnchorPosition } from './popup.types';
 
 export interface SelectionOption {

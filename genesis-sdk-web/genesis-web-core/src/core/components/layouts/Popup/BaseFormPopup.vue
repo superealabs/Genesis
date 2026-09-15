@@ -46,10 +46,10 @@
 
 <script setup lang="ts">
 import { computed, toRef, onMounted, onUnmounted } from 'vue';
-import { useDraggable } from '@/core/composables/ux/useDraggable.ts';
-import { useResizable } from '@/core/composables/ux/useResizable.ts';
-import IconX from '@/core/components/ui/icons/IconX.vue';
-import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
+import { useDraggable } from '@genesis-labs/web-core/core/composables/ux/useDraggable.ts';
+import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable.ts';
+import IconX from '@genesis-labs/web-core/core/components/ui/icons/IconX.vue';
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 // ✅ Import du nouveau composant
 
 

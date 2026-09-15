@@ -96,18 +96,18 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import GenesisBackButton from '@/core/components/ui/actions/GenesisBackButton.vue';
-import GenesisSegmentedControl from '@/core/components/ui/actions/GenesisSegmentedControl.vue';
-import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
-import GenesisDropdown from '@/core/components/ui/dropdown/GenesisDropdown.vue';
-import IconCursor from '@/core/components/ui/icons/IconCursor.vue';
-import IconGitCompare from '@/core/components/ui/icons/IconGitCompare.vue';
-import IconFilter from '@/core/components/ui/icons/IconFilter.vue';
-import IconSort from '@/core/components/ui/icons/IconSort.vue';
-import IconSearch from '@/core/components/ui/icons/IconSearch.vue';
+import GenesisBackButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisBackButton.vue';
+import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
+import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
+import IconCursor from '@genesis-labs/web-core/core/components/ui/icons/IconCursor.vue';
+import IconGitCompare from '@genesis-labs/web-core/core/components/ui/icons/IconGitCompare.vue';
+import IconFilter from '@genesis-labs/web-core/core/components/ui/icons/IconFilter.vue';
+import IconSort from '@genesis-labs/web-core/core/components/ui/icons/IconSort.vue';
+import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
 import LayoutSwitcherAlt from '../ui/dropdown/LayoutSwitcherAlt.vue';
-import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
-import Carrousel, { type CarouselSlide } from '@/core/components/ui/carrousel/Carrousel.vue';
+import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
+import Carrousel, { type CarouselSlide } from '@genesis-labs/web-core/core/components/ui/carrousel/Carrousel.vue';
 
 export type CollectionMode = 'selection' | 'compare';
 

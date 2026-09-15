@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import GenesisBackButton from '@/core/components/ui/actions/GenesisBackButton.vue';
+import GenesisBackButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisBackButton.vue';
 
 defineProps<{
     title: string;

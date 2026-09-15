@@ -3,6 +3,10 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "types": ["vite/client"],
     "allowArbitraryExtensions": true,
+    "composite": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationDir": "./dist/types", 
 
     /* Options de base pour Vue 3 + TypeScript */
     "target": "ES2020",
@@ -16,7 +20,7 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    // "noEmit": true,
     "jsx": "preserve",
 
     /* Linting */
@@ -24,12 +28,26 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     /* Alias de chemins (sans baseUrl) */
     "paths": {
-      "@/*": ["./src/*"],
+      "@genesis-labs/web-core/*": ["./src/*"],
       "@genesis-labs/shared-types": ["../genesis-web-types-shared/src/index.ts"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "../genesis-web-types-shared/src/framework.shared.ts", "../genesis-web-types-shared/src/frontend.shared.ts", "../genesis-web-types-shared/src/generator.shared.ts"]
+  "include": [
+    "src/**/*.ts", 
+    "src/**/*.tsx", 
+    "src/**/*.vue",
+    // "../genesis-web-types-shared/src/**/*.ts"
+  ],
+  "exclude": [
+    "src/main.ts", // Exclure le main de dev local s'il n'a pas de App.vue
+    "node_modules",
+    "dist"
+  ],
+  "references": [
+    { "path": "../genesis-web-types-shared/tsconfig.json" }
+  ]
 }

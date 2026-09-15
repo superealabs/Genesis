@@ -73,9 +73,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, onUnmounted } from 'vue';
-import ProgressPopup from '@/core/components/layouts/Popup/ProgressPopup.vue';
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
-import ShowcaseLayout from '@/features/designSystem/components/layouts/ShowcaseLayout.vue';
+import ProgressPopup from '@genesis-labs/web-core/core/components/layouts/Popup/ProgressPopup.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import ShowcaseLayout from '@genesis-labs/web-core/features/designSystem/components/layouts/ShowcaseLayout.vue';
 
 // ═══ Types et constantes ═══
 const sizes = ['sm', 'md', 'lg', 'xl', '2xl', '3xl', 'full'] as const;

@@ -1,5 +1,5 @@
 <template>
-  <!-- ✅ On utilise la Vue Core en lui passant toutes les données et en écoutant ses événements -->
+  <!-- On utilise la Vue Core en lui passant toutes les données et en écoutant ses événements -->
   <CoreFrontendSelectionView
     :frontends="filteredFrontends"
     :selectedId="selectedId"
@@ -15,12 +15,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 
-// ✅ 1. Import de la Vue Core
-import CoreFrontendSelectionView from '@genesis-labs/core/features/frontend/views/FrontEndSelectionView.vue';
+// 1. Import de la Vue Core
+import { FrontendSelectionView as CoreFrontendSelectionView } from '@genesis-labs/core/features/frontend/manifest';
 
-// ✅ 2. Import du Composable VSC (qui contient déjà l'injection du service)
-import { useFrontendVscode } from '../composables/useFrontendVscode';
-import type { FrontendFramework } from '@genesis-labs/core/features/frontend/types/frontend.types';
+
+// 2. Import du Composable VSC (qui contient déjà l'injection du service)
+import { useFrontendVscode } from '@/features/frontend/composables/useFrontendVscode';
+import type { FrontendFramework } from '@genesis-labs/shared-types';
 
 const props = withDefaults(defineProps<{
   showBackButton?: boolean;
