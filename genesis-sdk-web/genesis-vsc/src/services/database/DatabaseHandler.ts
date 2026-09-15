@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-// ✅ Import des types partagés (Ajuste le chemin d'import si ton tsconfig utilise un alias différent, ex: '@genesis-labs/shared-types')
+// Import des types partagés (Ajuste le chemin d'import si ton tsconfig utilise un alias différent, ex: '@genesis-labs/shared-types')
 import type { 
     DatabaseEngineDto, 
     DatabaseConfig, 

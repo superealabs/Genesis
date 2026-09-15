@@ -10,14 +10,14 @@ import { FRAMEWORK_SERVICE_KEY } from '@genesis-labs/core/features/frameworks/ma
 import { FRONTEND_SERVICE_KEY } from '@genesis-labs/core/features/frontend/manifest';
 
 // 2. Imports des Services Concrets VSC
-import { frameworkServiceVsc } from './features/frameworks/services/framework.service';
-import { frontendServiceVsc } from './features/frontend/services/frontend.service';
+import { frameworkServiceVsc } from '@/features/frameworks/services/framework.service';
+import { frontendServiceVsc } from '@/features/frontend/services/frontend.service';
 
 import { GENERATOR_SERVICE_KEY } from '@genesis-labs/core/features/generator/manifest';
-import { generatorServiceVsc } from './features/generator/services/generator.service';
+import { generatorServiceVsc } from '@/features/generator/services/generator.service';
 
 import { DATABASE_SERVICE_KEY } from '@genesis-labs/core/features/database/manifest';
-import { databaseServiceVsc } from './features/database/services/database.service';
+import { databaseServiceVsc } from '@/features/database/services/database.service';
 
 console.log('[Main] Router importé:', router);  
 console.log('[Main] Routes:', router.getRoutes());

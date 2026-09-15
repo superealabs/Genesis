@@ -14,7 +14,7 @@
     "ignoreDeprecations": "6.0", /* condition pour faire marché la base url */
     "paths": {
       "@/*": ["./src/*"],
-      "@genesis-labs/core/*": ["../../../genesis-web-core/src/*"],
+      "@genesis-labs/web-core/*": ["../../../genesis-web-core/src/*"],
       "@genesis-labs/shared-types": ["../../../genesis-web-types-shared/src/index.ts"]
     },
     "jsx": "preserve",

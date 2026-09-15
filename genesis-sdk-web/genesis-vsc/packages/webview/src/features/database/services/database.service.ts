@@ -7,7 +7,7 @@ import type {
 } from '@genesis-labs/core/features/database/manifest';
 
 //  2. Import de l'INSTANCE singleton du service de communication VS Code
-import { vscodeService } from '../../../core/services/vscode.service';
+import { vscodeService } from '@/core/services/vscode.service';
 
 export class DatabaseServiceVsc implements IDatabaseService {
     

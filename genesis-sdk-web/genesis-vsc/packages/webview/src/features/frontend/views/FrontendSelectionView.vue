@@ -20,7 +20,7 @@ import { FrontendSelectionView as CoreFrontendSelectionView } from '@genesis-lab
 
 
 // 2. Import du Composable VSC (qui contient déjà l'injection du service)
-import { useFrontendVscode } from '../composables/useFrontendVscode';
+import { useFrontendVscode } from '@/features/frontend/composables/useFrontendVscode';
 import type { FrontendFramework } from '@genesis-labs/shared-types';
 
 const props = withDefaults(defineProps<{

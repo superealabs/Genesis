@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { GeneratorStepper } from '@genesis-labs/core/features/generator/manifest';
-import { useGeneratorVsc } from '../composables/useGeneratorVsc';
+import { GeneratorStepper } from '@genesis-labs/web-core/features/generator/manifest';
+import { useGeneratorVsc } from '@/features/generator/composables/useGeneratorVsc';
 import type { FileRequestPayload } from '@genesis-labs/core/features/generator/manifest';
 import type { Framework } from '@genesis-labs/core/features/frameworks/manifest';  // ← ajouter
 import { DatabaseEngineDto } from '@genesis-labs/shared-types';

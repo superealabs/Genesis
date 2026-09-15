@@ -1,5 +1,5 @@
 {
-  "name": "@genesis-labs/core",
+  "name": "@genesis-labs/web-core",
   "exports": {
     ".": "./src/index.ts",
     "./package.json": "./package.json",
