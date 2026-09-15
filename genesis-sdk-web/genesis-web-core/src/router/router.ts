@@ -1,5 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router';
-import HomeView from '@/features/home/components/HomeView.vue';
+
 import DesignSystemView from '@/features/designSystem/components/DesignSystemView.vue';
 import ButtonShowcase from '@/features/designSystem/components/ButtonShowcase.vue';
 import PopupShowcase from '@/features/designSystem/components/PopupShowcase.vue';
@@ -10,7 +10,7 @@ import ProgressShowcase from '@/features/designSystem/components/ProgressShowcas
 import FrameworksView from '@/features/frameworks/views/FrameworksView.vue';
 import FrontEndSelectionView from '@/features/frontend/views/FrontEndSelectionView.vue';
 import DatabaseSelection from '@/features/database/views/DatabaseSelection.vue';
-
+import HomeView from '@/features/home/components/HomeView.vue';
 // Routes communes à toutes les plateformes
 export const commonRoutes: RouteRecordRaw[] = [
     {

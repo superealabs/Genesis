@@ -29,7 +29,7 @@ import GenesisCollectionLayout from '@/core/components/layouts/GenesisCollection
 import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
 
 // ═══ PROPS & EMITS ═══
-const props = withDefaults(defineProps<{
+withDefaults(defineProps<{
     showBackButton?: boolean;
 }>(), {
     showBackButton: true

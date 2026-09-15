@@ -62,7 +62,7 @@ import SimpleSelectionPopup from '@/core/components/layouts/Popup/SimpleSelectio
 import type { SelectionOption } from '@/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 import type { Framework } from '../types/framework.types';
 
-const props = withDefaults(defineProps<{ showBackButton?: boolean }>(), { showBackButton: true });
+withDefaults(defineProps<{ showBackButton?: boolean }>(), { showBackButton: true });
 
 const emit = defineEmits<{
   'back': [];
@@ -71,7 +71,7 @@ const emit = defineEmits<{
 
 const {
   frameworks, selectedId, displayMode, compareMode, frameworkSlots, filters, searchQuery,
-  setSearch, setFilters, toggleDisplayMode, handleModeChange,
+  /*setSearch, setFilters, toggleDisplayMode,*/ handleModeChange,
   handleSelect, handleReplace, compare, initialize
 } = useFrameworks();
 

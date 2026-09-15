@@ -132,7 +132,7 @@ const props = withDefaults(defineProps<{
     showLogo: true,
 });
 
-const emit = defineEmits<{
+defineEmits<{
     click: [event: MouseEvent];
     info: [];
     close: [];

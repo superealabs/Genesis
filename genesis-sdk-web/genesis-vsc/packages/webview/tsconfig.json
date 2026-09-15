@@ -10,18 +10,19 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0", /* condition pour faire marché la base url */
+    "paths": {
+      "@/*": ["./src/*"],
+      "@genesis-labs/core/*": ["../../../genesis-web-core/src/*"],
+      "@genesis-labs/shared-types": ["../../../genesis-web-types-shared/src/index.ts"]
+    },
     "jsx": "preserve",
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
-    "paths": {
-        "@/*":                  ["./src/*"],
-        "@genesis-labs/shared-types": ["../../../genesis-web-types-shared/src/index.ts"],
-        "@genesis-labs/core/*": ["../../../genesis-web-core/src/*"]
-    },
+
     "types": ["vite/client", "node"]
   },
   "include": [
@@ -30,5 +31,9 @@
       "src/**/*.vue",
       "src/vite-env.d.ts"
   ],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../../../genesis-web-core/tsconfig.app.json" },
+    { "path": "../../../genesis-web-types-shared/tsconfig.json" }
+  ]
 }

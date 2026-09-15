@@ -116,7 +116,7 @@ import { ref, computed, watch, nextTick } from 'vue';
 import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
 import GenesisDropdown from '@/core/components/ui/dropdown/GenesisDropdown.vue';
 
-const props = defineProps<{ isOpen: boolean }>();
+defineProps<{ isOpen: boolean }>();
 const emit = defineEmits<{ 
     'update:isOpen': [value: boolean];
     generate: [payload: { model: string; prompt: string; includeDbSchema: boolean; token: string }];

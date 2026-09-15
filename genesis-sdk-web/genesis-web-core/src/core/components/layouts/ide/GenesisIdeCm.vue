@@ -35,7 +35,6 @@ import { EditorState, Compartment }                             from '@codemirro
 import { defaultKeymap, indentWithTab }                         from '@codemirror/commands';
 import { sql }                                                  from '@codemirror/lang-sql';
 import { json }                                                 from '@codemirror/lang-json';
-import { oneDark }                                              from '@codemirror/theme-one-dark';
 
 // ════════════════════════════════════════════════════════════
 // Props & Emits
