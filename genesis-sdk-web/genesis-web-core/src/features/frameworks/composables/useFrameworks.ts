@@ -1,9 +1,11 @@
 import { inject, computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useFrameworkStore } from '@/features/frameworks/store/useFramework.store';
-import { useCompareSlots } from '@/core/composables/ux/useCompareSlots';
-import { FRAMEWORK_SERVICE_KEY, type IFrameworkService } from '@/features/frameworks/types/framework.service.interface';
+
 import type { Framework, FrameworkFilters } from '@genesis-labs/shared-types';
+
+import { useCompareSlots } from '../../../core/composables/ux/useCompareSlots';
+import { FRAMEWORK_SERVICE_KEY, type IFrameworkService } from '../types/framework.service.interface';
+import { useFrameworkStore } from '../store/useFramework.store';
 
 export function useFrameworks() {
     // 1. Récupération du service via inject

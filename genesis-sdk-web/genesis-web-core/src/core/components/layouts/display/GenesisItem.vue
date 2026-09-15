@@ -112,8 +112,8 @@
 <script setup lang="ts">
 import { computed, inject, useSlots } from 'vue';
 import { GENESIS_LIST_CONTEXT, type GenesisListContext } from './GenesisItem.types';
-import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
-import IconHelpCircle from '@/core/components/ui/icons/IconHelpCircle.vue';
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
+import IconHelpCircle from '@genesis-labs/web-core/core/components/ui/icons/IconHelpCircle.vue';
 import IconTrashAlt from '../../ui/icons/IconTrashAlt.vue';
 
 const props = withDefaults(defineProps<{

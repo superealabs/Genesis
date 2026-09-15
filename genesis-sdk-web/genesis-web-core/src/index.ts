@@ -5,12 +5,15 @@
 // Il réexporte les manifests de chaque feature.
 
 // ═══ FEATURE : FRAMEWORKS ═══
-export * from '@/features/frameworks/manifest';
+export * from '@genesis-labs/web-core/features/frameworks/manifest';
 
 // ═══ FEATURE : FRONTEND ═══
-export * from '@/features/frontend/manifest';
+export * from '@genesis-labs/web-core/features/frontend/manifest';
 
 // ═══ FEATURE : GENERATOR ═══
-export * from '@/features/generator/manifest';
+export * from '@genesis-labs/web-core/features/generator/manifest';
 
-export * from '@/features/database/manifest'
+export * from '@genesis-labs/web-core/features/database/manifest'
+
+// Expose les routes pour les modules consommateurs (Webview, etc.)
+export { commonRoutes, designSystemRoutes } from './router/router';

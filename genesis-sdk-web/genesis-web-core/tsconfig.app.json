@@ -32,7 +32,7 @@
     "ignoreDeprecations": "6.0",
     /* Alias de chemins (sans baseUrl) */
     "paths": {
-      "@/*": ["./src/*"],
+      "@genesis-labs/web-core/*": ["./src/*"],
       "@genesis-labs/shared-types": ["../genesis-web-types-shared/src/index.ts"]
     }
   },

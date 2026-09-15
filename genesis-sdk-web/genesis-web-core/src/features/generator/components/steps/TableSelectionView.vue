@@ -97,7 +97,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'; // ✅ Ajout de onMounted et ref
-import { useGenerator } from '@/features/generator/composables/useGenerator';
+import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { 
     AVAILABLE_COMPONENTS, 
     type ComponentType,

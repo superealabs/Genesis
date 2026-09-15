@@ -59,9 +59,9 @@
 </template>
 
 <script setup lang="ts">
-import StepperPopup from '@/core/components/layouts/Popup/StepperPopup.vue';
-import FrameworksView from '@/features/frameworks/views/FrameworksView.vue';
-import FrontEndSelectionView from '@/features/frontend/views/FrontEndSelectionView.vue';
+import StepperPopup from '@genesis-labs/web-core/core/components/layouts/Popup/StepperPopup.vue';
+import FrameworksView from '@genesis-labs/web-core/features/frameworks/views/FrameworksView.vue';
+import FrontEndSelectionView from '@genesis-labs/web-core/features/frontend/views/FrontEndSelectionView.vue';
 
 import { 
     ProjectConfigView, 
@@ -71,15 +71,15 @@ import {
     RelationConfigView, 
     FrontendLayoutConfigView, 
     GitConfigView 
-} from '@/features/generator/components/steps';
+} from '@genesis-labs/web-core/features/generator/components/steps';
 
 
-import ErrorPopup from '@/core/components/layouts/Popup/ErrorPopup.vue';
-import DatabaseSelection from '@/features/database/views/DatabaseSelection.vue';
+import ErrorPopup from '@genesis-labs/web-core/core/components/layouts/Popup/ErrorPopup.vue';
+import DatabaseSelection from '@genesis-labs/web-core/features/database/views/DatabaseSelection.vue';
 import { DatabaseEngineDto, FileRequestPayload } from '@genesis-labs/shared-types';
 
-import type { Framework } from '@/features/frameworks/types/framework.types';
-import type { FrontendFramework } from '@/features/frontend/types/frontend.types.ts';
+import type { Framework } from '@genesis-labs/web-core/features/frameworks/types/framework.types';
+import type { FrontendFramework } from '@genesis-labs/web-core/features/frontend/types/frontend.types.ts';
 import { computed, ref } from 'vue';
 
 // L'étape 4 (ScriptConfigView) gère son propre scroll interne

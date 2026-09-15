@@ -23,9 +23,9 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import { useDatabase } from '@/features/database/composables/useDatabase';
-import DatabaseList from '@/features/database/components/DatabaseList.vue';
-import GenesisCollectionLayout from '@/core/components/layouts/GenesisCollectionLayout.vue';
+import { useDatabase } from '@genesis-labs/web-core/features/database/composables/useDatabase';
+import DatabaseList from '../components/DatabaseList.vue';
+import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
 import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
 
 // ═══ PROPS & EMITS ═══

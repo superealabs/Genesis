@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
+import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
 
 defineProps<{
     title?: string;

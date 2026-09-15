@@ -1,10 +1,10 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 
-// ✅ 1. Import des routes communes depuis le core (si tu en as)
-import { commonRoutes, designSystemRoutes } from '@genesis-labs/core/router/router';
+//  1. Import des routes communes depuis le core (si tu en as)
+import { commonRoutes, designSystemRoutes } from '@genesis-labs/core';
 
-// ✅ 2. Import de TA vue wrapper locale VSC (et non celle du core)
+//  2. Import de TA vue wrapper locale VSC (et non celle du core)
 import FrameworksViewVsc from '../features/frameworks/views/FrameworksView.vue';
 import FrontendSelectionViewVsc from '../features/frontend/views/FrontEndSelectionView.vue'; // Si tu en as une
 

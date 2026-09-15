@@ -99,10 +99,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, type ComponentPublicInstance } from 'vue';
 import { Menu, MenuButton, MenuItems } from '@headlessui/vue';
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
-import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
-import IconChevronDown from '@/core/components/ui/icons/IconChevronDown.vue';
-import { MENU_SIZES, type MenuSize } from '@/core/config/ui.config';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
+import IconChevronDown from '@genesis-labs/web-core/core/components/ui/icons/IconChevronDown.vue';
+import { MENU_SIZES, type MenuSize } from '@genesis-labs/web-core/core/config/ui.config';
 
 const props = withDefaults(defineProps<{
     position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';

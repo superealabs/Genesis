@@ -110,17 +110,17 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useGenerator } from '@/features/generator/composables/useGenerator';
+import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { MenuItem } from '@headlessui/vue';
-import GenesisDropdown from '@/core/components/ui/dropdown/GenesisDropdown.vue';
-import GenesisList from '@/core/components/layouts/display/GenesisList.vue';
-import GenesisItem from '@/core/components/layouts/display/GenesisItem.vue';
-import LayoutSwitcherAlt from '@/core/components/ui/dropdown/LayoutSwitcherAlt.vue';
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
-import GenesisSwitch from '@/core/components/ui/inputs/GenesisSwitch.vue';
-import IconPlus from '@/core/components/ui/icons/IconPlus.vue';
+import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
+import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue';
+import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.vue';
+import LayoutSwitcherAlt from '@genesis-labs/web-core/core/components/ui/dropdown/LayoutSwitcherAlt.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import GenesisSwitch from '@genesis-labs/web-core/core/components/ui/inputs/GenesisSwitch.vue';
+import IconPlus from '@genesis-labs/web-core/core/components/ui/icons/IconPlus.vue';
 import type { RelationParameter } from '@genesis-labs/shared-types';
-import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
+import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 
 // 1. On récupère TOUT, y compris les actions du store (pas de fonctions locales du même nom !)
 const { 

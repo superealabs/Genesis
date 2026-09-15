@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 
 interface Props {
     disabled?: boolean;

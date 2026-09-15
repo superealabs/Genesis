@@ -1,8 +1,10 @@
 {
   "name": "@genesis-labs/core",
   "exports": {
-      ".":                        "./src/index.ts",
-      "./features/*/manifest":    "./src/features/*/manifest.ts"
+    ".": "./src/index.ts",
+    "./package.json": "./package.json",
+    "./features/*/manifest": "./src/features/*/manifest.ts",
+    "./core/*": "./src/core/*"
   },
   "private": true,
   "version": "0.0.0",

@@ -1,8 +1,12 @@
 import { inject } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useFrontendStore } from '@/features/frontend/store/useFrontend.store';
-import { FRONTEND_SERVICE_KEY, type IFrontendService } from '@/features/frontend/types/frontend.service.interface';
+
 import type { FrontendFramework } from '@genesis-labs/shared-types';
+//  CORRECT : Chemin relatif depuis le dossier 'composables' vers le dossier 'types'
+import type { IFrontendService } from '../types/frontend.service.interface';
+import { FRONTEND_SERVICE_KEY } from '../types/frontend.service.interface';
+import { useFrontendStore } from '../store/useFrontend.store';
+
 
 export function useFrontend() {
     // 1. Récupération sécurisée du service via inject
@@ -11,12 +15,12 @@ export function useFrontend() {
         throw new Error('[useFrontend] IFrontendService non fourni. Vérifiez app.provide() dans main.ts');
     }
 
-    // 2. ✅ Astuce TypeScript : variable locale fortement typée pour les closures asynchrones
+    // 2.  Astuce TypeScript : variable locale fortement typée pour les closures asynchrones
     const svc = service as IFrontendService;
 
     const store = useFrontendStore();
     
-    // ✅ Exposition réactive de TOUT l'état nécessaire à la vue
+    //  Exposition réactive de TOUT l'état nécessaire à la vue
     const { 
         availableFrameworks, 
         selectedFramework, 
@@ -27,14 +31,14 @@ export function useFrontend() {
 
     /**
      * À appeler au montage du composant pour charger les données.
-     * ✅ Le composable est le SEUL à muter le store avec les données du service.
+     *  Le composable est le SEUL à muter le store avec les données du service.
      */
     async function initialize() {
         try {
-            // ✅ On attend la Promise et on récupère les données brutes
+            //  On attend la Promise et on récupère les données brutes
             const data = await svc.fetchFrontendFrameworks();
             
-            // ✅ Le composable met à jour le store (pas le service !)
+            //  Le composable met à jour le store (pas le service !)
             store.setAvailableFrameworks(data);
         } catch (error) {
             console.error('[useFrontend] Erreur lors du chargement des frameworks:', error);
@@ -48,7 +52,7 @@ export function useFrontend() {
         // 1. Mise à jour locale immédiate (Optimistic UI)
         store.selectFramework(framework);
         
-        // 2. ✅ Notification au service et attente de la confirmation
+        // 2.  Notification au service et attente de la confirmation
         try {
             await svc.selectFrontendFramework(framework);
         } catch (error) {
@@ -77,7 +81,7 @@ export function useFrontend() {
         selectFramework,
         reset,
         
-        // ✅ Mappings vers les actions du store pour la vue
+        //  Mappings vers les actions du store pour la vue
         // (Note : adapte 'setDisplayMode' en 'toggleDisplayMode' si ton store a déjà une méthode qui bascule)
         setSearch: store.setSearch,
         toggleDisplayMode: () => store.setDisplayMode(displayMode.value === 'grid' ? 'grid' : 'list')

@@ -243,12 +243,12 @@
 </template>
 
 <script setup lang="ts">
-import ShowcaseLayout from '@/features/designSystem/components/layouts/ShowcaseLayout.vue';
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
-import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
-import IconHome from '@/core/components/ui/icons/IconHome.vue';
-import IconCaretRight from '@/core/components/ui/icons/IconCaretRight.vue';
-import IconChevronDown from '@/core/components/ui/icons/IconChevronDown.vue';
+import ShowcaseLayout from '@genesis-labs/web-core/features/designSystem/components/layouts/ShowcaseLayout.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
+import IconHome from '@genesis-labs/web-core/core/components/ui/icons/IconHome.vue';
+import IconCaretRight from '@genesis-labs/web-core/core/components/ui/icons/IconCaretRight.vue';
+import IconChevronDown from '@genesis-labs/web-core/core/components/ui/icons/IconChevronDown.vue';
 
 const sizes = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'] as const;
 </script>

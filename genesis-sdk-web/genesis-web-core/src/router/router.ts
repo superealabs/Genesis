@@ -1,16 +1,16 @@
 import type { RouteRecordRaw } from 'vue-router';
 
-import DesignSystemView from '@/features/designSystem/components/DesignSystemView.vue';
-import ButtonShowcase from '@/features/designSystem/components/ButtonShowcase.vue';
-import PopupShowcase from '@/features/designSystem/components/PopupShowcase.vue';
-import LoaderShowcase from '@/features/designSystem/components/LoaderShowcase.vue';
-import ColorShowcase from '@/features/designSystem/components/ColorShowcase.vue';
-import ErrorShowcase from '@/features/designSystem/components/ErrorShowcase.vue';
-import ProgressShowcase from '@/features/designSystem/components/ProgressShowcase.vue';
-import FrameworksView from '@/features/frameworks/views/FrameworksView.vue';
-import FrontEndSelectionView from '@/features/frontend/views/FrontEndSelectionView.vue';
-import DatabaseSelection from '@/features/database/views/DatabaseSelection.vue';
-import HomeView from '@/features/home/components/HomeView.vue';
+import HomeView from '../features/home/components/HomeView.vue';
+import DesignSystemView from '../features/designSystem/components/DesignSystemView.vue';
+import ButtonShowcase from '../features/designSystem/components/ButtonShowcase.vue';
+import PopupShowcase from '../features/designSystem/components/PopupShowcase.vue';
+import LoaderShowcase from '../features/designSystem/components/LoaderShowcase.vue';
+import ColorShowcase from '../features/designSystem/components/ColorShowcase.vue';
+import ErrorShowcase from '../features/designSystem/components/ErrorShowcase.vue';
+import ProgressShowcase from '../features/designSystem/components/ProgressShowcase.vue';
+import FrameworksView from '../features/frameworks/views/FrameworksView.vue';
+import FrontEndSelectionView from '../features/frontend/views/FrontEndSelectionView.vue';
+import DatabaseSelection from '../features/database/views/DatabaseSelection.vue';
 // Routes communes à toutes les plateformes
 export const commonRoutes: RouteRecordRaw[] = [
     {

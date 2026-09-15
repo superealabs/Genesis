@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import ShowcaseLayout from '@/features/designSystem/components/layouts/ShowcaseLayout.vue';
+import ShowcaseLayout from '@genesis-labs/web-core/features/designSystem/components/layouts/ShowcaseLayout.vue';
 
 const backgrounds = [
     { label: 'bg-light', class: 'bg-bg-light' },

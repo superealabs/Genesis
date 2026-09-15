@@ -56,10 +56,10 @@ import { useFrameworks } from '../composables/useFrameworks';
 import FrameworkList from '../components/FrameworkList.vue';
 import FrameworkFilter from '../components/FrameworkFilter.vue';
 import FrameworkDetail from '../components/FrameworkDetail.vue';
-import GenesisCollectionLayout from '@/core/components/layouts/GenesisCollectionLayout.vue';
-import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue'; // ✅ Ajouté
-import SimpleSelectionPopup from '@/core/components/layouts/Popup/SimpleSelectionPopup.vue';
-import type { SelectionOption } from '@/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
+import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue'; // ✅ Ajouté
+import SimpleSelectionPopup from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 import type { Framework } from '../types/framework.types';
 
 withDefaults(defineProps<{ showBackButton?: boolean }>(), { showBackButton: true });

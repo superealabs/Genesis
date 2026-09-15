@@ -134,9 +134,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useGenerator } from '@/features/generator/composables/useGenerator';
-import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
+import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
+import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 
 // CORRECTION : Utiliser le store au lieu d'un ref local
 const { stepperData, /*updateDatabase,*/ testDatabaseConnection } = useGenerator();

@@ -171,11 +171,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { useGenerator } from '@/features/generator/composables/useGenerator';
+import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import type { LanguageDto } from '@genesis-labs/shared-types';
 
-import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
-import GenesisLabel from '@/core/components/ui/labels/GenesisLabel.vue';
+import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
+import GenesisLabel from '@genesis-labs/web-core/core/components/ui/labels/GenesisLabel.vue';
 
 // ✅ 1. Définition des événements (le Core demande au parent d'ouvrir le fichier)
 const emit = defineEmits<{

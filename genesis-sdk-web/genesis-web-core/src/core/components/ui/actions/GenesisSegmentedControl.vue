@@ -48,7 +48,7 @@
 import { computed, type Component } from 'vue';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
 // 👇 Import du composant source de vérité
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 
 interface SegmentedOption {
   label?: string;

@@ -223,14 +223,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useGenerator } from '@/features/generator/composables/useGenerator';
+import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { MOCK_BUILD_TOOLS, MOCK_JAVA_VERSIONS, MOCK_NODE_VERSIONS } from '../../types/generator.types';
 
 // Imports des composants
-import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
-import GenesisDisclosure from '@/core/components/layouts/GenesisDisclosure.vue';
-// import IconFolder from '@/core/components/ui/icons/IconFolder.vue';
-// import GenesisButtonIcon from '@/core/components/ui/actions/GenesisButtonIcon.vue';
+import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
+import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
+// import IconFolder from '@genesis-labs/web-core/core/components/ui/icons/IconFolder.vue';
+// import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 
 //  1. Définition des événements (le Core demande au parent d'ouvrir le dossier)
 const emit = defineEmits<{

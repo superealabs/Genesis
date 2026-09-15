@@ -1,9 +1,9 @@
 import { inject, computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useDatabaseStore } from '@/features/database/store/useDatabase.store';
-import { useCompareSlots } from '@/core/composables/ux/useCompareSlots';
-import { DATABASE_SERVICE_KEY, type IDatabaseService } from '@/features/database/types/database.service.interface';
-import type { DatabaseConfig, DatabaseEngineDto } from '@/features/database/types/database.types';
+import { useDatabaseStore } from '../store/useDatabase.store';
+import { useCompareSlots } from '../../../core/composables/ux/useCompareSlots';
+import { DATABASE_SERVICE_KEY, type IDatabaseService } from '../types/database.service.interface';
+import type { DatabaseConfig, DatabaseEngineDto } from '@genesis-labs/shared-types';
 
 export function useDatabase() {
     // 1. Injection du service

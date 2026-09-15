@@ -115,10 +115,10 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import type { CheckboxState } from '@/core/components/ui/inputs/GenesisCheckbox.vue';
-import GenesisInput from '@/core/components/ui/inputs/GenesisInput.vue';
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
-import GenesisDisclosure from '@/core/components/layouts/GenesisDisclosure.vue';
+import type { CheckboxState } from '@genesis-labs/web-core/core/components/ui/inputs/GenesisCheckbox.vue';
+import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
 
 // Nouvelle structure : Record<string, CheckboxState> au lieu de string[]
 interface FrameworkFilters {

@@ -24,7 +24,7 @@ export default defineConfig({
       // Alias projet
       '@':                  path.resolve(__dirname, './src'),
       '@genesis-labs/shared-types': path.resolve(__dirname, '../../../genesis-web-types-shared/src/index.ts'),
-      '@genesis-labs/core': path.resolve(__dirname, '../../../genesis-web-core/src'),
+      '@genesis-labs/web-core': path.resolve(__dirname, '../../../genesis-web-core/src'),
     }
   },
   build: {

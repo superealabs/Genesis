@@ -24,8 +24,8 @@
 </template>
 
 <script setup lang="ts">
-import GenesisButton from '@/core/components/ui/actions/GenesisButton.vue';
-import IconFolderPlus from '@/core/components/ui/icons/IconFolderPlus.vue';
+import GenesisButton from '../../../core/components/ui/actions/GenesisButton.vue';
+import IconFolderPlus from '@genesis-labs/web-core/core/components/ui/icons/IconFolderPlus.vue';
 
 const emit = defineEmits<{
     'open-generator': [];

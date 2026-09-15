@@ -42,9 +42,9 @@
 import { onMounted } from 'vue';
 
 //  1. Le composant gère son propre état via le composable du Core
-import { useFrontend } from '@/features/frontend/composables/useFrontend.ts';
-import FrontendList from '@/features/frontend/components/FrontendList.vue';
-import GenesisCollectionLayout from '@/core/components/layouts/GenesisCollectionLayout.vue';
+import { useFrontend } from '@genesis-labs/web-core/features/frontend/composables/useFrontend.ts';
+import FrontendList from '@genesis-labs/web-core/features/frontend/components/FrontendList.vue';
+import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
 import type { FrontendFramework } from '@genesis-labs/shared-types';
 
 //  2. On ne demande que showBackButton en prop

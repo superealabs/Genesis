@@ -17,8 +17,8 @@
 </template>
 
 <script setup lang="ts">
-import BaseFormPopup from '@/core/components/layouts/Popup/BaseFormPopup.vue';
-import GenesisProgressBar from '@/core/components/ui/feedback/GenesisProgressBar.vue';
+import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
+import GenesisProgressBar from '@genesis-labs/web-core/core/components/ui/feedback/GenesisProgressBar.vue';
 
 withDefaults(defineProps<{
     title?: string;

@@ -9,5 +9,5 @@ export type {
 } from '@genesis-labs/shared-types';
 
 // Tu pourras ajouter ici des types spécifiques à l'UI, par exemple :
-// import type { SomeCoreType } from '@/core/types/...';
+// import type { SomeCoreType } from '@genesis-labs/web-core/core/types/...';
 // export interface FrameworkUiState { ... }

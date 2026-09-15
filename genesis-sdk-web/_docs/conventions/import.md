@@ -145,6 +145,10 @@ import { useFrameworks } from '@genesis-labs/core/features/frameworks/composable
 ```
 
 
+Règle 8 : Dans le dossier genesis-web-core/src, l'alias @/ est STRICTEMENT INTERDIT pour tout import interne. Tous les fichiers du Core (vues, composables, stores, composants UI, router, manifestes) qui importent d'autres fichiers du Core doivent utiliser exclusivement des chemins relatifs (./ ou ../).
+
+Raison (Le piège de Vite) : Bien que TypeScript soit capable de résoudre @/ grâce aux "Project References", Vite résout les alias de manière globale en se basant sur le vite.config.ts du Webview (où @/ = webview/src). Si un fichier du Core utilise @/, Vite cherchera ce fichier dans le dossier du Webview, ne le trouvera pas, et fera échouer le build avec une erreur ENOENT, même si TypeScript est satisfait. Les chemins relatifs (../) sont les seules instructions que Vite peut suivre de manière universelle et sans ambiguïté, quel que soit le projet qui importe le fichier.
+
 # module genesis-vsc — Extension Host (src/)
 
 **Règle 1 :** L'Extension Host utilise UNIQUEMENT `@genesis-labs/shared-types` comme module externe Genesis. Il n'importe jamais depuis `@genesis-labs/core`.
