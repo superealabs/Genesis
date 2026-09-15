@@ -1,14 +1,13 @@
 import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
-import { useFrameworkStore } from '../store/useFramework.store';
-import { frameworkService } from '../services/framework.service';
+import { useFrameworkStore } from '@/features/frameworks/store/useFramework.store';
+import { frameworkService } from '@/features/frameworks/services/framework.service';
 import { useCompareSlots } from '@/core/composables/ux/useCompareSlots';
-import type { Framework, FrameworkFilters } from '../types/framework.types';
+import type { Framework, FrameworkFilters } from '@genesis-labs/shared-types';
 
 export function useFrameworks() {
     const store = useFrameworkStore();
     
-    // ✅ EXPOSITION DE TOUS LES ÉTATS NÉCESSAIRES
     const { filteredFrameworks, displayMode, filters, searchQuery } = storeToRefs(store);
 
     const compare = useCompareSlots<Framework>({

@@ -1,7 +1,7 @@
 import { inject } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useGeneratorStore } from '../store/useGenerator.store';
-import { GENERATOR_SERVICE_KEY, type IGeneratorService } from '../types/generator.service.interface';
+import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
+import { GENERATOR_SERVICE_KEY, type IGeneratorService } from '@genesis-labs/web-core/features/generator/types/generator.service.interface';
 
 import type { Framework, FrontendFramework,GeneratorData  } from '@genesis-labs/shared-types'
 

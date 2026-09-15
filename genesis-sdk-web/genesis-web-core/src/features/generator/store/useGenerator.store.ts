@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { Framework } from '../../frameworks/types/framework.types';
-import type { FrontendFramework } from '../../frontend/types/frontend.types';
+import type { FrontendFramework, Framework } from '@genesis-labs/shared-types';
 import type { 
     GeneratorData, ProjectConfig, DatabaseConfig, ScriptConfig, 
     ComponentType, TableMetadataDto, RelationParameter, LanguageDto, 

@@ -10,10 +10,10 @@ export type {
     // Types UI si besoin
 } from './types/database.types';
 
-export type { IDatabaseService } from './types/database.service.interface';
-export { DATABASE_SERVICE_KEY } from './types/database.service.interface';
+export type { IDatabaseService } from '@genesis-labs/web-core/features/database/types/database.service.interface.ts';
+export { DATABASE_SERVICE_KEY } from '@genesis-labs/web-core/features/database/types/database.service.interface.ts';
 
 // ═══ STORE, COMPOSABLE & VUE ═══
-export { useDatabaseStore } from './store/useDatabase.store';
-export { useDatabase } from './composables/useDatabase';
-export { default as DatabaseSelection } from './views/DatabaseSelection.vue';
+export { useDatabaseStore } from '@genesis-labs/web-core/features/database/store/useDatabase.store.ts';
+export { useDatabase } from '@genesis-labs/web-core/features/database/composables/useDatabase.ts';
+export { default as DatabaseSelection } from '@genesis-labs/web-core/features/database/views/DatabaseSelection.vue';

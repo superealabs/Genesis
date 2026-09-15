@@ -1,8 +1,8 @@
 import { inject, computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useDatabaseStore } from '../store/useDatabase.store';
-import { useCompareSlots } from '../../../core/composables/ux/useCompareSlots';
-import { DATABASE_SERVICE_KEY, type IDatabaseService } from '../types/database.service.interface';
+import { useDatabaseStore } from '@genesis-labs/web-core/features/database/store/useDatabase.store';
+import { useCompareSlots } from '@genesis-labs/web-core/core/composables/ux/useCompareSlots';
+import { DATABASE_SERVICE_KEY, type IDatabaseService } from '@genesis-labs/web-core/features/database/types/database.service.interface';
 import type { DatabaseConfig, DatabaseEngineDto } from '@genesis-labs/shared-types';
 
 export function useDatabase() {
@@ -25,7 +25,7 @@ export function useDatabase() {
         displayMode
     } = storeToRefs(store);
 
-    // ✅ 3. LOGIQUE DE SÉLECTION ET COMPARAISON (Comme useFrameworks)
+    // 3. LOGIQUE DE SÉLECTION ET COMPARAISON (Comme useFrameworks)
     const compare = useCompareSlots<DatabaseEngineDto>({
         slots: ['A', 'B', 'C', 'D'], // Ou juste ['A'] si tu ne veux qu'une seule sélection
         getId: (db) => db.id

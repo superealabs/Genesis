@@ -3,9 +3,8 @@ import { storeToRefs } from 'pinia';
 
 import type { FrontendFramework } from '@genesis-labs/shared-types';
 //  CORRECT : Chemin relatif depuis le dossier 'composables' vers le dossier 'types'
-import type { IFrontendService } from '../types/frontend.service.interface';
-import { FRONTEND_SERVICE_KEY } from '../types/frontend.service.interface';
-import { useFrontendStore } from '../store/useFrontend.store';
+import { IFrontendService, FRONTEND_SERVICE_KEY } from '@genesis-labs/web-core/features/frontend/types/frontend.service.interface';
+import { useFrontendStore } from '@genesis-labs/web-core/features/frontend/store/useFrontend.store';
 
 
 export function useFrontend() {

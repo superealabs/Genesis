@@ -52,15 +52,17 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useFrameworks } from '../composables/useFrameworks';
-import FrameworkList from '../components/FrameworkList.vue';
-import FrameworkFilter from '../components/FrameworkFilter.vue';
-import FrameworkDetail from '../components/FrameworkDetail.vue';
+import { useFrameworks } from '@genesis-labs/web-core/features/frameworks/composables/useFrameworks';
+import { 
+  FrameworkList, 
+  FrameworkFilter, 
+  FrameworkDetail 
+} from '@genesis-labs/web-core/features/frameworks/components';
 import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
-import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue'; // ✅ Ajouté
+import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
 import SimpleSelectionPopup from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
-import type { Framework } from '../types/framework.types';
+import type { Framework } from '@genesis-labs/shared-types';
 
 withDefaults(defineProps<{ showBackButton?: boolean }>(), { showBackButton: true });
 

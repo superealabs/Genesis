@@ -8,12 +8,12 @@ export type {
 // ═══ EXPORTS SPÉCIFIQUES À L'UI ═══
 export type { 
     // Types UI si besoin
-} from './types/framework.types';
+} from '@genesis-labs/web-core/features/frameworks/types/framework.types';
 
-export type { IFrameworkService } from './types/framework.service.interface';
-export { FRAMEWORK_SERVICE_KEY } from './types/framework.service.interface';
+export type { IFrameworkService } from '@genesis-labs/web-core/features/frameworks/types/framework.service.interface';
+export { FRAMEWORK_SERVICE_KEY } from '@genesis-labs/web-core/features/frameworks/types/framework.service.interface';
 
 // ═══ STORE, COMPOSABLE & VUE ═══
-export { useFrameworkStore } from './store/useFramework.store';
-export { useFrameworks } from './composables/useFrameworks';
-export { default as FrameworksView } from './views/FrameworksView.vue';
+export { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store';
+export { useFrameworks } from '@genesis-labs/web-core/features/frameworks/composables/useFrameworks';
+export { default as FrameworksView } from '@genesis-labs/web-core/features/frameworks/views/FrameworksView.vue';

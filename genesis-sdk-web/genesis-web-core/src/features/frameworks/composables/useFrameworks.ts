@@ -3,9 +3,9 @@ import { storeToRefs } from 'pinia';
 
 import type { Framework, FrameworkFilters } from '@genesis-labs/shared-types';
 
-import { useCompareSlots } from '../../../core/composables/ux/useCompareSlots';
-import { FRAMEWORK_SERVICE_KEY, type IFrameworkService } from '../types/framework.service.interface';
-import { useFrameworkStore } from '../store/useFramework.store';
+import { useCompareSlots } from '@genesis-labs/web-core/core/composables/ux/useCompareSlots';
+import { FRAMEWORK_SERVICE_KEY, type IFrameworkService } from '@genesis-labs/web-core/features/frameworks/types/framework.service.interface';
+import { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store';
 
 export function useFrameworks() {
     // 1. Récupération du service via inject
