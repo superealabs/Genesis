@@ -6,7 +6,9 @@ import { commonRoutes, designSystemRoutes } from '@genesis-labs/core';
 
 //  2. Import de TA vue wrapper locale VSC (et non celle du core)
 import FrameworksViewVsc from '@/features/frameworks/views/FrameworksView.vue';
-import FrontendSelectionViewVsc from '@/features/frontend/views/FrontEndSelectionView.vue'; // Si tu en as une
+// import FrontendSelectionViewVsc from '@/features/frontend/views/FrontEndSelectionView.vue'; // Si tu en as une
+
+import FrontendSelectionViewVsc from '@/features/frontend/views/FrontendSelectionView.vue'
 
 // genesis-vsc/packages/webview/src/router/index.ts
 import HomeViewVsc from '../features/home/views/HomeViewVsc.vue';
