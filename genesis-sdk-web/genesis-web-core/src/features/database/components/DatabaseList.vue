@@ -9,6 +9,11 @@
             :badge="databaseSlots?.get(engine.id) ?? null" 
             @click="$emit('select', engine, $event)"
         >
+
+            <template #default>
+                <td class="p-3 text-center">{{ engine.name }}</td>
+                <td class="p-3 text-center text-text-muted">{{ engine.driver }}</td>
+            </template>
         </GenesisItem>
     </GenesisList>
 </template>

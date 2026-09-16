@@ -52,10 +52,10 @@ const MOCK_FRONTEND_FRAMEWORKS: FrontendFrameworkDto[] = [
     },
     {
         id: 5,
-        languageId: 2,
+        languageId: 3,
         name: 'Razor',
         coreFramework: 'Laravel',
-        componentExtension: '.tl',
+        componentExtension: '.t',
         defaultPort: '1456'
     }
 ];

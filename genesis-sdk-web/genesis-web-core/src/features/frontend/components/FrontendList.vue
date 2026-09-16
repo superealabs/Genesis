@@ -20,6 +20,11 @@
                     Port: {{ fw.defaultPort }}
                 </span>
             </template> -->
+            <!--  -->
+            <template #default>
+                <td class="p-3 text-center">{{ fw.name }}</td>
+                <td class="p-3 text-center text-text-muted">{{ fw.coreFramework }}</td>
+            </template>
         </GenesisItem>
     </GenesisList>
 </template>
