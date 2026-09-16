@@ -42,6 +42,15 @@ const MOCK_DATABASE_ENGINES: DatabaseEngineDto[] = [
         driverType: 'jdbc',
         sid: 'ORCL'
     },
+    {
+        id: 5, 
+        name: 'MongoDB', 
+        driver: 'MongoDB.driver', 
+        driverName: 'Mongo JDBC Driver', 
+        port: '1524',
+        driverType: 'jdbc',
+        sid: 'Mongo'
+    },
 ];
 
 export class DatabaseHandler {
