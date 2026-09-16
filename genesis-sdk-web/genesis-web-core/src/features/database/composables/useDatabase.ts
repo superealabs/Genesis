@@ -1,7 +1,7 @@
 import { inject, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDatabaseStore } from '@genesis-labs/web-core/features/database/store/useDatabase.store';
-import { useCompareSlots } from '@genesis-labs/web-core/core/composables/ux/useCompareSlots';
+import { useCompareSlotsWithPopup } from '@genesis-labs/web-core/core/composables/ux/useCompareSlotsWithPopup';
 import { DATABASE_SERVICE_KEY, type IDatabaseService } from '@genesis-labs/web-core/features/database/types/database.service.interface';
 import type { DatabaseConfig, DatabaseEngineDto } from '@genesis-labs/shared-types';
 
@@ -26,8 +26,8 @@ export function useDatabase() {
     } = storeToRefs(store);
 
     // 3. LOGIQUE DE SÉLECTION ET COMPARAISON (Comme useFrameworks)
-    const compare = useCompareSlots<DatabaseEngineDto>({
-        slots: ['A', 'B', 'C', 'D'], // Ou juste ['A'] si tu ne veux qu'une seule sélection
+    const compare = useCompareSlotsWithPopup<DatabaseEngineDto>({
+        slots: ['A', 'B', 'C', 'D'],
         getId: (db) => db.id
     });
 
@@ -81,12 +81,8 @@ export function useDatabase() {
         }
     }
 
-    // ✅ 4. HANDLERS DE SÉLECTION
     function handleSelect(engine: DatabaseEngineDto, event?: MouseEvent) {
-        const result = compare.handleSelect(engine);
-        // Note: Contrairement aux frameworks, on n'a pas forcément besoin d'appeler 
-        // svc.selectDatabaseEngine(id) ici, car la sélection est gérée par le store Generator.
-        // On retourne juste le résultat pour que la vue puisse l'émettre.
+        const result = compare.handleSelect(engine, event); 
         return { action: result.action, event, engine };
     }
 
@@ -123,6 +119,14 @@ export function useDatabase() {
         handleReplace,
         handleModeChange,
         reset: store.reset,
-        toggleDisplayMode
+        toggleDisplayMode,
+
+
+        showReplacePopup: compare.showReplacePopup,
+        pendingEngine: compare.pendingItem, // Alias pour la clarté
+        mouseX: compare.mouseX,
+        mouseY: compare.mouseY,
+        cancelReplace: compare.cancelReplace,
+        triggerReplace: compare.triggerReplace
     };
 }

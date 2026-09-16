@@ -7,6 +7,7 @@
             :sublabel="fw.coreFramework"
             :selected="selectedId === fw.id"
             :show-info-button="true"
+            :badge="frameworkSlots?.get(fw.id) ?? null"
             @click="$emit('select', fw, $event)"
             @info="$emit('info', fw)"
         >
@@ -19,6 +20,11 @@
                     Port: {{ fw.defaultPort }}
                 </span>
             </template> -->
+            <!--  -->
+            <template #default>
+                <td class="p-3 text-center">{{ fw.name }}</td>
+                <td class="p-3 text-center text-text-muted">{{ fw.coreFramework }}</td>
+            </template>
         </GenesisItem>
     </GenesisList>
 </template>
@@ -32,6 +38,7 @@ defineProps<{
     frontends: FrontendFramework[];
     selectedId?: number;
     display: 'grid' | 'list';
+    frameworkSlots?: Map<number, string>;
 }>();
 
 defineEmits<{

@@ -1,5 +1,5 @@
 <template>
-  <!-- ✅ Plus besoin de passer toutes les props, la Core View est autonome -->
+  <!-- Plus besoin de passer toutes les props, la Core View est autonome -->
   <CoreFrameworksView
     ref="coreViewRef"
     :showBackButton="showBackButton"
@@ -32,7 +32,6 @@ const emit = defineEmits<{
 
 const coreViewRef = ref<InstanceType<typeof CoreFrameworksView> | null>(null);
 
-// ✅ CORRECTION : On reçoit le résultat complet émis par la Core View
 async function handleSelectWrapper(result: { action: string; framework: Framework; event?: MouseEvent }) {
   if (result.action === 'replace-needed') {
     coreViewRef.value?.triggerReplace(result.framework, result.event);

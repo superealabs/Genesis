@@ -1,14 +1,23 @@
 <template>
   <GenesisCollectionLayout
     title="Framework Frontend"
-    :searchValue="searchQuery"
-    :displayMode="displayMode"
+    v-model:searchValue="searchQuery"
+    v-model:displayMode="displayMode"
+    :mode="compareMode"
     searchPlaceholder="Rechercher par nom (ex: React, Vue)..."
     :showBackButton="showBackButton"
+    :showFilter="false"
+    :showSort="false"
+    :showCarousel="true"
     @back="$emit('back')"
-    @openFilter="$emit('openFilter')"
-    @update:searchValue="setSearch"
-    @update:displayMode="toggleDisplayMode"
+    @update:mode="handleModeChange"
+    
+    :replace-options="replaceOptions"
+    :show-replace-popup="showReplacePopup"
+    :mouse-x="mouseX"
+    :mouse-y="mouseY"
+    @select-replace="handleReplaceSelection"
+    @close-replace="cancelReplace"
   >
     <!--  SLOT : Permet au VSC/Web d'injecter ses propres filtres si besoin -->
     <template #filter>
@@ -21,10 +30,11 @@
 
     <FrontendList
       :frontends="availableFrameworks"
-      :selectedId="selectedFramework?.id"
+      :selectedId="selectedId"
       :display="displayMode"
+      :frameworkSlots="frameworkSlots" 
       @select="handleSelectWrapper"
-      @info="(fw) => $emit('info', fw)"
+      @info="handleInfo" 
     />
   </GenesisCollectionLayout>
 
@@ -39,13 +49,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 
 //  1. Le composant gère son propre état via le composable du Core
-import { useFrontend } from '@genesis-labs/web-core/features/frontend/composables/useFrontend.ts';
+import { useFrontend } from '@genesis-labs/web-core/features/frontend/composables/useFrontend';
 import FrontendList from '@genesis-labs/web-core/features/frontend/components/FrontendList.vue';
 import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
 import type { FrontendFramework } from '@genesis-labs/shared-types';
+import { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 
 //  2. On ne demande que showBackButton en prop
 withDefaults(defineProps<{
@@ -55,35 +66,65 @@ withDefaults(defineProps<{
 });
 
 //  3. On émet 'select' pour que le GeneratorStepper puisse avancer à l'étape suivante
+//  3. On émet 'select' avec le résultat complet (action, framework, event)
 const emit = defineEmits<{
   'back': [];
-  'select': [framework: FrontendFramework, event?: MouseEvent];
-  'info': [framework: FrontendFramework];
-  'openFilter': [];
+  'select': [result: { action: string; framework: FrontendFramework; event?: MouseEvent }];
+  // 'info': [framework: FrontendFramework];
+  // 'openFilter': [];
 }>();
 
 //  4. Récupération de l'état et des actions du composable
 const {
   availableFrameworks,
-  selectedFramework,
+  selectedId,
+  frameworkSlots,
   displayMode,
   searchQuery,
-  setSearch,
-  toggleDisplayMode,
-  selectFramework,
-  initialize
+  compareMode,
+  compare,
+  initialize,
+  // setSearch,
+  // toggleDisplayMode,
+  handleSelect,
+  handleReplace,
+  handleModeChange,
+  showReplacePopup,
+  pendingFramework,
+  mouseX,
+  mouseY,
+  cancelReplace,
+  // triggerReplace
 } = useFrontend();
 
-// ═══ HANDLERS UI ═══
-function handleSelectWrapper(framework: FrontendFramework, event?: MouseEvent) {
-  // 1. Met à jour l'état interne du core (store)
-  selectFramework(framework);
-  
-  // 2. Notifie le parent (GeneratorStepper) pour qu'il passe à l'étape suivante
-  emit('select', framework, event);
+const replaceOptions = computed<SelectionOption[]>(() => {
+  if (!compare?.slots?.value) return [];
+  return Object.entries(compare.slots.value)
+    .filter(([, fw]) => fw !== null)
+    .map(([slot, fw]) => ({
+      id: slot,
+      label: `Slot ${slot}`,
+      description: (fw as FrontendFramework).name
+    }));
+});
+
+function handleInfo(framework: FrontendFramework) {
+  // Pour l'instant on ne fait rien, ou on prépare le terrain pour le panneau de détail
+  console.log("Détails demandés pour :", framework.name);
+  // detailFramework.value = framework; (à décommenter quand le panneau sera actif)
 }
 
-// ═══ LIFECYCLE ═══
+// 3. HANDLERS SIMPLIFIÉS
+async function handleSelectWrapper(framework: FrontendFramework, event?: MouseEvent) {
+  const result = await handleSelect(framework, event);
+  emit('select', result);
+}
+
+function handleReplaceSelection(slotId: string | number) {
+  if (pendingFramework.value) handleReplace(slotId, pendingFramework.value);
+  cancelReplace();
+}
+
 onMounted(() => {
   initialize();
 });

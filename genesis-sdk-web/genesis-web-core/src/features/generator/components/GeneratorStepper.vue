@@ -29,17 +29,20 @@
             v-else-if="props.currentStep === 4"
             @test-connection-error="handleChildError"    
         />
+
         <ScriptConfigView
             v-else-if="props.currentStep === 5"
             @request-file-path="handleRequestFilePath"
         />
         <TableSelectionView v-else-if="props.currentStep === 6" />
+
         <RelationConfigView v-else-if="props.currentStep === 7" />
         <FrontEndSelectionView
             v-else-if="props.currentStep === 8"
-            @select="handleFrontendSelect"
             :showBackButton="false"
+            @select="handleFrontendSelect" 
         />
+
         <FrontendLayoutConfigView
             v-else-if="props.currentStep === 9"
             @request-file-path="handleRequestFilePath"
@@ -112,8 +115,12 @@ function handleFrameworkSelect(result: { action: string; framework: Framework; e
     emit('select-framework', result.framework);
 }
 
-function handleFrontendSelect(framework: FrontendFramework) {
-    emit('select-frontend', framework);
+function handleFrontendSelect(result: { action: string; framework: FrontendFramework; event?: MouseEvent }) {
+    emit('select-frontend', result.framework);
+}
+
+function handleDatabaseSelect(result: { action: string; engine: DatabaseEngineDto; event?: MouseEvent }) {
+    emit('select-database', result.engine);
 }
 
 function handleRequestFolderPath() {
@@ -124,9 +131,6 @@ function handleRequestFilePath(payload: FileRequestPayload) {
     emit('request-file-path', payload);
 }
 
-function handleDatabaseSelect(result: { action: string; engine: DatabaseEngineDto; event?: MouseEvent }) {
-    emit('select-database', result.engine);
-}
 
 const showError = ref(false);
 const errorMessage = ref('');

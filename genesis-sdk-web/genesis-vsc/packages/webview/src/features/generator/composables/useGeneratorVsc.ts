@@ -1,4 +1,5 @@
-import { useGenerator, useGeneratorStore } from '@genesis-labs/core/features/generator/manifest';
+import { useGenerator, useGeneratorStore } from '@genesis-labs/web-core/features/generator/manifest';
+import type { FileRequestPayload } from '@genesis-labs/web-core/features/generator/manifest';
 import { 
     selectFolderPathVsc, 
     selectFilePathVsc, 
@@ -10,17 +11,12 @@ export function useGeneratorVsc() {
     const store = useGeneratorStore();
 
     async function handleSelectFolderPath() {
-        console.log("handle folder path from composable of vsc");
         const path = await selectFolderPathVsc();
         if (path) {
             store.updateConfig('projectLocation', path);
-            // Optionnel : tu pourrais aussi lire le nom du dossier pour pré-remplir projectName ici
         }
     }
 
-    /**
-     * Handler générique pour n'importe quel champ de fichier
-     */
     async function handleSelectAnyFile(field: 'script' | 'logoPath' | 'faviconPath', extensions?: string[]) {
         const data = await selectFilePathVsc(extensions);
         if (data.path) {
@@ -35,9 +31,6 @@ export function useGeneratorVsc() {
         }
     }
 
-    /**
-     * Handler spécifique pour le script SQL (utilise la fonction dédiée)
-     */
     async function handleSelectSqlFile() {
         const data = await selectSqlFilePathVsc();
         if (data.path) {
@@ -46,10 +39,19 @@ export function useGeneratorVsc() {
         }
     }
 
+    // NOUVEAU : Le composable gère la décision (routing) du type de fichier
+    async function handleFileRequest(payload: FileRequestPayload) {
+        if (payload.field === 'script') {
+            await handleSelectSqlFile();
+        } else {
+            await handleSelectAnyFile(payload.field, payload.extensions);
+        }
+    }
+
     return {
-        ...base,
+        ...base, // Contient déjà setFramework, setDatabaseEngine, setSelectedFrontendFramework, goToNextStep, etc.
         handleSelectFolderPath,
-        handleSelectAnyFile,
-        handleSelectSqlFile
+        handleFileRequest, 
+        handleSelectSqlFile 
     };
 }
