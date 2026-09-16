@@ -249,6 +249,7 @@ public abstract class Database {
                 column.setTimeTz(isColumnTimeTz);
                 column.setDateTime(isColumnDateTime);
                 column.setDateTimeTz(isColumnDateTimeTz);
+                column.setJson("json".equalsIgnoreCase(getDatabaseType(columns)) || "jsonb".equalsIgnoreCase(getDatabaseType(columns)));
                 column.setUseTimeZone(useTimeZone);
                 column.setInterval(isColumnInterval);
 

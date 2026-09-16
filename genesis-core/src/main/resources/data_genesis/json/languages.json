@@ -41,6 +41,7 @@
       "boolean": "Boolean",
       "json": "String",
       "interval": "java.time.Duration",
+      "intervalYearMonth": "java.time.Period",
       "uuid": "String",
       "integer[]": "Integer[]",
       "text[]": "String[]",
@@ -59,6 +60,9 @@
       "String": [
         "@org.hibernate.annotations.ColumnTransformer(read = \"CAST(${this.columnName} as varchar)\", write = \"CAST(? as ${this.columnType})\")"
       ],
+      "uuid": [
+        "@org.hibernate.annotations.ColumnTransformer(read = \"CAST(${this.columnName} as varchar(36))\", write = \"CAST(? as uniqueidentifier)\")"
+      ],
       "java.time.LocalDate": [],
       "java.time.LocalDateTime": [],
       "java.time.OffsetDateTime": [],
@@ -71,6 +75,7 @@
       "java.time.Duration": [
         "@org.hibernate.annotations.Type(io.hypersistence.utils.hibernate.type.interval.PostgreSQLIntervalType.class)"
       ],
+      "java.time.Period": [],
       "Integer[]": [],
       "String[]": [],
       "byte[]": [],

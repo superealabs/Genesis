@@ -312,6 +312,8 @@
       "NVARCHAR": "string",
       "SYSNAME": "string",
       "INTERVAL": "interval",
+      "INTERVAL YEAR TO MONTH": "intervalYearMonth",
+      "INTERVAL DAY TO SECOND": "interval",
       "GEOMETRY": "string",
       "GEOGRAPHY": "string",
       "DATE": "date",

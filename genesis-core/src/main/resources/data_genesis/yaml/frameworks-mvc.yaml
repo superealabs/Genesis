@@ -3504,6 +3504,9 @@
         import java.util.List;
         import java.util.stream.Collectors;
         import jakarta.persistence.criteria.Predicate;
+        import java.time.Period;
+        import jakarta.persistence.criteria.Path;
+        import org.hibernate.query.criteria.HibernateCriteriaBuilder;
         
         public class WebUtils {
             public static final String ASC = "asc";
@@ -3569,6 +3572,25 @@
                 predicates.add(cb.lessThanOrEqualTo(field, max));
               }
             }
+          
+            public static void addPeriodInterval(jakarta.persistence.criteria.CriteriaBuilder cb, Path<Period> field, Period min, Period max, List<Predicate> predicates) {
+              HibernateCriteriaBuilder hcb =(HibernateCriteriaBuilder) cb;
+          
+              var totalMonths = hcb.sql(
+                      "(EXTRACT(YEAR FROM ?) * 12 + EXTRACT(MONTH FROM ?))",
+                      Long.class,
+                      field,
+                      field
+              );
+          
+              if (min != null) {
+                predicates.add(cb.ge(totalMonths, min.toTotalMonths()));
+              }
+          
+              if (max != null) {
+                predicates.add(cb.le(totalMonths, max.toTotalMonths()));
+              }
+          }
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
@@ -3599,6 +3621,118 @@
               LocalDateTime.parse(range[1].replace(" ", "T").substring(1, range[1].length()-1))
             };
             return ranges;
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
+
+    - fileType: "Oracle Year Month Interval Converter"
+      fileName: "OracleYearMonthIntervalConverter"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.utils;
+
+        import org.hibernate.engine.spi.SharedSessionContractImplementor;
+        import org.hibernate.usertype.UserType;
+        
+        import oracle.sql.INTERVALYM;
+        
+        import java.io.Serializable;
+        import java.sql.PreparedStatement;
+        import java.sql.ResultSet;
+        import java.sql.SQLException;
+        import java.time.Period;
+        import oracle.jdbc.OracleTypes;
+        
+        public class OracleYearMonthIntervalType implements UserType<Period> {
+        
+          @Override
+          public int getSqlType() {
+            return OracleTypes.INTERVALYM;
+          }
+          
+          @Override
+          public Class<Period> returnedClass() {
+            return Period.class;
+          }
+          
+          @Override
+          public boolean equals(Period x, Period y) {
+            return java.util.Objects.equals(x, y);
+          }
+          
+          @Override
+          public int hashCode(Period x) {
+            return java.util.Objects.hashCode(x);
+          }
+          
+          @Override
+          public Period nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {
+          
+            INTERVALYM interval = rs.getObject(position, INTERVALYM.class);
+  
+            if (interval == null) {
+              return null;
+            }
+            
+            String text = interval.stringValue().trim();
+            
+            boolean negative = text.startsWith("-");
+            text = text.replaceFirst("^[+-]", "");
+            
+            String[] parts = text.split("-");
+            
+            int years = Integer.parseInt(parts[0]);
+            int months = Integer.parseInt(parts[1]);
+            
+            Period result = Period.of(years, months, 0);
+          
+            return negative ? result.negated() : result;
+          }
+          
+          @Override
+          public void nullSafeSet(PreparedStatement st, Period value, int index,
+          SharedSessionContractImplementor session) throws SQLException {
+          
+            if (value == null) {
+              st.setNull(index, OracleTypes.INTERVALYM);
+              return;
+            }
+            
+            long totalMonths = value.toTotalMonths();
+            
+            boolean negative = totalMonths < 0;
+            long absoluteMonths = Math.abs(totalMonths);
+            
+            long years = absoluteMonths / 12;
+            long months = absoluteMonths % 12;
+            
+            String text =
+              (negative ? "-" : "+")
+                + years
+                + "-"
+                + String.format("%02d", months);
+                
+            st.setObject(index, new INTERVALYM(text), OracleTypes.INTERVALYM);
+          }
+          
+          @Override
+          public Period deepCopy(Period value) {
+            return value;
+          }
+          
+          @Override
+          public boolean isMutable() {
+            return false;
+          }
+          
+          @Override
+          public Serializable disassemble(Period value) {
+            return value;
+          }
+          
+          @Override
+          public Period assemble(Serializable cached, Object owner) {
+            return (Period) cached;
           }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
@@ -4516,14 +4650,14 @@
       {{tab}}{{#each fields}}
       {{tab}}{{#if this.isPrimaryKey and this.isForeignKey}}
       {{tab}}@Id
-      {{tab}}@ManyToOne
+      {{tab}}@ManyToOne(fetch = FetchType.LAZY)
       {{tab}}@JoinColumn(name="${this.columnName}", nullable = ${this.isNullable}){{elseIf this.isIntAndPrimaryKey}}
       {{tab}}@Id
       {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isManualPrimaryKey}}
       {{tab}}@Id
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
-      {{tab}}@ManyToOne
+      {{tab}}@ManyToOne(fetch = FetchType.LAZY)
       {{tab}}@JoinColumn(name="${this.columnName}", nullable = ${this.isNullable}){{else}}
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{/if}}
       {{#if !this.isForeignKey}}{{removeLine}}
@@ -4579,7 +4713,7 @@
                       }
                       {{elseIf this.isText}}
                       WebUtils.addLikeIfPresent(criteriaBuilder, ${this.criteriaBuildSnippet}, predicates);
-                      {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+                      {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isComparableInterval}}
                       if(object.get${majStart(this.name)}()!=null){
                           predicates.add(
                               criteriaBuilder.equal(
@@ -4588,6 +4722,11 @@
                           );
                       }
                       WebUtils.addInterval(criteriaBuilder, root.get("${this.name}"), object.get${majStart(this.name)}Min(), object.get${majStart(this.name)}Max(), predicates);
+                      {{elseIf this.isPeriodInterval}}
+                      if(object.get${majStart(this.name)}()!=null){
+                        predicates.add(criteriaBuilder.equal(root.get("${this.name}"), object.get${majStart(this.name)}()));
+                      }
+                      WebUtils.addPeriodInterval(criteriaBuilder, root.get("${this.name}"),object.get${majStart(this.name)}Min(), object.get${majStart(this.name)}Max(), predicates);
                       {{else}}
                       if(object.get${majStart(this.name)}()!=null){
                           predicates.add(
@@ -4647,7 +4786,11 @@
           {{tab}}private ${this.referencedColumnType} ${minStart(this.columnNameField)};
           {{elseIf this.isPrimaryKey}}
           {{tab}}private ${this.type} ${this.name};
-          {{tab}}{{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+          {{tab}}{{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isComparableInterval}}
+          {{tab}}private ${this.type} ${this.name};
+          {{tab}}private ${this.type} ${this.name}Min;
+          {{tab}}private ${this.type} ${this.name}Max;
+          {{elseIf this.isPeriodInterval}}
           {{tab}}private ${this.type} ${this.name};
           {{tab}}private ${this.type} ${this.name}Min;
           {{tab}}private ${this.type} ${this.name}Max;

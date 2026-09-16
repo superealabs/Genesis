@@ -141,6 +141,12 @@ public class FrameworkMetadataProvider {
 
         metadata.put("className", tableMetadata.getClassName());
         List<Map<String, Object>> jsonFields = getJsonFieldsList(tableMetadata);
+        System.out.println(
+                "[Genesis JSON] "
+                        + tableMetadata.getClassName()
+                        + " jsonFields=" + jsonFields
+                        + " hasJsonFields=" + !jsonFields.isEmpty()
+        );
         metadata.put("jsonFields", jsonFields);
         metadata.put("hasJsonFields", !jsonFields.isEmpty());
         metadata.put("hasCompositePrimaryKey", tableMetadata.hasCompositePrimaryKey());
@@ -278,6 +284,12 @@ public class FrameworkMetadataProvider {
         metadata.put("className", tableMetadata.getClassName());
         metadata.put("entityName", tableMetadata.getClassName());
         List<Map<String, Object>> jsonFields = getJsonFieldsList(tableMetadata);
+        System.out.println(
+                "[Genesis JSON] "
+                        + tableMetadata.getClassName()
+                        + " jsonFields=" + jsonFields
+                        + " hasJsonFields=" + !jsonFields.isEmpty()
+        );
         metadata.put("jsonFields", jsonFields);
         metadata.put("hasJsonFields", !jsonFields.isEmpty());
         metadata.put("classNameLink", tableMetadata.getClassName() + "s");
@@ -715,6 +727,26 @@ public class FrameworkMetadataProvider {
         if (configuredAnnotations != null) {
             attributeTypeAnnotations.addAll(configuredAnnotations);
         }
+        if (databaseId == 4 && "java.time.Period".equals(field.getType())) {
+            attributeTypeAnnotations.add(
+                    "@org.hibernate.annotations.Type("
+                            + "${groupLink}.${lowerCase(projectName)}.utils."
+                            + "OracleYearMonthIntervalType.class)"
+            );
+        }
+        if (databaseId != 2) { // PostgreSQL = 2
+            attributeTypeAnnotations.removeIf(annotation ->
+                    annotation.contains("PostgreSQLIntervalType")
+            );
+        }
+        if ("uniqueidentifier".equalsIgnoreCase(field.getColumnType())) {
+            attributeTypeAnnotations.removeIf(annotation -> annotation.contains("ColumnTransformer"));
+            attributeTypeAnnotations.add(
+                    "@org.hibernate.annotations.ColumnTransformer(" +
+                            "read = \"CAST(${this.columnName} as varchar(36))\", " +
+                            "write = \"CAST(? as uniqueidentifier)\")"
+            );
+        }
         boolean isNativeTextType = NativeDatabaseTypeRegistry.isNative(databaseId, field.getColumnType());
         if ("String".equals(field.getType()) && isNativeTextType) {
             attributeTypeAnnotations.removeIf(annotation ->
@@ -752,6 +784,8 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isDateTimeTz",field.isDateTimeTz());
         fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
+        fieldMap.put("isComparableInterval", field.isInterval() && !"java.time.Period".equals(field.getType()));
+        fieldMap.put("isPeriodInterval", field.isInterval() && "java.time.Period".equals(field.getType()));
         fieldMap.put("isParentForeignKey",field.getIsParentForeignKey());
 
         return fieldMap;
@@ -872,10 +906,7 @@ public class FrameworkMetadataProvider {
 
     private static List<Map<String, Object>> getJsonFieldsList(TableMetadata tableMetadata) {
         return Arrays.stream(tableMetadata.getColumns())
-                .filter(field -> {
-                    String columnType = field.getColumnType();
-                    return columnType != null && ("json".equalsIgnoreCase(columnType) || "jsonb".equalsIgnoreCase(columnType));
-                })
+                .filter(ColumnMetadata::isJson)
                 .map(field -> {
                     Map<String, Object> jsonField = new HashMap<>();
                     jsonField.put("name", field.getName());
