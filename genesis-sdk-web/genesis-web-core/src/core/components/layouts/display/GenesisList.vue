@@ -1,11 +1,10 @@
 <template>
-    <!-- ═══ MODE LIST (tableau avec colonnes alignées) ═══ -->
+    <!-- ═══ MODE TABLE (anciennement LIST : tableau avec colonnes alignées) ═══ -->
     <div
-        v-if="display === 'list'"
+        v-if="display === 'table'"
         class="w-full rounded-lg overflow-hidden bg-bg"
     >
         <table class="w-full text-sm text-left table-fixed">
-            <!-- Header optionnel -->
             <thead
                 v-if="showHeader && headers.length > 0"
                 class="text-xs font-semibold text-muted uppercase tracking-wider bg-bg-light border-b border-secondary"
@@ -29,6 +28,14 @@
         </table>
     </div>
 
+    <!-- ═══ MODE LIST (anciennement LINE : liste verticale flex simple) ═══ -->
+    <div
+        v-else-if="display === 'list'"
+        class="flex flex-col w-full gap-2"
+    >
+        <slot />
+    </div>
+
     <!-- ═══ MODE GRID ═══ -->
     <div v-else class="grid gap-3" :style="gridStyle">
         <slot />
@@ -40,7 +47,7 @@ import { computed, provide } from 'vue';
 import { GENESIS_LIST_CONTEXT, type GenesisListContext } from './GenesisItem.types';
 
 const props = withDefaults(defineProps<{
-    display?: 'grid' | 'list';
+    display?: 'grid' | 'table' | 'list';
     minColWidth?: string;
     headers?: { label: string; class?: string }[];
     showHeader?: boolean;
@@ -48,15 +55,14 @@ const props = withDefaults(defineProps<{
 }>(), {
     display: 'grid',
     minColWidth: '120px',
-    columnLayout: '1fr',
     headers: () => [],
     showHeader: true,
     haveActions: false,
 });
 
 provide<GenesisListContext>(GENESIS_LIST_CONTEXT, {
-    display:      computed(() => props.display),
-    deletable:     computed(() => props.haveActions),
+    display: computed(() => props.display),
+    deletable: computed(() => props.haveActions),
 });
 
 const hasActionColumn = computed(() => props.haveActions);

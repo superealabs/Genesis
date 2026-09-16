@@ -1,5 +1,4 @@
 <template>
-  <!-- 1. Plus besoin de div wrapper, de Menu, de transition manuelle -->
   <GenesisDropdown
     :align="align"
     :hide-chevron="hideChevron"
@@ -8,13 +7,12 @@
     :close-on-select="true"
     :open-at-hover="true"
   >
-    <!-- 2. Le trigger est géré proprement via un slot nommé -->
     <template #triggerIcon>
       <component :is="currentIcon" :size="24" aria-hidden="true" />
     </template>
 
     <div class="p-1">
-      <!-- 3. Le contenu du menu est injecté directement. On garde MenuItem pour l'état 'active' et l'accessibilité clavier -->
+      <!-- MODE GRID -->
       <MenuItem v-slot="{ active }" as="template">
         <GenesisButton
           :class="[active ? 'active' : '']"
@@ -30,6 +28,24 @@
         </GenesisButton>
       </MenuItem>
 
+      <!-- ✅ MODE TABLE (anciennement List) -->
+      <MenuItem v-slot="{ active }" as="template">
+        <GenesisButton
+          :class="[active ? 'active' : '']"
+          variant="tertiary"
+          :fill-width="true"
+          size="lg"
+          @click="selectView('table')"
+        >
+          <template #leftIcon>
+            <!-- Utilise l'icône de tableau de ton projet (ex: IconTable, IconTableAlt, ou IconListUl) -->
+            <IconTable aria-hidden="true" /> 
+          </template>
+          Table
+        </GenesisButton>
+      </MenuItem>
+
+      <!-- ✅ MODE LIST (anciennement Line) -->
       <MenuItem v-slot="{ active }" as="template">
         <GenesisButton
           :class="[active ? 'active' : '']"
@@ -50,17 +66,16 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-// 4. On n'importe PLUS que MenuItem de Headless UI (pour le slot { active })
 import { MenuItem } from '@headlessui/vue'; 
 
-// 5. On importe notre super-composant wrapper
 import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import IconGrid from '@genesis-labs/web-core/core/components/ui/icons/IconGrid.vue';
+import IconTable from '@genesis-labs/web-core/core/components/ui/icons/IconTable.vue'; // ✅ À adapter si le nom est différent
 import IconListUl from '@genesis-labs/web-core/core/components/ui/icons/IconListUl.vue';
 
 const props = withDefaults(defineProps<{
-    modelValue: 'grid' | 'list';
+    modelValue: 'grid' | 'table' | 'list'; // ✅ Mis à jour
     align?: 'left' | 'right';
     hideChevron?: boolean;
 }>(), {
@@ -69,15 +84,16 @@ const props = withDefaults(defineProps<{
 });
 
 const emit = defineEmits<{
-    'update:modelValue': [value: 'grid' | 'list'];
+    'update:modelValue': [value: 'grid' | 'table' | 'list']; // ✅ Mis à jour
 }>();
 
 const currentIcon = computed(() => {
     if (props.modelValue === 'grid') return IconGrid;
-    return IconListUl; // Par défaut pour 'list'
+    if (props.modelValue === 'table') return IconTable;
+    return IconListUl; 
 });
 
-const selectView = (view: 'grid' | 'list') => {
+const selectView = (view: 'grid' | 'table' | 'list') => { // ✅ Mis à jour
     emit('update:modelValue', view);
 };
 </script>
