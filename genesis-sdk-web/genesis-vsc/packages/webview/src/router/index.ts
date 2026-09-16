@@ -36,7 +36,7 @@ const routes: RouteRecordRaw[] = [
     ...commonRoutes.filter(r =>
         r.path !== '/frameworks' &&
         r.path !== '/frontend' &&
-        r.path !== '/'          // ← ajouter
+        r.path !== '/'   
     ),
     ...designSystemRoutes,
     ...vscodeSpecificRoutes

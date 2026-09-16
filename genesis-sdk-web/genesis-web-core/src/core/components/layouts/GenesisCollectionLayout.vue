@@ -90,6 +90,16 @@
 
         <div class="flex-1 min-h-0">
             <slot />
+            <SimpleSelectionPopup
+                v-if="showReplacePopup"
+                :show="showReplacePopup"
+                :mouseX="mouseX ?? 0"
+                :mouseY="mouseY ?? 0"
+                :options="replaceOptions ?? []"
+                position="bottom-right"
+                @select="$emit('select-replace', $event)"
+                @close="$emit('close-replace')"
+            />
         </div>
     </div>
 </template>
@@ -108,6 +118,8 @@ import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSear
 import LayoutSwitcherAlt from '../ui/dropdown/LayoutSwitcherAlt.vue';
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import Carrousel, { type CarouselSlide } from '@genesis-labs/web-core/core/components/ui/carrousel/Carrousel.vue';
+import SimpleSelectionPopup from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 
 export type CollectionMode = 'selection' | 'compare';
 
@@ -122,6 +134,11 @@ interface Props {
     showFilter?: boolean;
     showSort?: boolean;
     showCarousel?: boolean;
+
+    replaceOptions?: SelectionOption[];
+    showReplacePopup?: boolean;
+    mouseX?: number | null;
+    mouseY?: number | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -141,7 +158,10 @@ const emit = defineEmits<{
     'update:displayMode': [value: 'grid' | 'list'];
     'update:mode': [value: CollectionMode];
     'back': [];
-    'openFilter': []; // ✅ Réintégré pour ouvrir le popup
+    'openFilter': [];
+
+    'select-replace': [slotId: string | number];
+    'close-replace': [];
 }>();
 
 const carouselSlides = ref<CarouselSlide[]>([

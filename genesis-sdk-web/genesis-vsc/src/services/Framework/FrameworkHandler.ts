@@ -12,7 +12,7 @@ const MOCK_FRAMEWORKS: Framework[] = [
     { id: 5, languageId: 4, name: 'Express REST', coreFramework: 'Express', type: 'REST API', isProd: false, useDB: false, useCloud: false, useEurekaServer: false, isGateway: false, useFrontendApp: false },
 ];
 
-// ✅ Nom du canal de sortie dédié
+// Nom du canal de sortie dédié
 const LOG_CHANNEL = 'Genesis Frameworks';
 
 export class FrameworkHandler {
