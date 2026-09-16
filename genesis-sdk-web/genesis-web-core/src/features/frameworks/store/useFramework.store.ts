@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Framework, FrameworkFilters } from '@genesis-labs/shared-types';
+import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
 
 export const useFrameworkStore = defineStore('framework', () => {
     // ═══ État ═══
     const frameworks = ref<Framework[]>([]);
     const searchQuery = ref('');
     const filters = ref<FrameworkFilters>({});
-    const displayMode = ref<'grid' | 'list'>('grid');
+    const displayMode = ref<DisplayMode>('grid');
     
     // AJOUT : État de chargement
     const isLoading = ref(false);

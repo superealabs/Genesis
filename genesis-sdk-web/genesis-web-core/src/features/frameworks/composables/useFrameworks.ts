@@ -59,7 +59,6 @@ export function useFrameworks() {
 
     function setSearch(query: string) { store.setSearch(query); }
     function setFilters(newFilters: FrameworkFilters) { store.setFilters(newFilters); }
-    function toggleDisplayMode() { store.setDisplayMode(displayMode.value === 'grid' ? 'list' : 'grid'); }
     
     function handleModeChange(newMode: 'selection' | 'compare') {
         compare.switchMode(newMode);
@@ -98,7 +97,6 @@ export function useFrameworks() {
         initialize,
         setSearch,
         setFilters,
-        toggleDisplayMode,
         handleModeChange,
         handleSelect,
         handleReplace,
