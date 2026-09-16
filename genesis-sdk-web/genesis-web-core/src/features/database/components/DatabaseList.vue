@@ -22,11 +22,12 @@
 import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue';
 import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.vue';
 import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
+import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
 
 defineProps<{
     engines: DatabaseEngineDto[];
     selectedId?: number | null;
-    display: 'grid' | 'list';
+    display: DisplayMode;
     databaseSlots?: Map<number, string>; 
 }>();
 

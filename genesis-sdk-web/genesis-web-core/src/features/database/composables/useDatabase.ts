@@ -94,8 +94,6 @@ export function useDatabase() {
         compare.switchMode(newMode);
     }
 
-    function toggleDisplayMode() { store.setDisplayMode(displayMode.value === 'grid' ? 'list' : 'grid'); }
-
     // ═══════════════════════════════════════════════════════════
     // RETOUR FINAL
     // ═══════════════════════════════════════════════════════════
@@ -119,9 +117,7 @@ export function useDatabase() {
         handleReplace,
         handleModeChange,
         reset: store.reset,
-        toggleDisplayMode,
-
-
+        
         showReplacePopup: compare.showReplacePopup,
         pendingEngine: compare.pendingItem, // Alias pour la clarté
         mouseX: compare.mouseX,

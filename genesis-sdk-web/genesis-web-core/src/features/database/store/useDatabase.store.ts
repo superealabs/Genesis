@@ -1,13 +1,15 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { DatabaseEngineDto, DatabaseConnectionTestResult } from '@genesis-labs/shared-types';
+import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+
 
 export const useDatabaseStore = defineStore('database', () => {
     // ═══ État ═══
     const availableEngines = ref<DatabaseEngineDto[]>([]);
     const isLoading = ref(false);
     const connectionTestResult = ref<DatabaseConnectionTestResult | null>(null);
-    const displayMode = ref<'grid' | 'list'>('grid');
+    const displayMode = ref<DisplayMode>('grid');
 
     // ═══ Getters ═══
     const hasEngines = computed(() => availableEngines.value.length > 0);
@@ -30,7 +32,9 @@ export const useDatabaseStore = defineStore('database', () => {
         connectionTestResult.value = result;
     }
 
-    function setDisplayMode(mode: 'grid' | 'list') { displayMode.value = mode; }
+    function setDisplayMode(mode: DisplayMode) { 
+        displayMode.value = mode; 
+    }
 
     function clearConnectionTestResult() {
         connectionTestResult.value = null;
@@ -40,6 +44,7 @@ export const useDatabaseStore = defineStore('database', () => {
         availableEngines.value = [];
         isLoading.value = false;
         connectionTestResult.value = null;
+        displayMode.value = 'grid'; // Reset à la valeur par défaut
     }
 
     return {

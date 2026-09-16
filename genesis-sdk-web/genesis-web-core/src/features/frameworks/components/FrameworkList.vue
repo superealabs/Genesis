@@ -35,11 +35,12 @@
 import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue';
 import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.vue';
 import type { Framework } from '@genesis-labs/shared-types';
+import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
 
 defineProps<{
     frameworks: Framework[];
     selectedId?: number;
-    display: 'grid' | 'list';
+    display: DisplayMode;
     frameworkSlots?: Map<number, string>;
 }>();
 

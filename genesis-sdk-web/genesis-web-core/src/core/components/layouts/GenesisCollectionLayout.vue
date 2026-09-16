@@ -120,6 +120,7 @@ import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/Genes
 import Carrousel, { type CarouselSlide } from '@genesis-labs/web-core/core/components/ui/carrousel/Carrousel.vue';
 import SimpleSelectionPopup from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+import type { DisplayMode } from './display/GenesisItem.types.ts';
 
 export type CollectionMode = 'selection' | 'compare';
 
@@ -127,7 +128,7 @@ interface Props {
     title?: string;
     searchValue?: string;
     searchPlaceholder?: string;
-    displayMode: 'grid' | 'list';
+    displayMode: DisplayMode;
     mode?: CollectionMode;
     align?: 'left' | 'right';
     showBackButton?: boolean;
@@ -155,7 +156,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
     'update:searchValue': [value: string];
-    'update:displayMode': [value: 'grid' | 'list'];
+    'update:displayMode': [value: DisplayMode];
     'update:mode': [value: CollectionMode];
     'back': [];
     'openFilter': [];

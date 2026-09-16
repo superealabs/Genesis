@@ -9,7 +9,6 @@
 
         <!-- Wrapper unifié pour le badge et les actions -->
         <td
-            v-if="badge || deletable || showInfoButton"
             class="p-3 text-center relative"
         >
             <!-- Badge flottant en haut à droite de cette cellule -->

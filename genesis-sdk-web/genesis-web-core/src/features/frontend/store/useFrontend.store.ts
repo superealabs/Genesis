@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { FrontendFramework } from '@genesis-labs/shared-types';
+import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
 
 export const useFrontendStore = defineStore('frontend', () => {
     // ═══ État Métier ═══
@@ -8,7 +9,7 @@ export const useFrontendStore = defineStore('frontend', () => {
     const selectedFramework = ref<FrontendFramework | null>(null);
 
     // ═══ État UI (Nécessaire pour l'autonomie de la vue) ═══
-    const displayMode = ref<'grid' | 'list'>('grid');
+    const displayMode = ref<DisplayMode>('grid');
     const searchQuery = ref('');
 
     // ═══ Getters ═══
