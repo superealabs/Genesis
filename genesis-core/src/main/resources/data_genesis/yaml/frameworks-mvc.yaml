@@ -3100,18 +3100,20 @@
     staticFilesPath: "/wwwroot"
     viewSavePath: "${destinationFolder}/Views/${majStart(className)}"
     rootPath: "~"
-    backLink: "@Url.Action(\"Index\")"
-    previousLink: "@previousUrl"
+    backLink: 'href="@Url.Action("Index")"'
+    previousLink: 'href="@previousUrl"'
     antiForgeryTokenTagHelper: "@Html.AntiForgeryToken()"
     layout:
       name: "_Layout"
       additionalPageLink: ""
-      assetsImportLink: "~/css/style.css\" asp-append-version=\"true"
+      assetsImportLink: "href=\"~/css/style.css\" asp-append-version=\"true\""
+      baseHref: "{{removeLine}}"
       viewAnnotations: |
         @{
             var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
         }
       pageName: "@ViewData[\"Title\"]"
+      pageNameTagHelper: ""
       navLink: "class=\"nav-item @(currentController == \"${majStart(this.entityName)}\" ? \"active\" : \"\")\" asp-area=\"\" asp-controller=\"${majStart(this.entityName)}\" asp-action=\"Index\""
       callContent: |
         @RenderBody()
@@ -3127,6 +3129,7 @@
             ViewData["Title"] = "${majStart(className)}s";
             var searchCriteria = Model?.Search${majStart(className)}Criteria;
         }
+      viewEnd: "{{removeLine}}"
       inputTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}\""
       inputRadioTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}\" asp-for=\"Search${majStart(className)}Criteria.${majStart(this.name)}\""
       inputDateTagHelper: "name=\"${majStart(this.name)}\" value=\"@searchCriteria?.${majStart(this.name)}?.ToString(\"yyyy-MM-ddTHH:mm\")\""
@@ -3145,14 +3148,14 @@
         }
       filterLink: "asp-action=\"Search\" asp-controller=\"${majStart(className)}\""
       sortLink: "asp-action=\"Index\" asp-route-page=\"@Model.Page.Number\" asp-route-pageSize=\"@Model.Page.Size\" asp-route-sortOrder=\"@Model.CurrentSort\" asp-route-sortBy=\"${this.name},asc\""
-      detailsLink: "@Url.Action(\"Details\", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"
-      createLink: "@Url.Action(\"Create\")"
-      updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"
+      detailsLink: 'href="@Url.Action("Details", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"'
+      createLink: 'href="@Url.Action("Create")"'
+      updateLink: 'href="@Url.Action("Edit", new { ${pkColumn} = @${minStart(className)}.${majStart(pkColumn)} })"'
       deleteLink: "asp-action=\"Delete\""
       exportLink: "asp-action=\"ExportToCsv\""
       pageSizeChangeLink: "'@Url.Action(\"Index\")?page=0&pageSize='+this.value"
-      previousPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"
-      previousClassCondition: " @(Model.Page.Number == 0 ? \"disabled\" : \"\")"
+      previousPageLink: 'href="@Url.Action("Index", new { page = Model.Page.Number - 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"'
+      previousClassCondition: 'class="prev @(Model.Page.Number == 0 ? "disabled" : "")"'
       pagesListLoop: |
         @for (int i = 0; i < Model.Page.TotalPages; i++)
         {{tab}}{{tab}}{{tab}}{
@@ -3161,11 +3164,15 @@
         {{tab}}{{tab}}{{tab}}{{tab}}{{tab}}@i
         {{tab}}{{tab}}{{tab}}{{tab}}</a>
         {{tab}}{{tab}}{{tab}}}
-      nextPageLink: "@Url.Action(\"Index\", new { page = Model.Page.Number + 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"
-      nextClassCondition: " @(Model.Page.Number == Model.Page.TotalPages - 1 ? \"disabled\" : \"\")"
-      onGoingPageLink: "@Url.Action(\"Index\")"
+      nextPageLink: 'href="@Url.Action("Index", new { page = Model.Page.Number + 1, pageSize = Model.Page.Size, sortOrder = Model.CurrentSort })"'
+      nextClassCondition: 'class="next @(Model.Page.Number == Model.Page.TotalPages - 1 ? "disabled" : "")"'
+      onGoingPageLink: 'action="@Url.Action("Index")"'
       pageNumberValue: "@Model.Page.Number"
       pageSizeValue: "@Model.Page.Size"
+      pageSizeValueTagHelper: "{{removeLine}}"
+      pageSizeParamName: "pageSize"
+      sortParamName: "sortOrder"
+      filterMethod: "post"
       orderSortsTagHelper: "@Model.CurrentSortDisplay"
       currentSortValue: "@Model.CurrentSort"
       totalElementsTagHelper: "@Model.Page.TotalElements"
@@ -3182,6 +3189,29 @@
         @section Scripts {
             <script src="~/js/filter-utils.js"></script>
             <script src="~/js/export-utils.js"></script>
+        }
+      fileDataValue: |
+        @{
+            var fileContent = ${minStart(className)}.${majStart(this.name)};
+        }
+
+        @if (fileContent != null && fileContent.Length > 0)
+        {
+            if (FileUtils.IsImage(fileContent))
+            {
+                <img
+                    src="@FileUtils.BuildFileSource(fileContent)"
+                    alt="${this.name}"
+                    class="file-preview" />
+            }
+            else
+            {
+                <span>Fichier non prévisualisable</span>
+            }
+        }
+        else
+        {
+            <span>Aucun fichier</span>
         }
     detail:
       name: "Details"
@@ -3200,7 +3230,31 @@
       dataForeignValue: "@Model.${majStart(className)}.${majStart(this.name)}?.GetType().GetProperty((string)Model.${majStart(this.type)}DisplayColumn)?.GetValue(@Model.${majStart(className)}.${majStart(this.name)})"
       deleteDataTagHelper: "data-id=\"@Model.${majStart(className)}.${majStart(pkColumn)}\""
       deleteLink: "asp-action=\"Delete\""
-      updateLink: "@Url.Action(\"Edit\", new { ${pkColumn} = @Model.${majStart(className)}.${majStart(pkColumn)} })"
+      updateLink: 'href="@Url.Action("Edit", new { ${pkColumn} = @Model.${majStart(className)}.${majStart(pkColumn)} })"'
+      fileDataValue: |
+        @{
+            var fileContent = @Model.${majStart(className)}.${majStart(this.name)};
+        }
+
+        @if (fileContent != null && fileContent.Length > 0)
+        {
+            if (FileUtils.IsImage(fileContent))
+            {
+                <img src="@FileUtils.BuildFileSource(fileContent)"
+                     alt="${this.name}"
+                     class="file-preview-detail" />
+            }
+            else
+            {
+                <p>Fichier non prévisualisable</p>
+            }
+        }
+        else
+        {
+            <p>Aucun fichier</p>
+        }
+      additionalImports: "@using ${majStart(projectName)}.Utils"
+      hiddenPkValue: "value=\"@Model.${majStart(className)}.${majStart(this.name)}\""
     create:
       name: "Create"
       viewAnnotations: |
@@ -3213,6 +3267,7 @@
                 previousUrl = "/";
             }
         }
+      viewEnd: "{{removeLine}}"
       validationSection: |
         @if (!ViewData.ModelState.IsValid)
         {
@@ -3242,6 +3297,7 @@
                 previousUrl = "/";
             }
         }
+      viewEnd: "{{removeLine}}"
       validationSection: |
         @if (!ViewData.ModelState.IsValid)
         {{tab}}{
@@ -3253,6 +3309,7 @@
       inputTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.name)}\""
       textAreaTagHelper: "asp-for=\"${majStart(this.name)}\""
       textAreaValidationTagHelper: " asp-validation-for=\"${majStart(this.name)}\""
+      checkedRadioTagHelper: "checked=\"@(Model?.${majStart(className)}.${majStart(this.name)} != false ? \"checked\" : null)\""
       selectTagHelper: "asp-for=\"${majStart(className)}.${majStart(this.columnNameField)}\" asp-items=\"Model.${majStart(this.type)}sSelectList\""
       updateLink: "asp-action=\"Edit\" asp-controller=\"${className}\""
       scriptSection: |
@@ -3270,7 +3327,9 @@
                 previousUrl = "/";
             }
         }
+      previousLink: 'href="@previousUrl"'
       errorMessage: "@ViewData[\"ErrorMessage\"]"
+      viewEnd: "{{removeLine}}"
       destinationPath: "${destinationFolder}/Views/Shared/"
 
     templateEngineFilesEdits:
@@ -3346,85 +3405,82 @@
 - id: 6
   languageId: 1
   coreFramework: "Spring Boot"
-  name: "Spring - MVC"
+  name: "Spring MVC - Thymeleaf"
   template: "Template"
+  isProd: true
   useDB: true
-  withGroupId: false
+  withGroupId: true
   useCloud: false
   useEurekaServer: false
   isGateway: false
   excludeProjectFilesEdits: [ ]
   frontendPaths:
-    faviconPath: "{{removeLine}}"
-    logoPath: "{{removeLine}}"
-    langsPath: "{{removeLine}}"
+    faviconPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static"
+    logoPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/images"
+    langsPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/i18n"
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)};
-        
         import org.springframework.boot.SpringApplication;
         import org.springframework.boot.autoconfigure.SpringBootApplication;
-        
         @SpringBootApplication
         public class ${majStart(projectName)}Application {
-        {{tab}}public static void main(String[] args) {
-        {{tab}}{{tab}}SpringApplication.run(${majStart(projectName)}Application.class, args);
-        {{tab}}}
+            public static void main(String[] args) {
+                SpringApplication.run(${majStart(projectName)}Application.class,args);
+            }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}"
-
-    - fileType: "ApplicationYml"
-      fileName: "application"
-      extension: "yml"
-      content: |
-        spring:
-          application:
-            name: ${toKebabCase(projectName)}
-        
-        {{#if useDB}}
-          datasource:
-            url: ${connectionString}
-            username: ${databaseUsername}
-            password: ${databasePassword}
-          jpa:
-            database-platform : org.hibernate.dialect.${skipEscape(databaseType)}Dialect
-            hibernate:
-              ddl-auto: ${hibernateDdlAuto}
-            properties:
-              hibernate.format_sql: true
-        {{/if}}
-        eureka:
-          client:
-            register-with-eureka: ${useEurekaServer}
-            fetch-registry: ${useEurekaServer}
-        
-        server:
-          port: ${projectPort}
-        
-        logging:
-          level:
-            eureka: ${loggingLevel}
-            root: ${loggingLevel}
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/"
 
     - fileType: "WebConfig"
       fileName: "WebConfig"
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.config;
-
+        import org.springframework.context.annotation.Bean;
         import org.springframework.context.annotation.Configuration;
-        import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
-        import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+        import org.springframework.format.FormatterRegistry;
+        import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
         import org.springframework.web.servlet.config.annotation.CorsRegistry;
-        import org.springframework.data.web.config.EnableSpringDataWebSupport;
-
-        @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
+        import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+        import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
+        import java.time.LocalDateTime;
+        import java.time.OffsetDateTime;
+        import java.time.ZoneId;
+        import java.net.InetAddress;
+        import java.net.UnknownHostException;
         @Configuration
         public class WebConfig implements WebMvcConfigurer {
+            @Bean
+            public LayoutDialect layoutDialect() {
+                return new LayoutDialect();
+            }
+            @Override
+            public void addFormatters(FormatterRegistry registry) {
+                DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
+                registrar.setUseIsoFormat(true);
+                registrar.registerFormatters(registry);
+                registry.addConverter(String.class, OffsetDateTime.class, source -> {
+                  if (source == null || source.isBlank()) {
+                    return null;
+                  }
+                  return LocalDateTime.parse(source)
+                  .atZone(ZoneId.systemDefault())
+                  .toOffsetDateTime();
+                });
+                registry.addConverter(String.class, InetAddress.class, source -> {
+                  if (source == null || source.isBlank()) {
+                    return null;
+                  }
+                  try {
+                    return InetAddress.getByName(source);
+                  } catch (UnknownHostException e) {
+                    throw new IllegalArgumentException("Invalid IP address: " + source, e);
+                  }
+                });
+            }
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
@@ -3433,10 +3489,6 @@
                     .allowedHeaders("*")
                     .allowCredentials(true)
                     .maxAge(3600);
-            }
-            @Override
-            public void addViewControllers(ViewControllerRegistry registry) {
-                registry.addRedirectViewController("/", "/swagger-ui/index.html");
             }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
@@ -3452,6 +3504,9 @@
         import java.util.List;
         import java.util.stream.Collectors;
         import jakarta.persistence.criteria.Predicate;
+        import java.time.Period;
+        import jakarta.persistence.criteria.Path;
+        import org.hibernate.query.criteria.HibernateCriteriaBuilder;
         
         public class WebUtils {
             public static final String ASC = "asc";
@@ -3500,7 +3555,7 @@
                                          String value,
                                          List<Predicate> predicates) {
                   if (value != null && !value.isBlank()) {
-                      predicates.add(cb.like(cb.lower(field), "%" + value.toLowerCase() + "%"));
+                      predicates.add(cb.like(cb.lower(field), value.toLowerCase() + "%"));
                   }
             }
 
@@ -3516,6 +3571,80 @@
               if (max != null) {
                 predicates.add(cb.lessThanOrEqualTo(field, max));
               }
+            }
+          
+            public static void addPeriodInterval(jakarta.persistence.criteria.CriteriaBuilder cb, Path<Period> field, Period min, Period max, List<Predicate> predicates) {
+              HibernateCriteriaBuilder hcb =(HibernateCriteriaBuilder) cb;
+          
+              var totalMonths = hcb.sql(
+                      "(EXTRACT(YEAR FROM ?) * 12 + EXTRACT(MONTH FROM ?))",
+                      Long.class,
+                      field,
+                      field
+              );
+          
+              if (min != null) {
+                predicates.add(cb.ge(totalMonths, min.toTotalMonths()));
+              }
+          
+              if (max != null) {
+                predicates.add(cb.le(totalMonths, max.toTotalMonths()));
+              }
+            }
+            
+            public static String formatDuration(java.time.Duration duration) {
+              if (duration == null) {
+                return "-";
+              }
+        
+              long seconds = duration.getSeconds();
+          
+              long days = seconds / 86400;
+              long hours = (seconds % 86400) / 3600;
+              long minutes = (seconds % 3600) / 60;
+              long secs = seconds % 60;
+          
+              StringBuilder result = new StringBuilder();
+          
+              if (days != 0) {
+                result.append(days).append(" j ");
+              }
+          
+              if (hours != 0) {
+                result.append(hours).append(" h ");
+              }
+          
+              if (minutes != 0) {
+                result.append(minutes).append(" min ");
+              }
+          
+              if (secs != 0 || result.length() == 0) {
+                result.append(secs).append(" s");
+              }
+          
+              return result.toString().trim();
+            }
+        
+            public static String formatPeriod(java.time.Period period) {
+                if (period == null) {
+                  return "-";
+                }
+            
+                StringBuilder result = new StringBuilder();
+            
+                if (period.getYears() != 0) {
+                  result.append(period.getYears()).append(" an");
+                  if (Math.abs(period.getYears()) > 1) {
+                    result.append("s");
+                  }
+                  result.append(" ");
+                }
+            
+                if (period.getMonths() != 0 || result.length() == 0) {
+                  result.append(period.getMonths()).append(" mois");
+                }
+            
+                return result.toString().trim();
             }
         }
 
@@ -3547,6 +3676,118 @@
               LocalDateTime.parse(range[1].replace(" ", "T").substring(1, range[1].length()-1))
             };
             return ranges;
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
+
+    - fileType: "Oracle Year Month Interval"
+      fileName: "OracleYearMonthIntervalType"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.utils;
+
+        import org.hibernate.engine.spi.SharedSessionContractImplementor;
+        import org.hibernate.usertype.UserType;
+        
+        import oracle.sql.INTERVALYM;
+        
+        import java.io.Serializable;
+        import java.sql.PreparedStatement;
+        import java.sql.ResultSet;
+        import java.sql.SQLException;
+        import java.time.Period;
+        import oracle.jdbc.OracleTypes;
+        
+        public class OracleYearMonthIntervalType implements UserType<Period> {
+        
+          @Override
+          public int getSqlType() {
+            return OracleTypes.INTERVALYM;
+          }
+          
+          @Override
+          public Class<Period> returnedClass() {
+            return Period.class;
+          }
+          
+          @Override
+          public boolean equals(Period x, Period y) {
+            return java.util.Objects.equals(x, y);
+          }
+          
+          @Override
+          public int hashCode(Period x) {
+            return java.util.Objects.hashCode(x);
+          }
+          
+          @Override
+          public Period nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {
+          
+            INTERVALYM interval = rs.getObject(position, INTERVALYM.class);
+  
+            if (interval == null) {
+              return null;
+            }
+            
+            String text = interval.stringValue().trim();
+            
+            boolean negative = text.startsWith("-");
+            text = text.replaceFirst("^[+-]", "");
+            
+            String[] parts = text.split("-");
+            
+            int years = Integer.parseInt(parts[0]);
+            int months = Integer.parseInt(parts[1]);
+            
+            Period result = Period.of(years, months, 0);
+          
+            return negative ? result.negated() : result;
+          }
+          
+          @Override
+          public void nullSafeSet(PreparedStatement st, Period value, int index,
+          SharedSessionContractImplementor session) throws SQLException {
+          
+            if (value == null) {
+              st.setNull(index, OracleTypes.INTERVALYM);
+              return;
+            }
+            
+            long totalMonths = value.toTotalMonths();
+            
+            boolean negative = totalMonths < 0;
+            long absoluteMonths = Math.abs(totalMonths);
+            
+            long years = absoluteMonths / 12;
+            long months = absoluteMonths % 12;
+            
+            String text =
+              (negative ? "-" : "+")
+                + years
+                + "-"
+                + String.format("%02d", months);
+                
+            st.setObject(index, new INTERVALYM(text), OracleTypes.INTERVALYM);
+          }
+          
+          @Override
+          public Period deepCopy(Period value) {
+            return value;
+          }
+          
+          @Override
+          public boolean isMutable() {
+            return false;
+          }
+          
+          @Override
+          public Serializable disassemble(Period value) {
+            return value;
+          }
+          
+          @Override
+          public Period assemble(Serializable cached, Object owner) {
+            return (Period) cached;
           }
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
@@ -4190,51 +4431,179 @@
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.exception.handler;
-        
         import lombok.extern.slf4j.Slf4j;
-        import ${groupLink}.${lowerCase(projectName)}.dto.RestResponse;
         import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
         import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
         import org.springframework.http.HttpStatus;
-        import org.springframework.http.ResponseEntity;
+        import org.springframework.ui.Model;
+        import org.springframework.web.bind.annotation.ControllerAdvice;
         import org.springframework.web.bind.annotation.ExceptionHandler;
-        import org.springframework.web.bind.annotation.RestControllerAdvice;
-        
+        import org.springframework.web.bind.annotation.ResponseStatus;
+        import org.springframework.http.ResponseEntity;
+        import org.springframework.dao.DataIntegrityViolationException;
+        import org.springframework.web.servlet.resource.NoResourceFoundException;
         @Slf4j
-        @RestControllerAdvice
+        @ControllerAdvice
         public class GlobalExceptionHandler {
+            @ExceptionHandler(DataIntegrityViolationException.class)
+            @ResponseStatus(HttpStatus.CONFLICT)
+            public String handleDataIntegrityViolationException(DataIntegrityViolationException ex, Model model) {
+              String message = "Une contrainte d'intégrité n'a pas été respectée.";
+              Throwable cause = ex.getMostSpecificCause();
+              
+              if (cause != null && cause.getMessage() != null) {
+                String databaseMessage = cause.getMessage();
+                
+                if (databaseMessage.contains("duplicate key") || databaseMessage.contains("unique constraint")) {
+                  message = "Une valeur existe déjà pour un champ qui doit être unique.";
+                } else if (databaseMessage.contains("foreign key") || databaseMessage.contains("still referenced")) {
+                  message = "Impossible d'effectuer cette opération car cet élément est encore référencé par d'autres données.";
+                }
+              }
+            model.addAttribute("errorMessage", message);
+            return "error/error";
+            }
         
             @ExceptionHandler(ResourceNotFoundException.class)
-            public ResponseEntity<RestResponse<Void>> handleEntityNotFoundException(ResourceNotFoundException ex) {
-                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
-                log.info("Resource not found : {}", ex.getMessage(), ex);        
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            @ResponseStatus(HttpStatus.NOT_FOUND)
+            public String handleResourceNotFoundException(ResourceNotFoundException ex,Model model) {
+                log.info("Resource not found: {}", ex.getMessage());
+                model.addAttribute("errorMessage", ex.getMessage());
+                return "error/error";
             }
-        
-            @ExceptionHandler(InternalServerErrorException.class)
-            public ResponseEntity<RestResponse<Void>> handleInternalServerErrorException(InternalServerErrorException ex) {
-                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), null);
-                log.error("An internal error occurred : {}", ex.getMessage(), ex);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-            }
-        
             @ExceptionHandler(IllegalArgumentException.class)
-            public ResponseEntity<RestResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
-                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
-                log.error("Illegal argument provided : {}", ex.getMessage(), ex);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            @ResponseStatus(HttpStatus.BAD_REQUEST)
+            public String handleIllegalArgumentException(IllegalArgumentException ex, Model model) {
+                log.warn("Illegal argument provided: {}", ex.getMessage());
+                model.addAttribute("errorMessage", ex.getMessage());
+                return "error/error";
             }
-        
+
+            @ExceptionHandler(InternalServerErrorException.class)
+            @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+            public String handleInternalServerErrorException(InternalServerErrorException ex,Model model) {
+                log.error("An internal error occurred", ex);
+                model.addAttribute("errorMessage", ex.getMessage());
+                return "error/error";
+            }
+            @ExceptionHandler(NoResourceFoundException.class)
+            public ResponseEntity<Void> handleNoResourceFoundException(NoResourceFoundException ex) {
+                return ResponseEntity.notFound().build();
+            }
             @ExceptionHandler(Exception.class)
-            public ResponseEntity<RestResponse<Void>> handleGenericException(Exception ex) {
-                RestResponse<Void> response = RestResponse.buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", null);
-                log.error("An unexpected error occurred : {}", ex.getMessage(), ex);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+            public String handleGenericException(Exception ex, Model model) {
+                log.error("An unexpected error occurred", ex);
+                model.addAttribute("errorMessage", "Une erreur inattendue est survenue.");
+                return "error/error";
             }
-        
+      
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/exception/handler"
+
+    - fileType: "Messages"
+      fileName: "messages"
+      extension: "properties"
+      content: |
+        app.name=${projectName}
+
+        common.actions=Actions
+        common.create=Créer
+        common.edit=Modifier
+        common.delete=Supprimer
+        common.save=Enregistrer
+        common.cancel=Annuler
+        common.back=Retour
+        common.search=Rechercher
+        common.details=Détails
+
+        pagination.previous=Précédent
+        pagination.next=Suivant
+
+        message.noData=Aucune donnée disponible.
+        message.confirmDelete=Voulez-vous vraiment supprimer cet élément ?
+
+        error.notFound=Ressource introuvable.
+        error.internal=Une erreur interne est survenue.
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
+
+    - fileType: "ApplicationYml"
+      fileName: "application"
+      extension: "yml"
+      content: |
+        spring:
+          application:
+            name: ${toKebabCase(projectName)}
+
+          datasource:
+            url: ${databaseUrl}
+            username: ${databaseUsername}
+            password: ${databasePassword}
+            hikari:
+              maximum-pool-size: 10
+              connection-timeout: 30000
+
+          jpa:
+            database-platform: ${hibernateDialect}
+            hibernate:
+              ddl-auto: ${hibernateDdlAuto}
+            properties:
+              hibernate:
+                format_sql: true
+
+          thymeleaf:
+            prefix: classpath:/templates/
+            suffix: .html
+            encoding: UTF-8
+            cache: true
+
+          messages:
+            basename: messages
+            encoding: UTF-8
+
+        server:
+          port: ${projectPort}
+
+        logging:
+          level:
+            root: ${loggingLevel}
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources"
+
+    - fileType: "TestFile"
+      fileName: "${majStart(projectName)}ApplicationTests"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)};
+        import org.junit.jupiter.api.Test;
+        import org.springframework.boot.test.context.SpringBootTest;
+        @SpringBootTest
+        class ${majStart(projectName)}ApplicationTests {
+            @Test
+            void contextLoads() {
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
+
+    - fileType: "Home Controller"
+      fileName: "HomeController"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.controllers;
+        import org.springframework.stereotype.Controller;
+        import org.springframework.web.bind.annotation.GetMapping;
+        @Controller
+        public class HomeController {
+            @GetMapping("/")
+            public String home() {
+        {{#each allEntities}}
+        {{#if @first}}
+                return "redirect:/${minStart(this.className)}";
+        {{/if}}
+        {{/each}}
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
 
   configurations:
     - name: "Logging Level"
@@ -4266,21 +4635,22 @@
       variableName: "securityType"
       options:
         - "NONE"
+        - "Spring Security - Session Authentication"
       defaultOption: "NONE"
 
   dependencies:
-    - groupId: "org.projectlombok"
-      artifactId: "lombok"
-      version: "1.18.36"
-      scope: "provided"
-
     - groupId: "org.springframework.boot"
-      artifactId: "spring-boot-starter-data-jpa"
+      artifactId: "spring-boot-starter-web"
       version: "{{removeLine}}"
       scope: "{{removeLine}}"
 
     - groupId: "org.springframework.boot"
-      artifactId: "spring-boot-starter-web"
+      artifactId: "spring-boot-starter-thymeleaf"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-data-jpa"
       version: "{{removeLine}}"
       scope: "{{removeLine}}"
 
@@ -4292,16 +4662,11 @@
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-test"
       version: "{{removeLine}}"
-      scope: "{{removeLine}}"
+      scope: "test"
 
-    - groupId: "org.springdoc"
-      artifactId: "springdoc-openapi-starter-webmvc-ui"
-      version: "2.6.0"
-      scope: "{{removeLine}}"
-
-    - groupId: "io.hypersistence"
-      artifactId: "hypersistence-utils-hibernate-63"
-      version: "3.9.2"
+    - groupId: "nz.net.ultraq.thymeleaf"
+      artifactId: "thymeleaf-layout-dialect"
+      version: "4.0.1"
       scope: "{{removeLine}}"
 
     - groupId: "org.apache.commons"
@@ -4309,20 +4674,14 @@
       version: "1.11.0"
       scope: "{{removeLine}}"
 
-    - groupId: "org.springframework.boot"
-      artifactId: "spring-boot-starter-web"
-      version: "{{removeLine}}"
-      scope: "{{removeLine}}"
+    - groupId: "org.projectlombok"
+      artifactId: "lombok"
+      version: "1.18.36"
+      scope: "provided"
 
-    - groupId: "org.springframework.boot"
-      artifactId: "spring-boot-starter-thymeleaf"
-      version: "{{removeLine}}"
-      scope: "{{removeLine}}"
-
-    - groupId: "nz.net.ultraq.thymeleaf"
-      artifactId: "thymeleaf-layout-dialect"
-      version: "3.3.0"
-      scope: "{{removeLine}}"
+    - groupId: "io.hypersistence"
+      artifactId: "hypersistence-utils-hibernate-63"
+      version: "3.15.3"
 
   model:
     toGenerate: true
@@ -4337,27 +4696,32 @@
       @Setter
       @Getter
       @Entity
+      {{#if hasCompositePrimaryKey}}
+      @IdClass(${majStart(className)}Id.class)
+      {{else}}{{removeLine}}{{/if}}
       {{#if isView}}@Immutable{{else}}{{removeLine}}{{/if}}
       @Table(name="${tableName}")
     modelFieldContent: |
       {{tab}}{{#each fields}}
-      {{tab}}{{#if this.isIntAndPrimaryKey}}
+      {{tab}}{{#if this.isPrimaryKey and this.isForeignKey}}
+      {{tab}}@Id
+      {{tab}}@ManyToOne(fetch = FetchType.LAZY)
+      {{tab}}@JoinColumn(name="${this.columnName}", nullable = ${this.isNullable}){{elseIf this.isIntAndPrimaryKey}}
       {{tab}}@Id
       {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
-      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isPrimaryKey}}
+      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isManualPrimaryKey}}
       {{tab}}@Id
-      {{tab}}@org.hibernate.annotations.Generated(org.hibernate.annotations.GenerationTime.INSERT)
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
-      {{tab}}@ManyToOne
-      {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
+      {{tab}}@ManyToOne(fetch = FetchType.LAZY)
+      {{tab}}@JoinColumn(name="${this.columnName}", nullable = ${this.isNullable}){{else}}
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{/if}}
       {{#if !this.isForeignKey}}{{removeLine}}
       {{tab}}{{#each this.attributeTypeAnnotations}}
       {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}
+      {{tab}}{{/each}}{{removeLine}}{{/if}}
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}{{/if}}
+      {{tab}}{{/each}}{{removeLine}}
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
@@ -4386,25 +4750,25 @@
                   return (root, query, criteriaBuilder) -> {
                       List<Predicate> predicates = new ArrayList<>();
                       {{#each fields}}
-                      {{#if this.isPrimaryKey}}
-                      if(object.get${majStart(this.name)}()!=null){
-                          predicates.add(
-                              criteriaBuilder.equal(
-                                  ${this.criteriaBuildSnippet}
-                              )
-                          );
+                      {{#if this.isForeignKey}}
+                      if(object.get${majStart(this.columnNameField)}() != null){
+                        predicates.add(
+                          criteriaBuilder.equal(
+                            root.get("${this.name}").get("${minStart(this.referencedPrimaryKeyColumn)}"), object.get${majStart(this.columnNameField)}()
+                          )
+                        );
                       }
-                      {{elseIf this.isForeignKey}}
+                      {{elseIf this.isPrimaryKey}}
                       if(object.get${majStart(this.name)}()!=null){
-                          predicates.add(
-                              criteriaBuilder.equal(
-                                  ${this.criteriaBuildSnippet}
-                              )
+                        predicates.add(
+                          criteriaBuilder.equal(
+                            ${this.criteriaBuildSnippet}
+                          )
                           );
                       }
                       {{elseIf this.isText}}
                       WebUtils.addLikeIfPresent(criteriaBuilder, ${this.criteriaBuildSnippet}, predicates);
-                      {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+                      {{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isComparableInterval}}
                       if(object.get${majStart(this.name)}()!=null){
                           predicates.add(
                               criteriaBuilder.equal(
@@ -4413,6 +4777,11 @@
                           );
                       }
                       WebUtils.addInterval(criteriaBuilder, root.get("${this.name}"), object.get${majStart(this.name)}Min(), object.get${majStart(this.name)}Max(), predicates);
+                      {{elseIf this.isPeriodInterval}}
+                      if(object.get${majStart(this.name)}()!=null){
+                        predicates.add(criteriaBuilder.equal(root.get("${this.name}"), object.get${majStart(this.name)}()));
+                      }
+                      WebUtils.addPeriodInterval(criteriaBuilder, root.get("${this.name}"),object.get${majStart(this.name)}Min(), object.get${majStart(this.name)}Max(), predicates);
                       {{else}}
                       if(object.get${majStart(this.name)}()!=null){
                           predicates.add(
@@ -4428,143 +4797,33 @@
               }
           }
         destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/specification"
-      - fileType: "Unit Test File"
-        fileName: "${majStart(className)}ApplicationTests"
+      - fileType: "Composite Primary Key class"
+        fileName: "${majStart(className)}Id"
         extension: "java"
         content: |
-          package ${groupLink}.${lowerCase(projectName)};
-          
-          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-          import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-          
-          import java.nio.charset.StandardCharsets;
-          import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
-          import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
-          import org.junit.jupiter.api.AfterEach;
-          import org.junit.jupiter.api.BeforeEach;
-          import org.junit.jupiter.api.Tag;
-          import org.junit.jupiter.api.Test;
-          import org.junit.jupiter.api.TestInfo;
-          import org.junit.jupiter.api.TestInstance;
-          import org.junit.jupiter.api.TestInstance.Lifecycle;
-          import org.springframework.beans.factory.annotation.Autowired;
-          import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-          import org.springframework.boot.test.context.SpringBootTest;
-          import org.springframework.http.MediaType;
-          import org.springframework.mock.web.MockHttpServletResponse;
-          import org.springframework.test.web.servlet.MockMvc;
-          import org.springframework.test.context.ActiveProfiles;
-          import org.springframework.jdbc.core.JdbcTemplate;
-          import ${groupLink}.${lowerCase(projectName)}.utils.ConstraintDisabler;
-          
-          import com.fasterxml.jackson.databind.ObjectMapper;
-          import com.fasterxml.jackson.databind.ObjectWriter;
-          import com.fasterxml.jackson.databind.SerializationFeature;
-          
-          @SpringBootTest
-          @AutoConfigureMockMvc
-          @TestInstance(Lifecycle.PER_CLASS)
-          @ActiveProfiles("test")
-          class ${majStart(className)}ApplicationTests {
-          
-            private MockMvc mockMvc;
-            private ${majStart(className)}Service service;
-            private ${majStart(className)} mockData=new ${majStart(className)}();
-            private final JdbcTemplate jdbcTemplate;
-            private ConstraintDisabler constraintDisabler;
-          
-            @Autowired
-            public ${majStart(className)}ApplicationTests(MockMvc mockMvc, ${majStart(className)}Service service, JdbcTemplate jdbcTemplate) throws Exception {
-              this.mockMvc=mockMvc;
-              this.service=service;
-              this.jdbcTemplate = jdbcTemplate;
-              constraintDisabler = new ConstraintDisabler(jdbcTemplate);
-            }
-          
-            private final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(),
-            MediaType.APPLICATION_JSON.getSubtype(),
-            StandardCharsets.UTF_8);
-          
-            {{#if !isView}} 
-            @BeforeEach
-            void seedingTheDatabase(){
-              constraintDisabler.disableConstraintsForTable("${tableName}");
-              mockData = new ${majStart(className)}();
-              {{#each fields}}
-              {{#if this.isPrimaryKey}}{{removeLine}}
-              {{elseIf this.isForeignKey}}{{removeLine}}
-              {{else}}mockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
-              {{/each}}
-              service.create${majStart(className)}(mockData);
-            }
-            @AfterEach
-            void removingMockdatas(TestInfo testInfo){
-              if(testInfo.getTags().contains("skipAfter")){
-                return;
-              }
-              service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
-              constraintDisabler.restoreConstraints();
-            }
-            {{else}}{{removeLine}}{{/if}}
-          
-            @Test
-            void testSearch${majStart(className)}() throws Exception{
-              ObjectMapper mapper=new ObjectMapper();
-              mapper.findAndRegisterModules();
-              mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
-              ObjectWriter writer=mapper.writer().withDefaultPrettyPrinter();
-              String requestJson=writer.writeValueAsString(mockData);
-              MockHttpServletResponse resp=mockMvc.perform(post("/${lowerCase(classNameLink)}/search").contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
-            }
-          
-            @Test
-            void testGetAll${majStart(className)}() throws Exception{
-              MockHttpServletResponse resp=mockMvc.perform(get("/${lowerCase(classNameLink)}")).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
-            }
-          
-            {{#if !isView}} 
-            @Test
-            void testCreate${majStart(className)}() throws Exception{
-              ${majStart(className)} otherMockData=new ${majStart(className)}();
-              {{#each fields}}
-              {{#if this.isPrimaryKey}}{{removeLine}}
-              {{elseIf this.isForeignKey}}{{removeLine}}
-              {{else}}otherMockData.set${majStart(this.name)}(${this.mockdata});{{/if}}
-              {{/each}}
-              service.create${majStart(className)}(otherMockData);
-              MockHttpServletResponse resp=mockMvc.perform(get("/${lowerCase(classNameLink)}")).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
-              service.delete${majStart(className)}(otherMockData.get${majStart(pkColumn)}());
-            }
-            {{else}}{{removeLine}}{{/if}}
-          
-            {{#if !isView}} 
-            @Test
-            void testModify${majStart(className)}() throws Exception{
-              ObjectMapper mapper=new ObjectMapper();
-              mapper.findAndRegisterModules();
-              mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, false);
-              ObjectWriter writer=mapper.writer().withDefaultPrettyPrinter();
-              String requestJson=writer.writeValueAsString(mockData);
-              String requestUrl="/${lowerCase(classNameLink)}/%s";
-              requestUrl=String.format(requestUrl, mockData.get${majStart(pkColumn)}());
-              MockHttpServletResponse resp=mockMvc.perform(put(requestUrl).contentType(APPLICATION_JSON_UTF8).content(requestJson)).andReturn().getResponse();
-              System.out.println(resp.getContentAsString());
-            }
-          
-            @Test
-            @Tag("skipAfter")
-            void testDelete${majStart(className)}() throws Exception{
-              service.delete${majStart(className)}(mockData.get${majStart(pkColumn)}());
-              constraintDisabler.restoreConstraints();
-            }
-            {{else}}{{removeLine}}{{/if}}
+          package ${groupLink}.${lowerCase(projectName)}.models;
+
+          import lombok.AllArgsConstructor;
+          import lombok.EqualsAndHashCode;
+          import lombok.Getter;
+          import lombok.NoArgsConstructor;
+          import lombok.Setter;
+
+          import java.io.Serializable;
+
+          @Getter
+          @Setter
+          @NoArgsConstructor
+          @AllArgsConstructor
+          @EqualsAndHashCode
+          public class ${majStart(className)}Id implements Serializable {
+
+          {{#each compositePkFields}}
+              private ${this.type} ${this.name};
+          {{/each}}
           }
-        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/java/${groupLinkPath}/${lowerCase(projectName)}"
+        destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
+
       - fileType: "DTO Search Model class"
         fileName: "${className}Search"
         extension: "java"
@@ -4573,21 +4832,20 @@
 
           import lombok.Getter;
           import lombok.Setter;
-          {{#each fields}}
-          {{#if this.isForeignKey}}
-          import ${groupLink}.${lowerCase(projectName)}.models.${this.type};
-          {{else}}{{removeLine}}{{/if}}
-          {{/each}}
 
           @Getter @Setter
           public class ${className}Search {
 
           {{tab}}{{#each fields}}
-          {{#if this.isPrimaryKey}}
+          {{#if this.isForeignKey}}
+          {{tab}}private ${this.referencedColumnType} ${minStart(this.columnNameField)};
+          {{elseIf this.isPrimaryKey}}
           {{tab}}private ${this.type} ${this.name};
-          {{elseIf this.isForeignKey}}{{removeLine}}
+          {{tab}}{{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isComparableInterval}}
           {{tab}}private ${this.type} ${this.name};
-          {{tab}}{{elseIf this.isNumeric or this.isDate or this.isTime or this.isDateTime or this.isInterval}}
+          {{tab}}private ${this.type} ${this.name}Min;
+          {{tab}}private ${this.type} ${this.name}Max;
+          {{elseIf this.isPeriodInterval}}
           {{tab}}private ${this.type} ${this.name};
           {{tab}}private ${this.type} ${this.name}Min;
           {{tab}}private ${this.type} ${this.name}Max;
@@ -4617,6 +4875,9 @@
       import org.springframework.data.jpa.repository.JpaRepository;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
       import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+      {{#if hasCompositePrimaryKey}}
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)}Id;
+      {{else}}{{removeLine}}{{/if}}
 
     modelDaoAnnotations: ""
     modelDaoClassKeyword: "public interface"
@@ -4636,6 +4897,9 @@
       import org.springframework.data.domain.Pageable;      
       import org.springframework.data.jpa.domain.Specification;
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+      {{#if hasCompositePrimaryKey}}
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)}Id;
+      {{else}}{{removeLine}}{{/if}}
       import ${groupLink}.${lowerCase(projectName)}.models.dto.${majStart(className)}Search;
       import org.springframework.stereotype.Service;
       import ${groupLink}.${lowerCase(projectName)}.repositories.${majStart(className)}Repository;
@@ -4644,6 +4908,7 @@
       import ${groupLink}.${lowerCase(projectName)}.specification.${majStart(className)}Specification;
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
       import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
+      import org.springframework.dao.DataIntegrityViolationException;
 
     serviceAnnotations: |
       @Service
@@ -4692,6 +4957,8 @@
       {{tab}}public ${majStart(className)} create${majStart(className)}(${majStart(className)} ${minStart(className)}) {
       {{tab}}    try {
       {{tab}}        return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}        throw ex;
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while creating ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
@@ -4701,9 +4968,11 @@
       {{tab}}public ${majStart(className)} update${majStart(className)}(${pkColumnType} ${pkColumn}, ${majStart(className)} ${minStart(className)}) {
       {{tab}}    Optional<${majStart(className)}> existing${majStart(className)} = ${minStart(className)}Repository.findById(${pkColumn});
       {{tab}}    if (existing${majStart(className)}.isPresent()) {
-      {{tab}}        ${minStart(className)}.set${majStart(pkColumn)}(${pkColumn});
+      {{tab}}        ${pkUpdateSetter}
       {{tab}}        try {
       {{tab}}            return ${minStart(className)}Repository.save(${minStart(className)});
+      {{tab}}        } catch (DataIntegrityViolationException ex) {
+      {{tab}}            throw ex;
       {{tab}}        } catch (Exception ex) {
       {{tab}}            throw new InternalServerErrorException("Error while updating ${formatReadableLowerCase(className)}", ex);
       {{tab}}        }
@@ -4716,6 +4985,8 @@
       {{tab}}public void delete${majStart(className)}(${pkColumnType} ${pkColumn}) {
       {{tab}}    try {
       {{tab}}        ${minStart(className)}Repository.deleteById(${pkColumn});
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}        throw ex;
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Error while deleting ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
@@ -4732,6 +5003,9 @@
           package ${groupLink}.${lowerCase(projectName)}.services.interfaces;
           
           import ${groupLink}.${lowerCase(projectName)}.models.${className};
+          {{#if hasCompositePrimaryKey}}
+          import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)}Id;
+          {{else}}{{removeLine}}{{/if}}
           import ${groupLink}.${lowerCase(projectName)}.models.dto.${className}Search;
           import org.springframework.data.domain.Page;
           import org.springframework.data.domain.Pageable;    
@@ -4759,56 +5033,323 @@
     toGenerate: true
     controllerImports: |
       import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)};
+      {{#if hasCompositePrimaryKey}}
+      import ${groupLink}.${lowerCase(projectName)}.models.${majStart(className)}Id;
+      {{else}}{{removeLine}}{{/if}}
       import ${groupLink}.${lowerCase(projectName)}.models.dto.${majStart(className)}Search;
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
       import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
-      import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
-      import org.springframework.stereotype.Controller;
-      import org.springframework.ui.Model;
       import org.springframework.data.domain.Page;
       import org.springframework.data.domain.PageRequest;
       import org.springframework.data.domain.Pageable;
       import org.springframework.data.domain.Sort;
-      import org.springframework.web.bind.annotation.*;
-      import java.util.HashMap;
+      import org.springframework.stereotype.Controller;
+      import org.springframework.ui.Model;
+      import org.springframework.web.bind.annotation.GetMapping;
+      import org.springframework.web.bind.annotation.ModelAttribute;
+      import org.springframework.web.bind.annotation.PathVariable;
+      import org.springframework.web.bind.annotation.RequestMapping;
+      import org.springframework.web.bind.annotation.RequestParam;
+      {{#if hasJsonFields}}
+      import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+      import org.springframework.web.bind.WebDataBinder;
+      import org.springframework.web.bind.annotation.InitBinder;
+      {{else}}{{removeLine}}{{/if}}
+      {{#if !isView}}
+      import org.springframework.web.bind.annotation.PostMapping;
+      import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+      {{else}}{{removeLine}}{{/if}}
+      import jakarta.validation.Valid;
+      import org.springframework.validation.BindingResult;
+      import org.springframework.dao.DataIntegrityViolationException;
+      {{#each foreignTypes}}
+      import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(this.type)}Service;
+      {{/each}}{{removeLine}}
     controllerAnnotations: |
       @Controller
-      @RequestMapping("/${lowerCase(classNameLink)}")
+      @RequestMapping("/${minStart(className)}")
     controllerExtends: ""
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
-      {{tab}}private final ${majStart(className)}Service ${lowerCase(className)}Service;
+      {{tab}}private final ${majStart(className)}Service ${minStart(className)}Service;
+      {{#each foreignTypes}}
+      {{tab}}private final ${majStart(this.type)}Service ${minStart(this.type)}Service;
+      {{/each}}{{removeLine}}
     controllerConstructors: |
-      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${lowerCase(className)}Service) {
-      {{tab}}   this.${lowerCase(className)}Service = ${lowerCase(className)}Service;
+      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${minStart(className)}Service{{#each foreignTypes}}, ${majStart(this.type)}Service ${minStart(this.type)}Service{{/each}}) {
+      {{tab}}    this.${minStart(className)}Service = ${minStart(className)}Service;
+      {{tab}}    {{#each foreignTypes}}
+      {{tab}}    this.${minStart(this.type)}Service = ${minStart(this.type)}Service;
+      {{tab}}    {{/each}}{{removeLine}}
       {{tab}}}
     controllerMethodContent: |
-      @GetMapping
-      public String list${majStart(classNameLink)}(
-           @RequestParam(defaultValue = "0") int page,
-           @RequestParam(defaultValue = "10") int size,
-           @RequestParam(defaultValue = "${pkColumn},asc") String sortParam,
-           Model model) {
-
-              Sort sort = WebUtils.createSortObject(sortParam);
-
-              Pageable pageable = PageRequest.of(page, size, sort);
-
-              Page<${majStart(className)}> ${minStart(className)}Page = ${minStart(className)}Service.getAll${majStart(className)}(pageable);
-
-              model.addAttribute("${minStart(className)}s", ${minStart(className)}Page.getContent()); 
-              model.addAttribute("${minStart(className)}Page", ${minStart(className)}Page);
-
-              model.addAttribute("currentPage", page);
-
-              model.addAttribute("pageTitle", "Liste des ${minStart(className)}s");
-
-              if (!${minStart(className)}Page.hasContent()) {
-                  model.addAttribute("noDataMessage", "Aucun ${minStart(className)} trouvé.");
-              }
-
-              return "${minStart(className)}/list"; 
-          }
+      {{#if hasJsonFields}}
+      {{tab}}@InitBinder
+      {{tab}}public void initBinder(WebDataBinder binder) {
+      {{#each jsonFields}}
+      {{tab}}    binder.registerCustomEditor(
+      {{tab}}            String.class,
+      {{tab}}            "${this.name}",
+      {{tab}}            new StringTrimmerEditor(true)
+      {{tab}}    );
+      {{/each}}
+      {{tab}}}
+      {{tab}}
+      {{else}}{{removeLine}}{{/if}}
+      {{tab}}@GetMapping
+      {{tab}}public String list${majStart(classNameLink)}(
+      {{tab}}        @ModelAttribute("${minStart(className)}Search") ${majStart(className)}Search search,
+      {{tab}}        @RequestParam(defaultValue = "0") int page,
+      {{tab}}        @RequestParam(defaultValue = "10") int pageSize,
+      {{tab}}        @RequestParam(defaultValue = "${defaultSortColumn},asc") String sortOrder,
+      {{tab}}        Model model) {
+      {{tab}}    Sort sort = WebUtils.createSortObject(sortOrder);
+      {{tab}}    Pageable pageable = PageRequest.of(page, pageSize, sort);
+      {{tab}}    Page<${majStart(className)}> ${minStart(className)}Page =
+      {{tab}}            ${minStart(className)}Service.getAll${majStart(className)}(pageable, search);
+      {{tab}}    model.addAttribute("${minStart(className)}s", ${minStart(className)}Page.getContent());
+      {{tab}}    model.addAttribute("${minStart(className)}Page", ${minStart(className)}Page);
+      {{tab}}    model.addAttribute("${minStart(className)}Search", search);
+      {{#each foreignOptionTypes}}
+      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{/each}}
+      {{tab}}    model.addAttribute("currentPage", page);
+      {{tab}}    model.addAttribute("pageSize", pageSize);
+      {{tab}}    model.addAttribute("sortOrder", sortOrder);
+      {{tab}}    model.addAttribute("pageTitle", "Liste des ${minStart(className)}s");
+      {{tab}}
+      {{tab}}    if (!${minStart(className)}Page.hasContent()) {
+      {{tab}}        model.addAttribute("noDataMessage", "Aucun ${minStart(className)} trouvé.");
+      {{tab}}    }
+      {{tab}}    return "${minStart(className)}/list";
+      {{tab}}}
+      {{tab}}
+      {{#if hasCompositePrimaryKey}}
+      {{tab}}@GetMapping("{{#each compositePkFields}}/{${this.name}}{{/each}}")
+      {{tab}}public String view${majStart(className)}(
+      {{tab}}        Model model{{#each compositePkFields}},
+      {{tab}}        @PathVariable("${this.name}") ${this.type} ${this.name}{{/each}}) {
+      {{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
+      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(id);
+      {{else}}
+      {{tab}}@GetMapping("/{id}")
+      {{tab}}public String view${majStart(className)}(@PathVariable("id") ${pkColumnType} ${pkColumn}, Model model) {
+      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{/if}}
+      {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
+      {{tab}}    model.addAttribute("pageTitle", "Détail ${minStart(className)}");
+      {{tab}}    return "${minStart(className)}/view";
+      {{tab}}}
+      {{tab}}
+      {{#if !isView}}
+      {{tab}}@GetMapping("/create")
+      {{tab}}public String showCreateForm(Model model) {
+      {{tab}}    model.addAttribute("${minStart(className)}", new ${majStart(className)}());
+      {{#each foreignOptionTypes}}
+      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{/each}}
+      {{tab}}    model.addAttribute("pageTitle", "Créer ${minStart(className)}");
+      {{tab}}    return "${minStart(className)}/create";
+      {{tab}}}
+      {{tab}}
+      {{tab}}@PostMapping("/create")
+      {{tab}}public String create${majStart(className)}(
+      {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
+      {{tab}}        BindingResult bindingResult,
+      {{tab}}        Model model,
+      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{#each fieldsFK}}
+      {{#if this.isNullable}}
+        {{else}}
+      {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() == null
+      {{tab}}            || ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
+      {{tab}}        bindingResult.rejectValue(
+      {{tab}}                "${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}",
+      {{tab}}                "NotNull",
+      {{tab}}                "Ce champ est obligatoire."
+      {{tab}}        );
+      {{tab}}    }
+      {{/if}}
+      {{/each}}{{removeLine}}
+      {{tab}}    if (bindingResult.hasErrors()) {
+      {{tab}}        model.addAttribute("pageTitle", "Créer ${minStart(className)}");
+      {{#each foreignOptionTypes}}
+      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{/each}}
+      {{tab}}        return "${minStart(className)}/create";
+      {{tab}}    }
+      {{#each fieldsFK}}
+      {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
+      {{#if this.isNullable}}
+      {{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
+      {{tab}}            ${minStart(className)}.set${majStart(this.name)}(null);
+      {{tab}}        } else {
+      {{tab}}            ${minStart(className)}.set${majStart(this.name)}(
+      {{tab}}                    ${minStart(this.type)}Service.get${majStart(this.type)}ById(
+      {{tab}}                            ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
+      {{tab}}                    )
+      {{tab}}            );
+      {{tab}}        }
+      {{else}}
+      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(
+      {{tab}}                ${minStart(this.type)}Service.get${majStart(this.type)}ById(
+      {{tab}}                        ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
+      {{tab}}                )
+      {{tab}}        );
+      {{/if}}
+      {{tab}}    }
+      {{/each}}{{removeLine}}
+      {{tab}}    ${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
+      {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} créé avec succès.");
+      {{tab}}    return "redirect:/${minStart(className)}";
+      {{tab}}}
+      {{else}}{{removeLine}}{{/if}}
+      {{tab}}
+      {{#if isView = false and hasCompositePrimaryKey = true}}
+      {{tab}}@GetMapping("{{#each compositePkFields}}/{${this.name}}{{/each}}/edit")
+      {{tab}}public String showEditForm(
+      {{tab}}        Model model{{#each compositePkFields}},
+      {{tab}}        @PathVariable("${this.name}") ${this.type} ${this.name}{{/each}}) {
+      {{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
+      {{tab}}    ${majStart(className)} ${minStart(className)} =
+      {{tab}}            ${minStart(className)}Service.get${majStart(className)}ById(id);
+      {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
+      {{#each foreignOptionTypes}}
+      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{/each}}
+      {{tab}}    model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
+      {{tab}}    return "${minStart(className)}/edit";
+      {{tab}}}
+      {{elseIf isView = false}}
+      {{tab}}@GetMapping("/{id}/edit")
+      {{tab}}public String showEditForm(
+      {{tab}}        @PathVariable("id") ${pkColumnType} ${pkColumn},
+      {{tab}}        Model model) {
+      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
+      {{#each foreignOptionTypes}}
+      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{/each}}
+      {{tab}}    model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
+      {{tab}}    return "${minStart(className)}/edit";
+      {{tab}}}
+      {{else}}{{removeLine}}{{/if}}
+      {{tab}}
+      {{#if isView = false and hasCompositePrimaryKey = true}}
+      {{tab}}@PostMapping("{{#each compositePkFields}}/{${this.name}}{{/each}}/edit")
+      {{tab}}public String update${majStart(className)}(
+      {{tab}}        {{#each compositePkFields}}@PathVariable("${this.name}") ${this.type} ${this.name},
+      {{tab}}        {{/each}}
+      {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
+      {{tab}}        BindingResult bindingResult,
+      {{tab}}        Model model,
+      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}    if (bindingResult.hasErrors()) {
+      {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
+      {{#each foreignOptionTypes}}
+      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{/each}}
+      {{tab}}        return "${minStart(className)}/edit";
+      {{tab}}    }
+      {{tab}}    ${majStart(className)}Id id =
+      {{tab}}            new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
+      {{#each fieldsFK}}
+      {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
+      {{#if this.isNullable}}
+      {{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
+      {{tab}}            ${minStart(className)}.set${majStart(this.name)}(null);
+      {{tab}}        } else {
+      {{tab}}            ${minStart(className)}.set${majStart(this.name)}(
+      {{tab}}                    ${minStart(this.type)}Service.get${majStart(this.type)}ById(
+      {{tab}}                            ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
+      {{tab}}                    )
+      {{tab}}            );
+      {{tab}}        }
+      {{else}}
+      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(
+      {{tab}}                ${minStart(this.type)}Service.get${majStart(this.type)}ById(
+      {{tab}}                        ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
+      {{tab}}                )
+      {{tab}}        );
+      {{/if}}
+      {{tab}}    }
+      {{/each}}{{removeLine}}
+      {{tab}}    ${minStart(className)}Service.update${majStart(className)}(id, ${minStart(className)});
+      {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} modifié avec succès.");
+      {{tab}}    return "redirect:/${minStart(className)}";
+      {{tab}}}
+      {{elseIf isView = false}}
+      {{tab}}@PostMapping("/{id}/edit")
+      {{tab}}public String update${majStart(className)}(
+      {{tab}}        @PathVariable("id") ${pkColumnType} ${pkColumn},
+      {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
+      {{tab}}        BindingResult bindingResult,
+      {{tab}}        Model model,
+      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}    if (bindingResult.hasErrors()) {
+      {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");{{#each foreignOptionTypes}}
+      {{tab}}        model.addAttribute("${minStart(this.type)}Options",${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{/each}}
+      {{tab}}        return "${minStart(className)}/edit";
+      {{tab}}    }
+      {{#each fieldsFK}}
+      {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
+      {{#if this.isNullable}}
+        {{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
+      {{tab}}            ${minStart(className)}.set${majStart(this.name)}(null);
+      {{tab}}        } else {
+      {{tab}}            ${minStart(className)}.set${majStart(this.name)}(
+      {{tab}}                    ${minStart(this.type)}Service.get${majStart(this.type)}ById(
+      {{tab}}                            ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
+      {{tab}}                    )
+      {{tab}}            );
+      {{tab}}        }
+      {{else}}
+      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(
+      {{tab}}                ${minStart(this.type)}Service.get${majStart(this.type)}ById(
+      {{tab}}                        ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
+      {{tab}}                )
+      {{tab}}        );
+      {{/if}}
+      {{tab}}    }
+      {{/each}}{{removeLine}}
+      {{tab}}    ${minStart(className)}Service.update${majStart(className)}(${pkColumn},${minStart(className)});
+      {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} modifié avec succès.");
+      {{tab}}    return "redirect:/${minStart(className)}";
+      {{tab}}}
+      {{else}}{{removeLine}}{{/if}}
+      {{tab}}
+      {{#if isView = false and hasCompositePrimaryKey = true}}
+      {{tab}}@PostMapping("/delete")
+      {{tab}}public String delete${majStart(className)}(
+      {{#each compositePkFields}}
+      {{tab}}        @RequestParam("${this.name}") ${this.type} ${this.name},
+      {{/each}}
+      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}    ${majStart(className)}Id id =
+      {{tab}}            new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
+      {{tab}}    try {
+      {{tab}}       ${minStart(className)}Service.delete${majStart(className)}(id);
+      {{tab}}       redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}       redirectAttributes.addFlashAttribute("errorMessage", "Impossible de supprimer cet élément car il est utilisé par d'autres données.");
+      {{tab}}    }
+      {{tab}}    return "redirect:/${minStart(className)}";
+      {{tab}}}
+      {{elseIf isView = false}}
+      {{tab}}@PostMapping("/delete")
+      {{tab}}public String delete${majStart(className)}(
+      {{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn},
+      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}    try {
+      {{tab}}       ${minStart(className)}Service.delete${majStart(className)}(${pkColumn});
+      {{tab}}       redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
+      {{tab}}    } catch (DataIntegrityViolationException ex) {
+      {{tab}}       redirectAttributes.addFlashAttribute("errorMessage", "Impossible de supprimer cet élément car il est utilisé par d'autres données.");
+      {{tab}}    }
+      {{tab}}    return "redirect:/${minStart(className)}";
+      {{tab}}}
+      {{else}}{{removeLine}}{{/if}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
     controllerAdditionalFiles: [ ]
@@ -4819,100 +5360,229 @@
     viewExtension: "html"
     staticFilesPath: "/src/main/resources/static"
     viewSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/${minStart(className)}"
-    rootPath: "{{removeLine}}"
-    backLink: "{{removeLine}}"
-    previousLink: "{{removeLine}}"
+    rootPath: "."
+    backLink: "th:href=\"@{/${minStart(className)}}\""
+    previousLink: "th:href=\"@{/${minStart(className)}}\""
     antiForgeryTokenTagHelper: "{{removeLine}}"
     layout:
       name: "base"
       additionalPageLink: "xmlns:th=\"http://www.thymeleaf.org\" xmlns:layout=\"http://www.ultraq.net.nz/thymeleaf/layout\""
-      assetsImportLink: "/css/style.css"
+      baseHref: "<base th:href=\"@{/}\">"
+      assetsImportLink: "th:href=\"@{/css/style.css}\""
       viewAnnotations: "{{removeLine}}"
-      pageName:
+      pageName: ""
+      pageNameTagHelper: "th:text=\"|${projectName} - $[thymeleafDollar]{pageTitle}|\""
 #      navLink: "th:classappend=\"${#httpServletRequest.requestURI == '/${this.entityName}'} ? 'active'\" th:href=\"@{/${this.entityName}}\""
-      navLink: "th:href=\"@{/${minStart(this.entityName)}}\""
+      navLink: "class=\"nav-item\" th:href=\"@{/${minStart(this.entityName)}}\""
       callContent: |
-        <div layout:fragment="content">
-            <!-- Contenu par défaut si aucune page ne définit 'content' -->
-            <p>${projectName}</p>
-        </div>
+        <div layout:fragment="content"></div>
       logoutLink: "th:action=\"@{/logout}\""
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/layout"
     list:
       name: "list"
-      viewAnnotations:
-      inputTagHelper:
-      inputRadioTagHelper:
-      inputDateTagHelper:
-      selectTagHelper:
-      deleteDataTagHelper:
-      pageSizeTagHelper:
-      dataValue:
-      dataForeignValue:
-      inlineDataValue: "th:text=\"${minStart(className)}.${minStart(this.name)}\""
-      inlineDataForeignValue: "th:text=\"${minStart(className)}.${minStart(this.name)}\""
-      inlineLoopStatement: "th:each=\"${minStart(className)} : ${minStart(className)}s}\""
-      blockLoopStatementStart:
-      blockLoopStatementEnd:
-      filterLink:
-      sortLink:
-      detailsLink:
-      createLink:
-      updateLink:
-      deleteLink:
-      exportLink:
-      pageSizeChangeLink:
-      previousPageLink:
-      previousClassCondition:
-      pagesListLoop:
-      nextPageLink:
-      nextClassCondition:
-      onGoingPageLink:
-      pageNumberValue:
-      pageSizeValue:
-      currentSortValue:
-      totalElementsTagHelper:
-      activeSortAscCondition:
-      activeSortDescCondition:
-      onGoingPagesLoop:
-      scriptSection:
+      viewAnnotations: |
+        <div xmlns:th="http://www.thymeleaf.org"
+             xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+             layout:decorate="~{layout/base}">
+            <main layout:fragment="content">
+      viewEnd: |
+        </main>
+        </div>
+      inputTagHelper: "name=\"${minStart(this.name)}\" th:value=\"$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.name)}}\""
+      inputRadioTagHelper: ""
+      inputDateTagHelper: "name=\"${minStart(this.name)}\" th:value=\"$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.name)}}\""
+      selectTagHelper: "name=\"${minStart(this.columnNameField)}\""
+      deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
+      pageSizeTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Page.size == ${this}}\""
+      dataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      dateDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'dd/MM/yyyy') : '-'}\"></span>"
+      timeDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'HH:mm:ss') : '-'}\"></span>"
+      timeTzDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'HH:mm:ss XXX') : '-'}\"></span>"
+      dateTimeDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'dd/MM/yyyy HH:mm:ss') : '-'}\"></span>"
+      dateTimeTzDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'dd/MM/yyyy HH:mm:ss XXX') : '-'}\"></span>"
+      intervalDataValue: "<span th:text=\"$[thymeleafDollar]{T(${groupLink}.${lowerCase(projectName)}.utils.WebUtils).formatDuration(${minStart(className)}.${minStart(this.name)})}\"></span>"
+      periodIntervalDataValue: "<span th:text=\"$[thymeleafDollar]{T(${groupLink}.${lowerCase(projectName)}.utils.WebUtils).formatPeriod(${minStart(className)}.${minStart(this.name)})}\"></span>"
+      arrayDataValue: |
+        <span th:text="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #strings.arrayJoin(${minStart(className)}.${minStart(this.name)}, ', ') : ''}"></span>
+      dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? ${minStart(className)}.${minStart(this.name)}.${minStart(this.displayColumn)} : ''}\"></span>"
+      inlineDataValue: "{{removeLine}}"
+      inlineDataForeignValue: "{{removeLine}}"
+      inlineLoopStatement: "th:each=\"${minStart(className)} : $[thymeleafDollar]{${minStart(className)}s}\""
+      blockLoopStatementStart: "{{removeLine}}"
+      blockLoopStatementEnd: "{{removeLine}}"
+      filterLink: "th:action=\"@{/${minStart(className)}}\""
+      sortLink: "th:href=\"@{/${minStart(className)}(page=0,pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder == '${this.name},asc' ? '${this.name},desc' : '${this.name},asc'})}\""
+      detailsLink: "th:href=\"@{/${minStart(className)}/{id}(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
+      createLink: "th:href=\"@{/${minStart(className)}/create}\""
+      updateLink: "th:href=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
+      deleteLink: "th:action=\"@{/${minStart(className)}/delete}\""
+      exportLink: "th:action=\"@{/${minStart(className)}/export}\""
+      pageSizeChangeLink: "(u => { u.searchParams.set('page', '0'); u.searchParams.set('pageSize', this.value); return u.toString(); })(new URL(window.location.href))"
+      previousPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number - 1},pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder})}\""
+      previousClassCondition: "class=\"prev\" th:classappend=\"$[thymeleafDollar]{${minStart(className)}Page.first} ? 'disabled' : ''\""
+      pagesListLoop: |
+        <a th:each="pageNumber : $[thymeleafDollar]{#numbers.sequence(0, ${minStart(className)}Page.totalPages - 1)}"
+           th:href="@{/${minStart(className)}(page=$[thymeleafDollar]{pageNumber},pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder})}"
+           th:text="$[thymeleafDollar]{pageNumber + 1}"
+           th:classappend="$[thymeleafDollar]{pageNumber == ${minStart(className)}Page.number} ? 'active' : ''">
+        </a>
+      nextPageLink: "th:href=\"@{/${minStart(className)}(page=$[thymeleafDollar]{${minStart(className)}Page.number + 1},pageSize=$[thymeleafDollar]{${minStart(className)}Page.size},sortOrder=$[thymeleafDollar]{sortOrder})}\""
+      nextClassCondition: "class=\"next\" th:classappend=\"$[thymeleafDollar]{${minStart(className)}Page.last} ? 'disabled' : ''\""
+      onGoingPageLink: "th:action=\"@{/${minStart(className)}}\""
+      pageNumberValue: "0"
+      pageSizeValue: "10"
+      pageSizeValueTagHelper: "th:value=\"$[thymeleafDollar]{${minStart(className)}Page.size}\""
+      pageSizeParamName: "pageSize"
+      sortParamName: "sortOrder"
+      filterMethod: "get"
+      orderSortsTagHelper: "{{removeLine}}"
+      currentSortValue: ""
+      currentSortValueTagHelper: "th:value=\"$[thymeleafDollar]{sortOrder}\""
+      totalElementsTagHelper: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}Page.totalElements}\"></span>"
+      activeSortAscCondition: "th:classappend=\"$[thymeleafDollar]{sortOrder == '${this.name},asc'} ? 'active' : ''\""
+      activeSortDescCondition: "th:classappend=\"$[thymeleafDollar]{sortOrder == '${this.name},desc'} ? 'active' : ''\""
+      onGoingPagesLoop: |
+        <option th:each="pageNumber : $[thymeleafDollar]{#numbers.sequence(0, ${minStart(className)}Page.totalPages - 1)}"
+                th:value="$[thymeleafDollar]{pageNumber}"
+                th:text="$[thymeleafDollar]{pageNumber + 1}"
+                th:selected="$[thymeleafDollar]{pageNumber == ${minStart(className)}Page.number}">
+        </option>
+      scriptSection: |
+        <script src="./js/filter-utils.js"></script>
+        <script src="./js/export-utils.js"></script>
+      fileDataValue: |
+        <span th:if="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
+            Fichier disponible
+        </span>
+        <span th:unless="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
+            Aucun fichier
+        </span>
+      filterTrueSelectedTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.name)} == true}\""
+      filterFalseSelectedTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.name)} == false}\""
+      foreignOptionsLoop: |
+        <option th:each="${minStart(this.type)} : $[thymeleafDollar]{${minStart(this.type)}Options}"
+                th:value="$[thymeleafDollar]{${minStart(this.type)}.${minStart(this.referencedPrimaryKeyColumn)}}"
+                th:text="$[thymeleafDollar]{${minStart(this.type)}.${minStart(this.displayColumn)}}"
+                th:selected="$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.columnNameField)} == ${minStart(this.type)}.${minStart(this.referencedPrimaryKeyColumn)}}">
+        </option>
+      flashMessageSection: |
+        <div class="success-message"
+             th:if="$[thymeleafDollar]{successMessage}">
+            <span th:text="$[thymeleafDollar]{successMessage}"></span>
+        </div>
+
+        <div class="error-message"
+             th:if="$[thymeleafDollar]{errorMessage}">
+            <span th:text="$[thymeleafDollar]{errorMessage}"></span>
+        </div>
     detail:
       name: "view"
-      viewAnnotations: "{{removeLine}}"
-      dataValue: "{{removeLine}}"
-      dataForeignValue: "{{removeLine}}"
-      deleteDataTagHelper: "{{removeLine}}"
-      deleteLink: "{{removeLine}}"
-      updateLink: "{{removeLine}}"
+      viewAnnotations: |
+        <div xmlns:th="http://www.thymeleaf.org"
+             xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+             layout:decorate="~{layout/base}">
+            <main layout:fragment="content">
+      viewEnd: |
+        </main>
+        </div>
+      dataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      dateDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'dd/MM/yyyy') : '-'}\"></span>"
+      timeDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'HH:mm:ss') : '-'}\"></span>"
+      timeTzDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'HH:mm:ss XXX') : '-'}\"></span>"
+      dateTimeDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'dd/MM/yyyy HH:mm:ss') : '-'}\"></span>"
+      dateTimeTzDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'dd/MM/yyyy HH:mm:ss XXX') : '-'}\"></span>"
+      dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? ${minStart(className)}.${minStart(this.name)}.${minStart(this.displayColumn)} : ''}\"></span>"
+      intervalDataValue: "<span th:text=\"$[thymeleafDollar]{T(${groupLink}.${lowerCase(projectName)}.utils.WebUtils).formatDuration(${minStart(className)}.${minStart(this.name)})}\"></span>"
+      periodIntervalDataValue: "<span th:text=\"$[thymeleafDollar]{T(${groupLink}.${lowerCase(projectName)}.utils.WebUtils).formatPeriod(${minStart(className)}.${minStart(this.name)})}\"></span>"
+      deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
+      deleteLink: "th:action=\"@{/${minStart(className)}/delete}\""
+      updateLink: "th:href=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
+      fileDataValue: |
+        <p th:if="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
+            Fichier disponible
+        </p>
+        <p th:unless="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
+            Aucun fichier
+        </p>
+      hiddenPkValue: "th:value=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\""
+      additionalImports: "{{removeLine}}"
     create:
       name: "create"
-      viewAnnotations: "{{removeLine}}"
-      validationSection: "{{removeLine}}"
-      validationTagHelper: "{{removeLine}}"
-      selectValidationTagHelper: "{{removeLine}}"
-      inputTagHelper: "{{removeLine}}"
-      textAreaTagHelper: "{{removeLine}}"
-      textAreaValidationTagHelper: "{{removeLine}}"
-      checkedRadioTagHelper: "{{removeLine}}"
-      selectTagHelper: "{{removeLine}}"
-      createLink: "{{removeLine}}"
+      viewAnnotations: |
+        <div xmlns:th="http://www.thymeleaf.org"
+             xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+             layout:decorate="~{layout/base}">
+            <main layout:fragment="content">
+      viewEnd: |
+        </main>
+        </div>
+      validationSection: |
+        <div class="error-message"
+             th:if="$[thymeleafDollar]{#fields.hasErrors('*')}">
+            <p th:each="error : $[thymeleafDollar]{#fields.errors('*')}"
+               th:text="$[thymeleafDollar]{error}">
+            </p>
+        </div>
+      validationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
+      selectValidationTagHelper: "th:errors=\"*{${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}}\""
+      inputTagHelper: "name=\"${minStart(this.name)}\" th:field=\"*{${minStart(this.name)}}\""
+      textAreaTagHelper: "th:field=\"*{${minStart(this.name)}}\""
+      textAreaValidationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
+      checkedRadioTagHelper: ""
+      selectTagHelper: "th:field=\"*{${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}}\""
+      createLink: "th:action=\"@{/${minStart(className)}/create}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
     edit:
       name: "edit"
-      viewAnnotations: "{{removeLine}}"
-      validationSection: "{{removeLine}}"
-      validationTagHelper: "{{removeLine}}"
-      selectValidationTagHelper: "{{removeLine}}"
-      inputTagHelper: "{{removeLine}}"
-      textAreaTagHelper: "{{removeLine}}"
-      textAreaValidationTagHelper: "{{removeLine}}"
-      selectTagHelper: "{{removeLine}}"
-      updateLink: "{{removeLine}}"
+      viewAnnotations: |
+        <div xmlns:th="http://www.thymeleaf.org"
+             xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+             layout:decorate="~{layout/base}">
+            <main layout:fragment="content">
+      viewEnd: |
+        </main>
+        </div>
+      validationSection: |
+        <div class="error-message"
+             th:if="$[thymeleafDollar]{#fields.hasErrors('*')}">
+            <p th:each="error : $[thymeleafDollar]{#fields.errors('*')}"
+               th:text="$[thymeleafDollar]{error}">
+            </p>
+        </div>
+      validationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
+      selectValidationTagHelper: "th:errors=\"*{${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}}\""
+      inputTagHelper: "name=\"${minStart(this.name)}\" th:field=\"*{${minStart(this.name)}}\""
+      textAreaTagHelper: "th:field=\"*{${minStart(this.name)}}\""
+      textAreaValidationTagHelper: "th:errors=\"*{${minStart(this.name)}}\""
+      checkedRadioTagHelper: ""
+      selectTagHelper: "th:field=\"*{${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}}\""
+      updateLink: "th:action=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\" th:object=\"$[thymeleafDollar]{${minStart(className)}}\""
       scriptSection: "{{removeLine}}"
+    form:
+      toGenerate: true
+      name: "_form"
+      viewAnnotations: |
+        <div xmlns:th="[http://www.thymeleaf.org](http://www.thymeleaf.org)"
+             th:fragment="fields(isEdit)">
+      viewEnd: |
+        </div>
+      foreignOptionsLoop: |
+        <option th:each="${minStart(this.type)} : $[thymeleafDollar]{${minStart(this.type)}Options}"
+                th:value="$[thymeleafDollar]{${minStart(this.type)}.${minStart(this.referencedPrimaryKeyColumn)}}"
+                th:text="$[thymeleafDollar]{${minStart(this.type)}.${minStart(this.displayColumn)}}">
+        </option>
     error:
       name: "error"
-      viewAnnotations: "{{removeLine}}"
-      errorMessage: "{{removeLine}}"
+      viewAnnotations: |
+        <div xmlns:th="http://www.thymeleaf.org"
+             xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+             layout:decorate="~{layout/base}">
+            <main layout:fragment="content">
+      previousLink: 'th:href="@{/}"'
+      errorMessage: '<span th:text="*{errorMessage}"></span>'
+      viewEnd: |
+        </main>
+        </div>
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/error"
 
     templateEngineFilesEdits: [ ]
@@ -5666,6 +6336,7 @@
       viewAnnotations: |
         ${DjangoBaseTemplate}
       pageName:
+      pageNameTagHelper: ""
       navLink: "class=\"nav-item \" href=\"{% url '${lowerCase(this.entityName)}_list' %}\""
       callContent: |
         {% block content %}{% endblock %}

@@ -58,8 +58,12 @@ class SimpleFilterManager {
 
         document.querySelectorAll('.sort-link').forEach(link => {
             link.addEventListener('click', (e) => {
-                e.preventDefault();
                 const url = new URL(link.href);
+                // Spring MVC : le href Thymeleaf contient déjà le tri complet.
+                if (url.searchParams.has('sortOrder')) {
+                    return;
+                }
+                e.preventDefault();
                 const sortByParam = url.searchParams.get('sortBy');
                 if (sortByParam) {
                     const field = sortByParam.split(',')[0];
@@ -76,6 +80,11 @@ class SimpleFilterManager {
                 if (page !== null) this.pageInput.value = page;
                 const pageSize = url.searchParams.get('pageSize');
                 if (pageSize !== null) this.pageSizeInput.value = pageSize;
+                const sortOrder = url.searchParams.get('sortOrder');
+                const sortOrderInput = this.form.querySelector('input[name="sortOrder"]');
+                if (sortOrder !== null && sortOrderInput) {
+                    sortOrderInput.value = sortOrder;
+                }
                 this.form.submit();
             });
         });

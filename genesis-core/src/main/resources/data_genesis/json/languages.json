@@ -34,12 +34,14 @@
       "datetime": "java.time.LocalDateTime",
       "DATETIME": "java.time.LocalDateTime",
       "timestamp": "java.time.LocalDateTime",
+      "timestamptz": "java.time.OffsetDateTime",
       "timestamp[]": "java.time.LocalDateTime[]",
       "time": "java.time.LocalTime",
       "timetz": "java.time.OffsetTime",
       "boolean": "Boolean",
       "json": "String",
       "interval": "java.time.Duration",
+      "intervalYearMonth": "java.time.Period",
       "uuid": "String",
       "integer[]": "Integer[]",
       "text[]": "String[]",
@@ -58,6 +60,9 @@
       "String": [
         "@org.hibernate.annotations.ColumnTransformer(read = \"CAST(${this.columnName} as varchar)\", write = \"CAST(? as ${this.columnType})\")"
       ],
+      "uuid": [
+        "@org.hibernate.annotations.ColumnTransformer(read = \"CAST(${this.columnName} as varchar(36))\", write = \"CAST(? as uniqueidentifier)\")"
+      ],
       "java.time.LocalDate": [],
       "java.time.LocalDateTime": [],
       "java.time.OffsetDateTime": [],
@@ -70,6 +75,7 @@
       "java.time.Duration": [
         "@org.hibernate.annotations.Type(io.hypersistence.utils.hibernate.type.interval.PostgreSQLIntervalType.class)"
       ],
+      "java.time.Period": [],
       "Integer[]": [],
       "String[]": [],
       "byte[]": [],
@@ -88,6 +94,7 @@
       "xml": "\"<mock>mock</mock>\"",
       "date": "java.time.LocalDate.now()",
       "timestamp": "java.time.LocalDateTime.now()",
+      "timestamptz": "java.time.OffsetDateTime.now()",
       "time": "java.time.LocalTime.now()",
       "timetz": "java.time.OffsetTime.now()",
       "interval": "java.time.Duration.ofSeconds(0)",
@@ -96,6 +103,7 @@
       "int2": "0",
       "smallint": "0",
       "integer": "0",
+      "integer[]": "new Integer[]{1, 2}",
       "int4": "0",
       "int8": "0L",
       "bigint": "0L",
@@ -115,11 +123,13 @@
       "decimal": "0.",
       "numeric": "0.",
       "timestamp without time zone": "java.time.LocalDateTime.now()",
+      "timestamp with time zone": "java.time.OffsetDateTime.now()",
       "bool": "true",
       "tsrange": "new java.time.LocalDateTime[]{java.time.LocalDateTime.now(), java.time.LocalDateTime.now().plusHours(1L)}",
       "jsonb": "\"{}\"",
       "_int4": "new Integer[]{0}",
       "_text": "new String[]{\"mock\"}",
+      "text[]": "new String[]{\"mock1\", \"mock2\"}",
       "cidr": "\"192.0.2.0/24\"",
       "macaddr": "\"00-B0-D0-63-C2-26\"",
       "INT": "0",

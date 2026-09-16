@@ -1,3 +1,4 @@
+
 package org.labs.genesis.frontend.generator;
 
 import org.labs.genesis.config.Constantes;
@@ -73,6 +74,10 @@ public class ViewsGenerator implements IViewsGenerator {
         generateDetailsView(framework, frameworkOptions, language, viewsTemplate, tableMetadata, destinationFolder, projectName, groupLink);
 
         if (Boolean.FALSE.equals(tableMetadata.getIsView())) {
+            if (framework.getView().getForm() != null && Boolean.TRUE.equals(framework.getView().getForm().getToGenerate()
+            )) {
+                generateFormView(framework, frameworkOptions, language, viewsTemplate, tableMetadata, destinationFolder, projectName, groupLink);
+            }
             generateCreateView(framework, frameworkOptions, language, viewsTemplate, tableMetadata, destinationFolder, projectName, groupLink);
             generateEditView(framework, frameworkOptions, language, viewsTemplate, tableMetadata, destinationFolder, projectName, groupLink);
         }
@@ -94,7 +99,7 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String templateContent = loadViewListTemplate(viewsTemplate);
 
-        HashMap<String, Object> metadataPrimary = getAltViewListHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewListHashMap(framework, tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
@@ -109,6 +114,7 @@ public class ViewsGenerator implements IViewsGenerator {
         fileName = engine.simpleRender(fileName, metadataFinally);
 
         String result = engine.render(primaryResult, metadataFinally);
+        result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$"));
         FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
     }
 
@@ -126,7 +132,7 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String templateContent = loadViewDetailsTemplate(viewsTemplate);
 
-        HashMap<String, Object> metadataPrimary = getAltViewDetailHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewDetailHashMap(framework, tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
@@ -141,6 +147,8 @@ public class ViewsGenerator implements IViewsGenerator {
         fileName = engine.simpleRender(fileName, metadataFinally);
 
         String result = engine.render(primaryResult, metadataFinally);
+        result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$")
+        );
         FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
     }
 
@@ -158,7 +166,7 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String templateContent = loadViewCreateTemplate(viewsTemplate);
 
-        HashMap<String, Object> metadataPrimary = getAltViewCreateHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewCreateHashMap(framework,tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
@@ -173,6 +181,7 @@ public class ViewsGenerator implements IViewsGenerator {
         fileName = engine.simpleRender(fileName, metadataFinally);
 
         String result = engine.render(primaryResult, metadataFinally);
+        result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$"));
         FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
     }
 
@@ -190,7 +199,7 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String templateContent = loadViewEditTemplate(viewsTemplate);
 
-        HashMap<String, Object> metadataPrimary = getAltViewEditHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewEditHashMap(framework, tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
@@ -205,6 +214,34 @@ public class ViewsGenerator implements IViewsGenerator {
         fileName = engine.simpleRender(fileName, metadataFinally);
 
         String result = engine.render(primaryResult, metadataFinally);
+        result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$"));
+        FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
+    }
+
+    private void generateFormView(
+            FrameworkMVC framework,
+            Map<String, Object> frameworkOptions,
+            Language language,
+            ViewsTemplate viewsTemplate,
+            TableMetadata tableMetadata,
+            String destinationFolder,
+            String projectName,
+            String groupLink) throws Exception {
+
+        String templateContent = loadViewFormTemplate(viewsTemplate);
+        HashMap<String, Object> metadataPrimary = getAltViewFormHashMap(framework, tableMetadata);
+        String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
+        HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
+
+        String fileSavePath = engine.simpleRender(framework.getView().getViewSavePath(),metadataFinally
+        );
+        FileUtils.createDirectory(fileSavePath);
+
+        String fileName = engine.simpleRender(framework.getView().getForm().getName(), metadataFinally
+        );
+
+        String result = engine.render(primaryResult, metadataFinally);
+        result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$"));
         FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
     }
 
@@ -241,6 +278,7 @@ public class ViewsGenerator implements IViewsGenerator {
         fileName = engine.simpleRender(fileName, metadataFinally);
 
         String result = engine.render(firstResult, metadataFinally);
+        result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$"));
         FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
         
         // Générer la page d'accueil
@@ -453,6 +491,7 @@ public class ViewsGenerator implements IViewsGenerator {
             File faviconFile = framework.getProjectBranding().getFaviconFile();
             try{
                 Path targetPath = Paths.get(faviconPath,framework.getProjectBranding().getFaviconUrl());
+                Files.createDirectories(targetPath.getParent());
                 Files.copy(faviconFile.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
             }
             catch (IOException e){
@@ -460,6 +499,10 @@ public class ViewsGenerator implements IViewsGenerator {
             }
         }
         return "";
+    }
+
+    private String loadViewFormTemplate(ViewsTemplate viewsTemplate) throws IOException {
+        return FileUtils.getFileContent(Constantes.TEMPLATES_PATH + "/" + viewsTemplate.getTemplate() + "/" + viewsTemplate.getFormTemplate() + "." + Constantes.TEMPLATE_EXT);
     }
 
     private String loadViewMainLayoutTemplate(ViewsTemplate viewsTemplate) throws IOException {

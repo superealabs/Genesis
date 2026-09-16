@@ -63,5 +63,57 @@
       "regexPattern": " ",
       "defaultValue":  "value=\"${value}\""
     }
+  },
+  {
+    "id": 3,
+    "languageId": 1,
+    "types": {
+      "byte": "number",
+      "Byte": "number",
+      "short": "number",
+      "Short": "number",
+      "int": "number",
+      "Integer": "number",
+      "long": "number",
+      "Long": "number",
+      "float": "number",
+      "Float": "number",
+      "double": "number",
+      "Double": "number",
+      "BigDecimal": "number",
+      "BigInteger": "number",
+
+      "String": "text",
+      "Character": "text",
+      "char": "text",
+
+      "LocalDate": "date",
+      "Date": "date",
+
+      "LocalDateTime": "datetime-local",
+      "OffsetDateTime": "datetime-local",
+      "ZonedDateTime": "datetime-local",
+
+      "LocalTime": "time",
+      "OffsetTime": "time",
+
+      "boolean": "radio",
+      "Boolean": "radio",
+
+      "byte[]": "file",
+      "Byte[]": "file"
+    },
+    "validations": {
+      "notNull": "required",
+      "notBlank": "required",
+      "maxSize": "maxlength=\"${maxLength}\"",
+      "numericMinimumValue": "min=\"${min}\"",
+      "numericMinimumInclusiveValue": "min=\"${min}\"",
+      "numericMaximumValue": "max=\"${max}\"",
+      "numericMaximumInclusiveValue": "max=\"${max}\"",
+      "minAndMaxSize": "minlength=\"${minLength}\" maxlength=\"${maxLength}\"",
+      "regexPattern": " ",
+      "defaultValue": "value=\"${value}\""
+    }
   }
 ]

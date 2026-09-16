@@ -8,6 +8,7 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ChildTableMetadata;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.engine.GenesisTemplateEngine;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.utils.StringUtils;
@@ -71,12 +72,15 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> metadata = new HashMap<>();
 
         metadata.put("className", tableMetadata.getClassName());
+        metadata.put("hasCompositePrimaryKey", tableMetadata.hasCompositePrimaryKey());
         metadata.put("entityName", framework.getModelDao().getModelDaoName());
         metadata.put("package", framework.getModelDao().getModelDaoPackage());
         metadata.put("imports", framework.getModelDao().getModelDaoImports());
         metadata.put("extends", framework.getModelDao().getModelDaoExtends());
 
-        if (tableMetadata.getPrimaryColumn() != null) {
+        if (tableMetadata.hasCompositePrimaryKey()) {
+            metadata.put("pkColumnType", tableMetadata.getClassName() + "Id");
+        } else if (tableMetadata.getPrimaryColumn() != null) {
             metadata.put("pkColumnType", tableMetadata.getPrimaryColumn().getType());
         } else {
             metadata.put("pkColumnType", "");
@@ -96,12 +100,29 @@ public class FrameworkMetadataProvider {
 
         metadata.put("className", tableMetadata.getClassName());
 
-        if (tableMetadata.getPrimaryColumn() != null) {
+        metadata.put("hasCompositePrimaryKey", tableMetadata.hasCompositePrimaryKey());
+        if (tableMetadata.hasCompositePrimaryKey()) {
+            metadata.put("pkColumn", "id");
+            metadata.put("pkColumnType", tableMetadata.getClassName() + "Id");
+        } else if (tableMetadata.getPrimaryColumn() != null) {
             metadata.put("pkColumn", tableMetadata.getPrimaryColumn().getName());
+            metadata.put("pkColumnType", tableMetadata.getPrimaryColumn().getType());
         } else {
             metadata.put("pkColumn", "");
+            metadata.put("pkColumnType", "");
         }
-
+        if (tableMetadata.hasCompositePrimaryKey()) {
+            metadata.put("pkUpdateSetter", "{{removeLine}}");
+        } else if (tableMetadata.getPrimaryColumn() != null) {
+            String pkName = tableMetadata.getPrimaryColumn().getName();
+            metadata.put("pkUpdateSetter", StringUtils.minStart(tableMetadata.getClassName())
+                                            + ".set"
+                                            + StringUtils.majStart(pkName)
+                                            + "(" + pkName + ");"
+            );
+        } else {
+            metadata.put("pkUpdateSetter", "{{removeLine}}");
+        }
         metadata.put("entityName", framework.getService().getServiceName());
         metadata.put("package", framework.getService().getServicePackage());
         metadata.put("imports", framework.getService().getServiceImports());
@@ -119,6 +140,30 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> metadata = new HashMap<>();
 
         metadata.put("className", tableMetadata.getClassName());
+        List<Map<String, Object>> jsonFields = getJsonFieldsList(tableMetadata);
+        System.out.println(
+                "[Genesis JSON] "
+                        + tableMetadata.getClassName()
+                        + " jsonFields=" + jsonFields
+                        + " hasJsonFields=" + !jsonFields.isEmpty()
+        );
+        metadata.put("jsonFields", jsonFields);
+        metadata.put("hasJsonFields", !jsonFields.isEmpty());
+        metadata.put("hasCompositePrimaryKey", tableMetadata.hasCompositePrimaryKey());
+        if (tableMetadata.hasCompositePrimaryKey()) {
+            metadata.put("pkColumn", "id");
+            metadata.put("compositePkFields", getTableMetadataHashMap(tableMetadata).get("compositePkFields"));
+        } else if (tableMetadata.getPrimaryColumn() != null) {
+            metadata.put("pkColumn", tableMetadata.getPrimaryColumn().getName());
+        } else {
+            metadata.put("pkColumn", "");
+        }
+        metadata.put("defaultSortColumn", getDefaultSortColumn(tableMetadata));
+        metadata.put("pkColumnType", tableMetadata.hasCompositePrimaryKey()
+                                        ? tableMetadata.getClassName() + "Id"
+                                        : tableMetadata.getPrimaryColumn() != null
+                                          ? tableMetadata.getPrimaryColumn().getType()
+                                          : "");
         metadata.put("entityName", framework.getController().getControllerName());
         metadata.put("package", framework.getController().getControllerPackage());
         metadata.put("imports", framework.getController().getControllerImports());
@@ -139,6 +184,12 @@ public class FrameworkMetadataProvider {
 
         metadata.putAll(primaryModelMetadata);
         metadata.putAll(languageMetadata);
+        metadata.put("hasCompositePrimaryKey", tableMetadata.hasCompositePrimaryKey());
+        metadata.put("pkColumnType", tableMetadata.hasCompositePrimaryKey()
+                                        ? tableMetadata.getClassName() + "Id"
+                                        : tableMetadata.getPrimaryColumn() != null
+                                          ? tableMetadata.getPrimaryColumn().getType()
+                                          : "");
 
         return metadata;
     }
@@ -177,6 +228,8 @@ public class FrameworkMetadataProvider {
 
         metadata.putAll(primaryControllerMetadata);
         metadata.putAll(languageMetadata);
+        metadata.put("foreignTypes", getForeignTypesList(tableMetadata, language));
+        metadata.put("foreignOptionTypes", getForeignOptionTypesList(tableMetadata, language));
 
         return metadata;
     }
@@ -185,9 +238,12 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> metadata = new HashMap<>();
 
         addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
+        metadata.putAll(getTableMetadataHashMap(tableMetadata));
         metadata.put("fields", getFieldsList(tableMetadata));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
+        metadata.put("foreignTypes", getForeignTypesList(tableMetadata));
+        metadata.put("foreignOptionTypes", getForeignOptionTypesList(tableMetadata));
         metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
 
         return metadata;
@@ -197,9 +253,12 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> metadata = new HashMap<>();
 
         addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
+        metadata.putAll(getTableMetadataHashMap(tableMetadata));
         metadata.put("fields", getFieldsList(tableMetadata, language));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
+        metadata.put("foreignTypes", getForeignTypesList(tableMetadata, language));
+        metadata.put("foreignOptionTypes", getForeignOptionTypesList(tableMetadata, language));
         metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
 
         return metadata;
@@ -224,6 +283,15 @@ public class FrameworkMetadataProvider {
         metadata.put("minClassName", StringUtils.minStart(tableMetadata.getClassName()));
         metadata.put("className", tableMetadata.getClassName());
         metadata.put("entityName", tableMetadata.getClassName());
+        List<Map<String, Object>> jsonFields = getJsonFieldsList(tableMetadata);
+        System.out.println(
+                "[Genesis JSON] "
+                        + tableMetadata.getClassName()
+                        + " jsonFields=" + jsonFields
+                        + " hasJsonFields=" + !jsonFields.isEmpty()
+        );
+        metadata.put("jsonFields", jsonFields);
+        metadata.put("hasJsonFields", !jsonFields.isEmpty());
         metadata.put("classNameLink", tableMetadata.getClassName() + "s");
 
         metadata.put("isView", tableMetadata.getIsView());
@@ -264,6 +332,7 @@ public class FrameworkMetadataProvider {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             Map<String, Object> fieldMap = getFieldHashMap(field);
+            addForeignKeyDisplayColumn(fieldMap, field, tableMetadata);
             // Enrich with Django-specific arguments to support constraints in templates
             String djangoArgs = buildDjangoArgs(field);
             fieldMap.put("djangoArgs", djangoArgs);
@@ -289,17 +358,10 @@ public class FrameworkMetadataProvider {
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field);
-
-                String fieldType = field.getType();
-
-                boolean exists = fieldsFK.stream()
-                        .anyMatch(existing -> fieldType.equals(existing.get("type")));
-
-                if (!exists) {
-                    // Ajouter les données des options FK pour le template
-                    addForeignKeyOptions(fieldMap, field);
-                    fieldsFK.add(fieldMap);
-                }
+                addForeignKeyDisplayColumn(fieldMap, field, tableMetadata);
+                // Ajouter les données des options FK pour le template
+                addForeignKeyOptions(fieldMap, field);
+                fieldsFK.add(fieldMap);
             }
         }
         return fieldsFK;
@@ -338,10 +400,105 @@ public class FrameworkMetadataProvider {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             Map<String, Object> fieldMap = getFieldHashMap(field, language, tableMetadata.getDatabase().getId());
+            addForeignKeyDisplayColumn(fieldMap, field, tableMetadata);
             fieldMap.put("djangoArgs", buildDjangoArgs(field));
             fields.add(fieldMap);
         }
         return fields;
+    }
+
+    private static void addForeignKeyDisplayColumn(Map<String, Object> fieldMap,  ColumnMetadata field, TableMetadata tableMetadata) {
+        if (!field.isForeign() || tableMetadata.getParentTables() == null) {
+            return;
+        }
+        System.out.println("FIELD FK = " + field.getName());
+
+        for (var parent : tableMetadata.getParentTables()) {
+            System.out.println(
+                    "PARENT COLUMN = " +
+                            (parent.getColumn() != null ? parent.getColumn().getName() : "null")
+                            + " | TABLE = " +
+                            (parent.getTable() != null ? parent.getTable().getTableName() : "null")
+            );
+        }
+        tableMetadata.getParentTables().stream()
+                .filter(parent ->
+                        parent.getColumn() != null && Objects.equals(parent.getColumn().getName(), field.getName()))
+                .peek(parent -> System.out.println(
+                        "FK=" + field.getName()
+                                + " | parentColumn=" + parent.getColumn().getName()
+                                + " | parentTable=" + parent.getTable().getTableName()
+                                + " | display=" + detectBestDisplayColumn(parent.getTable())
+                ))
+                .map(parent -> detectBestDisplayColumn(parent.getTable()))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .ifPresentOrElse(
+                        displayColumn -> fieldMap.put("displayColumn", displayColumn),
+                        () -> fieldMap.put("displayColumn", field.getReferencedPrimaryKeyColumn())
+                );
+    }
+
+    private static String detectBestDisplayColumn(TableMetadata tableMetadata){
+        if (tableMetadata == null || tableMetadata.getColumns() == null || tableMetadata.getColumns().length == 0) {
+            return null;
+        }
+        List<ColumnMetadata> nonNullableColumns =
+                Arrays.stream(tableMetadata.getColumns())
+                        .filter(column ->
+                                !column.isPrimary() && !column.isNullable()
+                        )
+                        .toList();
+        if (!nonNullableColumns.isEmpty()) {
+            return findBestDisplayColumn(nonNullableColumns, true);
+        }
+        List<ColumnMetadata> nullableColumns =
+                Arrays.stream(tableMetadata.getColumns())
+                        .filter(column -> !column.isPrimary())
+                        .toList();
+        if (!nullableColumns.isEmpty()) {
+            return findBestDisplayColumn(nullableColumns, false);
+        }
+        return tableMetadata.getColumns()[0].getName();
+    }
+
+    private static String findBestDisplayColumn(List<ColumnMetadata> columns, boolean prioritizeStructuredText) {
+        if (prioritizeStructuredText) {
+            Optional<ColumnMetadata> structuredText =
+                    columns.stream()
+                            .filter(FrameworkMetadataProvider::isTextColumn)
+                            .filter(column -> {
+                                String columnType = column.getColumnType();
+                                if (columnType == null) {
+                                    return false;
+                                }
+                                String type = columnType.toLowerCase();
+                                return type.contains("json") || type.contains("xml") || type.contains("inet");
+                            })
+                            .findFirst();
+            if (structuredText.isPresent()) {
+                return structuredText.get().getName();
+            }
+        }
+        return columns.stream()
+                .filter(FrameworkMetadataProvider::isTextColumn)
+                .findFirst()
+                .or(() -> columns.stream()
+                        .filter(FrameworkMetadataProvider::isDateColumn)
+                        .findFirst())
+                .or(() -> columns.stream()
+                        .filter(ColumnMetadata::isNumeric)
+                        .findFirst())
+                .orElse(columns.get(0))
+                .getName();
+    }
+
+    private static boolean isTextColumn(ColumnMetadata column) {
+        return "String".equals(column.getType()) || column.isText();
+    }
+
+    private static boolean isDateColumn(ColumnMetadata column) {
+        return column.isDate() || column.isDateTime() || column.isDateTimeTz();
     }
 
     // Build Django field arguments string (excluding verbose_name and db_column which are in template)
@@ -443,18 +600,42 @@ public class FrameworkMetadataProvider {
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
                 Map<String, Object> fieldMap = getFieldHashMap(field, language,tableMetadata.getDatabase().getId());
-
-                String fieldType = field.getType();
-
-                boolean exists = fieldsFK.stream()
-                        .anyMatch(existing -> fieldType.equals(existing.get("type")));
-
-                if (!exists) {
-                    fieldsFK.add(fieldMap);
-                }
+                addForeignKeyDisplayColumn(fieldMap, field, tableMetadata);
+                fieldsFK.add(fieldMap);
             }
         }
         return fieldsFK;
+    }
+
+    private static List<Map<String, Object>> getForeignTypesList(TableMetadata tableMetadata) {
+        List<Map<String, Object>> fieldsFK = getFieldsFKList(tableMetadata);
+        Map<Object, Map<String, Object>> uniqueTypes = new LinkedHashMap<>();
+        for (Map<String, Object> field : fieldsFK) {
+            Object type = field.get("type");
+            if (tableMetadata.getClassName().equals(type)) {
+                continue;
+            }
+            uniqueTypes.putIfAbsent(type, field);
+        }
+        return new ArrayList<>(uniqueTypes.values());
+    }
+
+    private static List<Map<String, Object>> getForeignTypesList(TableMetadata tableMetadata, Language language) {
+        List<Map<String, Object>> fieldsFK = getFieldsFKList(tableMetadata, language);
+        List<Map<String, Object>> foreignTypes = fieldsFK.stream()
+                .filter(field ->
+                        !tableMetadata.getClassName().equals(field.get("type"))
+                )
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(
+                                field -> field.get("type"),
+                                field -> field,
+                                (first, second) -> first,
+                                LinkedHashMap::new
+                        ),
+                        map -> new ArrayList<>(map.values())
+                ));
+        return foreignTypes;
     }
 
     public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field) {
@@ -481,6 +662,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("decimalDigits", field.getDecimalDigits());
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
+        fieldMap.put("isRequired", field.getValidationAnnotations().containsKey("notNull") || field.getValidationAnnotations().containsKey("notBlank"));
         fieldMap.put("validationAnnotations", getFieldValidationAnnotations(field));
         fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary() && field.isAutoGenerated());
         fieldMap.put("isText",field.isText());
@@ -492,6 +674,8 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isDateTimeTz",field.isDateTimeTz());
         fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
+        fieldMap.put("isPeriodInterval", "java.time.Period".equals(field.getType()));
+        fieldMap.put("isDurationInterval", field.isInterval() && !"java.time.Period".equals(field.getType()));
 
         return fieldMap;
     }
@@ -511,6 +695,8 @@ public class FrameworkMetadataProvider {
                 "TimeOnly".equals(field.getType()) || field.isTime() || field.isTimeTz()
         ) {
             uiType = "time";
+        } else if (field.isInterval()) {
+            uiType = "text";
         } else if (field.isNumeric()) {
             uiType = "number";
         }
@@ -545,6 +731,26 @@ public class FrameworkMetadataProvider {
         if (configuredAnnotations != null) {
             attributeTypeAnnotations.addAll(configuredAnnotations);
         }
+        if (databaseId == 4 && "java.time.Period".equals(field.getType())) {
+            attributeTypeAnnotations.add(
+                    "@org.hibernate.annotations.Type("
+                            + "${groupLink}.${lowerCase(projectName)}.utils."
+                            + "OracleYearMonthIntervalType.class)"
+            );
+        }
+        if (databaseId != 2) { // PostgreSQL = 2
+            attributeTypeAnnotations.removeIf(annotation ->
+                    annotation.contains("PostgreSQLIntervalType")
+            );
+        }
+        if ("uniqueidentifier".equalsIgnoreCase(field.getColumnType())) {
+            attributeTypeAnnotations.removeIf(annotation -> annotation.contains("ColumnTransformer"));
+            attributeTypeAnnotations.add(
+                    "@org.hibernate.annotations.ColumnTransformer(" +
+                            "read = \"CAST(${this.columnName} as varchar(36))\", " +
+                            "write = \"CAST(? as uniqueidentifier)\")"
+            );
+        }
         boolean isNativeTextType = NativeDatabaseTypeRegistry.isNative(databaseId, field.getColumnType());
         if ("String".equals(field.getType()) && isNativeTextType) {
             attributeTypeAnnotations.removeIf(annotation ->
@@ -570,6 +776,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("decimalDigits", field.getDecimalDigits());
         fieldMap.put("isUnique", field.isUnique());
         fieldMap.put("isNullable", field.isNullable());
+        fieldMap.put("isRequired", field.getValidationAnnotations().containsKey("notNull") || field.getValidationAnnotations().containsKey("notBlank"));
         fieldMap.put("validationAnnotations", getFieldValidationAnnotations(field));
         fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary() && field.isAutoGenerated());
         fieldMap.put("isText",field.isText());
@@ -581,6 +788,9 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isDateTimeTz",field.isDateTimeTz());
         fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
+        fieldMap.put("isComparableInterval", field.isInterval() && !"java.time.Period".equals(field.getType()));
+        fieldMap.put("isPeriodInterval", field.isInterval() && "java.time.Period".equals(field.getType()));
+        fieldMap.put("isDurationInterval", field.isInterval() && !"java.time.Period".equals(field.getType()));
         fieldMap.put("isParentForeignKey",field.getIsParentForeignKey());
 
         return fieldMap;
@@ -648,6 +858,12 @@ public class FrameworkMetadataProvider {
         metadata.put("textAreas", getTextAreasList(tableMetadata, language));
         metadata.put("inputsFilter", getFilterInputsList(tableMetadata, language));
 
+        if (framework instanceof FrameworkMVC frameworkMVC) {
+            boolean useReusableForm = frameworkMVC.getView().getForm() != null && Boolean.TRUE.equals(frameworkMVC.getView().getForm().getToGenerate());
+            metadata.put("useReusableForm", useReusableForm);
+            metadata.put("formIncludeTagHelper", useReusableForm ? frameworkMVC.getView().getForm().getIncludeTagHelper() : "");
+        }
+
         List<Integer> pageSizesList = Arrays.asList(5, 10, 50, 100, 200, 300, 500, 1000);
         metadata.put("pageSizesList", pageSizesList);
 
@@ -664,6 +880,9 @@ public class FrameworkMetadataProvider {
                 ) {
                     InputTypeMapping.Input input = InputTypeMapping.getInput(field, language, engine);
                     Map<String, Object> inputMap = getInputHashMap(input);
+                    inputMap.put("isPrimaryKey", field.isPrimary());
+                    inputMap.put("isAutoGenerated", field.isAutoGenerated());
+                    inputMap.put("isManualPrimaryKey", field.isPrimary() && !field.isAutoGenerated());
                     if (Boolean.TRUE.equals(inputMap.get("isShowed"))) {
                         inputs.add(inputMap);
                     }
@@ -688,6 +907,17 @@ public class FrameworkMetadataProvider {
         }
 
         return textAreas;
+    }
+
+    private static List<Map<String, Object>> getJsonFieldsList(TableMetadata tableMetadata) {
+        return Arrays.stream(tableMetadata.getColumns())
+                .filter(ColumnMetadata::isJson)
+                .map(field -> {
+                    Map<String, Object> jsonField = new HashMap<>();
+                    jsonField.put("name", field.getName());
+                    return jsonField;
+                })
+                .toList();
     }
 
     private static List<Map<String, Object>> getFilterInputsList(TableMetadata tableMetadata, Language language) throws Exception {
@@ -736,7 +966,7 @@ public class FrameworkMetadataProvider {
     public static @NotNull Map<String, Object> getTextAreaHashMap(ColumnMetadata columnMetadata, Language language) {
         Map<String, Object> inputMap = new HashMap<>();
 
-        inputMap.put("name", StringUtils.majStart(columnMetadata.getName()) + StringUtils.majStart(columnMetadata.getColumnType().toLowerCase()));
+        inputMap.put("name", StringUtils.majStart(columnMetadata.getName()));
         inputMap.put("class", columnMetadata.getColumnType().toLowerCase() + "-textarea");
         inputMap.put("placeholder", language.getMockData().get(columnMetadata.getColumnType()));
         inputMap.put("validFormat", language.getMockData().get(columnMetadata.getColumnType()));
@@ -792,14 +1022,38 @@ public class FrameworkMetadataProvider {
     public static @NotNull Map<String, Object> getTableMetadataHashMap(TableMetadata tm) {
         Map<String, Object> tmMap = new HashMap<>();
 
-        if (tm.getPrimaryColumn() != null) {
+        tmMap.put("hasCompositePrimaryKey", tm.hasCompositePrimaryKey());
+        if (tm.hasCompositePrimaryKey()) {
+            tmMap.put("pkColumn", "id");
+            tmMap.put("pkColumnType", tm.getClassName() + "Id");
+        } else if (tm.getPrimaryColumn() != null) {
             tmMap.put("pkColumn", tm.getPrimaryColumn().getName());
             tmMap.put("pkColumnType", tm.getPrimaryColumn().getType());
         } else {
             tmMap.put("pkColumn", "");
             tmMap.put("pkColumnType", "");
         }
-
+        tmMap.put("defaultSortColumn", getDefaultSortColumn(tm));
+        tmMap.put("pkColumns", tm.getPrimaryColumns()
+                                        .stream()
+                                        .map(ColumnMetadata::getName)
+                                        .toList());
+        tmMap.put("compositePkFields", tm.getPrimaryColumns()
+                        .stream()
+                        .map(column -> {
+                            Map<String, Object> field = new HashMap<>();
+                            field.put("name", column.getName());
+                            field.put("type", column.isForeign()
+                                            ? column.getReferencedColumnType()
+                                            : column.getType());
+                            field.put("isForeignKey", column.isForeign());
+                            field.put("referencedPrimaryKeyColumn", column.isForeign()
+                                            ? column.getReferencedPrimaryKeyColumn()
+                                            : "");
+                            return field;
+                        })
+                        .toList()
+        );
         tmMap.put("tableName", tm.getTableName());
         tmMap.put("className", tm.getClassName());
         tmMap.put("entityName", tm.getClassName());
@@ -855,8 +1109,10 @@ public class FrameworkMetadataProvider {
         altMap.putAll(getGeneralViewHashMap(frameworkMVC));
         altMap.put("assetsImportLink", frameworkMVC.getView().getLayout().getAssetsImportLink());
         altMap.put("additionalPageLink", frameworkMVC.getView().getLayout().getAdditionalPageLink());
+        altMap.put("baseHref", frameworkMVC.getView().getLayout().getBaseHref());
         altMap.put("viewAnnotations", frameworkMVC.getView().getLayout().getViewAnnotations());
         altMap.put("pageName", frameworkMVC.getView().getLayout().getPageName());
+        altMap.put("pageNameTagHelper", frameworkMVC.getView().getLayout().getPageNameTagHelper());
         altMap.put("navLink", frameworkMVC.getView().getLayout().getNavLink());
         altMap.put("callContent", frameworkMVC.getView().getLayout().getCallContent());
         altMap.put("logoutLink", frameworkMVC.getView().getLayout().getLogoutLink());
@@ -866,13 +1122,16 @@ public class FrameworkMetadataProvider {
     public static HashMap<String, Object> getAltViewErrorHashMap (FrameworkMVC frameworkMVC) {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getError().getViewAnnotations());
+        altMap.put("previousLink", frameworkMVC.getView().getError().getPreviousLink());
         altMap.put("errorMessage", frameworkMVC.getView().getError().getErrorMessage());
+        altMap.put("viewEnd", frameworkMVC.getView().getError().getViewEnd());
         return altMap;
     }
 
-    public static HashMap<String, Object> getAltViewListHashMap (FrameworkMVC frameworkMVC) {
+    public static HashMap<String, Object> getAltViewListHashMap (FrameworkMVC frameworkMVC, TableMetadata tableMetadata) {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getList().getViewAnnotations());
+        altMap.put("viewEnd", frameworkMVC.getView().getList().getViewEnd());
         altMap.put("inputTagHelper", frameworkMVC.getView().getList().getInputTagHelper());
         altMap.put("inputRadioTagHelper", frameworkMVC.getView().getList().getInputRadioTagHelper());
         altMap.put("inputDateTagHelper", frameworkMVC.getView().getList().getInputDateTagHelper());
@@ -880,6 +1139,14 @@ public class FrameworkMetadataProvider {
         altMap.put("deleteDataTagHelper", frameworkMVC.getView().getList().getDeleteDataTagHelper());
         altMap.put("pageSizeTagHelper", frameworkMVC.getView().getList().getPageSizeTagHelper());
         altMap.put("dataValue", frameworkMVC.getView().getList().getDataValue());
+        altMap.put("dateDataValue", frameworkMVC.getView().getList().getDateDataValue());
+        altMap.put("timeDataValue", frameworkMVC.getView().getList().getTimeDataValue());
+        altMap.put("timeTzDataValue", frameworkMVC.getView().getList().getTimeTzDataValue());
+        altMap.put("dateTimeDataValue", frameworkMVC.getView().getList().getDateTimeDataValue());
+        altMap.put("dateTimeTzDataValue", frameworkMVC.getView().getList().getDateTimeTzDataValue());
+        altMap.put("intervalDataValue", frameworkMVC.getView().getList().getIntervalDataValue());
+        altMap.put("periodIntervalDataValue", frameworkMVC.getView().getList().getPeriodIntervalDataValue());
+        altMap.put("arrayDataValue", frameworkMVC.getView().getList().getArrayDataValue());
         altMap.put("dataRawValue", frameworkMVC.getView().getList().getDataRawValue());
         altMap.put("orderSortsTagHelper", frameworkMVC.getView().getList().getOrderSortsTagHelper());
         altMap.put("dataForeignValue", frameworkMVC.getView().getList().getDataForeignValue());
@@ -904,28 +1171,60 @@ public class FrameworkMetadataProvider {
         altMap.put("onGoingPageLink", frameworkMVC.getView().getList().getOnGoingPageLink());
         altMap.put("pageNumberValue", frameworkMVC.getView().getList().getPageNumberValue());
         altMap.put("pageSizeValue", frameworkMVC.getView().getList().getPageSizeValue());
+        altMap.put("pageSizeValueTagHelper", frameworkMVC.getView().getList().getPageSizeValueTagHelper());
         altMap.put("currentSortValue", frameworkMVC.getView().getList().getCurrentSortValue());
+        altMap.put("currentSortValueTagHelper", frameworkMVC.getView().getList().getCurrentSortValueTagHelper());
         altMap.put("totalElementsTagHelper", frameworkMVC.getView().getList().getTotalElementsTagHelper());
         altMap.put("activeSortAscCondition", frameworkMVC.getView().getList().getActiveSortAscCondition());
         altMap.put("activeSortDescCondition", frameworkMVC.getView().getList().getActiveSortDescCondition());
         altMap.put("onGoingPagesLoop", frameworkMVC.getView().getList().getOnGoingPagesLoop());
         altMap.put("scriptSection", frameworkMVC.getView().getList().getScriptSection());
+        altMap.put("pageSizeParamName", frameworkMVC.getView().getList().getPageSizeParamName());
+        altMap.put("sortParamName", frameworkMVC.getView().getList().getSortParamName());
+        altMap.put("fileDataValue", frameworkMVC.getView().getList().getFileDataValue());
+        altMap.put("filterMethod", frameworkMVC.getView().getList().getFilterMethod());
+        altMap.put("filterTrueSelectedTagHelper", frameworkMVC.getView().getList().getFilterTrueSelectedTagHelper());
+        altMap.put("filterFalseSelectedTagHelper", frameworkMVC.getView().getList().getFilterFalseSelectedTagHelper());
+        altMap.put("foreignOptionsLoop", frameworkMVC.getView().getList().getForeignOptionsLoop());
+        altMap.put("flashMessageSection", frameworkMVC.getView().getList().getFlashMessageSection());
+        if (tableMetadata != null && tableMetadata.hasCompositePrimaryKey()) {
+            System.out.println("Metadata" + tableMetadata);
+            altMap.put("detailsLink", buildCompositeDetailsLink(tableMetadata));
+            altMap.put("updateLink", buildCompositeUpdateLink(tableMetadata));
+            altMap.put("deleteDataTagHelper", buildCompositeDeleteDataTagHelper(tableMetadata));
+        }
+        altMap.put("deletePkInputs", buildDeletePkInputs(tableMetadata));
         return altMap;
     }
 
-    public static HashMap<String, Object> getAltViewDetailHashMap (FrameworkMVC frameworkMVC) {
+    public static HashMap<String, Object> getAltViewDetailHashMap (FrameworkMVC frameworkMVC, TableMetadata tableMetadata) {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getDetail().getViewAnnotations());
         altMap.put("dataValue", frameworkMVC.getView().getDetail().getDataValue());
-        altMap.put("dataRawValue", frameworkMVC.getView().getList().getDataRawValue());
+        altMap.put("dateDataValue", frameworkMVC.getView().getDetail().getDateDataValue());
+        altMap.put("timeDataValue", frameworkMVC.getView().getDetail().getTimeDataValue());
+        altMap.put("timeTzDataValue", frameworkMVC.getView().getDetail().getTimeTzDataValue());
+        altMap.put("dateTimeDataValue", frameworkMVC.getView().getDetail().getDateTimeDataValue());
+        altMap.put("dateTimeTzDataValue", frameworkMVC.getView().getDetail().getDateTimeTzDataValue());
+        altMap.put("intervalDataValue", frameworkMVC.getView().getDetail().getIntervalDataValue());
+        altMap.put("periodIntervalDataValue", frameworkMVC.getView().getDetail().getPeriodIntervalDataValue());
+        altMap.put("dataRawValue", frameworkMVC.getView().getDetail().getDataRawValue());
         altMap.put("dataForeignValue", frameworkMVC.getView().getDetail().getDataForeignValue());
         altMap.put("deleteDataTagHelper", frameworkMVC.getView().getDetail().getDeleteDataTagHelper());
         altMap.put("updateLink", frameworkMVC.getView().getDetail().getUpdateLink());
         altMap.put("deleteLink", frameworkMVC.getView().getDetail().getDeleteLink());
+        altMap.put("additionalImports", frameworkMVC.getView().getDetail().getAdditionalImports());
+        altMap.put("viewEnd", frameworkMVC.getView().getDetail().getViewEnd());
+        altMap.put("fileDataValue", frameworkMVC.getView().getDetail().getFileDataValue());
+        altMap.put("hiddenPkValue", frameworkMVC.getView().getDetail().getHiddenPkValue());
+        if (tableMetadata != null && tableMetadata.hasCompositePrimaryKey()) {
+            altMap.put("updateLink", buildCompositeUpdateLink(tableMetadata));
+            altMap.put("deleteDataTagHelper", buildCompositeDeleteDataTagHelper(tableMetadata));
+        }
         return altMap;
     }
 
-    public static HashMap<String, Object> getAltViewCreateHashMap (FrameworkMVC frameworkMVC) {
+    public static HashMap<String, Object> getAltViewCreateHashMap (FrameworkMVC frameworkMVC, TableMetadata tableMetadata) {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getCreate().getViewAnnotations());
         altMap.put("validationSection", frameworkMVC.getView().getCreate().getValidationSection());
@@ -938,21 +1237,159 @@ public class FrameworkMetadataProvider {
         altMap.put("selectTagHelper", frameworkMVC.getView().getCreate().getSelectTagHelper());
         altMap.put("createLink", frameworkMVC.getView().getCreate().getCreateLink());
         altMap.put("scriptSection", frameworkMVC.getView().getCreate().getScriptSection());
+        altMap.put("viewEnd", frameworkMVC.getView().getCreate().getViewEnd());
+        altMap.put("formIncludeTagHelper", "th:replace=\"~{" + StringUtils.minStart(tableMetadata.getClassName()) + "/_form :: fields(false)}\"");
         return altMap;
     }
 
-    public static HashMap<String, Object> getAltViewEditHashMap (FrameworkMVC frameworkMVC) {
+    public static HashMap<String, Object> getAltViewEditHashMap (FrameworkMVC frameworkMVC, TableMetadata tableMetadata) {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getEdit().getViewAnnotations());
         altMap.put("validationSection", frameworkMVC.getView().getEdit().getValidationSection());
-        altMap.put("validationTagHelper", frameworkMVC.getView().getCreate().getValidationTagHelper());
-        altMap.put("selectValidationTagHelper", frameworkMVC.getView().getCreate().getSelectValidationTagHelper());
+        altMap.put("validationTagHelper", frameworkMVC.getView().getEdit().getValidationTagHelper());
+        altMap.put("selectValidationTagHelper", frameworkMVC.getView().getEdit().getSelectValidationTagHelper());
         altMap.put("inputTagHelper", frameworkMVC.getView().getEdit().getInputTagHelper());
         altMap.put("textAreaTagHelper", frameworkMVC.getView().getEdit().getTextAreaTagHelper());
         altMap.put("textAreaValidationTagHelper", frameworkMVC.getView().getEdit().getTextAreaValidationTagHelper());
+        altMap.put("checkedRadioTagHelper", frameworkMVC.getView().getEdit().getCheckedRadioTagHelper());
         altMap.put("selectTagHelper", frameworkMVC.getView().getEdit().getSelectTagHelper());
         altMap.put("updateLink", frameworkMVC.getView().getEdit().getUpdateLink());
         altMap.put("scriptSection", frameworkMVC.getView().getEdit().getScriptSection());
+        altMap.put("viewEnd", frameworkMVC.getView().getCreate().getViewEnd());
+        if (tableMetadata != null && tableMetadata.hasCompositePrimaryKey()) {
+            altMap.put("updateLink", buildCompositeEditFormLink(tableMetadata));
+        }
+        altMap.put("formIncludeTagHelper", "th:replace=\"~{" + StringUtils.minStart(tableMetadata.getClassName()) + "/_form :: fields(true)}\"");
         return altMap;
+    }
+
+    public static HashMap<String, Object> getAltViewFormHashMap(FrameworkMVC frameworkMVC, TableMetadata tableMetadata) {
+        HashMap<String, Object> altMap = new HashMap<>(getAltViewCreateHashMap(frameworkMVC, tableMetadata));
+        altMap.put("viewAnnotations", frameworkMVC.getView().getForm().getViewAnnotations());
+        altMap.put("viewEnd", frameworkMVC.getView().getForm().getViewEnd());
+        altMap.put("foreignOptionsLoop", frameworkMVC.getView().getForm().getForeignOptionsLoop());
+        return altMap;
+    }
+
+    private static String getDefaultSortColumn(TableMetadata tableMetadata) {
+        if (tableMetadata.hasCompositePrimaryKey()) {
+            return tableMetadata.getPrimaryColumns().get(0).getName();
+        }
+        if (tableMetadata.getPrimaryColumn() != null) {
+            return tableMetadata.getPrimaryColumn().getName();
+        }
+        return "";
+    }
+
+    private static String getCompositePropertyExpression(TableMetadata tableMetadata, ColumnMetadata column) {
+        String entityName = StringUtils.minStart(tableMetadata.getClassName());
+        String fieldName = StringUtils.minStart(column.getName());
+        if (column.isForeign()) {
+            String referencedPk = StringUtils.minStart(column.getReferencedPrimaryKeyColumn());
+            return "$[thymeleafDollar]{" + entityName + "." + fieldName + "." + referencedPk + "}";
+        }
+        return "$[thymeleafDollar]{" + entityName + "." + fieldName + "}";
+    }
+
+    private static String buildCompositeDetailsLink(TableMetadata tableMetadata) {
+        String entityName = StringUtils.minStart(tableMetadata.getClassName());
+        String path = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> "/{" + StringUtils.minStart(column.getName()) + "}")
+                .collect(Collectors.joining());
+        String params = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> {
+                    String name = StringUtils.minStart(column.getName());
+                    return name + "=" + getCompositePropertyExpression(tableMetadata, column);
+                })
+                .collect(Collectors.joining(","));
+        return "th:href=\"@{/" + entityName + path + "(" + params + ")}\"";
+    }
+
+    private static String buildCompositeUpdateLink(TableMetadata tableMetadata) {
+        String entityName = StringUtils.minStart(tableMetadata.getClassName());
+        String path = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> "/{" + StringUtils.minStart(column.getName()) + "}")
+                .collect(Collectors.joining());
+        String params = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> {
+                    String name = StringUtils.minStart(column.getName());
+                    return name + "=" + getCompositePropertyExpression(tableMetadata, column);
+                })
+                .collect(Collectors.joining(","));
+        return "th:href=\"@{/" + entityName + path + "/edit(" + params + ")}\"";
+    }
+
+    private static String buildCompositeEditFormLink(TableMetadata tableMetadata) {
+        String entityName = StringUtils.minStart(tableMetadata.getClassName());
+        String path = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> "/{" + StringUtils.minStart(column.getName()) + "}")
+                .collect(Collectors.joining());
+        String params = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> {String name = StringUtils.minStart(column.getName());
+                    return name + "=" + getCompositePropertyExpression(tableMetadata,column);
+                })
+                .collect(Collectors.joining(","));
+
+        return "th:action=\"@{/" + entityName + path + "/edit(" + params + ")}\" " + "th:object=\"$[thymeleafDollar]{" + entityName + "}\"";
+    }
+
+    private static String buildCompositeDeleteDataTagHelper(TableMetadata tableMetadata) {
+        String attributes = tableMetadata.getPrimaryColumns().stream()
+                .map(column -> {
+                    String name = StringUtils.minStart(column.getName());
+                    return "data-pk-" + name.toLowerCase() + "=" + getCompositePropertyExpression(tableMetadata, column);
+                })
+                .collect(Collectors.joining(","));
+        return "th:attr=\"" + attributes + "\"";
+    }
+
+    private static String buildDeletePkInputs(TableMetadata tableMetadata) {
+        if (tableMetadata.hasCompositePrimaryKey()) {
+            return tableMetadata.getPrimaryColumns().stream()
+                    .map(column ->
+                            "<input type=\"hidden\" name=\"" + column.getName()
+                                    + "\" id=\"" + tableMetadata.getClassName()
+                                    + "_" + column.getName()
+                                    + "\" data-composite-pk />")
+                    .collect(Collectors.joining("\n"));
+        }
+
+        if (tableMetadata.getPrimaryColumn() != null) {
+            String name = tableMetadata.getPrimaryColumn().getName();
+
+            return "<input type=\"hidden\" name=\"" + name
+                    + "\" id=\"" + tableMetadata.getClassName()
+                    + "Id\" />";
+        }
+
+        return "";
+    }
+
+    private static List<Map<String, Object>> getForeignOptionTypesList(TableMetadata tableMetadata, Language language) {
+        List<Map<String, Object>> fieldsFK = getFieldsFKList(tableMetadata, language);
+        return fieldsFK.stream()
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(
+                                field -> field.get("type"),
+                                field -> field,
+                                (first, second) -> first,
+                                LinkedHashMap::new
+                        ),
+                        map -> new ArrayList<>(map.values())
+                ));
+    }
+
+    private static List<Map<String, Object>> getForeignOptionTypesList(TableMetadata tableMetadata) {
+        List<Map<String, Object>> fieldsFK = getFieldsFKList(tableMetadata);
+        return fieldsFK.stream()
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(
+                                field -> field.get("type"),
+                                field -> field,
+                                (first, second) -> first,
+                                LinkedHashMap::new
+                        ),
+                        map -> new ArrayList<>(map.values())
+                ));
     }
 }

@@ -3,7 +3,7 @@ ${viewAnnotations}
     <h1 class="page-title">${className} / <span class="page-type"><span class="page-action"
                 data-i18n="list"></span></span>
     </h1>
-    {{#if !isView}}<a href="${createLink}" class="btn btn-primary btn-md">
+    {{#if !isView}}<a ${createLink} class="btn btn-primary btn-md">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 5v14M5 12h14" />
         </svg>
@@ -11,9 +11,11 @@ ${viewAnnotations}
     </a>{{/if}}
 </div>
 
+${flashMessageSection}
+
 <div class="filters" id="filters-container">
     <div class="filters-header">
-        <form method="post" ${filterLink} id="filtersForm">
+        <form method="${filterMethod}" ${filterLink} id="filtersForm">
             <div class="active-filters">
                 <p data-i18n="filter"></p>
 
@@ -80,8 +82,8 @@ ${viewAnnotations}
             {{#if this.type = radio}}{{removeLine}}
             <select class="filter-select" name="${this.name}" id="${this.name}" ${inputRadioTagHelper}>
                 <option value=""><span data-i18n="choose_option"></span></option>
-                <option value="true">True</option>
-                <option value="false">False</option>
+                <<option value="true" ${filterTrueSelectedTagHelper}>True</option>
+                 <option value="false" ${filterFalseSelectedTagHelper}>False</option>
             </select>
             {{elseIf this.type = datetime-local}}{{removeLine}}
             <input class="filter-input" type="${this.type}" id="${this.name}" ${inputDateTagHelper}>
@@ -96,6 +98,7 @@ ${viewAnnotations}
             <label for="">${this.name} :</label>
             <select class="filter-select" ${selectTagHelper}>
                 <option value="">-- <span data-i18n="select"></span> ${this.type} --</option>
+                ${foreignOptionsLoop}
             </select>
         </div>
         {{/each}}{{removeLine}}
@@ -104,9 +107,9 @@ ${viewAnnotations}
 
 <div class="modal" id="exportModal">
     <form class="modal-content" method="post" ${exportLink}>
-        <input type="hidden" name="page" value="{pageNumberValue}" />
-        <input type="hidden" name="pageSize" value="${pageSizeValue}" />
-        <input type="hidden" name="sortOrder" value="${currentSortValue}" />
+        <input type="hidden" name="page" value="${pageNumberValue}" />
+        <input type="hidden" name="${pageSizeParamName}" value="${pageSizeValue}" ${pageSizeValueTagHelper} />
+        <input type="hidden" name="${sortParamName}" value="${currentSortValue}" ${currentSortValueTagHelper} />
         ${antiForgeryTokenTagHelper}
 
         <div class="modal-header">
@@ -138,7 +141,7 @@ ${viewAnnotations}
                         </thead>
                         <tbody>
                             ${blockLoopStatementStart}
-                                <tr>
+                                <tr ${inlineLoopStatement}>
                                     {{#each fields}}
                                     <td>{{#if this.isForeignKey}} ${dataForeignValue} {{else}} ${dataValue} {{/if}}</td>
                                     {{/each}}{{removeLine}}
@@ -181,11 +184,11 @@ ${viewAnnotations}
                         {{else}}
                         <a ${sortLink} class="sort-link">
                             <div class="sort-icons">
-                                <svg class="sort-asc ${activeSortAscCondition}" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                                <svg class="sort-asc" ${activeSortAscCondition} width="10" height="10" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2">
                                     <path d="M7 15l5-5 5 5" />
                                 </svg>
-                                <svg class="sort-desc ${activeSortDescCondition}" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                                <svg class="sort-desc" ${activeSortDescCondition} width="10" height="10" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2">
                                     <path d="M7 10l5 5 5-5" />
                                 </svg>
@@ -203,37 +206,47 @@ ${viewAnnotations}
         </thead>
         <tbody>
             ${blockLoopStatementStart}
-            <tr>
+            <tr ${inlineLoopStatement}>
                 {{#each fields}}
                 <td>
                     {{#if this.type = byte[]}}
 
-                    @{
-                        var fileContent = ${dataRawValue};
-                    }
-
-                    @if (fileContent != null && fileContent.Length > 0)
-                    {
-                        if (FileUtils.IsImage(fileContent))
-                        {
-                            <img
-                                src="@FileUtils.BuildFileSource(fileContent)"
-                                alt="${this.name}"
-                                class="file-preview" />
-                        }
-                        else
-                        {
-                            <span>Fichier non prévisualisable</span>
-                        }
-                    }
-                    else
-                    {
-                        <span>Aucun fichier</span>
-                    }
+                        ${fileDataValue}
 
                     {{elseIf this.isForeignKey}}
 
                         ${dataForeignValue}
+                    {{elseIf this.type = String[]}}
+
+                        ${arrayDataValue}
+
+                    {{elseIf this.isDateTimeTz}}
+
+                        ${dateTimeTzDataValue}
+
+                    {{elseIf this.isDateTime}}
+
+                        ${dateTimeDataValue}
+
+                    {{elseIf this.isTimeTz}}
+
+                        ${timeTzDataValue}
+
+                    {{elseIf this.isTime}}
+
+                        ${timeDataValue}
+
+                    {{elseIf this.isDate}}
+
+                        ${dateDataValue}
+
+                    {{elseIf this.isPeriodInterval}}
+
+                        ${periodIntervalDataValue}
+
+                    {{elseIf this.isDurationInterval}}
+
+                        ${intervalDataValue}
 
                     {{else}}
 
@@ -244,7 +257,7 @@ ${viewAnnotations}
                 {{/each}}{{removeLine}}
                 <td>
                     <div class="actions-group">
-                        <a href="${detailsLink}" class="action-button">
+                        <a ${detailsLink} class="action-button">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 59">
                                 <title data-i18n="details"></title>
                                 <g id="Layer_2" data-name="Layer 2">
@@ -264,7 +277,7 @@ ${viewAnnotations}
                                 </g>
                             </svg>
                         </a>
-                        {{#if !isView}}<a href="${updateLink}" class="action-button">
+                        {{#if !isView}}<a ${updateLink} class="action-button">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 59">
                                 <title data-i18n="edit"></title>
                                 <g id="Layer_2" data-name="Layer 2">
@@ -309,7 +322,8 @@ ${viewAnnotations}
     </table>
 </div>
 
-{{#if !isView}}<div id="customModal" class="modal" data-trigger=".btn-delete" data-input="${className}Id"
+{{#if !isView}}
+<div id="customModal" class="modal" data-trigger=".btn-delete" data-input="${className}Id"
     data-text="${className}IdText">
     <div class="modal-content">
         <div class="modal-header">
@@ -325,7 +339,7 @@ ${viewAnnotations}
         <div class="modal-body">
             <div class="warning-icon" style="text-align: center; margin: 20px 0;">
                 <svg width="64" height="64" viewBox="0 0 122.88 111.54" style="color: var(--error-color);">
-                    <path fill="currentColor"
+                    <path fill="currentCol2026-09-07T06:16:10.681537Zor"
                         d="M2.35,84.42,45.28,10.2l.17-.27h0A23,23,0,0,1,52.5,2.69,17,17,0,0,1,61.57,0a16.7,16.7,0,0,1,9.11,2.69,22.79,22.79,0,0,1,7,7.26q.19.32.36.63l42.23,73.34.24.44h0a22.48,22.48,0,0,1,2.37,10.19,17.63,17.63,0,0,1-2.17,8.35,15.94,15.94,0,0,1-6.93,6.6c-.19.1-.39.18-.58.26a21.19,21.19,0,0,1-9.11,1.75v0H17.61c-.22,0-.44,0-.65,0a18.07,18.07,0,0,1-6.2-1.15A16.42,16.42,0,0,1,3,104.24a17.53,17.53,0,0,1-3-9.57,23,23,0,0,1,1.57-8.74,7.66,7.66,0,0,1,.77-1.51Z" />
                     <path fill="var(--bg-secondary)"
                         d="M9,88.75,52.12,14.16c5.24-8.25,13.54-8.46,18.87,0l42.43,73.69c3.39,6.81,1.71,16-9.33,15.77H17.61C10.35,103.8,5.67,97.43,9,88.75Z" />
@@ -350,9 +364,7 @@ ${viewAnnotations}
             </button>
             <form id="deleteForm" style="margin: 0;" method="post" ${deleteLink}>
                 ${antiForgeryTokenTagHelper}
-                {{#each fields}}{{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}
-                <input type="hidden" name="${this.name}" id="${className}Id" />{{/if}}{{else}}{{removeLine}}{{/if}}
-                {{/each}}{{removeLine}}
+                ${deletePkInputs}
                 <button type="submit" class="btn btn-danger btn-sm">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">
@@ -364,11 +376,12 @@ ${viewAnnotations}
             </form>
         </div>
     </div>
-</div>{{else}}{{removeLine}}{{/if}}
+</div>
+{{else}}{{removeLine}}{{/if}}
 
 <div class="content-footer">
     <div class="pagination">
-        <a href="${previousPageLink}" class="prev ${previousClassCondition}">
+        <a ${previousPageLink} ${previousClassCondition}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
                 <title data-i18n="previous_page"></title>
                 <g id="Layer_2" data-name="Layer 2">
@@ -385,7 +398,7 @@ ${viewAnnotations}
 
         ${pagesListLoop}
 
-        <a href="${nextPageLink}" class="next ${nextClassCondition}">
+        <a ${nextPageLink} ${nextClassCondition}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 59 47.26">
                 <title data-i18n="next_page"></title>
                 <g id="Layer_2" data-name="Layer 2">
@@ -406,15 +419,15 @@ ${viewAnnotations}
             <label for="total_items" data-i18n="total_items"></label>
             <p>${totalElementsTagHelper}</p>
         </div>
-        <form method="get" class="ongoing-page" action="${onGoingPageLink}">
+        <form method="get" class="ongoing-page" ${onGoingPageLink}>
             <p data-i18n="ongoing_page"></p>
             <select class="dropdown-select btn-sm" name="page" id="page">
                 ${onGoingPagesLoop}
             </select>
-            <input type="hidden" name="pageSize" value="${pageSizeValue}" />
-            <input type="hidden" name="sortOrder" value="${currentSortValue}" />
-            <button type="submit" class="btn btn-tertiary btn-sm"><span data-i18n="go"></span></button>
+            <input type="hidden" name="${pageSizeParamName}" value="${pageSizeValue}" ${pageSizeValueTagHelper} />
+            <input type="hidden" name="${sortParamName}" value="${currentSortValue}" ${currentSortValueTagHelper} />
         </form>
     </div>
 </div>
 ${scriptSection}
+${viewEnd}
