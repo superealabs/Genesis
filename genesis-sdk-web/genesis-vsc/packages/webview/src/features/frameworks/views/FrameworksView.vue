@@ -1,5 +1,5 @@
 <template>
-  <!-- ✅ Plus besoin de passer toutes les props, la Core View est autonome -->
+  <!-- Plus besoin de passer toutes les props, la Core View est autonome -->
   <CoreFrameworksView
     ref="coreViewRef"
     :showBackButton="showBackButton"

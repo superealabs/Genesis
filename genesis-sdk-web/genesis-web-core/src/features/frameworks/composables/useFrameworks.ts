@@ -3,9 +3,9 @@ import { storeToRefs } from 'pinia';
 
 import type { Framework, FrameworkFilters } from '@genesis-labs/shared-types';
 
-import { useCompareSlots } from '@genesis-labs/web-core/core/composables/ux/useCompareSlots';
 import { FRAMEWORK_SERVICE_KEY, type IFrameworkService } from '@genesis-labs/web-core/features/frameworks/types/framework.service.interface';
 import { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store';
+import { useCompareSlotsWithPopup } from '@genesis-labs/web-core/core/composables/ux/useCompareSlotsWithPopup';
 
 export function useFrameworks() {
     // 1. Récupération du service via inject
@@ -21,7 +21,7 @@ export function useFrameworks() {
     const store = useFrameworkStore();
     const { filteredFrameworks, displayMode, filters, searchQuery, isLoading } = storeToRefs(store);
 
-    const compare = useCompareSlots<Framework>({
+    const compare = useCompareSlotsWithPopup<Framework>({
         slots: ['A', 'B', 'C', 'D'],
         getId: (f) => f.id
     });
@@ -66,8 +66,15 @@ export function useFrameworks() {
     }
 
     async function handleSelect(framework: Framework, event?: MouseEvent) {
-        const result = compare.handleSelect(framework);
-        // IMPORTANT : On utilise 'svc' ici, PAS 'service'
+        const result = compare.handleSelect(framework, event);
+        
+        // Si un remplacement est en attente, on NE PASSE PAS encore l'appel au service.
+        // L'appel au service se fera quand l'utilisateur confirmera dans le popup (via handleReplace).
+        if (result.action === 'pending-replace') {
+            return { action: 'replace-needed' as const, event, framework };
+        }
+
+        // Sinon, c'est une sélection/désélection normale, on appelle le service
         await svc.selectFramework(framework.id); 
         return { action: result.action, event, framework };
     }
@@ -87,13 +94,20 @@ export function useFrameworks() {
         compare,
         filters,
         searchQuery,
-        isLoading, // ✅ Ajouté pour que la vue puisse afficher un spinner si besoin
+        isLoading,
         initialize,
         setSearch,
         setFilters,
         toggleDisplayMode,
         handleModeChange,
         handleSelect,
-        handleReplace
+        handleReplace,
+
+        showReplacePopup: compare.showReplacePopup,
+        pendingFramework: compare.pendingItem, // Alias pour rester cohérent avec le nom dans la vue
+        mouseX: compare.mouseX,
+        mouseY: compare.mouseY,
+        cancelReplace: compare.cancelReplace,
+        triggerReplace: compare.triggerReplace // Gardé pour le defineExpose
     };
 }

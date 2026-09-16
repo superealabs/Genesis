@@ -69,15 +69,12 @@ const emit = defineEmits<{
 
 const {
   frameworks, selectedId, displayMode, compareMode, frameworkSlots, filters, searchQuery,
-  /*setSearch, setFilters, toggleDisplayMode,*/ handleModeChange,
-  handleSelect, handleReplace, compare, initialize
+  handleModeChange, handleSelect, handleReplace, compare, initialize,
+  // États du popup fournis par le composable
+  showReplacePopup, pendingFramework, mouseX, mouseY, cancelReplace, triggerReplace
 } = useFrameworks();
 
 const detailFramework = ref<Framework | null>(null);
-const showReplacePopup = ref(false);
-const pendingFramework = ref<Framework | null>(null);
-const mouseX = ref<number | null>(null);
-const mouseY = ref<number | null>(null);
 const isFilterOpen = ref(false); //  État du popup de filtre
 
 const replaceOptions = computed<SelectionOption[]>(() => {
@@ -96,29 +93,12 @@ function handleReplaceSelection(slotId: string | number) {
   if (pendingFramework.value) handleReplace(slotId, pendingFramework.value);
   cancelReplace();
 }
-function cancelReplace() {
-  showReplacePopup.value = false;
-  pendingFramework.value = null;
-  mouseX.value = null;
-  mouseY.value = null;
-}
+
 
 async function handleSelectWrapper(framework: Framework, event?: MouseEvent) {
   const result = await handleSelect(framework, event);
   
-  if (result.action === 'replace-needed') {
-    triggerReplace(framework, event);
-  } else {
-    emit('select', result);
-  }
-}
-
-function triggerReplace(framework: Framework, event?: MouseEvent) {
-  pendingFramework.value = framework;
-  mouseX.value = event ? event.clientX : window.innerWidth / 2;
-  mouseY.value = event ? event.clientY : window.innerHeight / 2;
-  showReplacePopup.value = true;
-  console.warn("déclenchement du remplacement")
+  emit('select', result);
 }
 
 
