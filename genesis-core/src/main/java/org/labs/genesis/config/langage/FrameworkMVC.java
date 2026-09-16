@@ -94,6 +94,13 @@ public class FrameworkMVC extends Framework {
         private String deleteDataTagHelper;
         private String pageSizeTagHelper;
         private String dataValue;
+        private String dateDataValue;
+        private String timeDataValue;
+        private String timeTzDataValue;
+        private String dateTimeDataValue;
+        private String dateTimeTzDataValue;
+        private String intervalDataValue;
+        private String periodIntervalDataValue;
         private String dataRawValue;
         private String orderSortsTagHelper;
         private String dataForeignValue;
@@ -144,6 +151,13 @@ public class FrameworkMVC extends Framework {
         private String name;
         private String viewAnnotations;
         private String dataValue;
+        private String dateDataValue;
+        private String timeDataValue;
+        private String timeTzDataValue;
+        private String dateTimeDataValue;
+        private String dateTimeTzDataValue;
+        private String intervalDataValue;
+        private String periodIntervalDataValue;
         private String dataRawValue;
         private String dataForeignValue;
         private String deleteDataTagHelper;

@@ -21,6 +21,20 @@ ${additionalImports}
             ${fileDataValue}
             {{elseIf this.isForeignKey}}
             <p>${dataForeignValue}</p>
+            {{elseIf this.isDateTimeTz}}
+                ${dateTimeTzDataValue}
+            {{elseIf this.isDateTime}}
+                ${dateTimeDataValue}
+            {{elseIf this.isTimeTz}}
+                ${timeTzDataValue}
+            {{elseIf this.isTime}}
+                ${timeDataValue}
+            {{elseIf this.isDate}}
+                ${dateDataValue}
+            {{elseIf this.isPeriodInterval}}
+                ${periodIntervalDataValue}
+            {{elseIf this.isDurationInterval}}
+                ${intervalDataValue}
             {{else}}
             <p>${dataValue}</p>
             {{/if}}

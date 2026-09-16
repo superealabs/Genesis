@@ -674,6 +674,8 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isDateTimeTz",field.isDateTimeTz());
         fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
+        fieldMap.put("isPeriodInterval", "java.time.Period".equals(field.getType()));
+        fieldMap.put("isDurationInterval", field.isInterval() && !"java.time.Period".equals(field.getType()));
 
         return fieldMap;
     }
@@ -693,6 +695,8 @@ public class FrameworkMetadataProvider {
                 "TimeOnly".equals(field.getType()) || field.isTime() || field.isTimeTz()
         ) {
             uiType = "time";
+        } else if (field.isInterval()) {
+            uiType = "text";
         } else if (field.isNumeric()) {
             uiType = "number";
         }
@@ -786,6 +790,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isInterval",field.isInterval());
         fieldMap.put("isComparableInterval", field.isInterval() && !"java.time.Period".equals(field.getType()));
         fieldMap.put("isPeriodInterval", field.isInterval() && "java.time.Period".equals(field.getType()));
+        fieldMap.put("isDurationInterval", field.isInterval() && !"java.time.Period".equals(field.getType()));
         fieldMap.put("isParentForeignKey",field.getIsParentForeignKey());
 
         return fieldMap;
@@ -1134,6 +1139,13 @@ public class FrameworkMetadataProvider {
         altMap.put("deleteDataTagHelper", frameworkMVC.getView().getList().getDeleteDataTagHelper());
         altMap.put("pageSizeTagHelper", frameworkMVC.getView().getList().getPageSizeTagHelper());
         altMap.put("dataValue", frameworkMVC.getView().getList().getDataValue());
+        altMap.put("dateDataValue", frameworkMVC.getView().getList().getDateDataValue());
+        altMap.put("timeDataValue", frameworkMVC.getView().getList().getTimeDataValue());
+        altMap.put("timeTzDataValue", frameworkMVC.getView().getList().getTimeTzDataValue());
+        altMap.put("dateTimeDataValue", frameworkMVC.getView().getList().getDateTimeDataValue());
+        altMap.put("dateTimeTzDataValue", frameworkMVC.getView().getList().getDateTimeTzDataValue());
+        altMap.put("intervalDataValue", frameworkMVC.getView().getList().getIntervalDataValue());
+        altMap.put("periodIntervalDataValue", frameworkMVC.getView().getList().getPeriodIntervalDataValue());
         altMap.put("arrayDataValue", frameworkMVC.getView().getList().getArrayDataValue());
         altMap.put("dataRawValue", frameworkMVC.getView().getList().getDataRawValue());
         altMap.put("orderSortsTagHelper", frameworkMVC.getView().getList().getOrderSortsTagHelper());
@@ -1189,6 +1201,13 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
         altMap.put("viewAnnotations", frameworkMVC.getView().getDetail().getViewAnnotations());
         altMap.put("dataValue", frameworkMVC.getView().getDetail().getDataValue());
+        altMap.put("dateDataValue", frameworkMVC.getView().getDetail().getDateDataValue());
+        altMap.put("timeDataValue", frameworkMVC.getView().getDetail().getTimeDataValue());
+        altMap.put("timeTzDataValue", frameworkMVC.getView().getDetail().getTimeTzDataValue());
+        altMap.put("dateTimeDataValue", frameworkMVC.getView().getDetail().getDateTimeDataValue());
+        altMap.put("dateTimeTzDataValue", frameworkMVC.getView().getDetail().getDateTimeTzDataValue());
+        altMap.put("intervalDataValue", frameworkMVC.getView().getDetail().getIntervalDataValue());
+        altMap.put("periodIntervalDataValue", frameworkMVC.getView().getDetail().getPeriodIntervalDataValue());
         altMap.put("dataRawValue", frameworkMVC.getView().getDetail().getDataRawValue());
         altMap.put("dataForeignValue", frameworkMVC.getView().getDetail().getDataForeignValue());
         altMap.put("deleteDataTagHelper", frameworkMVC.getView().getDetail().getDeleteDataTagHelper());

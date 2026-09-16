@@ -3590,7 +3590,62 @@
               if (max != null) {
                 predicates.add(cb.le(totalMonths, max.toTotalMonths()));
               }
-          }
+            }
+            
+            public static String formatDuration(java.time.Duration duration) {
+              if (duration == null) {
+                return "-";
+              }
+        
+              long seconds = duration.getSeconds();
+          
+              long days = seconds / 86400;
+              long hours = (seconds % 86400) / 3600;
+              long minutes = (seconds % 3600) / 60;
+              long secs = seconds % 60;
+          
+              StringBuilder result = new StringBuilder();
+          
+              if (days != 0) {
+                result.append(days).append(" j ");
+              }
+          
+              if (hours != 0) {
+                result.append(hours).append(" h ");
+              }
+          
+              if (minutes != 0) {
+                result.append(minutes).append(" min ");
+              }
+          
+              if (secs != 0 || result.length() == 0) {
+                result.append(secs).append(" s");
+              }
+          
+              return result.toString().trim();
+            }
+        
+            public static String formatPeriod(java.time.Period period) {
+                if (period == null) {
+                  return "-";
+                }
+            
+                StringBuilder result = new StringBuilder();
+            
+                if (period.getYears() != 0) {
+                  result.append(period.getYears()).append(" an");
+                  if (Math.abs(period.getYears()) > 1) {
+                    result.append("s");
+                  }
+                  result.append(" ");
+                }
+            
+                if (period.getMonths() != 0 || result.length() == 0) {
+                  result.append(period.getMonths()).append(" mois");
+                }
+            
+                return result.toString().trim();
+            }
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
@@ -3625,8 +3680,8 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
 
-    - fileType: "Oracle Year Month Interval Converter"
-      fileName: "OracleYearMonthIntervalConverter"
+    - fileType: "Oracle Year Month Interval"
+      fileName: "OracleYearMonthIntervalType"
       extension: "java"
       content: |
         package ${groupLink}.${lowerCase(projectName)}.utils;
@@ -5340,6 +5395,13 @@
       deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
       pageSizeTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Page.size == ${this}}\""
       dataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      dateDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'dd/MM/yyyy') : '-'}\"></span>"
+      timeDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'HH:mm:ss') : '-'}\"></span>"
+      timeTzDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'HH:mm:ss XXX') : '-'}\"></span>"
+      dateTimeDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'dd/MM/yyyy HH:mm:ss') : '-'}\"></span>"
+      dateTimeTzDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'dd/MM/yyyy HH:mm:ss XXX') : '-'}\"></span>"
+      intervalDataValue: "<span th:text=\"$[thymeleafDollar]{T(${groupLink}.${lowerCase(projectName)}.utils.WebUtils).formatDuration(${minStart(className)}.${minStart(this.name)})}\"></span>"
+      periodIntervalDataValue: "<span th:text=\"$[thymeleafDollar]{T(${groupLink}.${lowerCase(projectName)}.utils.WebUtils).formatPeriod(${minStart(className)}.${minStart(this.name)})}\"></span>"
       arrayDataValue: |
         <span th:text="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #strings.arrayJoin(${minStart(className)}.${minStart(this.name)}, ', ') : ''}"></span>
       dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? ${minStart(className)}.${minStart(this.name)}.${minStart(this.displayColumn)} : ''}\"></span>"
@@ -5424,7 +5486,14 @@
         </main>
         </div>
       dataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\"></span>"
+      dateDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'dd/MM/yyyy') : '-'}\"></span>"
+      timeDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'HH:mm:ss') : '-'}\"></span>"
+      timeTzDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'HH:mm:ss XXX') : '-'}\"></span>"
+      dateTimeDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'dd/MM/yyyy HH:mm:ss') : '-'}\"></span>"
+      dateTimeTzDataValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? #temporals.format(${minStart(className)}.${minStart(this.name)}, 'dd/MM/yyyy HH:mm:ss XXX') : '-'}\"></span>"
       dataForeignValue: "<span th:text=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null ? ${minStart(className)}.${minStart(this.name)}.${minStart(this.displayColumn)} : ''}\"></span>"
+      intervalDataValue: "<span th:text=\"$[thymeleafDollar]{T(${groupLink}.${lowerCase(projectName)}.utils.WebUtils).formatDuration(${minStart(className)}.${minStart(this.name)})}\"></span>"
+      periodIntervalDataValue: "<span th:text=\"$[thymeleafDollar]{T(${groupLink}.${lowerCase(projectName)}.utils.WebUtils).formatPeriod(${minStart(className)}.${minStart(this.name)})}\"></span>"
       deleteDataTagHelper: "th:attr=\"data-id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}}\""
       deleteLink: "th:action=\"@{/${minStart(className)}/delete}\""
       updateLink: "th:href=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
