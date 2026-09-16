@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { GeneratorStepper } from '@genesis-labs/web-core/features/generator/manifest';
 import { useGeneratorVsc } from '@/features/generator/composables/useGeneratorVsc';
-import type { FileRequestPayload } from '@genesis-labs/core/features/generator/manifest';
-import type { Framework } from '@genesis-labs/core/features/frameworks/manifest';  // ← ajouter
-import { DatabaseEngineDto } from '@genesis-labs/shared-types';
+import type { FileRequestPayload } from '@genesis-labs/web-core/features/generator/manifest';
+import type { Framework } from '@genesis-labs/web-core/features/frameworks/manifest';
+import type { FrontendFramework } from '@genesis-labs/web-core/features/frontend/manifest';
+import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
 
 const {
     currentStep,
@@ -11,12 +12,11 @@ const {
     goToPreviousStep,
     goToNextStep,
     setFramework,
+    setDatabaseEngine,
     setSelectedFrontendFramework,
     reset,
     handleSelectFolderPath,
-    handleSelectAnyFile,
-    handleSelectSqlFile,
-    setDatabaseEngine,
+    handleFileRequest
 } = useGeneratorVsc();
 
 function handleClose() {
@@ -26,32 +26,22 @@ function handleClose() {
 function handleNextStep() {
     const finalData = goToNextStep();
     if (finalData) {
-        // Logique de fin si nécessaire
+        // Déclencher la génération du projet ici si nécessaire
+        console.log("Prêt à générer :", finalData);
     }
 }
 
-function onSelectFramework(framework: Framework) {   // ← ajouter
+// ═══ ORCHESTRATION UI (Sélection + Avancement) ═══
+function onSelectFramework(framework: Framework) {
     setFramework(framework);
 }
 
 function onSelectDatabase(engine: DatabaseEngineDto) {
-    // 1. Pré-remplit le store avec les métadonnées du moteur (port, driver, etc.)
     setDatabaseEngine(engine);
-    console.log(`Selection depuis vsc : ${engine.name}`)
-    
 }
 
-function onRequestFolderPath() {
-    handleSelectFolderPath();
-}
-
-function onRequestFilePath(payload: FileRequestPayload) {
-    console.log("handle request filePath from composable of vsc")
-    if (payload.field === 'script') {
-        handleSelectSqlFile();
-    } else {
-        handleSelectAnyFile(payload.field, payload.extensions);
-    }
+function onSelectFrontend(framework: FrontendFramework) {
+    setSelectedFrontendFramework(framework);
 }
 </script>
 
@@ -64,8 +54,8 @@ function onRequestFilePath(payload: FileRequestPayload) {
         @next="handleNextStep"
         @select-framework="onSelectFramework"
         @select-database="onSelectDatabase"
-        @select-frontend="setSelectedFrontendFramework"
-        @request-folder-path="onRequestFolderPath"
-        @request-file-path="onRequestFilePath"
-    />                                               <!-- ← retirer la balise fermante séparée -->
+        @select-frontend="onSelectFrontend" 
+        @request-folder-path="handleSelectFolderPath" 
+        @request-file-path="handleFileRequest" 
+    />
 </template>

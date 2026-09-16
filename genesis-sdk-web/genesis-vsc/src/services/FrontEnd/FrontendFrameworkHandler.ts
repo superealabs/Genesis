@@ -49,6 +49,14 @@ const MOCK_FRONTEND_FRAMEWORKS: FrontendFrameworkDto[] = [
         coreFramework: 'Svelte',
         componentExtension: '.svelte',
         defaultPort: '5173'
+    },
+    {
+        id: 5,
+        languageId: 2,
+        name: 'Razor',
+        coreFramework: 'Laravel',
+        componentExtension: '.tl',
+        defaultPort: '1456'
     }
 ];
 

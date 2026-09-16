@@ -7,6 +7,7 @@
             :sublabel="fw.coreFramework"
             :selected="selectedId === fw.id"
             :show-info-button="true"
+            :badge="frameworkSlots?.get(fw.id) ?? null"
             @click="$emit('select', fw, $event)"
             @info="$emit('info', fw)"
         >
@@ -32,6 +33,7 @@ defineProps<{
     frontends: FrontendFramework[];
     selectedId?: number;
     display: 'grid' | 'list';
+    frameworkSlots?: Map<number, string>;
 }>();
 
 defineEmits<{
