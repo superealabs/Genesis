@@ -73,6 +73,7 @@ public class DataProvider {
                         .toList();
 
         return executeChart(
+                connection,
                 dsl,
                 tableName,
                 config,
@@ -105,6 +106,7 @@ public class DataProvider {
                 );
 
         return executeTable(
+                connection,
                 dsl,
                 tableName,
                 config
@@ -186,63 +188,23 @@ public class DataProvider {
     // =========================================================================
 
     private ChartData executeChart(
+            Connection connection,
             DSLContext dsl,
             String tableName,
             VisualizationConfig config,
             List<VisualizationParameter> dimensions,
             List<VisualizationParameter> measures,
             List<VisualizationParameter> values
-    ) {
+    ) throws Exception {
 
-        Table<?> table =
-                DSL.table(
-                        DSL.name(tableName)
-                );
+        List<VisualizationParameter> parameters = new ArrayList<>();
+        parameters.addAll(dimensions);
+        parameters.addAll(measures);
+        parameters.addAll(values);
 
-        List<SelectField<?>> selectFields =
-                new ArrayList<>();
-
-        List<Field<?>> dimensionFields =
-                new ArrayList<>();
-
-        List<Field<?>> measureFields =
-                new ArrayList<>();
-
-        dimensionFields =
-                buildDimensionFields(
-                        config,
-                        dimensions,
-                        selectFields
-                );
-
-        measureFields =
-                buildMeasureFields(
-                        config,
-                        measures,
-                        selectFields
-                );
-
-        buildValueFields(
-                config,
-                values,
-                selectFields
-        );
-
-        if (selectFields.isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "No visualization value has been configured"
-            );
-        }
-
-        Select<?> query =
-                buildChartQuery(
-                        dsl,
-                        table,
-                        selectFields,
-                        dimensionFields,
-                        measureFields
-                );
+        QueryPlan plan = new QueryPlanner(connection, dsl)
+                .planChart(tableName, config, parameters);
+        Select<?> query = new SQLGenerator().generate(dsl, plan);
 
         System.out.println(
                 "[DataProvider] Chart SQL: " + query
@@ -264,35 +226,15 @@ public class DataProvider {
     // =========================================================================
 
     private TableData executeTable(
+            Connection connection,
             DSLContext dsl,
             String tableName,
             VisualizationConfig config
-    ) {
+    ) throws Exception {
 
-        Table<?> table =
-                DSL.table(
-                        DSL.name(tableName)
-                );
-
-        List<SelectField<?>> selectFields =
-                buildTableColumns(
-                        config
-                );
-
-        if (selectFields.isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "No table column has been configured"
-            );
-        }
-
-        Select<?> query =
-                buildTableQuery(
-                        dsl,
-                        table,
-                        selectFields,
-                        config
-                );
+        QueryPlan plan = new QueryPlanner(connection, dsl)
+                .planTable(tableName, config);
+        Select<?> query = new SQLGenerator().generate(dsl, plan);
 
         System.out.println(
                 "[DataProvider] Table SQL: " + query
@@ -391,78 +333,83 @@ public class DataProvider {
     // TABLE RESULT
     // =========================================================================
 
-    /**
-     * Transforme directement le résultat SQL en TableData.
-     *
-     * Exemple :
-     *
-     * columns:
-     *
-     * [
-     *     "id",
-     *     "nom",
-     *     "salaire"
-     * ]
-     *
-     * rows:
-     *
-     * [
-     *     [1, "Jean", 2500],
-     *     [2, "Paul", 3000]
-     * ]
-     */
-    // Dans DataProvider, modifiez la méthode convertTableResult()
     private TableData convertTableResult(
             Result<?> result,
-            VisualizationConfig config  // Ajout du paramètre config
+            VisualizationConfig config
     ) {
         List<String> columns = new ArrayList<>();
         List<List<Object>> rows = new ArrayList<>();
 
-        // =====================================================================
-        // Récupérer les en-têtes configurés
-        // =====================================================================
         Map<String, String> configuredHeaders = null;
         Object headersObj = config.getValue("columnsHeaders");
+
         if (headersObj instanceof Map<?, ?> map) {
+
             configuredHeaders = new HashMap<>();
+
             for (Map.Entry<?, ?> entry : map.entrySet()) {
-                if (entry.getKey() instanceof String key && entry.getValue() instanceof String value) {
-                    if(key.contains(":")) key = key.substring(key.lastIndexOf(":") + 1);
-                    if(key.contains(".")) key = key.substring(key.lastIndexOf(".") + 1);
-                    configuredHeaders.put(key, value);
+
+                if (entry.getKey() instanceof String key
+                        && entry.getValue() instanceof String value) {
+
+                    if (key.contains(":")) {
+                        key = key.substring(
+                                key.lastIndexOf(":") + 1
+                        );
+                    }
+
+                    if (key.contains(".")) {
+                        key = key.substring(
+                                key.lastIndexOf(".") + 1
+                        );
+                    }
+
+                    configuredHeaders.put(
+                            key,
+                            value
+                    );
                 }
             }
         }
 
-        // =====================================================================
-        // COLUMNS - Utiliser les en-têtes configurés si disponibles
-        // =====================================================================
         for (Field<?> field : result.fields()) {
-            String fieldName = field.getName();
 
+            String fieldName =
+                    field.getName();
 
-            // Si un en-tête personnalisé existe pour cette colonne, l'utiliser
-            if (configuredHeaders != null && configuredHeaders.containsKey(fieldName)) {
-                columns.add(configuredHeaders.get(fieldName));
+            if (configuredHeaders != null
+                    && configuredHeaders.containsKey(fieldName)) {
+
+                columns.add(
+                        configuredHeaders.get(fieldName)
+                );
+
             } else {
+
                 columns.add(fieldName);
             }
         }
 
-        // =====================================================================
-        // ROWS (inchangé)
-        // =====================================================================
         for (Record record : result) {
-            List<Object> row = new ArrayList<>();
+
+            List<Object> row =
+                    new ArrayList<>();
+
             for (Field<?> field : result.fields()) {
-                Object value = record.get(field);
+
+                Object value =
+                        record.get(field);
+
                 row.add(value);
             }
+
             rows.add(row);
         }
 
-        return new TableData(columns, rows);
+        return new TableData(
+                columns,
+                rows
+        );
     }
 
     // =========================================================================
@@ -538,12 +485,9 @@ public class DataProvider {
                             BigDecimal.class
                     );
 
-            Field<BigDecimal> aggregated =
-                    DSL.sum(
-                            numericField
-                    ).as(
-                            param.getKey()
-                    );
+            Field<?> aggregated =
+                    aggregateField(config, numericField)
+                            .as(param.getKey());
 
             fields.add(
                     aggregated
@@ -555,6 +499,25 @@ public class DataProvider {
         }
 
         return fields;
+    }
+
+    private Field<?> aggregateField(
+            VisualizationConfig config,
+            Field<BigDecimal> numericField
+    ) {
+        Object configuredAggregation = config.getValue("aggregation");
+        String aggregation = configuredAggregation == null
+                ? "SUM"
+                : configuredAggregation.toString().trim().toUpperCase();
+
+        return switch (aggregation.replace('_', ' ')) {
+            case "COUNT" -> DSL.count(numericField);
+            case "COUNT DISTINCT" -> DSL.countDistinct(numericField);
+            case "AVG" -> DSL.avg(numericField);
+            case "MIN" -> DSL.min(numericField);
+            case "MAX" -> DSL.max(numericField);
+            default -> DSL.sum(numericField);
+        };
     }
 
     // =========================================================================
@@ -597,22 +560,324 @@ public class DataProvider {
             Table<?> table,
             List<SelectField<?>> selectFields,
             List<Field<?>> dimensionFields,
-            List<Field<?>> measureFields
+            List<Field<?>> measureFields,
+            VisualizationConfig config,
+            List<VisualizationParameter> dimensions,
+            List<VisualizationParameter> measures,
+            List<VisualizationParameter> values
     ) {
 
-        SelectJoinStep<Record> from =
-                dsl.select(selectFields)
-                        .from(table);
+        SelectQuery<Record> query =
+                dsl.selectQuery();
+
+        query.addSelect(
+                selectFields
+        );
+
+        query.addFrom(
+                table
+        );
+
+        // =====================================================================
+        // GROUP BY
+        // =====================================================================
 
         if (!dimensionFields.isEmpty()
                 && !measureFields.isEmpty()) {
 
-            return from.groupBy(
+            query.addGroupBy(
                     dimensionFields
             );
         }
 
-        return from;
+        // =====================================================================
+        // SORT
+        // =====================================================================
+
+        List<SortField<?>> sortFields =
+                buildSortFields(
+                        config,
+                        dimensions,
+                        measures,
+                        values
+                );
+
+        if (!sortFields.isEmpty()) {
+
+            query.addOrderBy(
+                    sortFields
+            );
+        }
+
+        // =====================================================================
+        // LIMIT
+        // =====================================================================
+
+        Integer limit =
+                getChartLimit(
+                        config,
+                        dimensions,
+                        measures,
+                        values
+                );
+
+        if (limit != null
+                && limit > 0) {
+
+            query.addLimit(limit);
+        }
+
+        return query;
+    }
+
+    // =========================================================================
+    // CHART SORT
+    // =========================================================================
+
+    private List<SortField<?>> buildSortFields(
+            VisualizationConfig config,
+            List<VisualizationParameter> dimensions,
+            List<VisualizationParameter> measures,
+            List<VisualizationParameter> values
+    ) {
+
+        List<SortField<?>> sortFields =
+                new ArrayList<>();
+
+        for (VisualizationParameter parameter :
+                dimensions) {
+
+            SortField<?> sortField =
+                    buildSortField(
+                            config,
+                            parameter
+                    );
+
+            if (sortField != null) {
+
+                sortFields.add(sortField);
+            }
+        }
+
+        for (VisualizationParameter parameter :
+                measures) {
+
+            SortField<?> sortField =
+                    buildSortField(
+                            config,
+                            parameter
+                    );
+
+            if (sortField != null) {
+
+                sortFields.add(sortField);
+            }
+        }
+
+        for (VisualizationParameter parameter :
+                values) {
+
+            SortField<?> sortField =
+                    buildSortField(
+                            config,
+                            parameter
+                    );
+
+            if (sortField != null) {
+
+                sortFields.add(sortField);
+            }
+        }
+
+        return sortFields;
+    }
+
+    private SortField<?> buildSortField(
+            VisualizationConfig config,
+            VisualizationParameter parameter
+    ) {
+
+        Object sortValue =
+                config.getValue(
+                        parameter.getKey() + ".sort"
+                );
+
+        if (sortValue == null) {
+            return null;
+        }
+
+        String direction =
+                sortValue
+                        .toString()
+                        .trim()
+                        .toUpperCase();
+
+        if (direction.isEmpty()
+                || "NONE".equals(direction)) {
+
+            return null;
+        }
+
+        String column =
+                getColumnValue(
+                        config,
+                        parameter
+                );
+
+        if (column == null) {
+            return null;
+        }
+
+        // =====================================================================
+        // MEASURE
+        // =====================================================================
+
+        if (parameter.isMeasure()) {
+
+            Field<BigDecimal> numericField =
+                    DSL.field(
+                            DSL.name(column),
+                            BigDecimal.class
+                    );
+
+            Field<?> aggregated = aggregateField(config, numericField);
+
+            if ("ASCENDING".equals(direction)
+                    || "ASC".equals(direction)) {
+
+                return aggregated.asc();
+            }
+
+            if ("DESCENDING".equals(direction)
+                    || "DESC".equals(direction)) {
+
+                return aggregated.desc();
+            }
+
+            return null;
+        }
+
+        // =====================================================================
+        // DIMENSION / VALUE
+        // =====================================================================
+
+        Field<?> field =
+                DSL.field(
+                        DSL.name(column)
+                );
+
+        if ("ASCENDING".equals(direction)
+                || "ASC".equals(direction)) {
+
+            return field.asc();
+        }
+
+        if ("DESCENDING".equals(direction)
+                || "DESC".equals(direction)) {
+
+            return field.desc();
+        }
+
+        return null;
+    }
+
+    // =========================================================================
+    // CHART LIMIT
+    // =========================================================================
+
+    private Integer getChartLimit(
+            VisualizationConfig config,
+            List<VisualizationParameter> dimensions,
+            List<VisualizationParameter> measures,
+            List<VisualizationParameter> values
+    ) {
+
+        Integer limit =
+                getParameterLimit(
+                        config,
+                        dimensions
+                );
+
+        if (limit != null) {
+            return limit;
+        }
+
+        limit =
+                getParameterLimit(
+                        config,
+                        measures
+                );
+
+        if (limit != null) {
+            return limit;
+        }
+
+        return getParameterLimit(
+                config,
+                values
+        );
+    }
+
+    private Integer getParameterLimit(
+            VisualizationConfig config,
+            List<VisualizationParameter> parameters
+    ) {
+
+        for (VisualizationParameter parameter :
+                parameters) {
+
+            Object value =
+                    config.getValue(
+                            parameter.getKey() + ".limit"
+                    );
+
+            if (value == null) {
+                continue;
+            }
+
+            Integer limit =
+                    parseInteger(value);
+
+            if (limit != null
+                    && limit > 0) {
+
+                return limit;
+            }
+        }
+
+        return null;
+    }
+
+    private Integer parseInteger(
+            Object value
+    ) {
+
+        if (value == null) {
+            return null;
+        }
+
+        if (value instanceof Number number) {
+
+            return number.intValue();
+        }
+
+        try {
+
+            String stringValue =
+                    value.toString().trim();
+
+            if (stringValue.isEmpty()) {
+                return null;
+            }
+
+            return Integer.parseInt(
+                    stringValue
+            );
+
+        } catch (NumberFormatException e) {
+
+            return null;
+        }
     }
 
     // =========================================================================

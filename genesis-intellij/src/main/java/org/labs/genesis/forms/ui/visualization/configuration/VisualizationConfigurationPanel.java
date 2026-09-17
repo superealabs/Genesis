@@ -6,10 +6,7 @@ import org.labs.genesis.forms.ui.common.RoundedBorder;
 import org.labs.genesis.forms.ui.common.ScrollableContentPanel;
 import org.labs.genesis.forms.ui.visualization.DashboardVisualComponent;
 import org.labs.genesis.forms.ui.visualization.configuration.editor.*;
-import org.labs.genesis.forms.ui.visualization.model.FieldQueryOptions;
-import org.labs.genesis.forms.ui.visualization.model.VisualizationItem;
-import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
-import org.labs.genesis.forms.ui.visualization.model.VisualizationParameterType;
+import org.labs.genesis.forms.ui.visualization.model.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -31,6 +28,7 @@ public class VisualizationConfigurationPanel extends JPanel {
     private final ScrollableContentPanel contentPanel;
     private final Map<String, JComponent> editorMap = new HashMap<>();
     private final Map<String, JPanel> rowMap = new HashMap<>();
+    private GlobalVisualizationOptionsPanel globalOptionsPanel;
 
     public VisualizationConfigurationPanel(
             DashboardVisualComponent targetComponent,
@@ -67,6 +65,10 @@ public class VisualizationConfigurationPanel extends JPanel {
 
     private void buildParameters() {
         for (VisualizationParameter parameter : item.parameters) {
+            if ("limit".equals(parameter.getKey()) || "sort".equals(parameter.getKey()) || "filter".equals(parameter.getKey())) {
+                continue;
+            }
+
             JComponent editor = createEditor(parameter);
             editorMap.put(parameter.getKey(), editor);
 
@@ -77,6 +79,10 @@ public class VisualizationConfigurationPanel extends JPanel {
             contentPanel.add(row);
             contentPanel.add(Box.createVerticalStrut(10));
         }
+
+        globalOptionsPanel = new GlobalVisualizationOptionsPanel();
+        bindGlobalOptionsToConfig();
+        contentPanel.add(createGlobalOptionsSection());
         contentPanel.add(Box.createVerticalGlue());
     }
 
@@ -315,92 +321,84 @@ public class VisualizationConfigurationPanel extends JPanel {
         panel.add(Box.createVerticalStrut(5));
         panel.add(editor);
 
-        if (supportsFieldOptions(parameter)) {
-            FieldAdvancedOptionsPanel advancedPanel = new FieldAdvancedOptionsPanel();
-            advancedPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-            restoreFieldOptions(parameter.getKey(), advancedPanel);
-            boolean hasActive = advancedPanel.hasActiveOptions();
-            advancedPanel.setVisible(hasActive);
-
-            JToggleButton optionsToggle = createFieldOptionsToggle();
-            optionsToggle.setSelected(hasActive);
-            updateToggleIndicator(optionsToggle, hasActive);
-            labelRow.add(optionsToggle, BorderLayout.EAST);
-
-            optionsToggle.addActionListener(e -> {
-                advancedPanel.setVisible(optionsToggle.isSelected());
-                contentPanel.revalidate();
-                contentPanel.repaint();
-            });
-
-            advancedPanel.setChangeListener(() -> {
-                FieldQueryOptions options = advancedPanel.getOptions();
-                persistFieldOptions(parameter.getKey(), options);
-                updateToggleIndicator(optionsToggle, !options.isEmpty());
-            });
-
-            panel.add(Box.createVerticalStrut(6));
-            panel.add(advancedPanel);
-        }
-
         return panel;
     }
 
-    private boolean supportsFieldOptions(VisualizationParameter parameter) {
-        if (!parameter.hasQueryRole()) return false;
-        if (!(parameter.isDimension() || parameter.isMeasure() || parameter.isValue())) return false;
-        return switch (parameter.getType()) {
-            case DB_COLUMN, DB_COLUMN_OR_FORMULA -> true;
-            default -> false;
-        };
-    }
+    private JPanel createGlobalOptionsSection() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setOpaque(false);
+        panel.setBorder(new EmptyBorder(0, 10, 0, 10));
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-    private JToggleButton createFieldOptionsToggle() {
-        JToggleButton button = new JToggleButton(AllIcons.General.Filter);
-        button.setToolTipText("Limit / Sort / Filter");
-        button.setBorderPainted(false);
-        button.setContentAreaFilled(false);
-        button.setFocusPainted(false);
-        button.setFocusable(false);
-        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        button.setMargin(new Insets(0, 0, 0, 0));
-        Dimension size = new Dimension(20, 20);
-        button.setPreferredSize(size);
-        button.setMinimumSize(size);
-        button.setMaximumSize(size);
-        return button;
-    }
-
-    private void updateToggleIndicator(JToggleButton button, boolean active) {
-        button.setBorder(active
-                ? BorderFactory.createCompoundBorder(new RoundedBorder(DashboardTheme.ACCENT, 1, 6), new EmptyBorder(1, 1, 1, 1))
-                : BorderFactory.createEmptyBorder(2, 2, 2, 2));
-        button.setContentAreaFilled(active);
-        button.setToolTipText(active ? "Limit / Sort / Filter (actif)" : "Limit / Sort / Filter");
-    }
-
-    private void restoreFieldOptions(String key, FieldAdvancedOptionsPanel panel) {
-        if (targetComponent == null) return;
-        FieldQueryOptions options = new FieldQueryOptions();
-
-        Object limit = targetComponent.getConfigValue(key + ".limit");
-        if (limit instanceof Number number) {
-            options.limit = number.intValue();
-        } else if (limit instanceof String s && !s.isBlank()) {
-            try { options.limit = Integer.parseInt(s.trim()); } catch (NumberFormatException ignored) { }
+        if (globalOptionsPanel == null) {
+            globalOptionsPanel = new GlobalVisualizationOptionsPanel();
         }
-        options.sortDirection = targetComponent.getConfigValue(key + ".sort");
-        options.filter = targetComponent.getConfigValue(key + ".filter");
 
-        panel.setOptions(options);
+        panel.add(globalOptionsPanel);
+        return panel;
     }
 
-    private void persistFieldOptions(String key, FieldQueryOptions options) {
-        if (targetComponent == null) return;
-        targetComponent.updateConfig(key + ".limit", options.limit);
-        targetComponent.updateConfig(key + ".sort", options.sortDirection);
-        targetComponent.updateConfig(key + ".filter", options.filter);
+    private void bindGlobalOptionsToConfig() {
+        if (globalOptionsPanel == null || targetComponent == null) {
+            return;
+        }
+
+        Object globalLimit = targetComponent.getConfigObject("limit");
+        Object globalAggregation = targetComponent.getConfigObject("aggregation");
+        Object globalSortColumn = targetComponent.getConfigObject("sortColumn");
+        Object globalSortDirection = targetComponent.getConfigObject("sortDirection");
+        Object globalFilters = targetComponent.getConfigObject("filters");
+
+        if (globalLimit != null) {
+            globalOptionsPanel.setLimitValue(globalLimit);
+        }
+        if (globalAggregation != null) {
+            globalOptionsPanel.setAggregation(globalAggregation.toString());
+        }
+        if (globalSortColumn != null) {
+            globalOptionsPanel.setSortColumn(globalSortColumn.toString());
+        }
+        if (globalSortDirection != null) {
+            globalOptionsPanel.setSortDirection(globalSortDirection.toString());
+        }
+        if (globalFilters != null && globalFilters instanceof List<?> list) {
+            List<VisualizationFilterCondition> conditions = new ArrayList<>();
+            for (Object item : list) {
+                if (item instanceof VisualizationFilterCondition condition) {
+                    conditions.add(condition);
+                }
+            }
+            globalOptionsPanel.setFilters(conditions);
+        }
+
+        for (VisualizationParameter parameter : item.parameters) {
+            String legacyLimitKey = parameter.getKey() + ".limit";
+            String legacySortKey = parameter.getKey() + ".sort";
+            String legacyFilterKey = parameter.getKey() + ".filter";
+
+            Object legacyLimit = targetComponent.getConfigObject(legacyLimitKey);
+            Object legacySort = targetComponent.getConfigObject(legacySortKey);
+            Object legacyFilter = targetComponent.getConfigObject(legacyFilterKey);
+
+            if (legacyLimit != null && globalLimit == null) {
+                globalOptionsPanel.setLimitValue(legacyLimit);
+            }
+            if (legacySort != null && (globalSortDirection == null || globalSortColumn == null)) {
+                globalOptionsPanel.setSortDirection(legacySort.toString());
+            }
+            if (legacyFilter != null && globalFilters == null) {
+                globalOptionsPanel.setFilters(Collections.singletonList(new VisualizationFilterCondition("", "is", legacyFilter.toString())));
+            }
+        }
+
+        globalOptionsPanel.setChangeListener(() -> {
+            targetComponent.updateConfig("limit", globalOptionsPanel.getLimitValue());
+            targetComponent.updateConfig("aggregation", globalOptionsPanel.getAggregation());
+            targetComponent.updateConfig("sortColumn", globalOptionsPanel.getSortColumn());
+            targetComponent.updateConfig("sortDirection", globalOptionsPanel.getSortDirection());
+            targetComponent.updateConfig("filters", globalOptionsPanel.getFilters());
+        });
     }
 
     private JComponent createEditor(VisualizationParameter parameter) {

@@ -371,7 +371,7 @@ public class DataPanelTree extends JPanel {
 
         for (ColumnMetadata col : metadata) {
             columns.add(new ColumnData(
-                    col.getName(),
+                    col.getReferencedColumn(),
                     col.getColumnType() != null ? col.getColumnType().toUpperCase() : "UNKNOWN",
                     col.isPrimary(),
                     col.isNullable()
