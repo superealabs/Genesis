@@ -6,8 +6,10 @@ import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.forms.renderer.VisualizationRenderer;
 import org.labs.genesis.forms.renderer.VisualizationRendererFactory;
+import org.labs.genesis.forms.renderer.map.MapRenderer;
 import org.labs.genesis.forms.renderer.provider.ChartData;
 import org.labs.genesis.forms.renderer.provider.DataProvider;
+import org.labs.genesis.forms.renderer.provider.MapData;
 import org.labs.genesis.forms.renderer.provider.TableData;
 import org.labs.genesis.forms.renderer.table.TableRenderer;
 import org.labs.genesis.forms.theme.DashboardTheme;
@@ -344,6 +346,30 @@ public class DashboardVisualComponent extends JPanel {
                 .executeOnPooledThread(() -> {
 
                     try {
+                        if (isMapVisualization()) {
+                            MapData data =
+                                    dataProvider.loadMap(
+                                            context.getConnection(),
+                                            tableName,
+                                            config
+                                    );
+
+                            SwingUtilities.invokeLater(() -> {
+
+                                if (version != dataLoadVersion) {
+                                    return;
+                                }
+
+                                setMapData(data);
+
+                                renderer.updateConfig(config);
+
+                                visualComponent.revalidate();
+                                visualComponent.repaint();
+                            });
+
+                            return;
+                        }
 
                         /*
                          * =====================================================
@@ -406,7 +432,7 @@ public class DashboardVisualComponent extends JPanel {
                         });
 
                     } catch (Exception e) {
-
+                        e.printStackTrace();
                         SwingUtilities.invokeLater(() -> {
 
                             if (version != dataLoadVersion) {
@@ -474,6 +500,26 @@ public class DashboardVisualComponent extends JPanel {
         );
     }
 
+    private void setMapData(
+            MapData data
+    ) {
+
+        config.setValue(
+                MapData.CONFIG_KEY,
+                data
+        );
+
+        config.setValue(
+                MapData.ERROR_KEY,
+                null
+        );
+
+        config.setValue(
+                MapData.LOADING_KEY,
+                false
+        );
+    }
+
     // =========================================================================
     // CLEAR DATA
     // =========================================================================
@@ -494,6 +540,23 @@ public class DashboardVisualComponent extends JPanel {
 
             config.setValue(
                     TableData.CONFIG_KEY,
+                    null
+            );
+
+        } else if (isMapVisualization()) {
+
+            config.setValue(
+                    MapData.LOADING_KEY,
+                    true
+            );
+
+            config.setValue(
+                    MapData.ERROR_KEY,
+                    null
+            );
+
+            config.setValue(
+                    MapData.CONFIG_KEY,
                     null
             );
 
@@ -538,6 +601,23 @@ public class DashboardVisualComponent extends JPanel {
 
             config.setValue(
                     TableData.LOADING_KEY,
+                    false
+            );
+
+        } else if (isMapVisualization()) {
+
+            config.setValue(
+                    MapData.CONFIG_KEY,
+                    null
+            );
+
+            config.setValue(
+                    MapData.ERROR_KEY,
+                    message
+            );
+
+            config.setValue(
+                    MapData.LOADING_KEY,
                     false
             );
 
@@ -588,6 +668,13 @@ public class DashboardVisualComponent extends JPanel {
     private boolean isTableVisualization() {
 
         return TableRenderer.class.equals(
+                visualizationItem.rendererClass
+        );
+    }
+
+    private boolean isMapVisualization() {
+
+        return MapRenderer.class.equals(
                 visualizationItem.rendererClass
         );
     }

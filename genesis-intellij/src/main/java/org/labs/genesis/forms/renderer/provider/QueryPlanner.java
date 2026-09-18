@@ -12,13 +12,77 @@ import java.util.*;
 /** Converts visualization intent into a database-independent jOOQ query plan. */
 public final class QueryPlanner {
     private final Connection connection;
-    private final DSLContext dsl;
     private final FilterConditionBuilder filterBuilder;
 
     public QueryPlanner(Connection connection, DSLContext dsl) {
         this.connection    = Objects.requireNonNull(connection);
-        this.dsl           = Objects.requireNonNull(dsl);
         this.filterBuilder = new FilterConditionBuilder(connection);
+    }
+
+    public QueryPlan planMap(String tableName, VisualizationConfig config) throws Exception {
+
+        QueryPlan plan = new QueryPlan(DSL.table(DSL.name(tableName)));
+        Set<String> requiredTables = new LinkedHashSet<>();
+        requiredTables.add(tableName);
+
+        List<FieldReference> references = new ArrayList<>();
+
+        Object lng = config.getValue("longitude");
+        Object lat = config.getValue("latitude");
+        Object val = config.getValue("valueColumn");
+        Object lab = config.getValue("labelColumn");
+
+        // Colonnes attendues par la carte
+        String[] keys = {
+                lat != null ? lat.toString() : null,
+                lng != null ? lng.toString() : null,
+                val != null ? val.toString() : null,
+                lab != null ? lab.toString() : null
+        };
+
+        for (String raw : keys) {
+            if (raw == null || raw.isBlank()) continue;
+
+            FieldReference reference = FieldReference.parse(raw, tableName);
+            if (reference == null) continue;
+
+            requiredTables.add(reference.table());
+            references.add(reference);
+
+            plan.select().add(new SelectExpression(
+                    qualified(reference),
+                    reference.column(),      // alias = nom simple
+                    false));
+        }
+
+        if (plan.select().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Map requires at least latitude and longitude columns");
+        }
+
+        // Filtres + tris → collecte des tables (comme pour chart/table)
+        collectTablesFromFilters(config.getValue("filters"), tableName, requiredTables);
+        collectTablesFromSorts(config, tableName, requiredTables);
+
+        // Jointures
+        addJoins(plan, tableName, requiredTables);
+
+        // Bindings (pour filtres/tris)
+        List<FieldBinding> bindings = new ArrayList<>();
+        for (FieldReference reference : references) {
+            bindings.add(new FieldBinding(
+                    reference,
+                    QueryRole.COLUMNS,
+                    false,
+                    null,
+                    reference.column()));
+        }
+
+        addFilters(plan, config, tableName, bindings);
+        addSort(plan, config, bindings);
+        plan.limit(parseInteger(config.getValue("limit")));
+
+        return plan;
     }
 
     public QueryPlan planChart(String tableName,

@@ -16,6 +16,435 @@ import java.util.Map;
 
 public class DataProvider {
 
+    // =========================
+// MAP
+// =========================
+
+    public MapData loadMap(
+            Connection connection,
+            String tableName,
+            VisualizationConfig config
+    ) throws Exception {
+
+        validateTableInputs(connection, tableName, config);
+
+        DSLContext dsl = DSL.using(
+                connection,
+                dialect(connection)
+        );
+
+        QueryPlan plan = new QueryPlanner(
+                connection,
+                dsl
+        ).planMap(
+                tableName,
+                config
+        );
+
+        Select<?> query = new SQLGenerator().generate(
+                dsl,
+                plan
+        );
+
+        System.out.println("[DataProvider] Map SQL: " + query);
+
+        Result<?> result = query.fetch();
+
+        return convertMapResult(
+                result,
+                config
+        );
+    }
+
+    private MapData convertMapResult(
+            Result<?> result,
+            VisualizationConfig config
+    ) {
+
+        // ---------------------------------
+        // Configuration des colonnes
+        // ---------------------------------
+
+        String latitudeColumn = getOptionalColumnValue(
+                config,
+                "latitude"
+        );
+
+        String longitudeColumn = getOptionalColumnValue(
+                config,
+                "longitude"
+        );
+
+        String valueColumn = getOptionalColumnValue(
+                config,
+                "valueColumn"
+        );
+
+        String labelColumn = getOptionalColumnValue(
+                config,
+                "labelColumn"
+        );
+
+        // ---------------------------------
+        // Validation
+        // ---------------------------------
+
+        if (latitudeColumn == null || latitudeColumn.isBlank()) {
+            throw new IllegalStateException(
+                    "Map requires a latitude column"
+            );
+        }
+
+        if (longitudeColumn == null || longitudeColumn.isBlank()) {
+            throw new IllegalStateException(
+                    "Map requires a longitude column"
+            );
+        }
+
+        // ---------------------------------
+        // Marker type
+        //
+        // PIN    -> Leaflet marker
+        // BUBBLE -> Leaflet circleMarker
+        // ---------------------------------
+
+        String markerType = getString(
+                config,
+                "markerType",
+                "PIN"
+        );
+
+        markerType = normalizeMarkerType(
+                markerType
+        );
+
+        // ---------------------------------
+        // Map mode
+        //
+        // On le conserve car MapData le demande,
+        // même si le renderer utilise surtout
+        // MapPoint.markerType.
+        // ---------------------------------
+
+        MapData.MapMode mode =
+                "PIN".equals(markerType)
+                        ? MapData.MapMode.PIN
+                        : MapData.MapMode.BUBBLE;
+
+        // ---------------------------------
+        // Recherche des champs dans le Result
+        // ---------------------------------
+
+        Field<?> latitudeField = findResultField(
+                result,
+                latitudeColumn
+        );
+
+        Field<?> longitudeField = findResultField(
+                result,
+                longitudeColumn
+        );
+
+        Field<?> valueField = valueColumn == null
+                ? null
+                : findResultField(
+                result,
+                valueColumn
+        );
+
+        Field<?> labelField = labelColumn == null
+                ? null
+                : findResultField(
+                result,
+                labelColumn
+        );
+
+        if (latitudeField == null) {
+            throw new IllegalStateException(
+                    "Latitude column '" +
+                            latitudeColumn +
+                            "' was not found in the query result"
+            );
+        }
+
+        if (longitudeField == null) {
+            throw new IllegalStateException(
+                    "Longitude column '" +
+                            longitudeColumn +
+                            "' was not found in the query result"
+            );
+        }
+
+        // ---------------------------------
+        // Construction des points
+        // ---------------------------------
+
+        List<MapData.MapPoint> points =
+                new ArrayList<>();
+
+        for (Record record : result) {
+
+            Object latitudeObject =
+                    record.get(latitudeField);
+
+            Object longitudeObject =
+                    record.get(longitudeField);
+
+            // Coordonnées obligatoires
+            if (latitudeObject == null ||
+                    longitudeObject == null) {
+                continue;
+            }
+
+            Double latitude =
+                    toNullableDouble(latitudeObject);
+
+            Double longitude =
+                    toNullableDouble(longitudeObject);
+
+            // Valeurs invalides
+            if (latitude == null ||
+                    longitude == null) {
+                continue;
+            }
+
+            // Latitude : -90 -> 90
+            if (latitude < -90.0 ||
+                    latitude > 90.0) {
+                continue;
+            }
+
+            // Longitude : -180 -> 180
+            if (longitude < -180.0 ||
+                    longitude > 180.0) {
+                continue;
+            }
+
+            // ---------------------------------
+            // Value
+            //
+            // Peut être null.
+            // Le renderer pourra utiliser 1
+            // par défaut pour les bubbles.
+            // ---------------------------------
+
+            Double value = null;
+
+            if (valueField != null) {
+                value = toNullableDouble(
+                        record.get(valueField)
+                );
+            }
+
+            // ---------------------------------
+            // Label
+            // ---------------------------------
+
+            String label = null;
+
+            if (labelField != null) {
+
+                Object labelObject =
+                        record.get(labelField);
+
+                if (labelObject != null) {
+                    label = labelObject.toString();
+                }
+            }
+
+            // ---------------------------------
+            // Création du point
+            // ---------------------------------
+
+            points.add(
+                    new MapData.MapPoint(
+                            label,
+                            markerType,
+                            latitude,
+                            longitude,
+                            value
+                    )
+            );
+        }
+
+        // ---------------------------------
+        // MapData final
+        // ---------------------------------
+
+        return new MapData(
+                points,
+                mode
+        );
+    }
+
+    private String getOptionalColumnValue(
+            VisualizationConfig config,
+            String key
+    ) {
+
+        if (config == null) {
+            return null;
+        }
+
+        Object value = config.getValue(key);
+
+        if (value == null) {
+            return null;
+        }
+
+        String stringValue = value.toString().trim();
+
+        if (stringValue.isBlank()) {
+            return null;
+        }
+
+        return extractColumnName(stringValue);
+    }
+
+    private String normalizeMarkerType(
+            String markerType
+    ) {
+
+        if (markerType == null ||
+                markerType.isBlank()) {
+            return "PIN";
+        }
+
+        String normalized =
+                markerType.trim().toUpperCase();
+
+        if ("PIN".equals(normalized)) {
+            return "PIN";
+        }
+
+        return "BUBBLE";
+    }
+
+    private Field<?> findResultField(
+            Result<?> result,
+            String columnName
+    ) {
+
+        if (result == null ||
+                columnName == null ||
+                columnName.isBlank()) {
+            return null;
+        }
+
+        String target =
+                extractColumnName(columnName);
+
+        if (target == null ||
+                target.isBlank()) {
+            return null;
+        }
+
+        // ---------------------------------
+        // 1. Recherche exacte
+        // ---------------------------------
+
+        Field<?> field =
+                result.field(target);
+
+        if (field != null) {
+            return field;
+        }
+
+        // ---------------------------------
+        // 2. Recherche insensible à la casse
+        // ---------------------------------
+
+        for (Field<?> current : result.fields()) {
+
+            if (current.getName()
+                    .equalsIgnoreCase(target)) {
+
+                return current;
+            }
+        }
+
+        // ---------------------------------
+        // 3. Recherche sur la dernière partie
+        //
+        // Exemple :
+        // "cities.latitude"
+        // devient "latitude"
+        // ---------------------------------
+
+        for (Field<?> current : result.fields()) {
+
+            String fieldName =
+                    current.getName();
+
+            if (fieldName == null) {
+                continue;
+            }
+
+            int dotIndex =
+                    fieldName.lastIndexOf('.');
+
+            String simpleName =
+                    dotIndex >= 0
+                            ? fieldName.substring(
+                            dotIndex + 1
+                    )
+                            : fieldName;
+
+            if (simpleName.equalsIgnoreCase(target)) {
+                return current;
+            }
+        }
+
+        return null;
+    }
+
+    private Double toNullableDouble(
+            Object value
+    ) {
+
+        if (value == null) {
+            return null;
+        }
+
+        if (value instanceof Number number) {
+            double result = number.doubleValue();
+
+            if (Double.isNaN(result) ||
+                    Double.isInfinite(result)) {
+                return null;
+            }
+
+            return result;
+        }
+
+        try {
+
+            String text =
+                    value.toString().trim();
+
+            if (text.isBlank()) {
+                return null;
+            }
+
+            double result =
+                    Double.parseDouble(text);
+
+            if (Double.isNaN(result) ||
+                    Double.isInfinite(result)) {
+                return null;
+            }
+
+            return result;
+
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private String getString(VisualizationConfig config, String key, String fallback) {
+        Object v = config.getValue(key);
+        return v == null || v.toString().isBlank() ? fallback : v.toString(); }
+
     // =========================================================================
     // CHART
     // =========================================================================
