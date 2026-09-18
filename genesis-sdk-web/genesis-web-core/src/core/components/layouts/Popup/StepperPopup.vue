@@ -16,6 +16,7 @@
             </div>
 
             <!--  CORRECTION : Footer fixé en bas, il ne doit JAMAIS rétrécir (flex-shrink-0) -->
+            <!-- Footer fixé en bas -->
             <div class="flex-shrink-0 flex justify-between items-center pt-4 mt-4 border-t border-secondary">
                 <GenesisButton
                     variant="secondary"
@@ -39,9 +40,20 @@
                     />
                 </div>
 
-                <GenesisButton @click="$emit('next')">
-                    {{ currentStep === totalSteps ? 'Générer' : 'Suivant' }}
-                </GenesisButton>
+                <!-- ✅ Groupe d'actions à droite -->
+                <div class="flex items-center gap-2">
+                    <GenesisButton
+                        v-if="isSkippable"
+                        variant="tertiary"
+                        @click="$emit('skip')"
+                    >
+                        Passer
+                    </GenesisButton>
+                    
+                    <GenesisButton @click="$emit('next')">
+                        {{ currentStep === totalSteps ? 'Générer' : 'Suivant' }}
+                    </GenesisButton>
+                </div>
             </div>
         </div>
     </BaseFormPopup>
@@ -60,18 +72,21 @@ withDefaults(defineProps<{
     position?: PopupPosition;
     isClosable?: boolean;
     draggable?: boolean;
-    contentClass?: string;          // ← ajouter
+    contentClass?: string;
+    isSkippable?: boolean;
 }>(), {
     size: 'md',
     isClosable: true,
     draggable: true,
     position: 'center',
-    contentClass: 'overflow-y-auto' // ← défaut conservé pour toutes les autres étapes
+    contentClass: 'overflow-y-auto',
+    isSkippable: false
 });
 
 defineEmits<{
     close: [];
     previous: [];
     next: [];
+    skip: [];
 }>();
 </script>

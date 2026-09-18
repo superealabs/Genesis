@@ -9,6 +9,7 @@ import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
 const {
     currentStep,
     totalSteps,
+    isCurrentStepSkippable,
     goToPreviousStep,
     goToNextStep,
     setFramework,
@@ -16,7 +17,8 @@ const {
     setSelectedFrontendFramework,
     reset,
     handleSelectFolderPath,
-    handleFileRequest
+    handleFileRequest,
+    skipCurrentStep,
 } = useGeneratorVsc();
 
 function handleClose() {
@@ -49,13 +51,15 @@ function onSelectFrontend(framework: FrontendFramework) {
     <GeneratorStepper
         :currentStep="currentStep"
         :totalSteps="totalSteps"
+        :is-skippable="isCurrentStepSkippable" 
         @close="handleClose"
         @previous="goToPreviousStep"
         @next="handleNextStep"
+        @skip="skipCurrentStep" 
         @select-framework="onSelectFramework"
         @select-database="onSelectDatabase"
-        @select-frontend="onSelectFrontend" 
-        @request-folder-path="handleSelectFolderPath" 
-        @request-file-path="handleFileRequest" 
+        @select-frontend="onSelectFrontend"
+        @request-folder-path="handleSelectFolderPath"
+        @request-file-path="handleFileRequest"
     />
 </template>
