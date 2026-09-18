@@ -7,7 +7,7 @@
         @close="$emit('close')"
         :position="position"
     >
-        <!-- ✅ CORRECTION : Conteneur flex qui prend toute la hauteur disponible sans cacher le débordement -->
+        <!--  CORRECTION : Conteneur flex qui prend toute la hauteur disponible sans cacher le débordement -->
         <div class="flex flex-col flex-1 min-h-0 h-full">
             
             <!-- Zone de contenu scrollable -->
@@ -15,7 +15,7 @@
                 <slot />
             </div>
 
-            <!-- ✅ CORRECTION : Footer fixé en bas, il ne doit JAMAIS rétrécir (flex-shrink-0) -->
+            <!--  CORRECTION : Footer fixé en bas, il ne doit JAMAIS rétrécir (flex-shrink-0) -->
             <div class="flex-shrink-0 flex justify-between items-center pt-4 mt-4 border-t border-secondary">
                 <GenesisButton
                     variant="secondary"

@@ -1,12 +1,8 @@
 <template>
-    <div class="flex flex-col gap-6 p-4 max-w-3xl mx-auto">
+    <div class="flex flex-col gap-4 p-4 max-w-3xl mx-auto">
         
         <!-- ═══ Section 1 : Framework Sélectionné & Port ═══ -->
-        <div class="space-y-3">
-            <h3 class="text-lg font-semibold text-text flex items-center gap-2">
-                Framework & Port
-            </h3>
-            
+        <GenesisDisclosure title="Framework & Port" default-open variant="primary">
             <div class="flex flex-col md:flex-row md:items-end gap-4 p-4 bg-bg-light/50 rounded-lg border border-secondary">
                 <div class="flex-1 min-w-0">
                     <span class="text-sm font-medium text-text-muted block mb-1.5">
@@ -18,26 +14,25 @@
                     </div>
                 </div>
 
-                <div>
+                <div class="w-full md:w-auto">
                     <GenesisInput
                         v-model="layoutConfig.port"
                         type="number"
                         label="Port"
                         placeholder="ex: 3000"
+                        fill-width
                     />
                 </div>
             </div>
-        </div>
-
-        <div class="border-t border-secondary"></div>
+        </GenesisDisclosure>
 
         <!-- ═══ Section 2 : Langues Supportées ═══ -->
-        <div class="space-y-3">
-            <h3 class="text-lg font-semibold text-text flex items-center gap-2">
-                Langues Supportées
-                <span class="text-accent text-sm font-normal">*</span>
-            </h3>
-            <p class="text-sm text-text-muted">
+        <GenesisDisclosure :title="'interface language'" :variant="'secondary'">
+            <template #title>
+                Langues Supportées <span class="text-accent text-sm font-normal">*</span>
+            </template>
+            
+            <p class="text-sm text-text-muted mb-3">
                 Sélectionnez les langues à inclure dans le projet.
             </p>
             
@@ -65,7 +60,7 @@
                 </div>
             </GenesisInput>
 
-            <div v-if="layoutConfig.selectedLanguages.length > 0" class="flex flex-wrap gap-1.5 mt-1.5">
+            <div v-if="layoutConfig.selectedLanguages.length > 0" class="flex flex-wrap gap-1.5 mt-3">
                 <GenesisLabel
                     v-for="code in layoutConfig.selectedLanguages"
                     :key="code"
@@ -73,14 +68,10 @@
                     @remove="() => toggleLanguage(code)" 
                 />
             </div>
-        </div>
-
-        <div class="border-t border-secondary"></div>
+        </GenesisDisclosure>
 
         <!-- ═══ Section 3 : Structure et Navigation ═══ -->
-        <div class="space-y-3">
-            <h3 class="text-lg font-semibold text-text">Structure et Navigation</h3>
-            
+        <GenesisDisclosure title="Structure et Navigation" variant="primary">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <GenesisInput
                     v-model="layoutConfig.navbarType"
@@ -111,14 +102,10 @@
                     <span class="text-sm text-text-muted italic">D'autres options de structure à venir...</span>
                 </div>
             </div>
-        </div>
-
-        <div class="border-t border-secondary"></div>
+        </GenesisDisclosure>
 
         <!-- ═══ Section 4 : Charte Graphique ═══ -->
-        <div class="space-y-3">
-            <h3 class="text-lg font-semibold text-text">Charte Graphique</h3>
-            
+        <GenesisDisclosure title="Charte Graphique" variant="primary">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <GenesisInput
                     v-model="layoutConfig.primaryColor"
@@ -137,14 +124,7 @@
                     fill-width
                 />
             </div>
-        </div>
 
-        <div class="border-t border-secondary"></div>
-
-        <!-- ═══ Section 5 : Assets ═══ -->
-        <div class="space-y-3">
-            <h3 class="text-lg font-semibold text-text">Assets (Logo & Favicon)</h3>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <GenesisInput
                     v-model="layoutConfig.logoPath"
@@ -165,7 +145,7 @@
                     @browse="() => emit('request-file-path', { field: 'faviconPath', extensions: ['ico', 'png', 'svg'] })"
                 />
             </div>
-        </div>
+        </GenesisDisclosure>
     </div>
 </template>
 
@@ -176,8 +156,8 @@ import type { LanguageDto } from '@genesis-labs/shared-types';
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisLabel from '@genesis-labs/web-core/core/components/ui/labels/GenesisLabel.vue';
+import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
 
-// ✅ 1. Définition des événements (le Core demande au parent d'ouvrir le fichier)
 const emit = defineEmits<{
     'request-file-path': [payload: { field: 'logoPath' | 'faviconPath', extensions: string[] }];
 }>();
@@ -193,7 +173,6 @@ const {
 const layoutConfig = computed(() => stepperData.value.frontendLayout);
 const selectedFrontendName = computed(() => stepperData.value.frontend?.name || 'Non défini (Étape 7)');
 
-// ✅ 2. État UI transitoire (doit rester dans le composant, pas dans le store)
 const selectedLanguageToAdd = ref('');
 
 type NavbarType = 'side' | 'top' | '';
@@ -202,7 +181,6 @@ const navbarOptions: { label: string; value: NavbarType }[] = [
     { label: 'Barre supérieure (Top)', value: 'top' }
 ];
 
-// ✅ 3. Logique UI pure
 function handleLanguageSelect(code: string) {
     if (!code) return;
     selectedLanguageToAdd.value = code;
