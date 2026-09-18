@@ -1,9 +1,10 @@
-import { inject } from 'vue';
+import { inject, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
 import { GENERATOR_SERVICE_KEY, type IGeneratorService } from '@genesis-labs/web-core/features/generator/types/generator.service.interface';
+import { useGenesisWizard } from '@genesis-labs/web-core/core/composables/ux/useGenesisWizard';
 
-import type { Framework, FrontendFramework,GeneratorData  } from '@genesis-labs/shared-types'
+import type { GeneratorData } from '@genesis-labs/shared-types';
 
 export function useGenerator() {
     const service = inject(GENERATOR_SERVICE_KEY);
@@ -13,99 +14,79 @@ export function useGenerator() {
     
     const svc = service as IGeneratorService;
     const store = useGeneratorStore();
-    
-    //  CORRECTION : On inclut les getters dans storeToRefs pour garder la réactivité
+
+    const SKIPPABLE_CONFIG = {
+        5: [],      // L'étape 5 peut être skipée (sans dépendance)
+        8: [9],     // Si on skip l'étape 8, l'étape 9 est aussi skipée
+        10: []      // L'étape 10 peut être skipée (fin du processus)
+    };
+
+    // ═══ 1. INITIALISATION DU WIZARD GÉNÉRIQUE ═══
+    const wizard = useGenesisWizard({
+        totalSteps: 10,
+        skippableStepsConfig: SKIPPABLE_CONFIG,
+        onBeforeNext: async (currentStep: number) => {
+            console.log(`Étape précédente : ${currentStep}`);
+            
+            // On accède directement à wizard.skippedSteps.value
+            const skippedArray = Array.from(wizard.skippedSteps.value);
+            console.log(`Étapes ignorées :`, skippedArray.length > 0 ? skippedArray : 'Aucune');            
+
+            return true; 
+        }
+    });
+
+    // ═══ 2. ÉTAT DU STORE (Réactif) ═══
     const { 
-        currentStep, totalSteps, stepperData, isFirstStep, isLastStep, 
+        stepperData, 
         getTablesParents, getTablesChilds, getRelations,
-        getAvailableFrontendFrameworks,
-        getAvailableLanguages,
-        tables,
-        views,
-        availableTables
+        getAvailableFrontendFrameworks, getAvailableLanguages,
+        tables, views, availableTables
     } = storeToRefs(store);
 
-    // ═══════════════════════════════════════════════════════════
-    // NAVIGATION & VALIDATION
-    // ═══════════════════════════════════════════════════════════
-    function validateCurrentStep(): boolean {
-        // ... (ton code de validation existant)
-        return true; 
-    }
-
-    function handleComplete(): GeneratorData {
+    // ═══ 3. WRAPPERS DE NAVIGATION (Avec logique métier spécifique) ═══
+    function handleComplete(): GeneratorData | null {
         console.log('Données finales prêtes pour la génération:', stepperData.value);
         return stepperData.value;
     }
 
-    function goToNextStep(): GeneratorData | null {
-        if (!validateCurrentStep()) return null;
-        if (!isLastStep.value) {
-            store.goToNextStep();
-            return null;
-        } else {
-            return handleComplete();
+    const isCurrentStepSkippable = computed(() => {
+        return Object.keys(SKIPPABLE_CONFIG).map(Number).includes(wizard.currentStep.value);
+    });
+
+    async function goToNextStep(): Promise<GeneratorData | null> {
+        // Le wizard gère déjà onBeforeNext. S'il retourne true, on avance.
+        const didMove = await wizard.goToNextStep();
+        
+        if (!didMove && wizard.isLastStep.value) {
+            return handleComplete(); // On est à la fin et on valide
         }
+        return null;
     }
 
     function goToPreviousStep() {
-        store.goToPreviousStep();
+        wizard.goToPreviousStep();
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // ACTIONS MÉTIER ASYNCHRONES
-    // ═══════════════════════════════════════════════════════════
-    async function fetchTablesMetadata() {
-        const data = await svc.fetchTablesMetadata();
-        store.setAvailableTables(data);
-    }
-
-
-    async function fetchTablesMetadataParents() {
-        const data = await svc.fetchTablesMetadataParents();
-        store.setTablesParents(data);
-    }
-
-    async function fetchTablesMetadataChilds() {
-        const data = await svc.fetchTablesMetadataChilds();
-        store.setTablesChilds(data);
-    }
-
-    async function fetchRelations() {
-        const data = await svc.fetchRelations();
-        store.setRelations(data);
-    }
-
-    async function fetchAvailableLanguages() {
-        const data = await svc.fetchAvailableLanguages();
-        store.setAvailableLanguages(data);
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    // MUTATIONS & SÉLECTIONS
-    // ═══════════════════════════════════════════════════════════
-    function handleFrameworkSelect(framework: Framework) {
-        store.setFramework(framework);
-        // goToNextStep();
-    }
-
-
-    function setSelectedFrontendFramework(framework: FrontendFramework | null) {
-        store.setSelectedFrontendFramework(framework);
-        // goToNextStep();
+    function skipCurrentStep() {
+        wizard.skipCurrentStep();
     }
 
     function reset() {
         store.reset();
+        wizard.resetWizard();
     }
+
+    // ═══ 4. ACTIONS MÉTIER ASYNCHRONES ═══
+    async function fetchTablesMetadata() { store.setAvailableTables(await svc.fetchTablesMetadata()); }
+    async function fetchTablesMetadataParents() { store.setTablesParents(await svc.fetchTablesMetadataParents()); }
+    async function fetchTablesMetadataChilds() { store.setTablesChilds(await svc.fetchTablesMetadataChilds()); }
+    async function fetchRelations() { store.setRelations(await svc.fetchRelations()); }
+    async function fetchAvailableLanguages() { store.setAvailableLanguages(await svc.fetchAvailableLanguages()); }
 
     async function testDatabaseConnection(): Promise<{ success: boolean; message: string }> {
         try {
-            // On récupère la config actuelle depuis le store
-            const dbConfig = stepperData.value.database;
-            
-            // On appelle le service
-            const result = await svc.testDatabaseConnection(dbConfig);
+            const result = await svc.testDatabaseConnection(stepperData.value.database);
             return result;
         } catch (error) {
             console.error('[useGenerator] Erreur lors du test de connexion:', error);
@@ -115,45 +96,38 @@ export function useGenerator() {
             };
         }
     }
-    // ═══════════════════════════════════════════════════════════
-    // RETOUR FINAL
-    // ═══════════════════════════════════════════════════════════
-    return {
-        // État
-        currentStep,
-        totalSteps,
-        isFirstStep,
-        isLastStep,
-        stepperData,
 
-        //  Getters (maintenant correctement réactifs grâce à storeToRefs)
-        getTablesParents,
-        getTablesChilds,
-        getRelations,
+    // ═══ 5. RETOUR FINAL ═══
+    return {
+        // État du Wizard
+        currentStep: wizard.currentStep,
+        totalSteps: wizard.totalSteps,
+        isFirstStep: wizard.isFirstStep,
+        isLastStep: wizard.isLastStep,
+        skippedSteps: wizard.skippedSteps,
+
+        // État des Données
+        stepperData,
+        getTablesParents, getTablesChilds, getRelations,
         availableFrontendFrameworks: getAvailableFrontendFrameworks, 
         availableLanguages: getAvailableLanguages,
-
-        tables,
-        views,
-        availableTables,
+        tables, views, availableTables,
 
         // Navigation
         goToNextStep,
         goToPreviousStep,
+        skipCurrentStep,
         reset,
 
         // Sélections & Actions Métier
-        handleFrameworkSelect,
-        setSelectedFrontendFramework,
         setFramework: store.setFramework,
-        fetchTablesMetadataParents,
-        fetchTablesMetadataChilds,
-        fetchRelations,
-        fetchAvailableLanguages,
+        setDatabaseEngine: store.setDatabaseEngine,
+        setSelectedFrontendFramework: store.setSelectedFrontendFramework,
+        fetchTablesMetadata, fetchTablesMetadataParents, fetchTablesMetadataChilds,
+        fetchRelations, fetchAvailableLanguages,
+        testDatabaseConnection,
 
-        fetchTablesMetadata,
-
-        // Mutations directes du store
+        // Mutations directes
         updateConfig: store.updateConfig,
         updateDatabase: store.updateDatabase,
         updateScript: store.updateScript,
@@ -165,7 +139,6 @@ export function useGenerator() {
         toggleLanguage: store.toggleLanguage,
         addRelation: store.addRelation,
         removeRelation: store.removeRelation,
-        testDatabaseConnection,
-        setDatabaseEngine: store.setDatabaseEngine,
+        isCurrentStepSkippable,
     };
 }

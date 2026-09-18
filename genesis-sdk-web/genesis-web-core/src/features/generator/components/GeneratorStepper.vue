@@ -5,9 +5,11 @@
         :totalSteps="props.totalSteps"
         size="full"
         :content-class="stepContentClass"
+        :is-skippable="props.isSkippable" 
         @close="handleClose"
         @previous="emit('previous')"
         @next="emit('next')"
+        @skip="emit('skip')" 
     >
         <FrameworksView
             v-if="props.currentStep === 1"
@@ -93,12 +95,14 @@ const stepContentClass = computed(() =>
 const props = defineProps<{
     currentStep: number;
     totalSteps: number;
+    isSkippable?: boolean;
 }>();
 
 const emit = defineEmits<{
     close: [];
     next: [];
     previous: [];
+    skip: []; // NOUVEL EMIT RELAYÉ VERS LE PARENT
     'select-framework': [framework: Framework];
     'select-frontend': [framework: FrontendFramework];
     'request-folder-path': [];
