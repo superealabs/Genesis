@@ -7,3 +7,4 @@ export * from './database.shared';
 export * from './framework.service.interface';
 export * from './database.service.interface';
 export * from './generator.service.interface';
+export * from './frontend.service.interface';
