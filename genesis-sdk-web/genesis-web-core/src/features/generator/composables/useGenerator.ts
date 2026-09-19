@@ -1,3 +1,4 @@
+// genesis-sdk-web/genesis-web-core/src/features/generator/composables/useGenerator.ts
 import { inject, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
@@ -13,76 +14,61 @@ export function useGenerator() {
     const frontendService = inject(FRONTEND_SERVICE_KEY);
     const databaseService = inject(DATABASE_SERVICE_KEY);
 
-    if (!service) {
-        throw new Error('[useGenerator] IGeneratorService non fourni. Vérifiez app.provide() dans main.ts');
-    }
+    if (!service) throw new Error('[useGenerator] IGeneratorService non fourni.');
     
     const svc = service as IGeneratorService;
     const fdsvc = frontendService as IFrontendService;
     const dbsvc = databaseService as IDatabaseService;
     const store = useGeneratorStore();
 
-    const SKIPPABLE_CONFIG = {
-        5: [],      // L'étape 5 peut être skipée (sans dépendance)
-        8: [9],     // Si on skip l'étape 8, l'étape 9 est aussi skipée
-        10: []      // L'étape 10 peut être skipée (fin du processus)
-    };
+    const SKIPPABLE_CONFIG = { 5: [], 8: [9], 10: [] };
 
-    // ═══ 1. INITIALISATION DU WIZARD GÉNÉRIQUE ═══
     const wizard = useGenesisWizard({
         totalSteps: 10,
         skippableStepsConfig: SKIPPABLE_CONFIG,
         onBeforeNext: async (currentStep: number) => {
-            console.log(`Étape précédente : ${currentStep}`);
-            
-            // On accède directement à wizard.skippedSteps.value
-            const skippedArray = Array.from(wizard.skippedSteps.value);
-            console.log(`Étapes ignorées :`, skippedArray.length > 0 ? skippedArray : 'Aucune');            
+
+
+
+            // gfhghgf
+            console.log(`last step : ${currentStep}`);
+
+
+            if (currentStep === 1) {
+                console.log('[onBeforeNext] store.stepperData.framework =', store.stepperData.framework);
+                console.log('[onBeforeNext] store.$id =', store.$id);
+            }
+
 
             return true; 
         }
     });
 
-    // ═══ 2. ÉTAT DU STORE (Réactif) ═══
     const { 
         stepperData, 
         getTablesParents, getTablesChilds, getRelations,
         getAvailableFrontendFrameworks, getAvailableLanguages,
-        tables, views, availableTables, getAvailableLoggingLevels
-
+        tables, views, availableTables, 
+        
+        getAvailableLoggingLevels,
+        getAvailableSecurityTypes,
+        getAvailableCacheProviders,
+        getAvailableLanguageVersions,
+        getAvailableFrameworkVersions,
+        getAvailableBuildTools,
+        getAvailableHibernateDdlAutoOptions,
     } = storeToRefs(store);
 
-    // ═══ 3. WRAPPERS DE NAVIGATION (Avec logique métier spécifique) ═══
     function handleComplete(): GeneratorData | null {
-        console.log('Données finales prêtes pour la génération:', stepperData.value);
         return stepperData.value;
     }
 
-    const isCurrentStepSkippable = computed(() => {
-        return Object.keys(SKIPPABLE_CONFIG).map(Number).includes(wizard.currentStep.value);
-    });
+    const isCurrentStepSkippable = computed(() => Object.keys(SKIPPABLE_CONFIG).map(Number).includes(wizard.currentStep.value));
 
     async function goToNextStep(): Promise<GeneratorData | null> {
-        // Le wizard gère déjà onBeforeNext. S'il retourne true, on avance.
         const didMove = await wizard.goToNextStep();
-        
-        if (!didMove && wizard.isLastStep.value) {
-            return handleComplete(); // On est à la fin et on valide
-        }
+        if (!didMove && wizard.isLastStep.value) return handleComplete();
         return null;
-    }
-
-    function goToPreviousStep() {
-        wizard.goToPreviousStep();
-    }
-
-    function skipCurrentStep() {
-        wizard.skipCurrentStep();
-    }
-
-    function reset() {
-        store.reset();
-        wizard.resetWizard();
     }
 
     // ═══ 4. ACTIONS MÉTIER ASYNCHRONES ═══
@@ -90,61 +76,86 @@ export function useGenerator() {
     async function fetchTablesMetadataParents() { store.setTablesParents(await svc.fetchTablesMetadataParents()); }
     async function fetchTablesMetadataChilds() { store.setTablesChilds(await svc.fetchTablesMetadataChilds()); }
     async function fetchRelations() { store.setRelations(await svc.fetchRelations()); }
-
-
     async function fetchAvailableLanguages() { store.setAvailableLanguages(await fdsvc.fetchAvailableLanguages()); }
 
     async function testDatabaseConnection(): Promise<{ success: boolean; message: string }> {
         try {
-            const result = await dbsvc.testDatabaseConnection(stepperData.value.database);
-            return result;
+            return await dbsvc.testDatabaseConnection(stepperData.value.database);
         } catch (error) {
-            console.error('[useGenerator] Erreur lors du test de connexion:', error);
-            return { 
-                success: false, 
-                message: error instanceof Error ? error.message : 'Une erreur inconnue est survenue.' 
-            };
+            return { success: false, message: error instanceof Error ? error.message : 'Erreur inconnue' };
         }
     }
 
-    async function fetchLoggingLevels() {
-        store.setAvailableLoggingLevels(
-            await svc.fetchLoggingLevels()
-        );
+    // CORRECTION : Prend maintenant frameworkId comme le contrat l'exige
+    async function fetchLoggingLevels(frameworkId: number) {
+        const data = await svc.fetchLoggingLevels(frameworkId);
+        store.setAvailableLoggingLevels(data);
     }
+
+    async function fetchSecurityTypes(frameworkId: number) {
+        const data = await svc.fetchSecurityTypes(frameworkId);
+        store.setAvailableSecurityTypes(data);
+    }
+
+    async function fetchCacheProviders(frameworkId: number) {
+        const data = await svc.fetchCacheProviders(frameworkId);
+        store.setAvailableCacheProviders(data);
+    }
+
+    async function fetchLanguageVersions(languageId: number) {
+        const data = await svc.fetchLanguageVersions(languageId);
+        store.setAvailableLanguageVersions(data);
+    }
+
+    async function fetchFrameworkVersions(frameworkId: number) {
+        const data = await svc.fetchFrameworkVersions(frameworkId);
+        store.setAvailableFrameworkVersions(data);
+    }
+
+    async function fetchBuildTools(frameworkId: number) {
+        const data = await svc.fetchBuildTools(frameworkId);
+        store.setAvailableBuildTools(data);
+    }
+
+    async function fetchHibernateDdlAutoOptions(frameworkId: number) {
+        const data = await svc.fetchHibernateDdlAutoOptions(frameworkId);
+        store.setAvailableHibernateDdlAutoOptions(data);
+    }
+
 
     // ═══ 5. RETOUR FINAL ═══
     return {
-        // État du Wizard
         currentStep: wizard.currentStep,
         totalSteps: wizard.totalSteps,
         isFirstStep: wizard.isFirstStep,
         isLastStep: wizard.isLastStep,
         skippedSteps: wizard.skippedSteps,
 
-        // État des Données
         stepperData,
         getTablesParents, getTablesChilds, getRelations,
         availableFrontendFrameworks: getAvailableFrontendFrameworks, 
         availableLanguages: getAvailableLanguages,
         tables, views, availableTables,
+        
         availableLoggingLevels: getAvailableLoggingLevels,
+        availableSecurityTypes: getAvailableSecurityTypes,
+        availableCacheProviders: getAvailableCacheProviders,
+        availableLanguageVersions: getAvailableLanguageVersions,
+        availableFrameworkVersions: getAvailableFrameworkVersions,
+        availableBuildTools: getAvailableBuildTools,
+        availableHibernateDdlAutoOptions: getAvailableHibernateDdlAutoOptions,
 
-        // Navigation
         goToNextStep,
-        goToPreviousStep,
-        skipCurrentStep,
-        reset,
+        goToPreviousStep: wizard.goToPreviousStep,
+        skipCurrentStep: wizard.skipCurrentStep,
+        reset: () => { store.reset(); wizard.resetWizard(); },
 
-        // Sélections & Actions Métier
         setFramework: store.setFramework,
         setDatabaseEngine: store.setDatabaseEngine,
         setSelectedFrontendFramework: store.setSelectedFrontendFramework,
         fetchTablesMetadata, fetchTablesMetadataParents, fetchTablesMetadataChilds,
-        fetchRelations, fetchAvailableLanguages,
-        testDatabaseConnection,
+        fetchRelations, fetchAvailableLanguages, testDatabaseConnection,
 
-        // Mutations directes
         updateConfig: store.updateConfig,
         updateDatabase: store.updateDatabase,
         updateScript: store.updateScript,
@@ -158,6 +169,13 @@ export function useGenerator() {
         removeRelation: store.removeRelation,
         isCurrentStepSkippable,
 
-        fetchLoggingLevels
+        // Exports des fonctions de fetch avec leurs signatures corrigées
+        fetchLoggingLevels,
+        fetchSecurityTypes,
+        fetchCacheProviders,
+        fetchLanguageVersions,
+        fetchFrameworkVersions,
+        fetchBuildTools,
+        fetchHibernateDdlAutoOptions,
     };
 }

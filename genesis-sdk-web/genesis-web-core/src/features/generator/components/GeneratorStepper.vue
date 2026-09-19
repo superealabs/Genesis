@@ -116,8 +116,16 @@ function handleClose() {
     emit('close');
 }
 
-function handleFrameworkSelect(result: { action: string; framework: Framework; event?: MouseEvent }) {
-    emit('select-framework', result.framework);
+// Dans genesis-sdk-web/genesis-web-core/src/features/generator/components/GeneratorStepper.vue
+
+function handleFrameworkSelect(payload: any) {
+    console.log("🔍 [Stepper] Payload brut reçu :", payload);
+    
+    // Extrait le framework, que l'enfant l'ait envoyé directement ou dans une propriété .framework
+    const framework = payload?.framework ? payload.framework : payload;
+    
+    console.log("🚀 [Stepper] Framework extrait et émis vers le parent :", framework?.name);
+    emit('select-framework', framework);
 }
 
 function handleFrontendSelect(result: { action: string; framework: FrontendFramework; event?: MouseEvent }) {

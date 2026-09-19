@@ -1,4 +1,4 @@
-import type { TableMetadataDto, RelationParameter, LoggingLevel } from './generator.shared';
+import type { TableMetadataDto, RelationParameter } from './generator.shared';
 
 /**
  * Contrat du service générateur (Pure Interface).
@@ -10,5 +10,12 @@ export interface IGeneratorService {
     fetchTablesMetadataChilds(): Promise<TableMetadataDto[]>;
     fetchRelations(): Promise<RelationParameter[]>;
 
-    fetchLoggingLevels(): Promise<LoggingLevel[]>;
+    fetchLoggingLevels(frameworkId: number): Promise<string[]>;
+    fetchSecurityTypes(frameworkId: number): Promise<string[]>;
+    fetchCacheProviders(frameworkId: number): Promise<string[]>; // Ajouté pour cohérence
+    fetchHibernateDdlAutoOptions(frameworkId: number): Promise<string[]>;
+    
+    fetchLanguageVersions(languageId: number): Promise<string[]>;
+    fetchFrameworkVersions(frameworkId: number): Promise<string[]>;
+    fetchBuildTools(frameworkId: number): Promise<string[]>;
 }

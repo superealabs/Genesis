@@ -1,3 +1,4 @@
+// genesis-sdk-web/genesis-web-core/src/features/generator/store/useGenerator.store.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { FrontendFramework, Framework } from '@genesis-labs/shared-types';
@@ -5,8 +6,7 @@ import type {
     GeneratorData, ProjectConfig, DatabaseConfig, ScriptConfig, 
     ComponentType, TableMetadataDto, RelationParameter, LanguageDto, 
     FrontendLayoutConfig, GitConfiguration, 
-    DatabaseEngineDto,
-    LoggingLevel
+    DatabaseEngineDto
 } from '@genesis-labs/shared-types';
 
 import { INITIAL_STATE } from './generator.initial-state';
@@ -21,7 +21,16 @@ export const useGeneratorStore = defineStore('generator', () => {
     const relations = ref<RelationParameter[]>([]);
     const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
     const availableLanguages = ref<LanguageDto[]>([]);
-    const availableLoggingLevels = ref<LoggingLevel[]>([]);
+
+    //  CORRECTION : Types simples (string[])
+    const availableLoggingLevels = ref<string[]>([]);
+    const availableSecurityTypes = ref<string[]>([]);
+    const availableCacheProviders = ref<string[]>([]);
+    const availableHibernateDdlAutoOptions = ref<string[]>([]);
+
+    const availableLanguageVersions = ref<string[]>([]);
+    const availableFrameworkVersions = ref<string[]>([]);
+    const availableBuildTools = ref<string[]>([]);
 
     const stepperData = ref<GeneratorData>(structuredClone(INITIAL_STATE));
 
@@ -31,7 +40,16 @@ export const useGeneratorStore = defineStore('generator', () => {
     const getRelations = computed(() => relations.value);
     const getAvailableFrontendFrameworks = computed(() => availableFrontendFrameworks.value);
     const getAvailableLanguages = computed(() => availableLanguages.value);
+    
     const getAvailableLoggingLevels = computed(() => availableLoggingLevels.value);
+    const getAvailableSecurityTypes = computed(() => availableSecurityTypes.value);
+    const getAvailableCacheProviders = computed(() => availableCacheProviders.value);
+    const getAvailableHibernateDdlAutoOptions = computed(() => availableHibernateDdlAutoOptions.value);
+
+
+    const getAvailableLanguageVersions = computed(() => availableLanguageVersions.value);
+    const getAvailableFrameworkVersions = computed(() => availableFrameworkVersions.value);
+    const getAvailableBuildTools = computed(() => availableBuildTools.value);
 
     const tables = computed(() => availableTables.value.filter(t => !t.isView));
     const views = computed(() => availableTables.value.filter(t => t.isView));
@@ -40,11 +58,13 @@ export const useGeneratorStore = defineStore('generator', () => {
 
     // ═══ Actions de Mutation des Données ═══
     function setFramework(framework: Framework) {
+        console.log("💾 [Store] setFramework appelé avec :", framework); // <-- AJOUTEZ CECI
+        
         stepperData.value.framework = framework;
-        if (framework.coreFramework === 'Spring') {
+        if (framework?.coreFramework === 'Spring') {
             stepperData.value.config.buildTool = 'maven';
             stepperData.value.config.languageVersion = '17';
-        } else if (framework.coreFramework === 'Express') {
+        } else if (framework?.coreFramework === 'Express') {
             stepperData.value.config.buildTool = 'npm';
             stepperData.value.config.languageVersion = '20';
         }
@@ -70,12 +90,14 @@ export const useGeneratorStore = defineStore('generator', () => {
         if (framework) stepperData.value.frontendLayout.port = framework.defaultPort;
     }
 
-    function setAvailableLoggingLevels(data: LoggingLevel[]) {
-        availableLoggingLevels.value = data;
-    }
+    function setAvailableLoggingLevels(data: string[]) { availableLoggingLevels.value = data; }
+    function setAvailableSecurityTypes(data: string[]) { availableSecurityTypes.value = data; }
+    function setAvailableCacheProviders(data: string[]) { availableCacheProviders.value = data; } // ✅ Ajouté
 
     function setAvailableTables(data: TableMetadataDto[]) { availableTables.value = data; }
-    function updateConfig<K extends keyof ProjectConfig>(key: K, value: ProjectConfig[K]) { (stepperData.value.config as any)[key] = value; }
+    function updateConfig<K extends keyof ProjectConfig>(key: K, value: ProjectConfig[K]) { 
+        (stepperData.value.config as any)[key] = value; 
+    }
     function updateDatabase<K extends keyof DatabaseConfig>(key: K, value: DatabaseConfig[K]) { (stepperData.value.database as any)[key] = value; }
     function updateScript<K extends keyof ScriptConfig>(key: K, value: ScriptConfig[K]) { (stepperData.value.script as any)[key] = value; }
     function updateFrontendLayout<K extends keyof FrontendLayoutConfig>(key: K, value: FrontendLayoutConfig[K]) { (stepperData.value.frontendLayout as any)[key] = value; }
@@ -125,6 +147,14 @@ export const useGeneratorStore = defineStore('generator', () => {
     function setAvailableLanguages(data: LanguageDto[]) { availableLanguages.value = data; }
     function setIsGenerating(value: boolean) { isGenerating.value = value; }
 
+    function setAvailableLanguageVersions(data: string[]) { availableLanguageVersions.value = data; }
+    function setAvailableFrameworkVersions(data: string[]) { availableFrameworkVersions.value = data; }
+    function setAvailableBuildTools(data: string[]) { availableBuildTools.value = data; }
+
+    function setAvailableHibernateDdlAutoOptions(data: string[]) { 
+        availableHibernateDdlAutoOptions.value = data; 
+    }
+
     function reset() {
         isGenerating.value = false;
         stepperData.value = structuredClone(INITIAL_STATE);
@@ -135,13 +165,17 @@ export const useGeneratorStore = defineStore('generator', () => {
         availableTables, tables, views,
         getTablesParents, getTablesChilds, getRelations,
         getAvailableTables, getAvailableViews, getAvailableFrontendFrameworks, getAvailableLanguages,
-        getAvailableLoggingLevels,
+        getAvailableLoggingLevels, getAvailableSecurityTypes, getAvailableCacheProviders,
+        getAvailableLanguageVersions, getAvailableFrameworkVersions, getAvailableBuildTools,
+        getAvailableHibernateDdlAutoOptions,
         
         setDatabaseEngine, setFramework, setSelectedFrontendFramework, setAvailableTables,
         updateConfig, updateDatabase, updateScript, updateFrontendLayout, updateGitConfig,
         toggleTable, toggleView, toggleComponent, toggleLanguage, addRelation, removeRelation,
         setTablesParents, setTablesChilds, setRelations, setAvailableLanguages, setIsGenerating,
-        setAvailableLoggingLevels,
+        setAvailableLoggingLevels, setAvailableSecurityTypes, setAvailableCacheProviders,
+        setAvailableLanguageVersions, setAvailableFrameworkVersions, setAvailableBuildTools,
+        setAvailableHibernateDdlAutoOptions,
         reset
     };
 });

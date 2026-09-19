@@ -1,6 +1,5 @@
 <template>
     <div class="p-6 space-y-6">
-        
         <!-- ═══ Section 1 : Configuration de Base ═══ -->
         <div class="space-y-4">
             <h3 class="text-lg font-semibold text-text border-b border-secondary pb-2">
@@ -8,30 +7,26 @@
             </h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Nom du projet -->
                 <GenesisInput 
                     v-model="config.projectName" 
                     variant="secondary" 
                     label="Nom du projet" 
                     placeholder="mon-super-projet"
-                    :size="'lg'"
+                    size="lg"
                     is-mandatory
                     fill-width
                 />
-
-                <!-- Description du projet -->
                 <GenesisInput 
                     v-model="config.projectDescription" 
                     variant="secondary" 
                     label="Description du projet"
-                    :size="'lg'"
+                    size="lg"
                     placeholder="Une brève description de l'application..."
                     fill-width
                 />
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Localisation -->
                 <GenesisInput
                     v-model="config.projectLocation"
                     type="path"
@@ -41,13 +36,11 @@
                     size="lg"
                     @request-folder-path="handleSelectFolderPath"
                 />
-
-                <!-- Port d'exécution -->
                 <GenesisInput
                     v-model="config.projectPort"
                     type="number"
                     variant="secondary"
-                    :size="'lg'"
+                    size="lg"
                     label="Port d'exécution"
                     placeholder="ex: 8080"
                     fill-width
@@ -64,7 +57,6 @@
             </h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Version du Language -->
                 <GenesisInput
                     v-model="config.languageVersion"
                     type="select"
@@ -87,7 +79,6 @@
                     </div>
                 </GenesisInput>
 
-                <!-- Build Tool -->
                 <GenesisInput
                     v-model="config.buildTool"
                     type="select"
@@ -99,18 +90,17 @@
                     <div class="p-1 space-y-1">
                         <button
                             v-for="tool in availableBuildTools"
-                            :key="tool.value"
+                            :key="tool"
                             type="button"
                             class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                            :class="{ 'text-accent font-medium': config.buildTool === tool.value }"
-                            @click="updateConfig('buildTool', tool.value)"
+                            :class="{ 'text-accent font-medium': config.buildTool === tool }"
+                            @click="updateConfig('buildTool', tool)"
                         >
-                            {{ tool.label }}
+                            {{ tool.charAt(0).toUpperCase() + tool.slice(1) }}
                         </button>
                     </div>
                 </GenesisInput>
 
-                <!-- Group ID (Conditionnel) -->
                 <div v-if="showGroupId" class="space-y-1">
                     <GenesisInput 
                         v-model="config.groupId"
@@ -121,15 +111,28 @@
                     />
                 </div>
 
-                <!-- Framework Version -->
                 <div class="space-y-1">
                     <GenesisInput 
                         v-model="config.frameworkVersion"
+                        type="select"
                         variant="secondary"
                         label="Version du Framework"
-                        placeholder="ex: 3.2.0"
+                        placeholder="Sélectionner..."
                         fill-width
-                    />
+                    >
+                        <div class="p-1 space-y-1">
+                            <button
+                                v-for="v in availableFrameworkVersions"
+                                :key="v"
+                                type="button"
+                                class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                                :class="{ 'text-accent font-medium': config.frameworkVersion === v }"
+                                @click="updateConfig('frameworkVersion', v)"
+                            >
+                                {{ v }}
+                            </button>
+                        </div>
+                    </GenesisInput>
                 </div>
             </div>
         </div>
@@ -145,9 +148,9 @@
             >
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                     
-                    <!-- Logging Level -->
+                    <!-- ✅ Logging Level (SIMPLIFIÉ) -->
                     <GenesisInput
-                        v-model="loggingLevelValue"
+                        v-model="config.loggingLevel"
                         type="select"
                         variant="secondary"
                         label="Niveau de Logging"
@@ -157,18 +160,18 @@
                         <div class="p-1 space-y-1">
                             <button
                                 v-for="opt in availableLoggingLevels"
-                                :key="opt.id"
+                                :key="opt"
                                 type="button"
                                 class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                                :class="{ 'text-accent font-medium': config.loggingLevel?.id === opt.id }"
+                                :class="{ 'text-accent font-medium': config.loggingLevel === opt }"
                                 @click="updateConfig('loggingLevel', opt)"
                             >
-                                {{ opt.name }}
+                                {{ opt }}
                             </button>
                         </div>
                     </GenesisInput>
 
-                    <!-- Security Type -->
+                    <!-- ✅ Security Type (SIMPLIFIÉ) -->
                     <GenesisInput
                         v-model="config.securityType"
                         type="select"
@@ -179,19 +182,27 @@
                     >
                         <div class="p-1 space-y-1">
                             <button
-                                v-for="opt in securityOptions"
-                                :key="opt.value"
                                 type="button"
                                 class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                                :class="{ 'text-accent font-medium': config.securityType === opt.value }"
-                                @click="updateConfig('securityType', opt.value)"
+                                :class="{ 'text-accent font-medium': !config.securityType || config.securityType === 'NONE' }"
+                                @click="updateConfig('securityType', 'NONE')"
                             >
-                                {{ opt.label }}
+                                Aucune
+                            </button>
+                            <button
+                                v-for="opt in availableSecurityTypes"
+                                :key="opt"
+                                type="button"
+                                class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                                :class="{ 'text-accent font-medium': config.securityType === opt }"
+                                @click="updateConfig('securityType', opt)"
+                            >
+                                {{ opt }}
                             </button>
                         </div>
                     </GenesisInput>
 
-                    <!-- Cache Provider -->
+                    <!-- ✅ Cache Provider (SIMPLIFIÉ) -->
                     <GenesisInput
                         v-model="config.cacheProvider"
                         type="select"
@@ -202,99 +213,113 @@
                     >
                         <div class="p-1 space-y-1">
                             <button
-                                v-for="opt in cacheOptions"
-                                :key="opt.value"
+                                v-for="opt in availableCacheProviders"
+                                :key="opt"
                                 type="button"
                                 class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                                :class="{ 'text-accent font-medium': config.cacheProvider === opt.value }"
-                                @click="updateConfig('cacheProvider', opt.value)"
+                                :class="{ 'text-accent font-medium': config.cacheProvider === opt }"
+                                @click="updateConfig('cacheProvider', opt)"
                             >
-                                {{ opt.label }}
+                                {{ opt }}
                             </button>
                         </div>
                     </GenesisInput>
 
+                    <div v-if="showHibernateDdl" class="space-y-1">
+                        <GenesisInput
+                            v-model="config.hibernateDdlAuto"
+                            type="select"
+                            variant="secondary"
+                            label="Hibernate DDL Auto"
+                            placeholder="none"
+                            fill-width
+                        >
+                            <div class="p-1 space-y-1">
+                                <button
+                                    v-for="opt in availableHibernateDdlAutoOptions"
+                                    :key="opt"
+                                    type="button"
+                                    class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                                    :class="{ 'text-accent font-medium': config.hibernateDdlAuto === opt }"
+                                    @click="updateConfig('hibernateDdlAuto', opt)"
+                                >
+                                    {{ opt }}
+                                </button>
+                            </div>
+                        </GenesisInput>
+                    </div>
+
                 </div>
             </GenesisDisclosure>
         </div>
-
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
-import { MOCK_BUILD_TOOLS, MOCK_JAVA_VERSIONS, MOCK_NODE_VERSIONS } from '../../types/generator.types';
 
-// Imports des composants
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
 
-//  1. Définition des événements (le Core demande au parent d'ouvrir le dossier)
-const emit = defineEmits<{
-    'request-folder-path': [];
-}>();
+const emit = defineEmits<{ 'request-folder-path': []; }>();
 
-//  2. Appel correct du composable (sans argument, via inject)
 const { 
     stepperData,
     updateConfig,
     availableLoggingLevels,
-    fetchLoggingLevels 
+    availableSecurityTypes,
+    availableCacheProviders,
+    availableLanguageVersions,    
+    availableFrameworkVersions,   
+    availableBuildTools,
+    availableHibernateDdlAutoOptions,
+    fetchLoggingLevels, 
+    fetchSecurityTypes,
+    fetchCacheProviders,
+    fetchLanguageVersions,        
+    fetchFrameworkVersions,
+    fetchBuildTools,
+    fetchHibernateDdlAutoOptions
 } = useGenerator();
 
 const config = computed(() => stepperData.value.config);
 const framework = computed(() => stepperData.value.framework);
 
 const showGroupId = computed(() => {
-    return framework.value?.coreFramework === 'Spring' || framework.value?.coreFramework === 'Laravel';
+    return framework.value?.withGroupId === true;
 });
 
-const loggingLevelValue = computed({
-    get: () => config.value.loggingLevel?.name ?? '',
-    set: (name: string) => {
-        const level = availableLoggingLevels.value.find(
-            level => level.name === name
-        );
+const showHibernateDdl = computed(() => framework.value?.withHibernateDdlAuto === true);
 
-        if (level) {
-            updateConfig('loggingLevel', level);
-        }
-    }
-});
+console.log(`framework séléctionné : ${framework.value}`);
 
-const availableLanguageVersions = computed(() => {
-    const core = framework.value?.coreFramework;
-    if (core === 'Spring' || core === 'Laravel') return MOCK_JAVA_VERSIONS;
-    if (core === 'Express' || core === 'Django') return MOCK_NODE_VERSIONS;
-    return ['Latest'];
-});
-
-//  3. Typage explicite pour résoudre l'erreur TS2345 sur 'buildTool'
-// type BuildToolType = 'maven' | 'gradle' | 'npm' | 'yarn' | 'pip';
-const availableBuildTools = computed(() => MOCK_BUILD_TOOLS);
-
-
-const securityOptions = [
-    { label: 'Aucune', value: 'none' },
-    { label: 'JWT (JSON Web Token)', value: 'jwt' },
-    { label: 'Session Cookie', value: 'session' },
-    { label: 'OAuth2', value: 'oauth2' }
-];
-
-const cacheOptions = [
-    { label: 'Aucun', value: 'none' },
-    { label: 'Redis', value: 'redis' },
-    { label: 'Ehcache', value: 'ehcache' },
-    { label: 'Caffeine', value: 'caffeine' }
-];
-
-//  4. Handler local qui émet l'événement au lieu d'appeler le service
 function handleSelectFolderPath() {
     emit('request-folder-path');
 }
 
+// Watcher unique et propre pour recharger toutes les listes quand le framework
+watch(() => framework.value?.id, async (newId) => {
+    if (newId && framework.value) {
+        await fetchBuildTools(newId);
+        await fetchLanguageVersions(framework.value.languageId);
+        await fetchFrameworkVersions(newId);
+        await fetchLoggingLevels(newId);
+        await fetchSecurityTypes(newId);
+        await fetchCacheProviders(newId);
+        await fetchHibernateDdlAutoOptions(newId);
+    }
+});
+
 onMounted(async () => {
-    await fetchLoggingLevels();
+    if (framework.value?.id) {
+        await fetchBuildTools(framework.value.id);
+        await fetchLanguageVersions(framework.value.languageId);
+        await fetchFrameworkVersions(framework.value.id);
+        await fetchLoggingLevels(framework.value.id);
+        await fetchSecurityTypes(framework.value.id);
+        await fetchCacheProviders(framework.value.id);
+        await fetchHibernateDdlAutoOptions(framework.value.id);
+    }
 });
 </script>

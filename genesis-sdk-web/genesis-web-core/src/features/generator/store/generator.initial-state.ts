@@ -12,10 +12,7 @@ export const INITIAL_STATE: GeneratorData = {
         frameworkVersion: '',
         projectDescription: '',
         projectPort: '',
-        loggingLevel: {
-            id: '',
-            name: ''
-        },
+        loggingLevel: '',
         securityType: '',
         cacheProvider: ''
     },

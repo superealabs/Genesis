@@ -95,12 +95,23 @@ function handleReplaceSelection(slotId: string | number) {
 }
 
 
-async function handleSelectWrapper(framework: Framework, event?: MouseEvent) {
-  const result = await handleSelect(framework, event);
-  
-  emit('select', result);
-}
+// Dans genesis-sdk-web/genesis-web-core/src/features/frameworks/views/FrameworksView.vue
 
+async function handleSelectWrapper(framework: Framework, event?: MouseEvent) {
+
+  try {
+    console.log("🔥 [FrameworksView] Clic détecté ! Framework reçu :", framework);
+    
+    // On exécute la logique interne (mise à jour visuelle, etc.)
+    await handleSelect(framework, event);
+    
+    // ✅ CORRECTION : On émet DIRECTEMENT l'objet framework, de manière fiable
+    console.log("📤 [FrameworksView] Émission de l'événement 'select' avec le framework :", framework.name);
+    emit('select', { action: 'select', framework: framework, event }); 
+  } catch (error) {
+    console.error("Alerte syr le handleSelect");
+  }
+}
 
 defineExpose({
   triggerReplace

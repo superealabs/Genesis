@@ -73,8 +73,7 @@ export function useFrameworks() {
             return { action: 'replace-needed' as const, event, framework };
         }
 
-        // Sinon, c'est une sélection/désélection normale, on appelle le service
-        await svc.selectFramework(framework.id); 
+        // NE JAMAIS APPELER LA FONCTION SELECTFRAMEWORK ICI
         return { action: result.action, event, framework };
     }
 

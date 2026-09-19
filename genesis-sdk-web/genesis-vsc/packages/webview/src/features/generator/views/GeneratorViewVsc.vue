@@ -19,14 +19,15 @@ const {
     handleSelectFolderPath,
     handleFileRequest,
     skipCurrentStep,
+    stepperData
 } = useGeneratorVsc();
 
 function handleClose() {
     reset();
 }
 
-function handleNextStep() {
-    const finalData = goToNextStep();
+async function handleNextStep() {
+    const finalData = await goToNextStep();
     if (finalData) {
         // Déclencher la génération du projet ici si nécessaire
         console.log("Prêt à générer :", finalData);
@@ -34,8 +35,12 @@ function handleNextStep() {
 }
 
 // ═══ ORCHESTRATION UI (Sélection + Avancement) ═══
-function onSelectFramework(framework: Framework) {
+// Dans packages/webview/src/features/generator/views/GeneratorViewVsc.vue
+
+function onSelectFramework(framework: any) {
     setFramework(framework);
+    // Vérifier immédiatement après
+    console.log('[onSelectFramework] store après setFramework =', stepperData.value.framework);
 }
 
 function onSelectDatabase(engine: DatabaseEngineDto) {

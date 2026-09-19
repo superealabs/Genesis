@@ -16,6 +16,11 @@ export interface Framework {
     useEurekaServer: boolean;
     isGateway: boolean;
     useFrontendApp: boolean;
+
+    withGroupId?: boolean;
+
+    withHibernateDdlAuto?: boolean;
+    withEurekaSupport?: boolean;
 }
 
 export interface FrameworkFilters {

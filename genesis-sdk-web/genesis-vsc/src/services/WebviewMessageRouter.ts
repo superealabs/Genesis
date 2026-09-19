@@ -53,6 +53,26 @@ export class WebviewMessageRouter {
                     await this.generatorHandler.handleGetLoggingLevels(message.payload, this.panel);
                     break;
 
+                case 'GET_SECURITY_TYPES':
+                    await this.generatorHandler.handleGetSecurityTypes(message.payload, this.panel);
+                    break;
+
+                case 'GET_LANGUAGE_VERSIONS':
+                    await this.generatorHandler.handleGetLanguageVersions(message.payload, this.panel);
+                    break;
+
+                case 'GET_FRAMEWORK_VERSIONS':
+                    await this.generatorHandler.handleGetFrameworkVersions(message.payload, this.panel);
+                    break;
+
+                case 'GET_BUILD_TOOLS':
+                    await this.generatorHandler.handleGetBuildTools(message.payload, this.panel);
+                    break;
+
+                case 'GET_CACHE_PROVIDERS':
+                    await this.generatorHandler.handleGetCacheProviders(message.payload, this.panel);
+                    break;
+
                 case 'REQUEST_FOLDER_PATH': // Nom harmonisé avec le frontend
                     await this.generatorHandler.handleRequestFolderPath();
                     break;

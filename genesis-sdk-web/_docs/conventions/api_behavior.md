@@ -4,7 +4,7 @@
 
     * Filtre
     - chargement de la liste des languages
-    - chargement de la liste des architectures
+    - chargement de la liste des architectures(FrontEnd managed)
     - chargement de la liste des coresFramework
     - chargement des option d'intégration(Eureka)
     - chargement des templates Engine
@@ -19,7 +19,7 @@
 - onMounted
     - chargement des configs liés aux framework choisis. getConfigFramework()
     - chargement des loggings level
-    - chargement des securityTypes(dépends du framework ou du language)
+    - chargement des securityTypes(dépends du framework)
     - chargement des cacheproviders(dépends du framework ou du language)
     - chargement des buildTool(dépends du language ou du framework)
 
