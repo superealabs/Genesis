@@ -31,3 +31,19 @@ export interface FrameworkFilters {
     viewTemplateEngine?: string;
     viewExtension?: string;
 }
+
+/**
+ * Représentation minimale d'un Core Framework pour les filtres.
+ */
+export interface CoreFramework {
+    id: number;
+    name: string;
+}
+
+/**
+ * Représentation minimale d'un moteur de template pour les filtres.
+ */
+export interface ViewTemplate {
+    id: number;
+    name: string;
+}
