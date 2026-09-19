@@ -4,15 +4,22 @@ import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/sto
 import { GENERATOR_SERVICE_KEY, type IGeneratorService } from '@genesis-labs/web-core/features/generator/types/generator.service.interface';
 import { useGenesisWizard } from '@genesis-labs/web-core/core/composables/ux/useGenesisWizard';
 
-import type { GeneratorData } from '@genesis-labs/shared-types';
+import type { GeneratorData, IDatabaseService } from '@genesis-labs/shared-types';
+import { FRONTEND_SERVICE_KEY, IFrontendService } from '../../frontend/manifest';
+import { DATABASE_SERVICE_KEY } from '../../database/manifest';
 
 export function useGenerator() {
     const service = inject(GENERATOR_SERVICE_KEY);
+    const frontendService = inject(FRONTEND_SERVICE_KEY);
+    const databaseService = inject(DATABASE_SERVICE_KEY);
+
     if (!service) {
         throw new Error('[useGenerator] IGeneratorService non fourni. Vérifiez app.provide() dans main.ts');
     }
     
     const svc = service as IGeneratorService;
+    const fdsvc = frontendService as IFrontendService;
+    const dbsvc = databaseService as IDatabaseService;
     const store = useGeneratorStore();
 
     const SKIPPABLE_CONFIG = {
@@ -41,7 +48,8 @@ export function useGenerator() {
         stepperData, 
         getTablesParents, getTablesChilds, getRelations,
         getAvailableFrontendFrameworks, getAvailableLanguages,
-        tables, views, availableTables
+        tables, views, availableTables, getAvailableLoggingLevels
+
     } = storeToRefs(store);
 
     // ═══ 3. WRAPPERS DE NAVIGATION (Avec logique métier spécifique) ═══
@@ -82,11 +90,13 @@ export function useGenerator() {
     async function fetchTablesMetadataParents() { store.setTablesParents(await svc.fetchTablesMetadataParents()); }
     async function fetchTablesMetadataChilds() { store.setTablesChilds(await svc.fetchTablesMetadataChilds()); }
     async function fetchRelations() { store.setRelations(await svc.fetchRelations()); }
-    async function fetchAvailableLanguages() { store.setAvailableLanguages(await svc.fetchAvailableLanguages()); }
+
+
+    async function fetchAvailableLanguages() { store.setAvailableLanguages(await fdsvc.fetchAvailableLanguages()); }
 
     async function testDatabaseConnection(): Promise<{ success: boolean; message: string }> {
         try {
-            const result = await svc.testDatabaseConnection(stepperData.value.database);
+            const result = await dbsvc.testDatabaseConnection(stepperData.value.database);
             return result;
         } catch (error) {
             console.error('[useGenerator] Erreur lors du test de connexion:', error);
@@ -95,6 +105,12 @@ export function useGenerator() {
                 message: error instanceof Error ? error.message : 'Une erreur inconnue est survenue.' 
             };
         }
+    }
+
+    async function fetchLoggingLevels() {
+        store.setAvailableLoggingLevels(
+            await svc.fetchLoggingLevels()
+        );
     }
 
     // ═══ 5. RETOUR FINAL ═══
@@ -112,6 +128,7 @@ export function useGenerator() {
         availableFrontendFrameworks: getAvailableFrontendFrameworks, 
         availableLanguages: getAvailableLanguages,
         tables, views, availableTables,
+        availableLoggingLevels: getAvailableLoggingLevels,
 
         // Navigation
         goToNextStep,
@@ -140,5 +157,7 @@ export function useGenerator() {
         addRelation: store.addRelation,
         removeRelation: store.removeRelation,
         isCurrentStepSkippable,
+
+        fetchLoggingLevels
     };
 }

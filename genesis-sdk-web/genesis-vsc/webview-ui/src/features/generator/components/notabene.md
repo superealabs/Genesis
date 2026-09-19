@@ -1,1 +1,0 @@
-la dernière configuration sera ajouté aux premiers formulaires

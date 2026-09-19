@@ -1,4 +1,4 @@
-import type { TableMetadataDto, RelationParameter } from './generator.shared';
+import type { TableMetadataDto, RelationParameter, LoggingLevel } from './generator.shared';
 
 /**
  * Contrat du service générateur (Pure Interface).
@@ -9,4 +9,6 @@ export interface IGeneratorService {
     fetchTablesMetadataParents(): Promise<TableMetadataDto[]>;
     fetchTablesMetadataChilds(): Promise<TableMetadataDto[]>;
     fetchRelations(): Promise<RelationParameter[]>;
+
+    fetchLoggingLevels(): Promise<LoggingLevel[]>;
 }

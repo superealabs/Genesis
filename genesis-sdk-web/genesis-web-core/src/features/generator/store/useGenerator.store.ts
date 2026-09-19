@@ -5,7 +5,8 @@ import type {
     GeneratorData, ProjectConfig, DatabaseConfig, ScriptConfig, 
     ComponentType, TableMetadataDto, RelationParameter, LanguageDto, 
     FrontendLayoutConfig, GitConfiguration, 
-    DatabaseEngineDto
+    DatabaseEngineDto,
+    LoggingLevel
 } from '@genesis-labs/shared-types';
 
 import { INITIAL_STATE } from './generator.initial-state';
@@ -20,6 +21,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     const relations = ref<RelationParameter[]>([]);
     const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
     const availableLanguages = ref<LanguageDto[]>([]);
+    const availableLoggingLevels = ref<LoggingLevel[]>([]);
 
     const stepperData = ref<GeneratorData>(structuredClone(INITIAL_STATE));
 
@@ -29,6 +31,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     const getRelations = computed(() => relations.value);
     const getAvailableFrontendFrameworks = computed(() => availableFrontendFrameworks.value);
     const getAvailableLanguages = computed(() => availableLanguages.value);
+    const getAvailableLoggingLevels = computed(() => availableLoggingLevels.value);
 
     const tables = computed(() => availableTables.value.filter(t => !t.isView));
     const views = computed(() => availableTables.value.filter(t => t.isView));
@@ -65,6 +68,10 @@ export const useGeneratorStore = defineStore('generator', () => {
     function setSelectedFrontendFramework(framework: FrontendFramework | null) {
         stepperData.value.frontend = framework;
         if (framework) stepperData.value.frontendLayout.port = framework.defaultPort;
+    }
+
+    function setAvailableLoggingLevels(data: LoggingLevel[]) {
+        availableLoggingLevels.value = data;
     }
 
     function setAvailableTables(data: TableMetadataDto[]) { availableTables.value = data; }
@@ -128,11 +135,13 @@ export const useGeneratorStore = defineStore('generator', () => {
         availableTables, tables, views,
         getTablesParents, getTablesChilds, getRelations,
         getAvailableTables, getAvailableViews, getAvailableFrontendFrameworks, getAvailableLanguages,
+        getAvailableLoggingLevels,
         
         setDatabaseEngine, setFramework, setSelectedFrontendFramework, setAvailableTables,
         updateConfig, updateDatabase, updateScript, updateFrontendLayout, updateGitConfig,
         toggleTable, toggleView, toggleComponent, toggleLanguage, addRelation, removeRelation,
         setTablesParents, setTablesChilds, setRelations, setAvailableLanguages, setIsGenerating,
+        setAvailableLoggingLevels,
         reset
     };
 });

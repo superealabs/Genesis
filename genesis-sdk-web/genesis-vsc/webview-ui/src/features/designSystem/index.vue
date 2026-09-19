@@ -1,1 +1,0 @@
-export { default as DesignSystemView } from '@/features/designSystem/components/DesignSystemView.vue';

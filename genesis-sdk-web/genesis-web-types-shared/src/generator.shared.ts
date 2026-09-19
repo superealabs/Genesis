@@ -8,19 +8,36 @@ import type { DatabaseConfig } from './database.shared';
 
 // ═══ Interfaces et Types (Purs, sans dépendance UI) ═══
 
+export interface LoggingLevel {
+    id: string;
+    name: string;
+}
+
 export interface ProjectConfig {
+
     projectName: string;
+
     projectLocation: string;
+
     languageVersion: string;
+
     buildTool: 'maven' | 'gradle' | 'npm' | 'yarn' | 'pip';
+
     groupId: string;
+
     frameworkVersion: string;
+
     projectDescription: string;
+
     projectPort: string;
-    loggingLevel: string;
+
+    loggingLevel: LoggingLevel;
+
     securityType: string;
+
     cacheProvider: string;
 }
+
 
 export interface ScriptConfig {
     path: string;

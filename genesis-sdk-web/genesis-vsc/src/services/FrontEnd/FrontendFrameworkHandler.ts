@@ -1,110 +1,54 @@
 import * as vscode from 'vscode';
-import { getAxiosInstance } from '../http/genesisAxiosInstance';
+import { logger } from '../LoggerService';
+import { VsCodeFrontendService } from './VsCodeFrontendService';
+import type { FrontendFramework } from '@genesis-labs/shared-types';
 
-// ═══ TYPES ═══
-export interface FrontendFrameworkDto {
-    id: number;
-    languageId: number;
-    name: string;
-    coreFramework: string;
-    componentExtension: string;
-    defaultPort: string;
-}
-
-export interface LanguageDto {
-    code: string;   // ex: 'fr', 'en'
-    name: string;   // ex: 'Français', 'English'
-}
-
-// ═══ DONNÉES STATIQUES (FALLBACK) ═══
-const MOCK_FRONTEND_FRAMEWORKS: FrontendFrameworkDto[] = [
-    {
-        id: 1,
-        languageId: 2,
-        name: 'React',
-        coreFramework: 'React',
-        componentExtension: '.tsx',
-        defaultPort: '3000'
-    },
-    {
-        id: 2,
-        languageId: 2,
-        name: 'Vue.js',
-        coreFramework: 'Vue',
-        componentExtension: '.vue',
-        defaultPort: '5173'
-    },
-    {
-        id: 3,
-        languageId: 2,
-        name: 'Angular',
-        coreFramework: 'Angular',
-        componentExtension: '.ts',
-        defaultPort: '4200'
-    },
-    {
-        id: 4,
-        languageId: 2,
-        name: 'Svelte',
-        coreFramework: 'Svelte',
-        componentExtension: '.svelte',
-        defaultPort: '5173'
-    },
-    {
-        id: 5,
-        languageId: 3,
-        name: 'Razor',
-        coreFramework: 'Laravel',
-        componentExtension: '.t',
-        defaultPort: '1456'
-    }
-];
-
-const MOCK_LANGUAGES: LanguageDto[] = [
-    { code: 'fr', name: 'Français' },
-    { code: 'en', name: 'English' },
-    { code: 'es', name: 'Español' },
-    { code: 'de', name: 'Deutsch' },
-    { code: 'it', name: 'Italiano' },
-    { code: 'pt', name: 'Português' },
-    { code: 'ar', name: 'العربية' },
-    { code: 'zh', name: '中文' }
-];
+const LOG_CHANNEL = 'Genesis Frontend Handler';
 
 export class FrontendHandler {
+    // ✅ Instanciation du service qui contient la logique et les mocks
+    private service = new VsCodeFrontendService();
+
     constructor(private panel: vscode.WebviewPanel) {}
 
-    async handleGetFrontendFrameworks(_payload: any): Promise<void> {
-        try {
-            const { data } = await getAxiosInstance().get<FrontendFrameworkDto[]>('/frontend_frameworks');
-            this.panel.webview.postMessage({ 
-                type: 'FRONTEND_FRAMEWORKS_LOADED', 
-                payload: data 
-            });
-        } catch (error) {
-            console.warn('[FrontendHandler] API Frontend Frameworks échouée, utilisation du fallback statique:', (error as Error).message);
-            this.panel.webview.postMessage({
-                type: 'FRONTEND_FRAMEWORKS_LOADED',
-                payload: MOCK_FRONTEND_FRAMEWORKS
-            });
-        }
+    // ═══ ROUTAGE VERS LE SERVICE (Lecture) ═══
+    // Plus de try/catch ici, le service garantit un retour (réel ou mock).
+
+    async handleGetFrontendFrameworks(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        logger.log(LOG_CHANNEL, '➡️ [getFrontends] Récupération des frameworks frontend...');
+        const data = await this.service.fetchFrontendFrameworks();
+        panel.webview.postMessage({ type: 'FRONTEND_FRAMEWORKS_LOADED', payload: data });
     }
 
+    async handleGetAvailableLanguages(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        logger.log(LOG_CHANNEL, '➡️ [getLanguages] Récupération des langues disponibles...');
+        const data = await this.service.fetchAvailableLanguages();
+        panel.webview.postMessage({ type: 'AVAILABLE_LANGUAGES_LOADED', payload: data });
+    }
 
-    // NOUVELLE MÉTHODE : Récupération des langues
-    async handleGetAvailableLanguages(_payload: any): Promise<void> {
+    // ═══ ACTION (Écriture) ═══
+    // Try/catch nécessaire ici pour transformer une erreur réseau en message UI lisible.
+
+    async handleSelectFrontendFramework(payload: { framework: FrontendFramework }, panel: vscode.WebviewPanel): Promise<void> {
+        logger.log(LOG_CHANNEL, `➡️ [selectFrontend] Sélection du framework: ${payload.framework.name}`);
+        
         try {
-            // Tentative d'appel à l'API Java (à adapter selon ton endpoint réel)
-            const { data } = await getAxiosInstance().get<LanguageDto[]>('/frontend/languages');
-            this.panel.webview.postMessage({ 
-                type: 'AVAILABLE_LANGUAGES_LOADED', 
-                payload: data 
+            await this.service.selectFrontendFramework(payload.framework);
+            logger.log(LOG_CHANNEL, `✅ [selectFrontend] Framework sélectionné avec succès.`);
+            
+            panel.webview.postMessage({ 
+                type: 'FRONTEND_FRAMEWORK_SELECTED', 
+                payload: { success: true, framework: payload.framework } 
             });
+            
         } catch (error) {
-            console.warn('[FrontendHandler] API Languages échouée, utilisation du fallback statique:', (error as Error).message);
-            this.panel.webview.postMessage({
-                type: 'AVAILABLE_LANGUAGES_LOADED',
-                payload: MOCK_LANGUAGES
+            logger.log(LOG_CHANNEL, `❌ [selectFrontend] Échec de la sélection: ${(error as Error).message}`);
+            panel.webview.postMessage({ 
+                type: 'API_ERROR', 
+                payload: { 
+                    command: 'SELECT_FRONTEND', 
+                    message: `Échec de la sélection du framework frontend` 
+                } 
             });
         }
     }

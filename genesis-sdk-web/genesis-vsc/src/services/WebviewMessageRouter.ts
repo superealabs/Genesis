@@ -49,6 +49,9 @@ export class WebviewMessageRouter {
                     await this.frameworkHandler.getViewTemplates(message.payload, this.panel);
                     break;
 
+                case 'GET_LOGGING_LEVELS':
+                    await this.generatorHandler.handleGetLoggingLevels(message.payload, this.panel);
+                    break;
 
                 case 'REQUEST_FOLDER_PATH': // Nom harmonisé avec le frontend
                     await this.generatorHandler.handleRequestFolderPath();
@@ -75,11 +78,11 @@ export class WebviewMessageRouter {
                     break;
 
                 case 'GET_FRONTEND_FRAMEWORKS':
-                    await this.frontendHandler.handleGetFrontendFrameworks(message.payload);
+                    await this.frontendHandler.handleGetFrontendFrameworks(message.payload, this.panel);
                     break;
 
                 case 'GET_AVAILABLE_LANGUAGES':
-                    await this.frontendHandler.handleGetAvailableLanguages(message.payload);
+                    await this.frontendHandler.handleGetAvailableLanguages(message.payload, this.panel);
                     break;
 
                 case 'GET_DATABASE_ENGINES':

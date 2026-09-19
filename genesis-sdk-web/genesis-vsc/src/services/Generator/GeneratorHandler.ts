@@ -1,44 +1,16 @@
 import * as vscode from 'vscode';
-import { getAxiosInstance } from '../http/genesisAxiosInstance';
-import { DatabaseConfig } from '@genesis-labs/shared-types';
+import { logger } from '../LoggerService';
+import { VsCodeGeneratorService } from './VsCodeGeneratorService';
 
-// 1. Import des types directement depuis le Core (Single Source of Truth)
-import type { 
-    TableMetadataDto, 
-    RelationParameter 
-} from '@genesis-labs/shared-types';
-
-// ═══ DONNÉES STATIQUES (FALLBACK) ═══
-const MOCK_PARENT_TABLES: TableMetadataDto[] = [
-    { tableName: 'utilisateur', className: 'Utilisateur', isView: false },
-    { tableName: 'produit', className: 'Produit', isView: false },
-    { tableName: 'categorie', className: 'Categorie', isView: false },
-    { tableName: 'vue_clients_actifs', className: 'VueClientsActifs', isView: true },
-];
-
-const MOCK_CHILD_TABLES: TableMetadataDto[] = [
-    { tableName: 'commande', className: 'Commande', isView: false },
-    { tableName: 'facture', className: 'Facture', isView: false },
-    { tableName: 'detail_commande', className: 'DetailCommande', isView: false },
-    { tableName: 'vue_ventes_mensuelles', className: 'VueVentesMensuelles', isView: true },
-];
-
-const MOCK_RELATIONS: RelationParameter[] = [
-    { parentTable: 'Utilisateur', childTable: 'Commande', mandatory: true, hasForm: true },
-    { parentTable: 'Categorie', childTable: 'Produit', mandatory: true, hasForm: false },
-    { parentTable: 'Commande', childTable: 'DetailCommande', mandatory: true, hasForm: true },
-];
-
-const MOCK_TABLES: TableMetadataDto[] = [
-    { tableName: 'utilisateur', className: 'Utilisateur', isView: false },
-    { tableName: 'produit', className: 'Produit', isView: false },
-    { tableName: 'categorie', className: 'Categorie', isView: false },
-    { tableName: 'vue_clients_actifs', className: 'VueClientsActifs', isView: true },
-    { tableName: 'commande', className: 'Commande', isView: false },
-];
+const LOG_CHANNEL = 'Genesis Generator Handler';
 
 export class GeneratorHandler {
+    // ✅ Instanciation du service qui contient la logique et les mocks
+    private service = new VsCodeGeneratorService();
+
     constructor(private panel: vscode.WebviewPanel) {}
+
+    // ═══ ACTIONS UI SPÉCIFIQUES À VS CODE (Pas d'API backend) ═══
 
     async handleRequestFolderPath(): Promise<void> {
         const folders = await vscode.window.showOpenDialog({
@@ -81,89 +53,36 @@ export class GeneratorHandler {
         }
     }
 
+    // ═══ ROUTAGE VERS LE SERVICE (Lecture) ═══
+    // Plus de try/catch ici, le service garantit un retour (réel ou mock).
+
     async handleGetTablesMetadata(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
-        try {
-            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/tables_metadata_all');
-            panel.webview.postMessage({ type: 'TABLES_METADATA_LOADED', payload: data });
-        } catch (error) {
-            console.warn('[GeneratorHandler] API Tables échouée, utilisation du fallback:', (error as Error).message);
-            panel.webview.postMessage({
-                type: 'TABLES_METADATA_LOADED',
-                payload: MOCK_TABLES
-            });
-        }
+        logger.log(LOG_CHANNEL, '➡️ [getTables] Récupération des tables...');
+        const data = await this.service.fetchTablesMetadata();
+        panel.webview.postMessage({ type: 'TABLES_METADATA_LOADED', payload: data });
     }
 
     async handleGetTablesMetadataParents(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
-        try {
-            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/tables_metadata/parents');
-            panel.webview.postMessage({ type: 'TABLES_METADATA_PARENTS_LOADED', payload: data });
-        } catch (error) {
-            console.warn('[GeneratorHandler] API Parents échouée, utilisation du fallback statique:', (error as Error).message);
-            panel.webview.postMessage({
-                type: 'TABLES_METADATA_PARENTS_LOADED',
-                payload: MOCK_PARENT_TABLES
-            });
-        }
+        const data = await this.service.fetchTablesMetadataParents();
+        panel.webview.postMessage({ type: 'TABLES_METADATA_PARENTS_LOADED', payload: data });
     }
 
     async handleGetTablesMetadataChilds(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
-        try {
-            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/tables_metadata/childs');
-            panel.webview.postMessage({ type: 'TABLES_METADATA_CHILDS_LOADED', payload: data });
-        } catch (error) {
-            console.warn('[GeneratorHandler] API Childs échouée, utilisation du fallback statique:', (error as Error).message);
-            panel.webview.postMessage({
-                type: 'TABLES_METADATA_CHILDS_LOADED',
-                payload: MOCK_CHILD_TABLES
-            });
-        }
+        const data = await this.service.fetchTablesMetadataChilds();
+        panel.webview.postMessage({ type: 'TABLES_METADATA_CHILDS_LOADED', payload: data });
     }
 
     async handleGetRelations(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
-        try {
-            const { data } = await getAxiosInstance().get<RelationParameter[]>('/relations');
-            panel.webview.postMessage({ type: 'RELATIONS_LOADED', payload: data });
-        } catch (error) {
-            console.warn('[GeneratorHandler] API Relations échouée, utilisation du fallback statique:', (error as Error).message);
-            panel.webview.postMessage({
-                type: 'RELATIONS_LOADED',
-                payload: MOCK_RELATIONS
-            });
-        }
+        const data = await this.service.fetchRelations();
+        panel.webview.postMessage({ type: 'RELATIONS_LOADED', payload: data });
     }
 
-    async handleTestDatabaseConnection(payload: DatabaseConfig, panel: vscode.WebviewPanel): Promise<void> {
-        try {
-            // 🔄 SIMULATION : Remplace ceci par ton vrai appel API ou logique Node.js (ex: mysql2, pg, etc.)
-            // const { data } = await getAxiosInstance().post('/test-db-connection', payload);
-            
-            // Simulation d'un délai réseau pour le réalisme UX
-            await new Promise(resolve => setTimeout(resolve, 800));
+    async handleGetLoggingLevels(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        const data = await this.service.fetchLoggingLevels();
 
-            // Validation basique pour la démo (à adapter selon ta logique réelle)
-            if (!payload.host || !payload.databaseName) {
-                throw new Error("L'hôte et le nom de la base de données sont requis.");
-            }
-
-            // Succès simulé
-            panel.webview.postMessage({
-                type: 'DATABASE_CONNECTION_TESTED',
-                payload: { 
-                    success: true, 
-                    message: `Connexion réussie à ${payload.engine} sur ${payload.host}:${payload.port} !` 
-                }
-            });
-
-        } catch (error) {
-            console.warn('[GeneratorHandler] Test de connexion échoué:', (error as Error).message);
-            panel.webview.postMessage({
-                type: 'DATABASE_CONNECTION_TESTED',
-                payload: { 
-                    success: false, 
-                    message: (error as Error).message || 'Échec de la connexion à la base de données.' 
-                }
-            });
-        }
+        panel.webview.postMessage({
+            type: 'LOGGING_LEVELS_LOADED',
+            payload: data
+        });
     }
 }

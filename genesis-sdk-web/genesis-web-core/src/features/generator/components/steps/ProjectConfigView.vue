@@ -147,7 +147,7 @@
                     
                     <!-- Logging Level -->
                     <GenesisInput
-                        v-model="config.loggingLevel"
+                        v-model="loggingLevelValue"
                         type="select"
                         variant="secondary"
                         label="Niveau de Logging"
@@ -156,14 +156,14 @@
                     >
                         <div class="p-1 space-y-1">
                             <button
-                                v-for="opt in loggingOptions"
-                                :key="opt.value"
+                                v-for="opt in availableLoggingLevels"
+                                :key="opt.id"
                                 type="button"
                                 class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                                :class="{ 'text-accent font-medium': config.loggingLevel === opt.value }"
-                                @click="updateConfig('loggingLevel', opt.value)"
+                                :class="{ 'text-accent font-medium': config.loggingLevel?.id === opt.id }"
+                                @click="updateConfig('loggingLevel', opt)"
                             >
-                                {{ opt.label }}
+                                {{ opt.name }}
                             </button>
                         </div>
                     </GenesisInput>
@@ -222,15 +222,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { MOCK_BUILD_TOOLS, MOCK_JAVA_VERSIONS, MOCK_NODE_VERSIONS } from '../../types/generator.types';
 
 // Imports des composants
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
-// import IconFolder from '@genesis-labs/web-core/core/components/ui/icons/IconFolder.vue';
-// import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 
 //  1. Définition des événements (le Core demande au parent d'ouvrir le dossier)
 const emit = defineEmits<{
@@ -239,8 +237,10 @@ const emit = defineEmits<{
 
 //  2. Appel correct du composable (sans argument, via inject)
 const { 
-    stepperData, 
-    updateConfig 
+    stepperData,
+    updateConfig,
+    availableLoggingLevels,
+    fetchLoggingLevels 
 } = useGenerator();
 
 const config = computed(() => stepperData.value.config);
@@ -248,6 +248,19 @@ const framework = computed(() => stepperData.value.framework);
 
 const showGroupId = computed(() => {
     return framework.value?.coreFramework === 'Spring' || framework.value?.coreFramework === 'Laravel';
+});
+
+const loggingLevelValue = computed({
+    get: () => config.value.loggingLevel?.name ?? '',
+    set: (name: string) => {
+        const level = availableLoggingLevels.value.find(
+            level => level.name === name
+        );
+
+        if (level) {
+            updateConfig('loggingLevel', level);
+        }
+    }
 });
 
 const availableLanguageVersions = computed(() => {
@@ -261,13 +274,6 @@ const availableLanguageVersions = computed(() => {
 // type BuildToolType = 'maven' | 'gradle' | 'npm' | 'yarn' | 'pip';
 const availableBuildTools = computed(() => MOCK_BUILD_TOOLS);
 
-//  Options pour les dropdowns avancés
-const loggingOptions = [
-    { label: 'DEBUG', value: 'DEBUG' },
-    { label: 'INFO', value: 'INFO' },
-    { label: 'WARN', value: 'WARN' },
-    { label: 'ERROR', value: 'ERROR' }
-];
 
 const securityOptions = [
     { label: 'Aucune', value: 'none' },
@@ -287,4 +293,8 @@ const cacheOptions = [
 function handleSelectFolderPath() {
     emit('request-folder-path');
 }
+
+onMounted(async () => {
+    await fetchLoggingLevels();
+});
 </script>
