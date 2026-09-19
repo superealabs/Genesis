@@ -1,66 +1,75 @@
 import * as vscode from 'vscode';
-import { getAxiosInstance } from '../http/genesisAxiosInstance';
 import { logger } from '../LoggerService';
-import type { Framework } from '@genesis-labs/shared-types'; 
+// ✅ On importe UNIQUEMENT le service. Plus besoin d'importer les mocks ici.
+import { VsCodeFrameworkService } from './VsCodeFrameworkService';
 
-// ═══ DONNÉES STATIQUES (FALLBACK) ═══
-const MOCK_FRAMEWORKS: Framework[] = [
-    { id: 1, languageId: 1, name: 'Spring Boot REST', coreFramework: 'Spring', type: 'REST API', isProd: true, useDB: true, useCloud: false, useEurekaServer: false, isGateway: false, useFrontendApp: false },
-    { id: 2, languageId: 1, name: 'Spring MVC', coreFramework: 'Spring', type: 'MVC', isProd: true, useDB: true, useCloud: false, useEurekaServer: false, isGateway: false, useFrontendApp: true },
-    { id: 3, languageId: 2, name: 'Django REST', coreFramework: 'Django', type: 'REST API', isProd: true, useDB: true, useCloud: false, useEurekaServer: false, isGateway: false, useFrontendApp: false },
-    { id: 4, languageId: 3, name: 'Laravel MVC', coreFramework: 'Laravel', type: 'MVC', isProd: true, useDB: true, useCloud: false, useEurekaServer: false, isGateway: false, useFrontendApp: true },
-    { id: 5, languageId: 4, name: 'Express REST', coreFramework: 'Express', type: 'REST API', isProd: false, useDB: false, useCloud: false, useEurekaServer: false, isGateway: false, useFrontendApp: false },
-];
-
-// Nom du canal de sortie dédié
 const LOG_CHANNEL = 'Genesis Frameworks';
 
 export class FrameworkHandler {
-    
+    // ✅ Instanciation unique du service respectant le contrat
+    private service = new VsCodeFrameworkService();
+
+    // ═══ 1. RÉCUPÉRATION DES LISTES (Lecture) ═══
+    // Le service gère lui-même le fallback en interne si l'API échoue.
+
     async getAll(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
-        logger.log(LOG_CHANNEL, '➡️ [getAll] Méthode appelée. Tentative de récupération des frameworks...');
-        
+        logger.log(LOG_CHANNEL, '➡️ [getAll] Tentative de récupération des frameworks...');
         try {
-            logger.log(LOG_CHANNEL, '🔄 [getAll] Appel API en cours vers /frameworks...');
-            const { data } = await getAxiosInstance().get<Framework[]>('/frameworks');
-            
-            logger.log(LOG_CHANNEL, `✅ [getAll] API réussie. ${data.length} éléments reçus. Envoi à la webview.`);
+            const data = await this.service.fetchFrameworks();
+            logger.log(LOG_CHANNEL, `✅ [getAll] Succès. ${data.length} éléments reçus.`);
             panel.webview.postMessage({ type: 'FRAMEWORKS_LOADED', payload: data });
-            
         } catch (error) {
-            logger.log(LOG_CHANNEL, `⚠️ [getAll] API échouée (${(error as Error).message}). Activation du FALLBACK MOCK !`);
-            logger.log(LOG_CHANNEL, `📦 [getAll] Envoi de ${MOCK_FRAMEWORKS.length} frameworks en mock à la webview.`);
-            
-            panel.webview.postMessage({ type: 'FRAMEWORKS_LOADED', payload: MOCK_FRAMEWORKS });
+            logger.log(LOG_CHANNEL, `⚠️ [getAll] Erreur critique inattendue.`);
+            panel.webview.postMessage({ type: 'API_ERROR', payload: { command: 'GET_FRAMEWORKS', message: 'Erreur de chargement' } });
         }
     }
+
+    async getLanguages(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        logger.log(LOG_CHANNEL, '➡️ [getLanguages] Récupération des langages...');
+        const data = await this.service.fetchLanguages();
+        panel.webview.postMessage({ type: 'LANGUAGES_LOADED', payload: data });
+    }
+
+    async getCoreFrameworks(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        logger.log(LOG_CHANNEL, '➡️ [getCoreFrameworks] Récupération des core frameworks...');
+        const data = await this.service.fetchCoreFrameworks();
+        panel.webview.postMessage({ type: 'CORE_FRAMEWORKS_LOADED', payload: data });
+    }
+
+    async getViewTemplates(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        logger.log(LOG_CHANNEL, '➡️ [getViewTemplates] Récupération des moteurs de template...');
+        const data = await this.service.fetchViewTemplates();
+        panel.webview.postMessage({ type: 'VIEW_TEMPLATES_LOADED', payload: data });
+    }
+
+    // ═══ 2. ACTION MÉTIER (Écriture) ═══
 
     async select(payload: { id: number }, panel: vscode.WebviewPanel): Promise<void> {
         logger.log(LOG_CHANNEL, `➡️ [select] Méthode appelée pour l'ID: ${payload.id}`);
         
         try {
-            const { data } = await getAxiosInstance().post(`/frameworks/${payload.id}/select`);
-            logger.log(LOG_CHANNEL, '✅ [select] API réussie. Envoi de la confirmation à la webview.');
+            // ✅ Délégation au service pour l'appel API
+            await this.service.selectFramework(payload.id);
+            logger.log(LOG_CHANNEL, '✅ [select] API réussie.');
             
-            panel.webview.postMessage({ type: 'FRAMEWORK_SELECTED', payload: data });
+            // ✅ CORRECTION : On informe simplement la webview du succès. 
+            // Pas besoin de mock, la webview connaît déjà l'ID qu'elle vient d'envoyer.
+            panel.webview.postMessage({ 
+                type: 'FRAMEWORK_SELECTED', 
+                payload: { success: true, id: payload.id } 
+            });
             
         } catch (error) {
-            logger.log(LOG_CHANNEL, `⚠️ [select] API échouée. Activation du fallback statique.`);
-            const selected = MOCK_FRAMEWORKS.find(f => f.id === payload.id);
+            logger.log(LOG_CHANNEL, `⚠️ [select] API échouée: ${(error as Error).message}`);
             
-            if (selected) {
-                logger.log(LOG_CHANNEL, `📦 [select] Fallback réussi pour l'ID ${payload.id}.`);
-                panel.webview.postMessage({ 
-                    type: 'FRAMEWORK_SELECTED', 
-                    payload: { success: true, framework: selected } 
-                });
-            } else {
-                logger.log(LOG_CHANNEL, `❌ [select] Fallback échoué : Framework introuvable pour l'ID ${payload.id}.`);
-                panel.webview.postMessage({ 
-                    type: 'API_ERROR', 
-                    payload: { command: 'SELECT_FRAMEWORK', message: 'Framework introuvable' } 
-                });
-            }
+            // ✅ En cas d'échec, on renvoie une erreur propre que la webview peut afficher
+            panel.webview.postMessage({ 
+                type: 'API_ERROR', 
+                payload: { 
+                    command: 'SELECT_FRAMEWORK', 
+                    message: `Échec de la sélection du framework (ID: ${payload.id})` 
+                } 
+            });
         }
     }
 }

@@ -13,7 +13,7 @@
     
     "baseUrl": ".", 
     "paths": {
-      "@genesis-labs/shared-types": ["../genesis-web-types-shared/dist/index.d.ts"]
+      "@genesis-labs/shared-types": ["../genesis-web-types-shared/index.ts"]
     }
   },
   "include": [
