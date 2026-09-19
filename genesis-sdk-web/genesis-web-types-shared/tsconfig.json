@@ -13,5 +13,5 @@
         "baseUrl": ".",
         "ignoreDeprecations": "6.0",
     },
-    "include": ["src/**/*.ts", "../genesis-web-core/src/features/database/types/database.service.interface.ts"]
+    "include": ["src/**/*.ts"]
 }
