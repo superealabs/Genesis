@@ -54,3 +54,5 @@ genesis-sdk-web/**/dist/
 genesis-sdk-web/**/out/
 genesis-sdk-web/**/.vite/
 genesis-sdk-web/**/tsconfig.tsbuildinfo
+
+genesis-api\build

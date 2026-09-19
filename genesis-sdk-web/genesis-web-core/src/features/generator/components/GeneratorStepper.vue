@@ -36,7 +36,9 @@
             v-else-if="props.currentStep === 5"
             @request-file-path="handleRequestFilePath"
         />
-        <TableSelectionView v-else-if="props.currentStep === 6" />
+        
+        <!-- <GenerationConfiguration v-else-if="props.currentStep === 6" /> -->
+        <GenerationConfigurationAlt v-else-if="props.currentStep === 6" />
 
         <RelationConfigView v-else-if="props.currentStep === 7" />
         <FrontEndSelectionView
@@ -72,7 +74,8 @@ import {
     ProjectConfigView, 
     DatabaseConfigView, 
     ScriptConfigView, 
-    TableSelectionView, 
+    // GenerationConfiguration,
+    GenerationConfigurationAlt,
     RelationConfigView, 
     FrontendLayoutConfigView, 
     GitConfigView 
@@ -88,9 +91,7 @@ import type { FrontendFramework } from '@genesis-labs/web-core/features/frontend
 import { computed, ref } from 'vue';
 
 // L'étape 4 (ScriptConfigView) gère son propre scroll interne
-const stepContentClass = computed(() =>
-    props.currentStep === 4 ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'
-);
+const stepContentClass = computed(() => 'overflow-y-auto');
 
 const props = defineProps<{
     currentStep: number;

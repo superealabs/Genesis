@@ -96,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'; // ✅ Ajout de onMounted et ref
+import { computed, onMounted, ref } from 'vue'; //  Ajout de onMounted et ref
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { 
     AVAILABLE_COMPONENTS, 
@@ -104,7 +104,7 @@ import {
     type TableMetadataDto 
 } from '@genesis-labs/shared-types';
 
-// ✅ 1. Récupération des vraies données et de la fonction de fetch
+//  1. Récupération des vraies données et de la fonction de fetch
 const { 
     stepperData, 
     toggleTable, 
@@ -118,7 +118,7 @@ const {
 const isLoading = ref(false);
 const tableSelection = computed(() => stepperData.value.tableSelection);
 
-// ✅ 2. Combinaison des listes réactives pour l'affichage
+//  2. Combinaison des listes réactives pour l'affichage
 const combinedItems = computed<(TableMetadataDto & { type: 'table' | 'view' })[]>(() => {
     return [
         ...tables.value.map(t => ({ ...t, type: 'table' as const })),
