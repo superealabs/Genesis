@@ -5538,93 +5538,85 @@
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
       componentAdditionalFiles: [ ]
 
-    - componentType: "List Component"
+    - componentType: "Entity Card"
       generateForView: true
       router:
         label: "{{removeLine}}"
         link: ""
-      componentName: "${majStart(className)}List"
       importFile: |
-        import ${majStart(className)}Row from './${majStart(className)}Row.vue'
-        import { use${majStart(className)}s } from '@/composables/use${majStart(className)}s'
-        import { ${majStart(className)} } from '@/models/${majStart(className)}Model'{{#if !isView}}
-        import { usePopup } from '@/composables/usePopup'
-        import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'
-        import { ref, type PropType } from 'vue'{{/if}}
-        import { SortFieldParameter } from '@/models/api/RequestModel'
-        import SortButton from '@/components/button/SortButton.vue'
-      selector: "${majStart(className)}List"
+        import { computed, type PropType } from 'vue'
+        import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
+        import EntityRowActions from '@/components/table/EntityRowActions.vue'
+        import { useDateFormat } from '@/composables/useDateFormat'
+        {{#if containsFile=true}}import { getUrl } from '@/composables/useImage'{{/if}}
+      selector: "${majStart(className)}Card"
       standalone: true
       importComponent: "{{removeLine}}"
       template: |
         <template>
-          <table class="table table-auto relative">
-            <thead>
-              <tr>
-                <template v-for="field in ${majStart(className)}.getAllSearchFieldsMetadata()" :key="field.key">
-                  <th
-                    v-show="field.showInTable && visibleFields.includes(field.key)"
-                    class="sticky top-0 bg-primary text-primary-content px-3 py-2 font-bold min-w-35 z-1"
-                    :class="{ 'left-0 z-2': field.identifier }"
-                  >
-                    <div class="flex items-center justify-between gap-1">
-                      <span>{{ field.label }}</span>
-        
-                      <!-- Sort Buttons -->
-                      <SortButton v-show="field.sortable" :field-key="field.key" @sort="sortBy" />
-                    </div>
-                  </th>
-                </template>
-                <!-- Right sticky column -->
-                <th
-                  class="sticky top-0 right-0 bg-primary text-primary-content px-3 py-2 font-bold min-w-35 z-2"
-                >{{ message }}</th>
-              </tr>
-            </thead>
-            <tbody class="bg-base-100">
-              <!-- Empty message -->
-              <tr v-if="!loading && message">
-                <td
-                  :colspan="visibleFields.filter(f => ${majStart(className)}.getAllSearchFieldsMetadata().some(m => m.key === f && m.showInTable)).length + 1"
-                  class="text-center py-4 text-gray-500"
-                >
-              </tr>
+          <div class="card bg-base-100 shadow-md border border-base-300 hover:shadow-lg transition-shadow duration-200">
+            <div class="card-body p-4">
+              <!-- Titre de la carte -->
+              <h2 class="card-title text-base font-bold text-primary mb-2 truncate">
+                <span> #{{ ${minStart(className)}Data['id'] }} - ${majStart(className)} </span>
+              </h2>
 
-              <!-- Entity rows -->
-              <${majStart(className)}Row
-                v-else
-                v-for="${minStart(className)} in data"
-                :key="${minStart(className)}.getKeyValue()"
-                :${minStart(className)}="${minStart(className)}"
-                :visible-fields="visibleFields"
-                :view-action="viewAction"
-                :edit-action="editAction"
-                :remove-action="removeAction"
-                @request-view="view${majStart(className)}"{{#if !isView}}
-                @request-delete="openDeletePopup"
-                @request-update="goToUpdateFormView"{{/if}}
-              />
-            </tbody>
-          </table>{{#if !isView}}
-          <!-- Delete confirmation popup -->
-          <DeleteConfirmationPopup
-            :visible="deletePopup"
-            :message="$t('confirmation.delete')"
-            @confirm="confirmDelete"
-            @cancel="closePopup"
-          />{{/if}}
+              <!-- Corps de la carte : affiche UNIQUEMENT les champs visibles -->
+              <div class="space-y-1 text-sm flex-1">
+                <template v-for="field in ${majStart(className)}.getAllSearchFieldsMetadata()" :key="field.key">
+                  <div
+                    v-if="field.showInTable && visibleFields.includes(field.key)"
+                    class="flex justify-between gap-2 border-b border-base-200 py-1 last:border-0"
+                  >
+                    <span class="font-semibold text-base-content/70 text-xs uppercase tracking-wide">
+                      {{ field.label }}
+                    </span>
+                    <span class="text-right text-base-content truncate max-w-[60%]">
+                      <template v-if="field.type === 'date'">
+                        {{ formatDate(${minStart(className)}Data[field.key]) }}
+                      </template>
+                      <template v-else-if="field.type === 'number'">
+                        {{ ${minStart(className)}Data[field.key] != null ? $n(${minStart(className)}Data[field.key], 'decimal') : '--' }}
+                      </template>
+                      <template v-else-if="field.type === 'select'">
+                        {{ ${minStart(className)}Data[field.key] != null ? ${minStart(className)}Data[field.key].getKeyValue() : '--' }}
+                      </template>
+                      <template v-else-if="field.type === 'file'">
+                        <img
+                          v-if="${minStart(className)}Data[field.key]"
+                          :src="getUrl(${minStart(className)}Data[field.key])"
+                          :alt="field.key"
+                          class="max-h-10 max-w-10"
+                        />
+                      </template>
+                      <template v-else>
+                        {{ ${minStart(className)}Data[field.key] ?? '--' }}
+                      </template>
+                    </span>
+                  </div>
+                </template>
+              </div>
+
+              <!-- Actions en bas de carte -->
+              <div class="card-actions justify-end mt-3 pt-2 border-t border-base-200">
+                <EntityRowActions
+                  :view="viewAction"
+                  :remove="removeAction"
+                  :edit="editAction"
+                  @delete-row="deleteRow"
+                  @view-row="viewRow"
+                  @edit-row="updateRow"
+                />
+              </div>
+            </div>
+          </div>
         </template>
       style: "<style scoped></style>"
       export: |
-        defineProps({
-          data: {
-            type: Array as PropType<${majStart(className)}[]>,
+        const props = defineProps({
+          ${minStart(className)}: {
+            type: Object as PropType<${majStart(className)}>,
             required: true,
-          },
-          message: String,
-          loading: {
-            type: Boolean,
-            default: false,
           },
           viewAction: {
             type: Boolean,
@@ -5643,31 +5635,275 @@
             default: () => []
           }
         })
+
+        const ${minStart(className)}Data = computed(() => {
+          return props.${minStart(className)} as Record<string, any>
+        })
+
+        const emit = defineEmits<{
+          (e: 'request-delete', ${minStart(className)}: ${majStart(className)}): void
+          (e: 'request-view', ${minStart(className)}: ${majStart(className)}): void
+          (e: 'request-update', ${minStart(className)}: ${majStart(className)}): void
+        }>()
+
+        const deleteRow = () => emit('request-delete', props.${minStart(className)})
+        const viewRow = () => emit('request-view', props.${minStart(className)})
+        const updateRow = () => emit('request-update', props.${minStart(className)})
+        const { formatDate } = useDateFormat()
+      componentName: "${majStart(className)}Card"
+      destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
+      componentAdditionalFiles: [ ]
+
+    - componentType: "Entity Grid"
+      generateForView: true
+      router:
+        label: "{{removeLine}}"
+        link: ""
+      importFile: |
+        import ${majStart(className)}Card from './${majStart(className)}Card.vue'
+        import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
+        import { computed, type PropType } from 'vue'
+      selector: "${majStart(className)}Grid"
+      standalone: true
+      importComponent: "{{removeLine}}"
+      template: |
+        <template>
+          <div class="p-4">
+            <div v-if="!loading && message" class="text-center py-10 text-gray-500">
+              {{ message }}
+            </div>
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <component
+                v-for="${minStart(className)} in data"
+                :key="${minStart(className)}.getKeyValue()"
+                :is="${majStart(className)}Card"
+                :${minStart(className)}="${minStart(className)}"
+                v-bind="itemProps"
+                @request-view="$emit('request-view', $event)"
+                @request-delete="$emit('request-delete', $event)"
+                @request-update="$emit('request-update', $event)"
+              />
+            </div>
+          </div>
+        </template>
+      style: "<style scoped></style>"
+      export: |
+        const props = defineProps({
+          data: { type: Array as PropType<${majStart(className)}[]>, required: true },
+          message: String,
+          loading: { type: Boolean, default: false },
+          viewAction: { type: Boolean, default: true },
+          editAction: { type: Boolean, default: true },
+          removeAction: { type: Boolean, default: true },
+          visibleFields: { type: Array as PropType<string[]>, default: () => [] },
+        })
+
+        defineEmits<{
+          (e: 'request-view', ${minStart(className)}: ${majStart(className)}): void
+          (e: 'request-delete', ${minStart(className)}: ${majStart(className)}): void
+          (e: 'request-update', ${minStart(className)}: ${majStart(className)}): void
+        }>()
+
+        const itemProps = computed(() => ({
+          visibleFields: props.visibleFields,
+          viewAction: props.viewAction,
+          editAction: props.editAction,
+          removeAction: props.removeAction,
+        }))
+      componentName: "${majStart(className)}Grid"
+      destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
+      componentAdditionalFiles: [ ]
+
+    - componentType: "Entity Table"
+      generateForView: true
+      router:
+        label: "{{removeLine}}"
+        link: ""
+      importFile: |
+        import ${majStart(className)}Row from './${majStart(className)}Row.vue'
+        import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
+        import { computed, type PropType } from 'vue'
+        import { SortFieldParameter } from '@/models/api/RequestModel'
+        import SortButton from '@/components/button/SortButton.vue'
+      selector: "${majStart(className)}Table"
+      standalone: true
+      importComponent: "{{removeLine}}"
+      template: |
+        <template>
+          <table class="table table-auto relative">
+            <thead>
+              <tr>
+                <template v-for="field in ${majStart(className)}.getAllSearchFieldsMetadata()" :key="field.key">
+                  <th
+                    v-show="field.showInTable && visibleFields.includes(field.key)"
+                    class="sticky top-0 bg-primary text-primary-content px-3 py-2 font-bold min-w-35 z-1"
+                    :class="{ 'left-0 z-2': field.identifier }"
+                  >
+                    <div class="flex items-center justify-between gap-1">
+                      <span>{{ field.label }}</span>
+                      <SortButton
+                        v-show="field.sortable"
+                        :field-key="field.key"
+                        @sort="$emit('sortby', $event)"
+                      />
+                    </div>
+                  </th>
+                </template>
+                <th
+                  class="sticky top-0 right-0 bg-primary text-primary-content px-3 py-2 font-bold min-w-35 z-2"
+                ></th>
+              </tr>
+            </thead>
+            <tbody class="bg-base-100">
+              <tr v-if="!loading && message">
+                <td :colspan="visibleColCount + 1" class="text-center py-4 text-gray-500">
+                  {{ message }}
+                </td>
+              </tr>
+              <component
+                v-else
+                v-for="${minStart(className)} in data"
+                :key="${minStart(className)}.getKeyValue()"
+                :is="${majStart(className)}Row"
+                :${minStart(className)}="${minStart(className)}"
+                v-bind="itemProps"
+                @request-view="$emit('request-view', $event)"
+                @request-delete="$emit('request-delete', $event)"
+                @request-update="$emit('request-update', $event)"
+              />
+            </tbody>
+          </table>
+        </template>
+      style: "<style scoped></style>"
+      export: |
+        const props = defineProps({
+          data: { type: Array as PropType<${majStart(className)}[]>, required: true },
+          message: String,
+          loading: { type: Boolean, default: false },
+          viewAction: { type: Boolean, default: true },
+          editAction: { type: Boolean, default: true },
+          removeAction: { type: Boolean, default: true },
+          visibleFields: { type: Array as PropType<string[]>, default: () => [] },
+        })
+
+        defineEmits<{
+          (e: 'sortby', sortData: SortFieldParameter): void
+          (e: 'request-view', ${minStart(className)}: ${majStart(className)}): void
+          (e: 'request-delete', ${minStart(className)}: ${majStart(className)}): void
+          (e: 'request-update', ${minStart(className)}: ${majStart(className)}): void
+        }>()
+
+        // Regroupe les props pour éviter la répétition
+        const itemProps = computed(() => ({
+          visibleFields: props.visibleFields,
+          viewAction: props.viewAction,
+          editAction: props.editAction,
+          removeAction: props.removeAction,
+        }))
+
+        // Calcul du colspan isolé ici
+        const visibleColCount = computed(
+          () =>
+            props.visibleFields.filter((f) =>
+              ${majStart(className)}.getAllSearchFieldsMetadata().some((m) => m.key === f && m.showInTable),
+            ).length,
+        )
+      componentName: "${majStart(className)}Table"
+      destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
+      componentAdditionalFiles: [ ]
+
+    - componentType: "List Component"
+      generateForView: true
+      router:
+        label: "{{removeLine}}"
+        link: ""
+      componentName: "${majStart(className)}List"
+      importFile: |
+        import ${majStart(className)}Table from './${majStart(className)}Table.vue'
+        import ${majStart(className)}Grid from './${majStart(className)}Grid.vue'
+        import { use${majPluralize(className)} } from '@/composables/use${majPluralize(className)}'
+        import { ${majStart(className)} } from '@/models/${majStart(className)}Model'{{#if !isView}}
+        import { usePopup } from '@/composables/usePopup'
+        import DeleteConfirmationPopup from '@/components/popup/DeleteConfirmationPopup.vue'{{/if}}
+        import { ref, computed, type PropType, type Component } from 'vue'
+        import { SortFieldParameter } from '@/models/api/RequestModel'
+      selector: "${majStart(className)}List"
+      standalone: true
+      importComponent: "{{removeLine}}"
+      template: |
+        <template>
+          <!-- View Switcher : Affiche dynamiquement le composant selon le mode -->
+          <component
+            :is="currentLayoutComponent"
+            :data="data"
+            :message="message"
+            :loading="loading"
+            :visible-fields="visibleFields"
+            :view-action="viewAction"
+            :edit-action="editAction"
+            :remove-action="removeAction"
+            @request:refresh="$emit('request:refresh')"
+            @sortby="$emit('sortby', $event)"
+            @request-view="view${majStart(className)}"{{#if !isView}}
+            @request-delete="openDeletePopup"
+            @request-update="goToUpdateFormView"{{/if}}
+          />
+
+          <!-- Delete confirmation popup (Partagé) -->{{#if !isView}}
+          <DeleteConfirmationPopup
+            :visible="deletePopup"
+            :message="$t('confirmation.delete')"
+            @confirm="confirmDelete"
+            @cancel="closePopup"
+          />{{/if}}
+        </template>
+      style: "<style scoped></style>"
+      export: |
+        const props = defineProps({
+          data: { type: Array as PropType<${majStart(className)}[]>, required: true },
+          message: String,
+          loading: { type: Boolean, default: false },
+          viewAction: { type: Boolean, default: true },
+          editAction: { type: Boolean, default: true },
+          removeAction: { type: Boolean, default: true },
+          visibleFields: { type: Array as PropType<string[]>, default: () => [] },
+          layoutMode: { type: String as PropType<'list' | 'card'>, default: 'list' },
+        })
+
         const emit = defineEmits<{
           (e: 'request:refresh'): void
           (e: 'sortby', sortData: SortFieldParameter): void
         }>()
-        
-        function sortBy(sortData: SortFieldParameter): void {
-          emit('sortby', sortData)
+
+        // Ajouter un nouveau mode = ajouter une seule ligne ici
+        const layoutComponents: Record<string, Component> = {
+          list: ${majStart(className)}Table,
+          card: ${majStart(className)}Grid,
+          // Exemples futurs :
+          // kanban: ${majStart(className)}Kanban,
+          // timeline: ${majStart(className)}Timeline,
         }
 
+        // Fallback sur ${majStart(className)}Table si le mode n'existe pas (sécurité)
+        const currentLayoutComponent = computed<Component>(
+          () => layoutComponents[props.layoutMode] ?? ${majStart(className)}Table,
+        )
+
         {{#if isView}}
-        const { view${majStart(className)} } = use${majStart(className)}s()
+        const { view${majStart(className)} } = use${majPluralize(className)}()
         {{else}}
-        const selectedEntity = ref()
-
+        const selectedEntity = ref<${majStart(className)}>()
         const { visible: deletePopup, closePopup } = usePopup(false)
-        const { delete${majStart(className)}, view${majStart(className)}, goToUpdateFormView } = use${majStart(className)}s()
+        const { delete${majStart(className)}, view${majStart(className)}, goToUpdateFormView } = use${majPluralize(className)}()
 
-        function openDeletePopup(entity: ${majStart(className)}) {
+        const openDeletePopup = (entity: ${majStart(className)}) => {
           if (!entity) return
           selectedEntity.value = entity
           deletePopup.value = true
         }
 
-        async function confirmDelete() {
-          const { success, error } = await delete${majStart(className)}(selectedEntity.value)
+        const confirmDelete = async () => {
+          const { success, error } = await delete${majStart(className)}(selectedEntity.value!)
           if (success) {
             deletePopup.value = false
             emit('request:refresh')
@@ -5691,6 +5927,7 @@
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import ${majStart(className)}List from '@/entities/${minStart(className)}/${majStart(className)}List.vue'
         import EntityTable from '@/components/table/EntityTable.vue'
+        import LayoutSwitcher from '@/components/button/LayoutSwitcher.vue'
         import { use${majPluralize(className)} } from '@/composables/use${majPluralize(className)}'{{#if !isView}}
         import GenesisButton from '@/components/button/GenesisButton.vue'
         import PlusIcon from '@/components/icons/PlusIcon.vue'{{/if}}
@@ -5705,11 +5942,17 @@
               <h3 class="text-xl font-semibold text-base-content">
                 {{ $t('entity.nav', { entity: '${majStart(className)}' }) }}
                 <span class="text-base-content/50 font-normal"> {{ $t('entity.list.nav') }}</span>
-              </h3>{{#if !isView}}
-              <GenesisButton title="Create new ${minStart(className)}" @click="goToCreateFormView" class="btn-secondary">
-                <PlusIcon />
-                {{ $t('button.addEntity', { entity: '${majStart(className)}' }) }}
-              </GenesisButton>{{/if}}
+              </h3>
+              <div class="flex items-center gap-3">
+                <!-- Composant réutilisable pour le basculement de vue -->
+                <LayoutSwitcher v-model="layoutMode" />
+        {{#if !isView}}
+                <GenesisButton title="Create new ${minStart(className)}" @click="goToCreateFormView" class="btn-secondary">
+                  <PlusIcon />
+                  {{ $t('button.addEntity', { entity: '${majStart(className)}' }) }}
+                </GenesisButton>
+        {{/if}}
+              </div>
             </div>
         
             <!-- Table -->
@@ -5722,6 +5965,7 @@
               :entities="${minPluralize(className)}"
               :message="message"
               :visible-fields="visibleListFields"
+              :layout-mode="layoutMode"
               @update:visible-fields="handleUpdateVisibleFields"{{#if isView}}
               :remove-action="false"
               :edit-action="false"{{/if}}
@@ -5741,13 +5985,12 @@
           export${majStart(className)}sToCsv,
           visibleListFields,
           loadColumnConfig,
-          saveColumnConfig
+          saveColumnConfig,
+          layoutMode
         } = use${majPluralize(className)}()
 
-        // Reactive search fields
         const searchFields = ref<EntitySearchField[]>(${majStart(className)}.getAllSearchFieldsMetadata())
 
-        // Gestion de la mise à jour des champs visibles (onClick appliquer)
         const handleUpdateVisibleFields = async (newFields: string[]) => {
           const result = await saveColumnConfig(newFields)
           if (!result.success) {
@@ -5759,16 +6002,16 @@
           await export${majStart(className)}sToCsv(${minPluralize(className)}.value)
         }
 
-        // Chargement de la configuration au montage du composant
         onMounted(() => {
           loadColumnConfig()
         })
+
       componentAdditionalFiles:
         - fileType: "Entity Composable"
           fileName: "use${majPluralize(className)}"
           extension: "ts"
           content: |
-            import { ref } from 'vue'
+            import { ref, watch } from 'vue'
             import { ${majStart(className)}, {{#if !isView}}${majStart(className)}FormDTO{{/if}} } from '@/models/${majStart(className)}Model'
             import * as ${minStart(className)}Service from '@/services/${majStart(className)}Service'
             import * as columnConfigService from '@/services/ColumnConfigService'
@@ -5805,12 +6048,20 @@
 
               const visibleListFields = ref<string[]>([...DEFAULT_LIST_VIEW_FIELDS])
 
+              // On utilise une clé spécifique à l'entité pour plus de flexibilité future
+              const savedLayoutMode = localStorage.getItem('layoutMode_${minStart(className)}') as 'list' | 'card' | null
+              const layoutMode = ref<'list' | 'card'>(savedLayoutMode || 'list')
+
+              watch(layoutMode, (newValue) => {
+                localStorage.setItem('layoutMode_${minStart(className)}', newValue)
+              })
+
               /**
-                * Handles API response by updating the ${minStart(className)}s and pagination
-                * @param data Array of ${majStart(className)} returned by the API
-                * @param err Optional error message
-                * @param pagination Optional pagination data
-              */
+               * Handles API response by updating the ${minStart(className)}s and pagination
+               * @param data Array of ${majStart(className)} returned by the API
+               * @param err Optional error message
+               * @param pagination Optional pagination data
+               */
               const handleResponse = (
                 data: ${majStart(className)}[],
                 err: string | undefined,
@@ -5832,8 +6083,7 @@
 
               const loadColumnConfig = async () => {
                 try {
-                  // ${EntityName} contient le nom de la table en minuscule (ex: 'personne')
-                  const response = await columnConfigService.getVisibleFields('${minStart(EntityName)}', 'list')
+                  const response = await columnConfigService.getVisibleFields('${minStart(className)}', 'list')
                   if (response.returnCode === 1 && response.data && response.data.length > 0) {
                     visibleListFields.value = response.data
                   }
@@ -5845,7 +6095,7 @@
               /** Sauvegarde la nouvelle configuration vers le serveur */
               const saveColumnConfig = async (fields: string[]) => {
                 try {
-                  const response = await columnConfigService.updateVisibleFields('${minStart(EntityName)}', 'list', fields)
+                  const response = await columnConfigService.updateVisibleFields('${minStart(className)}', 'list', fields)
                   if (response.returnCode === 1) {
                     visibleListFields.value = fields
                     return { success: true, error: null }
@@ -6094,8 +6344,9 @@
                 loading,
                 message,
                 paginationData,
+                layoutMode,
 
-                // State & function of column configuration configuration
+                // State & function of column configuration
                 visibleListFields,
                 loadColumnConfig,
                 saveColumnConfig,

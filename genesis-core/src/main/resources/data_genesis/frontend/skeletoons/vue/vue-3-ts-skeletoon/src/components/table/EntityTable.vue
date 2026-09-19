@@ -67,6 +67,7 @@
         :editAction="editAction"
         :viewAction="viewAction"
         :visibleFields="visibleFields"
+        :layout-mode="layoutMode"
         @request:refresh="doSearch"
         @sortby="sortByAndSearch"
       />
@@ -130,6 +131,7 @@ const props = withDefaults(
     viewAction?: boolean
     removeAction?: boolean
     visibleFields?: string[]
+    layoutMode?: 'list' | 'card'
   }>(),
   {
     showFilters: true,
@@ -137,6 +139,7 @@ const props = withDefaults(
     viewAction: true,
     removeAction: true,
     visibleFields: () => [],
+    layoutMode: 'list',
   },
 )
 
