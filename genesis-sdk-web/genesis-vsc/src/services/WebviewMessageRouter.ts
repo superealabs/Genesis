@@ -37,6 +37,19 @@ export class WebviewMessageRouter {
                     await this.frameworkHandler.select(message.payload, this.panel);
                     break;
 
+                case 'GET_LANGUAGES':
+                    await this.frameworkHandler.getLanguages(message.payload, this.panel);
+                    break;
+
+                case 'GET_CORE_FRAMEWORKS':
+                    await this.frameworkHandler.getCoreFrameworks(message.payload, this.panel);
+                    break;
+
+                case 'GET_VIEW_TEMPLATES':
+                    await this.frameworkHandler.getViewTemplates(message.payload, this.panel);
+                    break;
+
+
                 case 'REQUEST_FOLDER_PATH': // Nom harmonisé avec le frontend
                     await this.generatorHandler.handleRequestFolderPath();
                     break;

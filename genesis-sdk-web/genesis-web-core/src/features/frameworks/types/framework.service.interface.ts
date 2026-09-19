@@ -1,20 +1,8 @@
 import type { InjectionKey } from 'vue';
-import type { Framework, Language, CoreFramework, ViewTemplate } from '@genesis-labs/shared-types';
+import type { IFrameworkService } from '@genesis-labs/shared-types'; // Import de l'interface pure
 
-export interface IFrameworkService {
-    // Retourne une Promise, ne touche pas au store
-    fetchFrameworks(): Promise<Framework[]>;
-    selectFramework(id: number): Promise<void>;
+// On réexporte l'interface pour la commodité locale
+export type { IFrameworkService };
 
-
-    fetchLanguages(): Promise<Language[]>;
-    
-    /** Récupère la liste des cœurs de framework (id, name) */
-    fetchCoreFrameworks(): Promise<CoreFramework[]>;
-    
-    /** Récupère la liste des moteurs de template (id, name) */
-    fetchViewTemplates(): Promise<ViewTemplate[]>;
-} 
-
-// Clé typée pour l'injection de dépendance (obligatoire)
+// ✅ La clé d'injection reste spécifique à Vue, mais elle référence l'interface pure
 export const FRAMEWORK_SERVICE_KEY: InjectionKey<IFrameworkService> = Symbol('FrameworkService');
