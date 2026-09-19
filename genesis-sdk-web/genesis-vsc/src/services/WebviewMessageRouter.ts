@@ -90,6 +90,10 @@ export class WebviewMessageRouter {
                     await this.databaseHandler.handleTestDatabaseConnection(message.payload, this.panel);
                     break;
 
+                case 'SELECT_DATABASE':
+                    await this.databaseHandler.handleSelectDatabase(message.payload, this.panel);
+                    break;
+
                 default:
                     console.warn(`[WebviewMessageRouter] Message non géré : ${message.type}`);
             }

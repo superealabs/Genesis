@@ -5,3 +5,4 @@ export * from './generator.shared';
 export * from './database.shared';
 
 export * from './framework.service.interface'
+export * from './database.service.interface';

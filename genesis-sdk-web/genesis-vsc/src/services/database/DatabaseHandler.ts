@@ -1,124 +1,86 @@
 import * as vscode from 'vscode';
-// Import des types partagés (Ajuste le chemin d'import si ton tsconfig utilise un alias différent, ex: '@genesis-labs/shared-types')
-import type { 
-    DatabaseEngineDto, 
-    DatabaseConfig, 
-    DatabaseConnectionTestResult 
-} from '@genesis-labs/shared-types'; 
+import { logger } from '../LoggerService';
+import { VsCodeDatabaseService } from './VsCodeDatabaseService';
+import type { DatabaseConfig } from '@genesis-labs/shared-types';
 
-// ═══ DONNÉES STATIQUES (FALLBACK) ═══
-// Alignées sur la structure de la classe Java org.labs.genesis.connexion.Database
-const MOCK_DATABASE_ENGINES: DatabaseEngineDto[] = [
-    { 
-        id: 1, 
-        name: 'PostgreSQL', 
-        driver: 'org.postgresql.Driver', 
-        driverName: 'PostgreSQL JDBC Driver', 
-        port: '5432',
-        driverType: 'jdbc'
-    },
-    { 
-        id: 2, 
-        name: 'MySQL', 
-        driver: 'com.mysql.cj.jdbc.Driver', 
-        driverName: 'MySQL Connector/J', 
-        port: '3306',
-        driverType: 'jdbc'
-    },
-    { 
-        id: 3, 
-        name: 'SQL Server', 
-        driver: 'com.microsoft.sqlserver.jdbc.SQLServerDriver', 
-        driverName: 'Microsoft JDBC Driver for SQL Server', 
-        port: '1433',
-        driverType: 'jdbc'
-    },
-    { 
-        id: 4, 
-        name: 'Oracle', 
-        driver: 'oracle.jdbc.OracleDriver', 
-        driverName: 'Oracle JDBC Driver', 
-        port: '1521',
-        driverType: 'jdbc',
-        sid: 'ORCL'
-    },
-    {
-        id: 5, 
-        name: 'MongoDB', 
-        driver: 'MongoDB.driver', 
-        driverName: 'Mongo JDBC Driver', 
-        port: '1524',
-        driverType: 'jdbc',
-        sid: 'Mongo'
-    },
-];
+const LOG_CHANNEL = 'Genesis Database Handler';
 
 export class DatabaseHandler {
+    // ✅ Instanciation du service qui contient la logique et les mocks
+    private service = new VsCodeDatabaseService();
+
     constructor(private panel: vscode.WebviewPanel) {}
 
     /**
-     * Récupère la liste des moteurs de base de données disponibles
+     * Récupère la liste des moteurs de base de données disponibles.
+     * Pas de try/catch nécessaire ici : le service garantit un retour (réel ou mock).
      */
     async handleGetAvailableEngines(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
-        try {
-            // 🔄 SIMULATION D'APPEL API (À remplacer par ton vrai endpoint plus tard)
-            // const { data } = await getAxiosInstance().get<DatabaseEngineDto[]>('/api/database/engines');
-            
-            // Petit délai pour simuler un appel réseau réaliste (bon pour l'UX)
-            await new Promise(resolve => setTimeout(resolve, 300));
+        logger.log(LOG_CHANNEL, '➡️ [getEngines] Récupération des moteurs de base de données...');
+        
+        // Le service gère le fallback en interne
+        const data = await this.service.fetchDatabaseEngines();
+        
+        logger.log(LOG_CHANNEL, `✅ [getEngines] Succès. ${data.length} moteurs reçus.`);
+        panel.webview.postMessage({
+            type: 'DATABASE_ENGINES_LOADED',
+            payload: data
+        });
+    }
 
+    /**
+     * Teste la connexion à la base de données.
+     * Try/catch nécessaire ici pour transformer une erreur réseau en message UI lisible.
+     */
+    async handleTestDatabaseConnection(payload: DatabaseConfig, panel: vscode.WebviewPanel): Promise<void> {
+        logger.log(LOG_CHANNEL, `➡️ [testConnection] Test de connexion pour: ${payload.engine} (${payload.host})`);
+        
+        try {
+            // Délégation pure au service
+            const result = await this.service.testDatabaseConnection(payload);
+            
+            // On renvoie le résultat à la webview (qu'il soit success: true ou success: false)
             panel.webview.postMessage({
-                type: 'DATABASE_ENGINES_LOADED',
-                payload: MOCK_DATABASE_ENGINES
+                type: 'DATABASE_CONNECTION_TESTED',
+                payload: result
             });
 
         } catch (error) {
-            console.warn('[DatabaseHandler] API Engines échouée, utilisation du fallback:', (error as Error).message);
+            // Si le service throw (ex: erreur 500, réseau coupé), on l'attrape ici pour l'UI
+            logger.log(LOG_CHANNEL, `❌ [testConnection] Erreur réseau/API: ${(error as Error).message}`);
+            
             panel.webview.postMessage({
-                type: 'DATABASE_ENGINES_LOADED',
-                payload: MOCK_DATABASE_ENGINES
+                type: 'API_ERROR',
+                payload: { 
+                    command: 'TEST_DATABASE_CONNECTION', 
+                    message: `Échec du test de connexion: ${(error as Error).message}` 
+                }
             });
         }
     }
 
-    /**
-     * Teste la connexion à la base de données avec la configuration fournie
-     */
-    async handleTestDatabaseConnection(payload: DatabaseConfig, panel: vscode.WebviewPanel): Promise<void> {
+
+    async handleSelectDatabase(payload: { id: number }, panel: vscode.WebviewPanel): Promise<void> {
+        logger.log(LOG_CHANNEL, `➡️ [selectDatabase] Sélection du moteur ID: ${payload.id}`);
+        
         try {
-            // 🔄 SIMULATION D'APPEL API (À remplacer par ton vrai endpoint plus tard)
-            // const { data } = await getAxiosInstance().post<DatabaseConnectionTestResult>('/api/database/test-connection', payload);
+            await this.service.selectDatabase(payload.id);
+            logger.log(LOG_CHANNEL, `✅ [selectDatabase] Moteur ID ${payload.id} sélectionné avec succès.`);
             
-            // Délai simulé
-            await new Promise(resolve => setTimeout(resolve, 800));
-
-            // Validation basique (mimant ce que ferait le backend Java)
-            if (!payload.host || !payload.databaseName) {
-                throw new Error("L'hôte et le nom de la base de données sont requis.");
-            }
-
-            // Succès simulé
-            const result: DatabaseConnectionTestResult = {
-                success: true,
-                message: `Connexion réussie à ${payload.engine} sur ${payload.host}:${payload.port} !`
-            };
-
-            panel.webview.postMessage({
-                type: 'DATABASE_CONNECTION_TESTED',
-                payload: result
+            panel.webview.postMessage({ 
+                type: 'DATABASE_SELECTED', 
+                payload: { success: true, id: payload.id } 
             });
-
-        } catch (error) {
-            console.warn('[DatabaseHandler] Test de connexion échoué:', (error as Error).message);
             
-            const result: DatabaseConnectionTestResult = {
-                success: false,
-                message: (error as Error).message || 'Échec de la connexion à la base de données.'
-            };
-
-            panel.webview.postMessage({
-                type: 'DATABASE_CONNECTION_TESTED',
-                payload: result
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ [selectDatabase] Échec de la sélection: ${(error as Error).message}`);
+            
+            panel.webview.postMessage({ 
+                type: 'API_ERROR', 
+                payload: { 
+                    command: 'SELECT_DATABASE', 
+                    message: `Échec de la sélection de la base de données (ID: ${payload.id})` 
+                } 
             });
         }
     }
