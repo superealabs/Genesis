@@ -48,11 +48,6 @@ export interface RelationParameter {
     hasForm: boolean;
 }
 
-export interface LanguageDto {
-    code: string;
-    name: string;
-}
-
 export interface FrontendLayoutConfig {
     selectedLanguages: string[];
     navbarType: 'side' | 'top' | '';
@@ -112,3 +107,22 @@ export const AVAILABLE_COMPONENTS: { label: string; value: ComponentType }[] = [
     { label: 'Service', value: 'service' },
     { label: 'Controller', value: 'controller' },
 ];
+
+export interface AiPromptPayload {
+    prompt: string;
+    fileContent?: string; // Optionnel, selon si on analyse un fichier existant
+    showSchema: boolean;  // Demande à l'IA de retourner un schéma de BDD ou du code
+}
+
+export interface AiResponseDto {
+    aiResponse: string;       // La réponse textuelle ou le code généré par l'IA
+    newFileContent?: string;  // Le contenu du fichier mis à jour (si applicable)
+    success: boolean;
+    error?: string;
+}
+
+export interface GenerationResult {
+    success: boolean;
+    message: string;
+    projectPath?: string; // Le chemin où le projet a été généré
+}

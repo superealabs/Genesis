@@ -7,3 +7,9 @@ export interface FrontendFramework {
     componentExtension: string;
     defaultPort: string;
 }
+
+export interface LanguageDto {
+    id : number;
+    code: string;
+    name: string;
+}
