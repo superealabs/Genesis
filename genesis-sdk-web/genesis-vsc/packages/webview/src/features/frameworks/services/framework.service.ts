@@ -17,7 +17,7 @@ export class FrameworkServiceVsc implements IFrameworkService {
             // Écoute UNE SEULE FOIS, puis cleanup pour éviter les fuites mémoire
             const cleanup = this.vscode.onMessage<Framework[]>('FRAMEWORKS_LOADED', (data) => {
                 cleanup();
-                resolve(data); // ✅ Retourne la donnée brute, NE TOUCHE PAS AU STORE
+                resolve(data); // Retourne la donnée brute, NE TOUCHE PAS AU STORE
             });
         });
     }

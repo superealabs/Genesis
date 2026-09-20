@@ -25,7 +25,7 @@ export const useFrontendStore = defineStore('frontend', () => {
     }
 
     // ═══ Actions UI ═══
-    function setDisplayMode(mode: 'grid' | 'list') {
+    function setDisplayMode(mode: DisplayMode) {
         displayMode.value = mode;
     }
 

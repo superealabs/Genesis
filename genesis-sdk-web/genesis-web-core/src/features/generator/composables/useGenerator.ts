@@ -120,7 +120,7 @@ export function useGenerator() {
     async function fetchTablesMetadataParents() { store.setTablesParents(await svc.fetchTablesMetadataParents()); }
     async function fetchTablesMetadataChilds() { store.setTablesChilds(await svc.fetchTablesMetadataChilds()); }
     async function fetchRelations() { store.setRelations(await svc.fetchRelations()); }
-    async function fetchAvailableLanguages() { store.setAvailableLanguages(await fdsvc.fetchAvailableLanguages()); }
+    async function fetchAvailableLanguages() { store.setAvailableLanguages(await fdsvc.fetchInterfaceLanguages()); }
 
     async function testDatabaseConnection(): Promise<{ success: boolean; message: string }> {
         try {

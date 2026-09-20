@@ -1,10 +1,10 @@
 // genesis-sdk-web/genesis-web-core/src/features/generator/store/useGenerator.store.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { FrontendFramework, Framework } from '@genesis-labs/shared-types';
+import type { FrontendFramework, Framework, InterfaceLanguage } from '@genesis-labs/shared-types';
 import type { 
     GeneratorData, ProjectConfig, DatabaseConfig, ScriptConfig, 
-    ComponentType, TableMetadataDto, RelationParameter, LanguageDto, 
+    ComponentType, TableMetadataDto, RelationParameter,  
     FrontendLayoutConfig, GitConfiguration, 
     DatabaseEngineDto
 } from '@genesis-labs/shared-types';
@@ -25,7 +25,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     const tablesChilds = ref<TableMetadataDto[]>([]);
     const relations = ref<RelationParameter[]>([]);
     const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
-    const availableLanguages = ref<LanguageDto[]>([]);
+    const availableLanguages = ref<InterfaceLanguage[]>([]);
 
     //  CORRECTION : Types simples (string[])
     const availableLoggingLevels = ref<string[]>([]);
@@ -146,7 +146,7 @@ export const useGeneratorStore = defineStore('generator', () => {
         idx === -1 ? list.push(component) : list.splice(idx, 1);
     }
     function toggleLanguage(code: string) {
-        const list = stepperData.value.frontendLayout.selectedLanguages;
+        const list = stepperData.value.frontendLayout.selectedInterfaceLanguages;
         const idx = list.indexOf(code);
         idx === -1 ? list.push(code) : list.splice(idx, 1);
     }
@@ -163,7 +163,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     function setTablesParents(data: TableMetadataDto[]) { tablesParents.value = data; }
     function setTablesChilds(data: TableMetadataDto[]) { tablesChilds.value = data; }
     function setRelations(data: RelationParameter[]) { relations.value = data; }
-    function setAvailableLanguages(data: LanguageDto[]) { availableLanguages.value = data; }
+    function setAvailableLanguages(data: InterfaceLanguage[]) { availableLanguages.value = data; }
     function setIsGenerating(value: boolean) { isGenerating.value = value; }
 
     function setAvailableLanguageVersions(data: string[]) { availableLanguageVersions.value = data; }

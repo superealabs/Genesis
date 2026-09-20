@@ -73,21 +73,11 @@ export function useFrontend() {
             return { action: 'replace-needed' as const, event, framework };
         }
 
-        try {
-            await svc.selectFrontendFramework(framework);
-        } catch (error) {
-            console.error('[useFrontend] Erreur lors de la sélection du framework:', error);
-        }
         return { action: result.action, event, framework };
     }
 
     async function handleReplace(slotId: string | number, framework: FrontendFramework) {
         compare.replaceSlot(slotId, framework);
-        try {
-            await svc.selectFrontendFramework(framework);
-        } catch (error) {
-            console.error('[useFrontend] Erreur lors du remplacement:', error);
-        }
     }
 
     function handleModeChange(newMode: 'selection' | 'compare') {
@@ -109,10 +99,7 @@ export function useFrontend() {
         handleModeChange,
         reset: store.reset,
         setSearch: store.setSearch,
-        // ✅ 4. CORRECTION DU BUG DE TOGGLE
-        toggleDisplayMode: () => store.setDisplayMode(displayMode.value === 'grid' ? 'list' : 'grid'),
         
-        // ✅ 5. ÉTATS DU POPUP POUR LA VUE
         showReplacePopup: compare.showReplacePopup,
         pendingFramework: compare.pendingItem,
         mouseX: compare.mouseX,

@@ -4,7 +4,8 @@ import type {
     IGeneratorService, 
     TableMetadataDto, 
     RelationParameter,
-    ProjectConfig
+    ProjectConfig,
+    FrontendFramework
 } from '@genesis-labs/shared-types';
 
 const LOG_CHANNEL = 'Genesis Generator Service';
@@ -202,6 +203,15 @@ export class VsCodeGeneratorService implements IGeneratorService {
             
             // ⚠️ CRUCIAL : Il faut RELANCER l'erreur pour que le Handler puisse l'attraper
             throw error; 
+        }
+    }
+
+    async selectFrontendFramework(frameworkFrontEndId: number): Promise<void> {
+        try {
+            await getAxiosInstance().post(`/api/database/${frameworkFrontEndId}/select`);
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ selectFrontendFramework API échouée: ${(error as Error).message}`);
+            throw error; // <-- Permet au Handler d'attraper l'erreur
         }
     }
 }

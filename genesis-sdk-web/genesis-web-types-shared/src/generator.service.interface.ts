@@ -47,6 +47,8 @@ export interface IGeneratorService {
     saveTableSelection(config: TableSelectionConfig): Promise<{ success: boolean; message: string }>;
 
     // ═══ ÉTAPE 7 : RELATIONS ═══
+    fetchTablesMetadataParents(): Promise<TableMetadataDto[]>;
+    fetchTablesMetadataChilds(): Promise<TableMetadataDto[]>;
     fetchRelations(): Promise<RelationParameter[]>;
     saveRelationParameters(relations: RelationParameter[]): Promise<{ success: boolean; message: string }>;
 
@@ -55,7 +57,7 @@ export interface IGeneratorService {
      * Sauvegarde le choix du framework frontend (ou du moteur de template MVC) 
      * après validation de l'étape 8.
      */
-    saveFrontendSelection(framework: FrontendFramework): Promise<{ success: boolean; message: string }>;
+    selectFrontendFramework(frameworkFrontEndId: number): Promise<void>
 
     /**
      * Sauvegarde la configuration du layout frontend (langues d'interface, navbar, couleurs, branding, port).

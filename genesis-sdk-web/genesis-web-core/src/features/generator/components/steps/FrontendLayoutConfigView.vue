@@ -60,9 +60,9 @@
                 </div>
             </GenesisInput>
 
-            <div v-if="layoutConfig.selectedLanguages.length > 0" class="flex flex-wrap gap-1.5 mt-3">
+            <div v-if="layoutConfig.selectedInterfaceLanguages.length > 0" class="flex flex-wrap gap-1.5 mt-3">
                 <GenesisLabel
-                    v-for="code in layoutConfig.selectedLanguages"
+                    v-for="code in layoutConfig.selectedInterfaceLanguages"
                     :key="code"
                     :text="getLanguageName(code)"
                     @remove="() => toggleLanguage(code)" 
@@ -152,8 +152,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
-import type { LanguageDto } from '@genesis-labs/shared-types';
-
+import type { InterfaceLanguage } from '@genesis-labs/shared-types';
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisLabel from '@genesis-labs/web-core/core/components/ui/labels/GenesisLabel.vue';
 import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
@@ -185,7 +184,7 @@ function handleLanguageSelect(code: string) {
     if (!code) return;
     selectedLanguageToAdd.value = code;
     
-    if (!layoutConfig.value.selectedLanguages.includes(code)) {
+    if (!layoutConfig.value.selectedInterfaceLanguages.includes(code)) {
         toggleLanguage(code);
     }
     
@@ -196,7 +195,7 @@ function handleLanguageSelect(code: string) {
 }
 
 function getLanguageName(code: string) {
-    const lang = availableLanguages.value.find((l: LanguageDto) => l.code === code);
+    const lang = availableLanguages.value.find((l: InterfaceLanguage) => l.code === code);
     return lang ? lang.name : code;
 }
 

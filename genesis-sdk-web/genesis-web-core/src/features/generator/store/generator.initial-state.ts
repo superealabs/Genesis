@@ -27,7 +27,7 @@ export const INITIAL_STATE: GeneratorData = {
     tableSelection: { selectedTables: [], selectedViews: [], selectedComponents: [] },
     frontend: null,
     frontendLayout: {
-        selectedLanguages: [], navbarType: '', primaryColor: '#3B82F6',
+        selectedInterfaceLanguages: [], navbarType: '', primaryColor: '#3B82F6',
         secondaryColor: '#64748B', logoPath: '', faviconPath: '', port: ''
     },
     git: {
