@@ -3,6 +3,7 @@ package org.labs.genesis.forms.renderer.provider;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
+import org.labs.genesis.forms.ui.visualization.configuration.editor.GlobalVisualizationOptionsPanel;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationItem;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
@@ -16,9 +17,14 @@ import java.util.Map;
 
 public class DataProvider {
 
+    public static final String[] AGGREGATIONS = new String[]{
+            "NONE", "SUM", "COUNT", "AVG", "MIN", "MAX", "COUNT DISTINCT"
+    };
+    public static final String DEFAULT_AGGREGATION = AGGREGATIONS[0];
+
     // =========================
-// MAP
-// =========================
+    // MAP
+    // =========================
 
     public MapData loadMap(
             Connection connection,
@@ -936,10 +942,11 @@ public class DataProvider {
     ) {
         Object configuredAggregation = config.getValue("aggregation");
         String aggregation = configuredAggregation == null
-                ? "SUM"
+                ? DEFAULT_AGGREGATION
                 : configuredAggregation.toString().trim().toUpperCase();
 
         return switch (aggregation.replace('_', ' ')) {
+                        case "NONE" -> numericField;
             case "COUNT" -> DSL.count(numericField);
             case "COUNT DISTINCT" -> DSL.countDistinct(numericField);
             case "AVG" -> DSL.avg(numericField);
@@ -1574,21 +1581,47 @@ public class DataProvider {
     // NUMERIC CONVERSION
     // =========================================================================
 
-    private double toDouble(
-            Object value
-    ) {
+    private double toDouble(Object value) {
 
         if (value == null) {
             return 0.0;
         }
 
         if (value instanceof Number number) {
-
             return number.doubleValue();
         }
 
-        try {
+        if (value instanceof java.sql.Timestamp timestamp) {
+            return timestamp.getTime();
+        }
 
+        if (value instanceof java.sql.Date date) {
+            return date.getTime();
+        }
+
+        if (value instanceof java.util.Date date) {
+            return date.getTime();
+        }
+
+        if (value instanceof java.time.LocalDateTime dateTime) {
+            return dateTime
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli();
+        }
+
+        if (value instanceof java.time.LocalDate date) {
+            return date
+                    .atStartOfDay(java.time.ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli();
+        }
+
+        if (value instanceof java.time.Instant instant) {
+            return instant.toEpochMilli();
+        }
+
+        try {
             return Double.parseDouble(
                     value.toString()
             );
@@ -1596,7 +1629,7 @@ public class DataProvider {
         } catch (NumberFormatException e) {
 
             throw new IllegalArgumentException(
-                    "Value is not numeric: " + value,
+                    "Value is not supported: " + value,
                     e
             );
         }

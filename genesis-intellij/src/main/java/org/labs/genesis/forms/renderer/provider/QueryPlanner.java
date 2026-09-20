@@ -94,7 +94,7 @@ public final class QueryPlanner {
         Set<String> requiredTables = new LinkedHashSet<>();
         requiredTables.add(tableName);
 
-        String aggregation = config.getString("aggregation", "SUM");
+        String aggregation = config.getString("aggregation", "NONE");
 
         // -------- 1a. Colonnes du SELECT --------
         for (VisualizationParameter parameter : parameters) {
@@ -206,7 +206,7 @@ public final class QueryPlanner {
     }
 
     private Field<?> aggregate(String name, Field<?> field) {
-        String normalized = name == null ? "SUM" : name.trim().toUpperCase().replace(' ', '_');
+        String normalized = name == null ? DataProvider.DEFAULT_AGGREGATION : name.trim().toUpperCase().replace(' ', '_');
         @SuppressWarnings("unchecked")
         Field<? extends Number> numericField = (Field<? extends Number>) field;
         return switch (normalized) {

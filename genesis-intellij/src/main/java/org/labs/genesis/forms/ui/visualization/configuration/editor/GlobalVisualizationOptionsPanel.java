@@ -1,6 +1,7 @@
 package org.labs.genesis.forms.ui.visualization.configuration.editor;
 
 import com.intellij.icons.AllIcons;
+import org.labs.genesis.forms.renderer.provider.DataProvider;
 import org.labs.genesis.forms.theme.DashboardTheme;
 import org.labs.genesis.forms.ui.common.RoundedBorder;
 import org.labs.genesis.forms.ui.visualization.model.*;
@@ -16,10 +17,6 @@ import java.util.Map;
 
 public class GlobalVisualizationOptionsPanel extends JPanel {
 
-    private static final String DEFAULT_AGGREGATION = "SUM";
-    private static final String[] AGGREGATIONS = new String[]{
-            "SUM", "COUNT", "AVG", "MIN", "MAX", "COUNT DISTINCT"
-    };
     private static final String[] SORT_OPTIONS = new String[]{"Asc", "Desc"};
     private static final String[] FILTER_OPERATORS = new String[]{
             "is",
@@ -39,7 +36,7 @@ public class GlobalVisualizationOptionsPanel extends JPanel {
     private static final int CARD_RADIUS = 8;
 
     private final OptionalNumberEditor limitEditor = new OptionalNumberEditor();
-    private final JComboBox<String> aggregationCombo = new JComboBox<>(AGGREGATIONS);
+    private final JComboBox<String> aggregationCombo = new JComboBox<>(DataProvider.AGGREGATIONS);
     private final ColumnDropField sortColumnField = new ColumnDropField();
     private final JComboBox<String> sortDirectionCombo = new JComboBox<>(SORT_OPTIONS);
     private final JPanel filtersContainer = new JPanel();
@@ -104,7 +101,7 @@ public class GlobalVisualizationOptionsPanel extends JPanel {
 
     public String getAggregation() {
         Object selected = aggregationCombo.getSelectedItem();
-        return selected == null ? DEFAULT_AGGREGATION : selected.toString();
+        return selected == null ? DataProvider.DEFAULT_AGGREGATION : selected.toString();
     }
 
     public String getSortDirection() {
@@ -138,7 +135,7 @@ public class GlobalVisualizationOptionsPanel extends JPanel {
 
     public void setAggregation(String aggregation) {
         if (aggregation == null || aggregation.isBlank()) {
-            aggregationCombo.setSelectedItem(DEFAULT_AGGREGATION);
+            aggregationCombo.setSelectedItem(DataProvider.DEFAULT_AGGREGATION);
             return;
         }
 
@@ -148,7 +145,7 @@ public class GlobalVisualizationOptionsPanel extends JPanel {
                 : normalized);
 
         if (aggregationCombo.getSelectedItem() == null) {
-            aggregationCombo.setSelectedItem(DEFAULT_AGGREGATION);
+            aggregationCombo.setSelectedItem(DataProvider.DEFAULT_AGGREGATION);
         }
     }
 
