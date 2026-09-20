@@ -13,13 +13,21 @@ export interface InterfaceLanguage {
 }
 
 // ═══ 3. FRAMEWORK FRONTEND ═══
-// Aligné avec org.labs.genesis.frontend.generator.FrontendFramework
 export interface FrontendFramework {
     id: number;
-    languageId: number;          // Référence l'ID de FrontendProgrammingLanguage
-    coreFramework: string;       // ex: 'React', 'Vue', 'Angular'
+    languageId: number;          
+    coreFramework: string;       // ex: 'React', 'Vue', 'Angular', ou '.NET MVC'
     name: string;                // ex: 'React avec TypeScript'
-    template?: string;
-    componentExtension: string;  // ex: '.tsx', '.vue'
+    
+    /**
+     * MOTEUR DE TEMPLATE (Cas MVC)
+     * Si le framework backend est de type MVC, cette propriété contient 
+     * le nom du moteur de vue (ex: 'Razor', 'Thymeleaf', 'Blade').
+     * Dans ce cas, le frontend doit masquer les sélecteurs de langages JS/TS 
+     * et afficher cette valeur comme choix de template.
+     */
+    viewTemplateEngine?: string; 
+    
+    componentExtension: string;  // ex: '.tsx', '.vue', '.cshtml'
     defaultPort: string;         // ex: '3000', '5173'
 }

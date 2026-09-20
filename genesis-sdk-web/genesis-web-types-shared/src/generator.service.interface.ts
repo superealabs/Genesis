@@ -14,15 +14,12 @@ import type {
     GenerationResult
 } from './generator.shared';
 
-import { FrontendFramework } from './frontend.shared';
+import type { FrontendFramework } from './frontend.shared';
 
 /**
  * Contrat du service générateur (Pure Interface).
- * Ne contient aucune logique UI ou mutation de store.
- * Sert de source de vérité pour les implémentations Web (Vite) et Extension (VS Code).
  */
 export interface IGeneratorService {
-    
     // ═══ ÉTAPE 1 : FRAMEWORK ═══
     selectFramework(id: number): Promise<void>;
 
@@ -50,42 +47,27 @@ export interface IGeneratorService {
     saveTableSelection(config: TableSelectionConfig): Promise<{ success: boolean; message: string }>;
 
     // ═══ ÉTAPE 7 : RELATIONS ═══
-    /**
-     * Récupère la liste des paramètres de relations (existantes ou suggérées par l'IA/le backend).
-     */
     fetchRelations(): Promise<RelationParameter[]>;
-
-    /**
-     * Sauvegarde la liste complète des relations configurées par l'utilisateur 
-     * après validation de l'étape 7 (équivalent à setRelationParameterList).
-     * @param relations La liste des relations à persister.
-     */
     saveRelationParameters(relations: RelationParameter[]): Promise<{ success: boolean; message: string }>;
 
-    selectFrontendFramework(framework: FrontendFramework): Promise<void>;
-
-
-
+    // ═══ ÉTAPE 8 & 9 : FRONTEND ═══
+    /**
+     * Sauvegarde le choix du framework frontend (ou du moteur de template MVC) 
+     * après validation de l'étape 8.
+     */
     saveFrontendSelection(framework: FrontendFramework): Promise<{ success: boolean; message: string }>;
 
-    // ═══ ÉTAPE 9 : CONFIGURATION LAYOUT FRONTEND ═══
     /**
      * Sauvegarde la configuration du layout frontend (langues d'interface, navbar, couleurs, branding, port).
-     * (Équivalent à setFrontEndConfig())
      */
     saveFrontendLayoutConfig(config: FrontendLayoutConfig): Promise<{ success: boolean; message: string }>;
 
-
+    // ═══ ÉTAPE 10 : GIT ═══
     saveGitConfiguration(config: GitConfiguration): Promise<{ success: boolean; message: string }>;
 
-    // ═══ ÉTAPE 11 : GÉNÉRATION FINALE (NOUVEAU) ═══
+    // ═══ ÉTAPE 11 : GÉNÉRATION FINALE ═══
     /**
-     * Déclenche la génération complète du projet.
-     * C'est l'action finale qui envoie l'intégralité des données collectées durant le wizard 
-     * au backend pour créer les fichiers sur le disque.
-     * @param data L'objet GeneratorData contenant l'état complet de toutes les étapes.
-     * @returns Le résultat de l'opération (succès, message, chemin absolu du projet généré).
-     * vérifie si les informations insérés en finalité correspondent à ceux qui se trouvent côté serveur
+     * Déclenche la génération complète du projet en envoyant l'état global.
      */
     launchGeneration(data: GeneratorData): Promise<GenerationResult>;
 }
