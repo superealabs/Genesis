@@ -2,28 +2,22 @@ import { inject, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import type { FrontendFramework } from '@genesis-labs/shared-types';
-//  CORRECT : Chemin relatif depuis le dossier 'composables' vers le dossier 'types'
 import { IFrontendService, FRONTEND_SERVICE_KEY } from '@genesis-labs/web-core/features/frontend/types/frontend.service.interface';
 import { useFrontendStore } from '@genesis-labs/web-core/features/frontend/store/useFrontend.store';
-
 import { useCompareSlotsWithPopup } from '@genesis-labs/web-core/core/composables/ux/useCompareSlotsWithPopup';
 
-
 export function useFrontend() {
-    // 1. Récupération sécurisée du service via inject
     const service = inject(FRONTEND_SERVICE_KEY);
     if (!service) {
         throw new Error('[useFrontend] IFrontendService non fourni. Vérifiez app.provide() dans main.ts');
     }
 
-    // 2.  Astuce TypeScript : variable locale fortement typée pour les closures asynchrones
     const svc = service as IFrontendService;
-
     const store = useFrontendStore();
     
-    //  Exposition réactive de TOUT l'état nécessaire à la vue
+    // ✅ RENOMMÉ : availableFrameworks -> availableFrontendFrameworks
     const { 
-        availableFrameworks, 
+        availableFrontendFrameworks, 
         displayMode,
         searchQuery
     } = storeToRefs(store);
@@ -39,7 +33,8 @@ export function useFrontend() {
         return compareMode.value === 'selection' ? selectedItem.value?.id : undefined;
     });
 
-    const frameworkSlotsMap = computed(() => {
+    // ✅ RENOMMÉ : frameworkSlotsMap -> frontendFrameworkSlotsMap
+    const frontendFrameworkSlotsMap = computed(() => {
         if (compareMode.value !== 'compare') return new Map<number, string>();
         const map = new Map<number, string>();
         for (const [slot, fw] of Object.entries(compareSlots.value)) {
@@ -48,31 +43,20 @@ export function useFrontend() {
         return map;
     });
 
-
-    /**
-     * À appeler au montage du composant pour charger les données.
-     *  Le composable est le SEUL à muter le store avec les données du service.
-     */
     async function initialize() {
         try {
-            //  On attend la Promise et on récupère les données brutes
             const data = await svc.fetchFrontendFrameworks();
-            
-            //  Le composable met à jour le store (pas le service !)
-            store.setAvailableFrameworks(data);
+            store.setAvailableFrontendFrameworks(data);
         } catch (error) {
-            console.error('[useFrontend] Erreur lors du chargement des frameworks:', error);
+            console.error('[useFrontend] Erreur lors du chargement des frameworks frontend:', error);
         }
     }
 
-
     async function handleSelect(framework: FrontendFramework, event?: MouseEvent) {
         const result = compare.handleSelect(framework, event);
-        
         if (result.action === 'pending-replace') {
             return { action: 'replace-needed' as const, event, framework };
         }
-
         return { action: result.action, event, framework };
     }
 
@@ -84,11 +68,11 @@ export function useFrontend() {
         compare.switchMode(newMode);
     }    
 
-
     return {
-        availableFrameworks,
+        // ✅ RENOMMÉ dans le return
+        availableFrontendFrameworks,
         selectedId: currentSelectedId,
-        frameworkSlots: frameworkSlotsMap,
+        frontendFrameworkSlots: frontendFrameworkSlotsMap, // ✅ RENOMMÉ
         displayMode,
         searchQuery,
         compareMode,

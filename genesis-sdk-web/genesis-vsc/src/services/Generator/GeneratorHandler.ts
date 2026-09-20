@@ -1,8 +1,16 @@
 import * as vscode from 'vscode';
 import { logger } from '../LoggerService';
 import { VsCodeGeneratorService } from './VsCodeGeneratorService';
-
-import { ProjectConfig } from '@genesis-labs/shared-types';
+import type { 
+    ProjectConfig,
+    DatabaseConfig,
+    ScriptConfig,
+    TableSelectionConfig,
+    AiPromptPayload,
+    FrontendLayoutConfig,
+    GitConfiguration,
+    GeneratorData
+} from '@genesis-labs/shared-types';
 
 const LOG_CHANNEL = 'Genesis Generator Handler';
 
@@ -10,6 +18,8 @@ export class GeneratorHandler {
     private service = new VsCodeGeneratorService();
 
     constructor(private panel: vscode.WebviewPanel) {}
+
+    // ═══ ACTIONS UI SPÉCIFIQUES À VS CODE ═══
 
     async handleRequestFolderPath(): Promise<void> {
         const folders = await vscode.window.showOpenDialog({
@@ -39,7 +49,7 @@ export class GeneratorHandler {
         }   
     }
 
-    // ═══ ROUTAGE VERS LE SERVICE (Lecture) ═══
+    // ═══ ROUTAGE VERS LE SERVICE (Lecture - Pas de try/catch, le service gère le fallback) ═══
 
     async handleGetTablesMetadata(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
         const data = await this.service.fetchTablesMetadata();
@@ -61,7 +71,6 @@ export class GeneratorHandler {
         panel.webview.postMessage({ type: 'RELATIONS_LOADED', payload: data });
     }
 
-    // ✅ CORRECTION : Reçoit et transmet frameworkId
     async handleGetLoggingLevels(payload: { frameworkId: number }, panel: vscode.WebviewPanel): Promise<void> {
         const data = await this.service.fetchLoggingLevels(payload.frameworkId);
         panel.webview.postMessage({ type: 'LOGGING_LEVELS_LOADED', payload: data });
@@ -72,7 +81,6 @@ export class GeneratorHandler {
         panel.webview.postMessage({ type: 'SECURITY_TYPES_LOADED', payload: data });
     }
 
-    // AJOUT : Pour compléter le trio
     async handleGetCacheProviders(payload: { frameworkId: number }, panel: vscode.WebviewPanel): Promise<void> {
         const data = await this.service.fetchCacheProviders(payload.frameworkId);
         panel.webview.postMessage({ type: 'CACHE_PROVIDERS_LOADED', payload: data });
@@ -95,93 +103,133 @@ export class GeneratorHandler {
     }
 
     async handleGetHibernateDdlAutoOptions(payload: { frameworkId: number }, panel: vscode.WebviewPanel): Promise<void> {
-        logger.log(LOG_CHANNEL, `➡️ [getHibernateDdlAuto] Récupération pour le framework ID: ${payload.frameworkId}`);
         const data = await this.service.fetchHibernateDdlAutoOptions(payload.frameworkId);
         panel.webview.postMessage({ type: 'HIBERNATE_DDL_AUTO_LOADED', payload: data });
     }
 
+    async handleGetAvailableLlmModels(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        const data = await this.service.fetchAvailableLlmModels();
+        panel.webview.postMessage({ type: 'AVAILABLE_LLM_MODELS_LOADED', payload: data });
+    }
 
+    // ═══ ACTIONS (Écriture/Lancement - Try/catch obligatoire pour gérer les erreurs API) ═══
 
     async handleSelectFramework(payload: { id: number }, panel: vscode.WebviewPanel): Promise<void> {
-        logger.log(LOG_CHANNEL, `➡️ [selectFramework] Réception de la demande pour l'ID: ${payload.id}`);
-        
         try {
-            // Si ça échoue, ça va sauter directement au catch
             await this.service.selectFramework(payload.id);
-            
-            logger.log(LOG_CHANNEL, `✅ [selectFramework] Succès.`);
-            panel.webview.postMessage({ 
-                type: 'FRAMEWORK_SELECTED', 
-                payload: { success: true, id: payload.id } 
-            });
-            
+            panel.webview.postMessage({ type: 'FRAMEWORK_SELECTED', payload: { success: true, id: payload.id } });
         } catch (error) {
-            // ⚠️ CRUCIAL : On intercepte l'erreur et on prévient la Webview
-            const errorMsg = (error as Error).message || 'Erreur inconnue';
-            logger.log(LOG_CHANNEL, `❌ [selectFramework] Échec critique: ${errorMsg}`);
-            
-            panel.webview.postMessage({
-                type: 'API_ERROR',
-                payload: { 
-                    command: 'SELECT_FRAMEWORK', 
-                    message: `Échec de la communication avec l'API: ${errorMsg}` 
-                }
-            });
+            this.sendApiError(panel, 'SELECT_FRAMEWORK', error);
         }
     }
 
     async handleSaveProjectConfig(payload: { config: ProjectConfig }, panel: vscode.WebviewPanel): Promise<void> {
-        logger.log(LOG_CHANNEL, `➡️ [saveProjectConfig] Réception de la demande de sauvegarde`);
-        
         try {
             const result = await this.service.saveProjectConfig(payload.config);
-            
-            if (result.success) {
-                logger.log(LOG_CHANNEL, `✅ [saveProjectConfig] Succès: ${result.message}`);
-            } else {
-                logger.log(LOG_CHANNEL, `⚠️ [saveProjectConfig] Succès partiel/Warning: ${result.message}`);
-            }
-
-            panel.webview.postMessage({ 
-                type: 'PROJECT_CONFIG_SAVED', 
-                payload: result 
-            });
-
+            panel.webview.postMessage({ type: 'PROJECT_CONFIG_SAVED', payload: result });
         } catch (error) {
-            logger.log(LOG_CHANNEL, `❌ [saveProjectConfig] Échec critique: ${(error as Error).message}`);
-            
-            panel.webview.postMessage({
-                type: 'API_ERROR',
-                payload: { 
-                    command: 'SAVE_PROJECT_CONFIG', 
-                    message: `Échec de la sauvegarde de la configuration: ${(error as Error).message}` 
-                }
-            });
+            this.sendApiError(panel, 'SAVE_PROJECT_CONFIG', error);
         }
     }
 
     async handleSelectDatabase(payload: { id: number }, panel: vscode.WebviewPanel): Promise<void> {
-        logger.log(LOG_CHANNEL, `➡️ [selectDatabase] Sélection du moteur ID: ${payload.id}`);
-        
         try {
             await this.service.selectDatabase(payload.id);
-            logger.log(LOG_CHANNEL, `✅ [selectDatabase] Moteur ID ${payload.id} sélectionné avec succès.`);
-            
-            panel.webview.postMessage({ 
-                type: 'DATABASE_SELECTED', 
-                payload: { success: true, id: payload.id } 
-            });
-            
+            panel.webview.postMessage({ type: 'DATABASE_SELECTED', payload: { success: true, id: payload.id } });
         } catch (error) {
-            logger.log(LOG_CHANNEL, `❌ [selectDatabase] Échec de la sélection: ${(error as Error).message}`);
-            
-            panel.webview.postMessage({ 
-                type: 'API_ERROR', 
-                payload: { 
-                    command: 'SELECT_DATABASE', 
-                    message: `Échec de la sélection de la base de données (ID: ${payload.id})` 
-                } 
-            });
+            this.sendApiError(panel, 'SELECT_DATABASE', error);
         }
+    }
+
+    async handleSaveDatabaseConfig(payload: { config: DatabaseConfig }, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.saveDatabaseConfig(payload.config);
+            panel.webview.postMessage({ type: 'DATABASE_CONFIG_SAVED', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'SAVE_DATABASE_CONFIG', error);
+        }
+    }
+
+    async handleGenerateAiScript(payload: AiPromptPayload, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.generateAiScript(payload);
+            panel.webview.postMessage({ type: 'AI_SCRIPT_GENERATED', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'GENERATE_AI_SCRIPT', error);
+        }
+    }
+
+    async handleSaveScriptConfig(payload: { script: ScriptConfig }, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.saveScriptConfig(payload.script);
+            panel.webview.postMessage({ type: 'SCRIPT_CONFIG_SAVED', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'SAVE_SCRIPT_CONFIG', error);
+        }
+    }
+
+    async handleSaveTableSelection(payload: { config: TableSelectionConfig }, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.saveTableSelection(payload.config);
+            panel.webview.postMessage({ type: 'TABLE_SELECTION_SAVED', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'SAVE_TABLE_SELECTION', error);
+        }
+    }
+
+    async handleSaveRelationParameters(payload: { relations: any[] }, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.saveRelationParameters(payload.relations);
+            panel.webview.postMessage({ type: 'RELATION_PARAMETERS_SAVED', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'SAVE_RELATION_PARAMETERS', error);
+        }
+    }
+
+    async handleSelectFrontendFramework(payload: { id: number }, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            await this.service.selectFrontendFramework(payload.id);
+            panel.webview.postMessage({ type: 'FRONTEND_FRAMEWORK_SELECTED', payload: { success: true, id: payload.id } });
+        } catch (error) {
+            this.sendApiError(panel, 'SELECT_FRONTEND_FRAMEWORK', error);
+        }
+    }
+
+    async handleSaveFrontendLayoutConfig(payload: { config: FrontendLayoutConfig }, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.saveFrontendLayoutConfig(payload.config);
+            panel.webview.postMessage({ type: 'FRONTEND_LAYOUT_CONFIG_SAVED', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'SAVE_FRONTEND_LAYOUT_CONFIG', error);
+        }
+    }
+
+    async handleSaveGitConfiguration(payload: { config: GitConfiguration }, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.saveGitConfiguration(payload.config);
+            panel.webview.postMessage({ type: 'GIT_CONFIGURATION_SAVED', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'SAVE_GIT_CONFIGURATION', error);
+        }
+    }
+
+    async handleLaunchGeneration(payload: GeneratorData, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            logger.log(LOG_CHANNEL, `🚀 [launchGeneration] Lancement de la génération pour: ${payload.config.projectName}`);
+            const result = await this.service.launchGeneration(payload);
+            panel.webview.postMessage({ type: 'GENERATION_RESULT', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'LAUNCH_GENERATION', error);
+        }
+    }
+
+    // ═══ UTILITAIRE ═══
+    private sendApiError(panel: vscode.WebviewPanel, command: string, error: unknown) {
+        const errorMsg = (error as Error).message || 'Erreur inconnue';
+        logger.log(LOG_CHANNEL, `❌ [${command}] Échec critique: ${errorMsg}`);
+        panel.webview.postMessage({
+            type: 'API_ERROR',
+            payload: { command, message: `Échec de l'opération: ${errorMsg}` }
+        });
     }
 }

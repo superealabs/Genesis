@@ -5,23 +5,28 @@ import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/disp
 
 export const useFrontendStore = defineStore('frontend', () => {
     // ═══ État Métier ═══
-    const availableFrameworks = ref<FrontendFramework[]>([]);
-    const selectedFramework = ref<FrontendFramework | null>(null);
+    // ✅ RENOMMÉ : availableFrameworks -> availableFrontendFrameworks
+    const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
+    // ✅ RENOMMÉ : selectedFramework -> selectedFrontendFramework
+    const selectedFrontendFramework = ref<FrontendFramework | null>(null);
 
-    // ═══ État UI (Nécessaire pour l'autonomie de la vue) ═══
+    // ═══ État UI ═══
     const displayMode = ref<DisplayMode>('grid');
     const searchQuery = ref('');
 
     // ═══ Getters ═══
-    const hasSelectedFramework = computed(() => selectedFramework.value !== null);
+    // ✅ RENOMMÉ
+    const hasSelectedFrontendFramework = computed(() => selectedFrontendFramework.value !== null);
 
     // ═══ Actions Métier ═══
-    function setAvailableFrameworks(frameworks: FrontendFramework[]) {
-        availableFrameworks.value = frameworks;
+    // ✅ RENOMMÉ
+    function setAvailableFrontendFrameworks(frameworks: FrontendFramework[]) {
+        availableFrontendFrameworks.value = frameworks;
     }
 
-    function selectFramework(framework: FrontendFramework) {
-        selectedFramework.value = framework;
+    // ✅ RENOMMÉ
+    function selectFrontendFramework(framework: FrontendFramework) {
+        selectedFrontendFramework.value = framework;
     }
 
     // ═══ Actions UI ═══
@@ -34,25 +39,25 @@ export const useFrontendStore = defineStore('frontend', () => {
     }
 
     function reset() {
-        availableFrameworks.value = [];
-        selectedFramework.value = null;
+        availableFrontendFrameworks.value = [];
+        selectedFrontendFramework.value = null;
         displayMode.value = 'grid';
         searchQuery.value = '';
     }
 
     return {
         // État
-        availableFrameworks,
-        selectedFramework,
+        availableFrontendFrameworks,
+        selectedFrontendFramework,
         displayMode,
         searchQuery,
         
         // Getters
-        hasSelectedFramework,
+        hasSelectedFrontendFramework,
         
         // Actions
-        setAvailableFrameworks,
-        selectFramework,
+        setAvailableFrontendFrameworks,
+        selectFrontendFramework,
         setDisplayMode,
         setSearch,
         reset

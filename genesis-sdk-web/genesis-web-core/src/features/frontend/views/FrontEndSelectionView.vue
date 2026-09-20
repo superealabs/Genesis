@@ -29,10 +29,10 @@
     </template>
 
     <FrontendList
-      :frontends="availableFrameworks"
+      :frontends="availableFrontendFrameworks"
       :selectedId="selectedId"
       :display="displayMode"
-      :frameworkSlots="frameworkSlots" 
+      :frameworkSlots="frontendFrameworkSlots"
       @select="handleSelectWrapper"
       @info="handleInfo" 
     />
@@ -76,9 +76,9 @@ const emit = defineEmits<{
 
 //  4. Récupération de l'état et des actions du composable
 const {
-  availableFrameworks,
+  availableFrontendFrameworks,
   selectedId,
-  frameworkSlots,
+  frontendFrameworkSlots,
   displayMode,
   searchQuery,
   compareMode,
