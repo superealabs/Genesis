@@ -38,7 +38,7 @@
     - Location
 
 - afterNext
-    setProjectConfig 
+    setProjectConfig
 
 # step 3
 - onMounted
@@ -65,7 +65,7 @@
 - toujours vérifier la connexion avant de continuer
 
 - afterNext
-    setCredentials
+    setDatabaseConfig
 
 # step 5 (skippable)
 - onMounted
@@ -82,7 +82,7 @@
         NewFileContent
 
 - afterNext
-    setModification
+    setScriptMOdification
 
 # step 6
 - onMounted
@@ -116,6 +116,7 @@ Choix
 # step 9
 - onMounted
     - chargement des languages disponibles
+    - chargement des languages de programmation disponible
     - chargement des types de NavbarDisponible
 
 - afterNext

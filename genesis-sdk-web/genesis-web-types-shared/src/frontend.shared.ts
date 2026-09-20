@@ -1,15 +1,25 @@
-// On ne garde que les attributs nécessaires à l'UX et à l'information de l'utilisateur
-export interface FrontendFramework {
+// ═══ 1. LANGAGE DE PROGRAMMATION FRONTEND (JS, TS, etc.) ═══
+export interface FrontendProgrammingLanguage {
     id: number;
-    languageId: number;
-    name: string;
-    coreFramework: string;
-    componentExtension: string;
-    defaultPort: string;
+    name: string;      // ex: 'JavaScript', 'TypeScript'
+    extension: string; // ex: '.js', '.ts'
 }
 
-export interface LanguageDto {
-    id : number;
-    code: string;
-    name: string;
+// ═══ 2. LANGUE D'INTERFACE / LOCALISATION (FR, EN, etc.) ═══
+export interface InterfaceLanguage {
+    id: number;
+    code: string;      // ex: 'fr', 'en', 'es'
+    name: string;      // ex: 'Français', 'English', 'Español'
+}
+
+// ═══ 3. FRAMEWORK FRONTEND ═══
+// Aligné avec org.labs.genesis.frontend.generator.FrontendFramework
+export interface FrontendFramework {
+    id: number;
+    languageId: number;          // Référence l'ID de FrontendProgrammingLanguage
+    coreFramework: string;       // ex: 'React', 'Vue', 'Angular'
+    name: string;                // ex: 'React avec TypeScript'
+    template?: string;
+    componentExtension: string;  // ex: '.tsx', '.vue'
+    defaultPort: string;         // ex: '3000', '5173'
 }

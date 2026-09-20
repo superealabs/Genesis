@@ -67,20 +67,16 @@ export function useFrameworks() {
     async function handleSelect(framework: Framework, event?: MouseEvent) {
         const result = compare.handleSelect(framework, event);
         
-        // Si un remplacement est en attente, on NE PASSE PAS encore l'appel au service.
-        // L'appel au service se fera quand l'utilisateur confirmera dans le popup (via handleReplace).
         if (result.action === 'pending-replace') {
             return { action: 'replace-needed' as const, event, framework };
         }
 
-        // NE JAMAIS APPELER LA FONCTION SELECTFRAMEWORK ICI
+        // NE JAMAIS APPELER LA FONCTION SELECTFRAMEWORK ICI(pas de communication avec api)
         return { action: result.action, event, framework };
     }
 
     async function handleReplace(slotId: string | number, framework: Framework) {
         compare.replaceSlot(slotId, framework);
-        //  IMPORTANT : On utilise 'svc' ici, PAS 'service'
-        await svc.selectFramework(framework.id);
     }
 
     return {

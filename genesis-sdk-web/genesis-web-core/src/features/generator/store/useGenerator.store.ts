@@ -12,8 +12,13 @@ import type {
 import { INITIAL_STATE } from './generator.initial-state';
 
 export const useGeneratorStore = defineStore('generator', () => {
+
+
+    const pendingFramework = ref<Framework | null>(null);
+
     // ═══ État des Données Uniquement ═══
     const isGenerating = ref(false);
+    const wizardError = ref<string | null>(null);
     
     const availableTables = ref<TableMetadataDto[]>([]);
     const tablesParents = ref<TableMetadataDto[]>([]);
@@ -55,6 +60,18 @@ export const useGeneratorStore = defineStore('generator', () => {
     const views = computed(() => availableTables.value.filter(t => t.isView));
     const getAvailableTables = computed(() => availableTables.value);
     const getAvailableViews = computed(() => views.value); 
+
+
+    function setWizardError(message: string) {
+        wizardError.value = message;
+    }
+    function clearWizardError() {
+        wizardError.value = null;
+    }
+
+    function setPendingFramework(framework: Framework | null) {
+        pendingFramework.value = framework;
+    }
 
     // ═══ Actions de Mutation des Données ═══
     function setFramework(framework: Framework) {
@@ -139,6 +156,8 @@ export const useGeneratorStore = defineStore('generator', () => {
         relations.value.push(relation);
         return true;
     }
+
+
     function removeRelation(index: number) { relations.value.splice(index, 1); }
     
     function setTablesParents(data: TableMetadataDto[]) { tablesParents.value = data; }
@@ -161,6 +180,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     }
 
     return {
+        wizardError,
         isGenerating, stepperData,
         availableTables, tables, views,
         getTablesParents, getTablesChilds, getRelations,
@@ -168,7 +188,12 @@ export const useGeneratorStore = defineStore('generator', () => {
         getAvailableLoggingLevels, getAvailableSecurityTypes, getAvailableCacheProviders,
         getAvailableLanguageVersions, getAvailableFrameworkVersions, getAvailableBuildTools,
         getAvailableHibernateDdlAutoOptions,
+        pendingFramework,
         
+
+        setWizardError,
+        clearWizardError,
+        setPendingFramework,
         setDatabaseEngine, setFramework, setSelectedFrontendFramework, setAvailableTables,
         updateConfig, updateDatabase, updateScript, updateFrontendLayout, updateGitConfig,
         toggleTable, toggleView, toggleComponent, toggleLanguage, addRelation, removeRelation,

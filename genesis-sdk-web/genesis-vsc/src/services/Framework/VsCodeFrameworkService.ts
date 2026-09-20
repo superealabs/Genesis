@@ -58,11 +58,7 @@ export class VsCodeFrameworkService implements IFrameworkService {
         }
     }
 
-    async selectFramework(id: number): Promise<void> {
-        // On ne retourne pas de mock ici car c'est une action d'écriture. 
-        // Si l'API échoue, on laisse l'erreur remonter pour que le Handler la gère (comme dans ton code actuel).
-        await getAxiosInstance().post(`/frameworks/${id}/select`);
-    }
+
 
     async fetchLanguages(): Promise<Language[]> {
         try {

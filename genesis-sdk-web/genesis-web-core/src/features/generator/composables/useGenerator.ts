@@ -27,16 +27,60 @@ export function useGenerator() {
         totalSteps: 10,
         skippableStepsConfig: SKIPPABLE_CONFIG,
         onBeforeNext: async (currentStep: number) => {
-
-
-
             // gfhghgf
             console.log(`last step : ${currentStep}`);
 
-
+            // COrriger afin de faire en sorte que le framework dans le storeFramework deviennent celui dans le stepData
             if (currentStep === 1) {
-                console.log('[onBeforeNext] store.stepperData.framework =', store.stepperData.framework);
-                console.log('[onBeforeNext] store.$id =', store.$id);
+                const fw = store.pendingFramework; // On récupère le brouillon
+                
+                if (!fw) {
+                    console.warn('[Wizard] ⚠️ Aucun framework sélectionné. Navigation bloquée.');
+                    return false; // Bloque la navigation
+                }
+
+                try {
+                    console.log(`[Wizard] 🔄 Commit et sauvegarde du framework: ${fw.name}`);
+                    
+                    // 1. On affecte officiellement au store du générateur (stepperData)
+                    store.setFramework(fw);
+                    
+                    // 2. On sauvegarde côté API
+                    // await svc.selectFramework(fw.id);
+                    
+                    console.log('[Wizard] ✅ Framework validé et sauvegardé avec succès.');
+                } catch (error) {
+                    const msg = error instanceof Error ? error.message : 'Erreur inconnue lors de la sélection du framework.';
+                    console.error('[Wizard] ❌ Échec:', msg);
+                    
+                    // ✅ NOUVEAU : On notifie l'interface utilisateur via le store
+                    store.setWizardError(msg); 
+                    return false; 
+                }
+            }
+
+            if (currentStep === 2) {
+                const config = stepperData.value.config;
+                
+                // Validation basique des champs obligatoires avant d'appeler l'API
+                if (!config.projectName || !config.projectLocation) {
+                    console.warn('[Wizard] ⚠️ Nom du projet ou localisation manquants.');
+                    // Idéalement, déclenchez ici un toast d'erreur UI
+                    return false; // Bloque la navigation
+                }
+
+                try {
+                    console.log('[Wizard] 🔄 Sauvegarde de la configuration du projet vers l\'API...');
+                    await svc.saveProjectConfig(config);
+                    console.log('[Wizard] ✅ Configuration du projet sauvegardée avec succès.');
+                } catch (error) {
+                    console.error('[Wizard] ❌ Échec de la sauvegarde de la configuration:', error);
+                    
+                    // Optionnel : Déclencher une popup d'erreur globale ici si vous avez un système de toast
+                    // ex: store.showError("Impossible de sauvegarder la configuration: " + (error as Error).message);
+                    
+                    return false; // ❌ Bloque la navigation vers l'étape 3 tant que l'API n'a pas répondu OK
+                }
             }
 
 
@@ -151,6 +195,7 @@ export function useGenerator() {
         reset: () => { store.reset(); wizard.resetWizard(); },
 
         setFramework: store.setFramework,
+        setPendingFramework: store.setPendingFramework,
         setDatabaseEngine: store.setDatabaseEngine,
         setSelectedFrontendFramework: store.setSelectedFrontendFramework,
         fetchTablesMetadata, fetchTablesMetadataParents, fetchTablesMetadataChilds,

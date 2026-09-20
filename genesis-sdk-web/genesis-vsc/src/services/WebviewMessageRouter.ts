@@ -33,10 +33,6 @@ export class WebviewMessageRouter {
                     await this.frameworkHandler.getAll(message.payload, this.panel);
                     break;
                     
-                case 'SELECT_FRAMEWORK':
-                    await this.frameworkHandler.select(message.payload, this.panel);
-                    break;
-
                 case 'GET_LANGUAGES':
                     await this.frameworkHandler.getLanguages(message.payload, this.panel);
                     break;
@@ -111,6 +107,10 @@ export class WebviewMessageRouter {
 
                 case 'TEST_DATABASE_CONNECTION':
                     await this.databaseHandler.handleTestDatabaseConnection(message.payload, this.panel);
+                    break;
+
+                case 'SELECT_FRAMEWORK':
+                    await this.generatorHandler.handleSelectFramework(message.payload, this.panel);
                     break;
 
                 case 'SELECT_DATABASE':

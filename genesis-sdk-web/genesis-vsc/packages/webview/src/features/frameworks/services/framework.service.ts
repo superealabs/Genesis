@@ -22,20 +22,6 @@ export class FrameworkServiceVsc implements IFrameworkService {
         });
     }
 
-    selectFramework(id: number): Promise<void> {
-        return new Promise((resolve) => {
-            this.vscode.sendMessage('SELECT_FRAMEWORK', { id });
-            
-            const cleanup = this.vscode.onMessage<{ success: boolean }>('FRAMEWORK_SELECTED', (data) => {
-                cleanup();
-                if (data.success) {
-                    console.log('Framework sélectionné avec succès');
-                }
-                resolve();
-            });
-        });
-    }
-
     fetchLanguages(): Promise<Language[]> {
         return new Promise((resolve) => {
             this.vscode.sendMessage('GET_LANGUAGES');

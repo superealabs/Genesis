@@ -66,9 +66,11 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue';
 import StepperPopup from '@genesis-labs/web-core/core/components/layouts/Popup/StepperPopup.vue';
 import FrameworksView from '@genesis-labs/web-core/features/frameworks/views/FrameworksView.vue';
 import FrontEndSelectionView from '@genesis-labs/web-core/features/frontend/views/FrontEndSelectionView.vue';
+import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
 
 import { 
     ProjectConfigView, 
@@ -80,6 +82,8 @@ import {
     FrontendLayoutConfigView, 
     GitConfigView 
 } from '@genesis-labs/web-core/features/generator/components/steps';
+
+const store = useGeneratorStore();
 
 
 import ErrorPopup from '@genesis-labs/web-core/core/components/layouts/Popup/ErrorPopup.vue';
@@ -151,8 +155,9 @@ const errorStackTrace = ref('');
 const isDevMode = import.meta.env.DEV;
 
 function handleChildError(message: string) {
+    // Conserver pour les erreurs spécifiques de DatabaseConfigView
     errorMessage.value = message;
-    errorStackTrace.value = ''; // Pas de stack trace pour les erreurs métier attendues
+    errorStackTrace.value = ''; 
     showError.value = true;
 }
 
@@ -160,5 +165,17 @@ function clearError() {
     showError.value = false;
     errorMessage.value = '';
     errorStackTrace.value = '';
+    // ✅ IMPORTANT : On nettoie aussi le store pour éviter que l'erreur réapparaisse
+    store.clearWizardError(); 
 }
+
+
+watch(() => store.wizardError, (newError) => {
+    if (newError) {
+        errorMessage.value = newError;
+        showError.value = true;
+    }
+}, { immediate: true });
+
+
 </script>

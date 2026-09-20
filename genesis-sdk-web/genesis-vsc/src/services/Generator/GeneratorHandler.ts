@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { logger } from '../LoggerService';
 import { VsCodeGeneratorService } from './VsCodeGeneratorService';
 
+import { ProjectConfig } from '@genesis-labs/shared-types';
+
 const LOG_CHANNEL = 'Genesis Generator Handler';
 
 export class GeneratorHandler {
@@ -96,5 +98,90 @@ export class GeneratorHandler {
         logger.log(LOG_CHANNEL, `➡️ [getHibernateDdlAuto] Récupération pour le framework ID: ${payload.frameworkId}`);
         const data = await this.service.fetchHibernateDdlAutoOptions(payload.frameworkId);
         panel.webview.postMessage({ type: 'HIBERNATE_DDL_AUTO_LOADED', payload: data });
+    }
+
+
+
+    async handleSelectFramework(payload: { id: number }, panel: vscode.WebviewPanel): Promise<void> {
+        logger.log(LOG_CHANNEL, `➡️ [selectFramework] Réception de la demande pour l'ID: ${payload.id}`);
+        
+        try {
+            // Si ça échoue, ça va sauter directement au catch
+            await this.service.selectFramework(payload.id);
+            
+            logger.log(LOG_CHANNEL, `✅ [selectFramework] Succès.`);
+            panel.webview.postMessage({ 
+                type: 'FRAMEWORK_SELECTED', 
+                payload: { success: true, id: payload.id } 
+            });
+            
+        } catch (error) {
+            // ⚠️ CRUCIAL : On intercepte l'erreur et on prévient la Webview
+            const errorMsg = (error as Error).message || 'Erreur inconnue';
+            logger.log(LOG_CHANNEL, `❌ [selectFramework] Échec critique: ${errorMsg}`);
+            
+            panel.webview.postMessage({
+                type: 'API_ERROR',
+                payload: { 
+                    command: 'SELECT_FRAMEWORK', 
+                    message: `Échec de la communication avec l'API: ${errorMsg}` 
+                }
+            });
+        }
+    }
+
+    async handleSaveProjectConfig(payload: { config: ProjectConfig }, panel: vscode.WebviewPanel): Promise<void> {
+        logger.log(LOG_CHANNEL, `➡️ [saveProjectConfig] Réception de la demande de sauvegarde`);
+        
+        try {
+            const result = await this.service.saveProjectConfig(payload.config);
+            
+            if (result.success) {
+                logger.log(LOG_CHANNEL, `✅ [saveProjectConfig] Succès: ${result.message}`);
+            } else {
+                logger.log(LOG_CHANNEL, `⚠️ [saveProjectConfig] Succès partiel/Warning: ${result.message}`);
+            }
+
+            panel.webview.postMessage({ 
+                type: 'PROJECT_CONFIG_SAVED', 
+                payload: result 
+            });
+
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ [saveProjectConfig] Échec critique: ${(error as Error).message}`);
+            
+            panel.webview.postMessage({
+                type: 'API_ERROR',
+                payload: { 
+                    command: 'SAVE_PROJECT_CONFIG', 
+                    message: `Échec de la sauvegarde de la configuration: ${(error as Error).message}` 
+                }
+            });
+        }
+    }
+
+    async handleSelectDatabase(payload: { id: number }, panel: vscode.WebviewPanel): Promise<void> {
+        logger.log(LOG_CHANNEL, `➡️ [selectDatabase] Sélection du moteur ID: ${payload.id}`);
+        
+        try {
+            await this.service.selectDatabase(payload.id);
+            logger.log(LOG_CHANNEL, `✅ [selectDatabase] Moteur ID ${payload.id} sélectionné avec succès.`);
+            
+            panel.webview.postMessage({ 
+                type: 'DATABASE_SELECTED', 
+                payload: { success: true, id: payload.id } 
+            });
+            
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ [selectDatabase] Échec de la sélection: ${(error as Error).message}`);
+            
+            panel.webview.postMessage({ 
+                type: 'API_ERROR', 
+                payload: { 
+                    command: 'SELECT_DATABASE', 
+                    message: `Échec de la sélection de la base de données (ID: ${payload.id})` 
+                } 
+            });
+        }
     }
 }

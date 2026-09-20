@@ -1,8 +1,9 @@
 import type { 
     IGeneratorService,
     GeneratorData,
-    TableMetadataDto, 
-    RelationParameter 
+    TableMetadataDto,
+    RelationParameter,
+    ProjectConfig 
 } from '@genesis-labs/shared-types';
 import { vscodeService } from '../../../core/services/vscode.service';
 
@@ -116,6 +117,57 @@ export class GeneratorServiceVsc implements IGeneratorService {
             const cleanup = this.vscode.onMessage<string[]>('HIBERNATE_DDL_AUTO_LOADED', (data) => {
                 cleanup();
                 resolve(data);
+            });
+        });
+    }
+
+
+    selectFramework(frameworkId: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.vscode.sendMessage('SELECT_FRAMEWORK', { id: frameworkId });
+            
+            // Écoute du succès
+            const cleanup = this.vscode.onMessage<any>('FRAMEWORK_SELECTED', (data) => {
+                cleanup();
+                if (data.success) {
+                    resolve();
+                } else {
+                    // Sécurité au cas où le backend renvoie success: false sans erreur HTTP
+                    reject(new Error(data.message || 'Échec de la sélection'));
+                }
+            });
+
+            // CRUCIAL : Écoute spécifique des erreurs pour cette commande
+            const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
+                if (data.command === 'SELECT_FRAMEWORK') {
+                    cleanup();
+                    errorCleanup(); // Nettoyer les écouteurs pour éviter les fuites
+                    reject(new Error(data.message)); // <-- C'est CE reject qui déclenchera ton catch dans useGenerator
+                }
+            });
+        });
+    }
+
+    saveProjectConfig(config: ProjectConfig): Promise<{ success: boolean; message: string }> {
+        return new Promise((resolve, reject) => {
+            this.vscode.sendMessage('SAVE_PROJECT_CONFIG', { config });
+            
+            // Écoute du succès
+            const cleanup = this.vscode.onMessage<{ success: boolean; message: string }>(
+                'PROJECT_CONFIG_SAVED', 
+                (data) => {
+                    cleanup();
+                    resolve(data);
+                }
+            );
+
+            // Écoute des erreurs spécifiques à cette commande
+            const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
+                if (data.command === 'SAVE_PROJECT_CONFIG') {
+                    cleanup();
+                    errorCleanup();
+                    reject(new Error(data.message));
+                }
             });
         });
     }

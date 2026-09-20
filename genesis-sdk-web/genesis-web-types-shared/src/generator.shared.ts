@@ -52,13 +52,13 @@ export interface RelationParameter {
 }
 
 export interface FrontendLayoutConfig {
-    selectedLanguages: string[];
-    navbarType: 'side' | 'top' | '';
-    primaryColor: string;
-    secondaryColor: string;
-    logoPath: string;
-    port: string;
-    faviconPath: string;
+    selectedInterfaceLanguages: string[]; // ex: ['fr', 'en'] (codes des langues)
+    navbarType: 'side' | 'top' | '';      // Correspond à "Sidebar" / "Topbar" en Java
+    primaryColor: string;                 // ex: '#537cc2'
+    secondaryColor: string;               // ex: '#537cc240'
+    logoPath: string;                     // Chemin du fichier ou URL
+    faviconPath: string;                  // Chemin du fichier ou URL
+    port: string;                         // Port d'exécution du frontend (ex: '3000')
 }
 
 export interface GitConfiguration {
@@ -111,17 +111,26 @@ export const AVAILABLE_COMPONENTS: { label: string; value: ComponentType }[] = [
     { label: 'Controller', value: 'controller' },
 ];
 
+
+export interface LlmModelDto {
+    id: string;       // ex: 'gpt-4o', 'claude-sonnet-3-5'
+    name: string;     // ex: 'GPT-4o', 'Claude 3.5 Sonnet'
+    provider?: string; // ex: 'OpenAI', 'Anthropic' (optionnel, pour affichage)
+}
+
 export interface AiPromptPayload {
-    prompt: string;
-    fileContent?: string; // Optionnel, selon si on analyse un fichier existant
-    showSchema: boolean;  // Demande à l'IA de retourner un schéma de BDD ou du code
+    model: string;          // Le modèle LLM sélectionné par l'utilisateur
+    prompt: string;         // La demande textuelle de l'utilisateur
+    fileContent?: string;   // Le contenu actuel de l'éditeur (pour modification/contexte)
+    showSchema: boolean;    // Correspond au checkbox "includeDbSchema" (injecter le schéma DB)
+    token?: string;         // Token d'API personnel (optionnel, si fourni par l'utilisateur)
 }
 
 export interface AiResponseDto {
-    aiResponse: string;       // La réponse textuelle ou le code généré par l'IA
-    newFileContent?: string;  // Le contenu du fichier mis à jour (si applicable)
     success: boolean;
-    error?: string;
+    aiResponse: string;      // La réponse textuelle de l'IA (explications, chat)
+    newFileContent?: string; // Le code SQL généré ou modifié (à injecter dans GenesisIdeCm)
+    error?: string;          // Message d'erreur détaillé si success === false
 }
 
 export interface GenerationResult {

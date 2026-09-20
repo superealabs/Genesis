@@ -59,29 +59,4 @@ export class DatabaseHandler {
         }
     }
 
-
-    async handleSelectDatabase(payload: { id: number }, panel: vscode.WebviewPanel): Promise<void> {
-        logger.log(LOG_CHANNEL, `➡️ [selectDatabase] Sélection du moteur ID: ${payload.id}`);
-        
-        try {
-            await this.service.selectDatabase(payload.id);
-            logger.log(LOG_CHANNEL, `✅ [selectDatabase] Moteur ID ${payload.id} sélectionné avec succès.`);
-            
-            panel.webview.postMessage({ 
-                type: 'DATABASE_SELECTED', 
-                payload: { success: true, id: payload.id } 
-            });
-            
-        } catch (error) {
-            logger.log(LOG_CHANNEL, `❌ [selectDatabase] Échec de la sélection: ${(error as Error).message}`);
-            
-            panel.webview.postMessage({ 
-                type: 'API_ERROR', 
-                payload: { 
-                    command: 'SELECT_DATABASE', 
-                    message: `Échec de la sélection de la base de données (ID: ${payload.id})` 
-                } 
-            });
-        }
-    }
 }

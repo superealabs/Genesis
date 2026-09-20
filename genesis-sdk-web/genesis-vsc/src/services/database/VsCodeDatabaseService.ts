@@ -38,8 +38,4 @@ export class VsCodeDatabaseService implements IDatabaseService {
         const { data } = await getAxiosInstance().post<DatabaseConnectionTestResult>('/api/database/test-connection', config);
         return data;
     }
-
-    async selectDatabase(engineId: number): Promise<void> {
-        await getAxiosInstance().post(`/api/database/${engineId}/select`);
-    }
 }

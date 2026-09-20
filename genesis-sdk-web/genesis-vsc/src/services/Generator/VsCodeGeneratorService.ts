@@ -3,7 +3,8 @@ import { logger } from '../LoggerService';
 import type { 
     IGeneratorService, 
     TableMetadataDto, 
-    RelationParameter
+    RelationParameter,
+    ProjectConfig
 } from '@genesis-labs/shared-types';
 
 const LOG_CHANNEL = 'Genesis Generator Service';
@@ -158,6 +159,49 @@ export class VsCodeGeneratorService implements IGeneratorService {
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchHibernateDdlAutoOptions API échouée. Fallback mock.`);
             return MOCK_HIBERNATE_DDL_AUTO;
+        }
+    }
+
+    async saveProjectConfig(config: ProjectConfig): Promise<{ success: boolean; message: string }> {
+        try {
+            logger.log(LOG_CHANNEL, `💾 Sauvegarde de la config du projet: ${config.projectName}`);
+            
+            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>(
+                '/api/generator/project-config', 
+                config
+            );
+            
+            return data;
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ saveProjectConfig API échouée: ${(error as Error).message}`);
+            // On lève l'erreur pour que le Handler la gère
+            throw error; 
+        }
+    }
+
+    async selectFramework(frameworkId: number): Promise<void> {
+        try {
+            logger.log(LOG_CHANNEL, `🔄 Tentative de sélection du framework ID: ${frameworkId}`);
+            await getAxiosInstance().post(`/api/generator/frameworks/${frameworkId}/select`);
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ selectFramework API échouée: ${(error as Error).message}`);
+            
+            // ⚠️ CRUCIAL : Il faut RELANCER l'erreur pour que le Handler puisse l'attraper
+            throw error; 
+        }
+    }
+
+    async selectDatabase(engineId: number): Promise<void> {
+
+
+        try {
+            logger.log(LOG_CHANNEL, `🔄 Tentative de sélection du database ID: ${engineId}`);
+            await getAxiosInstance().post(`/api/database/${engineId}/select`);
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ selectDatabase API échouée: ${(error as Error).message}`);
+            
+            // ⚠️ CRUCIAL : Il faut RELANCER l'erreur pour que le Handler puisse l'attraper
+            throw error; 
         }
     }
 }

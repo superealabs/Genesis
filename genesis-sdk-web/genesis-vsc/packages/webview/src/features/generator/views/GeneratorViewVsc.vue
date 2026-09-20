@@ -19,7 +19,8 @@ const {
     handleSelectFolderPath,
     handleFileRequest,
     skipCurrentStep,
-    stepperData
+    stepperData,
+    setPendingFramework
 } = useGeneratorVsc();
 
 function handleClose() {
@@ -38,7 +39,8 @@ async function handleNextStep() {
 // Dans packages/webview/src/features/generator/views/GeneratorViewVsc.vue
 
 function onSelectFramework(framework: any) {
-    setFramework(framework);
+    // setFramework(framework);
+    setPendingFramework(framework);
     // Vérifier immédiatement après
     console.log('[onSelectFramework] store après setFramework =', stepperData.value.framework);
 }

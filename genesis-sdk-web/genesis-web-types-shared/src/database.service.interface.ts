@@ -20,8 +20,5 @@ export interface IDatabaseService {
     testDatabaseConnection(config: DatabaseConfig): Promise<DatabaseConnectionTestResult>;
     
     
-    /**
-     * @param engineId L'identifiant du moteur choisi.
-     */
-    selectDatabase(engineId: number): Promise<void>;
+
 }

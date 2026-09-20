@@ -43,33 +43,4 @@ export class FrameworkHandler {
     }
 
     // ═══ 2. ACTION MÉTIER (Écriture) ═══
-
-    async select(payload: { id: number }, panel: vscode.WebviewPanel): Promise<void> {
-        logger.log(LOG_CHANNEL, `➡️ [select] Méthode appelée pour l'ID: ${payload.id}`);
-        
-        try {
-            // ✅ Délégation au service pour l'appel API
-            await this.service.selectFramework(payload.id);
-            logger.log(LOG_CHANNEL, '✅ [select] API réussie.');
-            
-            // ✅ CORRECTION : On informe simplement la webview du succès. 
-            // Pas besoin de mock, la webview connaît déjà l'ID qu'elle vient d'envoyer.
-            panel.webview.postMessage({ 
-                type: 'FRAMEWORK_SELECTED', 
-                payload: { success: true, id: payload.id } 
-            });
-            
-        } catch (error) {
-            logger.log(LOG_CHANNEL, `⚠️ [select] API échouée: ${(error as Error).message}`);
-            
-            // ✅ En cas d'échec, on renvoie une erreur propre que la webview peut afficher
-            panel.webview.postMessage({ 
-                type: 'API_ERROR', 
-                payload: { 
-                    command: 'SELECT_FRAMEWORK', 
-                    message: `Échec de la sélection du framework (ID: ${payload.id})` 
-                } 
-            });
-        }
-    }
 }
