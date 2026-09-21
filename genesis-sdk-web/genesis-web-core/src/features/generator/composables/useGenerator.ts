@@ -8,6 +8,7 @@ import { useGenesisWizard } from '@genesis-labs/web-core/core/composables/ux/use
 import type { GeneratorData, IDatabaseService } from '@genesis-labs/shared-types';
 import { FRONTEND_SERVICE_KEY, IFrontendService } from '../../frontend/manifest';
 import { DATABASE_SERVICE_KEY } from '../../database/manifest';
+import { STEP_HANDLERS, type WizardServices } from './wizard-step-handlers';
 
 export function useGenerator() {
     const service = inject(GENERATOR_SERVICE_KEY);
@@ -21,69 +22,31 @@ export function useGenerator() {
     const dbsvc = databaseService as IDatabaseService;
     const store = useGeneratorStore();
 
-    const SKIPPABLE_CONFIG = { 5: [], 8: [9], 10: [] };
+    const SKIPPABLE_CONFIG = { 
+        5: [], 
+        8: [9], 
+        10: [] 
+    };
+
+    const wizardServices: WizardServices = { svc, fdsvc, dbsvc };
 
     const wizard = useGenesisWizard({
         totalSteps: 10,
         skippableStepsConfig: SKIPPABLE_CONFIG,
         onBeforeNext: async (currentStep: number) => {
-            // gfhghgf
-            console.log(`last step : ${currentStep}`);
+            store.clearWizardError(); // Nettoie les erreurs précédentes
 
-            // COrriger afin de faire en sorte que le framework dans le storeFramework deviennent celui dans le stepData
-            if (currentStep === 1) {
-                const fw = store.pendingFramework; // On récupère le brouillon
+            const handler = STEP_HANDLERS[currentStep];
+            
+            if (handler) {
+                console.log(`[Wizard] Exécution du handler pour l'étape ${currentStep}...`);
+                const canProceed = await handler(store, wizardServices);
                 
-                if (!fw) {
-                    console.warn('[Wizard] ⚠️ Aucun framework sélectionné. Navigation bloquée.');
-                    return false; // Bloque la navigation
-                }
-
-                try {
-                    console.log(`[Wizard] 🔄 Commit et sauvegarde du framework: ${fw.name}`);
-                    
-                    // 1. On affecte officiellement au store du générateur (stepperData)
-                    store.setFramework(fw);
-                    
-                    // 2. On sauvegarde côté API
-                    // await svc.selectFramework(fw.id);
-                    
-                    console.log('[Wizard] ✅ Framework validé et sauvegardé avec succès.');
-                } catch (error) {
-                    const msg = error instanceof Error ? error.message : 'Erreur inconnue lors de la sélection du framework.';
-                    console.error('[Wizard] ❌ Échec:', msg);
-                    
-                    // ✅ NOUVEAU : On notifie l'interface utilisateur via le store
-                    store.setWizardError(msg); 
-                    return false; 
+                if (!canProceed) {
+                    console.warn(`[Wizard] Navigation bloquée à l'étape ${currentStep}.`);
+                    return false;
                 }
             }
-
-            if (currentStep === 2) {
-                const config = stepperData.value.config;
-                
-                // Validation basique des champs obligatoires avant d'appeler l'API
-                if (!config.projectName || !config.projectLocation) {
-                    console.warn('[Wizard] ⚠️ Nom du projet ou localisation manquants.');
-                    // Idéalement, déclenchez ici un toast d'erreur UI
-                    return false; // Bloque la navigation
-                }
-
-                try {
-                    console.log('[Wizard] 🔄 Sauvegarde de la configuration du projet vers l\'API...');
-                    await svc.saveProjectConfig(config);
-                    console.log('[Wizard] ✅ Configuration du projet sauvegardée avec succès.');
-                } catch (error) {
-                    console.error('[Wizard] ❌ Échec de la sauvegarde de la configuration:', error);
-                    
-                    // Optionnel : Déclencher une popup d'erreur globale ici si vous avez un système de toast
-                    // ex: store.showError("Impossible de sauvegarder la configuration: " + (error as Error).message);
-                    
-                    return false; // ❌ Bloque la navigation vers l'étape 3 tant que l'API n'a pas répondu OK
-                }
-            }
-
-
             return true; 
         }
     });

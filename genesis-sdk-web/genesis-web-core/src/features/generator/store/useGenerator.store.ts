@@ -13,70 +13,87 @@ import { INITIAL_STATE } from './generator.initial-state';
 
 export const useGeneratorStore = defineStore('generator', () => {
 
-
-    const pendingFramework = ref<Framework | null>(null);
-
-    // ═══ État des Données Uniquement ═══
+    // ═══ ÉTAT GLOBAL & UTILITAIRE ═══
     const isGenerating = ref(false);
     const wizardError = ref<string | null>(null);
-    
-    const availableTables = ref<TableMetadataDto[]>([]);
-    const tablesParents = ref<TableMetadataDto[]>([]);
-    const tablesChilds = ref<TableMetadataDto[]>([]);
-    const relations = ref<RelationParameter[]>([]);
-    const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
-    const availableLanguages = ref<InterfaceLanguage[]>([]);
+    const stepperData = ref<GeneratorData>(structuredClone(INITIAL_STATE));
 
-    //  CORRECTION : Types simples (string[])
+    // ═══ ÉTAPE 1 : FRAMEWORK ═══
+    const pendingFramework = ref<Framework | null>(null);
+
+    // ═══ ÉTAPE 2 : CONFIGURATION PROJET (Listes dynamiques) ═══
     const availableLoggingLevels = ref<string[]>([]);
     const availableSecurityTypes = ref<string[]>([]);
     const availableCacheProviders = ref<string[]>([]);
     const availableHibernateDdlAutoOptions = ref<string[]>([]);
-
     const availableLanguageVersions = ref<string[]>([]);
     const availableFrameworkVersions = ref<string[]>([]);
     const availableBuildTools = ref<string[]>([]);
 
-    const stepperData = ref<GeneratorData>(structuredClone(INITIAL_STATE));
+    // ═══ ÉTAPE 6 : TABLES, VUES & COMPOSANTS ═══
+    const availableTables = ref<TableMetadataDto[]>([]);
+    const tablesParents = ref<TableMetadataDto[]>([]);
+    const tablesChilds = ref<TableMetadataDto[]>([]);
 
-    // ═══ Getters ═══
+    // ═══ ÉTAPE 7 : RELATIONS ═══
+    const relations = ref<RelationParameter[]>([]);
+
+    // ═══ ÉTAPE 8 & 9 : FRONTEND ═══
+    const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
+    const availableLanguages = ref<InterfaceLanguage[]>([]);
+
+
+    // ═══════════════════════════════════════════════════════════
+    // ═══ GETTERS (Computeds) ═══
+    // ═══════════════════════════════════════════════════════════
+
+    // Global
+    // (Aucun getter global spécifique pour l'instant)
+
+    // Étape 6 : Tables & Vues
+    const getAvailableTables = computed(() => availableTables.value);
+    const tables = computed(() => availableTables.value.filter(t => !t.isView));
+    const views = computed(() => availableTables.value.filter(t => t.isView));
+    const getAvailableViews = computed(() => views.value);
     const getTablesParents = computed(() => tablesParents.value);
     const getTablesChilds = computed(() => tablesChilds.value);
+
+    // Étape 7 : Relations
     const getRelations = computed(() => relations.value);
+
+    // Étape 8 & 9 : Frontend
     const getAvailableFrontendFrameworks = computed(() => availableFrontendFrameworks.value);
     const getAvailableLanguages = computed(() => availableLanguages.value);
-    
+
+    // Étape 2 : Config Projet
     const getAvailableLoggingLevels = computed(() => availableLoggingLevels.value);
     const getAvailableSecurityTypes = computed(() => availableSecurityTypes.value);
     const getAvailableCacheProviders = computed(() => availableCacheProviders.value);
     const getAvailableHibernateDdlAutoOptions = computed(() => availableHibernateDdlAutoOptions.value);
-
-
     const getAvailableLanguageVersions = computed(() => availableLanguageVersions.value);
     const getAvailableFrameworkVersions = computed(() => availableFrameworkVersions.value);
     const getAvailableBuildTools = computed(() => availableBuildTools.value);
 
-    const tables = computed(() => availableTables.value.filter(t => !t.isView));
-    const views = computed(() => availableTables.value.filter(t => t.isView));
-    const getAvailableTables = computed(() => availableTables.value);
-    const getAvailableViews = computed(() => views.value); 
 
+    // ═══════════════════════════════════════════════════════════
+    // ═══ ACTIONS ═══
+    // ═══════════════════════════════════════════════════════════
 
-    function setWizardError(message: string) {
-        wizardError.value = message;
+    // ── Global & Utilitaire ──
+    function setWizardError(message: string) { wizardError.value = message; }
+    function clearWizardError() { wizardError.value = null; }
+    function setIsGenerating(value: boolean) { isGenerating.value = value; }
+    function reset() {
+        isGenerating.value = false;
+        stepperData.value = structuredClone(INITIAL_STATE);
     }
-    function clearWizardError() {
-        wizardError.value = null;
-    }
 
+    // ── Étape 1 : Framework ──
     function setPendingFramework(framework: Framework | null) {
         pendingFramework.value = framework;
     }
-
-    // ═══ Actions de Mutation des Données ═══
     function setFramework(framework: Framework) {
-        console.log("💾 [Store] setFramework appelé avec :", framework); // <-- AJOUTEZ CECI
-        
+        console.log("💾 [Store] setFramework appelé avec :", framework);
         stepperData.value.framework = framework;
         if (framework?.coreFramework === 'Spring') {
             stepperData.value.config.buildTool = 'maven';
@@ -87,6 +104,19 @@ export const useGeneratorStore = defineStore('generator', () => {
         }
     }
 
+    // ── Étape 2 : Configuration Projet ──
+    function updateConfig<K extends keyof ProjectConfig>(key: K, value: ProjectConfig[K]) { 
+        (stepperData.value.config as any)[key] = value; 
+    }
+    function setAvailableLoggingLevels(data: string[]) { availableLoggingLevels.value = data; }
+    function setAvailableSecurityTypes(data: string[]) { availableSecurityTypes.value = data; }
+    function setAvailableCacheProviders(data: string[]) { availableCacheProviders.value = data; }
+    function setAvailableLanguageVersions(data: string[]) { availableLanguageVersions.value = data; }
+    function setAvailableFrameworkVersions(data: string[]) { availableFrameworkVersions.value = data; }
+    function setAvailableBuildTools(data: string[]) { availableBuildTools.value = data; }
+    function setAvailableHibernateDdlAutoOptions(data: string[]) { availableHibernateDdlAutoOptions.value = data; }
+
+    // ── Étape 3 & 4 : Base de Données ──
     function setDatabaseEngine(engine: DatabaseEngineDto) {
         let engineKey = engine.name.toLowerCase().replace(' ', '');
         if (engineKey === 'postgresql') engineKey = 'postgre';
@@ -101,35 +131,20 @@ export const useGeneratorStore = defineStore('generator', () => {
             stepperData.value.database.sid = engine.sid;
         }
     }
-
-    function setSelectedFrontendFramework(framework: FrontendFramework | null) {
-        stepperData.value.frontend = framework;
-        if (framework) stepperData.value.frontendLayout.port = framework.defaultPort;
+    function updateDatabase<K extends keyof DatabaseConfig>(key: K, value: DatabaseConfig[K]) { 
+        (stepperData.value.database as any)[key] = value; 
     }
 
-    function setAvailableLoggingLevels(data: string[]) { availableLoggingLevels.value = data; }
-    function setAvailableSecurityTypes(data: string[]) { availableSecurityTypes.value = data; }
-    function setAvailableCacheProviders(data: string[]) { availableCacheProviders.value = data; } // ✅ Ajouté
+    // ── Étape 5 : Script / IA ──
+    function updateScript<K extends keyof ScriptConfig>(key: K, value: ScriptConfig[K]) { 
+        (stepperData.value.script as any)[key] = value; 
+    }
 
+    // ── Étape 6 : Tables, Vues & Composants ──
     function setAvailableTables(data: TableMetadataDto[]) { availableTables.value = data; }
-    function updateConfig<K extends keyof ProjectConfig>(key: K, value: ProjectConfig[K]) { 
-        (stepperData.value.config as any)[key] = value; 
-    }
-    function updateDatabase<K extends keyof DatabaseConfig>(key: K, value: DatabaseConfig[K]) { (stepperData.value.database as any)[key] = value; }
-    function updateScript<K extends keyof ScriptConfig>(key: K, value: ScriptConfig[K]) { (stepperData.value.script as any)[key] = value; }
-    function updateFrontendLayout<K extends keyof FrontendLayoutConfig>(key: K, value: FrontendLayoutConfig[K]) { (stepperData.value.frontendLayout as any)[key] = value; }
+    function setTablesParents(data: TableMetadataDto[]) { tablesParents.value = data; }
+    function setTablesChilds(data: TableMetadataDto[]) { tablesChilds.value = data; }
     
-    function updateGitConfig<K extends keyof GitConfiguration>(key: K, value: GitConfiguration[K]) {
-        (stepperData.value.git as any)[key] = value;
-        if (key === 'useGit' && value === false) {
-            stepperData.value.git = { 
-                useGit: false, separateRepositories: false, useRemoteRepo: false, 
-                isNewRemoteRepo: true, repositoryName: '', backendRepositoryName: '',
-                frontendRepositoryName: '', githubUsername: '', githubToken: '' 
-            };
-        }
-    }
-
     function toggleTable(tableName: string) {
         const list = stepperData.value.tableSelection.selectedTables;
         const idx = list.indexOf(tableName);
@@ -145,62 +160,85 @@ export const useGeneratorStore = defineStore('generator', () => {
         const idx = list.indexOf(component);
         idx === -1 ? list.push(component) : list.splice(idx, 1);
     }
-    function toggleLanguage(code: string) {
-        const list = stepperData.value.frontendLayout.selectedInterfaceLanguages;
-        const idx = list.indexOf(code);
-        idx === -1 ? list.push(code) : list.splice(idx, 1);
-    }
+
+    // ── Étape 7 : Relations ──
+    function setRelations(data: RelationParameter[]) { relations.value = data; }
     function addRelation(relation: RelationParameter): boolean {
         const exists = relations.value.some(r => r.parentTable === relation.parentTable && r.childTable === relation.childTable);
         if (exists) return false;
         relations.value.push(relation);
         return true;
     }
-
-
     function removeRelation(index: number) { relations.value.splice(index, 1); }
-    
-    function setTablesParents(data: TableMetadataDto[]) { tablesParents.value = data; }
-    function setTablesChilds(data: TableMetadataDto[]) { tablesChilds.value = data; }
-    function setRelations(data: RelationParameter[]) { relations.value = data; }
+
+    // ── Étape 8 & 9 : Frontend ──
+    function setSelectedFrontendFramework(framework: FrontendFramework | null) {
+        stepperData.value.frontend = framework;
+        if (framework) stepperData.value.frontendLayout.port = framework.defaultPort;
+    }
     function setAvailableLanguages(data: InterfaceLanguage[]) { availableLanguages.value = data; }
-    function setIsGenerating(value: boolean) { isGenerating.value = value; }
-
-    function setAvailableLanguageVersions(data: string[]) { availableLanguageVersions.value = data; }
-    function setAvailableFrameworkVersions(data: string[]) { availableFrameworkVersions.value = data; }
-    function setAvailableBuildTools(data: string[]) { availableBuildTools.value = data; }
-
-    function setAvailableHibernateDdlAutoOptions(data: string[]) { 
-        availableHibernateDdlAutoOptions.value = data; 
+    function updateFrontendLayout<K extends keyof FrontendLayoutConfig>(key: K, value: FrontendLayoutConfig[K]) { 
+        (stepperData.value.frontendLayout as any)[key] = value; 
+    }
+    function toggleLanguage(code: string) {
+        const list = stepperData.value.frontendLayout.selectedInterfaceLanguages;
+        const idx = list.indexOf(code);
+        idx === -1 ? list.push(code) : list.splice(idx, 1);
     }
 
-    function reset() {
-        isGenerating.value = false;
-        stepperData.value = structuredClone(INITIAL_STATE);
+    // ── Étape 10 : Git ──
+    function updateGitConfig<K extends keyof GitConfiguration>(key: K, value: GitConfiguration[K]) {
+        (stepperData.value.git as any)[key] = value;
+        if (key === 'useGit' && value === false) {
+            stepperData.value.git = { 
+                useGit: false, separateRepositories: false, useRemoteRepo: false, 
+                isNewRemoteRepo: true, repositoryName: '', backendRepositoryName: '',
+                frontendRepositoryName: '', githubUsername: '', githubToken: '' 
+            };
+        }
     }
 
+
+    // ═══════════════════════════════════════════════════════════
+    // ═══ RETURN ═══
+    // ═══════════════════════════════════════════════════════════
     return {
-        wizardError,
-        isGenerating, stepperData,
-        availableTables, tables, views,
-        getTablesParents, getTablesChilds, getRelations,
-        getAvailableTables, getAvailableViews, getAvailableFrontendFrameworks, getAvailableLanguages,
-        getAvailableLoggingLevels, getAvailableSecurityTypes, getAvailableCacheProviders,
-        getAvailableLanguageVersions, getAvailableFrameworkVersions, getAvailableBuildTools,
-        getAvailableHibernateDdlAutoOptions,
-        pendingFramework,
-        
+        // Global
+        wizardError, isGenerating, stepperData,
+        setWizardError, clearWizardError, setIsGenerating, reset,
 
-        setWizardError,
-        clearWizardError,
-        setPendingFramework,
-        setDatabaseEngine, setFramework, setSelectedFrontendFramework, setAvailableTables,
-        updateConfig, updateDatabase, updateScript, updateFrontendLayout, updateGitConfig,
-        toggleTable, toggleView, toggleComponent, toggleLanguage, addRelation, removeRelation,
-        setTablesParents, setTablesChilds, setRelations, setAvailableLanguages, setIsGenerating,
-        setAvailableLoggingLevels, setAvailableSecurityTypes, setAvailableCacheProviders,
-        setAvailableLanguageVersions, setAvailableFrameworkVersions, setAvailableBuildTools,
-        setAvailableHibernateDdlAutoOptions,
-        reset
+        // Étape 1
+        pendingFramework, setPendingFramework, setFramework,
+
+        // Étape 2
+        getAvailableLoggingLevels, getAvailableSecurityTypes, getAvailableCacheProviders,
+        getAvailableHibernateDdlAutoOptions, getAvailableLanguageVersions,
+        getAvailableFrameworkVersions, getAvailableBuildTools,
+        updateConfig, setAvailableLoggingLevels, setAvailableSecurityTypes,
+        setAvailableCacheProviders, setAvailableLanguageVersions, setAvailableFrameworkVersions,
+        setAvailableBuildTools, setAvailableHibernateDdlAutoOptions,
+
+        // Étape 3 & 4
+        setDatabaseEngine, updateDatabase,
+
+        // Étape 5
+        updateScript,
+
+        // Étape 6
+        availableTables, tables, views, getAvailableTables, getAvailableViews,
+        getTablesParents, getTablesChilds,
+        setAvailableTables, setTablesParents, setTablesChilds,
+        toggleTable, toggleView, toggleComponent,
+
+        // Étape 7
+        relations, getRelations, setRelations, addRelation, removeRelation,
+
+        // Étape 8 & 9
+        availableFrontendFrameworks, getAvailableFrontendFrameworks,
+        availableLanguages, getAvailableLanguages,
+        setSelectedFrontendFramework, setAvailableLanguages, updateFrontendLayout, toggleLanguage,
+
+        // Étape 10
+        updateGitConfig,
     };
 });

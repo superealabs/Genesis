@@ -14,8 +14,6 @@ import type {
     GenerationResult
 } from './generator.shared';
 
-import type { FrontendFramework } from './frontend.shared';
-
 /**
  * Contrat du service générateur (Pure Interface).
  */
