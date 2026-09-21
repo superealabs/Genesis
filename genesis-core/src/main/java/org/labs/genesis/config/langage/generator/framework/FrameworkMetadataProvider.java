@@ -230,7 +230,6 @@ public class FrameworkMetadataProvider {
         metadata.putAll(languageMetadata);
         metadata.put("foreignTypes", getForeignTypesList(tableMetadata, language));
         metadata.put("foreignOptionTypes", getForeignOptionTypesList(tableMetadata, language));
-
         return metadata;
     }
 
@@ -257,6 +256,15 @@ public class FrameworkMetadataProvider {
         metadata.put("fields", getFieldsList(tableMetadata, language));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
         metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
+        List<Map<String, Object>> fileFields = getFileFieldsList(tableMetadata, language);
+        metadata.put("fileFields", fileFields);
+        metadata.put("hasFileFields", !fileFields.isEmpty());
+        metadata.put("isView", tableMetadata.getIsView());
+        if (Boolean.FALSE.equals(tableMetadata.getIsView())) {
+            metadata.put("writableController", Collections.singletonList(new HashMap<>(metadata)));
+        } else {
+            metadata.put("writableController", Collections.emptyList());
+        }
         metadata.put("foreignTypes", getForeignTypesList(tableMetadata, language));
         metadata.put("foreignOptionTypes", getForeignOptionTypesList(tableMetadata, language));
         metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
@@ -920,6 +928,13 @@ public class FrameworkMetadataProvider {
                 .toList();
     }
 
+    private static List<Map<String, Object>> getFileFieldsList(TableMetadata tableMetadata, Language language) {
+        return getFieldsList(tableMetadata, language)
+                .stream()
+                .filter(field -> "byte[]".equals(field.get("type")))
+                .toList();
+    }
+
     private static List<Map<String, Object>> getFilterInputsList(TableMetadata tableMetadata, Language language) throws Exception {
         List<Map<String, Object>> inputs = new ArrayList<>();
 
@@ -1181,7 +1196,7 @@ public class FrameworkMetadataProvider {
         altMap.put("scriptSection", frameworkMVC.getView().getList().getScriptSection());
         altMap.put("pageSizeParamName", frameworkMVC.getView().getList().getPageSizeParamName());
         altMap.put("sortParamName", frameworkMVC.getView().getList().getSortParamName());
-        altMap.put("fileDataValue", frameworkMVC.getView().getList().getFileDataValue());
+        altMap.put("fileDataValue", buildFileDataValue(frameworkMVC.getView().getList().getFileDataValue(), tableMetadata));
         altMap.put("filterMethod", frameworkMVC.getView().getList().getFilterMethod());
         altMap.put("filterTrueSelectedTagHelper", frameworkMVC.getView().getList().getFilterTrueSelectedTagHelper());
         altMap.put("filterFalseSelectedTagHelper", frameworkMVC.getView().getList().getFilterFalseSelectedTagHelper());
@@ -1215,7 +1230,8 @@ public class FrameworkMetadataProvider {
         altMap.put("deleteLink", frameworkMVC.getView().getDetail().getDeleteLink());
         altMap.put("additionalImports", frameworkMVC.getView().getDetail().getAdditionalImports());
         altMap.put("viewEnd", frameworkMVC.getView().getDetail().getViewEnd());
-        altMap.put("fileDataValue", frameworkMVC.getView().getDetail().getFileDataValue());
+        altMap.put("fileDataValue", buildFileDataValue(frameworkMVC.getView().getDetail().getFileDataValue(), tableMetadata)
+        );
         altMap.put("hiddenPkValue", frameworkMVC.getView().getDetail().getHiddenPkValue());
         if (tableMetadata != null && tableMetadata.hasCompositePrimaryKey()) {
             altMap.put("updateLink", buildCompositeUpdateLink(tableMetadata));
@@ -1289,6 +1305,48 @@ public class FrameworkMetadataProvider {
             return "$[thymeleafDollar]{" + entityName + "." + fieldName + "." + referencedPk + "}";
         }
         return "$[thymeleafDollar]{" + entityName + "." + fieldName + "}";
+    }
+
+    private static String buildFileUrl(TableMetadata tableMetadata, String action
+    ) {
+        String entityName = StringUtils.minStart(tableMetadata.getClassName());
+        String params;
+
+        if (tableMetadata.hasCompositePrimaryKey()) {
+            params = tableMetadata.getPrimaryColumns()
+                    .stream()
+                    .map(column -> {
+                        String name = StringUtils.minStart(column.getName());
+                        return name + "=" + getCompositePropertyExpression(tableMetadata, column);
+                    })
+                    .collect(Collectors.joining(","));
+        } else {
+            ColumnMetadata primaryColumn = tableMetadata.getPrimaryColumn();
+            if (primaryColumn == null) {
+                return "";
+            }
+            String name = StringUtils.minStart(primaryColumn.getName());
+            params = name + "=" + getCompositePropertyExpression(tableMetadata, primaryColumn);
+        }
+
+        return "@{/" + entityName + "/files/${minStart(this.name)}/" + action + "(" + params + ")}";
+    }
+
+    private static String buildFilePreviewUrl(TableMetadata tableMetadata) {
+        return buildFileUrl(tableMetadata, "preview");
+    }
+
+    private static String buildFileDownloadUrl(TableMetadata tableMetadata) {
+        return buildFileUrl(tableMetadata, "download");
+    }
+
+    private static String buildFileDataValue(String fileDataValue, TableMetadata tableMetadata) {
+        if (fileDataValue == null || tableMetadata == null) {
+            return fileDataValue;
+        }
+        return fileDataValue
+                .replace("${filePreviewUrl}", buildFilePreviewUrl(tableMetadata))
+                .replace("${fileDownloadUrl}", buildFileDownloadUrl(tableMetadata));
     }
 
     private static String buildCompositeDetailsLink(TableMetadata tableMetadata) {
