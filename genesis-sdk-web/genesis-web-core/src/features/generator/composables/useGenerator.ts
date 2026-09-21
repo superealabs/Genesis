@@ -5,21 +5,27 @@ import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/sto
 import { GENERATOR_SERVICE_KEY, type IGeneratorService } from '@genesis-labs/web-core/features/generator/types/generator.service.interface';
 import { useGenesisWizard } from '@genesis-labs/web-core/core/composables/ux/useGenesisWizard';
 
-import type { GeneratorData, IDatabaseService } from '@genesis-labs/shared-types';
+import type { GeneratorData, IDatabaseService, IFrameworkService } from '@genesis-labs/shared-types';
 import { FRONTEND_SERVICE_KEY, IFrontendService } from '../../frontend/manifest';
 import { DATABASE_SERVICE_KEY } from '../../database/manifest';
-import { STEP_HANDLERS, type WizardServices } from './wizard-step-handlers';
+import { BEFORE_NEXT_HANDLERS, type WizardServices } from './wizard-step-handlers-beforeNext';
+import { ON_ENTER_HANDLERS } from './wizard-step-handlers-onEnter'; // ✅ AJOUT
+import { FRAMEWORK_SERVICE_KEY } from '../../frameworks/manifest';
+
 
 export function useGenerator() {
     const service = inject(GENERATOR_SERVICE_KEY);
     const frontendService = inject(FRONTEND_SERVICE_KEY);
     const databaseService = inject(DATABASE_SERVICE_KEY);
+    const frameworkService = inject(FRAMEWORK_SERVICE_KEY);
 
     if (!service) throw new Error('[useGenerator] IGeneratorService non fourni.');
     
     const svc = service as IGeneratorService;
     const fdsvc = frontendService as IFrontendService;
     const dbsvc = databaseService as IDatabaseService;
+    const fsvc = frameworkService as IFrameworkService;
+
     const store = useGeneratorStore();
 
     const SKIPPABLE_CONFIG = { 
@@ -28,26 +34,35 @@ export function useGenerator() {
         10: [] 
     };
 
-    const wizardServices: WizardServices = { svc, fdsvc, dbsvc };
+    const wizardServices: WizardServices = { svc, fdsvc, dbsvc, fsvc };
 
     const wizard = useGenesisWizard({
         totalSteps: 10,
         skippableStepsConfig: SKIPPABLE_CONFIG,
+        
+        // ═══ HOOK 1 : AVANT DE QUITTER L'ÉTAPE (Validation / Sauvegarde) ═══
         onBeforeNext: async (currentStep: number) => {
-            store.clearWizardError(); // Nettoie les erreurs précédentes
-
-            const handler = STEP_HANDLERS[currentStep];
+            store.clearWizardError();
+            const handler = BEFORE_NEXT_HANDLERS[currentStep];
             
             if (handler) {
-                console.log(`[Wizard] Exécution du handler pour l'étape ${currentStep}...`);
+                console.log(`[Wizard] Validation de l'étape ${currentStep}...`);
                 const canProceed = await handler(store, wizardServices);
-                
                 if (!canProceed) {
                     console.warn(`[Wizard] Navigation bloquée à l'étape ${currentStep}.`);
                     return false;
                 }
             }
             return true; 
+        },
+
+        // ═══ HOOK 2 : À L'ARRIVÉE SUR L'ÉTAPE (Chargement des données) ═══
+        onStepEnter: async (currentStep: number) => {
+            const handler = ON_ENTER_HANDLERS[currentStep];
+            if (handler) {
+                console.log(`[Wizard] Entrée dans l'étape ${currentStep} : Déclenchement du chargement...`);
+                await handler(store, wizardServices);
+            }
         }
     });
 

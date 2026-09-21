@@ -2,18 +2,20 @@ import { useGeneratorStore } from '../store/useGenerator.store';
 import type { IGeneratorService } from '../types/generator.service.interface';
 import type { IFrontendService } from '../../frontend/types/frontend.service.interface';
 import type { IDatabaseService } from '../../database/types/database.service.interface';
+import { IFrameworkService } from '@genesis-labs/shared-types';
 
 export interface WizardServices {
     svc: IGeneratorService;
     fdsvc: IFrontendService;
     dbsvc: IDatabaseService;
+    fsvc: IFrameworkService;
 }
 
 /**
  * Dictionnaire des actions à exécuter avant de passer à l'étape suivante.
  * Retourne `true` pour autoriser la navigation, `false` pour la bloquer.
  */
-export const STEP_HANDLERS: Record<
+export const BEFORE_NEXT_HANDLERS: Record<
     number, 
     (store: ReturnType<typeof useGeneratorStore>, services: WizardServices) => Promise<boolean>
 > = {

@@ -42,6 +42,8 @@ export const useGeneratorStore = defineStore('generator', () => {
     const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
     const availableLanguages = ref<InterfaceLanguage[]>([]);
 
+    const availableDatabaseEngines = ref<DatabaseEngineDto[]>([]); // ✅ AJOUT
+
 
     // ═══════════════════════════════════════════════════════════
     // ═══ GETTERS (Computeds) ═══
@@ -198,6 +200,9 @@ export const useGeneratorStore = defineStore('generator', () => {
         }
     }
 
+    function setAvailableDatabaseEngines(data: DatabaseEngineDto[]) { availableDatabaseEngines.value = data; }
+    function setAvailableFrontendFrameworks(data: FrontendFramework[]) { availableFrontendFrameworks.value = data; }
+
 
     // ═══════════════════════════════════════════════════════════
     // ═══ RETURN ═══
@@ -217,6 +222,7 @@ export const useGeneratorStore = defineStore('generator', () => {
         updateConfig, setAvailableLoggingLevels, setAvailableSecurityTypes,
         setAvailableCacheProviders, setAvailableLanguageVersions, setAvailableFrameworkVersions,
         setAvailableBuildTools, setAvailableHibernateDdlAutoOptions,
+        setAvailableDatabaseEngines, setAvailableFrontendFrameworks,
 
         // Étape 3 & 4
         setDatabaseEngine, updateDatabase,

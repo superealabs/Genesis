@@ -54,8 +54,7 @@
 </template>
 
 <script setup lang="ts">
-// ✅ 1. Supprime 'onMounted' des imports, on n'en a plus besoin
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed } from 'vue'; // ✅ 'watch' reste uniquement pour wizardError
 import StepperPopup from '@genesis-labs/web-core/core/components/layouts/Popup/StepperPopup.vue';
 import ErrorPopup from '@genesis-labs/web-core/core/components/layouts/Popup/ErrorPopup.vue';
 import DatabaseSelection from '@genesis-labs/web-core/features/database/views/DatabaseSelection.vue';
@@ -87,18 +86,18 @@ const emit = defineEmits<{
     'select-database': [engine: DatabaseEngineDto];
 }>();
 
-// ═══ 2. DÉSTRUCTURATION DU COMPOSABLE ═══
+// ═══ 1. DÉSTRUCTURATION DU COMPOSABLE (Plus besoin d'appeler initialize manuellement) ═══
 const {
     searchQuery, displayMode, compareMode, frameworks, selectedId, frameworkSlots,
     replaceOptions, showReplacePopup, mouseX, mouseY, filters, detailFramework,
-    isFilterOpen, pendingFramework, isLoading, initialize, setSearch, setFilters,
+    isFilterOpen, pendingFramework, isLoading, setSearch, setFilters,
     setDisplayMode, handleModeChange, handleSelectWrapper, handleReplaceSelection,
     cancelReplace, openFilter, closeFilter, closeDetail, handleInfo
 } = useWizardFramework((framework: Framework) => {
     emit('select-framework', framework);
 });
 
-// ═══ 3. OPTIMISATION : Regroupement des props dans un objet réactif ═══
+// ═══ 2. OPTIMISATION : Regroupement des props dans un objet réactif ═══
 const frameworkLayoutProps = computed<FrameworkLayoutProps>(() => ({
     searchQuery: searchQuery.value,
     displayMode: displayMode.value,
@@ -119,23 +118,10 @@ const frameworkLayoutProps = computed<FrameworkLayoutProps>(() => ({
     isLoading: isLoading.value
 }));
 
-// ═══ 4. CHARGEMENT DES DONNÉES À LA DEMANDE (Lazy Loading) ═══
-// ✅ REMPLACE le onMounted. On charge les données uniquement quand on arrive à l'étape 1.
-watch(
-    () => props.currentStep,
-    (newStep) => {
-        if (newStep === 1) {
-            console.log("🔄 [Stepper] Entrée dans l'étape 1 : Chargement des frameworks...");
-            initialize();
-        }
-        // Tu pourras facilement ajouter d'autres étapes ici plus tard, ex:
-        // if (newStep === 3) { loadDatabases(); }
-        // if (newStep === 6) { loadTables(); }
-    },
-    { immediate: true } // immediate: true assure le chargement si le wizard s'ouvre directement à l'étape 1
-);
+// ✅ LE WATCH SUR currentStep A ÉTÉ SUPPRIMÉ. 
+// Le chargement est désormais géré centralement par onStepEnter dans useGenerator.ts
 
-// ═══ 5. HANDLERS & GESTION DES ERREURS ═══
+// ═══ 3. HANDLERS & GESTION DES ERREURS ═══
 function handleClose() { emit('close'); }
 function handleFrontendSelect(result: { action: string; framework: FrontendFramework; event?: MouseEvent }) { emit('select-frontend', result.framework); }
 function handleDatabaseSelect(result: { action: string; engine: DatabaseEngineDto; event?: MouseEvent }) { emit('select-database', result.engine); }
