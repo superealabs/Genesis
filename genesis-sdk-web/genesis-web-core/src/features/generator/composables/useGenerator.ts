@@ -8,9 +8,9 @@ import { useGenesisWizard } from '@genesis-labs/web-core/core/composables/ux/use
 import type { GeneratorData, IDatabaseService, IFrameworkService } from '@genesis-labs/shared-types';
 import { FRONTEND_SERVICE_KEY, IFrontendService } from '../../frontend/manifest';
 import { DATABASE_SERVICE_KEY } from '../../database/manifest';
-import { BEFORE_NEXT_HANDLERS, type WizardServices } from './wizard-step-handlers-beforeNext';
-import { ON_ENTER_HANDLERS } from './wizard-step-handlers-onEnter'; // ✅ AJOUT
 import { FRAMEWORK_SERVICE_KEY } from '../../frameworks/manifest';
+import { WIZARD_STEP_CONFIG, type WizardServices } from './wizard-step-config';
+
 
 
 export function useGenerator() {
@@ -40,14 +40,14 @@ export function useGenerator() {
         totalSteps: 10,
         skippableStepsConfig: SKIPPABLE_CONFIG,
         
-        // ═══ HOOK 1 : AVANT DE QUITTER L'ÉTAPE (Validation / Sauvegarde) ═══
+        // ✅ HOOK AVANT NEXT : On délègue à la config de l'étape
         onBeforeNext: async (currentStep: number) => {
             store.clearWizardError();
-            const handler = BEFORE_NEXT_HANDLERS[currentStep];
+            const stepConfig = WIZARD_STEP_CONFIG[currentStep];
             
-            if (handler) {
+            if (stepConfig?.beforeNext) {
                 console.log(`[Wizard] Validation de l'étape ${currentStep}...`);
-                const canProceed = await handler(store, wizardServices);
+                const canProceed = await stepConfig.beforeNext(store, wizardServices);
                 if (!canProceed) {
                     console.warn(`[Wizard] Navigation bloquée à l'étape ${currentStep}.`);
                     return false;
@@ -56,12 +56,12 @@ export function useGenerator() {
             return true; 
         },
 
-        // ═══ HOOK 2 : À L'ARRIVÉE SUR L'ÉTAPE (Chargement des données) ═══
+        // ✅ HOOK ON ENTER : On délègue à la config de l'étape
         onStepEnter: async (currentStep: number) => {
-            const handler = ON_ENTER_HANDLERS[currentStep];
-            if (handler) {
-                console.log(`[Wizard] Entrée dans l'étape ${currentStep} : Déclenchement du chargement...`);
-                await handler(store, wizardServices);
+            const stepConfig = WIZARD_STEP_CONFIG[currentStep];
+            if (stepConfig?.onEnter) {
+                console.log(`[Wizard] Entrée dans l'étape ${currentStep} : Chargement...`);
+                await stepConfig.onEnter(store, wizardServices);
             }
         }
     });

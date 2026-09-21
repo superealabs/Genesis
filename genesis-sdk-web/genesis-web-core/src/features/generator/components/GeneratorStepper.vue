@@ -117,8 +117,6 @@ const frameworkLayoutProps = computed<FrameworkLayoutProps>(() => ({
     pendingFramework: pendingFramework.value,
     isLoading: isLoading.value
 }));
-
-// ✅ LE WATCH SUR currentStep A ÉTÉ SUPPRIMÉ. 
 // Le chargement est désormais géré centralement par onStepEnter dans useGenerator.ts
 
 // ═══ 3. HANDLERS & GESTION DES ERREURS ═══

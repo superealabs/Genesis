@@ -42,7 +42,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
     const availableLanguages = ref<InterfaceLanguage[]>([]);
 
-    const availableDatabaseEngines = ref<DatabaseEngineDto[]>([]); // ✅ AJOUT
+    const availableDatabaseEngines = ref<DatabaseEngineDto[]>([]);
 
 
     // ═══════════════════════════════════════════════════════════

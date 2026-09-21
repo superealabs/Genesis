@@ -132,6 +132,10 @@ export function useGenesisWizard(config: WizardConfig) {
         }
     }
 
+    if (config.onStepEnter) {
+        config.onStepEnter(currentStep.value);
+    }
+
     return {
         currentStep,
         totalSteps,

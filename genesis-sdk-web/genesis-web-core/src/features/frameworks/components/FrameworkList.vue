@@ -1,6 +1,7 @@
 <template>
     <GenesisList :display="display" minColWidth="200px">
         <GenesisItem
+            v-if="frameworks.length > 0"
             v-for="framework in frameworks"
             :key="framework.id"
             :label="framework.name"
@@ -28,6 +29,9 @@
                 <td class="p-3 text-center">{{ framework.coreFramework }}</td>
             </template>
         </GenesisItem>
+        <div v-else>
+            Aucun framework
+        </div>
     </GenesisList>
 </template>
 
