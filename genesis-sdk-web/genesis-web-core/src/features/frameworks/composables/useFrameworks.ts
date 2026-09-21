@@ -95,6 +95,7 @@ export function useFrameworks() {
         handleModeChange,
         handleSelect,
         handleReplace,
+        setDisplayMode: store.setDisplayMode,
 
         showReplacePopup: compare.showReplacePopup,
         pendingFramework: compare.pendingItem, // Alias pour rester cohérent avec le nom dans la vue

@@ -26,7 +26,8 @@ export const STEP_HANDLERS: Record<
         }
         try {
             store.setFramework(fw);
-            await svc.selectFramework(fw.id);
+            console.log(svc);
+            // await svc.selectFramework(fw.id);
             return true;
         } catch (error) {
             store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection du framework.");

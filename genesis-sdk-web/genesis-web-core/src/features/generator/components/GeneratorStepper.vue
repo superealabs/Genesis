@@ -11,46 +11,34 @@
         @next="emit('next')"
         @skip="emit('skip')" 
     >
-        <FrameworksView
+        <!-- ═══ ÉTAPE 1 : FRAMEWORK (Optimisé avec v-bind) ═══ -->
+        <FrameworkLayout
             v-if="props.currentStep === 1"
-            :showBackButton="false"
-            @select="handleFrameworkSelect"
+            v-bind="frameworkLayoutProps"
+            
+            @back="emit('close')"
+            @openFilter="openFilter"
+            @closeFilter="closeFilter"
+            @closeDetail="closeDetail"
+            @select-replace="handleReplaceSelection"
+            @close-replace="cancelReplace"
+            @select="handleSelectWrapper"
+            @info="handleInfo"
+            @update:searchValue="setSearch"
+            @update:displayMode="setDisplayMode"
+            @update:mode="handleModeChange"
+            @update:filters="setFilters"
         />
 
-        <ProjectConfigView
-            v-else-if="props.currentStep === 2"
-            @request-folder-path="handleRequestFolderPath"
-        />
-
-        <DatabaseSelection
-            v-else-if="props.currentStep === 3"
-            @select="handleDatabaseSelect"
-        />
-
-        <DatabaseConfigView
-            v-else-if="props.currentStep === 4"
-            @test-connection-error="handleChildError"    
-        />
-
-        <ScriptConfigView
-            v-else-if="props.currentStep === 5"
-            @request-file-path="handleRequestFilePath"
-        />
-        
-        <!-- <GenerationConfiguration v-else-if="props.currentStep === 6" /> -->
+        <!-- Le reste des étapes reste inchangé -->
+        <ProjectConfigView v-else-if="props.currentStep === 2" @request-folder-path="handleRequestFolderPath" />
+        <DatabaseSelection v-else-if="props.currentStep === 3" @select="handleDatabaseSelect" />
+        <DatabaseConfigView v-else-if="props.currentStep === 4" @test-connection-error="handleChildError" />
+        <ScriptConfigView v-else-if="props.currentStep === 5" @request-file-path="handleRequestFilePath" />
         <GenerationConfigurationAlt v-else-if="props.currentStep === 6" />
-
         <RelationConfigView v-else-if="props.currentStep === 7" />
-        <FrontEndSelectionView
-            v-else-if="props.currentStep === 8"
-            :showBackButton="false"
-            @select="handleFrontendSelect" 
-        />
-
-        <FrontendLayoutConfigView
-            v-else-if="props.currentStep === 9"
-            @request-file-path="handleRequestFilePath"
-        />
+        <FrontEndSelectionView v-else-if="props.currentStep === 8" :showBackButton="false" @select="handleFrontendSelect" />
+        <FrontendLayoutConfigView v-else-if="props.currentStep === 9" @request-file-path="handleRequestFilePath" />
         <GitConfigView v-else-if="props.currentStep === 10" />
     </StepperPopup>
 
@@ -66,48 +54,32 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue';
+// ✅ 1. Supprime 'onMounted' des imports, on n'en a plus besoin
+import { ref, watch, computed } from 'vue';
 import StepperPopup from '@genesis-labs/web-core/core/components/layouts/Popup/StepperPopup.vue';
-import FrameworksView from '@genesis-labs/web-core/features/frameworks/views/FrameworksView.vue';
-import FrontEndSelectionView from '@genesis-labs/web-core/features/frontend/views/FrontEndSelectionView.vue';
-import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
-
-import { 
-    ProjectConfigView, 
-    DatabaseConfigView, 
-    ScriptConfigView, 
-    // GenerationConfiguration,
-    GenerationConfigurationAlt,
-    RelationConfigView, 
-    FrontendLayoutConfigView, 
-    GitConfigView 
-} from '@genesis-labs/web-core/features/generator/components/steps';
-
-const store = useGeneratorStore();
-
-
 import ErrorPopup from '@genesis-labs/web-core/core/components/layouts/Popup/ErrorPopup.vue';
 import DatabaseSelection from '@genesis-labs/web-core/features/database/views/DatabaseSelection.vue';
+import FrontEndSelectionView from '@genesis-labs/web-core/features/frontend/views/FrontEndSelectionView.vue';
+
+import FrameworkLayout, { type FrameworkLayoutProps } from '@genesis-labs/web-core/features/frameworks/components/FrameworkLayout.vue';
+import { useWizardFramework } from '@genesis-labs/web-core/features/frameworks/composables/useWizardFramework';
+
+import { 
+    ProjectConfigView, DatabaseConfigView, ScriptConfigView, GenerationConfigurationAlt,
+    RelationConfigView, FrontendLayoutConfigView, GitConfigView 
+} from '@genesis-labs/web-core/features/generator/components/steps';
+
+import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
 import { DatabaseEngineDto, FileRequestPayload } from '@genesis-labs/shared-types';
+import type { Framework, FrontendFramework } from '@genesis-labs/shared-types';
 
-import type { Framework } from '@genesis-labs/web-core/features/frameworks/types/framework.types';
-import type { FrontendFramework } from '@genesis-labs/web-core/features/frontend/types/frontend.types.ts';
-import { computed, ref } from 'vue';
+const store = useGeneratorStore();
+const stepContentClass = 'overflow-y-auto';
 
-// L'étape 4 (ScriptConfigView) gère son propre scroll interne
-const stepContentClass = computed(() => 'overflow-y-auto');
-
-const props = defineProps<{
-    currentStep: number;
-    totalSteps: number;
-    isSkippable?: boolean;
-}>();
+const props = defineProps<{ currentStep: number; totalSteps: number; isSkippable?: boolean }>();
 
 const emit = defineEmits<{
-    close: [];
-    next: [];
-    previous: [];
-    skip: []; // NOUVEL EMIT RELAYÉ VERS LE PARENT
+    close: []; next: []; previous: []; skip: [];
     'select-framework': [framework: Framework];
     'select-frontend': [framework: FrontendFramework];
     'request-folder-path': [];
@@ -115,39 +87,60 @@ const emit = defineEmits<{
     'select-database': [engine: DatabaseEngineDto];
 }>();
 
-// ← handleClose manquait
-function handleClose() {
-    emit('close');
-}
-
-// Dans genesis-sdk-web/genesis-web-core/src/features/generator/components/GeneratorStepper.vue
-
-function handleFrameworkSelect(payload: any) {
-    console.log("🔍 [Stepper] Payload brut reçu :", payload);
-    
-    // Extrait le framework, que l'enfant l'ait envoyé directement ou dans une propriété .framework
-    const framework = payload?.framework ? payload.framework : payload;
-    
-    console.log("🚀 [Stepper] Framework extrait et émis vers le parent :", framework?.name);
+// ═══ 2. DÉSTRUCTURATION DU COMPOSABLE ═══
+const {
+    searchQuery, displayMode, compareMode, frameworks, selectedId, frameworkSlots,
+    replaceOptions, showReplacePopup, mouseX, mouseY, filters, detailFramework,
+    isFilterOpen, pendingFramework, isLoading, initialize, setSearch, setFilters,
+    setDisplayMode, handleModeChange, handleSelectWrapper, handleReplaceSelection,
+    cancelReplace, openFilter, closeFilter, closeDetail, handleInfo
+} = useWizardFramework((framework: Framework) => {
     emit('select-framework', framework);
-}
+});
 
-function handleFrontendSelect(result: { action: string; framework: FrontendFramework; event?: MouseEvent }) {
-    emit('select-frontend', result.framework);
-}
+// ═══ 3. OPTIMISATION : Regroupement des props dans un objet réactif ═══
+const frameworkLayoutProps = computed<FrameworkLayoutProps>(() => ({
+    searchQuery: searchQuery.value,
+    displayMode: displayMode.value,
+    compareMode: compareMode.value,
+    searchPlaceholder: "Rechercher par nom, core, type...",
+    showBackButton: false,
+    frameworks: frameworks.value,
+    selectedId: selectedId.value,
+    frameworkSlots: frameworkSlots.value,
+    replaceOptions: replaceOptions.value,
+    showReplacePopup: showReplacePopup.value,
+    mouseX: mouseX.value,
+    mouseY: mouseY.value,
+    filters: filters.value,
+    detailFramework: detailFramework.value,
+    isFilterOpen: isFilterOpen.value,
+    pendingFramework: pendingFramework.value,
+    isLoading: isLoading.value
+}));
 
-function handleDatabaseSelect(result: { action: string; engine: DatabaseEngineDto; event?: MouseEvent }) {
-    emit('select-database', result.engine);
-}
+// ═══ 4. CHARGEMENT DES DONNÉES À LA DEMANDE (Lazy Loading) ═══
+// ✅ REMPLACE le onMounted. On charge les données uniquement quand on arrive à l'étape 1.
+watch(
+    () => props.currentStep,
+    (newStep) => {
+        if (newStep === 1) {
+            console.log("🔄 [Stepper] Entrée dans l'étape 1 : Chargement des frameworks...");
+            initialize();
+        }
+        // Tu pourras facilement ajouter d'autres étapes ici plus tard, ex:
+        // if (newStep === 3) { loadDatabases(); }
+        // if (newStep === 6) { loadTables(); }
+    },
+    { immediate: true } // immediate: true assure le chargement si le wizard s'ouvre directement à l'étape 1
+);
 
-function handleRequestFolderPath() {
-    emit('request-folder-path');
-}
-
-function handleRequestFilePath(payload: FileRequestPayload) {
-    emit('request-file-path', payload);
-}
-
+// ═══ 5. HANDLERS & GESTION DES ERREURS ═══
+function handleClose() { emit('close'); }
+function handleFrontendSelect(result: { action: string; framework: FrontendFramework; event?: MouseEvent }) { emit('select-frontend', result.framework); }
+function handleDatabaseSelect(result: { action: string; engine: DatabaseEngineDto; event?: MouseEvent }) { emit('select-database', result.engine); }
+function handleRequestFolderPath() { emit('request-folder-path'); }
+function handleRequestFilePath(payload: FileRequestPayload) { emit('request-file-path', payload); }
 
 const showError = ref(false);
 const errorMessage = ref('');
@@ -155,7 +148,6 @@ const errorStackTrace = ref('');
 const isDevMode = import.meta.env.DEV;
 
 function handleChildError(message: string) {
-    // Conserver pour les erreurs spécifiques de DatabaseConfigView
     errorMessage.value = message;
     errorStackTrace.value = ''; 
     showError.value = true;
@@ -165,10 +157,8 @@ function clearError() {
     showError.value = false;
     errorMessage.value = '';
     errorStackTrace.value = '';
-    // ✅ IMPORTANT : On nettoie aussi le store pour éviter que l'erreur réapparaisse
     store.clearWizardError(); 
 }
-
 
 watch(() => store.wizardError, (newError) => {
     if (newError) {
@@ -176,6 +166,4 @@ watch(() => store.wizardError, (newError) => {
         showError.value = true;
     }
 }, { immediate: true });
-
-
 </script>

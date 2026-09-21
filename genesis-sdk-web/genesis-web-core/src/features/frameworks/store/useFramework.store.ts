@@ -9,7 +9,9 @@ export const useFrameworkStore = defineStore('framework', () => {
     const searchQuery = ref('');
     const filters = ref<FrameworkFilters>({});
     const displayMode = ref<DisplayMode>('grid');
-    
+    const isFilterOpen = ref(false);
+    const detailFramework = ref<Framework | null>(null);
+
     // AJOUT : État de chargement
     const isLoading = ref(false);
 
@@ -42,7 +44,7 @@ export const useFrameworkStore = defineStore('framework', () => {
     function setFrameworks(data: Framework[]) { frameworks.value = data; }
     function setSearch(query: string) { searchQuery.value = query; }
     function setFilters(newFilters: FrameworkFilters) { filters.value = { ...filters.value, ...newFilters }; }
-    function setDisplayMode(mode: 'grid' | 'list') { displayMode.value = mode; }
+    function setDisplayMode(mode: DisplayMode) { displayMode.value = mode; }
     
     // ✅ AJOUT : Action pour modifier l'état de chargement
     function setLoading(state: boolean) { isLoading.value = state; }
@@ -54,6 +56,8 @@ export const useFrameworkStore = defineStore('framework', () => {
         displayMode, 
         isLoading,          // ✅ Exporté
         filteredFrameworks,
+        isFilterOpen,
+        detailFramework,
         setFrameworks, 
         setSearch, 
         setFilters, 
