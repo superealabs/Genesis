@@ -164,6 +164,10 @@ public class ProjectGenerator {
     }
     public static void renderFilesEdits(List<FilesEdit> filesEdits, HashMap<String, Object> initializeHashMap) throws Exception {
         for (FilesEdit projectFile : filesEdits) {
+            if ("OracleYearMonthIntervalType".equals(projectFile.getFileName()) && !"Oracle".equalsIgnoreCase(String.valueOf(initializeHashMap.get("databaseType"))
+            )) {
+                continue;
+            }
             String destinationFilePath = engine.render(projectFile.getDestinationPath(), initializeHashMap);
             String fileName = engine.render(projectFile.getFileName(), initializeHashMap);
             String content = engine.render(projectFile.getContent(), initializeHashMap);
