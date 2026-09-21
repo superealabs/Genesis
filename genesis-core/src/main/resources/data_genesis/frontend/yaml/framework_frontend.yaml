@@ -6,6 +6,34 @@
   initPath: "angular/angular-skeletoon"
   componentExtension: "ts"
   defaultPort: "4200"
+  docker:
+    volumes:
+      - name: "angular_node_modules"
+        dir: "/app/node_modules"
+    environments: []
+    commands:
+      - command: "npm start"
+        args: [ "--", "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: true
+      - command: "ng serve"
+        args: [ "--", "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: true
+      - command: "npm run build"
+        args: [ ]
+        needVolume: false
+    images:
+      - image: "node:${versionNode}"
+        build: []
+      - image: "node:${versionNode}-alpine"
+        build: []
+      - image: "node:${versionNode}-bookworm"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
   frontendPaths:
     faviconPath: "${destinationFolder}/src"
     logoPath: "${destinationFolder}/src/assets/icon"
@@ -555,7 +583,24 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/"
+      destinationPath: ""
+    - fileType: "Docker File"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM ${frontendImage}  
+        
+        {{#each frontendSpecificBuild}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
+        WORKDIR /app
+        
+        COPY package*.json ./
+        
+        RUN npm ci
+        
+        EXPOSE ${frontendPort}
+        
+        CMD [${commandFrontend}]
 
   additionalFiles:
     - fileType: "Language file"
@@ -1979,6 +2024,49 @@
   initPath: "vue/vue-3-ts-skeletoon"
   componentExtension: "vue"
   defaultPort: "5173"
+  docker:
+    volumes:
+      - name: "vue_node_modules"
+        dir: "/app/node_modules"
+    environments: []
+    commands:
+      - command: "npm run dev"
+        args: [ "--", "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: true
+      - command: "vite"
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: true
+      - command: "vite dev"
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: true
+      - command: "vite serve"
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: true
+      - command: "npm run build"
+        args: [ ]
+        needVolume: false
+      - command: "vite build"
+        args: [ ]
+        needVolume: false
+      - command: "npm run preview"
+        args: [ "--", "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: false
+      - command: "vite preview"
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: false
+    images:
+      - image: "node:${versionNode}"
+        build: []
+      - image: "node:${versionNode}-alpine"
+        build: []
+      - image: "node:${versionNode}-bookworm"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
   conditionalFiles:
     - fileType: "Git Ignore"
       fileName: ".gitignore"
@@ -2006,7 +2094,26 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/"
+      destinationPath: ""
+    - fileType: "Docker File"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM ${frontendImage} 
+        
+        {{#each frontendSpecificBuild}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
+        WORKDIR /app
+        
+        COPY package*.json ./
+        
+        RUN npm install
+        
+        EXPOSE ${frontendPort}
+        
+        CMD [${commandFrontend}]
+      destinationPath: ""
+
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/src/assets/images"
@@ -3204,6 +3311,7 @@
           return response
         }
 
+        export async function currentUser() {
         export async function currentUser() {
           const request = new RequestModel(BASE_URL + '/current')
           const response = await userApi.GET(request.buildRequestUrl([], false))
@@ -7717,6 +7825,49 @@
   initPath: "react/react-ts-skeletoon"
   componentExtension: "tsx"
   defaultPort: "3000"
+  docker:
+    volumes:
+      - name: "react_node_modules"
+        dir: "/app/node_modules"
+    environments: []
+    commands:
+      - command: "npm run dev"
+        args: [ "--", "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: true
+      - command: "vite"
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: true
+      - command: "vite dev"
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: true
+      - command: "vite serve"
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: true
+      - command: "npm run build"
+        args: [ ]
+        needVolume: false
+      - command: "vite build"
+        args: [ ]
+        needVolume: false
+      - command: "npm run preview"
+        args: [ "--", "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: false
+      - command: "vite preview"
+        args: [ "--host", "0.0.0.0", "--port", "${frontendPort}" ]
+        needVolume: false
+    images:
+      - image: "node:${versionNode}"
+        build: []
+      - image: "node:${versionNode}-alpine"
+        build: []
+      - image: "node:${versionNode}-bookworm"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
   conditionalFiles:
     - fileType: "Git Ignore"
       fileName: ".gitignore"
@@ -7743,7 +7894,26 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/"
+      destinationPath: ""
+    - fileType: "Docker File"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM ${frontendImage} 
+        
+        {{#each frontendSpecificBuild}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
+        WORKDIR /app
+        
+        COPY package*.json ./
+        
+        RUN npm install
+        
+        EXPOSE ${frontendPort}
+        
+        CMD [${commandFrontend}]
+      destinationPath: ""
+      
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/public"

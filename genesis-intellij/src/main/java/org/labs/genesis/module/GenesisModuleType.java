@@ -33,6 +33,7 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
         RelationshipConfigurationWizardStep relationshipConfigurationWizardStep = new RelationshipConfigurationWizardStep(generationContextManager);
         GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(generationContextManager, listProjectGenerationContexts, specificConfigurationWizardStep, relationshipConfigurationWizardStep);
         GitConfigurationWizardStep gitConfigurationWizardStep = new GitConfigurationWizardStep(generationContextManager);
+        DockerConfigurationWizardStep dockerConfigurationWizardStep = new DockerConfigurationWizardStep(generationContextManager);
 
         // Rule to code
         FirstWizardStep firstWizardStep = new FirstWizardStep(generationContextManager);
@@ -58,6 +59,7 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
                 relationshipConfigurationWizardStep,
                 frontendConfigurationWizardStep,
                 gitConfigurationWizardStep,
+                dockerConfigurationWizardStep,
                 specificConfigurationWizardStep,
                 syncGenerationWizardStep,
         };
