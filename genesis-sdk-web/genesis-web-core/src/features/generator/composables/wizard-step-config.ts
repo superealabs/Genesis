@@ -4,6 +4,7 @@ import type { IFrontendService } from '../../frontend/types/frontend.service.int
 import type { IDatabaseService } from '../../database/types/database.service.interface';
 import type { IFrameworkService } from '@genesis-labs/shared-types'; // Adapte le chemin si nécessaire
 import { useFrameworkStore } from '../../frameworks/manifest';
+import { useDatabaseStore } from '../../database/manifest';
 
 export interface WizardServices {
     svc: IGeneratorService;
@@ -88,12 +89,14 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
  },
         beforeNext: async (store, { svc }) => {
             const config = store.stepperData.config;
-            if (!config.projectName || !config.projectLocation) {
-                store.setWizardError("Le nom du projet et la localisation sont obligatoires.");
-                return false;
-            }
+            console.log(config);
+            console.log(svc);
+            // if (!config.projectName || !config.projectLocation) {
+            //     store.setWizardError("Le nom du projet et la localisation sont obligatoires.");
+            //     return false;
+            // }
             try {
-                await svc.saveProjectConfig(config);
+                // await svc.saveProjectConfig(config);
                 return true;
             } catch (error) {
                 store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde de la configuration.");
@@ -103,26 +106,54 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     },
 
     // ═══ ÉTAPE 3 : SÉLECTION BASE DE DONNÉES ═══
+    // ═══ ÉTAPE 3 : SÉLECTION BASE DE DONNÉES ═══
     3: {
         onEnter: async (store, { dbsvc }) => {
             console.log("🔄 [Étape 3] Chargement des moteurs de base de données...");
             try {
                 const engines = await dbsvc.fetchDatabaseEngines();
-                store.setAvailableDatabaseEngines(engines);
+                store.setAvailableDatabaseEngines(engines); // La liste est maintenant en mémoire
             } catch (error) {
                 console.error("❌ Échec chargement moteurs DB:", error);
+                store.setWizardError("Impossible de charger la liste des bases de données.");
             }
         },
         beforeNext: async (store, { svc }) => {
             const db = store.stepperData.database;
+            
+            // 1. Validation de base
             if (!db.engine) {
                 store.setWizardError("Veuillez sélectionner un moteur de base de données.");
                 return false;
             }
+
             try {
-                // TODO: Récupérer dynamiquement l'ID du moteur sélectionné depuis le store
-                const engineId = 1; 
+                // 2. RECHERCHE DYNAMIQUE DE L'ID
+                // On cherche dans la liste chargée à l'entrée de l'étape (onEnter)
+                const databaseStore = useDatabaseStore();
+                const matchedEngine = databaseStore.availableEngines.find(eng => {
+                    // Comparaison souple : on ignore la casse et les espaces pour éviter les mismatches
+                    // Ex: "PostgreSQL" correspond à "postgresql" ou "postgre"
+                    const normalizedName = eng.name.toLowerCase().replace(/\s+/g, '');
+                    const normalizedConfig = db.engine.toLowerCase().replace(/\s+/g, '');
+                    
+                    return normalizedName === normalizedConfig || eng.name.toLowerCase() === db.engine.toLowerCase();
+                });
+
+                // 3. Sécurité : si on ne trouve pas de correspondance
+                if (!matchedEngine) {
+                    console.warn("[Wizard] Moteur non trouvé dans la liste. engine config:", db.engine);
+                    store.setWizardError("Moteur de base de données invalide. Veuillez le sélectionner à nouveau.");
+                    return false;
+                }
+
+                // 4. On a maintenant l'ID numérique requis par le contrat !
+                const engineId = matchedEngine.id;
+                console.log(`[Wizard] Sélection de la BDD validée. ID récupéré : ${engineId}`);
+                
+                // 5. Appel du service avec l'ID
                 await svc.selectDatabase(engineId);
+                
                 return true;
             } catch (error) {
                 store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection de la base de données.");

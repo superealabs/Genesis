@@ -112,6 +112,7 @@ export function useDatabase() {
         
         // Actions
         fetchAvailableEngines,
+        setDisplayMode: store.setDisplayMode,
         testConnection,
         handleSelect,
         handleReplace,

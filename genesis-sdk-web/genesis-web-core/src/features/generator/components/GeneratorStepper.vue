@@ -15,7 +15,6 @@
         <FrameworkLayout
             v-if="props.currentStep === 1"
             v-bind="frameworkLayoutProps"
-            
             @back="emit('close')"
             @openFilter="openFilter"
             @closeFilter="closeFilter"
@@ -30,9 +29,20 @@
             @update:filters="setFilters"
         />
 
-        <!-- Le reste des étapes reste inchangé -->
         <ProjectConfigView v-else-if="props.currentStep === 2" @request-folder-path="handleRequestFolderPath" />
-        <DatabaseSelection v-else-if="props.currentStep === 3" @select="handleDatabaseSelect" />
+
+        <!-- ═══ ÉTAPE 3 : BASE DE DONNÉES (Nouvelle architecture optimisée) ═══ -->
+        <DatabaseLayout 
+            v-else-if="props.currentStep === 3"
+            v-bind="databaseLayoutProps"
+            @back="emit('close')"
+            @update:displayMode="setDisplayModeDb"
+            @update:mode="handleModeChangeDb"
+            @select-replace="handleReplaceSelectionDb"
+            @close-replace="cancelReplaceDb"
+            @select="handleSelectWrapperDb"
+        />
+
         <DatabaseConfigView v-else-if="props.currentStep === 4" @test-connection-error="handleChildError" />
         <ScriptConfigView v-else-if="props.currentStep === 5" @request-file-path="handleRequestFilePath" />
         <GenerationConfigurationAlt v-else-if="props.currentStep === 6" />
@@ -54,12 +64,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'; // ✅ 'watch' reste uniquement pour wizardError
+import { ref, watch, computed } from 'vue';
 import StepperPopup from '@genesis-labs/web-core/core/components/layouts/Popup/StepperPopup.vue';
 import ErrorPopup from '@genesis-labs/web-core/core/components/layouts/Popup/ErrorPopup.vue';
-import DatabaseSelection from '@genesis-labs/web-core/features/database/views/DatabaseSelection.vue';
 import FrontEndSelectionView from '@genesis-labs/web-core/features/frontend/views/FrontEndSelectionView.vue';
 
+import DatabaseLayout, { type DatabaseLayoutProps } from '@genesis-labs/web-core/features/database/components/DatabaseLayout.vue';
+import { useWizardDatabase } from '@genesis-labs/web-core/features/database/composables/useWizardDatabase';
+
+// IMPORTS EXISTANTS
 import FrameworkLayout, { type FrameworkLayoutProps } from '@genesis-labs/web-core/features/frameworks/components/FrameworkLayout.vue';
 import { useWizardFramework } from '@genesis-labs/web-core/features/frameworks/composables/useWizardFramework';
 
@@ -81,12 +94,12 @@ const emit = defineEmits<{
     close: []; next: []; previous: []; skip: [];
     'select-framework': [framework: Framework];
     'select-frontend': [framework: FrontendFramework];
+    'select-database': [engine: DatabaseEngineDto];
     'request-folder-path': [];
     'request-file-path': [payload: FileRequestPayload];
-    'select-database': [engine: DatabaseEngineDto];
 }>();
 
-// ═══ 1. DÉSTRUCTURATION DU COMPOSABLE (Plus besoin d'appeler initialize manuellement) ═══
+// ═══ 1. DÉSTRUCTURATION FRAMEWORK ═══
 const {
     searchQuery, displayMode, compareMode, frameworks, selectedId, frameworkSlots,
     replaceOptions, showReplacePopup, mouseX, mouseY, filters, detailFramework,
@@ -97,7 +110,29 @@ const {
     emit('select-framework', framework);
 });
 
-// ═══ 2. OPTIMISATION : Regroupement des props dans un objet réactif ═══
+// ═══ 2. DÉSTRUCTURATION DATABASE (NOUVEAU) ═══
+const {
+    engines,
+    selectedId: dbSelectedId,
+    databaseSlots,
+    displayMode: dbDisplayMode,
+    compareMode: dbCompareMode,
+    showReplacePopup: dbShowReplacePopup,
+    // pendingEngine,
+    mouseX: dbMouseX,
+    mouseY: dbMouseY,
+    isLoading: dbIsLoading,
+    replaceOptions: dbReplaceOptions,
+    handleSelectWrapper: handleSelectWrapperDb,
+    handleReplaceSelection: handleReplaceSelectionDb,
+    cancelReplace: cancelReplaceDb,
+    handleModeChange: handleModeChangeDb,
+    setDisplayMode: setDisplayModeDb
+} = useWizardDatabase((engine: DatabaseEngineDto) => {
+    emit('select-database', engine);
+});
+
+// ═══ 3. OPTIMISATION : Regroupement des props dans des objets réactifs ═══
 const frameworkLayoutProps = computed<FrameworkLayoutProps>(() => ({
     searchQuery: searchQuery.value,
     displayMode: displayMode.value,
@@ -117,12 +152,24 @@ const frameworkLayoutProps = computed<FrameworkLayoutProps>(() => ({
     pendingFramework: pendingFramework.value,
     isLoading: isLoading.value
 }));
-// Le chargement est désormais géré centralement par onStepEnter dans useGenerator.ts
 
-// ═══ 3. HANDLERS & GESTION DES ERREURS ═══
+const databaseLayoutProps = computed<DatabaseLayoutProps>(() => ({
+    engines: engines.value,
+    selectedId: dbSelectedId.value,
+    databaseSlots: databaseSlots.value,
+    displayMode: dbDisplayMode.value,
+    compareMode: dbCompareMode.value,
+    showBackButton: false,
+    replaceOptions: dbReplaceOptions.value,
+    showReplacePopup: dbShowReplacePopup.value,
+    mouseX: dbMouseX.value,
+    mouseY: dbMouseY.value,
+    isLoading: dbIsLoading.value
+}));
+
+// ═══ 4. HANDLERS & GESTION DES ERREURS ═══
 function handleClose() { emit('close'); }
 function handleFrontendSelect(result: { action: string; framework: FrontendFramework; event?: MouseEvent }) { emit('select-frontend', result.framework); }
-function handleDatabaseSelect(result: { action: string; engine: DatabaseEngineDto; event?: MouseEvent }) { emit('select-database', result.engine); }
 function handleRequestFolderPath() { emit('request-folder-path'); }
 function handleRequestFilePath(payload: FileRequestPayload) { emit('request-file-path', payload); }
 
