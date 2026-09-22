@@ -33,12 +33,12 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
         onEnter: async (_store, { fsvc }) => {
             console.log("🔄 [Étape 1] Chargement des frameworks...");
             try { 
-                // ✅ 2. On récupère les données
+                //  2. On récupère les données
                 const data = await fsvc.fetchFrameworks();
-                console.log("✅ Récupération réussie :", data.length, "frameworks");
+                console.log(" Récupération réussie :", data.length, "frameworks");
                 
                 // on injecte dans le store ou via le composable
-                // ✅ 3. On les injecte dans le store dédié
+                //  3. On les injecte dans le store dédié
                 const frameworkStore = useFrameworkStore();
                 frameworkStore.setFrameworks(data);
                 console.log(`contenu du framework store : ${frameworkStore.frameworks}`)

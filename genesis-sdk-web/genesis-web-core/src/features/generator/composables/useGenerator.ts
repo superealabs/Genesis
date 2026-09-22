@@ -40,7 +40,16 @@ export function useGenerator() {
         totalSteps: 10,
         skippableStepsConfig: SKIPPABLE_CONFIG,
         
-        // ✅ HOOK AVANT NEXT : On délègue à la config de l'étape
+        //  HOOK ON ENTER : On délègue à la config de l'étape
+        onStepEnter: async (currentStep: number) => {
+            const stepConfig = WIZARD_STEP_CONFIG[currentStep];
+            if (stepConfig?.onEnter) {
+                console.log(`[Wizard] Entrée dans l'étape ${currentStep} : Chargement...`);
+                await stepConfig.onEnter(store, wizardServices);
+            }
+        },
+
+        //  HOOK AVANT NEXT : On délègue à la config de l'étape   
         onBeforeNext: async (currentStep: number) => {
             store.clearWizardError();
             const stepConfig = WIZARD_STEP_CONFIG[currentStep];
@@ -54,15 +63,6 @@ export function useGenerator() {
                 }
             }
             return true; 
-        },
-
-        // ✅ HOOK ON ENTER : On délègue à la config de l'étape
-        onStepEnter: async (currentStep: number) => {
-            const stepConfig = WIZARD_STEP_CONFIG[currentStep];
-            if (stepConfig?.onEnter) {
-                console.log(`[Wizard] Entrée dans l'étape ${currentStep} : Chargement...`);
-                await stepConfig.onEnter(store, wizardServices);
-            }
         }
     });
 
