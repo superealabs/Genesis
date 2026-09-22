@@ -1077,7 +1077,7 @@ public class FrameworkMetadataProvider {
         tmMap.put("isView", tm.getIsView());
 
         // à corriger quand l'utilisateur choisira les champs à afficher ou non dans le future
-        tmMap.put("fields", getFieldsList(tm)); 
+        tmMap.put("fields", getFieldsList(tm));
 
         return tmMap;
     }
@@ -1092,6 +1092,8 @@ public class FrameworkMetadataProvider {
         HashMap<String, Object> frameworkSecurityBooleanMetadata = new HashMap<>();
         // Defaults values:
         frameworkSecurityBooleanMetadata.put("useJWT", false);
+        frameworkSecurityBooleanMetadata.put("useAuthCookie",false);
+        frameworkSecurityBooleanMetadata.put("useAuthSession",false);
 
         String securityType = (String) frameworkConfiguration.get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
@@ -1449,5 +1451,52 @@ public class FrameworkMetadataProvider {
                         ),
                         map -> new ArrayList<>(map.values())
                 ));
+    }
+
+    public static List<String> getAdminProtectedRoutes(List<TableMetadata> entities) {
+        List<String> routes = new ArrayList<>();
+        for (TableMetadata tableMetadata : entities) {
+            if (Boolean.TRUE.equals(tableMetadata.getIsView())) {
+                continue;
+            }
+            String basePath = "/" + StringUtils.minStart(tableMetadata.getClassName());
+
+            routes.add(basePath + "/create");
+
+            if (tableMetadata.hasCompositePrimaryKey()) {
+
+                StringBuilder editPath = new StringBuilder(basePath);
+
+                for (int i = 0;
+                     i < tableMetadata.getPrimaryColumns().size();
+                     i++) {
+
+                    editPath.append("/*");
+                }
+
+                editPath.append("/edit");
+
+                routes.add(editPath.toString());
+
+            } else {
+
+                routes.add(basePath + "/*/edit");
+            }
+
+            routes.add(basePath + "/delete");
+        }
+
+        return routes;
+    }
+
+    public static String buildAdminProtectedRoutesContent(List<TableMetadata> entities) {
+        List<String> routes = getAdminProtectedRoutes(entities);
+        return routes.stream()
+                .map(route ->
+                        "                            \"" +
+                                route +
+                                "\""
+                )
+                .collect(Collectors.joining(",\n"));
     }
 }
