@@ -2,6 +2,7 @@ package org.labs.genesis.config.langage.generator.project;
 
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.form.FormConfiguration;
 import org.labs.genesis.config.git.GitConfiguration;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.framework.APIGenerator;
@@ -50,6 +51,7 @@ public class ProjectGenerator {
     public static final Map<Integer, FrontendLanguage> frontendLanguage;
     public static final Map<Integer, FrontendFramework> frontendFrameworks;
     public static final Map<Integer, InterfaceLang> langs;
+    public static final FormConfiguration formConfiguration;
 
     static {
         try {
@@ -60,6 +62,8 @@ public class ProjectGenerator {
 
             languages = Arrays.stream(FileUtils.fromJson(Language[].class, Constantes.LANGUAGE_JSON))
                     .collect(Collectors.toMap(Language::getId, language -> language));
+
+            formConfiguration = FileUtils.fromJson(FormConfiguration.class, Constantes.FORM_CONFIGURATION_JSON);
 
             projects = Arrays.stream(FileUtils.fromYaml(Project[].class, Constantes.PROJECT_YAML))
                     .collect(Collectors.toMap(Project::getId, project -> project));

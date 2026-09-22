@@ -50,7 +50,7 @@
 
     "datetime": {
       "components": [
-        "datetime"
+        "datetime-local"
       ]
     },
 
@@ -62,7 +62,7 @@
 
     "geographic": {
       "components": [
-        "map"
+        "geographic map"
       ]
     },
 

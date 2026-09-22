@@ -4,6 +4,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import lombok.Getter;
+import org.labs.genesis.config.form.TableConfiguration;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.context.GenerationContextManager;
@@ -23,7 +24,7 @@ public class FormConfigurationWizardStep extends ModuleWizardStep {
             GenerationContextManager generationContextManager
     ) {
         this.generationContextManager = generationContextManager;
-        this.form = new FormConfigurationForm();
+        this.form = new FormConfigurationForm(generationContextManager.getContext());
     }
 
     @Override
@@ -33,7 +34,7 @@ public class FormConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public void updateStep() {
-
+        List<TableConfiguration> tables = form.getTablesConfiguration();
     }
 
     @Override
@@ -79,33 +80,6 @@ public class FormConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean validate() throws ConfigurationException {
-
-        if (form.getSelectedTable() == null) {
-
-            Messages.showErrorDialog(
-                    form.getMainPanel(),
-                    "Please select a table.",
-                    "Selection required"
-            );
-
-            throw new ConfigurationException(
-                    "No table selected."
-            );
-        }
-
-        if (form.getSelectedColumns().isEmpty()) {
-
-            Messages.showErrorDialog(
-                    form.getMainPanel(),
-                    "Please select at least one column.",
-                    "Selection required"
-            );
-
-            throw new ConfigurationException(
-                    "No column selected."
-            );
-        }
-
         return true;
     }
 
