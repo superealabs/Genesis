@@ -12,6 +12,7 @@ import org.labs.genesis.config.langage.generator.indicator.NoOpProgressReporter;
 import org.labs.genesis.config.langage.generator.indicator.ProgressReporter;
 import org.labs.genesis.config.langage.generator.sync.builder.GenesisContextBuilder;
 import org.labs.genesis.config.langage.generator.sync.models.GenesisContextModel;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.frontend.generator.ViewsGenerator;
 import org.labs.genesis.connexion.Credentials;
@@ -31,6 +32,9 @@ import org.labs.utils.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -306,6 +310,13 @@ public class ProjectGenerator {
         if (!context.isGenerateProjectStructure()){
             return;
         }
+
+        boolean hasPoint = entities != null
+                && entities.stream()
+                .filter(entity -> entity.getColumns() != null)
+                .flatMap(entity -> Arrays.stream(entity.getColumns()))
+                .anyMatch(ColumnMetadata::isGeographic);
+
         HashMap<String, Object> initializeHashMap = getInitialHashMap(
                 context.getDestinationFolder(),
                 context.getProjectName(),
@@ -324,9 +335,26 @@ public class ProjectGenerator {
                 context.getProjectDescription(),
                 context.getLanguageConfiguration(),
                 context.getFramework(),
-                context.getFrameworkConfiguration()
+                context.getFrameworkConfiguration(),
+                hasPoint
         );
         System.out.println("Generating PROJECT FILESSS 2");
+
+        if(hasPoint) {
+            FilesEdit serializer = context.getFramework().getConditionalFiles().stream()
+                    .filter(file -> "PointSerializer".equals(file.getFileType()))
+                    .findFirst()
+                    .orElse(null);
+
+            if(serializer != null) {
+                String destination = engine.simpleRender(serializer.getDestinationPath(), projectFilesEditsHashMap);
+                String content = serializer.getContent() == null ? "" : serializer.getContent();
+                Path serializerTarget = Paths.get(destination, serializer.getFileName() + "." + serializer.getExtension());
+                FileUtils.createFileStructure(destination);
+                Files.writeString(serializerTarget, engine.render(content, projectFilesEditsHashMap));
+                System.out.println(serializer + " @@" + destination);
+            }
+        }
 
         if (context.getFramework().getUseDB()) {
             if (context.getFramework().getModelDao() != null) {

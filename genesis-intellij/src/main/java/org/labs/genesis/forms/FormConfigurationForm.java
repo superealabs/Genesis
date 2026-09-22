@@ -85,6 +85,7 @@ public class FormConfigurationForm {
     private final Map<String, Map<String, ColumnConfiguration>> configurationsByTable = new HashMap<>();
     private Map<String, ColumnConfiguration> columnConfigurations = new HashMap<>();
 
+    @Getter
     private TableMetadata selectedTable;
     private boolean updatingUI = false;
     private boolean updatingList = false;
@@ -924,16 +925,16 @@ public class FormConfigurationForm {
         if (column.isNumeric()) {
             return TYPE_NUMBER;
         }
-        return TYPE_TEXT;
+        if(column.isText()) {
+            return TYPE_TEXT;
+        }
+
+        return null;
     }
 
     // ------------------------------------------------------------------
     // Public accessors
     // ------------------------------------------------------------------
-
-    public TableMetadata getSelectedTable() {
-        return selectedTable;
-    }
 
     public List<ColumnMetadata> getSelectedColumns() {
         if (selectedTable == null || selectedTable.getColumns() == null) {
