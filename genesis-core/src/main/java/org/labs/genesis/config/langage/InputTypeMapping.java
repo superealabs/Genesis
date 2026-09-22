@@ -89,7 +89,15 @@ public class InputTypeMapping {
     }
 
     private static String getInputType(ColumnMetadata field, InputTypeMapping inputTypeMapping) {
-        return inputTypeMapping.getTypes().get(field.getType());
+        String type = field.getType();
+        if (type == null) {
+            return null;
+        }
+        int lastDotIndex = type.lastIndexOf('.');
+        if (lastDotIndex >= 0) {
+            type = type.substring(lastDotIndex + 1);
+        }
+        return inputTypeMapping.getTypes().get(type);
     }
 
     private static boolean getIsShowed(ColumnMetadata field) {
