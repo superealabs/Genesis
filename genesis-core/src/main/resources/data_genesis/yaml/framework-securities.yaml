@@ -4412,7 +4412,9 @@
                         )
 
                         .exceptionHandling(exception -> exception
-                                .accessDeniedPage("/access-denied")
+                              .accessDeniedHandler((request, response, accessDeniedException) ->
+                                      response.sendRedirect(request.getContextPath() + "/access-denied")
+                              )
                         )
 
                         .sessionManagement(session -> session
@@ -4838,33 +4840,30 @@
       fileName: "access-denied"
       extension: "html"
       content: |
-        <!DOCTYPE html>
-        <html lang="fr"
-              xmlns:th="http://www.thymeleaf.org">
+        <div xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+            <main layout:fragment="content">
+                <div class="header">
+                    <h3>Accès refusé</h3>
+                    <a th:href="@{/}"
+                       class="btn btn-primary btn-md">
+                        <svg width="16"
+                             height="16"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7" />
+                        </svg>
+                        <p>Retour</p>
+                    </a>
+                </div>
 
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-            <title>${majStart(projectName)} | Accès refusé</title>
-
-            <link rel="stylesheet" th:href="@{/css/style.css}" />
-        </head>
-
-        <body>
-
-            <div class="error-container">
-
-                <h1>Accès refusé</h1>
-
-                <p>Vous ne disposez pas des autorisations nécessaires pour accéder à cette page.</p>
-
-                <a th:href="@{/}" class="btn btn-primary">Retour à l'accueil</a>
-
-            </div>
-
-        </body>
-        </html>
+                <div class="error-container">
+                    <p class="error-message">Vous ne disposez pas des autorisations nécessaires pour effectuer cette action.
+                    </p>
+                </div>
+            </main>
+        </div>
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/auth"
 
     - fileType: "Login Page"
