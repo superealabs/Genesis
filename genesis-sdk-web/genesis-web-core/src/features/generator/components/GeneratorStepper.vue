@@ -47,7 +47,24 @@
         <ScriptConfigView v-else-if="props.currentStep === 5" @request-file-path="handleRequestFilePath" />
         <GenerationConfigurationAlt v-else-if="props.currentStep === 6" />
         <RelationConfigView v-else-if="props.currentStep === 7" />
-        <FrontEndSelectionView v-else-if="props.currentStep === 8" :showBackButton="false" @select="handleFrontendSelect" />
+
+
+        <!-- ═══ ÉTAPE 8 : SÉLECTION FRONTEND (Nouvelle architecture optimisée) ═══ -->
+        <FrontendLayout 
+            v-else-if="props.currentStep === 8"
+            v-bind="frontendLayoutProps"
+            @back="emit('close')"
+            @update:searchValue="setSearchFe"
+            @update:displayMode="setDisplayModeFe"
+            @update:mode="handleModeChangeFe"
+            @select-replace="handleReplaceSelectionFe"
+            @close-replace="cancelReplaceFe"
+            @select="handleSelectWrapperFe"
+            @info="handleInfoFe"
+        />
+        
+        
+        
         <FrontendLayoutConfigView v-else-if="props.currentStep === 9" @request-file-path="handleRequestFilePath" />
         <GitConfigView v-else-if="props.currentStep === 10" />
     </StepperPopup>
@@ -67,7 +84,6 @@
 import { ref, watch, computed } from 'vue';
 import StepperPopup from '@genesis-labs/web-core/core/components/layouts/Popup/StepperPopup.vue';
 import ErrorPopup from '@genesis-labs/web-core/core/components/layouts/Popup/ErrorPopup.vue';
-import FrontEndSelectionView from '@genesis-labs/web-core/features/frontend/views/FrontEndSelectionView.vue';
 
 import DatabaseLayout, { type DatabaseLayoutProps } from '@genesis-labs/web-core/features/database/components/DatabaseLayout.vue';
 import { useWizardDatabase } from '@genesis-labs/web-core/features/database/composables/useWizardDatabase';
@@ -75,6 +91,7 @@ import { useWizardDatabase } from '@genesis-labs/web-core/features/database/comp
 // IMPORTS EXISTANTS
 import FrameworkLayout, { type FrameworkLayoutProps } from '@genesis-labs/web-core/features/frameworks/components/FrameworkLayout.vue';
 import { useWizardFramework } from '@genesis-labs/web-core/features/frameworks/composables/useWizardFramework';
+
 
 import { 
     ProjectConfigView, DatabaseConfigView, ScriptConfigView, GenerationConfigurationAlt,
@@ -84,6 +101,10 @@ import {
 import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
 import { DatabaseEngineDto, FileRequestPayload } from '@genesis-labs/shared-types';
 import type { Framework, FrontendFramework } from '@genesis-labs/shared-types';
+
+
+import FrontendLayout, { type FrontendLayoutProps } from '../../frontend/components/FrontendLayout.vue';
+import { useWizardFrontend } from '../../frontend/composables/useWizardFrontend';
 
 const store = useGeneratorStore();
 const stepContentClass = 'overflow-y-auto';
@@ -118,7 +139,6 @@ const {
     displayMode: dbDisplayMode,
     compareMode: dbCompareMode,
     showReplacePopup: dbShowReplacePopup,
-    // pendingEngine,
     mouseX: dbMouseX,
     mouseY: dbMouseY,
     isLoading: dbIsLoading,
@@ -130,6 +150,30 @@ const {
     setDisplayMode: setDisplayModeDb
 } = useWizardDatabase((engine: DatabaseEngineDto) => {
     emit('select-database', engine);
+});
+
+// ═══ 3. DÉSTRUCTURATION FRONTEND (NOUVEAU) ═══
+const {
+    frontends,
+    selectedId: feSelectedId,
+    frontendFrameworkSlots: feSlots,
+    displayMode: feDisplayMode,
+    searchQuery: feSearchQuery,
+    compareMode: feCompareMode,
+    showReplacePopup: feShowReplacePopup,
+    mouseX: feMouseX,
+    mouseY: feMouseY,
+    isLoading: feIsLoading,
+    replaceOptions: feReplaceOptions,
+    handleSelectWrapper: handleSelectWrapperFe,
+    handleReplaceSelection: handleReplaceSelectionFe,
+    cancelReplace: cancelReplaceFe,
+    handleModeChange: handleModeChangeFe,
+    setSearch: setSearchFe,
+    setDisplayMode: setDisplayModeFe,
+    handleInfo: handleInfoFe
+} = useWizardFrontend((framework: FrontendFramework) => {
+    emit('select-frontend', framework);
 });
 
 // ═══ 3. OPTIMISATION : Regroupement des props dans des objets réactifs ═══
@@ -167,9 +211,23 @@ const databaseLayoutProps = computed<DatabaseLayoutProps>(() => ({
     isLoading: dbIsLoading.value
 }));
 
+const frontendLayoutProps = computed<FrontendLayoutProps>(() => ({
+    frontends: frontends.value,
+    selectedId: feSelectedId.value,
+    frontendFrameworkSlots: feSlots.value,
+    displayMode: feDisplayMode.value,
+    searchQuery: feSearchQuery.value,
+    compareMode: feCompareMode.value,
+    showBackButton: false,
+    replaceOptions: feReplaceOptions.value,
+    showReplacePopup: feShowReplacePopup.value,
+    mouseX: feMouseX.value,
+    mouseY: feMouseY.value,
+    isLoading: feIsLoading.value
+}));
+
 // ═══ 4. HANDLERS & GESTION DES ERREURS ═══
 function handleClose() { emit('close'); }
-function handleFrontendSelect(result: { action: string; framework: FrontendFramework; event?: MouseEvent }) { emit('select-frontend', result.framework); }
 function handleRequestFolderPath() { emit('request-folder-path'); }
 function handleRequestFilePath(payload: FileRequestPayload) { emit('request-file-path', payload); }
 

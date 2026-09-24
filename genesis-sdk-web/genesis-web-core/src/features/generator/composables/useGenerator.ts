@@ -114,37 +114,37 @@ export function useGenerator() {
     }
 
     async function fetchLoggingLevels(frameworkId: number) {
-        const data = await svc.fetchLoggingLevels(frameworkId);
+        const data = await fsvc.fetchLoggingLevels(frameworkId);
         store.setAvailableLoggingLevels(data);
     }
 
     async function fetchSecurityTypes(frameworkId: number) {
-        const data = await svc.fetchSecurityTypes(frameworkId);
+        const data = await fsvc.fetchSecurityTypes(frameworkId);
         store.setAvailableSecurityTypes(data);
     }
 
     async function fetchCacheProviders(frameworkId: number) {
-        const data = await svc.fetchCacheProviders(frameworkId);
+        const data = await fsvc.fetchCacheProviders(frameworkId);
         store.setAvailableCacheProviders(data);
     }
 
     async function fetchLanguageVersions(languageId: number) {
-        const data = await svc.fetchLanguageVersions(languageId);
+        const data = await fsvc.fetchLanguageVersions(languageId);
         store.setAvailableLanguageVersions(data);
     }
 
     async function fetchFrameworkVersions(frameworkId: number) {
-        const data = await svc.fetchFrameworkVersions(frameworkId);
+        const data = await fsvc.fetchFrameworkVersions(frameworkId);
         store.setAvailableFrameworkVersions(data);
     }
 
     async function fetchBuildTools(frameworkId: number) {
-        const data = await svc.fetchBuildTools(frameworkId);
+        const data = await fsvc.fetchBuildTools(frameworkId);
         store.setAvailableBuildTools(data);
     }
 
     async function fetchHibernateDdlAutoOptions(frameworkId: number) {
-        const data = await svc.fetchHibernateDdlAutoOptions(frameworkId);
+        const data = await fsvc.fetchHibernateDdlAutoOptions(frameworkId);
         store.setAvailableHibernateDdlAutoOptions(data);
     }
 
@@ -181,6 +181,7 @@ export function useGenerator() {
         setFramework: store.setFramework,
         setPendingFramework: store.setPendingFramework,
         setPendingDatabaseEngine: store.setPendingDatabaseEngine,
+        setPendingFrontendFramework: store.setPendingFrontendFramework,
         setDatabaseEngine: store.setDatabaseEngine,
         setSelectedFrontendFramework: store.setSelectedFrontendFramework,
         fetchTablesMetadata, fetchTablesMetadataParents, fetchTablesMetadataChilds,

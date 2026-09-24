@@ -62,19 +62,18 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
 
     // ═══ ÉTAPE 2 : CONFIGURATION PROJET ═══
     2: {
-        onEnter: async (store, { svc }) => {
+        onEnter: async (store, { fsvc }) => {
             const fw = store.stepperData.framework;
             if (!fw) return;
             console.log("🔄 [Étape 2] Chargement des options de configuration...");
             try {
                 await Promise.all([
-                    // ✅ Ces listes restent dans GeneratorStore car elles dépendent du contexte de génération
-                    svc.fetchLoggingLevels(fw.id).then(data => store.setAvailableLoggingLevels(data)),
-                    svc.fetchSecurityTypes(fw.id).then(data => store.setAvailableSecurityTypes(data)),
-                    svc.fetchCacheProviders(fw.id).then(data => store.setAvailableCacheProviders(data)),
-                    svc.fetchLanguageVersions(fw.languageId).then(data => store.setAvailableLanguageVersions(data)),
-                    svc.fetchFrameworkVersions(fw.id).then(data => store.setAvailableFrameworkVersions(data)),
-                    svc.fetchBuildTools(fw.id).then(data => store.setAvailableBuildTools(data)),
+                    fsvc.fetchLoggingLevels(fw.id).then(data => store.setAvailableLoggingLevels(data)),
+                    fsvc.fetchSecurityTypes(fw.id).then(data => store.setAvailableSecurityTypes(data)),
+                    fsvc.fetchCacheProviders(fw.id).then(data => store.setAvailableCacheProviders(data)),
+                    fsvc.fetchLanguageVersions(fw.languageId).then(data => store.setAvailableLanguageVersions(data)),
+                    fsvc.fetchFrameworkVersions(fw.id).then(data => store.setAvailableFrameworkVersions(data)),
+                    fsvc.fetchBuildTools(fw.id).then(data => store.setAvailableBuildTools(data)),
                 ]);
             } catch (error) {
                 console.error("❌ Échec chargement options config:", error);
@@ -194,7 +193,9 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
         },
         beforeNext: async (store, { svc }) => {
             try {
-                await svc.saveTableSelection(store.stepperData.tableSelection);
+                // await svc.saveTableSelection(store.stepperData.tableSelection);
+                                console.log(svc);
+
                 return true;
             } catch (error) {
                 store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des tables.");
@@ -208,7 +209,9 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
         beforeNext: async (store, { svc }) => {
             try {
                 // store.relations est un Ref unwrap par Pinia, c'est correct
-                await svc.saveRelationParameters(store.relations); 
+                // await svc.saveRelationParameters(store.relations); 
+                                console.log(svc);
+
                 return true;
             } catch (error) {
                 store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des relations.");
@@ -234,17 +237,29 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
             }
         },
         beforeNext: async (store, { svc }) => {
-            const frontend = store.stepperData.frontend;
-            if (frontend) {
-                try {
-                    await svc.selectFrontendFramework(frontend.id);
-                    return true;
-                } catch (error) {
-                    store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection du frontend.");
-                    return false;
-                }
+            // 1. On vérifie le brouillon (pending). 
+            // Si c'est null, c'est que l'étape est skippée, donc on autorise le passage.
+            console.log(svc);
+            if (!store.pendingFrontendFramework) {
+                return true; // Skippable
             }
-            return true; // Skippable
+
+            try {
+                // 2. ENGAGEMENT : On officialise le choix dans stepperData
+                store.setSelectedFrontendFramework(store.pendingFrontendFramework);
+
+                // 3. Appel API avec l'ID du framework maintenant engagé
+                const frontendId = store.stepperData.frontend?.id;
+                if (frontendId) {
+                    console.log(`[Wizard] Sélection du Frontend validée. ID :`, frontendId);
+                    // await svc.selectFrontendFramework(frontendId);
+                }
+                
+                return true;
+            } catch (error) {
+                store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection du frontend.");
+                return false;
+            }
         }
     },
 
@@ -252,7 +267,9 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     9: {
         beforeNext: async (store, { svc }) => {
             try {
-                await svc.saveFrontendLayoutConfig(store.stepperData.frontendLayout);
+                // await svc.saveFrontendLayoutConfig(store.stepperData.frontendLayout);
+                                console.log(svc);
+
                 return true;
             } catch (error) {
                 store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde du layout frontend.");
@@ -265,7 +282,8 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     10: {
         beforeNext: async (store, { svc }) => {
             try {
-                await svc.saveGitConfiguration(store.stepperData.git);
+                // await svc.saveGitConfiguration(store.stepperData.git);
+                console.log(svc);
                 return true;
             } catch (error) {
                 store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde Git.");

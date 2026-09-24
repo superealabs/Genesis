@@ -12,7 +12,6 @@ const {
     isCurrentStepSkippable,
     goToPreviousStep,
     goToNextStep,
-    setDatabaseEngine,
     setSelectedFrontendFramework,
     reset,
     handleSelectFolderPath,
@@ -20,7 +19,8 @@ const {
     skipCurrentStep,
     stepperData,
     setPendingFramework,
-    setPendingDatabaseEngine
+    setPendingDatabaseEngine,
+    setPendingFrontendFramework
 } = useGeneratorVsc();
 
 function handleClose() {
@@ -50,7 +50,7 @@ function onSelectDatabase(engine: DatabaseEngineDto) {
 }
 
 function onSelectFrontend(framework: FrontendFramework) {
-    setSelectedFrontendFramework(framework);
+    setPendingFrontendFramework(framework);
 }
 </script>
 

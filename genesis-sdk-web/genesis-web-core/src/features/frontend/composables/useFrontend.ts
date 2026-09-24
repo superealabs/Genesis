@@ -15,11 +15,11 @@ export function useFrontend() {
     const svc = service as IFrontendService;
     const store = useFrontendStore();
     
-    // ✅ RENOMMÉ : availableFrameworks -> availableFrontendFrameworks
     const { 
         availableFrontendFrameworks, 
         displayMode,
-        searchQuery
+        searchQuery,
+        isLoading // ✅ AJOUT
     } = storeToRefs(store);
 
     const compare = useCompareSlotsWithPopup<FrontendFramework>({
@@ -33,7 +33,6 @@ export function useFrontend() {
         return compareMode.value === 'selection' ? selectedItem.value?.id : undefined;
     });
 
-    // ✅ RENOMMÉ : frameworkSlotsMap -> frontendFrameworkSlotsMap
     const frontendFrameworkSlotsMap = computed(() => {
         if (compareMode.value !== 'compare') return new Map<number, string>();
         const map = new Map<number, string>();
@@ -44,11 +43,14 @@ export function useFrontend() {
     });
 
     async function initialize() {
+        store.setLoading(true); // ✅ AJOUT
         try {
             const data = await svc.fetchFrontendFrameworks();
             store.setAvailableFrontendFrameworks(data);
         } catch (error) {
             console.error('[useFrontend] Erreur lors du chargement des frameworks frontend:', error);
+        } finally {
+            store.setLoading(false); // ✅ AJOUT
         }
     }
 
@@ -66,23 +68,30 @@ export function useFrontend() {
 
     function handleModeChange(newMode: 'selection' | 'compare') {
         compare.switchMode(newMode);
-    }    
+    }
+
+    // ✅ AJOUT : Pour satisfaire l'interface du Wizard (même si c'est un placeholder pour l'instant)
+    function handleInfo(framework: FrontendFramework) {
+        console.log("Détails demandés pour :", framework.name);
+    }
 
     return {
-        // ✅ RENOMMÉ dans le return
         availableFrontendFrameworks,
         selectedId: currentSelectedId,
-        frontendFrameworkSlots: frontendFrameworkSlotsMap, // ✅ RENOMMÉ
+        frontendFrameworkSlots: frontendFrameworkSlotsMap,
         displayMode,
         searchQuery,
+        isLoading, // ✅ AJOUT
         compareMode,
         compare,
         initialize,
         handleSelect,
         handleReplace,
         handleModeChange,
+        handleInfo, // ✅ AJOUT
         reset: store.reset,
         setSearch: store.setSearch,
+        setDisplayMode: store.setDisplayMode, // ✅ AJOUT
         
         showReplacePopup: compare.showReplacePopup,
         pendingFramework: compare.pendingItem,

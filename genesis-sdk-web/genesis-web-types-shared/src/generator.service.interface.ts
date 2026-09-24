@@ -22,13 +22,6 @@ export interface IGeneratorService {
     selectFramework(id: number): Promise<void>;
 
     // ═══ ÉTAPE 2 : CONFIGURATION PROJET ═══
-    fetchLoggingLevels(frameworkId: number): Promise<string[]>;
-    fetchSecurityTypes(frameworkId: number): Promise<string[]>;
-    fetchCacheProviders(frameworkId: number): Promise<string[]>;
-    fetchHibernateDdlAutoOptions(frameworkId: number): Promise<string[]>;
-    fetchLanguageVersions(languageId: number): Promise<string[]>;
-    fetchFrameworkVersions(frameworkId: number): Promise<string[]>;
-    fetchBuildTools(frameworkId: number): Promise<string[]>;
     saveProjectConfig(config: ProjectConfig): Promise<{ success: boolean; message: string }>;
 
     // ═══ ÉTAPE 3 & 4 : BASE DE DONNÉES ═══

@@ -23,6 +23,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     // dsqdsqdqsjbjkbkjb
     const pendingFramework = ref<Framework | null>(null);
     const pendingDatabaseEngine = ref<DatabaseEngineDto | null>(null);
+    const pendingFrontendFramework = ref<FrontendFramework | null>(null);
 
     // ═══ ÉTAPE 2 : CONFIGURATION PROJET (Listes dynamiques spécifiques au générateur) ═══
     const availableLoggingLevels = ref<string[]>([]);
@@ -83,6 +84,10 @@ export const useGeneratorStore = defineStore('generator', () => {
     // ── Étape 1 : Framework ──
     function setPendingFramework(framework: Framework | null) {
         pendingFramework.value = framework;
+    }
+
+    function setPendingFrontendFramework(frontendFramework : FrontendFramework | null) {
+        pendingFrontendFramework.value = frontendFramework;
     }
 
     function setPendingDatabaseEngine(engine: DatabaseEngineDto | null) {
@@ -198,6 +203,7 @@ export const useGeneratorStore = defineStore('generator', () => {
 
         // Étape 1
         pendingFramework, setPendingFramework, setFramework,
+        pendingFrontendFramework,
 
         // Étape 2
         getAvailableLoggingLevels, getAvailableSecurityTypes, getAvailableCacheProviders,
@@ -208,6 +214,7 @@ export const useGeneratorStore = defineStore('generator', () => {
         setAvailableCacheProviders, setAvailableLanguageVersions, setAvailableFrameworkVersions,
         setAvailableBuildTools, setAvailableHibernateDdlAutoOptions,
         setPendingDatabaseEngine,
+        setPendingFrontendFramework,
 
         // Étape 3 & 4
         setDatabaseEngine, updateDatabase,

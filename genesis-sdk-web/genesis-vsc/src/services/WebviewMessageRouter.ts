@@ -45,25 +45,25 @@ export class WebviewMessageRouter {
 
                 // ═══ GENERATOR : CONFIGURATION PROJET (Étape 2) ═══
                 case 'GET_LOGGING_LEVELS':
-                    await this.generatorHandler.handleGetLoggingLevels(message.payload, this.panel);
+                    await this.frameworkHandler.handleGetLoggingLevels(message.payload, this.panel);
                     break;
                 case 'GET_SECURITY_TYPES':
-                    await this.generatorHandler.handleGetSecurityTypes(message.payload, this.panel);
+                    await this.frameworkHandler.handleGetSecurityTypes(message.payload, this.panel);
                     break;
                 case 'GET_LANGUAGE_VERSIONS':
-                    await this.generatorHandler.handleGetLanguageVersions(message.payload, this.panel);
+                    await this.frameworkHandler.handleGetLanguageVersions(message.payload, this.panel);
                     break;
                 case 'GET_FRAMEWORK_VERSIONS':
-                    await this.generatorHandler.handleGetFrameworkVersions(message.payload, this.panel);
+                    await this.frameworkHandler.handleGetFrameworkVersions(message.payload, this.panel);
                     break;
                 case 'GET_BUILD_TOOLS':
-                    await this.generatorHandler.handleGetBuildTools(message.payload, this.panel);
+                    await this.frameworkHandler.handleGetBuildTools(message.payload, this.panel);
                     break;
                 case 'GET_CACHE_PROVIDERS':
-                    await this.generatorHandler.handleGetCacheProviders(message.payload, this.panel);
+                    await this.frameworkHandler.handleGetCacheProviders(message.payload, this.panel);
                     break;
                 case 'GET_HIBERNATE_DDL_AUTO_OPTIONS':
-                    await this.generatorHandler.handleGetHibernateDdlAutoOptions(message.payload, this.panel);
+                    await this.frameworkHandler.handleGetHibernateDdlAutoOptions(message.payload, this.panel);
                     break;
                 case 'SAVE_PROJECT_CONFIG':
                     await this.generatorHandler.handleSaveProjectConfig(message.payload, this.panel);
