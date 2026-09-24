@@ -2,6 +2,8 @@
 import { inject, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
+import { useFrontendStore } from '@genesis-labs/web-core/features/frontend/store/useFrontend.store'; // ✅ AJOUTÉ
+
 import { GENERATOR_SERVICE_KEY, type IGeneratorService } from '@genesis-labs/web-core/features/generator/types/generator.service.interface';
 import { useGenesisWizard } from '@genesis-labs/web-core/core/composables/ux/useGenesisWizard';
 
@@ -10,8 +12,6 @@ import { FRONTEND_SERVICE_KEY, IFrontendService } from '../../frontend/manifest'
 import { DATABASE_SERVICE_KEY } from '../../database/manifest';
 import { FRAMEWORK_SERVICE_KEY } from '../../frameworks/manifest';
 import { WIZARD_STEP_CONFIG, type WizardServices } from './wizard-step-config';
-
-
 
 export function useGenerator() {
     const service = inject(GENERATOR_SERVICE_KEY);
@@ -27,6 +27,7 @@ export function useGenerator() {
     const fsvc = frameworkService as IFrameworkService;
 
     const store = useGeneratorStore();
+    const frontendStore = useFrontendStore(); // ✅ AJOUTÉ pour les actions frontend
 
     const SKIPPABLE_CONFIG = { 
         5: [], 
@@ -40,7 +41,7 @@ export function useGenerator() {
         totalSteps: 10,
         skippableStepsConfig: SKIPPABLE_CONFIG,
         
-        //  HOOK ON ENTER : On délègue à la config de l'étape
+        // HOOK ON ENTER : On délègue à la config de l'étape
         onStepEnter: async (currentStep: number) => {
             const stepConfig = WIZARD_STEP_CONFIG[currentStep];
             if (stepConfig?.onEnter) {
@@ -49,7 +50,7 @@ export function useGenerator() {
             }
         },
 
-        //  HOOK AVANT NEXT : On délègue à la config de l'étape   
+        // HOOK AVANT NEXT : On délègue à la config de l'étape   
         onBeforeNext: async (currentStep: number) => {
             store.clearWizardError();
             const stepConfig = WIZARD_STEP_CONFIG[currentStep];
@@ -69,7 +70,6 @@ export function useGenerator() {
     const { 
         stepperData, 
         getTablesParents, getTablesChilds, getRelations,
-        getAvailableFrontendFrameworks, getAvailableLanguages,
         tables, views, availableTables, 
         
         getAvailableLoggingLevels,
@@ -98,7 +98,12 @@ export function useGenerator() {
     async function fetchTablesMetadataParents() { store.setTablesParents(await svc.fetchTablesMetadataParents()); }
     async function fetchTablesMetadataChilds() { store.setTablesChilds(await svc.fetchTablesMetadataChilds()); }
     async function fetchRelations() { store.setRelations(await svc.fetchRelations()); }
-    async function fetchAvailableLanguages() { store.setAvailableLanguages(await fdsvc.fetchInterfaceLanguages()); }
+    
+    // ✅ CORRIGÉ : Cible désormais le store Frontend (Source de Vérité)
+    async function fetchAvailableLanguages() { 
+        const data = await fdsvc.fetchInterfaceLanguages();
+        frontendStore.setAvailableInterfaceLanguages(data); 
+    }
 
     async function testDatabaseConnection(): Promise<{ success: boolean; message: string }> {
         try {
@@ -108,7 +113,6 @@ export function useGenerator() {
         }
     }
 
-    // CORRECTION : Prend maintenant frameworkId comme le contrat l'exige
     async function fetchLoggingLevels(frameworkId: number) {
         const data = await svc.fetchLoggingLevels(frameworkId);
         store.setAvailableLoggingLevels(data);
@@ -155,8 +159,10 @@ export function useGenerator() {
 
         stepperData,
         getTablesParents, getTablesChilds, getRelations,
-        availableFrontendFrameworks: getAvailableFrontendFrameworks, 
-        availableLanguages: getAvailableLanguages,
+        
+        // ✅ SUPPRIMÉ : availableFrontendFrameworks et availableLanguages 
+        // (Les composants UI doivent désormais utiliser useFrontendStore ou useWizardFrontend pour ces données)
+        
         tables, views, availableTables,
         
         availableLoggingLevels: getAvailableLoggingLevels,
@@ -174,6 +180,7 @@ export function useGenerator() {
 
         setFramework: store.setFramework,
         setPendingFramework: store.setPendingFramework,
+        setPendingDatabaseEngine: store.setPendingDatabaseEngine,
         setDatabaseEngine: store.setDatabaseEngine,
         setSelectedFrontendFramework: store.setSelectedFrontendFramework,
         fetchTablesMetadata, fetchTablesMetadataParents, fetchTablesMetadataChilds,

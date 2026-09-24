@@ -1,10 +1,14 @@
+// genesis-sdk-web/genesis-web-core/src/features/generator/composables/wizard-step-config.ts
 import { useGeneratorStore } from '../store/useGenerator.store';
 import type { IGeneratorService } from '../types/generator.service.interface';
 import type { IFrontendService } from '../../frontend/types/frontend.service.interface';
 import type { IDatabaseService } from '../../database/types/database.service.interface';
-import type { IFrameworkService } from '@genesis-labs/shared-types'; // Adapte le chemin si nécessaire
-import { useFrameworkStore } from '../../frameworks/manifest';
-import { useDatabaseStore } from '../../database/manifest';
+import type { IFrameworkService } from '@genesis-labs/shared-types';
+
+// ✅ IMPORTS DES STORES DE FEATURE (Sources de Vérité)
+import { useFrameworkStore } from '../../frameworks/store/useFramework.store';
+import { useDatabaseStore } from '../../database/store/useDatabase.store';
+import { useFrontendStore } from '../../frontend/store/useFrontend.store'; // ✅ AJOUTÉ
 
 export interface WizardServices {
     svc: IGeneratorService;
@@ -13,20 +17,11 @@ export interface WizardServices {
     fsvc: IFrameworkService;
 }
 
-/**
- * Configuration d'une étape du Wizard.
- * Les deux propriétés sont optionnelles : une étape peut n'avoir que du chargement, 
- * que de la validation, ou les deux.
- */
 export interface StepConfig {
     onEnter?: (store: ReturnType<typeof useGeneratorStore>, services: WizardServices) => Promise<void> | void;
     beforeNext?: (store: ReturnType<typeof useGeneratorStore>, services: WizardServices) => Promise<boolean> | boolean;
 }
 
-/**
- * Registre central de la logique de chaque étape.
- * C'est la "Single Source of Truth" pour le comportement du Wizard.
- */
 export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     
     // ═══ ÉTAPE 1 : FRAMEWORK ═══
@@ -34,31 +29,29 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
         onEnter: async (_store, { fsvc }) => {
             console.log("🔄 [Étape 1] Chargement des frameworks...");
             try { 
-                //  2. On récupère les données
                 const data = await fsvc.fetchFrameworks();
-                console.log(" Récupération réussie :", data.length, "frameworks");
+                console.log("✅ Récupération réussie :", data.length, "frameworks");
                 
-                // on injecte dans le store ou via le composable
-                //  3. On les injecte dans le store dédié
+                // ✅ Source de vérité : useFrameworkStore
                 const frameworkStore = useFrameworkStore();
                 frameworkStore.setFrameworks(data);
-                console.log(`contenu du framework store : ${frameworkStore.frameworks}`)
             } catch (error) {
                 console.error("❌ Échec chargement frameworks:", error);
-                // Optionnel : tu peux aussi prévenir l'utilisateur via le store du wizard
                 _store.setWizardError("Impossible de charger la liste des frameworks.");
             }
         },
-        beforeNext: async (store, { svc }) => {
+        beforeNext: async (store, { }) => {
             const fw = store.pendingFramework;
             if (!fw) {
                 store.setWizardError("Veuillez sélectionner un framework avant de continuer.");
                 return false;
             }
+
+            // console.log(svc);
             try {
                 store.setFramework(fw);
-                console.log(svc)
-                // await svc.selectFramework(fw.id); 
+                console.log(`Framework séléctionné :`, JSON.stringify(fw, null, 2));
+                // await svc.selectFramework(fw.id);
                 return true;
             } catch (error) {
                 store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection du framework.");
@@ -66,7 +59,6 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
             }
         }
     },
-
 
     // ═══ ÉTAPE 2 : CONFIGURATION PROJET ═══
     2: {
@@ -76,6 +68,7 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
             console.log("🔄 [Étape 2] Chargement des options de configuration...");
             try {
                 await Promise.all([
+                    // ✅ Ces listes restent dans GeneratorStore car elles dépendent du contexte de génération
                     svc.fetchLoggingLevels(fw.id).then(data => store.setAvailableLoggingLevels(data)),
                     svc.fetchSecurityTypes(fw.id).then(data => store.setAvailableSecurityTypes(data)),
                     svc.fetchCacheProviders(fw.id).then(data => store.setAvailableCacheProviders(data)),
@@ -86,16 +79,20 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
             } catch (error) {
                 console.error("❌ Échec chargement options config:", error);
             }
- },
+        },
         beforeNext: async (store, { svc }) => {
             const config = store.stepperData.config;
-            console.log(config);
-            console.log(svc);
             // if (!config.projectName || !config.projectLocation) {
             //     store.setWizardError("Le nom du projet et la localisation sont obligatoires.");
             //     return false;
             // }
+
+            // BON (Affiche l'objet formaté avec des sauts de ligne)
+            console.log("configuration du projet :", JSON.stringify(config, null, 2));
             try {
+                console.log(svc);
+                // jjsdkjqshdkqsjhd
+                // dqsdsqd
                 // await svc.saveProjectConfig(config);
                 return true;
             } catch (error) {
@@ -106,54 +103,47 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     },
 
     // ═══ ÉTAPE 3 : SÉLECTION BASE DE DONNÉES ═══
-    // ═══ ÉTAPE 3 : SÉLECTION BASE DE DONNÉES ═══
     3: {
-        onEnter: async (store, { dbsvc }) => {
+        onEnter: async (_store, { dbsvc }) => {
             console.log("🔄 [Étape 3] Chargement des moteurs de base de données...");
             try {
                 const engines = await dbsvc.fetchDatabaseEngines();
-                store.setAvailableDatabaseEngines(engines); // La liste est maintenant en mémoire
+                const databaseStore = useDatabaseStore();
+                databaseStore.setAvailableEngines(engines);
             } catch (error) {
                 console.error("❌ Échec chargement moteurs DB:", error);
-                store.setWizardError("Impossible de charger la liste des bases de données.");
+                _store.setWizardError("Impossible de charger la liste des bases de données.");
             }
         },
         beforeNext: async (store, { svc }) => {
-            const db = store.stepperData.database;
-            
-            // 1. Validation de base
-            if (!db.engine) {
+            // 1. On vérifie le brouillon (pending), pas encore stepperData
+            if (!store.pendingDatabaseEngine) {
                 store.setWizardError("Veuillez sélectionner un moteur de base de données.");
                 return false;
             }
 
             try {
-                // 2. RECHERCHE DYNAMIQUE DE L'ID
-                // On cherche dans la liste chargée à l'entrée de l'étape (onEnter)
+                // 2. ENGAGEMENT : On officialise le choix dans stepperData
+                store.setDatabaseEngine(store.pendingDatabaseEngine);
+
+                // 3. RECHERCHE DYNAMIQUE DE L'ID pour l'API
                 const databaseStore = useDatabaseStore();
                 const matchedEngine = databaseStore.availableEngines.find(eng => {
-                    // Comparaison souple : on ignore la casse et les espaces pour éviter les mismatches
-                    // Ex: "PostgreSQL" correspond à "postgresql" ou "postgre"
                     const normalizedName = eng.name.toLowerCase().replace(/\s+/g, '');
-                    const normalizedConfig = db.engine.toLowerCase().replace(/\s+/g, '');
-                    
-                    return normalizedName === normalizedConfig || eng.name.toLowerCase() === db.engine.toLowerCase();
+                    const normalizedConfig = store.pendingDatabaseEngine!.name.toLowerCase().replace(/\s+/g, '');
+                    return normalizedName === normalizedConfig || eng.name.toLowerCase() === store.pendingDatabaseEngine!.name.toLowerCase();
                 });
 
-                // 3. Sécurité : si on ne trouve pas de correspondance
                 if (!matchedEngine) {
-                    console.warn("[Wizard] Moteur non trouvé dans la liste. engine config:", db.engine);
                     store.setWizardError("Moteur de base de données invalide. Veuillez le sélectionner à nouveau.");
                     return false;
                 }
 
-                // 4. On a maintenant l'ID numérique requis par le contrat !
                 const engineId = matchedEngine.id;
-                console.log(`[Wizard] Sélection de la BDD validée. ID récupéré : ${engineId}`);
+                console.log(`[Wizard] Sélection de la BDD validée. ID récupéré :`, engineId);
                 
-                // 5. Appel du service avec l'ID
-                await svc.selectDatabase(engineId);
-                
+                console.log(svc);
+                // await svc.selectDatabase(engineId);
                 return true;
             } catch (error) {
                 store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection de la base de données.");
@@ -166,7 +156,9 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     4: {
         beforeNext: async (store, { svc }) => {
             try {
-                await svc.saveDatabaseConfig(store.stepperData.database);
+                console.log(svc);
+                console.log(`configuration de la base de donnée : `, JSON.stringify(store.stepperData.database, null, 2));
+                // await svc.saveDatabaseConfig(store.stepperData.database);
                 return true;
             } catch (error) {
                 store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des credentials.");
@@ -180,10 +172,12 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
         beforeNext: async (store, { svc }) => {
             const script = store.stepperData.script;
             if (script.path || script.content) {
-                try { await svc.saveScriptConfig(script); } 
+                try { 
+                    await svc.saveScriptConfig(script); 
+                } 
                 catch (error) { console.warn("Échec sauvegarde script (non bloquant):", error); }
             }
-            return true; // Toujours true car skippable
+            return true;
         }
     },
 
@@ -193,7 +187,7 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
             console.log("🔄 [Étape 6] Chargement des tables et vues...");
             try {
                 const tables = await svc.fetchTablesMetadata();
-                store.setAvailableTables(tables);
+                store.setAvailableTables(tables); // ✅ Reste dans GeneratorStore (contexte spécifique)
             } catch (error) {
                 console.error("❌ Échec chargement tables:", error);
             }
@@ -213,7 +207,8 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     7: {
         beforeNext: async (store, { svc }) => {
             try {
-                await svc.saveRelationParameters(store.relations); // Correction: store.relations au lieu de store.getRelations
+                // store.relations est un Ref unwrap par Pinia, c'est correct
+                await svc.saveRelationParameters(store.relations); 
                 return true;
             } catch (error) {
                 store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des relations.");
@@ -224,15 +219,18 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
 
     // ═══ ÉTAPE 8 : SÉLECTION FRONTEND (Skippable) ═══
     8: {
-        onEnter: async (store, { fdsvc }) => {
+        onEnter: async (_store, { fdsvc }) => {
             console.log("🔄 [Étape 8] Chargement des options Frontend...");
+            // ✅ Source de vérité : useFrontendStore
+            const frontendStore = useFrontendStore();
             try {
                 await Promise.all([
-                    fdsvc.fetchFrontendFrameworks().then(data => store.setAvailableFrontendFrameworks(data)),
-                    fdsvc.fetchInterfaceLanguages().then(data => store.setAvailableLanguages(data)),
+                    fdsvc.fetchFrontendFrameworks().then(data => frontendStore.setAvailableFrontendFrameworks(data)),
+                    fdsvc.fetchInterfaceLanguages().then(data => frontendStore.setAvailableInterfaceLanguages(data)), // ✅ Méthode renommée
                 ]);
             } catch (error) {
                 console.error("❌ Échec chargement options Frontend:", error);
+                _store.setWizardError("Impossible de charger les options frontend.");
             }
         },
         beforeNext: async (store, { svc }) => {

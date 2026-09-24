@@ -16,9 +16,9 @@ export function useDatabase() {
     const store = useDatabaseStore();
     
     // 2. Exposition réactive de l'état du store
-    const { 
+    const {
         availableEngines, 
-        isLoading, 
+        isLoading,
         connectionTestResult,
         hasEngines,
         isConnectionSuccessful,

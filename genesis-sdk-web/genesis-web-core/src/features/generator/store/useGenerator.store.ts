@@ -1,7 +1,7 @@
 // genesis-sdk-web/genesis-web-core/src/features/generator/store/useGenerator.store.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { FrontendFramework, Framework, InterfaceLanguage } from '@genesis-labs/shared-types';
+import type { FrontendFramework, Framework } from '@genesis-labs/shared-types';
 import type { 
     GeneratorData, ProjectConfig, DatabaseConfig, ScriptConfig, 
     ComponentType, TableMetadataDto, RelationParameter,  
@@ -19,9 +19,12 @@ export const useGeneratorStore = defineStore('generator', () => {
     const stepperData = ref<GeneratorData>(structuredClone(INITIAL_STATE));
 
     // ═══ ÉTAPE 1 : FRAMEWORK ═══
+    // hdqshdqsd
+    // dsqdsqdqsjbjkbkjb
     const pendingFramework = ref<Framework | null>(null);
+    const pendingDatabaseEngine = ref<DatabaseEngineDto | null>(null);
 
-    // ═══ ÉTAPE 2 : CONFIGURATION PROJET (Listes dynamiques) ═══
+    // ═══ ÉTAPE 2 : CONFIGURATION PROJET (Listes dynamiques spécifiques au générateur) ═══
     const availableLoggingLevels = ref<string[]>([]);
     const availableSecurityTypes = ref<string[]>([]);
     const availableCacheProviders = ref<string[]>([]);
@@ -38,19 +41,10 @@ export const useGeneratorStore = defineStore('generator', () => {
     // ═══ ÉTAPE 7 : RELATIONS ═══
     const relations = ref<RelationParameter[]>([]);
 
-    // ═══ ÉTAPE 8 & 9 : FRONTEND ═══
-    const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
-    const availableLanguages = ref<InterfaceLanguage[]>([]);
-
-    const availableDatabaseEngines = ref<DatabaseEngineDto[]>([]);
-
 
     // ═══════════════════════════════════════════════════════════
     // ═══ GETTERS (Computeds) ═══
     // ═══════════════════════════════════════════════════════════
-
-    // Global
-    // (Aucun getter global spécifique pour l'instant)
 
     // Étape 6 : Tables & Vues
     const getAvailableTables = computed(() => availableTables.value);
@@ -63,10 +57,6 @@ export const useGeneratorStore = defineStore('generator', () => {
     // Étape 7 : Relations
     const getRelations = computed(() => relations.value);
 
-    // Étape 8 & 9 : Frontend
-    const getAvailableFrontendFrameworks = computed(() => availableFrontendFrameworks.value);
-    const getAvailableLanguages = computed(() => availableLanguages.value);
-
     // Étape 2 : Config Projet
     const getAvailableLoggingLevels = computed(() => availableLoggingLevels.value);
     const getAvailableSecurityTypes = computed(() => availableSecurityTypes.value);
@@ -77,7 +67,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     const getAvailableBuildTools = computed(() => availableBuildTools.value);
 
 
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════  
     // ═══ ACTIONS ═══
     // ═══════════════════════════════════════════════════════════
 
@@ -94,16 +84,14 @@ export const useGeneratorStore = defineStore('generator', () => {
     function setPendingFramework(framework: Framework | null) {
         pendingFramework.value = framework;
     }
+
+    function setPendingDatabaseEngine(engine: DatabaseEngineDto | null) {
+        pendingDatabaseEngine.value = engine;
+    }
+
     function setFramework(framework: Framework) {
         console.log("💾 [Store] setFramework appelé avec :", framework);
         stepperData.value.framework = framework;
-        if (framework?.coreFramework === 'Spring') {
-            stepperData.value.config.buildTool = 'maven';
-            stepperData.value.config.languageVersion = '17';
-        } else if (framework?.coreFramework === 'Express') {
-            stepperData.value.config.buildTool = 'npm';
-            stepperData.value.config.languageVersion = '20';
-        }
     }
 
     // ── Étape 2 : Configuration Projet ──
@@ -173,12 +161,11 @@ export const useGeneratorStore = defineStore('generator', () => {
     }
     function removeRelation(index: number) { relations.value.splice(index, 1); }
 
-    // ── Étape 8 & 9 : Frontend ──
+    // ── Étape 8 & 9 : Frontend (Uniquement les actions modifiant stepperData) ──
     function setSelectedFrontendFramework(framework: FrontendFramework | null) {
         stepperData.value.frontend = framework;
         if (framework) stepperData.value.frontendLayout.port = framework.defaultPort;
     }
-    function setAvailableLanguages(data: InterfaceLanguage[]) { availableLanguages.value = data; }
     function updateFrontendLayout<K extends keyof FrontendLayoutConfig>(key: K, value: FrontendLayoutConfig[K]) { 
         (stepperData.value.frontendLayout as any)[key] = value; 
     }
@@ -200,9 +187,6 @@ export const useGeneratorStore = defineStore('generator', () => {
         }
     }
 
-    function setAvailableDatabaseEngines(data: DatabaseEngineDto[]) { availableDatabaseEngines.value = data; }
-    function setAvailableFrontendFrameworks(data: FrontendFramework[]) { availableFrontendFrameworks.value = data; }
-
 
     // ═══════════════════════════════════════════════════════════
     // ═══ RETURN ═══
@@ -219,10 +203,11 @@ export const useGeneratorStore = defineStore('generator', () => {
         getAvailableLoggingLevels, getAvailableSecurityTypes, getAvailableCacheProviders,
         getAvailableHibernateDdlAutoOptions, getAvailableLanguageVersions,
         getAvailableFrameworkVersions, getAvailableBuildTools,
+        pendingDatabaseEngine,
         updateConfig, setAvailableLoggingLevels, setAvailableSecurityTypes,
         setAvailableCacheProviders, setAvailableLanguageVersions, setAvailableFrameworkVersions,
         setAvailableBuildTools, setAvailableHibernateDdlAutoOptions,
-        setAvailableDatabaseEngines, setAvailableFrontendFrameworks,
+        setPendingDatabaseEngine,
 
         // Étape 3 & 4
         setDatabaseEngine, updateDatabase,
@@ -240,9 +225,7 @@ export const useGeneratorStore = defineStore('generator', () => {
         relations, getRelations, setRelations, addRelation, removeRelation,
 
         // Étape 8 & 9
-        availableFrontendFrameworks, getAvailableFrontendFrameworks,
-        availableLanguages, getAvailableLanguages,
-        setSelectedFrontendFramework, setAvailableLanguages, updateFrontendLayout, toggleLanguage,
+        setSelectedFrontendFramework, updateFrontendLayout, toggleLanguage,
 
         // Étape 10
         updateGitConfig,

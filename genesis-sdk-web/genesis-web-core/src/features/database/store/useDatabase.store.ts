@@ -1,8 +1,8 @@
+// genesis-sdk-web/genesis-web-core/src/features/database/store/useDatabase.store.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { DatabaseEngineDto, DatabaseConnectionTestResult } from '@genesis-labs/shared-types';
 import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
-
 
 export const useDatabaseStore = defineStore('database', () => {
     // ═══ État ═══
@@ -13,13 +13,9 @@ export const useDatabaseStore = defineStore('database', () => {
 
     // ═══ Getters ═══
     const hasEngines = computed(() => availableEngines.value.length > 0);
-    
-    const isConnectionSuccessful = computed(() => 
-        connectionTestResult.value?.success === true
-    );
+    const isConnectionSuccessful = computed(() => connectionTestResult.value?.success === true);
 
     // ═══ Actions (Mutations) ═══
-    
     function setAvailableEngines(data: DatabaseEngineDto[]) { 
         availableEngines.value = data; 
     }
@@ -44,7 +40,7 @@ export const useDatabaseStore = defineStore('database', () => {
         availableEngines.value = [];
         isLoading.value = false;
         connectionTestResult.value = null;
-        displayMode.value = 'grid'; // Reset à la valeur par défaut
+        displayMode.value = 'grid';
     }
 
     return {

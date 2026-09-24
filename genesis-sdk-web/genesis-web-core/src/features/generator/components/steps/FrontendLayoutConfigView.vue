@@ -163,11 +163,20 @@ const emit = defineEmits<{
 
 const { 
     stepperData, 
-    availableLanguages,
     fetchAvailableLanguages, 
     updateFrontendLayout, 
     toggleLanguage 
 } = useGenerator();
+
+// on corrige plus tard 
+const availableLanguages = ref<InterfaceLanguage[]>([
+    {
+        id: 0,
+        code: "none",
+        name: "sqdqsd"
+    }
+]);
+
 
 const layoutConfig = computed(() => stepperData.value.frontendLayout);
 const selectedFrontendName = computed(() => stepperData.value.frontend?.name || 'Non défini (Étape 7)');

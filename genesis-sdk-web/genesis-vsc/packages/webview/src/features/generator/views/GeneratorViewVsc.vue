@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { GeneratorStepper } from '@genesis-labs/web-core/features/generator/manifest';
 import { useGeneratorVsc } from '@/features/generator/composables/useGeneratorVsc';
-import type { FileRequestPayload } from '@genesis-labs/web-core/features/generator/manifest';
-import type { Framework } from '@genesis-labs/web-core/features/frameworks/manifest';
-import type { FrontendFramework } from '@genesis-labs/web-core/features/frontend/manifest';
+
 import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
+
+import { GeneratorStepper } from '@genesis-labs/web-core/features/generator/manifest';
+import { FrontendFramework } from '@genesis-labs/shared-types';
 
 const {
     currentStep,
@@ -12,7 +12,6 @@ const {
     isCurrentStepSkippable,
     goToPreviousStep,
     goToNextStep,
-    setFramework,
     setDatabaseEngine,
     setSelectedFrontendFramework,
     reset,
@@ -20,7 +19,8 @@ const {
     handleFileRequest,
     skipCurrentStep,
     stepperData,
-    setPendingFramework
+    setPendingFramework,
+    setPendingDatabaseEngine
 } = useGeneratorVsc();
 
 function handleClose() {
@@ -46,7 +46,7 @@ function onSelectFramework(framework: any) {
 }
 
 function onSelectDatabase(engine: DatabaseEngineDto) {
-    setDatabaseEngine(engine);
+    setPendingDatabaseEngine(engine);
 }
 
 function onSelectFrontend(framework: FrontendFramework) {

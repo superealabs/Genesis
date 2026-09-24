@@ -11,14 +11,14 @@ export const INITIAL_STATE: GeneratorData = {
         groupId: 'com.example',
         frameworkVersion: '',
         projectDescription: '',
-        projectPort: '',
-        loggingLevel: '',
-        securityType: '',
-        cacheProvider: ''
+        projectPort: 'none',
+        loggingLevel: 'none',
+        securityType: 'none',
+        cacheProvider: 'none'
     },
     database: {
         engine: 'postgre', host: 'localhost', port: 5432,
-        databaseName: '', schema: 'public', username: '', password: '',
+        databaseName: 'my_database', schema: 'public', username: '', password: '',
         driverType: 'org.postgresql.Driver',
         driverName: 'PostgreSQL JDBC Driver',
         sid: '', trustCertificate: false, allowPublicKeyRetrieval: false,

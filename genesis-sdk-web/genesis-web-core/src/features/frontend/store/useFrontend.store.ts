@@ -1,32 +1,37 @@
+// genesis-sdk-web/genesis-web-core/src/features/frontend/store/useFrontend.store.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { FrontendFramework } from '@genesis-labs/shared-types';
+import type { FrontendFramework, InterfaceLanguage } from '@genesis-labs/shared-types';
 import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
 
 export const useFrontendStore = defineStore('frontend', () => {
     // ═══ État Métier ═══
-    // ✅ RENOMMÉ : availableFrameworks -> availableFrontendFrameworks
     const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
-    // ✅ RENOMMÉ : selectedFramework -> selectedFrontendFramework
     const selectedFrontendFramework = ref<FrontendFramework | null>(null);
+    
+    // ✅ AJOUT : Source de vérité pour les langues d'interface
+    const availableInterfaceLanguages = ref<InterfaceLanguage[]>([]);
 
     // ═══ État UI ═══
     const displayMode = ref<DisplayMode>('grid');
     const searchQuery = ref('');
 
     // ═══ Getters ═══
-    // ✅ RENOMMÉ
     const hasSelectedFrontendFramework = computed(() => selectedFrontendFramework.value !== null);
+    const getAvailableInterfaceLanguages = computed(() => availableInterfaceLanguages.value);
 
     // ═══ Actions Métier ═══
-    // ✅ RENOMMÉ
     function setAvailableFrontendFrameworks(frameworks: FrontendFramework[]) {
         availableFrontendFrameworks.value = frameworks;
     }
 
-    // ✅ RENOMMÉ
     function selectFrontendFramework(framework: FrontendFramework) {
         selectedFrontendFramework.value = framework;
+    }
+
+    // ✅ AJOUT : Action pour les langues d'interface
+    function setAvailableInterfaceLanguages(languages: InterfaceLanguage[]) {
+        availableInterfaceLanguages.value = languages;
     }
 
     // ═══ Actions UI ═══
@@ -41,6 +46,7 @@ export const useFrontendStore = defineStore('frontend', () => {
     function reset() {
         availableFrontendFrameworks.value = [];
         selectedFrontendFramework.value = null;
+        availableInterfaceLanguages.value = []; // ✅ AJOUT
         displayMode.value = 'grid';
         searchQuery.value = '';
     }
@@ -49,15 +55,18 @@ export const useFrontendStore = defineStore('frontend', () => {
         // État
         availableFrontendFrameworks,
         selectedFrontendFramework,
+        availableInterfaceLanguages, // ✅ AJOUT
         displayMode,
         searchQuery,
         
         // Getters
         hasSelectedFrontendFramework,
+        getAvailableInterfaceLanguages, // ✅ AJOUT
         
         // Actions
         setAvailableFrontendFrameworks,
         selectFrontendFramework,
+        setAvailableInterfaceLanguages, // ✅ AJOUT
         setDisplayMode,
         setSearch,
         reset
