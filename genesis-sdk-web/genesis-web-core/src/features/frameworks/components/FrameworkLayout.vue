@@ -5,6 +5,7 @@
     :displayMode="displayMode"
     @update:searchValue="$emit('update:searchValue', $event)"
     @update:displayMode="$emit('update:displayMode', $event)"
+    @update:mode="$emit('update:mode', $event)"
     :mode="compareMode"
     :searchPlaceholder="searchPlaceholder"
     :showBackButton="showBackButton"
@@ -99,6 +100,7 @@ defineEmits<{
   'info': [framework: Framework];
   'update:searchValue': [value: string];
   'update:displayMode': [mode: DisplayMode];
+  'update:mode': [mode: 'selection' | 'compare'];
   'update:filters': [filters: any];
 }>();
 </script>
