@@ -352,7 +352,6 @@ public class ProjectGenerator {
                 Path serializerTarget = Paths.get(destination, serializer.getFileName() + "." + serializer.getExtension());
                 FileUtils.createFileStructure(destination);
                 Files.writeString(serializerTarget, engine.render(content, projectFilesEditsHashMap));
-                System.out.println(serializer + " @@" + destination);
             }
         }
 
@@ -540,18 +539,19 @@ public class ProjectGenerator {
 
         tableMetadata.setColumnsFrontendTypes(frontendLanguage, database);
         if (context.getFrontendGenerationOptions() != null && context.getFrontendGenerationOptions().contains(ProjectGenerationContext.FRONTEND_COMPONENT)) {
-            frontendGenerator.generateComponent(securityType,database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName,  generateComponentOnly);
+            frontendGenerator.generateComponent(securityType,database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, generateComponentOnly, context.getFormConfiguration());
         }
 
         if (context.getFrontendGenerationOptions() != null && context.getFrontendGenerationOptions().contains(ProjectGenerationContext.FRONTEND_COMPONENT_SERVICE)) {
-            frontendGenerator.generateService(securityType, database, frontendLanguage, frontendFramework, tableMetadata, webappFolder, projectName, generateComponentOnly);
+            frontendGenerator.generateService(securityType, database, frontendLanguage, frontendFramework, tableMetadata, webappFolder, projectName, generateComponentOnly, context.getFormConfiguration());
         }
 
         if (context.getFrontendGenerationOptions() != null && context.getFrontendGenerationOptions().contains(ProjectGenerationContext.FRONTEND_COMPONENT_MODEL)) {
-            frontendGenerator.generateModel(securityType, database, frontendLanguage, frontendFramework, tableMetadata, webappFolder, projectName, generateComponentOnly);
+            frontendGenerator.generateModel(securityType, database, frontendLanguage, frontendFramework, tableMetadata, webappFolder, projectName, generateComponentOnly, context.getFormConfiguration());
         }
 
-        HashMap<String, Object> tableHashMapData = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, webappFolder, projectName);
+        HashMap<String, Object> tableHashMapData = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(
+            tableMetadata, webappFolder, projectName, context.getFormConfiguration());
         if (tableMetadata.getIsParent()){
             renderFilesEdits(frontendFramework.getMereFiles(),tableHashMapData);
         }
@@ -662,7 +662,9 @@ public class ProjectGenerator {
             genesisGenerator.generateController(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
-        HashMap<String, Object> tableHashMapData = FrameworkMetadataProvider.getHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, renderedDestinationFolder, projectName, groupLink);
+        HashMap<String, Object> tableHashMapData = FrameworkMetadataProvider.getHashMapIntermediaire(
+            language, tableMetadata, framework, frameworkOptions, renderedDestinationFolder, projectName, groupLink,
+            context.getFormConfiguration());
         if (tableMetadata.getIsParent()){
             renderFilesEdits(framework.getMereFiles(),tableHashMapData);
         }

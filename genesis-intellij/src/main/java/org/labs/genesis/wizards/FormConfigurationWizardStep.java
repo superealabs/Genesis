@@ -4,7 +4,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import lombok.Getter;
-import org.labs.genesis.config.form.TableConfiguration;
+import org.labs.genesis.config.form.FieldConfiguration;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.context.GenerationContextManager;
@@ -12,6 +12,7 @@ import org.labs.genesis.forms.FormConfigurationForm;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Map;
 
 public class FormConfigurationWizardStep extends ModuleWizardStep {
 
@@ -34,7 +35,9 @@ public class FormConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public void updateStep() {
-        List<TableConfiguration> tables = form.getTablesConfiguration();
+        if(generationContextManager.getContext() == null) return;
+        Map<String, Map<String, FieldConfiguration>> tables = form.getTablesConfiguration();
+        generationContextManager.getContext().setFormConfiguration(tables);
     }
 
     @Override
@@ -57,16 +60,6 @@ public class FormConfigurationWizardStep extends ModuleWizardStep {
         if (selectedTable == null) {
             return;
         }
-
-        System.out.println(
-                "Selected table: "
-                        + selectedTable.getTableName()
-        );
-
-        System.out.println(
-                "Selected columns: "
-                        + selectedColumns
-        );
 
         /*
          * Plus tard, ici :

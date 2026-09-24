@@ -23,7 +23,7 @@
         "radio",
         "select",
         "autocomplete",
-        "upload"
+        "file"
       ]
     },
 
@@ -56,7 +56,7 @@
 
     "binary": {
       "components": [
-        "upload"
+        "file"
       ]
     },
 
@@ -176,9 +176,13 @@
       }
     },
 
-    "upload": {
+    "file": {
       "configuration": {
         "fields": [
+          {
+            "name": "upload directory",
+            "type": "text"
+          },
           {
             "name": "accept",
             "type": "multi-select",

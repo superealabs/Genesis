@@ -217,7 +217,9 @@ public class SyncGenerator extends ProjectGenerator {
             apiRemover.removeController(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
-        HashMap<String, Object> tableHashMapData = FrameworkMetadataProvider.getHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, renderedDestinationFolder, projectName, groupLink);
+        HashMap<String, Object> tableHashMapData = FrameworkMetadataProvider.getHashMapIntermediaire(
+            language, tableMetadata, framework, frameworkOptions, renderedDestinationFolder, projectName, groupLink,
+            context.getFormConfiguration());
         if (tableMetadata.getIsParent()){
             removeFilesEdits(framework.getMereFiles(),tableHashMapData);
         }
@@ -251,7 +253,8 @@ public class SyncGenerator extends ProjectGenerator {
             frontendRemover.removeModel(frontendLanguage, frontendFramework, tableMetadata, webappFolder, projectName, generateComponentOnly);
         }
 
-        HashMap<String, Object> tableHashMapData = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, webappFolder, projectName);
+        HashMap<String, Object> tableHashMapData = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(
+            tableMetadata, webappFolder, projectName, context.getFormConfiguration());
         if (tableMetadata.getIsParent()){
             removeFilesEdits(frontendFramework.getMereFiles(),tableHashMapData);
         }

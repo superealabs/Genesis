@@ -2,6 +2,7 @@ package org.labs.genesis.config.langage.generator.framework;
 
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.Constantes;
+import org.labs.genesis.config.form.FieldConfiguration;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -194,12 +195,24 @@ public class FrameworkMetadataProvider {
     }
 
     public static HashMap<String, Object> getHashMapIntermediaire(Language language, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) {
+        return getHashMapIntermediaire(language, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink, null);
+    }
+
+    public static HashMap<String, Object> getHashMapIntermediaire(
+            Language language,
+            TableMetadata tableMetadata,
+            Framework framework,
+            Map<String, Object> frameworkConfiguration,
+            String destinationFolder,
+            String projectName,
+            String groupLink,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         HashMap<String, Object> metadata = new HashMap<>();
 
         addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
-        metadata.put("fields", getFieldsList(tableMetadata, language));
-        metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
-        metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
+        metadata.put("fields", getFieldsList(tableMetadata, language, formConfiguration));
+        metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language, formConfiguration));
+        metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language, formConfiguration));
         metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
 
         return metadata;
@@ -335,9 +348,16 @@ public class FrameworkMetadataProvider {
     }
 
     private static List<Map<String, Object>> getFieldsList(TableMetadata tableMetadata, Language language) {
+        return getFieldsList(tableMetadata, language, null);
+    }
+
+    private static List<Map<String, Object>> getFieldsList(
+            TableMetadata tableMetadata,
+            Language language,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
-            Map<String, Object> fieldMap = getFieldHashMap(field, language, tableMetadata.getDatabase().getId());
+            Map<String, Object> fieldMap = getFieldHashMap(field, language, tableMetadata.getDatabase().getId(), tableMetadata.getTableName(), formConfiguration);
             fieldMap.put("djangoArgs", buildDjangoArgs(field));
             fields.add(fieldMap);
         }
@@ -428,10 +448,17 @@ public class FrameworkMetadataProvider {
     }
 
     private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata, Language language) {
+        return getFieldsPKList(tableMetadata, language, null);
+    }
+
+    private static List<Map<String, Object>> getFieldsPKList(
+            TableMetadata tableMetadata,
+            Language language,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         List<Map<String, Object>> fieldsPK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isPrimary()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field, language, tableMetadata.getDatabase().getId());
+                Map<String, Object> fieldMap = getFieldHashMap(field, language, tableMetadata.getDatabase().getId(), tableMetadata.getTableName(), formConfiguration);
                 fieldsPK.add(fieldMap);
             }
         }
@@ -439,10 +466,17 @@ public class FrameworkMetadataProvider {
     }
 
     private static List<Map<String, Object>> getFieldsFKList(TableMetadata tableMetadata, Language language) {
+        return getFieldsFKList(tableMetadata, language, null);
+    }
+
+    private static List<Map<String, Object>> getFieldsFKList(
+            TableMetadata tableMetadata,
+            Language language,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         List<Map<String, Object>> fieldsFK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field, language,tableMetadata.getDatabase().getId());
+                Map<String, Object> fieldMap = getFieldHashMap(field, language,tableMetadata.getDatabase().getId(), tableMetadata.getTableName(), formConfiguration);
 
                 String fieldType = field.getType();
 
@@ -496,7 +530,27 @@ public class FrameworkMetadataProvider {
         return fieldMap;
     }
 
+    public static @NotNull Map<String, Object> getFieldHashMap(
+            ColumnMetadata field,
+            String tableName,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
+        Map<String, Object> fieldMap = getFieldHashMap(field);
+        String type = getFormConfiguration(fieldMap, field, tableName, formConfiguration);
+        if(type != null)
+            fieldMap.put("uiType", type);
+        return fieldMap;
+    }
+
     public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field, Language language, int databaseId) {
+        return getFieldHashMap(field, language, databaseId, null, null);
+    }
+
+    public static @NotNull Map<String, Object> getFieldHashMap(
+            ColumnMetadata field,
+            Language language,
+            int databaseId,
+            String tableName,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         Map<String, Object> fieldMap = new HashMap<>();
 
         fieldMap.put("typeBase", field.getFrontEndType());
@@ -514,6 +568,8 @@ public class FrameworkMetadataProvider {
         } else if (field.isNumeric()) {
             uiType = "number";
         }
+        String type = getFormConfiguration(fieldMap, field, tableName, formConfiguration);
+        uiType = type != null ? type : uiType;
         fieldMap.put("uiType", uiType);
         System.out.println(
                 "FIELD=" + field.getName()
@@ -584,6 +640,26 @@ public class FrameworkMetadataProvider {
         fieldMap.put("isParentForeignKey",field.getIsParentForeignKey());
 
         return fieldMap;
+    }
+
+    private static String getFormConfiguration(
+            Map<String, Object> fieldMap,
+            ColumnMetadata field,
+            String tableName,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
+        FieldConfiguration configuredField = formConfiguration == null || tableName == null
+                ? null
+                : formConfiguration.getOrDefault(tableName, Map.of()).get(field.getName());
+        if (configuredField == null) {
+            return null;
+        }
+        if (configuredField.getConfiguration() != null && !configuredField.getConfiguration().isEmpty()) {
+            fieldMap.putAll(configuredField.getConfiguration());
+        }
+        if (configuredField.getComponent() != null && !configuredField.getComponent().isBlank()) {
+            return configuredField.getComponent();
+        }
+        return null;
     }
 
     public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName) throws Exception {

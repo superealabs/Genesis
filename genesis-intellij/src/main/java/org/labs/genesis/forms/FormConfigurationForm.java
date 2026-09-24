@@ -20,8 +20,8 @@ import com.intellij.util.ui.UIUtil;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.form.FieldConfiguration;
 import org.labs.genesis.config.form.FormConfiguration;
-import org.labs.genesis.config.form.TableConfiguration;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
@@ -38,7 +38,7 @@ import java.util.*;
 import java.util.List;
 
 public class FormConfigurationForm {
-    private List<TableConfiguration> tablesConf = new ArrayList<>();
+    private Map<String, Map<String, FieldConfiguration>> tablesConf = new HashMap<>();
 
     private static final String CARD_EMPTY = "empty";
     private static final String CARD_CONFIG = "config";
@@ -556,6 +556,7 @@ public class FormConfigurationForm {
 
     private JComponent createComponentSelector(ColumnConfiguration configuration) {
         List<ComponentOption> options = getComponentOptions(configuration);
+
         if (options.isEmpty()) {
             JBLabel none = new JBLabel("No component available");
             none.setForeground(JBColor.GRAY);
@@ -563,28 +564,30 @@ public class FormConfigurationForm {
         }
 
         ComboBox<ComponentOption> combo = new ComboBox<>();
+
+        // Première entrée = aucun choix utilisateur
+        combo.addItem(null);
+
         for (ComponentOption option : options) {
             combo.addItem(option);
         }
 
-        int index = 0;
+        combo.setRenderer(new ComponentComboRenderer());
+
+        // Si un component a déjà été choisi, on l'affiche.
         if (configuration.component != null) {
-            for (int i = 0; i < combo.getItemCount(); i++) {
+            for (int i = 1; i < combo.getItemCount(); i++) {
                 ComponentOption option = combo.getItemAt(i);
+
                 if (option.component.equals(configuration.component)
                         && Objects.equals(option.columnField, configuration.columnField)) {
-                    index = i;
+                    combo.setSelectedIndex(i);
                     break;
                 }
             }
+        } else {
+            combo.setSelectedIndex(0);
         }
-
-        combo.setSelectedIndex(index);
-
-        // Keep the model in sync with what is displayed
-        ComponentOption current = combo.getItemAt(index);
-        configuration.component = current.component;
-        configuration.columnField = current.columnField;
 
         Dimension size = combo.getPreferredSize();
         combo.setPreferredSize(new Dimension(
@@ -596,14 +599,23 @@ public class FormConfigurationForm {
             if (updatingUI) {
                 return;
             }
-            ComponentOption option = (ComponentOption) combo.getSelectedItem();
+
+            ComponentOption option =
+                    (ComponentOption) combo.getSelectedItem();
+
             if (option == null) {
-                return;
+                configuration.component = null;
+                configuration.columnField = null;
+            } else {
+                configuration.component = option.component;
+                configuration.columnField = option.columnField;
+                updateTableConfiguration(selectedTable.getTableName(),
+                        configuration.column.getReferencedColumn(), option.component);
             }
-            configuration.component = option.component;
-            configuration.columnField = option.columnField;
+
             configuration.assignedColumns.clear();
             configuration.values.clear();
+
             rebuildLater();
         });
 
@@ -699,12 +711,21 @@ public class FormConfigurationForm {
             if (updatingUI) {
                 return;
             }
-            ColumnMetadata value = (ColumnMetadata) combo.getSelectedItem();
+
+            ColumnMetadata value =
+                    (ColumnMetadata) combo.getSelectedItem();
+
             if (value == null) {
                 configuration.assignedColumns.remove(field.getName());
             } else {
                 configuration.assignedColumns.put(field.getName(), value);
             }
+
+            updateFieldConfiguration(selectedTable.getTableName(),
+                    configuration.columnField, field.getName(), field.getType(),
+                    value != null ? selectedTable.getTableName() +
+                            "." + value.getReferencedColumn() : null);
+
             rebuildLater();
         });
 
@@ -736,6 +757,7 @@ public class FormConfigurationForm {
                 return;
             }
             configuration.values.put(field.getName(), (String) combo.getSelectedItem());
+            updateFieldConfiguration(selectedTable.getTableName(), configuration.column.getReferencedColumn(), field.getName(), field.getType(), (String) combo.getSelectedItem());
         });
 
         return combo;
@@ -766,6 +788,8 @@ public class FormConfigurationForm {
                         }
                     }
                     configuration.values.put(field.getName(), String.join(",", checked));
+                    updateFieldConfiguration(selectedTable.getTableName(),
+                            configuration.column.getReferencedColumn(), field.getName(), field.getType(), String.join(",", checked));
                 });
 
                 panel.add(checkBox);
@@ -793,6 +817,7 @@ public class FormConfigurationForm {
             protected void textChanged(@NotNull DocumentEvent e) {
                 if (!updatingUI) {
                     configuration.values.put(field.getName(), textField.getText());
+                    updateFieldConfiguration(selectedTable.getTableName(), configuration.column.getReferencedColumn(), field.getName(), field.getType(), textField.getText());
                 }
             }
         });
@@ -1107,6 +1132,32 @@ public class FormConfigurationForm {
         }
     }
 
+    private static class ComponentComboRenderer
+            extends ColoredListCellRenderer<ComponentOption> {
+
+        @Override
+        protected void customizeCellRenderer(
+                @NotNull JList<? extends ComponentOption> list,
+                ComponentOption value,
+                int index,
+                boolean selected,
+                boolean hasFocus
+        ) {
+            if (value == null) {
+                append(
+                        "Default component",
+                        SimpleTextAttributes.GRAYED_ATTRIBUTES
+                );
+                return;
+            }
+
+            append(
+                    value.toString(),
+                    SimpleTextAttributes.REGULAR_ATTRIBUTES
+            );
+        }
+    }
+
     private static class ColumnComboRenderer extends ColoredListCellRenderer<ColumnMetadata> {
 
         @Override
@@ -1132,62 +1183,47 @@ public class FormConfigurationForm {
         }
     }
 
-    private void updateTablesConfiguration() {
-        List<TableConfiguration> result = new ArrayList<>();
-
-        for (TableMetadata table : tables) {
-            Map<String, ColumnConfiguration> configurations =
-                    configurationsByTable.get(table.getTableName());
-
-            if (configurations == null) {
-                continue;
-            }
-
-            TableConfiguration tableConfiguration = new TableConfiguration();
-            tableConfiguration.setName(table.getTableName());
-
-            for (ColumnConfiguration configuration : configurations.values()) {
-
-                if (!isConfigurable(configuration.column)) {
-                    continue;
-                }
-
-                if (configuration.component == null) {
-                    continue;
-                }
-
-                TableConfiguration.FieldConfiguration field =
-                        new TableConfiguration.FieldConfiguration();
-
-                field.setColumn(configuration.column.getName());
-                field.setComponent(configuration.component);
-
-                for (Map.Entry<String, ColumnMetadata> entry
-                        : configuration.assignedColumns.entrySet()) {
-
-                    ColumnMetadata assignedColumn = entry.getValue();
-
-                    if (assignedColumn != null) {
-                        field.getColumns().put(
-                                entry.getKey(),
-                                assignedColumn.getName()
-                        );
-                    }
-                }
-
-                field.getConfiguration().putAll(configuration.values);
-
-                tableConfiguration.getFields().add(field);
-            }
-
-            result.add(tableConfiguration);
+    private void updateTableConfiguration(String tableName, String columnName, String component) {
+        if (tableName == null || tableName.isBlank()
+                || columnName == null || columnName.isBlank()) {
+            return;
         }
 
-        tablesConf = result;
+        Map<String, FieldConfiguration> tableConf =
+                tablesConf.computeIfAbsent(tableName, k -> new HashMap<>());
+
+        if (component == null || component.isBlank()) {
+            tableConf.remove(columnName);
+            if (tableConf.isEmpty()) {
+                tablesConf.remove(tableName);
+            }
+            return;
+        }
+
+        FieldConfiguration fieldConf =
+                tableConf.computeIfAbsent(columnName, k -> new FieldConfiguration());
+
+        fieldConf.setComponent(component);
     }
 
-    public List<TableConfiguration> getTablesConfiguration() {
-        updateTablesConfiguration();
+    private void updateFieldConfiguration(String tableName, String columnName, String configuration, String type, String value) {
+        if(tableName == null || tableName.isBlank() || columnName == null
+                || columnName.isBlank()) return;
+
+        Map<String, FieldConfiguration> tableConf = tablesConf.get(tableName);
+        if(tableConf != null) {
+            FieldConfiguration fieldConf = tableConf.get(columnName);
+            if (fieldConf != null) {
+                if (configuration != null && value != null && !value.isBlank()) {
+                    fieldConf.addConfig(configuration, value, type);
+                } else if (configuration != null) {
+                    fieldConf.removeConf(configuration);
+                }
+            }
+        }
+    }
+
+    public Map<String, Map<String, FieldConfiguration>>getTablesConfiguration() {
         return tablesConf;
     }
 }
