@@ -40,6 +40,7 @@ export function useWizardFramework(onSelect: (framework: Framework, event?: Mous
     return {
         // Retourne les refs directement (Vue les déballera dans le template)
         frameworks: fw.frameworks,
+        languages: fw.languages,
         selectedId: fw.selectedId,
         displayMode: fw.displayMode,
         compareMode: fw.compareMode,

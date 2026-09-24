@@ -7,6 +7,7 @@ import { FRAMEWORK_SERVICE_KEY, type IFrameworkService } from '@genesis-labs/web
 import { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store';
 import { useCompareSlotsWithPopup } from '@genesis-labs/web-core/core/composables/ux/useCompareSlotsWithPopup';
 
+
 export function useFrameworks() {
     // 1. Récupération du service via inject
     const service = inject(FRAMEWORK_SERVICE_KEY);
@@ -19,7 +20,8 @@ export function useFrameworks() {
     const svc = service as IFrameworkService;
 
     const store = useFrameworkStore();
-    const { filteredFrameworks, displayMode, filters, searchQuery, isLoading } = storeToRefs(store);
+    const { filteredFrameworks, displayMode, filters, searchQuery, isLoading, languages } = storeToRefs(store);
+
 
     const compare = useCompareSlotsWithPopup<Framework>({
         slots: ['A', 'B', 'C', 'D'],
@@ -44,12 +46,14 @@ export function useFrameworks() {
     async function initialize() {
         store.setLoading(true);
         try {
-            const data = await svc.fetchFrameworks();
-            if (data != null) {
-                console.log("récupération reussi")
-            }
-            console.log(data)
-            store.setFrameworks(data);                    
+            // 1. Récupérer les frameworks
+            const frameworksData = await svc.fetchFrameworks();
+            store.setFrameworks(frameworksData);
+            
+
+            const languagesData = await svc.fetchLanguages();
+            store.setLanguages(languagesData);
+            
         } catch (error) {
             console.error('[useFrameworks] Erreur lors du chargement:', error);
         } finally {
@@ -81,6 +85,7 @@ export function useFrameworks() {
 
     return {
         frameworks: filteredFrameworks,
+        languages,
         selectedId: currentSelectedId,
         displayMode,
         frameworkSlots: frameworkSlotsMap,

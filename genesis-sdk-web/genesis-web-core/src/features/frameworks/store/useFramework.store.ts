@@ -3,9 +3,12 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Framework, FrameworkFilters } from '@genesis-labs/shared-types';
 import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+import { Language } from '@genesis-labs/shared-types';
+
 
 export const useFrameworkStore = defineStore('framework', () => {
     const frameworks = ref<Framework[]>([]);
+        const languages = ref<Language[]>([]);
     const searchQuery = ref('');
     const filters = ref<FrameworkFilters>({});
     const displayMode = ref<DisplayMode>('grid');
@@ -35,13 +38,15 @@ export const useFrameworkStore = defineStore('framework', () => {
     });
 
     function setFrameworks(data: Framework[]) { frameworks.value = data; }
+    function setLanguages(data: Language[]) { languages.value = data; } // ✅ AJOUT
+
     function setSearch(query: string) { searchQuery.value = query; }
     function setFilters(newFilters: FrameworkFilters) { filters.value = { ...filters.value, ...newFilters }; }
     function setDisplayMode(mode: DisplayMode) { displayMode.value = mode; }
     function setLoading(state: boolean) { isLoading.value = state; }
 
     return {
-        frameworks, searchQuery, filters, displayMode, isLoading, filteredFrameworks,
-        isFilterOpen, detailFramework, setFrameworks, setSearch, setFilters, setDisplayMode, setLoading
+        frameworks, languages, searchQuery, filters, displayMode, isLoading, filteredFrameworks,
+        isFilterOpen, detailFramework, setFrameworks, setSearch, setFilters, setDisplayMode, setLoading, setLanguages
     };
 });

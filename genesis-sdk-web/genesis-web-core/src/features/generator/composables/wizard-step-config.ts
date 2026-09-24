@@ -35,6 +35,11 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
                 // ✅ Source de vérité : useFrameworkStore
                 const frameworkStore = useFrameworkStore();
                 frameworkStore.setFrameworks(data);
+
+                const languagesData = await fsvc.fetchLanguages();
+                frameworkStore.setLanguages(languagesData);
+                console.log("✅ Récupération réussie :", languagesData.length, "langues");
+
             } catch (error) {
                 console.error("❌ Échec chargement frameworks:", error);
                 _store.setWizardError("Impossible de charger la liste des frameworks.");

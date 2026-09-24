@@ -15,6 +15,9 @@
         <FrameworkLayout
             v-if="props.currentStep === 1"
             v-bind="frameworkLayoutProps"
+            :group-by="frameworkGroupBy"
+            :languages="languages"
+            @update:groupBy="frameworkGroupBy = $event"
             @back="emit('close')"
             @openFilter="openFilter"
             @closeFilter="closeFilter"
@@ -109,6 +112,8 @@ import { useWizardFrontend } from '../../frontend/composables/useWizardFrontend'
 const store = useGeneratorStore();
 const stepContentClass = 'overflow-y-auto';
 
+const frameworkGroupBy = ref<keyof Framework | null>('coreFramework'); 
+
 const props = defineProps<{ currentStep: number; totalSteps: number; isSkippable?: boolean }>();
 
 const emit = defineEmits<{
@@ -126,7 +131,8 @@ const {
     replaceOptions, showReplacePopup, mouseX, mouseY, filters, detailFramework,
     isFilterOpen, pendingFramework, isLoading, setSearch, setFilters,
     setDisplayMode, handleModeChange, handleSelectWrapper, handleReplaceSelection,
-    cancelReplace, openFilter, closeFilter, closeDetail, handleInfo
+    cancelReplace, openFilter, closeFilter, closeDetail, handleInfo,
+    languages
 } = useWizardFramework((framework: Framework) => {
     emit('select-framework', framework);
 });
@@ -194,7 +200,8 @@ const frameworkLayoutProps = computed<FrameworkLayoutProps>(() => ({
     detailFramework: detailFramework.value,
     isFilterOpen: isFilterOpen.value,
     pendingFramework: pendingFramework.value,
-    isLoading: isLoading.value
+    isLoading: isLoading.value,
+    groupBy: frameworkGroupBy.value,
 }));
 
 const databaseLayoutProps = computed<DatabaseLayoutProps>(() => ({
