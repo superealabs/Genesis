@@ -9,3 +9,7 @@ propre veut dire, respect de la responsabilité unique. les variables d'états d
 Reutilisable, si une même logique peut revenir plusieurs fois selon le contexte, alors il faut soit le transformer en component, soit en composable, soit en fonction, principe de DRY. Si le store d'une feature peu être reutiliser, alors à reutiliser
 
 Ordonnée car les variables doivent être regroupper entre eux, les setter et getter d'une même entité, les fonctions métiers dans un fichiers
+
+
+Documentation ciblée : Ajout de commentaires explicatifs (de préférence au format JSDoc au-dessus de la fonction) pour toute fonction dont la logique n'est pas immédiatement évidente. Les fonctions triviales (comme les simples setters) n'en auront pas besoin pour éviter de polluer le code.
+Zéro emoji : Suppression de tous les emojis dans les commentaires, les logs (console.log), les messages d'erreur et les chaînes de caractères. Le code doit rester sobre et professionnel.

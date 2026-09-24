@@ -36,7 +36,7 @@
   <BaseFormPopup
     v-if="isFilterOpen"
     title="Filtres des Frameworks"
-    :size="'lg'"
+    size="lg"
     @close="$emit('closeFilter')"
   >
     <FrameworkFilter 
@@ -55,16 +55,19 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Language } from '@genesis-labs/shared-types';
+import type { Framework, Language } from '@genesis-labs/shared-types';
+import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+
 import FrameworkList from './FrameworkList.vue'; 
 import FrameworkFilter from './FrameworkFilter.vue'; 
 import FrameworkDetail from './FrameworkDetail.vue'; 
 import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
 import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
-import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
-import type { Framework } from '@genesis-labs/shared-types';
-import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
 
+// ============================================================================
+// 1. INTERFACE DES PROPS
+// ============================================================================
 export interface FrameworkLayoutProps {
   title?: string;
   searchQuery: string;
@@ -98,15 +101,23 @@ const props = withDefaults(defineProps<FrameworkLayoutProps>(), {
   groupLabels: () => ({})
 });
 
+// ============================================================================
+// 2. EMITS
+// ============================================================================
 defineEmits<{
+  // Navigation
   'back': [];
   'openFilter': [];
   'closeFilter': [];
   'closeDetail': [];
+  
+  // Actions utilisateur
   'select-replace': [slotId: string | number];
   'close-replace': [];
   'select': [framework: Framework, event?: MouseEvent];
   'info': [framework: Framework];
+  
+  // Mises à jour réactives (v-model)
   'update:searchValue': [value: string];
   'update:displayMode': [mode: DisplayMode];
   'update:mode': [mode: 'selection' | 'compare'];
@@ -114,29 +125,44 @@ defineEmits<{
   'update:groupBy': [value: keyof Framework | null];
 }>();
 
+// ============================================================================
+// 3. CONSTANTES DE CONFIGURATION
+// ============================================================================
+/**
+ * Options disponibles pour le menu de regroupement.
+ * Les valeurs doivent correspondre exactement aux clés de l'interface Framework.
+ */
 const frameworkGroupOptions: { label: string; value: keyof Framework | null }[] = [
   { label: 'Tous les frameworks', value: null },
   { label: 'Par Core Framework', value: 'coreFramework' },
-  { label: 'Par Langage', value: 'languageId' }, // Vérifie bien que c'est 'languageId' et pas 'language' dans ton interface
+  { label: 'Par Langage', value: 'languageId' },
   { label: 'Statut Production', value: 'isProd' }
 ];
 
+// ============================================================================
+// 4. COMPUTEDS (LOGIQUE METIER LOCALE)
+// ============================================================================
+/**
+ * Génère un dictionnaire de traduction pour le composant générique GenesisGroupedList.
+ * 
+ * Pourquoi c'est nécessaire : Le composant générique ne connaît que les IDs bruts 
+ * (ex: languageId = 1). Ce computed transforme ces IDs en noms lisibles (ex: "Java") 
+ * en utilisant les données récupérées depuis l'API, tout en fournissant des valeurs 
+ * par défaut pour les types booléens et les valeurs nulles.
+ */
 const dynamicGroupLabels = computed<Record<string | number, string>>(() => {
-  console.log('🔍 languages reçues:', props.languages); // ← AJOUTE CE LOG
-  
   const labels: Record<string | number, string> = {
     'null': 'Non spécifié',
+    'undefined': 'Non spécifié',
     'true': 'Prêt pour la Production',
     'false': 'En Développement'
   };
 
   if (props.languages && props.languages.length > 0) {
-    props.languages.forEach(lang => {
+    props.languages.forEach((lang) => {
       labels[lang.id] = lang.name;
     });
   }
-  
-  console.log('📖 dynamicGroupLabels généré:', labels); // ← AJOUTE CE LOG
   
   return labels;
 });
