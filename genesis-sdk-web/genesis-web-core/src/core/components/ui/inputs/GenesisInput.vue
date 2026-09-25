@@ -50,7 +50,9 @@
                         {{ modelValue || placeholder || 'Sélectionner...' }}
                     </span>
                 </template>
-                <slot />
+                <template #default="{ close }">
+                    <slot :close="close" />
+                </template>
             </GenesisDropdown>
         </template>
 

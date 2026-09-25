@@ -1,78 +1,101 @@
+// genesis-sdk-web/genesis-web-core/src/features/frontend/store/useFrontend.store.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+
+// Types
 import type { FrontendFramework, InterfaceLanguage } from '@genesis-labs/shared-types';
-import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
 
 export const useFrontendStore = defineStore('frontend', () => {
-    // ═══ État Métier ═══
-    const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
-    const selectedFrontendFramework = ref<FrontendFramework | null>(null);
-    const availableInterfaceLanguages = ref<InterfaceLanguage[]>([]);
 
-    // ═══ État UI ═══
-    const displayMode = ref<DisplayMode>('grid');
-    const searchQuery = ref('');
-    const isLoading = ref(false); // ✅ AJOUT : Pour gérer le spinner de chargement
+  // ==========================================================================
+  // 1. ÉTAT (STATE) - Groupé par domaine
+  // ==========================================================================
+  
+  // Domaine : Données métier
+  const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
+  const selectedFrontendFramework = ref<FrontendFramework | null>(null);
+  const availableInterfaceLanguages = ref<InterfaceLanguage[]>([]);
 
-    // ═══ Getters ═══
-    const hasSelectedFrontendFramework = computed(() => selectedFrontendFramework.value !== null);
-    const getAvailableInterfaceLanguages = computed(() => availableInterfaceLanguages.value);
+  // Domaine : Interface Utilisateur (UI)
+  const displayMode = ref<DisplayMode>('grid');
+  const searchQuery = ref('');
+  const isLoading = ref(false);
 
-    // ═══ Actions Métier ═══
-    function setAvailableFrontendFrameworks(frameworks: FrontendFramework[]) {
-        availableFrontendFrameworks.value = frameworks;
-    }
 
-    function selectFrontendFramework(framework: FrontendFramework) {
-        selectedFrontendFramework.value = framework;
-    }
+  // ==========================================================================
+  // 2. GETTERS (COMPUTED) - Dérivés de l'état
+  // ==========================================================================
+  
+  const hasSelectedFrontendFramework = computed(() => selectedFrontendFramework.value !== null);
+  
+  const getAvailableInterfaceLanguages = computed(() => availableInterfaceLanguages.value);
 
-    function setAvailableInterfaceLanguages(languages: InterfaceLanguage[]) {
-        availableInterfaceLanguages.value = languages;
-    }
 
-    // ═══ Actions UI ═══
-    function setDisplayMode(mode: DisplayMode) {
-        displayMode.value = mode;
-    }
+  // ==========================================================================
+  // 3. ACTIONS - Groupées par domaine
+  // ==========================================================================
+  
+  // Actions : Données métier
+  function setAvailableFrontendFrameworks(frameworks: FrontendFramework[]) {
+    availableFrontendFrameworks.value = frameworks;
+  }
 
-    function setSearch(query: string) {
-        searchQuery.value = query;
-    }
+  function selectFrontendFramework(framework: FrontendFramework) {
+    selectedFrontendFramework.value = framework;
+  }
 
-    function setLoading(state: boolean) { // ✅ AJOUT
-        isLoading.value = state;
-    }
+  function setAvailableInterfaceLanguages(languages: InterfaceLanguage[]) {
+    availableInterfaceLanguages.value = languages;
+  }
 
-    function reset() {
-        availableFrontendFrameworks.value = [];
-        selectedFrontendFramework.value = null;
-        availableInterfaceLanguages.value = [];
-        displayMode.value = 'grid';
-        searchQuery.value = '';
-        isLoading.value = false; // ✅ AJOUT
-    }
+  // Actions : Interface Utilisateur (UI)
+  function setDisplayMode(mode: DisplayMode) {
+    displayMode.value = mode;
+  }
 
-    return {
-        // État
-        availableFrontendFrameworks,
-        selectedFrontendFramework,
-        availableInterfaceLanguages,
-        displayMode,
-        searchQuery,
-        isLoading, // ✅ AJOUT
-        
-        // Getters
-        hasSelectedFrontendFramework,
-        getAvailableInterfaceLanguages,
-        
-        // Actions
-        setAvailableFrontendFrameworks,
-        selectFrontendFramework,
-        setAvailableInterfaceLanguages,
-        setDisplayMode,
-        setSearch,
-        setLoading, // ✅ AJOUT
-        reset
-    };
+  function setSearch(query: string) {
+    searchQuery.value = query;
+  }
+
+  function setLoading(state: boolean) {
+    isLoading.value = state;
+  }
+
+  // Action : Réinitialisation complète du store
+  function reset() {
+    availableFrontendFrameworks.value = [];
+    selectedFrontendFramework.value = null;
+    availableInterfaceLanguages.value = [];
+    displayMode.value = 'grid';
+    searchQuery.value = '';
+    isLoading.value = false;
+  }
+
+
+  // ==========================================================================
+  // 4. RETURN - Ordre identique à la déclaration
+  // ==========================================================================
+  return {
+    // État
+    availableFrontendFrameworks,
+    selectedFrontendFramework,
+    availableInterfaceLanguages,
+    displayMode,
+    searchQuery,
+    isLoading,
+    
+    // Getters
+    hasSelectedFrontendFramework,
+    getAvailableInterfaceLanguages,
+    
+    // Actions
+    setAvailableFrontendFrameworks,
+    selectFrontendFramework,
+    setAvailableInterfaceLanguages,
+    setDisplayMode,
+    setSearch,
+    setLoading,
+    reset
+  };
 });

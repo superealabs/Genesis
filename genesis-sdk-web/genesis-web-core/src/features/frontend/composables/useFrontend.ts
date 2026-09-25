@@ -1,103 +1,147 @@
+// genesis-sdk-web/genesis-web-core/src/features/frontend/composables/useFrontend.ts
 import { inject, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 
+// Types
 import type { FrontendFramework } from '@genesis-labs/shared-types';
-import { IFrontendService, FRONTEND_SERVICE_KEY } from '@genesis-labs/web-core/features/frontend/types/frontend.service.interface';
-import { useFrontendStore } from '@genesis-labs/web-core/features/frontend/store/useFrontend.store';
+
+// Services & Stores
+import { FRONTEND_SERVICE_KEY, type IFrontendService } from '../types/frontend.service.interface';
+import { useFrontendStore } from '../store/useFrontend.store';
+
+// Composables
 import { useCompareSlotsWithPopup } from '@genesis-labs/web-core/core/composables/ux/useCompareSlotsWithPopup';
 
+/**
+ * Composable métier pour la gestion des frameworks frontend.
+ * 
+ * Il orchestre le chargement des frameworks, la gestion de l'état via le store,
+ * et la logique de sélection/comparaison multiple via un composable générique.
+ */
 export function useFrontend() {
-    const service = inject(FRONTEND_SERVICE_KEY);
-    if (!service) {
-        throw new Error('[useFrontend] IFrontendService non fourni. Vérifiez app.provide() dans main.ts');
-    }
+  // ==========================================================================
+  // 1. INJECTION & STORE
+  // ==========================================================================
+  const service = inject(FRONTEND_SERVICE_KEY);
+  if (!service) {
+    throw new Error('[useFrontend] IFrontendService non fourni. Vérifiez app.provide() dans main.ts');
+  }
 
-    const svc = service as IFrontendService;
-    const store = useFrontendStore();
+  const svc = service as IFrontendService;
+  const store = useFrontendStore();
+
+  // ==========================================================================
+  // 2. ÉTAT RÉACTIF (Depuis le store)
+  // ==========================================================================
+  const { 
+    availableFrontendFrameworks, 
+    displayMode,
+    searchQuery,
+    isLoading
+  } = storeToRefs(store);
+
+  // ==========================================================================
+  // 3. ÉTAT LOCAL & LOGIQUE DE COMPARAISON
+  // ==========================================================================
+  const compare = useCompareSlotsWithPopup<FrontendFramework>({
+    slots: ['A', 'B', 'C', 'D'],
+    getId: (fw) => fw.id
+  });
+
+  const { mode: compareMode, slots: compareSlots, selectedItem } = compare;
+
+  // ==========================================================================
+  // 4. COMPUTEDS (Données dérivées)
+  // ==========================================================================
+  const currentSelectedId = computed(() => {
+    return compareMode.value === 'selection' ? selectedItem.value?.id : undefined;
+  });
+
+  const frontendFrameworkSlotsMap = computed(() => {
+    if (compareMode.value !== 'compare') return new Map<number, string>();
+    const map = new Map<number, string>();
+    for (const [slot, fw] of Object.entries(compareSlots.value)) {
+      if (fw) map.set(fw.id, slot);
+    }
+    return map;
+  });
+
+  // ==========================================================================
+  // 5. ACTIONS MÉTIER
+  // ==========================================================================
+
+  /**
+   * Initialise les données en récupérant la liste des frameworks frontend
+   * depuis le service et en mettant à jour le store.
+   */
+  async function initialize() {
+    store.setLoading(true);
+    try {
+      const data = await svc.fetchFrontendFrameworks();
+      store.setAvailableFrontendFrameworks(data);
+    } catch (error) {
+      console.error('[useFrontend] Erreur lors du chargement des frameworks frontend:', error);
+    } finally {
+      store.setLoading(false);
+    }
+  }
+
+  /**
+   * Wrapper autour de la logique de sélection du composable de comparaison.
+   * Permet de gérer les cas où un remplacement de slot est nécessaire.
+   */
+  async function handleSelect(framework: FrontendFramework, event?: MouseEvent) {
+    const result = compare.handleSelect(framework, event);
+    if (result.action === 'pending-replace') {
+      return { action: 'replace-needed' as const, event, framework };
+    }
+    return { action: result.action, event, framework };
+  }
+
+  function handleReplace(slotId: string | number, framework: FrontendFramework) {
+    compare.replaceSlot(slotId, framework);
+  }
+
+  function handleModeChange(newMode: 'selection' | 'compare') {
+    compare.switchMode(newMode);
+  }
+
+  function handleInfo(framework: FrontendFramework) {
+    console.log('[useFrontend] Détails demandés pour :', framework.name);
+  }
+
+  // ==========================================================================
+  // 6. RETOUR FINAL (Ordonné par domaine)
+  // ==========================================================================
+  return {
+    // Données
+    availableFrontendFrameworks,
+    searchQuery,
     
-    const { 
-        availableFrontendFrameworks, 
-        displayMode,
-        searchQuery,
-        isLoading // ✅ AJOUT
-    } = storeToRefs(store);
-
-    const compare = useCompareSlotsWithPopup<FrontendFramework>({
-        slots: ['A', 'B', 'C', 'D'],
-        getId: (fw) => fw.id
-    });
-
-    const { mode: compareMode, slots: compareSlots, selectedItem } = compare;
-
-    const currentSelectedId = computed(() => {
-        return compareMode.value === 'selection' ? selectedItem.value?.id : undefined;
-    });
-
-    const frontendFrameworkSlotsMap = computed(() => {
-        if (compareMode.value !== 'compare') return new Map<number, string>();
-        const map = new Map<number, string>();
-        for (const [slot, fw] of Object.entries(compareSlots.value)) {
-            if (fw) map.set(fw.id, slot);
-        }
-        return map;
-    });
-
-    async function initialize() {
-        store.setLoading(true); // ✅ AJOUT
-        try {
-            const data = await svc.fetchFrontendFrameworks();
-            store.setAvailableFrontendFrameworks(data);
-        } catch (error) {
-            console.error('[useFrontend] Erreur lors du chargement des frameworks frontend:', error);
-        } finally {
-            store.setLoading(false); // ✅ AJOUT
-        }
-    }
-
-    async function handleSelect(framework: FrontendFramework, event?: MouseEvent) {
-        const result = compare.handleSelect(framework, event);
-        if (result.action === 'pending-replace') {
-            return { action: 'replace-needed' as const, event, framework };
-        }
-        return { action: result.action, event, framework };
-    }
-
-    async function handleReplace(slotId: string | number, framework: FrontendFramework) {
-        compare.replaceSlot(slotId, framework);
-    }
-
-    function handleModeChange(newMode: 'selection' | 'compare') {
-        compare.switchMode(newMode);
-    }
-
-    // ✅ AJOUT : Pour satisfaire l'interface du Wizard (même si c'est un placeholder pour l'instant)
-    function handleInfo(framework: FrontendFramework) {
-        console.log("Détails demandés pour :", framework.name);
-    }
-
-    return {
-        availableFrontendFrameworks,
-        selectedId: currentSelectedId,
-        frontendFrameworkSlots: frontendFrameworkSlotsMap,
-        displayMode,
-        searchQuery,
-        isLoading, // ✅ AJOUT
-        compareMode,
-        compare,
-        initialize,
-        handleSelect,
-        handleReplace,
-        handleModeChange,
-        handleInfo, // ✅ AJOUT
-        reset: store.reset,
-        setSearch: store.setSearch,
-        setDisplayMode: store.setDisplayMode, // ✅ AJOUT
-        
-        showReplacePopup: compare.showReplacePopup,
-        pendingFramework: compare.pendingItem,
-        mouseX: compare.mouseX,
-        mouseY: compare.mouseY,
-        cancelReplace: compare.cancelReplace,
-        triggerReplace: compare.triggerReplace
-    };
+    // État UI
+    displayMode,
+    isLoading,
+    selectedId: currentSelectedId,
+    frontendFrameworkSlots: frontendFrameworkSlotsMap,
+    compareMode,
+    
+    // Comparaison & Popup
+    compare,
+    showReplacePopup: compare.showReplacePopup,
+    pendingFramework: compare.pendingItem,
+    mouseX: compare.mouseX,
+    mouseY: compare.mouseY,
+    
+    // Actions
+    initialize,
+    handleSelect,
+    handleReplace,
+    handleModeChange,
+    handleInfo,
+    setSearch: store.setSearch,
+    setDisplayMode: store.setDisplayMode,
+    reset: store.reset,
+    cancelReplace: compare.cancelReplace,
+    triggerReplace: compare.triggerReplace
+  };
 }

@@ -1,49 +1,68 @@
 <template>
-    <GenesisList :display="display" minColWidth="200px">
-        <GenesisItem
-            v-for="fw in frontends"
-            :key="fw.id"
-            :label="fw.name"
-            :sublabel="fw.coreFramework"
-            :selected="selectedId === fw.id"
-            :show-info-button="true"
-            :badge="frameworkSlots?.get(fw.id) ?? null"
-            @click="$emit('select', fw, $event)"
-            @info="$emit('info', fw)"
-        >
-            <!-- Affichage des métadonnées utiles pour le choix
-            <template #complementary>
-                <span class="px-2 py-0.5 bg-blue-500/10 text-blue-500 text-xs rounded-full font-medium whitespace-nowrap border border-blue-500/20">
-                    {{ fw.componentExtension }}
-                </span>
-                <span class="px-2 py-0.5 bg-secondary/20 text-text text-xs rounded-full whitespace-nowrap border border-secondary">
-                    Port: {{ fw.defaultPort }}
-                </span>
-            </template> -->
-            <!--  -->
-            <template #default>
-                <td class="p-3 text-center">{{ fw.name }}</td>
-                <td class="p-3 text-center text-text-muted">{{ fw.coreFramework }}</td>
-            </template>
-        </GenesisItem>
-    </GenesisList>
+  <GenesisList :display="display" minColWidth="200px">
+    <GenesisItem
+      v-for="fw in frontends"
+      :key="fw.id"
+      :label="fw.name"
+      :sublabel="fw.coreFramework"
+      :selected="selectedId === fw.id"
+      :show-info-button="true"
+      :badge="frameworkSlots?.get(fw.id) ?? null"
+      @click="$emit('select', fw, $event)"
+      @info="$emit('info', fw)"
+    >
+      <!-- 
+        Préservation de la structure pour le mode 'table'.
+        Ces balises <td> seront injectées dans les colonnes définies par le parent 
+        si le mode d'affichage est défini sur 'table'.
+      -->
+      <template #default>
+        <td class="p-3 text-center">{{ fw.name }}</td>
+        <td class="p-3 text-center text-text-muted">{{ fw.coreFramework }}</td>
+      </template>
+    </GenesisItem>
+  </GenesisList>
 </template>
 
 <script setup lang="ts">
+// ============================================================================
+// 1. IMPORTS
+// ============================================================================
+import type { FrontendFramework } from '@genesis-labs/shared-types';
+import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+
 import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue';
 import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.vue';
-import type { FrontendFramework } from '@genesis-labs/shared-types';
-import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
 
+// ============================================================================
+// 2. PROPS
+// ============================================================================
+/**
+ * Composant de liste spécifique aux frameworks frontend.
+ * Il délègue la mise en page (grille, liste, tableau) au composant générique GenesisList.
+ */
 defineProps<{
-    frontends: FrontendFramework[];
-    selectedId?: number;
-    display: DisplayMode;
-    frameworkSlots?: Map<number, string>;
+  /** Liste des frameworks frontend à afficher. */
+  frontends: FrontendFramework[];
+  
+  /** ID du framework actuellement sélectionné. */
+  selectedId?: number;
+  
+  /** Mode d'affichage actuel (grid, list, ou table). */
+  display: DisplayMode;
+  
+  /** Map des slots de comparaison occupés (ex: Map(1 => 'A')). */
+  frameworkSlots?: Map<number, string>;
 }>();
 
+// ============================================================================
+// 3. EMITS
+// ============================================================================
 defineEmits<{
-    select: [framework: FrontendFramework, event?: MouseEvent];
-    info: [framework: FrontendFramework];
+  /** Émis lorsque l'utilisateur clique sur un framework frontend. */
+  select: [framework: FrontendFramework, event?: MouseEvent];
+  
+  /** Émis lorsque l'utilisateur clique sur le bouton d'information. */
+  info: [framework: FrontendFramework];
 }>();
 </script>

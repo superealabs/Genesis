@@ -16,4 +16,4 @@ export { DATABASE_SERVICE_KEY } from '@genesis-labs/web-core/features/database/t
 // ═══ STORE, COMPOSABLE & VUE ═══
 export { useDatabaseStore } from '@genesis-labs/web-core/features/database/store/useDatabase.store.ts';
 export { useDatabase } from '@genesis-labs/web-core/features/database/composables/useDatabase.ts';
-export { default as DatabaseSelection } from '@genesis-labs/web-core/features/database/views/DatabaseSelection.vue';
+export { default as DatabaseView } from '@genesis-labs/web-core/features/database/views/DatabaseView.vue';

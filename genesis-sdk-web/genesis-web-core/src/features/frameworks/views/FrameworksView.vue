@@ -1,6 +1,9 @@
 <template>
   <FrameworkLayout
     v-bind="layoutProps"
+    :group-by="groupBy"
+    :languages="languages"
+    @update:group-by="groupBy = $event"
     @back="$emit('back')"
     @update:mode="handleModeChange"
     @update:searchValue="setSearch"
@@ -38,7 +41,7 @@ const emit = defineEmits<{
 }>();
 
 // ============================================================================
-// 2. INJECTION DU COMPOSABLE METIER
+// 2. INJECTION DU COMPOSABLE MÉTIER
 // ============================================================================
 const {
   frameworks,
@@ -62,7 +65,8 @@ const {
   handleSelect,
   handleReplace,
   cancelReplace,
-  triggerReplace
+  triggerReplace,
+  languages //  RÉCUPÉRATION DES LANGUES POUR LE GROUPEMENT
 } = useFrameworks();
 
 // ============================================================================
@@ -70,6 +74,9 @@ const {
 // ============================================================================
 const detailFramework = ref<Framework | null>(null);
 const isFilterOpen = ref(false);
+
+//  ÉTAT DE REGROUPEMENT LOCAL (Rend le composant autonome)
+const groupBy = ref<keyof Framework | null>('coreFramework');
 
 // ============================================================================
 // 4. COMPUTEDS (Données dérivées)
@@ -111,7 +118,9 @@ const layoutProps = computed<FrameworkLayoutProps>(() => ({
   detailFramework: detailFramework.value,
   isFilterOpen: isFilterOpen.value,
   isLoading: isLoading.value,
-  showBackButton: props.showBackButton // Transmission explicite de la prop
+  showBackButton: props.showBackButton,
+  groupBy: groupBy.value,
+  languages: languages.value
 }));
 
 // ============================================================================

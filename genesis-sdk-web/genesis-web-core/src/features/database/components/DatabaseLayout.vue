@@ -11,13 +11,13 @@
     :showSort="false"
     :showCarousel="true"
     @back="$emit('back')"
-    :replace-options="replaceOptions"
-    :show-replace-popup="showReplacePopup"
-    :mouse-x="mouseX"
-    :mouse-y="mouseY"
+    :replaceOptions="replaceOptions"
+    :showReplacePopup="showReplacePopup"
+    :mouseX="mouseX"
+    :mouseY="mouseY"
     @select-replace="$emit('select-replace', $event)"
     @close-replace="$emit('close-replace')"
-    :is-loading="isLoading"
+    :isLoading="isLoading"
   >
     <DatabaseList
       :engines="engines"
@@ -30,13 +30,24 @@
 </template>
 
 <script setup lang="ts">
-import DatabaseList from './DatabaseList.vue'; 
-import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
-import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+// ============================================================================
+// 1. IMPORTS
+// ============================================================================
 import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
 import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 
-// ✅ Export du type pour réutilisation par les composants parents
+import DatabaseList from './DatabaseList.vue';
+import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
+
+// ============================================================================
+// 2. INTERFACE DES PROPS
+// ============================================================================
+/**
+ * Propriétés attendues par le composant de mise en page des bases de données.
+ * Ce composant sert de pont entre la logique du wizard et l'affichage de la liste,
+ * en gérant l'agencement global (recherche, mode d'affichage, popup de remplacement).
+ */
 export interface DatabaseLayoutProps {
   title?: string;
   displayMode: DisplayMode;
@@ -60,10 +71,18 @@ withDefaults(defineProps<DatabaseLayoutProps>(), {
   isLoading: false
 });
 
+// ============================================================================
+// 3. EMITS
+// ============================================================================
 defineEmits<{
+  // Navigation
   'back': [];
+  
+  // Mises à jour réactives (v-model)
   'update:displayMode': [mode: DisplayMode];
   'update:mode': [mode: 'selection' | 'compare'];
+  
+  // Actions utilisateur
   'select-replace': [slotId: string | number];
   'close-replace': [];
   'select': [engine: DatabaseEngineDto, event?: MouseEvent];

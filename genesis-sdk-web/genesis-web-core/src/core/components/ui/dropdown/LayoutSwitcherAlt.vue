@@ -6,6 +6,7 @@
     :trigger-size="'lg'"
     :close-on-select="true"
     :open-at-hover="true"
+    :positioning="'fixed'"
   >
     <template #triggerIcon>
       <component :is="currentIcon" :size="24" aria-hidden="true" />

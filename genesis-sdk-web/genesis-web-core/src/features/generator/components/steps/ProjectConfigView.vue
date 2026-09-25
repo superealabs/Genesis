@@ -66,18 +66,20 @@
           placeholder="Sélectionner..."
           fill-width
         >
-          <div class="p-1 space-y-1">
-            <button
-              v-for="v in availableLanguageVersions"
-              :key="v"
-              type="button"
-              class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-              :class="{ 'text-accent font-medium': config.languageVersion === v }"
-              @click="updateConfig('languageVersion', v)"
-            >
-              {{ v }}
-            </button>
-          </div>
+          <template #default="{ close }">
+            <div class="p-1 space-y-1">
+              <button
+                v-for="v in availableLanguageVersions"
+                :key="v"
+                type="button"
+                class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                :class="{ 'text-accent font-medium': config.languageVersion === v }"
+                @click="() => { updateConfig('languageVersion', v); close(); }"
+              >
+                {{ v }}
+              </button>
+            </div>
+          </template>
         </GenesisInput>
 
         <GenesisInput
@@ -88,18 +90,20 @@
           placeholder="Sélectionner..."
           fill-width
         >
-          <div class="p-1 space-y-1">
-            <button
-              v-for="tool in availableBuildTools"
-              :key="tool"
-              type="button"
-              class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-              :class="{ 'text-accent font-medium': config.buildTool === tool }"
-              @click="updateConfig('buildTool', tool)"
-            >
-              {{ tool.charAt(0).toUpperCase() + tool.slice(1) }}
-            </button>
-          </div>
+          <template #default="{ close }">
+            <div class="p-1 space-y-1">
+              <button
+                v-for="tool in availableBuildTools"
+                :key="tool"
+                type="button"
+                class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                :class="{ 'text-accent font-medium': config.buildTool === tool }"
+                @click="() => { updateConfig('buildTool', tool); close() }"
+              >
+                {{ tool.charAt(0).toUpperCase() + tool.slice(1) }}
+              </button>
+            </div>
+          </template>
         </GenesisInput>
 
         <div v-if="showGroupId" class="space-y-1">
@@ -121,18 +125,20 @@
             placeholder="Sélectionner..."
             fill-width
           >
-            <div class="p-1 space-y-1">
-              <button
-                v-for="v in availableFrameworkVersions"
-                :key="v"
-                type="button"
-                class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                :class="{ 'text-accent font-medium': config.frameworkVersion === v }"
-                @click="updateConfig('frameworkVersion', v)"
-              >
-                {{ v }}
-              </button>
-            </div>
+            <template #default="{ close }">
+              <div class="p-1 space-y-1">
+                <button
+                  v-for="v in availableFrameworkVersions"
+                  :key="v"
+                  type="button"
+                  class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                  :class="{ 'text-accent font-medium': config.frameworkVersion === v }"
+                  @click="() => { updateConfig('frameworkVersion', v); close() }"
+                >
+                  {{ v }}
+                </button>
+              </div>
+            </template>
           </GenesisInput>
         </div>
       </div>
@@ -158,18 +164,20 @@
             placeholder="INFO"
             fill-width
           >
-            <div class="p-1 space-y-1">
-              <button
-                v-for="opt in availableLoggingLevels"
-                :key="opt"
-                type="button"
-                class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                :class="{ 'text-accent font-medium': config.loggingLevel === opt }"
-                @click="updateConfig('loggingLevel', opt)"
-              >
-                {{ opt }}
-              </button>
-            </div>
+            <template #default="{ close }">
+              <div class="p-1 space-y-1">
+                <button
+                  v-for="opt in availableLoggingLevels"
+                  :key="opt"
+                  type="button"
+                  class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                  :class="{ 'text-accent font-medium': config.loggingLevel === opt }"
+                  @click="() => { updateConfig('loggingLevel', opt); close() }"
+                >
+                  {{ opt }}
+                </button>
+              </div>
+            </template>
           </GenesisInput>
 
           <!-- Security Type -->
@@ -181,26 +189,28 @@
             placeholder="Aucune"
             fill-width
           >
-            <div class="p-1 space-y-1">
-              <button
-                type="button"
-                class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                :class="{ 'text-accent font-medium': !config.securityType || config.securityType === 'NONE' }"
-                @click="updateConfig('securityType', 'NONE')"
-              >
-                Aucune
-              </button>
-              <button
-                v-for="opt in availableSecurityTypes"
-                :key="opt"
-                type="button"
-                class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                :class="{ 'text-accent font-medium': config.securityType === opt }"
-                @click="updateConfig('securityType', opt)"
-              >
-                {{ opt }}
-              </button>
-            </div>
+            <template #default="{close}">
+              <div class="p-1 space-y-1">
+                <button
+                  type="button"
+                  class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                  :class="{ 'text-accent font-medium': !config.securityType || config.securityType === 'NONE' }"
+                  @click="() => { updateConfig('securityType', 'NONE'); close() }"
+                >
+                  Aucune
+                </button>
+                <button
+                  v-for="opt in availableSecurityTypes"
+                  :key="opt"
+                  type="button"
+                  class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                  :class="{ 'text-accent font-medium': config.securityType === opt }"
+                  @click="() => { updateConfig('securityType', opt); close() }"
+                >
+                  {{ opt }}
+                </button>
+              </div>
+            </template>
           </GenesisInput>
 
           <!-- Cache Provider -->
@@ -212,18 +222,20 @@
             placeholder="Aucun"
             fill-width
           >
-            <div class="p-1 space-y-1">
-              <button
-                v-for="opt in availableCacheProviders"
-                :key="opt"
-                type="button"
-                class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                :class="{ 'text-accent font-medium': config.cacheProvider === opt }"
-                @click="updateConfig('cacheProvider', opt)"
-              >
-                {{ opt }}
-              </button>
-            </div>
+            <template #default="{ close }">
+              <div class="p-1 space-y-1">
+                <button
+                  v-for="opt in availableCacheProviders"
+                  :key="opt"
+                  type="button"
+                  class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                  :class="{ 'text-accent font-medium': config.cacheProvider === opt }"
+                  @click="() => { updateConfig('cacheProvider', opt); close() }"
+                >
+                  {{ opt }}
+                </button>
+              </div>
+            </template>
           </GenesisInput>
 
           <!-- Hibernate DDL Auto -->
@@ -236,18 +248,20 @@
               placeholder="none"
               fill-width
             >
-              <div class="p-1 space-y-1">
-                <button
-                  v-for="opt in availableHibernateDdlAutoOptions"
-                  :key="opt"
-                  type="button"
-                  class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                  :class="{ 'text-accent font-medium': config.hibernateDdlAuto === opt }"
-                  @click="updateConfig('hibernateDdlAuto', opt)"
-                >
-                  {{ opt }}
-                </button>
-              </div>
+              <template #default="{ close }">
+                <div class="p-1 space-y-1">
+                  <button
+                    v-for="opt in availableHibernateDdlAutoOptions"
+                    :key="opt"
+                    type="button"
+                    class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                    :class="{ 'text-accent font-medium': config.hibernateDdlAuto === opt }"
+                    @click="() => { updateConfig('hibernateDdlAuto', opt); close() }"
+                  >
+                    {{ opt }}
+                  </button>
+                </div>
+              </template>
             </GenesisInput>
           </div>
 

@@ -33,13 +33,24 @@
 </template>
 
 <script setup lang="ts">
-import FrontendList from './FrontendList.vue'; 
-import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
-import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+// ============================================================================
+// 1. IMPORTS
+// ============================================================================
 import type { FrontendFramework } from '@genesis-labs/shared-types';
 import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 
-// ✅ Export du type pour réutilisation par les composants parents
+import FrontendList from './FrontendList.vue';
+import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
+
+// ============================================================================
+// 2. INTERFACE DES PROPS
+// ============================================================================
+/**
+ * Propriétés attendues par le composant de mise en page des frameworks frontend.
+ * Ce composant sert de pont entre la logique du wizard et l'affichage de la liste,
+ * en gérant l'agencement global (recherche, mode d'affichage, popup de remplacement).
+ */
 export interface FrontendLayoutProps {
   title?: string;
   searchQuery: string;
@@ -64,11 +75,19 @@ withDefaults(defineProps<FrontendLayoutProps>(), {
   isLoading: false
 });
 
+// ============================================================================
+// 3. EMITS
+// ============================================================================
 defineEmits<{
+  // Navigation
   'back': [];
+  
+  // Mises à jour réactives (v-model)
   'update:searchValue': [value: string];
   'update:displayMode': [mode: DisplayMode];
   'update:mode': [mode: 'selection' | 'compare'];
+  
+  // Actions utilisateur
   'select-replace': [slotId: string | number];
   'close-replace': [];
   'select': [framework: FrontendFramework, event?: MouseEvent];

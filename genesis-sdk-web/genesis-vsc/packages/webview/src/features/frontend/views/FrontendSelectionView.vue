@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { 
-  FrontendSelectionView as CoreFrontendSelectionView,
+  FrontendsView as CoreFrontendSelectionView,
   type FrontendFramework 
 } from '@genesis-labs/web-core/features/frontend/manifest'; // Ajuste le chemin si ton alias est différent
 
