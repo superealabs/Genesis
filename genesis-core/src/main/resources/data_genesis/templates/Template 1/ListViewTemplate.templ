@@ -107,8 +107,6 @@ ${flashMessageSection}
 
 <div class="modal" id="exportModal">
     <form class="modal-content" method="post" ${exportLink}>
-        <input type="hidden" name="page" value="${pageNumberValue}" />
-        <input type="hidden" name="${pageSizeParamName}" value="${pageSizeValue}" ${pageSizeValueTagHelper} />
         <input type="hidden" name="${sortParamName}" value="${currentSortValue}" ${currentSortValueTagHelper} />
         ${antiForgeryTokenTagHelper}
 

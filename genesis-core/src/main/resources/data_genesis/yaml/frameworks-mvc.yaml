@@ -696,7 +696,7 @@
             Task AddAsync(T entity);
             Task UpdateAsync(T entity);
             Task DeleteAsync(TKey id);
-            Task<bool> ExistsAsync(TKey id);
+            Task<bool> ExistsAsync(TKey  id);
         }
       destinationPath: "${destinationFolder}/Services/Generic/"
 
@@ -4724,6 +4724,72 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
 
+    - fileType: "CSV Export Service"
+      fileName: "CsvExportService"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.services.generic;
+
+        import org.springframework.stereotype.Service;
+
+        import java.nio.charset.StandardCharsets;
+        import java.util.List;
+        import java.util.Map;
+        import java.util.stream.Collectors;
+
+        @Service
+        public class CsvExportService {
+            public byte[] export(List<String> headers, List<? extends Map<String, Object>> rows) {
+                StringBuilder csv = new StringBuilder();
+                csv.append(headers.stream().map(this::escape).collect(Collectors.joining(",")));
+                csv.append("\n");
+                for (Map<String, Object> row : rows) {
+                    csv.append(
+                            headers.stream()
+                                    .map(header ->formatValue(row.get(header)))
+                                    .map(this::escape)
+                                    .collect(Collectors.joining(","))
+                    );
+                    csv.append("\n");
+                }
+                // BOM UTF-8 pour Excel + accents
+                String content = "\uFEFF" + csv;
+                return content.getBytes(StandardCharsets.UTF_8);
+            }
+
+            private String formatValue(Object value) {
+                if (value == null) {
+                    return "";
+                }
+                if (value instanceof byte[] bytes) {
+                    return bytes.length > 0
+                            ? "Fichier disponible"
+                            : "";
+                }
+                if (value instanceof Object[] array) {
+                    return java.util.Arrays.stream(array)
+                            .map(item ->item == null ? "" : item.toString())
+                            .collect(Collectors.joining(", "));
+                }
+                return value.toString();
+            }
+
+            private String escape(String value) {
+                if (value == null) {
+                    return "";
+                }
+                String escaped = value.replace("\"", "\"\"");
+                if (escaped.contains(",")
+                        || escaped.contains("\"")
+                        || escaped.contains("\n")
+                        || escaped.contains("\r")) {
+                    return "\"" + escaped + "\"";
+                }
+                return escaped;
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services/generic"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
@@ -5031,6 +5097,8 @@
       import ${groupLink}.${lowerCase(projectName)}.exception.ResourceNotFoundException;
       import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
       import org.springframework.dao.DataIntegrityViolationException;
+      import java.util.List;
+      import org.springframework.data.domain.Sort;
 
     serviceAnnotations: |
       @Service
@@ -5070,6 +5138,16 @@
       {{tab}}        return ${minStart(className)}.get();
       {{tab}}    } else {
       {{tab}}        throw new ResourceNotFoundException("${majStart(className)} not found with ${pkColumn} : " + ${pkColumn});
+      {{tab}}    }
+      {{tab}}}
+      
+      {{tab}}@Override
+      {{tab}}public List<${majStart(className)}> getAll${majStart(className)}(Sort sort, ${majStart(className)}Search object) {
+      {{tab}}    try {
+      {{tab}}        Specification<${majStart(className)}> spec = ${majStart(className)}Specification.filter(object);
+      {{tab}}        return ${minStart(className)}Repository.findAll(spec, sort);
+      {{tab}}    } catch (Exception ex) {
+      {{tab}}        throw new InternalServerErrorException("Error while retrieving ${formatReadableLowerCase(className)} for export", ex);
       {{tab}}    }
       {{tab}}}
       
@@ -5130,7 +5208,9 @@
           {{else}}{{removeLine}}{{/if}}
           import ${groupLink}.${lowerCase(projectName)}.models.dto.${className}Search;
           import org.springframework.data.domain.Page;
-          import org.springframework.data.domain.Pageable;    
+          import org.springframework.data.domain.Pageable;
+          import java.util.List;
+          import org.springframework.data.domain.Sort;
           
           public interface ${majStart(className)}Service {
               Page<${className}> getAll${className}(Pageable pageable);
@@ -5138,6 +5218,8 @@
               Page<${className}> getAll${className}(Pageable pageable, ${majStart(className)}Search object);
           
               ${className} get${className}ById(${pkColumnType} ${pkColumn});
+          
+              List<${className}> getAll${className}(Sort sort, ${majStart(className)}Search object);
           
               {{#if !isView}}
           
@@ -5164,10 +5246,6 @@
       {{#if hasFileFields}}
       import ${groupLink}.${lowerCase(projectName)}.utils.FileUtils;
       import org.springframework.web.multipart.MultipartFile;
-      import org.springframework.http.ResponseEntity;
-      import org.springframework.http.HttpHeaders;
-      import org.springframework.http.MediaType;
-      import org.springframework.http.ContentDisposition;
       {{else}}{{removeLine}}{{/if}}
       import org.springframework.data.domain.Page;
       import org.springframework.data.domain.PageRequest;
@@ -5176,17 +5254,28 @@
       import org.springframework.stereotype.Controller;
       import org.springframework.ui.Model;
       import org.springframework.web.bind.annotation.GetMapping;
+      import org.springframework.web.bind.annotation.PostMapping;
       import org.springframework.web.bind.annotation.ModelAttribute;
       import org.springframework.web.bind.annotation.PathVariable;
       import org.springframework.web.bind.annotation.RequestMapping;
       import org.springframework.web.bind.annotation.RequestParam;
+      import ${groupLink}.${lowerCase(projectName)}.services.generic.CsvExportService;
+      import java.util.List;
+      import java.util.Map;
+      import java.util.LinkedHashMap;
+      import java.util.Arrays;
+      import java.nio.charset.StandardCharsets;
+      import org.springframework.http.ResponseEntity;
+      import org.springframework.http.HttpHeaders;
+      import org.springframework.http.MediaType;
+      import org.springframework.http.ContentDisposition;
+      import ${groupLink}.${lowerCase(projectName)}.exception.InternalServerErrorException;
       {{#if hasJsonFields}}
       import org.springframework.beans.propertyeditors.StringTrimmerEditor;
       import org.springframework.web.bind.WebDataBinder;
       import org.springframework.web.bind.annotation.InitBinder;
       {{else}}{{removeLine}}{{/if}}
       {{#if !isView}}
-      import org.springframework.web.bind.annotation.PostMapping;
       import org.springframework.web.servlet.mvc.support.RedirectAttributes;
       {{else}}{{removeLine}}{{/if}}
       import jakarta.validation.Valid;
@@ -5205,9 +5294,11 @@
       {{#each foreignTypes}}
       {{tab}}private final ${majStart(this.type)}Service ${minStart(this.type)}Service;
       {{/each}}{{removeLine}}
+      {{tab}}private final CsvExportService csvExportService;
     controllerConstructors: |
-      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${minStart(className)}Service{{#each foreignTypes}}, ${majStart(this.type)}Service ${minStart(this.type)}Service{{/each}}) {
+      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${minStart(className)}Service, CsvExportService csvExportService{{#each foreignTypes}}, ${majStart(this.type)}Service ${minStart(this.type)}Service{{/each}}) {
       {{tab}}    this.${minStart(className)}Service = ${minStart(className)}Service;
+      {{tab}}    this.csvExportService = csvExportService;
       {{tab}}    {{#each foreignTypes}}
       {{tab}}    this.${minStart(this.type)}Service = ${minStart(this.type)}Service;
       {{tab}}    {{/each}}{{removeLine}}
@@ -5254,6 +5345,58 @@
       {{tab}}    return "${minStart(className)}/list";
       {{tab}}}
       {{tab}}
+      {{tab}}@PostMapping("/export")
+      {{tab}}public ResponseEntity<byte[]> export${majStart(className)}(
+      {{tab}}        @ModelAttribute("${minStart(className)}Search") ${majStart(className)}Search search,
+      {{tab}}        @RequestParam(defaultValue = "${defaultSortColumn},asc")
+      {{tab}}        String sortOrder) {
+      {{tab}}    try {
+      {{tab}}        Sort sort = WebUtils.createSortObject(sortOrder);
+      {{tab}}        List<${majStart(className)}> data = ${minStart(className)}Service
+      {{tab}}                        .getAll${majStart(className)}(sort, search);
+      {{tab}}
+      {{tab}}        List<String> headers = Arrays.asList(
+      {{#each fields}}
+      {{tab}}                        "{{#if this.isForeignKey}}${this.type}{{else}}${majStart(this.name)}{{/if}}"{{#if @last}}{{else}},{{/if}}
+      {{/each}}
+      {{tab}}                );
+      {{tab}}
+      {{tab}}        List<Map<String, Object>> rows =
+      {{tab}}                data.stream()
+      {{tab}}                        .map(item -> {Map<String, Object> row = new LinkedHashMap<>();
+      {{#each fields}}
+      {{#if this.isForeignKey}}
+      {{tab}}                            row.put("${this.type}",item.get${majStart(this.name)}() != null
+      {{tab}}                                            ? item.get${majStart(this.name)}()
+      {{tab}}                                                    .get${majStart(this.displayColumn)}() : "");
+      {{else}}
+      {{tab}}                            row.put("${majStart(this.name)}", item.get${majStart(this.name)}());
+      {{/if}}
+      {{/each}}
+      {{tab}}                            return row;
+      {{tab}}                        })
+      {{tab}}                        .toList();
+      {{tab}}        byte[] csv = csvExportService.export(headers, rows);
+      {{tab}}
+      {{tab}}        return ResponseEntity.ok()
+      {{tab}}                .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
+      {{tab}}                .header(
+      {{tab}}                        HttpHeaders.CONTENT_DISPOSITION,
+      {{tab}}                        ContentDisposition
+      {{tab}}                                .attachment()
+      {{tab}}                                .filename(
+      {{tab}}                                        "${majStart(className)}.csv",
+      {{tab}}                                        StandardCharsets.UTF_8
+      {{tab}}                                )
+      {{tab}}                                .build()
+      {{tab}}                                .toString()
+      {{tab}}                )
+      {{tab}}                .body(csv);
+      {{tab}}
+      {{tab}}    } catch (Exception ex) {
+      {{tab}}        throw new InternalServerErrorException("Erreur lors de l'export CSV de ${formatReadableLowerCase(className)}", ex);
+      {{tab}}    }
+      {{tab}}}
       {{#if hasCompositePrimaryKey}}
       {{tab}}@GetMapping("{{#each compositePkFields}}/{${this.name}}{{/each}}")
       {{tab}}public String view${majStart(className)}(
