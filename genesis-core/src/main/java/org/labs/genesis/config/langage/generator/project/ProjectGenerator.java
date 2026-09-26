@@ -164,12 +164,17 @@ public class ProjectGenerator {
     }
     public static void renderFilesEdits(List<FilesEdit> filesEdits, HashMap<String, Object> initializeHashMap) throws Exception {
         for (FilesEdit projectFile : filesEdits) {
+            if ("OracleYearMonthIntervalType".equals(projectFile.getFileName()) && !"Oracle".equalsIgnoreCase(String.valueOf(initializeHashMap.get("databaseType"))
+            )) {
+                continue;
+            }
             String destinationFilePath = engine.render(projectFile.getDestinationPath(), initializeHashMap);
             String fileName = engine.render(projectFile.getFileName(), initializeHashMap);
             String content = engine.render(projectFile.getContent(), initializeHashMap);
             String extension = projectFile.getExtension();
 
             // ALT rendering for specific placeholders
+            content = engine.simpleRenderAlt(content, Map.of("thymeleafDollar", "$"));
             content = engine.simpleRenderAlt(content, Map.of("spring-cloud.version", "${spring-cloud.version}"));
             content = engine.simpleRenderAlt(content, Map.of("spring.application.name", "${spring.application.name}"));
             content = engine.simpleRenderAlt(content, Map.of("server.port", "${server.port}"));
@@ -323,6 +328,26 @@ public class ProjectGenerator {
                 context.getFrameworkConfiguration()
         );
         System.out.println("Generating PROJECT FILESSS 2");
+
+        List<String> adminProtectedRoutes = FrameworkMetadataProvider.getAdminProtectedRoutes(entities);
+        if (!adminProtectedRoutes.isEmpty()) {
+            HashMap<String, Object> adminRoutesSection = new HashMap<>();
+            adminRoutesSection.put(
+                    "routes",
+                    adminProtectedRoutes.stream()
+                            .map(route ->
+                                    "                            \"" +
+                                            route +
+                                            "\""
+                            )
+                            .collect(
+                                    Collectors.joining(",\n")
+                            )
+            );
+            projectFilesEditsHashMap.put("adminRoutesSection", Collections.singletonList(adminRoutesSection));
+        } else {
+            projectFilesEditsHashMap.put("adminRoutesSection", Collections.emptyList());
+        }
 
         if (context.getFramework().getUseDB()) {
             if (context.getFramework().getModelDao() != null) {

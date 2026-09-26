@@ -459,16 +459,24 @@ public class OracleDatabase extends Database {
         }
     }
 
-
-
-    public String handleType(String columnType, int decimalDigits) {
-        if (decimalDigits > 0 && columnType.contains("NUMBER")) {
-            return columnType + "(*,*)";
+    public String handleType( String columnType, int columnSize, int decimalDigits) {
+        if (columnType == null) {
+            return null;
         }
-        if (columnType.contains("TIMESTAMP")) {
-            return "TIMESTAMP";
+        String normalized = columnType.trim().toUpperCase();
+        if ("NUMBER".equals(normalized)) {
+            if (decimalDigits > 0) {
+                return "NUMBER(*,*)";
+            }
+            if (columnSize <= 9) {
+                return "NUMBER";
+            }
+            if (columnSize <= 18) {
+                return "BIGINT";
+            }
+            return "NUMBER(*,*)";
         }
-        return columnType;
+        return normalized;
     }
 
     private Set<String> fetchIdentityColumns(Connection connection, String tableName) {
@@ -505,7 +513,7 @@ public class OracleDatabase extends Database {
                 String columnType = columns.getString("TYPE_NAME");
                 int columnSize = columns.getInt("COLUMN_SIZE");
                 int decimalDigits = columns.getInt("DECIMAL_DIGITS");
-                columnType = handleType(columnType, decimalDigits);
+                columnType = handleType(columnType, columnSize, decimalDigits);
                 // COLUMN_DEF doit être lu avant IS_NULLABLE
                 String defaultValue = columns.getString("COLUMN_DEF");
                 String isNullable = columns.getString("IS_NULLABLE");
@@ -539,12 +547,28 @@ public class OracleDatabase extends Database {
                 column.setColumnSize(columnSize,frameworkValidationAnnotations,engine);
                 column.setDecimalDigits(decimalDigits,frameworkValidationAnnotations,engine);
 
-                if (language.getTypes().get(getDatabaseType(columns)) == null)
-                    throw new RuntimeException("Database type not supported yet: Oracle type " + columnType + " is mapped to Genesis type " + getDatabaseType(columns) + ", but this type is not configured for " + language.getName());
-                else
-                    column.setType(language.getTypes().get(getDatabaseType(columns)));
-
-                column.setColumnType(columnType);
+                String normalizedColumnType = normalizeColumnType(columnType);
+                String genesisType = getTypes().get(normalizedColumnType);
+                if (genesisType == null) {
+                    throw new RuntimeException(
+                            "Database type not supported yet: Oracle type "
+                                    + normalizedColumnType
+                                    + " is not configured in Oracle types"
+                    );
+                }
+                String languageType = language.getTypes().get(genesisType);
+                if (languageType == null) {
+                    throw new RuntimeException(
+                            "Database type not supported yet: Oracle type "
+                                    + normalizedColumnType
+                                    + " is mapped to Genesis type "
+                                    + genesisType
+                                    + ", but this type is not configured for "
+                                    + language.getName()
+                    );
+                }
+                column.setType(languageType);
+                column.setColumnType(normalizedColumnType);
                 listeCols.add(column);
             }
         } catch (Exception e) {
@@ -642,5 +666,26 @@ public class OracleDatabase extends Database {
             return schema;
         }
         return schema.toUpperCase();
+    }
+
+    @Override
+    public String normalizeColumnType(String columnType) {
+        if (columnType == null) {
+            return null;
+        }
+        String normalized = columnType
+                .trim()
+                .toUpperCase();
+        normalized = normalized.replaceAll(
+                "TIMESTAMP\\(\\d+\\)",
+                "TIMESTAMP"
+        );
+        if (normalized.startsWith("INTERVAL YEAR")) {
+            return "INTERVAL YEAR TO MONTH";
+        }
+        if (normalized.startsWith("INTERVAL DAY")) {
+            return "INTERVAL DAY TO SECOND";
+        }
+        return normalized;
     }
 }

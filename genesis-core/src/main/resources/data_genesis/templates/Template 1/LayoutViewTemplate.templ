@@ -129,7 +129,7 @@ ${viewAnnotations}
                     </select>
                 </div>
 
-                {{#if useAuthCookie}}<div class="setting-separator"></div>
+                {{#if useAuthCookie or useAuthSession}}<div class="setting-separator"></div>
 
                 <form ${logoutLink} method="post" class="settings-form" id="settingsForm">
                     <button type="submit" class="logout-btn" id="logoutBtn">
